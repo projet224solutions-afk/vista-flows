@@ -45,6 +45,7 @@ const NearbyTaxiMoto = lazyWithRetry(() => import("./pages/NearbyTaxiMoto"));
 const NearbyLivraison = lazyWithRetry(() => import("./pages/NearbyLivraison"));
 const NearbyBoutiques = lazyWithRetry(() => import("./pages/NearbyBoutiques"));
 const ClientTrackingPage = lazyWithRetry(() => import("./pages/ClientTrackingPage"));
+const MesCommandes = lazyWithRetry(() => import("./pages/MesCommandes"));
 const Profil = lazyWithRetry(() => import("./pages/Profil"));
 const MyPurchases = lazyWithRetry(() => import("./pages/MyPurchases"));
 const AgentLogin = lazyWithRetry(() => import("./pages/AgentLogin"));
@@ -296,6 +297,7 @@ function App() {
               <Route path="/client-tracking" element={<ClientTrackingPage />} />
               <Route path="/profil" element={<Profil />} />
               <Route path="/my-purchases" element={<MyPurchases />} />
+              <Route path="/mes-commandes" element={<MesCommandes />} />
               <Route path="/profile/:userId" element={<UserPublicProfile />} />
               
               {/* Affiliate Routes - Vendeur */}
