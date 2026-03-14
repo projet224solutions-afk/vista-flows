@@ -87,12 +87,17 @@ export function useRestaurantOrders(serviceId: string) {
     // Générer un numéro de commande
     const orderNumber = `CMD-${Date.now().toString(36).toUpperCase()}`;
     
+    // Récupérer l'ID de l'utilisateur connecté pour le suivi client
+    const { data: authData } = await supabase.auth.getUser();
+    const customerUserId = authData?.user?.id || null;
+    
     const { data: newOrder, error } = await supabase
       .from('restaurant_orders')
       .insert([{ 
         ...data, 
         professional_service_id: serviceId,
         order_number: orderNumber,
+        customer_user_id: customerUserId,
       }])
       .select()
       .single();
