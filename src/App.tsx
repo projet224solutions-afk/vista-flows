@@ -45,6 +45,7 @@ const NearbyTaxiMoto = lazyWithRetry(() => import("./pages/NearbyTaxiMoto"));
 const NearbyLivraison = lazyWithRetry(() => import("./pages/NearbyLivraison"));
 const NearbyBoutiques = lazyWithRetry(() => import("./pages/NearbyBoutiques"));
 const ClientTrackingPage = lazyWithRetry(() => import("./pages/ClientTrackingPage"));
+const MesCommandes = lazyWithRetry(() => import("./pages/MesCommandes"));
 const Profil = lazyWithRetry(() => import("./pages/Profil"));
 const MyPurchases = lazyWithRetry(() => import("./pages/MyPurchases"));
 const AgentLogin = lazyWithRetry(() => import("./pages/AgentLogin"));
