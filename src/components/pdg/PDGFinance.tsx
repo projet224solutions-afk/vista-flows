@@ -165,6 +165,16 @@ export default function PDGFinance() {
         </Suspense>
       </TabsContent>
 
+      <TabsContent value="service-subscriptions" className="space-y-6">
+        <Suspense fallback={
+          <div className="flex items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        }>
+          <PDGServiceSubscriptions />
+        </Suspense>
+      </TabsContent>
+
       <TabsContent value="escrow" className="space-y-6">
         <Suspense fallback={
           <div className="flex items-center justify-center p-12">
