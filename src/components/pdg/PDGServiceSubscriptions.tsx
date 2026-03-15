@@ -24,28 +24,50 @@ import {
   DollarSign, History, TrendingUp, Users, Edit, RefreshCw, Gift,
   Store, Calendar, AlertCircle, CheckCircle, XCircle, Clock,
   UtensilsCrossed, Home, Wrench, Car, Dumbbell, Scissors, Laptop,
-  BookOpen, Truck, Camera, Leaf, Heart, Hammer, Sparkles, Filter
+  BookOpen, Truck, Camera, Leaf, Heart, Hammer, Sparkles, Filter,
+  Shield, LayoutGrid, Eye, Ban, CreditCard
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 // Service type icon mapping
-const SERVICE_ICONS: Record<string, React.ReactNode> = {
-  restaurant: <UtensilsCrossed className="w-4 h-4" />,
-  location: <Home className="w-4 h-4" />,
-  construction: <Hammer className="w-4 h-4" />,
-  vtc: <Car className="w-4 h-4" />,
-  sport: <Dumbbell className="w-4 h-4" />,
-  beaute: <Scissors className="w-4 h-4" />,
-  informatique: <Laptop className="w-4 h-4" />,
-  education: <BookOpen className="w-4 h-4" />,
-  livraison: <Truck className="w-4 h-4" />,
-  media: <Camera className="w-4 h-4" />,
-  agriculture: <Leaf className="w-4 h-4" />,
-  sante: <Heart className="w-4 h-4" />,
-  reparation: <Wrench className="w-4 h-4" />,
-  menage: <Sparkles className="w-4 h-4" />,
-  ecommerce: <Store className="w-4 h-4" />,
+const SERVICE_ICONS: Record<string, any> = {
+  restaurant: UtensilsCrossed,
+  location: Home,
+  construction: Hammer,
+  vtc: Car,
+  sport: Dumbbell,
+  beaute: Scissors,
+  informatique: Laptop,
+  education: BookOpen,
+  livraison: Truck,
+  media: Camera,
+  agriculture: Leaf,
+  sante: Heart,
+  reparation: Wrench,
+  menage: Sparkles,
+  ecommerce: Store,
+  securite: Shield,
+};
+
+const SERVICE_COLORS: Record<string, string> = {
+  restaurant: 'from-orange-500/20 to-orange-600/10 border-orange-500/30',
+  location: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
+  construction: 'from-amber-500/20 to-amber-600/10 border-amber-500/30',
+  vtc: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
+  sport: 'from-green-500/20 to-green-600/10 border-green-500/30',
+  beaute: 'from-pink-500/20 to-pink-600/10 border-pink-500/30',
+  informatique: 'from-cyan-500/20 to-cyan-600/10 border-cyan-500/30',
+  education: 'from-indigo-500/20 to-indigo-600/10 border-indigo-500/30',
+  livraison: 'from-teal-500/20 to-teal-600/10 border-teal-500/30',
+  media: 'from-rose-500/20 to-rose-600/10 border-rose-500/30',
+  agriculture: 'from-lime-500/20 to-lime-600/10 border-lime-500/30',
+  sante: 'from-red-500/20 to-red-600/10 border-red-500/30',
+  reparation: 'from-slate-500/20 to-slate-600/10 border-slate-500/30',
+  menage: 'from-violet-500/20 to-violet-600/10 border-violet-500/30',
+  ecommerce: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30',
+  securite: 'from-sky-500/20 to-sky-600/10 border-sky-500/30',
 };
 
 interface ServiceTypeInfo {
@@ -67,7 +89,8 @@ export default function PDGServiceSubscriptions() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isFreeDialogOpen, setIsFreeDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [selectedServiceType, setSelectedServiceType] = useState<string>('all');
+  const [activeServiceTab, setActiveServiceTab] = useState<string>('all');
+  const [activeSubTab, setActiveSubTab] = useState<string>('subscriptions');
   const [freeSubscriptionData, setFreeSubscriptionData] = useState({
     serviceId: '', planId: '', days: ''
   });
@@ -85,7 +108,6 @@ export default function PDGServiceSubscriptions() {
         ServiceSubscriptionService.getAllSubscriptions(200)
       ]);
 
-      // Fetch service types
       const { data: stData } = await supabase
         .from('service_types')
         .select('id, code, name')
@@ -105,32 +127,39 @@ export default function PDGServiceSubscriptions() {
     }
   };
 
-  // Filter subscriptions by service type
-  const filteredSubscriptions = useMemo(() => {
-    if (selectedServiceType === 'all') return subscriptions;
-    return subscriptions.filter(sub => 
-      sub.professional_services?.service_type_id === selectedServiceType
-    );
-  }, [subscriptions, selectedServiceType]);
-
   // Stats per service type
   const serviceTypeStats = useMemo(() => {
-    const statsMap: Record<string, { active: number; total: number; revenue: number; name: string }> = {};
+    const statsMap: Record<string, { active: number; expired: number; cancelled: number; total: number; revenue: number; name: string; code: string }> = {};
     
+    serviceTypes.forEach(st => {
+      statsMap[st.id] = { active: 0, expired: 0, cancelled: 0, total: 0, revenue: 0, name: st.name, code: st.code };
+    });
+
     subscriptions.forEach(sub => {
       const stId = sub.professional_services?.service_type_id;
-      if (!stId) return;
-      const st = serviceTypes.find(s => s.id === stId);
-      if (!statsMap[stId]) {
-        statsMap[stId] = { active: 0, total: 0, revenue: 0, name: st?.name || 'Inconnu' };
-      }
+      if (!stId || !statsMap[stId]) return;
       statsMap[stId].total++;
       if (sub.status === 'active') statsMap[stId].active++;
+      else if (sub.status === 'expired') statsMap[stId].expired++;
+      else if (sub.status === 'cancelled') statsMap[stId].cancelled++;
       statsMap[stId].revenue += sub.price_paid_gnf || 0;
     });
 
     return statsMap;
   }, [subscriptions, serviceTypes]);
+
+  // Filtered subscriptions
+  const filteredSubscriptions = useMemo(() => {
+    if (activeServiceTab === 'all') return subscriptions;
+    return subscriptions.filter(sub => 
+      sub.professional_services?.service_type_id === activeServiceTab
+    );
+  }, [subscriptions, activeServiceTab]);
+
+  // Service types with subscriptions (for tabs)
+  const activeServiceTypes = useMemo(() => {
+    return serviceTypes.filter(st => serviceTypeStats[st.id]?.total > 0);
+  }, [serviceTypes, serviceTypeStats]);
 
   const handleOpenPriceDialog = (plan: ServicePlan) => {
     setSelectedPlan(plan);
@@ -146,12 +175,10 @@ export default function PDGServiceSubscriptions() {
       toast({ title: 'Erreur', description: 'Prix invalide', variant: 'destructive' });
       return;
     }
-
     try {
       setSubmitting(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
-
       const success = await ServiceSubscriptionService.changePlanPrice(selectedPlan.id, priceValue, user.id, reason || undefined);
       if (success) {
         toast({ title: 'Succès', description: `Prix du plan ${selectedPlan.display_name} modifié` });
@@ -175,7 +202,6 @@ export default function PDGServiceSubscriptions() {
       toast({ title: 'Erreur', description: 'Jours invalides', variant: 'destructive' });
       return;
     }
-
     try {
       setSubmitting(true);
       const { data: service, error: serviceError } = await supabase
@@ -183,9 +209,7 @@ export default function PDGServiceSubscriptions() {
         .select('id, user_id')
         .eq('id', freeSubscriptionData.serviceId)
         .single();
-
       if (serviceError || !service) throw new Error('Service non trouvé');
-
       const success = await ServiceSubscriptionService.offerFreeSubscription(
         service.id, service.user_id, freeSubscriptionData.planId, days
       );
@@ -233,20 +257,39 @@ export default function PDGServiceSubscriptions() {
     );
   }
 
+  const currentStats = activeServiceTab === 'all' 
+    ? stats 
+    : serviceTypeStats[activeServiceTab] 
+      ? {
+          total_subscriptions: serviceTypeStats[activeServiceTab].total,
+          active_subscriptions: serviceTypeStats[activeServiceTab].active,
+          expired_subscriptions: serviceTypeStats[activeServiceTab].expired,
+          total_revenue: serviceTypeStats[activeServiceTab].revenue,
+          monthly_revenue: 0,
+          subscriptions_by_plan: {},
+          subscriptions_by_status: {}
+        }
+      : null;
+
+  const getIcon = (code: string) => {
+    const IconComp = SERVICE_ICONS[code] || Store;
+    return <IconComp className="w-4 h-4" />;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Abonnements Services Professionnels</h2>
-          <p className="text-muted-foreground text-sm">Gestion par type de service</p>
+          <h2 className="text-2xl font-bold text-foreground">Abonnements Services de Proximité</h2>
+          <p className="text-muted-foreground text-sm">Gestion unifiée par catégorie de service</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button onClick={() => setIsFreeDialogOpen(true)} size="sm">
+          <Button onClick={() => setIsFreeDialogOpen(true)} size="sm" variant="outline">
             <Gift className="w-4 h-4 mr-2" />Offrir
           </Button>
           <Button onClick={handleMarkExpired} variant="outline" size="sm">
-            <Clock className="w-4 h-4 mr-2" />Expirés
+            <Clock className="w-4 h-4 mr-2" />Marquer expirés
           </Button>
           <Button onClick={fetchData} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />Actualiser
@@ -254,92 +297,164 @@ export default function PDGServiceSubscriptions() {
         </div>
       </div>
 
-      {/* Global Stats */}
-      {stats && (
+      {/* Service Type Tabs - Primary Navigation */}
+      <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div className="flex gap-2 pb-2 min-w-max">
+          {/* All tab */}
+          <button
+            onClick={() => setActiveServiceTab('all')}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border",
+              activeServiceTab === 'all'
+                ? "bg-primary text-primary-foreground border-primary shadow-md"
+                : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground"
+            )}
+          >
+            <LayoutGrid className="w-4 h-4" />
+            <span>Vue Globale</span>
+            <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+              {subscriptions.length}
+            </Badge>
+          </button>
+
+          {/* Per-service-type tabs */}
+          {serviceTypes.map(st => {
+            const stStats = serviceTypeStats[st.id];
+            const hasData = stStats && stStats.total > 0;
+            const isActive = activeServiceTab === st.id;
+            const colorClass = SERVICE_COLORS[st.code] || 'from-gray-500/20 to-gray-600/10 border-gray-500/30';
+
+            return (
+              <button
+                key={st.id}
+                onClick={() => setActiveServiceTab(st.id)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border whitespace-nowrap",
+                  isActive
+                    ? `bg-gradient-to-r ${colorClass} shadow-md`
+                    : "bg-card text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground",
+                  !hasData && "opacity-60"
+                )}
+              >
+                {getIcon(st.code)}
+                <span>{st.name}</span>
+                {stStats && stStats.total > 0 && (
+                  <Badge variant={isActive ? "default" : "secondary"} className="ml-1 text-[10px] px-1.5 py-0">
+                    {stStats.active}/{stStats.total}
+                  </Badge>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Stats Cards for selected service */}
+      {currentStats && (
         <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-          <Card>
+          <Card className="border-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total</CardTitle>
+              <CardTitle className="text-sm font-medium">Abonnements</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.total_subscriptions}</div>
-              <p className="text-xs text-muted-foreground">{stats.active_subscriptions} actifs</p>
+              <div className="text-2xl font-bold">{currentStats.total_subscriptions}</div>
+              <p className="text-xs text-muted-foreground">
+                <span className="text-green-500 font-medium">{currentStats.active_subscriptions} actifs</span>
+                {currentStats.expired_subscriptions > 0 && (
+                  <span className="text-destructive ml-2">{currentStats.expired_subscriptions} expirés</span>
+                )}
+              </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Revenus Totaux</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{ServiceSubscriptionService.formatAmount(stats.total_revenue)}</div>
+              <div className="text-2xl font-bold">{ServiceSubscriptionService.formatAmount(currentStats.total_revenue)}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenus Mensuel</CardTitle>
+              <CardTitle className="text-sm font-medium">Taux d'Activation</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{ServiceSubscriptionService.formatAmount(stats.monthly_revenue)}</div>
+              <div className="text-2xl font-bold">
+                {currentStats.total_subscriptions > 0 
+                  ? ((currentStats.active_subscriptions / currentStats.total_subscriptions) * 100).toFixed(0) 
+                  : 0}%
+              </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Taux Actif</CardTitle>
-              <Store className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">
+                {activeServiceTab === 'all' ? 'Rev. Mensuel' : 'Moy. / Abo.'}
+              </CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {stats.total_subscriptions > 0 ? ((stats.active_subscriptions / stats.total_subscriptions) * 100).toFixed(0) : 0}%
+                {activeServiceTab === 'all' 
+                  ? ServiceSubscriptionService.formatAmount(stats?.monthly_revenue || 0)
+                  : ServiceSubscriptionService.formatAmount(
+                      currentStats.total_subscriptions > 0 
+                        ? Math.round(currentStats.total_revenue / currentStats.total_subscriptions) 
+                        : 0
+                    )
+                }
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Per-Service-Type Stats Cards */}
-      {Object.keys(serviceTypeStats).length > 0 && (
+      {/* Service-specific breakdown when "all" */}
+      {activeServiceTab === 'all' && activeServiceTypes.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Abonnements par type de service
-          </h3>
+          <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Répartition par service</h3>
           <ScrollArea className="w-full">
             <div className="flex gap-3 pb-3">
-              {Object.entries(serviceTypeStats).map(([stId, st]) => {
-                const stInfo = serviceTypes.find(s => s.id === stId);
-                const code = stInfo?.code || '';
-                const icon = SERVICE_ICONS[code] || <Store className="w-4 h-4" />;
-                const isSelected = selectedServiceType === stId;
+              {activeServiceTypes.map(st => {
+                const stStats = serviceTypeStats[st.id];
+                const colorClass = SERVICE_COLORS[st.code] || 'from-gray-500/20 to-gray-600/10 border-gray-500/30';
                 
                 return (
                   <Card
-                    key={stId}
-                    className={`min-w-[180px] cursor-pointer transition-all hover:shadow-md ${
-                      isSelected ? 'ring-2 ring-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => setSelectedServiceType(isSelected ? 'all' : stId)}
+                    key={st.id}
+                    className={cn(
+                      "min-w-[200px] cursor-pointer transition-all hover:shadow-lg border",
+                      `bg-gradient-to-br ${colorClass}`
+                    )}
+                    onClick={() => setActiveServiceTab(st.id)}
                   >
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 rounded-md bg-primary/10">{icon}</div>
-                        <span className="text-xs font-medium truncate">{st.name}</span>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="p-2 rounded-lg bg-background/60">{getIcon(st.code)}</div>
+                        <span className="text-sm font-semibold">{st.name}</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2 text-center">
                         <div>
-                          <p className="text-lg font-bold">{st.active}</p>
+                          <p className="text-lg font-bold text-green-500">{stStats.active}</p>
                           <p className="text-[10px] text-muted-foreground">Actifs</p>
                         </div>
                         <div>
-                          <p className="text-lg font-bold">{st.total}</p>
+                          <p className="text-lg font-bold text-destructive">{stStats.expired}</p>
+                          <p className="text-[10px] text-muted-foreground">Expirés</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold">{stStats.total}</p>
                           <p className="text-[10px] text-muted-foreground">Total</p>
                         </div>
                       </div>
-                      <p className="text-xs font-medium text-primary mt-1">
-                        {ServiceSubscriptionService.formatAmount(st.revenue)}
-                      </p>
+                      <div className="mt-2 pt-2 border-t border-border/50">
+                        <p className="text-xs font-semibold text-primary">
+                          {ServiceSubscriptionService.formatAmount(stStats.revenue)}
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 );
@@ -350,175 +465,210 @@ export default function PDGServiceSubscriptions() {
         </div>
       )}
 
-      {/* Filter indicator */}
-      {selectedServiceType !== 'all' && (
-        <div className="flex items-center gap-2 bg-primary/10 rounded-lg p-3">
-          <Filter className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium">
-            Filtré: {serviceTypes.find(s => s.id === selectedServiceType)?.name}
+      {/* Active filter indicator */}
+      {activeServiceTab !== 'all' && (
+        <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg p-3">
+          {getIcon(serviceTypes.find(s => s.id === activeServiceTab)?.code || '')}
+          <span className="text-sm font-semibold">
+            {serviceTypes.find(s => s.id === activeServiceTab)?.name}
           </span>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedServiceType('all')}>
-            <XCircle className="w-4 h-4 mr-1" /> Réinitialiser
+          <span className="text-xs text-muted-foreground">— {filteredSubscriptions.length} abonnement(s)</span>
+          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setActiveServiceTab('all')}>
+            <Eye className="w-4 h-4 mr-1" /> Vue globale
           </Button>
-          <Badge variant="secondary">{filteredSubscriptions.length} résultat(s)</Badge>
         </div>
       )}
 
-      {/* Main Tabs */}
-      <Tabs defaultValue="subscriptions" className="space-y-4">
+      {/* Sub-tabs: Abonnements / Plans / Historique */}
+      <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="subscriptions">Abonnements</TabsTrigger>
-          <TabsTrigger value="plans">Plans et Prix</TabsTrigger>
-          <TabsTrigger value="history">Historique Prix</TabsTrigger>
+          <TabsTrigger value="subscriptions">
+            <Users className="w-3.5 h-3.5 mr-1.5" />Abonnements
+          </TabsTrigger>
+          <TabsTrigger value="plans">
+            <CreditCard className="w-3.5 h-3.5 mr-1.5" />Plans & Prix
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <History className="w-3.5 h-3.5 mr-1.5" />Historique
+          </TabsTrigger>
         </TabsList>
 
+        {/* Subscriptions List */}
         <TabsContent value="subscriptions" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>
-                {selectedServiceType !== 'all'
-                  ? `Abonnements - ${serviceTypes.find(s => s.id === selectedServiceType)?.name}`
-                  : 'Tous les Abonnements'}
+              <CardTitle className="flex items-center gap-2">
+                {activeServiceTab !== 'all' && getIcon(serviceTypes.find(s => s.id === activeServiceTab)?.code || '')}
+                {activeServiceTab !== 'all'
+                  ? `Abonnements ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
+                  : 'Tous les Abonnements Services'}
               </CardTitle>
               <CardDescription>
-                {filteredSubscriptions.length} abonnement(s) trouvé(s)
+                {filteredSubscriptions.length} abonnement(s) 
+                {activeServiceTab !== 'all' && ` pour ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>Expiration</TableHead>
-                    <TableHead>Montant</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSubscriptions.length === 0 ? (
+              <ScrollArea className="w-full">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                        Aucun abonnement trouvé
-                      </TableCell>
+                      <TableHead>Service</TableHead>
+                      {activeServiceTab === 'all' && <TableHead>Type</TableHead>}
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Cycle</TableHead>
+                      <TableHead>Expiration</TableHead>
+                      <TableHead>Montant</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    filteredSubscriptions.map((sub) => {
-                      const stId = sub.professional_services?.service_type_id;
-                      const st = serviceTypes.find(s => s.id === stId);
-                      const code = st?.code || '';
-                      const icon = SERVICE_ICONS[code] || <Store className="w-3 h-3" />;
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSubscriptions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={activeServiceTab === 'all' ? 8 : 7} className="text-center text-muted-foreground py-12">
+                          <div className="flex flex-col items-center gap-2">
+                            <Store className="w-8 h-8 opacity-30" />
+                            <span>Aucun abonnement trouvé</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredSubscriptions.map((sub) => {
+                        const stId = sub.professional_services?.service_type_id;
+                        const st = serviceTypes.find(s => s.id === stId);
+                        const daysRemaining = ServiceSubscriptionService.getDaysRemaining(sub.current_period_end);
 
-                      return (
-                        <TableRow key={sub.id}>
-                          <TableCell className="font-medium">
-                            {sub.professional_services?.business_name || 'Inconnu'}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5">
-                              {icon}
-                              <span className="text-xs">{st?.name || '-'}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {sub.service_plans?.display_name || sub.service_plans?.name || '-'}
-                          </TableCell>
-                          <TableCell>{getStatusBadge(sub.status)}</TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {format(new Date(sub.current_period_end), 'dd MMM yyyy', { locale: fr })}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {ServiceSubscriptionService.getDaysRemaining(sub.current_period_end)}j restants
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {ServiceSubscriptionService.formatAmount(sub.price_paid_gnf)}
-                          </TableCell>
-                          <TableCell>
-                            {sub.status === 'active' && (
-                              <Button variant="destructive" size="sm" onClick={() => handleCancelSubscription(sub.id)}>
-                                Annuler
-                              </Button>
+                        return (
+                          <TableRow key={sub.id}>
+                            <TableCell className="font-medium">
+                              {sub.professional_services?.business_name || 'Inconnu'}
+                            </TableCell>
+                            {activeServiceTab === 'all' && (
+                              <TableCell>
+                                <div className="flex items-center gap-1.5">
+                                  {getIcon(st?.code || '')}
+                                  <span className="text-xs">{st?.name || '-'}</span>
+                                </div>
+                              </TableCell>
                             )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {sub.service_plans?.display_name || sub.service_plans?.name || '-'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{getStatusBadge(sub.status)}</TableCell>
+                            <TableCell>
+                              <span className="text-xs capitalize">{sub.billing_cycle || '-'}</span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {format(new Date(sub.current_period_end), 'dd MMM yyyy', { locale: fr })}
+                                </div>
+                                <div className={cn(
+                                  "text-xs font-medium",
+                                  daysRemaining <= 0 ? "text-destructive" : daysRemaining <= 7 ? "text-orange-500" : "text-muted-foreground"
+                                )}>
+                                  {daysRemaining <= 0 ? 'Expiré' : `${daysRemaining}j restants`}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-semibold">
+                              {ServiceSubscriptionService.formatAmount(sub.price_paid_gnf)}
+                            </TableCell>
+                            <TableCell>
+                              {sub.status === 'active' && (
+                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleCancelSubscription(sub.id)}>
+                                  <Ban className="w-3.5 h-3.5 mr-1" />Annuler
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Plans & Pricing */}
         <TabsContent value="plans" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Plans d'Abonnement Services</CardTitle>
-              <CardDescription>Plans disponibles pour tous les services professionnels</CardDescription>
+              <CardTitle>Plans d'Abonnement — Services de Proximité</CardTitle>
+              <CardDescription>Plans unifiés pour tous les types de services professionnels</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Prix Mensuel</TableHead>
-                    <TableHead>Prix Annuel</TableHead>
-                    <TableHead>Limites</TableHead>
-                    <TableHead>Fonctionnalités</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {plans.map((plan) => (
-                    <TableRow key={plan.id}>
-                      <TableCell className="font-medium">
-                        <div>
-                          {plan.display_name}
-                          {plan.priority_listing && <Badge variant="secondary" className="ml-2">Premium</Badge>}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{plan.description}</p>
-                      </TableCell>
-                      <TableCell>{ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}</TableCell>
-                      <TableCell>
-                        {plan.yearly_price_gnf ? ServiceSubscriptionService.formatAmount(plan.yearly_price_gnf) : '-'}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <div>Réservations: {plan.max_bookings_per_month || '∞'}</div>
-                        <div>Produits: {plan.max_products || '∞'}</div>
-                        <div>Staff: {plan.max_staff || '∞'}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1 max-w-xs">
-                          {plan.analytics_access && <Badge variant="outline" className="text-xs">Analytics</Badge>}
-                          {plan.sms_notifications && <Badge variant="outline" className="text-xs">SMS</Badge>}
-                          {plan.custom_branding && <Badge variant="outline" className="text-xs">Branding</Badge>}
-                          {plan.api_access && <Badge variant="outline" className="text-xs">API</Badge>}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
+              <ScrollArea className="w-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Prix Mensuel</TableHead>
+                      <TableHead>Prix Annuel</TableHead>
+                      <TableHead>Limites</TableHead>
+                      <TableHead>Fonctionnalités</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {plans.map((plan) => (
+                      <TableRow key={plan.id}>
+                        <TableCell className="font-medium">
+                          <div>
+                            {plan.display_name}
+                            {plan.priority_listing && <Badge variant="secondary" className="ml-2">Premium</Badge>}
+                          </div>
+                          {plan.description && <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>}
+                        </TableCell>
+                        <TableCell className="font-semibold">{ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}</TableCell>
+                        <TableCell>
+                          {plan.yearly_price_gnf ? ServiceSubscriptionService.formatAmount(plan.yearly_price_gnf) : '-'}
+                          {plan.yearly_discount_percentage && (
+                            <Badge variant="secondary" className="ml-1 text-[10px]">-{plan.yearly_discount_percentage}%</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs space-y-0.5">
+                          <div>Réservations: <span className="font-medium">{plan.max_bookings_per_month || '∞'}</span></div>
+                          <div>Produits: <span className="font-medium">{plan.max_products || '∞'}</span></div>
+                          <div>Staff: <span className="font-medium">{plan.max_staff || '∞'}</span></div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1 max-w-xs">
+                            {plan.analytics_access && <Badge variant="outline" className="text-[10px]">Analytics</Badge>}
+                            {plan.sms_notifications && <Badge variant="outline" className="text-[10px]">SMS</Badge>}
+                            {plan.email_notifications && <Badge variant="outline" className="text-[10px]">Email</Badge>}
+                            {plan.custom_branding && <Badge variant="outline" className="text-[10px]">Branding</Badge>}
+                            {plan.api_access && <Badge variant="outline" className="text-[10px]">API</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Price History */}
         <TabsContent value="history" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Historique des Changements de Prix</CardTitle>
+              <CardDescription>Traçabilité des modifications tarifaires</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -527,25 +677,35 @@ export default function PDGServiceSubscriptions() {
                     <TableHead>Date</TableHead>
                     <TableHead>Ancien Prix</TableHead>
                     <TableHead>Nouveau Prix</TableHead>
+                    <TableHead>Variation</TableHead>
                     <TableHead>Raison</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {priceHistory.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        Aucun historique
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        Aucun historique de prix
                       </TableCell>
                     </TableRow>
                   ) : (
-                    priceHistory.map((h) => (
-                      <TableRow key={h.id}>
-                        <TableCell>{format(new Date(h.changed_at), 'dd MMM yyyy HH:mm', { locale: fr })}</TableCell>
-                        <TableCell>{ServiceSubscriptionService.formatAmount(h.old_price)}</TableCell>
-                        <TableCell>{ServiceSubscriptionService.formatAmount(h.new_price)}</TableCell>
-                        <TableCell>{h.reason || '-'}</TableCell>
-                      </TableRow>
-                    ))
+                    priceHistory.map((h) => {
+                      const diff = h.new_price - h.old_price;
+                      const pctChange = h.old_price > 0 ? ((diff / h.old_price) * 100).toFixed(1) : '0';
+                      return (
+                        <TableRow key={h.id}>
+                          <TableCell>{format(new Date(h.changed_at), 'dd MMM yyyy HH:mm', { locale: fr })}</TableCell>
+                          <TableCell>{ServiceSubscriptionService.formatAmount(h.old_price)}</TableCell>
+                          <TableCell className="font-semibold">{ServiceSubscriptionService.formatAmount(h.new_price)}</TableCell>
+                          <TableCell>
+                            <Badge variant={diff > 0 ? 'destructive' : 'default'} className="text-xs">
+                              {diff > 0 ? '+' : ''}{pctChange}%
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">{h.reason || '-'}</TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
@@ -587,11 +747,11 @@ export default function PDGServiceSubscriptions() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Offrir un Abonnement Gratuit</DialogTitle>
-            <DialogDescription>Attribuer un abonnement gratuit à un service</DialogDescription>
+            <DialogDescription>Attribuer un abonnement gratuit à un service de proximité</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>ID du Service</Label>
+              <Label>ID du Service Professionnel</Label>
               <Input
                 value={freeSubscriptionData.serviceId}
                 onChange={e => setFreeSubscriptionData(prev => ({ ...prev, serviceId: e.target.value }))}
@@ -601,13 +761,13 @@ export default function PDGServiceSubscriptions() {
             <div>
               <Label>Plan</Label>
               <select
-                className="w-full p-2 border rounded-md bg-background"
+                className="w-full p-2 border rounded-md bg-background text-foreground"
                 value={freeSubscriptionData.planId}
                 onChange={e => setFreeSubscriptionData(prev => ({ ...prev, planId: e.target.value }))}
               >
-                <option value="">Sélectionner</option>
+                <option value="">Sélectionner un plan</option>
                 {plans.map(plan => (
-                  <option key={plan.id} value={plan.id}>{plan.display_name}</option>
+                  <option key={plan.id} value={plan.id}>{plan.display_name} — {ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}/mois</option>
                 ))}
               </select>
             </div>
