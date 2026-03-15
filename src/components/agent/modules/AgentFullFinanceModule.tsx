@@ -563,6 +563,13 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
           </Suspense>
         </TabsContent>
 
+        {/* Service Subscriptions */}
+        <TabsContent value="service-subs" className="space-y-6">
+          <Suspense fallback={<LoadingSpinner />}>
+            <PDGServiceSubscriptions />
+          </Suspense>
+        </TabsContent>
+
         {/* Escrow */}
         <TabsContent value="escrow" className="space-y-6">
           <Suspense fallback={<LoadingSpinner />}>
