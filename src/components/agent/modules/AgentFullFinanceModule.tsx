@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   DollarSign, TrendingUp, Wallet, Download, Clock, 
-  BarChart3, RefreshCw, Sparkles, Shield, Bike,
+  BarChart3, RefreshCw, Sparkles, Shield, Bike, Building2,
   ArrowUpRight, ArrowDownLeft, Activity, PiggyBank,
   CreditCard, Calendar
 } from 'lucide-react';
