@@ -109,7 +109,7 @@ export default function PDGFinance() {
     <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
       {/* Mobile: Horizontal scrollable tabs */}
       <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
-        <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-6 gap-1 bg-muted/50 p-1 rounded-xl">
+        <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-7 gap-1 bg-muted/50 p-1 rounded-xl">
           <TabsTrigger value="overview" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Revenus</span>
@@ -125,6 +125,10 @@ export default function PDGFinance() {
           <TabsTrigger value="subscriptions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Abonnements</span>
+          </TabsTrigger>
+          <TabsTrigger value="service-subscriptions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Services</span>
           </TabsTrigger>
           <TabsTrigger value="escrow" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
