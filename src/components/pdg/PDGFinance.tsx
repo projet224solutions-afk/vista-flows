@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar, Crown, Shield, Bike, Sparkles } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar, Crown, Shield, Bike, Sparkles, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   LineChart,
@@ -26,6 +26,7 @@ const PDGRevenueAnalytics = lazy(() => import('./PDGRevenueAnalytics'));
 const SubscriptionManagement = lazy(() => import('./SubscriptionManagement'));
 const PDGEscrowManagement = lazy(() => import('./PDGEscrowManagement'));
 const DriverSubscriptionManagement = lazy(() => import('./DriverSubscriptionManagement'));
+const PDGServiceSubscriptions = lazy(() => import('./PDGServiceSubscriptions'));
 
 export default function PDGFinance() {
   const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
@@ -108,7 +109,7 @@ export default function PDGFinance() {
     <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
       {/* Mobile: Horizontal scrollable tabs */}
       <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
-        <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-6 gap-1 bg-muted/50 p-1 rounded-xl">
+        <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-7 gap-1 bg-muted/50 p-1 rounded-xl">
           <TabsTrigger value="overview" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Revenus</span>
@@ -124,6 +125,10 @@ export default function PDGFinance() {
           <TabsTrigger value="subscriptions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Abonnements</span>
+          </TabsTrigger>
+          <TabsTrigger value="service-subscriptions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Services</span>
           </TabsTrigger>
           <TabsTrigger value="escrow" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -157,6 +162,16 @@ export default function PDGFinance() {
           </div>
         }>
           <SubscriptionManagement />
+        </Suspense>
+      </TabsContent>
+
+      <TabsContent value="service-subscriptions" className="space-y-6">
+        <Suspense fallback={
+          <div className="flex items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        }>
+          <PDGServiceSubscriptions />
         </Suspense>
       </TabsContent>
 
