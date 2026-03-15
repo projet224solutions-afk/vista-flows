@@ -41,6 +41,7 @@ const PDGRevenueAnalytics = lazy(() => import('@/components/pdg/PDGRevenueAnalyt
 const SubscriptionManagement = lazy(() => import('@/components/pdg/SubscriptionManagement'));
 const PDGEscrowManagement = lazy(() => import('@/components/pdg/PDGEscrowManagement'));
 const DriverSubscriptionManagement = lazy(() => import('@/components/pdg/DriverSubscriptionManagement'));
+const PDGServiceSubscriptions = lazy(() => import('@/components/pdg/PDGServiceSubscriptions'));
 
 interface AgentFullFinanceModuleProps {
   agentId: string;
