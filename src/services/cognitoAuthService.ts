@@ -12,22 +12,34 @@ import {
   CognitoUserSession,
   ISignUpResult,
 } from 'amazon-cognito-identity-js';
-import { cognitoConfig, isCognitoConfigured } from '@/config/cognito';
+import { cognitoConfig, getCognitoConfigErrors, isCognitoConfigured } from '@/config/cognito';
 
 // Singleton User Pool (évite de recréer à chaque appel)
 let userPoolInstance: CognitoUserPool | null = null;
 
-const getUserPool = (): CognitoUserPool | null => {
+export const getCognitoSetupError = (): string | null => {
   if (!isCognitoConfigured()) {
-    console.warn('⚠️ [Cognito] Configuration manquante');
+    return 'Configuration Cognito manquante: ajoutez VITE_AWS_COGNITO_USER_POOL_ID et VITE_AWS_COGNITO_CLIENT_ID';
+  }
+
+  const errors = getCognitoConfigErrors();
+  return errors.length ? errors[0] : null;
+};
+
+const getUserPool = (): CognitoUserPool | null => {
+  const setupError = getCognitoSetupError();
+  if (setupError) {
+    console.warn('⚠️ [Cognito] Configuration invalide:', setupError);
     return null;
   }
+
   if (!userPoolInstance) {
     userPoolInstance = new CognitoUserPool({
       UserPoolId: cognitoConfig.userPoolId,
       ClientId: cognitoConfig.clientId,
     });
   }
+
   return userPoolInstance;
 };
 
