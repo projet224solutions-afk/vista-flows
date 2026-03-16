@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useCognitoAuth } from '@/contexts/CognitoAuthContext';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { Loader2, WifiOff } from 'lucide-react';
 import CryptoJS from 'crypto-js';
@@ -124,6 +125,12 @@ function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: s
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, profile, loading, profileLoading } = useAuth();
+  const {
+    isCognitoEnabled,
+    isAuthenticated: isCognitoAuthenticated,
+    cognitoProfile,
+    isLoading: cognitoLoading,
+  } = useCognitoAuth();
   const { isOnline } = useOnlineStatus();
   const navigate = useNavigate();
   const [customAuth, setCustomAuth] = useState<{ checked: boolean; isValid: boolean; role: string | null }>({
@@ -136,8 +143,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   const [offlineProfile, setOfflineProfile] = useState<{ role: string } | null>(null);
   
   useEffect(() => {
-    if (!isOnline && !user) {
-      // Chercher un profil en cache dans localStorage
+    if (!isOnline && !user && !isCognitoAuthenticated) {
       try {
         const keys = Object.keys(localStorage);
         const profileKey = keys.find(k => k.startsWith('profile_cache_'));
@@ -152,34 +158,33 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         console.warn('⚠️ Erreur lecture profil offline');
       }
     }
-  }, [isOnline, user]);
+  }, [isOnline, user, isCognitoAuthenticated]);
 
-  // Vérifier les sessions custom au montage
   useEffect(() => {
     const result = checkCustomSession(allowedRoles);
     setCustomAuth({ checked: true, ...result });
   }, [allowedRoles]);
 
-  // Vérification d'authentification sécurisée - NE PAS rediriger si offline
   useEffect(() => {
-    if (!loading && customAuth.checked && !user && !customAuth.isValid) {
-      // En mode offline, ne pas rediriger si on a un profil en cache
-      if (!isOnline && offlineProfile) {
-        console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (profil cache disponible)");
-        return;
-      }
-      // En mode offline sans profil cache, ne pas rediriger non plus (l'app ne pourrait pas charger /auth)
-      if (!isOnline) {
-        console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (offline)");
-        return;
-      }
-      console.log("🔒 Utilisateur non authentifié, redirection vers /auth");
+    const hasCognitoAuth = isCognitoEnabled && isCognitoAuthenticated;
+    if (!loading && !cognitoLoading && customAuth.checked && !user && !customAuth.isValid && !hasCognitoAuth) {
+      if (!isOnline && offlineProfile) return;
+      if (!isOnline) return;
       navigate('/auth');
     }
-  }, [user, loading, navigate, customAuth, isOnline, offlineProfile]);
+  }, [
+    user,
+    loading,
+    cognitoLoading,
+    isCognitoEnabled,
+    isCognitoAuthenticated,
+    navigate,
+    customAuth,
+    isOnline,
+    offlineProfile,
+  ]);
 
-  // Attendre que les vérifications soient terminées
-  if (loading || profileLoading || !customAuth.checked) {
+  if (loading || cognitoLoading || profileLoading || !customAuth.checked) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center space-x-2">
@@ -190,9 +195,9 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     );
   }
 
-  // Vérifier si l'utilisateur est authentifié via Supabase OU session custom OU offline cache
-  const isAuthenticated = !!user || customAuth.isValid || (!isOnline && !!offlineProfile);
-  const rawRole = profile?.role || customAuth.role || offlineProfile?.role || 'client';
+  const hasCognitoAuth = isCognitoEnabled && isCognitoAuthenticated;
+  const isAuthenticated = !!user || customAuth.isValid || hasCognitoAuth || (!isOnline && !!offlineProfile);
+  const rawRole = profile?.role || cognitoProfile?.role || customAuth.role || offlineProfile?.role || 'client';
   
   // Normaliser les rôles équivalents (pdg/ceo/admin sont tous des rôles PDG)
   const normalizeRole = (role: string): string => {
