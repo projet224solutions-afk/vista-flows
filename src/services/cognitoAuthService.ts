@@ -12,22 +12,34 @@ import {
   CognitoUserSession,
   ISignUpResult,
 } from 'amazon-cognito-identity-js';
-import { cognitoConfig, isCognitoConfigured } from '@/config/cognito';
+import { cognitoConfig, getCognitoConfigErrors, isCognitoConfigured } from '@/config/cognito';
 
 // Singleton User Pool (évite de recréer à chaque appel)
 let userPoolInstance: CognitoUserPool | null = null;
 
-const getUserPool = (): CognitoUserPool | null => {
+export const getCognitoSetupError = (): string | null => {
   if (!isCognitoConfigured()) {
-    console.warn('⚠️ [Cognito] Configuration manquante');
+    return 'Configuration Cognito manquante: ajoutez VITE_AWS_COGNITO_USER_POOL_ID et VITE_AWS_COGNITO_CLIENT_ID';
+  }
+
+  const errors = getCognitoConfigErrors();
+  return errors.length ? errors[0] : null;
+};
+
+const getUserPool = (): CognitoUserPool | null => {
+  const setupError = getCognitoSetupError();
+  if (setupError) {
+    console.warn('⚠️ [Cognito] Configuration invalide:', setupError);
     return null;
   }
+
   if (!userPoolInstance) {
     userPoolInstance = new CognitoUserPool({
       UserPoolId: cognitoConfig.userPoolId,
       ClientId: cognitoConfig.clientId,
     });
   }
+
   return userPoolInstance;
 };
 
@@ -57,7 +69,7 @@ export const cognitoSignUp = (
   return new Promise((resolve) => {
     const userPool = getUserPool();
     if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
+      resolve({ success: false, error: getCognitoSetupError() || 'Cognito non configuré' });
       return;
     }
 
@@ -101,7 +113,7 @@ export const cognitoConfirmSignUp = (
   return new Promise((resolve) => {
     const userPool = getUserPool();
     if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
+      resolve({ success: false, error: getCognitoSetupError() || 'Cognito non configuré' });
       return;
     }
 
@@ -133,7 +145,7 @@ export const cognitoSignIn = (
   return new Promise((resolve) => {
     const userPool = getUserPool();
     if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
+      resolve({ success: false, error: getCognitoSetupError() || 'Cognito non configuré' });
       return;
     }
 
@@ -236,7 +248,7 @@ export const cognitoForgotPassword = (email: string): Promise<CognitoAuthResult>
   return new Promise((resolve) => {
     const userPool = getUserPool();
     if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
+      resolve({ success: false, error: getCognitoSetupError() || 'Cognito non configuré' });
       return;
     }
 
@@ -269,7 +281,7 @@ export const cognitoConfirmPassword = (
   return new Promise((resolve) => {
     const userPool = getUserPool();
     if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
+      resolve({ success: false, error: getCognitoSetupError() || 'Cognito non configuré' });
       return;
     }
 
@@ -355,8 +367,13 @@ function mapCognitoError(err: any): string {
       return 'Trop de tentatives. Réessayez plus tard';
     case 'UserNotConfirmedException':
       return 'Veuillez confirmer votre email avant de vous connecter';
-    case 'InvalidParameterException':
+    case 'InvalidParameterException': {
+      const rawMessage = (err?.message || '').toLowerCase();
+      if (rawMessage.includes("at 'clientid'") || rawMessage.includes('arn:aws:cognito-idp')) {
+        return "Configuration Cognito invalide: VITE_AWS_COGNITO_CLIENT_ID doit contenir l'App client ID (pas l'ARN du User Pool).";
+      }
       return 'Paramètres invalides. Vérifiez vos informations';
+    }
     case 'NetworkError':
       return 'Erreur réseau. Vérifiez votre connexion internet';
     default:

@@ -19,6 +19,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSelector from "@/components/LanguageSelector";
 import { getDashboardRoute } from "@/hooks/useRoleRedirect";
 import { useCognitoAuth } from "@/contexts/CognitoAuthContext";
+import { getCognitoSetupError } from "@/services/cognitoAuthService";
 
 // Validation schemas avec tous les rôles
 const loginSchema = z.object({
@@ -1605,7 +1606,11 @@ export default function Auth() {
       const emailSchema = z.string().email("Adresse email invalide");
       emailSchema.parse(resetEmail);
 
-      // ✅ Uniquement Cognito - pas de fallback Supabase
+      const setupError = getCognitoSetupError();
+      if (setupError) {
+        throw new Error(setupError);
+      }
+
       const result = await cognitoForgotPassword(resetEmail.trim());
       if (!result.success) {
         throw new Error(result.error || 'Erreur lors de l\'envoi du code de réinitialisation');
@@ -1651,65 +1656,35 @@ export default function Auth() {
         throw new Error("Les mots de passe ne correspondent pas");
       }
 
-      if (isCognitoEnabled) {
-        if (!resetEmail.trim()) {
-          throw new Error("Veuillez saisir l'email du compte à réinitialiser");
-        }
-
-        if (!resetCode.trim()) {
-          throw new Error("Veuillez saisir le code de vérification reçu par email");
-        }
-
-        const result = await cognitoConfirmPassword(resetEmail.trim(), resetCode.trim(), newPassword);
-        if (!result.success) {
-          throw new Error(result.error || 'Échec de réinitialisation Cognito');
-        }
-
-        setSuccess("✅ Mot de passe Cognito réinitialisé avec succès ! Vous pouvez maintenant vous connecter.");
-        setResetCode('');
-        setNewPassword('');
-        setConfirmNewPassword('');
-
-        setTimeout(() => {
-          setShowNewPasswordForm(false);
-          setShowResetPassword(false);
-          setIsLogin(true);
-          setSuccess(null);
-          setError(null);
-        }, 2000);
-        return;
+      const setupError = getCognitoSetupError();
+      if (setupError) {
+        throw new Error(setupError);
       }
 
-      // Supabase fallback
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("Session expirée. Veuillez demander un nouveau lien de réinitialisation.");
+      if (!resetEmail.trim()) {
+        throw new Error("Veuillez saisir l'email du compte à réinitialiser");
       }
 
-      console.log('🔐 Session active, mise à jour du mot de passe...');
-
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) {
-        console.error('❌ Erreur Supabase:', error);
-        throw error;
+      if (!resetCode.trim()) {
+        throw new Error("Veuillez saisir le code de vérification reçu par email");
       }
 
-      console.log('✅ Mot de passe mis à jour avec succès');
-      setSuccess("✅ Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter.");
+      const result = await cognitoConfirmPassword(resetEmail.trim(), resetCode.trim(), newPassword);
+      if (!result.success) {
+        throw new Error(result.error || 'Échec de réinitialisation Cognito');
+      }
+
+      setSuccess("✅ Mot de passe Cognito réinitialisé avec succès ! Vous pouvez maintenant vous connecter.");
+      setResetCode('');
       setNewPassword('');
       setConfirmNewPassword('');
-      
-      await supabase.auth.signOut();
-      
+
       setTimeout(() => {
         setShowNewPasswordForm(false);
+        setShowResetPassword(false);
         setIsLogin(true);
         setSuccess(null);
-        navigate('/auth');
+        setError(null);
       }, 2000);
     } catch (err) {
       let errorMessage = 'Une erreur est survenue';
@@ -2317,9 +2292,7 @@ export default function Auth() {
                 
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground mb-4">
-                    {isCognitoEnabled
-                      ? "Entrez votre adresse email pour recevoir un code de réinitialisation Cognito."
-                      : "Entrez votre adresse email pour recevoir un lien de réinitialisation de mot de passe."}
+                    Entrez votre adresse email pour recevoir un code de réinitialisation Cognito.
                   </p>
                   <Label htmlFor="reset-email">Adresse email</Label>
                   <Input
@@ -2343,7 +2316,7 @@ export default function Auth() {
                       Envoi en cours...
                     </>
                   ) : (
-                    isCognitoEnabled ? 'Envoyer le code de réinitialisation' : 'Envoyer le lien de réinitialisation'
+                    'Envoyer le code de réinitialisation'
                   )}
                 </Button>
 
@@ -2383,34 +2356,28 @@ export default function Auth() {
                 
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground mb-4">
-                    {isCognitoEnabled
-                      ? "Saisissez le code reçu par email Cognito puis votre nouveau mot de passe."
-                      : "🔐 Choisissez votre nouveau mot de passe."}
+                    Saisissez le code reçu par email Cognito puis votre nouveau mot de passe.
                   </p>
 
-                  {isCognitoEnabled && (
-                    <>
-                      <Label htmlFor="cognito-reset-email">Email du compte</Label>
-                      <Input
-                        id="cognito-reset-email"
-                        type="email"
-                        placeholder="votre@email.com"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        required
-                      />
+                  <Label htmlFor="cognito-reset-email">Email du compte</Label>
+                  <Input
+                    id="cognito-reset-email"
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                  />
 
-                      <Label htmlFor="cognito-reset-code">Code de vérification</Label>
-                      <Input
-                        id="cognito-reset-code"
-                        type="text"
-                        placeholder="Ex: 123456"
-                        value={resetCode}
-                        onChange={(e) => setResetCode(e.target.value)}
-                        required
-                      />
-                    </>
-                  )}
+                  <Label htmlFor="cognito-reset-code">Code de vérification</Label>
+                  <Input
+                    id="cognito-reset-code"
+                    type="text"
+                    placeholder="Ex: 123456"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value)}
+                    required
+                  />
 
                   <Label htmlFor="new-password">Nouveau mot de passe</Label>
                   <div className="relative">
