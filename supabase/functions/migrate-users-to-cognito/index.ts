@@ -66,7 +66,7 @@ async function cognitoRequest(target: string, payload: Record<string, unknown>, 
   const cleanRegion = region.replace(/https?:\/\//g, '').replace(/cognito-idp\./g, '').replace(/\.amazonaws\.com.*/g, '').replace(/\/.*/g, '').trim() || 'eu-central-1';
   const host = `cognito-idp.${cleanRegion}.amazonaws.com`;
   const body = JSON.stringify(payload);
-  const headers = await signAWSRequest('POST', host, '/', body, target, region, accessKey, secretKey);
+  const headers = await signAWSRequest('POST', host, '/', body, target, cleanRegion, accessKey, secretKey);
 
   const response = await fetch(`https://${host}/`, { method: 'POST', headers, body });
   const data = await response.json();
