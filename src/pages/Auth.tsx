@@ -18,6 +18,7 @@ import { z } from "zod";
 import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSelector from "@/components/LanguageSelector";
 import { getDashboardRoute } from "@/hooks/useRoleRedirect";
+import { useCognitoAuth } from "@/contexts/CognitoAuthContext";
 
 // Validation schemas avec tous les rôles
 const loginSchema = z.object({
