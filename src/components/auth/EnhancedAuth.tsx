@@ -629,8 +629,69 @@ export default function EnhancedAuth() {
             </CardHeader>
 
             <CardContent className="p-2.5 space-y-2">
+              {/* ===== COGNITO: FORMULAIRE CONFIRMATION CODE ===== */}
+              {needsConfirmation && (
+                <div className="space-y-2">
+                  <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <p className="text-[10px] text-muted-foreground">
+                      Un code de vérification a été envoyé à <strong>{confirmationEmail}</strong>
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleCognitoConfirmation} className="space-y-2">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="confirmation-code" className="text-[11px] font-medium flex items-center gap-1">
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                        Code de vérification
+                      </Label>
+                      <Input
+                        id="confirmation-code"
+                        type="text"
+                        placeholder="123456"
+                        value={confirmationCode}
+                        onChange={(e) => setConfirmationCode(e.target.value)}
+                        disabled={loading}
+                        className="h-8 text-xs rounded-md text-center tracking-widest font-mono"
+                        required
+                        maxLength={6}
+                        autoFocus
+                      />
+                    </div>
+
+                    {error && (
+                      <Alert variant="destructive" className="rounded-md py-1.5 px-2">
+                        <AlertCircle className="h-3 w-3" />
+                        <AlertDescription className="text-[10px] ml-1">{error}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    <Button
+                      type="submit"
+                      className="w-full h-8 text-xs font-medium rounded-md"
+                      disabled={loading || confirmationCode.length < 4}
+                    >
+                      {loading ? (
+                        <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Vérification...</>
+                      ) : (
+                        <><UserCheck className="mr-1 h-3 w-3" /> Confirmer mon email</>
+                      )}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full h-7 text-[10px]"
+                      onClick={() => { setNeedsConfirmation(false); setError(null); }}
+                    >
+                      <ArrowLeft className="mr-1 h-3 w-3" /> Retour
+                    </Button>
+                  </form>
+                </div>
+              )}
+
               {/* ===== FORMULAIRE CONNEXION ===== */}
-              {!showSignupPanel && (
+              {!showSignupPanel && !needsConfirmation && (
                 <div className="space-y-2">
                   {/* Info compact */}
                   <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
