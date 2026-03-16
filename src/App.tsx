@@ -201,8 +201,8 @@ function App() {
         <BrowserRouter>
           <LanguageProvider>
             <CurrencyProvider>
-              <CognitoAuthProvider>
               <AuthProvider>
+              <CognitoAuthProvider>
                 <OAuthPasswordGate />
                 <CartProvider>
                 <TooltipProvider>
@@ -233,9 +233,10 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               {/* Accueil application (avec footer + services) */}
               <Route path="/home" element={<Home />} />
-              <Route path="/auth" element={<UniversalLoginPage />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Navigate to="/auth" replace />} />
-              <Route path="/universal-login" element={<UniversalLoginPage />} />
+<Route path="/universal-login" element={<UniversalLoginPage />} />
               <Route path="/auth/set-password" element={<SetPasswordAfterOAuth />} />
               <Route path="/agent/create" element={<AgentCreation />} />
               <Route path="/worker/settings" element={<WorkerSettings />} />
@@ -548,8 +549,8 @@ function App() {
           </ErrorBoundary>
         </TooltipProvider>
       </CartProvider>
-    </AuthProvider>
     </CognitoAuthProvider>
+    </AuthProvider>
     </CurrencyProvider>
     </LanguageProvider>
     </BrowserRouter>
