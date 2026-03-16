@@ -1606,7 +1606,11 @@ export default function Auth() {
       const emailSchema = z.string().email("Adresse email invalide");
       emailSchema.parse(resetEmail);
 
-      // ✅ Uniquement Cognito - pas de fallback Supabase
+      const setupError = getCognitoSetupError();
+      if (setupError) {
+        throw new Error(setupError);
+      }
+
       const result = await cognitoForgotPassword(resetEmail.trim());
       if (!result.success) {
         throw new Error(result.error || 'Erreur lors de l\'envoi du code de réinitialisation');
