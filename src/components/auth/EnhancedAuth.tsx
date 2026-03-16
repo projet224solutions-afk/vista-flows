@@ -831,7 +831,7 @@ export default function EnhancedAuth() {
               )}
 
               {/* ===== FORMULAIRE INSCRIPTION (Client uniquement) ===== */}
-              {showSignupPanel && (
+              {showSignupPanel && !needsConfirmation && (
                 <div className="space-y-2">
                   {/* Info: compte client */}
                   <div className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-md p-2 flex items-center gap-2">
