@@ -74,21 +74,14 @@ router.get('/me', verifyCognitoToken, async (req, res) => {
 router.put('/profile', verifyCognitoToken, async (req, res) => {
   try {
     const { sub } = req.cognitoUser;
-    const { fullName, phone, city, country, avatarUrl } = req.body;
+    const result = await updateUserProfile(sub, req.body);
 
-    // TODO: Update Cloud SQL
-    // const { rows } = await pool.query(
-    //   `UPDATE users SET full_name = $1, phone = $2, city = $3, country = $4, 
-    //    avatar_url = $5, updated_at = NOW() WHERE cognito_user_id = $6 RETURNING *`,
-    //   [fullName, phone, city, country, avatarUrl, sub]
-    // );
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
 
     logger.info(`✅ Profile updated for: ${sub}`);
-
-    res.json({
-      success: true,
-      message: 'Profil mis à jour',
-    });
+    res.json({ success: true, message: 'Profil mis à jour', user: result.user });
   } catch (error) {
     logger.error(`❌ Update profile error: ${error.message}`);
     res.status(500).json({
