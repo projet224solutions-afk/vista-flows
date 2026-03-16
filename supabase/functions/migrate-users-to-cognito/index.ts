@@ -184,11 +184,11 @@ Deno.serve(async (req) => {
           { Name: 'email', Value: email },
           { Name: 'email_verified', Value: String(authUser.email_confirmed_at != null) },
           { Name: 'custom:role', Value: role },
-          { Name: 'custom:supabase_id', Value: authUser.id },
         ];
         if (fullName) userAttributes.push({ Name: 'name', Value: fullName });
-        if (authUser.phone || profile?.phone) {
-          userAttributes.push({ Name: 'phone_number', Value: authUser.phone || profile.phone });
+        const formattedPhone = formatPhoneE164(authUser.phone || profile?.phone);
+        if (formattedPhone) {
+          userAttributes.push({ Name: 'phone_number', Value: formattedPhone });
         }
 
         await cognitoRequest(
