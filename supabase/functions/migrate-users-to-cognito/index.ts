@@ -183,7 +183,6 @@ Deno.serve(async (req) => {
         const userAttributes = [
           { Name: 'email', Value: email },
           { Name: 'email_verified', Value: String(authUser.email_confirmed_at != null) },
-          { Name: 'custom:role', Value: role },
         ];
         if (fullName) userAttributes.push({ Name: 'name', Value: fullName });
         const formattedPhone = formatPhoneE164(authUser.phone || profile?.phone);
