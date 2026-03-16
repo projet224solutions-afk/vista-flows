@@ -329,34 +329,90 @@ export default function EnhancedAuth() {
     }
   };
 
+  // Helper: mapper le type de compte vers le rôle
+  const mapAccountTypeToRole = (type: AccountType | null) => {
+    switch (type) {
+      case 'marchand': return 'vendeur';
+      case 'livreur': return 'livreur';
+      case 'taxi_moto': return 'taxi';
+      case 'transitaire': return 'transitaire';
+      case 'client': default: return 'client';
+    }
+  };
+
+  // Cognito: gérer la confirmation du code d'inscription
+  const handleCognitoConfirmation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const result = await cognitoConfirmSignUp(confirmationEmail, confirmationCode);
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur de confirmation');
+      }
+
+      toast.success(t('auth.emailConfirmed') || 'Email confirmé ! Connectez-vous.');
+      setNeedsConfirmation(false);
+      setConfirmationCode('');
+      setMode('login');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur de confirmation';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      // Mapper le type de compte vers le rôle
-      const mapAccountTypeToRole = (type: AccountType | null) => {
-        switch (type) {
-          case 'marchand':
-            return 'vendeur';
-          case 'livreur':
-            return 'livreur';
-          case 'taxi_moto':
-            return 'taxi';
-          case 'transitaire':
-            return 'transitaire';
-          case 'client':
-          default:
-            return 'client';
-        }
-      };
+      // ===== COGNITO AUTH (prioritaire si configuré) =====
+      if (isCognitoEnabled) {
+        if (mode === 'signup') {
+          const roleToUse = mapAccountTypeToRole(accountType);
+          const result = await cognitoSignUp(email, password, {
+            'custom:role': roleToUse,
+            name: fullName,
+          });
 
+          if (!result.success) {
+            throw new Error(result.error || 'Erreur d\'inscription');
+          }
+
+          if (result.needsConfirmation) {
+            setNeedsConfirmation(true);
+            setConfirmationEmail(email);
+            toast.info(t('auth.checkEmail') || 'Vérifiez votre email pour le code de confirmation');
+          } else {
+            toast.success(t('auth.signupSuccess') || 'Inscription réussie !');
+          }
+        } else {
+          // Connexion Cognito
+          const result = await cognitoSignIn(email, password);
+
+          if (!result.success) {
+            if (result.challengeName === 'NEW_PASSWORD_REQUIRED') {
+              toast.info('Nouveau mot de passe requis');
+              // TODO: handle new password challenge
+              return;
+            }
+            throw new Error(result.error || 'Erreur de connexion');
+          }
+
+          toast.success(t('auth.connectionSuccess'));
+          // La redirection se fait via le useEffect qui observe isCognitoAuthenticated
+        }
+        return;
+      }
+
+      // ===== SUPABASE AUTH (fallback) =====
       if (mode === 'signup') {
-        // Inscription - passer le rôle mappé ET le account_type
         const roleToUse = mapAccountTypeToRole(accountType);
-        
-        // Extraire prénom et nom du nom complet
         const nameParts = fullName.trim().split(' ');
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
@@ -372,22 +428,19 @@ export default function EnhancedAuth() {
               last_name: lastName,
               account_type: accountType,
               role: roleToUse,
-              has_password: true // Marquer que l'utilisateur a défini un mot de passe
+              has_password: true
             }
           }
         });
         
         if (error) throw error;
         
-        // ✅ Marquer has_password = true dans le profil (au cas où le trigger ne le fait pas)
         if (data.user) {
-          // Note: Le profil sera créé par le trigger, on mettra à jour has_password après confirmation
           localStorage.setItem(`oauth_password_set_${data.user.id}`, 'true');
         }
         
         toast.success(t('auth.checkEmail'));
       } else {
-        // Connexion
         const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password
@@ -396,7 +449,6 @@ export default function EnhancedAuth() {
         if (error) throw error;
         toast.success(t('auth.connectionSuccess'));
         
-        // ✅ Récupérer le profil pour rediriger vers le bon dashboard
         if (data.user) {
           let profileData = null;
           let attempts = 0;
@@ -422,17 +474,11 @@ export default function EnhancedAuth() {
           
           if (profileData?.role) {
             const roleRoutes: Record<string, string> = {
-              admin: '/pdg',
-              ceo: '/pdg',
-              pdg: '/pdg',
-              vendeur: '/vendeur',
-              livreur: '/livreur',
-              taxi: '/taxi-moto/driver',
-              driver: '/taxi-moto/driver',
-              syndicat: '/syndicat',
-              transitaire: '/transitaire',
-              client: '/client',
-              agent: '/agent',
+              admin: '/pdg', ceo: '/pdg', pdg: '/pdg',
+              vendeur: '/vendeur', livreur: '/livreur',
+              taxi: '/taxi-moto/driver', driver: '/taxi-moto/driver',
+              syndicat: '/syndicat', transitaire: '/transitaire',
+              client: '/client', agent: '/agent',
             };
             const targetRoute = roleRoutes[profileData.role] || '/home';
             console.log(`🚀 [EnhancedAuth] Redirection login vers ${targetRoute} (rôle: ${profileData.role})`);
