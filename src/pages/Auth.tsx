@@ -2366,7 +2366,7 @@ export default function Auth() {
                       Envoi en cours...
                     </>
                   ) : (
-                    'Envoyer le lien de réinitialisation'
+                    isCognitoEnabled ? 'Envoyer le code de réinitialisation' : 'Envoyer le lien de réinitialisation'
                   )}
                 </Button>
 
