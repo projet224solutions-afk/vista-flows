@@ -1002,7 +1002,12 @@ export default function EnhancedAuth() {
               <div className="bg-primary/5 rounded-lg p-2 text-center border border-primary/10">
                 <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1.5">
                   <Lock className="h-3 w-3 text-primary" />
-                  <span>{t('auth.securityInfo')} • <span className="font-medium text-primary">224Solutions</span></span>
+                  <span>
+                    {t('auth.securityInfo')} • <span className="font-medium text-primary">224Solutions</span>
+                    {isCognitoEnabled && (
+                      <span className="ml-1 text-[8px] bg-primary/10 text-primary px-1 py-0.5 rounded">AWS Cognito</span>
+                    )}
+                  </span>
                 </p>
               </div>
             </div>
