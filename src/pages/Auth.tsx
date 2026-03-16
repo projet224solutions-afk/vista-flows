@@ -517,10 +517,18 @@ export default function Auth() {
       if (isAuthenticating) return;
       
       const params = new URLSearchParams(window.location.search);
+      const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.substring(1));
       const isReset = params.get('reset') === 'true';
+      const isRecoveryHash = hashParams.get('type') === 'recovery';
+      const hasAccessToken = hash.includes('access_token');
       
       // Ne pas rediriger si c'est une réinitialisation de mot de passe
-      if (isReset) return;
+      // (via query param OU via hash fragment du lien email)
+      if (isReset || isRecoveryHash || (hasAccessToken && hash.includes('type=recovery'))) {
+        console.log('🔐 [Auth Mount] Mode réinitialisation détecté, pas de redirection automatique');
+        return;
+      }
       
       const { data: { session } } = await supabase.auth.getSession();
       
