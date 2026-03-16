@@ -1,3 +1,8 @@
+// Polyfill pour amazon-cognito-identity-js (utilise Buffer/global de Node.js)
+if (typeof globalThis.global === 'undefined') {
+  (globalThis as any).global = globalThis;
+}
+
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
