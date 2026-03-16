@@ -32,6 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
+import { useCognitoAuth } from '@/contexts/CognitoAuthContext';
 
 // Lazy load framer-motion pour réduire TBT (914ms -> <200ms)
 const motion = {
