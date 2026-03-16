@@ -1605,13 +1605,24 @@ export default function Auth() {
       const emailSchema = z.string().email("Adresse email invalide");
       emailSchema.parse(resetEmail);
 
-      // ✅ Utiliser l'origine actuelle pour la redirection (plus fiable)
-      // Le domaine de production doit être configuré dans Supabase Auth > URL Configuration
+      if (isCognitoEnabled) {
+        const result = await cognitoForgotPassword(resetEmail.trim());
+        if (!result.success) {
+          throw new Error(result.error || 'Erreur lors de l\'envoi du code Cognito');
+        }
+
+        setSuccess("✅ Code de réinitialisation envoyé par Cognito. Vérifiez votre email puis saisissez le code.");
+        setShowResetPassword(false);
+        setShowNewPasswordForm(true);
+        setIsLogin(false);
+        return;
+      }
+
+      // ✅ Supabase fallback
       const redirectUrl = `${window.location.origin}/auth?reset=true`;
 
       console.log('🔐 Envoi email réinitialisation avec redirectTo:', redirectUrl);
 
-      // Envoyer l'email de réinitialisation avec le bon redirect URL
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: redirectUrl,
       });
@@ -1623,7 +1634,6 @@ export default function Auth() {
       setSuccess("✅ Email de réinitialisation envoyé ! Vérifiez votre boîte mail et suivez les instructions.");
       setResetEmail('');
       
-      // Retour au formulaire de connexion après 3 secondes
       setTimeout(() => {
         setShowResetPassword(false);
         setSuccess(null);
@@ -1655,15 +1665,6 @@ export default function Auth() {
     setSuccess(null);
 
     try {
-      // Vérifier d'abord qu'on a une session active
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("Session expirée. Veuillez demander un nouveau lien de réinitialisation.");
-      }
-
-      console.log('🔐 Session active, mise à jour du mot de passe...');
-
       // Validation du nouveau mot de passe
       if (newPassword.length < 6) {
         throw new Error("Le mot de passe doit faire au moins 6 caractères");
@@ -1673,7 +1674,44 @@ export default function Auth() {
         throw new Error("Les mots de passe ne correspondent pas");
       }
 
-      // Mettre à jour le mot de passe
+      if (isCognitoEnabled) {
+        if (!resetEmail.trim()) {
+          throw new Error("Veuillez saisir l'email du compte à réinitialiser");
+        }
+
+        if (!resetCode.trim()) {
+          throw new Error("Veuillez saisir le code de vérification reçu par email");
+        }
+
+        const result = await cognitoConfirmPassword(resetEmail.trim(), resetCode.trim(), newPassword);
+        if (!result.success) {
+          throw new Error(result.error || 'Échec de réinitialisation Cognito');
+        }
+
+        setSuccess("✅ Mot de passe Cognito réinitialisé avec succès ! Vous pouvez maintenant vous connecter.");
+        setResetCode('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+
+        setTimeout(() => {
+          setShowNewPasswordForm(false);
+          setShowResetPassword(false);
+          setIsLogin(true);
+          setSuccess(null);
+          setError(null);
+        }, 2000);
+        return;
+      }
+
+      // Supabase fallback
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Session expirée. Veuillez demander un nouveau lien de réinitialisation.");
+      }
+
+      console.log('🔐 Session active, mise à jour du mot de passe...');
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
@@ -1688,10 +1726,8 @@ export default function Auth() {
       setNewPassword('');
       setConfirmNewPassword('');
       
-      // Se déconnecter pour forcer une nouvelle connexion avec le nouveau mot de passe
       await supabase.auth.signOut();
       
-      // Retour au formulaire de connexion après 2 secondes
       setTimeout(() => {
         setShowNewPasswordForm(false);
         setIsLogin(true);
