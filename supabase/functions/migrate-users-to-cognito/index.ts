@@ -78,12 +78,31 @@ async function cognitoRequest(target: string, payload: Record<string, unknown>, 
 }
 
 function generateTempPassword(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+  // Garantir au moins 1 majuscule, 1 minuscule, 1 chiffre, 1 symbole
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lower = 'abcdefghijklmnopqrstuvwxyz';
+  const digits = '0123456789';
+  const symbols = '!@#$%^&*';
+  const all = upper + lower + digits + symbols;
+  
   let password = '';
-  for (let i = 0; i < 16; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  password += upper.charAt(Math.floor(Math.random() * upper.length));
+  password += lower.charAt(Math.floor(Math.random() * lower.length));
+  password += digits.charAt(Math.floor(Math.random() * digits.length));
+  password += symbols.charAt(Math.floor(Math.random() * symbols.length));
+  for (let i = 4; i < 16; i++) {
+    password += all.charAt(Math.floor(Math.random() * all.length));
   }
-  return password;
+  // Mélanger
+  return password.split('').sort(() => Math.random() - 0.5).join('');
+}
+
+function formatPhoneE164(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  let cleaned = phone.replace(/[\s\-\(\)\.]/g, '');
+  if (cleaned.startsWith('+') && /^\+\d{8,15}$/.test(cleaned)) return cleaned;
+  if (/^\d{9,10}$/.test(cleaned)) return '+224' + cleaned; // Guinée par défaut
+  return null; // Format invalide → on skip le téléphone
 }
 
 Deno.serve(async (req) => {
@@ -165,11 +184,11 @@ Deno.serve(async (req) => {
           { Name: 'email', Value: email },
           { Name: 'email_verified', Value: String(authUser.email_confirmed_at != null) },
           { Name: 'custom:role', Value: role },
-          { Name: 'custom:supabase_id', Value: authUser.id },
         ];
         if (fullName) userAttributes.push({ Name: 'name', Value: fullName });
-        if (authUser.phone || profile?.phone) {
-          userAttributes.push({ Name: 'phone_number', Value: authUser.phone || profile.phone });
+        const formattedPhone = formatPhoneE164(authUser.phone || profile?.phone);
+        if (formattedPhone) {
+          userAttributes.push({ Name: 'phone_number', Value: formattedPhone });
         }
 
         await cognitoRequest(
