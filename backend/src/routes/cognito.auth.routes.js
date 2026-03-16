@@ -99,18 +99,14 @@ router.delete('/account', verifyCognitoToken, async (req, res) => {
   try {
     const { sub } = req.cognitoUser;
 
-    // TODO: Soft delete Cloud SQL
-    // await pool.query(
-    //   'UPDATE users SET is_active = false, deleted_at = NOW() WHERE cognito_user_id = $1',
-    //   [sub]
-    // );
+    const { query } = await import('../config/cloudSql.js');
+    await query(
+      'UPDATE users SET is_active = false, deleted_at = NOW() WHERE cognito_user_id = $1',
+      [sub]
+    );
 
     logger.info(`✅ Account deactivated for: ${sub}`);
-
-    res.json({
-      success: true,
-      message: 'Compte désactivé',
-    });
+    res.json({ success: true, message: 'Compte désactivé' });
   } catch (error) {
     logger.error(`❌ Delete account error: ${error.message}`);
     res.status(500).json({
