@@ -548,8 +548,8 @@ function App() {
           </ErrorBoundary>
         </TooltipProvider>
       </CartProvider>
-    </CognitoAuthProvider>
     </AuthProvider>
+    </CognitoAuthProvider>
     </CurrencyProvider>
     </LanguageProvider>
     </BrowserRouter>
