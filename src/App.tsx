@@ -549,6 +549,7 @@ function App() {
           </ErrorBoundary>
         </TooltipProvider>
       </CartProvider>
+    </CognitoAuthProvider>
     </AuthProvider>
     </CurrencyProvider>
     </LanguageProvider>
