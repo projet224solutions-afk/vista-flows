@@ -105,6 +105,9 @@ app.use('/auth', authRoutes);
 // Analytics tracking routes (public tracking + authenticated retrieval)
 app.use('/api/analytics', analyticsRoutes);
 
+// Cognito Auth Gateway routes (JWT Cognito verification + Cloud SQL sync)
+app.use('/api/cognito', cognitoAuthRoutes);
+
 // Wallet routes (protégé par JWT)
 app.use('/api/wallet', walletRoutes);
 
