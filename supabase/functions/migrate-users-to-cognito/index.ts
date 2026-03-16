@@ -62,7 +62,9 @@ async function signAWSRequest(method: string, host: string, path: string, body: 
 }
 
 async function cognitoRequest(target: string, payload: Record<string, unknown>, region: string, accessKey: string, secretKey: string) {
-  const host = `cognito-idp.${region}.amazonaws.com`;
+  // Extract clean region from potentially malformed env var
+  const cleanRegion = region.replace(/https?:\/\//g, '').replace(/cognito-idp\./g, '').replace(/\.amazonaws\.com.*/g, '').replace(/\/.*/g, '').trim() || 'eu-central-1';
+  const host = `cognito-idp.${cleanRegion}.amazonaws.com`;
   const body = JSON.stringify(payload);
   const headers = await signAWSRequest('POST', host, '/', body, target, region, accessKey, secretKey);
 
