@@ -51,22 +51,13 @@ router.post('/sync-profile', verifyCognitoToken, async (req, res) => {
  */
 router.get('/me', verifyCognitoToken, async (req, res) => {
   try {
-    const { sub, email, role } = req.cognitoUser;
+    const user = await getUserByCognitoId(req.cognitoUser.sub);
 
-    // TODO: Requête Cloud SQL
-    // const { rows } = await pool.query(
-    //   'SELECT * FROM users WHERE cognito_user_id = $1',
-    //   [sub]
-    // );
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'Profil non trouvé' });
+    }
 
-    res.json({
-      success: true,
-      user: {
-        cognitoUserId: sub,
-        email,
-        role,
-      },
-    });
+    res.json({ success: true, user });
   } catch (error) {
     logger.error(`❌ Get profile error: ${error.message}`);
     res.status(500).json({
