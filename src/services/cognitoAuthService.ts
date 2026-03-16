@@ -69,7 +69,7 @@ export const cognitoSignUp = (
   return new Promise((resolve) => {
     const userPool = getUserPool();
     if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
+      resolve({ success: false, error: getCognitoSetupError() || 'Cognito non configuré' });
       return;
     }
 
