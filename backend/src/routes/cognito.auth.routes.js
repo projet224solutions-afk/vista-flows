@@ -18,37 +18,23 @@ const router = express.Router();
  */
 router.post('/sync-profile', verifyCognitoToken, async (req, res) => {
   try {
-    const { sub, email, role, fullName, phone } = req.cognitoUser;
-    const { additionalData } = req.body; // Données supplémentaires (ville, pays, etc.)
+    const { additionalData } = req.body;
 
-    // TODO: Remplacer par le client PostgreSQL Google Cloud SQL
-    // import { pool } from '../config/cloudSql.js';
-    //
-    // const result = await pool.query(
-    //   `INSERT INTO users (cognito_user_id, email, role, full_name, phone, created_at, updated_at)
-    //    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-    //    ON CONFLICT (cognito_user_id)
-    //    DO UPDATE SET 
-    //      email = EXCLUDED.email,
-    //      full_name = EXCLUDED.full_name,
-    //      phone = EXCLUDED.phone,
-    //      updated_at = NOW()
-    //    RETURNING *`,
-    //   [sub, email, role, fullName, phone]
-    // );
+    const result = await syncCognitoUser(req.cognitoUser, {
+      ...additionalData,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    });
 
-    logger.info(`✅ Profile synced for Cognito user: ${sub}`);
+    if (!result.success) {
+      return res.status(500).json({ success: false, error: result.error });
+    }
 
+    logger.info(`✅ Profile synced for Cognito user: ${req.cognitoUser.sub}`);
     res.json({
       success: true,
       message: 'Profil synchronisé',
-      user: {
-        cognitoUserId: sub,
-        email,
-        role,
-        fullName,
-        phone,
-      },
+      user: result.user,
     });
   } catch (error) {
     logger.error(`❌ Profile sync error: ${error.message}`);
