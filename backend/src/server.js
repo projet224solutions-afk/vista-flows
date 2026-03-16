@@ -26,7 +26,6 @@ import internalRoutes from './routes/internal.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
-import cognitoAuthRoutes from './routes/cognito.auth.routes.js';
 
 // Configuration
 dotenv.config();
@@ -104,9 +103,6 @@ app.use('/auth', authRoutes);
 
 // Analytics tracking routes (public tracking + authenticated retrieval)
 app.use('/api/analytics', analyticsRoutes);
-
-// Cognito Auth Gateway routes (JWT Cognito verification + Cloud SQL sync)
-app.use('/api/cognito', cognitoAuthRoutes);
 
 // Wallet routes (protégé par JWT)
 app.use('/api/wallet', walletRoutes);
