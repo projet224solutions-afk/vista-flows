@@ -202,6 +202,7 @@ function App() {
           <LanguageProvider>
             <CurrencyProvider>
               <AuthProvider>
+              <CognitoAuthProvider>
                 <OAuthPasswordGate />
                 <CartProvider>
                 <TooltipProvider>
