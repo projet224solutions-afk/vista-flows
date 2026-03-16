@@ -116,6 +116,11 @@
     })();
   </script>
 
+  <script>
+    // Polyfill Node.js globals pour amazon-cognito-identity-js
+    if (typeof globalThis.global === 'undefined') { globalThis.global = globalThis; }
+    if (typeof globalThis.process === 'undefined') { globalThis.process = { env: {}, version: '' }; }
+  </script>
   <script type="module" src="/src/main.tsx"></script>
   
   <script>
