@@ -367,8 +367,13 @@ function mapCognitoError(err: any): string {
       return 'Trop de tentatives. Réessayez plus tard';
     case 'UserNotConfirmedException':
       return 'Veuillez confirmer votre email avant de vous connecter';
-    case 'InvalidParameterException':
+    case 'InvalidParameterException': {
+      const rawMessage = (err?.message || '').toLowerCase();
+      if (rawMessage.includes("at 'clientid'") || rawMessage.includes('arn:aws:cognito-idp')) {
+        return "Configuration Cognito invalide: VITE_AWS_COGNITO_CLIENT_ID doit contenir l'App client ID (pas l'ARN du User Pool).";
+      }
       return 'Paramètres invalides. Vérifiez vos informations';
+    }
     case 'NetworkError':
       return 'Erreur réseau. Vérifiez votre connexion internet';
     default:
