@@ -2378,6 +2378,7 @@ export default function Auth() {
                     setShowResetPassword(false);
                     setError(null);
                     setSuccess(null);
+                    setResetCode('');
                   }}
                 >
                   Retour à la connexion
