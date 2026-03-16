@@ -53,8 +53,10 @@ export default function Auth() {
   const [showNewPasswordForm, setShowNewPasswordForm] = useState(false);
   const [checkingResetLink, setCheckingResetLink] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const { isCognitoEnabled, forgotPassword: cognitoForgotPassword, confirmPassword: cognitoConfirmPassword } = useCognitoAuth();
   const navigate = useNavigate();
   
   // ✅ FIX: Ref pour bloquer le handler SIGNED_IN pendant que handleSubmit gère la création
