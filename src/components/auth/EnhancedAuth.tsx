@@ -101,6 +101,15 @@ export default function EnhancedAuth() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, profile, loading: authLoading, profileLoading } = useAuth();
+  const {
+    isCognitoEnabled,
+    signIn: cognitoSignIn,
+    signUp: cognitoSignUp,
+    confirmSignUp: cognitoConfirmSignUp,
+    isAuthenticated: isCognitoAuthenticated,
+    cognitoProfile,
+  } = useCognitoAuth();
+
   const [step, setStep] = useState<Step>('type');
   const [mode, setMode] = useState<AuthMode>('login');
   const [accountType, setAccountType] = useState<AccountType | null>(null);
@@ -122,6 +131,11 @@ export default function EnhancedAuth() {
   const [socialLoading, setSocialLoading] = useState<'google' | 'facebook' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Cognito confirmation state
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [confirmationCode, setConfirmationCode] = useState('');
+  const [confirmationEmail, setConfirmationEmail] = useState('');
 
   // État pour le modal "Email déjà existant"
   const [existingEmailModal, setExistingEmailModal] = useState<{
