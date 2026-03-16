@@ -1605,39 +1605,16 @@ export default function Auth() {
       const emailSchema = z.string().email("Adresse email invalide");
       emailSchema.parse(resetEmail);
 
-      if (isCognitoEnabled) {
-        const result = await cognitoForgotPassword(resetEmail.trim());
-        if (!result.success) {
-          throw new Error(result.error || 'Erreur lors de l\'envoi du code Cognito');
-        }
-
-        setSuccess("✅ Code de réinitialisation envoyé par Cognito. Vérifiez votre email puis saisissez le code.");
-        setShowResetPassword(false);
-        setShowNewPasswordForm(true);
-        setIsLogin(false);
-        return;
+      // ✅ Uniquement Cognito - pas de fallback Supabase
+      const result = await cognitoForgotPassword(resetEmail.trim());
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi du code de réinitialisation');
       }
 
-      // ✅ Supabase fallback
-      const redirectUrl = `${window.location.origin}/auth?reset=true`;
-
-      console.log('🔐 Envoi email réinitialisation avec redirectTo:', redirectUrl);
-
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: redirectUrl,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      setSuccess("✅ Email de réinitialisation envoyé ! Vérifiez votre boîte mail et suivez les instructions.");
-      setResetEmail('');
-      
-      setTimeout(() => {
-        setShowResetPassword(false);
-        setSuccess(null);
-      }, 3000);
+      setSuccess("✅ Code de réinitialisation envoyé. Vérifiez votre email puis saisissez le code ci-dessous.");
+      setShowResetPassword(false);
+      setShowNewPasswordForm(true);
+      setIsLogin(false);
     } catch (err) {
       let errorMessage = 'Une erreur est survenue';
       
