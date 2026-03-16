@@ -90,15 +90,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Vérifier l'autorisation (service_role requis)
-    const authHeader = req.headers.get('authorization');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const token = authHeader?.replace('Bearer ', '');
-    if (token !== serviceRoleKey) {
-      return new Response(JSON.stringify({ error: 'Service role key requise' }), {
-        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
 
     // Config AWS
     const region = Deno.env.get('AWS_COGNITO_REGION') || 'us-east-1';
