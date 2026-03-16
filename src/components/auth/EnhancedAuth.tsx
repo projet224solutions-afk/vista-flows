@@ -32,6 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
+import { useCognitoAuth } from '@/contexts/CognitoAuthContext';
 
 // Lazy load framer-motion pour réduire TBT (914ms -> <200ms)
 const motion = {
@@ -100,6 +101,15 @@ export default function EnhancedAuth() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, profile, loading: authLoading, profileLoading } = useAuth();
+  const {
+    isCognitoEnabled,
+    signIn: cognitoSignIn,
+    signUp: cognitoSignUp,
+    confirmSignUp: cognitoConfirmSignUp,
+    isAuthenticated: isCognitoAuthenticated,
+    cognitoProfile,
+  } = useCognitoAuth();
+
   const [step, setStep] = useState<Step>('type');
   const [mode, setMode] = useState<AuthMode>('login');
   const [accountType, setAccountType] = useState<AccountType | null>(null);
@@ -122,6 +132,11 @@ export default function EnhancedAuth() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Cognito confirmation state
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [confirmationCode, setConfirmationCode] = useState('');
+  const [confirmationEmail, setConfirmationEmail] = useState('');
+
   // État pour le modal "Email déjà existant"
   const [existingEmailModal, setExistingEmailModal] = useState<{
     open: boolean;
@@ -137,14 +152,25 @@ export default function EnhancedAuth() {
     role: string;
   }>({ open: false, email: '', role: '' });
 
-  // Handle OAuth callback - délègue la logique profil/rôle à useAuth
-  // On écoute seulement pour la redirection une fois le profil prêt
+  // Cognito: rediriger si authentifié
   useEffect(() => {
-    // Si l'utilisateur est connecté et a un profil avec un rôle, rediriger
+    if (isCognitoEnabled && isCognitoAuthenticated && cognitoProfile) {
+      const roleRoutes: Record<string, string> = {
+        admin: '/pdg', ceo: '/pdg', vendeur: '/vendeur', livreur: '/livreur',
+        taxi: '/taxi-moto/driver', syndicat: '/syndicat', transitaire: '/transitaire',
+        client: '/client', agent: '/agent',
+      };
+      const targetRoute = roleRoutes[cognitoProfile.role || 'client'] || '/client';
+      console.log(`🚀 [Cognito] Redirection vers ${targetRoute} (rôle: ${cognitoProfile.role})`);
+      navigate(targetRoute, { replace: true });
+    }
+  }, [isCognitoEnabled, isCognitoAuthenticated, cognitoProfile, navigate]);
+
+  // Handle OAuth callback (Supabase) - délègue la logique profil/rôle à useAuth
+  useEffect(() => {
     if (!authLoading && !profileLoading && user && profile?.role) {
       const isNewSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
       
-      // Vérifier si c'est un OAuth user sans mot de passe
       const provider = user.app_metadata?.provider;
       const isOAuthUser = provider === 'google' || provider === 'facebook';
       const hasSetPassword = localStorage.getItem(`oauth_password_set_${user.id}`);
@@ -164,15 +190,9 @@ export default function EnhancedAuth() {
       }
 
       const roleRoutes: Record<string, string> = {
-        admin: '/pdg',
-        ceo: '/pdg',
-        vendeur: '/vendeur',
-        livreur: '/livreur',
-        taxi: '/taxi-moto/driver',
-        syndicat: '/syndicat',
-        transitaire: '/transitaire',
-        client: '/client',
-        agent: '/agent',
+        admin: '/pdg', ceo: '/pdg', vendeur: '/vendeur', livreur: '/livreur',
+        taxi: '/taxi-moto/driver', syndicat: '/syndicat', transitaire: '/transitaire',
+        client: '/client', agent: '/agent',
       };
 
       const targetRoute = roleRoutes[profile.role] || '/';
@@ -309,34 +329,90 @@ export default function EnhancedAuth() {
     }
   };
 
+  // Helper: mapper le type de compte vers le rôle
+  const mapAccountTypeToRole = (type: AccountType | null) => {
+    switch (type) {
+      case 'marchand': return 'vendeur';
+      case 'livreur': return 'livreur';
+      case 'taxi_moto': return 'taxi';
+      case 'transitaire': return 'transitaire';
+      case 'client': default: return 'client';
+    }
+  };
+
+  // Cognito: gérer la confirmation du code d'inscription
+  const handleCognitoConfirmation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const result = await cognitoConfirmSignUp(confirmationEmail, confirmationCode);
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur de confirmation');
+      }
+
+      toast.success(t('auth.emailConfirmed') || 'Email confirmé ! Connectez-vous.');
+      setNeedsConfirmation(false);
+      setConfirmationCode('');
+      setMode('login');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur de confirmation';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      // Mapper le type de compte vers le rôle
-      const mapAccountTypeToRole = (type: AccountType | null) => {
-        switch (type) {
-          case 'marchand':
-            return 'vendeur';
-          case 'livreur':
-            return 'livreur';
-          case 'taxi_moto':
-            return 'taxi';
-          case 'transitaire':
-            return 'transitaire';
-          case 'client':
-          default:
-            return 'client';
-        }
-      };
+      // ===== COGNITO AUTH (prioritaire si configuré) =====
+      if (isCognitoEnabled) {
+        if (mode === 'signup') {
+          const roleToUse = mapAccountTypeToRole(accountType);
+          const result = await cognitoSignUp(email, password, {
+            'custom:role': roleToUse,
+            name: fullName,
+          });
 
+          if (!result.success) {
+            throw new Error(result.error || 'Erreur d\'inscription');
+          }
+
+          if (result.needsConfirmation) {
+            setNeedsConfirmation(true);
+            setConfirmationEmail(email);
+            toast.info(t('auth.checkEmail') || 'Vérifiez votre email pour le code de confirmation');
+          } else {
+            toast.success(t('auth.signupSuccess') || 'Inscription réussie !');
+          }
+        } else {
+          // Connexion Cognito
+          const result = await cognitoSignIn(email, password);
+
+          if (!result.success) {
+            if (result.challengeName === 'NEW_PASSWORD_REQUIRED') {
+              toast.info('Nouveau mot de passe requis');
+              // TODO: handle new password challenge
+              return;
+            }
+            throw new Error(result.error || 'Erreur de connexion');
+          }
+
+          toast.success(t('auth.connectionSuccess'));
+          // La redirection se fait via le useEffect qui observe isCognitoAuthenticated
+        }
+        return;
+      }
+
+      // ===== SUPABASE AUTH (fallback) =====
       if (mode === 'signup') {
-        // Inscription - passer le rôle mappé ET le account_type
         const roleToUse = mapAccountTypeToRole(accountType);
-        
-        // Extraire prénom et nom du nom complet
         const nameParts = fullName.trim().split(' ');
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
@@ -352,22 +428,19 @@ export default function EnhancedAuth() {
               last_name: lastName,
               account_type: accountType,
               role: roleToUse,
-              has_password: true // Marquer que l'utilisateur a défini un mot de passe
+              has_password: true
             }
           }
         });
         
         if (error) throw error;
         
-        // ✅ Marquer has_password = true dans le profil (au cas où le trigger ne le fait pas)
         if (data.user) {
-          // Note: Le profil sera créé par le trigger, on mettra à jour has_password après confirmation
           localStorage.setItem(`oauth_password_set_${data.user.id}`, 'true');
         }
         
         toast.success(t('auth.checkEmail'));
       } else {
-        // Connexion
         const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password
@@ -376,7 +449,6 @@ export default function EnhancedAuth() {
         if (error) throw error;
         toast.success(t('auth.connectionSuccess'));
         
-        // ✅ Récupérer le profil pour rediriger vers le bon dashboard
         if (data.user) {
           let profileData = null;
           let attempts = 0;
@@ -402,17 +474,11 @@ export default function EnhancedAuth() {
           
           if (profileData?.role) {
             const roleRoutes: Record<string, string> = {
-              admin: '/pdg',
-              ceo: '/pdg',
-              pdg: '/pdg',
-              vendeur: '/vendeur',
-              livreur: '/livreur',
-              taxi: '/taxi-moto/driver',
-              driver: '/taxi-moto/driver',
-              syndicat: '/syndicat',
-              transitaire: '/transitaire',
-              client: '/client',
-              agent: '/agent',
+              admin: '/pdg', ceo: '/pdg', pdg: '/pdg',
+              vendeur: '/vendeur', livreur: '/livreur',
+              taxi: '/taxi-moto/driver', driver: '/taxi-moto/driver',
+              syndicat: '/syndicat', transitaire: '/transitaire',
+              client: '/client', agent: '/agent',
             };
             const targetRoute = roleRoutes[profileData.role] || '/home';
             console.log(`🚀 [EnhancedAuth] Redirection login vers ${targetRoute} (rôle: ${profileData.role})`);
@@ -563,8 +629,69 @@ export default function EnhancedAuth() {
             </CardHeader>
 
             <CardContent className="p-2.5 space-y-2">
+              {/* ===== COGNITO: FORMULAIRE CONFIRMATION CODE ===== */}
+              {needsConfirmation && (
+                <div className="space-y-2">
+                  <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <p className="text-[10px] text-muted-foreground">
+                      Un code de vérification a été envoyé à <strong>{confirmationEmail}</strong>
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleCognitoConfirmation} className="space-y-2">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="confirmation-code" className="text-[11px] font-medium flex items-center gap-1">
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                        Code de vérification
+                      </Label>
+                      <Input
+                        id="confirmation-code"
+                        type="text"
+                        placeholder="123456"
+                        value={confirmationCode}
+                        onChange={(e) => setConfirmationCode(e.target.value)}
+                        disabled={loading}
+                        className="h-8 text-xs rounded-md text-center tracking-widest font-mono"
+                        required
+                        maxLength={6}
+                        autoFocus
+                      />
+                    </div>
+
+                    {error && (
+                      <Alert variant="destructive" className="rounded-md py-1.5 px-2">
+                        <AlertCircle className="h-3 w-3" />
+                        <AlertDescription className="text-[10px] ml-1">{error}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    <Button
+                      type="submit"
+                      className="w-full h-8 text-xs font-medium rounded-md"
+                      disabled={loading || confirmationCode.length < 4}
+                    >
+                      {loading ? (
+                        <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Vérification...</>
+                      ) : (
+                        <><UserCheck className="mr-1 h-3 w-3" /> Confirmer mon email</>
+                      )}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full h-7 text-[10px]"
+                      onClick={() => { setNeedsConfirmation(false); setError(null); }}
+                    >
+                      <ArrowLeft className="mr-1 h-3 w-3" /> Retour
+                    </Button>
+                  </form>
+                </div>
+              )}
+
               {/* ===== FORMULAIRE CONNEXION ===== */}
-              {!showSignupPanel && (
+              {!showSignupPanel && !needsConfirmation && (
                 <div className="space-y-2">
                   {/* Info compact */}
                   <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
@@ -704,7 +831,7 @@ export default function EnhancedAuth() {
               )}
 
               {/* ===== FORMULAIRE INSCRIPTION (Client uniquement) ===== */}
-              {showSignupPanel && (
+              {showSignupPanel && !needsConfirmation && (
                 <div className="space-y-2">
                   {/* Info: compte client */}
                   <div className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-md p-2 flex items-center gap-2">
@@ -875,7 +1002,12 @@ export default function EnhancedAuth() {
               <div className="bg-primary/5 rounded-lg p-2 text-center border border-primary/10">
                 <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1.5">
                   <Lock className="h-3 w-3 text-primary" />
-                  <span>{t('auth.securityInfo')} • <span className="font-medium text-primary">224Solutions</span></span>
+                  <span>
+                    {t('auth.securityInfo')} • <span className="font-medium text-primary">224Solutions</span>
+                    {isCognitoEnabled && (
+                      <span className="ml-1 text-[8px] bg-primary/10 text-primary px-1 py-0.5 rounded">AWS Cognito</span>
+                    )}
+                  </span>
                 </p>
               </div>
             </div>
