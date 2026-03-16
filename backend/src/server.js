@@ -26,6 +26,7 @@ import internalRoutes from './routes/internal.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
+import cognitoAuthRoutes from './routes/cognito.auth.routes.js';
 
 // Configuration
 dotenv.config();
