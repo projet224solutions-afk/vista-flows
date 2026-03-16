@@ -152,14 +152,25 @@ export default function EnhancedAuth() {
     role: string;
   }>({ open: false, email: '', role: '' });
 
-  // Handle OAuth callback - délègue la logique profil/rôle à useAuth
-  // On écoute seulement pour la redirection une fois le profil prêt
+  // Cognito: rediriger si authentifié
   useEffect(() => {
-    // Si l'utilisateur est connecté et a un profil avec un rôle, rediriger
+    if (isCognitoEnabled && isCognitoAuthenticated && cognitoProfile) {
+      const roleRoutes: Record<string, string> = {
+        admin: '/pdg', ceo: '/pdg', vendeur: '/vendeur', livreur: '/livreur',
+        taxi: '/taxi-moto/driver', syndicat: '/syndicat', transitaire: '/transitaire',
+        client: '/client', agent: '/agent',
+      };
+      const targetRoute = roleRoutes[cognitoProfile.role || 'client'] || '/client';
+      console.log(`🚀 [Cognito] Redirection vers ${targetRoute} (rôle: ${cognitoProfile.role})`);
+      navigate(targetRoute, { replace: true });
+    }
+  }, [isCognitoEnabled, isCognitoAuthenticated, cognitoProfile, navigate]);
+
+  // Handle OAuth callback (Supabase) - délègue la logique profil/rôle à useAuth
+  useEffect(() => {
     if (!authLoading && !profileLoading && user && profile?.role) {
       const isNewSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
       
-      // Vérifier si c'est un OAuth user sans mot de passe
       const provider = user.app_metadata?.provider;
       const isOAuthUser = provider === 'google' || provider === 'facebook';
       const hasSetPassword = localStorage.getItem(`oauth_password_set_${user.id}`);
@@ -179,15 +190,9 @@ export default function EnhancedAuth() {
       }
 
       const roleRoutes: Record<string, string> = {
-        admin: '/pdg',
-        ceo: '/pdg',
-        vendeur: '/vendeur',
-        livreur: '/livreur',
-        taxi: '/taxi-moto/driver',
-        syndicat: '/syndicat',
-        transitaire: '/transitaire',
-        client: '/client',
-        agent: '/agent',
+        admin: '/pdg', ceo: '/pdg', vendeur: '/vendeur', livreur: '/livreur',
+        taxi: '/taxi-moto/driver', syndicat: '/syndicat', transitaire: '/transitaire',
+        client: '/client', agent: '/agent',
       };
 
       const targetRoute = roleRoutes[profile.role] || '/';
