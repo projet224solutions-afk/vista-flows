@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useCognitoAuth } from '@/contexts/CognitoAuthContext';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { Loader2, WifiOff } from 'lucide-react';
 import CryptoJS from 'crypto-js';
