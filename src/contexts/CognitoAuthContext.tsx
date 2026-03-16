@@ -122,8 +122,18 @@ export const CognitoAuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     refreshIntervalRef.current = setInterval(async () => {
-      const newSession = await cognitoRefreshSession();
-      updateAuthState(newSession);
+      try {
+        const newSession = await cognitoRefreshSession();
+        if (newSession) {
+          updateAuthState(newSession);
+        } else {
+          console.warn('⚠️ [CognitoAuth] Session refresh failed, signing out');
+          updateAuthState(null);
+        }
+      } catch (err) {
+        console.error('❌ [CognitoAuth] Refresh error, signing out:', err);
+        updateAuthState(null);
+      }
     }, 50 * 60 * 1000); // 50 min
 
     return () => {
