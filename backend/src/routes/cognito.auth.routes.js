@@ -6,6 +6,7 @@
 
 import express from 'express';
 import { verifyCognitoToken, requireCognitoRole } from '../middlewares/cognito.middleware.js';
+import { syncCognitoUser, getUserByCognitoId, updateUserProfile } from '../services/cognitoSync.service.js';
 import { logger } from '../config/logger.js';
 
 const router = express.Router();
@@ -17,37 +18,23 @@ const router = express.Router();
  */
 router.post('/sync-profile', verifyCognitoToken, async (req, res) => {
   try {
-    const { sub, email, role, fullName, phone } = req.cognitoUser;
-    const { additionalData } = req.body; // Données supplémentaires (ville, pays, etc.)
+    const { additionalData } = req.body;
 
-    // TODO: Remplacer par le client PostgreSQL Google Cloud SQL
-    // import { pool } from '../config/cloudSql.js';
-    //
-    // const result = await pool.query(
-    //   `INSERT INTO users (cognito_user_id, email, role, full_name, phone, created_at, updated_at)
-    //    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-    //    ON CONFLICT (cognito_user_id)
-    //    DO UPDATE SET 
-    //      email = EXCLUDED.email,
-    //      full_name = EXCLUDED.full_name,
-    //      phone = EXCLUDED.phone,
-    //      updated_at = NOW()
-    //    RETURNING *`,
-    //   [sub, email, role, fullName, phone]
-    // );
+    const result = await syncCognitoUser(req.cognitoUser, {
+      ...additionalData,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent'),
+    });
 
-    logger.info(`✅ Profile synced for Cognito user: ${sub}`);
+    if (!result.success) {
+      return res.status(500).json({ success: false, error: result.error });
+    }
 
+    logger.info(`✅ Profile synced for Cognito user: ${req.cognitoUser.sub}`);
     res.json({
       success: true,
       message: 'Profil synchronisé',
-      user: {
-        cognitoUserId: sub,
-        email,
-        role,
-        fullName,
-        phone,
-      },
+      user: result.user,
     });
   } catch (error) {
     logger.error(`❌ Profile sync error: ${error.message}`);
@@ -64,22 +51,13 @@ router.post('/sync-profile', verifyCognitoToken, async (req, res) => {
  */
 router.get('/me', verifyCognitoToken, async (req, res) => {
   try {
-    const { sub, email, role } = req.cognitoUser;
+    const user = await getUserByCognitoId(req.cognitoUser.sub);
 
-    // TODO: Requête Cloud SQL
-    // const { rows } = await pool.query(
-    //   'SELECT * FROM users WHERE cognito_user_id = $1',
-    //   [sub]
-    // );
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'Profil non trouvé' });
+    }
 
-    res.json({
-      success: true,
-      user: {
-        cognitoUserId: sub,
-        email,
-        role,
-      },
-    });
+    res.json({ success: true, user });
   } catch (error) {
     logger.error(`❌ Get profile error: ${error.message}`);
     res.status(500).json({
@@ -96,21 +74,14 @@ router.get('/me', verifyCognitoToken, async (req, res) => {
 router.put('/profile', verifyCognitoToken, async (req, res) => {
   try {
     const { sub } = req.cognitoUser;
-    const { fullName, phone, city, country, avatarUrl } = req.body;
+    const result = await updateUserProfile(sub, req.body);
 
-    // TODO: Update Cloud SQL
-    // const { rows } = await pool.query(
-    //   `UPDATE users SET full_name = $1, phone = $2, city = $3, country = $4, 
-    //    avatar_url = $5, updated_at = NOW() WHERE cognito_user_id = $6 RETURNING *`,
-    //   [fullName, phone, city, country, avatarUrl, sub]
-    // );
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
 
     logger.info(`✅ Profile updated for: ${sub}`);
-
-    res.json({
-      success: true,
-      message: 'Profil mis à jour',
-    });
+    res.json({ success: true, message: 'Profil mis à jour', user: result.user });
   } catch (error) {
     logger.error(`❌ Update profile error: ${error.message}`);
     res.status(500).json({
@@ -128,18 +99,14 @@ router.delete('/account', verifyCognitoToken, async (req, res) => {
   try {
     const { sub } = req.cognitoUser;
 
-    // TODO: Soft delete Cloud SQL
-    // await pool.query(
-    //   'UPDATE users SET is_active = false, deleted_at = NOW() WHERE cognito_user_id = $1',
-    //   [sub]
-    // );
+    const { query } = await import('../config/cloudSql.js');
+    await query(
+      'UPDATE users SET is_active = false, deleted_at = NOW() WHERE cognito_user_id = $1',
+      [sub]
+    );
 
     logger.info(`✅ Account deactivated for: ${sub}`);
-
-    res.json({
-      success: true,
-      message: 'Compte désactivé',
-    });
+    res.json({ success: true, message: 'Compte désactivé' });
   } catch (error) {
     logger.error(`❌ Delete account error: ${error.message}`);
     res.status(500).json({
