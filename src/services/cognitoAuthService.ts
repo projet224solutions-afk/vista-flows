@@ -14,16 +14,21 @@ import {
 } from 'amazon-cognito-identity-js';
 import { cognitoConfig, isCognitoConfigured } from '@/config/cognito';
 
-// Initialiser le User Pool
+// Singleton User Pool (évite de recréer à chaque appel)
+let userPoolInstance: CognitoUserPool | null = null;
+
 const getUserPool = (): CognitoUserPool | null => {
   if (!isCognitoConfigured()) {
     console.warn('⚠️ [Cognito] Configuration manquante');
     return null;
   }
-  return new CognitoUserPool({
-    UserPoolId: cognitoConfig.userPoolId,
-    ClientId: cognitoConfig.clientId,
-  });
+  if (!userPoolInstance) {
+    userPoolInstance = new CognitoUserPool({
+      UserPoolId: cognitoConfig.userPoolId,
+      ClientId: cognitoConfig.clientId,
+    });
+  }
+  return userPoolInstance;
 };
 
 export interface CognitoAuthResult {

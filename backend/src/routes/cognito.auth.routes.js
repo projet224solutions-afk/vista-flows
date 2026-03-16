@@ -6,6 +6,7 @@
 
 import express from 'express';
 import { verifyCognitoToken, requireCognitoRole } from '../middlewares/cognito.middleware.js';
+import { syncCognitoUser, getUserByCognitoId, updateUserProfile } from '../services/cognitoSync.service.js';
 import { logger } from '../config/logger.js';
 
 const router = express.Router();

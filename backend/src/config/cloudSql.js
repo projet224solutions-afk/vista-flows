@@ -51,6 +51,7 @@ pool.on('error', (err) => {
  * Helper: Exécuter une requête avec retry
  */
 export async function query(text, params, retries = 3) {
+  let lastError;
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const start = Date.now();
@@ -63,6 +64,7 @@ export async function query(text, params, retries = 3) {
 
       return result;
     } catch (error) {
+      lastError = error;
       if (attempt === retries) {
         logger.error(`❌ Query failed after ${retries} attempts: ${error.message}`);
         throw error;
@@ -71,6 +73,7 @@ export async function query(text, params, retries = 3) {
       await new Promise(r => setTimeout(r, 1000 * attempt));
     }
   }
+  throw lastError; // Garantit qu'une erreur est toujours lancée
 }
 
 /**
