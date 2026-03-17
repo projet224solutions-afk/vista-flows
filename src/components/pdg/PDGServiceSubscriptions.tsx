@@ -413,7 +413,7 @@ export default function PDGServiceSubscriptions() {
             <CardContent>
               <div className="text-2xl font-bold">
                 {activeServiceTab === 'all' 
-                  ? ServiceSubscriptionService.formatAmount(stats?.monthly_revenue || 0)
+                  ? ServiceSubscriptionService.formatAmount(stats.monthly_revenue || 0)
                   : ServiceSubscriptionService.formatAmount(
                       currentStats.total_subscriptions > 0 
                         ? Math.round(currentStats.total_revenue / currentStats.total_subscriptions) 
