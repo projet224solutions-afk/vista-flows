@@ -1431,66 +1431,17 @@ export default function Auth() {
           setSuccess("✅ Inscription réussie ! Vérifiez votre boîte mail pour confirmer votre compte, puis connectez-vous.");
         }
       } else {
-        // Connexion
-        console.log('🔐 [Auth] Tentative de connexion Cognito (principal)...');
+        // Connexion - Supabase Auth est le système principal
+        console.log('🔐 [Auth] Tentative de connexion Supabase...');
         const validatedData = loginSchema.parse(formData);
         
-        // 🔑 ÉTAPE 1: Authentification Cognito (système principal)
-        let cognitoSuccess = false;
-        let cognitoTokens: any = null;
-        
-        if (isCognitoEnabled) {
-          const cognitoResult = await cognitoSignIn(validatedData.email, validatedData.password);
-          if (cognitoResult.success && (cognitoResult.tokens || cognitoResult.session)) {
-            cognitoSuccess = true;
-            cognitoTokens = cognitoResult.tokens || (cognitoResult.session ? {
-              idToken: cognitoResult.session.getIdToken().getJwtToken(),
-              accessToken: cognitoResult.session.getAccessToken().getJwtToken(),
-              refreshToken: cognitoResult.session.getRefreshToken().getToken(),
-            } : null);
-            console.log('✅ [Auth] Cognito login réussi');
-            
-            // 🔄 Sync backend Cloud SQL (non bloquant)
-            if (cognitoTokens?.idToken) {
-              syncCognitoProfile(cognitoTokens.idToken).catch(err => {
-                console.warn('⚠️ [Auth] Sync Cloud SQL échouée (non bloquant):', err);
-              });
-            }
-          } else if (cognitoResult.challengeName === 'NEW_PASSWORD_REQUIRED') {
-            throw new Error('🔐 Nouveau mot de passe requis. Utilisez "Mot de passe oublié" pour réinitialiser.');
-          } else {
-            throw new Error(cognitoResult.error || '❌ Email ou mot de passe incorrect.');
-          }
-        }
-        
-        // 🔑 ÉTAPE 2: Synchroniser la session Supabase (pour RLS/DB)
-        try {
-          console.log('🔄 [Auth] Synchronisation session Supabase...');
-          await supabase.functions.invoke('cognito-sync-session', {
-            body: {
-              email: validatedData.email,
-              password: validatedData.password,
-              cognitoIdToken: cognitoTokens?.idToken,
-              mode: 'login',
-            },
-          });
-        } catch (syncErr) {
-          console.warn('⚠️ [Auth] Sync Supabase session échouée (tentative login direct):', syncErr);
-        }
-        
-        // 🔑 ÉTAPE 3: Login Supabase pour obtenir la session RLS
+        // 🔑 Login Supabase (système principal)
         const { data, error } = await supabase.auth.signInWithPassword({
           email: validatedData.email,
           password: validatedData.password,
         });
 
         if (error) {
-          // Si Cognito a réussi mais Supabase échoue, c'est un problème de sync
-          if (cognitoSuccess) {
-            console.warn('⚠️ [Auth] Supabase login échoué après Cognito success - problème de sync');
-            // Tenter de continuer sans session Supabase (dégradé)
-            throw new Error('⚠️ Connexion partielle. Veuillez réessayer dans quelques secondes.');
-          }
           if (error.message.includes('Email not confirmed')) {
             throw new Error('📧 Email non confirmé. Veuillez vérifier votre boîte mail et cliquer sur le lien de confirmation.');
           } else if (error.message.includes('Invalid login credentials')) {
@@ -1500,7 +1451,14 @@ export default function Auth() {
           }
         }
 
-        console.log('✅ [Auth] Double login réussi (Cognito + Supabase)');
+        console.log('✅ [Auth] Login Supabase réussi');
+        
+        // 🔄 Sync Cloud SQL en arrière-plan (non bloquant)
+        if (data.session?.access_token) {
+          syncCognitoProfile(data.session.access_token).catch(err => {
+            console.warn('⚠️ [Auth] Sync Cloud SQL échouée (non bloquant):', err);
+          });
+        }
 
         
         if (data.user) {
