@@ -424,11 +424,11 @@ export default function EnhancedAuth() {
 
           // 🔄 Sync session Supabase pour RLS
           try {
+            const idToken = result.tokens?.idToken || result.session?.getIdToken()?.getJwtToken();
             await supabase.functions.invoke('cognito-sync-session', {
               body: {
                 email, password,
-                cognitoUserId: result.session?.getIdToken()?.decodePayload()?.sub,
-                cognitoIdToken: result.session?.getIdToken()?.getJwtToken(),
+                cognitoIdToken: idToken,
                 mode: 'login',
               },
             });
