@@ -337,7 +337,17 @@ export const cognitoRefreshSession = (): Promise<CognitoUserSession | null> => {
  */
 function mapCognitoError(err: any): string {
   const code = err?.code || err?.name || '';
-  
+  const rawMessage = String(err?.message || '');
+  const normalizedMessage = rawMessage.toLowerCase();
+
+  // Cas critique: App Client Cognito configuré avec un secret (incompatible SPA/front)
+  if (
+    normalizedMessage.includes('secret_hash') ||
+    normalizedMessage.includes('configured with secret')
+  ) {
+    return 'Configuration Cognito invalide: ce Client ID utilise un secret. Créez un App Client PUBLIC (sans secret) dans AWS Cognito puis mettez à jour VITE_AWS_COGNITO_CLIENT_ID.';
+  }
+
   switch (code) {
     case 'UserNotFoundException':
       return 'Aucun compte trouvé avec cet email';
@@ -360,6 +370,6 @@ function mapCognitoError(err: any): string {
     case 'NetworkError':
       return 'Erreur réseau. Vérifiez votre connexion internet';
     default:
-      return err?.message || 'Une erreur est survenue';
+      return rawMessage || 'Une erreur est survenue';
   }
 }
