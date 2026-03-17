@@ -56,7 +56,7 @@ export default function Auth() {
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const { isCognitoEnabled, forgotPassword: cognitoForgotPassword, confirmPassword: cognitoConfirmPassword } = useCognitoAuth();
+  // Cognito désactivé comme auth principal - Supabase est le système principal
   const navigate = useNavigate();
   
   // ✅ FIX: Ref pour bloquer le handler SIGNED_IN pendant que handleSubmit gère la création
