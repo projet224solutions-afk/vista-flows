@@ -18,8 +18,6 @@ import { z } from "zod";
 import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSelector from "@/components/LanguageSelector";
 import { getDashboardRoute } from "@/hooks/useRoleRedirect";
-import { useCognitoAuth } from "@/contexts/CognitoAuthContext";
-import { cognitoSignIn, cognitoSignUp } from "@/services/cognitoAuthService";
 import { syncCognitoProfile } from "@/services/cognitoSyncService";
 
 // Validation schemas avec tous les rôles
