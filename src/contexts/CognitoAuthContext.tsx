@@ -102,6 +102,12 @@ export const CognitoAuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const existingSession = await cognitoGetCurrentSession();
         updateAuthState(existingSession);
+        
+        // Sync silencieuse au démarrage si session existante
+        if (existingSession && existingSession.isValid()) {
+          const idToken = existingSession.getIdToken().getJwtToken();
+          syncCognitoProfile(idToken).catch(() => {});
+        }
       } catch (err) {
         console.warn('⚠️ [CognitoAuth] Pas de session existante');
       } finally {
