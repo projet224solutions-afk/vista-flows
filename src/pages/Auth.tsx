@@ -1651,33 +1651,25 @@ export default function Auth() {
     setSuccess(null);
 
     try {
-      // Validation de l'email
       const emailSchema = z.string().email("Adresse email invalide");
       emailSchema.parse(resetEmail);
 
-      // ✅ Uniquement Cognito - pas de fallback Supabase
-      const result = await cognitoForgotPassword(resetEmail.trim());
-      if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de l\'envoi du code de réinitialisation');
-      }
+      // ✅ Supabase Auth - système principal
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: `${window.location.origin}/auth#type=recovery`,
+      });
+      
+      if (error) throw error;
 
-      setSuccess("✅ Code de réinitialisation envoyé. Vérifiez votre email puis saisissez le code ci-dessous.");
+      setSuccess("✅ Lien de réinitialisation envoyé. Vérifiez votre email.");
       setShowResetPassword(false);
-      setShowNewPasswordForm(true);
-      setIsLogin(false);
+      setIsLogin(true);
     } catch (err) {
       let errorMessage = 'Une erreur est survenue';
-      
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      
-      // Gestion des erreurs de validation Zod
+      if (err instanceof Error) errorMessage = err.message;
       if (err && typeof err === 'object' && 'issues' in err) {
-        const zodError = err as any;
-        errorMessage = zodError.issues[0]?.message || errorMessage;
+        errorMessage = (err as any).issues[0]?.message || errorMessage;
       }
-      
       setError(errorMessage);
       console.error('Erreur réinitialisation mot de passe:', err);
     } finally {
