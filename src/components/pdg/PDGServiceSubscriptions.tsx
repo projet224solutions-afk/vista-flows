@@ -79,7 +79,10 @@ interface ServiceTypeInfo {
 export default function PDGServiceSubscriptions() {
   const [plans, setPlans] = useState<ServicePlan[]>([]);
   const [priceHistory, setPriceHistory] = useState<ServicePriceHistory[]>([]);
-  const [stats, setStats] = useState<ServiceSubscriptionStats | null>(null);
+  const [stats, setStats] = useState<ServiceSubscriptionStats>({
+    total_subscriptions: 0, active_subscriptions: 0, expired_subscriptions: 0,
+    total_revenue: 0, monthly_revenue: 0, subscriptions_by_plan: {}, subscriptions_by_status: {}
+  });
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [serviceTypes, setServiceTypes] = useState<ServiceTypeInfo[]>([]);
   const [loading, setLoading] = useState(true);
