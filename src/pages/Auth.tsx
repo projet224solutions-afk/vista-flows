@@ -1439,20 +1439,25 @@ export default function Auth() {
         
         // 🔑 ÉTAPE 1: Authentification Cognito (système principal)
         let cognitoSuccess = false;
-        let cognitoSession: any = null;
+        let cognitoTokens: any = null;
         
         if (isCognitoEnabled) {
           const cognitoResult = await cognitoSignIn(validatedData.email, validatedData.password);
-          if (cognitoResult.success && cognitoResult.session) {
+          if (cognitoResult.success && (cognitoResult.tokens || cognitoResult.session)) {
             cognitoSuccess = true;
-            cognitoSession = cognitoResult.session;
+            cognitoTokens = cognitoResult.tokens || (cognitoResult.session ? {
+              idToken: cognitoResult.session.getIdToken().getJwtToken(),
+              accessToken: cognitoResult.session.getAccessToken().getJwtToken(),
+              refreshToken: cognitoResult.session.getRefreshToken().getToken(),
+            } : null);
             console.log('✅ [Auth] Cognito login réussi');
             
             // 🔄 Sync backend Cloud SQL (non bloquant)
-            const idToken = cognitoResult.session.getIdToken().getJwtToken();
-            syncCognitoProfile(idToken).catch(err => {
-              console.warn('⚠️ [Auth] Sync Cloud SQL échouée (non bloquant):', err);
-            });
+            if (cognitoTokens?.idToken) {
+              syncCognitoProfile(cognitoTokens.idToken).catch(err => {
+                console.warn('⚠️ [Auth] Sync Cloud SQL échouée (non bloquant):', err);
+              });
+            }
           } else if (cognitoResult.challengeName === 'NEW_PASSWORD_REQUIRED') {
             throw new Error('🔐 Nouveau mot de passe requis. Utilisez "Mot de passe oublié" pour réinitialiser.');
           } else {
@@ -1461,15 +1466,13 @@ export default function Auth() {
         }
         
         // 🔑 ÉTAPE 2: Synchroniser la session Supabase (pour RLS/DB)
-        // D'abord, s'assurer que l'utilisateur existe dans Supabase avec le bon mot de passe
         try {
           console.log('🔄 [Auth] Synchronisation session Supabase...');
           await supabase.functions.invoke('cognito-sync-session', {
             body: {
               email: validatedData.email,
               password: validatedData.password,
-              cognitoUserId: cognitoSession?.getIdToken()?.decodePayload()?.sub,
-              cognitoIdToken: cognitoSession?.getIdToken()?.getJwtToken(),
+              cognitoIdToken: cognitoTokens?.idToken,
               mode: 'login',
             },
           });
