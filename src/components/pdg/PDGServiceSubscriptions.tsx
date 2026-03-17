@@ -79,7 +79,10 @@ interface ServiceTypeInfo {
 export default function PDGServiceSubscriptions() {
   const [plans, setPlans] = useState<ServicePlan[]>([]);
   const [priceHistory, setPriceHistory] = useState<ServicePriceHistory[]>([]);
-  const [stats, setStats] = useState<ServiceSubscriptionStats | null>(null);
+  const [stats, setStats] = useState<ServiceSubscriptionStats>({
+    total_subscriptions: 0, active_subscriptions: 0, expired_subscriptions: 0,
+    total_revenue: 0, monthly_revenue: 0, subscriptions_by_plan: {}, subscriptions_by_status: {}
+  });
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [serviceTypes, setServiceTypes] = useState<ServiceTypeInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,6 +104,8 @@ export default function PDGServiceSubscriptions() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      console.log('[PDGServiceSubscriptions] Loading data...');
+      
       const [plansData, historyData, statsData, subsData] = await Promise.all([
         ServiceSubscriptionService.getPlans(),
         ServiceSubscriptionService.getPriceHistory(),
@@ -108,11 +113,20 @@ export default function PDGServiceSubscriptions() {
         ServiceSubscriptionService.getAllSubscriptions(200)
       ]);
 
-      const { data: stData } = await supabase
+      const { data: stData, error: stError } = await supabase
         .from('service_types')
         .select('id, code, name')
         .eq('is_active', true)
         .order('name');
+
+      console.log('[PDGServiceSubscriptions] Data loaded:', {
+        plans: plansData.length,
+        history: historyData.length,
+        stats: statsData,
+        subscriptions: subsData.length,
+        serviceTypes: stData?.length || 0,
+        stError: stError?.message
+      });
 
       setPlans(plansData);
       setPriceHistory(historyData);
@@ -399,7 +413,7 @@ export default function PDGServiceSubscriptions() {
             <CardContent>
               <div className="text-2xl font-bold">
                 {activeServiceTab === 'all' 
-                  ? ServiceSubscriptionService.formatAmount(stats?.monthly_revenue || 0)
+                  ? ServiceSubscriptionService.formatAmount(stats.monthly_revenue || 0)
                   : ServiceSubscriptionService.formatAmount(
                       currentStats.total_subscriptions > 0 
                         ? Math.round(currentStats.total_revenue / currentStats.total_subscriptions) 
@@ -618,43 +632,55 @@ export default function PDGServiceSubscriptions() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {plans.map((plan) => (
-                      <TableRow key={plan.id}>
-                        <TableCell className="font-medium">
-                          <div>
-                            {plan.display_name}
-                            {plan.priority_listing && <Badge variant="secondary" className="ml-2">Premium</Badge>}
+                    {plans.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                          <div className="flex flex-col items-center gap-2">
+                            <CreditCard className="w-8 h-8 opacity-30" />
+                            <span>Aucun plan configuré</span>
+                            <p className="text-xs">Les plans de service n'ont pas pu être chargés. Vérifiez la configuration.</p>
                           </div>
-                          {plan.description && <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>}
-                        </TableCell>
-                        <TableCell className="font-semibold">{ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}</TableCell>
-                        <TableCell>
-                          {plan.yearly_price_gnf ? ServiceSubscriptionService.formatAmount(plan.yearly_price_gnf) : '-'}
-                          {plan.yearly_discount_percentage && (
-                            <Badge variant="secondary" className="ml-1 text-[10px]">-{plan.yearly_discount_percentage}%</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-xs space-y-0.5">
-                          <div>Réservations: <span className="font-medium">{plan.max_bookings_per_month || '∞'}</span></div>
-                          <div>Produits: <span className="font-medium">{plan.max_products || '∞'}</span></div>
-                          <div>Staff: <span className="font-medium">{plan.max_staff || '∞'}</span></div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1 max-w-xs">
-                            {plan.analytics_access && <Badge variant="outline" className="text-[10px]">Analytics</Badge>}
-                            {plan.sms_notifications && <Badge variant="outline" className="text-[10px]">SMS</Badge>}
-                            {plan.email_notifications && <Badge variant="outline" className="text-[10px]">Email</Badge>}
-                            {plan.custom_branding && <Badge variant="outline" className="text-[10px]">Branding</Badge>}
-                            {plan.api_access && <Badge variant="outline" className="text-[10px]">API</Badge>}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      plans.map((plan) => (
+                        <TableRow key={plan.id}>
+                          <TableCell className="font-medium">
+                            <div>
+                              {plan.display_name}
+                              {plan.priority_listing && <Badge variant="secondary" className="ml-2">Premium</Badge>}
+                            </div>
+                            {plan.description && <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>}
+                          </TableCell>
+                          <TableCell className="font-semibold">{ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}</TableCell>
+                          <TableCell>
+                            {plan.yearly_price_gnf ? ServiceSubscriptionService.formatAmount(plan.yearly_price_gnf) : '-'}
+                            {plan.yearly_discount_percentage && (
+                              <Badge variant="secondary" className="ml-1 text-[10px]">-{plan.yearly_discount_percentage}%</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs space-y-0.5">
+                            <div>Réservations: <span className="font-medium">{plan.max_bookings_per_month || '∞'}</span></div>
+                            <div>Produits: <span className="font-medium">{plan.max_products || '∞'}</span></div>
+                            <div>Staff: <span className="font-medium">{plan.max_staff || '∞'}</span></div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1 max-w-xs">
+                              {plan.analytics_access && <Badge variant="outline" className="text-[10px]">Analytics</Badge>}
+                              {plan.sms_notifications && <Badge variant="outline" className="text-[10px]">SMS</Badge>}
+                              {plan.email_notifications && <Badge variant="outline" className="text-[10px]">Email</Badge>}
+                              {plan.custom_branding && <Badge variant="outline" className="text-[10px]">Branding</Badge>}
+                              {plan.api_access && <Badge variant="outline" className="text-[10px]">API</Badge>}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
                 <ScrollBar orientation="horizontal" />
@@ -675,6 +701,7 @@ export default function PDGServiceSubscriptions() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
+                    <TableHead>Plan</TableHead>
                     <TableHead>Ancien Prix</TableHead>
                     <TableHead>Nouveau Prix</TableHead>
                     <TableHead>Variation</TableHead>
@@ -684,8 +711,12 @@ export default function PDGServiceSubscriptions() {
                 <TableBody>
                   {priceHistory.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        Aucun historique de prix
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                        <div className="flex flex-col items-center gap-2">
+                          <History className="w-8 h-8 opacity-30" />
+                          <span>Aucun historique de prix</span>
+                          <p className="text-xs">Les changements de prix apparaîtront ici après modification d'un plan</p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -695,6 +726,11 @@ export default function PDGServiceSubscriptions() {
                       return (
                         <TableRow key={h.id}>
                           <TableCell>{format(new Date(h.changed_at), 'dd MMM yyyy HH:mm', { locale: fr })}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {plans.find(p => p.id === h.plan_id)?.display_name || '-'}
+                            </Badge>
+                          </TableCell>
                           <TableCell>{ServiceSubscriptionService.formatAmount(h.old_price)}</TableCell>
                           <TableCell className="font-semibold">{ServiceSubscriptionService.formatAmount(h.new_price)}</TableCell>
                           <TableCell>
