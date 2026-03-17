@@ -338,3 +338,6 @@ verify_jwt = false
 
 [functions.paypal-client-id]
 verify_jwt = false
+
+[functions.cognito-sync-session]
+verify_jwt = false
