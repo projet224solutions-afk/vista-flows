@@ -5,6 +5,104 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// ============================================
+// AWS Cognito Deletion Helper (Signature V4)
+// ============================================
+async function sha256(message: string): Promise<ArrayBuffer> {
+  return await crypto.subtle.digest('SHA-256', new TextEncoder().encode(message));
+}
+
+async function hmacSha256(key: ArrayBuffer, message: string): Promise<ArrayBuffer> {
+  const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(message));
+}
+
+function toHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function getSignatureKey(key: string, dateStamp: string, region: string, service: string) {
+  const kDate = await hmacSha256(new TextEncoder().encode('AWS4' + key).buffer, dateStamp);
+  const kRegion = await hmacSha256(kDate, region);
+  const kService = await hmacSha256(kRegion, service);
+  return await hmacSha256(kService, 'aws4_request');
+}
+
+async function cognitoAdminRequest(target: string, payload: Record<string, unknown>, region: string, accessKey: string, secretKey: string) {
+  const cleanRegion = region.replace(/https?:\/\//g, '').replace(/cognito-idp\./g, '').replace(/\.amazonaws\.com.*/g, '').replace(/\/.*/g, '').trim() || 'eu-central-1';
+  const host = `cognito-idp.${cleanRegion}.amazonaws.com`;
+  const body = JSON.stringify(payload);
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:\-]|\.\d{3}/g, '').slice(0, 15) + 'Z';
+  const dateStamp = amzDate.slice(0, 8);
+  const service = 'cognito-idp';
+  const credentialScope = `${dateStamp}/${cleanRegion}/${service}/aws4_request`;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/x-amz-json-1.1',
+    'Host': host,
+    'X-Amz-Date': amzDate,
+    'X-Amz-Target': target,
+  };
+
+  const sortedHeaders = Object.keys(headers).sort();
+  const canonicalHeaders = sortedHeaders.map(k => `${k.toLowerCase()}:${headers[k]}\n`).join('');
+  const signedHeaders = sortedHeaders.map(k => k.toLowerCase()).join(';');
+  const payloadHash = toHex(await sha256(body));
+  const canonicalRequest = ['POST', '/', '', canonicalHeaders, signedHeaders, payloadHash].join('\n');
+  const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credentialScope, toHex(await sha256(canonicalRequest))].join('\n');
+  const signingKey = await getSignatureKey(secretKey, dateStamp, cleanRegion, service);
+  const signature = toHex(await hmacSha256(signingKey, stringToSign));
+
+  headers['Authorization'] = `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const response = await fetch(`https://${host}/`, { method: 'POST', headers, body });
+  return { ok: response.ok, data: await response.json() };
+}
+
+async function deleteCognitoUser(email: string): Promise<void> {
+  const region = Deno.env.get('AWS_COGNITO_REGION') || Deno.env.get('VITE_AWS_COGNITO_REGION') || 'eu-central-1';
+  const userPoolId = Deno.env.get('AWS_COGNITO_USER_POOL_ID') || Deno.env.get('VITE_AWS_COGNITO_USER_POOL_ID');
+  const accessKey = Deno.env.get('AWS_ACCESS_KEY_ID');
+  const secretKey = Deno.env.get('AWS_SECRET_ACCESS_KEY');
+
+  if (!userPoolId || !accessKey || !secretKey) {
+    console.warn('⚠️ Cognito: config manquante, suppression Cognito ignorée');
+    return;
+  }
+
+  try {
+    // Chercher l'utilisateur par email dans Cognito
+    const listResult = await cognitoAdminRequest(
+      'AWSCognitoIdentityProviderService.ListUsers',
+      { UserPoolId: userPoolId, Filter: `email = "${email}"`, Limit: 1 },
+      region, accessKey, secretKey
+    );
+
+    if (!listResult.ok || !listResult.data.Users || listResult.data.Users.length === 0) {
+      console.log(`ℹ️ Cognito: utilisateur ${email} non trouvé dans Cognito (peut-être jamais migré)`);
+      return;
+    }
+
+    const cognitoUsername = listResult.data.Users[0].Username;
+    console.log(`🔑 Cognito: suppression de ${cognitoUsername} (${email})...`);
+
+    const deleteResult = await cognitoAdminRequest(
+      'AWSCognitoIdentityProviderService.AdminDeleteUser',
+      { UserPoolId: userPoolId, Username: cognitoUsername },
+      region, accessKey, secretKey
+    );
+
+    if (deleteResult.ok) {
+      console.log(`✅ Cognito: utilisateur ${email} supprimé avec succès`);
+    } else {
+      console.warn(`⚠️ Cognito: erreur suppression - ${JSON.stringify(deleteResult.data)}`);
+    }
+  } catch (e) {
+    console.warn('⚠️ Cognito: exception lors de la suppression:', e instanceof Error ? e.message : String(e));
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -470,7 +568,19 @@ Deno.serve(async (req) => {
       console.warn('  ⚠ Storage cleanup error:', e instanceof Error ? e.message : String(e));
     }
 
-    console.log('🔐 Suppression de l\'utilisateur auth...');
+    // 🔑 Suppression dans AWS Cognito
+    const userEmail = userToDelete?.email;
+    if (userEmail) {
+      await deleteCognitoUser(userEmail);
+    } else {
+      // Essayer de récupérer l'email depuis auth
+      const { data: authUserData } = await supabaseAdmin.auth.admin.getUserById(userId);
+      if (authUserData?.user?.email) {
+        await deleteCognitoUser(authUserData.user.email);
+      }
+    }
+
+    console.log('🔐 Suppression de l\'utilisateur auth Supabase...');
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
