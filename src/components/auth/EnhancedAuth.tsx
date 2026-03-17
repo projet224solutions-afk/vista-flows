@@ -384,11 +384,30 @@ export default function EnhancedAuth() {
             throw new Error(result.error || 'Erreur d\'inscription');
           }
 
+          // 🔄 Sync Supabase pour RLS
+          try {
+            const nameParts = fullName.trim().split(' ');
+            await supabase.functions.invoke('cognito-sync-session', {
+              body: {
+                email, password, role: roleToUse,
+                firstName: nameParts[0] || '', lastName: nameParts.slice(1).join(' ') || '',
+                mode: 'signup',
+              },
+            });
+          } catch (syncErr) {
+            console.warn('⚠️ Sync Supabase échouée:', syncErr);
+          }
+
           if (result.needsConfirmation) {
             setNeedsConfirmation(true);
             setConfirmationEmail(email);
             toast.info(t('auth.checkEmail') || 'Vérifiez votre email pour le code de confirmation');
           } else {
+            // Aussi créer la session Supabase
+            await supabase.auth.signUp({ email, password, options: {
+              emailRedirectTo: `${window.location.origin}/`,
+              data: { full_name: fullName, role: roleToUse, has_password: true }
+            }});
             toast.success(t('auth.signupSuccess') || 'Inscription réussie !');
           }
         } else {
@@ -398,14 +417,27 @@ export default function EnhancedAuth() {
           if (!result.success) {
             if (result.challengeName === 'NEW_PASSWORD_REQUIRED') {
               toast.info('Nouveau mot de passe requis');
-              // TODO: handle new password challenge
               return;
             }
             throw new Error(result.error || 'Erreur de connexion');
           }
 
+          // 🔄 Sync session Supabase pour RLS
+          try {
+            await supabase.functions.invoke('cognito-sync-session', {
+              body: {
+                email, password,
+                cognitoUserId: result.session?.getIdToken()?.decodePayload()?.sub,
+                mode: 'login',
+              },
+            });
+          } catch (syncErr) {
+            console.warn('⚠️ Sync Supabase login échouée:', syncErr);
+          }
+
+          // Login Supabase pour session RLS
+          await supabase.auth.signInWithPassword({ email, password });
           toast.success(t('auth.connectionSuccess'));
-          // La redirection se fait via le useEffect qui observe isCognitoAuthenticated
         }
         return;
       }

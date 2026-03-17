@@ -19,6 +19,8 @@ import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSelector from "@/components/LanguageSelector";
 import { getDashboardRoute } from "@/hooks/useRoleRedirect";
 import { useCognitoAuth } from "@/contexts/CognitoAuthContext";
+import { cognitoSignIn, cognitoSignUp } from "@/services/cognitoAuthService";
+import { syncCognitoProfile } from "@/services/cognitoSyncService";
 
 // Validation schemas avec tous les rôles
 const loginSchema = z.object({
@@ -1115,6 +1117,47 @@ export default function Auth() {
           throw new Error('Erreur lors de la génération de votre identifiant');
         }
 
+        // 🔑 ÉTAPE 1: Inscription Cognito (système principal)
+        let cognitoUserId: string | undefined;
+        if (isCognitoEnabled) {
+          console.log('🔐 [Auth] Inscription Cognito...');
+          const cognitoResult = await cognitoSignUp(validatedData.email, validatedData.password, {
+            'custom:role': validatedData.role,
+            'name': `${validatedData.firstName} ${validatedData.lastName}`,
+            'phone_number': `${phoneCode}${formData.phone}`,
+          });
+          
+          if (!cognitoResult.success) {
+            throw new Error(cognitoResult.error || 'Erreur lors de l\'inscription');
+          }
+          
+          cognitoUserId = cognitoResult.user?.getUsername();
+          console.log('✅ [Auth] Cognito signup réussi', { needsConfirmation: cognitoResult.needsConfirmation });
+        }
+        
+        // 🔑 ÉTAPE 2: Synchroniser avec Supabase Auth (pour RLS/DB)
+        try {
+          await supabase.functions.invoke('cognito-sync-session', {
+            body: {
+              email: validatedData.email,
+              password: validatedData.password,
+              cognitoUserId,
+              role: validatedData.role,
+              firstName: validatedData.firstName,
+              lastName: validatedData.lastName,
+              phone: `${phoneCode} ${formData.phone}`,
+              city: validatedData.city,
+              country: formData.country,
+              customId: userCustomId,
+              mode: 'signup',
+            },
+          });
+          console.log('✅ [Auth] Sync Supabase réussie');
+        } catch (syncErr) {
+          console.warn('⚠️ [Auth] Sync Supabase échouée, fallback signup direct:', syncErr);
+        }
+        
+        // 🔑 ÉTAPE 3: Signup/Login Supabase pour obtenir la session RLS
         const { data: authData, error } = await supabase.auth.signUp({
           email: validatedData.email,
           password: validatedData.password,
@@ -1127,7 +1170,7 @@ export default function Auth() {
               country: formData.country,
               city: validatedData.city,
               custom_id: userCustomId,
-              // Nom d'entreprise pour les marchands (synchronisation automatique)
+              cognito_user_id: cognitoUserId,
               business_name: validatedData.role === 'vendeur' ? (formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`) : null,
               service_type: validatedData.role === 'vendeur' ? selectedServiceType : null
             },
@@ -1391,17 +1434,61 @@ export default function Auth() {
         }
       } else {
         // Connexion
-        console.log('🔐 [Auth] Tentative de connexion...');
+        console.log('🔐 [Auth] Tentative de connexion Cognito (principal)...');
         const validatedData = loginSchema.parse(formData);
+        
+        // 🔑 ÉTAPE 1: Authentification Cognito (système principal)
+        let cognitoSuccess = false;
+        let cognitoSession: any = null;
+        
+        if (isCognitoEnabled) {
+          const cognitoResult = await cognitoSignIn(validatedData.email, validatedData.password);
+          if (cognitoResult.success && cognitoResult.session) {
+            cognitoSuccess = true;
+            cognitoSession = cognitoResult.session;
+            console.log('✅ [Auth] Cognito login réussi');
+            
+            // 🔄 Sync backend Cloud SQL (non bloquant)
+            const idToken = cognitoResult.session.getIdToken().getJwtToken();
+            syncCognitoProfile(idToken).catch(err => {
+              console.warn('⚠️ [Auth] Sync Cloud SQL échouée (non bloquant):', err);
+            });
+          } else if (cognitoResult.challengeName === 'NEW_PASSWORD_REQUIRED') {
+            throw new Error('🔐 Nouveau mot de passe requis. Utilisez "Mot de passe oublié" pour réinitialiser.');
+          } else {
+            throw new Error(cognitoResult.error || '❌ Email ou mot de passe incorrect.');
+          }
+        }
+        
+        // 🔑 ÉTAPE 2: Synchroniser la session Supabase (pour RLS/DB)
+        // D'abord, s'assurer que l'utilisateur existe dans Supabase avec le bon mot de passe
+        try {
+          console.log('🔄 [Auth] Synchronisation session Supabase...');
+          await supabase.functions.invoke('cognito-sync-session', {
+            body: {
+              email: validatedData.email,
+              password: validatedData.password,
+              cognitoUserId: cognitoSession?.getIdToken()?.decodePayload()?.sub,
+              mode: 'login',
+            },
+          });
+        } catch (syncErr) {
+          console.warn('⚠️ [Auth] Sync Supabase session échouée (tentative login direct):', syncErr);
+        }
+        
+        // 🔑 ÉTAPE 3: Login Supabase pour obtenir la session RLS
         const { data, error } = await supabase.auth.signInWithPassword({
           email: validatedData.email,
           password: validatedData.password,
         });
 
-        console.log('🔐 [Auth] Résultat connexion:', { hasUser: !!data?.user, hasError: !!error });
-
         if (error) {
-          // Gérer les erreurs d'authentification de manière conviviale
+          // Si Cognito a réussi mais Supabase échoue, c'est un problème de sync
+          if (cognitoSuccess) {
+            console.warn('⚠️ [Auth] Supabase login échoué après Cognito success - problème de sync');
+            // Tenter de continuer sans session Supabase (dégradé)
+            throw new Error('⚠️ Connexion partielle. Veuillez réessayer dans quelques secondes.');
+          }
           if (error.message.includes('Email not confirmed')) {
             throw new Error('📧 Email non confirmé. Veuillez vérifier votre boîte mail et cliquer sur le lien de confirmation.');
           } else if (error.message.includes('Invalid login credentials')) {
@@ -1410,6 +1497,9 @@ export default function Auth() {
             throw error;
           }
         }
+
+        console.log('✅ [Auth] Double login réussi (Cognito + Supabase)');
+
         
         if (data.user) {
           setSuccess("✅ Connexion réussie ! Redirection en cours...");
@@ -2962,6 +3052,38 @@ export default function Auth() {
                 const { data: userCustomId, error: generateError } = await supabase
                   .rpc('generate_custom_id_with_role', { p_role: 'client' });
                 if (generateError) throw new Error('Erreur lors de la génération de votre identifiant');
+                
+                // 🔑 Cognito signup d'abord (principal)
+                if (isCognitoEnabled) {
+                  const cognitoResult = await cognitoSignUp(validatedData.email, validatedData.password, {
+                    'custom:role': 'client',
+                    'name': `${validatedData.firstName} ${validatedData.lastName}`,
+                    'phone_number': `${phoneCode}${formData.phone}`,
+                  });
+                  if (!cognitoResult.success) {
+                    throw new Error(cognitoResult.error || 'Erreur inscription');
+                  }
+                }
+                
+                // Sync avec Supabase pour RLS
+                try {
+                  await supabase.functions.invoke('cognito-sync-session', {
+                    body: {
+                      email: validatedData.email,
+                      password: validatedData.password,
+                      role: 'client',
+                      firstName: validatedData.firstName,
+                      lastName: validatedData.lastName,
+                      phone: `${phoneCode} ${formData.phone}`,
+                      city: validatedData.city,
+                      country: formData.country,
+                      customId: userCustomId,
+                      mode: 'signup',
+                    },
+                  });
+                } catch (syncErr) {
+                  console.warn('⚠️ Sync Supabase échouée:', syncErr);
+                }
                 
                 const { data: authData, error: signUpError } = await supabase.auth.signUp({
                   email: validatedData.email,
