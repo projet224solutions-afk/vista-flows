@@ -1676,36 +1676,7 @@ export default function Auth() {
         throw new Error("Les mots de passe ne correspondent pas");
       }
 
-      if (isCognitoEnabled) {
-        if (!resetEmail.trim()) {
-          throw new Error("Veuillez saisir l'email du compte à réinitialiser");
-        }
-
-        if (!resetCode.trim()) {
-          throw new Error("Veuillez saisir le code de vérification reçu par email");
-        }
-
-        const result = await cognitoConfirmPassword(resetEmail.trim(), resetCode.trim(), newPassword);
-        if (!result.success) {
-          throw new Error(result.error || 'Échec de réinitialisation Cognito');
-        }
-
-        setSuccess("✅ Mot de passe Cognito réinitialisé avec succès ! Vous pouvez maintenant vous connecter.");
-        setResetCode('');
-        setNewPassword('');
-        setConfirmNewPassword('');
-
-        setTimeout(() => {
-          setShowNewPasswordForm(false);
-          setShowResetPassword(false);
-          setIsLogin(true);
-          setSuccess(null);
-          setError(null);
-        }, 2000);
-        return;
-      }
-
-      // Supabase fallback
+      // Supabase Auth - mise à jour du mot de passe via session de recovery
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
