@@ -632,43 +632,55 @@ export default function PDGServiceSubscriptions() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {plans.map((plan) => (
-                      <TableRow key={plan.id}>
-                        <TableCell className="font-medium">
-                          <div>
-                            {plan.display_name}
-                            {plan.priority_listing && <Badge variant="secondary" className="ml-2">Premium</Badge>}
+                    {plans.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                          <div className="flex flex-col items-center gap-2">
+                            <CreditCard className="w-8 h-8 opacity-30" />
+                            <span>Aucun plan configuré</span>
+                            <p className="text-xs">Les plans de service n'ont pas pu être chargés. Vérifiez la configuration.</p>
                           </div>
-                          {plan.description && <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>}
-                        </TableCell>
-                        <TableCell className="font-semibold">{ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}</TableCell>
-                        <TableCell>
-                          {plan.yearly_price_gnf ? ServiceSubscriptionService.formatAmount(plan.yearly_price_gnf) : '-'}
-                          {plan.yearly_discount_percentage && (
-                            <Badge variant="secondary" className="ml-1 text-[10px]">-{plan.yearly_discount_percentage}%</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-xs space-y-0.5">
-                          <div>Réservations: <span className="font-medium">{plan.max_bookings_per_month || '∞'}</span></div>
-                          <div>Produits: <span className="font-medium">{plan.max_products || '∞'}</span></div>
-                          <div>Staff: <span className="font-medium">{plan.max_staff || '∞'}</span></div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1 max-w-xs">
-                            {plan.analytics_access && <Badge variant="outline" className="text-[10px]">Analytics</Badge>}
-                            {plan.sms_notifications && <Badge variant="outline" className="text-[10px]">SMS</Badge>}
-                            {plan.email_notifications && <Badge variant="outline" className="text-[10px]">Email</Badge>}
-                            {plan.custom_branding && <Badge variant="outline" className="text-[10px]">Branding</Badge>}
-                            {plan.api_access && <Badge variant="outline" className="text-[10px]">API</Badge>}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      plans.map((plan) => (
+                        <TableRow key={plan.id}>
+                          <TableCell className="font-medium">
+                            <div>
+                              {plan.display_name}
+                              {plan.priority_listing && <Badge variant="secondary" className="ml-2">Premium</Badge>}
+                            </div>
+                            {plan.description && <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>}
+                          </TableCell>
+                          <TableCell className="font-semibold">{ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}</TableCell>
+                          <TableCell>
+                            {plan.yearly_price_gnf ? ServiceSubscriptionService.formatAmount(plan.yearly_price_gnf) : '-'}
+                            {plan.yearly_discount_percentage && (
+                              <Badge variant="secondary" className="ml-1 text-[10px]">-{plan.yearly_discount_percentage}%</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs space-y-0.5">
+                            <div>Réservations: <span className="font-medium">{plan.max_bookings_per_month || '∞'}</span></div>
+                            <div>Produits: <span className="font-medium">{plan.max_products || '∞'}</span></div>
+                            <div>Staff: <span className="font-medium">{plan.max_staff || '∞'}</span></div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1 max-w-xs">
+                              {plan.analytics_access && <Badge variant="outline" className="text-[10px]">Analytics</Badge>}
+                              {plan.sms_notifications && <Badge variant="outline" className="text-[10px]">SMS</Badge>}
+                              {plan.email_notifications && <Badge variant="outline" className="text-[10px]">Email</Badge>}
+                              {plan.custom_branding && <Badge variant="outline" className="text-[10px]">Branding</Badge>}
+                              {plan.api_access && <Badge variant="outline" className="text-[10px]">API</Badge>}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
                 <ScrollBar orientation="horizontal" />
