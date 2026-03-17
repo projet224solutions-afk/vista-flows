@@ -1469,6 +1469,7 @@ export default function Auth() {
               email: validatedData.email,
               password: validatedData.password,
               cognitoUserId: cognitoSession?.getIdToken()?.decodePayload()?.sub,
+              cognitoIdToken: cognitoSession?.getIdToken()?.getJwtToken(),
               mode: 'login',
             },
           });
