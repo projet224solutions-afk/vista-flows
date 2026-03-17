@@ -701,7 +701,7 @@ export default function Auth() {
     };
     
     checkResetSession();
-  }, [isCognitoEnabled]);
+  }, []);
 
   // Form data is already declared above (before trackOAuthEvent)
 
