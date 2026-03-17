@@ -1132,7 +1132,7 @@ export default function Auth() {
               country: formData.country,
               city: validatedData.city,
               custom_id: userCustomId,
-              cognito_user_id: cognitoUserId,
+              cognito_user_id: undefined,
               business_name: validatedData.role === 'vendeur' ? (formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`) : null,
               service_type: validatedData.role === 'vendeur' ? selectedServiceType : null
             },
