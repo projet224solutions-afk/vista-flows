@@ -22,6 +22,7 @@ import {
   type CognitoTokens,
 } from '@/services/cognitoAuthService';
 import { isCognitoConfigured } from '@/config/cognito';
+import { syncCognitoProfile } from '@/services/cognitoSyncService';
 
 export interface CognitoProfile {
   cognitoUserId: string;
