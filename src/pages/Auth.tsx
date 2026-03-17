@@ -18,8 +18,6 @@ import { z } from "zod";
 import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSelector from "@/components/LanguageSelector";
 import { getDashboardRoute } from "@/hooks/useRoleRedirect";
-import { useCognitoAuth } from "@/contexts/CognitoAuthContext";
-import { cognitoSignIn, cognitoSignUp } from "@/services/cognitoAuthService";
 import { syncCognitoProfile } from "@/services/cognitoSyncService";
 
 // Validation schemas avec tous les rôles
@@ -58,7 +56,7 @@ export default function Auth() {
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const { isCognitoEnabled, forgotPassword: cognitoForgotPassword, confirmPassword: cognitoConfirmPassword } = useCognitoAuth();
+  // Cognito désactivé comme auth principal - Supabase est le système principal
   const navigate = useNavigate();
   
   // ✅ FIX: Ref pour bloquer le handler SIGNED_IN pendant que handleSubmit gère la création
@@ -591,8 +589,7 @@ export default function Auth() {
   // Détecter si on vient d'un lien de réinitialisation et vérifier la session
   useEffect(() => {
     const checkResetSession = async () => {
-      // En mode Cognito, le reset se fait par code (pas par lien Supabase)
-      if (isCognitoEnabled) return;
+      // Supabase gère le reset par lien (pas par code)
 
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
@@ -704,7 +701,7 @@ export default function Auth() {
     };
     
     checkResetSession();
-  }, [isCognitoEnabled]);
+  }, []);
 
   // Form data is already declared above (before trackOAuthEvent)
 
@@ -1117,47 +1114,12 @@ export default function Auth() {
           throw new Error('Erreur lors de la génération de votre identifiant');
         }
 
-        // 🔑 ÉTAPE 1: Inscription Cognito (système principal)
-        let cognitoUserId: string | undefined;
-        if (isCognitoEnabled) {
-          console.log('🔐 [Auth] Inscription Cognito...');
-          const cognitoResult = await cognitoSignUp(validatedData.email, validatedData.password, {
-            'custom:role': validatedData.role,
-            'name': `${validatedData.firstName} ${validatedData.lastName}`,
-            'phone_number': `${phoneCode}${formData.phone}`,
-          });
-          
-          if (!cognitoResult.success) {
-            throw new Error(cognitoResult.error || 'Erreur lors de l\'inscription');
-          }
-          
-          cognitoUserId = cognitoResult.user?.getUsername();
-          console.log('✅ [Auth] Cognito signup réussi', { needsConfirmation: cognitoResult.needsConfirmation });
-        }
+        // Supabase est le système principal - pas de Cognito signup
         
         // 🔑 ÉTAPE 2: Synchroniser avec Supabase Auth (pour RLS/DB)
-        try {
-          await supabase.functions.invoke('cognito-sync-session', {
-            body: {
-              email: validatedData.email,
-              password: validatedData.password,
-              cognitoUserId,
-              role: validatedData.role,
-              firstName: validatedData.firstName,
-              lastName: validatedData.lastName,
-              phone: `${phoneCode} ${formData.phone}`,
-              city: validatedData.city,
-              country: formData.country,
-              customId: userCustomId,
-              mode: 'signup',
-            },
-          });
-          console.log('✅ [Auth] Sync Supabase réussie');
-        } catch (syncErr) {
-          console.warn('⚠️ [Auth] Sync Supabase échouée, fallback signup direct:', syncErr);
-        }
+        // Supabase est le système principal - sync Cloud SQL en arrière-plan
         
-        // 🔑 ÉTAPE 3: Signup/Login Supabase pour obtenir la session RLS
+        // 🔑 Signup Supabase directement
         const { data: authData, error } = await supabase.auth.signUp({
           email: validatedData.email,
           password: validatedData.password,
@@ -1170,7 +1132,7 @@ export default function Auth() {
               country: formData.country,
               city: validatedData.city,
               custom_id: userCustomId,
-              cognito_user_id: cognitoUserId,
+              cognito_user_id: undefined,
               business_name: validatedData.role === 'vendeur' ? (formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`) : null,
               service_type: validatedData.role === 'vendeur' ? selectedServiceType : null
             },
@@ -1433,66 +1395,17 @@ export default function Auth() {
           setSuccess("✅ Inscription réussie ! Vérifiez votre boîte mail pour confirmer votre compte, puis connectez-vous.");
         }
       } else {
-        // Connexion
-        console.log('🔐 [Auth] Tentative de connexion Cognito (principal)...');
+        // Connexion - Supabase Auth est le système principal
+        console.log('🔐 [Auth] Tentative de connexion Supabase...');
         const validatedData = loginSchema.parse(formData);
         
-        // 🔑 ÉTAPE 1: Authentification Cognito (système principal)
-        let cognitoSuccess = false;
-        let cognitoTokens: any = null;
-        
-        if (isCognitoEnabled) {
-          const cognitoResult = await cognitoSignIn(validatedData.email, validatedData.password);
-          if (cognitoResult.success && (cognitoResult.tokens || cognitoResult.session)) {
-            cognitoSuccess = true;
-            cognitoTokens = cognitoResult.tokens || (cognitoResult.session ? {
-              idToken: cognitoResult.session.getIdToken().getJwtToken(),
-              accessToken: cognitoResult.session.getAccessToken().getJwtToken(),
-              refreshToken: cognitoResult.session.getRefreshToken().getToken(),
-            } : null);
-            console.log('✅ [Auth] Cognito login réussi');
-            
-            // 🔄 Sync backend Cloud SQL (non bloquant)
-            if (cognitoTokens?.idToken) {
-              syncCognitoProfile(cognitoTokens.idToken).catch(err => {
-                console.warn('⚠️ [Auth] Sync Cloud SQL échouée (non bloquant):', err);
-              });
-            }
-          } else if (cognitoResult.challengeName === 'NEW_PASSWORD_REQUIRED') {
-            throw new Error('🔐 Nouveau mot de passe requis. Utilisez "Mot de passe oublié" pour réinitialiser.');
-          } else {
-            throw new Error(cognitoResult.error || '❌ Email ou mot de passe incorrect.');
-          }
-        }
-        
-        // 🔑 ÉTAPE 2: Synchroniser la session Supabase (pour RLS/DB)
-        try {
-          console.log('🔄 [Auth] Synchronisation session Supabase...');
-          await supabase.functions.invoke('cognito-sync-session', {
-            body: {
-              email: validatedData.email,
-              password: validatedData.password,
-              cognitoIdToken: cognitoTokens?.idToken,
-              mode: 'login',
-            },
-          });
-        } catch (syncErr) {
-          console.warn('⚠️ [Auth] Sync Supabase session échouée (tentative login direct):', syncErr);
-        }
-        
-        // 🔑 ÉTAPE 3: Login Supabase pour obtenir la session RLS
+        // 🔑 Login Supabase (système principal)
         const { data, error } = await supabase.auth.signInWithPassword({
           email: validatedData.email,
           password: validatedData.password,
         });
 
         if (error) {
-          // Si Cognito a réussi mais Supabase échoue, c'est un problème de sync
-          if (cognitoSuccess) {
-            console.warn('⚠️ [Auth] Supabase login échoué après Cognito success - problème de sync');
-            // Tenter de continuer sans session Supabase (dégradé)
-            throw new Error('⚠️ Connexion partielle. Veuillez réessayer dans quelques secondes.');
-          }
           if (error.message.includes('Email not confirmed')) {
             throw new Error('📧 Email non confirmé. Veuillez vérifier votre boîte mail et cliquer sur le lien de confirmation.');
           } else if (error.message.includes('Invalid login credentials')) {
@@ -1502,7 +1415,14 @@ export default function Auth() {
           }
         }
 
-        console.log('✅ [Auth] Double login réussi (Cognito + Supabase)');
+        console.log('✅ [Auth] Login Supabase réussi');
+        
+        // 🔄 Sync Cloud SQL en arrière-plan (non bloquant)
+        if (data.session?.access_token) {
+          syncCognitoProfile(data.session.access_token).catch(err => {
+            console.warn('⚠️ [Auth] Sync Cloud SQL échouée (non bloquant):', err);
+          });
+        }
 
         
         if (data.user) {
@@ -1695,33 +1615,25 @@ export default function Auth() {
     setSuccess(null);
 
     try {
-      // Validation de l'email
       const emailSchema = z.string().email("Adresse email invalide");
       emailSchema.parse(resetEmail);
 
-      // ✅ Uniquement Cognito - pas de fallback Supabase
-      const result = await cognitoForgotPassword(resetEmail.trim());
-      if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de l\'envoi du code de réinitialisation');
-      }
+      // ✅ Supabase Auth - système principal
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: `${window.location.origin}/auth#type=recovery`,
+      });
+      
+      if (error) throw error;
 
-      setSuccess("✅ Code de réinitialisation envoyé. Vérifiez votre email puis saisissez le code ci-dessous.");
+      setSuccess("✅ Lien de réinitialisation envoyé. Vérifiez votre email.");
       setShowResetPassword(false);
-      setShowNewPasswordForm(true);
-      setIsLogin(false);
+      setIsLogin(true);
     } catch (err) {
       let errorMessage = 'Une erreur est survenue';
-      
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      
-      // Gestion des erreurs de validation Zod
+      if (err instanceof Error) errorMessage = err.message;
       if (err && typeof err === 'object' && 'issues' in err) {
-        const zodError = err as any;
-        errorMessage = zodError.issues[0]?.message || errorMessage;
+        errorMessage = (err as any).issues[0]?.message || errorMessage;
       }
-      
       setError(errorMessage);
       console.error('Erreur réinitialisation mot de passe:', err);
     } finally {
@@ -1745,36 +1657,7 @@ export default function Auth() {
         throw new Error("Les mots de passe ne correspondent pas");
       }
 
-      if (isCognitoEnabled) {
-        if (!resetEmail.trim()) {
-          throw new Error("Veuillez saisir l'email du compte à réinitialiser");
-        }
-
-        if (!resetCode.trim()) {
-          throw new Error("Veuillez saisir le code de vérification reçu par email");
-        }
-
-        const result = await cognitoConfirmPassword(resetEmail.trim(), resetCode.trim(), newPassword);
-        if (!result.success) {
-          throw new Error(result.error || 'Échec de réinitialisation Cognito');
-        }
-
-        setSuccess("✅ Mot de passe Cognito réinitialisé avec succès ! Vous pouvez maintenant vous connecter.");
-        setResetCode('');
-        setNewPassword('');
-        setConfirmNewPassword('');
-
-        setTimeout(() => {
-          setShowNewPasswordForm(false);
-          setShowResetPassword(false);
-          setIsLogin(true);
-          setSuccess(null);
-          setError(null);
-        }, 2000);
-        return;
-      }
-
-      // Supabase fallback
+      // Supabase Auth - mise à jour du mot de passe via session de recovery
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -2411,9 +2294,7 @@ export default function Auth() {
                 
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground mb-4">
-                    {isCognitoEnabled
-                      ? "Entrez votre adresse email pour recevoir un code de réinitialisation Cognito."
-                      : "Entrez votre adresse email pour recevoir un lien de réinitialisation de mot de passe."}
+                    Entrez votre adresse email pour recevoir un lien de réinitialisation de mot de passe.
                   </p>
                   <Label htmlFor="reset-email">Adresse email</Label>
                   <Input
@@ -2437,7 +2318,7 @@ export default function Auth() {
                       Envoi en cours...
                     </>
                   ) : (
-                    isCognitoEnabled ? 'Envoyer le code de réinitialisation' : 'Envoyer le lien de réinitialisation'
+                    'Envoyer le lien de réinitialisation'
                   )}
                 </Button>
 
@@ -2477,34 +2358,8 @@ export default function Auth() {
                 
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground mb-4">
-                    {isCognitoEnabled
-                      ? "Saisissez le code reçu par email Cognito puis votre nouveau mot de passe."
-                      : "🔐 Choisissez votre nouveau mot de passe."}
+                    🔐 Choisissez votre nouveau mot de passe.
                   </p>
-
-                  {isCognitoEnabled && (
-                    <>
-                      <Label htmlFor="cognito-reset-email">Email du compte</Label>
-                      <Input
-                        id="cognito-reset-email"
-                        type="email"
-                        placeholder="votre@email.com"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        required
-                      />
-
-                      <Label htmlFor="cognito-reset-code">Code de vérification</Label>
-                      <Input
-                        id="cognito-reset-code"
-                        type="text"
-                        placeholder="Ex: 123456"
-                        value={resetCode}
-                        onChange={(e) => setResetCode(e.target.value)}
-                        required
-                      />
-                    </>
-                  )}
 
                   <Label htmlFor="new-password">Nouveau mot de passe</Label>
                   <div className="relative">
@@ -3058,16 +2913,7 @@ export default function Auth() {
                 if (generateError) throw new Error('Erreur lors de la génération de votre identifiant');
                 
                 // 🔑 Cognito signup d'abord (principal)
-                if (isCognitoEnabled) {
-                  const cognitoResult = await cognitoSignUp(validatedData.email, validatedData.password, {
-                    'custom:role': 'client',
-                    'name': `${validatedData.firstName} ${validatedData.lastName}`,
-                    'phone_number': `${phoneCode}${formData.phone}`,
-                  });
-                  if (!cognitoResult.success) {
-                    throw new Error(cognitoResult.error || 'Erreur inscription');
-                  }
-                }
+                // Supabase signup directement (pas de Cognito)
                 
                 // Sync avec Supabase pour RLS
                 try {
