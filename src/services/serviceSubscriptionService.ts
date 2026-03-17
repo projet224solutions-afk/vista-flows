@@ -89,11 +89,14 @@ export class ServiceSubscriptionService {
    */
   static async getPlans(): Promise<ServicePlan[]> {
     try {
-      const { data, error } = await supabase
+      console.log('[ServiceSubscription] Fetching plans...');
+      const { data, error, status } = await supabase
         .from('service_plans')
         .select('*')
         .eq('is_active', true)
         .order('display_order');
+
+      console.log('[ServiceSubscription] Plans response:', { status, count: data?.length, error: error?.message });
 
       if (error) {
         console.error('❌ Erreur récupération plans services:', error);
