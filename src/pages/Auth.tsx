@@ -589,8 +589,7 @@ export default function Auth() {
   // Détecter si on vient d'un lien de réinitialisation et vérifier la session
   useEffect(() => {
     const checkResetSession = async () => {
-      // En mode Cognito, le reset se fait par code (pas par lien Supabase)
-      if (isCognitoEnabled) return;
+      // Supabase gère le reset par lien (pas par code)
 
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
