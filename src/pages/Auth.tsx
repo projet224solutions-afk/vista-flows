@@ -1393,17 +1393,61 @@ export default function Auth() {
         }
       } else {
         // Connexion
-        console.log('🔐 [Auth] Tentative de connexion...');
+        console.log('🔐 [Auth] Tentative de connexion Cognito (principal)...');
         const validatedData = loginSchema.parse(formData);
+        
+        // 🔑 ÉTAPE 1: Authentification Cognito (système principal)
+        let cognitoSuccess = false;
+        let cognitoSession: any = null;
+        
+        if (isCognitoEnabled) {
+          const cognitoResult = await cognitoSignIn(validatedData.email, validatedData.password);
+          if (cognitoResult.success && cognitoResult.session) {
+            cognitoSuccess = true;
+            cognitoSession = cognitoResult.session;
+            console.log('✅ [Auth] Cognito login réussi');
+            
+            // 🔄 Sync backend Cloud SQL (non bloquant)
+            const idToken = cognitoResult.session.getIdToken().getJwtToken();
+            syncCognitoProfile(idToken).catch(err => {
+              console.warn('⚠️ [Auth] Sync Cloud SQL échouée (non bloquant):', err);
+            });
+          } else if (cognitoResult.challengeName === 'NEW_PASSWORD_REQUIRED') {
+            throw new Error('🔐 Nouveau mot de passe requis. Utilisez "Mot de passe oublié" pour réinitialiser.');
+          } else {
+            throw new Error(cognitoResult.error || '❌ Email ou mot de passe incorrect.');
+          }
+        }
+        
+        // 🔑 ÉTAPE 2: Synchroniser la session Supabase (pour RLS/DB)
+        // D'abord, s'assurer que l'utilisateur existe dans Supabase avec le bon mot de passe
+        try {
+          console.log('🔄 [Auth] Synchronisation session Supabase...');
+          await supabase.functions.invoke('cognito-sync-session', {
+            body: {
+              email: validatedData.email,
+              password: validatedData.password,
+              cognitoUserId: cognitoSession?.getIdToken()?.decodePayload()?.sub,
+              mode: 'login',
+            },
+          });
+        } catch (syncErr) {
+          console.warn('⚠️ [Auth] Sync Supabase session échouée (tentative login direct):', syncErr);
+        }
+        
+        // 🔑 ÉTAPE 3: Login Supabase pour obtenir la session RLS
         const { data, error } = await supabase.auth.signInWithPassword({
           email: validatedData.email,
           password: validatedData.password,
         });
 
-        console.log('🔐 [Auth] Résultat connexion:', { hasUser: !!data?.user, hasError: !!error });
-
         if (error) {
-          // Gérer les erreurs d'authentification de manière conviviale
+          // Si Cognito a réussi mais Supabase échoue, c'est un problème de sync
+          if (cognitoSuccess) {
+            console.warn('⚠️ [Auth] Supabase login échoué après Cognito success - problème de sync');
+            // Tenter de continuer sans session Supabase (dégradé)
+            throw new Error('⚠️ Connexion partielle. Veuillez réessayer dans quelques secondes.');
+          }
           if (error.message.includes('Email not confirmed')) {
             throw new Error('📧 Email non confirmé. Veuillez vérifier votre boîte mail et cliquer sur le lien de confirmation.');
           } else if (error.message.includes('Invalid login credentials')) {
@@ -1412,6 +1456,9 @@ export default function Auth() {
             throw error;
           }
         }
+
+        console.log('✅ [Auth] Double login réussi (Cognito + Supabase)');
+
         
         if (data.user) {
           setSuccess("✅ Connexion réussie ! Redirection en cours...");
