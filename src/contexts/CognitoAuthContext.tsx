@@ -152,14 +152,38 @@ export const CognitoAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = useCallback(async (email: string, password: string) => {
     const result = await cognitoSignIn(email, password);
-    if (result.success && result.session) {
-      updateAuthState(result.session);
-      
-      // 🔄 Sync avec le backend (Google Cloud SQL)
-      const idToken = result.session.getIdToken().getJwtToken();
-      syncCognitoProfile(idToken).catch(err => {
-        console.warn('⚠️ [CognitoAuth] Sync backend échouée (non bloquant):', err);
-      });
+    if (result.success) {
+      // Proxy retourne des tokens directement, SDK retourne une session
+      if (result.session) {
+        updateAuthState(result.session);
+        const idToken = result.session.getIdToken().getJwtToken();
+        syncCognitoProfile(idToken).catch(err => {
+          console.warn('⚠️ [CognitoAuth] Sync backend échouée (non bloquant):', err);
+        });
+      } else if (result.tokens) {
+        // Proxy mode: on a les tokens mais pas de session SDK locale
+        // On met à jour le profil depuis le token ID décodé
+        try {
+          const payload = JSON.parse(atob(result.tokens.idToken.split('.')[1]));
+          setCognitoProfile({
+            cognitoUserId: payload.sub,
+            email: payload.email || email,
+            role: payload['custom:role'] || 'client',
+            fullName: payload.name || '',
+            phone: payload.phone_number || '',
+            emailVerified: payload.email_verified === true,
+          });
+          setTokens(result.tokens);
+        } catch (e) {
+          console.warn('⚠️ [CognitoAuth] Impossible de décoder le token ID');
+        }
+        
+        if (result.tokens.idToken) {
+          syncCognitoProfile(result.tokens.idToken).catch(err => {
+            console.warn('⚠️ [CognitoAuth] Sync backend échouée (non bloquant):', err);
+          });
+        }
+      }
     }
     return result;
   }, [updateAuthState]);

@@ -1,7 +1,7 @@
 /**
- * 🔐 AWS COGNITO AUTH SERVICE
- * Gère l'authentification via Amazon Cognito
- * Sign up, Sign in, Forgot password, Token refresh
+ * 🔐 AWS COGNITO AUTH SERVICE (v3 - Proxy sécurisé)
+ * Utilise une Edge Function proxy pour gérer le SECRET_HASH côté serveur
+ * Fallback sur le SDK client si pas de secret configuré
  */
 
 import {
@@ -10,11 +10,11 @@ import {
   AuthenticationDetails,
   CognitoUserAttribute,
   CognitoUserSession,
-  ISignUpResult,
 } from 'amazon-cognito-identity-js';
 import { cognitoConfig, isCognitoConfigured } from '@/config/cognito';
+import { supabase } from '@/integrations/supabase/client';
 
-// Singleton User Pool (évite de recréer à chaque appel)
+// Singleton User Pool (pour les opérations SDK directes)
 let userPoolInstance: CognitoUserPool | null = null;
 
 const getUserPool = (): CognitoUserPool | null => {
@@ -38,6 +38,11 @@ export interface CognitoAuthResult {
   error?: string;
   needsConfirmation?: boolean;
   challengeName?: string;
+  tokens?: {
+    idToken: string;
+    accessToken: string;
+    refreshToken: string;
+  };
 }
 
 export interface CognitoTokens {
@@ -47,125 +52,134 @@ export interface CognitoTokens {
 }
 
 /**
- * Inscription via Cognito
+ * Appel au proxy Edge Function pour les opérations Cognito
  */
-export const cognitoSignUp = (
+async function callCognitoProxy(body: Record<string, unknown>): Promise<any> {
+  const { data, error } = await supabase.functions.invoke('cognito-auth-proxy', { body });
+  if (error) {
+    console.error('❌ [Cognito Proxy] Erreur appel:', error);
+    throw new Error(error.message || 'Erreur proxy Cognito');
+  }
+  return data;
+}
+
+/**
+ * Inscription via Cognito (proxy sécurisé)
+ */
+export const cognitoSignUp = async (
   email: string,
   password: string,
   attributes: Record<string, string> = {}
 ): Promise<CognitoAuthResult> => {
-  return new Promise((resolve) => {
-    const userPool = getUserPool();
-    if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
-      return;
+  if (!isCognitoConfigured()) {
+    return { success: false, error: 'Cognito non configuré' };
+  }
+
+  try {
+    const result = await callCognitoProxy({
+      action: 'signUp',
+      email,
+      password,
+      attributes,
+    });
+
+    if (result.error) {
+      console.error('❌ [Cognito] Erreur inscription:', result.error);
+      return { success: false, error: mapProxyError(result.code, result.error) };
     }
 
-    const attributeList: CognitoUserAttribute[] = [
-      new CognitoUserAttribute({ Name: 'email', Value: email }),
-    ];
-
-    // Ajouter les attributs personnalisés (role, full_name, phone, etc.)
-    Object.entries(attributes).forEach(([key, value]) => {
-      if (value) {
-        attributeList.push(
-          new CognitoUserAttribute({ Name: key, Value: value })
-        );
-      }
-    });
-
-    userPool.signUp(email, password, attributeList, [], (err, result) => {
-      if (err) {
-        console.error('❌ [Cognito] Erreur inscription:', err.message);
-        resolve({ success: false, error: mapCognitoError(err) });
-        return;
-      }
-
-      console.log('✅ [Cognito] Inscription réussie:', result?.user.getUsername());
-      resolve({
-        success: true,
-        user: result?.user,
-        needsConfirmation: !result?.userConfirmed,
-      });
-    });
-  });
+    console.log('✅ [Cognito] Inscription réussie via proxy');
+    return {
+      success: true,
+      needsConfirmation: !result.userConfirmed,
+    };
+  } catch (err: any) {
+    console.error('❌ [Cognito] Erreur inscription:', err.message);
+    return { success: false, error: mapProxyError('', err.message) };
+  }
 };
 
 /**
  * Confirmation du code de vérification (email)
  */
-export const cognitoConfirmSignUp = (
+export const cognitoConfirmSignUp = async (
   email: string,
   code: string
 ): Promise<CognitoAuthResult> => {
-  return new Promise((resolve) => {
-    const userPool = getUserPool();
-    if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
-      return;
+  if (!isCognitoConfigured()) {
+    return { success: false, error: 'Cognito non configuré' };
+  }
+
+  try {
+    const result = await callCognitoProxy({
+      action: 'confirmSignUp',
+      email,
+      code,
+    });
+
+    if (result.error) {
+      return { success: false, error: mapProxyError(result.code, result.error) };
     }
 
-    const cognitoUser = new CognitoUser({
-      Username: email,
-      Pool: userPool,
-    });
-
-    cognitoUser.confirmRegistration(code, true, (err) => {
-      if (err) {
-        console.error('❌ [Cognito] Erreur confirmation:', err.message);
-        resolve({ success: false, error: mapCognitoError(err) });
-        return;
-      }
-
-      console.log('✅ [Cognito] Email confirmé');
-      resolve({ success: true });
-    });
-  });
+    console.log('✅ [Cognito] Email confirmé via proxy');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: mapProxyError('', err.message) };
+  }
 };
 
 /**
- * Connexion via Cognito
+ * Connexion via Cognito (proxy sécurisé)
  */
-export const cognitoSignIn = (
+export const cognitoSignIn = async (
   email: string,
   password: string
 ): Promise<CognitoAuthResult> => {
-  return new Promise((resolve) => {
-    const userPool = getUserPool();
-    if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
-      return;
+  if (!isCognitoConfigured()) {
+    return { success: false, error: 'Cognito non configuré' };
+  }
+
+  try {
+    const result = await callCognitoProxy({
+      action: 'signIn',
+      email,
+      password,
+    });
+
+    if (result.error) {
+      console.error('❌ [Cognito] Erreur connexion:', result.error);
+      return { 
+        success: false, 
+        error: mapProxyError(result.code, result.error),
+        challengeName: result.challengeName,
+      };
     }
 
-    const cognitoUser = new CognitoUser({
-      Username: email,
-      Pool: userPool,
-    });
+    if (result.challengeName === 'NEW_PASSWORD_REQUIRED') {
+      return {
+        success: false,
+        challengeName: 'NEW_PASSWORD_REQUIRED',
+        error: 'Nouveau mot de passe requis',
+      };
+    }
 
-    const authDetails = new AuthenticationDetails({
-      Username: email,
-      Password: password,
-    });
+    if (result.authResult) {
+      console.log('✅ [Cognito] Connexion réussie via proxy');
+      return {
+        success: true,
+        tokens: {
+          idToken: result.authResult.IdToken,
+          accessToken: result.authResult.AccessToken,
+          refreshToken: result.authResult.RefreshToken,
+        },
+      };
+    }
 
-    cognitoUser.authenticateUser(authDetails, {
-      onSuccess: (session) => {
-        console.log('✅ [Cognito] Connexion réussie');
-        resolve({ success: true, session, user: cognitoUser });
-      },
-      onFailure: (err) => {
-        console.error('❌ [Cognito] Erreur connexion:', err.message);
-        resolve({ success: false, error: mapCognitoError(err) });
-      },
-      newPasswordRequired: () => {
-        resolve({
-          success: false,
-          challengeName: 'NEW_PASSWORD_REQUIRED',
-          error: 'Nouveau mot de passe requis',
-          user: cognitoUser,
-        });
-      },
-    });
-  });
+    return { success: false, error: 'Réponse inattendue du serveur' };
+  } catch (err: any) {
+    console.error('❌ [Cognito] Erreur connexion:', err.message);
+    return { success: false, error: mapProxyError('', err.message) };
+  }
 };
 
 /**
@@ -183,27 +197,18 @@ export const cognitoSignOut = (): void => {
 };
 
 /**
- * Récupérer la session courante
+ * Récupérer la session courante (SDK local)
  */
 export const cognitoGetCurrentSession = (): Promise<CognitoUserSession | null> => {
   return new Promise((resolve) => {
     const userPool = getUserPool();
-    if (!userPool) {
-      resolve(null);
-      return;
-    }
+    if (!userPool) { resolve(null); return; }
 
     const currentUser = userPool.getCurrentUser();
-    if (!currentUser) {
-      resolve(null);
-      return;
-    }
+    if (!currentUser) { resolve(null); return; }
 
     currentUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
-      if (err || !session) {
-        resolve(null);
-        return;
-      }
+      if (err || !session) { resolve(null); return; }
       resolve(session);
     });
   });
@@ -230,91 +235,75 @@ export const getTokensFromSession = (session: CognitoUserSession): CognitoTokens
 };
 
 /**
- * Réinitialisation du mot de passe - Étape 1 : Envoyer le code
+ * Réinitialisation du mot de passe - Étape 1 : Envoyer le code (proxy)
  */
-export const cognitoForgotPassword = (email: string): Promise<CognitoAuthResult> => {
-  return new Promise((resolve) => {
-    const userPool = getUserPool();
-    if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
-      return;
+export const cognitoForgotPassword = async (email: string): Promise<CognitoAuthResult> => {
+  if (!isCognitoConfigured()) {
+    return { success: false, error: 'Cognito non configuré' };
+  }
+
+  try {
+    const result = await callCognitoProxy({
+      action: 'forgotPassword',
+      email,
+    });
+
+    if (result.error) {
+      return { success: false, error: mapProxyError(result.code, result.error) };
     }
 
-    const cognitoUser = new CognitoUser({
-      Username: email,
-      Pool: userPool,
-    });
-
-    cognitoUser.forgotPassword({
-      onSuccess: () => {
-        console.log('✅ [Cognito] Code de réinitialisation envoyé');
-        resolve({ success: true });
-      },
-      onFailure: (err) => {
-        console.error('❌ [Cognito] Erreur forgot password:', err.message);
-        resolve({ success: false, error: mapCognitoError(err) });
-      },
-    });
-  });
+    console.log('✅ [Cognito] Code de réinitialisation envoyé via proxy');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: mapProxyError('', err.message) };
+  }
 };
 
 /**
- * Réinitialisation du mot de passe - Étape 2 : Confirmer avec le code
+ * Réinitialisation du mot de passe - Étape 2 : Confirmer avec le code (proxy)
  */
-export const cognitoConfirmPassword = (
+export const cognitoConfirmPassword = async (
   email: string,
   code: string,
   newPassword: string
 ): Promise<CognitoAuthResult> => {
-  return new Promise((resolve) => {
-    const userPool = getUserPool();
-    if (!userPool) {
-      resolve({ success: false, error: 'Cognito non configuré' });
-      return;
+  if (!isCognitoConfigured()) {
+    return { success: false, error: 'Cognito non configuré' };
+  }
+
+  try {
+    const result = await callCognitoProxy({
+      action: 'confirmPassword',
+      email,
+      code,
+      newPassword,
+    });
+
+    if (result.error) {
+      return { success: false, error: mapProxyError(result.code, result.error) };
     }
 
-    const cognitoUser = new CognitoUser({
-      Username: email,
-      Pool: userPool,
-    });
-
-    cognitoUser.confirmPassword(code, newPassword, {
-      onSuccess: () => {
-        console.log('✅ [Cognito] Mot de passe réinitialisé');
-        resolve({ success: true });
-      },
-      onFailure: (err) => {
-        console.error('❌ [Cognito] Erreur confirm password:', err.message);
-        resolve({ success: false, error: mapCognitoError(err) });
-      },
-    });
-  });
+    console.log('✅ [Cognito] Mot de passe réinitialisé via proxy');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: mapProxyError('', err.message) };
+  }
 };
 
 /**
- * Rafraîchir la session (token refresh)
+ * Rafraîchir la session (token refresh) - SDK local
  */
 export const cognitoRefreshSession = (): Promise<CognitoUserSession | null> => {
   return new Promise((resolve) => {
     const userPool = getUserPool();
-    if (!userPool) {
-      resolve(null);
-      return;
-    }
+    if (!userPool) { resolve(null); return; }
 
     const currentUser = userPool.getCurrentUser();
-    if (!currentUser) {
-      resolve(null);
-      return;
-    }
+    if (!currentUser) { resolve(null); return; }
 
     currentUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
-      if (err || !session) {
-        resolve(null);
-        return;
-      }
+      if (err || !session) { resolve(null); return; }
 
-      // Le SDK rafraîchit automatiquement si le token est expiré
       if (session.isValid()) {
         resolve(session);
       } else {
@@ -335,17 +324,12 @@ export const cognitoRefreshSession = (): Promise<CognitoUserSession | null> => {
 /**
  * Mapper les erreurs Cognito en messages lisibles (FR)
  */
-function mapCognitoError(err: any): string {
-  const code = err?.code || err?.name || '';
-  const rawMessage = String(err?.message || '');
-  const normalizedMessage = rawMessage.toLowerCase();
+function mapProxyError(code: string, message: string): string {
+  const normalizedMessage = (message || '').toLowerCase();
 
-  // Cas critique: App Client Cognito configuré avec un secret (incompatible SPA/front)
-  if (
-    normalizedMessage.includes('secret_hash') ||
-    normalizedMessage.includes('configured with secret')
-  ) {
-    return 'Configuration Cognito invalide: ce Client ID utilise un secret. Créez un App Client PUBLIC (sans secret) dans AWS Cognito puis mettez à jour VITE_AWS_COGNITO_CLIENT_ID.';
+  // Cas critique: App Client configuré avec un secret
+  if (normalizedMessage.includes('secret_hash') || normalizedMessage.includes('configured with secret')) {
+    return 'Configuration Cognito invalide: contactez le support technique.';
   }
 
   switch (code) {
@@ -367,9 +351,7 @@ function mapCognitoError(err: any): string {
       return 'Veuillez confirmer votre email avant de vous connecter';
     case 'InvalidParameterException':
       return 'Paramètres invalides. Vérifiez vos informations';
-    case 'NetworkError':
-      return 'Erreur réseau. Vérifiez votre connexion internet';
     default:
-      return rawMessage || 'Une erreur est survenue';
+      return message || 'Une erreur est survenue';
   }
 }

@@ -341,3 +341,6 @@ verify_jwt = false
 
 [functions.cognito-sync-session]
 verify_jwt = false
+
+[functions.cognito-auth-proxy]
+verify_jwt = false
