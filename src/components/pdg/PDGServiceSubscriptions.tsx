@@ -701,6 +701,7 @@ export default function PDGServiceSubscriptions() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
+                    <TableHead>Plan</TableHead>
                     <TableHead>Ancien Prix</TableHead>
                     <TableHead>Nouveau Prix</TableHead>
                     <TableHead>Variation</TableHead>
@@ -710,8 +711,12 @@ export default function PDGServiceSubscriptions() {
                 <TableBody>
                   {priceHistory.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        Aucun historique de prix
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                        <div className="flex flex-col items-center gap-2">
+                          <History className="w-8 h-8 opacity-30" />
+                          <span>Aucun historique de prix</span>
+                          <p className="text-xs">Les changements de prix apparaîtront ici après modification d'un plan</p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : (
