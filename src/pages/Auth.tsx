@@ -2358,34 +2358,8 @@ export default function Auth() {
                 
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground mb-4">
-                    {isCognitoEnabled
-                      ? "Saisissez le code reçu par email Cognito puis votre nouveau mot de passe."
-                      : "🔐 Choisissez votre nouveau mot de passe."}
+                    🔐 Choisissez votre nouveau mot de passe.
                   </p>
-
-                  {isCognitoEnabled && (
-                    <>
-                      <Label htmlFor="cognito-reset-email">Email du compte</Label>
-                      <Input
-                        id="cognito-reset-email"
-                        type="email"
-                        placeholder="votre@email.com"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        required
-                      />
-
-                      <Label htmlFor="cognito-reset-code">Code de vérification</Label>
-                      <Input
-                        id="cognito-reset-code"
-                        type="text"
-                        placeholder="Ex: 123456"
-                        value={resetCode}
-                        onChange={(e) => setResetCode(e.target.value)}
-                        required
-                      />
-                    </>
-                  )}
 
                   <Label htmlFor="new-password">Nouveau mot de passe</Label>
                   <div className="relative">
