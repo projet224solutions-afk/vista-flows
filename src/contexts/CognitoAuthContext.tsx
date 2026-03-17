@@ -148,6 +148,12 @@ export const CognitoAuthProvider = ({ children }: { children: ReactNode }) => {
     const result = await cognitoSignIn(email, password);
     if (result.success && result.session) {
       updateAuthState(result.session);
+      
+      // 🔄 Sync avec le backend (Google Cloud SQL)
+      const idToken = result.session.getIdToken().getJwtToken();
+      syncCognitoProfile(idToken).catch(err => {
+        console.warn('⚠️ [CognitoAuth] Sync backend échouée (non bloquant):', err);
+      });
     }
     return result;
   }, [updateAuthState]);
