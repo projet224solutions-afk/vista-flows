@@ -186,31 +186,66 @@ export class ServiceSubscriptionService {
   /**
    * Obtenir les statistiques des abonnements de services
    */
-  static async getStats(): Promise<ServiceSubscriptionStats | null> {
+  static async getStats(): Promise<ServiceSubscriptionStats> {
     try {
+      console.log('[ServiceSubscription] Fetching stats...');
       const { data, error } = await supabase.rpc('get_service_subscription_stats');
+
+      console.log('[ServiceSubscription] Stats response:', { data, error: error?.message });
 
       if (error) {
         console.error('❌ Erreur stats abonnements services:', error);
-        return null;
+        // Fallback: query directly
+        return this.getStatsDirect();
       }
 
       if (!data || data.length === 0) {
-        return {
-          total_subscriptions: 0,
-          active_subscriptions: 0,
-          expired_subscriptions: 0,
-          total_revenue: 0,
-          monthly_revenue: 0,
-          subscriptions_by_plan: {},
-          subscriptions_by_status: {}
-        };
+        return this.emptyStats();
       }
 
       return data[0] as ServiceSubscriptionStats;
     } catch (error) {
       console.error('❌ Exception stats abonnements services:', error);
-      return null;
+      return this.emptyStats();
+    }
+  }
+
+  private static emptyStats(): ServiceSubscriptionStats {
+    return {
+      total_subscriptions: 0,
+      active_subscriptions: 0,
+      expired_subscriptions: 0,
+      total_revenue: 0,
+      monthly_revenue: 0,
+      subscriptions_by_plan: {},
+      subscriptions_by_status: {}
+    };
+  }
+
+  private static async getStatsDirect(): Promise<ServiceSubscriptionStats> {
+    try {
+      const { data, error } = await supabase
+        .from('service_subscriptions')
+        .select('status, price_paid_gnf, created_at');
+
+      if (error || !data) return this.emptyStats();
+
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      return {
+        total_subscriptions: data.length,
+        active_subscriptions: data.filter(s => s.status === 'active').length,
+        expired_subscriptions: data.filter(s => s.status === 'expired').length,
+        total_revenue: data.reduce((sum, s) => sum + (s.price_paid_gnf || 0), 0),
+        monthly_revenue: data
+          .filter(s => new Date(s.created_at) > thirtyDaysAgo)
+          .reduce((sum, s) => sum + (s.price_paid_gnf || 0), 0),
+        subscriptions_by_plan: {},
+        subscriptions_by_status: {}
+      };
+    } catch {
+      return this.emptyStats();
     }
   }
 
