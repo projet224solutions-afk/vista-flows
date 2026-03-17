@@ -1986,7 +1986,7 @@ export default function Auth() {
             {/* Onglets Connexion / Inscription - Design professionnel */}
             {!showResetPassword && !showNewPasswordForm && (
               <div className="mb-6">
-                <div className="relative flex p-1 bg-gradient-to-r from-muted/50 to-muted/30 rounded-2xl border border-border/50 shadow-inner">
+                <div className="relative flex p-1 rounded-2xl border border-border/50">
                   {/* Indicateur animé */}
                   <div 
                     className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-primary to-primary/90 rounded-xl shadow-lg transition-all duration-300 ease-out ${
