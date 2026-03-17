@@ -254,7 +254,8 @@ export class ServiceSubscriptionService {
    */
   static async getAllSubscriptions(limit = 100): Promise<any[]> {
     try {
-      const { data, error } = await supabase
+      console.log('[ServiceSubscription] Fetching all subscriptions...');
+      const { data, error, status } = await supabase
         .from('service_subscriptions')
         .select(`
           *,
@@ -263,6 +264,8 @@ export class ServiceSubscriptionService {
         `)
         .order('created_at', { ascending: false })
         .limit(limit);
+
+      console.log('[ServiceSubscription] Subscriptions response:', { status, count: data?.length, error: error?.message });
 
       if (error) {
         console.error('❌ Erreur récupération abonnements services:', error);
