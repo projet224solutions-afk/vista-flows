@@ -2913,16 +2913,7 @@ export default function Auth() {
                 if (generateError) throw new Error('Erreur lors de la génération de votre identifiant');
                 
                 // 🔑 Cognito signup d'abord (principal)
-                if (isCognitoEnabled) {
-                  const cognitoResult = await cognitoSignUp(validatedData.email, validatedData.password, {
-                    'custom:role': 'client',
-                    'name': `${validatedData.firstName} ${validatedData.lastName}`,
-                    'phone_number': `${phoneCode}${formData.phone}`,
-                  });
-                  if (!cognitoResult.success) {
-                    throw new Error(cognitoResult.error || 'Erreur inscription');
-                  }
-                }
+                // Supabase signup directement (pas de Cognito)
                 
                 // Sync avec Supabase pour RLS
                 try {
