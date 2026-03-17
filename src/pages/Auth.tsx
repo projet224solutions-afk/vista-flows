@@ -1114,23 +1114,7 @@ export default function Auth() {
           throw new Error('Erreur lors de la génération de votre identifiant');
         }
 
-        // 🔑 ÉTAPE 1: Inscription Cognito (système principal)
-        let cognitoUserId: string | undefined;
-        if (isCognitoEnabled) {
-          console.log('🔐 [Auth] Inscription Cognito...');
-          const cognitoResult = await cognitoSignUp(validatedData.email, validatedData.password, {
-            'custom:role': validatedData.role,
-            'name': `${validatedData.firstName} ${validatedData.lastName}`,
-            'phone_number': `${phoneCode}${formData.phone}`,
-          });
-          
-          if (!cognitoResult.success) {
-            throw new Error(cognitoResult.error || 'Erreur lors de l\'inscription');
-          }
-          
-          cognitoUserId = cognitoResult.user?.getUsername();
-          console.log('✅ [Auth] Cognito signup réussi', { needsConfirmation: cognitoResult.needsConfirmation });
-        }
+        // Supabase est le système principal - pas de Cognito signup
         
         // 🔑 ÉTAPE 2: Synchroniser avec Supabase Auth (pour RLS/DB)
         try {
