@@ -1117,28 +1117,9 @@ export default function Auth() {
         // Supabase est le système principal - pas de Cognito signup
         
         // 🔑 ÉTAPE 2: Synchroniser avec Supabase Auth (pour RLS/DB)
-        try {
-          await supabase.functions.invoke('cognito-sync-session', {
-            body: {
-              email: validatedData.email,
-              password: validatedData.password,
-              cognitoUserId,
-              role: validatedData.role,
-              firstName: validatedData.firstName,
-              lastName: validatedData.lastName,
-              phone: `${phoneCode} ${formData.phone}`,
-              city: validatedData.city,
-              country: formData.country,
-              customId: userCustomId,
-              mode: 'signup',
-            },
-          });
-          console.log('✅ [Auth] Sync Supabase réussie');
-        } catch (syncErr) {
-          console.warn('⚠️ [Auth] Sync Supabase échouée, fallback signup direct:', syncErr);
-        }
+        // Supabase est le système principal - sync Cloud SQL en arrière-plan
         
-        // 🔑 ÉTAPE 3: Signup/Login Supabase pour obtenir la session RLS
+        // 🔑 Signup Supabase directement
         const { data: authData, error } = await supabase.auth.signUp({
           email: validatedData.email,
           password: validatedData.password,
