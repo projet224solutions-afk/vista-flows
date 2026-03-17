@@ -428,6 +428,7 @@ export default function EnhancedAuth() {
               body: {
                 email, password,
                 cognitoUserId: result.session?.getIdToken()?.decodePayload()?.sub,
+                cognitoIdToken: result.session?.getIdToken()?.getJwtToken(),
                 mode: 'login',
               },
             });
