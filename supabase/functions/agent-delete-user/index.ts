@@ -227,6 +227,12 @@ serve(async (req) => {
       console.warn('⚠️ Archivage exception (non bloquant):', e instanceof Error ? e.message : String(e));
     }
 
+    // 🔑 Suppression dans AWS Cognito
+    const { data: authToDeleteForCognito } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (authToDeleteForCognito?.user?.email) {
+      await deleteCognitoUser(authToDeleteForCognito.user.email);
+    }
+
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (deleteError) throw deleteError;
 

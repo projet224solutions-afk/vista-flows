@@ -249,6 +249,12 @@ serve(async (req) => {
     if (delete_user_too && vendor.user_id) {
       console.log('👤 Suppression de l\'utilisateur...');
       
+      // Supprimer dans Cognito d'abord
+      const { data: vendorAuth } = await supabaseAdmin.auth.admin.getUserById(vendor.user_id);
+      if (vendorAuth?.user?.email) {
+        await deleteCognitoUser(vendorAuth.user.email);
+      }
+      
       await safeDelete('profiles', 'id', vendor.user_id);
       await safeDelete('wallets', 'user_id', vendor.user_id);
       await safeDelete('notifications', 'user_id', vendor.user_id);

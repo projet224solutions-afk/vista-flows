@@ -568,7 +568,19 @@ Deno.serve(async (req) => {
       console.warn('  ⚠ Storage cleanup error:', e instanceof Error ? e.message : String(e));
     }
 
-    console.log('🔐 Suppression de l\'utilisateur auth...');
+    // 🔑 Suppression dans AWS Cognito
+    const userEmail = userToDelete?.email;
+    if (userEmail) {
+      await deleteCognitoUser(userEmail);
+    } else {
+      // Essayer de récupérer l'email depuis auth
+      const { data: authUserData } = await supabaseAdmin.auth.admin.getUserById(userId);
+      if (authUserData?.user?.email) {
+        await deleteCognitoUser(authUserData.user.email);
+      }
+    }
+
+    console.log('🔐 Suppression de l\'utilisateur auth Supabase...');
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {

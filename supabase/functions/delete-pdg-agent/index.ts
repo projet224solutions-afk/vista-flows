@@ -240,8 +240,14 @@ serve(async (req) => {
 
     console.log('✅ Agent supprimé de la base');
 
-    // 6. Supprimer l'utilisateur de auth.users
+    // 6. Supprimer l'utilisateur de Cognito + auth.users
     if (agent.user_id) {
+      // Supprimer dans Cognito d'abord
+      const agentEmail = agent.email;
+      if (agentEmail) {
+        await deleteCognitoUser(agentEmail);
+      }
+
       const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
         agent.user_id
       );
