@@ -3053,6 +3053,38 @@ export default function Auth() {
                   .rpc('generate_custom_id_with_role', { p_role: 'client' });
                 if (generateError) throw new Error('Erreur lors de la génération de votre identifiant');
                 
+                // 🔑 Cognito signup d'abord (principal)
+                if (isCognitoEnabled) {
+                  const cognitoResult = await cognitoSignUp(validatedData.email, validatedData.password, {
+                    'custom:role': 'client',
+                    'name': `${validatedData.firstName} ${validatedData.lastName}`,
+                    'phone_number': `${phoneCode}${formData.phone}`,
+                  });
+                  if (!cognitoResult.success) {
+                    throw new Error(cognitoResult.error || 'Erreur inscription');
+                  }
+                }
+                
+                // Sync avec Supabase pour RLS
+                try {
+                  await supabase.functions.invoke('cognito-sync-session', {
+                    body: {
+                      email: validatedData.email,
+                      password: validatedData.password,
+                      role: 'client',
+                      firstName: validatedData.firstName,
+                      lastName: validatedData.lastName,
+                      phone: `${phoneCode} ${formData.phone}`,
+                      city: validatedData.city,
+                      country: formData.country,
+                      customId: userCustomId,
+                      mode: 'signup',
+                    },
+                  });
+                } catch (syncErr) {
+                  console.warn('⚠️ Sync Supabase échouée:', syncErr);
+                }
+                
                 const { data: authData, error: signUpError } = await supabase.auth.signUp({
                   email: validatedData.email,
                   password: validatedData.password,
