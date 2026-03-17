@@ -104,6 +104,8 @@ export default function PDGServiceSubscriptions() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      console.log('[PDGServiceSubscriptions] Loading data...');
+      
       const [plansData, historyData, statsData, subsData] = await Promise.all([
         ServiceSubscriptionService.getPlans(),
         ServiceSubscriptionService.getPriceHistory(),
@@ -111,11 +113,20 @@ export default function PDGServiceSubscriptions() {
         ServiceSubscriptionService.getAllSubscriptions(200)
       ]);
 
-      const { data: stData } = await supabase
+      const { data: stData, error: stError } = await supabase
         .from('service_types')
         .select('id, code, name')
         .eq('is_active', true)
         .order('name');
+
+      console.log('[PDGServiceSubscriptions] Data loaded:', {
+        plans: plansData.length,
+        history: historyData.length,
+        stats: statsData,
+        subscriptions: subsData.length,
+        serviceTypes: stData?.length || 0,
+        stError: stError?.message
+      });
 
       setPlans(plansData);
       setPriceHistory(historyData);
