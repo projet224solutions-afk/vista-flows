@@ -1117,6 +1117,47 @@ export default function Auth() {
           throw new Error('Erreur lors de la génération de votre identifiant');
         }
 
+        // 🔑 ÉTAPE 1: Inscription Cognito (système principal)
+        let cognitoUserId: string | undefined;
+        if (isCognitoEnabled) {
+          console.log('🔐 [Auth] Inscription Cognito...');
+          const cognitoResult = await cognitoSignUp(validatedData.email, validatedData.password, {
+            'custom:role': validatedData.role,
+            'name': `${validatedData.firstName} ${validatedData.lastName}`,
+            'phone_number': `${phoneCode}${formData.phone}`,
+          });
+          
+          if (!cognitoResult.success) {
+            throw new Error(cognitoResult.error || 'Erreur lors de l\'inscription');
+          }
+          
+          cognitoUserId = cognitoResult.user?.getUsername();
+          console.log('✅ [Auth] Cognito signup réussi', { needsConfirmation: cognitoResult.needsConfirmation });
+        }
+        
+        // 🔑 ÉTAPE 2: Synchroniser avec Supabase Auth (pour RLS/DB)
+        try {
+          await supabase.functions.invoke('cognito-sync-session', {
+            body: {
+              email: validatedData.email,
+              password: validatedData.password,
+              cognitoUserId,
+              role: validatedData.role,
+              firstName: validatedData.firstName,
+              lastName: validatedData.lastName,
+              phone: `${phoneCode} ${formData.phone}`,
+              city: validatedData.city,
+              country: formData.country,
+              customId: userCustomId,
+              mode: 'signup',
+            },
+          });
+          console.log('✅ [Auth] Sync Supabase réussie');
+        } catch (syncErr) {
+          console.warn('⚠️ [Auth] Sync Supabase échouée, fallback signup direct:', syncErr);
+        }
+        
+        // 🔑 ÉTAPE 3: Signup/Login Supabase pour obtenir la session RLS
         const { data: authData, error } = await supabase.auth.signUp({
           email: validatedData.email,
           password: validatedData.password,
@@ -1129,7 +1170,7 @@ export default function Auth() {
               country: formData.country,
               city: validatedData.city,
               custom_id: userCustomId,
-              // Nom d'entreprise pour les marchands (synchronisation automatique)
+              cognito_user_id: cognitoUserId,
               business_name: validatedData.role === 'vendeur' ? (formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`) : null,
               service_type: validatedData.role === 'vendeur' ? selectedServiceType : null
             },
