@@ -726,6 +726,11 @@ export default function PDGServiceSubscriptions() {
                       return (
                         <TableRow key={h.id}>
                           <TableCell>{format(new Date(h.changed_at), 'dd MMM yyyy HH:mm', { locale: fr })}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {plans.find(p => p.id === h.plan_id)?.display_name || '-'}
+                            </Badge>
+                          </TableCell>
                           <TableCell>{ServiceSubscriptionService.formatAmount(h.old_price)}</TableCell>
                           <TableCell className="font-semibold">{ServiceSubscriptionService.formatAmount(h.new_price)}</TableCell>
                           <TableCell>
