@@ -22,6 +22,7 @@ import {
   type CognitoTokens,
 } from '@/services/cognitoAuthService';
 import { isCognitoConfigured } from '@/config/cognito';
+import { syncCognitoProfile } from '@/services/cognitoSyncService';
 
 export interface CognitoProfile {
   cognitoUserId: string;
@@ -101,6 +102,12 @@ export const CognitoAuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const existingSession = await cognitoGetCurrentSession();
         updateAuthState(existingSession);
+        
+        // Sync silencieuse au démarrage si session existante
+        if (existingSession && existingSession.isValid()) {
+          const idToken = existingSession.getIdToken().getJwtToken();
+          syncCognitoProfile(idToken).catch(() => {});
+        }
       } catch (err) {
         console.warn('⚠️ [CognitoAuth] Pas de session existante');
       } finally {
@@ -147,6 +154,12 @@ export const CognitoAuthProvider = ({ children }: { children: ReactNode }) => {
     const result = await cognitoSignIn(email, password);
     if (result.success && result.session) {
       updateAuthState(result.session);
+      
+      // 🔄 Sync avec le backend (Google Cloud SQL)
+      const idToken = result.session.getIdToken().getJwtToken();
+      syncCognitoProfile(idToken).catch(err => {
+        console.warn('⚠️ [CognitoAuth] Sync backend échouée (non bloquant):', err);
+      });
     }
     return result;
   }, [updateAuthState]);
