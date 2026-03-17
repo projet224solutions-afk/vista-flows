@@ -2313,9 +2313,7 @@ export default function Auth() {
                 
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground mb-4">
-                    {isCognitoEnabled
-                      ? "Entrez votre adresse email pour recevoir un code de réinitialisation Cognito."
-                      : "Entrez votre adresse email pour recevoir un lien de réinitialisation de mot de passe."}
+                    Entrez votre adresse email pour recevoir un lien de réinitialisation de mot de passe.
                   </p>
                   <Label htmlFor="reset-email">Adresse email</Label>
                   <Input
