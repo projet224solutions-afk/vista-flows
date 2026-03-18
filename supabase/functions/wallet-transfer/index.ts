@@ -25,27 +25,25 @@ const DEFAULT_MAX_TRANSFER = 50000000;
 const LIMITS_BASE_CURRENCY = "GNF";
 
 /**
- * 🔄 Convertir un seuil (stocké en GNF) vers la devise de l'expéditeur
- * Ex: min 500 GNF → ~0.05 EUR si 1 EUR = 10000 GNF
+ * 🔄 Convertir plusieurs seuils (stockés en GNF) vers la devise de l'expéditeur
+ * Utilise UN SEUL appel FX pour toutes les limites (performance)
  */
-async function convertLimitToCurrency(
-  limitInBase: number,
+async function convertLimitsToCurrency(
+  limits: number[],
   targetCurrency: string,
-  getFxRate: (from: string, to: string) => Promise<{ rate: number; source: string; fetched_at: string }>
-): Promise<number> {
-  if (targetCurrency === LIMITS_BASE_CURRENCY) return limitInBase;
+): Promise<number[]> {
+  if (targetCurrency === LIMITS_BASE_CURRENCY) return limits;
   
   try {
-    const { rate } = await getFxRate(LIMITS_BASE_CURRENCY, targetCurrency);
+    const { rate } = await getFxRateFromAPI(LIMITS_BASE_CURRENCY, targetCurrency);
     if (rate > 0) {
-      const converted = limitInBase * rate;
-      return smartRound(converted, targetCurrency);
+      return limits.map(l => smartRound(l * rate, targetCurrency));
     }
   } catch (e) {
-    console.error(`[LIMITS] Failed to convert ${limitInBase} ${LIMITS_BASE_CURRENCY} → ${targetCurrency}:`, e);
+    console.error(`[LIMITS] Failed to convert ${LIMITS_BASE_CURRENCY} → ${targetCurrency}:`, e);
   }
-  // Fallback: return raw value (safe default)
-  return limitInBase;
+  // Fallback: return raw values
+  return limits;
 }
 
 // Smart rounding: integers for weak currencies (GNF, XOF, etc.), 2 decimals for strong (EUR, USD, etc.)
