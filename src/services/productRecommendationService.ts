@@ -154,16 +154,22 @@ async function getPopularProducts(limit = 12): Promise<(RecommendedProduct & { r
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, price, images, rating, category_id')
+      .select('id, name, price, images, rating, category_id, vendors(business_type)')
       .eq('is_active', true)
       .order('rating', { ascending: false, nullsFirst: false })
-      .limit(limit);
+      .limit(limit * 2);
     if (error) {
       console.warn('[Recommendations] Popular products error:', error);
       throw error;
     }
-    console.log('[Recommendations] Popular products loaded:', data?.length || 0);
-    return (data || []).map(p => ({
+    // Filtrer: uniquement les vendeurs avec vente en ligne
+    const allowedTypes = ['hybrid', 'online'];
+    const filtered = (data || []).filter(p => {
+      const vendor = (p as any).vendors;
+      return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
+    }).slice(0, limit);
+    console.log('[Recommendations] Popular products loaded:', filtered.length);
+    return filtered.map(p => ({
       product_id: p.id, name: p.name, price: p.price,
       images: p.images || [], rating: p.rating, category_id: p.category_id, reason: 'popular'
     }));
