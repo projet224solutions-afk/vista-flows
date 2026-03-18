@@ -664,7 +664,7 @@ export default function UniversalWalletDashboard({
                   className="w-full"
                   showText={true}
                   onSuccess={() => {
-                    toast.success('Transfert réussi !');
+                    toast.success(t('wallet.transferSuccess'));
                     loadWallet();
                   }}
                 />
