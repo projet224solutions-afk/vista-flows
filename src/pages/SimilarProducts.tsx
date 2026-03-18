@@ -14,7 +14,6 @@ export default function SimilarProducts() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-5 h-5" />
@@ -29,7 +28,6 @@ export default function SimilarProducts() {
         )}
       </div>
 
-      {/* Grid */}
       <div className="p-4">
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -46,16 +44,14 @@ export default function SimilarProducts() {
             {products.map((p) => (
               <TranslatedProductCard
                 key={p.product_id}
-                product={{
-                  id: p.product_id,
-                  name: p.name,
-                  price: p.price,
-                  images: p.images,
-                  rating: p.rating,
-                  is_active: true,
-                  vendor_id: '',
-                }}
-                onProductClick={(pid) => navigate(`/product/${pid}`)}
+                id={p.product_id}
+                title={p.name}
+                price={p.price}
+                image={p.images || []}
+                rating={p.rating || 0}
+                reviewCount={0}
+                vendor=""
+                onBuy={() => navigate(`/product/${p.product_id}`)}
               />
             ))}
           </div>

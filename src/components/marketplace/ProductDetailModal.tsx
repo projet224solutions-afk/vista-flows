@@ -575,73 +575,30 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             {/* Boutons Produits similaires / Autres produits */}
             <div className="flex gap-2 mt-2">
               <Button
-                variant={recommendationView === 'similar' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 className="flex-1 gap-2"
-                onClick={() => setRecommendationView(recommendationView === 'similar' ? 'none' : 'similar')}
+                onClick={() => {
+                  onClose();
+                  navigate(`/marketplace/similar/${productId}`);
+                }}
               >
                 <Layers className="w-4 h-4" />
                 {t('marketplace.similarProducts') || 'Produits similaires'}
-                {(similar?.length || 0) > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{similar?.length}</Badge>
-                )}
               </Button>
               <Button
-                variant={recommendationView === 'others' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 className="flex-1 gap-2"
-                onClick={() => setRecommendationView(recommendationView === 'others' ? 'none' : 'others')}
+                onClick={() => {
+                  onClose();
+                  navigate(`/marketplace/others/${productId}`);
+                }}
               >
                 <Package className="w-4 h-4" />
                 {t('marketplace.otherProducts') || 'Autres produits'}
               </Button>
             </div>
-
-            {/* Vue Produits similaires */}
-            {recommendationView === 'similar' && (
-              <div className="mt-3 border border-border rounded-lg p-3 bg-muted/30">
-                <ProductRecommendationSection
-                  title={t('marketplace.similarProducts') || 'Produits similaires'}
-                  subtitle={t('marketplace.youMightLike') || 'Vous pourriez aussi aimer'}
-                  icon="star"
-                  products={similar || []}
-                  loading={loadingSimilar}
-                  onProductClick={(id) => {
-                    onClose();
-                    setTimeout(() => navigate(`/product/${id}`), 100);
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Vue Autres produits */}
-            {recommendationView === 'others' && (
-              <div className="mt-3 border border-border rounded-lg p-3 bg-muted/30">
-                {alsoBought && alsoBought.length > 0 && (
-                  <ProductRecommendationSection
-                    title={t('marketplace.alsoBought') || 'Les clients ont aussi acheté'}
-                    subtitle={t('marketplace.oftenBoughtTogether') || 'Souvent achetés ensemble'}
-                    icon="shopping"
-                    products={alsoBought}
-                    loading={loadingAlsoBought}
-                    onProductClick={(id) => {
-                      onClose();
-                      setTimeout(() => navigate(`/product/${id}`), 100);
-                    }}
-                  />
-                )}
-                <ProductRecommendationSection
-                  title={t('marketplace.selectionForYou') || 'Sélection pour vous'}
-                  icon="sparkles"
-                  products={(personalized || []).map(p => ({ ...p, reason: p.reason }))}
-                  loading={loadingPersonalized}
-                  onProductClick={(id) => {
-                    onClose();
-                    setTimeout(() => navigate(`/product/${id}`), 100);
-                  }}
-                />
-              </div>
-            )}
           </div>
 
           {/* Détails */}
