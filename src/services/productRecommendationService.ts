@@ -1,7 +1,6 @@
 /**
  * 🧠 SERVICE DE RECOMMANDATION PRODUITS - 224SOLUTIONS
  * Système intelligent inspiré d'Alibaba/Amazon
- * Suivi comportemental + recommandations personnalisées
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -17,11 +16,19 @@ interface RecommendedProduct {
   category_id?: string;
 }
 
+// Poids par type d'interaction
+const WEIGHTS: Record<ActionType, number> = {
+  view: 1,
+  search: 2,
+  cart: 5,
+  purchase: 10,
+  wishlist: 3,
+};
+
 // ==========================================
 // 📊 TRACKING DES INTERACTIONS
 // ==========================================
 
-/** Enregistrer une interaction utilisateur-produit */
 export async function trackInteraction(
   productId: string,
   actionType: ActionType,
@@ -29,14 +36,15 @@ export async function trackInteraction(
 ): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return; // Ignorer si non connecté
+    if (!user) return;
 
     await supabase
       .from('user_product_interactions')
       .insert({
         user_id: user.id,
         product_id: productId,
-        action_type: actionType,
+        interaction_type: actionType,
+        interaction_weight: WEIGHTS[actionType],
         metadata: metadata || {}
       });
   } catch (err) {
@@ -44,7 +52,6 @@ export async function trackInteraction(
   }
 }
 
-/** Enregistrer une recherche */
 export async function trackSearch(
   query: string,
   resultProductIds?: string[]
@@ -53,12 +60,11 @@ export async function trackSearch(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !resultProductIds?.length) return;
 
-    // Track le premier résultat cliqué comme contexte de recherche
     const inserts = resultProductIds.slice(0, 5).map(pid => ({
       user_id: user.id,
       product_id: pid,
-      action_type: 'search' as ActionType,
-      search_query: query,
+      interaction_type: 'search' as const,
+      interaction_weight: WEIGHTS.search,
       metadata: { query, total_results: resultProductIds.length }
     }));
 
@@ -72,18 +78,13 @@ export async function trackSearch(
 // 🎯 RECOMMANDATIONS
 // ==========================================
 
-/** Produits similaires à un produit donné */
 export async function getSimilarProducts(
   productId: string,
   limit = 10
 ): Promise<RecommendedProduct[]> {
   try {
     const { data, error } = await supabase
-      .rpc('get_similar_products', {
-        p_product_id: productId,
-        p_limit: limit
-      });
-
+      .rpc('get_similar_products', { p_product_id: productId, p_limit: limit });
     if (error) throw error;
     return (data || []) as RecommendedProduct[];
   } catch (err) {
@@ -92,7 +93,6 @@ export async function getSimilarProducts(
   }
 }
 
-/** Recommandations personnalisées pour l'utilisateur */
 export async function getPersonalizedRecommendations(
   limit = 12
 ): Promise<(RecommendedProduct & { reason: string })[]> {
@@ -101,11 +101,7 @@ export async function getPersonalizedRecommendations(
     if (!user) return getPopularProducts(limit);
 
     const { data, error } = await supabase
-      .rpc('get_personalized_recommendations', {
-        p_user_id: user.id,
-        p_limit: limit
-      });
-
+      .rpc('get_personalized_recommendations', { p_user_id: user.id, p_limit: limit });
     if (error) throw error;
     if (!data?.length) return getPopularProducts(limit);
     return data as (RecommendedProduct & { reason: string })[];
@@ -115,18 +111,13 @@ export async function getPersonalizedRecommendations(
   }
 }
 
-/** Produits souvent achetés ensemble */
 export async function getAlsoBoughtProducts(
   productId: string,
   limit = 8
 ): Promise<RecommendedProduct[]> {
   try {
     const { data, error } = await supabase
-      .rpc('get_also_bought_products', {
-        p_product_id: productId,
-        p_limit: limit
-      });
-
+      .rpc('get_also_bought_products', { p_product_id: productId, p_limit: limit });
     if (error) throw error;
     return (data || []) as RecommendedProduct[];
   } catch (err) {
@@ -135,7 +126,6 @@ export async function getAlsoBoughtProducts(
   }
 }
 
-/** Produits populaires dans une catégorie */
 export async function getPopularInCategory(
   categoryId: string,
   limit = 10,
@@ -148,7 +138,6 @@ export async function getPopularInCategory(
         p_limit: limit,
         p_exclude_product_id: excludeProductId || null
       });
-
     if (error) throw error;
     return (data || []) as RecommendedProduct[];
   } catch (err) {
@@ -161,10 +150,7 @@ export async function getPopularInCategory(
 // 🔄 FALLBACKS
 // ==========================================
 
-/** Produits populaires globaux (fallback) */
-async function getPopularProducts(
-  limit = 12
-): Promise<(RecommendedProduct & { reason: string })[]> {
+async function getPopularProducts(limit = 12): Promise<(RecommendedProduct & { reason: string })[]> {
   try {
     const { data, error } = await supabase
       .from('products')
@@ -172,27 +158,15 @@ async function getPopularProducts(
       .eq('is_active', true)
       .order('rating', { ascending: false, nullsFirst: false })
       .limit(limit);
-
     if (error) throw error;
     return (data || []).map(p => ({
-      product_id: p.id,
-      name: p.name,
-      price: p.price,
-      images: p.images || [],
-      rating: p.rating,
-      category_id: p.category_id,
-      reason: 'popular'
+      product_id: p.id, name: p.name, price: p.price,
+      images: p.images || [], rating: p.rating, category_id: p.category_id, reason: 'popular'
     }));
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
 
-/** Fallback si la fonction RPC échoue */
-async function getFallbackProducts(
-  limit: number,
-  excludeId?: string
-): Promise<RecommendedProduct[]> {
+async function getFallbackProducts(limit: number, excludeId?: string): Promise<RecommendedProduct[]> {
   try {
     let query = supabase
       .from('products')
@@ -200,21 +174,11 @@ async function getFallbackProducts(
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(limit);
-
-    if (excludeId) {
-      query = query.neq('id', excludeId);
-    }
-
+    if (excludeId) query = query.neq('id', excludeId);
     const { data } = await query;
     return (data || []).map(p => ({
-      product_id: p.id,
-      name: p.name,
-      price: p.price,
-      images: p.images || [],
-      rating: p.rating,
-      category_id: p.category_id
+      product_id: p.id, name: p.name, price: p.price,
+      images: p.images || [], rating: p.rating, category_id: p.category_id
     }));
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
