@@ -53,6 +53,15 @@ export default function QuickFooter() {
     },
   ];
 
+  const shouldHideFooter =
+    location.pathname.startsWith('/vendor-agent') ||
+    location.pathname.startsWith('/vendeur-digital') ||
+    location.pathname.startsWith('/vendeur');
+
+  if (shouldHideFooter) {
+    return null;
+  }
+
   return (
     <nav 
       className="fixed bottom-0 left-0 right-0 bg-card/98 backdrop-blur-md border-t border-border z-[100] shadow-lg" 
