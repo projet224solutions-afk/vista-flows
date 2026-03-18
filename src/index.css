@@ -638,12 +638,21 @@ All colors MUST be HSL.
     }
   }
 
-  /* Tablette portrait (601px - 768px): 2-3 colonnes */
+  /* Tablette portrait (601px - 768px): back to grid */
   @media (min-width: 601px) and (max-width: 768px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(2, 1fr);
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 0.875rem;
       padding: 0.875rem;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
