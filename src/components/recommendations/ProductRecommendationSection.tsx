@@ -3,7 +3,7 @@
  * Affiche les produits recommandés dans différentes sections
  */
 
-import { useRef } from 'react';
+import { useRef, type WheelEvent } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, ShoppingBag, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -53,11 +53,26 @@ export function ProductRecommendationSection({
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    const scrollAmount = 260;
+
+    const visibleWidth = scrollRef.current.clientWidth;
+    const scrollAmount = Math.max(Math.floor(visibleWidth * 0.8), 180);
+
     scrollRef.current.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth'
     });
+  };
+
+  const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
+    if (!scrollRef.current) return;
+
+    if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+      event.preventDefault();
+      scrollRef.current.scrollBy({
+        left: event.deltaY,
+        behavior: 'smooth'
+      });
+    }
   };
 
   if (!loading && products.length === 0) {
@@ -80,9 +95,10 @@ export function ProductRecommendationSection({
           </div>
         </div>
 
-        {products.length > 3 && (
+        {products.length > 1 && (
           <div className="flex gap-1">
             <Button
+              type="button"
               variant="outline"
               size="icon"
               className="h-7 w-7 rounded-full"
@@ -91,6 +107,7 @@ export function ProductRecommendationSection({
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
             <Button
+              type="button"
               variant="outline"
               size="icon"
               className="h-7 w-7 rounded-full"
@@ -105,12 +122,18 @@ export function ProductRecommendationSection({
       {/* Products carousel */}
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory -mx-1 px-1"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+        onWheel={handleWheel}
+        className="flex gap-2 sm:gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 snap-x snap-mandatory -mx-1 px-1 pr-2 touch-pan-x scroll-smooth"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-x'
+        }}
       >
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="min-w-[160px] max-w-[160px] snap-start">
+            <div key={i} className="min-w-[172px] max-w-[172px] sm:min-w-[190px] sm:max-w-[190px] snap-start shrink-0">
               <Skeleton className="h-[200px] w-full rounded-xl" />
               <Skeleton className="h-4 w-3/4 mt-2" />
               <Skeleton className="h-3 w-1/2 mt-1" />
@@ -120,7 +143,7 @@ export function ProductRecommendationSection({
           products.map((product) => (
             <div
               key={product.product_id}
-              className="min-w-[160px] max-w-[160px] snap-start"
+              className="min-w-[172px] max-w-[172px] sm:min-w-[190px] sm:max-w-[190px] snap-start shrink-0"
               onClick={() => onProductClick?.(product.product_id)}
             >
               <TranslatedProductCard
