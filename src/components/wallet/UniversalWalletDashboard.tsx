@@ -505,7 +505,7 @@ export default function UniversalWalletDashboard({
                   <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                     <p className="text-sm text-orange-700 flex items-center gap-2">
                       <Smartphone className="w-4 h-4" />
-                      Vous recevrez une notification {depositMethod === 'orange' ? 'Orange Money' : 'MTN MoMo'} pour confirmer.
+                      {t('wallet.mobileConfirmNotif')} ({depositMethod === 'orange' ? 'Orange Money' : 'MTN MoMo'})
                     </p>
                   </div>
 
