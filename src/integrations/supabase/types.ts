@@ -28700,6 +28700,14 @@ export type Database = {
       is_pdg_user: { Args: never; Returns: boolean }
       is_real_user: { Args: { p_user_id: string }; Returns: boolean }
       is_vehicle_blocked: { Args: { p_vehicle_id: string }; Returns: boolean }
+      is_vendor_agent_of: {
+        Args: { check_vendor_id: string }
+        Returns: boolean
+      }
+      is_vendor_or_agent: {
+        Args: { check_vendor_id: string }
+        Returns: boolean
+      }
       lock_expense_for_purchase: {
         Args: { expense_uuid: string }
         Returns: undefined
