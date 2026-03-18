@@ -86,7 +86,7 @@ export async function getSimilarProducts(
     const { data, error } = await supabase
       .rpc('get_similar_products', { p_product_id: productId, p_limit: limit });
     if (error) throw error;
-    return (data || []) as RecommendedProduct[];
+    return (data || []).map((d: any) => ({ ...d, product_id: d.product_id || d.id })) as RecommendedProduct[];
   } catch (err) {
     console.warn('[Recommendations] Similar products error:', err);
     return getFallbackProducts(limit, productId);
@@ -104,7 +104,7 @@ export async function getPersonalizedRecommendations(
       .rpc('get_personalized_recommendations', { p_user_id: user.id, p_limit: limit });
     if (error) throw error;
     if (!data?.length) return getPopularProducts(limit);
-    return data as (RecommendedProduct & { reason: string })[];
+    return (data || []).map((d: any) => ({ ...d, product_id: d.product_id || d.id })) as (RecommendedProduct & { reason: string })[];
   } catch (err) {
     console.warn('[Recommendations] Personalized error:', err);
     return getPopularProducts(limit);
@@ -119,7 +119,7 @@ export async function getAlsoBoughtProducts(
     const { data, error } = await supabase
       .rpc('get_also_bought_products', { p_product_id: productId, p_limit: limit });
     if (error) throw error;
-    return (data || []) as RecommendedProduct[];
+    return (data || []).map((d: any) => ({ ...d, product_id: d.product_id || d.id })) as RecommendedProduct[];
   } catch (err) {
     console.warn('[Recommendations] Also bought error:', err);
     return [];
@@ -139,7 +139,7 @@ export async function getPopularInCategory(
         p_exclude_product_id: excludeProductId || null
       });
     if (error) throw error;
-    return (data || []) as RecommendedProduct[];
+    return (data || []).map((d: any) => ({ ...d, product_id: d.product_id || d.id })) as RecommendedProduct[];
   } catch (err) {
     console.warn('[Recommendations] Popular in category error:', err);
     return [];
@@ -154,16 +154,22 @@ async function getPopularProducts(limit = 12): Promise<(RecommendedProduct & { r
   try {
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, price, images, rating, category_id')
+      .select('id, name, price, images, rating, category_id, vendors(business_type)')
       .eq('is_active', true)
       .order('rating', { ascending: false, nullsFirst: false })
-      .limit(limit);
+      .limit(limit * 2);
     if (error) {
       console.warn('[Recommendations] Popular products error:', error);
       throw error;
     }
-    console.log('[Recommendations] Popular products loaded:', data?.length || 0);
-    return (data || []).map(p => ({
+    // Filtrer: uniquement les vendeurs avec vente en ligne
+    const allowedTypes = ['hybrid', 'online'];
+    const filtered = (data || []).filter(p => {
+      const vendor = (p as any).vendors;
+      return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
+    }).slice(0, limit);
+    console.log('[Recommendations] Popular products loaded:', filtered.length);
+    return filtered.map(p => ({
       product_id: p.id, name: p.name, price: p.price,
       images: p.images || [], rating: p.rating, category_id: p.category_id, reason: 'popular'
     }));
@@ -174,13 +180,19 @@ async function getFallbackProducts(limit: number, excludeId?: string): Promise<R
   try {
     let query = supabase
       .from('products')
-      .select('id, name, price, images, rating, category_id')
+      .select('id, name, price, images, rating, category_id, vendors(business_type)')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
-      .limit(limit);
+      .limit(limit * 2);
     if (excludeId) query = query.neq('id', excludeId);
     const { data } = await query;
-    return (data || []).map(p => ({
+    // Filtrer: uniquement les vendeurs avec vente en ligne
+    const allowedTypes = ['hybrid', 'online'];
+    const filtered = (data || []).filter(p => {
+      const vendor = (p as any).vendors;
+      return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
+    }).slice(0, limit);
+    return filtered.map(p => ({
       product_id: p.id, name: p.name, price: p.price,
       images: p.images || [], rating: p.rating, category_id: p.category_id
     }));

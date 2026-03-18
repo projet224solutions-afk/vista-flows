@@ -48,13 +48,13 @@ export function useDiscoveryProducts(limit = 12) {
 
       // 3. Récupérer des produits de catégories NON explorées
       // Uniquement des vendeurs avec vente en ligne activée
+      const allowedTypes = ['hybrid', 'online'];
       let query = supabase
         .from('products')
-        .select('id, name, price, images, rating, category_id, categories(name), vendors!inner(business_type)')
+        .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type)')
         .eq('is_active', true)
-        .in('vendors.business_type', ['hybrid', 'online'])
         .order('rating', { ascending: false })
-        .limit(limit * 2); // On prend plus pour filtrer ensuite
+        .limit(limit * 3); // On prend plus pour filtrer ensuite
 
       // Exclure les catégories déjà vues (si l'utilisateur en a vu)
       if (viewedCategoryIds.length > 0 && viewedCategoryIds.length < 10) {
@@ -68,23 +68,30 @@ export function useDiscoveryProducts(limit = 12) {
       const { data: discoveryData, error } = await query;
       if (error) throw error;
 
-      // Filtrer les produits déjà vus
+      // Filtrer les produits déjà vus ET les vendeurs sans vente en ligne
       const unseen = (discoveryData || [])
-        .filter(p => !viewedIds.includes(p.id))
+        .filter(p => {
+          const vendor = (p as any).vendors;
+          if (!vendor || !vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
+          return !viewedIds.includes(p.id);
+        })
         .slice(0, limit);
 
       // Si pas assez de produits non vus, compléter avec des produits populaires aléatoires
       if (unseen.length < 4) {
         const { data: fallback } = await supabase
           .from('products')
-          .select('id, name, price, images, rating, category_id, categories(name), vendors!inner(business_type)')
+          .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type)')
           .eq('is_active', true)
-          .in('vendors.business_type', ['hybrid', 'online'])
           .order('reviews_count', { ascending: false })
-          .limit(limit);
+          .limit(limit * 2);
 
         const fallbackFiltered = (fallback || [])
-          .filter(p => !viewedIds.includes(p.id) && !unseen.find(u => u.id === p.id))
+          .filter(p => {
+            const vendor = (p as any).vendors;
+            if (!vendor || !vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
+            return !viewedIds.includes(p.id) && !unseen.find(u => u.id === p.id);
+          })
           .slice(0, limit - unseen.length);
 
         unseen.push(...fallbackFiltered);

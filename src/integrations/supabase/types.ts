@@ -28310,10 +28310,10 @@ export type Database = {
         Args: { p_limit?: number; p_product_id: string }
         Returns: {
           co_purchase_count: number
-          images: string[]
+          id: string
+          images: Json
           name: string
           price: number
-          product_id: string
           rating: number
         }[]
       }
@@ -28445,10 +28445,10 @@ export type Database = {
         Args: { p_limit?: number; p_user_id: string }
         Returns: {
           category_id: string
-          images: string[]
+          id: string
+          images: Json
           name: string
           price: number
-          product_id: string
           rating: number
           reason: string
           recommendation_score: number
@@ -28469,11 +28469,11 @@ export type Database = {
           p_limit?: number
         }
         Returns: {
-          images: string[]
+          id: string
+          images: Json
           name: string
-          popularity_score: number
+          popularity: number
           price: number
-          product_id: string
           rating: number
         }[]
       }
@@ -28541,10 +28541,10 @@ export type Database = {
         Args: { p_limit?: number; p_product_id: string }
         Returns: {
           category_id: string
-          images: string[]
+          id: string
+          images: Json
           name: string
           price: number
-          product_id: string
           rating: number
           similarity_score: number
         }[]

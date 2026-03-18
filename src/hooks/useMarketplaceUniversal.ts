@@ -146,7 +146,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       // + Filtrage par pays et ville
       const filtered = (data || []).filter(product => {
         const vendor = (product.vendors as any);
-        if (!vendor) return true;
+        if (!vendor) return false; // Pas de vendeur = pas affiché
         
         // Exclure les vendeurs qui n'ont pas activé la vente en ligne
         // Seuls 'hybrid' (physique + en ligne) et 'online' sont autorisés
