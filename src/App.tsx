@@ -38,6 +38,8 @@ const Auth = lazyWithRetry(() => import("./pages/Auth"));
 const Home = lazyWithRetry(() => import("./pages/Home"));
 const Marketplace = lazyWithRetry(() => import("./pages/Marketplace"));
 const ProductDetail = lazyWithRetry(() => import("./pages/ProductDetail"));
+const SimilarProducts = lazyWithRetry(() => import("./pages/SimilarProducts"));
+const OtherProducts = lazyWithRetry(() => import("./pages/OtherProducts"));
 const VendorShop = lazyWithRetry(() => import("./pages/VendorShop"));
 const Messages = lazyWithRetry(() => import("./pages/Messages"));
 const ServicesProximite = lazyWithRetry(() => import("./pages/ServicesProximite"));
@@ -246,6 +248,8 @@ function App() {
               {/* Main App Routes */}
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/visual-search" element={<VisualSearch />} />
+              <Route path="/marketplace/similar/:id" element={<SimilarProducts />} />
+              <Route path="/marketplace/others/:id" element={<OtherProducts />} />
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/marketplace/product/:id/*" element={<ProductDetail />} />
               <Route path="/product/:id" element={<ProductDetail />} />
