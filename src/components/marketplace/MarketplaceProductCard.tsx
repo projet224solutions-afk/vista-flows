@@ -220,11 +220,11 @@ export function MarketplaceProductCard({
         )}
         
         {/* Price + Stock Status avec conversion automatique */}
-        <div className="flex items-center justify-between gap-1.5 mb-2">
+        <div className="flex items-center justify-between gap-1 mb-1.5 min-w-0">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex flex-col">
+                <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
                   <span className="marketplace-card-price">
                     {formatPrice(price)}
                   </span>
