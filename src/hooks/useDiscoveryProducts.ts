@@ -47,10 +47,12 @@ export function useDiscoveryProducts(limit = 12) {
       }
 
       // 3. Récupérer des produits de catégories NON explorées
+      // Uniquement des vendeurs avec vente en ligne activée
       let query = supabase
         .from('products')
-        .select('id, name, price, images, rating, category_id, categories(name)')
+        .select('id, name, price, images, rating, category_id, categories(name), vendors!inner(business_type)')
         .eq('is_active', true)
+        .in('vendors.business_type', ['hybrid', 'online'])
         .order('rating', { ascending: false })
         .limit(limit * 2); // On prend plus pour filtrer ensuite
 
