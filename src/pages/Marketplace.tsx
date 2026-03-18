@@ -753,17 +753,12 @@ export default function Marketplace() {
               </MarketplaceGrid>
             )}
 
-            {marketplaceHasMore && !marketplaceLoading && (
-              <div className="text-center mt-4 md:mt-6">
-                <Button 
-                  onClick={marketplaceLoadMore} 
-                  disabled={marketplaceLoading}
-                  size={isMobile ? "sm" : "default"}
-                >
-                  {marketplaceLoading ? 'Chargement...' : 'Voir plus'}
-                </Button>
-              </div>
-            )}
+            {/* Infinite Scroll - charge automatiquement au défilement */}
+            <InfiniteScrollTrigger
+              onTrigger={marketplaceLoadMore}
+              hasMore={marketplaceHasMore}
+              isLoading={marketplaceLoading}
+            />
           </>
         )}
       </section>
