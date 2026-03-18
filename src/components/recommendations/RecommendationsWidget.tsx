@@ -45,7 +45,7 @@ export function RecommendationsWidget({
     <div className={className}>
       {showPersonalized && (
         <ProductRecommendationSection
-          title="Recommandé pour vous"
+          title="Sélection pour vous"
           icon="sparkles"
           products={(personalized || []).map(p => ({ ...p, reason: p.reason }))}
           loading={loadingPersonalized}

@@ -742,7 +742,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               </div>
             </div>
 
-            {/* 🧠 Recommandations */}
+            {/* Produits similaires & co-achats */}
             <RecommendationsWidget
               currentProductId={product.id}
               showPersonalized={false}
