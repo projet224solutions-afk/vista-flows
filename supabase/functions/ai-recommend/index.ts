@@ -364,7 +364,7 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
 async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
   const { data } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id, currency")
+    .select("id, name, price, images, rating, category_id")
     .eq("is_active", true)
     .order("rating", { ascending: false, nullsFirst: false })
     .limit(20);
@@ -376,7 +376,6 @@ async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
     images: p.images || [],
     rating: p.rating,
     category_id: p.category_id,
-    currency: p.currency,
     reason: "Populaire",
     score: 50,
   }));
