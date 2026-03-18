@@ -121,26 +121,37 @@ export function POSSystem() {
     // Si on a déjà un vendorId depuis le contexte agent, on l'utilise
     if (agentVendorId) {
       setVendorId(agentVendorId);
+      // Récupérer le user_id du vendeur pour les mutations (mode agent)
+      supabase
+        .from('vendors')
+        .select('user_id')
+        .eq('id', agentVendorId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.user_id) {
+            setVendorUserId(data.user_id);
+            console.log('✅ [POS Agent] vendor user_id récupéré:', data.user_id);
+          }
+        });
       return;
     }
     
     // Sinon, on cherche le vendor_id via l'utilisateur connecté
-    if (user?.id) {
+    if (authUser?.id) {
       supabase
         .from('vendors')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', authUser.id)
         .maybeSingle()
         .then(({ data, error }) => {
           if (data) {
             setVendorId(data.id);
           } else {
-            // Pas de vendor_id trouvé, on chargera tous les produits
             console.log('Pas de vendor trouvé, chargement de tous les produits du marketplace');
           }
         });
     }
-  }, [user?.id, agentVendorId]);
+  }, [authUser?.id, agentVendorId]);
   
   // Charger les produits du vendor depuis la base de données
   const [products, setProducts] = useState<Product[]>([]);
