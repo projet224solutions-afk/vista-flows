@@ -52,8 +52,17 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
     color: 'text-orange-500',
   },
   {
+    key: 'min_international_transfer_amount',
+    label: 'Minimum par Transfert International',
+    description: 'Montant minimum requis pour un transfert entre devises différentes',
+    icon: <Globe className="w-5 h-5" />,
+    defaultValue: 500,
+    category: 'daily',
+    color: 'text-cyan-500',
+  },
+  {
     key: 'max_international_transfer_amount',
-    label: 'Limite par Transfert International',
+    label: 'Maximum par Transfert International',
     description: 'Montant maximum pour un seul transfert entre devises différentes',
     icon: <Globe className="w-5 h-5" />,
     defaultValue: 50_000_000,
