@@ -40,6 +40,7 @@ const Marketplace = lazyWithRetry(() => import("./pages/Marketplace"));
 const ProductDetail = lazyWithRetry(() => import("./pages/ProductDetail"));
 const SimilarProducts = lazyWithRetry(() => import("./pages/SimilarProducts"));
 const OtherProducts = lazyWithRetry(() => import("./pages/OtherProducts"));
+const ForYouPage = lazyWithRetry(() => import("./pages/ForYouPage"));
 const VendorShop = lazyWithRetry(() => import("./pages/VendorShop"));
 const Messages = lazyWithRetry(() => import("./pages/Messages"));
 const ServicesProximite = lazyWithRetry(() => import("./pages/ServicesProximite"));
