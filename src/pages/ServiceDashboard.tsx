@@ -43,12 +43,11 @@ export default function ServiceDashboard() {
       const found = userServices.find((s) => s.id === serviceId);
       if (found) {
         setService(found);
-        autoFillGps(found);
       } else {
         navigate('/services');
       }
     }
-  }, [serviceId, userServices, loading, navigate, autoFillGps]);
+  }, [serviceId, userServices, loading, navigate]);
 
   if (loading) {
     return (
