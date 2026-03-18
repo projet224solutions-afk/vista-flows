@@ -387,10 +387,7 @@ export default function VendeurDashboard() {
         <CommunicationWidget position="bottom-right" showNotifications={true} />
       </Suspense>
 
-      {/* Bannière offline */}
-      <Suspense fallback={null}>
-        <OfflineBanner showSyncInfo={true} position="top" />
-      </Suspense>
+      {/* Bannière offline supprimée - intégrée dans le header */}
     </SidebarProvider>
   );
 }
