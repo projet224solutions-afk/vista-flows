@@ -1003,6 +1003,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_recommendations_cache: {
+        Row: {
+          ai_model: string | null
+          context: Json | null
+          created_at: string | null
+          expires_at: string
+          id: string
+          product_ids: string[]
+          reasons: string[] | null
+          recommendation_type: string
+          scores: number[] | null
+          user_id: string
+        }
+        Insert: {
+          ai_model?: string | null
+          context?: Json | null
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          product_ids?: string[]
+          reasons?: string[] | null
+          recommendation_type?: string
+          scores?: number[] | null
+          user_id: string
+        }
+        Update: {
+          ai_model?: string | null
+          context?: Json | null
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          product_ids?: string[]
+          reasons?: string[] | null
+          recommendation_type?: string
+          scores?: number[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       airline_partners: {
         Row: {
           api_config: Json | null
@@ -22372,6 +22411,72 @@ export type Database = {
         }
         Relationships: []
       }
+      user_behavior_sessions: {
+        Row: {
+          category_id: string | null
+          click_count: number | null
+          created_at: string | null
+          device_type: string | null
+          id: string
+          metadata: Json | null
+          product_id: string | null
+          referrer: string | null
+          scroll_depth: number | null
+          search_query: string | null
+          session_type: string
+          time_spent_seconds: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          click_count?: number | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          referrer?: string | null
+          scroll_depth?: number | null
+          search_query?: string | null
+          session_type?: string
+          time_spent_seconds?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category_id?: string | null
+          click_count?: number | null
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          referrer?: string | null
+          scroll_depth?: number | null
+          search_query?: string | null
+          session_type?: string
+          time_spent_seconds?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_behavior_sessions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_behavior_sessions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
       user_contacts: {
         Row: {
           contact_id: string
@@ -22588,6 +22693,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_search_history: {
+        Row: {
+          clicked_product_ids: string[] | null
+          created_at: string | null
+          id: string
+          query: string
+          results_count: number | null
+          user_id: string
+        }
+        Insert: {
+          clicked_product_ids?: string[] | null
+          created_at?: string | null
+          id?: string
+          query: string
+          results_count?: number | null
+          user_id: string
+        }
+        Update: {
+          clicked_product_ids?: string[] | null
+          created_at?: string | null
+          id?: string
+          query?: string
+          results_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_security_flags: {
         Row: {
