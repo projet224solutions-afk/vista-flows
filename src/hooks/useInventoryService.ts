@@ -182,7 +182,7 @@ export const useInventoryService = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, vendorId, toast]);
+  }, [vendorId, toast]);
 
   useEffect(() => {
     loadData();
