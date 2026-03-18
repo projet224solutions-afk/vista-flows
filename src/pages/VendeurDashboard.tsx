@@ -389,7 +389,7 @@ export default function VendeurDashboard() {
 
       {/* Bannière offline */}
       <Suspense fallback={null}>
-        <OfflineBanner showSyncInfo={true} />
+        <OfflineBanner showSyncInfo={true} position="top" />
       </Suspense>
     </SidebarProvider>
   );
