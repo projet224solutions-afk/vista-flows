@@ -567,7 +567,7 @@ export default function UniversalWalletDashboard({
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <ArrowUpCircle className="w-5 h-5 text-red-600" />
-                Retirer des fonds
+                {t('wallet.withdrawFunds')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
