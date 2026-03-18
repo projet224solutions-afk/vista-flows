@@ -349,8 +349,17 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
 
   if (sender_id === receiver_id) throw new Error("Impossible de transférer vers soi-même");
   if (amount <= 0) throw new Error("Le montant doit être positif");
-  if (amount < MIN_TRANSFER_AMOUNT) throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT}`);
-  if (amount > MAX_TRANSFER_AMOUNT) throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT}`);
+
+  // Load dynamic limits from pdg_settings
+  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit] = await Promise.all([
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_DAILY_TRANSFER),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_INTERNATIONAL_TRANSFER),
+  ]);
+
+  if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()}`);
+  if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()}`);
 
   const transferCode = `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
@@ -373,20 +382,22 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
 
   console.log(`🌍 Transfer: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | Intl: ${isInternational}`);
 
-  // Check daily limit for international
-  if (isInternational) {
-    const today = new Date().toISOString().split("T")[0];
-    const { data: todayTransfers } = await supabase
-      .from("wallet_transfers")
-      .select("amount_sent")
-      .eq("sender_id", sender_id)
-      .eq("status", "completed")
-      .gte("created_at", `${today}T00:00:00Z`);
+  // Check daily limit
+  const today = new Date().toISOString().split("T")[0];
+  const { data: todayTransfers } = await supabase
+    .from("wallet_transfers")
+    .select("amount_sent")
+    .eq("sender_id", sender_id)
+    .eq("status", "completed")
+    .gte("created_at", `${today}T00:00:00Z`);
 
-    const totalToday = (todayTransfers || []).reduce((s: number, t: any) => s + (t.amount_sent || 0), 0);
-    if (totalToday + amount > MAX_TRANSFER_AMOUNT) {
-      throw new Error(`Limite quotidienne de transfert international atteinte`);
-    }
+  const totalToday = (todayTransfers || []).reduce((s: number, t: any) => s + (t.amount_sent || 0), 0);
+
+  if (isInternational) {
+    if (amount > maxIntlLimit) throw new Error(`Limite par transfert international: ${maxIntlLimit.toLocaleString()}`);
+    if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()})`);
+  } else {
+    if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()})`);
   }
 
   if (senderWallet.balance < amount) {
