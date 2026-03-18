@@ -491,7 +491,7 @@ export default function UniversalWalletDashboard({
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Montant personnalisé (GNF)</Label>
+                    <Label>{t('wallet.customAmount')}</Label>
                     <Input
                       type="number"
                       placeholder="Ex: 50000"
@@ -499,7 +499,7 @@ export default function UniversalWalletDashboard({
                       onChange={(e) => setDepositAmount(e.target.value)}
                       min="5000"
                     />
-                    <p className="text-xs text-muted-foreground">Montant minimum: 5,000 GNF</p>
+                    <p className="text-xs text-muted-foreground">{t('wallet.minAmount')}: 5,000 GNF</p>
                   </div>
 
                   <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
