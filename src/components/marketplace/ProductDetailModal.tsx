@@ -622,7 +622,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
             <div>
               <h3 className="font-semibold mb-2">Description</h3>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words overflow-hidden">
                 {product.description || 'Aucune description disponible'}
               </p>
             </div>
