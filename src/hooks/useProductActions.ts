@@ -51,6 +51,9 @@ export function useProductActions({
 }: UseProductActionsProps) {
   const { generatePublicId } = usePublicId();
   const { user } = useAuth();
+  const { userId: vendorAuthUserId } = useCurrentVendor();
+  // Pour la vérification de limites, utiliser le user_id du vendeur (pas de l'agent)
+  const limitCheckUserId = vendorAuthUserId || user?.id;
   const { uploadFile: gcsUploadFile, uploadMultipleFiles } = useStorageUpload();
 
   /**
