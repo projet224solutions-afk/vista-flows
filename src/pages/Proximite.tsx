@@ -294,7 +294,7 @@ export default function Proximite() {
               <span>Rayon: {radiusKm} km</span>
             </div>
             {loading && (
-              <span className="text-muted-foreground flex items-center gap-1">
+              <span className="flex items-center gap-1" style={{ color: BLACK }}>
                 <Loader2 className="w-3 h-3 animate-spin" />
                 {t('common.loading')}
               </span>
