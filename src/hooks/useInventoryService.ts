@@ -95,33 +95,13 @@ export interface InventoryStats {
 }
 
 export const useInventoryService = () => {
-  const { user } = useAuth();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [alerts, setAlerts] = useState<InventoryAlert[]>([]);
   const [history, setHistory] = useState<InventoryHistory[]>([]);
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [vendorId, setVendorId] = useState<string | null>(null);
-
-  // Récupérer le vendor_id
-  useEffect(() => {
-    const getVendorId = async () => {
-      if (!user) return;
-      
-      const { data } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (data) {
-        setVendorId(data.id);
-      }
-    };
-
-    getVendorId();
-  }, [user]);
 
   // Charger les données initiales
   const loadData = useCallback(async () => {
