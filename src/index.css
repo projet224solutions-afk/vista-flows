@@ -706,6 +706,7 @@ All colors MUST be HSL.
     transform: translateY(-4px);
     box-shadow: 0 8px 24px hsl(var(--foreground) / 0.1);
     background: #FFFFFF;
+    border-color: #04439e;
   }
 
   /* Container image carré - Agrandi pour mobile */

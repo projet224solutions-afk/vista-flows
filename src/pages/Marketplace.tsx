@@ -34,15 +34,19 @@ import { cn } from "@/lib/utils";
 import { ScrollToTopButton } from "@/components/marketplace/ScrollToTopButton";
 import { InfiniteScrollTrigger } from "@/components/marketplace/InfiniteScrollTrigger";
 
+// Couleurs de marque
+const BRAND_BLUE = '#04439e';
+const BRAND_ORANGE = '#ff4000';
+
 // Configuration des catégories numériques pour le filtre
 const DIGITAL_CATEGORIES = [
-  { id: 'all', name: 'Tous', icon: Package, gradient: 'from-slate-500 to-slate-600' },
-  { id: 'voyage', name: 'Voyage', icon: Plane, gradient: 'from-primary to-secondary' },
-  { id: 'logiciel', name: 'Logiciels', icon: Monitor, gradient: 'from-purple-500 to-pink-500' },
-  { id: 'formation', name: 'Formations', icon: GraduationCap, gradient: 'from-green-500 to-emerald-500' },
-  { id: 'livre', name: 'Livres', icon: BookOpen, gradient: 'from-amber-500 to-yellow-500' },
-  { id: 'ai', name: 'IA', icon: Bot, gradient: 'from-violet-500 to-fuchsia-500' },
-  { id: 'physique_affilie', name: 'Affiliés', icon: ShoppingBag, gradient: 'from-orange-500 to-red-500' },
+  { id: 'all', name: 'Tous', icon: Package },
+  { id: 'voyage', name: 'Voyage', icon: Plane },
+  { id: 'logiciel', name: 'Logiciels', icon: Monitor },
+  { id: 'formation', name: 'Formations', icon: GraduationCap },
+  { id: 'livre', name: 'Livres', icon: BookOpen },
+  { id: 'ai', name: 'IA', icon: Bot },
+  { id: 'physique_affilie', name: 'Affiliés', icon: ShoppingBag },
 ] as const;
 
 const PAGE_LIMIT = 24;
@@ -460,9 +464,10 @@ export default function Marketplace() {
             className={cn(
               'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
               selectedItemType === 'professional_service' 
-                ? 'bg-primary text-primary-foreground shadow-sm' 
-                : 'bg-card border border-border hover:border-primary/50'
+                ? 'text-white shadow-sm' 
+                : 'bg-card border border-border hover:border-secondary/50'
             )}
+            style={selectedItemType === 'professional_service' ? { backgroundColor: BRAND_BLUE } : undefined}
           >
             <Briefcase className="w-3.5 h-3.5" />
             Services Pro
@@ -472,9 +477,10 @@ export default function Marketplace() {
             className={cn(
               'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
               selectedItemType === 'digital_product' 
-                ? 'bg-accent text-accent-foreground shadow-sm' 
+                ? 'text-white shadow-sm' 
                 : 'bg-card border border-border hover:border-accent/50'
             )}
+            style={selectedItemType === 'digital_product' ? { backgroundColor: BRAND_ORANGE } : undefined}
           >
             <Laptop className="w-3.5 h-3.5" />
             Numériques
@@ -484,7 +490,7 @@ export default function Marketplace() {
 
       {/* 🔥 Filtre Catégories Numériques - Visible uniquement pour les produits numériques */}
       {selectedItemType === 'digital_product' && (
-        <section className="px-2 py-2 border-b border-border bg-gradient-to-r from-accent/5 via-background to-accent/5">
+        <section className="px-2 py-2 border-b border-border">
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {DIGITAL_CATEGORIES.map((cat) => {
               const IconComponent = cat.icon;
@@ -497,18 +503,16 @@ export default function Marketplace() {
                     'flex items-center gap-1.5 px-2 py-1.5 rounded-lg shrink-0 transition-all duration-200',
                     'border text-xs font-medium',
                     isSelected
-                      ? 'bg-accent text-white border-accent shadow-sm scale-[1.02]'
-                      : 'bg-card border-border hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10'
+                      ? 'text-white border-transparent shadow-sm scale-[1.02]'
+                      : 'bg-card border-border hover:border-secondary/30'
                   )}
+                  style={isSelected ? { backgroundColor: BRAND_BLUE } : undefined}
                 >
-                  <div className={cn(
-                    'w-5 h-5 rounded-md flex items-center justify-center',
-                    isSelected ? 'bg-white/20' : `bg-gradient-to-br ${cat.gradient}`
-                  )}>
-                    <IconComponent className={cn(
-                      'w-3 h-3',
-                      isSelected ? 'text-white' : 'text-white'
-                    )} />
+                  <div 
+                    className="w-5 h-5 rounded-md flex items-center justify-center"
+                    style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : BRAND_BLUE }}
+                  >
+                    <IconComponent className="w-3 h-3 text-white" />
                   </div>
                   <span className={cn(
                     'hidden xs:inline',
@@ -577,8 +581,11 @@ export default function Marketplace() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowBrowseModal(true)}
-                className="h-11 w-11 p-0"
+                className="h-11 w-11 p-0 hover:text-white"
+                style={{ color: BRAND_BLUE }}
                 title="Explorer"
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = BRAND_BLUE; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
               >
                 <List className="w-6 h-6" />
               </Button>
