@@ -42,7 +42,7 @@ export function useAutoFillGps() {
       async (position) => {
         const { latitude, longitude } = position.coords;
 
-        const updates: Promise<any>[] = [];
+        const updates: Promise<unknown>[] = [];
 
         for (const v of vendorsToFix) {
           updates.push(
@@ -51,6 +51,7 @@ export function useAutoFillGps() {
               .update({ latitude, longitude })
               .eq('id', v.id)
               .then(() => console.log('✅ GPS auto-fill vendor:', v.id))
+              .catch(() => {})
           );
         }
 
@@ -61,6 +62,7 @@ export function useAutoFillGps() {
               .update({ latitude, longitude })
               .eq('id', s.id)
               .then(() => console.log('✅ GPS auto-fill service:', s.id))
+              .catch(() => {})
           );
         }
 
