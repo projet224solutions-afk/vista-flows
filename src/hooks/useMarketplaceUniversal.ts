@@ -594,6 +594,10 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const endIndex = startIndex + limit;
       const paginatedItems = allItems.slice(startIndex, endIndex);
 
+      // Protection anti-race-condition:
+      // ignorer les anciennes requêtes qui reviennent après une nouvelle sélection
+      if (requestId !== requestIdRef.current) return;
+
       if (reset) {
         setItems(paginatedItems);
         setPage(1);
