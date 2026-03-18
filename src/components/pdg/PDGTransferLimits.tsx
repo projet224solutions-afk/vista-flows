@@ -27,7 +27,7 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
   {
     key: 'min_transfer_amount',
     label: 'Montant Minimum par Transfert',
-    description: 'Le montant le plus bas autorisé pour un seul transfert',
+    description: 'En GNF — converti automatiquement dans la devise de l\'expéditeur',
     icon: <ArrowUpDown className="w-5 h-5" />,
     defaultValue: 100,
     category: 'amount',
@@ -36,7 +36,7 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
   {
     key: 'max_transfer_amount',
     label: 'Montant Maximum par Transfert',
-    description: 'Le montant le plus élevé autorisé pour un seul transfert',
+    description: 'En GNF — converti automatiquement dans la devise de l\'expéditeur',
     icon: <Banknote className="w-5 h-5" />,
     defaultValue: 50_000_000,
     category: 'amount',
@@ -45,7 +45,7 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
   {
     key: 'max_daily_transfer_amount',
     label: 'Limite Quotidienne Globale',
-    description: 'Montant maximum cumulé de transferts par utilisateur par jour',
+    description: 'En GNF — montant cumulé max par jour, converti par devise',
     icon: <TrendingUp className="w-5 h-5" />,
     defaultValue: 50_000_000,
     category: 'daily',
@@ -54,7 +54,7 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
   {
     key: 'min_international_transfer_amount',
     label: 'Minimum par Transfert International',
-    description: 'Montant minimum requis pour un transfert entre devises différentes',
+    description: 'En GNF — converti dans la devise de l\'expéditeur au taux du jour',
     icon: <Globe className="w-5 h-5" />,
     defaultValue: 500,
     category: 'daily',
@@ -63,7 +63,7 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
   {
     key: 'max_international_transfer_amount',
     label: 'Maximum par Transfert International',
-    description: 'Montant maximum pour un seul transfert entre devises différentes',
+    description: 'En GNF — converti dans la devise de l\'expéditeur au taux du jour',
     icon: <Globe className="w-5 h-5" />,
     defaultValue: 50_000_000,
     category: 'daily',

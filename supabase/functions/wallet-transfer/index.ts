@@ -21,6 +21,33 @@ const corsHeaders = {
 const DEFAULT_MIN_TRANSFER = 100;
 const DEFAULT_MAX_TRANSFER = 50000000;
 
+// Base currency for pdg_settings limits (all limits are stored in GNF)
+const LIMITS_BASE_CURRENCY = "GNF";
+
+/**
+ * 🔄 Convertir un seuil (stocké en GNF) vers la devise de l'expéditeur
+ * Ex: min 500 GNF → ~0.05 EUR si 1 EUR = 10000 GNF
+ */
+async function convertLimitToCurrency(
+  limitInBase: number,
+  targetCurrency: string,
+  getFxRate: (from: string, to: string) => Promise<{ rate: number; source: string; fetched_at: string }>
+): Promise<number> {
+  if (targetCurrency === LIMITS_BASE_CURRENCY) return limitInBase;
+  
+  try {
+    const { rate } = await getFxRate(LIMITS_BASE_CURRENCY, targetCurrency);
+    if (rate > 0) {
+      const converted = limitInBase * rate;
+      return smartRound(converted, targetCurrency);
+    }
+  } catch (e) {
+    console.error(`[LIMITS] Failed to convert ${limitInBase} ${LIMITS_BASE_CURRENCY} → ${targetCurrency}:`, e);
+  }
+  // Fallback: return raw value (safe default)
+  return limitInBase;
+}
+
 // Smart rounding: integers for weak currencies (GNF, XOF, etc.), 2 decimals for strong (EUR, USD, etc.)
 const ZERO_DECIMAL_CURRENCIES = new Set([
   "GNF", "XOF", "XAF", "VND", "IDR", "KRW", "JPY", "CLP", "UGX", "RWF",
@@ -217,15 +244,6 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
   const { sender_id, amount } = body;
   let { receiver_id } = body;
 
-  // Load dynamic limits from pdg_settings
-  const [minLimit, maxLimit] = await Promise.all([
-    getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
-    getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
-  ]);
-
-  if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()}`);
-  if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()}`);
-
   const resolvedReceiverId = await resolveRecipientId(supabase, receiver_id);
   if (!resolvedReceiverId) throw new Error(`Destinataire "${receiver_id}" introuvable`);
   receiver_id = resolvedReceiverId;
@@ -240,6 +258,24 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
 
   if (senderResult.error) throw new Error("Wallet expéditeur non trouvé");
   if (receiverResult.error) throw new Error("Wallet destinataire non trouvé");
+
+  const senderCurrency = (senderResult.data.currency || "GNF").toUpperCase();
+
+  // Load dynamic limits from pdg_settings and convert to sender's currency
+  const [minLimitRaw, maxLimitRaw] = await Promise.all([
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
+  ]);
+
+  const [minLimit, maxLimit] = await Promise.all([
+    convertLimitToCurrency(minLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(maxLimitRaw, senderCurrency, getFxRateFromAPI),
+  ]);
+
+  console.log(`[LIMITS-PREVIEW] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit}`);
+
+  if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()} ${senderCurrency}`);
+  if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()} ${senderCurrency}`);
   if (senderResult.data.balance < amount) throw new Error("Solde insuffisant");
 
   const senderCurrency = (senderResult.data.currency || "GNF").toUpperCase();
@@ -350,18 +386,6 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   if (sender_id === receiver_id) throw new Error("Impossible de transférer vers soi-même");
   if (amount <= 0) throw new Error("Le montant doit être positif");
 
-  // Load dynamic limits from pdg_settings
-  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit, minIntlLimit] = await Promise.all([
-    getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
-    getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
-    getPdgFeeRate(supabase, FEE_KEYS.MAX_DAILY_TRANSFER),
-    getPdgFeeRate(supabase, FEE_KEYS.MAX_INTERNATIONAL_TRANSFER),
-    getPdgFeeRate(supabase, FEE_KEYS.MIN_INTERNATIONAL_TRANSFER),
-  ]);
-
-  if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()}`);
-  if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()}`);
-
   const transferCode = `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
   // Load wallets
@@ -383,6 +407,29 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
 
   console.log(`🌍 Transfer: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | Intl: ${isInternational}`);
 
+  // Load dynamic limits from pdg_settings (raw values in GNF)
+  const [minLimitRaw, maxLimitRaw, maxDailyLimitRaw, maxIntlLimitRaw, minIntlLimitRaw] = await Promise.all([
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_DAILY_TRANSFER),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_INTERNATIONAL_TRANSFER),
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_INTERNATIONAL_TRANSFER),
+  ]);
+
+  // 🔄 Convert ALL limits to sender's currency
+  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit, minIntlLimit] = await Promise.all([
+    convertLimitToCurrency(minLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(maxLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(maxDailyLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(maxIntlLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(minIntlLimitRaw, senderCurrency, getFxRateFromAPI),
+  ]);
+
+  console.log(`[LIMITS-TRANSFER] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit} | intlMin: ${minIntlLimitRaw}→${minIntlLimit} | intlMax: ${maxIntlLimitRaw}→${maxIntlLimit} | daily: ${maxDailyLimitRaw}→${maxDailyLimit}`);
+
+  if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()} ${senderCurrency}`);
+  if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()} ${senderCurrency}`);
+
   // Check daily limit
   const today = new Date().toISOString().split("T")[0];
   const { data: todayTransfers } = await supabase
@@ -395,11 +442,11 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   const totalToday = (todayTransfers || []).reduce((s: number, t: any) => s + (t.amount_sent || 0), 0);
 
   if (isInternational) {
-    if (amount < minIntlLimit) throw new Error(`Montant minimum international: ${minIntlLimit.toLocaleString()}`);
-    if (amount > maxIntlLimit) throw new Error(`Limite par transfert international: ${maxIntlLimit.toLocaleString()}`);
-    if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()})`);
+    if (amount < minIntlLimit) throw new Error(`Montant minimum international: ${minIntlLimit.toLocaleString()} ${senderCurrency}`);
+    if (amount > maxIntlLimit) throw new Error(`Limite par transfert international: ${maxIntlLimit.toLocaleString()} ${senderCurrency}`);
+    if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()} ${senderCurrency})`);
   } else {
-    if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()})`);
+    if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()} ${senderCurrency})`);
   }
 
   if (senderWallet.balance < amount) {
