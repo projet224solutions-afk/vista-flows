@@ -39,14 +39,28 @@ serve(async (req) => {
       .maybeSingle();
 
     if (cached && cached.product_ids?.length > 0) {
+      console.log("Cache hit, product_ids:", cached.product_ids?.length, "sample:", cached.product_ids?.[0]);
       // Fetch product details for cached recommendations
       const products = await fetchProductDetails(supabase, cached.product_ids);
-      return new Response(JSON.stringify({
-        products,
-        reasons: cached.reasons || [],
-        source: "cache",
-        type
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.log("Cache fetched products:", products.length);
+      
+      // Attach reasons from cache
+      const productsWithReasons = products.map((p: any, i: number) => ({
+        ...p,
+        reason: cached.reasons?.[cached.product_ids.indexOf(p.product_id)] || cached.reasons?.[i] || "Recommandé",
+        score: cached.scores?.[cached.product_ids.indexOf(p.product_id)] || 50,
+      }));
+      
+      if (productsWithReasons.length === 0) {
+        console.log("Cache products empty, bypassing cache");
+        // Don't return, let it fall through to AI
+      } else {
+        return new Response(JSON.stringify({
+          products: productsWithReasons,
+          source: "cache",
+          type
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
     // Gather user behavior data
