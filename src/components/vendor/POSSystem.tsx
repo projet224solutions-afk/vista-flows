@@ -97,8 +97,8 @@ interface Customer {
 
 export function POSSystem() {
   const { settings, loading: settingsLoading, updateSettings } = usePOSSettings();
-  const { user, session } = useAuth();
-  const { vendorId: agentVendorId } = useAgent(); // Récupérer le vendor_id depuis le contexte agent
+  const { user: authUser, session } = useAuth();
+  const { vendorId: agentVendorId, agent } = useAgent(); // Récupérer le vendor_id depuis le contexte agent
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   
@@ -107,6 +107,15 @@ export function POSSystem() {
   
   // Récupérer le vendor_id de l'utilisateur connecté ou du contexte agent
   const [vendorId, setVendorId] = useState<string | null>(agentVendorId || null);
+  
+  // En mode agent, utiliser le user_id du vendeur pour les mutations
+  const [vendorUserId, setVendorUserId] = useState<string | null>(null);
+  const user = useMemo(() => {
+    if (agent && vendorUserId) {
+      return { ...authUser, id: vendorUserId };
+    }
+    return authUser;
+  }, [authUser, agent, vendorUserId]);
   
   useEffect(() => {
     // Si on a déjà un vendorId depuis le contexte agent, on l'utilise
