@@ -238,7 +238,7 @@ export function ProductImageCarousel({
 
       {/* Badge nombre d'images (discret) */}
       {images.length > 1 && (
-        <div className="absolute top-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute top-2 right-10 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-white text-xs font-medium">
             {currentIndex + 1}/{images.length}
           </div>
