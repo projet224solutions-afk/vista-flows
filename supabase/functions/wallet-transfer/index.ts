@@ -506,8 +506,11 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
 
     // Create transaction history entries
     const transferLabel = isInternational ? "🌍 Transfert international" : "Transfert";
+    const txIdOut = `TRF-OUT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    const txIdIn = `TRF-IN-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
     await Promise.all([
       supabase.from("wallet_transactions").insert({
+        transaction_id: txIdOut,
         sender_wallet_id: senderWallet.id,
         sender_user_id: sender_id,
         receiver_wallet_id: receiverWallet.id,
@@ -529,6 +532,7 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
         },
       }),
       supabase.from("wallet_transactions").insert({
+        transaction_id: txIdIn,
         sender_wallet_id: senderWallet.id,
         sender_user_id: sender_id,
         receiver_wallet_id: receiverWallet.id,
