@@ -564,7 +564,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           </div>
 
           {/* Détails */}
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0 overflow-hidden">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <LocalPrice 
