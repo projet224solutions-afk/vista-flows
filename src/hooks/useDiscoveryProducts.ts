@@ -22,44 +22,44 @@ export function useDiscoveryProducts(limit = 12) {
   const { user, loading: authLoading } = useAuth();
 
   return useQuery({
-    queryKey: ['discovery-products', user?.id],
+    queryKey: ['discovery-products', user?.id ?? 'anon'],
     queryFn: async (): Promise<DiscoveryProduct[]> => {
-      // 1. Récupérer les catégories déjà vues par l'utilisateur
-      const { data: viewedProducts } = await supabase
-        .from('product_views')
-        .select('product_id')
-        .eq('user_id', user!.id)
-        .order('viewed_at', { ascending: false })
-        .limit(50);
+      const allowedTypes = ['hybrid', 'online'];
 
-      const viewedIds = (viewedProducts || []).map(v => v.product_id);
-
-      // 2. Récupérer les category_id des produits vus
+      // 1. Récupérer les produits vus (si connecté)
+      let viewedIds: string[] = [];
       let viewedCategoryIds: string[] = [];
-      if (viewedIds.length > 0) {
-        const { data: viewedCats } = await supabase
-          .from('products')
-          .select('category_id')
-          .in('id', viewedIds)
-          .not('category_id', 'is', null);
 
-        viewedCategoryIds = [...new Set((viewedCats || []).map(p => p.category_id).filter(Boolean))] as string[];
+      if (user) {
+        const { data: viewedProducts } = await supabase
+          .from('product_views')
+          .select('product_id')
+          .eq('user_id', user.id)
+          .order('viewed_at', { ascending: false })
+          .limit(50);
+
+        viewedIds = (viewedProducts || []).map(v => v.product_id);
+
+        if (viewedIds.length > 0) {
+          const { data: viewedCats } = await supabase
+            .from('products')
+            .select('category_id')
+            .in('id', viewedIds)
+            .not('category_id', 'is', null);
+
+          viewedCategoryIds = [...new Set((viewedCats || []).map(p => p.category_id).filter(Boolean))] as string[];
+        }
       }
 
-      // 3. Récupérer des produits de catégories NON explorées
-      // Uniquement des vendeurs avec vente en ligne activée
-      const allowedTypes = ['hybrid', 'online'];
+      // 2. Récupérer des produits de catégories NON explorées
       let query = supabase
         .from('products')
         .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type)')
         .eq('is_active', true)
         .order('rating', { ascending: false })
-        .limit(limit * 3); // On prend plus pour filtrer ensuite
+        .limit(limit * 3);
 
-      // Exclure les catégories déjà vues (si l'utilisateur en a vu)
       if (viewedCategoryIds.length > 0 && viewedCategoryIds.length < 10) {
-        // S'il a vu peu de catégories, on exclut celles-là
-        // Sinon on prend tout mais on exclut les produits déjà vus
         for (const catId of viewedCategoryIds.slice(0, 5)) {
           query = query.neq('category_id', catId);
         }
@@ -68,7 +68,6 @@ export function useDiscoveryProducts(limit = 12) {
       const { data: discoveryData, error } = await query;
       if (error) throw error;
 
-      // Filtrer les produits déjà vus ET les vendeurs sans vente en ligne
       const unseen = (discoveryData || [])
         .filter(p => {
           const vendor = (p as any).vendors;
@@ -77,7 +76,7 @@ export function useDiscoveryProducts(limit = 12) {
         })
         .slice(0, limit);
 
-      // Si pas assez de produits non vus, compléter avec des produits populaires aléatoires
+      // Si pas assez, compléter avec des produits populaires
       if (unseen.length < 4) {
         const { data: fallback } = await supabase
           .from('products')
@@ -107,7 +106,7 @@ export function useDiscoveryProducts(limit = 12) {
         category_name: (p.categories as any)?.name,
       }));
     },
-    enabled: !authLoading && !!user,
+    enabled: !authLoading,
     staleTime: 20 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     retry: 1,

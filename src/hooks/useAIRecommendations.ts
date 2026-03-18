@@ -44,17 +44,44 @@ async function fetchAIRecommendations(
   return data as AIRecommendationResult;
 }
 
-/** Recommandations personnalisées par IA */
+/** Recommandations personnalisées par IA (fonctionne aussi sans auth avec fallback) */
 export function useAIPersonalized(limit = 20) {
   const { user, loading: authLoading } = useAuth();
 
   return useQuery({
-    queryKey: ['ai-recommendations', 'personalized', user?.id],
+    queryKey: ['ai-recommendations', 'personalized', user?.id ?? 'anon'],
     queryFn: async () => {
-      const result = await fetchAIRecommendations('personalized');
-      return result.products.slice(0, limit);
+      if (user) {
+        try {
+          const result = await fetchAIRecommendations('personalized');
+          if (result.products.length > 0) return result.products.slice(0, limit);
+        } catch { /* fallback */ }
+      }
+      // Fallback: produits récents bien notés
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, price, images, rating, vendor_id, vendors(business_type)')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(limit * 2);
+
+      const allowedTypes = ['hybrid', 'online'];
+      return (data || [])
+        .filter(p => {
+          const vendor = (p as any).vendors;
+          return vendor?.business_type && allowedTypes.includes(vendor.business_type);
+        })
+        .slice(0, limit)
+        .map(p => ({
+          product_id: p.id,
+          name: p.name,
+          price: p.price,
+          images: Array.isArray(p.images) ? (p.images as string[]) : [],
+          rating: p.rating,
+          reason: 'Nouveauté',
+        }));
     },
-    enabled: !authLoading && !!user,
+    enabled: !authLoading,
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
@@ -88,17 +115,44 @@ export function useAIContextual(context: Record<string, unknown> = {}, limit = 1
   });
 }
 
-/** Produits tendances adaptés à l'utilisateur */
+/** Produits tendances adaptés à l'utilisateur (fonctionne aussi sans auth) */
 export function useAITrending(limit = 16) {
   const { user, loading: authLoading } = useAuth();
 
   return useQuery({
-    queryKey: ['ai-recommendations', 'trending', user?.id],
+    queryKey: ['ai-recommendations', 'trending', user?.id ?? 'anon'],
     queryFn: async () => {
-      const result = await fetchAIRecommendations('trending');
-      return result.products.slice(0, limit);
+      // Si l'utilisateur est connecté, utiliser l'IA
+      if (user) {
+        try {
+          const result = await fetchAIRecommendations('trending');
+          if (result.products.length > 0) return result.products.slice(0, limit);
+        } catch { /* fallback ci-dessous */ }
+      }
+      // Fallback: produits populaires directs depuis la DB
+      const { data } = await supabase
+        .from('products')
+        .select('id, name, price, images, rating, vendor_id, vendors(business_type)')
+        .eq('is_active', true)
+        .order('reviews_count', { ascending: false })
+        .limit(limit * 2);
+
+      const allowedTypes = ['hybrid', 'online'];
+      return (data || [])
+        .filter(p => {
+          const vendor = (p as any).vendors;
+          return vendor?.business_type && allowedTypes.includes(vendor.business_type);
+        })
+        .slice(0, limit)
+        .map(p => ({
+          product_id: p.id,
+          name: p.name,
+          price: p.price,
+          images: Array.isArray(p.images) ? (p.images as string[]) : [],
+          rating: p.rating,
+        }));
     },
-    enabled: !authLoading && !!user,
+    enabled: !authLoading,
     staleTime: 15 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
