@@ -537,7 +537,7 @@ export default function UniversalWalletDashboard({
               {depositMethod === 'cash' && (
                 <div className="space-y-4 pt-2">
                   <div className="space-y-2">
-                    <Label>Montant à déposer (GNF)</Label>
+                    <Label>{t('wallet.amountToDeposit')}</Label>
                     <Input
                       type="number"
                       placeholder="Ex: 50000"
