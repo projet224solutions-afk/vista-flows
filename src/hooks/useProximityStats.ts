@@ -273,10 +273,7 @@ export function useProximityStats() {
         newStats.livraison++;
       });
 
-      // 4) Services pro — GPS optionnel : on compte tous les services actifs
-      // Si le service a un GPS valide et est dans le rayon => inRadius
-      // Si le service n'a pas de GPS => on le compte quand même (noGps mais inclus)
-      // Si le service a un GPS mais hors rayon => exclu
+      // 4) Services pro — strict GPS + rayon (cohérent avec ServicesProximite.tsx)
       const serviceTypeCounts: Record<string, number> = {};
       enrichedServices.forEach((service: any) => {
         const lat = service?.latitude;
@@ -285,15 +282,17 @@ export function useProximityStats() {
         
         if (!hasGps) {
           dbg.services.noGps++;
-          // ✅ On inclut quand même les services sans GPS (ils sont actifs)
-          const code = service?.service_types?.code;
-          if (code) {
-            serviceTypeCounts[code] = (serviceTypeCounts[code] || 0) + 1;
-          }
-          return;
+          return; // ❌ Pas de GPS = pas visible en proximité
         }
 
-        const distance = calcDistanceFn(position.latitude, position.longitude, Number(lat), Number(lng));
+        const lat_val = Number(lat);
+        const lng_val = Number(lng);
+        if (!Number.isFinite(lat_val) || !Number.isFinite(lng_val) || (lat_val === 0 && lng_val === 0)) {
+          dbg.services.noGps++;
+          return; // ❌ Coordonnées invalides
+        }
+
+        const distance = calcDistanceFn(position.latitude, position.longitude, lat_val, lng_val);
         if (!Number.isFinite(distance) || distance > RADIUS_KM) {
           dbg.services.outOfRadius++;
           return; // Hors rayon = exclu
