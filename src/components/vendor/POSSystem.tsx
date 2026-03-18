@@ -290,7 +290,7 @@ export function POSSystem() {
       try {
         const { default: offlineDB } = await import('@/lib/offlineDB');
         const pendingEvents = await offlineDB.getPendingEvents();
-        const salesEvents = pendingEvents.filter(e => e.type === 'sale' && e.vendor_id === vendorId);
+        const salesEvents = pendingEvents.filter(e => (e.type === 'sale' || e.type === 'credit_sale') && e.vendor_id === vendorId);
         
         if (salesEvents.length === 0) return;
         
@@ -302,11 +302,12 @@ export function POSSystem() {
             const saleData = event.data;
             
             // Obtenir ou créer un customer_id
+            const customerName = saleData.customer_name || 'Client comptoir';
             const { data: existingCustomer } = await supabase
               .from('customers')
               .select('id')
               .eq('vendor_id', vendorId)
-              .eq('name', saleData.customer_name || 'Client comptoir')
+              .eq('name', customerName)
               .maybeSingle();
             
             let customerId = existingCustomer?.id;
@@ -316,7 +317,7 @@ export function POSSystem() {
                 .from('customers')
                 .insert({
                   vendor_id: vendorId,
-                  name: saleData.customer_name || 'Client comptoir',
+                  name: customerName,
                   phone: saleData.customer_phone || null
                 })
                 .select('id')
@@ -326,8 +327,9 @@ export function POSSystem() {
             
             if (!customerId) continue;
 
-            // Utiliser le order_number de la vente offline ou en générer un nouveau
             const syncOrderNumber = saleData.order_number || `POS-SYNC-${Date.now().toString(36).toUpperCase()}`;
+
+            const isCreditSale = event.type === 'credit_sale';
 
             // Créer la commande
             const { data: order, error: orderError } = await supabase
@@ -340,12 +342,16 @@ export function POSSystem() {
                 subtotal: saleData.subtotal,
                 tax_amount: saleData.tax_amount,
                 discount_amount: saleData.discount_amount,
-                payment_status: 'paid',
+                payment_status: isCreditSale ? 'pending' : 'paid',
                 status: 'confirmed',
                 payment_method: 'cash',
-                shipping_address: { address: 'Point de vente' },
-                notes: `Vente offline synchronisée - ${syncOrderNumber}`,
-                source: 'pos_offline_synced',
+                shipping_address: isCreditSale 
+                  ? { address: 'Vente à crédit', is_credit_sale: true }
+                  : { address: 'Point de vente' },
+                notes: isCreditSale
+                  ? `🔖 VENTE À CRÉDIT (sync offline) - Client: ${customerName}${saleData.customer_phone ? ` - Tél: ${saleData.customer_phone}` : ''}`
+                  : `Vente offline synchronisée - ${syncOrderNumber}`,
+                source: isCreditSale ? 'pos_offline_credit_synced' : 'pos_offline_synced',
                 created_at: saleData.sale_date
               })
               .select('id')
@@ -363,11 +369,35 @@ export function POSSystem() {
             }));
             
             await supabase.from('order_items').insert(orderItems);
-            await supabase.from('orders').update({ status: 'processing' }).eq('id', order.id);
+
+            // Si vente à crédit, créer l'entrée dans vendor_credit_sales
+            if (isCreditSale) {
+              await supabase.from('vendor_credit_sales').insert([{
+                vendor_id: vendorId,
+                customer_name: customerName,
+                customer_phone: saleData.customer_phone || null,
+                order_number: syncOrderNumber,
+                total: saleData.total_amount,
+                subtotal: saleData.subtotal,
+                remaining_amount: saleData.total_amount,
+                due_date: saleData.due_date,
+                notes: saleData.credit_notes || `Produits: ${saleData.items.map((i: any) => `${i.product_name} x${i.quantity}`).join(', ')}`,
+                items: saleData.items.map((item: any) => ({
+                  id: item.product_id,
+                  name: item.product_name,
+                  price: item.unit_price,
+                  quantity: item.quantity,
+                  images: item.images || []
+                })),
+                status: 'pending'
+              }]);
+            } else {
+              await supabase.from('orders').update({ status: 'processing' }).eq('id', order.id);
+            }
             
             // Marquer l'événement comme synchronisé
             await offlineDB.markEventAsSynced(event.client_event_id);
-            console.log(`✅ Vente offline ${saleData.order_number} synchronisée`);
+            console.log(`✅ ${isCreditSale ? 'Vente à crédit' : 'Vente'} offline ${saleData.order_number} synchronisée`);
             
           } catch (syncError) {
             console.error('Erreur sync vente offline:', syncError);
