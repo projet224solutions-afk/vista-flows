@@ -1,9 +1,9 @@
 /**
  * 🎯 SECTION RECOMMANDATIONS PRODUITS - 224SOLUTIONS
- * Affiche les produits recommandés dans différentes sections
+ * Carrousel style Alibaba : grille 2 rangées défilable horizontalement
  */
 
-import { useRef, type WheelEvent } from 'react';
+import { useRef, useState, useEffect, useCallback, type WheelEvent, type TouchEvent } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, ShoppingBag, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -50,28 +50,73 @@ export function ProductRecommendationSection({
 }: ProductRecommendationSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const Icon = ICONS[icon];
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isScrollingRef = useRef(false);
+
+  // Vérifier la position de scroll
+  const checkScrollPosition = useCallback(() => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    setCanScrollLeft(scrollLeft > 2);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 2);
+  }, []);
+
+  useEffect(() => {
+    checkScrollPosition();
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener('scroll', checkScrollPosition, { passive: true });
+      const resizeObserver = new ResizeObserver(checkScrollPosition);
+      resizeObserver.observe(el);
+      return () => {
+        el.removeEventListener('scroll', checkScrollPosition);
+        resizeObserver.disconnect();
+      };
+    }
+  }, [checkScrollPosition, products]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-
-    const visibleWidth = scrollRef.current.clientWidth;
-    const scrollAmount = Math.max(Math.floor(visibleWidth * 0.8), 180);
-
+    const cardWidth = 160;
+    const scrollAmount = cardWidth * 2;
     scrollRef.current.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth'
     });
   };
 
+  // Gérer le scroll souris pour transformer vertical → horizontal
   const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
     if (!scrollRef.current) return;
-
     if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
       event.preventDefault();
+      event.stopPropagation();
       scrollRef.current.scrollBy({
-        left: event.deltaY,
-        behavior: 'smooth'
+        left: event.deltaY * 1.5,
+        behavior: 'auto'
       });
+    }
+  };
+
+  // Touch handlers pour une navigation fluide
+  const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
+    touchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    };
+    isScrollingRef.current = false;
+  };
+
+  const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
+    if (!touchStartRef.current || !scrollRef.current) return;
+    const dx = Math.abs(e.touches[0].clientX - touchStartRef.current.x);
+    const dy = Math.abs(e.touches[0].clientY - touchStartRef.current.y);
+    
+    // Si le mouvement est majoritairement horizontal, on prend le contrôle
+    if (dx > dy && dx > 10) {
+      isScrollingRef.current = true;
     }
   };
 
@@ -79,30 +124,39 @@ export function ProductRecommendationSection({
     return null;
   }
 
+  // Organiser les produits en 2 rangées pour le style Alibaba
+  const rows = products.length > 3 ? 2 : 1;
+  const row1 = products.filter((_, i) => i % 2 === 0);
+  const row2 = products.filter((_, i) => i % 2 === 1);
+
   return (
     <section className={cn('py-4', className)}>
-      {/* Header */}
+      {/* Header style Alibaba */}
       <div className="flex items-center justify-between mb-3 px-1">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             <Icon className="h-4 w-4 text-primary" />
           </div>
-          <div>
-            <h3 className="font-bold text-sm text-foreground">{title}</h3>
+          <div className="min-w-0">
+            <h3 className="font-bold text-sm text-foreground truncate">{title}</h3>
             {subtitle && (
-              <p className="text-xs text-muted-foreground">{subtitle}</p>
+              <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
             )}
           </div>
         </div>
 
-        {products.length > 1 && (
-          <div className="flex gap-1">
+        {products.length > 2 && (
+          <div className="flex gap-1 shrink-0 ml-2">
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="h-7 w-7 rounded-full"
+              className={cn(
+                "h-7 w-7 rounded-full transition-opacity",
+                !canScrollLeft && "opacity-40 cursor-default"
+              )}
               onClick={() => scroll('left')}
+              disabled={!canScrollLeft}
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
@@ -110,8 +164,12 @@ export function ProductRecommendationSection({
               type="button"
               variant="outline"
               size="icon"
-              className="h-7 w-7 rounded-full"
+              className={cn(
+                "h-7 w-7 rounded-full transition-opacity",
+                !canScrollRight && "opacity-40 cursor-default"
+              )}
               onClick={() => scroll('right')}
+              disabled={!canScrollRight}
             >
               <ChevronRight className="h-3.5 w-3.5" />
             </Button>
@@ -119,53 +177,115 @@ export function ProductRecommendationSection({
         )}
       </div>
 
-      {/* Products carousel */}
-      <div
-        ref={scrollRef}
-        onWheel={handleWheel}
-        className="flex gap-2 sm:gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 snap-x snap-mandatory -mx-1 px-1 pr-2 touch-pan-x scroll-smooth"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch',
-          touchAction: 'pan-x'
-        }}
-      >
-        {loading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="min-w-[172px] max-w-[172px] sm:min-w-[190px] sm:max-w-[190px] snap-start shrink-0">
-              <Skeleton className="h-[200px] w-full rounded-xl" />
-              <Skeleton className="h-4 w-3/4 mt-2" />
-              <Skeleton className="h-3 w-1/2 mt-1" />
+      {/* Carrousel grille 2 rangées - style Alibaba */}
+      <div className="relative">
+        {/* Gradient fade gauche */}
+        {canScrollLeft && (
+          <div className="absolute left-0 top-0 bottom-0 w-6 z-10 pointer-events-none bg-gradient-to-r from-background to-transparent" />
+        )}
+        {/* Gradient fade droite */}
+        {canScrollRight && (
+          <div className="absolute right-0 top-0 bottom-0 w-6 z-10 pointer-events-none bg-gradient-to-l from-background to-transparent" />
+        )}
+
+        <div
+          ref={scrollRef}
+          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          className="overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {loading ? (
+            <div className="flex gap-2 px-1">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="min-w-[148px] max-w-[148px] sm:min-w-[170px] sm:max-w-[170px] shrink-0">
+                  <Skeleton className="h-[180px] w-full rounded-xl" />
+                  <Skeleton className="h-4 w-3/4 mt-2" />
+                  <Skeleton className="h-3 w-1/2 mt-1" />
+                </div>
+              ))}
             </div>
-          ))
-        ) : (
-          products.map((product) => (
-            <div
-              key={product.product_id}
-              className="min-w-[172px] max-w-[172px] sm:min-w-[190px] sm:max-w-[190px] snap-start shrink-0"
-              onClick={() => onProductClick?.(product.product_id)}
-            >
-              <TranslatedProductCard
-                id={product.product_id}
-                image={product.images?.[0] || '/placeholder.svg'}
-                title={product.name}
-                price={product.price}
-                rating={product.rating || 0}
-                reviewCount={0}
-                vendor=""
-                onAddToCart={() => onAddToCart?.(product.product_id)}
-              />
-              {product.reason && (
-                <div className="mt-1">
-                  <ReasonBadge reason={product.reason} />
+          ) : rows === 1 ? (
+            /* Une seule rangée si peu de produits */
+            <div className="flex gap-2 px-1 pb-2">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.product_id}
+                  product={product}
+                  onProductClick={onProductClick}
+                  onAddToCart={onAddToCart}
+                />
+              ))}
+            </div>
+          ) : (
+            /* Grille 2 rangées style Alibaba */
+            <div className="flex flex-col gap-2 px-1 pb-2">
+              <div className="flex gap-2">
+                {row1.map((product) => (
+                  <ProductCard
+                    key={product.product_id}
+                    product={product}
+                    onProductClick={onProductClick}
+                    onAddToCart={onAddToCart}
+                  />
+                ))}
+              </div>
+              {row2.length > 0 && (
+                <div className="flex gap-2">
+                  {row2.map((product) => (
+                    <ProductCard
+                      key={product.product_id}
+                      product={product}
+                      onProductClick={onProductClick}
+                      onAddToCart={onAddToCart}
+                    />
+                  ))}
                 </div>
               )}
             </div>
-          ))
-        )}
+          )}
+        </div>
       </div>
     </section>
+  );
+}
+
+/* Carte produit compacte pour le carrousel */
+function ProductCard({
+  product,
+  onProductClick,
+  onAddToCart
+}: {
+  product: RecommendedProduct;
+  onProductClick?: (id: string) => void;
+  onAddToCart?: (id: string) => void;
+}) {
+  return (
+    <div
+      className="min-w-[148px] max-w-[148px] sm:min-w-[170px] sm:max-w-[170px] shrink-0 cursor-pointer"
+      onClick={() => onProductClick?.(product.product_id)}
+    >
+      <TranslatedProductCard
+        id={product.product_id}
+        image={product.images?.[0] || '/placeholder.svg'}
+        title={product.name}
+        price={product.price}
+        rating={product.rating || 0}
+        reviewCount={0}
+        vendor=""
+        onAddToCart={() => onAddToCart?.(product.product_id)}
+      />
+      {product.reason && (
+        <div className="mt-1">
+          <ReasonBadge reason={product.reason} />
+        </div>
+      )}
+    </div>
   );
 }
 
