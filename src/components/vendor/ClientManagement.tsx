@@ -62,20 +62,14 @@ export default function ClientManagement() {
   const [showClientDialog, setShowClientDialog] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!currentVendorId || vendorContextLoading) return;
     fetchClients();
-  }, [user]);
+  }, [currentVendorId, vendorContextLoading]);
 
   const fetchClients = async () => {
+    if (!currentVendorId) return;
     try {
-      // Get vendor ID
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (!vendor) return;
+      const vendorIdToUse = currentVendorId;
 
       // Fetch clients who have made orders with this vendor
       const { data: clientsData, error } = await supabase
