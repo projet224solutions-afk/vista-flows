@@ -112,7 +112,10 @@ const statusLabels = {
 };
 
 export default function PaymentProcessor() {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
+  const { userId: vendorUserId, isAgent } = useCurrentVendor();
+  // En mode agent, utiliser le user_id du vendeur pour les transactions
+  const user = isAgent && vendorUserId ? { ...authUser, id: vendorUserId } : authUser;
   const { toast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
