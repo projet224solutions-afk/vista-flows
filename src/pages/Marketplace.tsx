@@ -425,7 +425,7 @@ export default function Marketplace() {
       </header>
 
       {/* Categories - compact on mobile */}
-      <section className="px-2 py-1.5 border-b border-border overflow-hidden">
+      <section className="px-2 py-1.5 border-b border-border overflow-visible sticky top-[52px] sm:top-[60px] z-30 bg-background">
         <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5 -mx-0.5 px-0.5">
           {categories.map((category) => (
             <Badge
