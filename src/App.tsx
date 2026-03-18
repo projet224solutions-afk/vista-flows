@@ -159,11 +159,8 @@ PageLoader.displayName = 'PageLoader';
 
 // Auto-fill GPS component - runs once when user is authenticated
 function GpsAutoFill() {
-  useEffect(() => {
-    import('@/hooks/useAutoFillGps').then(mod => {
-      // Module loaded, but we need to call it differently since hooks can't be called here
-    });
-  }, []);
+  const { autoFillGps } = useAutoFillGpsHook();
+  useEffect(() => { autoFillGps(); }, [autoFillGps]);
   return null;
 }
 
