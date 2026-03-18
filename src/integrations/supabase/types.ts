@@ -30290,6 +30290,8 @@ export type Database = {
         | "mobile_money_out"
         | "card_payment"
         | "bank_transfer"
+        | "transfer_in"
+        | "transfer_out"
       user_presence_status: "online" | "offline" | "away" | "busy" | "in_call"
       user_role:
         | "admin"
@@ -30592,6 +30594,8 @@ export const Constants = {
         "mobile_money_out",
         "card_payment",
         "bank_transfer",
+        "transfer_in",
+        "transfer_out",
       ],
       user_presence_status: ["online", "offline", "away", "busy", "in_call"],
       user_role: [

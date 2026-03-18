@@ -425,14 +425,13 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   }
 
   // Create wallet_transfers record
+  // NOTE: sender_wallet_id/receiver_wallet_id are UUID but wallets.id is bigint - omit them
   const { data: transfer, error: transferError } = await supabase
     .from("wallet_transfers")
     .insert({
       transfer_code: transferCode,
       sender_id,
       receiver_id,
-      sender_wallet_id: senderWallet.id,
-      receiver_wallet_id: receiverWallet.id,
       amount_sent: amount,
       currency_sent: senderCurrency,
       fee_percentage: feePercentage,
@@ -507,8 +506,11 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
 
     // Create transaction history entries
     const transferLabel = isInternational ? "🌍 Transfert international" : "Transfert";
+    const txIdOut = `TRF-OUT-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    const txIdIn = `TRF-IN-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
     await Promise.all([
       supabase.from("wallet_transactions").insert({
+        transaction_id: txIdOut,
         sender_wallet_id: senderWallet.id,
         sender_user_id: sender_id,
         receiver_wallet_id: receiverWallet.id,
@@ -530,6 +532,7 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
         },
       }),
       supabase.from("wallet_transactions").insert({
+        transaction_id: txIdIn,
         sender_wallet_id: senderWallet.id,
         sender_user_id: sender_id,
         receiver_wallet_id: receiverWallet.id,
