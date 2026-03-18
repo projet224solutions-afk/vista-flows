@@ -358,7 +358,6 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
     images: p.images || [],
     rating: p.rating,
     category_id: p.category_id,
-    currency: p.currency,
   }));
 }
 
