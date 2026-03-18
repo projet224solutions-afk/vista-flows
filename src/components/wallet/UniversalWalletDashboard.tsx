@@ -516,7 +516,7 @@ export default function UniversalWalletDashboard({
                         return;
                       }
                       if (!depositAmount || parseFloat(depositAmount) < 5000) {
-                        toast.error('Montant minimum: 5,000 GNF');
+                        toast.error(t('wallet.minDeposit'));
                         return;
                       }
                       toast.info(`Envoi de la demande ${depositMethod === 'orange' ? 'Orange Money' : 'MTN MoMo'}...`);
