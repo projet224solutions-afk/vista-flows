@@ -41,11 +41,16 @@ const RADIUS_KM = 20;
 export default function ServicesProximite() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { userPosition, positionReady, usingRealLocation, getDistanceTo } = useGeoDistance();
+  const { userPosition, positionReady, usingRealLocation } = useGeoDistance();
   const [services, setServices] = useState<ProfessionalService[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("type") || "all");
+  
+  // Stabiliser la position pour éviter les re-renders infinis
+  const positionRef = useRef({ lat: userPosition.latitude, lng: userPosition.longitude });
+  const loadingRef = useRef(false);
+  const hasLoadedRef = useRef(false);
 
   const categories = [
     { id: "all", name: "Tous", icon: "🏪" },
