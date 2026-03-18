@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ export default function UniversalWalletDashboard({
   showTransactions = true 
 }: UniversalWalletDashboardProps) {
   const { convert } = usePriceConverter();
+  const { t } = useTranslation();
   const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ export default function UniversalWalletDashboard({
             
             if (rpcError) {
               console.error('❌ Erreur RPC initialize_user_wallet:', rpcError);
-              toast.error(`Impossible d'initialiser le wallet: ${rpcError.message}`);
+              toast.error(t('wallet.depositError'));
               throw rpcError;
             }
             
@@ -112,7 +114,7 @@ export default function UniversalWalletDashboard({
             
             console.log('✅ Wallet rechargé avec succès:', reloadedWallet);
             setWallet(reloadedWallet);
-            toast.success('Wallet chargé avec succès !');
+            toast.success(t('wallet.depositSuccess'));
             setLoading(false);
             return;
           } catch (initError: any) {
@@ -122,7 +124,7 @@ export default function UniversalWalletDashboard({
           }
         } else {
           // Autre erreur (permissions, etc.)
-          toast.error(`Erreur d'accès au wallet: ${walletError.message}`);
+          toast.error(t('wallet.depositError'));
           throw walletError;
         }
       }
@@ -143,7 +145,7 @@ export default function UniversalWalletDashboard({
       }
     } catch (error: any) {
       console.error('❌ Erreur critique chargement wallet:', error);
-      toast.error(`Erreur: ${error?.message || 'Impossible de charger le wallet'}`);
+      toast.error(t('wallet.depositError'));
       setWallet(null);
     } finally {
       setLoading(false);
@@ -185,11 +187,11 @@ export default function UniversalWalletDashboard({
     if (!wallet) return;
     const amount = parseFloat(depositAmount);
     if (!amount || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('wallet.invalidAmount'));
       return;
     }
     if (amount < 1000) {
-      toast.error('Montant minimum 1000 GNF');
+      toast.error(t('wallet.minDeposit'));
       return;
     }
     
@@ -230,12 +232,12 @@ export default function UniversalWalletDashboard({
       if (transactionError) console.warn('Transaction log failed:', transactionError);
 
       setDepositAmount("");
-      toast.success(`Dépôt de ${convert(amount, 'GNF').formatted} effectué avec succès`);
+      toast.success(t('wallet.depositSuccess'));
       window.dispatchEvent(new Event('wallet-updated'));
       await loadWallet();
     } catch (e: any) {
-      console.error('Erreur dépôt:', e);
-      toast.error(e?.message || 'Erreur lors du dépôt');
+      console.error('Deposit error:', e);
+      toast.error(t('wallet.depositError'));
     } finally {
       setBusy(false);
     }
@@ -245,15 +247,15 @@ export default function UniversalWalletDashboard({
     if (!wallet) return;
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('wallet.invalidAmount'));
       return;
     }
     if (amount < 5000) {
-      toast.error('Montant minimum 5000 GNF');
+      toast.error(t('wallet.minWithdraw'));
       return;
     }
     if (amount > wallet.balance) {
-      toast.error('Solde insuffisant');
+      toast.error(t('wallet.insufficientBalance'));
       return;
     }
     
@@ -294,12 +296,12 @@ export default function UniversalWalletDashboard({
       if (transactionError) console.warn('Transaction log failed:', transactionError);
 
       setWithdrawAmount("");
-      toast.success(`Retrait de ${convert(amount, 'GNF').formatted} effectué avec succès`);
+      toast.success(t('wallet.withdrawSuccess'));
       window.dispatchEvent(new Event('wallet-updated'));
       await loadWallet();
     } catch (e: any) {
-      console.error('Erreur retrait:', e);
-      toast.error(e?.message || 'Erreur lors du retrait');
+      console.error('Withdraw error:', e);
+      toast.error(t('wallet.withdrawError'));
     } finally {
       setBusy(false);
     }
@@ -320,9 +322,9 @@ export default function UniversalWalletDashboard({
           <div className="flex flex-col items-center justify-center gap-4">
             <AlertCircle className="w-12 h-12 text-orange-600" />
             <div className="text-center">
-              <h3 className="font-semibold text-orange-800 mb-2">Wallet non disponible</h3>
+              <h3 className="font-semibold text-orange-800 mb-2">{t('wallet.unavailable')}</h3>
               <p className="text-sm text-orange-600 mb-4">
-                Impossible de charger ou créer votre wallet. Vérifiez votre connexion.
+                {t('error.network')}
               </p>
               <Button 
                 onClick={loadWallet}
@@ -330,7 +332,7 @@ export default function UniversalWalletDashboard({
                 className="border-orange-300 text-orange-700 hover:bg-orange-100"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Réessayer
+                {t('error.tryAgain')}
               </Button>
             </div>
           </div>
@@ -350,7 +352,7 @@ export default function UniversalWalletDashboard({
                 <WalletIcon className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm opacity-90">Solde disponible</p>
+                <p className="text-sm opacity-90">{t('wallet.availableBalance')}</p>
                 <p className="text-3xl font-bold">{balanceDisplay}</p>
               </div>
             </div>
@@ -377,10 +379,10 @@ export default function UniversalWalletDashboard({
           
           <div className="flex gap-2 mt-4">
             <Badge variant="secondary" className="bg-white/20">
-              ID Wallet: {String(wallet.id).slice(0, 8)}...
+              {t('wallet.walletId')}: {String(wallet.id).slice(0, 8)}...
             </Badge>
             <Badge variant="secondary" className="bg-white/20">
-              Devise: {wallet.currency}
+              {t('wallet.walletCurrency')}: {wallet.currency}
             </Badge>
           </div>
         </CardContent>
@@ -391,15 +393,15 @@ export default function UniversalWalletDashboard({
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="deposit" className="flex items-center gap-1">
             <ArrowDownCircle className="w-3 h-3" />
-            Dépôt
+            {t('wallet.deposit')}
           </TabsTrigger>
           <TabsTrigger value="withdraw" className="flex items-center gap-1">
             <ArrowUpCircle className="w-3 h-3" />
-            Retrait
+            {t('wallet.withdraw')}
           </TabsTrigger>
           <TabsTrigger value="transfer" className="flex items-center gap-1">
             <WalletIcon className="w-3 h-3" />
-            Transfert
+            {t('wallet.transfer')}
           </TabsTrigger>
         </TabsList>
 
@@ -409,13 +411,13 @@ export default function UniversalWalletDashboard({
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <ArrowDownCircle className="w-5 h-5 text-green-600" />
-                Recharger mon wallet
+                {t('wallet.rechargeMyWallet')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Sélection de la méthode */}
               <div className="space-y-2">
-                <Label>Méthode de paiement</Label>
+                <Label>{t('wallet.paymentMethod')}</Label>
                 <div className="grid grid-cols-3 gap-2">
                   <Button
                     type="button"
@@ -424,7 +426,7 @@ export default function UniversalWalletDashboard({
                     className="flex flex-col items-center gap-1 h-auto py-3"
                   >
                     <CreditCard className="w-5 h-5" />
-                    <span className="text-xs">Carte</span>
+                    <span className="text-xs">{t('wallet.card')}</span>
                   </Button>
                   <Button
                     type="button"
@@ -459,7 +461,7 @@ export default function UniversalWalletDashboard({
               {(depositMethod === 'orange' || depositMethod === 'momo') && (
                 <div className="space-y-4 pt-2">
                   <div className="space-y-2">
-                    <Label>Numéro de téléphone</Label>
+                   <Label>{t('wallet.phoneNumber')}</Label>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md">+224</span>
                       <Input
@@ -472,7 +474,7 @@ export default function UniversalWalletDashboard({
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Montants rapides</Label>
+                    <Label>{t('wallet.quickAmounts')}</Label>
                     <div className="grid grid-cols-3 gap-2">
                       {[10000, 25000, 50000, 100000, 250000, 500000].map((amt) => (
                         <Button
@@ -489,7 +491,7 @@ export default function UniversalWalletDashboard({
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Montant personnalisé (GNF)</Label>
+                    <Label>{t('wallet.customAmount')}</Label>
                     <Input
                       type="number"
                       placeholder="Ex: 50000"
@@ -497,24 +499,24 @@ export default function UniversalWalletDashboard({
                       onChange={(e) => setDepositAmount(e.target.value)}
                       min="5000"
                     />
-                    <p className="text-xs text-muted-foreground">Montant minimum: 5,000 GNF</p>
+                    <p className="text-xs text-muted-foreground">{t('wallet.minAmount')}: 5,000 GNF</p>
                   </div>
 
                   <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                     <p className="text-sm text-orange-700 flex items-center gap-2">
                       <Smartphone className="w-4 h-4" />
-                      Vous recevrez une notification {depositMethod === 'orange' ? 'Orange Money' : 'MTN MoMo'} pour confirmer.
+                      {t('wallet.mobileConfirmNotif')} ({depositMethod === 'orange' ? 'Orange Money' : 'MTN MoMo'})
                     </p>
                   </div>
 
                   <Button 
                     onClick={() => {
                       if (!phoneNumber) {
-                        toast.error('Veuillez entrer votre numéro de téléphone');
+                        toast.error(t('wallet.enterPhone'));
                         return;
                       }
                       if (!depositAmount || parseFloat(depositAmount) < 5000) {
-                        toast.error('Montant minimum: 5,000 GNF');
+                        toast.error(t('wallet.minDeposit'));
                         return;
                       }
                       toast.info(`Envoi de la demande ${depositMethod === 'orange' ? 'Orange Money' : 'MTN MoMo'}...`);
@@ -527,7 +529,7 @@ export default function UniversalWalletDashboard({
                     className={`w-full ${depositMethod === 'orange' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-500 hover:bg-yellow-600'}`}
                   >
                     <Smartphone className="w-4 h-4 mr-2" />
-                    Recharger {parseFloat(depositAmount || '0').toLocaleString()} GNF
+                    {t('wallet.recharge')} {convert(parseFloat(depositAmount || '0'), 'GNF').formatted}
                   </Button>
                 </div>
               )}
@@ -535,7 +537,7 @@ export default function UniversalWalletDashboard({
               {depositMethod === 'cash' && (
                 <div className="space-y-4 pt-2">
                   <div className="space-y-2">
-                    <Label>Montant à déposer (GNF)</Label>
+                    <Label>{t('wallet.amountToDeposit')}</Label>
                     <Input
                       type="number"
                       placeholder="Ex: 50000"
@@ -543,7 +545,7 @@ export default function UniversalWalletDashboard({
                       onChange={(e) => setDepositAmount(e.target.value)}
                       min="1000"
                     />
-                    <p className="text-xs text-muted-foreground">Montant minimum: 1,000 GNF</p>
+                    <p className="text-xs text-muted-foreground">{t('wallet.minAmount')}: 1,000 GNF</p>
                   </div>
                   <Button 
                     onClick={() => setShowDepositConfirm(true)} 
@@ -551,7 +553,7 @@ export default function UniversalWalletDashboard({
                     className="w-full"
                   >
                     {busy ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <ArrowDownCircle className="w-4 h-4 mr-2" />}
-                    Déposer {parseFloat(depositAmount || '0').toLocaleString()} GNF
+                    {t('wallet.depositBtn')} {convert(parseFloat(depositAmount || '0'), 'GNF').formatted}
                   </Button>
                 </div>
               )}
@@ -565,13 +567,13 @@ export default function UniversalWalletDashboard({
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <ArrowUpCircle className="w-5 h-5 text-red-600" />
-                Retirer des fonds
+                {t('wallet.withdrawFunds')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Sélection de la méthode */}
               <div className="space-y-2">
-                <Label>Méthode de retrait</Label>
+                <Label>{t('wallet.withdrawalMethod')}</Label>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     type="button"
@@ -597,7 +599,7 @@ export default function UniversalWalletDashboard({
               {/* Numéro pour mobile money */}
               {(withdrawMethod === 'orange' || withdrawMethod === 'momo') && (
                 <div className="space-y-2">
-                  <Label>Numéro de téléphone</Label>
+                  <Label>{t('wallet.phoneNumber')}</Label>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md">+224</span>
                     <Input
@@ -611,7 +613,7 @@ export default function UniversalWalletDashboard({
               )}
 
               <div className="space-y-2">
-                <Label>Montant à retirer (GNF)</Label>
+                <Label>{t('wallet.amountToWithdraw')}</Label>
                 <Input
                   type="number"
                   placeholder="Ex: 50000"
@@ -621,14 +623,14 @@ export default function UniversalWalletDashboard({
                   max={wallet.balance}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Minimum: 5,000 GNF | Disponible: {wallet.balance.toLocaleString()} GNF
+                  {t('wallet.minAmount')}: 5,000 GNF | {t('wallet.availableBalance')}: {convert(wallet.balance, 'GNF').formatted}
                 </p>
               </div>
 
               <Button 
                 onClick={() => {
                   if ((withdrawMethod === 'orange' || withdrawMethod === 'momo') && !phoneNumber) {
-                    toast.error('Veuillez entrer votre numéro de téléphone');
+                    toast.error(t('wallet.enterPhone'));
                     return;
                   }
                   setShowWithdrawConfirm(true);
@@ -638,7 +640,7 @@ export default function UniversalWalletDashboard({
                 className="w-full"
               >
                 {busy ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <ArrowUpCircle className="w-4 h-4 mr-2" />}
-                Retirer {parseFloat(withdrawAmount || '0').toLocaleString()} GNF
+                {t('wallet.withdrawBtn')} {convert(parseFloat(withdrawAmount || '0'), 'GNF').formatted}
               </Button>
             </CardContent>
           </Card>
@@ -650,7 +652,7 @@ export default function UniversalWalletDashboard({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <WalletIcon className="w-5 h-5 text-blue-600" />
-                Transférer de l'argent
+                {t('wallet.transferMoney')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -662,7 +664,7 @@ export default function UniversalWalletDashboard({
                   className="w-full"
                   showText={true}
                   onSuccess={() => {
-                    toast.success('Transfert réussi !');
+                    toast.success(t('wallet.transferSuccess'));
                     loadWallet();
                   }}
                 />
@@ -670,7 +672,7 @@ export default function UniversalWalletDashboard({
                 <div className="text-center p-6">
                   <AlertCircle className="w-8 h-8 mx-auto mb-2 text-orange-500" />
                   <p className="text-sm text-muted-foreground">
-                    Code utilisateur non disponible pour les transferts
+                    {t('wallet.userCodeUnavailable')}
                   </p>
                 </div>
               )}
@@ -688,14 +690,14 @@ export default function UniversalWalletDashboard({
       <AlertDialog open={showDepositConfirm} onOpenChange={setShowDepositConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer le dépôt</AlertDialogTitle>
+            <AlertDialogTitle>{t('wallet.confirmDeposit')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Vous allez déposer {parseFloat(depositAmount || '0').toLocaleString()} GNF sur votre wallet.
+              {t('wallet.depositConfirmMsg')} ({convert(parseFloat(depositAmount || '0'), 'GNF').formatted})
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeposit}>Confirmer</AlertDialogAction>
+            <AlertDialogCancel>{t('wallet.cancelBtn')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeposit}>{t('wallet.confirm')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -703,15 +705,15 @@ export default function UniversalWalletDashboard({
       <AlertDialog open={showWithdrawConfirm} onOpenChange={setShowWithdrawConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer le retrait</AlertDialogTitle>
+            <AlertDialogTitle>{t('wallet.confirmWithdraw')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Vous allez retirer {parseFloat(withdrawAmount || '0').toLocaleString()} GNF de votre wallet.
+              {t('wallet.withdrawConfirmMsg')} ({convert(parseFloat(withdrawAmount || '0'), 'GNF').formatted})
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleWithdraw} className="bg-red-600 hover:bg-red-700">
-              Confirmer
+            <AlertDialogCancel>{t('wallet.cancelBtn')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleWithdraw} className="bg-destructive hover:bg-destructive/90">
+              {t('wallet.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

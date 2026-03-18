@@ -631,17 +631,17 @@ export default function Marketplace() {
                 <SearchBar
                   value={searchQuery}
                   onChange={setSearchQuery}
-                  placeholder="Rechercher un produit numérique..."
+                  placeholder={t('marketplace.searchProducts')}
                 />
               </div>
             )}
 
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs text-muted-foreground">
-                {marketplaceTotal} résultats
+                {marketplaceTotal} {t('marketplace.products').toLowerCase()}
                 {selectedItemType !== 'all' && (
                   <span className="ml-2">
-                    ({selectedItemType === 'product' ? 'Produits' : 'Produits numériques'})
+                    ({selectedItemType === 'product' ? t('marketplace.products') : t('marketplace.digitalProducts')})
                   </span>
                 )}
               </p>
@@ -664,12 +664,10 @@ export default function Marketplace() {
             ) : marketplaceItems.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-2">
-                  {selectedItemType === 'all' ? 'Aucun article trouvé' :
-                   selectedItemType === 'product' ? 'Aucun produit trouvé' :
-                   'Aucun produit numérique trouvé'}
+                   {t('marketplace.noProducts')}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Essayez de modifier vos filtres de recherche
+                  {t('marketplace.noProducts')}
                 </p>
               </div>
             ) : (
@@ -709,7 +707,7 @@ export default function Marketplace() {
                         product_mode: item.product_mode,
                         affiliate_url: item.affiliate_url
                       });
-                      toast.success('Ajouté au panier');
+                      toast.success(t('marketplace.addToCart'));
                     }}
                     onContact={() => handleContactVendor(item.id)}
                   />
