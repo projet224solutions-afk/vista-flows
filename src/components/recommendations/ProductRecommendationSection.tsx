@@ -63,7 +63,7 @@ export function ProductRecommendationSection({
     });
   };
 
-  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+  const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
     if (!scrollRef.current) return;
 
     if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
