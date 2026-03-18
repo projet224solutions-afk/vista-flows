@@ -366,8 +366,9 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
 async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
   const { data } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id")
+    .select("id, name, price, images, rating, category_id, vendors!inner(business_type)")
     .eq("is_active", true)
+    .in("vendors.business_type", ["hybrid", "online"])
     .order("rating", { ascending: false, nullsFirst: false })
     .limit(20);
 
