@@ -553,7 +553,7 @@ export default function UniversalWalletDashboard({
                     className="w-full"
                   >
                     {busy ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <ArrowDownCircle className="w-4 h-4 mr-2" />}
-                    Déposer {parseFloat(depositAmount || '0').toLocaleString()} GNF
+                    {t('wallet.depositBtn')} {convert(parseFloat(depositAmount || '0'), 'GNF').formatted}
                   </Button>
                 </div>
               )}
