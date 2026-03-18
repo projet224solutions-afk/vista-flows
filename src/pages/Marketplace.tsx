@@ -431,66 +431,35 @@ export default function Marketplace() {
         </div>
       </section>
 
-      {/* Filtres de type - Boutons icônes compacts pour mobile */}
-      <section className="px-3 py-2 border-b border-border bg-gradient-to-r from-muted/50 via-background to-muted/50">
-        <div className="flex justify-center gap-2 sm:gap-4">
-          {/* Services Pro - EN PREMIER */}
+      {/* Type filter buttons - inline compact */}
+      <section className="px-2 py-1.5 border-b border-border">
+        <div className="flex justify-center gap-2">
           <button
             onClick={() => {
               setSelectedItemType('professional_service');
               setSelectedDigitalCategory('all');
             }}
-            className={`group relative flex-1 max-w-[140px] h-14 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1.5 transition-all duration-300 ${
+            className={cn(
+              'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
               selectedItemType === 'professional_service' 
-                ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02] ring-2 ring-primary/30' 
-                : 'bg-card border border-border hover:border-primary hover:shadow-md'
-            }`}
-          >
-            <div className={`p-1.5 sm:p-2 rounded-lg transition-all ${
-              selectedItemType === 'professional_service' 
-                ? 'bg-white/20' 
-                : 'bg-primary/10'
-            }`}>
-              <Briefcase className={`w-4 h-4 sm:w-6 sm:h-6 transition-transform group-hover:scale-110 ${
-                selectedItemType === 'professional_service' ? 'text-white' : 'text-primary'
-              }`} />
-            </div>
-            <span className={`text-[9px] sm:text-xs font-medium ${
-              selectedItemType === 'professional_service' ? 'text-white' : 'text-muted-foreground'
-            }`}>
-              Services Pro
-            </span>
-            {selectedItemType === 'professional_service' && (
-              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary/50 animate-pulse" />
+                ? 'bg-primary text-primary-foreground shadow-sm' 
+                : 'bg-card border border-border hover:border-primary/50'
             )}
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            Services Pro
           </button>
-
-          {/* Produits Numériques */}
           <button
             onClick={() => setSelectedItemType('digital_product')}
-            className={`group relative flex-1 max-w-[140px] h-14 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1.5 transition-all duration-300 ${
+            className={cn(
+              'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
               selectedItemType === 'digital_product' 
-                ? 'bg-accent text-white shadow-lg shadow-accent/30 scale-[1.02] ring-2 ring-accent/50' 
-                : 'bg-card border border-border hover:border-accent hover:shadow-md'
-            }`}
-          >
-            <div className={`p-1.5 sm:p-2 rounded-lg transition-all ${
-              selectedItemType === 'digital_product' 
-                ? 'bg-white/20' 
-                : 'bg-accent/10'
-            }`}>
-              <Laptop className={`w-4 h-4 sm:w-6 sm:h-6 transition-transform group-hover:scale-110 ${
-                selectedItemType === 'digital_product' ? 'text-white' : 'text-accent'
-              }`} />
-            </div>
-            <span className={`text-[9px] sm:text-xs font-medium ${
-              selectedItemType === 'digital_product' ? 'text-white' : 'text-muted-foreground'
-            }`}>
-              Numériques
-            </span>
-            {selectedItemType === 'digital_product' && (
-              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent/50 animate-pulse" />
+                ? 'bg-accent text-accent-foreground shadow-sm' 
+                : 'bg-card border border-border hover:border-accent/50'
             )}
+          >
+            <Laptop className="w-3.5 h-3.5" />
+            Numériques
           </button>
         </div>
       </section>
