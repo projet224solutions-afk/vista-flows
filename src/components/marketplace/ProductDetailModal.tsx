@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause } from "lucide-react";
+import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause, Layers, Package } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrencyForCountry } from "@/data/countryMappings";
@@ -16,8 +16,10 @@ import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 import { trackProductView } from "@/services/analyticsTrackingService";
 import { useTrackProductView } from "@/hooks/useProductRecommendations";
-import { RecommendationsWidget } from "@/components/recommendations/RecommendationsWidget";
+import { ProductRecommendationSection } from "@/components/recommendations/ProductRecommendationSection";
+import { useSimilarProducts, useAlsoBoughtProducts, usePersonalizedRecommendations } from "@/hooks/useProductRecommendations";
 import { LocalPrice } from "@/components/ui/LocalPrice";
+import { useTranslation } from "@/hooks/useTranslation";
 interface Product {
   id: string;
   name: string;
@@ -51,13 +53,20 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [recommendationView, setRecommendationView] = useState<'none' | 'similar' | 'others'>('none');
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { t } = useTranslation();
   const hasTrackedView = useRef(false);
   const lastTrackedProductId = useRef<string | null>(null);
 
   // 🧠 Track pour recommandations intelligentes
   useTrackProductView(open && productId ? productId : null);
+  
+  // Recommendation hooks - always called
+  const { data: similar, isLoading: loadingSimilar } = useSimilarProducts(open && productId ? productId : null, 12);
+  const { data: alsoBought, isLoading: loadingAlsoBought } = useAlsoBoughtProducts(open && productId ? productId : null, 12);
+  const { data: personalized, isLoading: loadingPersonalized } = usePersonalizedRecommendations(12);
 
   // Mémoriser les vidéos et images pour le carrousel
   const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
@@ -92,6 +101,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     // Reset tracking when modal closes or product changes
     if (!open) {
       hasTrackedView.current = false;
+      setRecommendationView('none');
     }
   }, [productId, open]);
 
@@ -561,6 +571,77 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 </button>
               ))}
             </div>
+
+            {/* Boutons Produits similaires / Autres produits */}
+            <div className="flex gap-2 mt-2">
+              <Button
+                variant={recommendationView === 'similar' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1 gap-2"
+                onClick={() => setRecommendationView(recommendationView === 'similar' ? 'none' : 'similar')}
+              >
+                <Layers className="w-4 h-4" />
+                {t('marketplace.similarProducts') || 'Produits similaires'}
+                {(similar?.length || 0) > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{similar?.length}</Badge>
+                )}
+              </Button>
+              <Button
+                variant={recommendationView === 'others' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1 gap-2"
+                onClick={() => setRecommendationView(recommendationView === 'others' ? 'none' : 'others')}
+              >
+                <Package className="w-4 h-4" />
+                {t('marketplace.otherProducts') || 'Autres produits'}
+              </Button>
+            </div>
+
+            {/* Vue Produits similaires */}
+            {recommendationView === 'similar' && (
+              <div className="mt-3 border border-border rounded-lg p-3 bg-muted/30">
+                <ProductRecommendationSection
+                  title={t('marketplace.similarProducts') || 'Produits similaires'}
+                  subtitle={t('marketplace.youMightLike') || 'Vous pourriez aussi aimer'}
+                  icon="star"
+                  products={similar || []}
+                  loading={loadingSimilar}
+                  onProductClick={(id) => {
+                    onClose();
+                    setTimeout(() => navigate(`/product/${id}`), 100);
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Vue Autres produits */}
+            {recommendationView === 'others' && (
+              <div className="mt-3 border border-border rounded-lg p-3 bg-muted/30">
+                {alsoBought && alsoBought.length > 0 && (
+                  <ProductRecommendationSection
+                    title={t('marketplace.alsoBought') || 'Les clients ont aussi acheté'}
+                    subtitle={t('marketplace.oftenBoughtTogether') || 'Souvent achetés ensemble'}
+                    icon="shopping"
+                    products={alsoBought}
+                    loading={loadingAlsoBought}
+                    onProductClick={(id) => {
+                      onClose();
+                      setTimeout(() => navigate(`/product/${id}`), 100);
+                    }}
+                  />
+                )}
+                <ProductRecommendationSection
+                  title={t('marketplace.selectionForYou') || 'Sélection pour vous'}
+                  icon="sparkles"
+                  products={(personalized || []).map(p => ({ ...p, reason: p.reason }))}
+                  loading={loadingPersonalized}
+                  onProductClick={(id) => {
+                    onClose();
+                    setTimeout(() => navigate(`/product/${id}`), 100);
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Détails */}
@@ -742,21 +823,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               </div>
             </div>
 
-            {/* Produits similaires & co-achats - pleine largeur style Alibaba */}
-            <div className="-mx-4 px-0 overflow-visible">
-              <div className="px-4">
-                <RecommendationsWidget
-                  currentProductId={product.id}
-                  showPersonalized={false}
-                  showSimilar={true}
-                  showAlsoBought={true}
-                  onProductClick={(id) => {
-                    onClose();
-                    setTimeout(() => navigate(`/product/${id}`), 100);
-                  }}
-                />
-              </div>
-            </div>
 
             {/* Garanties */}
             <div className="space-y-2 pt-4 pb-6">
