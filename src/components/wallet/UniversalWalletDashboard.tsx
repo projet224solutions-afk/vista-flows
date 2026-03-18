@@ -393,15 +393,15 @@ export default function UniversalWalletDashboard({
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="deposit" className="flex items-center gap-1">
             <ArrowDownCircle className="w-3 h-3" />
-            Dépôt
+            {t('wallet.deposit')}
           </TabsTrigger>
           <TabsTrigger value="withdraw" className="flex items-center gap-1">
             <ArrowUpCircle className="w-3 h-3" />
-            Retrait
+            {t('wallet.withdraw')}
           </TabsTrigger>
           <TabsTrigger value="transfer" className="flex items-center gap-1">
             <WalletIcon className="w-3 h-3" />
-            Transfert
+            {t('wallet.transfer')}
           </TabsTrigger>
         </TabsList>
 
