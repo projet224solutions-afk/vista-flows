@@ -631,7 +631,7 @@ export default function Marketplace() {
                 <SearchBar
                   value={searchQuery}
                   onChange={setSearchQuery}
-                  placeholder="Rechercher un produit numérique..."
+                  placeholder={t('marketplace.searchProducts')}
                 />
               </div>
             )}
