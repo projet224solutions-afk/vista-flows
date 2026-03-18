@@ -81,14 +81,17 @@ export function useDiscoveryProducts(limit = 12) {
       if (unseen.length < 4) {
         const { data: fallback } = await supabase
           .from('products')
-          .select('id, name, price, images, rating, category_id, categories(name), vendors!inner(business_type)')
+          .select('id, name, price, images, rating, category_id, categories(name), vendors(business_type)')
           .eq('is_active', true)
-          .in('vendors.business_type', ['hybrid', 'online'])
           .order('reviews_count', { ascending: false })
-          .limit(limit);
+          .limit(limit * 2);
 
         const fallbackFiltered = (fallback || [])
-          .filter(p => !viewedIds.includes(p.id) && !unseen.find(u => u.id === p.id))
+          .filter(p => {
+            const vendor = (p as any).vendors;
+            if (!vendor || !vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
+            return !viewedIds.includes(p.id) && !unseen.find(u => u.id === p.id);
+          })
           .slice(0, limit - unseen.length);
 
         unseen.push(...fallbackFiltered);
