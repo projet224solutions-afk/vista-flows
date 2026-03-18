@@ -340,7 +340,7 @@ export default function Proximite() {
           )}
           
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: BLACK }} />
             <Input
               placeholder={t('home.searchPlaceholder') || t('common.search') + '...'}
               value={searchQuery}
