@@ -21,6 +21,33 @@ const corsHeaders = {
 const DEFAULT_MIN_TRANSFER = 100;
 const DEFAULT_MAX_TRANSFER = 50000000;
 
+// Base currency for pdg_settings limits (all limits are stored in GNF)
+const LIMITS_BASE_CURRENCY = "GNF";
+
+/**
+ * 🔄 Convertir un seuil (stocké en GNF) vers la devise de l'expéditeur
+ * Ex: min 500 GNF → ~0.05 EUR si 1 EUR = 10000 GNF
+ */
+async function convertLimitToCurrency(
+  limitInBase: number,
+  targetCurrency: string,
+  getFxRate: (from: string, to: string) => Promise<{ rate: number; source: string; fetched_at: string }>
+): Promise<number> {
+  if (targetCurrency === LIMITS_BASE_CURRENCY) return limitInBase;
+  
+  try {
+    const { rate } = await getFxRate(LIMITS_BASE_CURRENCY, targetCurrency);
+    if (rate > 0) {
+      const converted = limitInBase * rate;
+      return smartRound(converted, targetCurrency);
+    }
+  } catch (e) {
+    console.error(`[LIMITS] Failed to convert ${limitInBase} ${LIMITS_BASE_CURRENCY} → ${targetCurrency}:`, e);
+  }
+  // Fallback: return raw value (safe default)
+  return limitInBase;
+}
+
 // Smart rounding: integers for weak currencies (GNF, XOF, etc.), 2 decimals for strong (EUR, USD, etc.)
 const ZERO_DECIMAL_CURRENCIES = new Set([
   "GNF", "XOF", "XAF", "VND", "IDR", "KRW", "JPY", "CLP", "UGX", "RWF",
