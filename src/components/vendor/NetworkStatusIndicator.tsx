@@ -24,9 +24,13 @@ export default function NetworkStatusIndicator() {
                     const tx = db.transaction('events', 'readonly');
                     const store = tx.objectStore('events');
                     const index = store.index('by-status');
-                    const countRequest = index.count('pending');
-                    countRequest.onsuccess = () => {
-                        setPendingSync(countRequest.result);
+                    const pendingCountRequest = index.count('pending');
+                    const failedCountRequest = index.count('failed');
+
+                    pendingCountRequest.onsuccess = () => {
+                        failedCountRequest.onsuccess = () => {
+                            setPendingSync((pendingCountRequest.result || 0) + (failedCountRequest.result || 0));
+                        };
                     };
                 }
                 db.close();
