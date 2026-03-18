@@ -89,6 +89,7 @@ export default function ServicesProximite() {
           longitude,
           status,
           service_type_id,
+          user_id,
           service_types (id, name, code, category)
         `)
         .eq('status', 'active')
@@ -101,10 +102,48 @@ export default function ServicesProximite() {
         service_type: item.service_types,
       }));
 
-      // Calculer les distances - uniquement pour les services avec coordonnées GPS valides
+      // Pour les services sans GPS, essayer de récupérer depuis la table vendors (même user_id)
+      const servicesWithoutGps = list.filter(s => s.latitude == null || s.longitude == null);
+      if (servicesWithoutGps.length > 0) {
+        const userIds = [...new Set(servicesWithoutGps.map(s => (s as any).user_id).filter(Boolean))];
+        if (userIds.length > 0) {
+          const { data: vendorsData } = await supabase
+            .from('vendors')
+            .select('user_id, latitude, longitude')
+            .in('user_id', userIds)
+            .not('latitude', 'is', null)
+            .not('longitude', 'is', null);
+
+          if (vendorsData && vendorsData.length > 0) {
+            const vendorGpsMap = new Map(vendorsData.map(v => [v.user_id, { lat: v.latitude, lng: v.longitude }]));
+            list = list.map(s => {
+              if ((s.latitude == null || s.longitude == null) && (s as any).user_id) {
+                const vendorGps = vendorGpsMap.get((s as any).user_id);
+                if (vendorGps) {
+                  return { ...s, latitude: vendorGps.lat, longitude: vendorGps.lng };
+                }
+              }
+              return s;
+            });
+
+            // Mettre à jour en arrière-plan dans la DB pour les prochaines fois
+            for (const s of servicesWithoutGps) {
+              const vendorGps = vendorGpsMap.get((s as any).user_id);
+              if (vendorGps) {
+                supabase
+                  .from('professional_services')
+                  .update({ latitude: vendorGps.lat, longitude: vendorGps.lng })
+                  .eq('id', s.id)
+                  .then(() => console.log('✅ GPS synced for:', s.business_name));
+              }
+            }
+          }
+        }
+      }
+
+      // Calculer les distances
       list = list
         .map((s) => {
-          // Si pas de coordonnées GPS, distance = null
           const hasValidCoords = 
             s.latitude !== null && s.latitude !== undefined && 
             s.longitude !== null && s.longitude !== undefined &&
@@ -113,28 +152,19 @@ export default function ServicesProximite() {
           const distance = hasValidCoords ? getDistanceTo(s.latitude, s.longitude) : null;
           return { ...s, distance };
         })
-        // ✅ NOUVEAU: On garde tous les services actifs
-        // - Services avec GPS dans le rayon: inclus avec distance
-        // - Services avec GPS hors rayon: exclus
-        // - Services sans GPS: inclus (distance = null)
         .filter((s) => {
-          // Pas de GPS = on inclut quand même
           if (s.distance === null) return true;
-          // Avec GPS = on filtre par rayon
           return s.distance <= RADIUS_KM;
         });
 
       // Tri: services avec distance d'abord (plus proches en premier), puis sans GPS à la fin
       list.sort((a, b) => {
-        // Si les deux ont une distance, trier par distance puis rating
         if (a.distance !== null && b.distance !== null) {
           if (a.distance === b.distance) return (b.rating || 0) - (a.rating || 0);
           return a.distance - b.distance;
         }
-        // Services avec GPS avant ceux sans GPS
         if (a.distance !== null && b.distance === null) return -1;
         if (a.distance === null && b.distance !== null) return 1;
-        // Les deux sans GPS: trier par rating
         return (b.rating || 0) - (a.rating || 0);
       });
 
