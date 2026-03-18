@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// Framer-motion supprimé pour réduire TBT de 914ms
 import { 
   Store, 
   Package, 
@@ -33,19 +32,15 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 
-/**
- * SERVICES DE PROXIMITÉ POPULAIRES - Synchronisés EXACTEMENT avec Auth.tsx
- * Structure: 4 services en ligne 1, 2 services centrés en ligne 2
- */
+// Couleurs de la charte : Bleu #04439e et Orange #ff4000
+const BLUE = "#04439e";
+const ORANGE = "#ff4000";
+
 const getProximityPopularServices = (stats: any) => [
-  // Ligne 1 - 4 services (comme Auth.tsx ligne 1428-1445)
   {
     id: "restaurant",
     title: "Restaurant",
     icon: Utensils,
-    color: "from-red-500 to-red-600",
-    bgColor: "bg-red-50",
-    textColor: "text-red-600",
     count: stats.restaurant,
     path: "/services-proximite?type=restaurant",
     description: "Cuisine & plats"
@@ -54,9 +49,6 @@ const getProximityPopularServices = (stats: any) => [
     id: "beaute",
     title: "Beauté & Coiffure",
     icon: Scissors,
-    color: "from-pink-500 to-pink-600",
-    bgColor: "bg-pink-50",
-    textColor: "text-pink-600",
     count: stats.beaute,
     path: "/services-proximite?type=beaute",
     description: "Soins & styling"
@@ -65,9 +57,6 @@ const getProximityPopularServices = (stats: any) => [
     id: "vtc",
     title: "Transport VTC",
     icon: Car,
-    color: "from-slate-600 to-slate-700",
-    bgColor: "bg-slate-50",
-    textColor: "text-slate-600",
     count: stats.vtc,
     path: "/taxi",
     description: "Véhicules privés"
@@ -76,26 +65,17 @@ const getProximityPopularServices = (stats: any) => [
     id: "reparation",
     title: "Réparation",
     icon: Wrench,
-    color: "from-amber-500 to-amber-600",
-    bgColor: "bg-amber-50",
-    textColor: "text-amber-600",
     count: stats.reparation,
     path: "/services-proximite?type=reparation",
     description: "Électro & mécanique"
   }
 ];
 
-/**
- * SERVICES DE PROXIMITÉ COMPLÉMENTAIRES - Ligne 2 Auth.tsx
- */
 const getProximitySecondaryServices = (stats: any) => [
   {
     id: "menage",
     title: "Nettoyage",
     icon: Sparkles,
-    color: "from-cyan-500 to-cyan-600",
-    bgColor: "bg-cyan-50",
-    textColor: "text-cyan-600",
     count: stats.nettoyage,
     path: "/services-proximite?type=menage",
     description: "Ménage & pressing"
@@ -104,27 +84,17 @@ const getProximitySecondaryServices = (stats: any) => [
     id: "informatique",
     title: "Informatique",
     icon: Laptop,
-    color: "from-indigo-500 to-indigo-600",
-    bgColor: "bg-indigo-50",
-    textColor: "text-indigo-600",
     count: stats.informatique,
     path: "/services-proximite?type=informatique",
     description: "Tech & dépannage"
   }
 ];
 
-/**
- * ACCÈS RAPIDE - Services spécifiques à la proximité (Boutiques, Livraison)
- * Ces services ne sont pas dans le formulaire d'inscription mais utiles pour les clients
- */
 const getQuickAccessServices = (stats: any) => [
   {
     id: "boutiques",
     title: "Boutiques",
     icon: Store,
-    color: "from-blue-500 to-blue-600",
-    bgColor: "bg-blue-50",
-    textColor: "text-blue-600",
     count: stats.boutiques,
     path: "/proximite/boutiques",
     description: "Commerces locaux",
@@ -134,16 +104,12 @@ const getQuickAccessServices = (stats: any) => [
     id: "livraison",
     title: "Livraison",
     icon: Package,
-    color: "from-orange-500 to-orange-600",
-    bgColor: "bg-orange-50",
-    textColor: "text-orange-600",
     count: stats.livraison,
     path: "/proximite/livraison",
     description: "Colis & courses"
   }
 ];
 
-// Interface pour les catégories avec comptage de produits
 interface CategoryWithCount {
   id: string;
   name: string;
@@ -151,18 +117,11 @@ interface CategoryWithCount {
   product_count: number;
 }
 
-/**
- * SERVICES PROFESSIONNELS - Synchronisés avec Auth.tsx "Services Professionnels"
- * Ces services correspondent exactement aux boutons de la section violette
- */
 const getProfessionalServices = (stats: any) => [
   {
     id: "sport",
     title: "Sport & Fitness",
     icon: Dumbbell,
-    color: "from-lime-500 to-lime-600",
-    bgColor: "bg-lime-50",
-    textColor: "text-lime-600",
     description: "Coaching & salles",
     count: stats.sport
   },
@@ -170,9 +129,6 @@ const getProfessionalServices = (stats: any) => [
     id: "location",
     title: "Immobilier",
     icon: Building2,
-    color: "from-violet-500 to-violet-600",
-    bgColor: "bg-violet-50",
-    textColor: "text-violet-600",
     description: "Location & vente",
     count: stats.immobilier
   },
@@ -180,9 +136,6 @@ const getProfessionalServices = (stats: any) => [
     id: "media",
     title: "Photo & Vidéo",
     icon: Camera,
-    color: "from-fuchsia-500 to-fuchsia-600",
-    bgColor: "bg-fuchsia-50",
-    textColor: "text-fuchsia-600",
     description: "Événements & création",
     count: stats.media
   },
@@ -190,9 +143,6 @@ const getProfessionalServices = (stats: any) => [
     id: "construction",
     title: "Construction & BTP",
     icon: Building2,
-    color: "from-stone-500 to-stone-600",
-    bgColor: "bg-stone-50",
-    textColor: "text-stone-600",
     description: "Bâtiment & travaux",
     count: stats.construction
   },
@@ -200,9 +150,6 @@ const getProfessionalServices = (stats: any) => [
     id: "agriculture",
     title: "Agriculture",
     icon: ShoppingBag,
-    color: "from-green-500 to-green-600",
-    bgColor: "bg-green-50",
-    textColor: "text-green-600",
     description: "Produits locaux",
     count: stats.agriculture
   },
@@ -210,9 +157,6 @@ const getProfessionalServices = (stats: any) => [
     id: "freelance",
     title: "Administratif",
     icon: ShoppingBag,
-    color: "from-gray-500 to-gray-600",
-    bgColor: "bg-gray-50",
-    textColor: "text-gray-600",
     description: "Secrétariat & conseil",
     count: stats.freelance
   },
@@ -220,9 +164,6 @@ const getProfessionalServices = (stats: any) => [
     id: "sante",
     title: "Santé & Bien-être",
     icon: Heart,
-    color: "from-rose-500 to-rose-600",
-    bgColor: "bg-rose-50",
-    textColor: "text-rose-600",
     description: "Pharmacie & soins",
     count: stats.sante
   },
@@ -230,26 +171,10 @@ const getProfessionalServices = (stats: any) => [
     id: "maison",
     title: "Maison & Déco",
     icon: Home,
-    color: "from-teal-500 to-teal-600",
-    bgColor: "bg-teal-50",
-    textColor: "text-teal-600",
     description: "Intérieur & déco",
     count: stats.maison
   }
 ];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.05 }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
-};
 
 export default function Proximite() {
   const navigate = useNavigate();
@@ -260,25 +185,16 @@ export default function Proximite() {
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
 
-  // Charger uniquement les catégories qui contiennent des produits avec comptage
   useEffect(() => {
     const loadCategoriesWithProducts = async () => {
       try {
-        console.log('📦 Chargement des catégories avec produits...');
-        
-        // D'abord récupérer tous les produits actifs avec leur category_id
         const { data: products, error: productsError } = await supabase
           .from('products')
           .select('id, category_id')
           .eq('is_active', true)
           .not('category_id', 'is', null);
 
-        if (productsError) {
-          console.error('Erreur produits:', productsError);
-          throw productsError;
-        }
-
-        console.log('📦 Produits trouvés:', products?.length || 0);
+        if (productsError) throw productsError;
 
         if (!products || products.length === 0) {
           setProductCategories([]);
@@ -286,7 +202,6 @@ export default function Proximite() {
           return;
         }
 
-        // Compter les produits par category_id
         const categoryCountMap = new Map<string, number>();
         products.forEach((product) => {
           if (product.category_id) {
@@ -295,9 +210,6 @@ export default function Proximite() {
           }
         });
 
-        console.log('📦 Catégories avec produits:', categoryCountMap.size);
-
-        // Récupérer les infos des catégories qui ont des produits
         const categoryIds = Array.from(categoryCountMap.keys());
         
         const { data: categories, error: categoriesError } = await supabase
@@ -305,14 +217,8 @@ export default function Proximite() {
           .select('id, name, image_url')
           .in('id', categoryIds);
 
-        if (categoriesError) {
-          console.error('Erreur catégories:', categoriesError);
-          throw categoriesError;
-        }
+        if (categoriesError) throw categoriesError;
 
-        console.log('📦 Catégories récupérées:', categories?.length || 0);
-
-        // Combiner les données
         const categoriesWithProducts: CategoryWithCount[] = (categories || []).map((cat) => ({
           id: cat.id,
           name: cat.name,
@@ -320,7 +226,6 @@ export default function Proximite() {
           product_count: categoryCountMap.get(cat.id) || 0
         })).sort((a, b) => b.product_count - a.product_count);
 
-        console.log('📦 Catégories finales:', categoriesWithProducts);
         setProductCategories(categoriesWithProducts);
       } catch (error) {
         console.error('❌ Erreur chargement catégories:', error);
@@ -331,7 +236,6 @@ export default function Proximite() {
     loadCategoriesWithProducts();
   }, []);
 
-  // Memoize computed categories based on real stats - Structure comme Auth.tsx
   const proximityPopularServices = useMemo(() => getProximityPopularServices(stats), [stats]);
   const proximitySecondaryServices = useMemo(() => getProximitySecondaryServices(stats), [stats]);
   const quickAccessServices = useMemo(() => getQuickAccessServices(stats), [stats]);
@@ -342,18 +246,18 @@ export default function Proximite() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pb-24">
-      {/* Header avec recherche */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50">
+    <div className="min-h-screen bg-background pb-24">
+      {/* Header */}
+      <div className="sticky top-0 z-40 backdrop-blur-xl border-b" style={{ backgroundColor: 'rgba(255,255,255,0.95)', borderColor: `${BLUE}20` }}>
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-                <MapPin className="w-5 h-5 text-primary-foreground" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ backgroundColor: ORANGE }}>
+                <MapPin className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">{t('home.nearbyServices')}</h1>
-                <p className="text-xs text-muted-foreground">{t('proximity.mostRequested') || 'Tout ce dont vous avez besoin près de chez vous'}</p>
+                <h1 className="text-xl font-bold" style={{ color: BLUE }}>{t('home.nearbyServices')}</h1>
+                <p className="text-xs text-muted-foreground">{t('proximity.mostRequested') || 'Les plus demandés près de vous'}</p>
               </div>
             </div>
             <Button
@@ -362,6 +266,7 @@ export default function Proximite() {
               onClick={refresh}
               disabled={loading}
               className="rounded-full"
+              style={{ color: BLUE }}
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -371,19 +276,20 @@ export default function Proximite() {
             </Button>
           </div>
 
-          {/* Location indicator + Debug toggle */}
+          {/* Location indicator */}
           <div className="flex items-center gap-2 mb-3 text-xs flex-wrap">
             <button 
               onClick={() => setShowDebug(!showDebug)}
-              className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded-full transition-colors",
-                usingRealLocation ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-              )}
+              className="flex items-center gap-1 px-2 py-1 rounded-full transition-colors"
+              style={{ 
+                backgroundColor: usingRealLocation ? '#dcfce7' : '#fef3c7',
+                color: usingRealLocation ? '#15803d' : '#b45309'
+              }}
             >
               <MapPin className="w-3 h-3" />
               <span>{usingRealLocation ? "GPS actif" : "GPS désactivé"}</span>
             </button>
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full" style={{ backgroundColor: `${BLUE}15`, color: BLUE }}>
               <span>Rayon: {radiusKm} km</span>
             </div>
             {loading && (
@@ -396,8 +302,8 @@ export default function Proximite() {
 
           {/* Debug Panel */}
           {showDebug && debugInfo && (
-            <div className="mb-3 p-3 rounded-xl bg-muted/50 border border-border text-xs space-y-2">
-              <div className="font-semibold text-foreground flex items-center gap-2">
+            <div className="mb-3 p-3 rounded-xl border text-xs space-y-2" style={{ backgroundColor: '#f8fafc', borderColor: `${BLUE}20` }}>
+              <div className="font-semibold flex items-center gap-2" style={{ color: BLUE }}>
                 🔍 Debug GPS & Rayon {radiusKm}km
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -409,48 +315,25 @@ export default function Proximite() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Source:</span>
-                  <div className={cn("font-medium", debugInfo.usingRealGps ? "text-green-600" : "text-amber-600")}>
+                  <div className="font-medium" style={{ color: debugInfo.usingRealGps ? '#15803d' : '#b45309' }}>
                     {debugInfo.usingRealGps ? "GPS réel" : "Position par défaut (Coyah)"}
                   </div>
                 </div>
               </div>
-              <div className="border-t border-border pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="bg-background p-2 rounded-lg">
-                  <div className="font-medium text-foreground">Boutiques</div>
-                  <div className="text-muted-foreground">
-                    Total: {debugInfo.vendors.total} | 
-                    <span className="text-red-500"> Sans GPS: {debugInfo.vendors.noGps}</span> | 
-                    <span className="text-amber-500"> Hors rayon: {debugInfo.vendors.outOfRadius}</span> | 
-                    <span className="text-green-600"> ✓ {debugInfo.vendors.inRadius}</span>
+              <div className="border-t pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2" style={{ borderColor: `${BLUE}20` }}>
+                {[
+                  { label: 'Boutiques', data: debugInfo.vendors },
+                  { label: 'Services Pro', data: debugInfo.services },
+                  { label: 'Taxi-Moto', data: debugInfo.taxiMoto },
+                  { label: 'Livreurs', data: debugInfo.drivers }
+                ].map(item => (
+                  <div key={item.label} className="bg-white p-2 rounded-lg">
+                    <div className="font-medium" style={{ color: BLUE }}>{item.label}</div>
+                    <div className="text-muted-foreground text-[10px]">
+                      Total: {item.data.total} | Sans GPS: {item.data.noGps} | Hors: {item.data.outOfRadius} | ✓ {item.data.inRadius}
+                    </div>
                   </div>
-                </div>
-                <div className="bg-background p-2 rounded-lg">
-                  <div className="font-medium text-foreground">Services Pro</div>
-                  <div className="text-muted-foreground">
-                    Total: {debugInfo.services.total} | 
-                    <span className="text-red-500"> Sans GPS: {debugInfo.services.noGps}</span> | 
-                    <span className="text-amber-500"> Hors rayon: {debugInfo.services.outOfRadius}</span> | 
-                    <span className="text-green-600"> ✓ {debugInfo.services.inRadius}</span>
-                  </div>
-                </div>
-                <div className="bg-background p-2 rounded-lg">
-                  <div className="font-medium text-foreground">Taxi-Moto</div>
-                  <div className="text-muted-foreground">
-                    Total: {debugInfo.taxiMoto.total} | 
-                    <span className="text-red-500"> Sans GPS: {debugInfo.taxiMoto.noGps}</span> | 
-                    <span className="text-amber-500"> Hors rayon: {debugInfo.taxiMoto.outOfRadius}</span> | 
-                    <span className="text-green-600"> ✓ {debugInfo.taxiMoto.inRadius}</span>
-                  </div>
-                </div>
-                <div className="bg-background p-2 rounded-lg">
-                  <div className="font-medium text-foreground">Livreurs</div>
-                  <div className="text-muted-foreground">
-                    Total: {debugInfo.drivers.total} | 
-                    <span className="text-red-500"> Sans GPS: {debugInfo.drivers.noGps}</span> | 
-                    <span className="text-amber-500"> Hors rayon: {debugInfo.drivers.outOfRadius}</span> | 
-                    <span className="text-green-600"> ✓ {debugInfo.drivers.inRadius}</span>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           )}
@@ -461,29 +344,27 @@ export default function Proximite() {
               placeholder={t('home.searchPlaceholder') || t('common.search') + '...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50"
+              className="pl-10 h-12 rounded-xl border-0"
+              style={{ backgroundColor: `${BLUE}08`, outline: 'none' }}
             />
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-        {/* ═══════════════════════════════════════════════════════════════════
-            SERVICES DE PROXIMITÉ POPULAIRES - Comme Auth.tsx
-            Structure: Ligne 1 (4 cards) + Ligne 2 (2 cards centrées)
-        ═══════════════════════════════════════════════════════════════════ */}
+        {/* SERVICES DE PROXIMITÉ POPULAIRES */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: BLUE }}>
+                <TrendingUp className="w-5 h-5" style={{ color: ORANGE }} />
                 Services de Proximité Populaires
               </h2>
               <p className="text-sm text-muted-foreground">Les plus demandés près de vous</p>
             </div>
           </div>
 
-          {/* Ligne 1 - 4 services (comme Auth.tsx) */}
+          {/* Ligne 1 - 4 services */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
             {proximityPopularServices.map((service) => {
               const Icon = service.icon;
@@ -491,30 +372,35 @@ export default function Proximite() {
                 <button
                   key={service.id}
                   onClick={() => handleServiceClick(service.path)}
-                  className="group relative bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
+                  className="group relative rounded-2xl p-4 border transition-all duration-300 text-left overflow-hidden hover:shadow-lg"
+                  style={{ borderColor: `${BLUE}15`, backgroundColor: 'white' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = `${BLUE}40`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = `${BLUE}15`;
+                  }}
                 >
-                  <div className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110",
-                    service.bgColor
-                  )}>
-                    <Icon className={cn("w-6 h-6", service.textColor)} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: `${ORANGE}12` }}>
+                    <Icon className="w-6 h-6" style={{ color: ORANGE }} />
                   </div>
                   
-                  <h3 className="font-semibold text-foreground text-sm mb-1 group-hover:text-primary transition-colors">
+                  <h3 className="font-semibold text-sm mb-1" style={{ color: BLUE }}>
                     {service.title}
                   </h3>
                   <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-primary">{service.count} disponibles</span>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    <span className="text-xs font-medium" style={{ color: ORANGE }}>{service.count} disponibles</span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-all" style={{ color: BLUE }} />
                   </div>
                 </button>
               );
             })}
           </div>
 
-          {/* Ligne 2 - 2 services centrés (comme Auth.tsx) */}
+          {/* Ligne 2 - 2 services centrés */}
           <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
             {proximitySecondaryServices.map((service) => {
               const Icon = service.icon;
@@ -522,23 +408,22 @@ export default function Proximite() {
                 <button
                   key={service.id}
                   onClick={() => handleServiceClick(service.path)}
-                  className="group relative bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
+                  className="group relative rounded-2xl p-4 border transition-all duration-300 text-left overflow-hidden hover:shadow-lg"
+                  style={{ borderColor: `${BLUE}15`, backgroundColor: 'white' }}
                 >
-                  <div className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110",
-                    service.bgColor
-                  )}>
-                    <Icon className={cn("w-6 h-6", service.textColor)} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: `${ORANGE}12` }}>
+                    <Icon className="w-6 h-6" style={{ color: ORANGE }} />
                   </div>
                   
-                  <h3 className="font-semibold text-foreground text-sm mb-1 group-hover:text-primary transition-colors">
+                  <h3 className="font-semibold text-sm mb-1" style={{ color: BLUE }}>
                     {service.title}
                   </h3>
                   <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-primary">{service.count} disponibles</span>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    <span className="text-xs font-medium" style={{ color: ORANGE }}>{service.count} disponibles</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-all" style={{ color: BLUE }} />
                   </div>
                 </button>
               );
@@ -546,14 +431,12 @@ export default function Proximite() {
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════════════════════════
-            ACCÈS RAPIDE - Boutiques & Livraison
-        ═══════════════════════════════════════════════════════════════════ */}
+        {/* ACCÈS RAPIDE */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <Store className="w-5 h-5 text-blue-500" />
+              <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: BLUE }}>
+                <Store className="w-5 h-5" style={{ color: BLUE }} />
                 Accès Rapide
               </h2>
               <p className="text-sm text-muted-foreground">Boutiques & Livraison à proximité</p>
@@ -567,29 +450,29 @@ export default function Proximite() {
                 <button
                   key={service.id}
                   onClick={() => handleServiceClick(service.path)}
-                  className="group relative bg-gradient-to-br from-card to-muted/30 rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
+                  className="group relative rounded-2xl p-4 border transition-all duration-300 text-left overflow-hidden hover:shadow-lg"
+                  style={{ borderColor: `${BLUE}15`, backgroundColor: 'white' }}
                 >
                   {service.trending && (
-                    <Badge className="absolute top-2 right-2 bg-primary/10 text-primary border-0 text-[10px] px-1.5">
+                    <Badge className="absolute top-2 right-2 border-0 text-[10px] px-1.5" 
+                      style={{ backgroundColor: `${ORANGE}15`, color: ORANGE }}>
                       Tendance
                     </Badge>
                   )}
                   
-                  <div className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110",
-                    service.bgColor
-                  )}>
-                    <Icon className={cn("w-6 h-6", service.textColor)} />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: `${BLUE}10` }}>
+                    <Icon className="w-6 h-6" style={{ color: BLUE }} />
                   </div>
                   
-                  <h3 className="font-semibold text-foreground text-sm mb-1 group-hover:text-primary transition-colors">
+                  <h3 className="font-semibold text-sm mb-1" style={{ color: BLUE }}>
                     {service.title}
                   </h3>
                   <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-primary">{service.count} disponibles</span>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    <span className="text-xs font-medium" style={{ color: ORANGE }}>{service.count} disponibles</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-all" style={{ color: BLUE }} />
                   </div>
                 </button>
               );
@@ -601,15 +484,16 @@ export default function Proximite() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-primary" />
-                {t('home.productCategories') || t('proximity.productCategories') || 'Catégories de Produits'}
+              <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: BLUE }}>
+                <ShoppingBag className="w-5 h-5" style={{ color: BLUE }} />
+                {t('home.productCategories') || 'Catégories de Produits'}
               </h2>
-              <p className="text-sm text-muted-foreground">{t('home.exploreByCategory') || t('proximity.exploreByCategory') || 'Explorez par catégorie'}</p>
+              <p className="text-sm text-muted-foreground">{t('home.exploreByCategory') || 'Explorez par catégorie'}</p>
             </div>
             <button 
               onClick={() => navigate('/marketplace')}
-              className="text-sm text-primary font-medium flex items-center gap-1 hover:gap-2 transition-all"
+              className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all"
+              style={{ color: ORANGE }}
             >
               {t('home.seeAll')} <ArrowRight className="w-4 h-4" />
             </button>
@@ -617,7 +501,7 @@ export default function Proximite() {
 
           {loadingCategories ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <Loader2 className="w-6 h-6 animate-spin" style={{ color: BLUE }} />
             </div>
           ) : productCategories.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -631,18 +515,20 @@ export default function Proximite() {
                 <button
                   key={category.id}
                   onClick={() => navigate(`/marketplace?category=${category.id}&includePhysical=1`)}
-                  className="group bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:shadow-lg transition-all duration-300 text-left"
+                  className="group rounded-2xl p-4 border transition-all duration-300 text-left hover:shadow-lg"
+                  style={{ borderColor: `${BLUE}15`, backgroundColor: 'white' }}
                 >
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform group-hover:scale-110 bg-primary/10">
-                    <ShoppingBag className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: `${BLUE}10` }}>
+                    <ShoppingBag className="w-5 h-5" style={{ color: BLUE }} />
                   </div>
                   
-                  <h3 className="font-semibold text-foreground text-sm mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                  <h3 className="font-semibold text-sm mb-1 line-clamp-1" style={{ color: BLUE }}>
                     {category.name}
                   </h3>
                   
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-medium text-primary">{category.product_count}</span>
+                    <span className="text-xs font-medium" style={{ color: ORANGE }}>{category.product_count}</span>
                     <span className="text-xs text-muted-foreground">
                       {category.product_count > 1 ? 'articles' : 'article'}
                     </span>
@@ -657,15 +543,16 @@ export default function Proximite() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <Star className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: BLUE }}>
+                <Star className="w-5 h-5" style={{ color: ORANGE }} />
                 Services Professionnels
               </h2>
               <p className="text-sm text-muted-foreground">Experts qualifiés à votre service</p>
             </div>
             <button 
               onClick={() => navigate('/services-proximite')}
-              className="text-sm text-primary font-medium flex items-center gap-1 hover:gap-2 transition-all"
+              className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all"
+              style={{ color: ORANGE }}
             >
               Explorer <ArrowRight className="w-4 h-4" />
             </button>
@@ -678,21 +565,20 @@ export default function Proximite() {
                 <button
                   key={service.id}
                   onClick={() => navigate(`/services-proximite?type=${service.id}`)}
-                  className="group relative bg-card rounded-2xl p-4 border border-border/50 hover:border-primary/30 hover:bg-primary hover:text-primary-foreground hover:shadow-lg transition-all duration-300 text-left overflow-hidden"
+                  className="group relative rounded-2xl p-4 border transition-all duration-300 text-left overflow-hidden hover:shadow-lg"
+                  style={{ borderColor: `${BLUE}15`, backgroundColor: 'white' }}
                 >
-                  <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform group-hover:scale-110",
-                    service.bgColor
-                  )}>
-                    <Icon className={cn("w-5 h-5", service.textColor)} />
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: `${ORANGE}12` }}>
+                    <Icon className="w-5 h-5" style={{ color: ORANGE }} />
                   </div>
                   
-                  <h3 className="font-semibold text-foreground text-sm mb-1 group-hover:text-primary transition-colors">
+                  <h3 className="font-semibold text-sm mb-1" style={{ color: BLUE }}>
                     {service.title}
                   </h3>
                   <p className="text-xs text-muted-foreground mb-1">{service.description}</p>
                   {service.count > 0 && (
-                    <span className="text-xs font-medium text-primary">{service.count} disponibles</span>
+                    <span className="text-xs font-medium" style={{ color: ORANGE }}>{service.count} disponibles</span>
                   )}
                 </button>
               );
@@ -701,9 +587,9 @@ export default function Proximite() {
         </section>
 
         {/* Banner promotionnel */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-primary/90 to-primary/80 p-6 text-primary-foreground">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+        <div className="relative overflow-hidden rounded-3xl p-6 text-white" style={{ backgroundColor: BLUE }}>
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-1/2 translate-x-1/2" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+          <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full translate-y-1/2 -translate-x-1/2" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
           
           <div className="relative z-10">
             <h3 className="text-xl font-bold mb-2">Devenez prestataire</h3>
@@ -712,7 +598,8 @@ export default function Proximite() {
             </p>
             <button 
               onClick={() => navigate('/auth')}
-              className="bg-white text-primary px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors shadow-lg"
+              className="px-5 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-colors shadow-lg"
+              style={{ backgroundColor: ORANGE, color: 'white' }}
             >
               S'inscrire maintenant
             </button>
