@@ -258,7 +258,7 @@ export default function Proximite() {
               </div>
               <div>
                 <h1 className="text-xl font-bold" style={{ color: BLUE }}>{t('home.nearbyServices')}</h1>
-                <p className="text-xs text-muted-foreground">{t('proximity.mostRequested') || 'Les plus demandés près de vous'}</p>
+                <p className="text-xs" style={{ color: BLACK }}>{t('proximity.mostRequested') || 'Les plus demandés près de vous'}</p>
               </div>
             </div>
             <Button
