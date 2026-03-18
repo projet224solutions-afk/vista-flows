@@ -478,7 +478,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0 w-[95vw]">
         <ScrollArea className="h-[85vh] px-4 md:px-6">
         <DialogHeader>
           <DialogTitle className="text-xl md:text-2xl font-bold break-words pr-6">{product.name}</DialogTitle>
@@ -491,7 +491,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           </TabsList>
 
           <TabsContent value="details">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6 min-w-0">
           {/* Images & Video Carousel */}
           <div className="space-y-4">
             <div className="relative h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
@@ -564,7 +564,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           </div>
 
           {/* Détails */}
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0 overflow-hidden">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <LocalPrice 
