@@ -62,10 +62,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   // 🧠 Track pour recommandations intelligentes
   useTrackProductView(open && productId ? productId : null);
   
-  // Recommendation hooks - always called
-  const { data: similar, isLoading: loadingSimilar } = useSimilarProducts(open && productId ? productId : null, 12);
-  const { data: alsoBought, isLoading: loadingAlsoBought } = useAlsoBoughtProducts(open && productId ? productId : null, 12);
-  const { data: personalized, isLoading: loadingPersonalized } = usePersonalizedRecommendations(12);
+  
 
   // Mémoriser les vidéos et images pour le carrousel
   const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
