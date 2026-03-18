@@ -426,7 +426,7 @@ export default function UniversalWalletDashboard({
                     className="flex flex-col items-center gap-1 h-auto py-3"
                   >
                     <CreditCard className="w-5 h-5" />
-                    <span className="text-xs">Carte</span>
+                    <span className="text-xs">{t('wallet.card')}</span>
                   </Button>
                   <Button
                     type="button"
