@@ -410,18 +410,19 @@ export default function Marketplace() {
         </div>
       </header>
 
-      {/* Categories Responsive */}
-      <section className="px-2 sm:px-4 py-2 border-b border-border overflow-hidden">
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+      {/* Categories - compact on mobile */}
+      <section className="px-2 py-1.5 border-b border-border overflow-hidden">
+        <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5 -mx-0.5 px-0.5">
           {categories.map((category) => (
             <Badge
               key={category.id}
               variant={selectedCategory === category.id ? "default" : "secondary"}
-              className={`cursor-pointer whitespace-nowrap shrink-0 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs ${
+              className={cn(
+                'cursor-pointer whitespace-nowrap shrink-0 px-2 py-1 text-[10px] sm:text-xs',
                 selectedCategory === category.id
                   ? "bg-primary text-primary-foreground" 
                   : "hover:bg-accent"
-              }`}
+              )}
               onClick={() => setSelectedCategory(category.id)}
             >
               {category.name}
