@@ -79,6 +79,7 @@ export default function ServicesProximite() {
     try {
       setLoading(true);
       
+      // Filtrer dès la requête: uniquement les services actifs avec GPS ou récupérable
       const { data, error } = await supabase
         .from('professional_services')
         .select(`
@@ -149,16 +150,19 @@ export default function ServicesProximite() {
         }
       }
 
-      // Calculer les distances - exclure les services sans GPS
+      // Calculer les distances - exclure les services sans GPS valide
+      const beforeFilterCount = list.length;
       list = list
         .map((s) => {
+          const lat_val = Number(s.latitude);
+          const lng_val = Number(s.longitude);
           const hasValidCoords = 
-            s.latitude !== null && s.latitude !== undefined && 
-            s.longitude !== null && s.longitude !== undefined &&
-            Number.isFinite(Number(s.latitude)) && Number.isFinite(Number(s.longitude));
+            s.latitude != null && s.longitude != null &&
+            Number.isFinite(lat_val) && Number.isFinite(lng_val) &&
+            !(lat_val === 0 && lng_val === 0); // Exclure 0,0 (coordonnées invalides)
           
           const distance = hasValidCoords 
-            ? calculateDistance(lat, lng, Number(s.latitude), Number(s.longitude)) 
+            ? calculateDistance(lat, lng, lat_val, lng_val) 
             : null;
           return { ...s, distance };
         })
@@ -168,6 +172,8 @@ export default function ServicesProximite() {
           // Garder uniquement ceux dans le rayon défini
           return s.distance <= RADIUS_KM;
         });
+      
+      console.log(`📍 Proximité: ${beforeFilterCount} services trouvés, ${list.length} dans le rayon de ${RADIUS_KM}km`);
 
       // Tri: services avec distance d'abord (plus proches en premier), puis sans GPS à la fin
       list.sort((a, b) => {
