@@ -101,6 +101,7 @@ type ActivityItem = { id: string | number; type?: string; title: string; descrip
 export default function Profil() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  useRoleRedirect();
   const { uploadFile, isUploading: uploading } = useStorageUpload();
   const [isEditing, setIsEditing] = useState(false);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
