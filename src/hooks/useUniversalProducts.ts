@@ -207,12 +207,13 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
       if (error) throw error;
 
-      // Filtrer côté client les vendeurs "physical" si nécessaire
+      // Filtrer côté client: uniquement les vendeurs avec vente en ligne activée
       let filteredData = data || [];
       if (!filters.includePhysicalVendors) {
+        const allowedTypes = ['hybrid', 'online'];
         filteredData = filteredData.filter(product => {
           const vendor = product.vendors as any;
-          return vendor && vendor.business_type !== 'physical';
+          return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
         });
       }
 
