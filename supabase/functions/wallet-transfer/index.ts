@@ -425,14 +425,13 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   }
 
   // Create wallet_transfers record
+  // NOTE: sender_wallet_id/receiver_wallet_id are UUID but wallets.id is bigint - omit them
   const { data: transfer, error: transferError } = await supabase
     .from("wallet_transfers")
     .insert({
       transfer_code: transferCode,
       sender_id,
       receiver_id,
-      sender_wallet_id: senderWallet.id,
-      receiver_wallet_id: receiverWallet.id,
       amount_sent: amount,
       currency_sent: senderCurrency,
       fee_percentage: feePercentage,
