@@ -577,10 +577,10 @@ export default function Marketplace() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowBrowseModal(true)}
-                className="h-7 w-7 p-0"
+                className="h-9 w-9 p-0"
                 title="Explorer"
               >
-                <List className="w-4 h-4" />
+                <List className="w-5 h-5" />
               </Button>
             </div>
           )}
