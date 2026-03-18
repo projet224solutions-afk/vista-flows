@@ -102,6 +102,8 @@ const AgentAffiliateRedirect = lazyWithRetry(() => import("./pages/AgentAffiliat
 const DeliveryRequest = lazyWithRetry(() => import("./pages/DeliveryRequest"));
 const DeliveryClient = lazyWithRetry(() => import("./pages/DeliveryClient"));
 const BugBounty = lazyWithRetry(() => import("./pages/BugBounty"));
+const SimilarProductsPage = lazyWithRetry(() => import("./pages/SimilarProductsPage"));
+const OtherProductsPage = lazyWithRetry(() => import("./pages/OtherProductsPage"));
 const Cart = lazyWithRetry(() => import("./pages/Cart"));
 const VendorAgentInterface = lazyWithRetry(() => import("./pages/VendorAgentInterface"));
 const _VendorContracts = lazyWithRetry(() => import("./pages/VendorContracts"));
