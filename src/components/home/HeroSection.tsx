@@ -153,46 +153,6 @@ export function HeroSection({ className }: HeroSectionProps) {
         </Button>
       </div>
 
-      {/* Quick Actions Grid - Compact Cards */}
-      <div className="relative z-10 px-4 pb-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-foreground">{t('home.popularServices') || t('home.nearbyServices')}</h2>
-          <button 
-            onClick={() => user ? setShowServicesModal(true) : navigate('/services')}
-            className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-          >
-            {t('home.seeAll')}
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-4 gap-2">
-          {quickActions.map((action) => (
-            <button
-              key={action.id}
-              onClick={() => handleQuickActionClick(action.id)}
-              className={cn(
-                'flex flex-col items-center gap-2 p-3 rounded-2xl',
-                'bg-card border border-border/50',
-                'hover:border-primary hover:bg-primary hover:text-white',
-                'active:scale-95 transition-all duration-200 group'
-              )}
-            >
-              <div className={cn(
-                'w-10 h-10 rounded-xl flex items-center justify-center',
-                'bg-gradient-to-br text-white shadow-sm',
-                action.gradient,
-                '[&_svg]:transition-colors [&_svg]:duration-200 group-hover:[&_svg]:text-white group-active:[&_svg]:text-white'
-              )}>
-                {action.icon}
-              </div>
-              <span className="text-[11px] font-medium text-foreground text-center leading-tight group-hover:text-white transition-colors">
-                {action.label}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Available Services Modal - Only shown when user is logged in */}
       <AvailableServicesModal 
