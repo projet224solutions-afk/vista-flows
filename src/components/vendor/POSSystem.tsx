@@ -996,6 +996,101 @@ export function POSSystem() {
 
     setIsProcessingCredit(true);
 
+    // ✨ MODE OFFLINE: Stocker la vente à crédit localement
+    const isOffline = !navigator.onLine;
+
+    if (isOffline) {
+      try {
+        const offlineOrderId = `offline_credit_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        const offlineOrderNumber = `CR-OFF-${Date.now().toString(36).toUpperCase()}`;
+
+        const creditSaleData = {
+          type: 'credit_sale',
+          vendor_id: vendorId,
+          created_at: new Date().toISOString(),
+          data: {
+            offline_order_id: offlineOrderId,
+            order_number: offlineOrderNumber,
+            total_amount: total,
+            subtotal: subtotal,
+            tax_amount: tax,
+            discount_amount: discountValue,
+            payment_method: 'cash',
+            payment_status: 'pending',
+            status: 'confirmed',
+            source: 'pos_offline_credit',
+            customer_name: creditCustomerName.trim(),
+            customer_phone: creditCustomerPhone.trim() || '',
+            due_date: creditDueDate,
+            credit_notes: creditNotes || '',
+            items: cart.map(item => ({
+              product_id: item.id,
+              product_name: item.name,
+              quantity: item.quantity,
+              unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
+              total_price: item.total,
+              images: item.images || []
+            })),
+            sale_date: new Date().toISOString()
+          }
+        };
+
+        const { default: offlineDB } = await import('@/lib/offlineDB');
+        await offlineDB.initDB();
+        const eventId = await offlineDB.storeEvent(creditSaleData, true);
+
+        console.log('✅ [POS Offline] Vente à crédit stockée:', eventId);
+
+        // Mettre à jour le stock localement
+        const updatedProducts = products.map(product => {
+          const cartItem = cart.find(item => item.id === product.id);
+          if (cartItem) {
+            return { ...product, stock: Math.max(0, product.stock - cartItem.quantity) };
+          }
+          return product;
+        });
+        setProducts(updatedProducts);
+
+        // Mettre à jour le cache
+        try {
+          await offlineDB.cacheData(
+            `${PRODUCTS_CACHE_KEY}_${vendorId}`,
+            updatedProducts,
+            PRODUCTS_CACHE_TTL,
+            false
+          );
+        } catch (cachErr) {
+          console.warn('Erreur mise à jour cache:', cachErr);
+        }
+
+        // Réinitialiser
+        setLastOrderNumber(offlineOrderNumber);
+        setShowCreditSaleModal(false);
+        setCreditCustomerName('');
+        setCreditCustomerPhone('');
+        setCreditDueDate('');
+        setCreditNotes('');
+        setCart([]);
+
+        toast.success('✅ Vente à crédit enregistrée (hors-ligne)', {
+          description: `Client: ${creditSaleData.data.customer_name} - ${total.toLocaleString()} GNF - Sera synchronisée à la reconnexion.`,
+          duration: 5000
+        });
+
+        setIsProcessingCredit(false);
+        return;
+      } catch (offlineError: any) {
+        console.error('Erreur stockage offline crédit:', offlineError);
+        toast.error('Erreur enregistrement hors-ligne', {
+          description: offlineError.message || 'Veuillez réessayer.',
+          duration: 6000
+        });
+        setIsProcessingCredit(false);
+        return;
+      }
+    }
+
+    // MODE ONLINE: logique existante
     try {
       const orderNum = `CR-${Date.now().toString(36).toUpperCase()}`;
 
@@ -1018,9 +1113,9 @@ export function POSSystem() {
           subtotal: subtotal,
           tax_amount: tax,
           discount_amount: discountValue,
-          payment_status: 'pending', // Non payé
-          status: 'confirmed', // Confirmé mais non payé
-          payment_method: 'cash', // Sera payé en espèces (crédit = paiement différé)
+          payment_status: 'pending',
+          status: 'confirmed',
+          payment_method: 'cash',
           shipping_address: { address: 'Vente à crédit', is_credit_sale: true },
           notes: `🔖 VENTE À CRÉDIT - Client: ${creditCustomerName.trim()}${creditCustomerPhone ? ` - Tél: ${creditCustomerPhone}` : ''}`,
           source: 'pos'
@@ -1030,7 +1125,7 @@ export function POSSystem() {
 
       if (orderError) throw orderError;
 
-      // 3. Créer les items de commande (le trigger décrémentera le stock automatiquement)
+      // 3. Créer les items de commande
       const orderItems = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
