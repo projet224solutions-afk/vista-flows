@@ -309,7 +309,7 @@ export default function Proximite() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <span className="text-muted-foreground">Position utilisée:</span>
+                  <span style={{ color: BLACK }}>Position utilisée:</span>
                   <div className="font-mono text-[10px]">
                     {debugInfo.positionUsed.latitude.toFixed(5)}, {debugInfo.positionUsed.longitude.toFixed(5)}
                   </div>
