@@ -566,6 +566,29 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             )}
           </div>
 
+            {/* Boutons Produits similaires / Autres produits */}
+            <div className="flex gap-2 mt-2">
+              <Button
+                variant={showSection === 'similar' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setShowSection(showSection === 'similar' ? 'none' : 'similar')}
+              >
+                <Sparkles className="w-4 h-4 mr-1.5" />
+                Produits similaires
+              </Button>
+              <Button
+                variant={showSection === 'others' ? 'default' : 'outline'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setShowSection(showSection === 'others' ? 'none' : 'others')}
+              >
+                <Package className="w-4 h-4 mr-1.5" />
+                Autres produits
+              </Button>
+            </div>
+          </div>
+
           {/* Détails */}
           <div className="space-y-4 min-w-0 overflow-hidden">
             <div>
