@@ -12,6 +12,11 @@ export const FEE_KEYS = {
   INTERNATIONAL_TRANSFER: 'international_transfer_fee_percentage',
   PURCHASE_COMMISSION: 'commission_achats',
   SERVICE_COMMISSION: 'commission_services',
+  // Transfer limits
+  MIN_TRANSFER_AMOUNT: 'min_transfer_amount',
+  MAX_TRANSFER_AMOUNT: 'max_transfer_amount',
+  MAX_DAILY_TRANSFER: 'max_daily_transfer_amount',
+  MAX_INTERNATIONAL_TRANSFER: 'max_international_transfer_amount',
 } as const;
 
 // Valeurs par défaut (fallback si pdg_settings est vide)
@@ -22,6 +27,10 @@ const DEFAULT_FEES: Record<string, number> = {
   [FEE_KEYS.INTERNATIONAL_TRANSFER]: 1,
   [FEE_KEYS.PURCHASE_COMMISSION]: 5,
   [FEE_KEYS.SERVICE_COMMISSION]: 0.5,
+  [FEE_KEYS.MIN_TRANSFER_AMOUNT]: 100,
+  [FEE_KEYS.MAX_TRANSFER_AMOUNT]: 50000000,
+  [FEE_KEYS.MAX_DAILY_TRANSFER]: 50000000,
+  [FEE_KEYS.MAX_INTERNATIONAL_TRANSFER]: 50000000,
 };
 
 /**
