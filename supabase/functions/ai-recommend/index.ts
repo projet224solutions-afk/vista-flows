@@ -339,11 +339,17 @@ Les raisons doivent être courtes et engageantes (ex: "Basé sur vos recherches"
 
 async function fetchProductDetails(supabase: any, productIds: string[]) {
   if (!productIds.length) return [];
-  const { data } = await supabase
+  console.log("fetchProductDetails: querying", productIds.length, "IDs, sample:", productIds[0]);
+  const { data, error } = await supabase
     .from("products")
     .select("id, name, price, images, rating, category_id, currency")
-    .in("id", productIds)
-    .eq("is_active", true);
+    .in("id", productIds);
+  
+  if (error) {
+    console.error("fetchProductDetails error:", error);
+    return [];
+  }
+  console.log("fetchProductDetails: found", data?.length || 0, "products");
   
   return (data || []).map((p: any) => ({
     product_id: p.id,
