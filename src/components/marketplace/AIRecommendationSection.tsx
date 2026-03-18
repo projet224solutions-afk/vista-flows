@@ -1,5 +1,6 @@
 /**
  * 🤖 SECTION DE RECOMMANDATIONS IA - Style Alibaba
+ * Navigation horizontale fluide avec swipe, flèches et snap
  */
 
 import { useNavigate } from "react-router-dom";
@@ -7,7 +8,9 @@ import { Sparkles, TrendingUp, Clock, Gift, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import TranslatedProductCard from "./TranslatedProductCard";
+import { HorizontalScrollRow, ScrollItem } from "./HorizontalScrollRow";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useResponsive } from "@/hooks/useResponsive";
 import { cn } from "@/lib/utils";
 
 interface AIProduct {
@@ -52,11 +55,15 @@ export function AIRecommendationSection({
 }: AIRecommendationSectionProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { isMobile, isTablet } = useResponsive();
   const Icon = icons[icon];
 
   if (!isLoading && (!products || products.length === 0)) return null;
 
   const displayProducts = products?.slice(0, maxItems) || [];
+
+  // Responsive card width
+  const cardWidth = isMobile ? '44vw' : isTablet ? '200px' : '220px';
 
   return (
     <div className={cn("py-4", className)}>
@@ -86,37 +93,47 @@ export function AIRecommendationSection({
         )}
       </div>
 
-      {/* Products Grid */}
+      {/* Products - Horizontal Scroll */}
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <HorizontalScrollRow showArrows={false} gap={12}>
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-52 rounded-xl" />
+            <ScrollItem key={i} width={cardWidth}>
+              <Skeleton className="h-52 rounded-xl w-full" />
+            </ScrollItem>
           ))}
-        </div>
+        </HorizontalScrollRow>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <HorizontalScrollRow
+          showArrows={!isMobile}
+          arrowSize={isMobile ? 'sm' : 'md'}
+          gap={isMobile ? 8 : 12}
+          autoScroll={displayProducts.length > 3}
+          autoScrollInterval={5000}
+        >
           {displayProducts.map((p) => (
-            <div key={p.product_id} className="relative">
-              <TranslatedProductCard
-                id={p.product_id}
-                title={p.name}
-                price={p.price}
-                image={p.images || []}
-                rating={p.rating || 0}
-                reviewCount={0}
-                vendor=""
-                onBuy={() => navigate(`/product/${p.product_id}`)}
-              />
-              {showReason && p.reason && (
-                <div className="absolute top-2 left-2 z-10">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/90 text-primary-foreground font-medium backdrop-blur-sm">
-                    {p.reason}
-                  </span>
-                </div>
-              )}
-            </div>
+            <ScrollItem key={p.product_id} width={cardWidth} snapAlign="start">
+              <div className="relative">
+                <TranslatedProductCard
+                  id={p.product_id}
+                  title={p.name}
+                  price={p.price}
+                  image={p.images || []}
+                  rating={p.rating || 0}
+                  reviewCount={0}
+                  vendor=""
+                  onBuy={() => navigate(`/product/${p.product_id}`)}
+                />
+                {showReason && p.reason && (
+                  <div className="absolute top-2 left-2 z-10">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/90 text-primary-foreground font-medium backdrop-blur-sm">
+                      {p.reason}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </ScrollItem>
           ))}
-        </div>
+        </HorizontalScrollRow>
       )}
     </div>
   );
