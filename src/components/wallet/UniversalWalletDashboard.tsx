@@ -640,7 +640,7 @@ export default function UniversalWalletDashboard({
                 className="w-full"
               >
                 {busy ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <ArrowUpCircle className="w-4 h-4 mr-2" />}
-                Retirer {parseFloat(withdrawAmount || '0').toLocaleString()} GNF
+                {t('wallet.withdrawBtn')} {convert(parseFloat(withdrawAmount || '0'), 'GNF').formatted}
               </Button>
             </CardContent>
           </Card>
