@@ -613,7 +613,7 @@ export default function UniversalWalletDashboard({
               )}
 
               <div className="space-y-2">
-                <Label>Montant à retirer (GNF)</Label>
+                <Label>{t('wallet.amountToWithdraw')}</Label>
                 <Input
                   type="number"
                   placeholder="Ex: 50000"
