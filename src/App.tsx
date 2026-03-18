@@ -175,6 +175,13 @@ function App() {
   console.log('📍 Current URL:', window.location.href);
   console.log('📍 Pathname:', window.location.pathname);
 
+  // Auto-fill GPS pour vendors/services de l'utilisateur connecté
+  useEffect(() => {
+    import('@/hooks/useAutoFillGps').then(({ useAutoFillGps: _ }) => {
+      // Le hook est utilisé dans le composant AppGpsAutoFill ci-dessous
+    });
+  }, []);
+
   useEffect(() => {
     console.log('✅ App component mounted successfully');
     console.log('📍 Final URL after mount:', window.location.href);
