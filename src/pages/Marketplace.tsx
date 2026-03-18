@@ -790,7 +790,11 @@ export default function Marketplace() {
         open={showBrowseModal}
         onOpenChange={setShowBrowseModal}
         categories={categories}
-        onSelectCategory={(catId) => setSelectedCategory(catId)}
+        onSelectCategory={(catId) => {
+          setSelectedCategory(catId);
+          setSelectedDigitalCategory('all');
+          setSelectedItemType(catId === 'all' ? 'all' : 'product');
+        }}
         onSelectProduct={(productId) => handleProductClick(productId)}
         onSelectVendor={(vendorId) => navigate(`/marketplace?vendor=${vendorId}`)}
       />
