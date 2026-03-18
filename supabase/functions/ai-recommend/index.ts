@@ -1,3 +1,4 @@
+// AI Recommendation Engine - 224SOLUTIONS
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -38,14 +39,28 @@ serve(async (req) => {
       .maybeSingle();
 
     if (cached && cached.product_ids?.length > 0) {
+      console.log("Cache hit, product_ids:", cached.product_ids?.length, "sample:", cached.product_ids?.[0]);
       // Fetch product details for cached recommendations
       const products = await fetchProductDetails(supabase, cached.product_ids);
-      return new Response(JSON.stringify({
-        products,
-        reasons: cached.reasons || [],
-        source: "cache",
-        type
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.log("Cache fetched products:", products.length);
+      
+      // Attach reasons from cache
+      const productsWithReasons = products.map((p: any, i: number) => ({
+        ...p,
+        reason: cached.reasons?.[cached.product_ids.indexOf(p.product_id)] || cached.reasons?.[i] || "Recommandé",
+        score: cached.scores?.[cached.product_ids.indexOf(p.product_id)] || 50,
+      }));
+      
+      if (productsWithReasons.length === 0) {
+        console.log("Cache products empty, bypassing cache");
+        // Don't return, let it fall through to AI
+      } else {
+        return new Response(JSON.stringify({
+          products: productsWithReasons,
+          source: "cache",
+          type
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
     // Gather user behavior data
@@ -167,9 +182,13 @@ serve(async (req) => {
     let recommendations: Array<{ product_id: string; score: number; reason: string }> = [];
     try {
       const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+      console.log("AI tool call:", JSON.stringify(toolCall?.function?.name));
       if (toolCall) {
         const parsed = JSON.parse(toolCall.function.arguments);
         recommendations = parsed.recommendations || [];
+        console.log("AI returned", recommendations.length, "recommendations");
+      } else {
+        console.log("No tool call in AI response, keys:", Object.keys(aiData.choices?.[0]?.message || {}));
       }
     } catch (e) {
       console.error("Failed to parse AI response:", e);
@@ -178,9 +197,12 @@ serve(async (req) => {
 
     // Validate product IDs exist in catalog
     const validProductIds = new Set((catalogProducts || []).map(p => p.id));
+    const beforeFilter = recommendations.length;
     recommendations = recommendations.filter(r => validProductIds.has(r.product_id));
+    console.log(`Filtered: ${beforeFilter} -> ${recommendations.length} valid recommendations`);
 
     if (recommendations.length === 0) {
+      console.log("No valid recommendations, falling back to popular products");
       return fallbackResponse(supabase, corsHeaders, type);
     }
 
@@ -202,6 +224,12 @@ serve(async (req) => {
 
     // Fetch full product details
     const products = await fetchProductDetails(supabase, topRecos.map(r => r.product_id));
+    
+    // If no products found (all inactive etc.), fallback
+    if (products.length === 0) {
+      console.log("Products fetched but none found active, falling back");
+      return fallbackResponse(supabase, corsHeaders, type);
+    }
     
     // Attach reasons
     const productsWithReasons = products.map(p => {
@@ -311,11 +339,17 @@ Les raisons doivent être courtes et engageantes (ex: "Basé sur vos recherches"
 
 async function fetchProductDetails(supabase: any, productIds: string[]) {
   if (!productIds.length) return [];
-  const { data } = await supabase
+  console.log("fetchProductDetails: querying", productIds.length, "IDs, sample:", productIds[0]);
+  const { data, error } = await supabase
     .from("products")
     .select("id, name, price, images, rating, category_id, currency")
-    .in("id", productIds)
-    .eq("is_active", true);
+    .in("id", productIds);
+  
+  if (error) {
+    console.error("fetchProductDetails error:", error);
+    return [];
+  }
+  console.log("fetchProductDetails: found", data?.length || 0, "products");
   
   return (data || []).map((p: any) => ({
     product_id: p.id,
