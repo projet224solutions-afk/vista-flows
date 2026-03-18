@@ -616,7 +616,7 @@ export default function Marketplace() {
       </section>
 
       {/* Results */}
-      <section className="px-4 py-3">
+      <section className="px-2 sm:px-4 py-2">
         {/* Si "Services Pro" est sélectionné, afficher la grille des types de services */}
         {selectedItemType === 'professional_service' ? (
           <ServiceTypesGrid 
