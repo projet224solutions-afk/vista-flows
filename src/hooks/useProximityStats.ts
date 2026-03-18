@@ -193,7 +193,7 @@ export function useProximityStats() {
       // Debug counters
       const dbg: ProximityDebugInfo = {
         vendors: { total: vendors.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
-        services: { total: professionalServices.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
+        services: { total: enrichedServices.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
         taxiMoto: { total: taxiDrivers.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
         drivers: { total: drivers.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
         positionUsed: { latitude: position.latitude, longitude: position.longitude },
