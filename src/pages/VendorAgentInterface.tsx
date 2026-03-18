@@ -1,6 +1,146 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-...
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Users, TrendingUp, Package, ShoppingCart, Warehouse,
+  Truck, UserPlus, LogOut, BarChart3, FileText,
+  MessageSquare, Settings, Shield, Wallet, CreditCard, DollarSign
+} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { AgentProvider, type VendorAgent, type VendorAgentPermissions } from '@/contexts/AgentContext';
+import { AgentModuleWrapper } from '@/components/vendor/AgentModuleWrapper';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+// Import des modules fonctionnels du vendeur
+import ProductManagement from '@/components/vendor/ProductManagement';
+import OrderManagement from '@/components/vendor/OrderManagement';
+import POSSystemWrapper from '@/components/vendor/POSSystemWrapper';
+import { VendorAgentWalletView } from '@/components/vendor/VendorAgentWalletView';
+import { VendorAnalyticsDashboard } from '@/components/vendor/VendorAnalyticsDashboard';
+import InventoryManagement from '@/components/vendor/InventoryManagement';
+import MultiWarehouseManagement from '@/components/vendor/MultiWarehouseManagement';
+import ClientManagement from '@/components/vendor/ClientManagement';
+import { VendorDeliveriesPanel } from '@/components/vendor/VendorDeliveriesPanel';
+import PaymentManagement from '@/components/vendor/PaymentManagement';
+import PaymentLinksManager from '@/components/vendor/PaymentLinksManager';
+import SupportTickets from '@/components/vendor/SupportTickets';
+import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
+import SupplierManagement from '@/components/vendor/SupplierManagement';
+import ProspectManagement from '@/components/vendor/ProspectManagement';
+import MarketingManagement from '@/components/vendor/MarketingManagement';
+import ExpenseManagementDashboard from '@/components/vendor/ExpenseManagementDashboard';
+import CommissionsManagement from '@/components/vendor/CommissionsManagement';
+import AgentManagement from '@/components/vendor/AgentManagement';
+import AffiliateManagement from '@/components/vendor/AffiliateManagement';
+import { VendorDebtManagement } from '@/components/vendor/debts/VendorDebtManagement';
+
+export default function VendorAgentInterface() {
+  const { token } = useParams<{ token: string }>();
+  const [agent, setAgent] = useState<VendorAgent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [vendorBusinessType, setVendorBusinessType] = useState<string | null>(null);
+
+  const canAccessPOS = vendorBusinessType !== 'digital' && vendorBusinessType !== 'online';
+
+  useEffect(() => {
+    console.log('🚀 VendorAgentInterface - Initialisation avec token:', token);
+
+    if (!token) {
+      console.error('❌ Token manquant dans l\'URL');
+      toast.error('Token d\'accès manquant');
+      setLoading(false);
+      return;
+    }
+
+    loadAgentData(token);
+  }, [token]);
+
+  const loadAgentData = async (accessToken: string) => {
+    setLoading(true);
+
+    try {
+      console.log('🔍 Recherche agent avec token:', accessToken);
+      console.log('🔍 Longueur du token:', accessToken.length);
+
+      // Requête directe sans filtres supplémentaires d'abord
+      const { data: allAgents, error: listError } = await supabase
+        .from('vendor_agents')
+        .select('*')
+        .limit(10);
+
+      console.log('📋 Liste des agents disponibles:', allAgents);
+      console.log('📋 Nombre d\'agents:', allAgents?.length || 0);
+
+      if (listError) {
+        console.error('❌ Erreur liste agents:', listError);
+      }
+
+      // Requête spécifique pour cet agent
+      const { data: agentData, error: agentError } = await supabase
+        .from('vendor_agents')
+        .select('*')
+        .eq('access_token', accessToken)
+        .maybeSingle();
+
+      console.log('📊 Résultat recherche agent:', {
+        agentData,
+        agentError,
+        tokenRecherche: accessToken
+      });
+
+      if (agentError) {
+        console.error('❌ Erreur Supabase lors de la recherche:', agentError);
+        toast.error(`Erreur base de données: ${agentError.message}`);
+        return;
+      }
+
+      if (!agentData) {
+        console.warn('⚠️ Aucun agent trouvé avec ce token');
+        console.warn('⚠️ Token recherché:', accessToken);
+        console.warn('⚠️ Tokens disponibles:', allAgents?.map(a => a.access_token));
+        toast.error('Agent non trouvé. Vérifiez le lien d\'accès.');
+        return;
+      }
+
+      if (!agentData.is_active) {
+        console.warn('⚠️ Agent trouvé mais inactif');
+        toast.error('Ce compte agent est désactivé. Contactez votre vendeur.');
+        return;
+      }
+
+      console.log('✅ Agent chargé avec succès:', agentData);
+
+      // Convert Json permissions to VendorAgentPermissions
+      const formattedAgent = {
+        ...agentData,
+        permissions: agentData.permissions as VendorAgentPermissions
+      };
+
+      setAgent(formattedAgent);
+
+      // Récupérer le business_type du vendeur (pour verrouiller POS si "digital")
+      const { data: vendorInfo } = await supabase
+        .from('vendors')
+        .select('business_type')
+        .eq('id', agentData.vendor_id)
+        .maybeSingle();
+      setVendorBusinessType(vendorInfo?.business_type ?? null);
+
+      toast.success(`Bienvenue ${agentData.name} !`);
+
+    } catch (error: any) {
+      console.error('❌ Erreur fatale chargement agent:', error);
+      toast.error(`Erreur: ${error.message || 'Erreur inconnue'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearAgentSessions = () => {
     ['agent_session', 'agent_user', 'agent_token'].forEach((key) => {
       localStorage.removeItem(key);
