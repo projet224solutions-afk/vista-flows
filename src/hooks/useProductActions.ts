@@ -249,7 +249,7 @@ export function useProductActions({
     try {
       // ✅ VÉRIFICATION CRITIQUE: Vérifier la limite de produits AVANT de créer
       console.log('🔍 [ProductCreate] Vérification limite de produits...');
-      const limitCheck = await SubscriptionService.checkProductLimit(user.id);
+      const limitCheck = await SubscriptionService.checkProductLimit(limitCheckUserId!);
       
       if (!limitCheck) {
         toast.error('Impossible de vérifier les limites d\'abonnement');
