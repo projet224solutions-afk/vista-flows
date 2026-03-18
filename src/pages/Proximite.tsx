@@ -502,8 +502,7 @@ export default function Proximite() {
                     </Badge>
                   )}
                   
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: `${BLUE}10` }}>
+                   <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110">
                     <Icon className="w-6 h-6" style={{ color: BLUE }} />
                   </div>
                   
