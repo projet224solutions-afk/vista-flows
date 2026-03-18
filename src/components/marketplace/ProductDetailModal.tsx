@@ -101,6 +101,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     // Reset tracking when modal closes or product changes
     if (!open) {
       hasTrackedView.current = false;
+      setRecommendationView('none');
     }
   }, [productId, open]);
 
