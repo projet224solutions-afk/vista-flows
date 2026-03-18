@@ -119,6 +119,7 @@ export function ProductRecommendationSection({
             <div
               key={product.product_id}
               className="min-w-[160px] max-w-[160px] snap-start"
+              onClick={() => onProductClick?.(product.product_id)}
             >
               <TranslatedProductCard
                 id={product.product_id}
@@ -126,8 +127,9 @@ export function ProductRecommendationSection({
                 title={product.name}
                 price={product.price}
                 rating={product.rating || 0}
+                reviewCount={0}
+                vendor=""
                 onAddToCart={() => onAddToCart?.(product.product_id)}
-                onClick={() => onProductClick?.(product.product_id)}
               />
               {product.reason && (
                 <div className="mt-1">
