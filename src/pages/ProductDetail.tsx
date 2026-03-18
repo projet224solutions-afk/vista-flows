@@ -136,7 +136,7 @@ export default function ProductDetail() {
         .select(`
           *,
           promotional_videos,
-          vendors:vendor_id(business_name, id, shop_slug, country),
+          vendors:vendor_id(business_name, id, user_id, shop_slug, country),
           categories:category_id(name)
         `)
         .eq('id', id)
