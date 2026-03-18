@@ -80,15 +80,15 @@ export default function QuickFooter() {
               className={cn(
                 "flex flex-col items-center justify-center p-1.5 rounded-lg transition-all duration-300 min-w-[56px] group relative",
                 isActive
-                  ? "text-primary bg-accent scale-105"
-                  : "text-muted-foreground hover:text-primary hover:bg-accent/50 hover:scale-105"
+                  ? "text-primary scale-105"
+                  : "text-muted-foreground hover:text-primary hover:scale-105"
               )}
             >
               <div className={cn(
                 "p-1.5 rounded-full transition-all duration-300 relative",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-glow"
-                  : "bg-muted group-hover:bg-accent group-hover:text-primary"
+                  ? "text-primary"
+                  : "group-hover:text-primary"
               )}>
                 <Icon size={18} />
                 {/* Badge de notification */}
