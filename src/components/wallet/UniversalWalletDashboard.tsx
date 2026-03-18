@@ -411,7 +411,7 @@ export default function UniversalWalletDashboard({
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <ArrowDownCircle className="w-5 h-5 text-green-600" />
-                Recharger mon wallet
+                {t('wallet.rechargeMyWallet')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
