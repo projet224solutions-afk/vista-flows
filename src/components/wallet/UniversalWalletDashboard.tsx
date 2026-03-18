@@ -114,7 +114,7 @@ export default function UniversalWalletDashboard({
             
             console.log('✅ Wallet rechargé avec succès:', reloadedWallet);
             setWallet(reloadedWallet);
-            toast.success('Wallet chargé avec succès !');
+            toast.success(t('wallet.depositSuccess'));
             setLoading(false);
             return;
           } catch (initError: any) {
