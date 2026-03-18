@@ -548,7 +548,7 @@ export default function Proximite() {
                 <Star className="w-5 h-5" style={{ color: ORANGE }} />
                 Services Professionnels
               </h2>
-              <p className="text-sm text-muted-foreground">Experts qualifiés à votre service</p>
+              <p className="text-sm" style={{ color: BLACK }}>Experts qualifiés à votre service</p>
             </div>
             <button 
               onClick={() => navigate('/services-proximite')}
