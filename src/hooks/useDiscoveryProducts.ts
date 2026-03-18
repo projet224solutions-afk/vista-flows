@@ -81,7 +81,7 @@ export function useDiscoveryProducts(limit = 12) {
       if (unseen.length < 4) {
         const { data: fallback } = await supabase
           .from('products')
-          .select('id, name, price, images, rating, category_id, categories(name), vendors(business_type)')
+          .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type)')
           .eq('is_active', true)
           .order('reviews_count', { ascending: false })
           .limit(limit * 2);
