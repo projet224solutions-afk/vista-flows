@@ -15,6 +15,8 @@ import ProductReviewsSection from "./ProductReviewsSection";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 import { trackProductView } from "@/services/analyticsTrackingService";
+import { useTrackProductView } from "@/hooks/useProductRecommendations";
+import { RecommendationsWidget } from "@/components/recommendations/RecommendationsWidget";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 interface Product {
   id: string;
@@ -53,6 +55,9 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const { addToCart } = useCart();
   const hasTrackedView = useRef(false);
   const lastTrackedProductId = useRef<string | null>(null);
+
+  // 🧠 Track pour recommandations intelligentes
+  useTrackProductView(open && productId ? productId : null);
 
   // Mémoriser les vidéos et images pour le carrousel
   const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
@@ -736,6 +741,18 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                   />
               </div>
             </div>
+
+            {/* 🧠 Recommandations */}
+            <RecommendationsWidget
+              currentProductId={product.id}
+              showPersonalized={false}
+              showSimilar={true}
+              showAlsoBought={true}
+              onProductClick={(id) => {
+                onClose();
+                setTimeout(() => navigate(`/product/${id}`), 100);
+              }}
+            />
 
             {/* Garanties */}
             <div className="space-y-2 pt-4 pb-6">

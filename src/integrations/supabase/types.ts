@@ -14230,6 +14230,104 @@ export type Database = {
         }
         Relationships: []
       }
+      product_co_purchases: {
+        Row: {
+          co_purchase_count: number | null
+          id: string
+          product_id: string
+          related_product_id: string
+          updated_at: string
+        }
+        Insert: {
+          co_purchase_count?: number | null
+          id?: string
+          product_id: string
+          related_product_id: string
+          updated_at?: string
+        }
+        Update: {
+          co_purchase_count?: number | null
+          id?: string
+          product_id?: string
+          related_product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_co_purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_co_purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_co_purchases_related_product_id_fkey"
+            columns: ["related_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_co_purchases_related_product_id_fkey"
+            columns: ["related_product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
+      product_popularity_scores: {
+        Row: {
+          cart_count: number | null
+          id: string
+          popularity_score: number | null
+          product_id: string
+          purchase_count: number | null
+          updated_at: string
+          view_count: number | null
+        }
+        Insert: {
+          cart_count?: number | null
+          id?: string
+          popularity_score?: number | null
+          product_id: string
+          purchase_count?: number | null
+          updated_at?: string
+          view_count?: number | null
+        }
+        Update: {
+          cart_count?: number | null
+          id?: string
+          popularity_score?: number | null
+          product_id?: string
+          purchase_count?: number | null
+          updated_at?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_popularity_scores_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_popularity_scores_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
       product_recommendations: {
         Row: {
           based_on_product_id: string | null
@@ -28076,6 +28174,17 @@ export type Database = {
         }[]
       }
       get_agent_permissions: { Args: { p_agent_id: string }; Returns: Json }
+      get_also_bought_products: {
+        Args: { p_limit?: number; p_product_id: string }
+        Returns: {
+          co_purchase_count: number
+          images: string[]
+          name: string
+          price: number
+          product_id: string
+          rating: number
+        }[]
+      }
       get_audio_for_user: {
         Args: { p_message_id: string; p_user_id: string }
         Returns: {
@@ -28203,9 +28312,14 @@ export type Database = {
       get_personalized_recommendations: {
         Args: { p_limit?: number; p_user_id: string }
         Returns: {
+          category_id: string
+          images: string[]
+          name: string
+          price: number
           product_id: string
+          rating: number
           reason: string
-          score: number
+          recommendation_score: number
         }[]
       }
       get_platform_revenue_stats: {
@@ -28214,6 +28328,21 @@ export type Database = {
           revenue_type: string
           total_amount: number
           transaction_count: number
+        }[]
+      }
+      get_popular_in_category: {
+        Args: {
+          p_category_id: string
+          p_exclude_product_id?: string
+          p_limit?: number
+        }
+        Returns: {
+          images: string[]
+          name: string
+          popularity_score: number
+          price: number
+          product_id: string
+          rating: number
         }[]
       }
       get_prefix_for_role: { Args: { p_role: string }; Returns: string }
@@ -28274,6 +28403,18 @@ export type Database = {
           subscriptions_by_status: Json
           total_revenue: number
           total_subscriptions: number
+        }[]
+      }
+      get_similar_products: {
+        Args: { p_limit?: number; p_product_id: string }
+        Returns: {
+          category_id: string
+          images: string[]
+          name: string
+          price: number
+          product_id: string
+          rating: number
+          similarity_score: number
         }[]
       }
       get_surveillance_dashboard_fast: {

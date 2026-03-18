@@ -14,6 +14,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useUniversalProducts } from '@/hooks/useUniversalProducts';
 import { useNearbyServiceStats } from '@/hooks/useNearbyServiceStats';
 import { toast } from 'sonner';
+import { RecommendationsWidget } from '@/components/recommendations/RecommendationsWidget';
 
 // Premium Home Components
 import {
@@ -155,6 +156,16 @@ export default function Home() {
           onProductClick={handleProductClick}
           onAddToCart={handleAddToCart}
         />
+
+        {/* 🧠 Recommandations personnalisées */}
+        <div className="px-4">
+          <RecommendationsWidget
+            showPersonalized={true}
+            showSimilar={false}
+            showAlsoBought={false}
+            onProductClick={handleProductClick}
+          />
+        </div>
 
         {/* Bottom Navigation */}
         <BottomNavigation />

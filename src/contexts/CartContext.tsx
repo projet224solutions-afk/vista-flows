@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useRef, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useListPersistence } from '@/hooks/useAppPersistence';
+import { trackCartAdd } from '@/hooks/useProductRecommendations';
 
 export interface CartItem {
   id: string;
@@ -59,6 +60,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = useCallback((item: Omit<CartItem, 'quantity'>) => {
     const existingItem = cartItems.find(i => i.id === item.id);
+    
+    // 🧠 Track pour recommandations
+    trackCartAdd(item.id);
     
     if (existingItem) {
       updateItem(item.id, { quantity: existingItem.quantity + 1 });
