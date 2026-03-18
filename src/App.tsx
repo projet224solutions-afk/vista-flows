@@ -248,6 +248,8 @@ function App() {
               {/* Main App Routes */}
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/visual-search" element={<VisualSearch />} />
+              <Route path="/marketplace/similar/:id" element={<SimilarProducts />} />
+              <Route path="/marketplace/others/:id" element={<OtherProducts />} />
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/marketplace/product/:id/*" element={<ProductDetail />} />
               <Route path="/product/:id" element={<ProductDetail />} />
