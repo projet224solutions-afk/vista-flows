@@ -31,6 +31,7 @@ import { AIRecommendationSection } from "@/components/marketplace/AIRecommendati
 import { useBehaviorTracking } from "@/hooks/useBehaviorTracking";
 import { cn } from "@/lib/utils";
 import { ScrollToTopButton } from "@/components/marketplace/ScrollToTopButton";
+import { InfiniteScrollTrigger } from "@/components/marketplace/InfiniteScrollTrigger";
 
 // Configuration des catégories numériques pour le filtre
 const DIGITAL_CATEGORIES = [
