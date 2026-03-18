@@ -16,8 +16,7 @@ import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 import { trackProductView } from "@/services/analyticsTrackingService";
 import { useTrackProductView } from "@/hooks/useProductRecommendations";
-import { ProductRecommendationSection } from "@/components/recommendations/ProductRecommendationSection";
-import { useSimilarProducts, useAlsoBoughtProducts, usePersonalizedRecommendations } from "@/hooks/useProductRecommendations";
+import { useTrackProductView } from "@/hooks/useProductRecommendations";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 import { useTranslation } from "@/hooks/useTranslation";
 interface Product {
