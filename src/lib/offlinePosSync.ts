@@ -4,6 +4,7 @@ import offlineDB from '@/lib/offlineDB';
 
 interface SyncOfflinePosSalesOptions {
   vendorId?: string | null;
+  userId?: string | null;
 }
 
 interface SyncOfflinePosSalesResult {
@@ -26,7 +27,7 @@ export async function syncOfflinePosSales(
   }
 
   inFlightSync = (async () => {
-    const { vendorId } = options;
+    const { vendorId, userId: providedUserId } = options;
 
     const pendingEvents = await offlineDB.getPendingEvents();
     const failedEvents = await offlineDB.getFailedEvents();
@@ -42,6 +43,49 @@ export async function syncOfflinePosSales(
     if (salesEvents.length === 0) {
       return { total: 0, synced: 0, failed: 0 };
     }
+
+    let resolvedUserId: string | null = providedUserId ?? null;
+    if (!resolvedUserId) {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      resolvedUserId = authData.user?.id ?? null;
+    }
+
+    if (!resolvedUserId) {
+      throw new Error('Utilisateur non authentifié pour synchroniser les ventes offline');
+    }
+
+    let resolvedCustomerId: string | null = null;
+    const resolveCustomerId = async (): Promise<string> => {
+      if (resolvedCustomerId) return resolvedCustomerId;
+
+      const { data: existingCustomer, error: existingCustomerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('user_id', resolvedUserId)
+        .maybeSingle();
+
+      if (existingCustomerError) throw existingCustomerError;
+
+      if (existingCustomer?.id) {
+        resolvedCustomerId = existingCustomer.id;
+        return resolvedCustomerId;
+      }
+
+      const { data: newCustomer, error: newCustomerError } = await supabase
+        .from('customers')
+        .insert({ user_id: resolvedUserId })
+        .select('id')
+        .single();
+
+      if (newCustomerError) throw newCustomerError;
+      if (!newCustomer?.id) {
+        throw new Error('Impossible de créer le client POS offline');
+      }
+
+      resolvedCustomerId = newCustomer.id;
+      return resolvedCustomerId;
+    };
 
     let synced = 0;
     let failed = 0;
@@ -87,33 +131,7 @@ export async function syncOfflinePosSales(
         let createdNewOrder = false;
 
         if (!orderId) {
-          const { data: existingCustomer } = await supabase
-            .from('customers')
-            .select('id')
-            .eq('vendor_id', currentVendorId)
-            .eq('name', customerName)
-            .maybeSingle();
-
-          let customerId = existingCustomer?.id;
-
-          if (!customerId) {
-            const { data: newCustomer, error: newCustomerError } = await supabase
-              .from('customers')
-              .insert({
-                vendor_id: currentVendorId,
-                name: customerName,
-                phone: saleData.customer_phone || null,
-              })
-              .select('id')
-              .single();
-
-            if (newCustomerError) throw newCustomerError;
-            customerId = newCustomer?.id;
-          }
-
-          if (!customerId) {
-            throw new Error('Impossible de créer/récupérer le client pour la vente offline');
-          }
+          const customerId = await resolveCustomerId();
 
           const { data: order, error: orderError } = await supabase
             .from('orders')
@@ -129,11 +147,21 @@ export async function syncOfflinePosSales(
               status: 'confirmed',
               payment_method: 'cash',
               shipping_address: isCreditSale
-                ? { address: 'Vente à crédit', is_credit_sale: true }
-                : { address: 'Point de vente' },
+                ? {
+                    address: 'Vente à crédit',
+                    is_credit_sale: true,
+                    customer_name: customerName,
+                    customer_phone: saleData.customer_phone || null,
+                  }
+                : {
+                    address: 'Point de vente',
+                    customer_name: customerName,
+                    customer_phone: saleData.customer_phone || null,
+                  },
               notes: isCreditSale
                 ? `🔖 VENTE À CRÉDIT (sync offline) - Client: ${customerName}${saleData.customer_phone ? ` - Tél: ${saleData.customer_phone}` : ''}`
                 : `Vente offline synchronisée - ${syncOrderNumber}`,
+              full_name: customerName,
               source: 'pos',
               created_at: saleData.sale_date || new Date().toISOString(),
             })
