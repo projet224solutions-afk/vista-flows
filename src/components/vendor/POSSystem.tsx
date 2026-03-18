@@ -335,7 +335,7 @@ export function POSSystem() {
 
             if (existingOrderError) throw existingOrderError;
 
-            let orderId = existingOrder?.id || null;
+            let orderId: string | undefined = existingOrder?.id;
             let createdNewOrder = false;
 
             if (!orderId) {
@@ -394,8 +394,12 @@ export function POSSystem() {
                 .single();
 
               if (orderError) throw orderError;
-              orderId = order.id;
+              orderId = order?.id;
               createdNewOrder = true;
+            }
+
+            if (!orderId) {
+              throw new Error('Impossible de déterminer la commande à synchroniser');
             }
 
             // Vérifier si les items existent déjà (idempotence)
