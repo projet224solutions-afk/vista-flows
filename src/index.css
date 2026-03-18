@@ -723,6 +723,9 @@ All colors MUST be HSL.
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-width: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   @media (min-width: 601px) {
