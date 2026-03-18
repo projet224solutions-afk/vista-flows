@@ -478,8 +478,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0 w-[95vw]">
-        <ScrollArea className="h-[85vh] px-4 md:px-6">
+      <DialogContent className="max-w-5xl max-h-[92dvh] overflow-hidden p-0 w-[95vw] z-[210]">
+        <ScrollArea className="h-[calc(92dvh-2.5rem)] px-4 md:px-6">
         <DialogHeader>
           <DialogTitle className="text-xl md:text-2xl font-bold break-words pr-6">{product.name}</DialogTitle>
         </DialogHeader>
@@ -760,7 +760,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             </div>
 
             {/* Garanties */}
-            <div className="space-y-2 pt-4 pb-6">
+            <div className="space-y-2 pt-4 pb-footer md:pb-8">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="w-4 h-4" />
                 <span>{product.is_affiliate ? 'Achat sécurisé chez le partenaire' : 'Paiement sécurisé'}</span>
