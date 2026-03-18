@@ -142,8 +142,25 @@ export default function VendorAgentInterface() {
     }
   };
 
-  const handleSignOut = () => {
-    navigate('/');
+  const handleSignOut = async () => {
+    try {
+      // Nettoyer toutes les sessions agent du storage
+      localStorage.removeItem('agent_session');
+      localStorage.removeItem('agent_user');
+      localStorage.removeItem('agent_token');
+      sessionStorage.removeItem('agent_session');
+      sessionStorage.removeItem('agent_user');
+      
+      // Déconnexion Supabase Auth
+      await supabase.auth.signOut();
+      
+      toast.success('Déconnexion réussie');
+      navigate('/auth', { replace: true });
+    } catch (error) {
+      console.error('Erreur déconnexion:', error);
+      // Forcer la navigation même en cas d'erreur
+      navigate('/auth', { replace: true });
+    }
   };
 
   const hasPermission = (permission: string) => {
