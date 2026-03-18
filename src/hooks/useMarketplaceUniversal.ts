@@ -315,6 +315,8 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       "formation",
       "livre",
       "custom",
+      "ai",
+      "physique_affilie",
     ]);
 
     try {
