@@ -394,7 +394,7 @@ export default function Proximite() {
                   
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium" style={{ color: ORANGE }}>{service.count} disponibles</span>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-all" style={{ color: BLUE }} />
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-all" style={{ color: BLUE }} />
                   </div>
                 </button>
               );
