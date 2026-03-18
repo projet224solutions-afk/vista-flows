@@ -38,8 +38,8 @@ export async function trackInteraction(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    await supabase
-      .from('user_product_interactions')
+    await (supabase
+      .from('user_product_interactions') as any)
       .insert({
         user_id: user.id,
         product_id: productId,
