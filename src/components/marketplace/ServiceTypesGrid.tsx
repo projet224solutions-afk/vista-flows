@@ -183,18 +183,16 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
               key={serviceType.id}
               className={cn(
                 "group cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02]",
-                "border-2",
-                colors.border
+                "border-2 border-border hover:border-[#04439e]"
               )}
               onClick={() => handleServiceClick(serviceType)}
             >
               <CardContent className="p-4 sm:p-6">
-                {/* Icône avec gradient */}
-                <div className={cn(
-                  "w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mb-4",
-                  "bg-gradient-to-br shadow-lg",
-                  colors.bg
-                )}>
+                {/* Icône avec couleur de marque unie */}
+                <div 
+                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mb-4 shadow-lg"
+                  style={{ backgroundColor: BRAND_BLUE }}
+                >
                   <IconComponent className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                 </div>
 
