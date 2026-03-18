@@ -247,7 +247,7 @@ export default function UniversalWalletDashboard({
     if (!wallet) return;
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('wallet.invalidAmount'));
       return;
     }
     if (amount < 5000) {
