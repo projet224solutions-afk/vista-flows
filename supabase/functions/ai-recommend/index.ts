@@ -211,6 +211,12 @@ serve(async (req) => {
     // Fetch full product details
     const products = await fetchProductDetails(supabase, topRecos.map(r => r.product_id));
     
+    // If no products found (all inactive etc.), fallback
+    if (products.length === 0) {
+      console.log("Products fetched but none found active, falling back");
+      return fallbackResponse(supabase, corsHeaders, type);
+    }
+    
     // Attach reasons
     const productsWithReasons = products.map(p => {
       const reco = topRecos.find(r => r.product_id === p.product_id);
