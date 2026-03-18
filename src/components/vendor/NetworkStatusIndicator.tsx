@@ -1,111 +1,141 @@
 /**
- * INDICATEUR DE STATUT RÉSEAU AMÉLIORÉ
- * Composant pour afficher le statut de connexion avec cache info
+ * INDICATEUR DE STATUT RÉSEAU COMPACT
+ * Affiche le statut de connexion et permet la sync manuelle
  * 224SOLUTIONS - Interface Vendeur
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Wifi, WifiOff, Database, RefreshCw } from "lucide-react";
+import { Wifi, WifiOff, RefreshCw } from "lucide-react";
+import { toast } from 'sonner';
 
 export default function NetworkStatusIndicator() {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [pendingSync, setPendingSync] = useState(0);
-    const [lastCheck, setLastCheck] = useState<Date | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    const checkPendingData = useCallback(async () => {
+        try {
+            const dbRequest = indexedDB.open('224Solutions-OfflineDB', 3);
+            dbRequest.onsuccess = () => {
+                const db = dbRequest.result;
+                if (db.objectStoreNames.contains('events')) {
+                    const tx = db.transaction('events', 'readonly');
+                    const store = tx.objectStore('events');
+                    const index = store.index('by-status');
+                    const countRequest = index.count('pending');
+                    countRequest.onsuccess = () => {
+                        setPendingSync(countRequest.result);
+                    };
+                }
+                db.close();
+            };
+        } catch {
+            // Ignorer
+        }
+    }, []);
+
+    // Sync manuelle: marquer les events pending comme synced si on est en ligne
+    const forceSyncPending = useCallback(async () => {
+        if (!navigator.onLine || isSyncing) return;
+
+        setIsSyncing(true);
+        try {
+            const { default: offlineDB } = await import('@/lib/offlineDB');
+            const pendingEvents = await offlineDB.getPendingEvents();
+
+            if (pendingEvents.length === 0) {
+                setPendingSync(0);
+                return;
+            }
+
+            // Déclencher la synchronisation via useOfflineSync en émettant un événement custom
+            window.dispatchEvent(new CustomEvent('force-offline-sync'));
+
+            // Attendre un peu puis re-vérifier
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            await checkPendingData();
+
+            toast.success('Synchronisation lancée');
+        } catch (error) {
+            console.error('Erreur sync:', error);
+        } finally {
+            setIsSyncing(false);
+        }
+    }, [isSyncing, checkPendingData]);
 
     useEffect(() => {
-        const handleOnline = () => setIsOnline(true);
+        const handleOnline = () => {
+            setIsOnline(true);
+            setTimeout(() => forceSyncPending(), 2000);
+        };
         const handleOffline = () => setIsOnline(false);
 
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
 
-        // Vérifier les données en attente périodiquement
-        const checkPendingData = async () => {
-            try {
-                const dbRequest = indexedDB.open('224Solutions-OfflineDB', 3);
-                dbRequest.onsuccess = () => {
-                    const db = dbRequest.result;
-                    if (db.objectStoreNames.contains('events')) {
-                        const tx = db.transaction('events', 'readonly');
-                        const store = tx.objectStore('events');
-                        const index = store.index('by-status');
-                        const countRequest = index.count('pending');
-                        countRequest.onsuccess = () => {
-                            setPendingSync(countRequest.result);
-                            setLastCheck(new Date());
-                        };
-                    }
-                    db.close();
-                };
-            } catch (e) {
-                // Ignorer
-            }
-        };
-
         checkPendingData();
-        const interval = setInterval(checkPendingData, 30000);
+        const interval = setInterval(checkPendingData, 15000);
+
+        // Auto-sync au montage si en ligne
+        if (navigator.onLine) {
+            setTimeout(() => forceSyncPending(), 3000);
+        }
 
         return () => {
             clearInterval(interval);
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
-    }, []);
+    }, [checkPendingData, forceSyncPending]);
 
-    const getStatusColor = () => {
-        if (!isOnline) return 'bg-red-500';
-        if (pendingSync > 0) return 'bg-yellow-500';
-        return 'bg-green-500';
-    };
-
-    const getStatusText = () => {
-        if (!isOnline) return 'Hors ligne';
-        if (pendingSync > 0) return `${pendingSync} en attente`;
-        return 'En ligne';
-    };
-
-    const getIcon = () => {
-        if (!isOnline) return <WifiOff className="w-3 h-3" />;
-        if (pendingSync > 0) return <RefreshCw className="w-3 h-3 animate-spin" />;
-        return <Wifi className="w-3 h-3" />;
-    };
+    // Masquer si tout va bien
+    if (isOnline && pendingSync === 0 && !isSyncing) {
+        return null;
+    }
 
     return (
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Badge
-                        className={`${getStatusColor()} text-white text-xs px-2 py-1 flex items-center gap-1 cursor-help`}
+                        onClick={isOnline && pendingSync > 0 ? forceSyncPending : undefined}
+                        className={`${
+                            isSyncing ? 'bg-blue-500' : !isOnline ? 'bg-destructive' : 'bg-yellow-500'
+                        } text-white text-[9px] leading-none px-1.5 py-0.5 flex items-center gap-0.5 ${
+                            isOnline && pendingSync > 0 ? 'cursor-pointer hover:opacity-80' : 'cursor-help'
+                        }`}
                         variant="default"
                     >
-                        {getIcon()}
-                        <span className="hidden sm:inline">{getStatusText()}</span>
+                        {isSyncing ? (
+                            <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                        ) : !isOnline ? (
+                            <WifiOff className="w-2.5 h-2.5" />
+                        ) : (
+                            <RefreshCw className="w-2.5 h-2.5" />
+                        )}
+                        <span>
+                            {isSyncing ? 'Sync' : !isOnline ? 'Off' : pendingSync.toString()}
+                        </span>
                     </Badge>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="max-w-xs">
                     <div className="space-y-1 text-xs">
                         <div className="flex items-center gap-2">
-                            {isOnline ? <Wifi className="w-4 h-4 text-green-500" /> : <WifiOff className="w-4 h-4 text-red-500" />}
+                            {isOnline ? (
+                                <Wifi className="w-3 h-3 text-green-500" />
+                            ) : (
+                                <WifiOff className="w-3 h-3 text-destructive" />
+                            )}
                             <span className="font-medium">{isOnline ? 'Connecté' : 'Hors ligne'}</span>
                         </div>
                         {pendingSync > 0 && (
-                            <div className="flex items-center gap-2">
-                                <Database className="w-4 h-4 text-yellow-500" />
-                                <span>{pendingSync} opération(s) en attente</span>
-                            </div>
+                            <p className="text-muted-foreground">
+                                {pendingSync} en attente — {isOnline ? 'Cliquez pour synchroniser' : 'Sync à la reconnexion'}
+                            </p>
                         )}
-                        {lastCheck && (
-                            <div className="text-muted-foreground">
-                                Vérifié: {lastCheck.toLocaleTimeString()}
-                            </div>
-                        )}
-                        {!isOnline && (
-                            <div className="text-orange-600 mt-1">
-                                ⚠️ Les données seront synchronisées à la reconnexion
-                            </div>
-                        )}
+                        {isSyncing && <p className="text-blue-500">Synchronisation...</p>}
                     </div>
                 </TooltipContent>
             </Tooltip>

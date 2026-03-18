@@ -102,13 +102,6 @@ const HeaderActions = memo(function HeaderActions({
 }) {
   return (
     <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-      {/* Network Status - Desktop only */}
-      <div className="hidden md:block">
-        <Suspense fallback={null}>
-          <NetworkStatusIndicator />
-        </Suspense>
-      </div>
-
       {/* Quick Transfer */}
       <Suspense fallback={null}>
         <QuickTransferButton
@@ -119,10 +112,20 @@ const HeaderActions = memo(function HeaderActions({
         />
       </Suspense>
 
-      {/* Subscription Button - Tablet+ */}
-      <div className="hidden sm:block">
+      {/* Subscription Button + Network Status côte à côte */}
+      <div className="hidden sm:flex items-center gap-1">
         <Suspense fallback={null}>
           <VendorSubscriptionButton />
+        </Suspense>
+        <Suspense fallback={null}>
+          <NetworkStatusIndicator />
+        </Suspense>
+      </div>
+
+      {/* Network Status - Mobile only (quand subscription masqué) */}
+      <div className="sm:hidden">
+        <Suspense fallback={null}>
+          <NetworkStatusIndicator />
         </Suspense>
       </div>
 
