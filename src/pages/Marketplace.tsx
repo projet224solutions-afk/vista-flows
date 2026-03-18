@@ -664,9 +664,7 @@ export default function Marketplace() {
             ) : marketplaceItems.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-2">
-                  {selectedItemType === 'all' ? 'Aucun article trouvé' :
-                   selectedItemType === 'product' ? 'Aucun produit trouvé' :
-                   'Aucun produit numérique trouvé'}
+                   {t('marketplace.noProducts')}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {t('marketplace.noProducts')}
