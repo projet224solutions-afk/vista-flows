@@ -49,7 +49,6 @@ export function RecommendationsWidget({
       {showPersonalized && (
         <ProductRecommendationSection
           title="Recommandé pour vous"
-          subtitle="Basé sur vos préférences"
           icon="sparkles"
           products={(personalized || []).map(p => ({ ...p, reason: p.reason }))}
           loading={loadingPersonalized}
