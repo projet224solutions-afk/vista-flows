@@ -630,7 +630,7 @@ export default function UniversalWalletDashboard({
               <Button 
                 onClick={() => {
                   if ((withdrawMethod === 'orange' || withdrawMethod === 'momo') && !phoneNumber) {
-                    toast.error('Veuillez entrer votre numéro de téléphone');
+                    toast.error(t('wallet.enterPhone'));
                     return;
                   }
                   setShowWithdrawConfirm(true);
