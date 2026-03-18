@@ -278,7 +278,6 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
   if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()} ${senderCurrency}`);
   if (senderResult.data.balance < amount) throw new Error("Solde insuffisant");
 
-  const senderCurrency = (senderResult.data.currency || "GNF").toUpperCase();
   const receiverCurrency = (receiverResult.data.currency || "GNF").toUpperCase();
   const senderCountry = currencyToCountry(senderCurrency);
   const receiverCountry = currencyToCountry(receiverCurrency);
