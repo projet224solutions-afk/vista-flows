@@ -109,19 +109,18 @@ function FavoriteButtonComponent({ productId, vendorId, className, size = "sm" }
           : `Ajouter ${target.kind === "product" ? "le produit" : "le vendeur"} aux favoris`
       }
       className={cn(
-        "rounded-full flex items-center justify-center",
+        "flex items-center justify-center",
         "transition-all duration-200",
-        "backdrop-blur-sm shadow-sm",
         "hover:scale-110 active:scale-95",
         "disabled:opacity-50",
-        isFav
-          ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          : "bg-background/80 text-muted-foreground hover:text-destructive hover:bg-background border border-border/50",
         sizeClasses,
         className
       )}
     >
-      <Heart className={cn(iconSize, isFav && "fill-current")} />
+      <Heart
+        className={cn(iconSize, isFav && "fill-current")}
+        style={{ color: "#ff4000" }}
+      />
     </button>
   );
 }
