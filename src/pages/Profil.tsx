@@ -67,6 +67,11 @@ const userTypes = {
     label: "PDG",
     description: "Président Directeur Général",
     color: "bg-primary"
+  },
+  vendor_agent: {
+    label: "Agent Vendeur",
+    description: "Agent commercial d'un vendeur",
+    color: "bg-orange-500"
   }
 };
 
