@@ -601,85 +601,150 @@ All colors MUST be HSL.
      Mobile: 2 colonnes | Tablette: 2-3 | Desktop: 3-6
      ================================================ */
   .marketplace-grid {
-    display: grid;
-    /* Default: 2 colonnes pour mobile-first */
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
     gap: 0.5rem;
     width: 100%;
-    max-width: 100%;
     padding: 0.5rem;
-    overflow-x: hidden;
     box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
-  /* Empêcher les enfants de la grille de déborder */
+  .marketplace-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Chaque carte prend ~45% de la largeur visible pour montrer la suivante */
   .marketplace-grid > * {
-    min-width: 0;
+    min-width: 44%;
+    max-width: 44%;
+    flex-shrink: 0;
+    scroll-snap-align: start;
     overflow: hidden;
   }
 
-  /* Très petits écrans */
+  /* Très petits écrans: cartes plus larges */
   @media (max-width: 360px) {
     .marketplace-grid {
-      grid-template-columns: 1fr;
-      gap: 0.625rem;
-      padding: 0.625rem;
+      gap: 0.5rem;
+      padding: 0.5rem;
+    }
+    .marketplace-grid > * {
+      min-width: 70%;
+      max-width: 70%;
     }
   }
 
-  /* Tablette portrait (601px - 768px): 2-3 colonnes */
+  /* Tablette portrait (601px - 768px): back to grid */
   @media (min-width: 601px) and (max-width: 768px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(2, 1fr);
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 0.875rem;
       padding: 0.875rem;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
   /* Tablette landscape (769px - 1024px): 3 colonnes */
   @media (min-width: 769px) and (max-width: 1024px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(3, 1fr);
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 1rem;
       padding: 1rem;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
   /* Desktop petit (1025px - 1280px): 3-4 colonnes */
   @media (min-width: 1025px) and (max-width: 1280px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 1rem;
       padding: 1rem;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
   /* Desktop standard (1281px - 1536px): 4-5 colonnes */
   @media (min-width: 1281px) and (max-width: 1536px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 1.25rem;
       padding: 1.25rem;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
   /* Grand écran (1537px - 1920px): 5-6 colonnes */
   @media (min-width: 1537px) and (max-width: 1920px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 1.25rem;
       padding: 1.5rem;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
   /* Ultra wide (>1920px): Maximum 6 colonnes */
   @media (min-width: 1921px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(6, 1fr);
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 1.5rem;
       padding: 1.5rem;
       max-width: 2000px;
       margin: 0 auto;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
