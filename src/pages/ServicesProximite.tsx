@@ -149,7 +149,7 @@ export default function ServicesProximite() {
         }
       }
 
-      // Calculer les distances avec la position passée en paramètre (pas de closure stale)
+      // Calculer les distances - exclure les services sans GPS
       list = list
         .map((s) => {
           const hasValidCoords = 
@@ -163,7 +163,9 @@ export default function ServicesProximite() {
           return { ...s, distance };
         })
         .filter((s) => {
-          if (s.distance === null) return true;
+          // Exclure les services sans coordonnées GPS
+          if (s.distance === null) return false;
+          // Garder uniquement ceux dans le rayon défini
           return s.distance <= RADIUS_KM;
         });
 
