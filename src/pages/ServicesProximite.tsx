@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, MapPin, Phone, Clock, Star, Search, RefreshCw, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QuickFooter from "@/components/QuickFooter";
 import { cn } from "@/lib/utils";
-import { useGeoDistance, formatDistance } from "@/hooks/useGeoDistance";
+import { useGeoDistance, formatDistance, calculateDistance } from "@/hooks/useGeoDistance";
 
 interface ProfessionalService {
   id: string;
@@ -41,11 +41,16 @@ const RADIUS_KM = 20;
 export default function ServicesProximite() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { userPosition, positionReady, usingRealLocation, getDistanceTo } = useGeoDistance();
+  const { userPosition, positionReady, usingRealLocation } = useGeoDistance();
   const [services, setServices] = useState<ProfessionalService[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("type") || "all");
+  
+  // Stabiliser la position pour éviter les re-renders infinis
+  const positionRef = useRef({ lat: userPosition.latitude, lng: userPosition.longitude });
+  const loadingRef = useRef(false);
+  const hasLoadedRef = useRef(false);
 
   const categories = [
     { id: "all", name: "Tous", icon: "🏪" },
@@ -67,7 +72,10 @@ export default function ServicesProximite() {
     document.title = "Services de Proximité | 224SOLUTIONS";
   }, []);
 
-  const loadServices = async () => {
+  const loadServices = useCallback(async (lat: number, lng: number) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    
     try {
       setLoading(true);
       
@@ -126,7 +134,7 @@ export default function ServicesProximite() {
               return s;
             });
 
-            // Mettre à jour en arrière-plan dans la DB pour les prochaines fois
+            // Mettre à jour en arrière-plan dans la DB
             for (const s of servicesWithoutGps) {
               const vendorGps = vendorGpsMap.get((s as any).user_id);
               if (vendorGps) {
@@ -141,7 +149,7 @@ export default function ServicesProximite() {
         }
       }
 
-      // Calculer les distances
+      // Calculer les distances avec la position passée en paramètre (pas de closure stale)
       list = list
         .map((s) => {
           const hasValidCoords = 
@@ -149,7 +157,9 @@ export default function ServicesProximite() {
             s.longitude !== null && s.longitude !== undefined &&
             Number.isFinite(Number(s.latitude)) && Number.isFinite(Number(s.longitude));
           
-          const distance = hasValidCoords ? getDistanceTo(s.latitude, s.longitude) : null;
+          const distance = hasValidCoords 
+            ? calculateDistance(lat, lng, Number(s.latitude), Number(s.longitude)) 
+            : null;
           return { ...s, distance };
         })
         .filter((s) => {
@@ -169,19 +179,36 @@ export default function ServicesProximite() {
       });
 
       setServices(list);
+      console.log(`📍 Services chargés: ${list.length}, position: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
     } catch (error) {
       console.error('Erreur chargement services:', error);
       toast.error('Erreur lors du chargement des services');
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
-  };
+  }, []);
 
+  // Charger une seule fois quand positionReady, puis re-charger seulement si la position change significativement
   useEffect(() => {
-    if (positionReady) {
-      loadServices();
-    }
-  }, [positionReady, userPosition]);
+    if (!positionReady) return;
+    
+    const newLat = userPosition.latitude;
+    const newLng = userPosition.longitude;
+    const prevLat = positionRef.current.lat;
+    const prevLng = positionRef.current.lng;
+    
+    // Ne re-charger que si c'est le premier chargement OU si la position a changé de plus de 100m
+    const moved = hasLoadedRef.current 
+      ? calculateDistance(prevLat, prevLng, newLat, newLng) > 0.1 
+      : true;
+    
+    if (!moved) return;
+    
+    positionRef.current = { lat: newLat, lng: newLng };
+    hasLoadedRef.current = true;
+    loadServices(newLat, newLng);
+  }, [positionReady, userPosition.latitude, userPosition.longitude, loadServices]);
 
   const filteredServices = useMemo(() => {
     let result = services;
@@ -231,7 +258,7 @@ export default function ServicesProximite() {
                 <p className="text-xs text-muted-foreground truncate">Dans un rayon de {RADIUS_KM} km</p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={loadServices} disabled={loading}>
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => loadServices(positionRef.current.lat, positionRef.current.lng)} disabled={loading}>
               <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
             </Button>
           </div>
