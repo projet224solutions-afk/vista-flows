@@ -25,27 +25,25 @@ const DEFAULT_MAX_TRANSFER = 50000000;
 const LIMITS_BASE_CURRENCY = "GNF";
 
 /**
- * 🔄 Convertir un seuil (stocké en GNF) vers la devise de l'expéditeur
- * Ex: min 500 GNF → ~0.05 EUR si 1 EUR = 10000 GNF
+ * 🔄 Convertir plusieurs seuils (stockés en GNF) vers la devise de l'expéditeur
+ * Utilise UN SEUL appel FX pour toutes les limites (performance)
  */
-async function convertLimitToCurrency(
-  limitInBase: number,
+async function convertLimitsToCurrency(
+  limits: number[],
   targetCurrency: string,
-  getFxRate: (from: string, to: string) => Promise<{ rate: number; source: string; fetched_at: string }>
-): Promise<number> {
-  if (targetCurrency === LIMITS_BASE_CURRENCY) return limitInBase;
+): Promise<number[]> {
+  if (targetCurrency === LIMITS_BASE_CURRENCY) return limits;
   
   try {
-    const { rate } = await getFxRate(LIMITS_BASE_CURRENCY, targetCurrency);
+    const { rate } = await getFxRateFromAPI(LIMITS_BASE_CURRENCY, targetCurrency);
     if (rate > 0) {
-      const converted = limitInBase * rate;
-      return smartRound(converted, targetCurrency);
+      return limits.map(l => smartRound(l * rate, targetCurrency));
     }
   } catch (e) {
-    console.error(`[LIMITS] Failed to convert ${limitInBase} ${LIMITS_BASE_CURRENCY} → ${targetCurrency}:`, e);
+    console.error(`[LIMITS] Failed to convert ${LIMITS_BASE_CURRENCY} → ${targetCurrency}:`, e);
   }
-  // Fallback: return raw value (safe default)
-  return limitInBase;
+  // Fallback: return raw values
+  return limits;
 }
 
 // Smart rounding: integers for weak currencies (GNF, XOF, etc.), 2 decimals for strong (EUR, USD, etc.)
@@ -262,29 +260,36 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
   const senderCurrency = (senderResult.data.currency || "GNF").toUpperCase();
 
   // Load dynamic limits from pdg_settings and convert to sender's currency
-  const [minLimitRaw, maxLimitRaw] = await Promise.all([
+  const [minLimitRaw, maxLimitRaw, minIntlLimitRaw, maxIntlLimitRaw] = await Promise.all([
     getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
     getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_INTERNATIONAL_TRANSFER),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_INTERNATIONAL_TRANSFER),
   ]);
 
-  const [minLimit, maxLimit] = await Promise.all([
-    convertLimitToCurrency(minLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(maxLimitRaw, senderCurrency, getFxRateFromAPI),
-  ]);
+  const [minLimit, maxLimit, minIntlLimit, maxIntlLimit] = await convertLimitsToCurrency(
+    [minLimitRaw, maxLimitRaw, minIntlLimitRaw, maxIntlLimitRaw],
+    senderCurrency,
+  );
 
-  console.log(`[LIMITS-PREVIEW] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit}`);
+  console.log(`[LIMITS-PREVIEW] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit} | intlMin: ${minIntlLimitRaw}→${minIntlLimit} | intlMax: ${maxIntlLimitRaw}→${maxIntlLimit}`);
 
   if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()} ${senderCurrency}`);
   if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()} ${senderCurrency}`);
   if (senderResult.data.balance < amount) throw new Error("Solde insuffisant");
 
-  const senderCurrency = (senderResult.data.currency || "GNF").toUpperCase();
   const receiverCurrency = (receiverResult.data.currency || "GNF").toUpperCase();
   const senderCountry = currencyToCountry(senderCurrency);
   const receiverCountry = currencyToCountry(receiverCurrency);
 
   // ✅ RÈGLE CENTRALE: même devise = local, devise différente = international
   const isInternational = senderCurrency !== receiverCurrency;
+
+  // Vérification limites internationales dans le preview aussi
+  if (isInternational) {
+    if (amount < minIntlLimit) throw new Error(`Montant minimum international: ${minIntlLimit.toLocaleString()} ${senderCurrency}`);
+    if (amount > maxIntlLimit) throw new Error(`Limite par transfert international: ${maxIntlLimit.toLocaleString()} ${senderCurrency}`);
+  }
 
   console.log(`🌍 Preview: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | International: ${isInternational}`);
 
@@ -416,14 +421,11 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
     getPdgFeeRate(supabase, FEE_KEYS.MIN_INTERNATIONAL_TRANSFER),
   ]);
 
-  // 🔄 Convert ALL limits to sender's currency
-  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit, minIntlLimit] = await Promise.all([
-    convertLimitToCurrency(minLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(maxLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(maxDailyLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(maxIntlLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(minIntlLimitRaw, senderCurrency, getFxRateFromAPI),
-  ]);
+  // 🔄 Convert ALL limits to sender's currency (single FX call)
+  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit, minIntlLimit] = await convertLimitsToCurrency(
+    [minLimitRaw, maxLimitRaw, maxDailyLimitRaw, maxIntlLimitRaw, minIntlLimitRaw],
+    senderCurrency,
+  );
 
   console.log(`[LIMITS-TRANSFER] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit} | intlMin: ${minIntlLimitRaw}→${minIntlLimit} | intlMax: ${maxIntlLimitRaw}→${maxIntlLimit} | daily: ${maxDailyLimitRaw}→${maxDailyLimit}`);
 
