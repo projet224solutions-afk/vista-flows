@@ -567,7 +567,8 @@ export default function ProductPaymentModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary" />
@@ -761,6 +762,7 @@ export default function ProductPaymentModal({
           >
             {paymentMethod === 'wallet' ? 'Payer' : 'Confirmer'} {fc(grandTotal)}
           </SecureButton>
+        </div>
         </div>
       </DialogContent>
     </Dialog>
