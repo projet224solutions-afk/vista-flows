@@ -349,17 +349,23 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
   console.log("fetchProductDetails: querying", productIds.length, "IDs, sample:", productIds[0]);
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id, vendors!inner(business_type)")
-    .in("id", productIds)
-    .in("vendors.business_type", ["hybrid", "online"]);
+    .select("id, name, price, images, rating, category_id, vendors(business_type)")
+    .in("id", productIds);
   
   if (error) {
     console.error("fetchProductDetails error:", error);
     return [];
   }
-  console.log("fetchProductDetails: found", data?.length || 0, "products");
   
-  return (data || []).map((p: any) => ({
+  // Filter: only vendors with online selling
+  const allowedTypes = ["hybrid", "online"];
+  const filtered = (data || []).filter((p: any) => {
+    const vendor = p.vendors;
+    return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
+  });
+  console.log("fetchProductDetails: found", filtered.length, "products (after vendor filter)");
+  
+  return filtered.map((p: any) => ({
     product_id: p.id,
     name: p.name,
     price: p.price,
@@ -372,13 +378,19 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
 async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
   const { data } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id, vendors!inner(business_type)")
+    .select("id, name, price, images, rating, category_id, vendors(business_type)")
     .eq("is_active", true)
-    .in("vendors.business_type", ["hybrid", "online"])
     .order("rating", { ascending: false, nullsFirst: false })
-    .limit(20);
+    .limit(50);
 
-  const products = (data || []).map((p: any) => ({
+  // Filter: only vendors with online selling
+  const allowedTypes = ["hybrid", "online"];
+  const filtered = (data || []).filter((p: any) => {
+    const vendor = p.vendors;
+    return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
+  }).slice(0, 20);
+
+  const products = filtered.map((p: any) => ({
     product_id: p.id,
     name: p.name,
     price: p.price,
