@@ -141,16 +141,44 @@ export const useRoleRedirect = () => {
         
         if (shouldRedirectVendorAgent) {
           const redirectVendorAgent = async () => {
-            const { data: vendorAgent } = await supabase
-              .from('vendor_agents')
-              .select('access_token')
-              .eq('user_id', user.id)
-              .eq('is_active', true)
-              .maybeSingle();
-            
-            if (vendorAgent?.access_token) {
-              console.log('🚀 [useRoleRedirect] Redirection vendor_agent vers /vendor-agent/');
-              navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
+            try {
+              console.log('🔍 [useRoleRedirect] Recherche access_token pour vendor_agent user_id:', user.id);
+              
+              const { data: vendorAgent, error: vaError } = await supabase
+                .from('vendor_agents')
+                .select('access_token')
+                .eq('user_id', user.id)
+                .eq('is_active', true)
+                .maybeSingle();
+              
+              console.log('📋 [useRoleRedirect] Résultat vendor_agent:', { vendorAgent, vaError });
+              
+              if (vaError) {
+                console.error('❌ [useRoleRedirect] Erreur query vendor_agents:', vaError);
+              }
+              
+              if (vendorAgent?.access_token) {
+                console.log('🚀 [useRoleRedirect] Redirection vendor_agent vers /vendor-agent/', vendorAgent.access_token);
+                navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
+              } else {
+                console.warn('⚠️ [useRoleRedirect] Aucun access_token trouvé, tentative sans filtre is_active...');
+                // Fallback: essayer sans le filtre is_active
+                const { data: vendorAgentAny, error: vaError2 } = await supabase
+                  .from('vendor_agents')
+                  .select('access_token, is_active')
+                  .eq('user_id', user.id)
+                  .maybeSingle();
+                
+                console.log('📋 [useRoleRedirect] Résultat vendor_agent (sans filtre):', { vendorAgentAny, vaError2 });
+                
+                if (vendorAgentAny?.access_token) {
+                  navigate(`/vendor-agent/${vendorAgentAny.access_token}`, { replace: true });
+                } else {
+                  console.error('❌ [useRoleRedirect] Aucun vendor_agent trouvé pour cet utilisateur');
+                }
+              }
+            } catch (err) {
+              console.error('❌ [useRoleRedirect] Exception redirect vendor_agent:', err);
             }
           };
           redirectVendorAgent();
