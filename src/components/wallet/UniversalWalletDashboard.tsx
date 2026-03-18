@@ -232,7 +232,7 @@ export default function UniversalWalletDashboard({
       if (transactionError) console.warn('Transaction log failed:', transactionError);
 
       setDepositAmount("");
-      toast.success(`Dépôt de ${convert(amount, 'GNF').formatted} effectué avec succès`);
+      toast.success(t('wallet.depositSuccess'));
       window.dispatchEvent(new Event('wallet-updated'));
       await loadWallet();
     } catch (e: any) {
