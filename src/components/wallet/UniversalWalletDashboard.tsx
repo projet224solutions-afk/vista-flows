@@ -86,7 +86,7 @@ export default function UniversalWalletDashboard({
             
             if (rpcError) {
               console.error('❌ Erreur RPC initialize_user_wallet:', rpcError);
-              toast.error(`Impossible d'initialiser le wallet: ${rpcError.message}`);
+              toast.error(t('wallet.depositError'));
               throw rpcError;
             }
             
