@@ -747,19 +747,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           </div>
         </div>
 
-            {/* Produits similaires & co-achats - pleine largeur */}
-            <div className="w-full overflow-x-visible">
-              <RecommendationsWidget
-                currentProductId={product.id}
-                showPersonalized={false}
-                showSimilar={true}
-                showAlsoBought={true}
-                onProductClick={(id) => {
-                  onClose();
-                  setTimeout(() => navigate(`/product/${id}`), 100);
-                }}
-              />
-            </div>
 
             {/* Garanties */}
             <div className="space-y-2 pt-4 pb-footer md:pb-8">
