@@ -103,12 +103,18 @@ export function useGeoDistance() {
         };
 
         const accuracy = pos.coords.accuracy;
-        const accurateEnough = typeof accuracy === 'number' ? accuracy <= 10000 : true; // <= 10 km
+        const accurateEnough = typeof accuracy === 'number' ? accuracy <= 10000 : true;
 
+        // Éviter les re-renders si la position n'a pas changé significativement (< 50m)
+        const prev = lastKnownPositionRef.current;
+        const moved = calculateDistance(prev.latitude, prev.longitude, next.latitude, next.longitude);
+        
         lastKnownPositionRef.current = next;
         hasRealLocationRef.current = accurateEnough;
 
-        setUserPosition(next);
+        if (moved > 0.05 || !positionReady) {
+          setUserPosition(next);
+        }
         setUsingRealLocation(accurateEnough);
         setPositionReady(true);
       },
