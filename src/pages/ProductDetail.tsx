@@ -30,6 +30,7 @@ interface Product {
   vendors?: {
     business_name: string;
     id: string;
+    user_id: string;
     shop_slug?: string;
     country?: string;
   };
