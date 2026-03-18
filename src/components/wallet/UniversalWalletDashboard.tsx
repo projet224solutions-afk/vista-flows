@@ -296,7 +296,7 @@ export default function UniversalWalletDashboard({
       if (transactionError) console.warn('Transaction log failed:', transactionError);
 
       setWithdrawAmount("");
-      toast.success(`Retrait de ${convert(amount, 'GNF').formatted} effectué avec succès`);
+      toast.success(t('wallet.withdrawSuccess'));
       window.dispatchEvent(new Event('wallet-updated'));
       await loadWallet();
     } catch (e: any) {
