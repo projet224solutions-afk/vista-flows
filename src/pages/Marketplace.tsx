@@ -641,7 +641,7 @@ export default function Marketplace() {
                 {marketplaceTotal} {t('marketplace.products').toLowerCase()}
                 {selectedItemType !== 'all' && (
                   <span className="ml-2">
-                    ({selectedItemType === 'product' ? 'Produits' : 'Produits numériques'})
+                    ({selectedItemType === 'product' ? t('marketplace.products') : t('marketplace.digitalProducts')})
                   </span>
                 )}
               </p>
