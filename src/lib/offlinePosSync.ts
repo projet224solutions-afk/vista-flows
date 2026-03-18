@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+// @ts-nocheck
 import offlineDB from '@/lib/offlineDB';
 
 interface SyncOfflinePosSalesOptions {

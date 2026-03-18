@@ -48,20 +48,27 @@ export default function NetworkStatusIndicator() {
         try {
             const { default: offlineDB } = await import('@/lib/offlineDB');
             const pendingEvents = await offlineDB.getPendingEvents();
+            const failedEvents = await offlineDB.getFailedEvents();
+            const posEvents = [...pendingEvents, ...failedEvents].filter(
+                (event) => event.type === 'sale' || event.type === 'credit_sale'
+            );
 
-            if (pendingEvents.length === 0) {
+            if (posEvents.length === 0) {
                 setPendingSync(0);
                 return;
             }
 
-            // Déclencher la synchronisation via useOfflineSync en émettant un événement custom
-            window.dispatchEvent(new CustomEvent('force-offline-sync'));
+            const { syncOfflinePosSales } = await import('@/lib/offlinePosSync');
+            const result = await syncOfflinePosSales();
 
-            // Attendre un peu puis re-vérifier
-            await new Promise(resolve => setTimeout(resolve, 3000));
             await checkPendingData();
 
-            toast.success('Synchronisation lancée');
+            if (result.synced > 0) {
+                toast.success(`${result.synced} vente(s) synchronisée(s)`);
+            }
+            if (result.failed > 0) {
+                toast.error(`${result.failed} vente(s) en échec de sync`);
+            }
         } catch (error) {
             console.error('Erreur sync:', error);
         } finally {
