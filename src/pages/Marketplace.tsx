@@ -26,6 +26,9 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAIPersonalized, useAITrending } from "@/hooks/useAIRecommendations";
+import { AIRecommendationSection } from "@/components/marketplace/AIRecommendationSection";
+import { useBehaviorTracking } from "@/hooks/useBehaviorTracking";
 import { cn } from "@/lib/utils";
 
 // Configuration des catégories numériques pour le filtre
