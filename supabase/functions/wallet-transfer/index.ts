@@ -386,18 +386,6 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   if (sender_id === receiver_id) throw new Error("Impossible de transférer vers soi-même");
   if (amount <= 0) throw new Error("Le montant doit être positif");
 
-  // Load dynamic limits from pdg_settings
-  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit, minIntlLimit] = await Promise.all([
-    getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
-    getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
-    getPdgFeeRate(supabase, FEE_KEYS.MAX_DAILY_TRANSFER),
-    getPdgFeeRate(supabase, FEE_KEYS.MAX_INTERNATIONAL_TRANSFER),
-    getPdgFeeRate(supabase, FEE_KEYS.MIN_INTERNATIONAL_TRANSFER),
-  ]);
-
-  if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()}`);
-  if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()}`);
-
   const transferCode = `TRF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
   // Load wallets
@@ -419,6 +407,29 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
 
   console.log(`🌍 Transfer: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | Intl: ${isInternational}`);
 
+  // Load dynamic limits from pdg_settings (raw values in GNF)
+  const [minLimitRaw, maxLimitRaw, maxDailyLimitRaw, maxIntlLimitRaw, minIntlLimitRaw] = await Promise.all([
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_DAILY_TRANSFER),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_INTERNATIONAL_TRANSFER),
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_INTERNATIONAL_TRANSFER),
+  ]);
+
+  // 🔄 Convert ALL limits to sender's currency
+  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit, minIntlLimit] = await Promise.all([
+    convertLimitToCurrency(minLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(maxLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(maxDailyLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(maxIntlLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(minIntlLimitRaw, senderCurrency, getFxRateFromAPI),
+  ]);
+
+  console.log(`[LIMITS-TRANSFER] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit} | intlMin: ${minIntlLimitRaw}→${minIntlLimit} | intlMax: ${maxIntlLimitRaw}→${maxIntlLimit} | daily: ${maxDailyLimitRaw}→${maxDailyLimit}`);
+
+  if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()} ${senderCurrency}`);
+  if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()} ${senderCurrency}`);
+
   // Check daily limit
   const today = new Date().toISOString().split("T")[0];
   const { data: todayTransfers } = await supabase
@@ -431,11 +442,11 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   const totalToday = (todayTransfers || []).reduce((s: number, t: any) => s + (t.amount_sent || 0), 0);
 
   if (isInternational) {
-    if (amount < minIntlLimit) throw new Error(`Montant minimum international: ${minIntlLimit.toLocaleString()}`);
-    if (amount > maxIntlLimit) throw new Error(`Limite par transfert international: ${maxIntlLimit.toLocaleString()}`);
-    if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()})`);
+    if (amount < minIntlLimit) throw new Error(`Montant minimum international: ${minIntlLimit.toLocaleString()} ${senderCurrency}`);
+    if (amount > maxIntlLimit) throw new Error(`Limite par transfert international: ${maxIntlLimit.toLocaleString()} ${senderCurrency}`);
+    if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()} ${senderCurrency})`);
   } else {
-    if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()})`);
+    if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()} ${senderCurrency})`);
   }
 
   if (senderWallet.balance < amount) {
