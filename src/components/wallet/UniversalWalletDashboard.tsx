@@ -352,7 +352,7 @@ export default function UniversalWalletDashboard({
                 <WalletIcon className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm opacity-90">Solde disponible</p>
+                <p className="text-sm opacity-90">{t('wallet.availableBalance')}</p>
                 <p className="text-3xl font-bold">{balanceDisplay}</p>
               </div>
             </div>
