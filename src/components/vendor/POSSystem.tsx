@@ -351,7 +351,7 @@ export function POSSystem() {
                 notes: isCreditSale
                   ? `🔖 VENTE À CRÉDIT (sync offline) - Client: ${customerName}${saleData.customer_phone ? ` - Tél: ${saleData.customer_phone}` : ''}`
                   : `Vente offline synchronisée - ${syncOrderNumber}`,
-                source: isCreditSale ? 'pos_offline_credit_synced' : 'pos_offline_synced',
+                source: 'pos',
                 created_at: saleData.sale_date
               })
               .select('id')
