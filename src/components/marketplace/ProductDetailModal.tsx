@@ -494,7 +494,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div className="grid md:grid-cols-[2fr_3fr] gap-4 min-w-0">
           {/* Images & Video Carousel */}
           <div className="space-y-3">
-            <div className="relative h-[200px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-2 border border-border/20">
+            <div className="relative h-[100px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-2 border border-border/20">
 
               {isPlayingVideo && videos.length > 0 ? (
                 <video
