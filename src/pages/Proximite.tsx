@@ -315,7 +315,7 @@ export default function Proximite() {
                   </div>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Source:</span>
+                  <span style={{ color: BLACK }}>Source:</span>
                   <div className="font-medium" style={{ color: debugInfo.usingRealGps ? '#15803d' : '#b45309' }}>
                     {debugInfo.usingRealGps ? "GPS réel" : "Position par défaut (Coyah)"}
                   </div>
