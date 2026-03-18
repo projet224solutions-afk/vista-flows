@@ -105,8 +105,8 @@ export const useInventoryService = () => {
 
   // Charger les données initiales
   const loadData = useCallback(async () => {
-    if (!user || !vendorId) {
-      console.log('⚠️ loadData annulé - user:', !!user, 'vendorId:', vendorId);
+    if (!vendorId) {
+      console.log('⚠️ loadData annulé - vendorId:', vendorId);
       return;
     }
 
