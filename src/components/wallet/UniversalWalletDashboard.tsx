@@ -512,7 +512,7 @@ export default function UniversalWalletDashboard({
                   <Button 
                     onClick={() => {
                       if (!phoneNumber) {
-                        toast.error('Veuillez entrer votre numéro de téléphone');
+                        toast.error(t('wallet.enterPhone'));
                         return;
                       }
                       if (!depositAmount || parseFloat(depositAmount) < 5000) {
