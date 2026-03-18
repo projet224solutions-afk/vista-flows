@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { usePublicId } from '@/hooks/usePublicId';
 import { SubscriptionService } from '@/services/subscriptionService';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { generateEAN13Barcode } from '@/lib/barcodeGenerator';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
 
@@ -50,6 +51,9 @@ export function useProductActions({
 }: UseProductActionsProps) {
   const { generatePublicId } = usePublicId();
   const { user } = useAuth();
+  const { userId: vendorAuthUserId } = useCurrentVendor();
+  // Pour la vérification de limites, utiliser le user_id du vendeur (pas de l'agent)
+  const limitCheckUserId = vendorAuthUserId || user?.id;
   const { uploadFile: gcsUploadFile, uploadMultipleFiles } = useStorageUpload();
 
   /**
@@ -245,7 +249,7 @@ export function useProductActions({
     try {
       // ✅ VÉRIFICATION CRITIQUE: Vérifier la limite de produits AVANT de créer
       console.log('🔍 [ProductCreate] Vérification limite de produits...');
-      const limitCheck = await SubscriptionService.checkProductLimit(user.id);
+      const limitCheck = await SubscriptionService.checkProductLimit(limitCheckUserId!);
       
       if (!limitCheck) {
         toast.error('Impossible de vérifier les limites d\'abonnement');
