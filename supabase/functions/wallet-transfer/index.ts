@@ -217,8 +217,14 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
   const { sender_id, amount } = body;
   let { receiver_id } = body;
 
-  if (amount < MIN_TRANSFER_AMOUNT) throw new Error(`Montant minimum: ${MIN_TRANSFER_AMOUNT}`);
-  if (amount > MAX_TRANSFER_AMOUNT) throw new Error(`Montant maximum: ${MAX_TRANSFER_AMOUNT}`);
+  // Load dynamic limits from pdg_settings
+  const [minLimit, maxLimit] = await Promise.all([
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
+  ]);
+
+  if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()}`);
+  if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()}`);
 
   const resolvedReceiverId = await resolveRecipientId(supabase, receiver_id);
   if (!resolvedReceiverId) throw new Error(`Destinataire "${receiver_id}" introuvable`);
