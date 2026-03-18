@@ -68,9 +68,13 @@ export function useDiscoveryProducts(limit = 12) {
       const { data: discoveryData, error } = await query;
       if (error) throw error;
 
-      // Filtrer les produits déjà vus
+      // Filtrer les produits déjà vus ET les vendeurs sans vente en ligne
       const unseen = (discoveryData || [])
-        .filter(p => !viewedIds.includes(p.id))
+        .filter(p => {
+          const vendor = (p as any).vendors;
+          if (!vendor || !vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
+          return !viewedIds.includes(p.id);
+        })
         .slice(0, limit);
 
       // Si pas assez de produits non vus, compléter avec des produits populaires aléatoires
