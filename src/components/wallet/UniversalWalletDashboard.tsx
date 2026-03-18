@@ -255,7 +255,7 @@ export default function UniversalWalletDashboard({
       return;
     }
     if (amount > wallet.balance) {
-      toast.error('Solde insuffisant');
+      toast.error(t('wallet.insufficientBalance'));
       return;
     }
     
