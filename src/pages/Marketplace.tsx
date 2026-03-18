@@ -733,7 +733,7 @@ export default function Marketplace() {
       </section>
 
       {/* Footer de navigation */}
-      <QuickFooter />
+      {!showProductModal && !showBrowseModal && <QuickFooter />}
 
       {/* Modal de détails du produit */}
       <ProductDetailModal
