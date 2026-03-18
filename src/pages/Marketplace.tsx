@@ -341,7 +341,7 @@ export default function Marketplace() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 scroll-smooth">
       {/* Header compact mobile */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-3 py-2 sm:px-4 sm:py-3">
