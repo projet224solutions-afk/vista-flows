@@ -672,7 +672,7 @@ export default function UniversalWalletDashboard({
                 <div className="text-center p-6">
                   <AlertCircle className="w-8 h-8 mx-auto mb-2 text-orange-500" />
                   <p className="text-sm text-muted-foreground">
-                    Code utilisateur non disponible pour les transferts
+                    {t('wallet.userCodeUnavailable')}
                   </p>
                 </div>
               )}
