@@ -478,8 +478,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh]">
-        <ScrollArea className="h-[85vh] pr-4">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
+        <ScrollArea className="h-[85vh] px-4 md:px-6">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{product.name}</DialogTitle>
         </DialogHeader>
