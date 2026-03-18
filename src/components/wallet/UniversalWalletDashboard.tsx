@@ -145,7 +145,7 @@ export default function UniversalWalletDashboard({
       }
     } catch (error: any) {
       console.error('❌ Erreur critique chargement wallet:', error);
-      toast.error(`Erreur: ${error?.message || 'Impossible de charger le wallet'}`);
+      toast.error(t('wallet.depositError'));
       setWallet(null);
     } finally {
       setLoading(false);
