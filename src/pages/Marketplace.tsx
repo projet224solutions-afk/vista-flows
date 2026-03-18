@@ -618,6 +618,31 @@ export default function Marketplace() {
         )}
       </section>
 
+      {/* AI Recommendations - Alibaba style */}
+      <section className="px-2 sm:px-4 py-2">
+        <AIRecommendationSection
+          title={t('marketplace.selectedForYou') || 'Sélection pour vous'}
+          subtitle={t('marketplace.basedOnBehavior') || 'Basé sur votre activité récente'}
+          products={aiPersonalized}
+          isLoading={loadingAIPersonalized}
+          icon="sparkles"
+          showReason={true}
+          seeAllLink="/marketplace/for-you"
+          maxItems={6}
+        />
+
+        <AIRecommendationSection
+          title={t('marketplace.trendingNow') || 'Tendances du moment'}
+          subtitle={t('marketplace.trendingSubtitle') || 'Les plus populaires cette semaine'}
+          products={aiTrending}
+          isLoading={loadingAITrending}
+          icon="trending"
+          showReason={false}
+          seeAllLink="/marketplace/for-you"
+          maxItems={6}
+        />
+      </section>
+
       {/* Results */}
       <section className="px-2 sm:px-4 py-2">
         {/* Si "Services Pro" est sélectionné, afficher la grille des types de services */}
