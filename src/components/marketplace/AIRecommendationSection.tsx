@@ -125,7 +125,7 @@ export function AIRecommendationSection({
                 />
                 {showReason && p.reason && (
                   <div className="absolute top-2 left-2 z-10">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/90 text-primary-foreground font-medium backdrop-blur-sm">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full text-primary font-medium">
                       {p.reason}
                     </span>
                   </div>
