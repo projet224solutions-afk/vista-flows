@@ -12,6 +12,11 @@ export const FEE_KEYS = {
   INTERNATIONAL_TRANSFER: 'international_transfer_fee_percentage',
   PURCHASE_COMMISSION: 'commission_achats',
   SERVICE_COMMISSION: 'commission_services',
+  // Transfer limits
+  MIN_TRANSFER_AMOUNT: 'min_transfer_amount',
+  MAX_TRANSFER_AMOUNT: 'max_transfer_amount',
+  MAX_DAILY_TRANSFER: 'max_daily_transfer_amount',
+  MAX_INTERNATIONAL_TRANSFER: 'max_international_transfer_amount',
 } as const;
 
 // Valeurs par défaut (fallback si pdg_settings est vide)
