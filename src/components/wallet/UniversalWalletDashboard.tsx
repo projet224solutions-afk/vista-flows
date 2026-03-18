@@ -300,8 +300,8 @@ export default function UniversalWalletDashboard({
       window.dispatchEvent(new Event('wallet-updated'));
       await loadWallet();
     } catch (e: any) {
-      console.error('Erreur retrait:', e);
-      toast.error(e?.message || 'Erreur lors du retrait');
+      console.error('Withdraw error:', e);
+      toast.error(t('wallet.withdrawError'));
     } finally {
       setBusy(false);
     }
