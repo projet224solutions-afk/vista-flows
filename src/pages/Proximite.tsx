@@ -577,7 +577,7 @@ export default function Proximite() {
                   <h3 className="font-semibold text-sm mb-1" style={{ color: BLUE }}>
                     {service.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground mb-1">{service.description}</p>
+                  <p className="text-xs mb-1" style={{ color: BLACK }}>{service.description}</p>
                   {service.count > 0 && (
                     <span className="text-xs font-medium" style={{ color: ORANGE }}>{service.count} disponibles</span>
                   )}
