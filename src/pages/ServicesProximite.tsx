@@ -72,7 +72,10 @@ export default function ServicesProximite() {
     document.title = "Services de Proximité | 224SOLUTIONS";
   }, []);
 
-  const loadServices = async () => {
+  const loadServices = useCallback(async (lat: number, lng: number) => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    
     try {
       setLoading(true);
       
@@ -131,7 +134,7 @@ export default function ServicesProximite() {
               return s;
             });
 
-            // Mettre à jour en arrière-plan dans la DB pour les prochaines fois
+            // Mettre à jour en arrière-plan dans la DB
             for (const s of servicesWithoutGps) {
               const vendorGps = vendorGpsMap.get((s as any).user_id);
               if (vendorGps) {
@@ -146,7 +149,7 @@ export default function ServicesProximite() {
         }
       }
 
-      // Calculer les distances
+      // Calculer les distances avec la position passée en paramètre (pas de closure stale)
       list = list
         .map((s) => {
           const hasValidCoords = 
@@ -154,7 +157,9 @@ export default function ServicesProximite() {
             s.longitude !== null && s.longitude !== undefined &&
             Number.isFinite(Number(s.latitude)) && Number.isFinite(Number(s.longitude));
           
-          const distance = hasValidCoords ? getDistanceTo(s.latitude, s.longitude) : null;
+          const distance = hasValidCoords 
+            ? calculateDistance(lat, lng, Number(s.latitude), Number(s.longitude)) 
+            : null;
           return { ...s, distance };
         })
         .filter((s) => {
@@ -174,19 +179,36 @@ export default function ServicesProximite() {
       });
 
       setServices(list);
+      console.log(`📍 Services chargés: ${list.length}, position: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
     } catch (error) {
       console.error('Erreur chargement services:', error);
       toast.error('Erreur lors du chargement des services');
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
-  };
+  }, []);
 
+  // Charger une seule fois quand positionReady, puis re-charger seulement si la position change significativement
   useEffect(() => {
-    if (positionReady) {
-      loadServices();
-    }
-  }, [positionReady, userPosition]);
+    if (!positionReady) return;
+    
+    const newLat = userPosition.latitude;
+    const newLng = userPosition.longitude;
+    const prevLat = positionRef.current.lat;
+    const prevLng = positionRef.current.lng;
+    
+    // Ne re-charger que si c'est le premier chargement OU si la position a changé de plus de 100m
+    const moved = hasLoadedRef.current 
+      ? calculateDistance(prevLat, prevLng, newLat, newLng) > 0.1 
+      : true;
+    
+    if (!moved) return;
+    
+    positionRef.current = { lat: newLat, lng: newLng };
+    hasLoadedRef.current = true;
+    loadServices(newLat, newLng);
+  }, [positionReady, userPosition.latitude, userPosition.longitude, loadServices]);
 
   const filteredServices = useMemo(() => {
     let result = services;
