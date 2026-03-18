@@ -85,11 +85,12 @@ serve(async (req) => {
         .limit(50),
     ]);
 
-    // Gather product catalog sample
+    // Gather product catalog sample - only from vendors with online selling enabled
     const { data: catalogProducts } = await supabase
       .from("products")
-      .select("id, name, price, category_id, rating, images")
+      .select("id, name, price, category_id, rating, images, vendors!inner(business_type)")
       .eq("is_active", true)
+      .in("vendors.business_type", ["hybrid", "online"])
       .order("rating", { ascending: false, nullsFirst: false })
       .limit(100);
 
