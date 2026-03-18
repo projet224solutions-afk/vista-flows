@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useRef, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useListPersistence } from '@/hooks/useAppPersistence';
+import { trackCartAdd } from '@/hooks/useProductRecommendations';
 
 export interface CartItem {
   id: string;
