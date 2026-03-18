@@ -490,7 +490,7 @@ export default function Marketplace() {
 
       {/* 🔥 Filtre Catégories Numériques - Visible uniquement pour les produits numériques */}
       {selectedItemType === 'digital_product' && (
-        <section className="px-2 py-2 border-b border-border bg-gradient-to-r from-accent/5 via-background to-accent/5">
+        <section className="px-2 py-2 border-b border-border">
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {DIGITAL_CATEGORIES.map((cat) => {
               const IconComponent = cat.icon;
@@ -503,18 +503,16 @@ export default function Marketplace() {
                     'flex items-center gap-1.5 px-2 py-1.5 rounded-lg shrink-0 transition-all duration-200',
                     'border text-xs font-medium',
                     isSelected
-                      ? 'bg-accent text-white border-accent shadow-sm scale-[1.02]'
-                      : 'bg-card border-border hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10'
+                      ? 'text-white border-transparent shadow-sm scale-[1.02]'
+                      : 'bg-card border-border hover:border-secondary/30'
                   )}
+                  style={isSelected ? { backgroundColor: BRAND_BLUE } : undefined}
                 >
-                  <div className={cn(
-                    'w-5 h-5 rounded-md flex items-center justify-center',
-                    isSelected ? 'bg-white/20' : `bg-gradient-to-br ${cat.gradient}`
-                  )}>
-                    <IconComponent className={cn(
-                      'w-3 h-3',
-                      isSelected ? 'text-white' : 'text-white'
-                    )} />
+                  <div 
+                    className="w-5 h-5 rounded-md flex items-center justify-center"
+                    style={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : BRAND_BLUE }}
+                  >
+                    <IconComponent className="w-3 h-3 text-white" />
                   </div>
                   <span className={cn(
                     'hidden xs:inline',
