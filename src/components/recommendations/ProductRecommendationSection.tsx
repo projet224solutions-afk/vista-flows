@@ -60,7 +60,9 @@ export function ProductRecommendationSection({
     });
   };
 
-  if (!loading && products.length === 0) return null;
+  if (!loading && products.length === 0) {
+    return null;
+  }
 
   return (
     <section className={cn('py-4', className)}>
