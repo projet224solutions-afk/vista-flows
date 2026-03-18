@@ -250,6 +250,8 @@ function App() {
               <Route path="/marketplace/visual-search" element={<VisualSearch />} />
               <Route path="/marketplace/product/:id" element={<ProductDetail />} />
               <Route path="/marketplace/product/:id/*" element={<ProductDetail />} />
+              <Route path="/product/:productId/similar" element={<SimilarProductsPage />} />
+              <Route path="/product/:productId/others" element={<OtherProductsPage />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/product/:id/*" element={<ProductDetail />} />
               <Route path="/produit/:id" element={<ProductDetail />} />
