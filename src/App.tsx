@@ -157,6 +157,16 @@ const PageLoader = memo(() => (
 ));
 PageLoader.displayName = 'PageLoader';
 
+// Auto-fill GPS component - runs once when user is authenticated
+function GpsAutoFill() {
+  useEffect(() => {
+    import('@/hooks/useAutoFillGps').then(mod => {
+      // Module loaded, but we need to call it differently since hooks can't be called here
+    });
+  }, []);
+  return null;
+}
+
 // Configure QueryClient with better defaults
 const queryClient = new QueryClient({
   defaultOptions: {
