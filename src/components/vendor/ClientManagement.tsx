@@ -44,7 +44,7 @@ interface ClientStats {
 }
 
 export default function ClientManagement() {
-  const { user } = useAuth();
+  const { vendorId: currentVendorId, loading: vendorContextLoading } = useCurrentVendor();
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [stats, setStats] = useState<ClientStats>({
