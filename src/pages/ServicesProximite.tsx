@@ -258,7 +258,7 @@ export default function ServicesProximite() {
                 <p className="text-xs text-muted-foreground truncate">Dans un rayon de {RADIUS_KM} km</p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={loadServices} disabled={loading}>
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => loadServices(positionRef.current.lat, positionRef.current.lng)} disabled={loading}>
               <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
             </Button>
           </div>
