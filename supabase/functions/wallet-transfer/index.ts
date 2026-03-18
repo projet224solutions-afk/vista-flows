@@ -17,8 +17,9 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const MIN_TRANSFER_AMOUNT = 100;
-const MAX_TRANSFER_AMOUNT = 50000000;
+// Defaults - will be overridden by pdg_settings
+const DEFAULT_MIN_TRANSFER = 100;
+const DEFAULT_MAX_TRANSFER = 50000000;
 
 // Smart rounding: integers for weak currencies (GNF, XOF, etc.), 2 decimals for strong (EUR, USD, etc.)
 const ZERO_DECIMAL_CURRENCIES = new Set([
