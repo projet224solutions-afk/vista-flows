@@ -545,7 +545,7 @@ export default function UniversalWalletDashboard({
                       onChange={(e) => setDepositAmount(e.target.value)}
                       min="1000"
                     />
-                    <p className="text-xs text-muted-foreground">Montant minimum: 1,000 GNF</p>
+                    <p className="text-xs text-muted-foreground">{t('wallet.minAmount')}: 1,000 GNF</p>
                   </div>
                   <Button 
                     onClick={() => setShowDepositConfirm(true)} 
