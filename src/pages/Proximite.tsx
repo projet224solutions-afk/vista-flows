@@ -440,7 +440,7 @@ export default function Proximite() {
                 <Store className="w-5 h-5" style={{ color: BLUE }} />
                 Accès Rapide
               </h2>
-              <p className="text-sm text-muted-foreground">Boutiques & Livraison à proximité</p>
+              <p className="text-sm" style={{ color: BLACK }}>Boutiques & Livraison à proximité</p>
             </div>
           </div>
 
