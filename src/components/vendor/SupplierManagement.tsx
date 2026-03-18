@@ -3,40 +3,13 @@
  * Point d'entrée principal intégrant le nouveau système d'achats POS/ERP
  */
 
-import { useState, useEffect } from 'react';
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from 'react';
+import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { SupplierPurchaseManagement } from './suppliers/SupplierPurchaseManagement';
 import { Loader2 } from 'lucide-react';
 
 export default function SupplierManagement() {
-  const { user } = useAuth();
-  const [vendorId, setVendorId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchVendor = async () => {
-      try {
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (vendor) {
-          setVendorId(vendor.id);
-        }
-      } catch (error) {
-        console.error('Erreur chargement vendeur:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchVendor();
-  }, [user]);
+  const { vendorId, loading } = useCurrentVendor();
 
   if (loading) {
     return (

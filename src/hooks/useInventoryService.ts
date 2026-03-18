@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { useToast } from '@/hooks/use-toast';
 
 export interface InventoryItem {
@@ -95,38 +95,18 @@ export interface InventoryStats {
 }
 
 export const useInventoryService = () => {
-  const { user } = useAuth();
+  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [alerts, setAlerts] = useState<InventoryAlert[]>([]);
   const [history, setHistory] = useState<InventoryHistory[]>([]);
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [vendorId, setVendorId] = useState<string | null>(null);
-
-  // Récupérer le vendor_id
-  useEffect(() => {
-    const getVendorId = async () => {
-      if (!user) return;
-      
-      const { data } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (data) {
-        setVendorId(data.id);
-      }
-    };
-
-    getVendorId();
-  }, [user]);
 
   // Charger les données initiales
   const loadData = useCallback(async () => {
-    if (!user || !vendorId) {
-      console.log('⚠️ loadData annulé - user:', !!user, 'vendorId:', vendorId);
+    if (!vendorId) {
+      console.log('⚠️ loadData annulé - vendorId:', vendorId);
       return;
     }
 
@@ -202,7 +182,7 @@ export const useInventoryService = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, vendorId, toast]);
+  }, [vendorId, toast]);
 
   useEffect(() => {
     loadData();

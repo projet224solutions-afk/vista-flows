@@ -227,13 +227,7 @@ export default function InventoryManagement() {
         await updateStock(inventoryItem.id, newQty);
       } else {
         // Créer une nouvelle entrée d'inventaire
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user?.id)
-          .single();
-
-        if (vendor) {
+        if (vendorId) {
           const { error } = await supabase
             .from('inventory')
             .insert([{
@@ -272,18 +266,12 @@ export default function InventoryManagement() {
     }
 
     try {
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (!vendor) return;
+      if (!vendorId) return;
 
       const { error } = await supabase
         .from('warehouses')
         .insert([{
-          vendor_id: vendor.id,
+          vendor_id: vendorId,
           country: newWarehouse.country.trim(),
           city: newWarehouse.city.trim(),
           name: newWarehouse.name.trim(),

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useAuth } from "@/hooks/useAuth";
+import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -44,7 +44,7 @@ interface ClientStats {
 }
 
 export default function ClientManagement() {
-  const { user } = useAuth();
+  const { vendorId: currentVendorId, loading: vendorContextLoading } = useCurrentVendor();
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [stats, setStats] = useState<ClientStats>({
@@ -62,20 +62,14 @@ export default function ClientManagement() {
   const [showClientDialog, setShowClientDialog] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!currentVendorId || vendorContextLoading) return;
     fetchClients();
-  }, [user]);
+  }, [currentVendorId, vendorContextLoading]);
 
   const fetchClients = async () => {
+    if (!currentVendorId) return;
     try {
-      // Get vendor ID
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
-
-      if (!vendor) return;
+      const vendorIdToUse = currentVendorId;
 
       // Fetch clients who have made orders with this vendor
       const { data: clientsData, error } = await supabase
@@ -98,7 +92,7 @@ export default function ClientManagement() {
       const processedClients = (clientsData || [])
         .map(client => ({
           ...client,
-          orders: (client.orders || []).filter((order: any) => order.vendor_id === vendor.id)
+          orders: (client.orders || []).filter((order: any) => order.vendor_id === vendorIdToUse)
         }))
         .filter(client => client.orders.length > 0);
 
