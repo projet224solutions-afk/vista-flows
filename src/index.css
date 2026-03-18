@@ -609,7 +609,10 @@ All colors MUST be HSL.
     max-width: 100%;
     padding: 0.5rem;
     overflow-x: hidden;
+    overflow-y: auto;
     box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
 
   /* Empêcher les enfants de la grille de déborder */

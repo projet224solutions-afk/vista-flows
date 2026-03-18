@@ -71,11 +71,11 @@ export default function OtherProductsPage() {
       </div>
 
       {/* Grid de produits */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-2 sm:px-4 py-4">
         {isLoading ? (
-          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-4 md:overflow-x-visible md:snap-none md:pb-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="min-w-[160px] snap-start md:min-w-0 space-y-3">
+              <div key={i} className="space-y-2">
                 <Skeleton className="w-full aspect-square rounded-lg" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
@@ -97,12 +97,12 @@ export default function OtherProductsPage() {
           </div>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-3">
               {allProducts.length} produit{allProducts.length > 1 ? 's' : ''} recommandé{allProducts.length > 1 ? 's' : ''}
             </p>
-            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-4 md:overflow-x-visible md:snap-none md:pb-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
               {allProducts.map((product) => (
-                <div key={product.product_id} className="min-w-[160px] snap-start md:min-w-0">
+                <div key={product.product_id}>
                   <TranslatedProductCard
                     id={product.product_id}
                     image={product.images?.[0] || ''}
