@@ -126,6 +126,13 @@ export function useProximityStats() {
           .from('categories')
           .select('id, name')
           .eq('is_active', true),
+
+        // GPS cross-reference: vendors avec GPS pour enrichir les services sans GPS
+        supabase
+          .from('vendors')
+          .select('user_id, latitude, longitude')
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null),
       ]);
 
       if (vendorsRes.error) throw vendorsRes.error;
@@ -140,6 +147,25 @@ export function useProximityStats() {
       const drivers = driversRes.data ?? [];
       const taxiDrivers = taxiDriversRes.data ?? [];
       const products = productsRes.data ?? [];
+
+      // Construire une map user_id -> GPS depuis les vendors
+      const vendorGpsMap = new Map<string, { lat: number; lng: number }>();
+      (vendorGpsRes.data ?? []).forEach((v: any) => {
+        if (v.user_id && v.latitude != null && v.longitude != null) {
+          vendorGpsMap.set(v.user_id, { lat: v.latitude, lng: v.longitude });
+        }
+      });
+
+      // Enrichir les services sans GPS avec les données vendor
+      const enrichedServices = professionalServices.map((s: any) => {
+        if (s.latitude == null || s.longitude == null) {
+          const vendorGps = vendorGpsMap.get(s.user_id);
+          if (vendorGps) {
+            return { ...s, latitude: vendorGps.lat, longitude: vendorGps.lng };
+          }
+        }
+        return s;
+      });
 
       const newStats: ProximityStats = {
         boutiques: 0,
