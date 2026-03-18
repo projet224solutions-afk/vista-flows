@@ -633,7 +633,7 @@ export default function Marketplace() {
       </section>
 
       {/* AI Recommendations - Alibaba style */}
-      {selectedCategory === 'all' && (
+      {selectedCategory === 'all' && selectedItemType !== 'professional_service' && selectedItemType !== 'digital_product' && (
         <section className="px-2 sm:px-4 py-2">
           <AIRecommendationSection
             title={t('marketplace.selectedForYou') || 'Sélection pour vous'}
