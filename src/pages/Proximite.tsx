@@ -559,6 +559,22 @@ export default function Proximite() {
                   onClick={() => navigate(`/marketplace?category=${category.id}&includePhysical=1`)}
                   className="group rounded-2xl p-4 border transition-all duration-300 text-left hover:shadow-lg"
                   style={{ borderColor: `${BLUE}15`, backgroundColor: 'white' }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget;
+                    el.style.backgroundColor = BLUE;
+                    el.style.borderColor = BLUE;
+                    el.querySelectorAll('h3, p, span, svg').forEach((c: any) => { c.style.color = 'white'; });
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget;
+                    el.style.backgroundColor = 'white';
+                    el.style.borderColor = `${BLUE}15`;
+                    el.querySelectorAll('h3').forEach((c: any) => { c.style.color = BLUE; });
+                    el.querySelectorAll('span').forEach((c: any) => { c.style.color = ORANGE; });
+                    el.querySelectorAll('svg').forEach((c: any) => { c.style.color = BLUE; });
+                    const spans = el.querySelectorAll('span');
+                    if (spans[1]) (spans[1] as any).style.color = BLACK;
+                  }}
                 >
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform group-hover:scale-110">
                     <ShoppingBag className="w-5 h-5" style={{ color: BLUE }} />
