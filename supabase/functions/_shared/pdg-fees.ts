@@ -17,6 +17,7 @@ export const FEE_KEYS = {
   MAX_TRANSFER_AMOUNT: 'max_transfer_amount',
   MAX_DAILY_TRANSFER: 'max_daily_transfer_amount',
   MAX_INTERNATIONAL_TRANSFER: 'max_international_transfer_amount',
+  MIN_INTERNATIONAL_TRANSFER: 'min_international_transfer_amount',
 } as const;
 
 // Valeurs par défaut (fallback si pdg_settings est vide)
