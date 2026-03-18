@@ -322,9 +322,9 @@ export default function UniversalWalletDashboard({
           <div className="flex flex-col items-center justify-center gap-4">
             <AlertCircle className="w-12 h-12 text-orange-600" />
             <div className="text-center">
-              <h3 className="font-semibold text-orange-800 mb-2">Wallet non disponible</h3>
+              <h3 className="font-semibold text-orange-800 mb-2">{t('wallet.unavailable')}</h3>
               <p className="text-sm text-orange-600 mb-4">
-                Impossible de charger ou créer votre wallet. Vérifiez votre connexion.
+                {t('error.network')}
               </p>
               <Button 
                 onClick={loadWallet}
@@ -332,7 +332,7 @@ export default function UniversalWalletDashboard({
                 className="border-orange-300 text-orange-700 hover:bg-orange-100"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Réessayer
+                {t('error.tryAgain')}
               </Button>
             </div>
           </div>
