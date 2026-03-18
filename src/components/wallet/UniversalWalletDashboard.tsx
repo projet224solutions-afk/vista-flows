@@ -124,7 +124,7 @@ export default function UniversalWalletDashboard({
           }
         } else {
           // Autre erreur (permissions, etc.)
-          toast.error(`Erreur d'accès au wallet: ${walletError.message}`);
+          toast.error(t('wallet.depositError'));
           throw walletError;
         }
       }
