@@ -505,8 +505,8 @@ export default function Marketplace() {
         </section>
       )}
 
-      {/* Filters & View Controls Responsive */}
-      <section className="px-2 sm:px-4 py-2 border-b border-border">
+      {/* Filters & View Controls */}
+      <section className="px-2 py-1.5 border-b border-border">
         {/* Première ligne de filtres - scrollable horizontalement */}
         <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
           {/* Tri */}
