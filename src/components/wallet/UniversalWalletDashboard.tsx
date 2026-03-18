@@ -251,7 +251,7 @@ export default function UniversalWalletDashboard({
       return;
     }
     if (amount < 5000) {
-      toast.error('Montant minimum 5000 GNF');
+      toast.error(t('wallet.minWithdraw'));
       return;
     }
     if (amount > wallet.balance) {
