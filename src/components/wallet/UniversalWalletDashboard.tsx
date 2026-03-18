@@ -474,7 +474,7 @@ export default function UniversalWalletDashboard({
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Montants rapides</Label>
+                    <Label>{t('wallet.quickAmounts')}</Label>
                     <div className="grid grid-cols-3 gap-2">
                       {[10000, 25000, 50000, 100000, 250000, 500000].map((amt) => (
                         <Button
