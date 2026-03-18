@@ -361,7 +361,7 @@ export default function Proximite() {
                 <TrendingUp className="w-5 h-5" style={{ color: ORANGE }} />
                 Services de Proximité Populaires
               </h2>
-              <p className="text-sm text-muted-foreground">Les plus demandés près de vous</p>
+              <p className="text-sm" style={{ color: BLACK }}>Les plus demandés près de vous</p>
             </div>
           </div>
 
