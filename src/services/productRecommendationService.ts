@@ -86,7 +86,7 @@ export async function getSimilarProducts(
     const { data, error } = await supabase
       .rpc('get_similar_products', { p_product_id: productId, p_limit: limit });
     if (error) throw error;
-    return (data || []) as RecommendedProduct[];
+    return (data || []).map((d: any) => ({ ...d, product_id: d.product_id || d.id })) as RecommendedProduct[];
   } catch (err) {
     console.warn('[Recommendations] Similar products error:', err);
     return getFallbackProducts(limit, productId);
@@ -104,7 +104,7 @@ export async function getPersonalizedRecommendations(
       .rpc('get_personalized_recommendations', { p_user_id: user.id, p_limit: limit });
     if (error) throw error;
     if (!data?.length) return getPopularProducts(limit);
-    return data as (RecommendedProduct & { reason: string })[];
+    return (data || []).map((d: any) => ({ ...d, product_id: d.product_id || d.id })) as (RecommendedProduct & { reason: string })[];
   } catch (err) {
     console.warn('[Recommendations] Personalized error:', err);
     return getPopularProducts(limit);
@@ -119,7 +119,7 @@ export async function getAlsoBoughtProducts(
     const { data, error } = await supabase
       .rpc('get_also_bought_products', { p_product_id: productId, p_limit: limit });
     if (error) throw error;
-    return (data || []) as RecommendedProduct[];
+    return (data || []).map((d: any) => ({ ...d, product_id: d.product_id || d.id })) as RecommendedProduct[];
   } catch (err) {
     console.warn('[Recommendations] Also bought error:', err);
     return [];
@@ -139,7 +139,7 @@ export async function getPopularInCategory(
         p_exclude_product_id: excludeProductId || null
       });
     if (error) throw error;
-    return (data || []) as RecommendedProduct[];
+    return (data || []).map((d: any) => ({ ...d, product_id: d.product_id || d.id })) as RecommendedProduct[];
   } catch (err) {
     console.warn('[Recommendations] Popular in category error:', err);
     return [];
