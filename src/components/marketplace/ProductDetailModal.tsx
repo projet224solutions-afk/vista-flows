@@ -742,18 +742,20 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               </div>
             </div>
 
-            {/* Produits similaires & co-achats */}
-            <div className="-mx-4 px-4 overflow-x-visible">
-              <RecommendationsWidget
-                currentProductId={product.id}
-                showPersonalized={false}
-                showSimilar={true}
-                showAlsoBought={true}
-                onProductClick={(id) => {
-                  onClose();
-                  setTimeout(() => navigate(`/product/${id}`), 100);
-                }}
-              />
+            {/* Produits similaires & co-achats - pleine largeur style Alibaba */}
+            <div className="-mx-4 px-0 overflow-visible">
+              <div className="px-4">
+                <RecommendationsWidget
+                  currentProductId={product.id}
+                  showPersonalized={false}
+                  showSimilar={true}
+                  showAlsoBought={true}
+                  onProductClick={(id) => {
+                    onClose();
+                    setTimeout(() => navigate(`/product/${id}`), 100);
+                  }}
+                />
+              </div>
             </div>
 
             {/* Garanties */}
