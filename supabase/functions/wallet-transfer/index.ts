@@ -20,6 +20,19 @@ const corsHeaders = {
 const MIN_TRANSFER_AMOUNT = 100;
 const MAX_TRANSFER_AMOUNT = 50000000;
 
+// Smart rounding: integers for weak currencies (GNF, XOF, etc.), 2 decimals for strong (EUR, USD, etc.)
+const ZERO_DECIMAL_CURRENCIES = new Set([
+  "GNF", "XOF", "XAF", "VND", "IDR", "KRW", "JPY", "CLP", "UGX", "RWF",
+  "PYG", "COP", "HUF", "ISK", "BIF", "DJF", "KMF", "MGA", "VUV",
+]);
+
+function smartRound(amount: number, currency: string): number {
+  if (ZERO_DECIMAL_CURRENCIES.has(currency.toUpperCase())) {
+    return Math.round(amount);
+  }
+  return Math.round(amount * 100) / 100;
+}
+
 // ✅ Map wallet currency → country code for display
 function currencyToCountry(currency: string): string {
   const map: Record<string, string> = {
