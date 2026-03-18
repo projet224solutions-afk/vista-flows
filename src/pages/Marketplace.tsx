@@ -634,39 +634,41 @@ export default function Marketplace() {
       </section>
 
       {/* AI Recommendations - Alibaba style */}
-      <section className="px-2 sm:px-4 py-2">
-        <AIRecommendationSection
-          title={t('marketplace.selectedForYou') || 'Sélection pour vous'}
-          subtitle={t('marketplace.basedOnBehavior') || 'Basé sur votre activité récente'}
-          products={aiPersonalized}
-          isLoading={loadingAIPersonalized}
-          icon="sparkles"
-          showReason={true}
-          seeAllLink="/marketplace/for-you"
-          maxItems={6}
-        />
+      {selectedCategory === 'all' && (
+        <section className="px-2 sm:px-4 py-2">
+          <AIRecommendationSection
+            title={t('marketplace.selectedForYou') || 'Sélection pour vous'}
+            subtitle={t('marketplace.basedOnBehavior') || 'Basé sur votre activité récente'}
+            products={aiPersonalized}
+            isLoading={loadingAIPersonalized}
+            icon="sparkles"
+            showReason={true}
+            seeAllLink="/marketplace/for-you"
+            maxItems={6}
+          />
 
-        <AIRecommendationSection
-          title={t('marketplace.trendingNow') || 'Tendances du moment'}
-          subtitle={t('marketplace.trendingSubtitle') || 'Les plus populaires cette semaine'}
-          products={aiTrending}
-          isLoading={loadingAITrending}
-          icon="trending"
-          showReason={false}
-          seeAllLink="/marketplace/for-you"
-          maxItems={6}
-        />
+          <AIRecommendationSection
+            title={t('marketplace.trendingNow') || 'Tendances du moment'}
+            subtitle={t('marketplace.trendingSubtitle') || 'Les plus populaires cette semaine'}
+            products={aiTrending}
+            isLoading={loadingAITrending}
+            icon="trending"
+            showReason={false}
+            seeAllLink="/marketplace/for-you"
+            maxItems={6}
+          />
 
-        <AIRecommendationSection
-          title="À découvrir"
-          subtitle="Des produits que vous n'avez pas encore explorés"
-          products={discoveryProducts}
-          isLoading={loadingDiscovery}
-          icon="gift"
-          showReason={true}
-          maxItems={8}
-        />
-      </section>
+          <AIRecommendationSection
+            title="À découvrir"
+            subtitle="Des produits que vous n'avez pas encore explorés"
+            products={discoveryProducts}
+            isLoading={loadingDiscovery}
+            icon="gift"
+            showReason={true}
+            maxItems={8}
+          />
+        </section>
+      )}
 
       {/* Results */}
       <section className="px-2 sm:px-4 py-2">
