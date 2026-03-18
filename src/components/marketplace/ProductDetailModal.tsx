@@ -16,7 +16,7 @@ import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 import { trackProductView } from "@/services/analyticsTrackingService";
 import { useTrackProductView } from "@/hooks/useProductRecommendations";
-import { RecommendationsWidget } from "@/components/recommendations/RecommendationsWidget";
+
 import { LocalPrice } from "@/components/ui/LocalPrice";
 interface Product {
   id: string;
@@ -51,7 +51,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [showSection, setShowSection] = useState<'none' | 'similar' | 'others'>('none');
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const hasTrackedView = useRef(false);
@@ -568,19 +567,19 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             {/* Boutons Produits similaires / Autres produits */}
             <div className="flex gap-2 mt-2">
               <Button
-                variant={showSection === 'similar' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 className="flex-1"
-                onClick={() => setShowSection(showSection === 'similar' ? 'none' : 'similar')}
+                onClick={() => { onClose(); navigate(`/product/${product.id}/similar`); }}
               >
                 <Sparkles className="w-4 h-4 mr-1.5" />
                 Produits similaires
               </Button>
               <Button
-                variant={showSection === 'others' ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 className="flex-1"
-                onClick={() => setShowSection(showSection === 'others' ? 'none' : 'others')}
+                onClick={() => { onClose(); navigate(`/product/${product.id}/others`); }}
               >
                 <Package className="w-4 h-4 mr-1.5" />
                 Autres produits
@@ -770,30 +769,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           </div>
         </div>
 
-        {/* Sections de recommandation */}
-        {showSection === 'similar' && product && (
-          <div className="mt-4">
-            <RecommendationsWidget
-              currentProductId={product.id}
-              showPersonalized={false}
-              showSimilar={true}
-              showAlsoBought={false}
-              onProductClick={(id) => { onClose(); navigate(`/product/${id}`); }}
-            />
-          </div>
-        )}
 
-        {showSection === 'others' && product && (
-          <div className="mt-4">
-            <RecommendationsWidget
-              currentProductId={product.id}
-              showPersonalized={true}
-              showSimilar={false}
-              showAlsoBought={true}
-              onProductClick={(id) => { onClose(); navigate(`/product/${id}`); }}
-            />
-          </div>
-        )}
 
             {/* Garanties */}
             <div className="space-y-2 pt-4 pb-footer md:pb-8">
