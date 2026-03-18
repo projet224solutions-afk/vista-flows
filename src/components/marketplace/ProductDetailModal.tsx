@@ -743,7 +743,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             </div>
 
             {/* Produits similaires & co-achats */}
-            <div className="overflow-hidden -mx-4 px-4">
+            <div className="-mx-4 px-4 overflow-x-visible">
               <RecommendationsWidget
                 currentProductId={product.id}
                 showPersonalized={false}
