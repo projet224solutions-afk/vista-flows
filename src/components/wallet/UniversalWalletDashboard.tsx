@@ -623,7 +623,7 @@ export default function UniversalWalletDashboard({
                   max={wallet.balance}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Minimum: 5,000 GNF | Disponible: {wallet.balance.toLocaleString()} GNF
+                  {t('wallet.minAmount')}: 5,000 GNF | {t('wallet.availableBalance')}: {convert(wallet.balance, 'GNF').formatted}
                 </p>
               </div>
 
