@@ -68,7 +68,7 @@ export async function trackSearch(
       metadata: { query, total_results: resultProductIds.length }
     }));
 
-    await supabase.from('user_product_interactions').insert(inserts);
+    await (supabase.from('user_product_interactions') as any).insert(inserts);
   } catch (err) {
     console.warn('[Recommendations] Track search error:', err);
   }
