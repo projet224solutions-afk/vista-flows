@@ -417,7 +417,7 @@ export default function UniversalWalletDashboard({
             <CardContent className="space-y-4">
               {/* Sélection de la méthode */}
               <div className="space-y-2">
-                <Label>Méthode de paiement</Label>
+                <Label>{t('wallet.paymentMethod')}</Label>
                 <div className="grid grid-cols-3 gap-2">
                   <Button
                     type="button"
