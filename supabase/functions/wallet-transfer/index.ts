@@ -262,7 +262,7 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
 
     // 5. Le total débité = montant envoyé (la commission est intégrée au taux)
     totalDebit = amount;
-    feeAmount = Math.round(amount * realRate * feePercentage / 100); // Pour affichage uniquement
+    feeAmount = Math.round(amount * feePercentage / 100 * 100) / 100; // Fee in sender's currency
 
     console.log(`💱 Taux réel: ${realRate} | Marge PDG: ${feePercentage}% | Taux affiché: ${rateDisplayed} | Reçu: ${amountReceived} ${receiverCurrency}`);
   } else {
@@ -388,7 +388,9 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
     feePercentage = await getPdgFeeRate(supabase, FEE_KEYS.INTERNATIONAL_TRANSFER);
     rateDisplayed = realRate * (1 - feePercentage / 100);
     rateInternal = rateDisplayed;
-    feeAmount = Math.round(amount * realRate * feePercentage / 100);
+    // ✅ FIX: fee_amount must be in sender's currency (amount * feePercentage/100)
+    // to satisfy check constraint: fee_amount = requested_amount * fee_percentage
+    feeAmount = Math.round(amount * feePercentage / 100 * 100) / 100;
     amountReceived = Math.round(amount * rateDisplayed * 100) / 100;
   } else {
     // 🏠 Local: frais PDG uniquement, pas de conversion
