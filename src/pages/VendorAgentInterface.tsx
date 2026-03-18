@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Users, TrendingUp, Package, ShoppingCart, Warehouse, 
-  Truck, UserPlus, LogOut, BarChart3, FileText, 
+import {
+  Users, TrendingUp, Package, ShoppingCart, Warehouse,
+  Truck, UserPlus, LogOut, BarChart3, FileText,
   MessageSquare, Settings, Shield, Wallet, CreditCard, DollarSign
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,7 +40,6 @@ import { VendorDebtManagement } from '@/components/vendor/debts/VendorDebtManage
 
 export default function VendorAgentInterface() {
   const { token } = useParams<{ token: string }>();
-  const navigate = useNavigate();
   const [agent, setAgent] = useState<VendorAgent | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -50,37 +49,37 @@ export default function VendorAgentInterface() {
 
   useEffect(() => {
     console.log('🚀 VendorAgentInterface - Initialisation avec token:', token);
-    
+
     if (!token) {
       console.error('❌ Token manquant dans l\'URL');
       toast.error('Token d\'accès manquant');
       setLoading(false);
       return;
     }
-    
+
     loadAgentData(token);
   }, [token]);
 
   const loadAgentData = async (accessToken: string) => {
     setLoading(true);
-    
+
     try {
       console.log('🔍 Recherche agent avec token:', accessToken);
       console.log('🔍 Longueur du token:', accessToken.length);
-      
+
       // Requête directe sans filtres supplémentaires d'abord
       const { data: allAgents, error: listError } = await supabase
         .from('vendor_agents')
         .select('*')
         .limit(10);
-      
+
       console.log('📋 Liste des agents disponibles:', allAgents);
       console.log('📋 Nombre d\'agents:', allAgents?.length || 0);
-      
+
       if (listError) {
         console.error('❌ Erreur liste agents:', listError);
       }
-      
+
       // Requête spécifique pour cet agent
       const { data: agentData, error: agentError } = await supabase
         .from('vendor_agents')
@@ -88,8 +87,8 @@ export default function VendorAgentInterface() {
         .eq('access_token', accessToken)
         .maybeSingle();
 
-      console.log('📊 Résultat recherche agent:', { 
-        agentData, 
+      console.log('📊 Résultat recherche agent:', {
+        agentData,
         agentError,
         tokenRecherche: accessToken
       });
@@ -99,7 +98,7 @@ export default function VendorAgentInterface() {
         toast.error(`Erreur base de données: ${agentError.message}`);
         return;
       }
-      
+
       if (!agentData) {
         console.warn('⚠️ Aucun agent trouvé avec ce token');
         console.warn('⚠️ Token recherché:', accessToken);
@@ -115,7 +114,7 @@ export default function VendorAgentInterface() {
       }
 
       console.log('✅ Agent chargé avec succès:', agentData);
-      
+
       // Convert Json permissions to VendorAgentPermissions
       const formattedAgent = {
         ...agentData,
@@ -133,7 +132,7 @@ export default function VendorAgentInterface() {
       setVendorBusinessType(vendorInfo?.business_type ?? null);
 
       toast.success(`Bienvenue ${agentData.name} !`);
-      
+
     } catch (error: any) {
       console.error('❌ Erreur fatale chargement agent:', error);
       toast.error(`Erreur: ${error.message || 'Erreur inconnue'}`);
@@ -142,24 +141,33 @@ export default function VendorAgentInterface() {
     }
   };
 
+  const clearAgentSessions = () => {
+    ['agent_session', 'agent_user', 'agent_token'].forEach((key) => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    });
+
+    localStorage.removeItem('supabase.auth.token');
+
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith('sb-') && key.endsWith('-auth-token'))
+      .forEach((key) => localStorage.removeItem(key));
+  };
+
   const handleSignOut = async () => {
+    clearAgentSessions();
+
     try {
-      // Nettoyer toutes les sessions agent du storage
-      localStorage.removeItem('agent_session');
-      localStorage.removeItem('agent_user');
-      localStorage.removeItem('agent_token');
-      sessionStorage.removeItem('agent_session');
-      sessionStorage.removeItem('agent_user');
-      
-      // Déconnexion Supabase Auth
-      await supabase.auth.signOut();
-      
-      toast.success('Déconnexion réussie');
-      navigate('/auth', { replace: true });
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
+      if (error && error.message !== 'Session not found') {
+        console.error('Erreur déconnexion Supabase:', error);
+      }
     } catch (error) {
       console.error('Erreur déconnexion:', error);
-      // Forcer la navigation même en cas d'erreur
-      navigate('/auth', { replace: true });
+    } finally {
+      clearAgentSessions();
+      toast.success('Déconnexion réussie');
+      window.location.replace('/auth');
     }
   };
 
