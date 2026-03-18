@@ -464,9 +464,10 @@ export default function Marketplace() {
             className={cn(
               'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
               selectedItemType === 'professional_service' 
-                ? 'bg-primary text-primary-foreground shadow-sm' 
-                : 'bg-card border border-border hover:border-primary/50'
+                ? 'text-white shadow-sm' 
+                : 'bg-card border border-border hover:border-secondary/50'
             )}
+            style={selectedItemType === 'professional_service' ? { backgroundColor: BRAND_BLUE } : undefined}
           >
             <Briefcase className="w-3.5 h-3.5" />
             Services Pro
@@ -476,9 +477,10 @@ export default function Marketplace() {
             className={cn(
               'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
               selectedItemType === 'digital_product' 
-                ? 'bg-accent text-accent-foreground shadow-sm' 
+                ? 'text-white shadow-sm' 
                 : 'bg-card border border-border hover:border-accent/50'
             )}
+            style={selectedItemType === 'digital_product' ? { backgroundColor: BRAND_ORANGE } : undefined}
           >
             <Laptop className="w-3.5 h-3.5" />
             Numériques
