@@ -391,13 +391,13 @@ export default function Profil() {
         .from('vendor_agents')
         .select('access_token')
         .eq('user_id', user?.id)
-        .eq('is_active', true)
         .maybeSingle();
       if (vendorAgent?.access_token) {
         navigate(`/vendor-agent/${vendorAgent.access_token}`);
-      } else {
-        navigate('/');
+        return;
       }
+      navigate('/');
+      return;
     } else if (profile?.role === 'vendeur') {
       navigate('/vendeur');
     } else if (profile?.role === 'admin') {
