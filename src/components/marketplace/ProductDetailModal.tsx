@@ -51,6 +51,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [showSection, setShowSection] = useState<'none' | 'similar' | 'others'>('none');
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const hasTrackedView = useRef(false);
