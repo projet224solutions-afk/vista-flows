@@ -685,16 +685,6 @@ export default function Marketplace() {
               </div>
             )}
 
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs text-muted-foreground">
-                {marketplaceTotal} {t('marketplace.products').toLowerCase()}
-                {selectedItemType !== 'all' && (
-                  <span className="ml-2">
-                    ({selectedItemType === 'product' ? t('marketplace.products') : t('marketplace.digitalProducts')})
-                  </span>
-                )}
-              </p>
-            </div>
 
             {marketplaceLoading ? (
               <div className="marketplace-grid">
