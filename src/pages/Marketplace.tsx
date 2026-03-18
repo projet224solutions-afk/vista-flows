@@ -574,14 +574,6 @@ export default function Marketplace() {
           {!isMobile && (
             <div className="flex items-center gap-1 rounded-lg p-1 shrink-0">
               <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="h-7 w-7 p-0"
-              >
-                <Grid className="w-4 h-4" />
-              </Button>
-              <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowBrowseModal(true)}
