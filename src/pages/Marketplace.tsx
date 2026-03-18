@@ -767,6 +767,8 @@ export default function Marketplace() {
         )}
       </section>
 
+      <ScrollToTopButton />
+
       {/* Footer de navigation */}
       <QuickFooter />
 
