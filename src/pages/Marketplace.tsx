@@ -70,6 +70,14 @@ export default function Marketplace() {
   const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
+  
+  // AI Recommendations
+  const { data: aiPersonalized, isLoading: loadingAIPersonalized } = useAIPersonalized(6);
+  const { data: aiTrending, isLoading: loadingAITrending } = useAITrending(6);
+  
+  // Behavior tracking
+  useBehaviorTracking({ sessionType: 'browse' });
+  
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
