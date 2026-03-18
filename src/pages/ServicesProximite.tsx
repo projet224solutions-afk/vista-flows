@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, MapPin, Phone, Clock, Star, Search, RefreshCw, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QuickFooter from "@/components/QuickFooter";
 import { cn } from "@/lib/utils";
-import { useGeoDistance, formatDistance } from "@/hooks/useGeoDistance";
+import { useGeoDistance, formatDistance, calculateDistance } from "@/hooks/useGeoDistance";
 
 interface ProfessionalService {
   id: string;
