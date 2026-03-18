@@ -742,8 +742,11 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               </div>
             </div>
 
-            {/* Produits similaires & co-achats */}
-            <div className="-mx-4 px-4 overflow-x-visible">
+          </div>
+        </div>
+
+            {/* Produits similaires & co-achats - pleine largeur */}
+            <div className="w-full overflow-x-visible">
               <RecommendationsWidget
                 currentProductId={product.id}
                 showPersonalized={false}
@@ -769,8 +772,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 </div>
               )}
             </div>
-          </div>
-        </div>
       </TabsContent>
 
       <TabsContent value="reviews">
