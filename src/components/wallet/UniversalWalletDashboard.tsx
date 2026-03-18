@@ -236,8 +236,8 @@ export default function UniversalWalletDashboard({
       window.dispatchEvent(new Event('wallet-updated'));
       await loadWallet();
     } catch (e: any) {
-      console.error('Erreur dépôt:', e);
-      toast.error(e?.message || 'Erreur lors du dépôt');
+      console.error('Deposit error:', e);
+      toast.error(t('wallet.depositError'));
     } finally {
       setBusy(false);
     }
