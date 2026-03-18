@@ -351,11 +351,12 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   if (amount <= 0) throw new Error("Le montant doit être positif");
 
   // Load dynamic limits from pdg_settings
-  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit] = await Promise.all([
+  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit, minIntlLimit] = await Promise.all([
     getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
     getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
     getPdgFeeRate(supabase, FEE_KEYS.MAX_DAILY_TRANSFER),
     getPdgFeeRate(supabase, FEE_KEYS.MAX_INTERNATIONAL_TRANSFER),
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_INTERNATIONAL_TRANSFER),
   ]);
 
   if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()}`);
@@ -394,6 +395,7 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   const totalToday = (todayTransfers || []).reduce((s: number, t: any) => s + (t.amount_sent || 0), 0);
 
   if (isInternational) {
+    if (amount < minIntlLimit) throw new Error(`Montant minimum international: ${minIntlLimit.toLocaleString()}`);
     if (amount > maxIntlLimit) throw new Error(`Limite par transfert international: ${maxIntlLimit.toLocaleString()}`);
     if (totalToday + amount > maxDailyLimit) throw new Error(`Limite quotidienne atteinte (${maxDailyLimit.toLocaleString()})`);
   } else {
