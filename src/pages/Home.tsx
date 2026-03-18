@@ -157,15 +157,6 @@ export default function Home() {
           onAddToCart={handleAddToCart}
         />
 
-        {/* 🧠 Recommandations personnalisées */}
-        <div className="px-4">
-          <RecommendationsWidget
-            showPersonalized={true}
-            showSimilar={false}
-            showAlsoBought={false}
-            onProductClick={handleProductClick}
-          />
-        </div>
 
         {/* Bottom Navigation */}
         <BottomNavigation />
