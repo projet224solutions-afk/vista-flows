@@ -27,10 +27,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAIPersonalized, useAITrending } from "@/hooks/useAIRecommendations";
+import { useDiscoveryProducts } from "@/hooks/useDiscoveryProducts";
 import { AIRecommendationSection } from "@/components/marketplace/AIRecommendationSection";
 import { useBehaviorTracking } from "@/hooks/useBehaviorTracking";
 import { cn } from "@/lib/utils";
 import { ScrollToTopButton } from "@/components/marketplace/ScrollToTopButton";
+import { InfiniteScrollTrigger } from "@/components/marketplace/InfiniteScrollTrigger";
 
 // Configuration des catégories numériques pour le filtre
 const DIGITAL_CATEGORIES = [
@@ -75,7 +77,7 @@ export default function Marketplace() {
   // AI Recommendations
   const { data: aiPersonalized, isLoading: loadingAIPersonalized } = useAIPersonalized(6);
   const { data: aiTrending, isLoading: loadingAITrending } = useAITrending(6);
-  
+  const { data: discoveryProducts, isLoading: loadingDiscovery } = useDiscoveryProducts(8);
   // Behavior tracking
   useBehaviorTracking({ sessionType: 'browse' });
   
@@ -650,6 +652,16 @@ export default function Marketplace() {
           seeAllLink="/marketplace/for-you"
           maxItems={6}
         />
+
+        <AIRecommendationSection
+          title="À découvrir"
+          subtitle="Des produits que vous n'avez pas encore explorés"
+          products={discoveryProducts}
+          isLoading={loadingDiscovery}
+          icon="gift"
+          showReason={true}
+          maxItems={8}
+        />
       </section>
 
       {/* Results */}
@@ -752,17 +764,12 @@ export default function Marketplace() {
               </MarketplaceGrid>
             )}
 
-            {marketplaceHasMore && !marketplaceLoading && (
-              <div className="text-center mt-4 md:mt-6">
-                <Button 
-                  onClick={marketplaceLoadMore} 
-                  disabled={marketplaceLoading}
-                  size={isMobile ? "sm" : "default"}
-                >
-                  {marketplaceLoading ? 'Chargement...' : 'Voir plus'}
-                </Button>
-              </div>
-            )}
+            {/* Infinite Scroll - charge automatiquement au défilement */}
+            <InfiniteScrollTrigger
+              onTrigger={marketplaceLoadMore}
+              hasMore={marketplaceHasMore}
+              isLoading={marketplaceLoading}
+            />
           </>
         )}
       </section>
