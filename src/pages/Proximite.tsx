@@ -567,8 +567,7 @@ export default function Proximite() {
                   className="group relative rounded-2xl p-4 border transition-all duration-300 text-left overflow-hidden hover:shadow-lg"
                   style={{ borderColor: `${BLUE}15`, backgroundColor: 'white' }}
                 >
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: `${ORANGE}12` }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform group-hover:scale-110">
                     <Icon className="w-5 h-5" style={{ color: ORANGE }} />
                   </div>
                   
