@@ -169,6 +169,8 @@ export function ProductRecommendationSection({
       <div
         ref={scrollRef}
         onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         className="flex gap-2 sm:gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide pb-2 snap-x snap-mandatory -mx-1 px-1 pr-2 touch-pan-x scroll-smooth"
         style={{
           scrollbarWidth: 'none',
