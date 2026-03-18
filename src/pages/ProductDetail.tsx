@@ -54,6 +54,9 @@ export default function ProductDetail() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const hasTrackedView = useRef(false);
+  
+  // Behavior tracking for AI recommendations
+  useBehaviorTracking({ sessionType: 'product_view', productId: id });
 
   // Mémoriser les vidéos et images pour le carrousel
   const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
