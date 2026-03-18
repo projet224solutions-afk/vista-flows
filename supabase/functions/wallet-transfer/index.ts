@@ -421,14 +421,11 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
     getPdgFeeRate(supabase, FEE_KEYS.MIN_INTERNATIONAL_TRANSFER),
   ]);
 
-  // 🔄 Convert ALL limits to sender's currency
-  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit, minIntlLimit] = await Promise.all([
-    convertLimitToCurrency(minLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(maxLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(maxDailyLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(maxIntlLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(minIntlLimitRaw, senderCurrency, getFxRateFromAPI),
-  ]);
+  // 🔄 Convert ALL limits to sender's currency (single FX call)
+  const [minLimit, maxLimit, maxDailyLimit, maxIntlLimit, minIntlLimit] = await convertLimitsToCurrency(
+    [minLimitRaw, maxLimitRaw, maxDailyLimitRaw, maxIntlLimitRaw, minIntlLimitRaw],
+    senderCurrency,
+  );
 
   console.log(`[LIMITS-TRANSFER] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit} | intlMin: ${minIntlLimitRaw}→${minIntlLimit} | intlMax: ${maxIntlLimitRaw}→${maxIntlLimit} | daily: ${maxDailyLimitRaw}→${maxDailyLimit}`);
 
