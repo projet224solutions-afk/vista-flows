@@ -115,8 +115,8 @@ function FavoriteButtonComponent({ productId, vendorId, className, size = "sm" }
         "hover:scale-110 active:scale-95",
         "disabled:opacity-50",
         isFav
-          ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          : "bg-background/80 text-muted-foreground hover:text-destructive hover:bg-background border border-border/50",
+          ? "bg-transparent text-[#ff4000] border border-[#ff4000]"
+          : "bg-transparent text-[#ff4000] border border-[#ff4000] hover:bg-[#ff4000]/10",
         sizeClasses,
         className
       )}
