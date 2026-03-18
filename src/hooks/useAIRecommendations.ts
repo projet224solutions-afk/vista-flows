@@ -1,10 +1,12 @@
 /**
  * 🤖 HOOK DE RECOMMANDATIONS IA - 224SOLUTIONS
  * Appelle l'edge function ai-recommend pour des suggestions Gemini-powered
+ * Ne s'active que si l'utilisateur est connecté (évite le flickering)
  */
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AIProduct {
   product_id: string;
@@ -13,7 +15,6 @@ interface AIProduct {
   images: string[];
   rating: number | null;
   category_id?: string;
-  currency?: string;
   reason?: string;
   score?: number;
 }
@@ -45,21 +46,26 @@ async function fetchAIRecommendations(
 
 /** Recommandations personnalisées par IA */
 export function useAIPersonalized(limit = 20) {
+  const { user, loading: authLoading } = useAuth();
+
   return useQuery({
-    queryKey: ['ai-recommendations', 'personalized'],
+    queryKey: ['ai-recommendations', 'personalized', user?.id],
     queryFn: async () => {
       const result = await fetchAIRecommendations('personalized');
       return result.products.slice(0, limit);
     },
-    staleTime: 10 * 60 * 1000, // 10 min
+    enabled: !authLoading && !!user,
+    staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
+    refetchOnWindowFocus: false,
   });
 }
 
 /** Recommandations contextuelles (localisation, heure, saison) */
 export function useAIContextual(context: Record<string, unknown> = {}, limit = 12) {
-  // Build contextual data
+  const { user, loading: authLoading } = useAuth();
+
   const enrichedContext = {
     ...context,
     hour: new Date().getHours(),
@@ -69,42 +75,51 @@ export function useAIContextual(context: Record<string, unknown> = {}, limit = 1
   };
 
   return useQuery({
-    queryKey: ['ai-recommendations', 'contextual', JSON.stringify(enrichedContext)],
+    queryKey: ['ai-recommendations', 'contextual', user?.id, JSON.stringify(enrichedContext)],
     queryFn: async () => {
       const result = await fetchAIRecommendations('contextual', undefined, enrichedContext);
       return result.products.slice(0, limit);
     },
-    staleTime: 30 * 60 * 1000, // 30 min
+    enabled: !authLoading && !!user,
+    staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     retry: 1,
+    refetchOnWindowFocus: false,
   });
 }
 
 /** Produits tendances adaptés à l'utilisateur */
 export function useAITrending(limit = 16) {
+  const { user, loading: authLoading } = useAuth();
+
   return useQuery({
-    queryKey: ['ai-recommendations', 'trending'],
+    queryKey: ['ai-recommendations', 'trending', user?.id],
     queryFn: async () => {
       const result = await fetchAIRecommendations('trending');
       return result.products.slice(0, limit);
     },
+    enabled: !authLoading && !!user,
     staleTime: 15 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     retry: 1,
+    refetchOnWindowFocus: false,
   });
 }
 
 /** Recommandations post-achat */
 export function useAIPostPurchase(productId: string | undefined, limit = 10) {
+  const { user, loading: authLoading } = useAuth();
+
   return useQuery({
-    queryKey: ['ai-recommendations', 'post_purchase', productId],
+    queryKey: ['ai-recommendations', 'post_purchase', user?.id, productId],
     queryFn: async () => {
       const result = await fetchAIRecommendations('post_purchase', productId);
       return result.products.slice(0, limit);
     },
-    enabled: !!productId,
+    enabled: !authLoading && !!user && !!productId,
     staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     retry: 1,
+    refetchOnWindowFocus: false,
   });
 }

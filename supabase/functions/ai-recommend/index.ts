@@ -342,7 +342,7 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
   console.log("fetchProductDetails: querying", productIds.length, "IDs, sample:", productIds[0]);
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id, currency")
+    .select("id, name, price, images, rating, category_id")
     .in("id", productIds);
   
   if (error) {
@@ -358,14 +358,13 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
     images: p.images || [],
     rating: p.rating,
     category_id: p.category_id,
-    currency: p.currency,
   }));
 }
 
 async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
   const { data } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id, currency")
+    .select("id, name, price, images, rating, category_id")
     .eq("is_active", true)
     .order("rating", { ascending: false, nullsFirst: false })
     .limit(20);
@@ -377,7 +376,6 @@ async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
     images: p.images || [],
     rating: p.rating,
     category_id: p.category_id,
-    currency: p.currency,
     reason: "Populaire",
     score: 50,
   }));
