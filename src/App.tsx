@@ -205,6 +205,7 @@ function App() {
           <LanguageProvider>
             <CurrencyProvider>
               <AuthProvider>
+              <GpsAutoFill />
               <CognitoAuthProvider>
                 <OAuthPasswordGate />
                 <CartProvider>
