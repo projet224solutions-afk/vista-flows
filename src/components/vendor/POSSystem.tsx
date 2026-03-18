@@ -2653,7 +2653,7 @@ export function POSSystem() {
                   </Button>
                   <Button 
                     onClick={validateOrder}
-                    className="h-11 sm:h-12 font-bold text-xs sm:text-sm shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    className="h-11 sm:h-12 font-bold text-xs sm:text-sm shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
                     disabled={cart.length === 0}
                   >
                     <CheckSquare className="h-4 w-4 mr-1" />
