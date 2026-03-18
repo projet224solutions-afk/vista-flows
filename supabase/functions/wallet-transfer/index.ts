@@ -262,17 +262,21 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
   const senderCurrency = (senderResult.data.currency || "GNF").toUpperCase();
 
   // Load dynamic limits from pdg_settings and convert to sender's currency
-  const [minLimitRaw, maxLimitRaw] = await Promise.all([
+  const [minLimitRaw, maxLimitRaw, minIntlLimitRaw, maxIntlLimitRaw] = await Promise.all([
     getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
     getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_INTERNATIONAL_TRANSFER),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_INTERNATIONAL_TRANSFER),
   ]);
 
-  const [minLimit, maxLimit] = await Promise.all([
+  const [minLimit, maxLimit, minIntlLimit, maxIntlLimit] = await Promise.all([
     convertLimitToCurrency(minLimitRaw, senderCurrency, getFxRateFromAPI),
     convertLimitToCurrency(maxLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(minIntlLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(maxIntlLimitRaw, senderCurrency, getFxRateFromAPI),
   ]);
 
-  console.log(`[LIMITS-PREVIEW] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit}`);
+  console.log(`[LIMITS-PREVIEW] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit} | intlMin: ${minIntlLimitRaw}→${minIntlLimit} | intlMax: ${maxIntlLimitRaw}→${maxIntlLimit}`);
 
   if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()} ${senderCurrency}`);
   if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()} ${senderCurrency}`);
@@ -284,6 +288,12 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
 
   // ✅ RÈGLE CENTRALE: même devise = local, devise différente = international
   const isInternational = senderCurrency !== receiverCurrency;
+
+  // Vérification limites internationales dans le preview aussi
+  if (isInternational) {
+    if (amount < minIntlLimit) throw new Error(`Montant minimum international: ${minIntlLimit.toLocaleString()} ${senderCurrency}`);
+    if (amount > maxIntlLimit) throw new Error(`Limite par transfert international: ${maxIntlLimit.toLocaleString()} ${senderCurrency}`);
+  }
 
   console.log(`🌍 Preview: ${senderCountry}(${senderCurrency}) → ${receiverCountry}(${receiverCurrency}) | International: ${isInternational}`);
 
