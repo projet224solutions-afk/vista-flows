@@ -69,27 +69,9 @@ const iconMap: Record<string, LucideIcon> = {
   Package
 };
 
-// Couleurs par catégorie
-const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
-  'Commerce': { bg: 'from-blue-500 to-blue-600', text: 'text-blue-600', border: 'border-blue-200 hover:border-blue-400' },
-  'Alimentation': { bg: 'from-orange-500 to-red-500', text: 'text-orange-600', border: 'border-orange-200 hover:border-orange-400' },
-  'Transport': { bg: 'from-green-500 to-emerald-600', text: 'text-green-600', border: 'border-green-200 hover:border-green-400' },
-  'Beauté': { bg: 'from-pink-500 to-rose-500', text: 'text-pink-600', border: 'border-pink-200 hover:border-pink-400' },
-  'Réparation': { bg: 'from-slate-500 to-gray-600', text: 'text-slate-600', border: 'border-slate-200 hover:border-slate-400' },
-  'Éducation': { bg: 'from-purple-500 to-violet-600', text: 'text-purple-600', border: 'border-purple-200 hover:border-purple-400' },
-  'Technologie': { bg: 'from-cyan-500 to-blue-500', text: 'text-cyan-600', border: 'border-cyan-200 hover:border-cyan-400' },
-  'Immobilier': { bg: 'from-amber-500 to-yellow-600', text: 'text-amber-600', border: 'border-amber-200 hover:border-amber-400' },
-  'Média': { bg: 'from-indigo-500 to-purple-600', text: 'text-indigo-600', border: 'border-indigo-200 hover:border-indigo-400' },
-  'Tourisme': { bg: 'from-sky-500 to-blue-500', text: 'text-sky-600', border: 'border-sky-200 hover:border-sky-400' },
-  'Sport': { bg: 'from-red-500 to-orange-500', text: 'text-red-600', border: 'border-red-200 hover:border-red-400' },
-  'Professionnel': { bg: 'from-gray-600 to-slate-700', text: 'text-gray-600', border: 'border-gray-200 hover:border-gray-400' },
-  'Services': { bg: 'from-teal-500 to-cyan-600', text: 'text-teal-600', border: 'border-teal-200 hover:border-teal-400' },
-  'Numérique': { bg: 'from-violet-500 to-purple-600', text: 'text-violet-600', border: 'border-violet-200 hover:border-violet-400' },
-  'Maison': { bg: 'from-amber-400 to-orange-500', text: 'text-amber-600', border: 'border-amber-200 hover:border-amber-400' },
-  'Construction': { bg: 'from-yellow-500 to-amber-600', text: 'text-yellow-600', border: 'border-yellow-200 hover:border-yellow-400' },
-  'Agriculture': { bg: 'from-lime-500 to-green-600', text: 'text-lime-600', border: 'border-lime-200 hover:border-lime-400' },
-  'Santé': { bg: 'from-emerald-500 to-teal-600', text: 'text-emerald-600', border: 'border-emerald-200 hover:border-emerald-400' },
-};
+// Couleurs de marque unies (pas de dégradés)
+const BRAND_BLUE = '#04439e';
+const BRAND_ORANGE = '#ff4000';
 
 interface ServiceTypesGridProps {
   onBack?: () => void;
