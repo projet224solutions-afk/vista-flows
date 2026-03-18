@@ -581,8 +581,11 @@ export default function Marketplace() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowBrowseModal(true)}
-                className="h-11 w-11 p-0"
+                className="h-11 w-11 p-0 hover:text-white"
+                style={{ color: BRAND_BLUE }}
                 title="Explorer"
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = BRAND_BLUE; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
               >
                 <List className="w-6 h-6" />
               </Button>
