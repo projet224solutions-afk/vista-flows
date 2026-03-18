@@ -12,17 +12,11 @@ import {
 } from '@/hooks/useProductRecommendations';
 
 interface RecommendationsWidgetProps {
-  /** ID du produit en cours de consultation (pour similaires + aussi achetés) */
   currentProductId?: string | null;
-  /** Afficher les recommandations personnalisées */
   showPersonalized?: boolean;
-  /** Afficher les produits similaires */
   showSimilar?: boolean;
-  /** Afficher les co-achats */
   showAlsoBought?: boolean;
-  /** Callback quand un produit est cliqué */
   onProductClick?: (productId: string) => void;
-  /** Callback ajout au panier */
   onAddToCart?: (productId: string) => void;
   className?: string;
 }
@@ -36,16 +30,19 @@ export function RecommendationsWidget({
   onAddToCart,
   className
 }: RecommendationsWidgetProps) {
-  // Track la vue du produit courant
   useTrackProductView(currentProductId);
 
-  const { data: personalized, isLoading: loadingPersonalized } = usePersonalizedRecommendations(12);
+  const { data: personalized, isLoading: loadingPersonalized, error: personalizedError } = usePersonalizedRecommendations(12);
   const { data: similar, isLoading: loadingSimilar } = useSimilarProducts(currentProductId, 10);
   const { data: alsoBought, isLoading: loadingAlsoBought } = useAlsoBoughtProducts(currentProductId, 8);
 
+  // Debug en dev
+  if (personalizedError) {
+    console.warn('[RecommendationsWidget] Error:', personalizedError);
+  }
+
   return (
     <div className={className}>
-      {/* Recommandations personnalisées */}
       {showPersonalized && (
         <ProductRecommendationSection
           title="Recommandé pour vous"
@@ -57,7 +54,6 @@ export function RecommendationsWidget({
         />
       )}
 
-      {/* Produits similaires */}
       {showSimilar && currentProductId && (
         <ProductRecommendationSection
           title="Produits similaires"
@@ -70,7 +66,6 @@ export function RecommendationsWidget({
         />
       )}
 
-      {/* Achetés ensemble */}
       {showAlsoBought && currentProductId && (
         <ProductRecommendationSection
           title="Les clients ont aussi acheté"

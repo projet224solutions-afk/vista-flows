@@ -158,7 +158,11 @@ async function getPopularProducts(limit = 12): Promise<(RecommendedProduct & { r
       .eq('is_active', true)
       .order('rating', { ascending: false, nullsFirst: false })
       .limit(limit);
-    if (error) throw error;
+    if (error) {
+      console.warn('[Recommendations] Popular products error:', error);
+      throw error;
+    }
+    console.log('[Recommendations] Popular products loaded:', data?.length || 0);
     return (data || []).map(p => ({
       product_id: p.id, name: p.name, price: p.price,
       images: p.images || [], rating: p.rating, category_id: p.category_id, reason: 'popular'
