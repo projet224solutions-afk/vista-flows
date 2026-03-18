@@ -572,7 +572,7 @@ export default function Marketplace() {
           </Select>
 
           {!isMobile && (
-            <div className="flex items-center gap-1 bg-accent rounded-lg p-1 shrink-0">
+            <div className="flex items-center gap-1 rounded-lg p-1 shrink-0">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size="sm"
