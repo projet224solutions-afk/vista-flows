@@ -36,16 +36,40 @@ export default function ServiceDashboard() {
   const [service, setService] = useState<ProfessionalService | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Auto-fill GPS coordinates if missing
+  const autoFillGps = useCallback(async (svc: ProfessionalService) => {
+    if (svc.latitude && svc.longitude) return; // Already has GPS
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          await supabase
+            .from('professional_services')
+            .update({ latitude, longitude })
+            .eq('id', svc.id);
+          console.log('✅ GPS auto-rempli pour le service:', svc.business_name, latitude, longitude);
+        } catch (err) {
+          console.error('❌ Erreur auto-fill GPS:', err);
+        }
+      },
+      (err) => console.log('GPS auto-fill skipped:', err.message),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, []);
+
   useEffect(() => {
     if (!loading && userServices.length > 0) {
       const found = userServices.find((s) => s.id === serviceId);
       if (found) {
         setService(found);
+        autoFillGps(found);
       } else {
         navigate('/services');
       }
     }
-  }, [serviceId, userServices, loading, navigate]);
+  }, [serviceId, userServices, loading, navigate, autoFillGps]);
 
   if (loading) {
     return (
