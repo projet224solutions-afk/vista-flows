@@ -180,13 +180,19 @@ async function getFallbackProducts(limit: number, excludeId?: string): Promise<R
   try {
     let query = supabase
       .from('products')
-      .select('id, name, price, images, rating, category_id')
+      .select('id, name, price, images, rating, category_id, vendors(business_type)')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
-      .limit(limit);
+      .limit(limit * 2);
     if (excludeId) query = query.neq('id', excludeId);
     const { data } = await query;
-    return (data || []).map(p => ({
+    // Filtrer: uniquement les vendeurs avec vente en ligne
+    const allowedTypes = ['hybrid', 'online'];
+    const filtered = (data || []).filter(p => {
+      const vendor = (p as any).vendors;
+      return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
+    }).slice(0, limit);
+    return filtered.map(p => ({
       product_id: p.id, name: p.name, price: p.price,
       images: p.images || [], rating: p.rating, category_id: p.category_id
     }));
