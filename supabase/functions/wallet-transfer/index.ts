@@ -244,15 +244,6 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
   const { sender_id, amount } = body;
   let { receiver_id } = body;
 
-  // Load dynamic limits from pdg_settings
-  const [minLimit, maxLimit] = await Promise.all([
-    getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
-    getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
-  ]);
-
-  if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()}`);
-  if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()}`);
-
   const resolvedReceiverId = await resolveRecipientId(supabase, receiver_id);
   if (!resolvedReceiverId) throw new Error(`Destinataire "${receiver_id}" introuvable`);
   receiver_id = resolvedReceiverId;
@@ -267,6 +258,24 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
 
   if (senderResult.error) throw new Error("Wallet expéditeur non trouvé");
   if (receiverResult.error) throw new Error("Wallet destinataire non trouvé");
+
+  const senderCurrency = (senderResult.data.currency || "GNF").toUpperCase();
+
+  // Load dynamic limits from pdg_settings and convert to sender's currency
+  const [minLimitRaw, maxLimitRaw] = await Promise.all([
+    getPdgFeeRate(supabase, FEE_KEYS.MIN_TRANSFER_AMOUNT),
+    getPdgFeeRate(supabase, FEE_KEYS.MAX_TRANSFER_AMOUNT),
+  ]);
+
+  const [minLimit, maxLimit] = await Promise.all([
+    convertLimitToCurrency(minLimitRaw, senderCurrency, getFxRateFromAPI),
+    convertLimitToCurrency(maxLimitRaw, senderCurrency, getFxRateFromAPI),
+  ]);
+
+  console.log(`[LIMITS-PREVIEW] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit}`);
+
+  if (amount < minLimit) throw new Error(`Montant minimum: ${minLimit.toLocaleString()} ${senderCurrency}`);
+  if (amount > maxLimit) throw new Error(`Montant maximum: ${maxLimit.toLocaleString()} ${senderCurrency}`);
   if (senderResult.data.balance < amount) throw new Error("Solde insuffisant");
 
   const senderCurrency = (senderResult.data.currency || "GNF").toUpperCase();
