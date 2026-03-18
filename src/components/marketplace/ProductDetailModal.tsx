@@ -16,7 +16,7 @@ import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 import { trackProductView } from "@/services/analyticsTrackingService";
 import { useTrackProductView } from "@/hooks/useProductRecommendations";
-import { RecommendationsWidget } from "@/components/recommendations/RecommendationsWidget";
+
 import { LocalPrice } from "@/components/ui/LocalPrice";
 interface Product {
   id: string;
