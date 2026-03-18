@@ -106,12 +106,13 @@ export const useCurrentVendor = () => {
           vendorInfo = await getCachedData<{business_type: string; user_id: string}>(`${CACHE_KEY_VENDOR_PROFILE}_agent_${agentVendorId}`);
         }
         
+        const vendorAuthUserId = vendorInfo?.user_id || agentVendorId;
         setVendorData({
           vendorId: agentVendorId,
-          userId: vendorInfo?.user_id || agentVendorId,
+          userId: vendorAuthUserId,
           isAgent: true,
           agentPermissions: (agentContext.agent?.permissions as VendorAgentPermissions) || {},
-          user: { id: agentVendorId },
+          user: { id: vendorAuthUserId }, // Auth user_id du vendeur, pas le vendor table id
           profile: null,
           businessType: vendorInfo?.business_type as 'physical' | 'digital' | 'hybrid' | 'online' | undefined
         });
