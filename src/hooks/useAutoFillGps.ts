@@ -45,28 +45,18 @@ export function useAutoFillGps() {
         const updates: Promise<unknown>[] = [];
 
         for (const v of vendorsToFix) {
-          updates.push(
-            supabase
-              .from('vendors')
-              .update({ latitude, longitude })
-              .eq('id', v.id)
-              .then(() => console.log('✅ GPS auto-fill vendor:', v.id))
-              .catch(() => {})
-          );
+          try {
+            await supabase.from('vendors').update({ latitude, longitude }).eq('id', v.id);
+            console.log('✅ GPS auto-fill vendor:', v.id);
+          } catch { /* skip */ }
         }
 
         for (const s of servicesToFix) {
-          updates.push(
-            supabase
-              .from('professional_services')
-              .update({ latitude, longitude })
-              .eq('id', s.id)
-              .then(() => console.log('✅ GPS auto-fill service:', s.id))
-              .catch(() => {})
-          );
+          try {
+            await supabase.from('professional_services').update({ latitude, longitude }).eq('id', s.id);
+            console.log('✅ GPS auto-fill service:', s.id);
+          } catch { /* skip */ }
         }
-
-        await Promise.allSettled(updates);
       },
       (err) => console.log('GPS auto-fill skipped:', err.message),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
