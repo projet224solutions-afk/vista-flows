@@ -41,7 +41,8 @@ export const useHomeProducts = (limit: number = 4) => {
         const filteredProducts = (data || [])
           .filter(product => {
             const vendor = product.vendors as any;
-            return vendor && vendor.business_type !== 'physical';
+            const allowedTypes = ['hybrid', 'online'];
+            return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
           })
           .slice(0, limit);
 

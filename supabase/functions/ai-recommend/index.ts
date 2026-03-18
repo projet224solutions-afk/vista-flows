@@ -85,11 +85,12 @@ serve(async (req) => {
         .limit(50),
     ]);
 
-    // Gather product catalog sample
+    // Gather product catalog sample - only from vendors with online selling enabled
     const { data: catalogProducts } = await supabase
       .from("products")
-      .select("id, name, price, category_id, rating, images")
+      .select("id, name, price, category_id, rating, images, vendors!inner(business_type)")
       .eq("is_active", true)
+      .in("vendors.business_type", ["hybrid", "online"])
       .order("rating", { ascending: false, nullsFirst: false })
       .limit(100);
 
@@ -342,8 +343,9 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
   console.log("fetchProductDetails: querying", productIds.length, "IDs, sample:", productIds[0]);
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id")
-    .in("id", productIds);
+    .select("id, name, price, images, rating, category_id, vendors!inner(business_type)")
+    .in("id", productIds)
+    .in("vendors.business_type", ["hybrid", "online"]);
   
   if (error) {
     console.error("fetchProductDetails error:", error);
@@ -364,8 +366,9 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
 async function fallbackResponse(supabase: any, corsHeaders: any, type: string) {
   const { data } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id")
+    .select("id, name, price, images, rating, category_id, vendors!inner(business_type)")
     .eq("is_active", true)
+    .in("vendors.business_type", ["hybrid", "online"])
     .order("rating", { ascending: false, nullsFirst: false })
     .limit(20);
 

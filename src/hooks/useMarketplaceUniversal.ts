@@ -148,8 +148,10 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         const vendor = (product.vendors as any);
         if (!vendor) return true;
         
-        // Exclure les vendeurs physical
-        if (vendor.business_type === 'physical') return false;
+        // Exclure les vendeurs qui n'ont pas activé la vente en ligne
+        // Seuls 'hybrid' (physique + en ligne) et 'online' sont autorisés
+        const allowedTypes = ['hybrid', 'online'];
+        if (!vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
         
         // Filtrage par pays (normaliser les espaces comme dans loadLocations)
         if (country && country !== 'all') {
