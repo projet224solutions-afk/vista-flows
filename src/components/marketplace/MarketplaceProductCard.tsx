@@ -166,6 +166,11 @@ export function MarketplaceProductCard({
           </div>
         )}
 
+        {/* Favorite Button */}
+        <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+          <FavoriteButton productId={id} size="sm" />
+        </div>
+
       </div>
       
       {/* Content */}
