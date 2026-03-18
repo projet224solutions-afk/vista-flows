@@ -86,13 +86,19 @@ serve(async (req) => {
     ]);
 
     // Gather product catalog sample - only from vendors with online selling enabled
-    const { data: catalogProducts } = await supabase
+    const { data: rawCatalog } = await supabase
       .from("products")
-      .select("id, name, price, category_id, rating, images, vendors!inner(business_type)")
+      .select("id, name, price, category_id, rating, images, vendor_id, vendors(business_type)")
       .eq("is_active", true)
-      .in("vendors.business_type", ["hybrid", "online"])
       .order("rating", { ascending: false, nullsFirst: false })
-      .limit(100);
+      .limit(200);
+
+    // Filter: only vendors with online selling (hybrid/online)
+    const allowedTypes = ["hybrid", "online"];
+    const catalogProducts = (rawCatalog || []).filter((p: any) => {
+      const vendor = p.vendors;
+      return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
+    }).slice(0, 100);
 
     // Get categories for context
     const { data: categories } = await supabase
