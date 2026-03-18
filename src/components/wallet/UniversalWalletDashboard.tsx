@@ -379,10 +379,10 @@ export default function UniversalWalletDashboard({
           
           <div className="flex gap-2 mt-4">
             <Badge variant="secondary" className="bg-white/20">
-              ID Wallet: {String(wallet.id).slice(0, 8)}...
+              {t('wallet.walletId')}: {String(wallet.id).slice(0, 8)}...
             </Badge>
             <Badge variant="secondary" className="bg-white/20">
-              Devise: {wallet.currency}
+              {t('wallet.walletCurrency')}: {wallet.currency}
             </Badge>
           </div>
         </CardContent>
