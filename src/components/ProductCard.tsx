@@ -143,13 +143,13 @@ export default function ProductCard({
           )}
         </div>
         
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-rubik font-semibold text-vendeur-secondary price-text">
+        <div className="flex items-center justify-between mb-2 sm:mb-4 min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 overflow-hidden">
+            <span className="text-sm sm:text-lg font-rubik font-semibold text-vendeur-secondary price-text truncate">
               {convert(price, currency).formatted}
             </span>
             {originalPrice && (
-              <span className="text-sm text-muted-foreground line-through font-inter">
+              <span className="text-[10px] sm:text-sm text-muted-foreground line-through font-inter truncate">
                 {convert(originalPrice, currency).formatted}
               </span>
             )}
