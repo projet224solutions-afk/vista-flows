@@ -1,7 +1,6 @@
 import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag } from 'lucide-react';
-import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
