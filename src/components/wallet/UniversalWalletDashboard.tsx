@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
