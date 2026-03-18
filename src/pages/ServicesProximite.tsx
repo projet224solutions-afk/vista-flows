@@ -79,6 +79,7 @@ export default function ServicesProximite() {
     try {
       setLoading(true);
       
+      // Filtrer dès la requête: uniquement les services actifs avec GPS ou récupérable
       const { data, error } = await supabase
         .from('professional_services')
         .select(`
