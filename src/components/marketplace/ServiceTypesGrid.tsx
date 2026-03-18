@@ -175,7 +175,6 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {filteredTypes.map((serviceType) => {
           const IconComponent = iconMap[serviceType.icon] || Briefcase;
-          const colors = categoryColors[serviceType.category] || categoryColors['Professionnel'];
           const count = serviceCounts[serviceType.id] || 0;
 
           return (
