@@ -3,7 +3,7 @@
  * Affiche les produits recommandés dans différentes sections
  */
 
-import { useRef, type WheelEvent } from 'react';
+import { useRef, useEffect, useCallback, type WheelEvent } from 'react';
 import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, ShoppingBag, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
