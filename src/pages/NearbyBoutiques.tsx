@@ -73,7 +73,7 @@ export default function NearbyBoutiques() {
         service_type: v.service_type as Vendor["service_type"],
       }));
 
-      // Distances + filtre rayon - Inclure aussi les boutiques sans GPS
+      // Distances + filtre rayon - Exclure boutiques sans GPS
       list = list
         .map((v) => {
           if (v.latitude === null || v.latitude === undefined || v.longitude === null || v.longitude === undefined) {
@@ -82,8 +82,8 @@ export default function NearbyBoutiques() {
           const distance = calcDistanceFn(origin.latitude, origin.longitude, Number(v.latitude), Number(v.longitude));
           return { ...v, distance };
         })
-        // Inclure boutiques sans GPS + celles dans le rayon
-        .filter((v) => v.distance === null || v.distance <= RADIUS_KM);
+        // Exclure boutiques sans GPS + garder uniquement celles dans le rayon
+        .filter((v) => v.distance !== null && v.distance <= RADIUS_KM);
 
       // Tri: plus proches d'abord, sinon par note
       list.sort((a, b) => {
