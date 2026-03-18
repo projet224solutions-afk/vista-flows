@@ -77,7 +77,7 @@ export default function Marketplace() {
   // AI Recommendations
   const { data: aiPersonalized, isLoading: loadingAIPersonalized } = useAIPersonalized(6);
   const { data: aiTrending, isLoading: loadingAITrending } = useAITrending(6);
-  
+  const { data: discoveryProducts, isLoading: loadingDiscovery } = useDiscoveryProducts(8);
   // Behavior tracking
   useBehaviorTracking({ sessionType: 'browse' });
   
