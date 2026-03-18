@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause, Sparkles, Package } from "lucide-react";
+import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrencyForCountry } from "@/data/countryMappings";
@@ -16,7 +16,7 @@ import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 import { trackProductView } from "@/services/analyticsTrackingService";
 import { useTrackProductView } from "@/hooks/useProductRecommendations";
-
+import { RecommendationsWidget } from "@/components/recommendations/RecommendationsWidget";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 interface Product {
   id: string;
@@ -478,8 +478,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[92dvh] overflow-hidden p-0 w-[95vw] z-[210]">
-        <ScrollArea className="h-[calc(92dvh-2.5rem)] px-4 md:px-6">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
+        <ScrollArea className="h-[85vh] px-4 md:px-6">
         <DialogHeader>
           <DialogTitle className="text-xl md:text-2xl font-bold break-words pr-6">{product.name}</DialogTitle>
         </DialogHeader>
@@ -491,10 +491,10 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           </TabsList>
 
           <TabsContent value="details">
-            <div className="grid md:grid-cols-[2fr_3fr] gap-4 md:gap-6 min-w-0 items-start">
+            <div className="grid md:grid-cols-2 gap-6">
           {/* Images & Video Carousel */}
-          <div className="space-y-3 min-w-0">
-            <div className="relative h-[400px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-2 border border-border/20">
+          <div className="space-y-4">
+            <div className="relative h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
 
               {isPlayingVideo && videos.length > 0 ? (
                 <video
@@ -530,65 +530,41 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               )}
             </div>
             
-            {/* Thumbnails - Videos + Images - scrollable row */}
-            {(videos.length > 0 || images.length > 1) && (
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                {/* Video thumbnails */}
-                {videos.map((_, index) => (
-                  <button
-                    key={`video-${index}`}
-                    onClick={() => goToVideo(index)}
-                    className={`relative w-12 h-12 shrink-0 rounded-md overflow-hidden border-2 transition-all bg-black flex items-center justify-center ${
-                      isPlayingVideo && currentVideoIndex === index ? 'border-primary' : 'border-transparent hover:border-primary/50'
-                    }`}
-                  >
-                    <Play className="w-5 h-5 text-white" />
-                    <span className="absolute bottom-0.5 left-0.5 text-[8px] text-white bg-black/60 px-1 rounded">
-                      {index + 1}
-                    </span>
-                  </button>
-                ))}
-                
-                {/* Image thumbnails */}
-                {images.map((img, index) => (
-                  <button
-                    key={`img-${index}`}
-                    onClick={() => goToImage(index)}
-                    className={`relative w-12 h-12 shrink-0 rounded-md overflow-hidden border-2 transition-all ${
-                      !isPlayingVideo && currentImageIndex === index ? 'border-primary' : 'border-transparent hover:border-primary/50'
-                    }`}
-                  >
-                    <img loading="lazy" src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Boutons Produits similaires / Autres produits */}
-            <div className="flex gap-2 mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => { onClose(); navigate(`/product/${product.id}/similar`); }}
-              >
-                <Sparkles className="w-4 h-4 mr-1.5" />
-                Produits similaires
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => { onClose(); navigate(`/product/${product.id}/others`); }}
-              >
-                <Package className="w-4 h-4 mr-1.5" />
-                Autres produits
-              </Button>
+            {/* Thumbnails - Videos + Images */}
+            <div className="grid grid-cols-6 gap-2">
+              {/* Video thumbnails */}
+              {videos.map((_, index) => (
+                <button
+                  key={`video-${index}`}
+                  onClick={() => goToVideo(index)}
+                  className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all bg-black flex items-center justify-center ${
+                    isPlayingVideo && currentVideoIndex === index ? 'border-primary' : 'border-transparent hover:border-primary/50'
+                  }`}
+                >
+                  <Play className="w-6 h-6 text-white" />
+                  <span className="absolute bottom-0.5 left-0.5 text-[8px] text-white bg-black/60 px-1 rounded">
+                    {index + 1}
+                  </span>
+                </button>
+              ))}
+              
+              {/* Image thumbnails */}
+              {images.map((img, index) => (
+                <button
+                  key={`img-${index}`}
+                  onClick={() => goToImage(index)}
+                  className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                    !isPlayingVideo && currentImageIndex === index ? 'border-primary' : 'border-transparent'
+                  }`}
+                >
+                  <img loading="lazy" src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Détails */}
-          <div className="space-y-4 min-w-0 overflow-hidden">
+          <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <LocalPrice 
@@ -766,13 +742,22 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               </div>
             </div>
 
-          </div>
-        </div>
-
-
+            {/* Produits similaires & co-achats */}
+            <div className="-mx-4 px-4 overflow-x-visible">
+              <RecommendationsWidget
+                currentProductId={product.id}
+                showPersonalized={false}
+                showSimilar={true}
+                showAlsoBought={true}
+                onProductClick={(id) => {
+                  onClose();
+                  setTimeout(() => navigate(`/product/${id}`), 100);
+                }}
+              />
+            </div>
 
             {/* Garanties */}
-            <div className="space-y-2 pt-4 pb-footer md:pb-8">
+            <div className="space-y-2 pt-4 pb-6">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="w-4 h-4" />
                 <span>{product.is_affiliate ? 'Achat sécurisé chez le partenaire' : 'Paiement sécurisé'}</span>
@@ -784,6 +769,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 </div>
               )}
             </div>
+          </div>
+        </div>
       </TabsContent>
 
       <TabsContent value="reviews">
