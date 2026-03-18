@@ -92,7 +92,7 @@ export default function ClientManagement() {
       const processedClients = (clientsData || [])
         .map(client => ({
           ...client,
-          orders: (client.orders || []).filter((order: any) => order.vendor_id === vendor.id)
+          orders: (client.orders || []).filter((order: any) => order.vendor_id === vendorIdToUse)
         }))
         .filter(client => client.orders.length > 0);
 
