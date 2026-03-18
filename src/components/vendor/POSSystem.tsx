@@ -290,148 +290,214 @@ export function POSSystem() {
       try {
         const { default: offlineDB } = await import('@/lib/offlineDB');
         const pendingEvents = await offlineDB.getPendingEvents();
-        const salesEvents = pendingEvents.filter(e => (e.type === 'sale' || e.type === 'credit_sale') && e.vendor_id === vendorId);
-        
+        const failedEvents = await offlineDB.getFailedEvents();
+
+        // IMPORTANT: inclure aussi les événements en échec pour rejouer les ventes
+        // qui ont raté pendant les anciens bugs de synchronisation.
+        const salesEvents = [...pendingEvents, ...failedEvents]
+          .filter(e => (e.type === 'sale' || e.type === 'credit_sale') && e.vendor_id === vendorId)
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
         if (salesEvents.length === 0) return;
-        
+
         console.log(`🔄 Synchronisation de ${salesEvents.length} vente(s) offline...`);
         toast.info(`Synchronisation de ${salesEvents.length} vente(s) en cours...`);
-        
+
         for (const event of salesEvents) {
           try {
-            const saleData = event.data;
-            
-            // Obtenir ou créer un customer_id
+            const saleData = event.data || {};
             const customerName = saleData.customer_name || 'Client comptoir';
-            const { data: existingCustomer } = await supabase
-              .from('customers')
+            const syncOrderNumber = saleData.order_number || `POS-SYNC-${Date.now().toString(36).toUpperCase()}`;
+            const isCreditSale = event.type === 'credit_sale';
+
+            const mappedItems = Array.isArray(saleData.items)
+              ? saleData.items.map((item: any) => ({
+                  product_id: item.product_id,
+                  quantity: item.quantity,
+                  unit_price: item.unit_price,
+                  total_price: item.total_price,
+                  product_name: item.product_name,
+                  images: item.images || []
+                }))
+              : [];
+
+            if (mappedItems.length === 0) {
+              throw new Error('Aucun article à synchroniser pour cette vente offline');
+            }
+
+            // Idempotence: si la commande existe déjà, ne pas la recréer
+            const { data: existingOrder, error: existingOrderError } = await supabase
+              .from('orders')
               .select('id')
               .eq('vendor_id', vendorId)
-              .eq('name', customerName)
+              .eq('order_number', syncOrderNumber)
               .maybeSingle();
-            
-            let customerId = existingCustomer?.id;
-            
-            if (!customerId) {
-              const { data: newCustomer } = await supabase
+
+            if (existingOrderError) throw existingOrderError;
+
+            let orderId: string | undefined = existingOrder?.id;
+            let createdNewOrder = false;
+
+            if (!orderId) {
+              // Obtenir ou créer un customer_id
+              const { data: existingCustomer } = await supabase
                 .from('customers')
+                .select('id')
+                .eq('vendor_id', vendorId)
+                .eq('name', customerName)
+                .maybeSingle();
+
+              let customerId = existingCustomer?.id;
+
+              if (!customerId) {
+                const { data: newCustomer } = await supabase
+                  .from('customers')
+                  .insert({
+                    vendor_id: vendorId,
+                    name: customerName,
+                    phone: saleData.customer_phone || null
+                  })
+                  .select('id')
+                  .single();
+
+                customerId = newCustomer?.id;
+              }
+
+              if (!customerId) {
+                throw new Error('Impossible de créer/récupérer le client pour la vente offline');
+              }
+
+              // Créer la commande
+              const { data: order, error: orderError } = await supabase
+                .from('orders')
                 .insert({
+                  order_number: syncOrderNumber,
                   vendor_id: vendorId,
-                  name: customerName,
-                  phone: saleData.customer_phone || null
+                  customer_id: customerId,
+                  total_amount: saleData.total_amount,
+                  subtotal: saleData.subtotal,
+                  tax_amount: saleData.tax_amount,
+                  discount_amount: saleData.discount_amount,
+                  payment_status: isCreditSale ? 'pending' : 'paid',
+                  status: 'confirmed',
+                  payment_method: 'cash',
+                  shipping_address: isCreditSale
+                    ? { address: 'Vente à crédit', is_credit_sale: true }
+                    : { address: 'Point de vente' },
+                  notes: isCreditSale
+                    ? `🔖 VENTE À CRÉDIT (sync offline) - Client: ${customerName}${saleData.customer_phone ? ` - Tél: ${saleData.customer_phone}` : ''}`
+                    : `Vente offline synchronisée - ${syncOrderNumber}`,
+                  source: 'pos',
+                  created_at: saleData.sale_date || new Date().toISOString()
                 })
                 .select('id')
                 .single();
-              customerId = newCustomer?.id;
+
+              if (orderError) throw orderError;
+              orderId = order?.id;
+              createdNewOrder = true;
             }
-            
-            if (!customerId) continue;
 
-            const syncOrderNumber = saleData.order_number || `POS-SYNC-${Date.now().toString(36).toUpperCase()}`;
-
-            const isCreditSale = event.type === 'credit_sale';
-
-            // Créer la commande
-            const { data: order, error: orderError } = await supabase
-              .from('orders')
-              .insert({
-                order_number: syncOrderNumber,
-                vendor_id: vendorId,
-                customer_id: customerId,
-                total_amount: saleData.total_amount,
-                subtotal: saleData.subtotal,
-                tax_amount: saleData.tax_amount,
-                discount_amount: saleData.discount_amount,
-                payment_status: isCreditSale ? 'pending' : 'paid',
-                status: 'confirmed',
-                payment_method: 'cash',
-                shipping_address: isCreditSale 
-                  ? { address: 'Vente à crédit', is_credit_sale: true }
-                  : { address: 'Point de vente' },
-                notes: isCreditSale
-                  ? `🔖 VENTE À CRÉDIT (sync offline) - Client: ${customerName}${saleData.customer_phone ? ` - Tél: ${saleData.customer_phone}` : ''}`
-                  : `Vente offline synchronisée - ${syncOrderNumber}`,
-                source: 'pos',
-                created_at: saleData.sale_date
-              })
-              .select('id')
-              .single();
-            
-            if (orderError) throw orderError;
-            
-            // Créer les items (CRITICAL: le trigger DB décrémente le stock)
-            const orderItems = saleData.items.map((item: any) => ({
-              order_id: order.id,
-              product_id: item.product_id,
-              quantity: item.quantity,
-              unit_price: item.unit_price,
-              total_price: item.total_price
-            }));
-            
-            const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-            
-            if (itemsError) {
-              console.error('❌ Erreur insertion order_items (stock non décrémenté):', itemsError);
-              // Supprimer la commande orpheline
-              await supabase.from('orders').delete().eq('id', order.id);
-              throw itemsError;
+            if (!orderId) {
+              throw new Error('Impossible de déterminer la commande à synchroniser');
             }
-            
-            console.log(`📦 order_items insérés → trigger stock déclenché pour ${orderItems.length} produit(s)`);
 
-            // Si vente à crédit, créer l'entrée dans vendor_credit_sales
-            if (isCreditSale) {
-              await supabase.from('vendor_credit_sales').insert([{
-                vendor_id: vendorId,
-                customer_name: customerName,
-                customer_phone: saleData.customer_phone || null,
-                order_number: syncOrderNumber,
-                total: saleData.total_amount,
-                subtotal: saleData.subtotal,
-                remaining_amount: saleData.total_amount,
-                due_date: saleData.due_date,
-                notes: saleData.credit_notes || `Produits: ${saleData.items.map((i: any) => `${i.product_name} x${i.quantity}`).join(', ')}`,
-                items: saleData.items.map((item: any) => ({
-                  id: item.product_id,
-                  name: item.product_name,
-                  price: item.unit_price,
-                  quantity: item.quantity,
-                  images: item.images || []
-                })),
-                status: 'pending'
-              }]);
+            // Vérifier si les items existent déjà (idempotence)
+            const { count: existingItemsCount, error: existingItemsError } = await supabase
+              .from('order_items')
+              .select('id', { count: 'exact', head: true })
+              .eq('order_id', orderId);
+
+            if (existingItemsError) throw existingItemsError;
+
+            // Créer les items seulement s'ils n'existent pas encore
+            // (CRITICAL: le trigger DB décrémente le stock ici)
+            if ((existingItemsCount ?? 0) === 0) {
+              const orderItems = mappedItems.map((item: any) => ({
+                order_id: orderId,
+                product_id: item.product_id,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                total_price: item.total_price
+              }));
+
+              const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+
+              if (itemsError) {
+                console.error('❌ Erreur insertion order_items (stock non décrémenté):', itemsError);
+
+                // Supprimer seulement les commandes créées dans ce cycle (éviter suppression de données valides)
+                if (createdNewOrder) {
+                  await supabase.from('orders').delete().eq('id', orderId);
+                }
+
+                throw itemsError;
+              }
+
+              console.log(`📦 order_items insérés → trigger stock déclenché pour ${orderItems.length} produit(s)`);
             } else {
-              await supabase.from('orders').update({ status: 'processing' }).eq('id', order.id);
+              console.log(`ℹ️ Order ${syncOrderNumber} déjà synchronisée (${existingItemsCount} item(s))`);
             }
-            
-            // Marquer l'événement comme synchronisé
+
+            // Si vente à crédit, créer l'entrée dans vendor_credit_sales si absente
+            if (isCreditSale) {
+              const { data: existingCredit, error: existingCreditError } = await supabase
+                .from('vendor_credit_sales')
+                .select('id')
+                .eq('vendor_id', vendorId)
+                .eq('order_number', syncOrderNumber)
+                .maybeSingle();
+
+              if (existingCreditError) throw existingCreditError;
+
+              if (!existingCredit) {
+                await supabase.from('vendor_credit_sales').insert([{
+                  vendor_id: vendorId,
+                  customer_name: customerName,
+                  customer_phone: saleData.customer_phone || null,
+                  order_number: syncOrderNumber,
+                  total: saleData.total_amount,
+                  subtotal: saleData.subtotal,
+                  remaining_amount: saleData.total_amount,
+                  due_date: saleData.due_date,
+                  notes: saleData.credit_notes || `Produits: ${mappedItems.map((i: any) => `${i.product_name} x${i.quantity}`).join(', ')}`,
+                  items: mappedItems.map((item: any) => ({
+                    id: item.product_id,
+                    name: item.product_name,
+                    price: item.unit_price,
+                    quantity: item.quantity,
+                    images: item.images || []
+                  })),
+                  status: 'pending'
+                }]);
+              }
+            } else {
+              await supabase.from('orders').update({ status: 'processing' }).eq('id', orderId);
+            }
+
+            // Marquer l'événement comme synchronisé (pending OU failed)
             await offlineDB.markEventAsSynced(event.client_event_id);
-            console.log(`✅ ${isCreditSale ? 'Vente à crédit' : 'Vente'} offline ${saleData.order_number} synchronisée (stock décrémenté par trigger DB)`);
-            
+            console.log(`✅ ${isCreditSale ? 'Vente à crédit' : 'Vente'} offline ${syncOrderNumber} synchronisée (stock décrémenté)`);
           } catch (syncError) {
             console.error('Erreur sync vente offline:', syncError);
             await offlineDB.markEventAsFailed(event.client_event_id, String(syncError));
           }
         }
-        
+
         // Rafraîchir les produits pour avoir les stocks à jour depuis la DB
-        // (le trigger a déjà décrémenté stock_quantity)
         await loadVendorProducts();
-        
-        // Invalider aussi le cache offline pour que l'inventaire soit à jour
+
+        // Mettre à jour aussi le cache offline avec les stocks actuels
         try {
-          const freshProducts = products; // sera mis à jour par loadVendorProducts via setState
-          // Forcer le rechargement du cache après un petit délai pour laisser le setState se propager
           setTimeout(async () => {
             try {
               const { default: offlineDBModule } = await import('@/lib/offlineDB');
-              // Recharger les produits frais depuis Supabase pour le cache
               const { data: freshData } = await supabase
                 .from('products')
                 .select('id, name, price, stock_quantity, barcode, barcode_value, barcode_format, sku, images, category_id, section, categories(id, name), sell_by_carton, units_per_carton, price_carton')
-                .eq('vendor_id', vendorId!)
+                .eq('vendor_id', vendorId)
                 .eq('is_active', true);
-              
+
               if (freshData) {
                 const formatted = freshData.map((p: any) => ({
                   id: p.id,
@@ -447,6 +513,7 @@ export function POSSystem() {
                   units_per_carton: Number(p.units_per_carton || 1),
                   price_carton: Number(p.price_carton || 0)
                 }));
+
                 await offlineDBModule.cacheData(`${PRODUCTS_CACHE_KEY}_${vendorId}`, formatted, PRODUCTS_CACHE_TTL, false);
                 console.log('✅ Cache offline mis à jour avec stocks corrigés');
               }
@@ -454,10 +521,11 @@ export function POSSystem() {
               console.warn('Erreur mise à jour cache post-sync:', e);
             }
           }, 2000);
-        } catch (e) {}
-        
+        } catch (e) {
+          console.warn('Erreur post-sync cache wrapper:', e);
+        }
+
         toast.success('Ventes hors-ligne synchronisées !');
-        
       } catch (error) {
         console.error('Erreur synchronisation offline:', error);
       }
