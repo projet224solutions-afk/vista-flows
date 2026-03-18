@@ -601,29 +601,40 @@ All colors MUST be HSL.
      Mobile: 2 colonnes | Tablette: 2-3 | Desktop: 3-6
      ================================================ */
   .marketplace-grid {
-    display: grid;
-    /* Default: 2 colonnes pour mobile-first */
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
     gap: 0.5rem;
     width: 100%;
-    max-width: 100%;
     padding: 0.5rem;
-    overflow-x: hidden;
     box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
-  /* Empêcher les enfants de la grille de déborder */
+  .marketplace-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Chaque carte prend ~45% de la largeur visible pour montrer la suivante */
   .marketplace-grid > * {
-    min-width: 0;
+    min-width: 44%;
+    max-width: 44%;
+    flex-shrink: 0;
+    scroll-snap-align: start;
     overflow: hidden;
   }
 
-  /* Très petits écrans */
+  /* Très petits écrans: cartes plus larges */
   @media (max-width: 360px) {
     .marketplace-grid {
-      grid-template-columns: 1fr;
-      gap: 0.625rem;
-      padding: 0.625rem;
+      gap: 0.5rem;
+      padding: 0.5rem;
+    }
+    .marketplace-grid > * {
+      min-width: 70%;
+      max-width: 70%;
     }
   }
 
