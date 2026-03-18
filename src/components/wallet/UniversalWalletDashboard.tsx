@@ -690,14 +690,14 @@ export default function UniversalWalletDashboard({
       <AlertDialog open={showDepositConfirm} onOpenChange={setShowDepositConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer le dépôt</AlertDialogTitle>
+            <AlertDialogTitle>{t('wallet.confirmDeposit')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Vous allez déposer {parseFloat(depositAmount || '0').toLocaleString()} GNF sur votre wallet.
+              {t('wallet.depositConfirmMsg')} ({convert(parseFloat(depositAmount || '0'), 'GNF').formatted})
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeposit}>Confirmer</AlertDialogAction>
+            <AlertDialogCancel>{t('wallet.cancelBtn')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeposit}>{t('wallet.confirm')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -705,15 +705,15 @@ export default function UniversalWalletDashboard({
       <AlertDialog open={showWithdrawConfirm} onOpenChange={setShowWithdrawConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer le retrait</AlertDialogTitle>
+            <AlertDialogTitle>{t('wallet.confirmWithdraw')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Vous allez retirer {parseFloat(withdrawAmount || '0').toLocaleString()} GNF de votre wallet.
+              {t('wallet.withdrawConfirmMsg')} ({convert(parseFloat(withdrawAmount || '0'), 'GNF').formatted})
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleWithdraw} className="bg-red-600 hover:bg-red-700">
-              Confirmer
+            <AlertDialogCancel>{t('wallet.cancelBtn')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleWithdraw} className="bg-destructive hover:bg-destructive/90">
+              {t('wallet.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
