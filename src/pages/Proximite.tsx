@@ -489,7 +489,7 @@ export default function Proximite() {
                 <ShoppingBag className="w-5 h-5" style={{ color: BLUE }} />
                 {t('home.productCategories') || 'Catégories de Produits'}
               </h2>
-              <p className="text-sm text-muted-foreground">{t('home.exploreByCategory') || 'Explorez par catégorie'}</p>
+              <p className="text-sm" style={{ color: BLACK }}>{t('home.exploreByCategory') || 'Explorez par catégorie'}</p>
             </div>
             <button 
               onClick={() => navigate('/marketplace')}
