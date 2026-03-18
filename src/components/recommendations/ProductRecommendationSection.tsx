@@ -49,10 +49,13 @@ export function ProductRecommendationSection({
   className
 }: ProductRecommendationSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef<number | null>(null);
+  const userInteractedRef = useRef(false);
   const Icon = ICONS[icon];
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
+    userInteractedRef.current = true;
 
     const visibleWidth = scrollRef.current.clientWidth;
     const scrollAmount = Math.max(Math.floor(visibleWidth * 0.8), 180);
@@ -61,10 +64,37 @@ export function ProductRecommendationSection({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth'
     });
+
+    // Resume auto-scroll after 5s of inactivity
+    if (autoScrollRef.current) clearTimeout(autoScrollRef.current);
+    autoScrollRef.current = window.setTimeout(() => {
+      userInteractedRef.current = false;
+    }, 5000);
   };
+
+  // Auto-scroll from left to right
+  useEffect(() => {
+    if (loading || products.length <= 1) return;
+
+    const interval = setInterval(() => {
+      if (userInteractedRef.current || !scrollRef.current) return;
+
+      const el = scrollRef.current;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+
+      if (el.scrollLeft >= maxScroll - 2) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: 200, behavior: 'smooth' });
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [loading, products.length]);
 
   const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
     if (!scrollRef.current) return;
+    userInteractedRef.current = true;
 
     if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
       event.preventDefault();
@@ -73,7 +103,23 @@ export function ProductRecommendationSection({
         behavior: 'smooth'
       });
     }
+
+    if (autoScrollRef.current) clearTimeout(autoScrollRef.current);
+    autoScrollRef.current = window.setTimeout(() => {
+      userInteractedRef.current = false;
+    }, 5000);
   };
+
+  const handleTouchStart = useCallback(() => {
+    userInteractedRef.current = true;
+    if (autoScrollRef.current) clearTimeout(autoScrollRef.current);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    autoScrollRef.current = window.setTimeout(() => {
+      userInteractedRef.current = false;
+    }, 5000);
+  }, []);
 
   if (!loading && products.length === 0) {
     return null;
