@@ -530,7 +530,7 @@ export default function Proximite() {
                   
                   <div className="flex items-center gap-1">
                     <span className="text-xs font-medium" style={{ color: ORANGE }}>{category.product_count}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs" style={{ color: BLACK }}>
                       {category.product_count > 1 ? 'articles' : 'article'}
                     </span>
                   </div>
