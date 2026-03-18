@@ -20,6 +20,19 @@ const corsHeaders = {
 const MIN_TRANSFER_AMOUNT = 100;
 const MAX_TRANSFER_AMOUNT = 50000000;
 
+// Smart rounding: integers for weak currencies (GNF, XOF, etc.), 2 decimals for strong (EUR, USD, etc.)
+const ZERO_DECIMAL_CURRENCIES = new Set([
+  "GNF", "XOF", "XAF", "VND", "IDR", "KRW", "JPY", "CLP", "UGX", "RWF",
+  "PYG", "COP", "HUF", "ISK", "BIF", "DJF", "KMF", "MGA", "VUV",
+]);
+
+function smartRound(amount: number, currency: string): number {
+  if (ZERO_DECIMAL_CURRENCIES.has(currency.toUpperCase())) {
+    return Math.round(amount);
+  }
+  return Math.round(amount * 100) / 100;
+}
+
 // ✅ Map wallet currency → country code for display
 function currencyToCountry(currency: string): string {
   const map: Record<string, string> = {
@@ -286,11 +299,11 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
     amount_sent: amount,
     currency_sent: senderCurrency,
     fee_percentage: feePercentage,
-    fee_amount: Math.round(feeAmount),
-    total_debit: Math.round(totalDebit),
-    amount_after_fee: Math.round(amount - feeAmount),
+    fee_amount: smartRound(feeAmount, senderCurrency),
+    total_debit: smartRound(totalDebit, senderCurrency),
+    amount_after_fee: smartRound(amount - feeAmount, senderCurrency),
     rate_displayed: rateDisplayed,
-    amount_received: Math.round(amountReceived),
+    amount_received: smartRound(amountReceived, receiverCurrency),
     currency_received: receiverCurrency,
     is_international: isInternational,
     sender_country: senderCountry,
@@ -298,7 +311,7 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
     sender_balance: senderResult.data.balance,
     balance_after: senderResult.data.balance - totalDebit,
     // International-specific
-    commission_conversion: isInternational ? Math.round(feeAmount) : 0,
+    commission_conversion: isInternational ? smartRound(feeAmount, senderCurrency) : 0,
     frais_international: 0,
     rate_lock_seconds: isInternational ? 60 : undefined,
     rate_source: rateSource,
@@ -566,16 +579,16 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
       amount_sent: amount,
       currency_sent: senderCurrency,
       fee_percentage: feePercentage,
-      fee_amount: Math.round(feeAmount),
+      fee_amount: smartRound(feeAmount, senderCurrency),
       total_debit: amount,
-      amount_after_fee: Math.round(amount - feeAmount),
+      amount_after_fee: smartRound(amount - feeAmount, senderCurrency),
       rate_displayed: rateDisplayed,
-      amount_received: amountReceived,
+      amount_received: smartRound(amountReceived, receiverCurrency),
       currency_received: receiverCurrency,
       is_international: isInternational,
       sender_country: senderCountry,
       receiver_country: receiverCountry,
-      commission_conversion: isInternational ? Math.round(feeAmount) : 0,
+      commission_conversion: isInternational ? smartRound(feeAmount, senderCurrency) : 0,
       frais_international: 0,
     };
 
