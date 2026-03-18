@@ -56,6 +56,9 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const hasTrackedView = useRef(false);
   const lastTrackedProductId = useRef<string | null>(null);
 
+  // 🧠 Track pour recommandations intelligentes
+  useTrackProductView(open && productId ? productId : null);
+
   // Mémoriser les vidéos et images pour le carrousel
   const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);
   const images = useMemo(() => 
