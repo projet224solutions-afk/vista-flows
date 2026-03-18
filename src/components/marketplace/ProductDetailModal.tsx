@@ -491,9 +491,9 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           </TabsList>
 
           <TabsContent value="details">
-            <div className="grid md:grid-cols-[1fr_2fr] gap-4 min-w-0">
+            <div className="grid md:grid-cols-[1fr_2fr] gap-4 md:gap-6 min-w-0 items-start">
           {/* Images & Video Carousel */}
-          <div className="space-y-3">
+          <div className="space-y-3 min-w-0">
             <div className="relative h-[280px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-2 border border-border/20">
 
               {isPlayingVideo && videos.length > 0 ? (
@@ -530,37 +530,39 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               )}
             </div>
             
-            {/* Thumbnails - Videos + Images */}
-            <div className="grid grid-cols-6 gap-2">
-              {/* Video thumbnails */}
-              {videos.map((_, index) => (
-                <button
-                  key={`video-${index}`}
-                  onClick={() => goToVideo(index)}
-                  className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all bg-black flex items-center justify-center ${
-                    isPlayingVideo && currentVideoIndex === index ? 'border-primary' : 'border-transparent hover:border-primary/50'
-                  }`}
-                >
-                  <Play className="w-6 h-6 text-white" />
-                  <span className="absolute bottom-0.5 left-0.5 text-[8px] text-white bg-black/60 px-1 rounded">
-                    {index + 1}
-                  </span>
-                </button>
-              ))}
-              
-              {/* Image thumbnails */}
-              {images.map((img, index) => (
-                <button
-                  key={`img-${index}`}
-                  onClick={() => goToImage(index)}
-                  className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
-                    !isPlayingVideo && currentImageIndex === index ? 'border-primary' : 'border-transparent'
-                  }`}
-                >
-                  <img loading="lazy" src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
-                </button>
-              ))}
-            </div>
+            {/* Thumbnails - Videos + Images - scrollable row */}
+            {(videos.length > 0 || images.length > 1) && (
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                {/* Video thumbnails */}
+                {videos.map((_, index) => (
+                  <button
+                    key={`video-${index}`}
+                    onClick={() => goToVideo(index)}
+                    className={`relative w-12 h-12 shrink-0 rounded-md overflow-hidden border-2 transition-all bg-black flex items-center justify-center ${
+                      isPlayingVideo && currentVideoIndex === index ? 'border-primary' : 'border-transparent hover:border-primary/50'
+                    }`}
+                  >
+                    <Play className="w-5 h-5 text-white" />
+                    <span className="absolute bottom-0.5 left-0.5 text-[8px] text-white bg-black/60 px-1 rounded">
+                      {index + 1}
+                    </span>
+                  </button>
+                ))}
+                
+                {/* Image thumbnails */}
+                {images.map((img, index) => (
+                  <button
+                    key={`img-${index}`}
+                    onClick={() => goToImage(index)}
+                    className={`relative w-12 h-12 shrink-0 rounded-md overflow-hidden border-2 transition-all ${
+                      !isPlayingVideo && currentImageIndex === index ? 'border-primary' : 'border-transparent hover:border-primary/50'
+                    }`}
+                  >
+                    <img loading="lazy" src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Détails */}
