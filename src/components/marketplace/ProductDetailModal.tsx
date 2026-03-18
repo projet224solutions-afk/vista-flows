@@ -52,7 +52,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [recommendationView, setRecommendationView] = useState<'none' | 'similar' | 'others'>('none');
+  const navigate = useNavigate();
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { t } = useTranslation();
