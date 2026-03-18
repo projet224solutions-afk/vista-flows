@@ -227,13 +227,7 @@ export default function InventoryManagement() {
         await updateStock(inventoryItem.id, newQty);
       } else {
         // Créer une nouvelle entrée d'inventaire
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user?.id)
-          .single();
-
-        if (vendor) {
+        if (vendorId) {
           const { error } = await supabase
             .from('inventory')
             .insert([{
