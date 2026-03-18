@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause } from "lucide-react";
+import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause, Sparkles, Package } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrencyForCountry } from "@/data/countryMappings";
