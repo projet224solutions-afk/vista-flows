@@ -278,7 +278,7 @@ export function useProximityStats() {
       // Si le service n'a pas de GPS => on le compte quand même (noGps mais inclus)
       // Si le service a un GPS mais hors rayon => exclu
       const serviceTypeCounts: Record<string, number> = {};
-      professionalServices.forEach((service: any) => {
+      enrichedServices.forEach((service: any) => {
         const lat = service?.latitude;
         const lng = service?.longitude;
         const hasGps = lat !== null && lat !== undefined && lng !== null && lng !== undefined;
