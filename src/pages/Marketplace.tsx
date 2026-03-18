@@ -329,47 +329,28 @@ export default function Marketplace() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
+    <div className="min-h-screen bg-background pb-20">
+      {/* Header compact mobile */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
+        <div className="px-3 py-2 sm:px-4 sm:py-3">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0 overflow-hidden">
               {vendorName ? (
                 <>
-                  <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
+                  <h1 className="text-base sm:text-xl font-bold text-foreground truncate">
                     {vendorName}
                   </h1>
-                  <p className="text-xs text-muted-foreground">
-                    {marketplaceTotal} article{marketplaceTotal > 1 ? 's' : ''} disponible{marketplaceTotal > 1 ? 's' : ''}
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
+                    {marketplaceTotal} article{marketplaceTotal > 1 ? 's' : ''}
                   </p>
                 </>
               ) : (
-                <div className="overflow-hidden">
-                  <div className="flex animate-vision-ticker" style={{ width: 'max-content' }}>
-                    {/* Bloc 1 */}
-                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
-                      224SOLUTIONS donne à l'Afrique la possibilité de vendre en ligne et physiquement, que ce soit des produits physiques ou digitaux, via l'affiliation, tout en permettant à chacun de gérer son commerce physique et d'offrir ou accéder aux services les plus proches de lui.
-                    </span>
-                    <span className="text-primary/40 whitespace-nowrap px-4">•••</span>
-                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
-                      La plateforme connecte vendeurs et acheteurs à travers le continent, facilite le commerce digital, sécurise les paiements et crée de nouvelles opportunités économiques sans frontières.
-                    </span>
-                    <span className="text-primary/40 whitespace-nowrap px-4">•••</span>
-                    {/* Bloc 2 (copie exacte pour boucle infinie) */}
-                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
-                      224SOLUTIONS donne à l'Afrique la possibilité de vendre en ligne et physiquement, que ce soit des produits physiques ou digitaux, via l'affiliation, tout en permettant à chacun de gérer son commerce physique et d'offrir ou accéder aux services les plus proches de lui.
-                    </span>
-                    <span className="text-primary/40 whitespace-nowrap px-4">•••</span>
-                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
-                      La plateforme connecte vendeurs et acheteurs à travers le continent, facilite le commerce digital, sécurise les paiements et crée de nouvelles opportunités économiques sans frontières.
-                    </span>
-                    <span className="text-primary/40 whitespace-nowrap px-4">•••</span>
-                  </div>
-                </div>
+                <h1 className="text-sm sm:text-base font-semibold text-primary truncate">
+                  224Solutions Marketplace
+                </h1>
               )}
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <CurrencyIndicator variant="default" />
               {vendorId && (
                 <>
@@ -398,27 +379,22 @@ export default function Marketplace() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="relative h-9 w-9"
+                  className="relative h-8 w-8"
                   onClick={() => navigate('/cart')}
                 >
-                  <ShoppingCartIcon className="w-5 h-5" />
+                  <ShoppingCartIcon className="w-4 h-4" />
                   {getCartCount() > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                    <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[9px]">
                       {getCartCount()}
                     </Badge>
                   )}
                 </Button>
               )}
-              {isMobile && (
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Menu className="w-5 h-5" />
-                </Button>
-              )}
             </div>
           </div>
           
-          {/* Barre de recherche avec bouton caméra intégré */}
-          <div className="mt-3">
+          {/* Search bar */}
+          <div className="mt-2">
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
@@ -427,7 +403,6 @@ export default function Marketplace() {
               onFilter={() => setShowFilters(!showFilters)}
               showCamera
               onCameraCapture={(file) => {
-                // Naviguer vers la recherche visuelle avec l'image capturée
                 navigate('/marketplace/visual-search', { state: { capturedImage: file } });
               }}
             />
