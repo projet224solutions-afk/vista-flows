@@ -174,12 +174,12 @@ export function MarketplaceProductCard({
       <CardContent className="marketplace-card-content">
         {/* Type de produit si existant */}
         {category && (
-          <span className="text-[10px] text-primary font-medium uppercase tracking-wide mb-1 block">
-            Type de produit: {category}
+          <span className="text-[10px] text-primary font-medium uppercase tracking-wide mb-0.5 block truncate">
+            {category}
           </span>
         )}
 
-        {/* Title - 1 ligne */}
+        {/* Title */}
         <h3 className="marketplace-card-title" title={title}>
           {title}
         </h3>
@@ -220,11 +220,11 @@ export function MarketplaceProductCard({
         )}
         
         {/* Price + Stock Status avec conversion automatique */}
-        <div className="flex items-center justify-between gap-1.5 mb-2">
+        <div className="flex items-center justify-between gap-1 mb-1.5 min-w-0">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex flex-col">
+                <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
                   <span className="marketplace-card-price">
                     {formatPrice(price)}
                   </span>

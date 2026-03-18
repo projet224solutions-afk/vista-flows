@@ -119,8 +119,8 @@ export default function ProductCard({
         <FavoriteButton productId={id} className="absolute top-3 right-3 z-10" />
       </div>
       
-      <CardContent className="p-5 space-y-3 bg-gradient-to-b from-white to-secondary/20">
-        <h3 className="font-poppins font-bold text-foreground mb-2 line-clamp-2 h-12 text-base">
+      <CardContent className="p-3 sm:p-5 space-y-2 sm:space-y-3 bg-gradient-to-b from-white to-secondary/20 overflow-hidden">
+        <h3 className="font-poppins font-bold text-foreground mb-1 sm:mb-2 line-clamp-2 text-xs sm:text-base break-words">
           {title}
         </h3>
         
@@ -143,13 +143,13 @@ export default function ProductCard({
           )}
         </div>
         
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-rubik font-semibold text-vendeur-secondary price-text">
+        <div className="flex items-center justify-between mb-2 sm:mb-4 min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 overflow-hidden">
+            <span className="text-sm sm:text-lg font-rubik font-semibold text-vendeur-secondary price-text truncate">
               {convert(price, currency).formatted}
             </span>
             {originalPrice && (
-              <span className="text-sm text-muted-foreground line-through font-inter">
+              <span className="text-[10px] sm:text-sm text-muted-foreground line-through font-inter truncate">
                 {convert(originalPrice, currency).formatted}
               </span>
             )}
