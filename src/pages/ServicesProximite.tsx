@@ -134,7 +134,7 @@ export default function ServicesProximite() {
               return s;
             });
 
-            // Mettre à jour en arrière-plan dans la DB
+            // Mettre à jour en arrière-plan dans la DB pour que le GPS soit persisté
             for (const s of servicesWithoutGps) {
               const vendorGps = vendorGpsMap.get((s as any).user_id);
               if (vendorGps) {
@@ -149,7 +149,7 @@ export default function ServicesProximite() {
         }
       }
 
-      // Calculer les distances avec la position passée en paramètre (pas de closure stale)
+      // Calculer les distances - exclure les services sans GPS
       list = list
         .map((s) => {
           const hasValidCoords = 
@@ -163,7 +163,9 @@ export default function ServicesProximite() {
           return { ...s, distance };
         })
         .filter((s) => {
-          if (s.distance === null) return true;
+          // Exclure les services sans coordonnées GPS
+          if (s.distance === null) return false;
+          // Garder uniquement ceux dans le rayon défini
           return s.distance <= RADIUS_KM;
         });
 
@@ -333,15 +335,10 @@ export default function ServicesProximite() {
                 )}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                {/* Badge de distance - affiche "Pas de GPS" si pas de coordonnées */}
-                <div className={cn(
-                  "absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1",
-                  service.distance !== null 
-                    ? "bg-primary text-primary-foreground" 
-                    : "bg-muted text-muted-foreground"
-                )}>
+                {/* Badge de distance */}
+                <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-semibold shadow-md flex items-center gap-1 bg-primary text-primary-foreground">
                   <MapPin className="w-3 h-3" />
-                  {service.distance !== null ? formatDistance(service.distance) : "Pas de GPS"}
+                  {formatDistance(service.distance!)}
                 </div>
 
                 <div className="w-14 h-14 rounded-xl bg-muted/40 flex items-center justify-center overflow-hidden mb-3 group-hover:scale-105 transition-transform">
