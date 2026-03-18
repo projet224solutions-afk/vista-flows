@@ -73,9 +73,9 @@ export default function OtherProductsPage() {
       {/* Grid de produits */}
       <div className="container mx-auto px-4 py-6">
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-4 md:overflow-x-visible md:snap-none md:pb-0">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="space-y-3">
+              <div key={i} className="min-w-[160px] snap-start md:min-w-0 space-y-3">
                 <Skeleton className="w-full aspect-square rounded-lg" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
@@ -100,19 +100,20 @@ export default function OtherProductsPage() {
             <p className="text-sm text-muted-foreground mb-4">
               {allProducts.length} produit{allProducts.length > 1 ? 's' : ''} recommandé{allProducts.length > 1 ? 's' : ''}
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-4 md:overflow-x-visible md:snap-none md:pb-0">
               {allProducts.map((product) => (
-                <TranslatedProductCard
-                  key={product.product_id}
-                  id={product.product_id}
-                  image={product.images?.[0] || ''}
-                  title={product.name}
-                  price={product.price}
-                  vendor=""
-                  rating={product.rating || 0}
-                  reviewCount={0}
-                  onBuy={() => navigate(`/product/${product.product_id}`)}
-                />
+                <div key={product.product_id} className="min-w-[160px] snap-start md:min-w-0">
+                  <TranslatedProductCard
+                    id={product.product_id}
+                    image={product.images?.[0] || ''}
+                    title={product.name}
+                    price={product.price}
+                    vendor=""
+                    rating={product.rating || 0}
+                    reviewCount={0}
+                    onBuy={() => navigate(`/product/${product.product_id}`)}
+                  />
+                </div>
               ))}
             </div>
           </>
