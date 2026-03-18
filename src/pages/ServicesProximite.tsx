@@ -134,7 +134,7 @@ export default function ServicesProximite() {
               return s;
             });
 
-            // Mettre à jour en arrière-plan dans la DB
+            // Mettre à jour en arrière-plan dans la DB pour que le GPS soit persisté
             for (const s of servicesWithoutGps) {
               const vendorGps = vendorGpsMap.get((s as any).user_id);
               if (vendorGps) {
