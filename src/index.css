@@ -659,47 +659,92 @@ All colors MUST be HSL.
   /* Tablette landscape (769px - 1024px): 3 colonnes */
   @media (min-width: 769px) and (max-width: 1024px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(3, 1fr);
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 1rem;
       padding: 1rem;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
   /* Desktop petit (1025px - 1280px): 3-4 colonnes */
   @media (min-width: 1025px) and (max-width: 1280px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 1rem;
       padding: 1rem;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
   /* Desktop standard (1281px - 1536px): 4-5 colonnes */
   @media (min-width: 1281px) and (max-width: 1536px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 1.25rem;
       padding: 1.25rem;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
   /* Grand écran (1537px - 1920px): 5-6 colonnes */
   @media (min-width: 1537px) and (max-width: 1920px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 1.25rem;
       padding: 1.5rem;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
   /* Ultra wide (>1920px): Maximum 6 colonnes */
   @media (min-width: 1921px) {
     .marketplace-grid {
+      display: grid;
       grid-template-columns: repeat(6, 1fr);
+      overflow-x: visible;
+      scroll-snap-type: none;
       gap: 1.5rem;
       padding: 1.5rem;
       max-width: 2000px;
       margin: 0 auto;
+    }
+    .marketplace-grid > * {
+      min-width: 0;
+      max-width: none;
+      flex-shrink: unset;
+      scroll-snap-align: unset;
     }
   }
 
