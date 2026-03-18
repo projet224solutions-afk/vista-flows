@@ -652,6 +652,16 @@ export default function Marketplace() {
           seeAllLink="/marketplace/for-you"
           maxItems={6}
         />
+
+        <AIRecommendationSection
+          title="À découvrir"
+          subtitle="Des produits que vous n'avez pas encore explorés"
+          products={discoveryProducts}
+          isLoading={loadingDiscovery}
+          icon="gift"
+          showReason={true}
+          maxItems={8}
+        />
       </section>
 
       {/* Results */}
