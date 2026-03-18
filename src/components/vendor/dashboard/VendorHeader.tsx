@@ -86,6 +86,9 @@ const UserStatus = memo(function UserStatus({ displayName }: { displayName: stri
       <Suspense fallback={null}>
         <VendorIdDisplay showName={false} />
       </Suspense>
+      <Suspense fallback={null}>
+        <NetworkStatusIndicator />
+      </Suspense>
     </div>
   );
 });
@@ -112,20 +115,10 @@ const HeaderActions = memo(function HeaderActions({
         />
       </Suspense>
 
-      {/* Subscription Button + Network Status côte à côte */}
+      {/* Subscription Button */}
       <div className="hidden sm:flex items-center gap-1">
         <Suspense fallback={null}>
           <VendorSubscriptionButton />
-        </Suspense>
-        <Suspense fallback={null}>
-          <NetworkStatusIndicator />
-        </Suspense>
-      </div>
-
-      {/* Network Status - Mobile only (quand subscription masqué) */}
-      <div className="sm:hidden">
-        <Suspense fallback={null}>
-          <NetworkStatusIndicator />
         </Suspense>
       </div>
 
