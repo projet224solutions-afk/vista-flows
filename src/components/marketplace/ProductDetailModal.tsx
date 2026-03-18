@@ -478,10 +478,10 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh]">
-        <ScrollArea className="h-[85vh] pr-4">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
+        <ScrollArea className="h-[85vh] px-4 md:px-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{product.name}</DialogTitle>
+          <DialogTitle className="text-xl md:text-2xl font-bold break-words pr-6">{product.name}</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">
@@ -622,7 +622,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
             <div>
               <h3 className="font-semibold mb-2">Description</h3>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words overflow-hidden">
                 {product.description || 'Aucune description disponible'}
               </p>
             </div>
@@ -743,16 +743,18 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             </div>
 
             {/* Produits similaires & co-achats */}
-            <RecommendationsWidget
-              currentProductId={product.id}
-              showPersonalized={false}
-              showSimilar={true}
-              showAlsoBought={true}
-              onProductClick={(id) => {
-                onClose();
-                setTimeout(() => navigate(`/product/${id}`), 100);
-              }}
-            />
+            <div className="overflow-hidden -mx-4 px-4">
+              <RecommendationsWidget
+                currentProductId={product.id}
+                showPersonalized={false}
+                showSimilar={true}
+                showAlsoBought={true}
+                onProductClick={(id) => {
+                  onClose();
+                  setTimeout(() => navigate(`/product/${id}`), 100);
+                }}
+              />
+            </div>
 
             {/* Garanties */}
             <div className="space-y-2 pt-4 pb-6">
