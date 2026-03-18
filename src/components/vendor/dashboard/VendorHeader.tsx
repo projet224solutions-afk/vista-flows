@@ -86,6 +86,9 @@ const UserStatus = memo(function UserStatus({ displayName }: { displayName: stri
       <Suspense fallback={null}>
         <VendorIdDisplay showName={false} />
       </Suspense>
+      <Suspense fallback={null}>
+        <NetworkStatusIndicator />
+      </Suspense>
     </div>
   );
 });
