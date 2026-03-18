@@ -67,7 +67,7 @@ export default function NetworkStatusIndicator() {
                     const { data: existingCustomer } = await supabase
                         .from('customers')
                         .select('id')
-                        .eq('vendor_id', vendorId)
+                        .eq('user_id', vendorId)
                         .eq('name', customerName)
                         .maybeSingle();
 
@@ -75,7 +75,7 @@ export default function NetworkStatusIndicator() {
                     if (!customerId) {
                         const { data: newCustomer } = await supabase
                             .from('customers')
-                            .insert({ vendor_id: vendorId, name: customerName, phone: saleData.customer_phone || null })
+                            .insert({ user_id: vendorId, name: customerName, phone: saleData.customer_phone || null })
                             .select('id')
                             .single();
                         customerId = newCustomer?.id;
