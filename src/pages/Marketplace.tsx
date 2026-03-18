@@ -329,47 +329,28 @@ export default function Marketplace() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
+    <div className="min-h-screen bg-background pb-20">
+      {/* Header compact mobile */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
+        <div className="px-3 py-2 sm:px-4 sm:py-3">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex-1 min-w-0 overflow-hidden">
               {vendorName ? (
                 <>
-                  <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
+                  <h1 className="text-base sm:text-xl font-bold text-foreground truncate">
                     {vendorName}
                   </h1>
-                  <p className="text-xs text-muted-foreground">
-                    {marketplaceTotal} article{marketplaceTotal > 1 ? 's' : ''} disponible{marketplaceTotal > 1 ? 's' : ''}
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
+                    {marketplaceTotal} article{marketplaceTotal > 1 ? 's' : ''}
                   </p>
                 </>
               ) : (
-                <div className="overflow-hidden">
-                  <div className="flex animate-vision-ticker" style={{ width: 'max-content' }}>
-                    {/* Bloc 1 */}
-                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
-                      224SOLUTIONS donne à l'Afrique la possibilité de vendre en ligne et physiquement, que ce soit des produits physiques ou digitaux, via l'affiliation, tout en permettant à chacun de gérer son commerce physique et d'offrir ou accéder aux services les plus proches de lui.
-                    </span>
-                    <span className="text-primary/40 whitespace-nowrap px-4">•••</span>
-                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
-                      La plateforme connecte vendeurs et acheteurs à travers le continent, facilite le commerce digital, sécurise les paiements et crée de nouvelles opportunités économiques sans frontières.
-                    </span>
-                    <span className="text-primary/40 whitespace-nowrap px-4">•••</span>
-                    {/* Bloc 2 (copie exacte pour boucle infinie) */}
-                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
-                      224SOLUTIONS donne à l'Afrique la possibilité de vendre en ligne et physiquement, que ce soit des produits physiques ou digitaux, via l'affiliation, tout en permettant à chacun de gérer son commerce physique et d'offrir ou accéder aux services les plus proches de lui.
-                    </span>
-                    <span className="text-primary/40 whitespace-nowrap px-4">•••</span>
-                    <span className="text-sm sm:text-base font-medium text-primary whitespace-nowrap px-8 font-inter">
-                      La plateforme connecte vendeurs et acheteurs à travers le continent, facilite le commerce digital, sécurise les paiements et crée de nouvelles opportunités économiques sans frontières.
-                    </span>
-                    <span className="text-primary/40 whitespace-nowrap px-4">•••</span>
-                  </div>
-                </div>
+                <h1 className="text-sm sm:text-base font-semibold text-primary truncate">
+                  224Solutions Marketplace
+                </h1>
               )}
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <CurrencyIndicator variant="default" />
               {vendorId && (
                 <>
@@ -398,27 +379,22 @@ export default function Marketplace() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="relative h-9 w-9"
+                  className="relative h-8 w-8"
                   onClick={() => navigate('/cart')}
                 >
-                  <ShoppingCartIcon className="w-5 h-5" />
+                  <ShoppingCartIcon className="w-4 h-4" />
                   {getCartCount() > 0 && (
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                    <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[9px]">
                       {getCartCount()}
                     </Badge>
                   )}
                 </Button>
               )}
-              {isMobile && (
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <Menu className="w-5 h-5" />
-                </Button>
-              )}
             </div>
           </div>
           
-          {/* Barre de recherche avec bouton caméra intégré */}
-          <div className="mt-3">
+          {/* Search bar */}
+          <div className="mt-2">
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
@@ -427,7 +403,6 @@ export default function Marketplace() {
               onFilter={() => setShowFilters(!showFilters)}
               showCamera
               onCameraCapture={(file) => {
-                // Naviguer vers la recherche visuelle avec l'image capturée
                 navigate('/marketplace/visual-search', { state: { capturedImage: file } });
               }}
             />
@@ -435,18 +410,19 @@ export default function Marketplace() {
         </div>
       </header>
 
-      {/* Categories Responsive */}
-      <section className="px-2 sm:px-4 py-2 border-b border-border overflow-hidden">
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+      {/* Categories - compact on mobile */}
+      <section className="px-2 py-1.5 border-b border-border overflow-hidden">
+        <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5 -mx-0.5 px-0.5">
           {categories.map((category) => (
             <Badge
               key={category.id}
               variant={selectedCategory === category.id ? "default" : "secondary"}
-              className={`cursor-pointer whitespace-nowrap shrink-0 px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs ${
+              className={cn(
+                'cursor-pointer whitespace-nowrap shrink-0 px-2 py-1 text-[10px] sm:text-xs',
                 selectedCategory === category.id
                   ? "bg-primary text-primary-foreground" 
                   : "hover:bg-accent"
-              }`}
+              )}
               onClick={() => setSelectedCategory(category.id)}
             >
               {category.name}
@@ -455,66 +431,35 @@ export default function Marketplace() {
         </div>
       </section>
 
-      {/* Filtres de type - Boutons icônes compacts pour mobile */}
-      <section className="px-3 py-2 border-b border-border bg-gradient-to-r from-muted/50 via-background to-muted/50">
-        <div className="flex justify-center gap-2 sm:gap-4">
-          {/* Services Pro - EN PREMIER */}
+      {/* Type filter buttons - inline compact */}
+      <section className="px-2 py-1.5 border-b border-border">
+        <div className="flex justify-center gap-2">
           <button
             onClick={() => {
               setSelectedItemType('professional_service');
               setSelectedDigitalCategory('all');
             }}
-            className={`group relative flex-1 max-w-[140px] h-14 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1.5 transition-all duration-300 ${
+            className={cn(
+              'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
               selectedItemType === 'professional_service' 
-                ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02] ring-2 ring-primary/30' 
-                : 'bg-card border border-border hover:border-primary hover:shadow-md'
-            }`}
-          >
-            <div className={`p-1.5 sm:p-2 rounded-lg transition-all ${
-              selectedItemType === 'professional_service' 
-                ? 'bg-white/20' 
-                : 'bg-primary/10'
-            }`}>
-              <Briefcase className={`w-4 h-4 sm:w-6 sm:h-6 transition-transform group-hover:scale-110 ${
-                selectedItemType === 'professional_service' ? 'text-white' : 'text-primary'
-              }`} />
-            </div>
-            <span className={`text-[9px] sm:text-xs font-medium ${
-              selectedItemType === 'professional_service' ? 'text-white' : 'text-muted-foreground'
-            }`}>
-              Services Pro
-            </span>
-            {selectedItemType === 'professional_service' && (
-              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary/50 animate-pulse" />
+                ? 'bg-primary text-primary-foreground shadow-sm' 
+                : 'bg-card border border-border hover:border-primary/50'
             )}
+          >
+            <Briefcase className="w-3.5 h-3.5" />
+            Services Pro
           </button>
-
-          {/* Produits Numériques */}
           <button
             onClick={() => setSelectedItemType('digital_product')}
-            className={`group relative flex-1 max-w-[140px] h-14 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1.5 transition-all duration-300 ${
+            className={cn(
+              'flex-1 max-w-[140px] h-10 rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-medium',
               selectedItemType === 'digital_product' 
-                ? 'bg-accent text-white shadow-lg shadow-accent/30 scale-[1.02] ring-2 ring-accent/50' 
-                : 'bg-card border border-border hover:border-accent hover:shadow-md'
-            }`}
-          >
-            <div className={`p-1.5 sm:p-2 rounded-lg transition-all ${
-              selectedItemType === 'digital_product' 
-                ? 'bg-white/20' 
-                : 'bg-accent/10'
-            }`}>
-              <Laptop className={`w-4 h-4 sm:w-6 sm:h-6 transition-transform group-hover:scale-110 ${
-                selectedItemType === 'digital_product' ? 'text-white' : 'text-accent'
-              }`} />
-            </div>
-            <span className={`text-[9px] sm:text-xs font-medium ${
-              selectedItemType === 'digital_product' ? 'text-white' : 'text-muted-foreground'
-            }`}>
-              Numériques
-            </span>
-            {selectedItemType === 'digital_product' && (
-              <span className="absolute -bottom-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-accent/50 animate-pulse" />
+                ? 'bg-accent text-accent-foreground shadow-sm' 
+                : 'bg-card border border-border hover:border-accent/50'
             )}
+          >
+            <Laptop className="w-3.5 h-3.5" />
+            Numériques
           </button>
         </div>
       </section>
@@ -560,8 +505,8 @@ export default function Marketplace() {
         </section>
       )}
 
-      {/* Filters & View Controls Responsive */}
-      <section className="px-2 sm:px-4 py-2 border-b border-border">
+      {/* Filters & View Controls */}
+      <section className="px-2 py-1.5 border-b border-border">
         {/* Première ligne de filtres - scrollable horizontalement */}
         <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
           {/* Tri */}
@@ -671,7 +616,7 @@ export default function Marketplace() {
       </section>
 
       {/* Results */}
-      <section className="px-4 py-3">
+      <section className="px-2 sm:px-4 py-2">
         {/* Si "Services Pro" est sélectionné, afficher la grille des types de services */}
         {selectedItemType === 'professional_service' ? (
           <ServiceTypesGrid 
