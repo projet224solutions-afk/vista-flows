@@ -267,12 +267,10 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
     getPdgFeeRate(supabase, FEE_KEYS.MAX_INTERNATIONAL_TRANSFER),
   ]);
 
-  const [minLimit, maxLimit, minIntlLimit, maxIntlLimit] = await Promise.all([
-    convertLimitToCurrency(minLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(maxLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(minIntlLimitRaw, senderCurrency, getFxRateFromAPI),
-    convertLimitToCurrency(maxIntlLimitRaw, senderCurrency, getFxRateFromAPI),
-  ]);
+  const [minLimit, maxLimit, minIntlLimit, maxIntlLimit] = await convertLimitsToCurrency(
+    [minLimitRaw, maxLimitRaw, minIntlLimitRaw, maxIntlLimitRaw],
+    senderCurrency,
+  );
 
   console.log(`[LIMITS-PREVIEW] ${LIMITS_BASE_CURRENCY} → ${senderCurrency} | min: ${minLimitRaw}→${minLimit} | max: ${maxLimitRaw}→${maxLimit} | intlMin: ${minIntlLimitRaw}→${minIntlLimit} | intlMax: ${maxIntlLimitRaw}→${maxIntlLimit}`);
 
