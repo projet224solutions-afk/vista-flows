@@ -290,7 +290,7 @@ export function POSSystem() {
       try {
         const { default: offlineDB } = await import('@/lib/offlineDB');
         const pendingEvents = await offlineDB.getPendingEvents();
-        const salesEvents = pendingEvents.filter(e => e.type === 'sale' && e.vendor_id === vendorId);
+        const salesEvents = pendingEvents.filter(e => (e.type === 'sale' || e.type === 'credit_sale') && e.vendor_id === vendorId);
         
         if (salesEvents.length === 0) return;
         
@@ -302,11 +302,12 @@ export function POSSystem() {
             const saleData = event.data;
             
             // Obtenir ou créer un customer_id
+            const customerName = saleData.customer_name || 'Client comptoir';
             const { data: existingCustomer } = await supabase
               .from('customers')
               .select('id')
               .eq('vendor_id', vendorId)
-              .eq('name', saleData.customer_name || 'Client comptoir')
+              .eq('name', customerName)
               .maybeSingle();
             
             let customerId = existingCustomer?.id;
@@ -316,7 +317,7 @@ export function POSSystem() {
                 .from('customers')
                 .insert({
                   vendor_id: vendorId,
-                  name: saleData.customer_name || 'Client comptoir',
+                  name: customerName,
                   phone: saleData.customer_phone || null
                 })
                 .select('id')
@@ -326,8 +327,9 @@ export function POSSystem() {
             
             if (!customerId) continue;
 
-            // Utiliser le order_number de la vente offline ou en générer un nouveau
             const syncOrderNumber = saleData.order_number || `POS-SYNC-${Date.now().toString(36).toUpperCase()}`;
+
+            const isCreditSale = event.type === 'credit_sale';
 
             // Créer la commande
             const { data: order, error: orderError } = await supabase
@@ -340,12 +342,16 @@ export function POSSystem() {
                 subtotal: saleData.subtotal,
                 tax_amount: saleData.tax_amount,
                 discount_amount: saleData.discount_amount,
-                payment_status: 'paid',
+                payment_status: isCreditSale ? 'pending' : 'paid',
                 status: 'confirmed',
                 payment_method: 'cash',
-                shipping_address: { address: 'Point de vente' },
-                notes: `Vente offline synchronisée - ${syncOrderNumber}`,
-                source: 'pos_offline_synced',
+                shipping_address: isCreditSale 
+                  ? { address: 'Vente à crédit', is_credit_sale: true }
+                  : { address: 'Point de vente' },
+                notes: isCreditSale
+                  ? `🔖 VENTE À CRÉDIT (sync offline) - Client: ${customerName}${saleData.customer_phone ? ` - Tél: ${saleData.customer_phone}` : ''}`
+                  : `Vente offline synchronisée - ${syncOrderNumber}`,
+                source: isCreditSale ? 'pos_offline_credit_synced' : 'pos_offline_synced',
                 created_at: saleData.sale_date
               })
               .select('id')
@@ -363,11 +369,35 @@ export function POSSystem() {
             }));
             
             await supabase.from('order_items').insert(orderItems);
-            await supabase.from('orders').update({ status: 'processing' }).eq('id', order.id);
+
+            // Si vente à crédit, créer l'entrée dans vendor_credit_sales
+            if (isCreditSale) {
+              await supabase.from('vendor_credit_sales').insert([{
+                vendor_id: vendorId,
+                customer_name: customerName,
+                customer_phone: saleData.customer_phone || null,
+                order_number: syncOrderNumber,
+                total: saleData.total_amount,
+                subtotal: saleData.subtotal,
+                remaining_amount: saleData.total_amount,
+                due_date: saleData.due_date,
+                notes: saleData.credit_notes || `Produits: ${saleData.items.map((i: any) => `${i.product_name} x${i.quantity}`).join(', ')}`,
+                items: saleData.items.map((item: any) => ({
+                  id: item.product_id,
+                  name: item.product_name,
+                  price: item.unit_price,
+                  quantity: item.quantity,
+                  images: item.images || []
+                })),
+                status: 'pending'
+              }]);
+            } else {
+              await supabase.from('orders').update({ status: 'processing' }).eq('id', order.id);
+            }
             
             // Marquer l'événement comme synchronisé
             await offlineDB.markEventAsSynced(event.client_event_id);
-            console.log(`✅ Vente offline ${saleData.order_number} synchronisée`);
+            console.log(`✅ ${isCreditSale ? 'Vente à crédit' : 'Vente'} offline ${saleData.order_number} synchronisée`);
             
           } catch (syncError) {
             console.error('Erreur sync vente offline:', syncError);
@@ -996,6 +1026,101 @@ export function POSSystem() {
 
     setIsProcessingCredit(true);
 
+    // ✨ MODE OFFLINE: Stocker la vente à crédit localement
+    const isOffline = !navigator.onLine;
+
+    if (isOffline) {
+      try {
+        const offlineOrderId = `offline_credit_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        const offlineOrderNumber = `CR-OFF-${Date.now().toString(36).toUpperCase()}`;
+
+        const creditSaleData = {
+          type: 'credit_sale',
+          vendor_id: vendorId,
+          created_at: new Date().toISOString(),
+          data: {
+            offline_order_id: offlineOrderId,
+            order_number: offlineOrderNumber,
+            total_amount: total,
+            subtotal: subtotal,
+            tax_amount: tax,
+            discount_amount: discountValue,
+            payment_method: 'cash',
+            payment_status: 'pending',
+            status: 'confirmed',
+            source: 'pos_offline_credit',
+            customer_name: creditCustomerName.trim(),
+            customer_phone: creditCustomerPhone.trim() || '',
+            due_date: creditDueDate,
+            credit_notes: creditNotes || '',
+            items: cart.map(item => ({
+              product_id: item.id,
+              product_name: item.name,
+              quantity: item.quantity,
+              unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
+              total_price: item.total,
+              images: item.images || []
+            })),
+            sale_date: new Date().toISOString()
+          }
+        };
+
+        const { default: offlineDB } = await import('@/lib/offlineDB');
+        await offlineDB.initDB();
+        const eventId = await offlineDB.storeEvent(creditSaleData, true);
+
+        console.log('✅ [POS Offline] Vente à crédit stockée:', eventId);
+
+        // Mettre à jour le stock localement
+        const updatedProducts = products.map(product => {
+          const cartItem = cart.find(item => item.id === product.id);
+          if (cartItem) {
+            return { ...product, stock: Math.max(0, product.stock - cartItem.quantity) };
+          }
+          return product;
+        });
+        setProducts(updatedProducts);
+
+        // Mettre à jour le cache
+        try {
+          await offlineDB.cacheData(
+            `${PRODUCTS_CACHE_KEY}_${vendorId}`,
+            updatedProducts,
+            PRODUCTS_CACHE_TTL,
+            false
+          );
+        } catch (cachErr) {
+          console.warn('Erreur mise à jour cache:', cachErr);
+        }
+
+        // Réinitialiser
+        setLastOrderNumber(offlineOrderNumber);
+        setShowCreditSaleModal(false);
+        setCreditCustomerName('');
+        setCreditCustomerPhone('');
+        setCreditDueDate('');
+        setCreditNotes('');
+        setCart([]);
+
+        toast.success('✅ Vente à crédit enregistrée (hors-ligne)', {
+          description: `Client: ${creditSaleData.data.customer_name} - ${total.toLocaleString()} GNF - Sera synchronisée à la reconnexion.`,
+          duration: 5000
+        });
+
+        setIsProcessingCredit(false);
+        return;
+      } catch (offlineError: any) {
+        console.error('Erreur stockage offline crédit:', offlineError);
+        toast.error('Erreur enregistrement hors-ligne', {
+          description: offlineError.message || 'Veuillez réessayer.',
+          duration: 6000
+        });
+        setIsProcessingCredit(false);
+        return;
+      }
+    }
+
+    // MODE ONLINE: logique existante
     try {
       const orderNum = `CR-${Date.now().toString(36).toUpperCase()}`;
 
@@ -1018,9 +1143,9 @@ export function POSSystem() {
           subtotal: subtotal,
           tax_amount: tax,
           discount_amount: discountValue,
-          payment_status: 'pending', // Non payé
-          status: 'confirmed', // Confirmé mais non payé
-          payment_method: 'cash', // Sera payé en espèces (crédit = paiement différé)
+          payment_status: 'pending',
+          status: 'confirmed',
+          payment_method: 'cash',
           shipping_address: { address: 'Vente à crédit', is_credit_sale: true },
           notes: `🔖 VENTE À CRÉDIT - Client: ${creditCustomerName.trim()}${creditCustomerPhone ? ` - Tél: ${creditCustomerPhone}` : ''}`,
           source: 'pos'
@@ -1030,7 +1155,7 @@ export function POSSystem() {
 
       if (orderError) throw orderError;
 
-      // 3. Créer les items de commande (le trigger décrémentera le stock automatiquement)
+      // 3. Créer les items de commande
       const orderItems = cart.map(item => ({
         order_id: order.id,
         product_id: item.id,
@@ -2528,7 +2653,7 @@ export function POSSystem() {
                   </Button>
                   <Button 
                     onClick={validateOrder}
-                    className="h-11 sm:h-12 font-bold text-xs sm:text-sm shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    className="h-11 sm:h-12 font-bold text-xs sm:text-sm shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
                     disabled={cart.length === 0}
                   >
                     <CheckSquare className="h-4 w-4 mr-1" />
