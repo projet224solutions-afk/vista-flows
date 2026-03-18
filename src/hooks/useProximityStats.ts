@@ -84,10 +84,10 @@ export function useProximityStats() {
     try {
       setLoading(true);
 
-      const [vendorsRes, proServicesRes, driversRes, taxiDriversRes, productsRes, categoriesRes] = await Promise.all([
+      const [vendorsRes, proServicesRes, driversRes, taxiDriversRes, productsRes, categoriesRes, vendorGpsRes] = await Promise.all([
         supabase
           .from('vendors')
-          .select('id, business_type, service_type, latitude, longitude')
+          .select('id, business_type, service_type, latitude, longitude, user_id')
           .eq('is_active', true),
 
         supabase
@@ -97,6 +97,7 @@ export function useProximityStats() {
             latitude,
             longitude,
             service_type_id,
+            user_id,
             service_types (code, name)
           `)
           .eq('status', 'active'),
@@ -125,6 +126,13 @@ export function useProximityStats() {
           .from('categories')
           .select('id, name')
           .eq('is_active', true),
+
+        // GPS cross-reference: vendors avec GPS pour enrichir les services sans GPS
+        supabase
+          .from('vendors')
+          .select('user_id, latitude, longitude')
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null),
       ]);
 
       if (vendorsRes.error) throw vendorsRes.error;
@@ -139,6 +147,25 @@ export function useProximityStats() {
       const drivers = driversRes.data ?? [];
       const taxiDrivers = taxiDriversRes.data ?? [];
       const products = productsRes.data ?? [];
+
+      // Construire une map user_id -> GPS depuis les vendors
+      const vendorGpsMap = new Map<string, { lat: number; lng: number }>();
+      (vendorGpsRes.data ?? []).forEach((v: any) => {
+        if (v.user_id && v.latitude != null && v.longitude != null) {
+          vendorGpsMap.set(v.user_id, { lat: v.latitude, lng: v.longitude });
+        }
+      });
+
+      // Enrichir les services sans GPS avec les données vendor
+      const enrichedServices = professionalServices.map((s: any) => {
+        if (s.latitude == null || s.longitude == null) {
+          const vendorGps = vendorGpsMap.get(s.user_id);
+          if (vendorGps) {
+            return { ...s, latitude: vendorGps.lat, longitude: vendorGps.lng };
+          }
+        }
+        return s;
+      });
 
       const newStats: ProximityStats = {
         boutiques: 0,
@@ -166,7 +193,7 @@ export function useProximityStats() {
       // Debug counters
       const dbg: ProximityDebugInfo = {
         vendors: { total: vendors.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
-        services: { total: professionalServices.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
+        services: { total: enrichedServices.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
         taxiMoto: { total: taxiDrivers.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
         drivers: { total: drivers.length, noGps: 0, outOfRadius: 0, inRadius: 0 },
         positionUsed: { latitude: position.latitude, longitude: position.longitude },
@@ -251,7 +278,7 @@ export function useProximityStats() {
       // Si le service n'a pas de GPS => on le compte quand même (noGps mais inclus)
       // Si le service a un GPS mais hors rayon => exclu
       const serviceTypeCounts: Record<string, number> = {};
-      professionalServices.forEach((service: any) => {
+      enrichedServices.forEach((service: any) => {
         const lat = service?.latitude;
         const lng = service?.longitude;
         const hasGps = lat !== null && lat !== undefined && lng !== null && lng !== undefined;
