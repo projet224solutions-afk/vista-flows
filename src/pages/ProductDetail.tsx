@@ -30,6 +30,7 @@ interface Product {
   vendors?: {
     business_name: string;
     id: string;
+    user_id: string;
     shop_slug?: string;
     country?: string;
   };
@@ -136,7 +137,7 @@ export default function ProductDetail() {
         .select(`
           *,
           promotional_videos,
-          vendors:vendor_id(business_name, id, shop_slug, country),
+          vendors:vendor_id(business_name, id, user_id, shop_slug, country),
           categories:category_id(name)
         `)
         .eq('id', id)
@@ -177,7 +178,8 @@ export default function ProductDetail() {
   };
 
   const handleContact = async () => {
-    if (!product?.vendor_id) {
+    const vendorUserId = product?.vendors?.user_id;
+    if (!vendorUserId) {
       toast.error('Informations du vendeur non disponibles');
       return;
     }
@@ -189,19 +191,24 @@ export default function ProductDetail() {
       return;
     }
 
+    if (user.id === vendorUserId) {
+      toast.error('Vous ne pouvez pas vous envoyer un message');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('messages')
         .insert({
           sender_id: user.id,
-          recipient_id: product.vendor_id,
+          recipient_id: vendorUserId,
           content: `Bonjour, je suis intéressé par votre produit "${product.name}".`,
           type: 'text'
         });
 
       if (error) throw error;
       toast.success('Message envoyé au vendeur');
-      navigate(`/messages?recipientId=${product.vendor_id}`);
+      navigate(`/messages?recipientId=${vendorUserId}`);
     } catch (error) {
       console.error('Erreur envoi message:', error);
       toast.error('Erreur lors de l\'envoi du message');
