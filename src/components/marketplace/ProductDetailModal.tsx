@@ -52,7 +52,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
-  const navigate = useNavigate();
   const { addToCart } = useCart();
   const { t } = useTranslation();
   const hasTrackedView = useRef(false);
