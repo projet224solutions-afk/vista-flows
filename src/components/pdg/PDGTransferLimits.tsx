@@ -154,13 +154,18 @@ export default function PDGTransferLimits() {
     const minVal = Number(editValues['min_transfer_amount']);
     const maxVal = Number(editValues['max_transfer_amount']);
     const dailyVal = Number(editValues['max_daily_transfer_amount']);
-    const intlVal = Number(editValues['max_international_transfer_amount']);
+    const minIntlVal = Number(editValues['min_international_transfer_amount']);
+    const maxIntlVal = Number(editValues['max_international_transfer_amount']);
 
     if (minVal >= maxVal) {
       toast.error('Le minimum doit être inférieur au maximum');
       return;
     }
-    if (intlVal > dailyVal) {
+    if (minIntlVal >= maxIntlVal) {
+      toast.error('Le minimum international doit être inférieur au maximum international');
+      return;
+    }
+    if (maxIntlVal > dailyVal) {
       toast.error('La limite internationale ne peut pas dépasser la limite quotidienne');
       return;
     }
