@@ -612,6 +612,12 @@ All colors MUST be HSL.
     box-sizing: border-box;
   }
 
+  /* Empêcher les enfants de la grille de déborder */
+  .marketplace-grid > * {
+    min-width: 0;
+    overflow: hidden;
+  }
+
   /* Tablette portrait (601px - 768px): 2-3 colonnes */
   @media (min-width: 601px) and (max-width: 768px) {
     .marketplace-grid {
