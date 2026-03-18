@@ -479,6 +479,21 @@ export default function Proximite() {
                   onClick={() => handleServiceClick(service.path)}
                   className="group relative rounded-2xl p-4 border transition-all duration-300 text-left overflow-hidden hover:shadow-lg"
                   style={{ borderColor: `${BLUE}15`, backgroundColor: 'white' }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget;
+                    el.style.backgroundColor = BLUE;
+                    el.style.borderColor = BLUE;
+                    el.querySelectorAll('h3, p, span, svg').forEach((c: any) => { c.style.color = 'white'; });
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget;
+                    el.style.backgroundColor = 'white';
+                    el.style.borderColor = `${BLUE}15`;
+                    el.querySelectorAll('h3').forEach((c: any) => { c.style.color = BLUE; });
+                    el.querySelectorAll('p').forEach((c: any) => { c.style.color = BLACK; });
+                    el.querySelectorAll('span').forEach((c: any) => { c.style.color = ORANGE; });
+                    el.querySelectorAll('svg').forEach((c: any) => { c.style.color = BLUE; });
+                  }}
                 >
                   {service.trending && (
                     <Badge className="absolute top-2 right-2 border-0 text-[10px] px-1.5" 
