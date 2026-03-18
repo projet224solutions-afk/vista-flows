@@ -32,9 +32,10 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 
-// Couleurs de la charte : Bleu #04439e et Orange #ff4000
+// Couleurs de la charte : Bleu #04439e, Orange #ff4000, Noir #000000
 const BLUE = "#04439e";
 const ORANGE = "#ff4000";
+const BLACK = "#000000";
 
 const getProximityPopularServices = (stats: any) => [
   {
@@ -257,7 +258,7 @@ export default function Proximite() {
               </div>
               <div>
                 <h1 className="text-xl font-bold" style={{ color: BLUE }}>{t('home.nearbyServices')}</h1>
-                <p className="text-xs text-muted-foreground">{t('proximity.mostRequested') || 'Les plus demandés près de vous'}</p>
+                <p className="text-xs" style={{ color: BLACK }}>{t('proximity.mostRequested') || 'Les plus demandés près de vous'}</p>
               </div>
             </div>
             <Button
@@ -293,7 +294,7 @@ export default function Proximite() {
               <span>Rayon: {radiusKm} km</span>
             </div>
             {loading && (
-              <span className="text-muted-foreground flex items-center gap-1">
+              <span className="flex items-center gap-1" style={{ color: BLACK }}>
                 <Loader2 className="w-3 h-3 animate-spin" />
                 {t('common.loading')}
               </span>
@@ -308,13 +309,13 @@ export default function Proximite() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <span className="text-muted-foreground">Position utilisée:</span>
+                  <span style={{ color: BLACK }}>Position utilisée:</span>
                   <div className="font-mono text-[10px]">
                     {debugInfo.positionUsed.latitude.toFixed(5)}, {debugInfo.positionUsed.longitude.toFixed(5)}
                   </div>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Source:</span>
+                  <span style={{ color: BLACK }}>Source:</span>
                   <div className="font-medium" style={{ color: debugInfo.usingRealGps ? '#15803d' : '#b45309' }}>
                     {debugInfo.usingRealGps ? "GPS réel" : "Position par défaut (Coyah)"}
                   </div>
@@ -329,7 +330,7 @@ export default function Proximite() {
                 ].map(item => (
                   <div key={item.label} className="bg-white p-2 rounded-lg">
                     <div className="font-medium" style={{ color: BLUE }}>{item.label}</div>
-                    <div className="text-muted-foreground text-[10px]">
+                    <div className="text-[10px]" style={{ color: BLACK }}>
                       Total: {item.data.total} | Sans GPS: {item.data.noGps} | Hors: {item.data.outOfRadius} | ✓ {item.data.inRadius}
                     </div>
                   </div>
@@ -339,7 +340,7 @@ export default function Proximite() {
           )}
           
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: BLACK }} />
             <Input
               placeholder={t('home.searchPlaceholder') || t('common.search') + '...'}
               value={searchQuery}
@@ -360,7 +361,7 @@ export default function Proximite() {
                 <TrendingUp className="w-5 h-5" style={{ color: ORANGE }} />
                 Services de Proximité Populaires
               </h2>
-              <p className="text-sm text-muted-foreground">Les plus demandés près de vous</p>
+              <p className="text-sm" style={{ color: BLACK }}>Les plus demandés près de vous</p>
             </div>
           </div>
 
@@ -389,11 +390,11 @@ export default function Proximite() {
                   <h3 className="font-semibold text-sm mb-1" style={{ color: BLUE }}>
                     {service.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
+                  <p className="text-xs mb-2" style={{ color: BLACK }}>{service.description}</p>
                   
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium" style={{ color: ORANGE }}>{service.count} disponibles</span>
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-all" style={{ color: BLUE }} />
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-all" style={{ color: BLUE }} />
                   </div>
                 </button>
               );
@@ -419,7 +420,7 @@ export default function Proximite() {
                   <h3 className="font-semibold text-sm mb-1" style={{ color: BLUE }}>
                     {service.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
+                  <p className="text-xs mb-2" style={{ color: BLACK }}>{service.description}</p>
                   
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium" style={{ color: ORANGE }}>{service.count} disponibles</span>
@@ -439,7 +440,7 @@ export default function Proximite() {
                 <Store className="w-5 h-5" style={{ color: BLUE }} />
                 Accès Rapide
               </h2>
-              <p className="text-sm text-muted-foreground">Boutiques & Livraison à proximité</p>
+              <p className="text-sm" style={{ color: BLACK }}>Boutiques & Livraison à proximité</p>
             </div>
           </div>
 
@@ -468,7 +469,7 @@ export default function Proximite() {
                   <h3 className="font-semibold text-sm mb-1" style={{ color: BLUE }}>
                     {service.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
+                  <p className="text-xs mb-2" style={{ color: BLACK }}>{service.description}</p>
                   
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium" style={{ color: ORANGE }}>{service.count} disponibles</span>
@@ -488,7 +489,7 @@ export default function Proximite() {
                 <ShoppingBag className="w-5 h-5" style={{ color: BLUE }} />
                 {t('home.productCategories') || 'Catégories de Produits'}
               </h2>
-              <p className="text-sm text-muted-foreground">{t('home.exploreByCategory') || 'Explorez par catégorie'}</p>
+              <p className="text-sm" style={{ color: BLACK }}>{t('home.exploreByCategory') || 'Explorez par catégorie'}</p>
             </div>
             <button 
               onClick={() => navigate('/marketplace')}
@@ -504,7 +505,7 @@ export default function Proximite() {
               <Loader2 className="w-6 h-6 animate-spin" style={{ color: BLUE }} />
             </div>
           ) : productCategories.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8" style={{ color: BLACK }}>
               <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p className="text-sm">Aucune catégorie avec des produits pour le moment</p>
               <p className="text-xs mt-1">Les catégories apparaîtront ici dès que des produits seront ajoutés</p>
@@ -529,7 +530,7 @@ export default function Proximite() {
                   
                   <div className="flex items-center gap-1">
                     <span className="text-xs font-medium" style={{ color: ORANGE }}>{category.product_count}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs" style={{ color: BLACK }}>
                       {category.product_count > 1 ? 'articles' : 'article'}
                     </span>
                   </div>
@@ -547,7 +548,7 @@ export default function Proximite() {
                 <Star className="w-5 h-5" style={{ color: ORANGE }} />
                 Services Professionnels
               </h2>
-              <p className="text-sm text-muted-foreground">Experts qualifiés à votre service</p>
+              <p className="text-sm" style={{ color: BLACK }}>Experts qualifiés à votre service</p>
             </div>
             <button 
               onClick={() => navigate('/services-proximite')}
@@ -576,7 +577,7 @@ export default function Proximite() {
                   <h3 className="font-semibold text-sm mb-1" style={{ color: BLUE }}>
                     {service.title}
                   </h3>
-                  <p className="text-xs text-muted-foreground mb-1">{service.description}</p>
+                  <p className="text-xs mb-1" style={{ color: BLACK }}>{service.description}</p>
                   {service.count > 0 && (
                     <span className="text-xs font-medium" style={{ color: ORANGE }}>{service.count} disponibles</span>
                   )}
