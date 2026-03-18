@@ -760,7 +760,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             </div>
 
             {/* Garanties */}
-            <div className="space-y-2 pt-4 pb-6">
+            <div className="space-y-2 pt-4 pb-footer md:pb-8">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="w-4 h-4" />
                 <span>{product.is_affiliate ? 'Achat sécurisé chez le partenaire' : 'Paiement sécurisé'}</span>
