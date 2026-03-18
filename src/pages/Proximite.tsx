@@ -32,9 +32,10 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 
-// Couleurs de la charte : Bleu #04439e et Orange #ff4000
+// Couleurs de la charte : Bleu #04439e, Orange #ff4000, Noir #000000
 const BLUE = "#04439e";
 const ORANGE = "#ff4000";
+const BLACK = "#000000";
 
 const getProximityPopularServices = (stats: any) => [
   {
