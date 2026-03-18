@@ -211,10 +211,10 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
                     <Users className="w-3 h-3 mr-1" />
                     {count} {count > 1 ? 'prestataires' : 'prestataire'}
                   </Badge>
-                  <ArrowRight className={cn(
-                    "w-4 h-4 transition-transform group-hover:translate-x-1",
-                    colors.text
-                  )} />
+                  <ArrowRight 
+                    className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                    style={{ color: BRAND_ORANGE }}
+                  />
                 </div>
               </CardContent>
             </Card>
