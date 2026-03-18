@@ -52,8 +52,17 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
     color: 'text-orange-500',
   },
   {
+    key: 'min_international_transfer_amount',
+    label: 'Minimum par Transfert International',
+    description: 'Montant minimum requis pour un transfert entre devises différentes',
+    icon: <Globe className="w-5 h-5" />,
+    defaultValue: 500,
+    category: 'daily',
+    color: 'text-cyan-500',
+  },
+  {
     key: 'max_international_transfer_amount',
-    label: 'Limite par Transfert International',
+    label: 'Maximum par Transfert International',
     description: 'Montant maximum pour un seul transfert entre devises différentes',
     icon: <Globe className="w-5 h-5" />,
     defaultValue: 50_000_000,
@@ -145,13 +154,18 @@ export default function PDGTransferLimits() {
     const minVal = Number(editValues['min_transfer_amount']);
     const maxVal = Number(editValues['max_transfer_amount']);
     const dailyVal = Number(editValues['max_daily_transfer_amount']);
-    const intlVal = Number(editValues['max_international_transfer_amount']);
+    const minIntlVal = Number(editValues['min_international_transfer_amount']);
+    const maxIntlVal = Number(editValues['max_international_transfer_amount']);
 
     if (minVal >= maxVal) {
       toast.error('Le minimum doit être inférieur au maximum');
       return;
     }
-    if (intlVal > dailyVal) {
+    if (minIntlVal >= maxIntlVal) {
+      toast.error('Le minimum international doit être inférieur au maximum international');
+      return;
+    }
+    if (maxIntlVal > dailyVal) {
       toast.error('La limite internationale ne peut pas dépasser la limite quotidienne');
       return;
     }
