@@ -166,8 +166,6 @@ export function MarketplaceProductCard({
           </div>
         )}
 
-        {/* Bouton Favori */}
-        <FavoriteButton productId={id} className="absolute top-2 right-2 z-10" />
       </div>
       
       {/* Content */}
