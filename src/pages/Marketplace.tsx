@@ -669,7 +669,7 @@ export default function Marketplace() {
                    'Aucun produit numérique trouvé'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Essayez de modifier vos filtres de recherche
+                  {t('marketplace.noProducts')}
                 </p>
               </div>
             ) : (
