@@ -128,11 +128,18 @@ export const useRoleRedirect = () => {
     if (user && profile && profile.role) {
       // ✅ FIX: Pour les vendor_agents, rediriger vers leur interface dédiée
       if (profile.role === 'vendor_agent') {
-        const isOnRedirectTriggerRoute = REDIRECT_TRIGGER_ROUTES.some(route => 
+        // Rediriger depuis /, /auth, /home, /profil, /client vers l'interface agent
+        const vendorAgentRedirectRoutes = [...REDIRECT_TRIGGER_ROUTES, '/home', '/profil', '/profile', '/client'];
+        const shouldRedirectVendorAgent = vendorAgentRedirectRoutes.some(route => 
           currentPath === route || currentPath === route + '/'
         );
         
-        if (isOnRedirectTriggerRoute) {
+        // Ne pas rediriger si déjà sur l'interface vendor-agent
+        if (currentPath.startsWith('/vendor-agent')) {
+          return;
+        }
+        
+        if (shouldRedirectVendorAgent) {
           const redirectVendorAgent = async () => {
             const { data: vendorAgent } = await supabase
               .from('vendor_agents')
@@ -144,8 +151,6 @@ export const useRoleRedirect = () => {
             if (vendorAgent?.access_token) {
               console.log('🚀 [useRoleRedirect] Redirection vendor_agent vers /vendor-agent/');
               navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
-            } else {
-              navigate('/home', { replace: true });
             }
           };
           redirectVendorAgent();
