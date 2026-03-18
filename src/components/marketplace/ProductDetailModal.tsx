@@ -770,6 +770,30 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           </div>
         </div>
 
+        {/* Sections de recommandation */}
+        {showSection === 'similar' && product && (
+          <div className="mt-4">
+            <RecommendationsWidget
+              currentProductId={product.id}
+              showPersonalized={false}
+              showSimilar={true}
+              showAlsoBought={false}
+              onProductClick={(id) => { onClose(); navigate(`/product/${id}`); }}
+            />
+          </div>
+        )}
+
+        {showSection === 'others' && product && (
+          <div className="mt-4">
+            <RecommendationsWidget
+              currentProductId={product.id}
+              showPersonalized={true}
+              showSimilar={false}
+              showAlsoBought={true}
+              onProductClick={(id) => { onClose(); navigate(`/product/${id}`); }}
+            />
+          </div>
+        )}
 
             {/* Garanties */}
             <div className="space-y-2 pt-4 pb-footer md:pb-8">
