@@ -70,7 +70,7 @@ export function AIRecommendationSection({
       {/* Header */}
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20">
+          <div className="p-1.5">
             <Icon className="w-4 h-4 text-primary" />
           </div>
           <div>
