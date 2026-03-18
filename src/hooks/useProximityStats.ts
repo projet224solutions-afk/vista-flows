@@ -84,10 +84,10 @@ export function useProximityStats() {
     try {
       setLoading(true);
 
-      const [vendorsRes, proServicesRes, driversRes, taxiDriversRes, productsRes, categoriesRes] = await Promise.all([
+      const [vendorsRes, proServicesRes, driversRes, taxiDriversRes, productsRes, categoriesRes, vendorGpsRes] = await Promise.all([
         supabase
           .from('vendors')
-          .select('id, business_type, service_type, latitude, longitude')
+          .select('id, business_type, service_type, latitude, longitude, user_id')
           .eq('is_active', true),
 
         supabase
@@ -97,6 +97,7 @@ export function useProximityStats() {
             latitude,
             longitude,
             service_type_id,
+            user_id,
             service_types (code, name)
           `)
           .eq('status', 'active'),
