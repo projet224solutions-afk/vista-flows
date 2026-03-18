@@ -61,6 +61,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addToCart = useCallback((item: Omit<CartItem, 'quantity'>) => {
     const existingItem = cartItems.find(i => i.id === item.id);
     
+    // 🧠 Track pour recommandations
+    trackCartAdd(item.id);
+    
     if (existingItem) {
       updateItem(item.id, { quantity: existingItem.quantity + 1 });
       toast.success('Quantité augmentée dans le panier');
