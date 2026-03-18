@@ -383,9 +383,22 @@ export default function Profil() {
     navigate('/');
   };
 
-  const handleGoBack = () => {
+  const handleGoBack = async () => {
     // Rediriger selon le rôle de l'utilisateur
-    if (profile?.role === 'vendeur') {
+    if (profile?.role === 'vendor_agent') {
+      // Récupérer le token d'accès et rediriger vers l'interface agent
+      const { data: vendorAgent } = await supabase
+        .from('vendor_agents')
+        .select('access_token')
+        .eq('user_id', user?.id)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (vendorAgent?.access_token) {
+        navigate(`/vendor-agent/${vendorAgent.access_token}`);
+      } else {
+        navigate('/');
+      }
+    } else if (profile?.role === 'vendeur') {
       navigate('/vendeur');
     } else if (profile?.role === 'admin') {
       navigate('/admin');
