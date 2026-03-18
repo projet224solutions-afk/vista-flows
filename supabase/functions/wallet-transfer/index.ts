@@ -493,30 +493,50 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
 
   // Execute atomic transfer
   try {
-    // Debit sender (optimistic lock)
-    const { error: debitError } = await supabase
+    // Debit sender (optimistic lock with row count verification)
+    const { data: debitData, error: debitError } = await supabase
       .from("wallets")
       .update({
         balance: senderWallet.balance - amount,
         updated_at: new Date().toISOString(),
       })
       .eq("id", senderWallet.id)
-      .eq("balance", senderWallet.balance); // Optimistic lock
+      .eq("balance", senderWallet.balance) // Optimistic lock
+      .select("id")
+      .maybeSingle();
 
     if (debitError) throw new Error("Échec du débit du wallet expéditeur");
+    
+    // ✅ CRITICAL: Verify the optimistic lock matched a row
+    if (!debitData) {
+      console.error("⚠️ Optimistic lock failed - balance changed concurrently");
+      throw new Error("Transaction concurrente détectée. Veuillez réessayer.");
+    }
 
-    // Credit receiver
-    const { error: creditError } = await supabase
+    // Credit receiver (also with optimistic lock)
+    const { data: creditData, error: creditError } = await supabase
       .from("wallets")
       .update({
         balance: receiverWallet.balance + amountReceived,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", receiverWallet.id);
+      .eq("id", receiverWallet.id)
+      .select("id")
+      .maybeSingle();
 
-    if (creditError) {
-      // Rollback debit
-      await supabase.from("wallets").update({ balance: senderWallet.balance }).eq("id", senderWallet.id);
+    if (creditError || !creditData) {
+      // Rollback debit atomically
+      const { error: rollbackError } = await supabase
+        .from("wallets")
+        .update({ balance: senderWallet.balance, updated_at: new Date().toISOString() })
+        .eq("id", senderWallet.id);
+      
+      if (rollbackError) {
+        console.error("🚨 CRITICAL: Rollback failed!", rollbackError);
+        await logFinancialAudit(supabase, sender_id, "rollback_failed", {
+          transferCode, amount, senderWalletId: senderWallet.id, rollbackError
+        }, true);
+      }
       throw new Error("Échec du crédit du wallet destinataire");
     }
 
