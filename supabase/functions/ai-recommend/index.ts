@@ -343,8 +343,9 @@ async function fetchProductDetails(supabase: any, productIds: string[]) {
   console.log("fetchProductDetails: querying", productIds.length, "IDs, sample:", productIds[0]);
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, price, images, rating, category_id")
-    .in("id", productIds);
+    .select("id, name, price, images, rating, category_id, vendors!inner(business_type)")
+    .in("id", productIds)
+    .in("vendors.business_type", ["hybrid", "online"]);
   
   if (error) {
     console.error("fetchProductDetails error:", error);
