@@ -34,6 +34,8 @@ export interface ProfessionalService {
   total_orders: number;
   total_revenue: number;
   created_at: string;
+  latitude?: number | null;
+  longitude?: number | null;
   service_type?: ServiceType;
 }
 
