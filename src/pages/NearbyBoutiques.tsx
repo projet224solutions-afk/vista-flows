@@ -73,18 +73,17 @@ export default function NearbyBoutiques() {
         service_type: v.service_type as Vendor["service_type"],
       }));
 
-      // Distances + filtre rayon - EXCLURE les boutiques sans GPS
+      // Distances + filtre rayon - Inclure aussi les boutiques sans GPS
       list = list
         .map((v) => {
-          // Si pas de coordonnées GPS, distance = null
           if (v.latitude === null || v.latitude === undefined || v.longitude === null || v.longitude === undefined) {
             return { ...v, distance: null };
           }
           const distance = calcDistanceFn(origin.latitude, origin.longitude, Number(v.latitude), Number(v.longitude));
           return { ...v, distance };
         })
-        // Exclure les boutiques sans GPS et celles hors rayon
-        .filter((v) => v.distance !== null && v.distance <= RADIUS_KM);
+        // Inclure boutiques sans GPS + celles dans le rayon
+        .filter((v) => v.distance === null || v.distance <= RADIUS_KM);
 
       // Tri: plus proches d'abord, sinon par note
       list.sort((a, b) => {

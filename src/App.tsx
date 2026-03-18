@@ -1,4 +1,5 @@
 import { Suspense, memo, useEffect } from "react";
+import { useAutoFillGps as useAutoFillGpsHook } from "@/hooks/useAutoFillGps";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -157,6 +158,13 @@ const PageLoader = memo(() => (
 ));
 PageLoader.displayName = 'PageLoader';
 
+// Auto-fill GPS component - runs once when user is authenticated
+function GpsAutoFill() {
+  const { autoFillGps } = useAutoFillGpsHook();
+  useEffect(() => { autoFillGps(); }, [autoFillGps]);
+  return null;
+}
+
 // Configure QueryClient with better defaults
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -205,6 +213,7 @@ function App() {
           <LanguageProvider>
             <CurrencyProvider>
               <AuthProvider>
+              <GpsAutoFill />
               <CognitoAuthProvider>
                 <OAuthPasswordGate />
                 <CartProvider>
