@@ -344,3 +344,6 @@ verify_jwt = false
 
 [functions.cognito-auth-proxy]
 verify_jwt = false
+
+[functions.ai-recommend]
+verify_jwt = false

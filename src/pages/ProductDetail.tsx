@@ -10,6 +10,7 @@ import ProductPaymentModal from "@/components/ecommerce/ProductPaymentModal";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useAutoCarousel } from "@/hooks/useAutoCarousel";
 import { trackProductView } from "@/services/analyticsTrackingService";
+import { useBehaviorTracking } from "@/hooks/useBehaviorTracking";
 import SEOHead from "@/components/SEOHead";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 import { usePriceConverter } from "@/hooks/usePriceConverter";
@@ -53,6 +54,9 @@ export default function ProductDetail() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const hasTrackedView = useRef(false);
+  
+  // Behavior tracking for AI recommendations
+  useBehaviorTracking({ sessionType: 'product_view', productId: id });
 
   // Mémoriser les vidéos et images pour le carrousel
   const videos = useMemo(() => product?.promotional_videos || [], [product?.promotional_videos]);

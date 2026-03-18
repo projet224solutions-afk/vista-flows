@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop, Plane, Monitor, GraduationCap, BookOpen, Bot, ShoppingBag, Star } from "lucide-react";
+import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop, Plane, Monitor, GraduationCap, BookOpen, Bot, ShoppingBag, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,9 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/useAuth";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAIPersonalized, useAITrending } from "@/hooks/useAIRecommendations";
+import { AIRecommendationSection } from "@/components/marketplace/AIRecommendationSection";
+import { useBehaviorTracking } from "@/hooks/useBehaviorTracking";
 import { cn } from "@/lib/utils";
 
 // Configuration des catégories numériques pour le filtre
@@ -67,6 +70,14 @@ export default function Marketplace() {
   const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
+  
+  // AI Recommendations
+  const { data: aiPersonalized, isLoading: loadingAIPersonalized } = useAIPersonalized(6);
+  const { data: aiTrending, isLoading: loadingAITrending } = useAITrending(6);
+  
+  // Behavior tracking
+  useBehaviorTracking({ sessionType: 'browse' });
+  
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -613,6 +624,31 @@ export default function Marketplace() {
             </div>
           </div>
         )}
+      </section>
+
+      {/* AI Recommendations - Alibaba style */}
+      <section className="px-2 sm:px-4 py-2">
+        <AIRecommendationSection
+          title={t('marketplace.selectedForYou') || 'Sélection pour vous'}
+          subtitle={t('marketplace.basedOnBehavior') || 'Basé sur votre activité récente'}
+          products={aiPersonalized}
+          isLoading={loadingAIPersonalized}
+          icon="sparkles"
+          showReason={true}
+          seeAllLink="/marketplace/for-you"
+          maxItems={6}
+        />
+
+        <AIRecommendationSection
+          title={t('marketplace.trendingNow') || 'Tendances du moment'}
+          subtitle={t('marketplace.trendingSubtitle') || 'Les plus populaires cette semaine'}
+          products={aiTrending}
+          isLoading={loadingAITrending}
+          icon="trending"
+          showReason={false}
+          seeAllLink="/marketplace/for-you"
+          maxItems={6}
+        />
       </section>
 
       {/* Results */}
