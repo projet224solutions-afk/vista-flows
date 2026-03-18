@@ -235,28 +235,6 @@ export function ProductImageCarousel({
         )}
       />
 
-      {/* Indicateurs (Dots) */}
-      {showDots && images.length > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30">
-          {images.map((_, index) => (
-            <button
-              key={index}
-              onClick={(e) => {
-                e.stopPropagation();
-                goToSlide(index);
-              }}
-              className={cn(
-                'transition-all duration-300 rounded-full',
-                'hover:scale-110 active:scale-95',
-                index === currentIndex
-                  ? 'w-6 h-1.5 bg-white shadow-lg'
-                  : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
-              )}
-              aria-label={`Go to image ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
 
       {/* Badge nombre d'images (discret) */}
       {images.length > 1 && (
