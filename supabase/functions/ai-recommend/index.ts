@@ -168,9 +168,13 @@ serve(async (req) => {
     let recommendations: Array<{ product_id: string; score: number; reason: string }> = [];
     try {
       const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+      console.log("AI tool call:", JSON.stringify(toolCall?.function?.name));
       if (toolCall) {
         const parsed = JSON.parse(toolCall.function.arguments);
         recommendations = parsed.recommendations || [];
+        console.log("AI returned", recommendations.length, "recommendations");
+      } else {
+        console.log("No tool call in AI response, keys:", Object.keys(aiData.choices?.[0]?.message || {}));
       }
     } catch (e) {
       console.error("Failed to parse AI response:", e);
@@ -179,9 +183,12 @@ serve(async (req) => {
 
     // Validate product IDs exist in catalog
     const validProductIds = new Set((catalogProducts || []).map(p => p.id));
+    const beforeFilter = recommendations.length;
     recommendations = recommendations.filter(r => validProductIds.has(r.product_id));
+    console.log(`Filtered: ${beforeFilter} -> ${recommendations.length} valid recommendations`);
 
     if (recommendations.length === 0) {
+      console.log("No valid recommendations, falling back to popular products");
       return fallbackResponse(supabase, corsHeaders, type);
     }
 
