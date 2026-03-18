@@ -709,7 +709,7 @@ export default function Marketplace() {
                         product_mode: item.product_mode,
                         affiliate_url: item.affiliate_url
                       });
-                      toast.success('Ajouté au panier');
+                      toast.success(t('marketplace.addToCart'));
                     }}
                     onContact={() => handleContactVendor(item.id)}
                   />
