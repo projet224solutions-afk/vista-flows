@@ -505,7 +505,7 @@ export default function Proximite() {
               <Loader2 className="w-6 h-6 animate-spin" style={{ color: BLUE }} />
             </div>
           ) : productCategories.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8" style={{ color: BLACK }}>
               <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p className="text-sm">Aucune catégorie avec des produits pour le moment</p>
               <p className="text-xs mt-1">Les catégories apparaîtront ici dès que des produits seront ajoutés</p>
