@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { usePublicId } from '@/hooks/usePublicId';
 import { SubscriptionService } from '@/services/subscriptionService';
 import { useAuth } from '@/hooks/useAuth';
+import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { generateEAN13Barcode } from '@/lib/barcodeGenerator';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
 
