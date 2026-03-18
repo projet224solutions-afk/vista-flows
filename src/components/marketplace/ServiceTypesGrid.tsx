@@ -185,6 +185,20 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
                 "border-2 border-border hover:border-[#04439e]"
               )}
               onClick={() => handleServiceClick(serviceType)}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget;
+                el.style.backgroundColor = BRAND_BLUE;
+                el.querySelectorAll('h3, p, span').forEach((c: any) => { c.style.color = 'white'; });
+                el.querySelectorAll('svg').forEach((c: any) => { c.style.color = 'white'; });
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget;
+                el.style.backgroundColor = '';
+                el.querySelectorAll('h3').forEach((c: any) => { c.style.color = ''; });
+                el.querySelectorAll('p').forEach((c: any) => { c.style.color = ''; });
+                el.querySelectorAll('span').forEach((c: any) => { c.style.color = ''; });
+                el.querySelectorAll('svg').forEach((c: any) => { c.style.color = ''; });
+              }}
             >
               <CardContent className="p-4 sm:p-6">
                 {/* Icône avec couleur de marque unie */}
@@ -196,23 +210,23 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
                 </div>
 
                 {/* Nom du service */}
-                <h3 className="font-semibold text-sm sm:text-base line-clamp-1 mb-1 group-hover:text-primary transition-colors">
+                <h3 className="font-semibold text-sm sm:text-base line-clamp-1 mb-1 transition-colors">
                   {serviceType.name}
                 </h3>
 
                 {/* Description */}
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                <p className="text-xs text-muted-foreground line-clamp-2 mb-3 transition-colors">
                   {serviceType.description}
                 </p>
 
                 {/* Footer avec nombre et flèche */}
                 <div className="flex items-center justify-between">
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs transition-colors">
                     <Users className="w-3 h-3 mr-1" />
                     {count} {count > 1 ? 'prestataires' : 'prestataire'}
                   </Badge>
                   <ArrowRight 
-                    className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                    className="w-4 h-4 transition-transform group-hover:translate-x-1 transition-colors"
                     style={{ color: BRAND_ORANGE }}
                   />
                 </div>
