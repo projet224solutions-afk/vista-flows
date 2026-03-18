@@ -262,7 +262,7 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
 
     // 5. Le total débité = montant envoyé (la commission est intégrée au taux)
     totalDebit = amount;
-    feeAmount = Math.round(amount * realRate * feePercentage / 100); // Pour affichage uniquement
+    feeAmount = Math.round(amount * feePercentage / 100 * 100) / 100; // Fee in sender's currency
 
     console.log(`💱 Taux réel: ${realRate} | Marge PDG: ${feePercentage}% | Taux affiché: ${rateDisplayed} | Reçu: ${amountReceived} ${receiverCurrency}`);
   } else {
