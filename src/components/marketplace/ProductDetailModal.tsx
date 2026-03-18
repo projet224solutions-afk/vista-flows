@@ -564,7 +564,6 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 ))}
               </div>
             )}
-          </div>
 
             {/* Boutons Produits similaires / Autres produits */}
             <div className="flex gap-2 mt-2">
