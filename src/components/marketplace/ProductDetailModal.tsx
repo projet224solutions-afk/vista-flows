@@ -481,7 +481,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden p-0">
         <ScrollArea className="h-[85vh] px-4 md:px-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{product.name}</DialogTitle>
+          <DialogTitle className="text-xl md:text-2xl font-bold break-words pr-6">{product.name}</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">
