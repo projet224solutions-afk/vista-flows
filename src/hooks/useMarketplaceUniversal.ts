@@ -530,7 +530,20 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         allItems = allItems.filter(item => item.rating >= minRating);
       }
 
-      // Tri
+      // Tri avec rotation quotidienne pour une exposition équitable
+      // Seed basé sur la date du jour pour que l'ordre change chaque jour
+      const today = new Date();
+      const dailySeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+      
+      // Fonction de hash simple pour créer un ordre pseudo-aléatoire déterministe
+      const seededHash = (str: string, seed: number) => {
+        let hash = seed;
+        for (let i = 0; i < str.length; i++) {
+          hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+        }
+        return hash;
+      };
+
       // D'abord, séparer les produits sponsorisés (toujours en tête)
       const sponsored = allItems.filter(item => item.is_sponsored);
       const nonSponsored = allItems.filter(item => !item.is_sponsored);
@@ -538,10 +551,6 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       // Fonction de tri pour les non-sponsorisés
       const sortItems = (items: MarketplaceItem[]) => {
         switch (sortBy) {
-          case 'position':
-            // Tri par position de rotation (le plus petit = en tête)
-            items.sort((a, b) => (a.marketplace_position || 0) - (b.marketplace_position || 0));
-            break;
           case 'price_asc':
             items.sort((a, b) => a.price - b.price);
             break;
@@ -555,9 +564,18 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
             items.sort((a, b) => b.reviews_count - a.reviews_count);
             break;
           case 'newest':
+            items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            break;
+          case 'position':
           default:
-            // Par défaut, utiliser la position de rotation pour un ordre équitable
-            items.sort((a, b) => (a.marketplace_position || 0) - (b.marketplace_position || 0));
+            // Rotation quotidienne: chaque produit reçoit un score pseudo-aléatoire
+            // basé sur son ID + la date du jour, garantissant que l'ordre change chaque jour
+            // tout en restant stable pendant la même journée
+            items.sort((a, b) => {
+              const scoreA = seededHash(a.id, dailySeed);
+              const scoreB = seededHash(b.id, dailySeed);
+              return scoreA - scoreB;
+            });
             break;
         }
         return items;
