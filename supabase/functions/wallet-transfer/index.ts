@@ -388,7 +388,9 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
     feePercentage = await getPdgFeeRate(supabase, FEE_KEYS.INTERNATIONAL_TRANSFER);
     rateDisplayed = realRate * (1 - feePercentage / 100);
     rateInternal = rateDisplayed;
-    feeAmount = Math.round(amount * realRate * feePercentage / 100);
+    // ✅ FIX: fee_amount must be in sender's currency (amount * feePercentage/100)
+    // to satisfy check constraint: fee_amount = requested_amount * fee_percentage
+    feeAmount = Math.round(amount * feePercentage / 100 * 100) / 100;
     amountReceived = Math.round(amount * rateDisplayed * 100) / 100;
   } else {
     // 🏠 Local: frais PDG uniquement, pas de conversion
