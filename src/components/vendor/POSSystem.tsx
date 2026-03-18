@@ -359,7 +359,7 @@ export function POSSystem() {
             
             if (orderError) throw orderError;
             
-            // Créer les items
+            // Créer les items (CRITICAL: le trigger DB décrémente le stock)
             const orderItems = saleData.items.map((item: any) => ({
               order_id: order.id,
               product_id: item.product_id,
@@ -368,7 +368,16 @@ export function POSSystem() {
               total_price: item.total_price
             }));
             
-            await supabase.from('order_items').insert(orderItems);
+            const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+            
+            if (itemsError) {
+              console.error('❌ Erreur insertion order_items (stock non décrémenté):', itemsError);
+              // Supprimer la commande orpheline
+              await supabase.from('orders').delete().eq('id', order.id);
+              throw itemsError;
+            }
+            
+            console.log(`📦 order_items insérés → trigger stock déclenché pour ${orderItems.length} produit(s)`);
 
             // Si vente à crédit, créer l'entrée dans vendor_credit_sales
             if (isCreditSale) {
@@ -397,7 +406,7 @@ export function POSSystem() {
             
             // Marquer l'événement comme synchronisé
             await offlineDB.markEventAsSynced(event.client_event_id);
-            console.log(`✅ ${isCreditSale ? 'Vente à crédit' : 'Vente'} offline ${saleData.order_number} synchronisée`);
+            console.log(`✅ ${isCreditSale ? 'Vente à crédit' : 'Vente'} offline ${saleData.order_number} synchronisée (stock décrémenté par trigger DB)`);
             
           } catch (syncError) {
             console.error('Erreur sync vente offline:', syncError);
@@ -405,8 +414,48 @@ export function POSSystem() {
           }
         }
         
-        // Rafraîchir les produits pour avoir les stocks à jour
+        // Rafraîchir les produits pour avoir les stocks à jour depuis la DB
+        // (le trigger a déjà décrémenté stock_quantity)
         await loadVendorProducts();
+        
+        // Invalider aussi le cache offline pour que l'inventaire soit à jour
+        try {
+          const freshProducts = products; // sera mis à jour par loadVendorProducts via setState
+          // Forcer le rechargement du cache après un petit délai pour laisser le setState se propager
+          setTimeout(async () => {
+            try {
+              const { default: offlineDBModule } = await import('@/lib/offlineDB');
+              // Recharger les produits frais depuis Supabase pour le cache
+              const { data: freshData } = await supabase
+                .from('products')
+                .select('id, name, price, stock_quantity, barcode, barcode_value, barcode_format, sku, images, category_id, section, categories(id, name), sell_by_carton, units_per_carton, price_carton')
+                .eq('vendor_id', vendorId!)
+                .eq('is_active', true);
+              
+              if (freshData) {
+                const formatted = freshData.map((p: any) => ({
+                  id: p.id,
+                  name: p.name ?? 'Produit',
+                  price: Number(p.price || 0),
+                  category: p.categories?.name || 'Divers',
+                  categoryId: p.categories?.id || null,
+                  section: p.section || undefined,
+                  stock: Number(p.stock_quantity || 0),
+                  barcode: p.barcode_value || p.barcode || p.sku || undefined,
+                  images: p.images || [],
+                  sell_by_carton: p.sell_by_carton || false,
+                  units_per_carton: Number(p.units_per_carton || 1),
+                  price_carton: Number(p.price_carton || 0)
+                }));
+                await offlineDBModule.cacheData(`${PRODUCTS_CACHE_KEY}_${vendorId}`, formatted, PRODUCTS_CACHE_TTL, false);
+                console.log('✅ Cache offline mis à jour avec stocks corrigés');
+              }
+            } catch (e) {
+              console.warn('Erreur mise à jour cache post-sync:', e);
+            }
+          }, 2000);
+        } catch (e) {}
+        
         toast.success('Ventes hors-ligne synchronisées !');
         
       } catch (error) {
