@@ -330,7 +330,7 @@ export default function Proximite() {
                 ].map(item => (
                   <div key={item.label} className="bg-white p-2 rounded-lg">
                     <div className="font-medium" style={{ color: BLUE }}>{item.label}</div>
-                    <div className="text-muted-foreground text-[10px]">
+                    <div className="text-[10px]" style={{ color: BLACK }}>
                       Total: {item.data.total} | Sans GPS: {item.data.noGps} | Hors: {item.data.outOfRadius} | ✓ {item.data.inRadius}
                     </div>
                   </div>
