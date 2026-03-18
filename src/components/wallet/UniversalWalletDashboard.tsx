@@ -40,6 +40,7 @@ export default function UniversalWalletDashboard({
 }: UniversalWalletDashboardProps) {
   const { convert } = usePriceConverter();
   const { t } = useTranslation();
+  const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(false);
