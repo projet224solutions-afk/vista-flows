@@ -529,7 +529,7 @@ export default function UniversalWalletDashboard({
                     className={`w-full ${depositMethod === 'orange' ? 'bg-orange-500 hover:bg-orange-600' : 'bg-yellow-500 hover:bg-yellow-600'}`}
                   >
                     <Smartphone className="w-4 h-4 mr-2" />
-                    Recharger {parseFloat(depositAmount || '0').toLocaleString()} GNF
+                    {t('wallet.recharge')} {convert(parseFloat(depositAmount || '0'), 'GNF').formatted}
                   </Button>
                 </div>
               )}
