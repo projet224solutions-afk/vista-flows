@@ -763,6 +763,7 @@ export default function ProductPaymentModal({
             {paymentMethod === 'wallet' ? 'Payer' : 'Confirmer'} {fc(grandTotal)}
           </SecureButton>
         </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
