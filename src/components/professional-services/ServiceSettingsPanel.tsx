@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Navigation, CheckCircle2, MapPin } from 'lucide-react';
+import { mapService } from '@/services/mapService';
 
 interface ServiceSettingsPanelProps {
   open: boolean;
@@ -25,6 +26,10 @@ interface ServiceSettingsPanelProps {
 
 export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }: ServiceSettingsPanelProps) {
   const [saving, setSaving] = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsSuccess, setGpsSuccess] = useState(false);
+  const [detectedCoords, setDetectedCoords] = useState<{ lat: number; lng: number } | null>(null);
+
   const [form, setForm] = useState({
     business_name: '',
     description: '',
@@ -44,8 +49,40 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
         email: service.email || '',
         website: service.website || '',
       });
+      setGpsSuccess(false);
+      setDetectedCoords(null);
     }
   }, [service]);
+
+  const handleDetectPosition = useCallback(async () => {
+    setGpsLoading(true);
+    setGpsSuccess(false);
+    try {
+      const position = await mapService.getCurrentPosition();
+      const fullAddress = await mapService.reverseGeocode(position.latitude, position.longitude);
+
+      if (fullAddress && fullAddress !== 'Adresse inconnue') {
+        setForm(prev => ({ ...prev, address: fullAddress }));
+      }
+
+      setDetectedCoords({ lat: position.latitude, lng: position.longitude });
+      setGpsSuccess(true);
+      toast.success('Position détectée avec succès !');
+
+      // Save coordinates to DB
+      await supabase
+        .from('professional_services')
+        .update({ latitude: position.latitude, longitude: position.longitude })
+        .eq('id', service.id);
+
+      setTimeout(() => setGpsSuccess(false), 3000);
+    } catch (err: any) {
+      console.error('Erreur GPS:', err);
+      toast.error('Impossible de détecter votre position. Vérifiez vos paramètres de localisation.');
+    } finally {
+      setGpsLoading(false);
+    }
+  }, [service.id]);
 
   const handleSave = async () => {
     if (!form.business_name.trim()) {
@@ -110,14 +147,61 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="address">Adresse</Label>
-            <Input
-              id="address"
-              value={form.address}
-              onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))}
-              placeholder="Adresse du service"
-            />
+          {/* GPS Location Detection */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/30 bg-primary/5">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                  Localisation
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {detectedCoords
+                    ? `${detectedCoords.lat.toFixed(5)}, ${detectedCoords.lng.toFixed(5)}`
+                    : 'Détectez votre adresse via GPS'
+                  }
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant={gpsSuccess ? 'default' : 'outline'}
+                size="sm"
+                onClick={handleDetectPosition}
+                disabled={gpsLoading}
+                className={`gap-2 flex-shrink-0 transition-all duration-300 ${
+                  gpsSuccess
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                    : 'border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground'
+                }`}
+              >
+                {gpsLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="hidden sm:inline">Détection...</span>
+                  </>
+                ) : gpsSuccess ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    Localisé !
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="w-4 h-4" />
+                    Position
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Adresse</Label>
+              <Input
+                id="address"
+                value={form.address}
+                onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))}
+                placeholder="Adresse du service"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
