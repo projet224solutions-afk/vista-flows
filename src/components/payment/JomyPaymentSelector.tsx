@@ -267,9 +267,9 @@ export function JomyPaymentSelector({
       try {
         const { data, error } = await supabase.functions.invoke('wallet-operations', {
           body: {
-            action: 'transfer',
+            operation: 'transfer',
             amount,
-            recipient_public_id: recipientId,
+            recipient_id: recipientId,
             description: description || 'Transfert'
           }
         });
