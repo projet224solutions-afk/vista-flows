@@ -949,7 +949,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                       {deliverableFiles.length === 0 ? '⚠️ Aucun fichier' : `${deliverableFiles.length} fichier(s)`}
                     </span>
                   </div>
-                )
+                )}
 
                 {/* Catégorie */}
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
