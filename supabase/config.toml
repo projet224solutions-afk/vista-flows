@@ -350,3 +350,6 @@ verify_jwt = false
 
 [functions.wallet-payment-api]
 verify_jwt = false
+
+[functions.process-digital-renewals]
+verify_jwt = false
