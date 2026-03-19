@@ -153,8 +153,18 @@ export default function DigitalProductDetail() {
       return;
     }
 
-    // TODO: Implémenter le système de paiement pour produits numériques
-    toast.info('Système de paiement en cours de développement');
+    // Naviguer vers la page de paiement avec les infos du produit digital
+    toast.success('Redirection vers le paiement...');
+    navigate('/payment', {
+      state: {
+        productId: product.id,
+        productName: product.title,
+        amount: product.price,
+        quantity: 1,
+        vendorId: product.vendor_id || product.merchant_id,
+        productType: 'digital'
+      }
+    });
   };
 
   const handleContact = async () => {
