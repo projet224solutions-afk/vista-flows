@@ -555,155 +555,181 @@ export default function ServiceDetail() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Image d'en-tête */}
-      <div className="relative h-64 md:h-96 bg-gradient-to-br from-purple-500 to-blue-600">
+      {/* ═══ Hero Image ═══ */}
+      <div className="relative h-72 md:h-[420px] bg-muted overflow-hidden">
         {service.image_url ? (
-          <img 
-            src={service.image_url} 
+          <img
+            src={service.image_url}
             alt={service.name}
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-white text-6xl">
-            {service.category === 'restaurant' ? '🍽️' : 
-             service.category === 'sante' ? '🏥' :
-             service.category === 'education' ? '📚' :
-             service.category === 'beaute' ? '💇' :
-             service.category === 'commerce' ? '🛍️' : '🔧'}
+          <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+            <span className="text-7xl opacity-60">
+              {service.category === 'restaurant' ? '🍽️' :
+               service.category === 'sante' ? '🏥' :
+               service.category === 'education' ? '📚' :
+               service.category === 'beaute' ? '💇' :
+               service.category === 'commerce' ? '🛍️' : '🔧'}
+            </span>
           </div>
         )}
-        
-        {/* Overlay avec boutons */}
-        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent">
-          <div className="flex items-center justify-between">
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/40" />
+
+        {/* Top navigation */}
+        <div className="absolute top-0 left-0 right-0 p-3 flex items-center justify-between z-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full w-10 h-10"
+            onClick={() => navigate('/services-proximite')}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+
+          <div className="flex gap-2">
+            {isOwner && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full w-10 h-10"
+                onClick={() => navigate(`/dashboard/service/${id}`)}
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
-              className="text-white hover:bg-white/20"
-              onClick={() => navigate('/services-proximite')}
+              className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full w-10 h-10"
+              onClick={handleShare}
             >
-              <ArrowLeft className="w-6 h-6" />
+              <Share2 className="w-5 h-5" />
             </Button>
-            
-            <div className="flex gap-2">
-              {isOwner && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-white/20"
-                  onClick={() => navigate(`/dashboard/service/${id}`)}
-                >
-                  <Settings className="w-5 h-5" />
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/20"
-                onClick={handleShare}
-              >
-                <Share2 className="w-5 h-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/20"
-                onClick={toggleFavorite}
-              >
-                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full w-10 h-10"
+              onClick={toggleFavorite}
+            >
+              <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+            </Button>
           </div>
         </div>
 
-        {/* Badge statut */}
-        <div className="absolute bottom-4 right-4">
-          <Badge variant={service.is_open ? "default" : "secondary"} className="text-lg px-4 py-2">
+        {/* Status badge on image */}
+        <div className="absolute bottom-4 right-4 z-10">
+          <Badge
+            className={`text-sm px-4 py-2 font-semibold shadow-lg backdrop-blur-sm border-0 ${
+              service.is_open
+                ? 'bg-green-600/90 text-white'
+                : 'bg-red-600/90 text-white'
+            }`}
+          >
             {service.is_open ? '✅ Ouvert' : '🔴 Fermé'}
           </Badge>
         </div>
       </div>
 
-      {/* Contenu principal */}
-      <div className="max-w-4xl mx-auto px-4 -mt-8">
-        {/* Carte principale */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-foreground mb-2">
-                  {service.name}
-                </h1>
-                <div className="flex items-center gap-4 mb-3">
-                  <div className="flex items-center">
-                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400 mr-1" />
-                    <span className="font-semibold text-lg">{service.rating}</span>
-                    <span className="text-muted-foreground ml-2">
-                      ({service.reviews_count} avis)
-                    </span>
-                  </div>
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <Navigation className="w-3 h-3" />
-                    {formatDistance(distance)}
-                    {usingRealLocation && <span className="ml-1 text-green-500">●</span>}
-                  </Badge>
-                </div>
-                <Badge variant="secondary">{service.category}</Badge>
+      {/* ═══ Main Content ═══ */}
+      <div className="max-w-3xl mx-auto px-4 relative">
+        {/* Profile card overlapping hero */}
+        <Card className="relative -mt-16 z-20 border-0 shadow-xl rounded-2xl overflow-hidden">
+          <CardContent className="p-5 md:p-8">
+            {/* Name & rating */}
+            <h1 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight mb-3">
+              {service.name}
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              {/* Rating */}
+              <div className="flex items-center gap-1.5">
+                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                <span className="font-bold text-lg">{service.rating}</span>
+                <span className="text-muted-foreground text-sm">
+                  ({service.reviews_count} avis)
+                </span>
               </div>
+
+              {/* Distance */}
+              <Badge variant="outline" className="flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full border-primary/30">
+                <Navigation className="w-3.5 h-3.5 text-primary" />
+                {formatDistance(distance)}
+                {usingRealLocation && <span className="text-green-500 text-xs">●</span>}
+              </Badge>
             </div>
 
-            <p className="text-muted-foreground mb-6 text-lg">
+            {/* Category badge */}
+            <Badge className="bg-primary/10 text-primary border-0 font-semibold mb-4">
+              {service.category}
+            </Badge>
+
+            {/* Description */}
+            <p className="text-muted-foreground leading-relaxed mb-6">
               {service.description}
             </p>
 
-            {/* Boutons d'action */}
-            <div className={`grid gap-3 ${isRestaurant ? 'grid-cols-3' : 'grid-cols-2'}`}>
-              <Button onClick={handleContact} className="w-full">
+            {/* ═══ Action Buttons ═══ */}
+            <div className="flex flex-wrap gap-3">
+              <Button
+                onClick={handleContact}
+                className="flex-1 min-w-[120px] h-12 rounded-xl font-semibold text-sm bg-primary hover:bg-primary/90"
+              >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Contacter
               </Button>
-              {isRestaurant ? (
-                <>
-                  <Button onClick={handleReservation} variant="outline" className="w-full">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Réserver
-                  </Button>
-                  <Button onClick={handleOrderFromRestaurant} className="w-full bg-orange-500 hover:bg-orange-600">
-                    <span className="mr-2">🍽️</span>
-                    Commander
-                  </Button>
-                </>
-              ) : (
-                <Button onClick={handleReservation} variant="outline" className="w-full">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Réserver
+              <Button
+                onClick={handleReservation}
+                variant="outline"
+                className="flex-1 min-w-[120px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Réserver
+              </Button>
+              {isRestaurant && (
+                <Button
+                  onClick={handleOrderFromRestaurant}
+                  className="flex-1 min-w-[120px] h-12 rounded-xl font-semibold text-sm bg-accent text-accent-foreground hover:bg-accent/90"
+                >
+                  <UtensilsCrossed className="w-4 h-4 mr-2" />
+                  Commander
                 </Button>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Onglets */}
-        <Tabs defaultValue="info" className="mb-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="info">Informations</TabsTrigger>
-            <TabsTrigger value="hours">Horaires</TabsTrigger>
-            <TabsTrigger value="reviews">Avis ({reviews.length})</TabsTrigger>
+        {/* ═══ Tabs Section ═══ */}
+        <Tabs defaultValue="info" className="mt-6 mb-6">
+          <TabsList className="w-full rounded-xl h-12 bg-muted/60 p-1">
+            <TabsTrigger value="info" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold">
+              Informations
+            </TabsTrigger>
+            <TabsTrigger value="hours" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold">
+              Horaires
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold">
+              Avis ({reviews.length})
+            </TabsTrigger>
           </TabsList>
 
-          {/* Informations */}
+          {/* ─── Informations ─── */}
           <TabsContent value="info">
-            <Card>
-              <CardContent className="p-6 space-y-4">
+            <Card className="rounded-2xl border-0 shadow-md">
+              <CardContent className="p-5 md:p-6 space-y-5">
                 {service.address && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-muted-foreground mt-1 flex-shrink-0" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-5 h-5 text-primary" />
+                    </div>
                     <div className="flex-1">
-                      <p className="font-medium">Adresse</p>
-                      <p className="text-muted-foreground">{service.address}</p>
-                      <Button 
-                        variant="link" 
-                        className="px-0 h-auto mt-1"
+                      <p className="font-semibold text-foreground">Adresse</p>
+                      <p className="text-muted-foreground text-sm mt-0.5">{service.address}</p>
+                      <Button
+                        variant="link"
+                        className="px-0 h-auto mt-1 text-primary font-medium text-sm"
                         onClick={openInMaps}
                       >
                         Voir sur la carte
@@ -713,11 +739,13 @@ export default function ServiceDetail() {
                 )}
 
                 {service.phone && (
-                  <div className="flex items-start gap-3">
-                    <Phone className="w-5 h-5 text-muted-foreground mt-1 flex-shrink-0" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Phone className="w-5 h-5 text-primary" />
+                    </div>
                     <div className="flex-1">
-                      <p className="font-medium">Téléphone</p>
-                      <a href={`tel:${service.phone}`} className="text-primary hover:underline">
+                      <p className="font-semibold text-foreground">Téléphone</p>
+                      <a href={`tel:${service.phone}`} className="text-primary hover:underline text-sm mt-0.5 inline-block">
                         {service.phone}
                       </a>
                     </div>
@@ -725,11 +753,13 @@ export default function ServiceDetail() {
                 )}
 
                 {service.email && (
-                  <div className="flex items-start gap-3">
-                    <Mail className="w-5 h-5 text-muted-foreground mt-1 flex-shrink-0" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-5 h-5 text-primary" />
+                    </div>
                     <div className="flex-1">
-                      <p className="font-medium">Email</p>
-                      <a href={`mailto:${service.email}`} className="text-primary hover:underline">
+                      <p className="font-semibold text-foreground">Email</p>
+                      <a href={`mailto:${service.email}`} className="text-primary hover:underline text-sm mt-0.5 inline-block">
                         {service.email}
                       </a>
                     </div>
@@ -738,10 +768,10 @@ export default function ServiceDetail() {
 
                 {service.features && service.features.length > 0 && (
                   <div>
-                    <p className="font-medium mb-2">Caractéristiques</p>
+                    <p className="font-semibold text-foreground mb-2">Caractéristiques</p>
                     <div className="flex flex-wrap gap-2">
                       {service.features.map((feature, index) => (
-                        <Badge key={index} variant="outline">
+                        <Badge key={index} variant="outline" className="rounded-full">
                           {feature}
                         </Badge>
                       ))}
@@ -752,11 +782,11 @@ export default function ServiceDetail() {
             </Card>
           </TabsContent>
 
-          {/* Horaires */}
+          {/* ─── Horaires ─── */}
           <TabsContent value="hours">
-            <Card>
-              <CardContent className="p-6">
-                <div className="space-y-3">
+            <Card className="rounded-2xl border-0 shadow-md">
+              <CardContent className="p-5 md:p-6">
+                <div className="space-y-1">
                   {service.opening_hours && Object.entries(service.opening_hours).map(([day, hours]) => {
                     const dayName = day === 'monday' ? 'Lundi' :
                       day === 'tuesday' ? 'Mardi' :
@@ -764,8 +794,7 @@ export default function ServiceDetail() {
                       day === 'thursday' ? 'Jeudi' :
                       day === 'friday' ? 'Vendredi' :
                       day === 'saturday' ? 'Samedi' : 'Dimanche';
-                    
-                    // Handle both string format ("08:00 - 18:00") and object format ({open, close, closed})
+
                     let hoursDisplay: string;
                     if (typeof hours === 'string') {
                       hoursDisplay = hours;
@@ -779,11 +808,15 @@ export default function ServiceDetail() {
                     } else {
                       hoursDisplay = 'Non défini';
                     }
-                    
+
+                    const isClosed = hoursDisplay.toLowerCase() === 'fermé';
+
                     return (
-                      <div key={day} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                        <span className="font-medium capitalize">{dayName}</span>
-                        <span className="text-muted-foreground">{hoursDisplay}</span>
+                      <div key={day} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
+                        <span className="font-medium text-foreground">{dayName}</span>
+                        <span className={`text-sm font-medium ${isClosed ? 'text-red-500' : 'text-muted-foreground'}`}>
+                          {hoursDisplay}
+                        </span>
                       </div>
                     );
                   })}
@@ -792,46 +825,49 @@ export default function ServiceDetail() {
             </Card>
           </TabsContent>
 
-          {/* Avis */}
+          {/* ─── Avis ─── */}
           <TabsContent value="reviews">
-            <Card>
-              <CardContent className="p-6">
+            <Card className="rounded-2xl border-0 shadow-md">
+              <CardContent className="p-5 md:p-6">
                 {reviews.length === 0 ? (
-                  <div className="text-center py-8">
+                  <div className="text-center py-10">
+                    <Star className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-muted-foreground mb-4">Aucun avis pour le moment</p>
-                    <Button variant="outline">
+                    <Button variant="outline" className="rounded-xl">
                       Soyez le premier à donner votre avis
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     {reviews.map((review) => (
-                      <div key={review.id} className="border-b border-border pb-4 last:border-0">
-                        <div className="flex items-start gap-3 mb-3">
-                          <Avatar>
+                      <div key={review.id} className="border-b border-border/50 pb-5 last:border-0 last:pb-0">
+                        <div className="flex items-start gap-3">
+                          <Avatar className="w-10 h-10">
                             <AvatarImage src={review.user_avatar} />
-                            <AvatarFallback>{review.user_name[0]}</AvatarFallback>
+                            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                              {review.user_name[0]}
+                            </AvatarFallback>
                           </Avatar>
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-semibold">{review.user_name}</span>
-                              <span className="text-sm text-muted-foreground">
+                              <span className="font-semibold text-foreground text-sm">{review.user_name}</span>
+                              <span className="text-xs text-muted-foreground">
                                 {new Date(review.created_at).toLocaleDateString('fr-FR')}
                               </span>
                             </div>
-                            <div className="flex items-center mb-2">
+                            <div className="flex items-center gap-0.5 mb-2">
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`w-4 h-4 ${
+                                  className={`w-3.5 h-3.5 ${
                                     i < review.rating
                                       ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300'
+                                      : 'text-muted-foreground/30'
                                   }`}
                                 />
                               ))}
                             </div>
-                            <p className="text-muted-foreground">{review.comment}</p>
+                            <p className="text-muted-foreground text-sm leading-relaxed">{review.comment}</p>
                           </div>
                         </div>
                       </div>
@@ -843,14 +879,14 @@ export default function ServiceDetail() {
           </TabsContent>
         </Tabs>
 
-        {/* Galerie Photos */}
+        {/* ═══ Gallery ═══ */}
         {(galleryImages.length > 0 || isOwner) && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Camera className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-bold">Photos</h2>
-                <Badge variant="secondary">{galleryImages.length}</Badge>
+                <h2 className="text-xl font-bold text-foreground">Photos</h2>
+                <Badge variant="secondary" className="rounded-full">{galleryImages.length}</Badge>
               </div>
               {isOwner && (
                 <label className="cursor-pointer">
@@ -861,7 +897,7 @@ export default function ServiceDetail() {
                     onChange={handleImageUpload}
                     disabled={uploadingImage}
                   />
-                  <Button asChild variant="outline" size="sm" disabled={uploadingImage}>
+                  <Button asChild variant="outline" size="sm" disabled={uploadingImage} className="rounded-xl">
                     <span>
                       {uploadingImage ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
@@ -878,11 +914,11 @@ export default function ServiceDetail() {
             {galleryImages.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {galleryImages.map((img) => (
-                  <div key={img.id} className="relative group rounded-xl overflow-hidden aspect-square bg-muted">
+                  <div key={img.id} className="relative group rounded-2xl overflow-hidden aspect-square bg-muted shadow-sm">
                     <img
                       src={img.image_url}
                       alt={img.caption || 'Photo du service'}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"
                     />
                     {isOwner && (
@@ -897,12 +933,12 @@ export default function ServiceDetail() {
                 ))}
               </div>
             ) : isOwner ? (
-              <Card>
+              <Card className="rounded-2xl border-0 shadow-md">
                 <CardContent className="p-8 text-center">
-                  <Camera className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground mb-2">Aucune photo pour le moment</p>
-                  <p className="text-sm text-muted-foreground">
-                    Ajoutez des photos pour attirer plus de clients sur le marketplace
+                  <Camera className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
+                  <p className="text-muted-foreground mb-1">Aucune photo pour le moment</p>
+                  <p className="text-sm text-muted-foreground/70">
+                    Ajoutez des photos pour attirer plus de clients
                   </p>
                 </CardContent>
               </Card>
@@ -910,22 +946,21 @@ export default function ServiceDetail() {
           </div>
         )}
 
-        {/* Section Menu Restaurant */}
+        {/* ═══ Restaurant Menu Section ═══ */}
         {isRestaurant && menuItems.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <UtensilsCrossed className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold">Notre Menu</h2>
+              <h2 className="text-2xl font-bold text-foreground">Notre Menu</h2>
             </div>
 
-            {/* Catégories */}
             {menuCategories.length > 0 && (
-              <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+              <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
                 {menuCategories.map((category) => (
-                  <Badge 
-                    key={category.id} 
-                    variant="secondary" 
-                    className="whitespace-nowrap px-3 py-1"
+                  <Badge
+                    key={category.id}
+                    variant="secondary"
+                    className="whitespace-nowrap px-4 py-1.5 rounded-full font-medium"
                   >
                     {category.icon && <span className="mr-1">{category.icon}</span>}
                     {category.name}
@@ -934,13 +969,11 @@ export default function ServiceDetail() {
               </div>
             )}
 
-            {/* Grille des plats */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {menuItems.map((item) => (
-                <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow rounded-2xl border-0 shadow-sm">
                   <div className="flex">
-                    {/* Image du plat */}
-                    <div className="w-32 h-32 flex-shrink-0 bg-muted">
+                    <div className="w-28 h-28 flex-shrink-0 bg-muted">
                       {item.image_url ? (
                         <img
                           src={item.image_url}
@@ -948,63 +981,60 @@ export default function ServiceDetail() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xl bg-gradient-to-br from-orange-100 to-orange-200">
+                        <div className="w-full h-full flex items-center justify-center text-3xl bg-primary/5">
                           🍽️
                         </div>
                       )}
                     </div>
-                    
-                    {/* Infos du plat */}
+
                     <CardContent className="p-3 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <h3 className="font-semibold text-foreground line-clamp-1">
+                          <h3 className="font-semibold text-foreground line-clamp-1 text-sm">
                             {item.name}
                           </h3>
                           {item.is_featured && (
-                            <Badge className="bg-orange-500 text-white text-xs">
-                              ⭐ Populaire
+                            <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5">
+                              ⭐
                             </Badge>
                           )}
                         </div>
                         {item.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                          <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">
                             {item.description}
                           </p>
                         )}
-                        
-                        {/* Tags et niveau épicé */}
-                        <div className="flex items-center gap-2 flex-wrap">
+
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           {item.spicy_level && item.spicy_level > 0 && (
-                            <div className="flex items-center text-orange-500">
+                            <div className="flex items-center text-accent">
                               {[...Array(item.spicy_level)].map((_, i) => (
                                 <Flame key={i} className="w-3 h-3" />
                               ))}
                             </div>
                           )}
                           {item.dietary_tags?.map((tag, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">
+                            <Badge key={i} variant="outline" className="text-[10px] rounded-full px-1.5">
                               {tag}
                             </Badge>
                           ))}
                           {item.preparation_time && (
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                               <Clock className="w-3 h-3" />
                               {item.preparation_time}min
                             </span>
                           )}
                         </div>
                       </div>
-                      
-                      {/* Prix */}
+
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-lg font-bold text-primary">
+                        <span className="text-base font-bold text-primary">
                           {item.price.toLocaleString()} FG
                         </span>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={handleOrderFromRestaurant}
-                          className="bg-orange-500 hover:bg-orange-600"
+                          className="h-8 rounded-lg text-xs bg-accent hover:bg-accent/90 text-accent-foreground"
                         >
                           Commander
                         </Button>
@@ -1015,12 +1045,11 @@ export default function ServiceDetail() {
               ))}
             </div>
 
-            {/* Bouton voir tout le menu */}
-            <div className="text-center mt-4">
-              <Button 
-                variant="outline" 
+            <div className="text-center mt-5">
+              <Button
+                variant="outline"
                 onClick={handleOrderFromRestaurant}
-                className="w-full md:w-auto"
+                className="w-full md:w-auto rounded-xl h-12 font-semibold"
               >
                 <UtensilsCrossed className="w-4 h-4 mr-2" />
                 Voir le menu complet et commander
@@ -1030,7 +1059,7 @@ export default function ServiceDetail() {
         )}
       </div>
 
-      {/* Modal de réservation restaurant professionnel */}
+      {/* Modal de réservation restaurant */}
       {isRestaurant && service && (
         <ReservationModal
           isOpen={isReservationModalOpen}
