@@ -564,8 +564,12 @@ export default function ServiceDetail() {
   };
 
   const openInMaps = () => {
-    if (service?.latitude && service?.longitude) {
-      const url = `https://www.google.com/maps/search/?api=1&query=${service.latitude},${service.longitude}`;
+    if (service?.latitude && service?.longitude &&
+        !(service.latitude === 9.6412 && service.longitude === -13.5784)) {
+      const url = `https://www.google.com/maps/place/${service.latitude},${service.longitude}/@${service.latitude},${service.longitude},17z`;
+      window.open(url, '_blank');
+    } else if (service?.address) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.address)}`;
       window.open(url, '_blank');
     } else {
       toast.error('Coordonnées non disponibles');
