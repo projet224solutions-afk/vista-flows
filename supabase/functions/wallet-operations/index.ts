@@ -457,7 +457,13 @@ serve(async (req) => {
     }
 
     const requestBody = await req.json();
-    const parseResult = requestSchema.safeParse(requestBody);
+    const normalizedRequestBody = {
+      ...requestBody,
+      operation: requestBody?.operation ?? requestBody?.action,
+      recipient_id: requestBody?.recipient_id ?? requestBody?.recipient_public_id ?? requestBody?.receiver_id,
+    };
+
+    const parseResult = requestSchema.safeParse(normalizedRequestBody);
 
     if (!parseResult.success) {
       return new Response(
@@ -514,14 +520,29 @@ serve(async (req) => {
           .eq('user_id', user.id);
         if (depositError) throw depositError;
 
-        await supabaseClient.from('enhanced_transactions').insert({
-          sender_id: user.id, receiver_id: user.id, amount, method: 'wallet', status: 'completed',
-          currency: wallet.currency || 'GNF', transaction_type: 'deposit', metadata: { description: description || 'Dépôt', fee: depositFee }
-        });
+        const { data: depositTx, error: depositTxError } = await supabaseClient
+          .from('enhanced_transactions')
+          .insert({
+            sender_id: user.id,
+            receiver_id: user.id,
+            amount,
+            method: 'wallet',
+            status: 'completed',
+            currency: wallet.currency || 'GNF',
+            metadata: {
+              description: description || 'Dépôt',
+              fee: depositFee,
+              transaction_type: 'deposit'
+            }
+          })
+          .select('id')
+          .single();
+
+        if (depositTxError) throw depositTxError;
 
         await syncAgentWallet(supabaseClient, user.id, newBalance, 'deposit', userRole);
         await recordIdempotencyKey(supabaseClient, effectiveIdempotencyKey, user.id, 'deposit');
-        result = { success: true, new_balance: newBalance, operation: 'deposit' };
+        result = { success: true, new_balance: newBalance, operation: 'deposit', transaction_id: depositTx?.id || null };
         break;
       }
 
@@ -529,6 +550,7 @@ serve(async (req) => {
         if (wallet.balance < amount) {
           return new Response(JSON.stringify({ error: 'Solde insuffisant' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
+
         const newBalance = wallet.balance - amount;
         const { error: withdrawError } = await supabaseClient
           .from('wallets')
@@ -536,14 +558,28 @@ serve(async (req) => {
           .eq('user_id', user.id);
         if (withdrawError) throw withdrawError;
 
-        await supabaseClient.from('enhanced_transactions').insert({
-          sender_id: user.id, receiver_id: user.id, amount, method: 'wallet', status: 'completed',
-          currency: wallet.currency || 'GNF', transaction_type: 'withdrawal', metadata: { description: description || 'Retrait' }
-        });
+        const { data: withdrawTx, error: withdrawTxError } = await supabaseClient
+          .from('enhanced_transactions')
+          .insert({
+            sender_id: user.id,
+            receiver_id: user.id,
+            amount,
+            method: 'wallet',
+            status: 'completed',
+            currency: wallet.currency || 'GNF',
+            metadata: {
+              description: description || 'Retrait',
+              transaction_type: 'withdrawal'
+            }
+          })
+          .select('id')
+          .single();
+
+        if (withdrawTxError) throw withdrawTxError;
 
         await syncAgentWallet(supabaseClient, user.id, newBalance, 'withdraw', userRole);
         await recordIdempotencyKey(supabaseClient, effectiveIdempotencyKey, user.id, 'withdraw');
-        result = { success: true, new_balance: newBalance, operation: 'withdraw' };
+        result = { success: true, new_balance: newBalance, operation: 'withdraw', transaction_id: withdrawTx?.id || null };
         break;
       }
 
@@ -551,6 +587,7 @@ serve(async (req) => {
         if (!recipient_id) {
           return new Response(JSON.stringify({ error: 'Destinataire requis' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
+
         if (wallet.balance < amount) {
           return new Response(JSON.stringify({ error: 'Solde insuffisant' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
@@ -565,6 +602,7 @@ serve(async (req) => {
         if (!recipientUserId) {
           return new Response(JSON.stringify({ error: `Utilisateur ${recipient_id} introuvable` }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
+
         if (recipientUserId === user.id) {
           return new Response(JSON.stringify({ error: 'Transfert vers soi-même non autorisé' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
@@ -663,6 +701,7 @@ serve(async (req) => {
           success: true,
           new_balance: transferResult.senderBalance,
           operation: 'transfer',
+          transaction_id: transferResult.transactionId || null,
           recipient_new_balance: transferResult.recipientBalance,
           is_international: isInternational,
           fee_amount: feeAmount,
