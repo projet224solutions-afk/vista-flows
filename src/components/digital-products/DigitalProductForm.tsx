@@ -476,6 +476,10 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         }
         return true;
       case 'media':
+        if (salesMode === 'direct' && deliverableFiles.length === 0) {
+          toast.error('Vous devez ajouter au moins un fichier à livrer pour la vente directe');
+          return false;
+        }
         return true;
       default:
         return true;
