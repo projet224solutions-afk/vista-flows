@@ -307,7 +307,12 @@ export default function Payment() {
               vendorCode = `VEN-${vendorUserId.substring(0, 8).toUpperCase()}`;
             }
             setRecipientId(vendorCode);
-            setPaymentDescription(`Achat numérique: ${dpProduct.title} (x${qty})`);
+            const isSubscription = (dpProduct as any).pricing_type === 'subscription';
+            const interval = (dpProduct as any).subscription_interval || 'monthly';
+            const intervalLabel = interval === 'yearly' ? '/an' : '/mois';
+            setPaymentDescription(isSubscription 
+              ? `Abonnement ${intervalLabel}: ${dpProduct.title}` 
+              : `Achat numérique: ${dpProduct.title} (x${qty})`);
             setPaymentOpen(true);
           } else {
             // Fallback: essayer service_products
