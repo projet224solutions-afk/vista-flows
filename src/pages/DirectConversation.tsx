@@ -3,7 +3,7 @@
  * Avec présence en ligne, indicateur de frappe, horodatage complet
  */
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +79,8 @@ export default function DirectConversation() {
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTypingSentRef = useRef<number>(0);
+  const presenceDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPresenceRef = useRef<{ online: boolean; lastSeen: string | null }>({ online: false, lastSeen: null });
 
   // ─── Load recipient profile ───
   useEffect(() => {
@@ -115,46 +117,59 @@ export default function DirectConversation() {
     loadRecipient();
   }, [userId, navigate]);
 
-  // ─── Real online presence ───
+  // ─── Stabilized presence check ───
+  const applyPresence = useCallback((d: any) => {
+    if (!d) return;
+    const lastActive = d.last_active || d.last_seen || d.updated_at;
+    // Consider online if status says so AND last_active within 90s
+    const statusOnline = d.status === 'online' || d.status === 'busy' || d.status === 'in_call';
+    const recentlyActive = lastActive && (Date.now() - new Date(lastActive).getTime()) < 90000;
+    const isOnline = statusOnline && recentlyActive;
+    const lastSeen = d.last_seen || d.last_active || null;
+
+    // Only update if value actually changed (prevents flickering)
+    if (lastPresenceRef.current.online !== isOnline || lastPresenceRef.current.lastSeen !== lastSeen) {
+      lastPresenceRef.current = { online: isOnline, lastSeen };
+      setIsRecipientOnline(isOnline);
+      setRecipientLastSeen(lastSeen);
+    }
+  }, []);
+
   useEffect(() => {
     if (!userId) return;
 
     const fetchPresence = async () => {
       const { data } = await supabase
         .from('user_presence' as any)
-        .select('status, last_seen, last_active')
+        .select('status, last_seen, last_active, updated_at')
         .eq('user_id', userId)
         .maybeSingle();
-
-      if (data) {
-        const d = data as any;
-        const isOnline = d.status === 'online' || d.status === 'busy' || d.status === 'in_call';
-        setIsRecipientOnline(isOnline);
-        setRecipientLastSeen(d.last_seen || d.last_active);
-      }
+      applyPresence(data);
     };
 
     fetchPresence();
 
-    // Subscribe to presence changes
+    // Subscribe with debounce to prevent flickering from rapid heartbeats
     const channel = supabase
       .channel(`presence-watch-${userId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'user_presence', filter: `user_id=eq.${userId}` },
         (payload) => {
-          const d = payload.new as any;
-          if (d) {
-            const isOnline = d.status === 'online' || d.status === 'busy' || d.status === 'in_call';
-            setIsRecipientOnline(isOnline);
-            setRecipientLastSeen(d.last_seen || d.last_active);
-          }
+          // Debounce: wait 1.5s before applying to absorb rapid updates
+          if (presenceDebounceRef.current) clearTimeout(presenceDebounceRef.current);
+          presenceDebounceRef.current = setTimeout(() => {
+            applyPresence(payload.new);
+          }, 1500);
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [userId]);
+    return () => {
+      supabase.removeChannel(channel);
+      if (presenceDebounceRef.current) clearTimeout(presenceDebounceRef.current);
+    };
+  }, [userId, applyPresence]);
 
   // ─── Typing indicator (broadcast) ───
   useEffect(() => {

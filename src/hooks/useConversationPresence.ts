@@ -150,63 +150,74 @@ export function useConversationPresence(): UseConversationPresenceReturn {
     return formatLastSeen(presence?.lastSeen || null);
   }, [presences, formatLastSeen]);
 
-  // S'abonner aux changements de présence en temps réel
+  // S'abonner aux changements de présence en temps réel (avec debounce)
   useEffect(() => {
     if (!user?.id) return;
 
-    // Canal pour les mises à jour de présence
-    const channel = supabase
-      .channel('conversation-presence-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_presence',
-        },
-        (payload) => {
-          const row = payload.new as any;
-          if (!row?.user_id) return;
+    // Debounce map: accumulate updates per user, apply after delay
+    const pendingUpdates = new Map<string, any>();
+    let debounceTimer: NodeJS.Timeout | null = null;
 
-          // Ne mettre à jour que les utilisateurs qu'on suit
-          if (!trackedUsersRef.current.has(row.user_id)) return;
+    const flushUpdates = () => {
+      if (pendingUpdates.size === 0) return;
+      const updates = new Map(pendingUpdates);
+      pendingUpdates.clear();
 
-          const now = Date.now();
+      setPresences(prev => {
+        const updated = new Map(prev);
+        const now = Date.now();
+        updates.forEach((row, userId) => {
           const lastActive = row.last_active ? new Date(row.last_active).getTime() : 0;
           const timeSinceActive = now - lastActive;
-          const isReallyOnline = timeSinceActive < OFFLINE_THRESHOLD_MS && 
+          const isReallyOnline = timeSinceActive < OFFLINE_THRESHOLD_MS &&
             ['online', 'away', 'busy'].includes(row.status);
 
-          setPresences(prev => {
-            const updated = new Map(prev);
-            updated.set(row.user_id, {
-              userId: row.user_id,
+          const existing = updated.get(userId);
+          // Only update if state actually changed
+          if (!existing || existing.isOnline !== isReallyOnline || existing.status !== (isReallyOnline ? row.status : 'offline')) {
+            updated.set(userId, {
+              userId,
               status: isReallyOnline ? row.status : 'offline',
               lastSeen: row.last_seen || row.last_active,
               isOnline: isReallyOnline,
               device: row.current_device,
             });
-            return updated;
-          });
+          }
+        });
+        return updated;
+      });
+    };
+
+    const channel = supabase
+      .channel('conversation-presence-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_presence' },
+        (payload) => {
+          const row = payload.new as any;
+          if (!row?.user_id || !trackedUsersRef.current.has(row.user_id)) return;
+
+          pendingUpdates.set(row.user_id, row);
+
+          // Debounce: apply after 2s of quiet
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(flushUpdates, 2000);
         }
       )
       .subscribe();
 
     channelRef.current = channel;
 
-    // Rafraîchir périodiquement pour détecter les utilisateurs stale
+    // Rafraîchir périodiquement (toutes les 45 secondes)
     const refreshInterval = setInterval(() => {
       const userIds = Array.from(trackedUsersRef.current);
-      if (userIds.length > 0) {
-        loadPresences(userIds);
-      }
-    }, 30000); // Toutes les 30 secondes
+      if (userIds.length > 0) loadPresences(userIds);
+    }, 45000);
 
     return () => {
       clearInterval(refreshInterval);
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
+      if (debounceTimer) clearTimeout(debounceTimer);
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
   }, [user?.id, loadPresences]);
 
