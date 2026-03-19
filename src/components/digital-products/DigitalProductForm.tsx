@@ -353,6 +353,9 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       price: initialProduct.price ? String(initialProduct.price) : '',
       originalPrice: initialProduct.original_price ? String(initialProduct.original_price) : '',
       currency: initialProduct.currency || 'GNF',
+      pricingType: (initialProduct.pricing_type as DirectSaleFormData['pricingType']) || prev.pricingType,
+      subscriptionInterval: (initialProduct.subscription_interval as DirectSaleFormData['subscriptionInterval']) || prev.subscriptionInterval,
+      accessDuration: (initialProduct.access_duration as DirectSaleFormData['accessDuration']) || prev.accessDuration,
     }));
 
     setImages(initialProduct.images || []);
