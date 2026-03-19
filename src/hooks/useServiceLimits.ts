@@ -12,7 +12,6 @@ interface ServiceLimits {
   hasSms: boolean;
   hasEmail: boolean;
   hasBranding: boolean;
-  hasApi: boolean;
   hasPriorityListing: boolean;
   planName: string;
   isActive: boolean;

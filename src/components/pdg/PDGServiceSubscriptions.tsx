@@ -937,7 +937,6 @@ export default function PDGServiceSubscriptions() {
                   { key: 'sms_notifications', label: 'Notifications SMS' },
                   { key: 'email_notifications', label: 'Notifications Email' },
                   { key: 'custom_branding', label: 'Branding personnalisé' },
-                  { key: 'api_access', label: 'Accès API' },
                   { key: 'priority_listing', label: 'Mise en avant prioritaire' },
                 ].map(({ key, label }) => (
                   <div key={key} className="flex items-center justify-between py-1.5 px-3 rounded-lg border border-border bg-muted/30">
