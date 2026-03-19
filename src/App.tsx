@@ -89,6 +89,7 @@ const PaymentCorePage = lazyWithRetry(() => import("./pages/PaymentCore"));
 const Orders = lazyWithRetry(() => import("./pages/Orders"));
 const DigitalPurchaseDownload = lazyWithRetry(() => import("./pages/DigitalPurchaseDownload"));
 const MyDigitalPurchases = lazyWithRetry(() => import("./pages/MyDigitalPurchases"));
+const MyDigitalSubscriptions = lazyWithRetry(() => import("./pages/MyDigitalSubscriptions"));
 const ContactUserById = lazyWithRetry(() => import("./components/communication/ContactUserById"));
 const DirectConversation = lazyWithRetry(() => import("./pages/DirectConversation"));
 const Devis = lazyWithRetry(() => import("./pages/Devis"));
