@@ -334,6 +334,12 @@ export default function ServiceDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="api">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <WalletApiPanel serviceId={service.id} businessName={service.business_name} />
+            </Suspense>
+          </TabsContent>
         </Tabs>
       </div>
       
