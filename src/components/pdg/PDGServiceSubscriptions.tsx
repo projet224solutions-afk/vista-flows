@@ -25,8 +25,9 @@ import {
   Store, Calendar, AlertCircle, CheckCircle, XCircle, Clock,
   UtensilsCrossed, Home, Wrench, Car, Dumbbell, Scissors, Laptop,
   BookOpen, Truck, Camera, Leaf, Heart, Hammer, Sparkles, Filter,
-  Shield, LayoutGrid, Eye, Ban, CreditCard
+  Shield, LayoutGrid, Eye, Ban, CreditCard, Settings2
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
