@@ -375,6 +375,24 @@ export default function Messages() {
             .eq('vendor_id', conv.other_user_id)
             .maybeSingle();
 
+          // Récupérer le type de service pro (restaurant, coiffure, etc.)
+          const { data: proService } = await supabase
+            .from('professional_services')
+            .select(`
+              service_type:service_types (
+                code,
+                name
+              )
+            `)
+            .eq('user_id', conv.other_user_id)
+            .eq('status', 'active')
+            .limit(1)
+            .maybeSingle();
+
+          const serviceType = Array.isArray((proService as any)?.service_type)
+            ? (proService as any).service_type[0]
+            : (proService as any)?.service_type;
+
           // ✅ Calculer le nombre de messages non lus pour cette conversation
           const { count: unreadCount } = await supabase
             .from('messages')
@@ -405,7 +423,9 @@ export default function Messages() {
             vendor_phone: vendor?.phone,
             vendor_shop_slug: vendor?.shop_slug,
             vendor_id: vendor?.id,
-            user_role: (profile as any)?.role || null
+            user_role: (profile as any)?.role || null,
+            service_type_name: serviceType?.name || null,
+            service_type_code: serviceType?.code || null,
           };
         })
       );
