@@ -410,26 +410,38 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     const uploadedUrls: string[] = [];
     
     for (const file of Array.from(files)) {
-      console.log(`[DigitalProductForm] Uploading deliverable file to GCS...`, file.name);
+      console.log(`[DigitalProductForm] Uploading deliverable file...`, file.name, file.size);
       
-      const uploadResult = await uploadToGCS(file, {
-        folder: 'documents',
-        subfolder: `${user.id}/deliverables`,
-      });
+      try {
+        // Use digital-products bucket with Supabase fallback preferred for reliability
+        const uploadResult = await uploadToGCS(file, {
+          folder: 'digital-products',
+          subfolder: `${user.id}/deliverables`,
+          preferSupabase: true, // Force Supabase Storage for reliability
+        });
 
-      if (uploadResult.success && uploadResult.publicUrl) {
-        console.log(`[DigitalProductForm] ✅ Deliverable uploaded: ${uploadResult.publicUrl}`);
-        uploadedUrls.push(uploadResult.publicUrl);
-      } else {
+        if (uploadResult.success && uploadResult.publicUrl) {
+          console.log(`[DigitalProductForm] ✅ Deliverable uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
+          uploadedUrls.push(uploadResult.publicUrl);
+        } else {
+          console.error(`[DigitalProductForm] ❌ Upload failed for ${file.name}:`, uploadResult.error);
+          toast.error(`Erreur upload: ${file.name} - ${uploadResult.error || 'Échec inconnu'}`);
+        }
+      } catch (err: any) {
+        console.error(`[DigitalProductForm] ❌ Upload exception for ${file.name}:`, err);
         toast.error(`Erreur upload: ${file.name}`);
       }
     }
 
     if (uploadedUrls.length > 0) {
       setDeliverableFiles(prev => [...prev, ...uploadedUrls]);
-      toast.success(`${uploadedUrls.length} fichier(s) ajouté(s)`);
+      toast.success(`${uploadedUrls.length} fichier(s) ajouté(s) avec succès`);
+    } else if (files.length > 0) {
+      toast.error('Aucun fichier n\'a pu être uploadé. Vérifiez votre connexion et réessayez.');
     }
     setUploadingFiles(false);
+    // Reset input pour permettre de re-sélectionner le même fichier
+    e.target.value = '';
   };
 
   const handleVideoSelect = (file: File | null, url: string | null) => {
