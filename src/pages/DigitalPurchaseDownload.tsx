@@ -182,9 +182,19 @@ export default function DigitalPurchaseDownload() {
           vendors:vendor_id(business_name)
         `)
         .eq('id', productId!)
-        .single();
+        .maybeSingle();
 
-      if (productError) throw productError;
+      if (productError) {
+        console.error('Error fetching product:', productError);
+        throw productError;
+      }
+
+      if (!productData) {
+        console.error('Digital product not found for ID:', productId);
+        toast.error('Produit introuvable');
+        navigate('/marketplace');
+        return;
+      }
       
       const vRaw = (productData as any).vendors;
       setProduct({
