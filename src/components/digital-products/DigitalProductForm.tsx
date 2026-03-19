@@ -519,6 +519,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         description: baseData.description.trim(),
         short_description: baseData.shortDescription.trim(),
         images: images,
+        file_urls: salesMode === 'direct' ? deliverableFiles : [],
         video_url: videoUrl,
         category: category,
         product_type: baseData.productType || null,
