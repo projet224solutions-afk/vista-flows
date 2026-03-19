@@ -1269,7 +1269,14 @@ export default function Payment() {
                           setPaymentStep('form');
                           loadWalletData();
                           loadRecentTransactions();
-                          if (productPaymentInfo || cartPaymentInfo) {
+                          if (productPaymentInfo) {
+                            if (productPaymentInfo.productType === 'digital') {
+                              const isSubscription = productPaymentInfo.pricingType === 'subscription';
+                              navigate(isSubscription ? '/my-digital-subscriptions' : `/digital-purchase/${productPaymentInfo.productId}`);
+                            } else {
+                              navigate('/client');
+                            }
+                          } else if (cartPaymentInfo) {
                             navigate('/client');
                           }
                         }}
