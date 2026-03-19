@@ -95,12 +95,10 @@ export function ServiceIdBadge({ serviceId, compact = false, className }: Servic
           showIcon={false}
         />
       </div>
-      {profile?.role === 'prestataire' && (
-        <Badge variant="outline" className="text-[10px] gap-1 border-emerald-500/30 text-emerald-700">
-          <Shield className="w-2.5 h-2.5" />
-          Service Pro
-        </Badge>
-      )}
+      <Badge variant="outline" className="text-[10px] gap-1 border-primary/30 text-primary">
+        <Shield className="w-2.5 h-2.5" />
+        Service Pro
+      </Badge>
     </div>
   );
 }
