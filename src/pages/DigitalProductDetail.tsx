@@ -396,7 +396,7 @@ export default function DigitalProductDetail() {
                 ) : product.price > 0 ? (
                   <>
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Acheter
+                    {product.pricing_type === 'subscription' ? "S'abonner" : 'Acheter'}
                   </>
                 ) : (
                   <>
