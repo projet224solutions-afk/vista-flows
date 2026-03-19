@@ -1,21 +1,24 @@
 /**
  * Dashboard Home dédié pour les vendeurs de produits numériques
- * Affiche uniquement les stats et actions liées aux produits digitaux et affiliations
+ * Affiche les stats réelles (ventes, abonnés, revenus) depuis les tables de transactions
  */
 
-import { memo, Suspense, lazy } from 'react';
+import { memo, Suspense, lazy, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Laptop, Plus, Eye, TrendingUp, DollarSign,
-  Link, Package, FileText, BookOpen, Plane, Box, ShoppingCart
+  Link, Package, FileText, BookOpen, Plane, Box, ShoppingCart,
+  Users, Download, RefreshCw
 } from 'lucide-react';
 import { useMerchantDigitalProducts, DigitalProduct } from '@/hooks/useDigitalProducts';
 import { SectionLoader } from '@/components/ui/GlobalLoader';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const UniversalWalletTransactions = lazy(() => import('@/components/wallet/UniversalWalletTransactions'));
 
@@ -28,16 +31,61 @@ const categoryIcons: Record<string, React.ComponentType<any>> = {
   custom: Package,
 };
 
+interface MerchantStats {
+  totalSales: number;
+  totalRevenue: number;
+  activeSubscribers: number;
+  totalDownloads: number;
+}
+
 const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { products, loading } = useMerchantDigitalProducts();
+  const [stats, setStats] = useState<MerchantStats>({ totalSales: 0, totalRevenue: 0, activeSubscribers: 0, totalDownloads: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const publishedCount = products.filter(p => p.status === 'published').length;
   const draftCount = products.filter(p => p.status === 'draft').length;
   const affiliateCount = products.filter(p => p.product_mode === 'affiliate').length;
   const directCount = products.filter(p => p.product_mode === 'direct').length;
   const totalViews = products.reduce((sum, p) => sum + (p.views_count || 0), 0);
-  const totalSales = products.reduce((sum, p) => sum + (p.sales_count || 0), 0);
+
+  // Load real stats from purchases & subscriptions tables
+  useEffect(() => {
+    if (!user?.id) return;
+    const loadStats = async () => {
+      setStatsLoading(true);
+      try {
+        const [purchasesRes, subscriptionsRes] = await Promise.all([
+          supabase
+            .from('digital_product_purchases')
+            .select('id, amount, download_count')
+            .eq('merchant_id', user.id)
+            .eq('payment_status', 'completed'),
+          supabase
+            .from('digital_subscriptions')
+            .select('id, amount_per_period, status')
+            .eq('merchant_id', user.id)
+        ]);
+
+        const purchases = purchasesRes.data || [];
+        const subscriptions = subscriptionsRes.data || [];
+
+        const totalSales = purchases.length;
+        const totalRevenue = purchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const totalDownloads = purchases.reduce((sum, p) => sum + (p.download_count || 0), 0);
+        const activeSubscribers = subscriptions.filter(s => s.status === 'active').length;
+
+        setStats({ totalSales, totalRevenue, activeSubscribers, totalDownloads });
+      } catch (error) {
+        console.error('Erreur chargement stats:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    loadStats();
+  }, [user?.id]);
 
   return (
     <div className="space-y-6">
@@ -65,15 +113,70 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </CardContent>
       </Card>
 
-      {/* Stats Grid */}
+      {/* Real Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-1">
-              <Package className="w-4 h-4 text-purple-600" />
-              <span className="text-xs text-muted-foreground">Total Produits</span>
+              <ShoppingCart className="w-4 h-4 text-green-600" />
+              <span className="text-xs text-muted-foreground">Ventes</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold">{products.length}</div>
+            <div className="text-xl sm:text-2xl font-bold text-green-600">
+              {statsLoading ? '...' : stats.totalSales}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">achats confirmés</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Users className="w-4 h-4 text-purple-600" />
+              <span className="text-xs text-muted-foreground">Abonnés actifs</span>
+            </div>
+            <div className="text-xl sm:text-2xl font-bold text-purple-600">
+              {statsLoading ? '...' : stats.activeSubscribers}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">abonnements en cours</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <DollarSign className="w-4 h-4 text-orange-600" />
+              <span className="text-xs text-muted-foreground">Revenus</span>
+            </div>
+            <div className="text-xl sm:text-2xl font-bold text-orange-600">
+              {statsLoading ? '...' : stats.totalRevenue.toLocaleString('fr-FR')}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">GNF total</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Download className="w-4 h-4 text-blue-600" />
+              <span className="text-xs text-muted-foreground">Téléchargements</span>
+            </div>
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">
+              {statsLoading ? '...' : stats.totalDownloads}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">fichiers téléchargés</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Secondary stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Package className="w-4 h-4 text-primary" />
+              <span className="text-xs text-muted-foreground">Produits</span>
+            </div>
+            <div className="text-lg font-bold">{products.length}</div>
             <div className="flex gap-2 mt-1">
               <Badge variant="secondary" className="text-[10px]">{directCount} directs</Badge>
               <Badge variant="outline" className="text-[10px]">{affiliateCount} affil.</Badge>
@@ -87,30 +190,25 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               <TrendingUp className="w-4 h-4 text-green-600" />
               <span className="text-xs text-muted-foreground">Publiés</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-green-600">{publishedCount}</div>
+            <div className="text-lg font-bold text-green-600">{publishedCount}</div>
             {draftCount > 0 && (
               <p className="text-[10px] text-muted-foreground mt-1">{draftCount} brouillon{draftCount > 1 ? 's' : ''}</p>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="col-span-2">
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-1">
               <Eye className="w-4 h-4 text-blue-600" />
               <span className="text-xs text-muted-foreground">Vues totales</span>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-blue-600">{totalViews}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-3 sm:p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <ShoppingCart className="w-4 h-4 text-orange-600" />
-              <span className="text-xs text-muted-foreground">Ventes</span>
-            </div>
-            <div className="text-xl sm:text-2xl font-bold text-orange-600">{totalSales}</div>
+            <div className="text-lg font-bold text-blue-600">{totalViews}</div>
+            {stats.totalSales > 0 && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Taux de conversion : {((stats.totalSales / Math.max(totalViews, 1)) * 100).toFixed(1)}%
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -168,9 +266,9 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                             <span>{product.product_mode === 'affiliate' ? 'Affiliation' : 'Direct'}</span>
                             <span>•</span>
-                            <span>{product.views_count || 0} vues</span>
+                            <span>{product.sales_count || 0} ventes</span>
                             <span>•</span>
-                            <span>{formatDistanceToNow(new Date(product.created_at), { addSuffix: true, locale: fr })}</span>
+                            <span>{product.views_count || 0} vues</span>
                           </div>
                         </div>
                         <Badge
