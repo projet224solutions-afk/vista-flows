@@ -675,8 +675,17 @@ export default function PDGServiceSubscriptions() {
         <TabsContent value="plans" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Plans d'Abonnement — Services de Proximité</CardTitle>
-              <CardDescription>Plans unifiés pour tous les types de services professionnels</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                {activeServiceTab !== 'all' && getIcon(serviceTypes.find(s => s.id === activeServiceTab)?.code || '')}
+                {activeServiceTab !== 'all'
+                  ? `Plans — ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
+                  : "Plans d'Abonnement — Tous les Services"}
+              </CardTitle>
+              <CardDescription>
+                {activeServiceTab !== 'all' 
+                  ? `Plans spécifiques au service ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
+                  : 'Plans unifiés pour tous les types de services professionnels'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="w-full">
