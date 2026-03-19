@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { 
   ArrowLeft, RefreshCw, Calendar, CreditCard, XCircle, 
-  CheckCircle, Clock, AlertTriangle, Package, TrendingUp 
+  CheckCircle, Clock, AlertTriangle, Package, TrendingUp, Download 
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -303,13 +303,21 @@ export default function MyDigitalSubscriptions() {
                     {isActive && (
                       <div className="border-t border-border px-4 py-3 flex items-center gap-2 bg-muted/30">
                         <Button
+                          size="sm"
+                          onClick={() => navigate(`/digital-purchase/${sub.product_id}`)}
+                          className="text-xs"
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          Accéder au contenu
+                        </Button>
+                        <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleToggleAutoRenew(sub.id, sub.auto_renew)}
                           className="text-xs"
                         >
                           <RefreshCw className="w-3 h-3 mr-1" />
-                          {sub.auto_renew ? 'Désactiver le renouvellement' : 'Activer le renouvellement'}
+                          {sub.auto_renew ? 'Désactiver' : 'Activer'} renouvellement
                         </Button>
                         <div className="flex-1" />
                         <Button

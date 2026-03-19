@@ -968,7 +968,7 @@ export default function Payment() {
           });
 
           setProductPaymentInfo(null);
-          navigate(isSubscription ? '/my-digital-subscriptions' : `/digital-purchase/${productPaymentInfo.productId}`);
+          navigate(`/digital-purchase/${productPaymentInfo.productId}`);
           return;
         }
 
@@ -1353,8 +1353,8 @@ export default function Payment() {
                           loadRecentTransactions();
                           if (productPaymentInfo) {
                             if (productPaymentInfo.productType === 'digital') {
-                              const isSubscription = productPaymentInfo.pricingType === 'subscription';
-                              navigate(isSubscription ? '/my-digital-subscriptions' : `/digital-purchase/${productPaymentInfo.productId}`);
+                              // Always redirect to the content page — it handles both purchases & subscriptions
+                              navigate(`/digital-purchase/${productPaymentInfo.productId}`);
                             } else {
                               navigate('/client');
                             }
