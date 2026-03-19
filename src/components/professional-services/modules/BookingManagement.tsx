@@ -35,6 +35,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('pending');
+  const { limits, checkBookingLimit } = useServiceLimits(serviceId);
 
   useEffect(() => {
     loadBookings();
