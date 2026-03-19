@@ -1353,8 +1353,7 @@ export default function Payment() {
                           loadRecentTransactions();
                           if (productPaymentInfo) {
                             if (productPaymentInfo.productType === 'digital') {
-                              // Always redirect to the content page — it handles both purchases & subscriptions
-                              navigate(`/digital-purchase/${productPaymentInfo.productId}`);
+                              navigate('/my-digital-purchases');
                             } else {
                               navigate('/client');
                             }
