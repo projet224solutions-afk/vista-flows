@@ -97,34 +97,19 @@ export default function DigitalProductDetail() {
   const incrementViews = async () => {
     if (!productId) return;
     
-    // Vérifier si cette vue a déjà été comptée dans cette session
     const viewKey = `digital_product_view_${productId}`;
     const hasViewed = sessionStorage.getItem(viewKey);
     
-    if (hasViewed) {
-      console.log('Vue déjà comptée pour ce produit dans cette session');
-      return;
-    }
+    if (hasViewed) return;
     
     try {
-      // Récupérer le count actuel et incrémenter
-      const { data } = await supabase
-        .from('digital_products')
-        .select('views_count')
-        .eq('id', productId)
-        .single();
+      // Use RPC function to bypass RLS
+      const { error } = await supabase.rpc('increment_digital_product_views', {
+        p_product_id: productId
+      });
       
-      if (data) {
-        const { error } = await supabase
-          .from('digital_products')
-          .update({ views_count: (data.views_count || 0) + 1 })
-          .eq('id', productId);
-        
-        if (!error) {
-          // Marquer comme vu dans cette session
-          sessionStorage.setItem(viewKey, 'true');
-          console.log('Vue comptée avec succès pour:', productId);
-        }
+      if (!error) {
+        sessionStorage.setItem(viewKey, 'true');
       }
     } catch (error) {
       console.error('Erreur incrémentation vues:', error);
