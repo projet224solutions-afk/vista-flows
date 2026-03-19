@@ -248,66 +248,110 @@ export default function Payment() {
         const isDigital = stateData?.productType === 'digital';
         
         if (isDigital) {
-          // Charger depuis service_products (produits numériques)
-          const { data: digitalProduct, error: digitalError } = await supabase
-            .from('service_products')
+          // D'abord essayer digital_products (produits numériques du marketplace)
+          const { data: dpProduct, error: dpError } = await supabase
+            .from('digital_products')
             .select(`
               id,
-              name,
+              title,
               price,
-              professional_service_id,
-              professional_services!inner(user_id, business_name)
+              currency,
+              vendor_id,
+              merchant_id,
+              vendors:vendors!digital_products_vendor_id_fkey(user_id, business_name, country)
             `)
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
-          if (digitalError) throw digitalError;
-
-          if (digitalProduct) {
-            const totalAmount = digitalProduct.price * qty;
-            const proService = digitalProduct.professional_services as any;
+          if (dpProduct) {
+            const totalAmount = dpProduct.price * qty;
+            const vRaw = (dpProduct.vendors as any) || null;
+            const v = Array.isArray(vRaw) ? vRaw?.[0] : vRaw;
+            const vendorUserId = v?.user_id || dpProduct.merchant_id;
             
-            // Stocker les infos produit numérique
+            // Dériver la devise du vendeur
+            const vendorCurr = getVendorCurrency(v?.country);
+            setProductCurrency(dpProduct.currency || vendorCurr);
+            
             setProductPaymentInfo({
-              productId: digitalProduct.id,
-              productName: digitalProduct.name,
+              productId: dpProduct.id,
+              productName: dpProduct.title,
               quantity: qty,
-              vendorId: digitalProduct.professional_service_id,
-              vendorUserId: proService.user_id,
-              productType: 'digital' // Produit numérique
+              vendorId: dpProduct.vendor_id || dpProduct.merchant_id,
+              vendorUserId: vendorUserId,
+              productType: 'digital'
             });
             
-            // Récupérer le public_id / custom_id du vendeur depuis profiles
-            const proUserId = proService.user_id;
-            console.log('🔍 Recherche profil digital pour user_id:', proUserId);
-            
-            const { data: vendorProfile, error: profileError } = await supabase
+            // Récupérer le public_id du vendeur
+            const { data: vendorProfile } = await supabase
               .from('profiles')
               .select('public_id, custom_id')
-              .eq('id', proUserId)
+              .eq('id', vendorUserId)
               .maybeSingle();
 
-            console.log('📋 Profil vendeur digital trouvé:', vendorProfile, 'Erreur:', profileError);
-
-            // Pré-remplir les champs
             setPaymentAmount(totalAmount.toString());
             
-            // Utiliser custom_id en priorité (format VND0001), puis public_id
             let vendorCode: string;
             if (vendorProfile?.custom_id) {
               vendorCode = vendorProfile.custom_id;
             } else if (vendorProfile?.public_id && vendorProfile.public_id.length <= 15) {
               vendorCode = vendorProfile.public_id;
             } else {
-              vendorCode = `VEN-${proUserId.substring(0, 8).toUpperCase()}`;
+              vendorCode = `VEN-${vendorUserId.substring(0, 8).toUpperCase()}`;
             }
             setRecipientId(vendorCode);
-            console.log('✅ RecipientId digital défini:', vendorCode);
-            
-            setPaymentDescription(`Achat numérique: ${digitalProduct.name} (x${qty})`);
-            
-            // Ouvrir automatiquement le dialog de paiement
+            setPaymentDescription(`Achat numérique: ${dpProduct.title} (x${qty})`);
             setPaymentOpen(true);
+          } else {
+            // Fallback: essayer service_products
+            const { data: digitalProduct, error: digitalError } = await supabase
+              .from('service_products')
+              .select(`
+                id,
+                name,
+                price,
+                professional_service_id,
+                professional_services!inner(user_id, business_name)
+              `)
+              .eq('id', id)
+              .single();
+
+            if (digitalError) throw digitalError;
+
+            if (digitalProduct) {
+              const totalAmount = digitalProduct.price * qty;
+              const proService = digitalProduct.professional_services as any;
+              
+              setProductPaymentInfo({
+                productId: digitalProduct.id,
+                productName: digitalProduct.name,
+                quantity: qty,
+                vendorId: digitalProduct.professional_service_id,
+                vendorUserId: proService.user_id,
+                productType: 'digital'
+              });
+              
+              const proUserId = proService.user_id;
+              const { data: vendorProfile } = await supabase
+                .from('profiles')
+                .select('public_id, custom_id')
+                .eq('id', proUserId)
+                .maybeSingle();
+
+              setPaymentAmount(totalAmount.toString());
+              
+              let vendorCode: string;
+              if (vendorProfile?.custom_id) {
+                vendorCode = vendorProfile.custom_id;
+              } else if (vendorProfile?.public_id && vendorProfile.public_id.length <= 15) {
+                vendorCode = vendorProfile.public_id;
+              } else {
+                vendorCode = `VEN-${proUserId.substring(0, 8).toUpperCase()}`;
+              }
+              setRecipientId(vendorCode);
+              setPaymentDescription(`Achat numérique: ${digitalProduct.name} (x${qty})`);
+              setPaymentOpen(true);
+            }
           }
         } else {
           // Charger les détails du produit physique
