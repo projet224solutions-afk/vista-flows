@@ -788,6 +788,87 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
               </CardContent>
             </Card>
 
+            {/* Fichiers livrables (vente directe uniquement) */}
+            {salesMode === 'direct' && (
+              <Card className="border-primary/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Download className="w-4 h-4 text-primary" />
+                    Fichiers à livrer à l'acheteur
+                    <Badge variant="default" className="text-[10px]">Important</Badge>
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Les fichiers que l'acheteur pourra télécharger après le paiement (PDF, ZIP, MP3, vidéo, etc.)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {deliverableFiles.length > 0 && (
+                      <div className="space-y-2">
+                        {deliverableFiles.map((url, i) => {
+                          const fileName = (() => {
+                            try {
+                              const parts = url.split('/');
+                              return decodeURIComponent(parts[parts.length - 1].split('?')[0]);
+                            } catch { return `Fichier ${i + 1}`; }
+                          })();
+                          return (
+                            <div key={i} className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <File className="w-4 h-4 text-primary shrink-0" />
+                                <span className="text-sm truncate">{fileName}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setDeliverableFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                className="p-1 text-destructive hover:bg-destructive/10 rounded"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <label className={cn(
+                      "flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors",
+                      uploadingFiles ? "border-primary/50 bg-primary/5" : "border-border hover:border-primary/50"
+                    )}>
+                      {uploadingFiles ? (
+                        <>
+                          <Loader2 className="w-8 h-8 text-primary mb-2 animate-spin" />
+                          <span className="text-sm text-primary font-medium">Upload en cours...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                          <span className="text-sm text-muted-foreground">
+                            Ajoutez vos fichiers téléchargeables
+                          </span>
+                          <span className="text-xs text-muted-foreground mt-1">
+                            PDF, ZIP, MP3, MP4, DOCX... (jusqu'à 20MB)
+                          </span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleDeliverableFileUpload}
+                        className="hidden"
+                        disabled={uploadingFiles}
+                      />
+                    </label>
+                    {deliverableFiles.length === 0 && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Sans fichier, l'acheteur ne recevra rien après le paiement
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Vidéo */}
             <Card>
               <CardHeader className="pb-3">
