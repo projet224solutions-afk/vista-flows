@@ -1,8 +1,9 @@
 /**
  * Page de Conversation Directe - Interface Mobile-First
+ * Avec présence en ligne, indicateur de frappe, horodatage complet
  */
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
-import { fr, enUS } from "date-fns/locale";
+import { format, isToday, isYesterday } from "date-fns";
+import { fr } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface Message {
@@ -34,22 +35,52 @@ interface Profile {
   email?: string;
 }
 
+/** Format date separator */
+function formatDateSeparator(dateStr: string): string {
+  const date = new Date(dateStr);
+  if (isToday(date)) return "Aujourd'hui";
+  if (isYesterday(date)) return "Hier";
+  return format(date, "EEEE d MMMM yyyy", { locale: fr });
+}
+
+/** Group messages by date */
+function groupMessagesByDate(messages: Message[]): { date: string; messages: Message[] }[] {
+  const groups: { date: string; messages: Message[] }[] = [];
+  let currentDate = "";
+
+  for (const msg of messages) {
+    const msgDate = format(new Date(msg.created_at), "yyyy-MM-dd");
+    if (msgDate !== currentDate) {
+      currentDate = msgDate;
+      groups.push({ date: msg.created_at, messages: [msg] });
+    } else {
+      groups[groups.length - 1].messages.push(msg);
+    }
+  }
+  return groups;
+}
+
 export default function DirectConversation() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t, language } = useTranslation();
-  
+  const { t } = useTranslation();
+
   const [recipient, setRecipient] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  
+  const [isRecipientOnline, setIsRecipientOnline] = useState(false);
+  const [recipientLastSeen, setRecipientLastSeen] = useState<string | null>(null);
+  const [isRecipientTyping, setIsRecipientTyping] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTypingSentRef = useRef<number>(0);
 
-  // Charger le profil du destinataire
+  // ─── Load recipient profile ───
   useEffect(() => {
     const loadRecipient = async () => {
       if (!userId) {
@@ -57,20 +88,13 @@ export default function DirectConversation() {
         navigate("/messages");
         return;
       }
-
       try {
-        const { data: profile, error } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
           .select('id, first_name, last_name, avatar_url, email')
           .eq('id', userId)
           .maybeSingle();
 
-        if (error && (error as any).code !== 'PGRST116') {
-          throw error;
-        }
-
-        // Si le profil n'existe pas encore, on ouvre quand même la conversation
-        // (le système reste 100% "réel" : on ne fabrique pas de données, on affiche juste un placeholder)
         setRecipient(
           profile ?? {
             id: userId,
@@ -88,11 +112,105 @@ export default function DirectConversation() {
         setLoading(false);
       }
     };
-
     loadRecipient();
   }, [userId, navigate]);
 
-  // Charger les messages
+  // ─── Real online presence ───
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchPresence = async () => {
+      const { data } = await supabase
+        .from('user_presence' as any)
+        .select('status, last_seen, last_active')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (data) {
+        const d = data as any;
+        const isOnline = d.status === 'online' || d.status === 'busy' || d.status === 'in_call';
+        setIsRecipientOnline(isOnline);
+        setRecipientLastSeen(d.last_seen || d.last_active);
+      }
+    };
+
+    fetchPresence();
+
+    // Subscribe to presence changes
+    const channel = supabase
+      .channel(`presence-watch-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_presence', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const d = payload.new as any;
+          if (d) {
+            const isOnline = d.status === 'online' || d.status === 'busy' || d.status === 'in_call';
+            setIsRecipientOnline(isOnline);
+            setRecipientLastSeen(d.last_seen || d.last_active);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userId]);
+
+  // ─── Typing indicator (broadcast) ───
+  useEffect(() => {
+    if (!userId || !user?.id) return;
+
+    const channelName = [user.id, userId].sort().join('-');
+    const typingChannel = supabase.channel(`typing:${channelName}`);
+
+    typingChannel
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        if (payload.payload?.user_id === userId) {
+          setIsRecipientTyping(true);
+          // Auto-clear after 3s
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = setTimeout(() => setIsRecipientTyping(false), 3000);
+        }
+      })
+      .on('broadcast', { event: 'stop_typing' }, (payload) => {
+        if (payload.payload?.user_id === userId) {
+          setIsRecipientTyping(false);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(typingChannel);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, [userId, user?.id]);
+
+  // Send typing broadcast (throttled)
+  const sendTypingIndicator = useCallback(() => {
+    if (!userId || !user?.id) return;
+    const now = Date.now();
+    if (now - lastTypingSentRef.current < 2000) return; // throttle 2s
+    lastTypingSentRef.current = now;
+
+    const channelName = [user.id, userId].sort().join('-');
+    supabase.channel(`typing:${channelName}`).send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { user_id: user.id }
+    });
+  }, [userId, user?.id]);
+
+  const sendStopTyping = useCallback(() => {
+    if (!userId || !user?.id) return;
+    const channelName = [user.id, userId].sort().join('-');
+    supabase.channel(`typing:${channelName}`).send({
+      type: 'broadcast',
+      event: 'stop_typing',
+      payload: { user_id: user.id }
+    });
+  }, [userId, user?.id]);
+
+  // ─── Load messages + realtime ───
   useEffect(() => {
     if (!userId || !user?.id) return;
 
@@ -113,33 +231,24 @@ export default function DirectConversation() {
 
     loadMessages();
 
-    // Subscription temps réel
     const channel = supabase
       .channel(`direct_${userId}`)
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages'
-        },
+        { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
           const msg = payload.new as Message;
-          if (
-            (msg.sender_id === user.id || msg.sender_id === userId)
-          ) {
+          if (msg.sender_id === user.id || msg.sender_id === userId) {
             setMessages(prev => [...prev, msg]);
           }
         }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [userId, user?.id]);
 
-  // Auto-scroll + auto-focus input
+  // Auto-scroll + auto-focus
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -150,10 +259,19 @@ export default function DirectConversation() {
     }
   }, [loading, recipient]);
 
-  // Envoyer un message
+  // ─── Handle input change (with typing indicator) ───
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    if (e.target.value.trim()) {
+      sendTypingIndicator();
+    }
+  };
+
+  // ─── Send message ───
   const handleSend = async () => {
     if (!newMessage.trim() || !user?.id || !userId) return;
 
+    sendStopTyping();
     setSending(true);
     try {
       const { error } = await supabase
@@ -167,7 +285,6 @@ export default function DirectConversation() {
         });
 
       if (error) throw error;
-      
       setNewMessage("");
       inputRef.current?.focus();
     } catch (error) {
@@ -178,60 +295,80 @@ export default function DirectConversation() {
     }
   };
 
+  // ─── Format last seen ───
+  const formatLastSeen = (dateStr: string | null): string => {
+    if (!dateStr) return "Hors ligne";
+    const date = new Date(dateStr);
+    if (isToday(date)) return `Vu à ${format(date, 'HH:mm')}`;
+    if (isYesterday(date)) return `Vu hier à ${format(date, 'HH:mm')}`;
+    return `Vu le ${format(date, 'd MMM à HH:mm', { locale: fr })}`;
+  };
+
+  // ─── Render ───
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
 
-  // Si l'utilisateur n'est pas connecté, afficher un message
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <p className="text-muted-foreground mb-4">Veuillez vous connecter pour envoyer des messages</p>
-        <Button onClick={() => navigate('/auth')}>
-          Se connecter
-        </Button>
+        <Button onClick={() => navigate('/auth')}>Se connecter</Button>
       </div>
     );
   }
 
-  if (!recipient) {
-    return null;
-  }
+  if (!recipient) return null;
+
+  const messageGroups = groupMessagesByDate(messages);
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-[200]">
-      {/* Header Professionnel */}
+      {/* ─── Header ─── */}
       <div className="flex items-center gap-3 p-4 border-b border-border bg-card/95 backdrop-blur-sm shadow-sm">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={() => navigate(-1)}
-          className="h-10 w-10 rounded-full hover:bg-muted"
-        >
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-10 w-10 rounded-full hover:bg-muted">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        
-        <Avatar className="w-11 h-11 ring-2 ring-primary/20">
-          <AvatarImage src={recipient.avatar_url} />
-          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
-            {recipient.first_name?.[0]?.toUpperCase()}{recipient.last_name?.[0]?.toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        
+
+        <div className="relative">
+          <Avatar className="w-11 h-11 ring-2 ring-primary/20">
+            <AvatarImage src={recipient.avatar_url} />
+            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+              {recipient.first_name?.[0]?.toUpperCase()}{recipient.last_name?.[0]?.toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          {/* Online dot on avatar */}
+          {isRecipientOnline && (
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-card" />
+          )}
+        </div>
+
         <div className="flex-1 min-w-0">
           <h1 className="font-semibold text-lg truncate">
             {recipient.first_name} {recipient.last_name}
           </h1>
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            <span className="text-xs text-muted-foreground">En ligne</span>
+            {isRecipientTyping ? (
+              <span className="text-xs text-primary font-medium animate-pulse">
+                écrit un message...
+              </span>
+            ) : isRecipientOnline ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-xs text-green-600 font-medium">En ligne</span>
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                {formatLastSeen(recipientLastSeen)}
+              </span>
+            )}
           </div>
         </div>
-        
+
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-primary/10 hover:text-primary">
             <Phone className="w-5 h-5" />
@@ -244,8 +381,8 @@ export default function DirectConversation() {
           </Button>
         </div>
       </div>
-      
-      {/* Zone des Messages */}
+
+      {/* ─── Messages ─── */}
       <ScrollArea className="flex-1 px-4 py-3">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-20">
@@ -265,90 +402,100 @@ export default function DirectConversation() {
           </div>
         ) : (
           <>
-            {messages.map((msg) => {
-              const isOwn = msg.sender_id === user?.id;
-              return (
-                <div 
-                  key={msg.id} 
-                  className={cn("flex mb-3", isOwn ? "justify-end" : "justify-start")}
-                >
-                  <div className={cn(
-                    "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm transition-all",
-                    isOwn 
-                      ? "bg-primary text-primary-foreground rounded-br-sm" 
-                      : "bg-muted rounded-bl-sm"
-                  )}>
-                    {msg.file_url && msg.type === 'image' && (
-                      <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
-                    )}
-                    {msg.content && (
-                      <p className="text-sm leading-relaxed break-words">{msg.content}</p>
-                    )}
-                    <div className={cn(
-                      "flex items-center justify-end gap-1 mt-1",
-                      isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                    )}>
-                      <span className="text-[10px]">
-                        {format(new Date(msg.created_at), 'HH:mm', { locale: fr })}
-                      </span>
-                      {isOwn && <CheckCheck className="w-3 h-3" />}
+            {messageGroups.map((group, gi) => (
+              <div key={gi}>
+                {/* Date separator */}
+                <div className="flex items-center justify-center my-4">
+                  <span className="px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium shadow-sm">
+                    {formatDateSeparator(group.date)}
+                  </span>
+                </div>
+
+                {group.messages.map((msg) => {
+                  const isOwn = msg.sender_id === user?.id;
+                  return (
+                    <div key={msg.id} className={cn("flex mb-3", isOwn ? "justify-end" : "justify-start")}>
+                      <div className={cn(
+                        "max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm transition-all",
+                        isOwn
+                          ? "bg-primary text-primary-foreground rounded-br-sm"
+                          : "bg-muted rounded-bl-sm"
+                      )}>
+                        {msg.file_url && msg.type === 'image' && (
+                          <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
+                        )}
+                        {msg.content && (
+                          <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                        )}
+                        <div className={cn(
+                          "flex items-center justify-end gap-1 mt-1",
+                          isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
+                        )}>
+                          <span className="text-[10px]">
+                            {format(new Date(msg.created_at), 'HH:mm', { locale: fr })}
+                          </span>
+                          {isOwn && <CheckCheck className="w-3 h-3" />}
+                        </div>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+            ))}
+
+            {/* Typing indicator bubble */}
+            {isRecipientTyping && (
+              <div className="flex justify-start mb-3">
+                <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </>
         )}
       </ScrollArea>
-      
-      {/* Barre de Saisie Ultra Professionnelle */}
+
+      {/* ─── Input bar ─── */}
       <div className="p-3 border-t border-border bg-card/95 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-        <form 
-          onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-          className="flex items-center gap-2"
-        >
-          <Button 
-            type="button" 
-            variant="ghost" 
-            size="icon" 
-            className="h-11 w-11 flex-shrink-0 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-          >
+        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
+          <Button type="button" variant="ghost" size="icon" className="h-11 w-11 flex-shrink-0 rounded-full hover:bg-primary/10 hover:text-primary transition-colors">
             <Paperclip className="w-5 h-5" />
           </Button>
-          
+
           <div className="flex-1 relative">
             <Input
               ref={inputRef}
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder={t('messaging.placeholder') || "Type your message..."}
+              onChange={handleInputChange}
+              onBlur={sendStopTyping}
+              placeholder={t('messaging.placeholder') || "Tapez votre message..."}
               className="w-full h-11 bg-muted/60 border border-border/50 rounded-full px-5 pr-4 
                          focus:bg-background focus:border-primary/30 focus:ring-2 focus:ring-primary/10
                          placeholder:text-muted-foreground/60 transition-all"
               disabled={sending}
             />
           </div>
-          
-          <Button 
-            type="submit" 
+
+          <Button
+            type="submit"
             size="icon"
             disabled={!newMessage.trim() || sending}
             className={cn(
               "h-11 w-11 flex-shrink-0 rounded-full transition-all duration-200",
-              newMessage.trim() 
-                ? "bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25" 
+              newMessage.trim()
+                ? "bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25"
                 : "bg-muted text-muted-foreground"
             )}
           >
-            <Send className={cn(
-              "w-5 h-5 transition-transform",
-              sending && "animate-pulse"
-            )} />
+            <Send className={cn("w-5 h-5 transition-transform", sending && "animate-pulse")} />
           </Button>
         </form>
-        
-        {/* Safe area pour iOS */}
         <div className="h-safe-area-inset-bottom" />
       </div>
     </div>
