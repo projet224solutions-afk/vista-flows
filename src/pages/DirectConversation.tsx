@@ -139,10 +139,16 @@ export default function DirectConversation() {
     };
   }, [userId, user?.id]);
 
-  // Auto-scroll
+  // Auto-scroll + auto-focus input
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    if (!loading && recipient) {
+      setTimeout(() => inputRef.current?.focus(), 300);
+    }
+  }, [loading, recipient]);
 
   // Envoyer un message
   const handleSend = async () => {
