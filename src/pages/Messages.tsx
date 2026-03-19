@@ -19,7 +19,6 @@ import MessageItem from "@/components/communication/MessageItem";
 import { PresenceIndicator, PresenceBadge, TypingIndicator, MessageStatusBadge } from "@/components/communication/PresenceIndicator";
 import { ReplyBar } from "@/components/communication/EnhancedMessageBubble";
 import { usePresence } from "@/hooks/usePresence";
-import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 import { useConversationPresence } from "@/hooks/useConversationPresence";
 import { playNotificationSound } from "@/services/notificationSoundService";
 import { useStorageUpload, StorageFolder } from "@/hooks/useStorageUpload";
@@ -73,7 +72,9 @@ interface Conversation {
   vendor_phone?: string;
   vendor_shop_slug?: string;
   vendor_id?: string;
-  user_role?: string;
+  user_role?: string | null;
+  service_type_name?: string | null;
+  service_type_code?: string | null;
 }
 
 export default function Messages() {
@@ -106,26 +107,8 @@ export default function Messages() {
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Hook de présence (legacy)
-  const {
-    updatePresence,
-    getUserPresence,
-    subscribeToPresence,
-    setTyping,
-    subscribeToTyping,
-    typingUsers,
-    presenceCache,
-  } = usePresence();
-
-  // 🚀 Hook de présence temps réel ultra-rapide
-  const {
-    isOnline: isUserOnlineRealtime,
-    getPresence: getRealtimePresence,
-    startTyping: startTypingRealtime,
-    stopTyping: stopTypingRealtime,
-    typingUsers: realtimeTypingUsers,
-    isConnected: presenceConnected,
-  } = useRealtimePresence({ debug: false });
+  // Hook de présence
+  const { setTyping, subscribeToTyping } = usePresence();
 
   // 🟢 Hook de présence pour la liste des conversations
   const {
@@ -134,6 +117,9 @@ export default function Messages() {
     getLastSeenText,
     loadPresences,
   } = useConversationPresence();
+
+  const typingActiveRef = useRef(false);
+  const lastTypingSyncRef = useRef(0);
 
   useEffect(() => {
     loadCurrentUser();
@@ -244,88 +230,67 @@ export default function Messages() {
     };
   }, [currentUser]);
 
-  // Subscription à la présence de l'autre utilisateur
+  // Synchroniser présence du contact sélectionné (source unique stable)
   useEffect(() => {
-    if (!selectedConversation) return;
+    if (!selectedConversation) {
+      setOtherUserPresence('offline');
+      return;
+    }
 
-    // 🚀 Utiliser le hook temps réel pour une détection instantanée
-    const checkPresence = () => {
-      const isOnline = isUserOnlineRealtime(selectedConversation);
-      const presence = getRealtimePresence(selectedConversation);
+    loadPresences([selectedConversation]);
+    setOtherUserPresence(getContactStatus(selectedConversation));
+  }, [selectedConversation, loadPresences, getContactStatus]);
 
-      if (presence) {
-        setOtherUserPresence(presence.status);
-      } else {
-        setOtherUserPresence(isOnline ? 'online' : 'offline');
-      }
-    };
-
-    // Vérifier immédiatement
-    checkPresence();
-
-    // Mettre à jour périodiquement (le hook gère le temps réel)
-    const interval = setInterval(checkPresence, 1000);
-
-    // S'abonner aussi aux changements legacy pour compatibilité
-    const unsubscribe = subscribeToPresence(selectedConversation, (presence) => {
-      setOtherUserPresence(presence.status);
-    });
-
-    return () => {
-      clearInterval(interval);
-      unsubscribe();
-    };
-  }, [selectedConversation, isUserOnlineRealtime, getRealtimePresence, subscribeToPresence]);
-
-  // Subscription aux indicateurs de frappe
+  // Subscription aux indicateurs de frappe (sans polling)
   useEffect(() => {
-    if (!selectedConversation) return;
+    if (!selectedConversation) {
+      setIsTyping(false);
+      return;
+    }
 
-    // 🚀 Vérifier les indicateurs temps réel
-    const checkTyping = () => {
-      const typingInConv = Array.from(realtimeTypingUsers.entries())
-        .filter(([_, convId]) => convId === selectedConversation)
-        .length > 0;
-
-      if (typingInConv) {
-        setIsTyping(true);
-        return;
-      }
-    };
-
-    checkTyping();
-    const interval = setInterval(checkTyping, 500);
-
-    // Fallback legacy
     const unsubscribe = subscribeToTyping(selectedConversation, (indicators) => {
-      setIsTyping(indicators.length > 0);
+      const otherUserTyping = indicators.some((indicator) => indicator.user_id !== currentUser?.id);
+      setIsTyping(otherUserTyping);
     });
 
-    return () => {
-      clearInterval(interval);
-      unsubscribe();
-    };
-  }, [selectedConversation, subscribeToTyping, realtimeTypingUsers]);
+    return () => unsubscribe();
+  }, [selectedConversation, subscribeToTyping, currentUser?.id]);
 
-  // Gérer l'indicateur de frappe lors de la saisie
+  const stopTypingIndicator = useCallback(() => {
+    if (!selectedConversation) return;
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+
+    if (typingActiveRef.current) {
+      typingActiveRef.current = false;
+      setTyping(selectedConversation, false);
+    }
+  }, [selectedConversation, setTyping]);
+
+  // Gérer l'indicateur de frappe lors de la saisie (throttle anti-spam)
   const handleTyping = useCallback(() => {
     if (!selectedConversation) return;
 
-    // 🚀 Utiliser le système temps réel
-    startTypingRealtime(selectedConversation);
+    const now = Date.now();
 
-    // Fallback legacy
-    setTyping(selectedConversation, true);
+    if (!typingActiveRef.current || now - lastTypingSyncRef.current > 5000) {
+      typingActiveRef.current = true;
+      lastTypingSyncRef.current = now;
+      setTyping(selectedConversation, true);
+    }
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      stopTypingRealtime();
+      typingActiveRef.current = false;
       setTyping(selectedConversation, false);
-    }, 3000);
-  }, [selectedConversation, setTyping, startTypingRealtime, stopTypingRealtime]);
+    }, 3500);
+  }, [selectedConversation, setTyping]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -410,6 +375,24 @@ export default function Messages() {
             .eq('vendor_id', conv.other_user_id)
             .maybeSingle();
 
+          // Récupérer le type de service pro (restaurant, coiffure, etc.)
+          const { data: proService } = await supabase
+            .from('professional_services')
+            .select(`
+              service_type:service_types (
+                code,
+                name
+              )
+            `)
+            .eq('user_id', conv.other_user_id)
+            .eq('status', 'active')
+            .limit(1)
+            .maybeSingle();
+
+          const serviceType = Array.isArray((proService as any)?.service_type)
+            ? (proService as any).service_type[0]
+            : (proService as any)?.service_type;
+
           // ✅ Calculer le nombre de messages non lus pour cette conversation
           const { count: unreadCount } = await supabase
             .from('messages')
@@ -440,7 +423,9 @@ export default function Messages() {
             vendor_phone: vendor?.phone,
             vendor_shop_slug: vendor?.shop_slug,
             vendor_id: vendor?.id,
-            user_role: (profile as any)?.role || null
+            user_role: (profile as any)?.role || null,
+            service_type_name: serviceType?.name || null,
+            service_type_code: serviceType?.code || null,
           };
         })
       );
@@ -835,15 +820,22 @@ export default function Messages() {
   const selectedConvData = conversations.find(c => c.id === selectedConversation);
 
   // Helper pour le label du rôle utilisateur
-  const getRoleLabel = (conv: { is_vendor?: boolean; user_role?: string }) => {
+  const getRoleLabel = (conv: { is_vendor?: boolean; user_role?: string | null; service_type_name?: string | null; service_type_code?: string | null }) => {
     if (conv.is_vendor) return 'Vendeur';
+
+    if (conv.service_type_name?.trim()) {
+      if ((conv.service_type_code || '').toLowerCase() === 'restaurant') return 'Restaurant';
+      return conv.service_type_name;
+    }
+
     const role = conv.user_role?.toLowerCase();
+    if (role === 'prestataire') return 'Service';
     if (role === 'taxi' || role === 'taxi_moto') return 'Taxi Moto';
     if (role === 'livreur' || role === 'delivery') return 'Livreur';
     if (role === 'transitaire') return 'Transitaire';
     if (role === 'agent') return 'Agent';
     if (role === 'admin') return 'Admin';
-    return 'Client';
+    return 'Utilisateur';
   };
 
   const formatTime = (dateStr: string) => {
