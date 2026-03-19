@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, User, Phone, CheckCircle, XCircle, DollarSign } from 'lucide-react';
+import { Calendar, Clock, User, Phone, CheckCircle, XCircle, DollarSign, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useServiceLimits } from '@/hooks/useServiceLimits';
 
 interface Booking {
   id: string;
@@ -34,6 +35,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('pending');
+  const { limits, checkBookingLimit } = useServiceLimits(serviceId);
 
   useEffect(() => {
     loadBookings();
@@ -113,6 +115,30 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
           Suivez et gérez vos rendez-vous clients
         </p>
       </div>
+
+      {/* Avertissement limite abonnement */}
+      {(() => {
+        const activeCount = bookings.filter(b => b.status !== 'cancelled').length;
+        const limitCheck = checkBookingLimit(activeCount);
+        if (limits.maxBookings !== null) {
+          return (
+            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+              limitCheck.allowed 
+                ? 'bg-muted/50 border-border' 
+                : 'bg-destructive/10 border-destructive/30'
+            }`}>
+              <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${limitCheck.allowed ? 'text-muted-foreground' : 'text-destructive'}`} />
+              <p className="text-sm">
+                {limitCheck.allowed
+                  ? `Réservations : ${activeCount}/${limits.maxBookings} utilisées ce mois`
+                  : limitCheck.message
+                }
+              </p>
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5">

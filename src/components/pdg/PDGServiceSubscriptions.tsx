@@ -25,8 +25,9 @@ import {
   Store, Calendar, AlertCircle, CheckCircle, XCircle, Clock,
   UtensilsCrossed, Home, Wrench, Car, Dumbbell, Scissors, Laptop,
   BookOpen, Truck, Camera, Leaf, Heart, Hammer, Sparkles, Filter,
-  Shield, LayoutGrid, Eye, Ban, CreditCard
+  Shield, LayoutGrid, Eye, Ban, CreditCard, Settings2
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -90,10 +91,22 @@ export default function PDGServiceSubscriptions() {
   const [newPrice, setNewPrice] = useState('');
   const [reason, setReason] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditLimitsOpen, setIsEditLimitsOpen] = useState(false);
   const [isFreeDialogOpen, setIsFreeDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeServiceTab, setActiveServiceTab] = useState<string>('all');
   const [activeSubTab, setActiveSubTab] = useState<string>('subscriptions');
+  const [editLimitsForm, setEditLimitsForm] = useState({
+    max_bookings_per_month: '' as string,
+    max_products: '' as string,
+    max_staff: '' as string,
+    analytics_access: false,
+    sms_notifications: false,
+    email_notifications: false,
+    custom_branding: false,
+    api_access: false,
+    priority_listing: false,
+  });
   const [freeSubscriptionData, setFreeSubscriptionData] = useState({
     serviceId: '', planId: '', days: ''
   });
@@ -197,6 +210,49 @@ export default function PDGServiceSubscriptions() {
       if (success) {
         toast({ title: 'Succès', description: `Prix du plan ${selectedPlan.display_name} modifié` });
         setIsDialogOpen(false);
+        fetchData();
+      } else throw new Error('Échec');
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOpenEditLimits = (plan: ServicePlan) => {
+    setSelectedPlan(plan);
+    setEditLimitsForm({
+      max_bookings_per_month: plan.max_bookings_per_month?.toString() || '',
+      max_products: plan.max_products?.toString() || '',
+      max_staff: plan.max_staff?.toString() || '',
+      analytics_access: plan.analytics_access,
+      sms_notifications: plan.sms_notifications,
+      email_notifications: plan.email_notifications,
+      custom_branding: plan.custom_branding,
+      api_access: plan.api_access,
+      priority_listing: plan.priority_listing,
+    });
+    setIsEditLimitsOpen(true);
+  };
+
+  const handleSaveLimits = async () => {
+    if (!selectedPlan) return;
+    try {
+      setSubmitting(true);
+      const success = await ServiceSubscriptionService.updatePlanLimitsAndFeatures(selectedPlan.id, {
+        max_bookings_per_month: editLimitsForm.max_bookings_per_month ? parseInt(editLimitsForm.max_bookings_per_month) : null,
+        max_products: editLimitsForm.max_products ? parseInt(editLimitsForm.max_products) : null,
+        max_staff: editLimitsForm.max_staff ? parseInt(editLimitsForm.max_staff) : null,
+        analytics_access: editLimitsForm.analytics_access,
+        sms_notifications: editLimitsForm.sms_notifications,
+        email_notifications: editLimitsForm.email_notifications,
+        custom_branding: editLimitsForm.custom_branding,
+        api_access: editLimitsForm.api_access,
+        priority_listing: editLimitsForm.priority_listing,
+      });
+      if (success) {
+        toast({ title: 'Succès', description: `Limites du plan ${selectedPlan.display_name} mises à jour` });
+        setIsEditLimitsOpen(false);
         fetchData();
       } else throw new Error('Échec');
     } catch (error: any) {
@@ -674,9 +730,14 @@ export default function PDGServiceSubscriptions() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)} title="Modifier le prix">
+                                <DollarSign className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenEditLimits(plan)} title="Modifier limites & fonctionnalités">
+                                <Settings2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -821,6 +882,83 @@ export default function PDGServiceSubscriptions() {
             <Button variant="outline" onClick={() => setIsFreeDialogOpen(false)}>Annuler</Button>
             <Button onClick={handleOfferFreeSubscription} disabled={submitting}>
               {submitting ? 'Attribution...' : 'Offrir'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Limits & Features Dialog */}
+      <Dialog open={isEditLimitsOpen} onOpenChange={setIsEditLimitsOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Modifier Limites & Fonctionnalités</DialogTitle>
+            <DialogDescription>
+              {selectedPlan?.display_name} — Ajustez les limites et les fonctionnalités incluses
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5">
+            {/* Limites */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">Limites</h4>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Réservations/mois</Label>
+                  <Input
+                    type="number"
+                    value={editLimitsForm.max_bookings_per_month}
+                    onChange={e => setEditLimitsForm(f => ({ ...f, max_bookings_per_month: e.target.value }))}
+                    placeholder="∞ (vide)"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Produits max</Label>
+                  <Input
+                    type="number"
+                    value={editLimitsForm.max_products}
+                    onChange={e => setEditLimitsForm(f => ({ ...f, max_products: e.target.value }))}
+                    placeholder="∞ (vide)"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Staff max</Label>
+                  <Input
+                    type="number"
+                    value={editLimitsForm.max_staff}
+                    onChange={e => setEditLimitsForm(f => ({ ...f, max_staff: e.target.value }))}
+                    placeholder="∞ (vide)"
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Laissez vide pour illimité (∞)</p>
+            </div>
+
+            {/* Fonctionnalités */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">Fonctionnalités</h4>
+              <div className="space-y-2">
+                {[
+                  { key: 'analytics_access', label: 'Analytics' },
+                  { key: 'sms_notifications', label: 'Notifications SMS' },
+                  { key: 'email_notifications', label: 'Notifications Email' },
+                  { key: 'custom_branding', label: 'Branding personnalisé' },
+                  { key: 'api_access', label: 'Accès API' },
+                  { key: 'priority_listing', label: 'Mise en avant prioritaire' },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center justify-between py-1.5 px-3 rounded-lg border border-border bg-muted/30">
+                    <Label className="text-sm cursor-pointer">{label}</Label>
+                    <Switch
+                      checked={editLimitsForm[key as keyof typeof editLimitsForm] as boolean}
+                      onCheckedChange={(checked) => setEditLimitsForm(f => ({ ...f, [key]: checked }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditLimitsOpen(false)}>Annuler</Button>
+            <Button onClick={handleSaveLimits} disabled={submitting}>
+              {submitting ? 'Sauvegarde...' : 'Enregistrer'}
             </Button>
           </DialogFooter>
         </DialogContent>
