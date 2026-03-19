@@ -104,7 +104,6 @@ export default function PDGServiceSubscriptions() {
     sms_notifications: false,
     email_notifications: false,
     custom_branding: false,
-    api_access: false,
     priority_listing: false,
   });
   const [freeSubscriptionData, setFreeSubscriptionData] = useState({
@@ -188,6 +187,13 @@ export default function PDGServiceSubscriptions() {
     return serviceTypes.filter(st => serviceTypeStats[st.id]?.total > 0);
   }, [serviceTypes, serviceTypeStats]);
 
+  // Filter plans by selected service type
+  const filteredPlans = useMemo(() => {
+    if (activeServiceTab === 'all') return plans;
+    // Show plans linked to this service type OR universal plans (no service_type_id)
+    return plans.filter(p => p.service_type_id === activeServiceTab || p.service_type_id === null);
+  }, [plans, activeServiceTab]);
+
   const handleOpenPriceDialog = (plan: ServicePlan) => {
     setSelectedPlan(plan);
     setNewPrice(plan.monthly_price_gnf.toString());
@@ -229,7 +235,6 @@ export default function PDGServiceSubscriptions() {
       sms_notifications: plan.sms_notifications,
       email_notifications: plan.email_notifications,
       custom_branding: plan.custom_branding,
-      api_access: plan.api_access,
       priority_listing: plan.priority_listing,
     });
     setIsEditLimitsOpen(true);
@@ -247,7 +252,6 @@ export default function PDGServiceSubscriptions() {
         sms_notifications: editLimitsForm.sms_notifications,
         email_notifications: editLimitsForm.email_notifications,
         custom_branding: editLimitsForm.custom_branding,
-        api_access: editLimitsForm.api_access,
         priority_listing: editLimitsForm.priority_listing,
       });
       if (success) {
@@ -671,8 +675,17 @@ export default function PDGServiceSubscriptions() {
         <TabsContent value="plans" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Plans d'Abonnement — Services de Proximité</CardTitle>
-              <CardDescription>Plans unifiés pour tous les types de services professionnels</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                {activeServiceTab !== 'all' && getIcon(serviceTypes.find(s => s.id === activeServiceTab)?.code || '')}
+                {activeServiceTab !== 'all'
+                  ? `Plans — ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
+                  : "Plans d'Abonnement — Tous les Services"}
+              </CardTitle>
+              <CardDescription>
+                {activeServiceTab !== 'all' 
+                  ? `Plans spécifiques au service ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
+                  : 'Plans unifiés pour tous les types de services professionnels'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="w-full">
@@ -688,18 +701,18 @@ export default function PDGServiceSubscriptions() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {plans.length === 0 ? (
+                    {filteredPlans.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
                           <div className="flex flex-col items-center gap-2">
                             <CreditCard className="w-8 h-8 opacity-30" />
-                            <span>Aucun plan configuré</span>
-                            <p className="text-xs">Les plans de service n'ont pas pu être chargés. Vérifiez la configuration.</p>
+                            <span>Aucun plan configuré pour ce service</span>
+                            <p className="text-xs">Créez des plans spécifiques ou vérifiez la configuration.</p>
                           </div>
                         </TableCell>
                       </TableRow>
                     ) : (
-                      plans.map((plan) => (
+                      filteredPlans.map((plan) => (
                         <TableRow key={plan.id}>
                           <TableCell className="font-medium">
                             <div>
@@ -726,7 +739,6 @@ export default function PDGServiceSubscriptions() {
                               {plan.sms_notifications && <Badge variant="outline" className="text-[10px]">SMS</Badge>}
                               {plan.email_notifications && <Badge variant="outline" className="text-[10px]">Email</Badge>}
                               {plan.custom_branding && <Badge variant="outline" className="text-[10px]">Branding</Badge>}
-                              {plan.api_access && <Badge variant="outline" className="text-[10px]">API</Badge>}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -941,7 +953,6 @@ export default function PDGServiceSubscriptions() {
                   { key: 'sms_notifications', label: 'Notifications SMS' },
                   { key: 'email_notifications', label: 'Notifications Email' },
                   { key: 'custom_branding', label: 'Branding personnalisé' },
-                  { key: 'api_access', label: 'Accès API' },
                   { key: 'priority_listing', label: 'Mise en avant prioritaire' },
                 ].map(({ key, label }) => (
                   <div key={key} className="flex items-center justify-between py-1.5 px-3 rounded-lg border border-border bg-muted/30">

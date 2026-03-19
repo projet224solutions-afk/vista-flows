@@ -12,7 +12,6 @@ interface ServiceLimits {
   hasSms: boolean;
   hasEmail: boolean;
   hasBranding: boolean;
-  hasApi: boolean;
   hasPriorityListing: boolean;
   planName: string;
   isActive: boolean;
@@ -36,7 +35,6 @@ export function useServiceLimits(serviceId?: string) {
     hasSms: false,
     hasEmail: false,
     hasBranding: false,
-    hasApi: false,
     hasPriorityListing: subscription?.priority_listing ?? false,
     planName: subscription?.plan_name || 'free',
     isActive: isActive,
