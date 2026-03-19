@@ -65,6 +65,47 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingType, setUploadingType] = useState<'logo' | 'cover' | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsSuccess, setGpsSuccess] = useState(false);
+  const [detectedCoords, setDetectedCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  const handleDetectPosition = useCallback(async () => {
+    setGpsLoading(true);
+    setGpsSuccess(false);
+    try {
+      const position = await mapService.getCurrentPosition();
+      const fullAddress = await mapService.reverseGeocode(position.latitude, position.longitude);
+
+      // Parse address parts
+      const parts = fullAddress.split(',').map(p => p.trim());
+      const streetPart = parts[0] || '';
+      const neighborhoodPart = parts[1] || '';
+      const cityPart = parts.length >= 3 ? parts[2] : (parts[1] || 'Conakry');
+
+      setFormData(prev => ({
+        ...prev,
+        address: streetPart,
+        neighborhood: neighborhoodPart,
+        city: cityPart,
+      }));
+      setDetectedCoords({ lat: position.latitude, lng: position.longitude });
+      setGpsSuccess(true);
+      toast.success('Position détectée avec succès !');
+
+      // Update coordinates in DB
+      await supabase
+        .from('professional_services')
+        .update({ latitude: position.latitude, longitude: position.longitude })
+        .eq('id', serviceId);
+
+      setTimeout(() => setGpsSuccess(false), 3000);
+    } catch (err: any) {
+      console.error('Erreur GPS:', err);
+      toast.error('Impossible de détecter votre position. Vérifiez vos paramètres de localisation.');
+    } finally {
+      setGpsLoading(false);
+    }
+  }, [serviceId]);
   
   const [formData, setFormData] = useState({
     business_name: '',
