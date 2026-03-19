@@ -1516,7 +1516,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                 <span className="text-[10px] sm:text-xs">Retrait</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
               <DialogHeader>
                 <DialogTitle>Effectuer un retrait</DialogTitle>
                 <DialogDescription>
