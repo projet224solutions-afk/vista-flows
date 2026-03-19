@@ -1316,17 +1316,7 @@ export default function Payment() {
                                   });
                               }
 
-                              // Incrémenter le compteur de ventes
-                              const { data: currentProduct } = await supabase
-                                .from('digital_products')
-                                .select('sales_count')
-                                .eq('id', productPaymentInfo.productId)
-                                .single();
-                              
-                              await supabase
-                                .from('digital_products')
-                                .update({ sales_count: (currentProduct?.sales_count || 0) + 1 })
-                                .eq('id', productPaymentInfo.productId);
+                              // sales_count est incrémenté automatiquement par le trigger DB
 
                             } catch (err) {
                               console.error('[Payment] Error in digital purchase flow:', err);
