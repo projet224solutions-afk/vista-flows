@@ -624,8 +624,8 @@ export default function ServiceDetail() {
           <Badge
             className={`text-sm px-4 py-2 font-semibold shadow-lg backdrop-blur-sm border-0 ${
               service.is_open
-                ? 'bg-green-600/90 text-white'
-                : 'bg-red-600/90 text-white'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-destructive text-destructive-foreground'
             }`}
           >
             {service.is_open ? '✅ Ouvert' : '🔴 Fermé'}
