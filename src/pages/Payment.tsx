@@ -144,7 +144,9 @@ export default function Payment() {
     quantity: number;
     vendorId: string;
     vendorUserId: string;
-    productType: 'physical' | 'digital'; // Type de produit
+    productType: 'physical' | 'digital';
+    pricingType?: 'one_time' | 'subscription' | 'pay_what_you_want';
+    subscriptionInterval?: 'monthly' | 'yearly' | 'lifetime';
   } | null>(null);
 
   // État pour stocker les infos du panier (multi-produits)

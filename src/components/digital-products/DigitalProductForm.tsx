@@ -508,6 +508,10 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         productData.commission_rate = 0;
         productData.affiliate_url = null;
         productData.affiliate_platform = null;
+        // Save pricing type & subscription interval
+        productData.pricing_type = directData.pricingType || 'one_time';
+        productData.subscription_interval = directData.pricingType === 'subscription' ? directData.subscriptionInterval : null;
+        productData.access_duration = directData.accessDuration || 'lifetime';
       }
 
       if (isEdit) {
