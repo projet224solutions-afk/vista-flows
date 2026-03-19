@@ -56,6 +56,7 @@ const categories: NavCategory[] = [
       { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent, permission: 'view_transfer_fees' },
       { value: 'kyc', label: 'Gestion KYC', icon: Shield, permission: 'view_kyc' },
       { value: 'service-subscriptions', label: 'Abonnements Services', icon: Sparkles, badge: true, permission: 'view_service_subscriptions' },
+      { value: 'wallet-api', label: 'API 224Wallet', icon: Key, badge: true, permission: 'view_service_subscriptions' },
     ]
   },
   {

@@ -25250,6 +25250,205 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_api_keys: {
+        Row: {
+          allowed_domains: string[] | null
+          api_key: string
+          api_secret: string
+          commission_rate: number | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          is_test_mode: boolean | null
+          key_name: string
+          last_used_at: string | null
+          professional_service_id: string
+          rate_limit_per_day: number | null
+          rate_limit_per_minute: number | null
+          request_id: string
+          total_transactions: number | null
+          total_volume_gnf: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allowed_domains?: string[] | null
+          api_key: string
+          api_secret: string
+          commission_rate?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_test_mode?: boolean | null
+          key_name?: string
+          last_used_at?: string | null
+          professional_service_id: string
+          rate_limit_per_day?: number | null
+          rate_limit_per_minute?: number | null
+          request_id: string
+          total_transactions?: number | null
+          total_volume_gnf?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allowed_domains?: string[] | null
+          api_key?: string
+          api_secret?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_test_mode?: boolean | null
+          key_name?: string
+          last_used_at?: string | null
+          professional_service_id?: string
+          rate_limit_per_day?: number | null
+          rate_limit_per_minute?: number | null
+          request_id?: string
+          total_transactions?: number | null
+          total_volume_gnf?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_api_keys_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: false
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_api_keys_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_api_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_api_requests: {
+        Row: {
+          business_name: string
+          created_at: string | null
+          expected_volume: string | null
+          id: string
+          professional_service_id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string | null
+          use_case: string
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          business_name: string
+          created_at?: string | null
+          expected_volume?: string | null
+          id?: string
+          professional_service_id: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+          use_case: string
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          business_name?: string
+          created_at?: string | null
+          expected_volume?: string | null
+          id?: string
+          professional_service_id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+          use_case?: string
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_api_requests_professional_service_id_fkey"
+            columns: ["professional_service_id"]
+            isOneToOne: true
+            referencedRelation: "professional_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_api_transactions: {
+        Row: {
+          amount_gnf: number
+          api_key_id: string | null
+          commission_gnf: number | null
+          completed_at: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          net_amount_gnf: number | null
+          payer_identifier: string
+          payment_reference: string | null
+          professional_service_id: string
+          status: string
+        }
+        Insert: {
+          amount_gnf: number
+          api_key_id?: string | null
+          commission_gnf?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          net_amount_gnf?: number | null
+          payer_identifier: string
+          payment_reference?: string | null
+          professional_service_id: string
+          status?: string
+        }
+        Update: {
+          amount_gnf?: number
+          api_key_id?: string | null
+          commission_gnf?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          net_amount_gnf?: number | null
+          payer_identifier?: string
+          payment_reference?: string | null
+          professional_service_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_api_transactions_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_fees: {
         Row: {
           created_at: string | null

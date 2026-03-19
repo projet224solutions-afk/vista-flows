@@ -48,6 +48,7 @@ const BankingDashboard = lazy(() => import('@/components/pdg/BankingDashboard'))
 const PDGStolenVehiclesSupervision = lazy(() => import('@/components/pdg/PDGStolenVehiclesSupervision'));
 const DriverSubscriptionManagement = lazy(() => import('@/components/pdg/DriverSubscriptionManagement'));
 const PDGServiceSubscriptions = lazy(() => import('@/components/pdg/PDGServiceSubscriptions'));
+const PDGWalletApiManagement = lazy(() => import('@/components/pdg/PDGWalletApiManagement'));
 const PDGBureauMonitoring = lazy(() => import('@/components/pdg/PDGBureauMonitoring'));
 const VendorCertificationManager = lazy(() => import('@/components/ceo/VendorCertificationManager').then(m => ({ default: m.VendorCertificationManager })));
 const VendorKYCReview = lazy(() => import('@/components/ceo/VendorKYCReview').then(m => ({ default: m.VendorKYCReview })));
@@ -632,6 +633,12 @@ export default function PDG224Solutions() {
               {activeTab === 'service-subscriptions' && (
                 <ErrorBoundary>
                   <PDGServiceSubscriptions />
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'wallet-api' && (
+                <ErrorBoundary>
+                  <PDGWalletApiManagement />
                 </ErrorBoundary>
               )}
 
