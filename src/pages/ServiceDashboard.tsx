@@ -1,6 +1,6 @@
 import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key } from 'lucide-react';
+import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,10 +11,12 @@ import { ServiceModuleManager } from '@/components/professional-services/modules
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
 import { ServiceSettingsPanel } from '@/components/professional-services/ServiceSettingsPanel';
 import { ServiceSubscriptionCard } from '@/components/professional-services/ServiceSubscriptionCard';
+import { ServiceIdBadge } from '@/components/professional-services/ServiceIdBadge';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 const WalletApiPanel = lazy(() => import('@/components/professional-services/modules/WalletApiPanel'));
+const ServiceWalletWidget = lazy(() => import('@/components/professional-services/ServiceWalletWidget'));
 
 // Types de services qui ont leur propre module complet
 function isFullModuleService(service: ProfessionalService): boolean {
