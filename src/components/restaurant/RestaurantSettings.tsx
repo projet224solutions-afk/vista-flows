@@ -2,7 +2,7 @@
  * Paramètres du Restaurant - Horaires, Description, Images
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +12,10 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Clock, Save, Store, Phone, Mail, MapPin, 
-  Image as ImageIcon, Globe, Upload, X, Loader2
+  Image as ImageIcon, Globe, Upload, X, Loader2,
+  Navigation, CheckCircle2
 } from 'lucide-react';
+import { mapService } from '@/services/mapService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
@@ -63,6 +65,47 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingType, setUploadingType] = useState<'logo' | 'cover' | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsSuccess, setGpsSuccess] = useState(false);
+  const [detectedCoords, setDetectedCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  const handleDetectPosition = useCallback(async () => {
+    setGpsLoading(true);
+    setGpsSuccess(false);
+    try {
+      const position = await mapService.getCurrentPosition();
+      const fullAddress = await mapService.reverseGeocode(position.latitude, position.longitude);
+
+      // Parse address parts
+      const parts = fullAddress.split(',').map(p => p.trim());
+      const streetPart = parts[0] || '';
+      const neighborhoodPart = parts[1] || '';
+      const cityPart = parts.length >= 3 ? parts[2] : (parts[1] || 'Conakry');
+
+      setFormData(prev => ({
+        ...prev,
+        address: streetPart,
+        neighborhood: neighborhoodPart,
+        city: cityPart,
+      }));
+      setDetectedCoords({ lat: position.latitude, lng: position.longitude });
+      setGpsSuccess(true);
+      toast.success('Position détectée avec succès !');
+
+      // Update coordinates in DB
+      await supabase
+        .from('professional_services')
+        .update({ latitude: position.latitude, longitude: position.longitude })
+        .eq('id', serviceId);
+
+      setTimeout(() => setGpsSuccess(false), 3000);
+    } catch (err: any) {
+      console.error('Erreur GPS:', err);
+      toast.error('Impossible de détecter votre position. Vérifiez vos paramètres de localisation.');
+    } finally {
+      setGpsLoading(false);
+    }
+  }, [serviceId]);
   
   const [formData, setFormData] = useState({
     business_name: '',
@@ -280,6 +323,48 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
               placeholder="Décrivez votre restaurant, votre cuisine, votre ambiance..."
               rows={3}
             />
+          </div>
+
+          {/* Bouton Position Actuelle */}
+          <div className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/30 bg-primary/5">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">📍 Localisation du restaurant</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {detectedCoords 
+                  ? `Coordonnées : ${detectedCoords.lat.toFixed(5)}, ${detectedCoords.lng.toFixed(5)}`
+                  : 'Détectez automatiquement votre adresse via GPS'
+                }
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant={gpsSuccess ? 'default' : 'outline'}
+              size="sm"
+              onClick={handleDetectPosition}
+              disabled={gpsLoading}
+              className={`gap-2 transition-all duration-300 ${
+                gpsSuccess 
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600' 
+                  : 'border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground'
+              }`}
+            >
+              {gpsLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Détection...
+                </>
+              ) : gpsSuccess ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  Localisé !
+                </>
+              ) : (
+                <>
+                  <Navigation className="w-4 h-4" />
+                  Position actuelle
+                </>
+              )}
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
