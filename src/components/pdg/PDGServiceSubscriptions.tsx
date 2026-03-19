@@ -886,6 +886,83 @@ export default function PDGServiceSubscriptions() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Limits & Features Dialog */}
+      <Dialog open={isEditLimitsOpen} onOpenChange={setIsEditLimitsOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Modifier Limites & Fonctionnalités</DialogTitle>
+            <DialogDescription>
+              {selectedPlan?.display_name} — Ajustez les limites et les fonctionnalités incluses
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5">
+            {/* Limites */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">Limites</h4>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Réservations/mois</Label>
+                  <Input
+                    type="number"
+                    value={editLimitsForm.max_bookings_per_month}
+                    onChange={e => setEditLimitsForm(f => ({ ...f, max_bookings_per_month: e.target.value }))}
+                    placeholder="∞ (vide)"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Produits max</Label>
+                  <Input
+                    type="number"
+                    value={editLimitsForm.max_products}
+                    onChange={e => setEditLimitsForm(f => ({ ...f, max_products: e.target.value }))}
+                    placeholder="∞ (vide)"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Staff max</Label>
+                  <Input
+                    type="number"
+                    value={editLimitsForm.max_staff}
+                    onChange={e => setEditLimitsForm(f => ({ ...f, max_staff: e.target.value }))}
+                    placeholder="∞ (vide)"
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Laissez vide pour illimité (∞)</p>
+            </div>
+
+            {/* Fonctionnalités */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">Fonctionnalités</h4>
+              <div className="space-y-2">
+                {[
+                  { key: 'analytics_access', label: 'Analytics' },
+                  { key: 'sms_notifications', label: 'Notifications SMS' },
+                  { key: 'email_notifications', label: 'Notifications Email' },
+                  { key: 'custom_branding', label: 'Branding personnalisé' },
+                  { key: 'api_access', label: 'Accès API' },
+                  { key: 'priority_listing', label: 'Mise en avant prioritaire' },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center justify-between py-1.5 px-3 rounded-lg border border-border bg-muted/30">
+                    <Label className="text-sm cursor-pointer">{label}</Label>
+                    <Switch
+                      checked={editLimitsForm[key as keyof typeof editLimitsForm] as boolean}
+                      onCheckedChange={(checked) => setEditLimitsForm(f => ({ ...f, [key]: checked }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditLimitsOpen(false)}>Annuler</Button>
+            <Button onClick={handleSaveLimits} disabled={submitting}>
+              {submitting ? 'Sauvegarde...' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
