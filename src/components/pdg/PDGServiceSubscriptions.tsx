@@ -701,13 +701,13 @@ export default function PDGServiceSubscriptions() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {plans.length === 0 ? (
+                    {filteredPlans.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
                           <div className="flex flex-col items-center gap-2">
                             <CreditCard className="w-8 h-8 opacity-30" />
-                            <span>Aucun plan configuré</span>
-                            <p className="text-xs">Les plans de service n'ont pas pu être chargés. Vérifiez la configuration.</p>
+                            <span>Aucun plan configuré pour ce service</span>
+                            <p className="text-xs">Créez des plans spécifiques ou vérifiez la configuration.</p>
                           </div>
                         </TableCell>
                       </TableRow>
