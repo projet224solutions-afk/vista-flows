@@ -36,7 +36,6 @@ export function useServiceLimits(serviceId?: string) {
     hasSms: false,
     hasEmail: false,
     hasBranding: false,
-    hasApi: false,
     hasPriorityListing: subscription?.priority_listing ?? false,
     planName: subscription?.plan_name || 'free',
     isActive: isActive,
