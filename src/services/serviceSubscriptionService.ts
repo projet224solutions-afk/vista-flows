@@ -330,6 +330,40 @@ export class ServiceSubscriptionService {
   }
 
   /**
+   * Mettre à jour les limites et fonctionnalités d'un plan
+   */
+  static async updatePlanLimitsAndFeatures(
+    planId: string,
+    updates: {
+      max_bookings_per_month?: number | null;
+      max_products?: number | null;
+      max_staff?: number | null;
+      analytics_access?: boolean;
+      sms_notifications?: boolean;
+      email_notifications?: boolean;
+      custom_branding?: boolean;
+      api_access?: boolean;
+      priority_listing?: boolean;
+    }
+  ): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('service_plans')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', planId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur mise à jour limites plan:', error);
+      return false;
+    }
+  }
+
+  /**
    * Récupérer l'historique des prix
    */
   static async getPriceHistory(planId?: string): Promise<ServicePriceHistory[]> {
