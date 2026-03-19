@@ -968,7 +968,7 @@ export default function Payment() {
           });
 
           setProductPaymentInfo(null);
-          navigate(`/digital-purchase/${productPaymentInfo.productId}`);
+          navigate('/my-digital-purchases');
           return;
         }
 
