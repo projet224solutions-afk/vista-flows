@@ -860,7 +860,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                       />
                     </label>
                     {deliverableFiles.length === 0 && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                      <p className="text-xs text-destructive flex items-center gap-1.5">
                         <AlertCircle className="w-3.5 h-3.5" />
                         Sans fichier, l'acheteur ne recevra rien après le paiement
                       </p>
