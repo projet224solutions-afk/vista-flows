@@ -187,6 +187,13 @@ export default function PDGServiceSubscriptions() {
     return serviceTypes.filter(st => serviceTypeStats[st.id]?.total > 0);
   }, [serviceTypes, serviceTypeStats]);
 
+  // Filter plans by selected service type
+  const filteredPlans = useMemo(() => {
+    if (activeServiceTab === 'all') return plans;
+    // Show plans linked to this service type OR universal plans (no service_type_id)
+    return plans.filter(p => p.service_type_id === activeServiceTab || p.service_type_id === null);
+  }, [plans, activeServiceTab]);
+
   const handleOpenPriceDialog = (plan: ServicePlan) => {
     setSelectedPlan(plan);
     setNewPrice(plan.monthly_price_gnf.toString());
