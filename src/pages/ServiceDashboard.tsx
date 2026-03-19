@@ -185,6 +185,7 @@ export default function ServiceDashboard() {
                 <Badge className={`${verificationColors[service.verification_status]} text-xs`}>
                   {service.verification_status}
                 </Badge>
+                <ServiceIdBadge serviceId={service.id} compact />
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
                 {service.service_type?.name} • Commission: {service.service_type?.commission_rate}%
