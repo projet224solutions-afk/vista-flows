@@ -347,3 +347,6 @@ verify_jwt = false
 
 [functions.ai-recommend]
 verify_jwt = false
+
+[functions.wallet-payment-api]
+verify_jwt = false
