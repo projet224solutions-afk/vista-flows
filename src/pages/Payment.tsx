@@ -284,7 +284,9 @@ export default function Payment() {
               quantity: qty,
               vendorId: dpProduct.vendor_id || dpProduct.merchant_id,
               vendorUserId: vendorUserId,
-              productType: 'digital'
+              productType: 'digital',
+              pricingType: (dpProduct as any).pricing_type || 'one_time',
+              subscriptionInterval: (dpProduct as any).subscription_interval || undefined,
             });
             
             // Récupérer le public_id du vendeur
