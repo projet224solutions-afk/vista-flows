@@ -39,6 +39,9 @@ interface DigitalProductWithVendor {
   rating: number;
   reviews_count: number;
   created_at: string;
+  pricing_type?: string | null;
+  subscription_interval?: string | null;
+  access_duration?: string | null;
   vendors?: {
     id: string;
     business_name: string;
