@@ -173,9 +173,13 @@ export default function ServiceDetail() {
           cover_image_url,
           address,
           phone,
+          email,
+          website,
           opening_hours,
           rating,
           total_reviews,
+          latitude,
+          longitude,
           service_types (
             name,
             category,
