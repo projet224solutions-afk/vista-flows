@@ -197,7 +197,7 @@ export default function DirectConversation() {
   }
 
   return (
-    <div className="fixed inset-0 bg-background flex flex-col z-[100]">
+    <div className="fixed inset-0 bg-background flex flex-col z-[200]">
       {/* Header Professionnel */}
       <div className="flex items-center gap-3 p-4 border-b border-border bg-card/95 backdrop-blur-sm shadow-sm">
         <Button 
