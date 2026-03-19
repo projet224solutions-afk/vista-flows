@@ -820,15 +820,22 @@ export default function Messages() {
   const selectedConvData = conversations.find(c => c.id === selectedConversation);
 
   // Helper pour le label du rôle utilisateur
-  const getRoleLabel = (conv: { is_vendor?: boolean; user_role?: string }) => {
+  const getRoleLabel = (conv: { is_vendor?: boolean; user_role?: string | null; service_type_name?: string | null; service_type_code?: string | null }) => {
     if (conv.is_vendor) return 'Vendeur';
+
+    if (conv.service_type_name?.trim()) {
+      if ((conv.service_type_code || '').toLowerCase() === 'restaurant') return 'Restaurant';
+      return conv.service_type_name;
+    }
+
     const role = conv.user_role?.toLowerCase();
+    if (role === 'prestataire') return 'Service';
     if (role === 'taxi' || role === 'taxi_moto') return 'Taxi Moto';
     if (role === 'livreur' || role === 'delivery') return 'Livreur';
     if (role === 'transitaire') return 'Transitaire';
     if (role === 'agent') return 'Agent';
     if (role === 'admin') return 'Admin';
-    return 'Client';
+    return 'Utilisateur';
   };
 
   const formatTime = (dateStr: string) => {
