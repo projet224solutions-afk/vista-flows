@@ -110,6 +110,13 @@ export default function ServiceDashboard() {
             serviceTypeCode={service.service_type?.code}
             businessName={service.business_name}
           />
+          {/* Wallet du prestataire */}
+          <div className="mt-6">
+            <Suspense fallback={<div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <ServiceWalletWidget businessName={service.business_name} />
+            </Suspense>
+          </div>
+
           {/* Bouton Mes Achats */}
           <div className="mt-6">
             <Button
@@ -118,10 +125,6 @@ export default function ServiceDashboard() {
               onClick={() => {
                 const el = document.getElementById('my-purchases-section');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
-                else {
-                  const section = document.createElement('div');
-                  section.id = 'my-purchases-section';
-                }
               }}
             >
               <ShoppingBag className="w-5 h-5" />
