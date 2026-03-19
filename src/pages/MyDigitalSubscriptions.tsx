@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { 
   ArrowLeft, RefreshCw, Calendar, CreditCard, XCircle, 
-  CheckCircle, Clock, AlertTriangle, Package, TrendingUp 
+  CheckCircle, Clock, AlertTriangle, Package, TrendingUp, Download 
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
