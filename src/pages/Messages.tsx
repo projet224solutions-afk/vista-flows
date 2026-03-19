@@ -107,26 +107,8 @@ export default function Messages() {
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Hook de présence (legacy)
-  const {
-    updatePresence,
-    getUserPresence,
-    subscribeToPresence,
-    setTyping,
-    subscribeToTyping,
-    typingUsers,
-    presenceCache,
-  } = usePresence();
-
-  // 🚀 Hook de présence temps réel ultra-rapide
-  const {
-    isOnline: isUserOnlineRealtime,
-    getPresence: getRealtimePresence,
-    startTyping: startTypingRealtime,
-    stopTyping: stopTypingRealtime,
-    typingUsers: realtimeTypingUsers,
-    isConnected: presenceConnected,
-  } = useRealtimePresence({ debug: false });
+  // Hook de présence
+  const { setTyping, subscribeToTyping } = usePresence();
 
   // 🟢 Hook de présence pour la liste des conversations
   const {
@@ -135,6 +117,9 @@ export default function Messages() {
     getLastSeenText,
     loadPresences,
   } = useConversationPresence();
+
+  const typingActiveRef = useRef(false);
+  const lastTypingSyncRef = useRef(0);
 
   useEffect(() => {
     loadCurrentUser();
