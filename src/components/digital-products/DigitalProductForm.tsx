@@ -941,6 +941,16 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                   </span>
                 </div>
 
+                {/* Fichiers livrables */}
+                {salesMode === 'direct' && (
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <span className="text-sm text-muted-foreground">Fichiers livrables</span>
+                    <span className={cn("text-sm font-medium", deliverableFiles.length === 0 ? "text-destructive" : "text-foreground")}>
+                      {deliverableFiles.length === 0 ? '⚠️ Aucun fichier' : `${deliverableFiles.length} fichier(s)`}
+                    </span>
+                  </div>
+                )
+
                 {/* Catégorie */}
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <span className="text-sm text-muted-foreground">Catégorie</span>
