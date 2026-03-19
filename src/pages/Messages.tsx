@@ -19,7 +19,6 @@ import MessageItem from "@/components/communication/MessageItem";
 import { PresenceIndicator, PresenceBadge, TypingIndicator, MessageStatusBadge } from "@/components/communication/PresenceIndicator";
 import { ReplyBar } from "@/components/communication/EnhancedMessageBubble";
 import { usePresence } from "@/hooks/usePresence";
-import { useRealtimePresence } from "@/hooks/useRealtimePresence";
 import { useConversationPresence } from "@/hooks/useConversationPresence";
 import { playNotificationSound } from "@/services/notificationSoundService";
 import { useStorageUpload, StorageFolder } from "@/hooks/useStorageUpload";
