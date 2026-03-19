@@ -338,6 +338,26 @@ export default function DigitalProductDetail() {
                 )}
               </div>
 
+              {/* Pricing type badge */}
+              {product.product_mode !== 'affiliate' && product.pricing_type && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {product.pricing_type === 'subscription' ? (
+                    <Badge className="bg-primary/10 text-primary border-primary/20">
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Abonnement {product.subscription_interval === 'yearly' ? 'annuel' : product.subscription_interval === 'lifetime' ? 'à vie' : 'mensuel'}
+                    </Badge>
+                  ) : product.pricing_type === 'pay_what_you_want' ? (
+                    <Badge variant="secondary">
+                      Prix libre
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                      Achat unique — Accès permanent
+                    </Badge>
+                  )}
+                </div>
+              )}
+
               {product.product_mode === 'affiliate' && product.commission_rate > 0 && (
                 <Badge variant="outline" className="mb-4">
                   Commission: {product.commission_rate}%
