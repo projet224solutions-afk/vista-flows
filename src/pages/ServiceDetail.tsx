@@ -462,27 +462,54 @@ export default function ServiceDetail() {
   };
 
   const handleContact = () => {
+    if (service?.phone) {
+      // Appeler directement le numéro du restaurant
+      window.open(`tel:${service.phone}`, '_self');
+    } else if (service?.vendor_user_id) {
+      if (!user) {
+        toast.error('Veuillez vous connecter pour contacter ce service');
+        navigate('/auth');
+        return;
+      }
+      if (service.vendor_user_id === user.id) {
+        toast.error("Vous ne pouvez pas vous contacter vous-même");
+        return;
+      }
+      navigate(`/communication/direct/${service.vendor_user_id}`);
+    } else {
+      toast.error('Aucun moyen de contact disponible');
+    }
+  };
+
+  const handleMessage = () => {
     if (!user) {
-      toast.error('Veuillez vous connecter pour contacter ce service');
+      toast.error('Veuillez vous connecter pour envoyer un message');
       navigate('/auth');
       return;
     }
-
-    console.log('🔍 handleContact - service:', service);
-    console.log('🔍 handleContact - vendor_user_id:', service?.vendor_user_id);
-
     if (!service?.vendor_user_id) {
-      toast.error('Informations du prestataire non disponibles. Veuillez réessayer.');
+      toast.error('Informations du prestataire non disponibles');
       return;
     }
-
     if (service.vendor_user_id === user.id) {
       toast.error("Vous ne pouvez pas vous contacter vous-même");
       return;
     }
-
-    // Ouvrir la messagerie directe (réelle) avec le prestataire
     navigate(`/communication/direct/${service.vendor_user_id}`);
+  };
+
+  const handleLocateRestaurant = () => {
+    if (service?.latitude && service?.longitude && 
+        !(service.latitude === 9.6412 && service.longitude === -13.5784)) {
+      // Ouvrir Google Maps avec navigation vers le restaurant
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${service.latitude},${service.longitude}&travelmode=driving`;
+      window.open(url, '_blank');
+    } else if (service?.address) {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(service.address)}&travelmode=driving`;
+      window.open(url, '_blank');
+    } else {
+      toast.error('Position du restaurant non disponible');
+    }
   };
 
   const handleReservation = () => {
