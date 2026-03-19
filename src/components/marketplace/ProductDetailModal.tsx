@@ -304,6 +304,9 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
       const totalAmount = product.price * quantity;
       
+      // Déterminer si c'est un produit numérique (product_mode existe = digital_products)
+      const isDigital = !!product.product_mode;
+      
       toast.success('Redirection vers le paiement...');
       navigate(`/payment`, { 
         state: { 
@@ -311,7 +314,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           productName: product.name,
           amount: totalAmount,
           quantity,
-          vendorId: product.vendor_id
+          vendorId: product.vendor_id,
+          productType: isDigital ? 'digital' : 'physical'
         } 
       });
     } catch (error) {
