@@ -19,6 +19,9 @@ import {
   ImagePlus,
   X,
   Trash2,
+  LocateFixed,
+  Map,
+  PhoneCall,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -170,9 +173,13 @@ export default function ServiceDetail() {
           cover_image_url,
           address,
           phone,
+          email,
+          website,
           opening_hours,
           rating,
           total_reviews,
+          latitude,
+          longitude,
           service_types (
             name,
             category,
@@ -194,16 +201,23 @@ export default function ServiceDetail() {
           sunday: "Fermé"
         };
 
-        // Coordonnées par défaut (Conakry)
-        let lat = 9.6412;
-        let lng = -13.5784;
+        // Utiliser les coordonnées réelles de la base de données
+        let lat = proService.latitude || null;
+        let lng = proService.longitude || null;
 
-        // Si une adresse existe, tenter de la géocoder
-        if (proService.address) {
-          const coords = await geocodeAddress(proService.address);
-          if (coords) {
-            lat = coords.lat;
-            lng = coords.lng;
+        // Si pas de coordonnées en DB, tenter le géocodage
+        if (!lat || !lng) {
+          if (proService.address) {
+            const coords = await geocodeAddress(proService.address);
+            if (coords) {
+              lat = coords.lat;
+              lng = coords.lng;
+            }
+          }
+          // Fallback Conakry si rien ne marche
+          if (!lat || !lng) {
+            lat = 9.6412;
+            lng = -13.5784;
           }
         }
 
@@ -212,9 +226,11 @@ export default function ServiceDetail() {
           name: proService.business_name,
           description: proService.description || 'Aucune description disponible',
           category: proService.service_types?.category || 'service',
-          service_type_code: proService.service_types?.code, // Ajouter le code du type
+          service_type_code: proService.service_types?.code,
           address: proService.address,
           phone: proService.phone,
+          email: proService.email,
+          website: proService.website,
           rating: Number(proService.rating) || 0,
           reviews_count: proService.total_reviews || 0,
           is_open: true,
@@ -446,27 +462,54 @@ export default function ServiceDetail() {
   };
 
   const handleContact = () => {
+    if (service?.phone) {
+      // Appeler directement le numéro du restaurant
+      window.open(`tel:${service.phone}`, '_self');
+    } else if (service?.vendor_user_id) {
+      if (!user) {
+        toast.error('Veuillez vous connecter pour contacter ce service');
+        navigate('/auth');
+        return;
+      }
+      if (service.vendor_user_id === user.id) {
+        toast.error("Vous ne pouvez pas vous contacter vous-même");
+        return;
+      }
+      navigate(`/communication/direct/${service.vendor_user_id}`);
+    } else {
+      toast.error('Aucun moyen de contact disponible');
+    }
+  };
+
+  const handleMessage = () => {
     if (!user) {
-      toast.error('Veuillez vous connecter pour contacter ce service');
+      toast.error('Veuillez vous connecter pour envoyer un message');
       navigate('/auth');
       return;
     }
-
-    console.log('🔍 handleContact - service:', service);
-    console.log('🔍 handleContact - vendor_user_id:', service?.vendor_user_id);
-
     if (!service?.vendor_user_id) {
-      toast.error('Informations du prestataire non disponibles. Veuillez réessayer.');
+      toast.error('Informations du prestataire non disponibles');
       return;
     }
-
     if (service.vendor_user_id === user.id) {
       toast.error("Vous ne pouvez pas vous contacter vous-même");
       return;
     }
-
-    // Ouvrir la messagerie directe (réelle) avec le prestataire
     navigate(`/communication/direct/${service.vendor_user_id}`);
+  };
+
+  const handleLocateRestaurant = () => {
+    if (service?.latitude && service?.longitude && 
+        !(service.latitude === 9.6412 && service.longitude === -13.5784)) {
+      // Ouvrir Google Maps avec navigation vers le restaurant
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${service.latitude},${service.longitude}&travelmode=driving`;
+      window.open(url, '_blank');
+    } else if (service?.address) {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(service.address)}&travelmode=driving`;
+      window.open(url, '_blank');
+    } else {
+      toast.error('Position du restaurant non disponible');
+    }
   };
 
   const handleReservation = () => {
@@ -521,8 +564,12 @@ export default function ServiceDetail() {
   };
 
   const openInMaps = () => {
-    if (service?.latitude && service?.longitude) {
-      const url = `https://www.google.com/maps/search/?api=1&query=${service.latitude},${service.longitude}`;
+    if (service?.latitude && service?.longitude &&
+        !(service.latitude === 9.6412 && service.longitude === -13.5784)) {
+      const url = `https://www.google.com/maps/place/${service.latitude},${service.longitude}/@${service.latitude},${service.longitude},17z`;
+      window.open(url, '_blank');
+    } else if (service?.address) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.address)}`;
       window.open(url, '_blank');
     } else {
       toast.error('Coordonnées non disponibles');
@@ -673,17 +720,27 @@ export default function ServiceDetail() {
 
             {/* ═══ Action Buttons ═══ */}
             <div className="flex flex-wrap gap-3">
+              {service.phone && (
+                <Button
+                  onClick={handleContact}
+                  className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-primary hover:bg-primary/90"
+                >
+                  <PhoneCall className="w-4 h-4 mr-2" />
+                  Appeler
+                </Button>
+              )}
               <Button
-                onClick={handleContact}
-                className="flex-1 min-w-[120px] h-12 rounded-xl font-semibold text-sm bg-primary hover:bg-primary/90"
+                onClick={handleMessage}
+                variant="outline"
+                className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5"
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
-                Contacter
+                Message
               </Button>
               <Button
                 onClick={handleReservation}
                 variant="outline"
-                className="flex-1 min-w-[120px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5"
+                className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5"
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 Réserver
@@ -691,12 +748,24 @@ export default function ServiceDetail() {
               {isRestaurant && (
                 <Button
                   onClick={handleOrderFromRestaurant}
-                  className="flex-1 min-w-[120px] h-12 rounded-xl font-semibold text-sm bg-accent text-accent-foreground hover:bg-accent/90"
+                  className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-accent text-accent-foreground hover:bg-accent/90"
                 >
                   <UtensilsCrossed className="w-4 h-4 mr-2" />
                   Commander
                 </Button>
               )}
+            </div>
+
+            {/* ═══ Location Button ═══ */}
+            <div className="mt-4">
+              <Button
+                onClick={handleLocateRestaurant}
+                variant="outline"
+                className="w-full h-11 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5 gap-2"
+              >
+                <LocateFixed className="w-4 h-4" />
+                📍 Localiser sur la carte
+              </Button>
             </div>
           </CardContent>
         </Card>
