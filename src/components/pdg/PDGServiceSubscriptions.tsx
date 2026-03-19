@@ -723,7 +723,6 @@ export default function PDGServiceSubscriptions() {
                               {plan.sms_notifications && <Badge variant="outline" className="text-[10px]">SMS</Badge>}
                               {plan.email_notifications && <Badge variant="outline" className="text-[10px]">Email</Badge>}
                               {plan.custom_branding && <Badge variant="outline" className="text-[10px]">Branding</Badge>}
-                              {plan.api_access && <Badge variant="outline" className="text-[10px]">API</Badge>}
                             </div>
                           </TableCell>
                           <TableCell>
