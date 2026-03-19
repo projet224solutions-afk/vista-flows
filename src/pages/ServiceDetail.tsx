@@ -201,16 +201,23 @@ export default function ServiceDetail() {
           sunday: "Fermé"
         };
 
-        // Coordonnées par défaut (Conakry)
-        let lat = 9.6412;
-        let lng = -13.5784;
+        // Utiliser les coordonnées réelles de la base de données
+        let lat = proService.latitude || null;
+        let lng = proService.longitude || null;
 
-        // Si une adresse existe, tenter de la géocoder
-        if (proService.address) {
-          const coords = await geocodeAddress(proService.address);
-          if (coords) {
-            lat = coords.lat;
-            lng = coords.lng;
+        // Si pas de coordonnées en DB, tenter le géocodage
+        if (!lat || !lng) {
+          if (proService.address) {
+            const coords = await geocodeAddress(proService.address);
+            if (coords) {
+              lat = coords.lat;
+              lng = coords.lng;
+            }
+          }
+          // Fallback Conakry si rien ne marche
+          if (!lat || !lng) {
+            lat = 9.6412;
+            lng = -13.5784;
           }
         }
 
@@ -219,9 +226,11 @@ export default function ServiceDetail() {
           name: proService.business_name,
           description: proService.description || 'Aucune description disponible',
           category: proService.service_types?.category || 'service',
-          service_type_code: proService.service_types?.code, // Ajouter le code du type
+          service_type_code: proService.service_types?.code,
           address: proService.address,
           phone: proService.phone,
+          email: proService.email,
+          website: proService.website,
           rating: Number(proService.rating) || 0,
           reviews_count: proService.total_reviews || 0,
           is_open: true,
