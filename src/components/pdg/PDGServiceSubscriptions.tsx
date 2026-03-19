@@ -228,7 +228,6 @@ export default function PDGServiceSubscriptions() {
       sms_notifications: plan.sms_notifications,
       email_notifications: plan.email_notifications,
       custom_branding: plan.custom_branding,
-      api_access: plan.api_access,
       priority_listing: plan.priority_listing,
     });
     setIsEditLimitsOpen(true);
