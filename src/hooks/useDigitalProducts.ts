@@ -37,6 +37,10 @@ export interface DigitalProduct {
   reviews_count: number;
   created_at: string;
   published_at: string | null;
+  // Pricing fields
+  pricing_type?: string | null;
+  subscription_interval?: string | null;
+  access_duration?: string | null;
   // Joined fields
   merchant_name?: string;
   vendor_name?: string;
