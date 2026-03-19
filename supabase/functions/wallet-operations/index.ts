@@ -246,7 +246,7 @@ async function executeAtomicTransfer(
   recipientWallet: any,
   isInternational: boolean,
   metadata: any
-): Promise<{ success: boolean; error?: string; senderBalance?: number; recipientBalance?: number }> {
+): Promise<{ success: boolean; error?: string; senderBalance?: number; recipientBalance?: number; transactionId?: string }> {
 
   // Try RPC first
   const { data, error } = await supabase.rpc('execute_atomic_wallet_transfer', {
@@ -261,10 +261,12 @@ async function executeAtomicTransfer(
   });
 
   if (!error) {
+    const rpcTransactionId = (Array.isArray(data) ? data?.[0]?.id : data?.id) || undefined;
     return {
       success: true,
       senderBalance: senderWallet.balance - amountToDebit,
-      recipientBalance: recipientWallet.balance + amountToCredit
+      recipientBalance: recipientWallet.balance + amountToCredit,
+      transactionId: rpcTransactionId,
     };
   }
 
@@ -283,10 +285,10 @@ async function executeAtomicTransfer(
       method: 'wallet',
       status: 'pending',
       currency: metadata.senderCurrency || 'GNF',
-      transaction_type: isInternational ? 'international_transfer' : 'transfer',
       metadata: {
         description,
         atomic: true,
+        transaction_type: isInternational ? 'international_transfer' : 'transfer',
         is_international: isInternational,
         sender_balance_before: senderWallet.balance,
         recipient_balance_before: recipientWallet.balance,
@@ -296,7 +298,8 @@ async function executeAtomicTransfer(
     });
 
   if (txCreateError) {
-    return { success: false, error: 'Erreur création transaction' };
+    console.error('❌ [wallet-operations] enhanced_transactions insert failed:', txCreateError);
+    return { success: false, error: `Erreur création transaction: ${txCreateError.message}` };
   }
 
   // Debit sender
@@ -343,6 +346,7 @@ async function executeAtomicTransfer(
       metadata: {
         description,
         atomic: true,
+        transaction_type: isInternational ? 'international_transfer' : 'transfer',
         is_international: isInternational,
         sender_balance_after: newSenderBalance,
         recipient_balance_after: newRecipientBalance,
@@ -352,7 +356,7 @@ async function executeAtomicTransfer(
     })
     .eq('id', transactionId);
 
-  return { success: true, senderBalance: newSenderBalance, recipientBalance: newRecipientBalance };
+  return { success: true, senderBalance: newSenderBalance, recipientBalance: newRecipientBalance, transactionId };
 }
 
 async function syncAgentWallet(supabase: any, userId: string, newBalance: number, context: string, userRole: string): Promise<void> {
