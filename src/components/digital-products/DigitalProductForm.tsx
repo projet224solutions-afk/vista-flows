@@ -17,7 +17,11 @@ import {
   Video,
   Sparkles,
   ChevronRight,
-  Tag
+  Tag,
+  Download,
+  Trash2,
+  File,
+  AlertCircle
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -316,6 +320,8 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
   
   // Médias
   const [images, setImages] = useState<string[]>(() => initialProduct?.images || []);
+  const [deliverableFiles, setDeliverableFiles] = useState<string[]>(() => initialProduct?.file_urls || []);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(() => initialProduct?.video_url || null);
 
@@ -350,6 +356,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     }));
 
     setImages(initialProduct.images || []);
+    setDeliverableFiles(initialProduct.file_urls || []);
     setVideoPreviewUrl(initialProduct.video_url || null);
     setVideoFile(null);
   }, [isEdit, initialProduct]);
@@ -393,6 +400,36 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     }
 
     setImages(prev => [...prev, ...uploadedUrls]);
+  };
+
+  const handleDeliverableFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !user) return;
+
+    setUploadingFiles(true);
+    const uploadedUrls: string[] = [];
+    
+    for (const file of Array.from(files)) {
+      console.log(`[DigitalProductForm] Uploading deliverable file to GCS...`, file.name);
+      
+      const uploadResult = await uploadToGCS(file, {
+        folder: 'documents',
+        subfolder: `${user.id}/deliverables`,
+      });
+
+      if (uploadResult.success && uploadResult.publicUrl) {
+        console.log(`[DigitalProductForm] ✅ Deliverable uploaded: ${uploadResult.publicUrl}`);
+        uploadedUrls.push(uploadResult.publicUrl);
+      } else {
+        toast.error(`Erreur upload: ${file.name}`);
+      }
+    }
+
+    if (uploadedUrls.length > 0) {
+      setDeliverableFiles(prev => [...prev, ...uploadedUrls]);
+      toast.success(`${uploadedUrls.length} fichier(s) ajouté(s)`);
+    }
+    setUploadingFiles(false);
   };
 
   const handleVideoSelect = (file: File | null, url: string | null) => {
@@ -483,6 +520,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         description: baseData.description.trim(),
         short_description: baseData.shortDescription.trim(),
         images: images,
+        file_urls: salesMode === 'direct' ? deliverableFiles : [],
         video_url: videoUrl,
         category: category,
         product_type: baseData.productType || null,
@@ -751,6 +789,87 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
               </CardContent>
             </Card>
 
+            {/* Fichiers livrables (vente directe uniquement) */}
+            {salesMode === 'direct' && (
+              <Card className="border-primary/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Download className="w-4 h-4 text-primary" />
+                    Fichiers à livrer à l'acheteur
+                    <Badge variant="default" className="text-[10px]">Important</Badge>
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Les fichiers que l'acheteur pourra télécharger après le paiement (PDF, ZIP, MP3, vidéo, etc.)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {deliverableFiles.length > 0 && (
+                      <div className="space-y-2">
+                        {deliverableFiles.map((url, i) => {
+                          const fileName = (() => {
+                            try {
+                              const parts = url.split('/');
+                              return decodeURIComponent(parts[parts.length - 1].split('?')[0]);
+                            } catch { return `Fichier ${i + 1}`; }
+                          })();
+                          return (
+                            <div key={i} className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <File className="w-4 h-4 text-primary shrink-0" />
+                                <span className="text-sm truncate">{fileName}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setDeliverableFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                className="p-1 text-destructive hover:bg-destructive/10 rounded"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <label className={cn(
+                      "flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors",
+                      uploadingFiles ? "border-primary/50 bg-primary/5" : "border-border hover:border-primary/50"
+                    )}>
+                      {uploadingFiles ? (
+                        <>
+                          <Loader2 className="w-8 h-8 text-primary mb-2 animate-spin" />
+                          <span className="text-sm text-primary font-medium">Upload en cours...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                          <span className="text-sm text-muted-foreground">
+                            Ajoutez vos fichiers téléchargeables
+                          </span>
+                          <span className="text-xs text-muted-foreground mt-1">
+                            PDF, ZIP, MP3, MP4, DOCX... (jusqu'à 20MB)
+                          </span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleDeliverableFileUpload}
+                        className="hidden"
+                        disabled={uploadingFiles}
+                      />
+                    </label>
+                    {deliverableFiles.length === 0 && (
+                      <p className="text-xs text-destructive flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Sans fichier, l'acheteur ne recevra rien après le paiement
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Vidéo */}
             <Card>
               <CardHeader className="pb-3">
@@ -821,6 +940,16 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                     {images.length} image(s)
                   </span>
                 </div>
+
+                {/* Fichiers livrables */}
+                {salesMode === 'direct' && (
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <span className="text-sm text-muted-foreground">Fichiers livrables</span>
+                    <span className={cn("text-sm font-medium", deliverableFiles.length === 0 ? "text-destructive" : "text-foreground")}>
+                      {deliverableFiles.length === 0 ? '⚠️ Aucun fichier' : `${deliverableFiles.length} fichier(s)`}
+                    </span>
+                  </div>
+                )}
 
                 {/* Catégorie */}
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
