@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ExternalLink, Eye, Star, Shield, Download, ShoppingCart, MessageCircle, Store } from "lucide-react";
+import { ArrowLeft, ExternalLink, Eye, Star, Shield, Download, ShoppingCart, MessageCircle, Store, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -39,6 +39,9 @@ interface DigitalProductWithVendor {
   rating: number;
   reviews_count: number;
   created_at: string;
+  pricing_type?: string | null;
+  subscription_interval?: string | null;
+  access_duration?: string | null;
   vendors?: {
     id: string;
     business_name: string;
@@ -94,34 +97,19 @@ export default function DigitalProductDetail() {
   const incrementViews = async () => {
     if (!productId) return;
     
-    // Vérifier si cette vue a déjà été comptée dans cette session
     const viewKey = `digital_product_view_${productId}`;
     const hasViewed = sessionStorage.getItem(viewKey);
     
-    if (hasViewed) {
-      console.log('Vue déjà comptée pour ce produit dans cette session');
-      return;
-    }
+    if (hasViewed) return;
     
     try {
-      // Récupérer le count actuel et incrémenter
-      const { data } = await supabase
-        .from('digital_products')
-        .select('views_count')
-        .eq('id', productId)
-        .single();
+      // Use RPC function to bypass RLS
+      const { error } = await supabase.rpc('increment_digital_product_views', {
+        p_product_id: productId
+      });
       
-      if (data) {
-        const { error } = await supabase
-          .from('digital_products')
-          .update({ views_count: (data.views_count || 0) + 1 })
-          .eq('id', productId);
-        
-        if (!error) {
-          // Marquer comme vu dans cette session
-          sessionStorage.setItem(viewKey, 'true');
-          console.log('Vue comptée avec succès pour:', productId);
-        }
+      if (!error) {
+        sessionStorage.setItem(viewKey, 'true');
       }
     } catch (error) {
       console.error('Erreur incrémentation vues:', error);
@@ -350,6 +338,26 @@ export default function DigitalProductDetail() {
                 )}
               </div>
 
+              {/* Pricing type badge */}
+              {product.product_mode !== 'affiliate' && product.pricing_type && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {product.pricing_type === 'subscription' ? (
+                    <Badge className="bg-primary/10 text-primary border-primary/20">
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Abonnement {product.subscription_interval === 'yearly' ? 'annuel' : product.subscription_interval === 'lifetime' ? 'à vie' : 'mensuel'}
+                    </Badge>
+                  ) : product.pricing_type === 'pay_what_you_want' ? (
+                    <Badge variant="secondary">
+                      Prix libre
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                      Achat unique — Accès permanent
+                    </Badge>
+                  )}
+                </div>
+              )}
+
               {product.product_mode === 'affiliate' && product.commission_rate > 0 && (
                 <Badge variant="outline" className="mb-4">
                   Commission: {product.commission_rate}%
@@ -388,7 +396,7 @@ export default function DigitalProductDetail() {
                 ) : product.price > 0 ? (
                   <>
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Acheter
+                    {product.pricing_type === 'subscription' ? "S'abonner" : 'Acheter'}
                   </>
                 ) : (
                   <>
