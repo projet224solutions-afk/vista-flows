@@ -305,8 +305,8 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     price: initialProduct?.price ? String(initialProduct.price) : '',
     originalPrice: initialProduct?.original_price ? String(initialProduct.original_price) : '',
     currency: initialProduct?.currency || 'GNF',
-    pricingType: 'one_time',
-    subscriptionInterval: 'monthly',
+    pricingType: (initialProduct?.pricing_type as DirectSaleFormData['pricingType']) || 'one_time',
+    subscriptionInterval: (initialProduct?.subscription_interval as DirectSaleFormData['subscriptionInterval']) || 'monthly',
     minimumPrice: '',
     suggestedPrice: '',
     allowRefunds: true,
@@ -315,7 +315,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     maxQuantity: '',
     requireEmail: true,
     instantDelivery: true,
-    accessDuration: 'lifetime'
+    accessDuration: (initialProduct?.access_duration as DirectSaleFormData['accessDuration']) || 'lifetime'
   }));
   
   // Médias
