@@ -29043,6 +29043,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_digital_product_views: {
+        Args: { p_product_id: string }
+        Returns: undefined
+      }
       increment_document_download: {
         Args: { doc_id: string }
         Returns: undefined
