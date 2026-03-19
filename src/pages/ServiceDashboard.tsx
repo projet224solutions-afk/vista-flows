@@ -1,6 +1,6 @@
 import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key } from 'lucide-react';
+import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,10 +11,12 @@ import { ServiceModuleManager } from '@/components/professional-services/modules
 import { BookingManagement } from '@/components/professional-services/modules/BookingManagement';
 import { ServiceSettingsPanel } from '@/components/professional-services/ServiceSettingsPanel';
 import { ServiceSubscriptionCard } from '@/components/professional-services/ServiceSubscriptionCard';
+import { ServiceIdBadge } from '@/components/professional-services/ServiceIdBadge';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 const WalletApiPanel = lazy(() => import('@/components/professional-services/modules/WalletApiPanel'));
+const ServiceWalletWidget = lazy(() => import('@/components/professional-services/ServiceWalletWidget'));
 
 // Types de services qui ont leur propre module complet
 function isFullModuleService(service: ProfessionalService): boolean {
@@ -79,21 +81,24 @@ export default function ServiceDashboard() {
       <div className="min-h-screen bg-background pb-24">
         <div className="container mx-auto px-4 py-6">
           {/* Header avec bouton paramètres */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Store className="w-6 h-6 text-primary" />
-              <h1 className="text-xl sm:text-2xl font-bold">{service.business_name}</h1>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={() => setSettingsOpen(true)}
-            >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Paramètres</span>
-            </Button>
-          </div>
+           <div className="flex items-center justify-between mb-6">
+             <div className="flex items-center gap-3">
+               <Store className="w-6 h-6 text-primary" />
+               <h1 className="text-xl sm:text-2xl font-bold">{service.business_name}</h1>
+             </div>
+             <div className="flex items-center gap-2">
+               <ServiceIdBadge serviceId={service.id} compact />
+               <Button
+                 variant="outline"
+                 size="sm"
+                 className="gap-2"
+                 onClick={() => setSettingsOpen(true)}
+               >
+                 <Settings className="w-4 h-4" />
+                 <span className="hidden sm:inline">Paramètres</span>
+               </Button>
+             </div>
+           </div>
 
           {/* Barre d'abonnement compacte */}
           <ServiceSubscriptionCard serviceId={service.id} compact />
@@ -105,6 +110,13 @@ export default function ServiceDashboard() {
             serviceTypeCode={service.service_type?.code}
             businessName={service.business_name}
           />
+          {/* Wallet du prestataire */}
+          <div className="mt-6">
+            <Suspense fallback={<div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <ServiceWalletWidget businessName={service.business_name} />
+            </Suspense>
+          </div>
+
           {/* Bouton Mes Achats */}
           <div className="mt-6">
             <Button
@@ -113,10 +125,6 @@ export default function ServiceDashboard() {
               onClick={() => {
                 const el = document.getElementById('my-purchases-section');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
-                else {
-                  const section = document.createElement('div');
-                  section.id = 'my-purchases-section';
-                }
               }}
             >
               <ShoppingBag className="w-5 h-5" />
@@ -177,6 +185,7 @@ export default function ServiceDashboard() {
                 <Badge className={`${verificationColors[service.verification_status]} text-xs`}>
                   {service.verification_status}
                 </Badge>
+                <ServiceIdBadge serviceId={service.id} compact />
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
                 {service.service_type?.name} • Commission: {service.service_type?.commission_rate}%
@@ -243,6 +252,10 @@ export default function ServiceDashboard() {
           <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
             <TabsList className="inline-flex w-max sm:w-auto sm:flex sm:flex-wrap gap-0.5">
               <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3">Vue d'ensemble</TabsTrigger>
+              <TabsTrigger value="wallet" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+                <Wallet className="w-3.5 h-3.5" />
+                Wallet
+              </TabsTrigger>
               <TabsTrigger value="products" className="text-xs sm:text-sm px-2.5 sm:px-3">Produits</TabsTrigger>
               <TabsTrigger value="bookings" className="text-xs sm:text-sm px-2.5 sm:px-3">Réservations</TabsTrigger>
               <TabsTrigger value="my-purchases" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
@@ -288,6 +301,12 @@ export default function ServiceDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="wallet">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <ServiceWalletWidget businessName={service.business_name} />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="products">
