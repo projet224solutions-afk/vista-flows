@@ -104,7 +104,6 @@ export default function PDGServiceSubscriptions() {
     sms_notifications: false,
     email_notifications: false,
     custom_branding: false,
-    api_access: false,
     priority_listing: false,
   });
   const [freeSubscriptionData, setFreeSubscriptionData] = useState({
