@@ -413,6 +413,8 @@ function App() {
               />
               
               <Route path="/orders" element={<Orders />} />
+              <Route path="/digital-purchase/:productId" element={<DigitalPurchaseDownload />} />
+              <Route path="/my-digital-purchases" element={<MyDigitalPurchases />} />
               <Route
                 path="/wallet"
                 element={
