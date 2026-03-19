@@ -712,7 +712,7 @@ export default function PDGServiceSubscriptions() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      plans.map((plan) => (
+                      filteredPlans.map((plan) => (
                         <TableRow key={plan.id}>
                           <TableCell className="font-medium">
                             <div>
