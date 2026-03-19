@@ -90,10 +90,22 @@ export default function PDGServiceSubscriptions() {
   const [newPrice, setNewPrice] = useState('');
   const [reason, setReason] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditLimitsOpen, setIsEditLimitsOpen] = useState(false);
   const [isFreeDialogOpen, setIsFreeDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeServiceTab, setActiveServiceTab] = useState<string>('all');
   const [activeSubTab, setActiveSubTab] = useState<string>('subscriptions');
+  const [editLimitsForm, setEditLimitsForm] = useState({
+    max_bookings_per_month: '' as string,
+    max_products: '' as string,
+    max_staff: '' as string,
+    analytics_access: false,
+    sms_notifications: false,
+    email_notifications: false,
+    custom_branding: false,
+    api_access: false,
+    priority_listing: false,
+  });
   const [freeSubscriptionData, setFreeSubscriptionData] = useState({
     serviceId: '', planId: '', days: ''
   });
