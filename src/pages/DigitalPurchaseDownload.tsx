@@ -79,7 +79,7 @@ export default function DigitalPurchaseDownload() {
     }
   }, [user?.id, productId]);
 
-  const loadPurchaseAndProduct = async () => {
+  const loadPurchaseAndProduct = async (retryCount = 0) => {
     try {
       // Charger l'achat
       const { data: purchaseData, error: purchaseError } = await supabase
@@ -95,6 +95,12 @@ export default function DigitalPurchaseDownload() {
       if (purchaseError) throw purchaseError;
 
       if (!purchaseData) {
+        // Retry up to 3 times with delay (race condition with insert)
+        if (retryCount < 3) {
+          console.log(`[DigitalPurchaseDownload] Purchase not found, retrying (${retryCount + 1}/3)...`);
+          setTimeout(() => loadPurchaseAndProduct(retryCount + 1), 1500);
+          return;
+        }
         toast.error('Achat non trouvé ou accès non accordé');
         navigate('/marketplace');
         return;
