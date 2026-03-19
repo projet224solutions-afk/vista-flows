@@ -1387,7 +1387,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                 <span className="text-[10px] sm:text-xs">Dépôt</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
               <DialogHeader>
                 <DialogTitle>Effectuer un dépôt</DialogTitle>
                 <DialogDescription>
