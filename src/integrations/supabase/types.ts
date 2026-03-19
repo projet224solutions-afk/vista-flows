@@ -5727,6 +5727,7 @@ export type Database = {
       }
       digital_products: {
         Row: {
+          access_duration: string | null
           affiliate_platform: string | null
           affiliate_url: string | null
           category: string
@@ -5747,6 +5748,7 @@ export type Database = {
           metadata: Json | null
           original_price: number | null
           price: number
+          pricing_type: string
           product_mode: string
           product_type: string | null
           published_at: string | null
@@ -5760,6 +5762,7 @@ export type Database = {
           sponsor_priority: number | null
           sponsored_until: string | null
           status: string
+          subscription_interval: string | null
           tags: string[] | null
           title: string
           updated_at: string | null
@@ -5768,6 +5771,7 @@ export type Database = {
           views_count: number | null
         }
         Insert: {
+          access_duration?: string | null
           affiliate_platform?: string | null
           affiliate_url?: string | null
           category: string
@@ -5788,6 +5792,7 @@ export type Database = {
           metadata?: Json | null
           original_price?: number | null
           price?: number
+          pricing_type?: string
           product_mode?: string
           product_type?: string | null
           published_at?: string | null
@@ -5801,6 +5806,7 @@ export type Database = {
           sponsor_priority?: number | null
           sponsored_until?: string | null
           status?: string
+          subscription_interval?: string | null
           tags?: string[] | null
           title: string
           updated_at?: string | null
@@ -5809,6 +5815,7 @@ export type Database = {
           views_count?: number | null
         }
         Update: {
+          access_duration?: string | null
           affiliate_platform?: string | null
           affiliate_url?: string | null
           category?: string
@@ -5829,6 +5836,7 @@ export type Database = {
           metadata?: Json | null
           original_price?: number | null
           price?: number
+          pricing_type?: string
           product_mode?: string
           product_type?: string | null
           published_at?: string | null
@@ -5842,6 +5850,7 @@ export type Database = {
           sponsor_priority?: number | null
           sponsored_until?: string | null
           status?: string
+          subscription_interval?: string | null
           tags?: string[] | null
           title?: string
           updated_at?: string | null
@@ -5869,6 +5878,92 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      digital_subscriptions: {
+        Row: {
+          amount_per_period: number
+          auto_renew: boolean
+          billing_cycle: string
+          buyer_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          created_at: string | null
+          currency: string
+          current_period_end: string
+          current_period_start: string
+          failed_payment_count: number
+          id: string
+          last_payment_at: string | null
+          last_payment_transaction_id: string | null
+          merchant_id: string
+          metadata: Json | null
+          next_billing_date: string | null
+          payment_method: string
+          product_id: string
+          status: string
+          total_amount_paid: number
+          total_payments_made: number
+          updated_at: string | null
+        }
+        Insert: {
+          amount_per_period: number
+          auto_renew?: boolean
+          billing_cycle?: string
+          buyer_id: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          currency?: string
+          current_period_end: string
+          current_period_start?: string
+          failed_payment_count?: number
+          id?: string
+          last_payment_at?: string | null
+          last_payment_transaction_id?: string | null
+          merchant_id: string
+          metadata?: Json | null
+          next_billing_date?: string | null
+          payment_method?: string
+          product_id: string
+          status?: string
+          total_amount_paid?: number
+          total_payments_made?: number
+          updated_at?: string | null
+        }
+        Update: {
+          amount_per_period?: number
+          auto_renew?: boolean
+          billing_cycle?: string
+          buyer_id?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          currency?: string
+          current_period_end?: string
+          current_period_start?: string
+          failed_payment_count?: number
+          id?: string
+          last_payment_at?: string | null
+          last_payment_transaction_id?: string | null
+          merchant_id?: string
+          metadata?: Json | null
+          next_billing_date?: string | null
+          payment_method?: string
+          product_id?: string
+          status?: string
+          total_amount_paid?: number
+          total_payments_made?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_subscriptions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "digital_products"
             referencedColumns: ["id"]
           },
         ]
@@ -29239,6 +29334,10 @@ export type Database = {
       }
       process_deposit_payment: {
         Args: { p_transaction_id: string }
+        Returns: Json
+      }
+      process_digital_subscription_renewal: {
+        Args: { p_subscription_id: string }
         Returns: Json
       }
       process_djomy_success: {

@@ -144,7 +144,9 @@ export default function Payment() {
     quantity: number;
     vendorId: string;
     vendorUserId: string;
-    productType: 'physical' | 'digital'; // Type de produit
+    productType: 'physical' | 'digital';
+    pricingType?: 'one_time' | 'subscription' | 'pay_what_you_want';
+    subscriptionInterval?: 'monthly' | 'yearly' | 'lifetime';
   } | null>(null);
 
   // État pour stocker les infos du panier (multi-produits)
@@ -258,6 +260,9 @@ export default function Payment() {
               currency,
               vendor_id,
               merchant_id,
+              pricing_type,
+              subscription_interval,
+              access_duration,
               vendors:vendors!digital_products_vendor_id_fkey(user_id, business_name, country)
             `)
             .eq('id', id)
@@ -279,7 +284,9 @@ export default function Payment() {
               quantity: qty,
               vendorId: dpProduct.vendor_id || dpProduct.merchant_id,
               vendorUserId: vendorUserId,
-              productType: 'digital'
+              productType: 'digital',
+              pricingType: (dpProduct as any).pricing_type || 'one_time',
+              subscriptionInterval: (dpProduct as any).subscription_interval || undefined,
             });
             
             // Récupérer le public_id du vendeur
@@ -300,7 +307,12 @@ export default function Payment() {
               vendorCode = `VEN-${vendorUserId.substring(0, 8).toUpperCase()}`;
             }
             setRecipientId(vendorCode);
-            setPaymentDescription(`Achat numérique: ${dpProduct.title} (x${qty})`);
+            const isSubscription = (dpProduct as any).pricing_type === 'subscription';
+            const interval = (dpProduct as any).subscription_interval || 'monthly';
+            const intervalLabel = interval === 'yearly' ? '/an' : '/mois';
+            setPaymentDescription(isSubscription 
+              ? `Abonnement ${intervalLabel}: ${dpProduct.title}` 
+              : `Achat numérique: ${dpProduct.title} (x${qty})`);
             setPaymentOpen(true);
           } else {
             // Fallback: essayer service_products
@@ -841,9 +853,11 @@ export default function Payment() {
 
         // ====== PRODUIT NUMÉRIQUE ======
         if (productPaymentInfo.productType === 'digital') {
-          console.log('[Payment] Digital product payment - creating escrow + purchase record');
+          const isSubscription = productPaymentInfo.pricingType === 'subscription';
+          const billingCycle = productPaymentInfo.subscriptionInterval || 'monthly';
+          console.log('[Payment] Digital product payment', { isSubscription, billingCycle });
 
-          // Créer l'escrow pour le produit numérique (pas de commande physique)
+          // Créer l'escrow pour le produit numérique
           const escrowResult = await UniversalEscrowService.createEscrow({
             buyer_id: user.id,
             seller_id: productPaymentInfo.vendorUserId,
@@ -855,16 +869,32 @@ export default function Payment() {
               product_id: productPaymentInfo.productId,
               product_name: productPaymentInfo.productName,
               quantity: productPaymentInfo.quantity,
+              is_subscription: isSubscription,
+              billing_cycle: billingCycle,
               description: paymentDescription || `Achat numérique: ${productPaymentInfo.productName}`
             },
             escrow_options: {
-              auto_release_days: 0, // Libération immédiate pour les produits numériques
+              auto_release_days: 0,
               commission_percent: 0
             }
           });
 
           if (!escrowResult.success) {
             throw new Error(escrowResult.error || 'Échec du paiement');
+          }
+
+          // Calculer la date d'expiration
+          const now = new Date();
+          let accessExpiresAt: string | null = null;
+          let periodEnd: Date = new Date();
+          
+          if (isSubscription && billingCycle !== 'lifetime') {
+            if (billingCycle === 'monthly') {
+              periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            } else if (billingCycle === 'yearly') {
+              periodEnd = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+            }
+            accessExpiresAt = periodEnd.toISOString();
           }
 
           // Enregistrer l'achat dans digital_product_purchases
@@ -878,13 +908,43 @@ export default function Payment() {
               payment_status: 'completed',
               access_granted: true,
               download_count: 0,
-              max_downloads: 10,
-              transaction_id: escrowResult.escrow_id || null
+              max_downloads: isSubscription ? null : 10,
+              transaction_id: escrowResult.escrow_id || null,
+              access_expires_at: accessExpiresAt
             });
 
           if (purchaseError) {
             console.error('[Payment] Error creating purchase record:', purchaseError);
-            // Ne pas bloquer le flux - le paiement est fait
+          }
+
+          // Si c'est un abonnement, créer l'enregistrement dans digital_subscriptions
+          if (isSubscription && billingCycle !== 'lifetime') {
+            const { error: subError } = await supabase
+              .from('digital_subscriptions')
+              .insert({
+                product_id: productPaymentInfo.productId,
+                buyer_id: user.id,
+                merchant_id: productPaymentInfo.vendorUserId,
+                status: 'active',
+                billing_cycle: billingCycle,
+                amount_per_period: paymentPreview.amount,
+                currency: productCurrency || 'GNF',
+                current_period_start: now.toISOString(),
+                current_period_end: periodEnd.toISOString(),
+                next_billing_date: periodEnd.toISOString(),
+                auto_renew: true,
+                payment_method: 'wallet',
+                total_payments_made: 1,
+                total_amount_paid: paymentPreview.amount,
+                last_payment_at: now.toISOString(),
+                last_payment_transaction_id: escrowResult.escrow_id || null
+              });
+
+            if (subError) {
+              console.error('[Payment] Error creating subscription:', subError);
+            } else {
+              console.log('[Payment] ✅ Digital subscription created');
+            }
           }
 
           // Incrémenter le compteur de ventes
@@ -899,13 +959,16 @@ export default function Payment() {
             .update({ sales_count: (currentProduct?.sales_count || 0) + 1 })
             .eq('id', productPaymentInfo.productId);
 
+          const intervalLabels: Record<string, string> = { monthly: 'mensuel', yearly: 'annuel', lifetime: '' };
           toast({
-            title: "✅ Achat réussi !",
-            description: `${productPaymentInfo.productName} — Accès au téléchargement accordé`
+            title: isSubscription ? "✅ Abonnement activé !" : "✅ Achat réussi !",
+            description: isSubscription 
+              ? `${productPaymentInfo.productName} — Abonnement ${intervalLabels[billingCycle]} activé`
+              : `${productPaymentInfo.productName} — Accès au téléchargement accordé`
           });
 
           setProductPaymentInfo(null);
-          navigate(`/digital-purchase/${productPaymentInfo.productId}`);
+          navigate(isSubscription ? '/my-digital-subscriptions' : `/digital-purchase/${productPaymentInfo.productId}`);
           return;
         }
 
