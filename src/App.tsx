@@ -87,6 +87,8 @@ const Payment = lazyWithRetry(() => import("./pages/Payment"));
 const DjomyPayment = lazyWithRetry(() => import("./pages/DjomyPayment"));
 const PaymentCorePage = lazyWithRetry(() => import("./pages/PaymentCore"));
 const Orders = lazyWithRetry(() => import("./pages/Orders"));
+const DigitalPurchaseDownload = lazyWithRetry(() => import("./pages/DigitalPurchaseDownload"));
+const MyDigitalPurchases = lazyWithRetry(() => import("./pages/MyDigitalPurchases"));
 const ContactUserById = lazyWithRetry(() => import("./components/communication/ContactUserById"));
 const DirectConversation = lazyWithRetry(() => import("./pages/DirectConversation"));
 const Devis = lazyWithRetry(() => import("./pages/Devis"));
@@ -411,6 +413,8 @@ function App() {
               />
               
               <Route path="/orders" element={<Orders />} />
+              <Route path="/digital-purchase/:productId" element={<DigitalPurchaseDownload />} />
+              <Route path="/my-digital-purchases" element={<MyDigitalPurchases />} />
               <Route
                 path="/wallet"
                 element={

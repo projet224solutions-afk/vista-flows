@@ -839,6 +839,77 @@ export default function Payment() {
       if (productPaymentInfo) {
         console.log('[Payment] Creating product order:', productPaymentInfo);
 
+        // ====== PRODUIT NUMÉRIQUE ======
+        if (productPaymentInfo.productType === 'digital') {
+          console.log('[Payment] Digital product payment - creating escrow + purchase record');
+
+          // Créer l'escrow pour le produit numérique (pas de commande physique)
+          const escrowResult = await UniversalEscrowService.createEscrow({
+            buyer_id: user.id,
+            seller_id: productPaymentInfo.vendorUserId,
+            amount: paymentPreview.amount,
+            currency: productCurrency || 'GNF',
+            transaction_type: 'digital_product',
+            payment_provider: 'wallet',
+            metadata: {
+              product_id: productPaymentInfo.productId,
+              product_name: productPaymentInfo.productName,
+              quantity: productPaymentInfo.quantity,
+              description: paymentDescription || `Achat numérique: ${productPaymentInfo.productName}`
+            },
+            escrow_options: {
+              auto_release_days: 0, // Libération immédiate pour les produits numériques
+              commission_percent: 0
+            }
+          });
+
+          if (!escrowResult.success) {
+            throw new Error(escrowResult.error || 'Échec du paiement');
+          }
+
+          // Enregistrer l'achat dans digital_product_purchases
+          const { error: purchaseError } = await supabase
+            .from('digital_product_purchases')
+            .insert({
+              product_id: productPaymentInfo.productId,
+              buyer_id: user.id,
+              merchant_id: productPaymentInfo.vendorUserId,
+              amount: paymentPreview.amount,
+              payment_status: 'completed',
+              access_granted: true,
+              download_count: 0,
+              max_downloads: 10,
+              transaction_id: escrowResult.escrow_id || null
+            });
+
+          if (purchaseError) {
+            console.error('[Payment] Error creating purchase record:', purchaseError);
+            // Ne pas bloquer le flux - le paiement est fait
+          }
+
+          // Incrémenter le compteur de ventes
+          const { data: currentProduct } = await supabase
+            .from('digital_products')
+            .select('sales_count')
+            .eq('id', productPaymentInfo.productId)
+            .single();
+          
+          await supabase
+            .from('digital_products')
+            .update({ sales_count: (currentProduct?.sales_count || 0) + 1 })
+            .eq('id', productPaymentInfo.productId);
+
+          toast({
+            title: "✅ Achat réussi !",
+            description: `${productPaymentInfo.productName} — Accès au téléchargement accordé`
+          });
+
+          setProductPaymentInfo(null);
+          navigate(`/digital-purchase/${productPaymentInfo.productId}`);
+          return;
+        }
+
+        // ====== PRODUIT PHYSIQUE ======
         // Créer la commande via la fonction PostgreSQL
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
           p_user_id: user.id,
