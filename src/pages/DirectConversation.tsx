@@ -79,6 +79,8 @@ export default function DirectConversation() {
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTypingSentRef = useRef<number>(0);
+  const presenceDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPresenceRef = useRef<{ online: boolean; lastSeen: string | null }>({ online: false, lastSeen: null });
 
   // ─── Load recipient profile ───
   useEffect(() => {
