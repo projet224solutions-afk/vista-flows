@@ -487,12 +487,16 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
           }
         }
         return true;
-      case 'media':
-        if (salesMode === 'direct' && deliverableFiles.length === 0) {
-          toast.error('Vous devez ajouter au moins un fichier à livrer pour la vente directe');
+      case 'media': {
+        const hasDeliverableContent =
+          deliverableFiles.length > 0 || !!videoFile || !!videoPreviewUrl;
+
+        if (salesMode === 'direct' && !hasDeliverableContent) {
+          toast.error('Ajoutez un fichier livrable ou une vidéo pour la vente directe');
           return false;
         }
         return true;
+      }
       default:
         return true;
     }
@@ -500,6 +504,10 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
 
   const handleSubmit = async () => {
     if (!user) return;
+    if (uploadingFiles || uploadingVideo) {
+      toast.error('Veuillez attendre la fin des uploads avant de publier');
+      return;
+    }
     
     setLoading(true);
     try {
@@ -528,6 +536,17 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         setUploadingVideo(false);
       }
 
+      // Compatibilité: si aucun fichier livrable n'est ajouté mais qu'une vidéo existe,
+      // on utilise la vidéo comme livrable principal (cas fréquent pour les produits vidéo).
+      const finalDeliverableFiles = salesMode === 'direct'
+        ? (deliverableFiles.length > 0 ? deliverableFiles : (videoUrl ? [videoUrl] : []))
+        : [];
+
+      if (salesMode === 'direct' && finalDeliverableFiles.length === 0) {
+        toast.error('Aucun fichier livrable détecté');
+        return;
+      }
+
       // Construction des données selon le mode
       const productData: any = {
         merchant_id: user.id,
@@ -536,7 +555,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         description: baseData.description.trim(),
         short_description: baseData.shortDescription.trim(),
         images: images,
-        file_urls: salesMode === 'direct' ? deliverableFiles : [],
+        file_urls: finalDeliverableFiles,
         video_url: videoUrl,
         category: category,
         product_type: baseData.productType || null,

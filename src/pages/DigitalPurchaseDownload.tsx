@@ -177,7 +177,7 @@ export default function DigitalPurchaseDownload() {
       const { data: productData, error: productError } = await supabase
         .from('digital_products')
         .select(`
-          id, title, description, images, file_urls, file_type, price, currency, 
+          id, title, description, images, file_urls, file_type, video_url, price, currency, 
           pricing_type, subscription_interval, merchant_id, vendor_id,
           vendors:vendor_id(business_name)
         `)
@@ -243,9 +243,17 @@ export default function DigitalPurchaseDownload() {
     }
   };
 
+  const resolvedFileUrls = (() => {
+    const explicitFiles = Array.isArray(product?.file_urls) ? product.file_urls.filter(Boolean) : [];
+    if (explicitFiles.length > 0) return explicitFiles;
+
+    // Compatibilité rétroactive: produits créés avec vidéo uniquement
+    const fallbackVideoUrl = (product as any)?.video_url;
+    return fallbackVideoUrl ? [fallbackVideoUrl] : [];
+  })();
+
   const handleDownloadAll = async () => {
-    const fileUrls = product?.file_urls || [];
-    for (const url of fileUrls) {
+    for (const url of resolvedFileUrls) {
       await handleDownload(url);
     }
   };
@@ -287,7 +295,7 @@ export default function DigitalPurchaseDownload() {
     );
   }
 
-  const fileUrls = product.file_urls || [];
+  const fileUrls = resolvedFileUrls;
   const hasFiles = fileUrls.length > 0;
   const isSubscription = access.type === 'subscription';
   const daysRemaining = access.current_period_end 
