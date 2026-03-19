@@ -252,6 +252,10 @@ export default function ServiceDashboard() {
           <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
             <TabsList className="inline-flex w-max sm:w-auto sm:flex sm:flex-wrap gap-0.5">
               <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3">Vue d'ensemble</TabsTrigger>
+              <TabsTrigger value="wallet" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+                <Wallet className="w-3.5 h-3.5" />
+                Wallet
+              </TabsTrigger>
               <TabsTrigger value="products" className="text-xs sm:text-sm px-2.5 sm:px-3">Produits</TabsTrigger>
               <TabsTrigger value="bookings" className="text-xs sm:text-sm px-2.5 sm:px-3">Réservations</TabsTrigger>
               <TabsTrigger value="my-purchases" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
