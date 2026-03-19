@@ -319,6 +319,8 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
   
   // Médias
   const [images, setImages] = useState<string[]>(() => initialProduct?.images || []);
+  const [deliverableFiles, setDeliverableFiles] = useState<string[]>(() => initialProduct?.file_urls || []);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(() => initialProduct?.video_url || null);
 
