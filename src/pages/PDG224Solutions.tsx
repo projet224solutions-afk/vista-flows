@@ -636,6 +636,12 @@ export default function PDG224Solutions() {
                 </ErrorBoundary>
               )}
 
+              {activeTab === 'wallet-api' && (
+                <ErrorBoundary>
+                  <PDGWalletApiManagement />
+                </ErrorBoundary>
+              )}
+
               {activeTab === 'bureau-monitoring' && (
                 <ErrorBoundary>
                   <PDGBureauMonitoring />
