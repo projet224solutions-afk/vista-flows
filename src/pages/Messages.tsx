@@ -72,7 +72,9 @@ interface Conversation {
   vendor_phone?: string;
   vendor_shop_slug?: string;
   vendor_id?: string;
-  user_role?: string;
+  user_role?: string | null;
+  service_type_name?: string | null;
+  service_type_code?: string | null;
 }
 
 export default function Messages() {
