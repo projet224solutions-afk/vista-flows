@@ -730,9 +730,14 @@ export default function PDGServiceSubscriptions() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)} title="Modifier le prix">
+                                <DollarSign className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenEditLimits(plan)} title="Modifier limites & fonctionnalités">
+                                <Settings2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
