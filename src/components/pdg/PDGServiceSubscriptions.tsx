@@ -245,7 +245,6 @@ export default function PDGServiceSubscriptions() {
         sms_notifications: editLimitsForm.sms_notifications,
         email_notifications: editLimitsForm.email_notifications,
         custom_branding: editLimitsForm.custom_branding,
-        api_access: editLimitsForm.api_access,
         priority_listing: editLimitsForm.priority_listing,
       });
       if (success) {
