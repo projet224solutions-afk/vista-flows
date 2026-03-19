@@ -251,6 +251,10 @@ export default function ServiceDashboard() {
               </TabsTrigger>
               <TabsTrigger value="reviews" className="text-xs sm:text-sm px-2.5 sm:px-3">Avis</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2.5 sm:px-3">Stats</TabsTrigger>
+              <TabsTrigger value="api" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+                <Key className="w-3.5 h-3.5" />
+                API
+              </TabsTrigger>
             </TabsList>
           </div>
 
