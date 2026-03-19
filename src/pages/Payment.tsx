@@ -888,15 +888,15 @@ export default function Payment() {
           }
 
           // Incrémenter le compteur de ventes
+          const { data: currentProduct } = await supabase
+            .from('digital_products')
+            .select('sales_count')
+            .eq('id', productPaymentInfo.productId)
+            .single();
+          
           await supabase
             .from('digital_products')
-            .update({ sales_count: (await supabase
-              .from('digital_products')
-              .select('sales_count')
-              .eq('id', productPaymentInfo.productId)
-              .single()
-              .then(r => (r.data?.sales_count || 0) + 1))
-            })
+            .update({ sales_count: (currentProduct?.sales_count || 0) + 1 })
             .eq('id', productPaymentInfo.productId);
 
           toast({
