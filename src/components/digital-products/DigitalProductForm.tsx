@@ -401,6 +401,36 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     setImages(prev => [...prev, ...uploadedUrls]);
   };
 
+  const handleDeliverableFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !user) return;
+
+    setUploadingFiles(true);
+    const uploadedUrls: string[] = [];
+    
+    for (const file of Array.from(files)) {
+      console.log(`[DigitalProductForm] Uploading deliverable file to GCS...`, file.name);
+      
+      const uploadResult = await uploadToGCS(file, {
+        folder: 'documents',
+        subfolder: `${user.id}/deliverables`,
+      });
+
+      if (uploadResult.success && uploadResult.publicUrl) {
+        console.log(`[DigitalProductForm] ✅ Deliverable uploaded: ${uploadResult.publicUrl}`);
+        uploadedUrls.push(uploadResult.publicUrl);
+      } else {
+        toast.error(`Erreur upload: ${file.name}`);
+      }
+    }
+
+    if (uploadedUrls.length > 0) {
+      setDeliverableFiles(prev => [...prev, ...uploadedUrls]);
+      toast.success(`${uploadedUrls.length} fichier(s) ajouté(s)`);
+    }
+    setUploadingFiles(false);
+  };
+
   const handleVideoSelect = (file: File | null, url: string | null) => {
     setVideoFile(file);
     setVideoPreviewUrl(url);
