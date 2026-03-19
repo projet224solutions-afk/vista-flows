@@ -230,88 +230,67 @@ export default function Messages() {
     };
   }, [currentUser]);
 
-  // Subscription à la présence de l'autre utilisateur
+  // Synchroniser présence du contact sélectionné (source unique stable)
   useEffect(() => {
-    if (!selectedConversation) return;
+    if (!selectedConversation) {
+      setOtherUserPresence('offline');
+      return;
+    }
 
-    // 🚀 Utiliser le hook temps réel pour une détection instantanée
-    const checkPresence = () => {
-      const isOnline = isUserOnlineRealtime(selectedConversation);
-      const presence = getRealtimePresence(selectedConversation);
+    loadPresences([selectedConversation]);
+    setOtherUserPresence(getContactStatus(selectedConversation));
+  }, [selectedConversation, loadPresences, getContactStatus]);
 
-      if (presence) {
-        setOtherUserPresence(presence.status);
-      } else {
-        setOtherUserPresence(isOnline ? 'online' : 'offline');
-      }
-    };
-
-    // Vérifier immédiatement
-    checkPresence();
-
-    // Mettre à jour périodiquement (le hook gère le temps réel)
-    const interval = setInterval(checkPresence, 1000);
-
-    // S'abonner aussi aux changements legacy pour compatibilité
-    const unsubscribe = subscribeToPresence(selectedConversation, (presence) => {
-      setOtherUserPresence(presence.status);
-    });
-
-    return () => {
-      clearInterval(interval);
-      unsubscribe();
-    };
-  }, [selectedConversation, isUserOnlineRealtime, getRealtimePresence, subscribeToPresence]);
-
-  // Subscription aux indicateurs de frappe
+  // Subscription aux indicateurs de frappe (sans polling)
   useEffect(() => {
-    if (!selectedConversation) return;
+    if (!selectedConversation) {
+      setIsTyping(false);
+      return;
+    }
 
-    // 🚀 Vérifier les indicateurs temps réel
-    const checkTyping = () => {
-      const typingInConv = Array.from(realtimeTypingUsers.entries())
-        .filter(([_, convId]) => convId === selectedConversation)
-        .length > 0;
-
-      if (typingInConv) {
-        setIsTyping(true);
-        return;
-      }
-    };
-
-    checkTyping();
-    const interval = setInterval(checkTyping, 500);
-
-    // Fallback legacy
     const unsubscribe = subscribeToTyping(selectedConversation, (indicators) => {
-      setIsTyping(indicators.length > 0);
+      const otherUserTyping = indicators.some((indicator) => indicator.user_id !== currentUser?.id);
+      setIsTyping(otherUserTyping);
     });
 
-    return () => {
-      clearInterval(interval);
-      unsubscribe();
-    };
-  }, [selectedConversation, subscribeToTyping, realtimeTypingUsers]);
+    return () => unsubscribe();
+  }, [selectedConversation, subscribeToTyping, currentUser?.id]);
 
-  // Gérer l'indicateur de frappe lors de la saisie
+  const stopTypingIndicator = useCallback(() => {
+    if (!selectedConversation) return;
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+
+    if (typingActiveRef.current) {
+      typingActiveRef.current = false;
+      setTyping(selectedConversation, false);
+    }
+  }, [selectedConversation, setTyping]);
+
+  // Gérer l'indicateur de frappe lors de la saisie (throttle anti-spam)
   const handleTyping = useCallback(() => {
     if (!selectedConversation) return;
 
-    // 🚀 Utiliser le système temps réel
-    startTypingRealtime(selectedConversation);
+    const now = Date.now();
 
-    // Fallback legacy
-    setTyping(selectedConversation, true);
+    if (!typingActiveRef.current || now - lastTypingSyncRef.current > 5000) {
+      typingActiveRef.current = true;
+      lastTypingSyncRef.current = now;
+      setTyping(selectedConversation, true);
+    }
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      stopTypingRealtime();
+      typingActiveRef.current = false;
       setTyping(selectedConversation, false);
-    }, 3000);
-  }, [selectedConversation, setTyping, startTypingRealtime, stopTypingRealtime]);
+    }, 3500);
+  }, [selectedConversation, setTyping]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
