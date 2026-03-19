@@ -1,6 +1,6 @@
 import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag } from 'lucide-react';
+import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,6 +14,7 @@ import { ServiceSubscriptionCard } from '@/components/professional-services/Serv
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
+const WalletApiPanel = lazy(() => import('@/components/professional-services/modules/WalletApiPanel'));
 
 // Types de services qui ont leur propre module complet
 function isFullModuleService(service: ProfessionalService): boolean {
