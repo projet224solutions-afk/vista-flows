@@ -355,6 +355,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     }));
 
     setImages(initialProduct.images || []);
+    setDeliverableFiles(initialProduct.file_urls || []);
     setVideoPreviewUrl(initialProduct.video_url || null);
     setVideoFile(null);
   }, [isEdit, initialProduct]);
