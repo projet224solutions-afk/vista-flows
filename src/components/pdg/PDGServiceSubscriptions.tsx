@@ -218,6 +218,49 @@ export default function PDGServiceSubscriptions() {
     }
   };
 
+  const handleOpenEditLimits = (plan: ServicePlan) => {
+    setSelectedPlan(plan);
+    setEditLimitsForm({
+      max_bookings_per_month: plan.max_bookings_per_month?.toString() || '',
+      max_products: plan.max_products?.toString() || '',
+      max_staff: plan.max_staff?.toString() || '',
+      analytics_access: plan.analytics_access,
+      sms_notifications: plan.sms_notifications,
+      email_notifications: plan.email_notifications,
+      custom_branding: plan.custom_branding,
+      api_access: plan.api_access,
+      priority_listing: plan.priority_listing,
+    });
+    setIsEditLimitsOpen(true);
+  };
+
+  const handleSaveLimits = async () => {
+    if (!selectedPlan) return;
+    try {
+      setSubmitting(true);
+      const success = await ServiceSubscriptionService.updatePlanLimitsAndFeatures(selectedPlan.id, {
+        max_bookings_per_month: editLimitsForm.max_bookings_per_month ? parseInt(editLimitsForm.max_bookings_per_month) : null,
+        max_products: editLimitsForm.max_products ? parseInt(editLimitsForm.max_products) : null,
+        max_staff: editLimitsForm.max_staff ? parseInt(editLimitsForm.max_staff) : null,
+        analytics_access: editLimitsForm.analytics_access,
+        sms_notifications: editLimitsForm.sms_notifications,
+        email_notifications: editLimitsForm.email_notifications,
+        custom_branding: editLimitsForm.custom_branding,
+        api_access: editLimitsForm.api_access,
+        priority_listing: editLimitsForm.priority_listing,
+      });
+      if (success) {
+        toast({ title: 'Succès', description: `Limites du plan ${selectedPlan.display_name} mises à jour` });
+        setIsEditLimitsOpen(false);
+        fetchData();
+      } else throw new Error('Échec');
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleOfferFreeSubscription = async () => {
     if (!freeSubscriptionData.serviceId || !freeSubscriptionData.planId || !freeSubscriptionData.days) {
       toast({ title: 'Erreur', description: 'Remplissez tous les champs', variant: 'destructive' });
