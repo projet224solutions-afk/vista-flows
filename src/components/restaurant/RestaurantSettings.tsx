@@ -325,6 +325,48 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
             />
           </div>
 
+          {/* Bouton Position Actuelle */}
+          <div className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/30 bg-primary/5">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground">📍 Localisation du restaurant</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {detectedCoords 
+                  ? `Coordonnées : ${detectedCoords.lat.toFixed(5)}, ${detectedCoords.lng.toFixed(5)}`
+                  : 'Détectez automatiquement votre adresse via GPS'
+                }
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant={gpsSuccess ? 'default' : 'outline'}
+              size="sm"
+              onClick={handleDetectPosition}
+              disabled={gpsLoading}
+              className={`gap-2 transition-all duration-300 ${
+                gpsSuccess 
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600' 
+                  : 'border-primary/40 text-primary hover:bg-primary hover:text-primary-foreground'
+              }`}
+            >
+              {gpsLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Détection...
+                </>
+              ) : gpsSuccess ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  Localisé !
+                </>
+              ) : (
+                <>
+                  <Navigation className="w-4 h-4" />
+                  Position actuelle
+                </>
+              )}
+            </Button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Adresse</Label>
