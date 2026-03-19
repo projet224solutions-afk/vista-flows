@@ -116,6 +116,30 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
         </p>
       </div>
 
+      {/* Avertissement limite abonnement */}
+      {(() => {
+        const activeCount = bookings.filter(b => b.status !== 'cancelled').length;
+        const limitCheck = checkBookingLimit(activeCount);
+        if (limits.maxBookings !== null) {
+          return (
+            <div className={`flex items-center gap-3 p-3 rounded-lg border ${
+              limitCheck.allowed 
+                ? 'bg-muted/50 border-border' 
+                : 'bg-destructive/10 border-destructive/30'
+            }`}>
+              <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${limitCheck.allowed ? 'text-muted-foreground' : 'text-destructive'}`} />
+              <p className="text-sm">
+                {limitCheck.allowed
+                  ? `Réservations : ${activeCount}/${limits.maxBookings} utilisées ce mois`
+                  : limitCheck.message
+                }
+              </p>
+            </div>
+          );
+        }
+        return null;
+      })()}
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="all">
