@@ -1259,8 +1259,90 @@ export default function Payment() {
                         enableEscrow={!!(productPaymentInfo || cartPaymentInfo)}
                         recipientId={recipientId}
                         sellerId={productPaymentInfo?.vendorUserId || cartPaymentInfo?.vendorUserId}
-                        onPaymentSuccess={(transactionId) => {
+                        onPaymentSuccess={async (transactionId) => {
                           console.log('[Payment] Success:', transactionId);
+                          
+                          // Pour les produits numériques, créer l'enregistrement d'achat
+                          if (productPaymentInfo?.productType === 'digital' && user?.id) {
+                            try {
+                              const isSubscription = productPaymentInfo.pricingType === 'subscription';
+                              const billingCycle = productPaymentInfo.subscriptionInterval || 'monthly';
+                              const now = new Date();
+                              let accessExpiresAt: string | null = null;
+                              let periodEnd: Date = new Date();
+
+                              if (isSubscription && billingCycle !== 'lifetime') {
+                                if (billingCycle === 'monthly') {
+                                  periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                                } else if (billingCycle === 'yearly') {
+                                  periodEnd = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+                                }
+                                accessExpiresAt = periodEnd.toISOString();
+                              }
+
+                              // Créer l'achat dans digital_product_purchases
+                              const { error: purchaseError } = await supabase
+                                .from('digital_product_purchases')
+                                .insert({
+                                  product_id: productPaymentInfo.productId,
+                                  buyer_id: user.id,
+                                  merchant_id: productPaymentInfo.vendorUserId,
+                                  amount: parseFloat(paymentAmount) || 0,
+                                  payment_status: 'completed',
+                                  access_granted: true,
+                                  download_count: 0,
+                                  max_downloads: isSubscription ? null : 10,
+                                  transaction_id: transactionId || null,
+                                  access_expires_at: accessExpiresAt
+                                });
+
+                              if (purchaseError) {
+                                console.error('[Payment] Error creating digital purchase:', purchaseError);
+                              } else {
+                                console.log('[Payment] ✅ Digital purchase record created');
+                              }
+
+                              // Si abonnement, créer aussi l'enregistrement
+                              if (isSubscription && billingCycle !== 'lifetime') {
+                                await supabase
+                                  .from('digital_subscriptions')
+                                  .insert({
+                                    product_id: productPaymentInfo.productId,
+                                    buyer_id: user.id,
+                                    merchant_id: productPaymentInfo.vendorUserId,
+                                    status: 'active',
+                                    billing_cycle: billingCycle,
+                                    amount_per_period: parseFloat(paymentAmount) || 0,
+                                    currency: productCurrency || 'GNF',
+                                    current_period_start: now.toISOString(),
+                                    current_period_end: periodEnd.toISOString(),
+                                    next_billing_date: periodEnd.toISOString(),
+                                    auto_renew: true,
+                                    payment_method: 'wallet',
+                                    total_payments_made: 1,
+                                    total_amount_paid: parseFloat(paymentAmount) || 0,
+                                    last_payment_at: now.toISOString(),
+                                    last_payment_transaction_id: transactionId || null
+                                  });
+                              }
+
+                              // Incrémenter le compteur de ventes
+                              const { data: currentProduct } = await supabase
+                                .from('digital_products')
+                                .select('sales_count')
+                                .eq('id', productPaymentInfo.productId)
+                                .single();
+                              
+                              await supabase
+                                .from('digital_products')
+                                .update({ sales_count: (currentProduct?.sales_count || 0) + 1 })
+                                .eq('id', productPaymentInfo.productId);
+
+                            } catch (err) {
+                              console.error('[Payment] Error in digital purchase flow:', err);
+                            }
+                          }
+
                           toast({
                             title: "Paiement réussi",
                             description: "Votre paiement a été effectué avec succès",
