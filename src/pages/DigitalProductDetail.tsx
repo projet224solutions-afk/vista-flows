@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ExternalLink, Eye, Star, Shield, Download, ShoppingCart, MessageCircle, Store } from "lucide-react";
+import { ArrowLeft, ExternalLink, Eye, Star, Shield, Download, ShoppingCart, MessageCircle, Store, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
