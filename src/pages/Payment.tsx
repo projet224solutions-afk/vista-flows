@@ -260,6 +260,9 @@ export default function Payment() {
               currency,
               vendor_id,
               merchant_id,
+              pricing_type,
+              subscription_interval,
+              access_duration,
               vendors:vendors!digital_products_vendor_id_fkey(user_id, business_name, country)
             `)
             .eq('id', id)
