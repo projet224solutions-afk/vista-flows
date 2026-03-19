@@ -18,10 +18,8 @@ function showNotificationToast(n: AppNotification) {
   const title = n.title || "Nouvelle notification";
   const description = n.message;
 
-  // Jouer le son de notification
   playNotificationSound();
 
-  // Mapping simple par type (on n'a pas la priorité ici)
   switch ((n.type || "").toLowerCase()) {
     case "security":
       toast.error(title, { description });
@@ -41,20 +39,21 @@ function showNotificationToast(n: AppNotification) {
 }
 
 /**
- * Abonnement Realtime global sur la table `notifications`.
- * Objectif: que l'utilisateur "reçoive" immédiatement le message (toast) dès insertion DB.
+ * Abonnement Realtime global sur `notifications` + `messages`.
+ * Joue un son et affiche un toast pour chaque nouveau message reçu,
+ * même si l'utilisateur n'est pas sur la page de messagerie.
  */
 export function useNotificationsRealtime() {
   const { user } = useAuth();
 
-  // Dédoublonnage (React StrictMode, reconnexions, etc.)
   const seenIdsRef = useRef<Set<string>>(new Set());
   const cleanupTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
 
-    const channel = supabase
+    // ─── 1. Notifications table listener ───
+    const notifChannel = supabase
       .channel(`app-notifications:${user.id}`)
       .on(
         "postgres_changes",
@@ -66,17 +65,12 @@ export function useNotificationsRealtime() {
         },
         (payload) => {
           const n = payload.new as AppNotification;
-          if (!n?.id) return;
-
-          if (seenIdsRef.current.has(n.id)) return;
+          if (!n?.id || seenIdsRef.current.has(n.id)) return;
           seenIdsRef.current.add(n.id);
-
           showNotificationToast(n);
 
-          // Nettoyage soft pour éviter que le Set grossisse trop
           if (cleanupTimerRef.current) window.clearTimeout(cleanupTimerRef.current);
           cleanupTimerRef.current = window.setTimeout(() => {
-            // On garde uniquement les 200 derniers IDs
             const ids = Array.from(seenIdsRef.current);
             if (ids.length > 200) {
               seenIdsRef.current = new Set(ids.slice(ids.length - 200));
@@ -86,9 +80,40 @@ export function useNotificationsRealtime() {
       )
       .subscribe();
 
+    // ─── 2. Messages table listener (son + toast pour nouveaux messages) ───
+    const msgChannel = supabase
+      .channel(`msg-sound:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `recipient_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const msg = payload.new as any;
+          if (!msg?.id || seenIdsRef.current.has(msg.id)) return;
+          seenIdsRef.current.add(msg.id);
+
+          // Jouer le son de notification
+          playNotificationSound();
+
+          // Afficher un toast avec le contenu du message
+          const senderName = msg.sender_name || "Nouveau message";
+          const content = msg.content?.substring(0, 80) || "Vous avez reçu un message";
+          toast("💬 " + senderName, {
+            description: content,
+            duration: 5000,
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       if (cleanupTimerRef.current) window.clearTimeout(cleanupTimerRef.current);
-      supabase.removeChannel(channel);
+      supabase.removeChannel(notifChannel);
+      supabase.removeChannel(msgChannel);
     };
   }, [user?.id]);
 }
