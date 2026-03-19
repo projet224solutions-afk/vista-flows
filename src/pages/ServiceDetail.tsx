@@ -720,17 +720,27 @@ export default function ServiceDetail() {
 
             {/* ═══ Action Buttons ═══ */}
             <div className="flex flex-wrap gap-3">
+              {service.phone && (
+                <Button
+                  onClick={handleContact}
+                  className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-primary hover:bg-primary/90"
+                >
+                  <PhoneCall className="w-4 h-4 mr-2" />
+                  Appeler
+                </Button>
+              )}
               <Button
-                onClick={handleContact}
-                className="flex-1 min-w-[120px] h-12 rounded-xl font-semibold text-sm bg-primary hover:bg-primary/90"
+                onClick={handleMessage}
+                variant="outline"
+                className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5"
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
-                Contacter
+                Message
               </Button>
               <Button
                 onClick={handleReservation}
                 variant="outline"
-                className="flex-1 min-w-[120px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5"
+                className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5"
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 Réserver
@@ -738,12 +748,24 @@ export default function ServiceDetail() {
               {isRestaurant && (
                 <Button
                   onClick={handleOrderFromRestaurant}
-                  className="flex-1 min-w-[120px] h-12 rounded-xl font-semibold text-sm bg-accent text-accent-foreground hover:bg-accent/90"
+                  className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-accent text-accent-foreground hover:bg-accent/90"
                 >
                   <UtensilsCrossed className="w-4 h-4 mr-2" />
                   Commander
                 </Button>
               )}
+            </div>
+
+            {/* ═══ Location Button ═══ */}
+            <div className="mt-4">
+              <Button
+                onClick={handleLocateRestaurant}
+                variant="outline"
+                className="w-full h-11 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5 gap-2"
+              >
+                <LocateFixed className="w-4 h-4" />
+                📍 Localiser sur la carte
+              </Button>
             </div>
           </CardContent>
         </Card>
