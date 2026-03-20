@@ -53,18 +53,12 @@ export const cachedQueries = {
   // Produits populaires (cache 5 min)
   getProducts: (filters?: Record<string, any>) =>
     cachedQuery('products:list:' + JSON.stringify(filters || {}), async () => {
-      let q = supabase
+      const q = supabase
         .from('products')
         .select('id, name, price, images, vendor_id, category, stock_quantity, rating_average')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(50);
-      
-      if (filters) {
-        for (const [key, val] of Object.entries(filters)) {
-          if (val !== undefined && val !== null) q = q.eq(key, val);
-        }
-      }
       
       const { data, error } = await q;
       if (error) throw error;
