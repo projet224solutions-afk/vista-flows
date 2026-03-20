@@ -40,6 +40,7 @@ export default function PayPalCheckoutButton({
   onCancel,
   onError,
   creditWallet = false,
+  cardOnly = false,
   disabled = false,
 }: PayPalCheckoutButtonProps) {
   const [clientId, setClientId] = useState<string | null>(null);
