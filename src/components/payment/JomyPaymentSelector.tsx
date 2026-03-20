@@ -60,7 +60,7 @@ interface PaymentMethodOption {
   requiresPhone: boolean;
   phonePrefix?: string;
   phonePlaceholder?: string;
-  provider?: 'chapchappay' | 'stripe' | 'wallet';
+  provider?: 'chapchappay' | 'stripe' | 'wallet' | 'paypal';
 }
 
 export function JomyPaymentSelector({
