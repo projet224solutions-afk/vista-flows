@@ -1,4 +1,5 @@
 import { Suspense, memo, useEffect } from "react";
+import { usePrefetchCriticalData } from "@/hooks/usePrefetchCriticalData";
 import { useAutoFillGps as useAutoFillGpsHook } from "@/hooks/useAutoFillGps";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
@@ -191,6 +192,12 @@ const queryClient = new QueryClient({
   },
 });
 
+// Composant pour le prefetching des données critiques
+function AppPrefetcher() {
+  usePrefetchCriticalData();
+  return null;
+}
+
 function App() {
   // Debug log immédiat
   console.log('🎯 App component rendering...');
@@ -222,6 +229,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AppPrefetcher />
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <BrowserRouter>
           <LanguageProvider>
