@@ -1,27 +1,16 @@
 /**
  * WRAPPER PAIEMENT 224SOLUTIONS
- * Initialisation Stripe avec design personnalisé 224Solutions
+ * Paiement par carte bancaire via PayPal
  */
 
 import React, { useEffect, useState } from 'react';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
-import { Custom224PaymentForm } from './Custom224PaymentForm';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Shield, CheckCircle2, CreditCard, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-
-// Clé publique Stripe depuis les variables d'environnement
-const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_live_51RdKJzRxqizQJVjLFseVlmZ7qOJmOIx9PlsGPY600C0CifOqNyNlbfTb2NZAbW1cyVgk8hUt6vGAD3KQqMCIc7NB00F0KjYCqc';
-
-// Debug: afficher la clé chargée (masquée partiellement pour sécurité)
-if (stripePublicKey) {
-  console.log('✅ Clé Stripe configurée:', stripePublicKey.substring(0, 20) + '...' + stripePublicKey.substring(stripePublicKey.length - 10));
-} else {
-  console.error('❌ Clé Stripe non configurée');
-}
-
-const stripePromise = loadStripe(stripePublicKey);
+import { formatAmount } from '@/types/stripePayment';
+import { toast } from 'sonner';
 
 interface Custom224PaymentWrapperProps {
   amount: number;
@@ -44,92 +33,84 @@ export function Custom224PaymentWrapper({
   onSuccess,
   onError
 }: Custom224PaymentWrapperProps) {
-  const [clientSecret, setClientSecret] = useState<string>('');
+  const [paypalClientId, setPaypalClientId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [succeeded, setSucceeded] = useState(false);
 
   useEffect(() => {
-    createPaymentIntent();
-  }, [amount, currency]);
+    fetchPayPalClientId();
+  }, []);
 
-  const createPaymentIntent = async () => {
+  const fetchPayPalClientId = async () => {
     try {
       setLoading(true);
-      setError('');
-
-      // Appeler Edge Function pour créer le Payment Intent
-      const { data, error: functionError } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          amount,
-          currency: currency.toLowerCase(),
-          seller_id: sellerId,
-          seller_name: sellerName,
-          description: orderDescription || `Paiement 224Solutions - ${sellerName}`,
-          metadata: {
-            ...metadata,
-            platform: '224solutions',
-            seller_name: sellerName,
-          }
-        }
-      });
-
-      if (functionError) {
-        throw functionError;
-      }
-
-      // Supporter les deux formats de réponse (client_secret ou clientSecret)
-      const secret = data?.clientSecret || data?.client_secret;
-      if (!data || !secret) {
-        throw new Error('Pas de client secret reçu');
-      }
-
-      setClientSecret(secret);
-      
-      // Rendre disponible globalement pour Custom224PaymentForm
-      (window as any).clientSecret = data.clientSecret;
-
+      const { data, error: fnError } = await supabase.functions.invoke('paypal-client-id');
+      if (fnError) throw fnError;
+      if (!data?.clientId) throw new Error('PayPal Client ID non disponible');
+      setPaypalClientId(data.clientId);
     } catch (err) {
-      console.error('Error creating payment intent:', err);
-      const message = err instanceof Error ? err.message : 'Erreur lors de l\'initialisation du paiement';
-      setError(message);
-      onError(message);
+      console.error('Error fetching PayPal client ID:', err);
+      setError('Impossible d\'initialiser le paiement PayPal');
+      onError('Erreur d\'initialisation PayPal');
     } finally {
       setLoading(false);
     }
   };
 
-  // Options Stripe Elements avec le thème 224Solutions
-  const elementsOptions: StripeElementsOptions = {
-    clientSecret,
-    appearance: {
-      theme: 'stripe',
-      variables: {
-        colorPrimary: '#0070f3', // Couleur principale 224Solutions
-        colorBackground: '#ffffff',
-        colorText: '#1a1a1a',
-        colorDanger: '#ef4444',
-        fontFamily: 'Inter, system-ui, sans-serif',
-        spacingUnit: '4px',
-        borderRadius: '8px',
-      },
-      rules: {
-        '.Label': {
-          fontWeight: '600',
-          fontSize: '14px',
-          marginBottom: '8px',
-        },
-        '.Input': {
-          padding: '16px',
-          border: '2px solid #e5e7eb',
-          boxShadow: 'none',
-        },
-        '.Input:focus': {
-          border: '2px solid #0070f3',
-          boxShadow: '0 0 0 3px rgba(0, 112, 243, 0.1)',
-        },
+  const createOrder = async () => {
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('create-payment-intent', {
+        body: {
+          amount,
+          currency: currency.toLowerCase(),
+          seller_id: sellerId,
+          description: orderDescription || `Paiement 224Solutions - ${sellerName}`,
+          metadata: {
+            ...metadata,
+            platform: '224solutions',
+            seller_name: sellerName,
+          },
+          return_url: window.location.origin + '/payment-success',
+          cancel_url: window.location.origin + '/payment-cancelled',
+        }
+      });
+
+      if (fnError) throw fnError;
+      if (!data?.success || !data?.paypal_order_id) {
+        throw new Error(data?.error || 'Erreur création commande PayPal');
       }
-    },
-    locale: 'fr',
+
+      return data.paypal_order_id;
+    } catch (err) {
+      console.error('Error creating PayPal order:', err);
+      const message = err instanceof Error ? err.message : 'Erreur lors de la création du paiement';
+      setError(message);
+      onError(message);
+      throw err;
+    }
+  };
+
+  const onApprove = async (data: any) => {
+    try {
+      // Capturer le paiement
+      const { data: captureData, error: captureError } = await supabase.functions.invoke('paypal-capture-order', {
+        body: { orderID: data.orderID }
+      });
+
+      if (captureError) throw captureError;
+      if (!captureData?.success) throw new Error(captureData?.error || 'Erreur capture paiement');
+
+      setSucceeded(true);
+      toast.success('Paiement réussi !');
+      onSuccess(data.orderID);
+    } catch (err) {
+      console.error('Error capturing PayPal order:', err);
+      const message = err instanceof Error ? err.message : 'Erreur lors de la capture du paiement';
+      setError(message);
+      onError(message);
+      toast.error(message);
+    }
   };
 
   if (loading) {
@@ -150,18 +131,18 @@ export function Custom224PaymentWrapper({
     );
   }
 
-  if (error) {
+  if (error && !paypalClientId) {
     return (
-      <Card className="w-full max-w-lg mx-auto border-red-200">
+      <Card className="w-full max-w-lg mx-auto border-destructive/50">
         <CardContent className="pt-8 pb-8">
           <div className="text-center space-y-4">
-            <div className="text-red-500 text-4xl">❌</div>
+            <div className="text-destructive text-4xl">❌</div>
             <div>
-              <h3 className="text-xl font-semibold text-red-600">Erreur</h3>
+              <h3 className="text-xl font-semibold text-destructive">Erreur</h3>
               <p className="text-muted-foreground mt-2">{error}</p>
               <button
-                onClick={createPaymentIntent}
-                className="mt-4 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+                onClick={fetchPayPalClientId}
+                className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
               >
                 Réessayer
               </button>
@@ -172,20 +153,129 @@ export function Custom224PaymentWrapper({
     );
   }
 
-  if (!clientSecret) {
-    return null;
+  if (succeeded) {
+    return (
+      <Card className="w-full max-w-lg mx-auto bg-gradient-to-br from-green-50 to-emerald-50">
+        <CardContent className="pt-8 pb-8">
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="rounded-full bg-green-100 p-4">
+                <CheckCircle2 className="w-16 h-16 text-green-600" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-green-600">Paiement réussi !</h3>
+              <p className="text-gray-600 mt-2 text-lg">
+                <strong>{formatAmount(amount, currency)}</strong>
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Merci pour votre confiance en 224Solutions
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
+  if (!paypalClientId) return null;
+
   return (
-    <Elements stripe={stripePromise} options={elementsOptions}>
-      <Custom224PaymentForm
-        amount={amount}
-        currency={currency}
-        sellerName={sellerName}
-        orderDescription={orderDescription}
-        onSuccess={onSuccess}
-        onError={onError}
-      />
-    </Elements>
+    <Card className="w-full max-w-lg mx-auto shadow-xl border-2 border-primary/20">
+      <CardHeader className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-white rounded-lg p-2">
+              <span className="text-2xl font-bold text-primary">224</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">224Solutions Paiement</h2>
+              <p className="text-sm text-primary-foreground/90">Paiement sécurisé par carte bancaire</p>
+            </div>
+          </div>
+          <Shield className="w-8 h-8 text-primary-foreground/90" />
+        </div>
+      </CardHeader>
+
+      <CardContent className="pt-6 space-y-6">
+        {/* Montant */}
+        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-5 border-2 border-primary/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground font-medium">Montant à payer</p>
+              <p className="text-xs text-muted-foreground mt-1">à {sellerName}</p>
+              {orderDescription && (
+                <p className="text-xs text-muted-foreground">{orderDescription}</p>
+              )}
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-primary">
+                {formatAmount(amount, currency)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 mb-2">
+          <CreditCard className="w-5 h-5 text-primary" />
+          <span className="font-semibold text-foreground">Carte bancaire VISA / Mastercard</span>
+        </div>
+
+        {error && (
+          <Alert variant="destructive" className="border-2">
+            <AlertDescription className="flex items-center gap-2">
+              <span className="font-medium">❌</span>
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* PayPal Buttons - Card only */}
+        <PayPalScriptProvider options={{
+          clientId: paypalClientId,
+          currency: 'USD',
+          intent: 'capture',
+          components: 'buttons,funding-eligibility',
+        }}>
+          <PayPalButtons
+            fundingSource="card"
+            style={{
+              layout: 'vertical',
+              color: 'black',
+              shape: 'rect',
+              label: 'pay',
+              height: 55,
+            }}
+            createOrder={createOrder}
+            onApprove={onApprove}
+            onError={(err) => {
+              console.error('PayPal error:', err);
+              setError('Erreur PayPal. Veuillez réessayer.');
+              onError('Erreur PayPal');
+            }}
+            onCancel={() => {
+              toast.info('Paiement annulé');
+            }}
+          />
+        </PayPalScriptProvider>
+
+        {/* Sécurité */}
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-4">
+          <Lock className="w-4 h-4" />
+          <span>Paiement sécurisé PayPal • Cryptage SSL • PCI-DSS</span>
+        </div>
+
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <Shield className="w-4 h-4" />
+          <span>Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de la livraison</span>
+        </div>
+        
+        <div className="text-center pt-3 border-t">
+          <p className="text-xs text-muted-foreground">
+            Propulsé par <span className="font-bold text-primary">224Solutions</span>
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
