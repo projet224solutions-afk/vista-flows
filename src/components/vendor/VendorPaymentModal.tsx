@@ -1,9 +1,10 @@
 /**
  * MODAL PAIEMENT VENDEUR - 224SOLUTIONS
  * Support de 5 méthodes: wallet, cash, mobile_money, card, paypal
+ * PayPal utilise les Smart Buttons (SDK) pour paiement sécurisé
  */
 
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Wallet, Banknote, Smartphone, CreditCard, DollarSign, Loader2 } from 'lucide-react';
 import { VendorPaymentService } from '@/services/vendor/VendorPaymentService';
 import { toast } from 'sonner';
+
+const PayPalCheckoutButton = lazy(() => import('@/components/payment/PayPalCheckoutButton'));
 
 interface VendorPaymentModalProps {
   isOpen: boolean;
@@ -45,10 +48,8 @@ export const VendorPaymentModal = ({
   // Card
   const [cardToken, setCardToken] = useState('');
 
-  // PayPal
-  const [paypalEmail, setPaypalEmail] = useState('');
-
   const handlePayment = async () => {
+    if (selectedMethod === 'paypal') return; // PayPal handled by SDK buttons
     setIsProcessing(true);
 
     try {
@@ -58,26 +59,17 @@ export const VendorPaymentModal = ({
         case 'wallet':
           result = await VendorPaymentService.payWithWallet(orderId, amount, customerId);
           break;
-
         case 'cash':
           result = await VendorPaymentService.payWithCash(orderId, amount, customerId);
           break;
-
         case 'mobile_money':
           if (!mobilePhone) {
             toast.error('Veuillez entrer un numéro de téléphone');
             setIsProcessing(false);
             return;
           }
-          result = await VendorPaymentService.payWithMobileMoney(
-            orderId,
-            amount,
-            customerId,
-            mobilePhone,
-            mobileProvider
-          );
+          result = await VendorPaymentService.payWithMobileMoney(orderId, amount, customerId, mobilePhone, mobileProvider);
           break;
-
         case 'card':
           if (!cardToken) {
             toast.error('Veuillez entrer un token de carte valide');
@@ -86,16 +78,6 @@ export const VendorPaymentModal = ({
           }
           result = await VendorPaymentService.payWithCard(orderId, amount, customerId, cardToken);
           break;
-
-        case 'paypal':
-          if (!paypalEmail) {
-            toast.error('Veuillez entrer un email PayPal');
-            setIsProcessing(false);
-            return;
-          }
-          result = await VendorPaymentService.payWithPayPal(orderId, amount, customerId, paypalEmail);
-          break;
-
         default:
           throw new Error('Méthode de paiement non supportée');
       }
@@ -115,11 +97,27 @@ export const VendorPaymentModal = ({
     }
   };
 
+  const handlePayPalSuccess = async (captureData: any) => {
+    // Mark order as paid after PayPal capture
+    try {
+      await VendorPaymentService.payWithPayPal(orderId, amount, customerId, captureData.paypalOrderId);
+      onPaymentSuccess?.();
+      onClose();
+    } catch (error: any) {
+      console.error('[VendorPaymentModal] PayPal post-capture error:', error);
+    }
+  };
+
   const formatAmount = useFormatCurrency();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md max-h-[90vh] overflow-y-auto"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+        onFocusOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Paiement de la commande</DialogTitle>
         </DialogHeader>
@@ -171,13 +169,13 @@ export const VendorPaymentModal = ({
                 <RadioGroupItem value="paypal" id="paypal" />
                 <Label htmlFor="paypal" className="flex items-center gap-2 cursor-pointer flex-1">
                   <DollarSign className="h-4 w-4" />
-                  PayPal
+                  PayPal / Carte via PayPal
                 </Label>
               </div>
             </RadioGroup>
           </div>
 
-          {/* Champs conditionnels selon la méthode */}
+          {/* Champs conditionnels */}
           {selectedMethod === 'mobile_money' && (
             <div className="space-y-3">
               <div className="space-y-2">
@@ -200,6 +198,8 @@ export const VendorPaymentModal = ({
                   placeholder="622123456"
                   value={mobilePhone}
                   onChange={(e) => setMobilePhone(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  onFocus={(e) => e.stopPropagation()}
                 />
               </div>
             </div>
@@ -213,6 +213,8 @@ export const VendorPaymentModal = ({
                 placeholder="tok_xxxxxxxxxxxxx"
                 value={cardToken}
                 onChange={(e) => setCardToken(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onFocus={(e) => e.stopPropagation()}
               />
               <p className="text-xs text-muted-foreground">
                 Le token sera généré par Stripe lors de la saisie de la carte
@@ -221,16 +223,21 @@ export const VendorPaymentModal = ({
           )}
 
           {selectedMethod === 'paypal' && (
-            <div className="space-y-2">
-              <Label htmlFor="paypalEmail">Email PayPal</Label>
-              <Input
-                id="paypalEmail"
-                type="email"
-                placeholder="exemple@paypal.com"
-                value={paypalEmail}
-                onChange={(e) => setPaypalEmail(e.target.value)}
+            <Suspense fallback={
+              <div className="flex items-center justify-center p-4 gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Chargement PayPal...</span>
+              </div>
+            }>
+              <PayPalCheckoutButton
+                amount={amount}
+                currency="USD"
+                description={`Commande ${orderId}`}
+                orderId={orderId}
+                onSuccess={handlePayPalSuccess}
+                onCancel={() => toast.info('Paiement annulé')}
               />
-            </div>
+            </Suspense>
           )}
 
           {selectedMethod === 'cash' && (
@@ -249,22 +256,24 @@ export const VendorPaymentModal = ({
             </Alert>
           )}
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-4">
-            <Button variant="outline" onClick={onClose} disabled={isProcessing} className="flex-1">
-              Annuler
-            </Button>
-            <Button onClick={handlePayment} disabled={isProcessing} className="flex-1">
-              {isProcessing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Traitement...
-                </>
-              ) : (
-                'Confirmer le paiement'
-              )}
-            </Button>
-          </div>
+          {/* Actions — masqué pour PayPal (géré par les boutons SDK) */}
+          {selectedMethod !== 'paypal' && (
+            <div className="flex gap-2 pt-4">
+              <Button variant="outline" onClick={onClose} disabled={isProcessing} className="flex-1">
+                Annuler
+              </Button>
+              <Button onClick={handlePayment} disabled={isProcessing} className="flex-1">
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Traitement...
+                  </>
+                ) : (
+                  'Confirmer le paiement'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
