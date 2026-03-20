@@ -26,6 +26,8 @@ interface PayPalCheckoutButtonProps {
   onError?: (error: string) => void;
   /** If true, credit wallet instead of just returning capture data */
   creditWallet?: boolean;
+  /** If true, show only card payment (no PayPal balance tab) */
+  cardOnly?: boolean;
   disabled?: boolean;
 }
 
@@ -38,6 +40,7 @@ export default function PayPalCheckoutButton({
   onCancel,
   onError,
   creditWallet = false,
+  cardOnly = false,
   disabled = false,
 }: PayPalCheckoutButtonProps) {
   const [clientId, setClientId] = useState<string | null>(null);
@@ -144,54 +147,74 @@ export default function PayPalCheckoutButton({
       }}
     >
       <div className="space-y-3">
-        <Tabs value={paymentTab} onValueChange={(v) => setPaymentTab(v as 'paypal' | 'card')}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="paypal" className="gap-1.5 text-xs">
-              <Wallet className="w-3.5 h-3.5" />
-              PayPal
-            </TabsTrigger>
-            <TabsTrigger value="card" className="gap-1.5 text-xs">
-              <CreditCard className="w-3.5 h-3.5" />
-              Carte bancaire
-            </TabsTrigger>
-          </TabsList>
+        {cardOnly ? (
+          /* Mode carte uniquement — pas d'onglets */
+          <PayPalButtons
+            style={{ layout: 'vertical', shape: 'rect', label: 'pay', height: 45 }}
+            fundingSource={FUNDING.CARD}
+            createOrder={async () => {
+              try { return await createOrder(); }
+              catch (err) { toast.error(err instanceof Error ? err.message : 'Erreur'); throw err; }
+            }}
+            onApprove={async (data) => { await handleApprove(data); }}
+            onError={(err: any) => {
+              console.error('[PayPal Card] error:', err);
+              toast.error('Erreur paiement carte. Veuillez réessayer.');
+              onError?.('Erreur carte');
+            }}
+            onCancel={() => { toast.info('Paiement annulé'); onCancel?.(); }}
+          />
+        ) : (
+          /* Mode complet avec onglets PayPal + Carte */
+          <Tabs value={paymentTab} onValueChange={(v) => setPaymentTab(v as 'paypal' | 'card')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="paypal" className="gap-1.5 text-xs">
+                <Wallet className="w-3.5 h-3.5" />
+                PayPal
+              </TabsTrigger>
+              <TabsTrigger value="card" className="gap-1.5 text-xs">
+                <CreditCard className="w-3.5 h-3.5" />
+                Carte bancaire
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="paypal" className="mt-3">
-            <PayPalButtons
-              style={{ layout: 'vertical', shape: 'rect', label: 'pay', height: 45 }}
-              fundingSource={FUNDING.PAYPAL}
-              createOrder={async () => {
-                try { return await createOrder(); }
-                catch (err) { toast.error(err instanceof Error ? err.message : 'Erreur'); throw err; }
-              }}
-              onApprove={async (data) => { await handleApprove(data); }}
-              onError={(err: any) => {
-                console.error('[PayPal Checkout] error:', err);
-                toast.error('Erreur PayPal. Veuillez réessayer.');
-                onError?.('Erreur PayPal');
-              }}
-              onCancel={() => { toast.info('Paiement annulé'); onCancel?.(); }}
-            />
-          </TabsContent>
+            <TabsContent value="paypal" className="mt-3">
+              <PayPalButtons
+                style={{ layout: 'vertical', shape: 'rect', label: 'pay', height: 45 }}
+                fundingSource={FUNDING.PAYPAL}
+                createOrder={async () => {
+                  try { return await createOrder(); }
+                  catch (err) { toast.error(err instanceof Error ? err.message : 'Erreur'); throw err; }
+                }}
+                onApprove={async (data) => { await handleApprove(data); }}
+                onError={(err: any) => {
+                  console.error('[PayPal Checkout] error:', err);
+                  toast.error('Erreur PayPal. Veuillez réessayer.');
+                  onError?.('Erreur PayPal');
+                }}
+                onCancel={() => { toast.info('Paiement annulé'); onCancel?.(); }}
+              />
+            </TabsContent>
 
-          <TabsContent value="card" className="mt-3">
-            <PayPalButtons
-              style={{ layout: 'vertical', shape: 'rect', label: 'pay', height: 45 }}
-              fundingSource={FUNDING.CARD}
-              createOrder={async () => {
-                try { return await createOrder(); }
-                catch (err) { toast.error(err instanceof Error ? err.message : 'Erreur'); throw err; }
-              }}
-              onApprove={async (data) => { await handleApprove(data); }}
-              onError={(err: any) => {
-                console.error('[PayPal Card Checkout] error:', err);
-                toast.error('Erreur paiement carte. Veuillez réessayer.');
-                onError?.('Erreur carte');
-              }}
-              onCancel={() => { toast.info('Paiement annulé'); onCancel?.(); }}
-            />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="card" className="mt-3">
+              <PayPalButtons
+                style={{ layout: 'vertical', shape: 'rect', label: 'pay', height: 45 }}
+                fundingSource={FUNDING.CARD}
+                createOrder={async () => {
+                  try { return await createOrder(); }
+                  catch (err) { toast.error(err instanceof Error ? err.message : 'Erreur'); throw err; }
+                }}
+                onApprove={async (data) => { await handleApprove(data); }}
+                onError={(err: any) => {
+                  console.error('[PayPal Card Checkout] error:', err);
+                  toast.error('Erreur paiement carte. Veuillez réessayer.');
+                  onError?.('Erreur carte');
+                }}
+                onCancel={() => { toast.info('Paiement annulé'); onCancel?.(); }}
+              />
+            </TabsContent>
+          </Tabs>
+        )}
 
         <div className="flex items-center gap-2 justify-center">
           <Shield className="w-3.5 h-3.5 text-muted-foreground" />
