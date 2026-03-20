@@ -8,8 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { smartCache, CACHE_TTL, CACHE_TAGS } from '@/lib/smartCache';
 import { requestDedup } from '@/lib/requestDeduplicator';
 
-type SupabaseTable = string;
-
 interface CachedQueryOptions {
   ttl?: number;
   tags?: string[];
@@ -19,68 +17,18 @@ interface CachedQueryOptions {
 }
 
 /**
- * Requête SELECT avec cache automatique
+ * Requête cached générique - utilise le cache intelligent
+ * Accepte une fonction fetcher qui fait la requête Supabase
  */
-export async function cachedSelect<T = any>(
-  table: SupabaseTable,
-  query: {
-    select?: string;
-    filters?: Record<string, any>;
-    eq?: [string, any][];
-    limit?: number;
-    order?: { column: string; ascending?: boolean };
-    single?: boolean;
-  },
+export async function cachedQuery<T>(
+  cacheKey: string,
+  fetcher: () => Promise<T>,
   options?: CachedQueryOptions
 ): Promise<{ data: T | null; error: any; fromCache: boolean }> {
-  // Générer une clé de cache unique
-  const cacheKey = `supabase:${table}:${JSON.stringify(query)}`;
   const ttl = options?.ttl ?? CACHE_TTL.STANDARD;
-  const tags = options?.tags ?? [table];
-
-  const fetcher = async () => {
-    let q = supabase.from(table).select(query.select || '*');
-
-    // Appliquer les filtres eq
-    if (query.eq) {
-      for (const [col, val] of query.eq) {
-        q = q.eq(col, val);
-      }
-    }
-
-    // Appliquer les filtres génériques
-    if (query.filters) {
-      for (const [key, value] of Object.entries(query.filters)) {
-        if (value !== undefined && value !== null) {
-          q = q.eq(key, value);
-        }
-      }
-    }
-
-    // Order
-    if (query.order) {
-      q = q.order(query.order.column, { ascending: query.order.ascending ?? true });
-    }
-
-    // Limit
-    if (query.limit) {
-      q = q.limit(query.limit);
-    }
-
-    // Single
-    if (query.single) {
-      const { data, error } = await q.single();
-      if (error) throw error;
-      return data;
-    }
-
-    const { data, error } = await q;
-    if (error) throw error;
-    return data;
-  };
+  const tags = options?.tags ?? [];
 
   try {
-    // Avec déduplication
     const wrappedFetcher = options?.dedupe !== false
       ? () => requestDedup.dedupe(cacheKey, fetcher)
       : fetcher;
@@ -104,22 +52,38 @@ export async function cachedSelect<T = any>(
 export const cachedQueries = {
   // Produits populaires (cache 5 min)
   getProducts: (filters?: Record<string, any>) =>
-    cachedSelect('products', {
-      select: 'id, name, price, images, vendor_id, category, stock_quantity, rating_average',
-      filters: { is_active: true, ...filters },
-      limit: 50,
-      order: { column: 'created_at', ascending: false },
+    cachedQuery('products:list:' + JSON.stringify(filters || {}), async () => {
+      let q = supabase
+        .from('products')
+        .select('id, name, price, images, vendor_id, category, stock_quantity, rating_average')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (filters) {
+        for (const [key, val] of Object.entries(filters)) {
+          if (val !== undefined && val !== null) q = q.eq(key, val);
+        }
+      }
+      
+      const { data, error } = await q;
+      if (error) throw error;
+      return data;
     }, {
       ttl: CACHE_TTL.STANDARD,
       tags: [CACHE_TAGS.PRODUCTS],
     }),
 
-  // Détail produit (cache 2 min avec stale-while-revalidate)
+  // Détail produit (cache 2 min)
   getProduct: (id: string) =>
-    cachedSelect('products', {
-      select: '*',
-      eq: [['id', id]],
-      single: true,
+    cachedQuery(`product:${id}`, async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      return data;
     }, {
       ttl: CACHE_TTL.WARM,
       tags: [CACHE_TAGS.PRODUCTS, `product:${id}`],
@@ -128,10 +92,14 @@ export const cachedQueries = {
 
   // Vendeurs actifs (cache 5 min)
   getActiveVendors: () =>
-    cachedSelect('vendors', {
-      select: 'id, shop_name, logo_url, latitude, longitude, business_type, rating_average',
-      filters: { is_active: true },
-      limit: 100,
+    cachedQuery('vendors:active', async () => {
+      const { data, error } = await supabase
+        .from('vendors')
+        .select('id, shop_name, logo_url, latitude, longitude, business_type, rating_average')
+        .eq('is_active', true)
+        .limit(100);
+      if (error) throw error;
+      return data;
     }, {
       ttl: CACHE_TTL.STANDARD,
       tags: [CACHE_TAGS.VENDORS],
@@ -139,33 +107,45 @@ export const cachedQueries = {
 
   // Profil utilisateur (cache 2 min)
   getProfile: (userId: string) =>
-    cachedSelect('profiles', {
-      select: '*',
-      eq: [['id', userId]],
-      single: true,
+    cachedQuery(`profile:${userId}`, async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (error) throw error;
+      return data;
     }, {
       ttl: CACHE_TTL.WARM,
       tags: [CACHE_TAGS.USER, `user:${userId}`],
     }),
 
-  // Wallet (cache 30s - données sensibles)
+  // Wallet (cache 30s)
   getWallet: (userId: string) =>
-    cachedSelect('wallets', {
-      select: '*',
-      eq: [['user_id', userId]],
-      single: true,
+    cachedQuery(`wallet:${userId}`, async () => {
+      const { data, error } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      if (error) throw error;
+      return data;
     }, {
       ttl: CACHE_TTL.HOT,
       tags: [CACHE_TAGS.WALLET, `wallet:${userId}`],
-      staleWhileRevalidate: false, // Pas de stale pour les données financières
+      staleWhileRevalidate: false,
     }),
 
-  // Catégories (cache 1h - quasi-statique)
+  // Catégories (cache 1h)
   getCategories: () =>
-    cachedSelect('product_categories', {
-      select: 'id, name, slug, icon, parent_id',
-      filters: { is_active: true },
-      order: { column: 'sort_order', ascending: true },
+    cachedQuery('categories:all', async () => {
+      const { data, error } = await supabase
+        .from('product_categories')
+        .select('id, name, slug, icon, parent_id')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      return data;
     }, {
       ttl: CACHE_TTL.STATIC,
       tags: [CACHE_TAGS.CONFIG],
@@ -176,16 +156,10 @@ export const cachedQueries = {
  * Invalidation intelligente après mutation
  */
 export function invalidateAfterMutation(table: string, id?: string): void {
-  // Invalider le tag de la table
   smartCache.invalidateByTag(table);
-
-  // Invalider l'entrée spécifique
   if (id) {
-    smartCache.invalidateByPattern(`supabase:${table}:.*${id}.*`);
+    smartCache.invalidateByPattern(`.*${table}.*${id}.*`);
   }
-
-  // Invalider les listes qui contiennent cette table
-  smartCache.invalidateByPattern(`supabase:${table}:.*`);
-
-  console.log(`🔄 [CachedSupabase] Cache invalidé pour ${table}${id ? `:${id}` : ''}`);
+  smartCache.invalidateByPattern(`${table}:.*`);
+  console.log(`🔄 [Cache] Invalidé: ${table}${id ? `:${id}` : ''}`);
 }
