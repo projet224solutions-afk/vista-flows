@@ -204,7 +204,7 @@ export default function ProductPaymentModal({
 
   const paymentMethods = [
     { id: 'wallet' as ProductPaymentMethod, name: 'Wallet 224Solutions', description: 'Paiement instantané depuis votre wallet', icon: Wallet, color: 'text-primary' },
-    { id: 'card' as ProductPaymentMethod, name: 'Carte Bancaire', description: 'Paiement sécurisé VISA / Mastercard via Stripe', icon: CreditCard, color: 'text-primary' },
+    { id: 'card' as ProductPaymentMethod, name: 'Carte Bancaire', description: 'Paiement sécurisé VISA / Mastercard via PayPal', icon: CreditCard, color: 'text-primary' },
     { id: 'orange_money' as ProductPaymentMethod, name: 'Orange Money', description: 'Débit instantané sur votre téléphone', icon: Smartphone, color: 'text-orange-500' },
     { id: 'mtn_money' as ProductPaymentMethod, name: 'MTN Mobile Money', description: 'Débit instantané via MTN MoMo', icon: Smartphone, color: 'text-yellow-600' },
     { id: 'cash' as ProductPaymentMethod, name: 'Paiement à la livraison', description: 'Payez en espèces à la réception', icon: Banknote, color: 'text-green-600' },
