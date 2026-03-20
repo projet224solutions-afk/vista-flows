@@ -53,6 +53,25 @@ function deriveWalletCurrencyFromProfile(country: unknown, detectedCurrency: unk
   return "GNF";
 }
 
+function getSafePayPalReturnUrl(rawUrl: unknown, fallbackUrl: string): string {
+  if (typeof rawUrl !== "string" || rawUrl.trim().length === 0) return fallbackUrl;
+
+  try {
+    const parsed = new URL(rawUrl);
+    const isHttp = parsed.protocol === "https:" || parsed.protocol === "http:";
+    const isLovableHost = parsed.hostname.endsWith(".lovable.app");
+    const isLocalHost = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+
+    if (!isHttp || (!isLovableHost && !isLocalHost)) {
+      return fallbackUrl;
+    }
+
+    return parsed.toString();
+  } catch {
+    return fallbackUrl;
+  }
+}
+
 async function getFxRateForDeposit(supabaseAdmin: any, from: string, to: string): Promise<number> {
   if (from.toUpperCase() === to.toUpperCase()) return 1;
 
