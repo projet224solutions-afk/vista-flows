@@ -64,15 +64,14 @@ export default function PayPalCheckoutButton({
     const cancelUrl = new URL(window.location.href);
     cancelUrl.searchParams.set('paypal_result', 'cancel');
 
-    const { data, error } = await supabase.functions.invoke('paypal-deposit', {
-      body: {
-        amount,
-        currency,
-        action,
-        returnUrl: successUrl.toString(),
-        cancelUrl: cancelUrl.toString(),
-      },
-    });
+    const idempotencyKey = generateIdempotencyKey('payment');
+    const { data, error } = await signedInvoke('paypal-deposit', {
+      amount,
+      currency,
+      action: 'create',
+      returnUrl: successUrl.toString(),
+      cancelUrl: cancelUrl.toString(),
+    }, { idempotencyKey });
 
     if (error) throw new Error(error.message);
     if (!data?.success) throw new Error(data?.error || 'Erreur PayPal');
