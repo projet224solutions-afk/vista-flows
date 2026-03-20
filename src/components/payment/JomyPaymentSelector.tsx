@@ -146,8 +146,8 @@ export function JomyPaymentSelector({
     }] : []),
     {
       id: 'PAYPAL' as const,
-      name: 'PayPal / Carte Bancaire',
-      description: 'Paiement sécurisé via PayPal ou carte VISA / Mastercard',
+      name: 'Carte Bancaire',
+      description: 'Paiement sécurisé par carte VISA / Mastercard via PayPal',
       icon: <CreditCard className="h-5 w-5 text-blue-600" />,
       iconBg: 'bg-blue-100',
       requiresPhone: false,

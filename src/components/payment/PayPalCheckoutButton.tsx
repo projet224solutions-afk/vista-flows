@@ -26,6 +26,8 @@ interface PayPalCheckoutButtonProps {
   onError?: (error: string) => void;
   /** If true, credit wallet instead of just returning capture data */
   creditWallet?: boolean;
+  /** If true, show only card payment (no PayPal balance tab) */
+  cardOnly?: boolean;
   disabled?: boolean;
 }
 
