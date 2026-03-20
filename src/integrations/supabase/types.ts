@@ -20766,6 +20766,57 @@ export type Database = {
         }
         Relationships: []
       }
+      task_queue: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          last_error_at: string | null
+          max_retries: number
+          payload: Json
+          priority: string
+          retry_count: number
+          scheduled_at: string
+          started_at: string | null
+          status: string
+          task_type: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_error_at?: string | null
+          max_retries?: number
+          payload?: Json
+          priority?: string
+          retry_count?: number
+          scheduled_at?: string
+          started_at?: string | null
+          status?: string
+          task_type: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_error_at?: string | null
+          max_retries?: number
+          payload?: Json
+          priority?: string
+          retry_count?: number
+          scheduled_at?: string
+          started_at?: string | null
+          status?: string
+          task_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       taxi_api_usage: {
         Row: {
           created_at: string | null
@@ -28798,6 +28849,7 @@ export type Database = {
       }
       get_public_setting: { Args: { setting_key: string }; Returns: string }
       get_purchase_commission_percent: { Args: never; Returns: number }
+      get_queue_stats: { Args: never; Returns: Json }
       get_role_prefix: { Args: { user_role: string }; Returns: string }
       get_service_commission_percent: { Args: never; Returns: number }
       get_service_subscription: {
