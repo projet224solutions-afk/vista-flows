@@ -339,7 +339,7 @@ export default function ProductPaymentModal({
             id: item.id,
             name: item.name,
             price: item.price,
-            vendorId: item.vendorId,
+            vendor_id: item.vendorId,
             quantity: item.quantity || 1,
           })),
           amount: grandTotal,
