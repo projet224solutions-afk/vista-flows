@@ -585,18 +585,32 @@ export function JomyPaymentSelector({
         </CardContent>
       </Card>
 
-      {/* Modal Stripe pour paiement par carte */}
-      <StripeCardPaymentModal
-        isOpen={showStripeModal}
-        onClose={() => setShowStripeModal(false)}
-        amount={amount}
-        currency={displayCurrency}
-        orderId={orderId || `order-${Date.now()}`}
-        sellerId={sellerId || recipientId || ''}
-        description={description}
-        onSuccess={handleStripeSuccess}
-        onError={handleStripeError}
-      />
+      {/* Modal PayPal pour paiement par carte ou solde PayPal */}
+      {showStripeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                Paiement PayPal
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowStripeModal(false)}>✕</Button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Montant : <strong>{formattedAmount}</strong>
+            </p>
+            <PayPalCheckoutButton
+              amount={amount}
+              currency={displayCurrency === 'GNF' ? 'USD' : displayCurrency}
+              description={description || 'Paiement 224Solutions'}
+              orderId={orderId}
+              onSuccess={handlePayPalSuccess}
+              onCancel={() => setShowStripeModal(false)}
+              onError={handlePayPalError}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
