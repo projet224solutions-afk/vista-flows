@@ -207,8 +207,20 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
+    // 🔐 HMAC signature validation (if headers present)
+    const rawBody = await req.text();
+    const { validateHmacRequest, hmacErrorResponse } = await import("../_shared/hmac-guard.ts");
+    if (req.headers.get("x-signature")) {
+      const hmacResult = await validateHmacRequest(req, rawBody);
+      if (!hmacResult.valid) {
+        console.warn("🚨 HMAC validation failed:", hmacResult.code);
+        return hmacErrorResponse(hmacResult, corsHeaders);
+      }
+      console.log("✅ HMAC signature verified");
+    }
+
     const url = new URL(req.url);
-    const body = await req.json();
+    const body = JSON.parse(rawBody);
     // ✅ Support action from query params OR body (supabase.functions.invoke doesn't pass query params)
     const action = url.searchParams.get("action") || body.action || "transfer";
 

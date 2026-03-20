@@ -141,6 +141,18 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // 🔐 HMAC signature validation (if headers present)
+    const rawBody = await req.text();
+    const { validateHmacRequest, hmacErrorResponse } = await import("../_shared/hmac-guard.ts");
+    if (req.headers.get("x-signature")) {
+      const hmacResult = await validateHmacRequest(req, rawBody);
+      if (!hmacResult.valid) {
+        logStep("HMAC validation failed", { code: hmacResult.code });
+        return hmacErrorResponse(hmacResult, corsHeaders);
+      }
+      logStep("HMAC signature verified ✅");
+    }
+
     // Auth - validate JWT using getUser (verify_jwt=false)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -171,7 +183,7 @@ serve(async (req) => {
       orderId,
       returnUrl,
       cancelUrl,
-    } = await req.json();
+    } = JSON.parse(rawBody);
 
     const accessToken = await getPayPalAccessToken();
     logStep("PayPal access token obtained");
