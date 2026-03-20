@@ -1,4 +1,5 @@
 import { Suspense, memo, useEffect } from "react";
+import { usePrefetchCriticalData } from "@/hooks/usePrefetchCriticalData";
 import { useAutoFillGps as useAutoFillGpsHook } from "@/hooks/useAutoFillGps";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { Toaster } from "@/components/ui/toaster";
