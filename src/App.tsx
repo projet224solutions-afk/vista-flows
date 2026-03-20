@@ -168,14 +168,25 @@ function GpsAutoFill() {
   return null;
 }
 
-// Configure QueryClient with better defaults
+// Configure QueryClient with optimized cache for high-traffic multi-cloud
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes (anciennement cacheTime)
-      retry: 1,
+      staleTime: 1000 * 60 * 5, // 5 minutes - données considérées fraîches
+      gcTime: 1000 * 60 * 30, // 30 minutes - garde en cache mémoire
+      retry: (failureCount, error: any) => {
+        // Ne pas retry sur les erreurs 4xx (sauf 429)
+        if (error?.status >= 400 && error?.status < 500 && error?.status !== 429) return false;
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex + Math.random() * 500, 15000),
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true, // Rafraîchir après reconnexion réseau
+      networkMode: 'offlineFirst', // Supporter le mode hors-ligne
+    },
+    mutations: {
+      retry: 1,
+      networkMode: 'offlineFirst',
     },
   },
 });
