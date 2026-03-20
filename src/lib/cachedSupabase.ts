@@ -134,10 +134,9 @@ export const cachedQueries = {
   getCategories: () =>
     cachedQuery('categories:all', async () => {
       const { data, error } = await supabase
-        .from('product_categories')
+        .from('categories')
         .select('id, name, slug, icon, parent_id')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
+        .order('name', { ascending: true });
       if (error) throw error;
       return data;
     }, {
