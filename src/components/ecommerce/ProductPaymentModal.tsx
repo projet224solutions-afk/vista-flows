@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, startTransition, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -68,7 +69,8 @@ export default function ProductPaymentModal({
     totalAmount 
   });
   const fc = useFormatCurrency();
-  
+  const navigate = useNavigate();
+
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -323,6 +325,37 @@ export default function ProductPaymentModal({
       throw new Error('COD info missing');
     }
 
+    // Pour les paiements par carte ou mobile money, rediriger vers la page de paiement
+    // L'ordre sera créé APRÈS confirmation du paiement
+    if (paymentMethod === 'card' || paymentMethod === 'orange_money' || paymentMethod === 'mtn_money') {
+      const firstItem = cartItems[0];
+      toast.success('Redirection vers le paiement...');
+      onClose();
+      
+      navigate('/payment', {
+        state: {
+          fromCart: true,
+          cartItems: cartItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            vendorId: item.vendorId,
+            quantity: item.quantity || 1,
+          })),
+          amount: grandTotal,
+          totalAmount: grandTotal,
+          commissionFee,
+          productTotal: totalAmount,
+          paymentMethod,
+          productName: cartItems.length === 1 ? firstItem.name : `${cartItems.length} articles`,
+          vendorId: firstItem.vendorId,
+          productType: 'physical'
+        }
+      });
+      
+      return;
+    }
+
     // Créer ou récupérer le customer_id si manquant
     let effectiveCustomerId = customerId;
     if (!effectiveCustomerId) {
@@ -406,8 +439,9 @@ export default function ProductPaymentModal({
           continue;
         }
 
-        // Utiliser la nouvelle fonction PostgreSQL pour créer la commande avec items
-        // Note: On passe le total AVEC commission pour que ce soit facturé
+        // Normaliser vers les valeurs de l'enum payment_method de la DB
+        const normalizedPaymentMethod = isCODMethod ? 'cash' : paymentMethod;
+
         console.log('[ProductPayment] Creating order via create_online_order:', {
           user_id: userId,
           vendor_id: vendorId,
@@ -415,15 +449,8 @@ export default function ProductPaymentModal({
           product_total: vendorProductTotal,
           commission_fee: commissionPerVendor,
           total_amount_with_commission: vendorTotalWithCommission,
-          payment_method: paymentMethod
+          payment_method: normalizedPaymentMethod
         });
-
-        const isCOD = paymentMethod === 'cash' || paymentMethod === 'cash_on_delivery';
-        // Normaliser vers les valeurs de l'enum payment_method de la DB
-        const normalizedPaymentMethod = isCOD ? 'cash' 
-          : paymentMethod === 'orange_money' || paymentMethod === 'mtn_money' ? 'mobile_money' 
-          : paymentMethod === 'card' ? 'card'
-          : paymentMethod;
 
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
           p_user_id: userId,
@@ -433,15 +460,15 @@ export default function ProductPaymentModal({
             quantity: item.quantity || 1,
             price: item.price
           })),
-          p_total_amount: vendorTotalWithCommission, // ← MONTANT AVEC COMMISSION
+          p_total_amount: vendorTotalWithCommission,
           p_payment_method: normalizedPaymentMethod,
           p_shipping_address: {
-            address: isCOD && codPhone ? codPhone : 'Adresse de livraison',
-            city: isCOD && codCity ? codCity : 'Conakry',
+            address: isCODMethod && codPhone ? codPhone : 'Adresse de livraison',
+            city: isCODMethod && codCity ? codCity : 'Conakry',
             country: 'Guinée',
             commission_fee: commissionPerVendor,
             product_total: vendorProductTotal,
-            ...(isCOD ? { is_cod: true, cod_phone: codPhone, cod_city: codCity } : {})
+            ...(isCODMethod ? { is_cod: true, cod_phone: codPhone, cod_city: codCity } : {})
           }
         });
 
@@ -476,7 +503,7 @@ export default function ProductPaymentModal({
             buyer_id: userId,
             seller_id: vendorData.user_id,
             order_id: orderId,
-            amount: vendorTotalWithCommission, // ← MONTANT AVEC COMMISSION POUR L'ESCROW
+            amount: vendorTotalWithCommission,
             currency: 'GNF',
             transaction_type: 'product',
             payment_provider: 'wallet',
@@ -547,12 +574,12 @@ export default function ProductPaymentModal({
         }
       }
 
-      // Succès - afficher le montant total avec commission
+      // Succès
       if (paymentMethod === 'wallet') {
         toast.success('Paiement sécurisé effectué !', {
           description: `${fc(grandTotal)} bloqués en escrow (dont ${fc(commissionFee)} de frais)`
         });
-      } else {
+      } else if (isCODMethod) {
         toast.success('Commande créée !', {
           description: `Total à payer à la livraison: ${fc(grandTotal)}`
         });
@@ -560,7 +587,7 @@ export default function ProductPaymentModal({
 
       onPaymentSuccess();
       onClose();
-  }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose]);
+  }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose, codPhone, codCity, fc]);
 
   // Vérifier le solde avec le grandTotal (incluant la commission)
   const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < grandTotal;

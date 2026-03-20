@@ -11,7 +11,9 @@ import TranslatedProductCard from "./TranslatedProductCard";
 import { HorizontalScrollRow, ScrollItem } from "./HorizontalScrollRow";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useResponsive } from "@/hooks/useResponsive";
+import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface AIProduct {
   product_id: string;
@@ -21,6 +23,9 @@ interface AIProduct {
   rating: number | null;
   reason?: string;
   score?: number;
+  vendor_id?: string;
+  vendor_name?: string;
+  currency?: string;
 }
 
 interface AIRecommendationSectionProps {
@@ -56,6 +61,7 @@ export function AIRecommendationSection({
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isMobile, isTablet } = useResponsive();
+  const { addToCart } = useCart();
   const Icon = icons[icon];
 
   if (!isLoading && (!products || products.length === 0)) return null;
@@ -64,6 +70,18 @@ export function AIRecommendationSection({
 
   // Responsive card width
   const cardWidth = isMobile ? '44vw' : isTablet ? '200px' : '220px';
+
+  const handleAddToCart = (p: AIProduct) => {
+    addToCart({
+      id: p.product_id,
+      name: p.name,
+      price: p.price,
+      image: p.images?.[0],
+      vendor_id: p.vendor_id || '',
+      vendor_name: p.vendor_name,
+      currency: p.currency || 'GNF',
+    });
+  };
 
   return (
     <div className={cn("py-4", className)}>
@@ -122,6 +140,7 @@ export function AIRecommendationSection({
                   reviewCount={0}
                   vendor=""
                   onBuy={() => navigate(`/product/${p.product_id}`)}
+                  onAddToCart={() => handleAddToCart(p)}
                 />
                 {showReason && p.reason && (
                   <div className="absolute top-2 left-2 z-10">
