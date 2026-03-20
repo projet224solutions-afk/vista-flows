@@ -234,18 +234,10 @@ export function JomyPaymentSelector({
       return;
     }
 
-    // Paiement par carte Stripe
-    if (selectedMethod === 'STRIPE_CARD') {
-      // Stripe requiert un montant minimum (~500 GNF pour être ≥ 30 pence)
-      const MIN_STRIPE_AMOUNT = 500;
-      if (amount < MIN_STRIPE_AMOUNT) {
-        toast.error('Montant insuffisant', {
-          description: `Le montant minimum pour le paiement par carte est ${MIN_STRIPE_AMOUNT.toLocaleString()} ${displayCurrency}`
-        });
-        return;
-      }
-      console.log('🔵 [JomyPaymentSelector] Opening Stripe modal');
-      setShowStripeModal(true);
+    // Paiement par PayPal (carte ou solde PayPal)
+    if (selectedMethod === 'PAYPAL') {
+      console.log('🔵 [JomyPaymentSelector] Opening PayPal modal');
+      setShowStripeModal(true); // réutilise le même state pour ouvrir le modal PayPal
       return;
     }
 
