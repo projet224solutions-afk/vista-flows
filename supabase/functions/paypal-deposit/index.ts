@@ -223,7 +223,7 @@ serve(async (req) => {
             ),
             cancel_url: getSafePayPalReturnUrl(
               cancelUrl,
-              "https://vista-flows.lovable.app/wallet?paypal=cancel"
+              getSafePayPalReturnUrl(returnUrl, "https://vista-flows.lovable.app/wallet?paypal=cancel")
             ),
           },
         }),
