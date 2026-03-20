@@ -362,15 +362,15 @@ export function JomyPaymentSelector({
     setProcessing(false);
   };
 
-  const handleStripeSuccess = (paymentIntentId: string) => {
-    console.log('✅ [JomyPaymentSelector] Stripe payment success:', paymentIntentId);
+  const handlePayPalSuccess = (captureData: { paypalOrderId: string; captureId: string; amount: number; currency: string }) => {
+    console.log('✅ [JomyPaymentSelector] PayPal payment success:', captureData);
     setShowStripeModal(false);
     setPaymentStatus('success');
-    onPaymentSuccess(paymentIntentId, 'SUCCESS');
+    onPaymentSuccess(captureData.captureId || captureData.paypalOrderId, 'SUCCESS');
   };
 
-  const handleStripeError = (errorMsg: string) => {
-    console.error('❌ [JomyPaymentSelector] Stripe payment error:', errorMsg);
+  const handlePayPalError = (errorMsg: string) => {
+    console.error('❌ [JomyPaymentSelector] PayPal payment error:', errorMsg);
     setShowStripeModal(false);
     setPaymentStatus('failed');
     onPaymentFailed?.(errorMsg);
