@@ -11,9 +11,9 @@
  * 224Solutions
  */
 
-// API Key (publishable, safe for client)
-const HMAC_API_KEY = import.meta.env.VITE_HMAC_API_KEY || "";
-// Secret for signing (loaded from env)
+// API Key (publishable PayPal Client ID, safe for client)
+const HMAC_API_KEY = import.meta.env.VITE_PAYPAL_CLIENT_ID || "AUFfL3JGArOz2JdmKwIb-rLqSFPMqiRvpqAJENs-oCDq4LaYLDjxcy6Kh6I9d18vZG2JLxHQHwjnZRPO";
+// Secret for signing — uses PayPal secret via env
 const HMAC_SECRET = import.meta.env.VITE_HMAC_SECRET || "";
 
 const encoder = new TextEncoder();

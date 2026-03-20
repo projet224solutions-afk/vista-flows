@@ -97,8 +97,8 @@ export async function validateHmacRequest(
     skipNonceCheck?: boolean; // For testing
   }
 ): Promise<HmacGuardResult> {
-  const apiKeyEnv = options?.apiKeyEnvVar ?? "HMAC_API_KEY";
-  const secretEnv = options?.secretEnvVar ?? "HMAC_SECRET_KEY";
+  const apiKeyEnv = options?.apiKeyEnvVar ?? "PAYPAL_CLIENT_ID";
+  const secretEnv = options?.secretEnvVar ?? "PAYPAL_SECRET_KEY";
   const maxDrift = options?.maxDriftMs ?? MAX_TIMESTAMP_DRIFT_MS;
 
   // 1. Extract headers
