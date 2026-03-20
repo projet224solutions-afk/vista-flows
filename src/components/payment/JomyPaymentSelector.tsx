@@ -585,14 +585,14 @@ export function JomyPaymentSelector({
         </CardContent>
       </Card>
 
-      {/* Modal PayPal pour paiement par carte ou solde PayPal */}
+      {/* Modal PayPal - Mode carte bancaire uniquement */}
       {showStripeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-background rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-primary" />
-                Paiement PayPal
+                Paiement par Carte Bancaire
               </h3>
               <Button variant="ghost" size="sm" onClick={() => setShowStripeModal(false)}>✕</Button>
             </div>
@@ -607,6 +607,7 @@ export function JomyPaymentSelector({
               onSuccess={handlePayPalSuccess}
               onCancel={() => setShowStripeModal(false)}
               onError={handlePayPalError}
+              cardOnly
             />
           </div>
         </div>
