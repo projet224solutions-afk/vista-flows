@@ -76,7 +76,19 @@ serve(async (req) => {
     if (authError || !user) throw new Error("Non autorisé");
     logStep("User authenticated", { userId: user.id });
 
-    const { amount, currency = "USD", paypalEmail } = JSON.parse(rawBody);
+    const parsedBody = JSON.parse(rawBody);
+    
+    // 🔍 Fraud scoring
+    const fraudResult = assessFraudRisk(req, parsedBody, user.id);
+    if (fraudResult.action === "block") {
+      logStep("🚨 FRAUD BLOCKED", { score: fraudResult.score, flags: fraudResult.flags });
+      return new Response(
+        JSON.stringify({ success: false, error: "Transaction bloquée pour raisons de sécurité" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { amount, currency = "USD", paypalEmail } = parsedBody;
 
     if (!paypalEmail) throw new Error("Email PayPal requis");
     if (!amount || amount < MIN_WITHDRAWAL) {
