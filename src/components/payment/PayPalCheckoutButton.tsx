@@ -82,8 +82,8 @@ export default function PayPalCheckoutButton({
     if (!mountedRef.current) return;
     setProcessing(true);
     try {
-      const { data: captureData, error } = await supabase.functions.invoke('paypal-deposit', {
-        body: { action: 'capture', orderId: data.orderID },
+      const { data: captureData, error } = await signedInvoke('paypal-deposit', {
+        action: 'capture', orderId: data.orderID
       });
 
       if (error) throw new Error(error.message);
