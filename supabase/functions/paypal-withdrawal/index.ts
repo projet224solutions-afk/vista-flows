@@ -53,6 +53,18 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
+    // 🔐 HMAC signature validation (if headers present)
+    const rawBody = await req.text();
+    const { validateHmacRequest, hmacErrorResponse } = await import("../_shared/hmac-guard.ts");
+    if (req.headers.get("x-signature")) {
+      const hmacResult = await validateHmacRequest(req, rawBody);
+      if (!hmacResult.valid) {
+        logStep("HMAC validation failed", { code: hmacResult.code });
+        return hmacErrorResponse(hmacResult, corsHeaders);
+      }
+      logStep("HMAC signature verified ✅");
+    }
+
     // Auth
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -64,7 +76,7 @@ serve(async (req) => {
     if (authError || !user) throw new Error("Non autorisé");
     logStep("User authenticated", { userId: user.id });
 
-    const { amount, currency = "USD", paypalEmail } = await req.json();
+    const { amount, currency = "USD", paypalEmail } = JSON.parse(rawBody);
 
     if (!paypalEmail) throw new Error("Email PayPal requis");
     if (!amount || amount < MIN_WITHDRAWAL) {
