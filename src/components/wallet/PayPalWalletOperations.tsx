@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowDownCircle, ArrowUpCircle, Loader2, Shield, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { signedInvoke, generateIdempotencyKey } from "@/lib/security/hmacSigner";
 
 interface PayPalWalletOperationsProps {
   userId: string;
