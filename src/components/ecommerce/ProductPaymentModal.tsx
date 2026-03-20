@@ -332,34 +332,26 @@ export default function ProductPaymentModal({
       toast.success('Redirection vers le paiement...');
       onClose();
       
-      // Navigate to payment page with cart data
-      const paymentState = {
-        fromCart: true,
-        cartItems: cartItems.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          vendorId: item.vendorId,
-          quantity: item.quantity || 1,
-        })),
-        amount: grandTotal,
-        totalAmount: grandTotal,
-        commissionFee,
-        productTotal: totalAmount,
-        paymentMethod,
-        productName: cartItems.length === 1 ? firstItem.name : `${cartItems.length} articles`,
-        vendorId: firstItem.vendorId,
-        productType: 'physical'
-      };
-      
-      // Use window.location to ensure navigation works from modal
-      const navEvent = new CustomEvent('navigate-to-payment', { detail: paymentState });
-      window.dispatchEvent(navEvent);
-      
-      // Fallback: use the navigate from react-router if available
-      import('react-router-dom').then(({ createSearchParams }) => {
-        // Navigate programmatically
-      }).catch(() => {});
+      navigate('/payment', {
+        state: {
+          fromCart: true,
+          cartItems: cartItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            vendorId: item.vendorId,
+            quantity: item.quantity || 1,
+          })),
+          amount: grandTotal,
+          totalAmount: grandTotal,
+          commissionFee,
+          productTotal: totalAmount,
+          paymentMethod,
+          productName: cartItems.length === 1 ? firstItem.name : `${cartItems.length} articles`,
+          vendorId: firstItem.vendorId,
+          productType: 'physical'
+        }
+      });
       
       return;
     }
