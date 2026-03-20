@@ -40,9 +40,10 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
 
     setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("paypal-deposit", {
-        body: { amount: numAmount, currency: "USD", action: "create" },
-      });
+      const idempotencyKey = generateIdempotencyKey('deposit', userId);
+      const { data, error } = await signedInvoke("paypal-deposit", {
+        amount: numAmount, currency: "USD", action: "create"
+      }, { idempotencyKey });
 
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Erreur PayPal");
