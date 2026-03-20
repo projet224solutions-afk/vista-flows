@@ -73,8 +73,8 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
     setProcessing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("paypal-deposit", {
-        body: { action: "capture", orderId: currentOrderId },
+      const { data, error } = await signedInvoke("paypal-deposit", {
+        action: "capture", orderId: currentOrderId
       });
 
       if (error) throw new Error(error.message);
