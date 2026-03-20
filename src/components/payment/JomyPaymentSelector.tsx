@@ -1,7 +1,7 @@
 /**
  * 💳 SÉLECTEUR DE PAIEMENT - MULTI-PROVIDERS
- * Stripe pour les cartes bancaires, ChapChapPay pour Mobile Money (Orange, MTN, PayCard)
- * Méthodes: Carte Bancaire (Stripe), Orange Money, MTN MoMo, PayCard (ChapChapPay)
+ * PayPal pour les cartes bancaires et solde PayPal, ChapChapPay pour Mobile Money (Orange, MTN, PayCard)
+ * Méthodes: PayPal (Carte + Solde), Orange Money, MTN MoMo, PayCard (ChapChapPay)
  */
 
 import { useState, useEffect, useMemo } from 'react';
