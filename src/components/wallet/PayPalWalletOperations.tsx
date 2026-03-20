@@ -111,9 +111,10 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
 
     setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("paypal-withdrawal", {
-        body: { amount: numAmount, currency: "USD", paypalEmail },
-      });
+      const idempotencyKey = generateIdempotencyKey('withdrawal', userId);
+      const { data, error } = await signedInvoke("paypal-withdrawal", {
+        amount: numAmount, currency: "USD", paypalEmail
+      }, { idempotencyKey });
 
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Erreur retrait");
