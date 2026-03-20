@@ -145,7 +145,14 @@ serve(async (req) => {
     const userId = user.id;
     logStep("User authenticated", { userId });
 
-    const { amount, currency = "USD", action = "create", orderId, returnUrl } = await req.json();
+    const {
+      amount,
+      currency = "USD",
+      action = "create",
+      orderId,
+      returnUrl,
+      cancelUrl,
+    } = await req.json();
 
     const accessToken = await getPayPalAccessToken();
     logStep("PayPal access token obtained");

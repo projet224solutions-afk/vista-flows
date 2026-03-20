@@ -80,8 +80,22 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
 
   const createOrder = useCallback(async () => {
     console.log('[PayPal] createOrder called', { numAmount, paypalCurrency, selectedCurrency });
+
+    const successUrl = new URL(window.location.href);
+    successUrl.searchParams.set('paypal_result', 'success');
+
+    const cancelUrl = new URL(window.location.href);
+    cancelUrl.searchParams.set('paypal_result', 'cancel');
+
     const { data, error } = await supabase.functions.invoke('paypal-deposit', {
-      body: { amount: numAmount, currency: paypalCurrency, userCurrency: selectedCurrency, action: 'create' },
+      body: {
+        amount: numAmount,
+        currency: paypalCurrency,
+        userCurrency: selectedCurrency,
+        action: 'create',
+        returnUrl: successUrl.toString(),
+        cancelUrl: cancelUrl.toString(),
+      },
     });
     console.log('[PayPal] createOrder response', { data, error });
     if (error) {
