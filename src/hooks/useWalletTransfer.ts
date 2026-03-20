@@ -55,15 +55,13 @@ export function useWalletTransfer(): UseWalletTransferResult {
       setLoading(true);
       setError(null);
 
-      const { data: previewData, error: previewError } = await supabase.functions.invoke(
+      const { data: previewData, error: previewError } = await signedInvoke(
         'wallet-transfer',
         {
-          body: {
-            action: 'preview',
-            sender_id: user.id,
-            receiver_id: receiverId,
-            amount,
-          },
+          action: 'preview',
+          sender_id: user.id,
+          receiver_id: receiverId,
+          amount,
         }
       );
 
