@@ -141,7 +141,6 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
             </SelectTrigger>
             <SelectContent
               onPointerDownOutside={(e) => e.stopPropagation()}
-              onInteractOutside={(e) => e.stopPropagation()}
             >
               <ScrollArea className="h-[300px]">
                 {allCurrencies.map((c) => (
