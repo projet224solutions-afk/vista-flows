@@ -191,6 +191,13 @@ const queryClient = new QueryClient({
   },
 });
 
+// Composant pour le prefetching des données critiques
+function AppPrefetcher() {
+  const { usePrefetchCriticalData: prefetch } = require('@/hooks/usePrefetchCriticalData');
+  prefetch();
+  return null;
+}
+
 function App() {
   // Debug log immédiat
   console.log('🎯 App component rendering...');
