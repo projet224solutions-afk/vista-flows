@@ -82,11 +82,27 @@ export default function ProductPaymentModal({
   const [mobilePhone, setMobilePhone] = useState('');
   const [mobileProcessing, setMobileProcessing] = useState(false);
   
+  // Resolved seller user_id (from profiles) for Stripe
+  const [sellerUserId, setSellerUserId] = useState<string>('');
+  
   // Commission state
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig | null>(null);
   const [loadingCommission, setLoadingCommission] = useState(false);
   const [commissionFee, setCommissionFee] = useState(0);
   const [grandTotal, setGrandTotal] = useState(totalAmount);
+
+  // Resolve vendor user_id when modal opens
+  useEffect(() => {
+    if (open && cartItems.length > 0) {
+      const vendorId = cartItems.find(item => item.vendorId)?.vendorId;
+      if (vendorId) {
+        supabase.from('vendors').select('user_id').eq('id', vendorId).single()
+          .then(({ data }) => {
+            if (data?.user_id) setSellerUserId(data.user_id);
+          });
+      }
+    }
+  }, [open, cartItems]);
 
   // Reset step when modal opens/closes
   useEffect(() => {
@@ -96,6 +112,7 @@ export default function ProductPaymentModal({
       setPaymentStep('select_method');
       setMobilePhone('');
       setMobileProcessing(false);
+      setSellerUserId('');
     }
   }, [open]);
 
