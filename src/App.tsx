@@ -229,6 +229,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AppPrefetcher />
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <BrowserRouter>
           <LanguageProvider>
