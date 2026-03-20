@@ -1,11 +1,12 @@
 /**
- * 🔐 HMAC-SHA256 REQUEST GUARD - Middleware de sécurité niveau fintech
+ * 🔐 HMAC-SHA256 REQUEST GUARD V2 - Sécurité niveau fintech
  * 
  * Vérifie chaque requête via:
  * - X-API-KEY: identifiant client
- * - X-SIGNATURE: HMAC-SHA256 du payload
+ * - X-SIGNATURE: HMAC-SHA256(METHOD + PATH + BODY + TIMESTAMP + NONCE)
  * - X-TIMESTAMP: horodatage (max 5 min)
  * - X-NONCE: unicité anti-replay
+ * - Idempotency-Key: anti-double-transaction
  * 
  * 224Solutions - Sécurité financière absolue
  */
@@ -18,19 +19,24 @@ import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
 const MAX_TIMESTAMP_DRIFT_MS = 5 * 60 * 1000; // 5 minutes
 const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
-// In-memory nonce store (per edge function instance)
+// In-memory stores (per edge function instance)
 // In production at scale, replace with Redis/Upstash
 const usedNonces = new Map<string, number>();
+const idempotencyStore = new Map<string, { response: string; timestamp: number }>();
 
-// Cleanup expired nonces every 60s
+// Cleanup expired entries every 60s
 let lastCleanup = Date.now();
-function cleanupNonces() {
+function cleanupStores() {
   const now = Date.now();
   if (now - lastCleanup < 60_000) return;
   lastCleanup = now;
   for (const [nonce, ts] of usedNonces) {
     if (now - ts > NONCE_TTL_MS) usedNonces.delete(nonce);
+  }
+  for (const [key, val] of idempotencyStore) {
+    if (now - val.timestamp > IDEMPOTENCY_TTL_MS) idempotencyStore.delete(key);
   }
 }
 
@@ -73,7 +79,8 @@ function timingSafeEqual(a: string, b: string): boolean {
 export interface HmacGuardResult {
   valid: boolean;
   error?: string;
-  code?: "MISSING_HEADERS" | "INVALID_API_KEY" | "TIMESTAMP_EXPIRED" | "NONCE_REUSED" | "SIGNATURE_INVALID";
+  code?: "MISSING_HEADERS" | "INVALID_API_KEY" | "TIMESTAMP_EXPIRED" | "NONCE_REUSED" | "SIGNATURE_INVALID" | "IDEMPOTENCY_DUPLICATE";
+  cachedResponse?: string; // For idempotency hits
 }
 
 // ═══════════════════════════════════════════════════════
@@ -91,14 +98,15 @@ export async function validateHmacRequest(
   req: Request,
   rawBody: string,
   options?: {
-    apiKeyEnvVar?: string;    // Default: "HMAC_API_KEY"
-    secretEnvVar?: string;    // Default: "HMAC_SECRET_KEY"
-    maxDriftMs?: number;      // Default: 5 minutes
-    skipNonceCheck?: boolean; // For testing
+    apiKeyEnvVar?: string;
+    secretEnvVar?: string;
+    maxDriftMs?: number;
+    skipNonceCheck?: boolean;
+    checkIdempotency?: boolean; // Enable anti-double-transaction
   }
 ): Promise<HmacGuardResult> {
   const apiKeyEnv = options?.apiKeyEnvVar ?? "PAYPAL_CLIENT_ID";
-  const secretEnv = options?.secretEnvVar ?? "PAYPAL_SECRET_KEY";
+  const secretEnv = options?.secretEnvVar ?? "TRANSACTION_SECRET_KEY";
   const maxDrift = options?.maxDriftMs ?? MAX_TIMESTAMP_DRIFT_MS;
 
   // 1. Extract headers
@@ -148,7 +156,7 @@ export async function validateHmacRequest(
 
   // 4. Validate nonce uniqueness (anti-replay)
   if (!options?.skipNonceCheck) {
-    cleanupNonces();
+    cleanupStores();
     if (usedNonces.has(nonce)) {
       console.warn(`🚨 [HMAC-GUARD] Nonce reused: ${nonce.substring(0, 8)}...`);
       return {
@@ -161,7 +169,6 @@ export async function validateHmacRequest(
   }
 
   // 5. Reconstruct and verify signature
-  // Format: METHOD + URL_PATH + BODY + TIMESTAMP + NONCE
   const url = new URL(req.url);
   const signaturePayload = `${req.method}${url.pathname}${rawBody}${timestamp}${nonce}`;
 
@@ -186,7 +193,36 @@ export async function validateHmacRequest(
     };
   }
 
+  // 6. Idempotency check (anti-double-transaction)
+  if (options?.checkIdempotency) {
+    const idempotencyKey = req.headers.get("idempotency-key");
+    if (idempotencyKey && idempotencyStore.has(idempotencyKey)) {
+      const cached = idempotencyStore.get(idempotencyKey)!;
+      console.warn(`🔁 [HMAC-GUARD] Idempotency hit: ${idempotencyKey.substring(0, 8)}...`);
+      return {
+        valid: false,
+        error: "Duplicate transaction detected",
+        code: "IDEMPOTENCY_DUPLICATE",
+        cachedResponse: cached.response,
+      };
+    }
+  }
+
   return { valid: true };
+}
+
+// ═══════════════════════════════════════════════════════
+// Idempotency: Store successful response
+// ═══════════════════════════════════════════════════════
+
+export function storeIdempotencyResponse(req: Request, responseBody: string) {
+  const idempotencyKey = req.headers.get("idempotency-key");
+  if (idempotencyKey) {
+    idempotencyStore.set(idempotencyKey, {
+      response: responseBody,
+      timestamp: Date.now(),
+    });
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -197,6 +233,14 @@ export function hmacErrorResponse(
   result: HmacGuardResult,
   corsHeaders: Record<string, string>
 ): Response {
+  // If idempotency duplicate, return cached response
+  if (result.code === "IDEMPOTENCY_DUPLICATE" && result.cachedResponse) {
+    return new Response(result.cachedResponse, {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   return new Response(
     JSON.stringify({
       success: false,
@@ -211,12 +255,59 @@ export function hmacErrorResponse(
 }
 
 // ═══════════════════════════════════════════════════════
-// Webhook signature verification (PayPal, etc.)
+// Fraud scoring middleware
 // ═══════════════════════════════════════════════════════
 
-/**
- * Verify PayPal webhook signature using PayPal's API
- */
+export interface FraudScore {
+  score: number; // 0-100, higher = more suspicious
+  flags: string[];
+  action: "allow" | "review" | "block";
+}
+
+export function assessFraudRisk(
+  req: Request,
+  body: Record<string, unknown>,
+  userId: string,
+): FraudScore {
+  const flags: string[] = [];
+  let score = 0;
+
+  // Check amount thresholds
+  const amount = Number(body.amount || 0);
+  if (amount > 500000) { score += 20; flags.push("high_amount"); }
+  if (amount > 2000000) { score += 30; flags.push("very_high_amount"); }
+
+  // Check user agent
+  const ua = req.headers.get("user-agent") || "";
+  if (!ua || ua.length < 10) { score += 15; flags.push("suspicious_user_agent"); }
+  if (ua.includes("curl") || ua.includes("wget") || ua.includes("python")) {
+    score += 25; flags.push("automated_tool");
+  }
+
+  // Check for missing origin
+  const origin = req.headers.get("origin");
+  if (!origin) { score += 10; flags.push("no_origin_header"); }
+
+  // Check IP
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (!ip) { score += 5; flags.push("no_ip"); }
+
+  // Determine action
+  let action: "allow" | "review" | "block" = "allow";
+  if (score >= 60) action = "block";
+  else if (score >= 30) action = "review";
+
+  if (score > 0) {
+    console.log(`🔍 [FRAUD] User ${userId.substring(0, 8)}: score=${score}, flags=[${flags.join(",")}], action=${action}`);
+  }
+
+  return { score, flags, action };
+}
+
+// ═══════════════════════════════════════════════════════
+// Webhook signature verification (PayPal)
+// ═══════════════════════════════════════════════════════
+
 export async function verifyPayPalWebhook(
   req: Request,
   rawBody: string,
@@ -242,7 +333,6 @@ export async function verifyPayPalWebhook(
     return { valid: false, error: "Malformed certificate URL" };
   }
 
-  // Use PayPal's verification API
   const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
   const secret = Deno.env.get("PAYPAL_SECRET_KEY");
   if (!clientId || !secret) {
@@ -250,7 +340,6 @@ export async function verifyPayPalWebhook(
   }
 
   try {
-    // Get access token
     const tokenRes = await fetch("https://api-m.paypal.com/v1/oauth2/token", {
       method: "POST",
       headers: {
@@ -267,7 +356,6 @@ export async function verifyPayPalWebhook(
 
     const { access_token } = await tokenRes.json();
 
-    // Verify webhook signature
     const verifyRes = await fetch("https://api-m.paypal.com/v1/notifications/verify-webhook-signature", {
       method: "POST",
       headers: {
