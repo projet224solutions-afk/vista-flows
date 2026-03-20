@@ -1,20 +1,24 @@
 /**
- * 🔐 CLIENT-SIDE HMAC REQUEST SIGNER
+ * 🔐 CLIENT-SIDE HMAC REQUEST SIGNER V2
  * Signe toutes les requêtes de paiement avec HMAC-SHA256
  * 
  * Headers générés:
- * - X-API-KEY: identifiant client
+ * - X-API-KEY: identifiant client (PayPal Client ID)
  * - X-SIGNATURE: HMAC-SHA256(METHOD + PATH + BODY + TIMESTAMP + NONCE)
  * - X-TIMESTAMP: Date.now()
  * - X-NONCE: UUID unique
+ * - Idempotency-Key: UUID pour anti-double-transaction
  * 
  * 224Solutions
  */
 
+import { supabase } from '@/integrations/supabase/client';
+
 // API Key (publishable PayPal Client ID, safe for client)
 const HMAC_API_KEY = import.meta.env.VITE_PAYPAL_CLIENT_ID || "AUFfL3JGArOz2JdmKwIb-rLqSFPMqiRvpqAJENs-oCDq4LaYLDjxcy6Kh6I9d18vZG2JLxHQHwjnZRPO";
-// Secret for signing — uses PayPal secret via env
-const HMAC_SECRET = import.meta.env.VITE_HMAC_SECRET || "";
+
+// Signing secret - uses TRANSACTION_SECRET_KEY
+const HMAC_SECRET = import.meta.env.VITE_TRANSACTION_SECRET_KEY || import.meta.env.VITE_HMAC_SECRET || "";
 
 const encoder = new TextEncoder();
 
@@ -47,51 +51,64 @@ export interface SignedHeaders {
   "x-signature": string;
   "x-timestamp": string;
   "x-nonce": string;
+  "idempotency-key"?: string;
 }
 
 /**
  * 🔐 Sign a request for secure Edge Function calls
- * 
- * @param method - HTTP method (POST, GET, etc.)
- * @param path - URL path (e.g., /paypal-deposit)
- * @param body - Request body as string
- * @returns Headers to include in the request
  */
 export async function signRequest(
   method: string,
   path: string,
-  body: string = ""
+  body: string = "",
+  options?: { idempotencyKey?: string }
 ): Promise<SignedHeaders> {
   const timestamp = Date.now().toString();
   const nonce = generateNonce();
 
-  // Signature payload: METHOD + PATH + BODY + TIMESTAMP + NONCE
   const payload = `${method.toUpperCase()}${path}${body}${timestamp}${nonce}`;
   const signature = await hmacSha256(HMAC_SECRET, payload);
 
-  return {
+  const headers: SignedHeaders = {
     "x-api-key": HMAC_API_KEY,
     "x-signature": signature,
     "x-timestamp": timestamp,
     "x-nonce": nonce,
   };
+
+  if (options?.idempotencyKey) {
+    headers["idempotency-key"] = options.idempotencyKey;
+  }
+
+  return headers;
 }
 
 /**
- * 🔐 Helper: invoke a Supabase Edge Function with HMAC signature
+ * 🔐 Invoke a Supabase Edge Function with HMAC signature + idempotency
+ * Anti-double-transaction: generates a unique idempotency key per call
  */
 export async function signedInvoke(
   functionName: string,
   body: Record<string, unknown>,
-  supabaseClient: { functions: { invoke: (name: string, options: any) => Promise<any> } }
+  options?: { 
+    idempotencyKey?: string;
+    skipSigning?: boolean;
+  }
 ) {
   const bodyStr = JSON.stringify(body);
   const path = `/${functionName}`;
-  const headers = await signRequest("POST", path, bodyStr);
+  
+  // If HMAC secret is not configured, invoke without signing
+  if (!HMAC_SECRET || options?.skipSigning) {
+    return supabase.functions.invoke(functionName, { body });
+  }
 
-  return supabaseClient.functions.invoke(functionName, {
+  const idempotencyKey = options?.idempotencyKey || generateNonce();
+  const headers = await signRequest("POST", path, bodyStr, { idempotencyKey });
+
+  return supabase.functions.invoke(functionName, {
     body,
-    headers,
+    headers: headers as unknown as Record<string, string>,
   });
 }
 
@@ -100,4 +117,18 @@ export async function signedInvoke(
  */
 export function isHmacConfigured(): boolean {
   return Boolean(HMAC_API_KEY && HMAC_SECRET);
+}
+
+/**
+ * Generate a unique idempotency key for a transaction
+ * Format: txn_<type>_<userId_short>_<timestamp>_<random>
+ */
+export function generateIdempotencyKey(
+  type: 'deposit' | 'withdrawal' | 'transfer' | 'payment',
+  userId?: string
+): string {
+  const userPart = userId ? userId.substring(0, 8) : 'anon';
+  const ts = Date.now().toString(36);
+  const rand = Math.random().toString(36).substring(2, 8);
+  return `txn_${type}_${userPart}_${ts}_${rand}`;
 }

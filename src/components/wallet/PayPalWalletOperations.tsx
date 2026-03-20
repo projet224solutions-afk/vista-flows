@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowDownCircle, ArrowUpCircle, Loader2, Shield, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { signedInvoke, generateIdempotencyKey } from "@/lib/security/hmacSigner";
 
 interface PayPalWalletOperationsProps {
   userId: string;
@@ -40,9 +40,10 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
 
     setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("paypal-deposit", {
-        body: { amount: numAmount, currency: "USD", action: "create" },
-      });
+      const idempotencyKey = generateIdempotencyKey('deposit', userId);
+      const { data, error } = await signedInvoke("paypal-deposit", {
+        amount: numAmount, currency: "USD", action: "create"
+      }, { idempotencyKey });
 
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Erreur PayPal");
@@ -72,8 +73,8 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
     setProcessing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("paypal-deposit", {
-        body: { action: "capture", orderId: currentOrderId },
+      const { data, error } = await signedInvoke("paypal-deposit", {
+        action: "capture", orderId: currentOrderId
       });
 
       if (error) throw new Error(error.message);
@@ -110,9 +111,10 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
 
     setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("paypal-withdrawal", {
-        body: { amount: numAmount, currency: "USD", paypalEmail },
-      });
+      const idempotencyKey = generateIdempotencyKey('withdrawal', userId);
+      const { data, error } = await signedInvoke("paypal-withdrawal", {
+        amount: numAmount, currency: "USD", paypalEmail
+      }, { idempotencyKey });
 
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Erreur retrait");

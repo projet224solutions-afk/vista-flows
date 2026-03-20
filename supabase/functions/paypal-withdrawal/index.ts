@@ -53,11 +53,11 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    // 🔐 HMAC signature validation (if headers present)
+    // 🔐 HMAC signature validation + idempotency + fraud scoring
     const rawBody = await req.text();
-    const { validateHmacRequest, hmacErrorResponse } = await import("../_shared/hmac-guard.ts");
+    const { validateHmacRequest, hmacErrorResponse, assessFraudRisk } = await import("../_shared/hmac-guard.ts");
     if (req.headers.get("x-signature")) {
-      const hmacResult = await validateHmacRequest(req, rawBody);
+      const hmacResult = await validateHmacRequest(req, rawBody, { checkIdempotency: true });
       if (!hmacResult.valid) {
         logStep("HMAC validation failed", { code: hmacResult.code });
         return hmacErrorResponse(hmacResult, corsHeaders);
@@ -76,7 +76,19 @@ serve(async (req) => {
     if (authError || !user) throw new Error("Non autorisé");
     logStep("User authenticated", { userId: user.id });
 
-    const { amount, currency = "USD", paypalEmail } = JSON.parse(rawBody);
+    const parsedBody = JSON.parse(rawBody);
+    
+    // 🔍 Fraud scoring
+    const fraudResult = assessFraudRisk(req, parsedBody, user.id);
+    if (fraudResult.action === "block") {
+      logStep("🚨 FRAUD BLOCKED", { score: fraudResult.score, flags: fraudResult.flags });
+      return new Response(
+        JSON.stringify({ success: false, error: "Transaction bloquée pour raisons de sécurité" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { amount, currency = "USD", paypalEmail } = parsedBody;
 
     if (!paypalEmail) throw new Error("Email PayPal requis");
     if (!amount || amount < MIN_WITHDRAWAL) {

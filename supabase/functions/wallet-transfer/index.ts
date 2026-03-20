@@ -207,11 +207,11 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    // 🔐 HMAC signature validation (if headers present)
+    // 🔐 HMAC signature validation + idempotency + fraud scoring
     const rawBody = await req.text();
-    const { validateHmacRequest, hmacErrorResponse } = await import("../_shared/hmac-guard.ts");
+    const { validateHmacRequest, hmacErrorResponse, assessFraudRisk } = await import("../_shared/hmac-guard.ts");
     if (req.headers.get("x-signature")) {
-      const hmacResult = await validateHmacRequest(req, rawBody);
+      const hmacResult = await validateHmacRequest(req, rawBody, { checkIdempotency: true });
       if (!hmacResult.valid) {
         console.warn("🚨 HMAC validation failed:", hmacResult.code);
         return hmacErrorResponse(hmacResult, corsHeaders);

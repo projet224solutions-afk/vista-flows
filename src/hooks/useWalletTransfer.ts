@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { signedInvoke, generateIdempotencyKey } from '@/lib/security/hmacSigner';
 
 export interface TransferPreview {
   success: boolean;
@@ -53,15 +53,13 @@ export function useWalletTransfer(): UseWalletTransferResult {
       setLoading(true);
       setError(null);
 
-      const { data: previewData, error: previewError } = await supabase.functions.invoke(
+      const { data: previewData, error: previewError } = await signedInvoke(
         'wallet-transfer',
         {
-          body: {
-            action: 'preview',
-            sender_id: user.id,
-            receiver_id: receiverId,
-            amount,
-          },
+          action: 'preview',
+          sender_id: user.id,
+          receiver_id: receiverId,
+          amount,
         }
       );
 
@@ -97,17 +95,17 @@ export function useWalletTransfer(): UseWalletTransferResult {
       setExecuting(true);
       setError(null);
 
-      const { data, error: fnError } = await supabase.functions.invoke(
+      const idempotencyKey = generateIdempotencyKey('transfer', user.id);
+      const { data, error: fnError } = await signedInvoke(
         'wallet-transfer',
         {
-          body: {
-            action: 'transfer',
-            sender_id: user.id,
-            receiver_id: receiverId,
-            amount,
-            description,
-          },
-        }
+          action: 'transfer',
+          sender_id: user.id,
+          receiver_id: receiverId,
+          amount,
+          description,
+        },
+        { idempotencyKey }
       );
 
       if (fnError) throw fnError;

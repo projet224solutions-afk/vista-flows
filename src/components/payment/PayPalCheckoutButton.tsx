@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { PayPalScriptProvider, PayPalButtons, FUNDING } from '@paypal/react-paypal-js';
 import { supabase } from '@/integrations/supabase/client';
+import { signedInvoke, generateIdempotencyKey } from '@/lib/security/hmacSigner';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard, Wallet } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -63,15 +64,14 @@ export default function PayPalCheckoutButton({
     const cancelUrl = new URL(window.location.href);
     cancelUrl.searchParams.set('paypal_result', 'cancel');
 
-    const { data, error } = await supabase.functions.invoke('paypal-deposit', {
-      body: {
-        amount,
-        currency,
-        action,
-        returnUrl: successUrl.toString(),
-        cancelUrl: cancelUrl.toString(),
-      },
-    });
+    const idempotencyKey = generateIdempotencyKey('payment');
+    const { data, error } = await signedInvoke('paypal-deposit', {
+      amount,
+      currency,
+      action: 'create',
+      returnUrl: successUrl.toString(),
+      cancelUrl: cancelUrl.toString(),
+    }, { idempotencyKey });
 
     if (error) throw new Error(error.message);
     if (!data?.success) throw new Error(data?.error || 'Erreur PayPal');
@@ -82,8 +82,8 @@ export default function PayPalCheckoutButton({
     if (!mountedRef.current) return;
     setProcessing(true);
     try {
-      const { data: captureData, error } = await supabase.functions.invoke('paypal-deposit', {
-        body: { action: 'capture', orderId: data.orderID },
+      const { data: captureData, error } = await signedInvoke('paypal-deposit', {
+        action: 'capture', orderId: data.orderID
       });
 
       if (error) throw new Error(error.message);
