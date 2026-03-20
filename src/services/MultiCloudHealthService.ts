@@ -216,7 +216,8 @@ class MultiCloudHealthService {
     const start = Date.now();
     try {
       const { error } = await supabase.functions.invoke('gcs-signed-url', {
-        method: 'OPTIONS'
+        method: 'POST',
+        body: { healthCheck: true }
       });
       const rt = Date.now() - start;
       return this.makeCheck('google_cloud', 'Cloud Storage (GCS)', rt > 3000 ? 'degraded' : 'operational', rt, `${rt}ms`);
