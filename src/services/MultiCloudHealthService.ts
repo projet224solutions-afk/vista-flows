@@ -143,7 +143,8 @@ class MultiCloudHealthService {
     const start = Date.now();
     try {
       const { error } = await supabase.functions.invoke('google-cloud-test', {
-        method: 'OPTIONS'
+        method: 'POST',
+        body: { healthCheck: true }
       });
       const rt = Date.now() - start;
       return this.makeCheck('supabase', 'Edge Functions', rt > 2000 ? 'degraded' : 'operational', rt, `${rt}ms`);
