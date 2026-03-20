@@ -228,6 +228,15 @@ export default function Payment() {
         const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
         setPaymentDescription(`Achat panier: ${itemNames}`);
 
+        // Si une méthode de paiement est pré-sélectionnée (depuis ProductPaymentModal)
+        if (stateData?.paymentMethod) {
+          const method = stateData.paymentMethod;
+          if (method === 'card' || method === 'orange_money' || method === 'mtn_money') {
+            setSelectedPaymentMethod(method);
+            setPaymentStep('method');
+          }
+        }
+
         // Ouvrir automatiquement le dialog de paiement
         setPaymentOpen(true);
 
