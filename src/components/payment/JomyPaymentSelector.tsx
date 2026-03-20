@@ -49,7 +49,7 @@ interface JomyPaymentSelectorProps {
   sellerId?: string; // ID vendeur pour Stripe
 }
 
-type PaymentMethodId = 'STRIPE_CARD' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD';
+type PaymentMethodId = 'PAYPAL' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD';
 
 interface PaymentMethodOption {
   id: PaymentMethodId;
