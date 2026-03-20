@@ -5,8 +5,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const UPSTASH_URL = Deno.env.get('UPSTASH_REDIS_URL')!;
-const UPSTASH_TOKEN = Deno.env.get('UPSTASH_REDIS_TOKEN')!;
+// Parse Upstash URL - handle both REST URL and redis:// URI formats
+function getUpstashConfig() {
+  const rawUrl = Deno.env.get('UPSTASH_REDIS_URL') || '';
+  const token = Deno.env.get('UPSTASH_REDIS_TOKEN') || '';
+  
+  // If it's already a REST URL (https://...)
+  if (rawUrl.startsWith('https://')) {
+    return { url: rawUrl, token };
+  }
+  
+  // Extract hostname from redis:// URI or CLI command
+  const match = rawUrl.match(/([a-z0-9-]+\.upstash\.io)/i);
+  if (match) {
+    return { url: `https://${match[1]}`, token };
+  }
+  
+  // Fallback: try as-is
+  return { url: rawUrl, token };
+}
+
+const { url: UPSTASH_URL, token: UPSTASH_TOKEN } = getUpstashConfig();
 
 // Upstash REST API helper
 async function redis(command: string[]) {
