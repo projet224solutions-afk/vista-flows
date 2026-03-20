@@ -282,7 +282,7 @@ export function useClientData() {
   }, [products]);
 
   // Créer une commande
-  const createOrder = useCallback(async (userId: string) => {
+  const createOrder = useCallback(async (userId: string, paymentMethod: string = 'cash') => {
     if (cartItems.length === 0) {
       toast.error('Panier vide');
       return;
@@ -308,6 +308,12 @@ export function useClientData() {
 
         const vendorTotal = items.reduce((sum, item) => sum + item.price, 0);
 
+        // Normaliser la méthode de paiement
+        const normalizedMethod = paymentMethod === 'orange_money' || paymentMethod === 'mtn_money' 
+          ? 'mobile_money' 
+          : paymentMethod === 'card' ? 'card' 
+          : 'cash';
+
         // Utiliser la fonction PostgreSQL create_online_order
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
           p_user_id: userId,
@@ -318,7 +324,7 @@ export function useClientData() {
             price: item.price
           })),
           p_total_amount: vendorTotal,
-          p_payment_method: 'cash',
+          p_payment_method: normalizedMethod,
           p_shipping_address: {
             address: 'Adresse par défaut',
             city: 'Conakry',
