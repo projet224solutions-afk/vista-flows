@@ -97,17 +97,17 @@ export function useWalletTransfer(): UseWalletTransferResult {
       setExecuting(true);
       setError(null);
 
-      const { data, error: fnError } = await supabase.functions.invoke(
+      const idempotencyKey = generateIdempotencyKey('transfer', user.id);
+      const { data, error: fnError } = await signedInvoke(
         'wallet-transfer',
         {
-          body: {
-            action: 'transfer',
-            sender_id: user.id,
-            receiver_id: receiverId,
-            amount,
-            description,
-          },
-        }
+          action: 'transfer',
+          sender_id: user.id,
+          receiver_id: receiverId,
+          amount,
+          description,
+        },
+        { idempotencyKey }
       );
 
       if (fnError) throw fnError;
