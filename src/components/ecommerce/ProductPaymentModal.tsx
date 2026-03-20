@@ -494,7 +494,7 @@ export default function ProductPaymentModal({
             amount={grandTotal}
             currency="GNF"
             sellerName="224Solutions Marketplace"
-            sellerId={firstVendorId}
+            sellerId={sellerUserId || firstVendorId}
             orderDescription={`Achat ${cartItems.length} article(s)`}
             metadata={{ user_id: userId, items_count: String(cartItems.length) }}
             onSuccess={handleCardSuccess}
