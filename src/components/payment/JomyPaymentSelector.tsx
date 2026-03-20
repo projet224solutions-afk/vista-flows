@@ -430,7 +430,7 @@ export function JomyPaymentSelector({
               <Alert className="mt-3">
                 <Shield className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  Vos fonds sont protégés par notre système Escrow jusqu'à la livraison
+                  Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de la livraison
                 </AlertDescription>
               </Alert>
             )}
