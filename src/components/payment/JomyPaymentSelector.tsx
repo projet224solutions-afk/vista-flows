@@ -1,7 +1,7 @@
 /**
  * 💳 SÉLECTEUR DE PAIEMENT - MULTI-PROVIDERS
- * Stripe pour les cartes bancaires, ChapChapPay pour Mobile Money (Orange, MTN, PayCard)
- * Méthodes: Carte Bancaire (Stripe), Orange Money, MTN MoMo, PayCard (ChapChapPay)
+ * PayPal pour les cartes bancaires et solde PayPal, ChapChapPay pour Mobile Money (Orange, MTN, PayCard)
+ * Méthodes: PayPal (Carte + Solde), Orange Money, MTN MoMo, PayCard (ChapChapPay)
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -28,7 +28,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
+import PayPalCheckoutButton from '@/components/payment/PayPalCheckoutButton';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { formatCurrency } from '@/lib/formatters';
 
@@ -49,7 +49,7 @@ interface JomyPaymentSelectorProps {
   sellerId?: string; // ID vendeur pour Stripe
 }
 
-type PaymentMethodId = 'STRIPE_CARD' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD';
+type PaymentMethodId = 'PAYPAL' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD';
 
 interface PaymentMethodOption {
   id: PaymentMethodId;
@@ -60,7 +60,7 @@ interface PaymentMethodOption {
   requiresPhone: boolean;
   phonePrefix?: string;
   phonePlaceholder?: string;
-  provider?: 'chapchappay' | 'stripe' | 'wallet';
+  provider?: 'chapchappay' | 'stripe' | 'wallet' | 'paypal';
 }
 
 export function JomyPaymentSelector({
@@ -94,7 +94,7 @@ export function JomyPaymentSelector({
     return convert(amount, displayCurrency);
   }, [amount, displayCurrency, userCurrency, convert]);
   
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'STRIPE_CARD');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'PAYPAL');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
@@ -145,13 +145,13 @@ export function JomyPaymentSelector({
       provider: 'wallet' as const
     }] : []),
     {
-      id: 'STRIPE_CARD' as const,
-      name: 'Carte Bancaire',
-      description: 'Paiement sécurisé VISA / Mastercard via Stripe',
+      id: 'PAYPAL' as const,
+      name: 'PayPal / Carte Bancaire',
+      description: 'Paiement sécurisé via PayPal ou carte VISA / Mastercard',
       icon: <CreditCard className="h-5 w-5 text-blue-600" />,
       iconBg: 'bg-blue-100',
       requiresPhone: false,
-      provider: 'stripe' as const
+      provider: 'paypal' as const
     },
     // ChapChapPay - Orange Money (prioritaire)
     {
@@ -234,18 +234,10 @@ export function JomyPaymentSelector({
       return;
     }
 
-    // Paiement par carte Stripe
-    if (selectedMethod === 'STRIPE_CARD') {
-      // Stripe requiert un montant minimum (~500 GNF pour être ≥ 30 pence)
-      const MIN_STRIPE_AMOUNT = 500;
-      if (amount < MIN_STRIPE_AMOUNT) {
-        toast.error('Montant insuffisant', {
-          description: `Le montant minimum pour le paiement par carte est ${MIN_STRIPE_AMOUNT.toLocaleString()} ${displayCurrency}`
-        });
-        return;
-      }
-      console.log('🔵 [JomyPaymentSelector] Opening Stripe modal');
-      setShowStripeModal(true);
+    // Paiement par PayPal (carte ou solde PayPal)
+    if (selectedMethod === 'PAYPAL') {
+      console.log('🔵 [JomyPaymentSelector] Opening PayPal modal');
+      setShowStripeModal(true); // réutilise le même state pour ouvrir le modal PayPal
       return;
     }
 
@@ -370,15 +362,15 @@ export function JomyPaymentSelector({
     setProcessing(false);
   };
 
-  const handleStripeSuccess = (paymentIntentId: string) => {
-    console.log('✅ [JomyPaymentSelector] Stripe payment success:', paymentIntentId);
+  const handlePayPalSuccess = (captureData: { paypalOrderId: string; captureId: string; amount: number; currency: string }) => {
+    console.log('✅ [JomyPaymentSelector] PayPal payment success:', captureData);
     setShowStripeModal(false);
     setPaymentStatus('success');
-    onPaymentSuccess(paymentIntentId, 'SUCCESS');
+    onPaymentSuccess(captureData.captureId || captureData.paypalOrderId, 'SUCCESS');
   };
 
-  const handleStripeError = (errorMsg: string) => {
-    console.error('❌ [JomyPaymentSelector] Stripe payment error:', errorMsg);
+  const handlePayPalError = (errorMsg: string) => {
+    console.error('❌ [JomyPaymentSelector] PayPal payment error:', errorMsg);
     setShowStripeModal(false);
     setPaymentStatus('failed');
     onPaymentFailed?.(errorMsg);
@@ -593,18 +585,32 @@ export function JomyPaymentSelector({
         </CardContent>
       </Card>
 
-      {/* Modal Stripe pour paiement par carte */}
-      <StripeCardPaymentModal
-        isOpen={showStripeModal}
-        onClose={() => setShowStripeModal(false)}
-        amount={amount}
-        currency={displayCurrency}
-        orderId={orderId || `order-${Date.now()}`}
-        sellerId={sellerId || recipientId || ''}
-        description={description}
-        onSuccess={handleStripeSuccess}
-        onError={handleStripeError}
-      />
+      {/* Modal PayPal pour paiement par carte ou solde PayPal */}
+      {showStripeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                Paiement PayPal
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setShowStripeModal(false)}>✕</Button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Montant : <strong>{formattedAmount}</strong>
+            </p>
+            <PayPalCheckoutButton
+              amount={amount}
+              currency={displayCurrency === 'GNF' ? 'USD' : displayCurrency}
+              description={description || 'Paiement 224Solutions'}
+              orderId={orderId}
+              onSuccess={handlePayPalSuccess}
+              onCancel={() => setShowStripeModal(false)}
+              onError={handlePayPalError}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
