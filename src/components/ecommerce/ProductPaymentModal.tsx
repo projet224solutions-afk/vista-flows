@@ -69,7 +69,8 @@ export default function ProductPaymentModal({
     totalAmount 
   });
   const fc = useFormatCurrency();
-  
+  const navigate = useNavigate();
+
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
