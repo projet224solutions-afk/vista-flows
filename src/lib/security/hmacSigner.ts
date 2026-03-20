@@ -108,7 +108,7 @@ export async function signedInvoke(
 
   return supabase.functions.invoke(functionName, {
     body,
-    headers,
+    headers: headers as unknown as Record<string, string>,
   });
 }
 
