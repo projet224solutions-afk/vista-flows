@@ -46,7 +46,7 @@ interface JomyPaymentSelectorProps {
   onCancel: () => void;
   enableEscrow?: boolean;
   recipientId?: string;
-  sellerId?: string; // ID vendeur pour Stripe
+  sellerId?: string;
 }
 
 type PaymentMethodId = 'PAYPAL' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD';
@@ -60,7 +60,7 @@ interface PaymentMethodOption {
   requiresPhone: boolean;
   phonePrefix?: string;
   phonePlaceholder?: string;
-  provider?: 'chapchappay' | 'stripe' | 'wallet' | 'paypal';
+  provider?: 'chapchappay' | 'wallet' | 'paypal';
 }
 
 export function JomyPaymentSelector({
@@ -100,7 +100,7 @@ export function JomyPaymentSelector({
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
-  const [showStripeModal, setShowStripeModal] = useState(false);
+  const [showPaypalModal, setShowPaypalModal] = useState(false);
 
   // État pour adresse de livraison (COD)
   const [deliveryAddress, setDeliveryAddress] = useState({
@@ -237,7 +237,7 @@ export function JomyPaymentSelector({
     // Paiement par PayPal (carte ou solde PayPal)
     if (selectedMethod === 'PAYPAL') {
       console.log('🔵 [JomyPaymentSelector] Opening PayPal modal');
-      setShowStripeModal(true); // réutilise le même state pour ouvrir le modal PayPal
+      setShowPaypalModal(true); // réutilise le même state pour ouvrir le modal PayPal
       return;
     }
 
@@ -364,14 +364,14 @@ export function JomyPaymentSelector({
 
   const handlePayPalSuccess = (captureData: { paypalOrderId: string; captureId: string; amount: number; currency: string }) => {
     console.log('✅ [JomyPaymentSelector] PayPal payment success:', captureData);
-    setShowStripeModal(false);
+    setShowPaypalModal(false);
     setPaymentStatus('success');
     onPaymentSuccess(captureData.captureId || captureData.paypalOrderId, 'SUCCESS');
   };
 
   const handlePayPalError = (errorMsg: string) => {
     console.error('❌ [JomyPaymentSelector] PayPal payment error:', errorMsg);
-    setShowStripeModal(false);
+    setShowPaypalModal(false);
     setPaymentStatus('failed');
     onPaymentFailed?.(errorMsg);
   };
@@ -586,7 +586,7 @@ export function JomyPaymentSelector({
       </Card>
 
       {/* Modal PayPal - Mode carte bancaire uniquement */}
-      {showStripeModal && (
+      {showPaypalModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-background rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
@@ -594,7 +594,7 @@ export function JomyPaymentSelector({
                 <CreditCard className="h-5 w-5 text-primary" />
                 Paiement par Carte Bancaire
               </h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowStripeModal(false)}>✕</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowPaypalModal(false)}>✕</Button>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Montant : <strong>{formattedAmount}</strong>
@@ -605,7 +605,7 @@ export function JomyPaymentSelector({
               description={description || 'Paiement 224Solutions'}
               orderId={orderId}
               onSuccess={handlePayPalSuccess}
-              onCancel={() => setShowStripeModal(false)}
+              onCancel={() => setShowPaypalModal(false)}
               onError={handlePayPalError}
               cardOnly
             />
