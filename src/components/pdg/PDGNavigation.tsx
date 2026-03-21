@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   DollarSign, Users, Shield, Settings, Package, Wrench,
-  UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap,
+  UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap, Cloud,
   ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark,
   Menu, ChevronRight, Car, Lock, RefreshCw, Megaphone
 } from 'lucide-react';
@@ -94,6 +94,7 @@ const categories: NavCategory[] = [
       { value: 'config', label: 'Configuration', icon: Settings, permission: 'view_config' },
       { value: 'maintenance', label: 'Maintenance', icon: Wrench, permission: 'view_maintenance' },
       { value: 'api', label: 'API', icon: Key, permission: 'view_api' },
+      { value: 'multi-cloud', label: 'Multi-Cloud', icon: Cloud, badge: true, permission: 'view_debug' },
       { value: 'debug', label: 'Debug & Surveillance', icon: Zap, badge: true, permission: 'view_debug' },
     ]
   },
