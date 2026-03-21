@@ -253,15 +253,26 @@ export default function MyPurchasesOrdersList({
     try {
       const escrow = escrows[selectedOrder.id];
 
-      const { data, error } = await supabase.functions.invoke('confirm-delivery', {
-        body: { order_id: selectedOrder.id }
-      });
+      if (escrow) {
+        // Avec escrow: appeler la fonction de confirmation + libération escrow
+        const { data, error } = await supabase.functions.invoke('confirm-delivery', {
+          body: { order_id: selectedOrder.id }
+        });
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Erreur lors de la confirmation');
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Erreur lors de la confirmation');
+      } else {
+        // Sans escrow: mettre à jour directement le statut de la commande
+        const { error } = await supabase
+          .from('orders')
+          .update({ status: 'delivered', updated_at: new Date().toISOString() })
+          .eq('id', selectedOrder.id);
 
-      toast.success('Livraison confirmée !', {
-        description: 'Le vendeur a reçu le paiement'
+        if (error) throw error;
+      }
+
+      toast.success('Réception confirmée !', {
+        description: escrow ? 'Le paiement a été transféré au vendeur' : 'Merci d\'avoir confirmé la réception'
       });
 
       await loadOrders();
