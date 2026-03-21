@@ -228,7 +228,8 @@ serve(async (req) => {
             brand_name: "224Solutions",
             shipping_preference: "NO_SHIPPING",
             user_action: "PAY_NOW",
-            landing_page: "LOGIN",
+            // Force l'expérience saisie carte directement (guest checkout)
+            landing_page: "BILLING",
             return_url: getSafePayPalReturnUrl(
               returnUrl,
               "https://vista-flows.lovable.app/wallet?paypal=success"
