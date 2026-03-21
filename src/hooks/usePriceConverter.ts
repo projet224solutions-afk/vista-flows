@@ -9,6 +9,7 @@ import { useGeoDetection } from './useGeoDetection';
 import { useFxRates } from './useFxRates';
 import { formatCurrency } from '@/lib/formatters';
 import { useCurrency } from '@/context/CurrencyContext';
+import { WORLD_CURRENCIES } from '@/data/currencies';
 
 export interface ConvertedPrice {
   /** Prix original */
@@ -44,22 +45,8 @@ interface UsePriceConverterResult {
   refreshRates: () => Promise<void>;
 }
 
-// Liste des devises les plus courantes pour le préchargement
-// Inclut toutes les devises africaines et les principales devises mondiales
-const COMMON_CURRENCIES = [
-  // Devises principales
-  'USD', 'EUR', 'GBP', 'CHF', 'CAD', 'AUD', 'JPY', 'CNY', 'INR', 'AED',
-  // Afrique de l'Ouest
-  'GNF', 'XOF', 'NGN', 'GHS', 'SLL', 'LRD', 'GMD', 'CVE', 'MRU',
-  // Afrique Centrale
-  'XAF', 'CDF',
-  // Afrique de l'Est
-  'KES', 'TZS', 'UGX', 'RWF', 'ETB',
-  // Afrique Australe & Nord
-  'ZAR', 'MAD', 'EGP', 'TND', 'DZD',
-  // Autres importantes
-  'BRL', 'MXN', 'SAR', 'QAR', 'KWD'
-];
+// Couverture mondiale: précharge toutes les devises connues du système
+const WORLD_CURRENCY_CODES = Array.from(new Set(WORLD_CURRENCIES.map((c) => c.code.toUpperCase())));
 
 export function usePriceConverter(): UsePriceConverterResult {
   const { geoInfo, loading: geoLoading } = useGeoDetection();
@@ -73,7 +60,7 @@ export function usePriceConverter(): UsePriceConverterResult {
   // Charger les taux depuis GNF comme base (devise de tous les produits)
   const { rates, lastUpdated, loading: ratesLoading, refresh } = useFxRates({
     base: 'GNF',
-    symbols: COMMON_CURRENCIES,
+    symbols: WORLD_CURRENCY_CODES,
     refreshMinutes: 60, // Rafraîchir toutes les heures
   });
 
