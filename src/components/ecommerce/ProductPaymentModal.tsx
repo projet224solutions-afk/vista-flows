@@ -471,11 +471,16 @@ export default function ProductPaymentModal({
     );
   }
 
-  // ======== RENDER: Card form (Stripe inline) ========
+  // ======== RENDER: Card form (PayPal) ========
   if (paymentStep === 'card_form') {
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          className="sm:max-w-md max-h-[90vh] overflow-y-auto"
+          onPointerDownOutside={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onInteractOutside={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onFocusOutside={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        >
           <DialogHeader>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" onClick={() => setPaymentStep('select_method')}>
@@ -487,7 +492,7 @@ export default function ProductPaymentModal({
               </DialogTitle>
             </div>
             <DialogDescription>
-              Saisissez les informations de votre carte pour payer {fc(grandTotal)}
+              Cliquez ci-dessous pour saisir votre carte — {fc(grandTotal, 'GNF')}
             </DialogDescription>
           </DialogHeader>
           <Custom224PaymentWrapper
