@@ -480,7 +480,7 @@ export default function MyPurchasesOrdersList({
                 {filteredOrders.map((order) => {
                   const escrow = escrows[order.id];
                   const canConfirmDelivery = (order.status === 'in_transit' || order.status === 'delivered') && 
-                                              (escrow?.status === 'pending' || escrow?.status === 'held');
+                                              (!escrow || escrow?.status === 'pending' || escrow?.status === 'held');
 
                   return (
                     <Card key={order.id} className="overflow-hidden border">
