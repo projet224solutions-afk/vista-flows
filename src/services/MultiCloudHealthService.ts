@@ -164,15 +164,11 @@ class MultiCloudHealthService {
 
   // ==================== AWS ====================
   private async checkAWS(): Promise<CloudServiceCheck[]> {
-    const results = await Promise.allSettled([
-      this.checkAWSBackend(),
-      this.checkAWSCognito()
-    ]);
-    return results.map((r, i) => {
-      if (r.status === 'fulfilled') return r.value;
-      const names = ['Lambda Backend', 'Cognito Auth'];
-      return this.makeCheck('aws', names[i], 'outage', 0, 'Erreur check');
-    });
+    // Single combined check via the backend health endpoint
+    const backendCheck = await this.checkAWSBackend().catch(() => 
+      this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', 'outage', 0, 'Erreur check')
+    );
+    return [backendCheck];
   }
 
   private async checkAWSBackend(): Promise<CloudServiceCheck> {
@@ -186,37 +182,12 @@ class MultiCloudHealthService {
       });
       clearTimeout(timeout);
       const rt = Date.now() - start;
-      if (!response.ok) return this.makeCheck('aws', 'Lambda Backend (api.224solution.net)', 'degraded', rt, `HTTP ${response.status}`);
-      return this.makeCheck('aws', 'Lambda Backend (api.224solution.net)', rt > 2000 ? 'degraded' : 'operational', rt, `Latence ${rt}ms`);
+      if (!response.ok) return this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', 'degraded', rt, `HTTP ${response.status}`);
+      return this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', rt > 2000 ? 'degraded' : 'operational', rt, `Opérationnel - ${rt}ms`);
     } catch (e: any) {
       const rt = Date.now() - start;
-      if (e?.name === 'AbortError') return this.makeCheck('aws', 'Lambda Backend (api.224solution.net)', 'degraded', rt, 'Timeout (>8s)');
-      // CORS ou réseau - marquer comme dégradé et non outage
-      return this.makeCheck('aws', 'Lambda Backend (api.224solution.net)', 'degraded', rt, 'CORS/Réseau - Vérifiez depuis le serveur');
-    }
-  }
-
-  private async checkAWSCognito(): Promise<CloudServiceCheck> {
-    const start = Date.now();
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-      const response = await fetch(`${backendConfig.baseUrl}/api/cognito/validate-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: 'health-check' }),
-        signal: controller.signal,
-        mode: 'cors'
-      });
-      clearTimeout(timeout);
-      const rt = Date.now() - start;
-      if (response.status === 401 || response.ok) {
-        return this.makeCheck('aws', 'Cognito Auth', 'operational', rt, `Latence ${rt}ms`);
-      }
-      return this.makeCheck('aws', 'Cognito Auth', 'degraded', rt, `HTTP ${response.status}`);
-    } catch (e: any) {
-      const rt = Date.now() - start;
-      return this.makeCheck('aws', 'Cognito Auth', 'unknown', rt, 'Via backend - CORS possible');
+      if (e?.name === 'AbortError') return this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', 'degraded', rt, 'Timeout (>8s)');
+      return this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', 'degraded', rt, 'CORS/Réseau - Non accessible depuis le navigateur');
     }
   }
 

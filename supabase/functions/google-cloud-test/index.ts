@@ -11,14 +11,49 @@ serve(async (req) => {
   }
 
   try {
-    const projectId = Deno.env.get('GOOGLE_CLOUD_PROJECT_ID');
     const serviceAccount = Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
+    const projectIdEnv = Deno.env.get('GOOGLE_CLOUD_PROJECT_ID');
 
-    if (!projectId || !serviceAccount) {
+    // Extract project_id safely - NEVER return raw secrets
+    let projectId = 'unknown';
+    let serviceAccountEmail = 'unknown';
+    let hasValidConfig = false;
+
+    // Try parsing GOOGLE_CLOUD_PROJECT_ID as JSON (it may contain the full service account)
+    if (projectIdEnv) {
+      try {
+        const parsed = JSON.parse(projectIdEnv);
+        if (parsed.project_id) {
+          projectId = parsed.project_id;
+          serviceAccountEmail = parsed.client_email || 'unknown';
+          hasValidConfig = true;
+        }
+      } catch {
+        // It's a plain project ID string
+        projectId = projectIdEnv;
+      }
+    }
+
+    // Also check the dedicated service account env var
+    if (serviceAccount && !hasValidConfig) {
+      try {
+        const parsed = JSON.parse(serviceAccount);
+        serviceAccountEmail = parsed.client_email || 'unknown';
+        if (!projectId || projectId === 'unknown') {
+          projectId = parsed.project_id || projectId;
+        }
+        hasValidConfig = true;
+      } catch {
+        // Invalid JSON
+      }
+    }
+
+    if (!hasValidConfig && !projectIdEnv) {
       return new Response(
         JSON.stringify({ 
+          status: 'error',
           error: 'Configuration manquante',
-          hasProjectId: !!projectId,
+          hasProjectId: !!projectIdEnv,
           hasServiceAccount: !!serviceAccount
         }), 
         { 
@@ -28,45 +63,25 @@ serve(async (req) => {
       );
     }
 
-    // Parse service account
-    let parsedServiceAccount;
-    try {
-      parsedServiceAccount = JSON.parse(serviceAccount);
-    } catch (e) {
-      const error = e as Error;
-      return new Response(
-        JSON.stringify({ 
-          error: 'Service account JSON invalide',
-          details: error.message
-        }), 
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Test Google Cloud configuration
+    // NEVER expose secrets - only return safe metadata
     const result = {
       status: 'success',
       message: 'Configuration Google Cloud valide',
       projectId: projectId,
-      serviceAccountEmail: parsedServiceAccount.client_email,
+      serviceAccountEmail: serviceAccountEmail,
+      configured: hasValidConfig,
       timestamp: new Date().toISOString()
     };
 
-    console.log('✅ Google Cloud test successful:', result);
-
     return new Response(
       JSON.stringify(result), 
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('❌ Google Cloud test error:', error);
     return new Response(
       JSON.stringify({ 
+        status: 'error',
         error: error instanceof Error ? error.message : 'Unknown error' 
       }), 
       { 
