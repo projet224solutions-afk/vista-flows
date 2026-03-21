@@ -4,13 +4,19 @@
  * 224SOLUTIONS
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { PayPalScriptProvider, PayPalButtons, FUNDING } from '@paypal/react-paypal-js';
 import { supabase } from '@/integrations/supabase/client';
 import { signedInvoke, generateIdempotencyKey } from '@/lib/security/hmacSigner';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard, Wallet } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+const PAYPAL_SUPPORTED_CURRENCIES = new Set([
+  'AUD', 'BRL', 'CAD', 'CNY', 'CZK', 'DKK', 'EUR', 'HKD', 'HUF', 'ILS',
+  'JPY', 'MYR', 'MXN', 'TWD', 'NZD', 'NOK', 'PHP', 'PLN', 'GBP', 'SGD',
+  'SEK', 'CHF', 'THB', 'USD', 'RUB',
+]);
 
 interface PayPalCheckoutButtonProps {
   amount: number;
