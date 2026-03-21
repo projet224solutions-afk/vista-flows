@@ -162,32 +162,41 @@ class MultiCloudHealthService {
     }
   }
 
-  // ==================== AWS ====================
+  // ==================== AWS (via Edge Function proxy - no CORS) ====================
   private async checkAWS(): Promise<CloudServiceCheck[]> {
-    // Single combined check via the backend health endpoint
-    const backendCheck = await this.checkAWSBackend().catch(() => 
-      this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', 'outage', 0, 'Erreur check')
-    );
-    return [backendCheck];
-  }
-
-  private async checkAWSBackend(): Promise<CloudServiceCheck> {
     const start = Date.now();
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-      const response = await fetch(`${backendConfig.baseUrl}/health`, {
-        signal: controller.signal,
-        mode: 'cors'
+      const { data, error } = await supabase.functions.invoke('cloud-health-proxy', {
+        body: {}
       });
-      clearTimeout(timeout);
       const rt = Date.now() - start;
-      if (!response.ok) return this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', 'degraded', rt, `HTTP ${response.status}`);
-      return this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', rt > 2000 ? 'degraded' : 'operational', rt, `Opérationnel - ${rt}ms`);
-    } catch (e: any) {
+
+      if (error || !data?.results) {
+        return [
+          this.makeCheck('aws', 'Lambda Backend', 'degraded', rt, 'Proxy health check échoué'),
+          this.makeCheck('aws', 'Cognito Auth', 'degraded', rt, 'Proxy health check échoué')
+        ];
+      }
+
+      const results: CloudServiceCheck[] = [];
+      const backend = data.results['aws-backend'];
+      if (backend) {
+        results.push(this.makeCheck('aws', 'Lambda Backend', backend.status, backend.responseTime, backend.message));
+      }
+      const cognito = data.results['aws-cognito'];
+      if (cognito) {
+        results.push(this.makeCheck('aws', 'Cognito Auth', cognito.status, cognito.responseTime, cognito.message));
+      }
+      return results.length > 0 ? results : [
+        this.makeCheck('aws', 'Lambda Backend', 'unknown', rt, 'Pas de données'),
+        this.makeCheck('aws', 'Cognito Auth', 'unknown', rt, 'Pas de données')
+      ];
+    } catch (e) {
       const rt = Date.now() - start;
-      if (e?.name === 'AbortError') return this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', 'degraded', rt, 'Timeout (>8s)');
-      return this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', 'degraded', rt, 'CORS/Réseau - Non accessible depuis le navigateur');
+      return [
+        this.makeCheck('aws', 'Lambda Backend', 'degraded', rt, 'Erreur proxy'),
+        this.makeCheck('aws', 'Cognito Auth', 'degraded', rt, 'Erreur proxy')
+      ];
     }
   }
 
