@@ -252,20 +252,27 @@ export default function MyPurchasesOrdersList({
 
     try {
       const escrow = escrows[selectedOrder.id];
-      if (!escrow) {
-        toast.error('Pas d\'escrow trouvé pour cette commande');
-        return;
+
+      if (escrow) {
+        // Avec escrow: appeler la fonction de confirmation + libération escrow
+        const { data, error } = await supabase.functions.invoke('confirm-delivery', {
+          body: { order_id: selectedOrder.id }
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Erreur lors de la confirmation');
+      } else {
+        // Sans escrow: mettre à jour directement le statut de la commande
+        const { error } = await supabase
+          .from('orders')
+          .update({ status: 'delivered', updated_at: new Date().toISOString() })
+          .eq('id', selectedOrder.id);
+
+        if (error) throw error;
       }
 
-      const { data, error } = await supabase.functions.invoke('confirm-delivery', {
-        body: { order_id: selectedOrder.id }
-      });
-
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Erreur lors de la confirmation');
-
-      toast.success('Livraison confirmée !', {
-        description: 'Le vendeur a reçu le paiement'
+      toast.success('Réception confirmée !', {
+        description: escrow ? 'Le paiement a été transféré au vendeur' : 'Merci d\'avoir confirmé la réception'
       });
 
       await loadOrders();
@@ -480,7 +487,7 @@ export default function MyPurchasesOrdersList({
                 {filteredOrders.map((order) => {
                   const escrow = escrows[order.id];
                   const canConfirmDelivery = (order.status === 'in_transit' || order.status === 'delivered') && 
-                                              (escrow?.status === 'pending' || escrow?.status === 'held');
+                                              (!escrow || escrow?.status === 'pending' || escrow?.status === 'held');
 
                   return (
                     <Card key={order.id} className="overflow-hidden border">

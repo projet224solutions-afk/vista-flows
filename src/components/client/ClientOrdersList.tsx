@@ -197,23 +197,21 @@ export default function ClientOrdersList() {
 
     try {
       const escrow = escrows[selectedOrder.id];
-      
-      if (!escrow) {
-        toast.error('Pas d\'escrow trouvé pour cette commande');
-        return;
-      }
 
-      // Appeler la fonction Edge pour confirmer la livraison
-      const { data, error } = await supabase.functions.invoke('confirm-delivery', {
-        body: {
-          order_id: selectedOrder.id
-        }
-      });
+      if (escrow) {
+        const { data, error } = await supabase.functions.invoke('confirm-delivery', {
+          body: { order_id: selectedOrder.id }
+        });
 
-      if (error) throw error;
-      
-      if (!data?.success) {
-        throw new Error(data?.error || 'Erreur lors de la confirmation');
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Erreur lors de la confirmation');
+      } else {
+        const { error } = await supabase
+          .from('orders')
+          .update({ status: 'delivered', updated_at: new Date().toISOString() })
+          .eq('id', selectedOrder.id);
+
+        if (error) throw error;
       }
 
       toast.success('Livraison confirmée !', {
@@ -484,7 +482,7 @@ export default function ClientOrdersList() {
                 {filteredOrders.map((order) => {
                   const escrow = escrows[order.id];
                   // Permettre la confirmation si la commande est en transit OU déjà livrée mais que l'escrow n'est pas encore libéré
-                  const canConfirmDelivery = (order.status === 'in_transit' || order.status === 'delivered') && (escrow?.status === 'pending' || escrow?.status === 'held');
+                  const canConfirmDelivery = (order.status === 'in_transit' || order.status === 'delivered') && (!escrow || escrow?.status === 'pending' || escrow?.status === 'held');
 
                   return (
             <Card key={order.id} className="overflow-hidden">
