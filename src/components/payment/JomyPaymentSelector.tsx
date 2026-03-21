@@ -100,7 +100,7 @@ export function JomyPaymentSelector({
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
-  const [showPaypalModal, setShowPaypalModal] = useState(false);
+  const [showPaypalInline, setShowPaypalInline] = useState(false);
 
   // État pour adresse de livraison (COD)
   const [deliveryAddress, setDeliveryAddress] = useState({
@@ -236,8 +236,8 @@ export function JomyPaymentSelector({
 
     // Paiement par PayPal (carte ou solde PayPal)
     if (selectedMethod === 'PAYPAL') {
-      console.log('🔵 [JomyPaymentSelector] Opening PayPal modal');
-      setShowPaypalModal(true); // réutilise le même state pour ouvrir le modal PayPal
+      console.log('🔵 [JomyPaymentSelector] Showing PayPal inline');
+      setShowPaypalInline(true);
       return;
     }
 
@@ -364,14 +364,14 @@ export function JomyPaymentSelector({
 
   const handlePayPalSuccess = (captureData: { paypalOrderId: string; captureId: string; amount: number; currency: string }) => {
     console.log('✅ [JomyPaymentSelector] PayPal payment success:', captureData);
-    setShowPaypalModal(false);
+    setShowPaypalInline(false);
     setPaymentStatus('success');
     onPaymentSuccess(captureData.captureId || captureData.paypalOrderId, 'SUCCESS');
   };
 
   const handlePayPalError = (errorMsg: string) => {
     console.error('❌ [JomyPaymentSelector] PayPal payment error:', errorMsg);
-    setShowPaypalModal(false);
+    setShowPaypalInline(false);
     setPaymentStatus('failed');
     onPaymentFailed?.(errorMsg);
   };
@@ -557,61 +557,60 @@ export function JomyPaymentSelector({
             </Alert>
           )}
 
-          {/* Boutons */}
-          <div className="pt-4 flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={onCancel} 
-              className="flex-1"
-              disabled={processing}
-            >
-              Annuler
-            </Button>
-            <Button 
-              onClick={handlePayment} 
-              disabled={isConfirmDisabled}
-              className="flex-1"
-            >
-              {processing || isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Traitement...
-                </>
-              ) : (
-                'Payer maintenant'
-              )}
-            </Button>
-          </div>
+          {/* PayPal inline — formulaire carte affiché directement */}
+          {showPaypalInline && selectedMethod === 'PAYPAL' ? (
+            <div className="pt-4 space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                <span className="font-semibold text-sm">Saisissez vos informations de carte</span>
+              </div>
+              <PayPalCheckoutButton
+                amount={amount}
+                currency={displayCurrency === 'GNF' ? 'USD' : displayCurrency}
+                description={description || 'Paiement 224Solutions'}
+                orderId={orderId}
+                onSuccess={handlePayPalSuccess}
+                onCancel={() => setShowPaypalInline(false)}
+                onError={handlePayPalError}
+                cardOnly
+              />
+              <Button
+                variant="outline"
+                onClick={() => setShowPaypalInline(false)}
+                className="w-full"
+              >
+                Retour
+              </Button>
+            </div>
+          ) : (
+            /* Boutons standard */
+            <div className="pt-4 flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={onCancel} 
+                className="flex-1"
+                disabled={processing}
+              >
+                Annuler
+              </Button>
+              <Button 
+                onClick={handlePayment} 
+                disabled={isConfirmDisabled}
+                className="flex-1"
+              >
+                {processing || isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Traitement...
+                  </>
+                ) : (
+                  'Payer maintenant'
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Modal PayPal - Mode carte bancaire uniquement */}
-      {showPaypalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-background rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-primary" />
-                Paiement par Carte Bancaire
-              </h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowPaypalModal(false)}>✕</Button>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Montant : <strong>{formattedAmount}</strong>
-            </p>
-            <PayPalCheckoutButton
-              amount={amount}
-              currency={displayCurrency === 'GNF' ? 'USD' : displayCurrency}
-              description={description || 'Paiement 224Solutions'}
-              orderId={orderId}
-              onSuccess={handlePayPalSuccess}
-              onCancel={() => setShowPaypalModal(false)}
-              onError={handlePayPalError}
-              cardOnly
-            />
-          </div>
-        </div>
-      )}
     </>
   );
 }
