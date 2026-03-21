@@ -1,119 +1,305 @@
 /**
- * Dashboard Multi-Cloud Health Check
- * Vue temps réel de l'état de tous les services cloud
+ * Dashboard Multi-Cloud Health Check - Ultra Professionnel
+ * Surveillance temps réel de tous les services cloud 224Solutions
  */
+import { useState } from 'react';
 import { useMultiCloudHealth } from '@/hooks/useMultiCloudHealth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { RefreshCw, Cloud, Database, Shield, Bell, Server, CheckCircle, AlertTriangle, XCircle, HelpCircle } from 'lucide-react';
-import type { ServiceStatus, CloudProvider } from '@/services/MultiCloudHealthService';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  RefreshCw, Cloud, Database, Shield, Bell, Server, 
+  CheckCircle, AlertTriangle, XCircle, HelpCircle,
+  Activity, Clock, Wifi, WifiOff, Globe, Zap, TrendingUp
+} from 'lucide-react';
+import type { ServiceStatus, CloudProvider, CloudServiceCheck } from '@/services/MultiCloudHealthService';
+import { cn } from '@/lib/utils';
 
-const statusConfig: Record<ServiceStatus, { color: string; icon: typeof CheckCircle; label: string }> = {
-  operational: { color: 'bg-emerald-500', icon: CheckCircle, label: 'Opérationnel' },
-  degraded: { color: 'bg-amber-500', icon: AlertTriangle, label: 'Dégradé' },
-  outage: { color: 'bg-red-500', icon: XCircle, label: 'Panne' },
-  unknown: { color: 'bg-slate-400', icon: HelpCircle, label: 'Inconnu' }
+const statusConfig: Record<ServiceStatus, { color: string; bgColor: string; icon: typeof CheckCircle; label: string; textColor: string }> = {
+  operational: { color: 'bg-emerald-500', bgColor: 'bg-emerald-500/10', icon: CheckCircle, label: 'Opérationnel', textColor: 'text-emerald-600' },
+  degraded: { color: 'bg-amber-500', bgColor: 'bg-amber-500/10', icon: AlertTriangle, label: 'Dégradé', textColor: 'text-amber-600' },
+  outage: { color: 'bg-red-500', bgColor: 'bg-red-500/10', icon: XCircle, label: 'Panne', textColor: 'text-red-600' },
+  unknown: { color: 'bg-slate-400', bgColor: 'bg-slate-400/10', icon: HelpCircle, label: 'Inconnu', textColor: 'text-slate-500' }
 };
 
-const providerConfig: Record<CloudProvider, { label: string; icon: typeof Cloud; color: string }> = {
-  supabase: { label: 'Supabase', icon: Database, color: 'text-emerald-600' },
-  aws: { label: 'AWS', icon: Server, color: 'text-orange-500' },
-  google_cloud: { label: 'Google Cloud', icon: Cloud, color: 'text-blue-500' },
-  firebase: { label: 'Firebase', icon: Bell, color: 'text-yellow-500' }
+const providerConfig: Record<CloudProvider, { label: string; icon: typeof Cloud; color: string; bgGradient: string; description: string }> = {
+  supabase: { label: 'Supabase', icon: Database, color: 'text-emerald-600', bgGradient: 'from-emerald-500/5 to-emerald-500/10', description: 'Base de données, Auth, Realtime, Edge Functions' },
+  aws: { label: 'AWS', icon: Server, color: 'text-orange-500', bgGradient: 'from-orange-500/5 to-orange-500/10', description: 'Lambda Backend, Cognito Auth' },
+  google_cloud: { label: 'Google Cloud', icon: Cloud, color: 'text-blue-500', bgGradient: 'from-blue-500/5 to-blue-500/10', description: 'Cloud Storage, Cloud Functions' },
+  firebase: { label: 'Firebase', icon: Bell, color: 'text-yellow-500', bgGradient: 'from-yellow-500/5 to-yellow-500/10', description: 'Cloud Messaging (FCM)' }
 };
+
+function StatusIcon({ status, size = 'sm' }: { status: ServiceStatus; size?: 'sm' | 'md' | 'lg' }) {
+  const config = statusConfig[status];
+  const Icon = config.icon;
+  const sizeClass = size === 'lg' ? 'h-6 w-6' : size === 'md' ? 'h-5 w-5' : 'h-3.5 w-3.5';
+  return <Icon className={cn(sizeClass, config.textColor)} />;
+}
+
+function StatusDot({ status, pulse = false }: { status: ServiceStatus; pulse?: boolean }) {
+  return (
+    <div className={cn(
+      'w-2.5 h-2.5 rounded-full',
+      statusConfig[status].color,
+      pulse && status === 'operational' && 'animate-pulse'
+    )} />
+  );
+}
+
+function LatencyBadge({ ms }: { ms: number }) {
+  const color = ms < 500 ? 'text-emerald-600' : ms < 1500 ? 'text-amber-600' : 'text-red-600';
+  return <span className={cn('text-xs font-mono font-medium', color)}>{ms}ms</span>;
+}
+
+function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-muted/50 transition-colors cursor-default">
+            <div className="flex items-center gap-2.5">
+              <StatusIcon status={svc.status} />
+              <span className="text-sm font-medium">{svc.service}</span>
+            </div>
+            <LatencyBadge ms={svc.responseTime} />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="left" className="max-w-xs">
+          <div className="space-y-1">
+            <p className="font-semibold text-sm">{svc.service}</p>
+            <p className="text-xs text-muted-foreground">{svc.message}</p>
+            <p className="text-xs text-muted-foreground">
+              Vérifié : {new Date(svc.lastChecked).toLocaleTimeString('fr-FR')}
+            </p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 export default function MultiCloudDashboard() {
-  const { report, isChecking, refresh } = useMultiCloudHealth(60000);
+  const { report, isChecking, refresh, history } = useMultiCloudHealth(30000); // 30s refresh
+  const [showHistory, setShowHistory] = useState(false);
 
   if (!report) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="ml-3 text-muted-foreground">Vérification des services...</span>
+      <div className="flex flex-col items-center justify-center p-16 gap-4">
+        <div className="relative">
+          <Cloud className="h-12 w-12 text-muted-foreground/30" />
+          <RefreshCw className="h-5 w-5 animate-spin text-primary absolute -bottom-1 -right-1" />
+        </div>
+        <div className="text-center space-y-1">
+          <p className="font-medium text-foreground">Analyse de l'infrastructure...</p>
+          <p className="text-sm text-muted-foreground">Vérification de 9 services cloud en cours</p>
+        </div>
       </div>
     );
   }
 
-  const OverallStatus = statusConfig[report.overall];
+  const overallConfig = statusConfig[report.overall];
+  const OverallIcon = overallConfig.icon;
+
+  // Calcul tendance depuis l'historique
+  const lastFive = history.slice(-5);
+  const avgUptime = lastFive.length > 0
+    ? Math.round(lastFive.reduce((s, r) => s + r.uptimePercent, 0) / lastFive.length)
+    : report.uptimePercent;
 
   return (
     <div className="space-y-6">
-      {/* Header global */}
-      <div className="flex items-center justify-between">
+      {/* === HEADER === */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className={`w-3 h-3 rounded-full ${statusConfig[report.overall].color} animate-pulse`} />
-          <h2 className="text-lg font-semibold">Infrastructure Multi-Cloud</h2>
-          <Badge variant="outline" className="text-xs">
-            {report.uptimePercent}% opérationnel
-          </Badge>
+          <div className="relative">
+            <Globe className="h-7 w-7 text-primary" />
+            <StatusDot status={report.overall} pulse />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-foreground">Infrastructure Multi-Cloud</h2>
+            <p className="text-sm text-muted-foreground">Surveillance temps réel — 4 providers, {report.totalChecks} services</p>
+          </div>
         </div>
-        <Button variant="outline" size="sm" onClick={refresh} disabled={isChecking}>
-          <RefreshCw className={`h-4 w-4 mr-1 ${isChecking ? 'animate-spin' : ''}`} />
-          Rafraîchir
-        </Button>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="gap-1.5 text-xs">
+            <Activity className="h-3 w-3" />
+            Refresh: 30s
+          </Badge>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refresh} 
+            disabled={isChecking}
+            className="gap-1.5"
+          >
+            <RefreshCw className={cn('h-4 w-4', isChecking && 'animate-spin')} />
+            {isChecking ? 'Vérification...' : 'Rafraîchir'}
+          </Button>
+        </div>
       </div>
 
-      {/* Score global */}
-      <Card>
+      {/* === SCORE GLOBAL === */}
+      <Card className={cn('border-2', 
+        report.overall === 'operational' ? 'border-emerald-500/30' :
+        report.overall === 'degraded' ? 'border-amber-500/30' : 'border-red-500/30'
+      )}>
         <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <OverallStatus.icon className={`h-5 w-5 ${report.overall === 'operational' ? 'text-emerald-500' : report.overall === 'degraded' ? 'text-amber-500' : 'text-red-500'}`} />
-              <span className="font-medium">{OverallStatus.label}</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className={cn('p-2.5 rounded-xl', overallConfig.bgColor)}>
+                <OverallIcon className={cn('h-6 w-6', overallConfig.textColor)} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold">{overallConfig.label}</span>
+                  <Badge variant="secondary" className="text-xs font-mono">
+                    {report.uptimePercent}%
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {report.healthyChecks}/{report.totalChecks} services opérationnels
+                </p>
+              </div>
             </div>
-            <span className="text-sm text-muted-foreground">
-              {report.healthyChecks}/{report.totalChecks} services OK
-            </span>
+
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <TrendingUp className="h-4 w-4" />
+                <span>Tendance: {avgUptime}%</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>{new Date(report.timestamp).toLocaleTimeString('fr-FR')}</span>
+              </div>
+            </div>
           </div>
-          <Progress value={report.uptimePercent} className="h-2" />
-          <p className="text-xs text-muted-foreground mt-2">
-            Dernière vérification : {new Date(report.timestamp).toLocaleTimeString('fr-FR')}
-          </p>
+
+          <Progress 
+            value={report.uptimePercent} 
+            className="h-3 rounded-full" 
+          />
+
+          {/* Mini stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+            {(Object.keys(report.providers) as CloudProvider[]).map(provider => {
+              const prov = report.providers[provider];
+              const config = providerConfig[provider];
+              return (
+                <div key={provider} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
+                  <StatusDot status={prov.status} />
+                  <span className="text-xs font-medium truncate">{config.label}</span>
+                  <span className="text-xs text-muted-foreground ml-auto font-mono">{prov.avgResponseTime}ms</span>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Providers */}
+      {/* === PROVIDERS DETAIL === */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {(Object.keys(report.providers) as CloudProvider[]).map(provider => {
           const prov = report.providers[provider];
           const config = providerConfig[provider];
           const ProvIcon = config.icon;
+          const provStatus = statusConfig[prov.status];
 
           return (
-            <Card key={provider}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ProvIcon className={`h-5 w-5 ${config.color}`} />
-                    <CardTitle className="text-sm font-medium">{config.label}</CardTitle>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{prov.avgResponseTime}ms</span>
-                    <div className={`w-2 h-2 rounded-full ${statusConfig[prov.status].color}`} />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-2">
-                  {prov.services.map((svc, i) => {
-                    const SvcStatus = statusConfig[svc.status];
-                    return (
-                      <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-                        <div className="flex items-center gap-2">
-                          <SvcStatus.icon className={`h-3.5 w-3.5 ${svc.status === 'operational' ? 'text-emerald-500' : svc.status === 'degraded' ? 'text-amber-500' : svc.status === 'outage' ? 'text-red-500' : 'text-slate-400'}`} />
-                          <span className="text-xs">{svc.service}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">{svc.responseTime}ms</span>
+            <Card key={provider} className="overflow-hidden">
+              <div className={cn('bg-gradient-to-r', config.bgGradient)}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-background/80 backdrop-blur-sm">
+                        <ProvIcon className={cn('h-5 w-5', config.color)} />
                       </div>
-                    );
-                  })}
+                      <div>
+                        <CardTitle className="text-sm font-semibold">{config.label}</CardTitle>
+                        <p className="text-[11px] text-muted-foreground">{config.description}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={cn('text-[10px] font-mono', provStatus.textColor)}>
+                        {prov.avgResponseTime}ms
+                      </Badge>
+                      <StatusDot status={prov.status} pulse={prov.status === 'operational'} />
+                    </div>
+                  </div>
+                </CardHeader>
+              </div>
+              <CardContent className="pt-3 pb-4">
+                <div className="space-y-0.5">
+                  {prov.services.map((svc, i) => (
+                    <ServiceRow key={i} svc={svc} />
+                  ))}
                 </div>
               </CardContent>
             </Card>
           );
         })}
+      </div>
+
+      {/* === HISTORIQUE === */}
+      {history.length > 1 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Activity className="h-4 w-4 text-primary" />
+                Historique des vérifications ({history.length})
+              </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowHistory(!showHistory)}
+                className="text-xs"
+              >
+                {showHistory ? 'Masquer' : 'Afficher'}
+              </Button>
+            </div>
+          </CardHeader>
+          {showHistory && (
+            <CardContent className="pt-0">
+              <div className="flex items-center gap-1 overflow-x-auto pb-2">
+                {history.slice(-30).map((h, i) => (
+                  <TooltipProvider key={i}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className={cn(
+                          'w-3 h-8 rounded-sm flex-shrink-0 transition-all cursor-pointer hover:opacity-80',
+                          h.overall === 'operational' ? 'bg-emerald-500' :
+                          h.overall === 'degraded' ? 'bg-amber-500' :
+                          h.overall === 'outage' ? 'bg-red-500' : 'bg-slate-400',
+                          'opacity-60 hover:opacity-100'
+                        )} />
+                      </TooltipTrigger>
+                      <TooltipContent className="text-xs">
+                        <p>{new Date(h.timestamp).toLocaleTimeString('fr-FR')}</p>
+                        <p>{h.healthyChecks}/{h.totalChecks} OK — {h.uptimePercent}%</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
+              </div>
+              <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-1"><Wifi className="h-3 w-3" /> Premier check: {new Date(history[0].timestamp).toLocaleTimeString('fr-FR')}</span>
+                <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> Dernier: {new Date(history[history.length - 1].timestamp).toLocaleTimeString('fr-FR')}</span>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      )}
+
+      {/* === LÉGENDE === */}
+      <div className="flex flex-wrap items-center gap-4 px-2 text-xs text-muted-foreground">
+        {Object.entries(statusConfig).map(([key, val]) => (
+          <div key={key} className="flex items-center gap-1.5">
+            <div className={cn('w-2 h-2 rounded-full', val.color)} />
+            <span>{val.label}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
