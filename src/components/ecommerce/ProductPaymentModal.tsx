@@ -274,7 +274,7 @@ export default function ProductPaymentModal({
     try {
       await createOrderAfterPayment(paymentIntentId, 'card');
       setPaymentStep('success');
-      toast.success('Paiement par carte réussi !', { description: `${fc(grandTotal)} débité` });
+      toast.success('Paiement par carte réussi !', { description: `${fc(grandTotal, 'GNF')} débité` });
       setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
     } catch (err) {
       console.error('Order creation after card payment failed:', err);
@@ -318,7 +318,7 @@ export default function ProductPaymentModal({
         if (finalStatus.status === 'completed') {
           await createOrderAfterPayment(result.transactionId, paymentMethod);
           setPaymentStep('success');
-          toast.success('Paiement mobile réussi !', { description: `${fc(grandTotal)} débité de votre compte` });
+          toast.success('Paiement mobile réussi !', { description: `${fc(grandTotal, 'GNF')} débité de votre compte` });
           setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
         } else {
           toast.error('Paiement non confirmé', { description: 'Veuillez réessayer' });
@@ -379,7 +379,7 @@ export default function ProductPaymentModal({
 
       if (paymentMethod === 'wallet') {
         if (walletBalance !== null && walletBalance < grandTotal) {
-          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(grandTotal)}` });
+          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(grandTotal, 'GNF')}` });
           setProcessing(false);
           return;
         }
@@ -426,9 +426,9 @@ export default function ProductPaymentModal({
     }
 
     if (paymentMethod === 'wallet') {
-      toast.success('Paiement sécurisé effectué !', { description: `${fc(grandTotal)} bloqués en escrow (dont ${fc(commissionFee)} de frais)` });
+      toast.success('Paiement sécurisé effectué !', { description: `${fc(grandTotal, 'GNF')} bloqués en escrow (dont ${fc(commissionFee, 'GNF')} de frais)` });
     } else if (isCODMethod) {
-      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(grandTotal)}` });
+      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(grandTotal, 'GNF')}` });
     }
 
     onPaymentSuccess();
@@ -448,7 +448,7 @@ export default function ProductPaymentModal({
               <CheckCircle2 className="w-10 h-10 text-green-600" />
             </div>
             <h3 className="text-xl font-bold text-green-700">Paiement réussi !</h3>
-            <p className="text-muted-foreground text-center">{fc(grandTotal)} — Votre commande a été créée</p>
+            <p className="text-muted-foreground text-center">{fc(grandTotal, 'GNF')} — Votre commande a été créée</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -495,14 +495,14 @@ export default function ProductPaymentModal({
               </DialogTitle>
             </div>
             <DialogDescription>
-              Un débit de {fc(grandTotal)} sera envoyé sur votre téléphone
+              Un débit de {fc(grandTotal, 'GNF')} sera envoyé sur votre téléphone
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className={`p-4 rounded-lg border ${providerBg}`}>
               <div className="text-center space-y-1">
-                <p className="text-2xl font-bold">{fc(grandTotal)}</p>
+                <p className="text-2xl font-bold">{fc(grandTotal, 'GNF')}</p>
                 <p className="text-sm text-muted-foreground">Montant à débiter</p>
               </div>
             </div>
@@ -540,7 +540,7 @@ export default function ProductPaymentModal({
                 {mobileProcessing ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Traitement...</>
                 ) : (
-                  <>Payer {fc(grandTotal)}</>
+                  <>Payer {fc(grandTotal, 'GNF')}</>
                 )}
               </Button>
             </div>
@@ -565,7 +565,7 @@ export default function ProductPaymentModal({
               <div className="bg-muted/50 rounded-lg p-3 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Sous-total produits:</span>
-                  <span>{fc(totalAmount)}</span>
+                  <span>{fc(totalAmount, 'GNF')}</span>
                 </div>
                 {commissionFee > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground">
@@ -573,7 +573,7 @@ export default function ProductPaymentModal({
                       <Info className="w-3 h-3" />
                       Frais de service ({commissionConfig?.commission_value || 1.5}%):
                     </span>
-                    <span>+{fc(commissionFee)}</span>
+                    <span>+{fc(commissionFee, 'GNF')}</span>
                   </div>
                 )}
                 {loadingCommission && (
@@ -583,7 +583,7 @@ export default function ProductPaymentModal({
                 )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total à payer:</span>
-                  <span className="text-primary">{fc(grandTotal)}</span>
+                  <span className="text-primary">{fc(grandTotal, 'GNF')}</span>
                 </div>
               </div>
 
@@ -597,7 +597,7 @@ export default function ProductPaymentModal({
                   </div>
                   <div className="text-sm">
                     Solde disponible: <span className={`font-semibold ${insufficientBalance ? 'text-destructive' : 'text-green-600'}`}>
-                      {fc(walletBalance || 0)}
+                      {fc(walletBalance || 0, 'GNF')}
                     </span>
                   </div>
                   {walletBalance === 0 && (
