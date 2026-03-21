@@ -13725,6 +13725,69 @@ export type Database = {
           },
         ]
       }
+      paypal_webhook_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          paypal_order_id: string | null
+          processed_at: string | null
+          processing_error: string | null
+          processing_status: string
+          raw_payload: Json
+          related_transaction_id: string | null
+          related_user_id: string | null
+          resource_id: string | null
+          resource_type: string | null
+          signature_verified: boolean
+          summary: string | null
+          transmission_id: string | null
+          transmission_time: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          paypal_order_id?: string | null
+          processed_at?: string | null
+          processing_error?: string | null
+          processing_status?: string
+          raw_payload: Json
+          related_transaction_id?: string | null
+          related_user_id?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          signature_verified?: boolean
+          summary?: string | null
+          transmission_id?: string | null
+          transmission_time?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          paypal_order_id?: string | null
+          processed_at?: string | null
+          processing_error?: string | null
+          processing_status?: string
+          raw_payload?: Json
+          related_transaction_id?: string | null
+          related_user_id?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          signature_verified?: boolean
+          summary?: string | null
+          transmission_id?: string | null
+          transmission_time?: string | null
+        }
+        Relationships: []
+      }
       pdg_access_permissions: {
         Row: {
           agent_id: string
