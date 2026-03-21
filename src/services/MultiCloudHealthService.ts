@@ -164,15 +164,11 @@ class MultiCloudHealthService {
 
   // ==================== AWS ====================
   private async checkAWS(): Promise<CloudServiceCheck[]> {
-    const results = await Promise.allSettled([
-      this.checkAWSBackend(),
-      this.checkAWSCognito()
-    ]);
-    return results.map((r, i) => {
-      if (r.status === 'fulfilled') return r.value;
-      const names = ['Lambda Backend', 'Cognito Auth'];
-      return this.makeCheck('aws', names[i], 'outage', 0, 'Erreur check');
-    });
+    // Single combined check via the backend health endpoint
+    const backendCheck = await this.checkAWSBackend().catch(() => 
+      this.makeCheck('aws', 'Backend & Cognito (api.224solution.net)', 'outage', 0, 'Erreur check')
+    );
+    return [backendCheck];
   }
 
   private async checkAWSBackend(): Promise<CloudServiceCheck> {
