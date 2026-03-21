@@ -525,7 +525,7 @@ export default function VendorShop() {
                       image={product.images || []}
                       title={product.name}
                       price={product.price}
-                      currency="GNF"
+                      currency={vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF'}
                       vendor={vendor.business_name}
                       vendorId={vendor.id}
                       vendorPublicId={vendor.public_id}
