@@ -155,7 +155,7 @@ export function BrowseModal({
                       </div>
                       <div className="p-2.5 space-y-1">
                         <p className="text-xs font-medium line-clamp-1 text-foreground">{product.name}</p>
-                        <p className="text-xs font-bold text-primary">{product.price?.toLocaleString()} {product.currency || "GNF"}</p>
+                        <p className="text-xs font-bold text-primary"><BrowsePrice amount={product.price} currency={product.currency || 'GNF'} /></p>
                       </div>
                     </button>
                   );
