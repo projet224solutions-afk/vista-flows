@@ -698,7 +698,7 @@ export default function ProductPaymentModal({
                 <Truck className="h-4 w-4 text-emerald-600" />
                 <AlertDescription className="text-emerald-700">
                   <strong>Paiement à la livraison confirmé</strong><br/>
-                  Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(grandTotal)} en espèces.
+                  Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(grandTotal, 'GNF')} en espèces.
                 </AlertDescription>
               </Alert>
             </div>
