@@ -135,6 +135,7 @@ export function AIRecommendationSection({
                   id={p.product_id}
                   title={p.name}
                   price={p.price}
+                  currency={p.currency || 'GNF'}
                   image={p.images || []}
                   rating={p.rating || 0}
                   reviewCount={0}
