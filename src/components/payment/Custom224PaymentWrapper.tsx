@@ -1,12 +1,18 @@
 /**
  * WRAPPER PAIEMENT 224SOLUTIONS
- * Paiement carte bancaire via PayPal (VISA/Mastercard)
+ * Paiement carte bancaire INLINE via PayPal Card Fields
+ * Formulaire de saisie directement dans la page (pas de popup)
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  PayPalScriptProvider,
+  PayPalCardFieldsProvider,
+  PayPalCardFieldsForm,
+  usePayPalCardFields,
+} from '@paypal/react-paypal-js';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { CheckCircle2, CreditCard, Loader2, Lock, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +46,57 @@ const PAYPAL_SUPPORTED_CURRENCIES = new Set([
   'SEK', 'CHF', 'THB', 'USD', 'RUB',
 ]);
 
+/* ─── Submit button (must be inside PayPalCardFieldsProvider) ─── */
+function SubmitPayment({
+  isPaying,
+  setIsPaying,
+  label,
+}: {
+  isPaying: boolean;
+  setIsPaying: (v: boolean) => void;
+  label: string;
+}) {
+  const { cardFieldsForm } = usePayPalCardFields();
+
+  const handleClick = async () => {
+    if (!cardFieldsForm) {
+      toast.error('Formulaire de carte non prêt');
+      return;
+    }
+    const formState = await cardFieldsForm.getState();
+    if (!formState.isFormValid) {
+      toast.error('Veuillez vérifier les informations de votre carte');
+      return;
+    }
+    setIsPaying(true);
+    cardFieldsForm.submit().catch(() => {
+      setIsPaying(false);
+    });
+  };
+
+  return (
+    <Button
+      onClick={handleClick}
+      disabled={isPaying}
+      className="w-full h-12 text-base font-semibold"
+      size="lg"
+    >
+      {isPaying ? (
+        <>
+          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+          Traitement en cours…
+        </>
+      ) : (
+        <>
+          <Lock className="w-4 h-4 mr-2" />
+          {label}
+        </>
+      )}
+    </Button>
+  );
+}
+
+/* ─── Main component ─── */
 export function Custom224PaymentWrapper({
   amount,
   currency = 'GNF',
@@ -57,6 +114,7 @@ export function Custom224PaymentWrapper({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [succeeded, setSucceeded] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
   const [conversionInfo, setConversionInfo] = useState<ConversionInfo | null>(null);
 
   const sourceCurrency = currency.toUpperCase();
@@ -78,18 +136,13 @@ export function Custom224PaymentWrapper({
     try {
       setLoading(true);
       setError('');
-
       const { data, error: fnError } = await supabase.functions.invoke('paypal-client-id');
       if (fnError) throw fnError;
-
-      if (!data?.clientId) {
-        throw new Error('PayPal Client ID non disponible');
-      }
-
+      if (!data?.clientId) throw new Error('PayPal Client ID non disponible');
       setPaypalClientId(data.clientId);
     } catch (err) {
       console.error('Error fetching PayPal client ID:', err);
-      const message = 'Impossible d\'initialiser le paiement PayPal';
+      const message = "Impossible d'initialiser le paiement PayPal";
       setError(message);
       onError(message);
     } finally {
@@ -100,7 +153,6 @@ export function Custom224PaymentWrapper({
   const createOrder = async () => {
     try {
       setError('');
-
       const { data, error: fnError } = await supabase.functions.invoke('create-payment-intent', {
         body: {
           amount,
@@ -116,19 +168,11 @@ export function Custom224PaymentWrapper({
           },
         },
       });
-
-      if (fnError) {
-        throw new Error('Service paiement indisponible');
-      }
-
+      if (fnError) throw new Error('Service paiement indisponible');
       if (!data?.success || !data?.paypal_order_id) {
         throw new Error(data?.error || 'Erreur lors de la création du paiement');
       }
-
-      if (data?.conversion) {
-        setConversionInfo(data.conversion as ConversionInfo);
-      }
-
+      if (data?.conversion) setConversionInfo(data.conversion as ConversionInfo);
       return data.paypal_order_id as string;
     } catch (err) {
       console.error('Error creating PayPal order:', err);
@@ -139,178 +183,154 @@ export function Custom224PaymentWrapper({
     }
   };
 
-  const handleApprove = async (data: any, actions: any) => {
+  const handleApprove = async (data: { orderID: string }) => {
     try {
-      const capture = await actions?.order?.capture?.();
+      // Capture the order server-side for security
+      const { data: captureData, error: captureError } = await supabase.functions.invoke('create-payment-intent', {
+        body: { action: 'capture', order_id: data.orderID },
+      });
 
-      if (!capture || capture.status !== 'COMPLETED') {
-        throw new Error('Le paiement n\'a pas été confirmé');
+      if (captureError || !captureData?.success) {
+        throw new Error(captureData?.error || "Le paiement n'a pas été confirmé");
       }
 
       setSucceeded(true);
+      setIsPaying(false);
       toast.success('Paiement réussi !');
       onSuccess(data.orderID);
     } catch (err) {
       console.error('Error capturing PayPal order:', err);
       const message = err instanceof Error ? err.message : 'Erreur lors de la validation du paiement';
       setError(message);
+      setIsPaying(false);
       onError(message);
       toast.error(message);
     }
   };
 
+  /* ─── Loading state ─── */
   if (loading) {
     return (
-      <Card className="w-full max-w-lg mx-auto">
-        <CardContent className="pt-12 pb-12">
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <div className="text-center">
-              <p className="text-lg font-semibold">Initialisation du paiement...</p>
-              <p className="text-sm text-muted-foreground mt-2">Connexion sécurisée avec 224Solutions</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="py-8">
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Initialisation du paiement sécurisé…</p>
+        </div>
+      </div>
     );
   }
 
+  /* ─── Error state (no client ID) ─── */
   if (error && !paypalClientId) {
     return (
-      <Card className="w-full max-w-lg mx-auto border-destructive/40">
-        <CardContent className="pt-8 pb-8">
-          <div className="text-center space-y-4">
-            <div className="text-destructive text-4xl">❌</div>
-            <div>
-              <h3 className="text-xl font-semibold text-destructive">Erreur</h3>
-              <p className="text-muted-foreground mt-2">{error}</p>
-              <button
-                onClick={fetchPayPalClientId}
-                className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
-              >
-                Réessayer
-              </button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="py-6 text-center space-y-4">
+        <div className="text-destructive text-3xl">❌</div>
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={fetchPayPalClientId} variant="outline">
+          Réessayer
+        </Button>
+      </div>
     );
   }
 
+  /* ─── Success state ─── */
   if (succeeded) {
     return (
-      <Card className="w-full max-w-lg mx-auto bg-primary/5">
-        <CardContent className="pt-8 pb-8">
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="rounded-full bg-primary/15 p-4">
-                <CheckCircle2 className="w-16 h-16 text-primary" />
-              </div>
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-primary">Paiement réussi !</h3>
-              <p className="text-foreground mt-2 text-lg"><strong>{localAmount.formatted}</strong></p>
-              <p className="text-sm text-muted-foreground mt-2">Merci pour votre confiance en 224Solutions</p>
-            </div>
+      <div className="py-8 text-center space-y-4">
+        <div className="flex justify-center">
+          <div className="rounded-full bg-primary/15 p-4">
+            <CheckCircle2 className="w-14 h-14 text-primary" />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <h3 className="text-xl font-bold text-primary">Paiement réussi !</h3>
+        <p className="text-foreground text-lg font-semibold">{localAmount.formatted}</p>
+        <p className="text-sm text-muted-foreground">Merci pour votre confiance</p>
+      </div>
     );
   }
 
   if (!paypalClientId) return null;
 
+  /* ─── Card Fields inline form ─── */
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-xl border-2 border-primary/20">
-      <CardHeader className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
+    <div className="space-y-5">
+      {/* Amount summary */}
+      <div className="bg-muted/40 rounded-xl p-4 border border-border">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-background rounded-lg p-2">
-              <span className="text-2xl font-bold text-primary">224</span>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">224Solutions Paiement</h2>
-              <p className="text-sm text-primary-foreground/90">Carte bancaire sécurisée via PayPal</p>
-            </div>
+          <div>
+            <p className="text-sm text-muted-foreground font-medium">Montant à payer</p>
+            <p className="text-xs text-muted-foreground mt-0.5">à {sellerName}</p>
           </div>
-          <Shield className="w-8 h-8 text-primary-foreground/90" />
-        </div>
-      </CardHeader>
-
-      <CardContent className="pt-6 space-y-6">
-        <div className="bg-muted/40 rounded-xl p-5 border border-border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground font-medium">Montant à payer</p>
-              <p className="text-xs text-muted-foreground mt-1">à {sellerName}</p>
-              {orderDescription && <p className="text-xs text-muted-foreground">{orderDescription}</p>}
-            </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-primary">{localAmount.formatted}</p>
-              {localAmount.wasConverted && (
-                <p className="text-xs text-muted-foreground mt-1">Base: {fc(amount, sourceCurrency)}</p>
-              )}
-            </div>
+          <div className="text-right">
+            <p className="text-2xl font-bold text-primary">{localAmount.formatted}</p>
+            {localAmount.wasConverted && (
+              <p className="text-xs text-muted-foreground mt-1">Base: {fc(amount, sourceCurrency)}</p>
+            )}
           </div>
         </div>
+      </div>
 
-        <div className="flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-primary" />
-          <span className="font-semibold text-foreground">Paiement VISA / Mastercard</span>
-        </div>
+      <div className="flex items-center gap-2">
+        <CreditCard className="w-5 h-5 text-primary" />
+        <span className="font-semibold text-foreground">Saisissez votre carte</span>
+      </div>
 
-        {conversionInfo?.was_converted && (
-          <Alert>
-            <AlertDescription>
-              Conversion automatique: <strong>{conversionInfo.paypal_amount} {conversionInfo.paypal_currency}</strong>
-              {` `}(taux {conversionInfo.fx_rate.toFixed(6)}).
-            </AlertDescription>
-          </Alert>
-        )}
+      {conversionInfo?.was_converted && (
+        <Alert>
+          <AlertDescription>
+            Conversion automatique : <strong>{conversionInfo.paypal_amount} {conversionInfo.paypal_currency}</strong>
+            {' '}(taux {conversionInfo.fx_rate.toFixed(6)}).
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {error && (
-          <Alert variant="destructive" className="border-2">
-            <AlertDescription className="flex items-center gap-2">
-              <span className="font-medium">❌</span>
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        <PayPalScriptProvider
-          key={sdkCurrency}
-          options={{
-            clientId: paypalClientId,
-            currency: sdkCurrency,
-            intent: 'capture',
-            components: 'buttons,funding-eligibility',
+      <PayPalScriptProvider
+        key={sdkCurrency}
+        options={{
+          clientId: paypalClientId,
+          currency: sdkCurrency,
+          intent: 'capture',
+          components: 'card-fields',
+        }}
+      >
+        <PayPalCardFieldsProvider
+          createOrder={createOrder}
+          onApprove={handleApprove}
+          onError={(err) => {
+            console.error('PayPal Card Fields error:', err);
+            setIsPaying(false);
+            const message = 'Erreur de paiement. Veuillez réessayer.';
+            setError(message);
+            onError(message);
           }}
         >
-          <PayPalButtons
-            fundingSource="card"
-            style={{ layout: 'vertical', color: 'black', shape: 'rect', label: 'pay', height: 55 }}
-            createOrder={createOrder}
-            onApprove={handleApprove}
-            onError={(err) => {
-              console.error('PayPal error:', err);
-              const message = 'Erreur PayPal. Veuillez réessayer.';
-              setError(message);
-              onError(message);
-            }}
-            onCancel={() => toast.info('Paiement annulé')}
-          />
-        </PayPalScriptProvider>
+          <PayPalCardFieldsForm />
 
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-4">
-          <Lock className="w-4 h-4" />
-          <span>Paiement sécurisé PayPal • SSL • PCI-DSS</span>
-        </div>
+          <div className="mt-4">
+            <SubmitPayment
+              isPaying={isPaying}
+              setIsPaying={setIsPaying}
+              label={`Payer ${localAmount.formatted}`}
+            />
+          </div>
+        </PayPalCardFieldsProvider>
+      </PayPalScriptProvider>
 
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <Shield className="w-4 h-4" />
-          <span>Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de la livraison</span>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
+        <Lock className="w-3.5 h-3.5" />
+        <span>Paiement sécurisé • SSL • PCI-DSS</span>
+      </div>
+
+      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+        <Shield className="w-3.5 h-3.5" />
+        <span>Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de la livraison</span>
+      </div>
+    </div>
   );
 }
