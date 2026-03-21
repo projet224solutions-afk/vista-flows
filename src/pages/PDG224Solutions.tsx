@@ -34,6 +34,7 @@ const PDGSyndicatManagement = lazy(() => import('@/components/pdg/PDGSyndicatMan
 const PDGAIAssistant = lazy(() => import('@/components/pdg/PDGAIAssistant'));
 const UniversalCommunicationHub = lazy(() => import('@/components/communication/UniversalCommunicationHub'));
 const GoogleCloudMonitoring = lazy(() => import('@/components/pdg/GoogleCloudMonitoring'));
+const MultiCloudDashboard = lazy(() => import('@/components/admin/MultiCloudDashboard'));
 const SystemConfiguration = lazy(() => import('@/components/pdg/SystemConfiguration'));
 const TransferFeeSettings = lazy(() => import('@/components/admin/TransferFeeSettings'));
 const PDGOrders = lazy(() => import('@/components/pdg/PDGOrders'));
