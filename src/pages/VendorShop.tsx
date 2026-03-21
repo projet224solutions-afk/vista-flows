@@ -16,6 +16,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useVendorDigitalProducts } from "@/hooks/useHasDigitalProducts";
 import { trackShopVisit } from "@/services/analyticsTrackingService";
 import SEOHead from "@/components/SEOHead";
+import { getCurrencyForCountry } from "@/data/countryMappings";
+
 interface Vendor {
   id: string;
   business_name: string;
@@ -27,6 +29,7 @@ interface Vendor {
   address?: string;
   city?: string;
   neighborhood?: string;
+  country?: string;
   rating?: number;
   total_orders?: number;
   business_type?: string;
@@ -36,7 +39,7 @@ interface Vendor {
   is_active: boolean;
   user_id: string;
   shop_slug?: string;
-  public_id?: string; // public_id du vendeur depuis profiles
+  public_id?: string;
 }
 
 interface Product {
