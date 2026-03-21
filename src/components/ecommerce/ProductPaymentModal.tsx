@@ -70,6 +70,7 @@ export default function ProductPaymentModal({
 
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
   const [paymentStep, setPaymentStep] = useState<PaymentStep>('select_method');
+  const [showCardInline, setShowCardInline] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [loadingBalance, setLoadingBalance] = useState(false);
@@ -108,8 +109,10 @@ export default function ProductPaymentModal({
   useEffect(() => {
     if (open) {
       setPaymentStep('select_method');
+      setShowCardInline(false);
     } else {
       setPaymentStep('select_method');
+      setShowCardInline(false);
       setMobilePhone('');
       setMobileProcessing(false);
       setSellerUserId('');
@@ -342,7 +345,7 @@ export default function ProductPaymentModal({
     if (!userId || cartItems.length === 0) { toast.error('Informations manquantes'); throw new Error('Informations manquantes'); }
 
     // For card & mobile money, go to their respective forms
-    if (paymentMethod === 'card') { setPaymentStep('card_form'); return; }
+    if (paymentMethod === 'card') { setShowCardInline(true); return; }
     if (paymentMethod === 'orange_money' || paymentMethod === 'mtn_money') { setPaymentStep('mobile_money_form'); return; }
 
     const isCODMethod = paymentMethod === 'cash' || paymentMethod === 'cash_on_delivery';
@@ -466,45 +469,6 @@ export default function ProductPaymentModal({
                 : 'Veuillez patienter'}
             </p>
           </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // ======== RENDER: Card form (PayPal) ========
-  if (paymentStep === 'card_form') {
-    return (
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent
-          className="sm:max-w-md max-h-[90vh] overflow-y-auto"
-          onPointerDownOutside={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          onInteractOutside={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          onFocusOutside={(e) => { e.preventDefault(); e.stopPropagation(); }}
-        >
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => setPaymentStep('select_method')}>
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <DialogTitle className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-primary" />
-                Paiement par Carte Bancaire
-              </DialogTitle>
-            </div>
-            <DialogDescription>
-              Cliquez ci-dessous pour saisir votre carte — {fc(grandTotal, 'GNF')}
-            </DialogDescription>
-          </DialogHeader>
-          <Custom224PaymentWrapper
-            amount={grandTotal}
-            currency="GNF"
-            sellerName="224Solutions Marketplace"
-            sellerId={sellerUserId || firstVendorId}
-            orderDescription={`Achat ${cartItems.length} article(s)`}
-            metadata={{ user_id: userId, items_count: String(cartItems.length) }}
-            onSuccess={handleCardSuccess}
-            onError={(error) => { toast.error(error); setPaymentStep('select_method'); }}
-          />
         </DialogContent>
       </Dialog>
     );
@@ -705,12 +669,35 @@ export default function ProductPaymentModal({
           )}
         </div>
 
+        {/* Carte bancaire PayPal inline — affiché directement sans étape intermédiaire */}
+        {showCardInline && paymentMethod === 'card' && (
+          <div className="space-y-3 py-2 border-t">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-sm">Saisissez vos informations de carte</span>
+            </div>
+            <Custom224PaymentWrapper
+              amount={grandTotal}
+              currency="GNF"
+              sellerName="224Solutions Marketplace"
+              sellerId={sellerUserId || firstVendorId}
+              orderDescription={`Achat ${cartItems.length} article(s)`}
+              metadata={{ user_id: userId, items_count: String(cartItems.length) }}
+              onSuccess={handleCardSuccess}
+              onError={(error) => { toast.error(error); setShowCardInline(false); }}
+            />
+            <Button variant="outline" onClick={() => setShowCardInline(false)} className="w-full" size="sm">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Changer de méthode
+            </Button>
+          </div>
+        )}
+
         <div className="flex gap-3">
           <Button variant="outline" onClick={onClose} className="flex-1" disabled={processing}>Annuler</Button>
           <SecureButton
             onSecureClick={executePayment}
             className="flex-1"
-            disabled={insufficientBalance || loadingCommission}
+            disabled={insufficientBalance || loadingCommission || showCardInline}
             loadingText="Traitement..."
             debounceMs={1000}
           >
