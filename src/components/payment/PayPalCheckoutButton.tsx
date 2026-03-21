@@ -55,6 +55,13 @@ export default function PayPalCheckoutButton({
   const [paymentTab, setPaymentTab] = useState<'paypal' | 'card'>('paypal');
   const mountedRef = useRef(true);
 
+  // Use a PayPal-supported currency for the SDK; the edge function handles conversion
+  const sdkCurrency = useMemo(() => {
+    const upper = currency.toUpperCase();
+    if (PAYPAL_SUPPORTED_CURRENCIES.has(upper)) return upper;
+    return 'USD';
+  }, [currency]);
+
   useEffect(() => {
     mountedRef.current = true;
     supabase.functions.invoke('paypal-client-id').then(({ data }) => {
