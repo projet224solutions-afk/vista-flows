@@ -1,25 +1,45 @@
 /**
  * EDGE FUNCTION: create-payment-intent
- * Créer une commande PayPal pour paiement par carte bancaire
- * 224SOLUTIONS - PayPal exclusif
+ * Création d'ordre PayPal pour paiement carte (VISA/Mastercard)
+ * 224SOLUTIONS
  */
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const PAYPAL_API_BASE = "https://api-m.paypal.com";
+const PAYPAL_SUPPORTED_CURRENCIES = new Set([
+  "AUD", "BRL", "CAD", "CNY", "CZK", "DKK", "EUR", "HKD", "HUF", "ILS",
+  "JPY", "MYR", "MXN", "TWD", "NZD", "NOK", "PHP", "PLN", "GBP", "SGD",
+  "SEK", "CHF", "THB", "USD", "RUB"
+]);
+const PAYPAL_NO_DECIMAL_CURRENCIES = new Set(["JPY", "HUF", "TWD"]);
+
+interface FxResolution {
+  rate: number;
+  source: "same-currency" | "table" | "table-inverse" | "fx-rates";
+}
+
+const json = (payload: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 async function getPayPalAccessToken(clientId: string, secretKey: string): Promise<string> {
-  const response = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
-    method: 'POST',
+  const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+    method: "POST",
     headers: {
-      'Authorization': `Basic ${btoa(`${clientId}:${secretKey}`)}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${btoa(`${clientId}:${secretKey}`)}`,
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: 'grant_type=client_credentials',
+    body: "grant_type=client_credentials",
   });
 
   if (!response.ok) {
@@ -31,184 +51,217 @@ async function getPayPalAccessToken(clientId: string, secretKey: string): Promis
   return data.access_token;
 }
 
+async function resolveFxRate(supabaseAdmin: any, fromCurrency: string, toCurrency: string): Promise<FxResolution> {
+  const from = fromCurrency.toUpperCase();
+  const to = toCurrency.toUpperCase();
+
+  if (from === to) {
+    return { rate: 1, source: "same-currency" };
+  }
+
+  // 1) Table locale
+  try {
+    const { data: direct } = await supabaseAdmin
+      .from("currency_exchange_rates")
+      .select("rate")
+      .eq("from_currency", from)
+      .eq("to_currency", to)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (direct?.rate && Number(direct.rate) > 0) {
+      return { rate: Number(direct.rate), source: "table" };
+    }
+
+    const { data: reverse } = await supabaseAdmin
+      .from("currency_exchange_rates")
+      .select("rate")
+      .eq("from_currency", to)
+      .eq("to_currency", from)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (reverse?.rate && Number(reverse.rate) > 0) {
+      return { rate: 1 / Number(reverse.rate), source: "table-inverse" };
+    }
+  } catch {
+    // fallback below
+  }
+
+  // 2) Fallback fx-rates
+  const fxResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fx-rates`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+    },
+    body: JSON.stringify({ base: from, symbols: [to] }),
+  });
+
+  if (!fxResponse.ok) {
+    throw new Error(`Impossible d'obtenir le taux de change ${from}→${to}`);
+  }
+
+  const fxData = await fxResponse.json();
+  const rate = Number(fxData?.rates?.[to]);
+
+  if (!Number.isFinite(rate) || rate <= 0) {
+    throw new Error(`Taux de change invalide pour ${from}→${to}`);
+  }
+
+  return { rate, source: "fx-rates" };
+}
+
+async function resolvePayPalAmount(
+  supabaseAdmin: any,
+  amount: number,
+  sourceCurrency: string,
+  preferredPayPalCurrency?: string,
+) {
+  const source = sourceCurrency.toUpperCase();
+  const preferred = (preferredPayPalCurrency || "").toUpperCase();
+
+  let target = source;
+  if (!PAYPAL_SUPPORTED_CURRENCIES.has(target)) {
+    target = PAYPAL_SUPPORTED_CURRENCIES.has(preferred) ? preferred : "USD";
+  }
+
+  const fx = await resolveFxRate(supabaseAdmin, source, target);
+  const convertedNumeric = amount * fx.rate;
+
+  if (!Number.isFinite(convertedNumeric) || convertedNumeric <= 0) {
+    throw new Error(`Conversion invalide ${source}→${target}`);
+  }
+
+  const normalizedValue = PAYPAL_NO_DECIMAL_CURRENCIES.has(target)
+    ? Math.max(1, Math.round(convertedNumeric)).toString()
+    : Math.max(1, Math.round(convertedNumeric * 100) / 100).toFixed(2);
+
+  return {
+    targetCurrency: target,
+    paypalValue: normalizedValue,
+    convertedNumeric,
+    fxRate: fx.rate,
+    fxSource: fx.source,
+    wasConverted: source !== target,
+  };
+}
+
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
 
-    // Auth
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Auth utilisateur
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return json({ success: false, error: "Missing authorization header" });
     }
 
-    const token = authHeader.replace('Bearer ', '');
+    const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json({ success: false, error: "Unauthorized" });
     }
 
     const {
       amount,
-      currency = 'USD',
+      currency = "GNF",
       seller_id,
       order_id,
       service_id,
       product_id,
       metadata = {},
-      return_url,
-      cancel_url,
+      preferred_paypal_currency,
     } = await req.json();
 
-    if (!amount || amount <= 0) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid amount' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!amount || Number(amount) <= 0) {
+      return json({ success: false, error: "Invalid amount" });
     }
 
     if (!seller_id) {
-      return new Response(
-        JSON.stringify({ error: 'seller_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json({ success: false, error: "seller_id is required" });
     }
 
     // Vérifier vendeur
     const { data: seller, error: sellerError } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, role')
-      .eq('id', seller_id)
+      .from("profiles")
+      .select("id, full_name, email, role")
+      .eq("id", seller_id)
       .single();
 
     if (sellerError || !seller) {
-      return new Response(
-        JSON.stringify({ error: 'Seller not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json({ success: false, error: "Seller not found" });
     }
 
-    const validVendorRoles = ['VENDOR', 'vendeur', 'Vendeur', 'vendor'];
+    const validVendorRoles = ["VENDOR", "vendeur", "Vendeur", "vendor"];
     if (!validVendorRoles.includes(seller.role)) {
-      return new Response(
-        JSON.stringify({ error: 'User is not a vendor', actual_role: seller.role }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json({ success: false, error: "User is not a vendor", actual_role: seller.role });
     }
 
-    // Commission (5% par défaut)
-    let commissionRate = 5;
-    try {
-      const { data: config } = await supabase
-        .from('stripe_config')
-        .select('platform_commission_rate')
-        .limit(1)
-        .single();
-      if (config?.platform_commission_rate) {
-        commissionRate = config.platform_commission_rate;
-      }
-    } catch (_) { /* use default */ }
+    // Commission dynamique depuis pdg_settings
+    const commissionRate = await getPdgFeeRate(supabase, FEE_KEYS.PURCHASE_COMMISSION);
+    const sourceAmount = Number(amount);
+    const commissionAmount = Math.round((sourceAmount * commissionRate) / 100);
+    const totalAmountWithCommission = sourceAmount + commissionAmount;
+    const sellerNetAmount = sourceAmount;
 
-    const commissionAmount = Math.round((amount * commissionRate) / 100);
-    const totalAmountWithCommission = amount + commissionAmount;
-    const sellerNetAmount = amount;
+    // Conversion professionnelle vers devise PayPal supportée
+    const conversion = await resolvePayPalAmount(
+      supabase,
+      totalAmountWithCommission,
+      String(currency),
+      preferred_paypal_currency,
+    );
 
-    // Convertir en devise compatible PayPal
-    // GNF n'est pas supporté par PayPal, convertir en USD
-    let paypalCurrency = currency.toUpperCase();
-    let paypalAmount = totalAmountWithCommission;
-    
-    const unsupportedCurrencies = ['GNF', 'XOF', 'XAF'];
-    if (unsupportedCurrencies.includes(paypalCurrency)) {
-      // Taux approximatif GNF -> USD (1 USD ≈ 8600 GNF)
-      // Pour XOF: 1 USD ≈ 600 XOF
-      const rates: Record<string, number> = { 'GNF': 8600, 'XOF': 600, 'XAF': 600 };
-      const rate = rates[paypalCurrency] || 8600;
-      paypalAmount = Math.max(1, Math.round((totalAmountWithCommission / rate) * 100) / 100);
-      paypalCurrency = 'USD';
-    }
+    const paypalClientId = Deno.env.get("PAYPAL_CLIENT_ID");
+    const paypalSecretKey = Deno.env.get("PAYPAL_SECRET_KEY");
 
-    // Format pour PayPal (2 décimales)
-    const formattedAmount = paypalAmount.toFixed(2);
-
-    console.log(`💰 Paiement PayPal:
-      - Montant produit: ${amount} ${currency}
-      - Commission (${commissionRate}%): ${commissionAmount} ${currency}
-      - TOTAL CLIENT: ${totalAmountWithCommission} ${currency}
-      - PayPal: ${formattedAmount} ${paypalCurrency}
-    `);
-
-    // PayPal credentials
-    const paypalClientId = Deno.env.get('PAYPAL_CLIENT_ID');
-    const paypalSecretKey = Deno.env.get('PAYPAL_SECRET_KEY');
-    
     if (!paypalClientId || !paypalSecretKey) {
-      return new Response(
-        JSON.stringify({ error: 'PayPal credentials not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return json({ success: false, error: "PayPal credentials not configured" });
     }
 
-    // Get PayPal access token
     const accessToken = await getPayPalAccessToken(paypalClientId, paypalSecretKey);
 
-    // Construire les URLs de retour
-    const origin = return_url ? new URL(return_url).origin : req.headers.get('origin') || 'https://vista-flows.lovable.app';
-    const successUrl = return_url || `${origin}/payment-success`;
-    const cancelUrl = cancel_url || `${origin}/payment-cancelled`;
-
-    // Créer PayPal Order
     const orderPayload = {
-      intent: 'CAPTURE',
-      purchase_units: [{
-        amount: {
-          currency_code: paypalCurrency,
-          value: formattedAmount,
+      intent: "CAPTURE",
+      purchase_units: [
+        {
+          amount: {
+            currency_code: conversion.targetCurrency,
+            value: conversion.paypalValue,
+          },
+          description: `Paiement 224Solutions - ${seller.full_name || "Vendeur"}`,
+          custom_id: JSON.stringify({
+            buyer_id: user.id,
+            seller_id,
+            order_id: order_id || "",
+            product_id: product_id || "",
+            source_currency: String(currency).toUpperCase(),
+            source_total: totalAmountWithCommission,
+          }),
         },
-        description: `Paiement 224Solutions - ${seller.full_name || 'Vendeur'}`,
-        custom_id: JSON.stringify({
-          buyer_id: user.id,
-          seller_id,
-          order_id: order_id || '',
-          product_id: product_id || '',
-          original_amount: totalAmountWithCommission,
-          original_currency: currency,
-        }),
-      }],
-      payment_source: {
-        card: {
-          experience_context: {
-            return_url: successUrl,
-            cancel_url: cancelUrl,
-          }
-        }
-      },
+      ],
       application_context: {
-        brand_name: '224Solutions',
-        landing_page: 'NO_PREFERENCE',
-        user_action: 'PAY_NOW',
-        return_url: successUrl,
-        cancel_url: cancelUrl,
+        brand_name: "224Solutions",
+        shipping_preference: "NO_SHIPPING",
+        user_action: "PAY_NOW",
       },
     };
 
-    const paypalResponse = await fetch('https://api-m.paypal.com/v2/checkout/orders', {
-      method: 'POST',
+    const paypalResponse = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation',
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
       },
       body: JSON.stringify(orderPayload),
     });
@@ -216,80 +269,68 @@ serve(async (req) => {
     const paypalOrder = await paypalResponse.json();
 
     if (!paypalResponse.ok) {
-      console.error('❌ PayPal Order error:', JSON.stringify(paypalOrder));
-      return new Response(
-        JSON.stringify({ error: 'PayPal order creation failed', details: paypalOrder }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.error("❌ PayPal Order error:", JSON.stringify(paypalOrder));
+      return json({
+        success: false,
+        error: "PayPal order creation failed",
+        details: paypalOrder,
+      });
     }
 
-    console.log('✅ PayPal Order created:', paypalOrder.id);
-
-    // Enregistrer transaction
-    const { data: transaction, error: transactionError } = await supabase
-      .from('stripe_transactions')
+    // Logging transaction (backward-compatible table)
+    const { data: transaction } = await supabase
+      .from("stripe_transactions")
       .insert({
         stripe_payment_intent_id: `paypal_${paypalOrder.id}`,
         buyer_id: user.id,
-        seller_id: seller_id,
+        seller_id,
         amount: totalAmountWithCommission,
-        currency: currency.toUpperCase(),
+        currency: String(currency).toUpperCase(),
         commission_rate: commissionRate,
         commission_amount: commissionAmount,
         seller_net_amount: sellerNetAmount,
-        status: 'PENDING',
-        order_id: order_id,
-        service_id: service_id,
-        product_id: product_id,
-        payment_method: 'paypal_card',
+        status: "PENDING",
+        order_id,
+        service_id,
+        product_id,
+        payment_method: "paypal_card",
         metadata: {
           paypal_order_id: paypalOrder.id,
-          paypal_currency: paypalCurrency,
-          paypal_amount: formattedAmount,
-          product_amount: amount,
+          paypal_currency: conversion.targetCurrency,
+          paypal_amount: conversion.paypalValue,
+          fx_rate: conversion.fxRate,
+          fx_source: conversion.fxSource,
+          was_converted: conversion.wasConverted,
+          product_amount: sourceAmount,
           total_amount: totalAmountWithCommission,
-          ...metadata
+          ...metadata,
         },
       })
-      .select()
+      .select("id")
       .single();
 
-    if (transactionError) {
-      console.error('❌ Error creating transaction:', transactionError);
-    }
-
-    // Trouver le lien d'approbation
-    const approveLink = paypalOrder.links?.find((l: any) => l.rel === 'approve')?.href;
-    const captureLink = paypalOrder.links?.find((l: any) => l.rel === 'capture')?.href;
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        paypal_order_id: paypalOrder.id,
-        approve_url: approveLink,
-        capture_url: captureLink,
-        transaction_id: transaction?.id,
-        product_amount: amount,
-        commission_amount: commissionAmount,
-        total_amount: totalAmountWithCommission,
-        paypal_amount: formattedAmount,
-        paypal_currency: paypalCurrency,
-        currency: currency,
-        seller_net_amount: sellerNetAmount,
-        status: paypalOrder.status,
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
-
+    return json({
+      success: true,
+      paypal_order_id: paypalOrder.id,
+      transaction_id: transaction?.id,
+      status: paypalOrder.status,
+      product_amount: sourceAmount,
+      commission_amount: commissionAmount,
+      total_amount: totalAmountWithCommission,
+      seller_net_amount: sellerNetAmount,
+      conversion: {
+        source_currency: String(currency).toUpperCase(),
+        source_amount: totalAmountWithCommission,
+        paypal_currency: conversion.targetCurrency,
+        paypal_amount: conversion.paypalValue,
+        fx_rate: conversion.fxRate,
+        fx_source: conversion.fxSource,
+        was_converted: conversion.wasConverted,
+      },
+    });
   } catch (error) {
-    console.error('❌ Error in create-payment-intent:', error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return new Response(
-      JSON.stringify({ error: 'Payment creation failed', details: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error("❌ Error in create-payment-intent:", error);
+    const message = error instanceof Error ? error.message : "Internal server error";
+    return json({ success: false, error: "Payment creation failed", details: message });
   }
 });
