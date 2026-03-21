@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Package, Store, ShieldCheck, LayoutGrid, Star, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { LocalPrice } from "@/components/ui/LocalPrice";
 
 interface BrowseModalProps {
   open: boolean;
@@ -155,7 +156,7 @@ export function BrowseModal({
                       </div>
                       <div className="p-2.5 space-y-1">
                         <p className="text-xs font-medium line-clamp-1 text-foreground">{product.name}</p>
-                        <p className="text-xs font-bold text-primary">{product.price?.toLocaleString()} {product.currency || "GNF"}</p>
+                        <LocalPrice amount={product.price} currency={product.currency || 'GNF'} size="sm" className="text-xs font-bold" />
                       </div>
                     </button>
                   );
