@@ -152,9 +152,10 @@ export default function PayPalCheckoutButton({
 
   return (
     <PayPalScriptProvider
+      key={sdkCurrency}
       options={{
         clientId,
-        currency,
+        currency: sdkCurrency,
         intent: 'capture',
         components: 'buttons',
       }}
