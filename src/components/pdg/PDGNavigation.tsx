@@ -94,6 +94,7 @@ const categories: NavCategory[] = [
       { value: 'config', label: 'Configuration', icon: Settings, permission: 'view_config' },
       { value: 'maintenance', label: 'Maintenance', icon: Wrench, permission: 'view_maintenance' },
       { value: 'api', label: 'API', icon: Key, permission: 'view_api' },
+      { value: 'multi-cloud', label: 'Multi-Cloud', icon: Cloud, badge: true, permission: 'view_debug' },
       { value: 'debug', label: 'Debug & Surveillance', icon: Zap, badge: true, permission: 'view_debug' },
     ]
   },
