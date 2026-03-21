@@ -565,6 +565,11 @@ export default function PDG224Solutions() {
                 </ErrorBoundary>
               )}
 
+              {activeTab === 'multi-cloud' && (
+                <ErrorBoundary>
+                  <MultiCloudDashboard />
+                </ErrorBoundary>
+
               {activeTab === 'transfer-fees' && (
                 <ErrorBoundary>
                   <TransferFeeSettings />
