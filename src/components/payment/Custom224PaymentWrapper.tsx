@@ -1,11 +1,19 @@
 /**
  * WRAPPER PAIEMENT 224SOLUTIONS
- * Paiement carte bancaire via PayPal Smart Buttons (CARD funding)
+ * Tente le formulaire carte inline (CardFields), sinon fallback sur PayPal Buttons
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { PayPalScriptProvider, PayPalButtons, FUNDING } from '@paypal/react-paypal-js';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import {
+  PayPalScriptProvider,
+  PayPalButtons,
+  PayPalCardFieldsProvider,
+  PayPalCardFieldsForm,
+  usePayPalCardFields,
+  FUNDING,
+} from '@paypal/react-paypal-js';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { CheckCircle2, CreditCard, Loader2, Lock, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,6 +47,83 @@ const PAYPAL_SUPPORTED_CURRENCIES = new Set([
   'SEK','CHF','THB','USD','RUB',
 ]);
 
+/* ── Inline submit button (inside CardFieldsProvider) ── */
+function InlineSubmitButton({ label }: { label: string }) {
+  const { cardFieldsForm } = usePayPalCardFields();
+  const [paying, setPaying] = useState(false);
+
+  const handleClick = async () => {
+    if (!cardFieldsForm) return;
+    const state = await cardFieldsForm.getState();
+    if (!state.isFormValid) {
+      toast.error('Veuillez vérifier les informations de votre carte');
+      return;
+    }
+    setPaying(true);
+    cardFieldsForm.submit().catch(() => setPaying(false));
+  };
+
+  return (
+    <Button onClick={handleClick} disabled={paying} className="w-full h-12 text-base font-semibold" size="lg">
+      {paying ? (
+        <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Traitement…</>
+      ) : (
+        <><Lock className="w-4 h-4 mr-2" />{label}</>
+      )}
+    </Button>
+  );
+}
+
+/* ── Inline Card Fields form (with error boundary) ── */
+function InlineCardForm({
+  createOrder,
+  onApprove,
+  onError,
+  label,
+  onFallback,
+}: {
+  createOrder: () => Promise<string>;
+  onApprove: (data: { orderID: string }) => Promise<void>;
+  onError: (err: any) => void;
+  label: string;
+  onFallback: () => void;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    // Check if CardFields is available on the PayPal SDK
+    if (!(window as any).paypal?.CardFields) {
+      console.log('[224Pay] CardFields not available, falling back to buttons');
+      onFallback();
+    }
+  }, [onFallback]);
+
+  if (hasError) return null;
+
+  try {
+    return (
+      <PayPalCardFieldsProvider
+        createOrder={createOrder}
+        onApprove={onApprove}
+        onError={(err) => {
+          console.error('[224Pay] CardFields error:', err);
+          setHasError(true);
+          onFallback();
+        }}
+      >
+        <PayPalCardFieldsForm />
+        <div className="mt-4">
+          <InlineSubmitButton label={label} />
+        </div>
+      </PayPalCardFieldsProvider>
+    );
+  } catch {
+    onFallback();
+    return null;
+  }
+}
+
+/* ── Main wrapper ── */
 export function Custom224PaymentWrapper({
   amount,
   currency = 'GNF',
@@ -57,6 +142,8 @@ export function Custom224PaymentWrapper({
   const [error, setError] = useState('');
   const [succeeded, setSucceeded] = useState(false);
   const [conversionInfo, setConversionInfo] = useState<ConversionInfo | null>(null);
+  const [useButtonsFallback, setUseButtonsFallback] = useState(false);
+  const [sdkReady, setSdkReady] = useState(false);
 
   const sourceCurrency = currency.toUpperCase();
 
@@ -69,9 +156,7 @@ export function Custom224PaymentWrapper({
 
   const localAmount = useMemo(() => convert(amount, sourceCurrency), [amount, sourceCurrency, convert]);
 
-  useEffect(() => {
-    fetchPayPalClientId();
-  }, []);
+  useEffect(() => { fetchPayPalClientId(); }, []);
 
   const fetchPayPalClientId = async () => {
     try {
@@ -83,15 +168,14 @@ export function Custom224PaymentWrapper({
       setPaypalClientId(data.clientId);
     } catch (err) {
       console.error('Error fetching PayPal client ID:', err);
-      const message = "Impossible d'initialiser le paiement";
-      setError(message);
-      onError(message);
+      setError("Impossible d'initialiser le paiement");
+      onError("Impossible d'initialiser le paiement");
     } finally {
       setLoading(false);
     }
   };
 
-  const createOrder = async () => {
+  const createOrder = useCallback(async () => {
     try {
       setError('');
       const { data, error: fnError } = await supabase.functions.invoke('create-payment-intent', {
@@ -109,29 +193,43 @@ export function Custom224PaymentWrapper({
       if (data?.conversion) setConversionInfo(data.conversion as ConversionInfo);
       return data.paypal_order_id as string;
     } catch (err) {
-      console.error('Error creating PayPal order:', err);
       const message = err instanceof Error ? err.message : 'Erreur lors du paiement';
       setError(message);
       onError(message);
       throw err;
     }
-  };
+  }, [amount, sourceCurrency, sellerId, sellerName, orderDescription, sdkCurrency, metadata, userCurrency, onError]);
 
-  const handleApprove = async (data: any, actions: any) => {
+  const handleApprove = useCallback(async (data: any, actions?: any) => {
     try {
-      const capture = await actions?.order?.capture?.();
-      if (!capture || capture.status !== 'COMPLETED') throw new Error("Paiement non confirmé");
+      // Try client-side capture first (for buttons flow)
+      if (actions?.order?.capture) {
+        const capture = await actions.order.capture();
+        if (!capture || capture.status !== 'COMPLETED') throw new Error("Paiement non confirmé");
+      }
       setSucceeded(true);
       toast.success('Paiement réussi !');
       onSuccess(data.orderID);
     } catch (err) {
-      console.error('Error capturing PayPal order:', err);
       const message = err instanceof Error ? err.message : 'Erreur validation paiement';
       setError(message);
       onError(message);
       toast.error(message);
     }
-  };
+  }, [onSuccess, onError]);
+
+  const handleFallback = useCallback(() => {
+    setUseButtonsFallback(true);
+  }, []);
+
+  // Check SDK readiness for card-fields
+  const handleScriptReady = useCallback(() => {
+    setSdkReady(true);
+    // Check immediately if CardFields is available
+    if (!(window as any).paypal?.CardFields) {
+      setUseButtonsFallback(true);
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -147,9 +245,7 @@ export function Custom224PaymentWrapper({
       <div className="py-6 text-center space-y-4">
         <div className="text-destructive text-3xl">❌</div>
         <p className="text-muted-foreground">{error}</p>
-        <button onClick={fetchPayPalClientId} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
-          Réessayer
-        </button>
+        <Button onClick={fetchPayPalClientId} variant="outline">Réessayer</Button>
       </div>
     );
   }
@@ -172,6 +268,7 @@ export function Custom224PaymentWrapper({
 
   return (
     <div className="space-y-5">
+      {/* Amount summary */}
       <div className="bg-muted/40 rounded-xl p-4 border border-border">
         <div className="flex items-center justify-between">
           <div>
@@ -189,7 +286,9 @@ export function Custom224PaymentWrapper({
 
       <div className="flex items-center gap-2">
         <CreditCard className="w-5 h-5 text-primary" />
-        <span className="font-semibold text-foreground">Paiement VISA / Mastercard</span>
+        <span className="font-semibold text-foreground">
+          {useButtonsFallback ? 'Paiement VISA / Mastercard' : 'Saisissez votre carte'}
+        </span>
       </div>
 
       {conversionInfo?.was_converted && (
@@ -208,26 +307,42 @@ export function Custom224PaymentWrapper({
       )}
 
       <PayPalScriptProvider
-        key={sdkCurrency}
+        key={`${sdkCurrency}-${useButtonsFallback ? 'btn' : 'cf'}`}
         options={{
           clientId: paypalClientId,
           currency: sdkCurrency,
           intent: 'capture',
-          components: 'buttons,funding-eligibility',
+          components: useButtonsFallback ? 'buttons,funding-eligibility' : 'card-fields',
         }}
       >
-        <PayPalButtons
-          fundingSource={FUNDING.CARD}
-          style={{ layout: 'vertical', color: 'black', shape: 'rect', label: 'pay', height: 55 }}
-          createOrder={createOrder}
-          onApprove={handleApprove}
-          onError={(err) => {
-            console.error('PayPal error:', err);
-            setError('Erreur PayPal. Veuillez réessayer.');
-            onError('Erreur PayPal');
-          }}
-          onCancel={() => toast.info('Paiement annulé')}
-        />
+        {useButtonsFallback ? (
+          /* Fallback: PayPal button for card */
+          <PayPalButtons
+            fundingSource={FUNDING.CARD}
+            style={{ layout: 'vertical', color: 'black', shape: 'rect', label: 'pay', height: 55 }}
+            createOrder={createOrder}
+            onApprove={handleApprove}
+            onError={(err) => {
+              console.error('PayPal error:', err);
+              setError('Erreur PayPal. Veuillez réessayer.');
+              onError('Erreur PayPal');
+            }}
+            onCancel={() => toast.info('Paiement annulé')}
+          />
+        ) : (
+          /* Preferred: Inline card fields */
+          <InlineCardForm
+            createOrder={createOrder}
+            onApprove={handleApprove}
+            onError={(err) => {
+              console.error('CardFields error:', err);
+              setError('Erreur de paiement');
+              onError('Erreur de paiement');
+            }}
+            label={`Payer ${localAmount.formatted}`}
+            onFallback={handleFallback}
+          />
+        )}
       </PayPalScriptProvider>
 
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
