@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   DollarSign, Users, Shield, Settings, Package, Wrench,
-  UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap,
+  UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap, Cloud,
   ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark,
   Menu, ChevronRight, Car, Lock, RefreshCw, Megaphone
 } from 'lucide-react';
