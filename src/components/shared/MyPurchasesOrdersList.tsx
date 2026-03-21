@@ -252,10 +252,6 @@ export default function MyPurchasesOrdersList({
 
     try {
       const escrow = escrows[selectedOrder.id];
-      if (!escrow) {
-        toast.error('Pas d\'escrow trouvé pour cette commande');
-        return;
-      }
 
       const { data, error } = await supabase.functions.invoke('confirm-delivery', {
         body: { order_id: selectedOrder.id }
