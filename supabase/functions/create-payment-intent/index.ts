@@ -253,6 +253,8 @@ serve(async (req) => {
         brand_name: "224Solutions",
         shipping_preference: "NO_SHIPPING",
         user_action: "PAY_NOW",
+        // Ouvre directement le formulaire carte au lieu de l'écran d'intermédiation
+        landing_page: "BILLING",
       },
     };
 
