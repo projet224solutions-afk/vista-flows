@@ -1,18 +1,11 @@
 /**
  * WRAPPER PAIEMENT 224SOLUTIONS
- * Paiement carte bancaire INLINE via PayPal Card Fields
- * Formulaire de saisie directement dans la page (pas de popup)
+ * Paiement carte bancaire via PayPal Smart Buttons (CARD funding)
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  PayPalScriptProvider,
-  PayPalCardFieldsProvider,
-  PayPalCardFieldsForm,
-  usePayPalCardFields,
-} from '@paypal/react-paypal-js';
+import { PayPalScriptProvider, PayPalButtons, FUNDING } from '@paypal/react-paypal-js';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { CheckCircle2, CreditCard, Loader2, Lock, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,62 +34,11 @@ interface ConversionInfo {
 }
 
 const PAYPAL_SUPPORTED_CURRENCIES = new Set([
-  'AUD', 'BRL', 'CAD', 'CNY', 'CZK', 'DKK', 'EUR', 'HKD', 'HUF', 'ILS',
-  'JPY', 'MYR', 'MXN', 'TWD', 'NZD', 'NOK', 'PHP', 'PLN', 'GBP', 'SGD',
-  'SEK', 'CHF', 'THB', 'USD', 'RUB',
+  'AUD','BRL','CAD','CNY','CZK','DKK','EUR','HKD','HUF','ILS',
+  'JPY','MYR','MXN','TWD','NZD','NOK','PHP','PLN','GBP','SGD',
+  'SEK','CHF','THB','USD','RUB',
 ]);
 
-/* ─── Submit button (must be inside PayPalCardFieldsProvider) ─── */
-function SubmitPayment({
-  isPaying,
-  setIsPaying,
-  label,
-}: {
-  isPaying: boolean;
-  setIsPaying: (v: boolean) => void;
-  label: string;
-}) {
-  const { cardFieldsForm } = usePayPalCardFields();
-
-  const handleClick = async () => {
-    if (!cardFieldsForm) {
-      toast.error('Formulaire de carte non prêt');
-      return;
-    }
-    const formState = await cardFieldsForm.getState();
-    if (!formState.isFormValid) {
-      toast.error('Veuillez vérifier les informations de votre carte');
-      return;
-    }
-    setIsPaying(true);
-    cardFieldsForm.submit().catch(() => {
-      setIsPaying(false);
-    });
-  };
-
-  return (
-    <Button
-      onClick={handleClick}
-      disabled={isPaying}
-      className="w-full h-12 text-base font-semibold"
-      size="lg"
-    >
-      {isPaying ? (
-        <>
-          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-          Traitement en cours…
-        </>
-      ) : (
-        <>
-          <Lock className="w-4 h-4 mr-2" />
-          {label}
-        </>
-      )}
-    </Button>
-  );
-}
-
-/* ─── Main component ─── */
 export function Custom224PaymentWrapper({
   amount,
   currency = 'GNF',
@@ -114,7 +56,6 @@ export function Custom224PaymentWrapper({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [succeeded, setSucceeded] = useState(false);
-  const [isPaying, setIsPaying] = useState(false);
   const [conversionInfo, setConversionInfo] = useState<ConversionInfo | null>(null);
 
   const sourceCurrency = currency.toUpperCase();
@@ -142,7 +83,7 @@ export function Custom224PaymentWrapper({
       setPaypalClientId(data.clientId);
     } catch (err) {
       console.error('Error fetching PayPal client ID:', err);
-      const message = "Impossible d'initialiser le paiement PayPal";
+      const message = "Impossible d'initialiser le paiement";
       setError(message);
       onError(message);
     } finally {
@@ -160,18 +101,11 @@ export function Custom224PaymentWrapper({
           seller_id: sellerId,
           description: orderDescription || `Paiement 224Solutions - ${sellerName}`,
           preferred_paypal_currency: sdkCurrency,
-          metadata: {
-            ...metadata,
-            platform: '224solutions',
-            seller_name: sellerName,
-            user_currency: userCurrency,
-          },
+          metadata: { ...metadata, platform: '224solutions', seller_name: sellerName, user_currency: userCurrency },
         },
       });
       if (fnError) throw new Error('Service paiement indisponible');
-      if (!data?.success || !data?.paypal_order_id) {
-        throw new Error(data?.error || 'Erreur lors de la création du paiement');
-      }
+      if (!data?.success || !data?.paypal_order_id) throw new Error(data?.error || 'Erreur création paiement');
       if (data?.conversion) setConversionInfo(data.conversion as ConversionInfo);
       return data.paypal_order_id as string;
     } catch (err) {
@@ -183,57 +117,43 @@ export function Custom224PaymentWrapper({
     }
   };
 
-  const handleApprove = async (data: { orderID: string }) => {
+  const handleApprove = async (data: any, actions: any) => {
     try {
-      // Capture the order server-side for security
-      const { data: captureData, error: captureError } = await supabase.functions.invoke('create-payment-intent', {
-        body: { action: 'capture', order_id: data.orderID },
-      });
-
-      if (captureError || !captureData?.success) {
-        throw new Error(captureData?.error || "Le paiement n'a pas été confirmé");
-      }
-
+      const capture = await actions?.order?.capture?.();
+      if (!capture || capture.status !== 'COMPLETED') throw new Error("Paiement non confirmé");
       setSucceeded(true);
-      setIsPaying(false);
       toast.success('Paiement réussi !');
       onSuccess(data.orderID);
     } catch (err) {
       console.error('Error capturing PayPal order:', err);
-      const message = err instanceof Error ? err.message : 'Erreur lors de la validation du paiement';
+      const message = err instanceof Error ? err.message : 'Erreur validation paiement';
       setError(message);
-      setIsPaying(false);
       onError(message);
       toast.error(message);
     }
   };
 
-  /* ─── Loading state ─── */
   if (loading) {
     return (
-      <div className="py-8">
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Initialisation du paiement sécurisé…</p>
-        </div>
+      <div className="py-8 flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Initialisation du paiement sécurisé…</p>
       </div>
     );
   }
 
-  /* ─── Error state (no client ID) ─── */
   if (error && !paypalClientId) {
     return (
       <div className="py-6 text-center space-y-4">
         <div className="text-destructive text-3xl">❌</div>
         <p className="text-muted-foreground">{error}</p>
-        <Button onClick={fetchPayPalClientId} variant="outline">
+        <button onClick={fetchPayPalClientId} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90">
           Réessayer
-        </Button>
+        </button>
       </div>
     );
   }
 
-  /* ─── Success state ─── */
   if (succeeded) {
     return (
       <div className="py-8 text-center space-y-4">
@@ -244,17 +164,14 @@ export function Custom224PaymentWrapper({
         </div>
         <h3 className="text-xl font-bold text-primary">Paiement réussi !</h3>
         <p className="text-foreground text-lg font-semibold">{localAmount.formatted}</p>
-        <p className="text-sm text-muted-foreground">Merci pour votre confiance</p>
       </div>
     );
   }
 
   if (!paypalClientId) return null;
 
-  /* ─── Card Fields inline form ─── */
   return (
     <div className="space-y-5">
-      {/* Amount summary */}
       <div className="bg-muted/40 rounded-xl p-4 border border-border">
         <div className="flex items-center justify-between">
           <div>
@@ -272,7 +189,7 @@ export function Custom224PaymentWrapper({
 
       <div className="flex items-center gap-2">
         <CreditCard className="w-5 h-5 text-primary" />
-        <span className="font-semibold text-foreground">Saisissez votre carte</span>
+        <span className="font-semibold text-foreground">Paiement VISA / Mastercard</span>
       </div>
 
       {conversionInfo?.was_converted && (
@@ -296,30 +213,21 @@ export function Custom224PaymentWrapper({
           clientId: paypalClientId,
           currency: sdkCurrency,
           intent: 'capture',
-          components: 'card-fields',
+          components: 'buttons,funding-eligibility',
         }}
       >
-        <PayPalCardFieldsProvider
+        <PayPalButtons
+          fundingSource={FUNDING.CARD}
+          style={{ layout: 'vertical', color: 'black', shape: 'rect', label: 'pay', height: 55 }}
           createOrder={createOrder}
           onApprove={handleApprove}
           onError={(err) => {
-            console.error('PayPal Card Fields error:', err);
-            setIsPaying(false);
-            const message = 'Erreur de paiement. Veuillez réessayer.';
-            setError(message);
-            onError(message);
+            console.error('PayPal error:', err);
+            setError('Erreur PayPal. Veuillez réessayer.');
+            onError('Erreur PayPal');
           }}
-        >
-          <PayPalCardFieldsForm />
-
-          <div className="mt-4">
-            <SubmitPayment
-              isPaying={isPaying}
-              setIsPaying={setIsPaying}
-              label={`Payer ${localAmount.formatted}`}
-            />
-          </div>
-        </PayPalCardFieldsProvider>
+          onCancel={() => toast.info('Paiement annulé')}
+        />
       </PayPalScriptProvider>
 
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
