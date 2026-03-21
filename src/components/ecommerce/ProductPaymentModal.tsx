@@ -654,7 +654,7 @@ export default function ProductPaymentModal({
         {insufficientBalance && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Solde insuffisant. Il vous manque {fc(grandTotal - (walletBalance || 0))}.</AlertDescription>
+            <AlertDescription>Solde insuffisant. Il vous manque {fc(grandTotal - (walletBalance || 0), 'GNF')}.</AlertDescription>
           </Alert>
         )}
 
