@@ -1,16 +1,17 @@
 /**
  * WRAPPER PAIEMENT 224SOLUTIONS
- * Paiement par carte bancaire via PayPal
+ * Paiement carte bancaire via PayPal (VISA/Mastercard)
  */
 
-import React, { useEffect, useState } from 'react';
-import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import React, { useEffect, useMemo, useState } from 'react';
+import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Shield, CheckCircle2, CreditCard, Lock } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { formatAmount } from '@/types/stripePayment';
+import { CheckCircle2, CreditCard, Loader2, Lock, Shield } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { usePriceConverter } from '@/hooks/usePriceConverter';
 
 interface Custom224PaymentWrapperProps {
   amount: number;
@@ -23,6 +24,22 @@ interface Custom224PaymentWrapperProps {
   onError: (error: string) => void;
 }
 
+interface ConversionInfo {
+  source_currency: string;
+  source_amount: number;
+  paypal_currency: string;
+  paypal_amount: string;
+  fx_rate: number;
+  fx_source: string;
+  was_converted: boolean;
+}
+
+const PAYPAL_SUPPORTED_CURRENCIES = new Set([
+  'AUD', 'BRL', 'CAD', 'CNY', 'CZK', 'DKK', 'EUR', 'HKD', 'HUF', 'ILS',
+  'JPY', 'MYR', 'MXN', 'TWD', 'NZD', 'NOK', 'PHP', 'PLN', 'GBP', 'SGD',
+  'SEK', 'CHF', 'THB', 'USD', 'RUB',
+]);
+
 export function Custom224PaymentWrapper({
   amount,
   currency = 'GNF',
@@ -31,12 +48,27 @@ export function Custom224PaymentWrapper({
   orderDescription,
   metadata = {},
   onSuccess,
-  onError
+  onError,
 }: Custom224PaymentWrapperProps) {
-  const [paypalClientId, setPaypalClientId] = useState<string>('');
+  const fc = useFormatCurrency();
+  const { convert, userCurrency } = usePriceConverter();
+
+  const [paypalClientId, setPaypalClientId] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState('');
   const [succeeded, setSucceeded] = useState(false);
+  const [conversionInfo, setConversionInfo] = useState<ConversionInfo | null>(null);
+
+  const sourceCurrency = currency.toUpperCase();
+
+  const sdkCurrency = useMemo(() => {
+    if (PAYPAL_SUPPORTED_CURRENCIES.has(sourceCurrency)) return sourceCurrency;
+    const preferred = userCurrency?.toUpperCase();
+    if (preferred && PAYPAL_SUPPORTED_CURRENCIES.has(preferred)) return preferred;
+    return 'USD';
+  }, [sourceCurrency, userCurrency]);
+
+  const localAmount = useMemo(() => convert(amount, sourceCurrency), [amount, sourceCurrency, convert]);
 
   useEffect(() => {
     fetchPayPalClientId();
@@ -45,14 +77,21 @@ export function Custom224PaymentWrapper({
   const fetchPayPalClientId = async () => {
     try {
       setLoading(true);
+      setError('');
+
       const { data, error: fnError } = await supabase.functions.invoke('paypal-client-id');
       if (fnError) throw fnError;
-      if (!data?.clientId) throw new Error('PayPal Client ID non disponible');
+
+      if (!data?.clientId) {
+        throw new Error('PayPal Client ID non disponible');
+      }
+
       setPaypalClientId(data.clientId);
     } catch (err) {
       console.error('Error fetching PayPal client ID:', err);
-      setError('Impossible d\'initialiser le paiement PayPal');
-      onError('Erreur d\'initialisation PayPal');
+      const message = 'Impossible d\'initialiser le paiement PayPal';
+      setError(message);
+      onError(message);
     } finally {
       setLoading(false);
     }
@@ -60,53 +99,60 @@ export function Custom224PaymentWrapper({
 
   const createOrder = async () => {
     try {
+      setError('');
+
       const { data, error: fnError } = await supabase.functions.invoke('create-payment-intent', {
         body: {
           amount,
-          currency: currency.toLowerCase(),
+          currency: sourceCurrency,
           seller_id: sellerId,
           description: orderDescription || `Paiement 224Solutions - ${sellerName}`,
+          preferred_paypal_currency: sdkCurrency,
           metadata: {
             ...metadata,
             platform: '224solutions',
             seller_name: sellerName,
+            user_currency: userCurrency,
           },
-          return_url: window.location.origin + '/payment-success',
-          cancel_url: window.location.origin + '/payment-cancelled',
-        }
+        },
       });
 
-      if (fnError) throw fnError;
-      if (!data?.success || !data?.paypal_order_id) {
-        throw new Error(data?.error || 'Erreur création commande PayPal');
+      if (fnError) {
+        throw new Error('Service paiement indisponible');
       }
 
-      return data.paypal_order_id;
+      if (!data?.success || !data?.paypal_order_id) {
+        throw new Error(data?.error || 'Erreur lors de la création du paiement');
+      }
+
+      if (data?.conversion) {
+        setConversionInfo(data.conversion as ConversionInfo);
+      }
+
+      return data.paypal_order_id as string;
     } catch (err) {
       console.error('Error creating PayPal order:', err);
-      const message = err instanceof Error ? err.message : 'Erreur lors de la création du paiement';
+      const message = err instanceof Error ? err.message : 'Erreur lors du paiement';
       setError(message);
       onError(message);
       throw err;
     }
   };
 
-  const onApprove = async (data: any) => {
+  const handleApprove = async (data: any, actions: any) => {
     try {
-      // Capturer le paiement
-      const { data: captureData, error: captureError } = await supabase.functions.invoke('paypal-capture-order', {
-        body: { orderID: data.orderID }
-      });
+      const capture = await actions?.order?.capture?.();
 
-      if (captureError) throw captureError;
-      if (!captureData?.success) throw new Error(captureData?.error || 'Erreur capture paiement');
+      if (!capture || capture.status !== 'COMPLETED') {
+        throw new Error('Le paiement n\'a pas été confirmé');
+      }
 
       setSucceeded(true);
       toast.success('Paiement réussi !');
       onSuccess(data.orderID);
     } catch (err) {
       console.error('Error capturing PayPal order:', err);
-      const message = err instanceof Error ? err.message : 'Erreur lors de la capture du paiement';
+      const message = err instanceof Error ? err.message : 'Erreur lors de la validation du paiement';
       setError(message);
       onError(message);
       toast.error(message);
@@ -121,9 +167,7 @@ export function Custom224PaymentWrapper({
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
             <div className="text-center">
               <p className="text-lg font-semibold">Initialisation du paiement...</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Connexion sécurisée avec 224Solutions
-              </p>
+              <p className="text-sm text-muted-foreground mt-2">Connexion sécurisée avec 224Solutions</p>
             </div>
           </div>
         </CardContent>
@@ -133,7 +177,7 @@ export function Custom224PaymentWrapper({
 
   if (error && !paypalClientId) {
     return (
-      <Card className="w-full max-w-lg mx-auto border-destructive/50">
+      <Card className="w-full max-w-lg mx-auto border-destructive/40">
         <CardContent className="pt-8 pb-8">
           <div className="text-center space-y-4">
             <div className="text-destructive text-4xl">❌</div>
@@ -155,22 +199,18 @@ export function Custom224PaymentWrapper({
 
   if (succeeded) {
     return (
-      <Card className="w-full max-w-lg mx-auto bg-gradient-to-br from-green-50 to-emerald-50">
+      <Card className="w-full max-w-lg mx-auto bg-primary/5">
         <CardContent className="pt-8 pb-8">
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="rounded-full bg-green-100 p-4">
-                <CheckCircle2 className="w-16 h-16 text-green-600" />
+              <div className="rounded-full bg-primary/15 p-4">
+                <CheckCircle2 className="w-16 h-16 text-primary" />
               </div>
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-green-600">Paiement réussi !</h3>
-              <p className="text-gray-600 mt-2 text-lg">
-                <strong>{formatAmount(amount, currency)}</strong>
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Merci pour votre confiance en 224Solutions
-              </p>
+              <h3 className="text-2xl font-bold text-primary">Paiement réussi !</h3>
+              <p className="text-foreground mt-2 text-lg"><strong>{localAmount.formatted}</strong></p>
+              <p className="text-sm text-muted-foreground mt-2">Merci pour votre confiance en 224Solutions</p>
             </div>
           </div>
         </CardContent>
@@ -185,12 +225,12 @@ export function Custom224PaymentWrapper({
       <CardHeader className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-white rounded-lg p-2">
+            <div className="bg-background rounded-lg p-2">
               <span className="text-2xl font-bold text-primary">224</span>
             </div>
             <div>
               <h2 className="text-xl font-bold">224Solutions Paiement</h2>
-              <p className="text-sm text-primary-foreground/90">Paiement sécurisé par carte bancaire</p>
+              <p className="text-sm text-primary-foreground/90">Carte bancaire sécurisée via PayPal</p>
             </div>
           </div>
           <Shield className="w-8 h-8 text-primary-foreground/90" />
@@ -198,28 +238,35 @@ export function Custom224PaymentWrapper({
       </CardHeader>
 
       <CardContent className="pt-6 space-y-6">
-        {/* Montant */}
-        <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-5 border-2 border-primary/30">
+        <div className="bg-muted/40 rounded-xl p-5 border border-border">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Montant à payer</p>
               <p className="text-xs text-muted-foreground mt-1">à {sellerName}</p>
-              {orderDescription && (
-                <p className="text-xs text-muted-foreground">{orderDescription}</p>
-              )}
+              {orderDescription && <p className="text-xs text-muted-foreground">{orderDescription}</p>}
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-primary">
-                {formatAmount(amount, currency)}
-              </p>
+              <p className="text-3xl font-bold text-primary">{localAmount.formatted}</p>
+              {localAmount.wasConverted && (
+                <p className="text-xs text-muted-foreground mt-1">Base: {fc(amount, sourceCurrency)}</p>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2">
           <CreditCard className="w-5 h-5 text-primary" />
-          <span className="font-semibold text-foreground">Carte bancaire VISA / Mastercard</span>
+          <span className="font-semibold text-foreground">Paiement VISA / Mastercard</span>
         </div>
+
+        {conversionInfo?.was_converted && (
+          <Alert>
+            <AlertDescription>
+              Conversion automatique: <strong>{conversionInfo.paypal_amount} {conversionInfo.paypal_currency}</strong>
+              {` `}(taux {conversionInfo.fx_rate.toFixed(6)}).
+            </AlertDescription>
+          </Alert>
+        )}
 
         {error && (
           <Alert variant="destructive" className="border-2">
@@ -230,50 +277,38 @@ export function Custom224PaymentWrapper({
           </Alert>
         )}
 
-        {/* PayPal Buttons - Card only */}
-        <PayPalScriptProvider options={{
-          clientId: paypalClientId,
-          currency: 'USD',
-          intent: 'capture',
-          components: 'buttons,funding-eligibility',
-        }}>
+        <PayPalScriptProvider
+          key={sdkCurrency}
+          options={{
+            clientId: paypalClientId,
+            currency: sdkCurrency,
+            intent: 'capture',
+            components: 'buttons,funding-eligibility',
+          }}
+        >
           <PayPalButtons
             fundingSource="card"
-            style={{
-              layout: 'vertical',
-              color: 'black',
-              shape: 'rect',
-              label: 'pay',
-              height: 55,
-            }}
+            style={{ layout: 'vertical', color: 'black', shape: 'rect', label: 'pay', height: 55 }}
             createOrder={createOrder}
-            onApprove={onApprove}
+            onApprove={handleApprove}
             onError={(err) => {
               console.error('PayPal error:', err);
-              setError('Erreur PayPal. Veuillez réessayer.');
-              onError('Erreur PayPal');
+              const message = 'Erreur PayPal. Veuillez réessayer.';
+              setError(message);
+              onError(message);
             }}
-            onCancel={() => {
-              toast.info('Paiement annulé');
-            }}
+            onCancel={() => toast.info('Paiement annulé')}
           />
         </PayPalScriptProvider>
 
-        {/* Sécurité */}
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-4">
           <Lock className="w-4 h-4" />
-          <span>Paiement sécurisé PayPal • Cryptage SSL • PCI-DSS</span>
+          <span>Paiement sécurisé PayPal • SSL • PCI-DSS</span>
         </div>
 
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Shield className="w-4 h-4" />
           <span>Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de la livraison</span>
-        </div>
-        
-        <div className="text-center pt-3 border-t">
-          <p className="text-xs text-muted-foreground">
-            Propulsé par <span className="font-bold text-primary">224Solutions</span>
-          </p>
         </div>
       </CardContent>
     </Card>
