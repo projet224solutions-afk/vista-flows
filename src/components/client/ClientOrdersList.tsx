@@ -482,7 +482,7 @@ export default function ClientOrdersList() {
                 {filteredOrders.map((order) => {
                   const escrow = escrows[order.id];
                   // Permettre la confirmation si la commande est en transit OU déjà livrée mais que l'escrow n'est pas encore libéré
-                  const canConfirmDelivery = (order.status === 'in_transit' || order.status === 'delivered') && (escrow?.status === 'pending' || escrow?.status === 'held');
+                  const canConfirmDelivery = (order.status === 'in_transit' || order.status === 'delivered') && (!escrow || escrow?.status === 'pending' || escrow?.status === 'held');
 
                   return (
             <Card key={order.id} className="overflow-hidden">
