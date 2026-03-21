@@ -167,14 +167,29 @@ serve(async (req) => {
       );
     }
 
-    const request: SignedUrlRequest = await req.json();
+    const request = await req.json();
+
+    // Health check support
+    if (request.healthCheck === true) {
+      const hasServiceAccount = !!Deno.env.get('GOOGLE_CLOUD_SERVICE_ACCOUNT');
+      const bucketName = Deno.env.get('GCS_BUCKET_NAME') || '224solutions';
+      return new Response(
+        JSON.stringify({ 
+          status: hasServiceAccount ? 'ok' : 'not_configured',
+          bucket: bucketName,
+          timestamp: new Date().toISOString()
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { 
       action, 
       fileName, 
       contentType = 'application/octet-stream', 
       folder = '',
       expiresInMinutes = 15 
-    } = request;
+    } = request as SignedUrlRequest;
 
     // Validation
     if (!action || !fileName) {
