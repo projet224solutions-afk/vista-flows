@@ -709,7 +709,7 @@ export default function ProductPaymentModal({
             loadingText="Traitement..."
             debounceMs={1000}
           >
-            {paymentMethod === 'card' ? 'Continuer vers la carte' :
+            {paymentMethod === 'card' ? `Payer maintenant ${fc(grandTotal)}` :
              paymentMethod === 'orange_money' || paymentMethod === 'mtn_money' ? 'Continuer' :
              paymentMethod === 'wallet' ? `Payer ${fc(grandTotal)}` : `Confirmer ${fc(grandTotal)}`}
           </SecureButton>
