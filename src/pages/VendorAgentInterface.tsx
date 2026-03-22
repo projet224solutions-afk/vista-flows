@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, TrendingUp, Package, ShoppingCart, Warehouse, 
   Truck, UserPlus, LogOut, BarChart3, FileText, 
-  MessageSquare, Settings, Shield, Wallet, CreditCard, DollarSign
+  MessageSquare, Settings, Shield, Wallet, CreditCard, DollarSign,
+  Menu, X, ChevronRight, Home
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -14,6 +14,9 @@ import { Badge } from '@/components/ui/badge';
 import { AgentProvider, type VendorAgent, type VendorAgentPermissions } from '@/contexts/AgentContext';
 import { AgentModuleWrapper } from '@/components/vendor/AgentModuleWrapper';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 // Import des modules fonctionnels du vendeur
 import ProductManagement from '@/components/vendor/ProductManagement';
@@ -38,93 +41,66 @@ import AgentManagement from '@/components/vendor/AgentManagement';
 import AffiliateManagement from '@/components/vendor/AffiliateManagement';
 import { VendorDebtManagement } from '@/components/vendor/debts/VendorDebtManagement';
 
+interface NavItem {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  permission?: string;
+  disabled?: boolean;
+  disabledReason?: string;
+}
+
 export default function VendorAgentInterface() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [agent, setAgent] = useState<VendorAgent | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [vendorBusinessType, setVendorBusinessType] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const canAccessPOS = vendorBusinessType !== 'digital' && vendorBusinessType !== 'online';
 
   useEffect(() => {
-    console.log('🚀 VendorAgentInterface - Initialisation avec token:', token);
-    
     if (!token) {
-      console.error('❌ Token manquant dans l\'URL');
       toast.error('Token d\'accès manquant');
       setLoading(false);
       return;
     }
-    
     loadAgentData(token);
   }, [token]);
 
   const loadAgentData = async (accessToken: string) => {
     setLoading(true);
-    
     try {
-      console.log('🔍 Recherche agent avec token:', accessToken);
-      console.log('🔍 Longueur du token:', accessToken.length);
-      
-      // Requête directe sans filtres supplémentaires d'abord
-      const { data: allAgents, error: listError } = await supabase
-        .from('vendor_agents')
-        .select('*')
-        .limit(10);
-      
-      console.log('📋 Liste des agents disponibles:', allAgents);
-      console.log('📋 Nombre d\'agents:', allAgents?.length || 0);
-      
-      if (listError) {
-        console.error('❌ Erreur liste agents:', listError);
-      }
-      
-      // Requête spécifique pour cet agent
       const { data: agentData, error: agentError } = await supabase
         .from('vendor_agents')
         .select('*')
         .eq('access_token', accessToken)
         .maybeSingle();
 
-      console.log('📊 Résultat recherche agent:', { 
-        agentData, 
-        agentError,
-        tokenRecherche: accessToken
-      });
-
       if (agentError) {
-        console.error('❌ Erreur Supabase lors de la recherche:', agentError);
         toast.error(`Erreur base de données: ${agentError.message}`);
         return;
       }
       
       if (!agentData) {
-        console.warn('⚠️ Aucun agent trouvé avec ce token');
-        console.warn('⚠️ Token recherché:', accessToken);
-        console.warn('⚠️ Tokens disponibles:', allAgents?.map(a => a.access_token));
         toast.error('Agent non trouvé. Vérifiez le lien d\'accès.');
         return;
       }
 
       if (!agentData.is_active) {
-        console.warn('⚠️ Agent trouvé mais inactif');
         toast.error('Ce compte agent est désactivé. Contactez votre vendeur.');
         return;
       }
 
-      console.log('✅ Agent chargé avec succès:', agentData);
-      
-      // Convert Json permissions to VendorAgentPermissions
       const formattedAgent = {
         ...agentData,
         permissions: agentData.permissions as VendorAgentPermissions
       };
-
       setAgent(formattedAgent);
 
-      // Récupérer le business_type du vendeur (pour verrouiller POS si "digital")
       const { data: vendorInfo } = await supabase
         .from('vendors')
         .select('business_type')
@@ -133,9 +109,7 @@ export default function VendorAgentInterface() {
       setVendorBusinessType(vendorInfo?.business_type ?? null);
 
       toast.success(`Bienvenue ${agentData.name} !`);
-      
     } catch (error: any) {
-      console.error('❌ Erreur fatale chargement agent:', error);
       toast.error(`Erreur: ${error.message || 'Erreur inconnue'}`);
     } finally {
       setLoading(false);
@@ -144,21 +118,15 @@ export default function VendorAgentInterface() {
 
   const handleSignOut = async () => {
     try {
-      // Nettoyer toutes les sessions agent du storage
       localStorage.removeItem('agent_session');
       localStorage.removeItem('agent_user');
       localStorage.removeItem('agent_token');
       sessionStorage.removeItem('agent_session');
       sessionStorage.removeItem('agent_user');
-      
-      // Déconnexion Supabase Auth
       await supabase.auth.signOut();
-      
       toast.success('Déconnexion réussie');
       navigate('/auth', { replace: true });
     } catch (error) {
-      console.error('Erreur déconnexion:', error);
-      // Forcer la navigation même en cas d'erreur
       navigate('/auth', { replace: true });
     }
   };
@@ -167,11 +135,51 @@ export default function VendorAgentInterface() {
     return agent?.permissions?.[permission as keyof VendorAgentPermissions] || false;
   };
 
+  const handleNavClick = (tabId: string) => {
+    setActiveTab(tabId);
+    setMobileMenuOpen(false);
+  };
+
+  // Build navigation items
+  const getNavItems = (): NavItem[] => {
+    if (!agent) return [];
+    const items: NavItem[] = [
+      { id: 'overview', label: 'Vue d\'ensemble', icon: Home },
+    ];
+
+    if (hasPermission('view_dashboard')) items.push({ id: 'dashboard', label: 'Dashboard', icon: BarChart3 });
+    if (hasPermission('view_analytics')) items.push({ id: 'analytics', label: 'Analytics', icon: TrendingUp });
+    if (hasPermission('access_pos')) items.push({ id: 'pos', label: 'POS', icon: CreditCard, disabled: !canAccessPOS, disabledReason: 'Boutiques physiques uniquement' });
+    items.push({ id: 'products', label: 'Produits', icon: Package });
+    if (hasPermission('manage_orders')) items.push({ id: 'orders', label: 'Commandes', icon: ShoppingCart });
+    if (hasPermission('manage_inventory')) items.push({ id: 'inventory', label: 'Inventaire', icon: Package });
+    if (hasPermission('manage_warehouse')) items.push({ id: 'warehouse', label: 'Entrepôt', icon: Warehouse });
+    if (hasPermission('manage_suppliers')) items.push({ id: 'suppliers', label: 'Fournisseurs', icon: Truck });
+    if (hasPermission('manage_clients')) items.push({ id: 'clients', label: 'Clients', icon: Users });
+    if (hasPermission('manage_prospects')) items.push({ id: 'prospects', label: 'Prospects', icon: UserPlus });
+    if (hasPermission('manage_marketing')) items.push({ id: 'marketing', label: 'Marketing', icon: TrendingUp });
+    if (hasPermission('manage_delivery')) items.push({ id: 'delivery', label: 'Livraisons', icon: Truck });
+    if (hasPermission('access_wallet')) items.push({ id: 'wallet', label: 'Wallet', icon: Wallet });
+    if (hasPermission('manage_payments')) items.push({ id: 'payments', label: 'Paiements', icon: CreditCard });
+    if (hasPermission('manage_payment_links')) items.push({ id: 'payment_links', label: 'Liens Paiement', icon: DollarSign });
+    if (hasPermission('manage_expenses')) items.push({ id: 'expenses', label: 'Dépenses', icon: FileText });
+    if (hasPermission('manage_debts')) items.push({ id: 'debts', label: 'Dettes', icon: FileText });
+    if (hasPermission('access_affiliate')) items.push({ id: 'affiliate', label: 'Affiliation', icon: Users });
+    if (hasPermission('access_support')) items.push({ id: 'support', label: 'Support', icon: MessageSquare });
+    if (hasPermission('access_communication')) items.push({ id: 'communication', label: 'Messages', icon: MessageSquare });
+    if (hasPermission('view_reports')) items.push({ id: 'reports', label: 'Rapports', icon: FileText });
+    items.push({ id: 'commissions', label: 'Commissions', icon: DollarSign });
+    if (hasPermission('manage_agents')) items.push({ id: 'sub_agents', label: 'Sous-Agents', icon: UserPlus });
+    if (hasPermission('access_settings')) items.push({ id: 'settings', label: 'Paramètres', icon: Settings });
+
+    return items;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-vendeur-primary/10 to-vendeur-secondary/10">
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-vendeur-primary mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-vendeur-primary mx-auto" />
           <p className="text-muted-foreground">Chargement de votre espace agent...</p>
         </div>
       </div>
@@ -186,25 +194,16 @@ export default function VendorAgentInterface() {
             <CardTitle className="text-2xl">Accès Agent Vendeur</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-center space-y-2">
-              <p className="text-muted-foreground">
-                Aucun profil agent trouvé avec ce lien d'accès.
-              </p>
-              <div className="p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
-                <p className="font-medium">Vérifiez que :</p>
-                <ul className="list-disc list-inside text-left space-y-1 text-muted-foreground">
-                  <li>Le lien d'accès est complet et correct</li>
-                  <li>Votre compte agent est actif</li>
-                  <li>Le lien n'a pas expiré</li>
-                </ul>
-              </div>
-              {token && (
-                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-left">
-                  <p className="font-mono break-all">
-                    <span className="font-semibold">Token détecté:</span> {token}
-                  </p>
-                </div>
-              )}
+            <p className="text-center text-muted-foreground">
+              Aucun profil agent trouvé avec ce lien d'accès.
+            </p>
+            <div className="p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
+              <p className="font-medium">Vérifiez que :</p>
+              <ul className="list-disc list-inside text-left space-y-1 text-muted-foreground">
+                <li>Le lien d'accès est complet et correct</li>
+                <li>Votre compte agent est actif</li>
+                <li>Le lien n'a pas expiré</li>
+              </ul>
             </div>
             <Button onClick={handleSignOut} className="w-full" variant="outline">
               Retour à l'accueil
@@ -215,611 +214,396 @@ export default function VendorAgentInterface() {
     );
   }
 
-  return (
-    <AgentProvider agent={agent}>
-      <div className="min-h-screen bg-gradient-to-br from-vendeur-primary/10 to-vendeur-secondary/10">
-        {/* Header */}
-        <div className="bg-white shadow-lg border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-vendeur-gradient">
-                    <Shield className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold">Espace Agent</h1>
-                    <p className="text-sm text-muted-foreground">
-                      {agent.name} • {agent.agent_code} • Accès aux données du vendeur
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="outline" className="bg-vendeur-secondary/10 text-vendeur-secondary border-vendeur-secondary/20">
-                  Agent Actif
-                </Badge>
-              </div>
-              <Button onClick={handleSignOut} variant="outline" size="sm">
-                <LogOut className="w-4 h-4 mr-2" />
-                Déconnexion
-              </Button>
-            </div>
+  const navItems = getNavItems();
+  const activeNavItem = navItems.find(i => i.id === activeTab);
+
+  const NavigationContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Agent info in sidebar */}
+      <div className="p-4 border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-vendeur-primary/20 flex items-center justify-center flex-shrink-0">
+            <Shield className="w-5 h-5 text-vendeur-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-sm truncate">{agent.name}</p>
+            <p className="text-xs text-muted-foreground truncate">{agent.agent_code}</p>
           </div>
         </div>
+        <Badge variant="outline" className="mt-2 bg-green-50 text-green-700 border-green-200 text-xs">
+          ● Agent Actif
+        </Badge>
+      </div>
 
-        {/* Main Content */}
-        <ScrollArea className="h-[calc(100vh-200px)]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white shadow flex-wrap gap-1">
-            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-            {hasPermission('view_dashboard') && (
-              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            )}
-            {hasPermission('view_analytics') && (
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            )}
-            {hasPermission('access_pos') && (
-              <TabsTrigger
-                value="pos"
-                disabled={!canAccessPOS}
+      {/* Nav items */}
+      <ScrollArea className="flex-1 px-2 py-2">
+        <div className="space-y-0.5">
+          {navItems.map((item) => {
+            const active = activeTab === item.id;
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
                 onClick={() => {
-                  if (!canAccessPOS) {
-                    toast.error("POS verrouillé : disponible uniquement pour boutiques physiques / hybrides");
-                    setActiveTab('overview');
+                  if (item.disabled) {
+                    toast.error(item.disabledReason || 'Non disponible');
+                    return;
                   }
+                  handleNavClick(item.id);
                 }}
-              >
-                POS{!canAccessPOS ? ' 🔒' : ''}
-              </TabsTrigger>
-            )}
-            <TabsTrigger value="products">Produits</TabsTrigger>
-            {hasPermission('manage_orders') && (
-              <TabsTrigger value="orders">Commandes</TabsTrigger>
-            )}
-            {hasPermission('manage_inventory') && (
-              <TabsTrigger value="inventory">Inventaire</TabsTrigger>
-            )}
-            {hasPermission('manage_warehouse') && (
-              <TabsTrigger value="warehouse">Entrepôt</TabsTrigger>
-            )}
-            {hasPermission('manage_suppliers') && (
-              <TabsTrigger value="suppliers">Fournisseurs</TabsTrigger>
-            )}
-            {hasPermission('manage_clients') && (
-              <TabsTrigger value="clients">Clients</TabsTrigger>
-            )}
-            {hasPermission('manage_prospects') && (
-              <TabsTrigger value="prospects">Prospects</TabsTrigger>
-            )}
-            {hasPermission('manage_marketing') && (
-              <TabsTrigger value="marketing">Marketing</TabsTrigger>
-            )}
-            {hasPermission('manage_delivery') && (
-              <TabsTrigger value="delivery">Livraisons</TabsTrigger>
-            )}
-            {hasPermission('access_wallet') && (
-              <TabsTrigger value="wallet">Wallet</TabsTrigger>
-            )}
-            {hasPermission('manage_payments') && (
-              <TabsTrigger value="payments">Paiements</TabsTrigger>
-            )}
-            {hasPermission('manage_payment_links') && (
-              <TabsTrigger value="payment_links">Liens Paiement</TabsTrigger>
-            )}
-            {hasPermission('manage_expenses') && (
-              <TabsTrigger value="expenses">Dépenses</TabsTrigger>
-            )}
-            {hasPermission('manage_debts') && (
-              <TabsTrigger value="debts">Dettes</TabsTrigger>
-            )}
-            {hasPermission('access_affiliate') && (
-              <TabsTrigger value="affiliate">Affiliation</TabsTrigger>
-            )}
-            {hasPermission('access_support') && (
-              <TabsTrigger value="support">Support</TabsTrigger>
-            )}
-            {hasPermission('access_communication') && (
-              <TabsTrigger value="communication">Messages</TabsTrigger>
-            )}
-            {hasPermission('view_reports') && (
-              <TabsTrigger value="reports">Rapports</TabsTrigger>
-            )}
-            <TabsTrigger value="commissions">Commissions</TabsTrigger>
-            {hasPermission('manage_agents') && (
-              <TabsTrigger value="sub_agents">Agents Secondaires</TabsTrigger>
-            )}
-            {hasPermission('access_settings') && (
-              <TabsTrigger value="settings">Paramètres</TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="border-0 shadow-elegant">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Mes Permissions
-                  </CardTitle>
-                  <Shield className="w-4 h-4 text-vendeur-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{Object.values(agent.permissions).filter(Boolean).length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    accès actifs
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-elegant">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Sous-Agents
-                  </CardTitle>
-                  <UserPlus className="w-4 h-4 text-vendeur-secondary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">
-                    {agent.can_create_sub_agent ? 'Création autorisée' : 'Non autorisé'}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-elegant">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Statut
-                  </CardTitle>
-                  <TrendingUp className="w-4 h-4 text-green-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">Actif</div>
-                  <p className="text-xs text-muted-foreground">
-                    Compte vérifié
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-elegant">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Contact
-                  </CardTitle>
-                  <MessageSquare className="w-4 h-4 text-blue-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm font-medium">{agent.email}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {agent.phone}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Informations Agent */}
-            <Card className="border-0 shadow-elegant">
-              <CardHeader className="bg-vendeur-accent/30 border-b">
-                <CardTitle>Informations du Compte</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Nom</p>
-                    <p className="text-base font-semibold">{agent.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Code Agent</p>
-                    <p className="text-base font-mono font-semibold text-vendeur-primary">{agent.agent_code}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Email</p>
-                    <p className="text-base">{agent.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Téléphone</p>
-                    <p className="text-base">{agent.phone}</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Permissions Actives</p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(agent.permissions)
-                        .filter(([_, value]) => value)
-                        .map(([perm]) => (
-                        <Badge 
-                          key={perm}
-                          variant="secondary"
-                          className="bg-vendeur-primary/10 text-vendeur-primary border-vendeur-primary/20"
-                        >
-                          {perm.replace(/_/g, ' ')}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Modules Disponibles */}
-            <Card className="border-0 shadow-elegant">
-              <CardHeader className="bg-vendeur-accent/30 border-b">
-                <CardTitle>Modules Disponibles</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {hasPermission('view_dashboard') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('dashboard')}
-                    >
-                      <BarChart3 className="h-6 w-6" />
-                      <span className="text-sm">Dashboard</span>
-                    </Button>
-                  )}
-                  {hasPermission('access_pos') && (
-                    <Button
-                      variant="outline"
-                      className={`h-24 flex flex-col gap-2 ${!canAccessPOS ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      onClick={() => {
-                        if (!canAccessPOS) {
-                          toast.error("POS verrouillé : vendeur en ligne uniquement");
-                          return;
-                        }
-                        setActiveTab('pos');
-                      }}
-                    >
-                      <CreditCard className="h-6 w-6" />
-                      <span className="text-sm">POS{!canAccessPOS ? ' (verrouillé)' : ''}</span>
-                    </Button>
-                  )}
-                  {hasPermission('manage_products') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('products')}
-                    >
-                      <Package className="h-6 w-6" />
-                      <span className="text-sm">Produits</span>
-                    </Button>
-                  )}
-                  {hasPermission('manage_orders') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('orders')}
-                    >
-                      <ShoppingCart className="h-6 w-6" />
-                      <span className="text-sm">Commandes</span>
-                    </Button>
-                  )}
-                  {hasPermission('manage_inventory') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('inventory')}
-                    >
-                      <Package className="h-6 w-6" />
-                      <span className="text-sm">Inventaire</span>
-                    </Button>
-                  )}
-                  {hasPermission('manage_warehouse') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('warehouse')}
-                    >
-                      <Warehouse className="h-6 w-6" />
-                      <span className="text-sm">Entrepôt</span>
-                    </Button>
-                  )}
-                  {hasPermission('manage_clients') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('clients')}
-                    >
-                      <Users className="h-6 w-6" />
-                      <span className="text-sm">Clients</span>
-                    </Button>
-                  )}
-                  {hasPermission('manage_delivery') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('delivery')}
-                    >
-                      <Truck className="h-6 w-6" />
-                      <span className="text-sm">Livraisons</span>
-                    </Button>
-                  )}
-                  {hasPermission('access_wallet') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('wallet')}
-                    >
-                      <Wallet className="h-6 w-6" />
-                      <span className="text-sm">Wallet</span>
-                    </Button>
-                  )}
-                  {hasPermission('view_reports') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('analytics')}
-                    >
-                      <FileText className="h-6 w-6" />
-                      <span className="text-sm">Rapports</span>
-                    </Button>
-                  )}
-                  {hasPermission('access_communication') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('communication')}
-                    >
-                      <MessageSquare className="h-6 w-6" />
-                      <span className="text-sm">Communication</span>
-                    </Button>
-                  )}
-                  {hasPermission('manage_agents') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                      onClick={() => setActiveTab('sub_agents')}
-                    >
-                      <UserPlus className="h-6 w-6" />
-                      <span className="text-sm">Agents Secondaires</span>
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col gap-2"
-                    onClick={() => setActiveTab('commissions')}
-                  >
-                    <DollarSign className="h-6 w-6" />
-                    <span className="text-sm">Commissions</span>
-                  </Button>
-                  {hasPermission('access_settings') && (
-                    <Button
-                      variant="outline"
-                      className="h-24 flex flex-col gap-2"
-                    >
-                      <Settings className="h-6 w-6" />
-                      <span className="text-sm">Paramètres</span>
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="dashboard">
-            <AgentModuleWrapper permission="view_dashboard">
-              <VendorAnalyticsDashboard />
-            </AgentModuleWrapper>
-          </TabsContent>
-
-          <TabsContent value="products">
-            <AgentModuleWrapper permission="manage_products">
-              <ProductManagement />
-            </AgentModuleWrapper>
-          </TabsContent>
-
-          <TabsContent value="orders">
-            <AgentModuleWrapper permission="manage_orders">
-              <OrderManagement />
-            </AgentModuleWrapper>
-          </TabsContent>
-
-          <TabsContent value="wallet">
-            <AgentModuleWrapper permission="access_wallet">
-              <VendorAgentWalletView 
-                vendorId={agent.vendor_id}
-                agentName={agent.name}
-              />
-            </AgentModuleWrapper>
-          </TabsContent>
-
-          {/* Modules additionnels */}
-          {hasPermission('access_pos') && (
-            <TabsContent value="pos">
-              <AgentModuleWrapper>
-                {canAccessPOS ? (
-                  <POSSystemWrapper />
-                ) : (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>POS verrouillé</CardTitle>
-                      <CardDescription>
-                        Le vendeur est configuré en "En ligne uniquement". Le POS est désactivé.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button variant="outline" onClick={() => setActiveTab('overview')}>Retour</Button>
-                    </CardContent>
-                  </Card>
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all",
+                  "hover:bg-vendeur-primary/10",
+                  active && "bg-vendeur-primary/15 text-vendeur-primary font-medium",
+                  !active && "text-foreground/70",
+                  item.disabled && "opacity-50 cursor-not-allowed"
                 )}
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
+              >
+                <Icon className={cn("w-4 h-4 flex-shrink-0", active && "text-vendeur-primary")} />
+                <span className="truncate">{item.label}</span>
+                {item.disabled && <span className="ml-auto text-xs">🔒</span>}
+                {active && <ChevronRight className="w-3 h-3 ml-auto flex-shrink-0 text-vendeur-primary" />}
+              </button>
+            );
+          })}
+        </div>
+      </ScrollArea>
 
-          {hasPermission('manage_inventory') && (
-            <TabsContent value="inventory">
-              <AgentModuleWrapper>
-                <InventoryManagement />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
+      {/* Sign out */}
+      <div className="p-3 border-t border-border/50">
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Déconnexion</span>
+        </button>
+      </div>
+    </div>
+  );
 
-          {hasPermission('manage_warehouse') && (
-            <TabsContent value="warehouse">
-              <AgentModuleWrapper>
-                <MultiWarehouseManagement />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return <OverviewContent agent={agent} hasPermission={hasPermission} canAccessPOS={canAccessPOS} onTabChange={handleNavClick} />;
+      case 'dashboard':
+        return <AgentModuleWrapper permission="view_dashboard"><VendorAnalyticsDashboard /></AgentModuleWrapper>;
+      case 'products':
+        return <AgentModuleWrapper permission="manage_products"><ProductManagement /></AgentModuleWrapper>;
+      case 'orders':
+        return <AgentModuleWrapper permission="manage_orders"><OrderManagement /></AgentModuleWrapper>;
+      case 'wallet':
+        return <AgentModuleWrapper permission="access_wallet"><VendorAgentWalletView vendorId={agent.vendor_id} agentName={agent.name} /></AgentModuleWrapper>;
+      case 'pos':
+        return (
+          <AgentModuleWrapper>
+            {canAccessPOS ? <POSSystemWrapper /> : (
+              <Card><CardHeader><CardTitle>POS verrouillé</CardTitle><CardDescription>Le vendeur est configuré en "En ligne uniquement".</CardDescription></CardHeader></Card>
+            )}
+          </AgentModuleWrapper>
+        );
+      case 'inventory':
+        return <AgentModuleWrapper><InventoryManagement /></AgentModuleWrapper>;
+      case 'warehouse':
+        return <AgentModuleWrapper><MultiWarehouseManagement /></AgentModuleWrapper>;
+      case 'clients':
+        return <AgentModuleWrapper><ClientManagement /></AgentModuleWrapper>;
+      case 'delivery':
+        return <AgentModuleWrapper><VendorDeliveriesPanel /></AgentModuleWrapper>;
+      case 'payments':
+        return <AgentModuleWrapper><PaymentManagement /></AgentModuleWrapper>;
+      case 'payment_links':
+        return <AgentModuleWrapper><PaymentLinksManager /></AgentModuleWrapper>;
+      case 'support':
+        return <AgentModuleWrapper><SupportTickets /></AgentModuleWrapper>;
+      case 'communication':
+        return <AgentModuleWrapper><UniversalCommunicationHub /></AgentModuleWrapper>;
+      case 'suppliers':
+        return <AgentModuleWrapper><SupplierManagement /></AgentModuleWrapper>;
+      case 'prospects':
+        return <AgentModuleWrapper><ProspectManagement /></AgentModuleWrapper>;
+      case 'marketing':
+        return <AgentModuleWrapper><MarketingManagement /></AgentModuleWrapper>;
+      case 'expenses':
+        return <AgentModuleWrapper><ExpenseManagementDashboard /></AgentModuleWrapper>;
+      case 'debts':
+        return <AgentModuleWrapper><VendorDebtManagement vendorId={agent.vendor_id} /></AgentModuleWrapper>;
+      case 'analytics':
+        return <AgentModuleWrapper><VendorAnalyticsDashboard /></AgentModuleWrapper>;
+      case 'affiliate':
+        return <AgentModuleWrapper><AffiliateManagement /></AgentModuleWrapper>;
+      case 'reports':
+        return <AgentModuleWrapper><Card><CardHeader><CardTitle>Rapports & Analyses</CardTitle></CardHeader><CardContent><VendorAnalyticsDashboard /></CardContent></Card></AgentModuleWrapper>;
+      case 'commissions':
+        return <AgentModuleWrapper><CommissionsManagement /></AgentModuleWrapper>;
+      case 'sub_agents':
+        return <AgentModuleWrapper><AgentManagement /></AgentModuleWrapper>;
+      case 'settings':
+        return <AgentModuleWrapper><Card><CardHeader><CardTitle>Paramètres Agent</CardTitle><CardDescription>Configurez vos préférences</CardDescription></CardHeader><CardContent><p className="text-muted-foreground">Paramètres limités disponibles pour les agents</p></CardContent></Card></AgentModuleWrapper>;
+      default:
+        return null;
+    }
+  };
 
-          {hasPermission('manage_clients') && (
-            <TabsContent value="clients">
-              <AgentModuleWrapper>
-                <ClientManagement />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
+  return (
+    <AgentProvider agent={agent}>
+      <div className="min-h-screen bg-gradient-to-br from-vendeur-primary/5 to-vendeur-secondary/5">
+        {/* === MOBILE LAYOUT === */}
+        {isMobile ? (
+          <div className="flex flex-col h-screen">
+            {/* Mobile Header */}
+            <header className="bg-background/95 backdrop-blur-md border-b border-border/50 sticky top-0 z-50 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-72 p-0">
+                    <NavigationContent />
+                  </SheetContent>
+                </Sheet>
 
-          {hasPermission('manage_delivery') && (
-            <TabsContent value="delivery">
-              <AgentModuleWrapper>
-                <VendorDeliveriesPanel />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
+                <div className="flex-1 text-center mx-2">
+                  <h1 className="text-sm font-bold truncate">{activeNavItem?.label || 'Agent'}</h1>
+                  <p className="text-[10px] text-muted-foreground truncate">{agent.name}</p>
+                </div>
 
-          {hasPermission('manage_payments') && (
-            <TabsContent value="payments">
-              <AgentModuleWrapper>
-                <PaymentManagement />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
+                <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            </header>
 
-          {hasPermission('manage_payment_links') && (
-            <TabsContent value="payment_links">
-              <AgentModuleWrapper>
-                <PaymentLinksManager />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
+            {/* Mobile Content */}
+            <ScrollArea className="flex-1">
+              <div className="p-3 pb-20">
+                {renderTabContent()}
+              </div>
+            </ScrollArea>
 
-          {hasPermission('access_support') && (
-            <TabsContent value="support">
-              <AgentModuleWrapper>
-                <SupportTickets />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {hasPermission('access_communication') && (
-            <TabsContent value="communication">
-              <AgentModuleWrapper>
-                <UniversalCommunicationHub />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {hasPermission('manage_suppliers') && (
-            <TabsContent value="suppliers">
-              <AgentModuleWrapper>
-                <SupplierManagement />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {hasPermission('manage_prospects') && (
-            <TabsContent value="prospects">
-              <AgentModuleWrapper>
-                <ProspectManagement />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {hasPermission('manage_marketing') && (
-            <TabsContent value="marketing">
-              <AgentModuleWrapper>
-                <MarketingManagement />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {hasPermission('manage_expenses') && (
-            <TabsContent value="expenses">
-              <AgentModuleWrapper>
-                <ExpenseManagementDashboard />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {hasPermission('manage_debts') && (
-            <TabsContent value="debts">
-              <AgentModuleWrapper>
-                <VendorDebtManagement vendorId={agent.vendor_id} />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {/* Analytics Tab */}
-          {hasPermission('view_analytics') && (
-            <TabsContent value="analytics">
-              <AgentModuleWrapper>
-                <VendorAnalyticsDashboard />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {/* Affiliate Tab */}
-          {hasPermission('access_affiliate') && (
-            <TabsContent value="affiliate">
-              <AgentModuleWrapper>
-                <AffiliateManagement />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {/* Reports Tab */}
-          {hasPermission('view_reports') && (
-            <TabsContent value="reports">
-              <AgentModuleWrapper>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Rapports & Analyses</CardTitle>
-                    <CardDescription>Consultez les rapports détaillés de l'activité</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <VendorAnalyticsDashboard />
-                  </CardContent>
-                </Card>
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {/* Commissions Tab */}
-          <TabsContent value="commissions">
-            <AgentModuleWrapper>
-              <CommissionsManagement />
-            </AgentModuleWrapper>
-          </TabsContent>
-
-          {/* Sub Agents Tab */}
-          {hasPermission('manage_agents') && (
-            <TabsContent value="sub_agents">
-              <AgentModuleWrapper>
-                <AgentManagement />
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-
-          {/* Settings Tab */}
-          {hasPermission('access_settings') && (
-            <TabsContent value="settings">
-              <AgentModuleWrapper>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Paramètres Agent</CardTitle>
-                    <CardDescription>Configurez vos préférences et paramètres</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">Paramètres limités disponibles pour les agents</p>
-                  </CardContent>
-                </Card>
-              </AgentModuleWrapper>
-            </TabsContent>
-          )}
-          </Tabs>
+            {/* Mobile Bottom Nav - Quick access to top 5 items */}
+            <nav className="bg-background/95 backdrop-blur-md border-t border-border/50 px-2 py-1.5 safe-area-pb">
+              <div className="flex items-center justify-around">
+                {[
+                  { id: 'overview', icon: Home, label: 'Accueil' },
+                  { id: 'products', icon: Package, label: 'Produits' },
+                  { id: 'orders', icon: ShoppingCart, label: 'Commandes' },
+                  { id: 'wallet', icon: Wallet, label: 'Wallet' },
+                  { id: 'commissions', icon: DollarSign, label: 'Commissions' },
+                ].map(item => {
+                  const active = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleNavClick(item.id)}
+                      className={cn(
+                        "flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg transition-colors min-w-0",
+                        active ? "text-vendeur-primary" : "text-muted-foreground"
+                      )}
+                    >
+                      <item.icon className={cn("w-5 h-5", active && "text-vendeur-primary")} />
+                      <span className="text-[10px] font-medium truncate">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </nav>
           </div>
-        </ScrollArea>
+        ) : (
+          /* === DESKTOP LAYOUT === */
+          <div className="flex h-screen">
+            {/* Desktop Sidebar */}
+            <aside className="w-60 bg-background border-r border-border/50 flex-shrink-0">
+              <NavigationContent />
+            </aside>
+
+            {/* Desktop Content */}
+            <main className="flex-1 flex flex-col min-w-0">
+              {/* Desktop Header */}
+              <header className="bg-background/80 backdrop-blur-sm border-b border-border/50 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-xl font-bold">{activeNavItem?.label || 'Espace Agent'}</h1>
+                    <p className="text-sm text-muted-foreground">
+                      {agent.name} • {agent.agent_code}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      ● Actif
+                    </Badge>
+                    <Button onClick={handleSignOut} variant="outline" size="sm">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Déconnexion
+                    </Button>
+                  </div>
+                </div>
+              </header>
+
+              {/* Desktop Scrollable Content */}
+              <ScrollArea className="flex-1">
+                <div className="p-6">
+                  {renderTabContent()}
+                </div>
+              </ScrollArea>
+            </main>
+          </div>
+        )}
       </div>
     </AgentProvider>
+  );
+}
+
+/* ─── Overview Content ─── */
+function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
+  agent: VendorAgent;
+  hasPermission: (p: string) => boolean;
+  canAccessPOS: boolean;
+  onTabChange: (tab: string) => void;
+}) {
+  const isMobile = useIsMobile();
+
+  const moduleButtons: { id: string; icon: React.ElementType; label: string; permission?: string; disabled?: boolean }[] = [
+    hasPermission('view_dashboard') ? { id: 'dashboard', icon: BarChart3, label: 'Dashboard' } : null,
+    hasPermission('access_pos') ? { id: 'pos', icon: CreditCard, label: canAccessPOS ? 'POS' : 'POS 🔒', disabled: !canAccessPOS } : null,
+    hasPermission('manage_products') ? { id: 'products', icon: Package, label: 'Produits' } : null,
+    hasPermission('manage_orders') ? { id: 'orders', icon: ShoppingCart, label: 'Commandes' } : null,
+    hasPermission('manage_inventory') ? { id: 'inventory', icon: Package, label: 'Inventaire' } : null,
+    hasPermission('manage_warehouse') ? { id: 'warehouse', icon: Warehouse, label: 'Entrepôt' } : null,
+    hasPermission('manage_clients') ? { id: 'clients', icon: Users, label: 'Clients' } : null,
+    hasPermission('manage_delivery') ? { id: 'delivery', icon: Truck, label: 'Livraisons' } : null,
+    hasPermission('access_wallet') ? { id: 'wallet', icon: Wallet, label: 'Wallet' } : null,
+    hasPermission('view_reports') ? { id: 'analytics', icon: FileText, label: 'Rapports' } : null,
+    hasPermission('access_communication') ? { id: 'communication', icon: MessageSquare, label: 'Messages' } : null,
+    hasPermission('manage_agents') ? { id: 'sub_agents', icon: UserPlus, label: 'Sous-Agents' } : null,
+    { id: 'commissions', icon: DollarSign, label: 'Commissions' },
+    hasPermission('access_settings') ? { id: 'settings', icon: Settings, label: 'Paramètres' } : null,
+  ].filter(Boolean) as typeof moduleButtons;
+
+  return (
+    <div className="space-y-4 md:space-y-6">
+      {/* Stats */}
+      <div className={cn("grid gap-3", isMobile ? "grid-cols-2" : "grid-cols-4")}>
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Shield className="w-4 h-4 text-vendeur-primary" />
+              <span className="text-xs text-muted-foreground">Permissions</span>
+            </div>
+            <p className="text-xl md:text-2xl font-bold">{Object.values(agent.permissions).filter(Boolean).length}</p>
+            <p className="text-[10px] text-muted-foreground">accès actifs</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <UserPlus className="w-4 h-4 text-vendeur-secondary" />
+              <span className="text-xs text-muted-foreground">Sous-Agents</span>
+            </div>
+            <p className="text-xl md:text-2xl font-bold">0</p>
+            <p className="text-[10px] text-muted-foreground">{agent.can_create_sub_agent ? 'Autorisé' : 'Non autorisé'}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="w-4 h-4 text-green-600" />
+              <span className="text-xs text-muted-foreground">Statut</span>
+            </div>
+            <p className="text-xl md:text-2xl font-bold">Actif</p>
+            <p className="text-[10px] text-muted-foreground">Compte vérifié</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-3 md:p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <MessageSquare className="w-4 h-4 text-blue-600" />
+              <span className="text-xs text-muted-foreground">Contact</span>
+            </div>
+            <p className="text-xs md:text-sm font-medium truncate">{agent.email}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{agent.phone}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Agent Info */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="bg-vendeur-primary/5 border-b p-3 md:p-4">
+          <CardTitle className="text-sm md:text-base">Informations du Compte</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 md:p-6">
+          <div className={cn("grid gap-4", isMobile ? "grid-cols-1" : "grid-cols-2")}>
+            <div>
+              <p className="text-xs text-muted-foreground mb-0.5">Nom</p>
+              <p className="text-sm font-semibold">{agent.name}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-0.5">Code Agent</p>
+              <p className="text-sm font-mono font-semibold text-vendeur-primary">{agent.agent_code}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-0.5">Email</p>
+              <p className="text-sm truncate">{agent.email}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-0.5">Téléphone</p>
+              <p className="text-sm">{agent.phone}</p>
+            </div>
+            <div className={cn(isMobile ? "" : "col-span-2")}>
+              <p className="text-xs text-muted-foreground mb-1.5">Permissions Actives</p>
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(agent.permissions)
+                  .filter(([_, value]) => value)
+                  .map(([perm]) => (
+                  <Badge 
+                    key={perm}
+                    variant="secondary"
+                    className="bg-vendeur-primary/10 text-vendeur-primary border-vendeur-primary/20 text-[10px] px-2 py-0.5"
+                  >
+                    {perm.replace(/_/g, ' ')}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Modules */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="bg-vendeur-primary/5 border-b p-3 md:p-4">
+          <CardTitle className="text-sm md:text-base">Modules Disponibles</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 md:p-6">
+          <div className={cn("grid gap-2 md:gap-3", isMobile ? "grid-cols-3" : "grid-cols-4 lg:grid-cols-6")}>
+            {moduleButtons.map((mod) => (
+              <Button
+                key={mod.id}
+                variant="outline"
+                className={cn(
+                  "flex flex-col gap-1.5 h-auto py-3 px-2",
+                  mod.disabled && "opacity-50 cursor-not-allowed"
+                )}
+                onClick={() => {
+                  if (mod.disabled) {
+                    toast.error("POS verrouillé : vendeur en ligne uniquement");
+                    return;
+                  }
+                  onTabChange(mod.id);
+                }}
+              >
+                <mod.icon className="h-5 w-5" />
+                <span className="text-[10px] md:text-xs text-center leading-tight">{mod.label}</span>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
