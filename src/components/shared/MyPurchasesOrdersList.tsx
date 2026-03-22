@@ -486,8 +486,11 @@ export default function MyPurchasesOrdersList({
               <div className="space-y-4">
                 {filteredOrders.map((order) => {
                   const escrow = escrows[order.id];
-                  const canConfirmDelivery = (order.status === 'in_transit' || order.status === 'delivered') && 
-                                              (!escrow || escrow?.status === 'pending' || escrow?.status === 'held');
+                  // Le bouton "J'ai reçu" s'affiche uniquement pour les commandes en transit
+                  // OU livrées MAIS avec un escrow encore en attente (non libéré)
+                  const isDeliveryPending = order.status === 'in_transit' || order.status === 'shipped' || order.status === 'ready';
+                  const isDeliveredButEscrowPending = order.status === 'delivered' && escrow && (escrow.status === 'pending' || escrow.status === 'held');
+                  const canConfirmDelivery = (isDeliveryPending || isDeliveredButEscrowPending) && order.status !== 'cancelled';
 
                   return (
                     <Card key={order.id} className="overflow-hidden border">
