@@ -628,30 +628,30 @@ export default function SyndicatDashboardUltraPro() {
                                     </Button>
 
                                     <Button
-                                        onClick={() => toast.success('Rapport généré !')}
+                                        onClick={() => setActiveTab('analytics')}
                                         variant="outline"
                                         className="w-full rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50"
                                     >
                                         <Receipt className="w-4 h-4 mr-2" />
-                                        Générer Rapport
+                                        Voir les Statistiques
                                     </Button>
 
                                     <Button
-                                        onClick={() => toast.success('Sauvegarde créée !')}
+                                        onClick={() => setActiveTab('tickets')}
                                         variant="outline"
                                         className="w-full rounded-xl border-teal-200 text-teal-600 hover:bg-teal-50"
                                     >
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Sauvegarder Données
+                                        <Ticket className="w-4 h-4 mr-2" />
+                                        Tickets de Transport
                                     </Button>
 
                                     <Button
-                                        onClick={() => toast.info('Support contacté !')}
+                                        onClick={() => setActiveTab('wallet')}
                                         variant="outline"
                                         className="w-full rounded-xl border-orange-200 text-orange-600 hover:bg-orange-50"
                                     >
-                                        <Phone className="w-4 h-4 mr-2" />
-                                        Contacter Support
+                                        <Wallet className="w-4 h-4 mr-2" />
+                                        Finances & Wallet
                                     </Button>
                                 </CardContent>
                             </Card>
