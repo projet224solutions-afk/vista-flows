@@ -97,14 +97,13 @@ export const VendorPaymentModal = ({
     }
   };
 
-  const handlePayPalSuccess = async (captureData: any) => {
-    // Mark order as paid after PayPal capture
+  const handleStripeSuccess = async (data: { paymentIntentId: string; amount: number; currency: string }) => {
     try {
-      await VendorPaymentService.payWithPayPal(orderId, amount, customerId, captureData.paypalOrderId);
+      await VendorPaymentService.payWithCard(orderId, amount, customerId, data.paymentIntentId);
       onPaymentSuccess?.();
       onClose();
     } catch (error: any) {
-      console.error('[VendorPaymentModal] PayPal post-capture error:', error);
+      console.error('[VendorPaymentModal] Stripe post-payment error:', error);
     }
   };
 
