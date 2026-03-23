@@ -97,7 +97,7 @@ export default function PDGServiceSubscriptions() {
   const [isFreeDialogOpen, setIsFreeDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeServiceTab, setActiveServiceTab] = useState<string>('all');
-  const [activeSubTab, setActiveSubTab] = useState<string>('subscriptions');
+  const [activeSubTab, setActiveSubTab] = useState<string>('providers');
   const [editLimitsForm, setEditLimitsForm] = useState({
     max_bookings_per_month: '' as string,
     max_products: '' as string,
