@@ -56,6 +56,14 @@ export const translations: Record<string, Record<string, string>> = {
     "home.available": "disponibles",
     "home.trending": "Tendance",
     "home.searchPlaceholder": "Rechercher un service ou produit...",
+    "home.localShops": "Commerces locaux",
+    "home.orderFood": "Commander à manger",
+    "home.fastTransport": "Transport rapide",
+    "home.expressDelivery": "Livraison express",
+    "home.findServicesNearby": "Trouvez les services autour de vous",
+    "home.live": "En direct",
+    "home.addedToCart": "Produit ajouté au panier",
+    "nav.tracking": "Suivi",
     
     // Proximity
     "proximity.title": "Services de Proximité",
