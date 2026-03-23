@@ -36,14 +36,23 @@ const PORT = process.env.PORT || 3001;
 // ==================== MIDDLEWARES SÉCURITÉ ====================
 
 // Helmet - Sécurité headers HTTP (optimisé pour React/Vite)
+// CSP durci : pas de unsafe-inline, connectSrc limité
+const cspConnectSrc = process.env.CSP_CONNECT_SRC
+  ? process.env.CSP_CONNECT_SRC.split(',').map(s => s.trim())
+  : [];
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "*"],
+      styleSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'", ...cspConnectSrc],
       imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https:"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'none'"],
+      baseUri: ["'self'"],
     },
   },
   hsts: {

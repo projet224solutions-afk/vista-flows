@@ -66,10 +66,10 @@ serve(async (req) => {
       const issuer = "224Solutions";
       const otpauthUrl = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(user.email || "")}?secret=${secret}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
 
+      // SECURITY: Ne jamais retourner le secret brut — l'URL otpauth le contient déjà
       return new Response(
         JSON.stringify({
           success: true,
-          secret,
           otpauthUrl,
           backupCodes,
         }),
