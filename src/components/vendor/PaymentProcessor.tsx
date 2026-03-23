@@ -85,12 +85,12 @@ const paymentMethods: PaymentMethod[] = [
     processing_time: '1-3 jours ouvrés'
   },
   {
-    id: 'paypal',
-    name: 'PayPal',
+    id: 'stripe',
+    name: 'Stripe',
     type: 'card',
-    icon: Globe,
-    available: false,
-    fees: '3.4% + 200 GNF',
+    icon: CreditCard,
+    available: true,
+    fees: '2.9% + 100 GNF',
     processing_time: 'Instantané'
   }
 ];
