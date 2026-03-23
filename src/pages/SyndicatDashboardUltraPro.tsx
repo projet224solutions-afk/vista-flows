@@ -579,12 +579,12 @@ export default function SyndicatDashboardUltraPro() {
                                     </Button>
 
                                     <Button
-                                        onClick={() => setActiveTab('members')}
+                                        onClick={() => setActiveTab('sos')}
                                         variant="outline"
-                                        className="w-full rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50"
+                                        className="w-full rounded-xl border-red-200 text-red-600 hover:bg-red-50"
                                     >
-                                        <Shield className="w-4 h-4 mr-2" />
-                                        Gérer les Permissions
+                                        <Siren className="w-4 h-4 mr-2" />
+                                        Alertes SOS
                                     </Button>
 
                                     <Button
