@@ -2,11 +2,13 @@
  * NEARBY SERVICES SECTION - Ultra Professional Design
  * 224Solutions - Premium Services Grid
  * Apple/Uber-inspired with modern glassmorphism
+ * Fully translated + proximity location info
  */
 
-import { Store, Car, Truck, Zap, Utensils } from 'lucide-react';
+import { Store, Car, Truck, Zap, Utensils, MapPin } from 'lucide-react';
 import { HomeServiceCard } from './ServiceCard';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useGeoDistance } from '@/hooks/useGeoDistance';
 import { cn } from '@/lib/utils';
 
 interface ServiceStats {
@@ -28,13 +30,14 @@ export function NearbyServicesSection({
   className,
 }: NearbyServicesSectionProps) {
   const { t } = useTranslation();
+  const { cityName, positionReady } = useGeoDistance();
 
   const services = [
     {
       id: 'boutiques',
       icon: <Store className="w-6 h-6 text-vendeur-primary" />,
       title: t('home.shops'),
-      subtitle: 'Commerces locaux',
+      subtitle: t('home.localShops'),
       count: stats.boutiques,
       gradient: 'from-vendeur-primary/25 to-vendeur-secondary/15',
       iconBg: 'bg-vendeur-primary/20',
@@ -43,8 +46,8 @@ export function NearbyServicesSection({
     {
       id: 'restaurants',
       icon: <Utensils className="w-6 h-6 text-orange-500" />,
-      title: 'Restaurants',
-      subtitle: 'Commander à manger',
+      title: t('home.restaurant'),
+      subtitle: t('home.orderFood'),
       count: stats.restaurants,
       gradient: 'from-orange-500/25 to-red-500/15',
       iconBg: 'bg-orange-500/20',
@@ -54,7 +57,7 @@ export function NearbyServicesSection({
       id: 'taxi',
       icon: <Car className="w-6 h-6 text-taxi-primary" />,
       title: t('home.taxiMotos'),
-      subtitle: 'Transport rapide',
+      subtitle: t('home.fastTransport'),
       count: stats.taxi,
       gradient: 'from-taxi-primary/25 to-taxi-secondary/15',
       iconBg: 'bg-taxi-primary/20',
@@ -64,7 +67,7 @@ export function NearbyServicesSection({
       id: 'livraison',
       icon: <Truck className="w-6 h-6 text-livreur-primary" />,
       title: t('home.delivery'),
-      subtitle: 'Livraison express',
+      subtitle: t('home.expressDelivery'),
       count: stats.livraison,
       gradient: 'from-livreur-primary/25 to-livreur-secondary/15',
       iconBg: 'bg-livreur-primary/20',
@@ -84,8 +87,15 @@ export function NearbyServicesSection({
             <h2 className="text-lg md:text-xl font-bold text-foreground">
               {t('home.nearbyServices')}
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Trouvez les services autour de vous
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              {cityName && positionReady ? (
+                <>
+                  <MapPin className="w-3 h-3" />
+                  {cityName}
+                </>
+              ) : (
+                t('home.findServicesNearby')
+              )}
             </p>
           </div>
         </div>
@@ -96,7 +106,7 @@ export function NearbyServicesSection({
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
           </span>
           <span className="text-[11px] font-medium text-green-600 dark:text-green-400">
-            En direct
+            {t('home.live')}
           </span>
         </div>
       </div>
