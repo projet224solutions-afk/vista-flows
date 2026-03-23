@@ -1,10 +1,8 @@
-// @ts-nocheck
 import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { resendEmailService } from '@/services/resendEmailService';
-import { Shield, LogOut, Lock, Brain, Mail, UserCog, Activity } from 'lucide-react';
+import { Shield, LogOut, Lock, Brain, Mail, Activity } from 'lucide-react';
 import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
-import { useAdminUnifiedData } from '@/hooks/useAdminUnifiedData';
 import { usePDGAIAssistant } from '@/hooks/usePDGAIAssistant';
 import { usePDGErrorBoundary } from '@/hooks/usePDGErrorBoundary';
 import PDGNavigation from '@/components/pdg/PDGNavigation';
@@ -21,11 +18,10 @@ import { PDGDashboardHome } from '@/components/pdg/PDGDashboardHome';
 import { UserIdDisplay } from '@/components/UserIdDisplay';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
-// ✅ Pré-chargement paresseux des onglets pour meilleure perf perçue
+// Lazy-loaded tab components
 const PDGFinance = lazy(() => import('@/components/pdg/PDGFinance'));
 const PDGUsers = lazy(() => import('@/components/pdg/PDGUsers'));
 const SecurityOpsPanel = lazy(() => import('@/components/pdg/SecurityOpsPanel'));
-const PDGConfig = lazy(() => import('@/components/pdg/PDGConfig'));
 const PDGCopilot = lazy(() => import('@/components/pdg/PDGCopilot'));
 const PDGSystemMaintenance = lazy(() => import('@/components/pdg/PDGSystemMaintenance'));
 const PDGProductsManagement = lazy(() => import('@/components/pdg/PDGProductsManagement'));
@@ -59,164 +55,145 @@ const LogicSurveillanceDashboard = lazy(() => import('@/components/pdg/LogicSurv
 const PDGSyncDashboard = lazy(() => import('@/components/pdg/PDGSyncDashboard'));
 const BroadcastMessageCenter = lazy(() => import('@/components/pdg/BroadcastMessageCenter'));
 const DeletedUsersRestore = lazy(() => import('@/components/pdg/DeletedUsersRestore'));
+
+// Tabs that redirect to dedicated pages instead of inline content
+const EXTERNAL_TABS: Record<string, string> = {
+  'command-center': '/pdg/command-center',
+  'debug': '/pdg/debug',
+  'api': '/pdg/api-supervision',
+  'copilot-dashboard': '/pdg/copilot',
+};
+
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
-  const envOk = Boolean(import.meta.env.VITE_SUPABASE_URL && (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY));
-  
-  // Déterminer le rôle uniquement depuis le profil (source de vérité sécurisée)
-  // ⚠️ IMPORTANT: L'interface PDG doit accepter les rôles équivalents.
-  // (Historique: certains comptes PDG ont role='pdg' au lieu de 'admin')
+
+  // Role check - only admin/pdg/ceo
   const isAdmin = ['admin', 'pdg', 'ceo'].includes((profile?.role || '').toString().toLowerCase());
-  
+
+  // MFA state - server-side verified
   const [mfaVerified, setMfaVerified] = useState<boolean>(() => {
-    // Persistance courte dans la session du navigateur
     return sessionStorage.getItem('mfa_verified_admin') === 'true';
   });
   const [verifyingMfa, setVerifyingMfa] = useState(false);
+  const [sendingMfa, setSendingMfa] = useState(false);
   const [showMfaDialog, setShowMfaDialog] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
-  const [generatedMfaCode, setGeneratedMfaCode] = useState<string | null>(null);
-  const [mfaCodeExpiry, setMfaCodeExpiry] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [updatingEmail, setUpdatingEmail] = useState(false);
-  const adminData = useAdminUnifiedData(isAdmin);
-  const { error, captureError, clearError } = usePDGErrorBoundary();
 
-  // Hook IA Assistant
-  const { aiActive, insights } = usePDGAIAssistant();
+  const { error, clearError } = usePDGErrorBoundary();
+  const { aiActive } = usePDGAIAssistant();
 
   const handleTabChange = useCallback((tab: string) => {
-    // Redirection vers le centre de commande
-    if (tab === 'command-center') {
-      navigate('/pdg/command-center');
-      return;
-    }
-    // Redirection vers la page de debug si c'est l'onglet debug
-    if (tab === 'debug') {
-      navigate('/pdg/debug');
-      return;
-    }
-    // Redirection vers la page API Supervision si c'est l'onglet API
-    if (tab === 'api') {
-      navigate('/pdg/api-supervision');
+    // Redirect to external pages for certain tabs
+    const externalUrl = EXTERNAL_TABS[tab];
+    if (externalUrl) {
+      navigate(externalUrl);
       return;
     }
     setActiveTab(tab);
   }, [navigate]);
 
   useEffect(() => {
-    // Si pas d'utilisateur et pas en cours de chargement, rediriger vers auth
     if (!user && !profileLoading) {
       navigate('/auth');
       return;
     }
 
-    // Attendre que le profil soit complètement chargé avant de vérifier le rôle
-    if (profileLoading || !profile) {
-      return;
-    }
+    if (profileLoading || !profile) return;
 
-    // Vérifier le rôle UNIQUEMENT depuis le profil (source de vérité)
-    const currentRole = profile.role;
-    // Autoriser admin/pdg/ceo à accéder à l'interface PDG
-    if (!['admin', 'pdg', 'ceo'].includes(currentRole?.toString().toLowerCase())) {
+    const currentRole = (profile.role || '').toString().toLowerCase();
+    if (!['admin', 'pdg', 'ceo'].includes(currentRole)) {
       toast.error('Accès refusé - Réservé au PDG');
       navigate('/home');
       return;
     }
 
-    // Exiger MFA avant toute action PDG
-    if (['admin', 'pdg', 'ceo'].includes(currentRole?.toString().toLowerCase()) && !mfaVerified) {
+    // Show MFA dialog if not verified
+    if (!mfaVerified) {
       setShowMfaDialog(true);
     }
 
-    // Log de l'accès PDG une fois le profil chargé (après MFA si possible)
-    if (['admin', 'pdg', 'ceo'].includes(currentRole?.toString().toLowerCase()) && user) {
-      const logAccess = async () => {
-        try {
-          await supabase.from('audit_logs').insert({
-            actor_id: user.id,
-            action: 'PDG_ACCESS',
-            target_type: 'dashboard',
-            data_json: { timestamp: new Date().toISOString() }
-          });
-        } catch (error) {
-          console.warn('Audit log indisponible:', error);
-        }
-      };
-      logAccess();
+    // Log PDG access
+    if (user) {
+      supabase.from('audit_logs').insert({
+        actor_id: user.id,
+        action: 'PDG_ACCESS',
+        target_type: 'dashboard',
+        data_json: { timestamp: new Date().toISOString() }
+      }).then(() => {}).catch((err: unknown) => {
+        console.warn('Audit log error:', err);
+      });
     }
   }, [user, profile, profileLoading, navigate, mfaVerified]);
 
+  // Server-side MFA: send code
   const handleSendMfaCode = useCallback(async () => {
     if (!user?.email) {
-      toast.error('Email introuvable pour MFA');
+      toast.error('Email introuvable');
       return;
     }
+    setSendingMfa(true);
     try {
-      // Générer un code à 6 chiffres
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedMfaCode(code);
-      
-      // Définir l'expiration à 10 minutes
-      const expiryTime = Date.now() + 10 * 60 * 1000;
-      setMfaCodeExpiry(expiryTime);
-      
-      // Envoyer le code par email via Resend
-      const success = await resendEmailService.sendMfaCode(user.email, code);
-      
-      if (success) {
-        toast.success('Code MFA à 6 chiffres envoyé à votre email');
+      const { data, error: fnError } = await supabase.functions.invoke('pdg-mfa-verify', {
+        body: { action: 'send' },
+      });
+
+      if (fnError) throw fnError;
+
+      if (data?.success) {
+        toast.success('Code MFA envoyé à votre email');
+        // In dev mode, show the code if returned
+        if (data.dev_code) {
+          toast.info(`🔑 Mode dev - Code: ${data.dev_code}`, { duration: 60000 });
+        }
       } else {
-        toast.error('Erreur lors de l\'envoi du code');
+        toast.error(data?.error || 'Erreur envoi MFA');
       }
-    } catch (e: any) {
-      console.error('Erreur envoi code MFA:', e);
-      toast.error(e.message || 'Échec envoi code MFA');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Échec envoi code MFA';
+      console.error('MFA send error:', e);
+      toast.error(msg);
+    } finally {
+      setSendingMfa(false);
     }
   }, [user]);
 
+  // Server-side MFA: verify code
   const handleVerifyMfa = useCallback(async () => {
-    if (!user?.email) return;
     if (!mfaCode || mfaCode.length !== 6) {
-      toast.error('Entrez le code à 6 chiffres reçu par email');
+      toast.error('Entrez le code à 6 chiffres');
       return;
     }
-    
+
     setVerifyingMfa(true);
     try {
-      // Vérifier si le code a expiré
-      if (!mfaCodeExpiry || Date.now() > mfaCodeExpiry) {
-        toast.error('Code expiré. Demandez un nouveau code.');
-        setGeneratedMfaCode(null);
-        setMfaCodeExpiry(null);
+      const { data, error: fnError } = await supabase.functions.invoke('pdg-mfa-verify', {
+        body: { action: 'verify', code: mfaCode },
+      });
+
+      if (fnError) throw fnError;
+
+      if (data?.verified) {
+        setMfaVerified(true);
+        sessionStorage.setItem('mfa_verified_admin', 'true');
+        setShowMfaDialog(false);
         setMfaCode('');
-        return;
+        toast.success('✅ MFA vérifié, accès PDG autorisé');
+      } else {
+        toast.error(data?.error || 'Code MFA invalide');
       }
-      
-      // Vérifier si le code correspond
-      if (mfaCode !== generatedMfaCode) {
-        toast.error('Code MFA invalide');
-        return;
-      }
-      
-      // Code valide
-      setMfaVerified(true);
-      sessionStorage.setItem('mfa_verified_admin', 'true');
-      setShowMfaDialog(false);
-      setGeneratedMfaCode(null);
-      setMfaCodeExpiry(null);
-      toast.success('✅ MFA vérifié, accès PDG autorisé');
-    } catch (e: any) {
-      console.error('Erreur vérification MFA:', e);
-      toast.error(e.message || 'Erreur lors de la vérification');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erreur vérification MFA';
+      console.error('MFA verify error:', e);
+      toast.error(msg);
     } finally {
       setVerifyingMfa(false);
     }
-  }, [user, mfaCode, generatedMfaCode, mfaCodeExpiry]);
+  }, [mfaCode]);
 
   const handleUpdateEmail = useCallback(async () => {
     if (!newEmail || !newEmail.includes('@')) {
@@ -226,16 +203,16 @@ export default function PDG224Solutions() {
 
     setUpdatingEmail(true);
     try {
-      const { error } = await supabase.auth.updateUser({ email: newEmail });
-      
-      if (error) throw error;
+      const { error: updateError } = await supabase.auth.updateUser({ email: newEmail });
+      if (updateError) throw updateError;
 
-      toast.success('Email mis à jour avec succès. Vérifiez votre nouvelle adresse pour confirmer.');
+      toast.success('Email mis à jour. Vérifiez votre nouvelle adresse.');
       setShowEmailDialog(false);
       setNewEmail('');
-    } catch (error: any) {
-      console.error('Erreur mise à jour email:', error);
-      toast.error(error.message || 'Échec de la mise à jour de l\'email');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Échec mise à jour email';
+      console.error('Email update error:', err);
+      toast.error(msg);
     } finally {
       setUpdatingEmail(false);
     }
@@ -243,7 +220,7 @@ export default function PDG224Solutions() {
 
   if (profileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           <p className="text-muted-foreground">Chargement du profil...</p>
@@ -254,7 +231,7 @@ export default function PDG224Solutions() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
         <div className="flex flex-col items-center gap-4">
           <p className="text-destructive">Impossible de charger le profil</p>
           <Button onClick={() => navigate('/auth')}>Retour à la connexion</Button>
@@ -265,13 +242,7 @@ export default function PDG224Solutions() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
-      {/* Bandeau diagnostic pour éviter page blanche en cas d'env manquant */}
-      {!envOk && (
-        <div className="p-3 bg-yellow-100 border border-yellow-300 text-yellow-800">
-          Clés Supabase manquantes: définissez `VITE_SUPABASE_URL` et `VITE_SUPABASE_PUBLISHABLE_KEY` (ou `VITE_SUPABASE_ANON_KEY`).
-        </div>
-      )}
-      {/* Dialog MFA obligatoire pour PDG */}
+      {/* MFA Dialog */}
       {isAdmin && !mfaVerified && (
         <Dialog open={showMfaDialog}>
           <DialogContent>
@@ -285,14 +256,14 @@ export default function PDG224Solutions() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
-              <Button 
-                variant="secondary" 
-                onClick={handleSendMfaCode} 
-                disabled={verifyingMfa}
+              <Button
+                variant="secondary"
+                onClick={handleSendMfaCode}
+                disabled={sendingMfa || verifyingMfa}
                 className="w-full"
               >
                 <Mail className="w-4 h-4 mr-2" />
-                Envoyer le code à 6 chiffres par email
+                {sendingMfa ? 'Envoi en cours...' : 'Envoyer le code par email'}
               </Button>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Code de vérification</label>
@@ -304,8 +275,8 @@ export default function PDG224Solutions() {
                   className="text-center text-2xl font-mono tracking-widest"
                 />
               </div>
-              <Button 
-                onClick={handleVerifyMfa} 
+              <Button
+                onClick={handleVerifyMfa}
                 disabled={verifyingMfa || mfaCode.length !== 6}
                 className="w-full"
               >
@@ -314,19 +285,20 @@ export default function PDG224Solutions() {
             </div>
             <DialogFooter>
               <p className="text-xs text-muted-foreground">
-                🔐 Le code expire après 10 minutes. Ne le partagez avec personne.
+                🔐 Le code expire après 10 minutes.
               </p>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
-      {/* Animated Background Pattern */}
+
+      {/* Background */}
       <div className="fixed inset-0 opacity-10 pointer-events-none">
         <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
       </div>
 
       <div className="relative z-10 h-screen overflow-y-auto scrollbar-thin overflow-x-hidden">
-        {/* Header - Mobile Optimized */}
+        {/* Header */}
         <div className="border-b border-border/40 bg-card/30 backdrop-blur-xl w-full">
           <div className="max-w-[1600px] mx-auto px-4 py-3 sm:px-6 sm:py-6 w-full">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6 w-full">
@@ -344,13 +316,13 @@ export default function PDG224Solutions() {
                     </h1>
                     <UserIdDisplay layout="horizontal" showBadge={true} />
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex items-center gap-2 hidden sm:flex">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 items-center gap-2 hidden sm:flex">
                     <Lock className="w-3 h-3 text-green-500" />
                     Contrôle total et sécurisé
                   </p>
                 </div>
               </div>
-              {/* Mobile: Horizontal scroll for buttons */}
+              {/* Action buttons */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent sm:flex-wrap">
                 <Button
                   variant="default"
@@ -383,22 +355,16 @@ export default function PDG224Solutions() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleVerifyMfa}
-                    disabled={verifyingMfa}
+                    onClick={() => setShowMfaDialog(true)}
                     className="border-orange-500/30 text-orange-600 hover:bg-orange-500/10 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                   >
-                    {verifyingMfa ? '...' : 'MFA'}
+                    MFA
                   </Button>
                 )}
                 <Badge className="bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20 gap-1 text-xs flex-shrink-0">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                   <span className="hidden sm:inline">Système</span> Actif
                 </Badge>
-                {!envOk && (
-                  <Badge className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20 hover:bg-yellow-500/20 text-xs flex-shrink-0">
-                    Env
-                  </Badge>
-                )}
                 {aiActive && (
                   <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20 gap-1 text-xs flex-shrink-0">
                     <Brain className="w-3 h-3" />
@@ -452,253 +418,137 @@ export default function PDG224Solutions() {
           </div>
         )}
 
-        {/* Main Content - Mobile optimized padding */}
+        {/* Main Content */}
         <div className="max-w-[1600px] mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-24 sm:pb-8">
-          {/* Navigation */}
-          <PDGNavigation 
+          <PDGNavigation
             activeTab={activeTab}
             onTabChange={handleTabChange}
             aiActive={aiActive}
           />
 
-          {/* Content - Mobile spacing */}
           <div className="mt-4 sm:mt-8 animate-fade-in">
-                <Suspense fallback={
-                  <div className="flex items-center justify-center py-12">
-                    <div className="flex items-center gap-3">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                      <span className="text-muted-foreground">Chargement...</span>
-                    </div>
-                  </div>
-                }>
-                  {activeTab === 'dashboard' && (
-                    <ErrorBoundary>
-                      <PDGDashboardHome onNavigate={setActiveTab} />
-                    </ErrorBoundary>
-                  )}
-
-                  {activeTab === 'finance' && (
-                <ErrorBoundary>
-                  <PDGFinance />
-                </ErrorBoundary>
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-12">
+                <div className="flex items-center gap-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  <span className="text-muted-foreground">Chargement...</span>
+                </div>
+              </div>
+            }>
+              {activeTab === 'dashboard' && (
+                <ErrorBoundary><PDGDashboardHome onNavigate={setActiveTab} /></ErrorBoundary>
               )}
-
+              {activeTab === 'finance' && (
+                <ErrorBoundary><PDGFinance /></ErrorBoundary>
+              )}
               {activeTab === 'banking' && (
-                <ErrorBoundary>
-                  <BankingDashboard />
-                </ErrorBoundary>
+                <ErrorBoundary><BankingDashboard /></ErrorBoundary>
               )}
-
               {activeTab === 'users' && (
-                <ErrorBoundary>
-                  <PDGUsers />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGUsers /></ErrorBoundary>
               )}
-
               {activeTab === 'security' && (
-                <ErrorBoundary>
-                  <SecurityOpsPanel />
-                </ErrorBoundary>
+                <ErrorBoundary><SecurityOpsPanel /></ErrorBoundary>
               )}
-
               {activeTab === 'config' && (
-                <ErrorBoundary>
-                  <SystemConfiguration />
-                </ErrorBoundary>
+                <ErrorBoundary><SystemConfiguration /></ErrorBoundary>
               )}
-
               {activeTab === 'products' && (
-                <ErrorBoundary>
-                  <PDGProductsManagement />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGProductsManagement /></ErrorBoundary>
               )}
-
               {activeTab === 'maintenance' && (
-                <ErrorBoundary>
-                  <PDGSystemMaintenance />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGSystemMaintenance /></ErrorBoundary>
               )}
-
               {activeTab === 'agents' && (
-                <ErrorBoundary>
-                  <PDGAgentsManagement />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGAgentsManagement /></ErrorBoundary>
               )}
-
               {activeTab === 'syndicat' && (
-                <ErrorBoundary>
-                  <PDGSyndicatManagement />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGSyndicatManagement /></ErrorBoundary>
               )}
-
               {activeTab === 'reports' && (
-                <ErrorBoundary>
-                  <PDGReportsAnalytics />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGReportsAnalytics /></ErrorBoundary>
               )}
-
               {activeTab === 'ai-assistant' && (
-                <ErrorBoundary>
-                  <PDGAIAssistant mfaVerified={mfaVerified} />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGAIAssistant mfaVerified={mfaVerified} /></ErrorBoundary>
               )}
-
               {activeTab === 'copilot' && (
-                <ErrorBoundary>
-                  <PDGCopilot mfaVerified={mfaVerified} />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGCopilot mfaVerified={mfaVerified} /></ErrorBoundary>
               )}
-
               {activeTab === 'communication' && (
-                <ErrorBoundary>
-                  <Suspense fallback={<div className="flex items-center justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-                    <UniversalCommunicationHub />
-                  </Suspense>
-                </ErrorBoundary>
+                <ErrorBoundary><UniversalCommunicationHub /></ErrorBoundary>
               )}
-
-              {activeTab === 'api' && (
-                <ErrorBoundary>
-                  <GoogleCloudMonitoring />
-                </ErrorBoundary>
-              )}
-
               {activeTab === 'multi-cloud' && (
-                <ErrorBoundary>
-                  <MultiCloudDashboard />
-                </ErrorBoundary>
+                <ErrorBoundary><MultiCloudDashboard /></ErrorBoundary>
               )}
               {activeTab === 'transfer-fees' && (
-                <ErrorBoundary>
-                  <TransferFeeSettings />
-                </ErrorBoundary>
+                <ErrorBoundary><TransferFeeSettings /></ErrorBoundary>
               )}
-
               {activeTab === 'kyc' && (
-                <ErrorBoundary>
-                  <PDGKYCManagement />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGKYCManagement /></ErrorBoundary>
               )}
-
               {activeTab === 'orders' && (
-                <ErrorBoundary>
-                  <PDGOrders />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGOrders /></ErrorBoundary>
               )}
-
               {activeTab === 'vendors' && (
-                <ErrorBoundary>
-                  <PDGVendors />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGVendors /></ErrorBoundary>
               )}
-
               {activeTab === 'drivers' && (
-                <ErrorBoundary>
-                  <PDGDrivers />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGDrivers /></ErrorBoundary>
               )}
-
               {activeTab === 'quotes-invoices' && (
-                <ErrorBoundary>
-                  <QuotesInvoicesPDG />
-                </ErrorBoundary>
+                <ErrorBoundary><QuotesInvoicesPDG /></ErrorBoundary>
               )}
-
               {activeTab === 'bug-bounty' && (
-                <ErrorBoundary>
-                  <BugBountyDashboard />
-                </ErrorBoundary>
+                <ErrorBoundary><BugBountyDashboard /></ErrorBoundary>
               )}
-
               {activeTab === 'agent-wallet-audit' && (
-                <ErrorBoundary>
-                  <AgentWalletAudit />
-                </ErrorBoundary>
+                <ErrorBoundary><AgentWalletAudit /></ErrorBoundary>
               )}
-
               {activeTab === 'copilot-audit' && (
-                <ErrorBoundary>
-                  <CopilotAuditTrail />
-                </ErrorBoundary>
+                <ErrorBoundary><CopilotAuditTrail /></ErrorBoundary>
               )}
-
               {activeTab === 'stolen-vehicles' && (
-                <ErrorBoundary>
-                  <PDGStolenVehiclesSupervision />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGStolenVehiclesSupervision /></ErrorBoundary>
               )}
-
               {activeTab === 'driver-subscriptions' && (
-                <ErrorBoundary>
-                  <DriverSubscriptionManagement />
-                </ErrorBoundary>
+                <ErrorBoundary><DriverSubscriptionManagement /></ErrorBoundary>
               )}
-
               {activeTab === 'service-subscriptions' && (
-                <ErrorBoundary>
-                  <PDGServiceSubscriptions />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGServiceSubscriptions /></ErrorBoundary>
               )}
-
               {activeTab === 'wallet-api' && (
-                <ErrorBoundary>
-                  <PDGWalletApiManagement />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGWalletApiManagement /></ErrorBoundary>
               )}
-
               {activeTab === 'bureau-monitoring' && (
-                <ErrorBoundary>
-                  <PDGBureauMonitoring />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGBureauMonitoring /></ErrorBoundary>
               )}
-
               {activeTab === 'vendor-certification' && (
-                <ErrorBoundary>
-                  <VendorCertificationManager />
-                </ErrorBoundary>
+                <ErrorBoundary><VendorCertificationManager /></ErrorBoundary>
               )}
-
               {activeTab === 'vendor-kyc-review' && (
-                <ErrorBoundary>
-                  <VendorKYCReview />
-                </ErrorBoundary>
+                <ErrorBoundary><VendorKYCReview /></ErrorBoundary>
               )}
-
               {activeTab === 'id-normalization' && (
-                <ErrorBoundary>
-                  <IdNormalizationAudit />
-                </ErrorBoundary>
+                <ErrorBoundary><IdNormalizationAudit /></ErrorBoundary>
               )}
-
               {activeTab === 'logic-surveillance' && (
-                <ErrorBoundary>
-                  <LogicSurveillanceDashboard />
-                </ErrorBoundary>
+                <ErrorBoundary><LogicSurveillanceDashboard /></ErrorBoundary>
               )}
-
               {activeTab === 'sync-dashboard' && (
-                <ErrorBoundary>
-                  <PDGSyncDashboard />
-                </ErrorBoundary>
+                <ErrorBoundary><PDGSyncDashboard /></ErrorBoundary>
               )}
-
               {activeTab === 'broadcast-center' && (
-                <ErrorBoundary>
-                  <BroadcastMessageCenter />
-                </ErrorBoundary>
+                <ErrorBoundary><BroadcastMessageCenter /></ErrorBoundary>
               )}
-
               {activeTab === 'deleted-users-restore' && (
-                <ErrorBoundary>
-                  <DeletedUsersRestore />
-                </ErrorBoundary>
+                <ErrorBoundary><DeletedUsersRestore /></ErrorBoundary>
               )}
             </Suspense>
           </div>
         </div>
       </div>
 
-      {/* Dialog Modification Email */}
+      {/* Email Update Dialog */}
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -713,11 +563,7 @@ export default function PDG224Solutions() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Email actuel</label>
-              <Input 
-                value={user?.email || ''} 
-                disabled 
-                className="bg-muted"
-              />
+              <Input value={user?.email || ''} disabled className="bg-muted" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Nouvel email</label>
@@ -733,25 +579,19 @@ export default function PDG224Solutions() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => {
-                setShowEmailDialog(false);
-                setNewEmail('');
-              }}
+              onClick={() => { setShowEmailDialog(false); setNewEmail(''); }}
               disabled={updatingEmail}
             >
               Annuler
             </Button>
-            <Button
-              onClick={handleUpdateEmail}
-              disabled={updatingEmail || !newEmail}
-            >
+            <Button onClick={handleUpdateEmail} disabled={updatingEmail || !newEmail}>
               {updatingEmail ? 'Mise à jour...' : 'Mettre à jour'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      {/* Widget de communication flottant */}
+
+      {/* Floating communication widget */}
       <CommunicationWidget position="bottom-right" showNotifications={true} />
     </div>
   );
