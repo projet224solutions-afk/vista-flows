@@ -721,9 +721,15 @@ export default function ProductPaymentModal({
         {/* Carte bancaire Stripe inline */}
         {showCardInline && paymentMethod === 'card' && (
           <div className="space-y-3 py-2 border-t">
+            <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
+              <Shield className="w-4 h-4 text-green-600" />
+              <span className="text-xs text-green-800 dark:text-green-200">
+                Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de réception
+              </span>
+            </div>
             <div className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-sm">Paiement sécurisé par carte</span>
+              <span className="font-semibold text-sm">Paiement sécurisé par carte (Escrow)</span>
             </div>
             <Suspense fallback={
               <div className="flex items-center justify-center p-4 gap-2">

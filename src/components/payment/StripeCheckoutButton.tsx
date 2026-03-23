@@ -204,7 +204,7 @@ export default function StripeCheckoutButton({
 
         if (edgeFunction) {
           functionName = edgeFunction;
-          body = { amount, currency: currency.toLowerCase(), orderId, sellerId, description };
+          body = { amount, currency: currency.toLowerCase(), orderId, sellerId, description, ...extraParams };
         } else if (creditWallet) {
           functionName = 'stripe-deposit';
           body = { amount, currency: currency.toLowerCase() };
