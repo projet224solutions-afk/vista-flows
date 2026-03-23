@@ -493,34 +493,10 @@ export default function Auth() {
           .maybeSingle();
         
         if (profileData?.role && isMounted) {
-          let targetRoute = getDashboardRoute(profileData.role);
-          
-          // ✅ FIX: Vérifier le business_type pour les vendeurs
-          if (profileData.role === 'vendeur') {
-            const { data: vendor } = await supabase
-              .from('vendors')
-              .select('business_type')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-            
-            if (vendor?.business_type === 'digital') {
-              targetRoute = '/vendeur-digital';
-            }
-          }
-          
-          // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
-          if ((profileData.role as string) === 'prestataire') {
-            const { data: proService } = await supabase
-              .from('professional_services')
-              .select('id')
-              .eq('user_id', session.user.id)
-              .limit(1)
-              .maybeSingle();
-            if (proService) {
-              targetRoute = `/dashboard/service/${proService.id}`;
-            }
-          }
-          
+          const targetRoute = await resolvePostAuthRoute({
+            userId: session.user.id,
+            role: profileData.role,
+          });
           console.log('🚀 [Auth Mount] Redirection utilisateur existant vers:', targetRoute);
           navigate(targetRoute, { replace: true });
         }
