@@ -7,6 +7,14 @@ import { formatDistance } from "@/hooks/useGeoDistance";
 import { useVendorCertification } from "@/hooks/useVendorCertification";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
 
+function VendorCertBadgeSmall({ vendorId }: { vendorId: string }) {
+  const { certification } = useVendorCertification(vendorId);
+  if (!certification) return null;
+  return <CertifiedIcon status={certification.status} className="w-3.5 h-3.5 shrink-0" />;
+}
+
+
+
 interface VendorCardProps {
   vendor: {
     id: string;
