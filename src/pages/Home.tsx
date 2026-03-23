@@ -5,9 +5,8 @@
  * OPTIMISÉ pour les performances
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useRoleRedirect } from '@/hooks/useRoleRedirect';
 import { useCart } from '@/contexts/CartContext';
@@ -15,7 +14,6 @@ import { useUniversalProducts } from '@/hooks/useUniversalProducts';
 import { useNearbyServiceStats } from '@/hooks/useNearbyServiceStats';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
-import { RecommendationsWidget } from '@/components/recommendations/RecommendationsWidget';
 
 // Premium Home Components
 import {
@@ -33,11 +31,12 @@ import {
 
 export default function Home() {
   const navigate = useNavigate();
-  const { user, profile, loading: authLoading, profileLoading } = useAuth();
+  const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
   
-  // ⚡ Redirection automatique vers le dashboard si connecté avec un rôle
+  // Redirection automatique vers le dashboard depuis / et /auth uniquement
+  // /home reste accessible à tous les utilisateurs connectés ou non
   useRoleRedirect();
 
   // Stats des services à proximité (filtrés par distance 20km)
@@ -47,7 +46,6 @@ export default function Home() {
   const [showVendorsModal, setShowVendorsModal] = useState(false);
   const [showTaxiModal, setShowTaxiModal] = useState(false);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
 
   // Universal products hook - memoized options
   const productOptions = useMemo(() => ({
@@ -58,26 +56,12 @@ export default function Home() {
   
   const { products: universalProducts, loading: productsLoading } = useUniversalProducts(productOptions);
 
-  // Load notifications - seulement si user existe
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const loadNotifications = async () => {
-      try {
-        const { count } = await supabase
-          .from('notifications')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('read', false);
-
-        setNotificationCount(count || 0);
-      } catch (error) {
-        console.error('Error loading notifications:', error);
-      }
-    };
-
-    loadNotifications();
-  }, [user?.id]);
+  // Search submit: navigate to marketplace with query
+  const handleSearchSubmit = useCallback(() => {
+    if (searchQuery.trim()) {
+      navigate(`/marketplace?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  }, [searchQuery, navigate]);
 
   const handleProductClick = useCallback(
     (productId: string) => {
@@ -116,27 +100,29 @@ export default function Home() {
       });
       toast.success(t('home.addedToCart'));
     },
-    [addToCart]
+    [addToCart, t]
   );
 
   return (
     <div className="min-h-screen bg-background pb-24 relative overflow-hidden">
-      {/* 3D Spline Globe Background - Extended to cover entire page */}
+      {/* 3D Spline Globe Background */}
       <SplineBackground height="180vh" />
-      {/* Premium Header */}
+      
       <div className="relative z-10">
+        {/* Premium Header - cart works for all users (CartContext uses localStorage) */}
         <HomeHeader
-          cartCount={user ? getCartCount() : 0}
-          notificationCount={notificationCount}
+          cartCount={getCartCount()}
         />
 
-        {/* Premium Search Bar */}
+        {/* Premium Search Bar - connected to marketplace navigation */}
         <HomeSearchBar
           value={searchQuery}
           onChange={setSearchQuery}
+          onSubmit={handleSearchSubmit}
           placeholder={t('home.searchPlaceholder')}
           showFilter
           showCamera
+          onFilter={() => navigate('/marketplace')}
           onCameraCapture={(file) => {
             navigate('/marketplace/visual-search', { state: { capturedImage: file } });
           }}
@@ -158,7 +144,6 @@ export default function Home() {
           onProductClick={handleProductClick}
           onAddToCart={handleAddToCart}
         />
-
 
         {/* Bottom Navigation */}
         <BottomNavigation />

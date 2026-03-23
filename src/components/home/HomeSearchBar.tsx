@@ -2,6 +2,7 @@
  * HOME SEARCH BAR - Ultra Professional Design
  * 224Solutions - Premium Search Experience
  * Floating design with subtle animations
+ * Search submits to marketplace with query parameter
  */
 
 import { useState, useRef } from 'react';
@@ -14,6 +15,7 @@ import { cn } from '@/lib/utils';
 interface HomeSearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  onSubmit?: () => void;
   placeholder?: string;
   onFilter?: () => void;
   showFilter?: boolean;
@@ -25,6 +27,7 @@ interface HomeSearchBarProps {
 export function HomeSearchBar({
   value,
   onChange,
+  onSubmit,
   placeholder,
   onFilter,
   showFilter = true,
@@ -48,6 +51,12 @@ export function HomeSearchBar({
       onCameraCapture(file);
     }
     e.target.value = '';
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && onSubmit) {
+      onSubmit();
+    }
   };
 
   return (
@@ -77,6 +86,7 @@ export function HomeSearchBar({
             ref={inputRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={displayPlaceholder}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
@@ -120,7 +130,7 @@ export function HomeSearchBar({
                 'border-primary/30 bg-card hover:bg-primary hover:text-primary-foreground',
                 'transition-all duration-300 hover:scale-105 hover:shadow-lg'
               )}
-              title="Recherche par photo"
+              title={t('home.searchByPhoto') || 'Recherche par photo'}
             >
               <Camera className="w-5 h-5 text-primary" />
             </Button>
@@ -138,6 +148,7 @@ export function HomeSearchBar({
               'border-border/50 bg-card hover:bg-primary hover:text-primary-foreground',
               'transition-all duration-300 hover:scale-105 hover:shadow-lg'
             )}
+            title={t('home.filter') || 'Filtrer'}
           >
             <Filter className="w-5 h-5" />
           </Button>
