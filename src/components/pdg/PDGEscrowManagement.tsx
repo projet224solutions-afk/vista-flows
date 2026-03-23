@@ -463,4 +463,7 @@ export default function PDGEscrowManagement() {
       </AlertDialog>
     </>
   );
+      </Tabs>
+    </>
+  );
 }
