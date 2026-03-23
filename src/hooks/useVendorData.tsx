@@ -152,31 +152,47 @@ export function useVendorStats() {
           .lt('quantity', 10);
 
         // Fetch overdue payments - Qualify status column to avoid ambiguity
-        const { count: overdue_payments } = await supabase
-          .from('payment_schedules')
-          .select('id, orders!inner(vendor_id)', { count: 'exact', head: true })
-          .eq('orders.vendor_id', vendor.id)
-          .eq('payment_schedules.status', 'overdue');
+        let overdue_payments = 0;
+        try {
+          const { count } = await supabase
+            .from('payment_schedules')
+            .select('id, orders!inner(vendor_id)', { count: 'exact', head: true })
+            .eq('orders.vendor_id', vendor.id)
+            .eq('status', 'overdue');
+          overdue_payments = count || 0;
+        } catch {
+          // payment_schedules may not exist or query may fail - default to 0
+        }
 
-        // Fetch customers count (approximate)
-        const { count: customers_count } = await supabase
+        // Fetch unique customers count via distinct customer_ids from orders
+        const { data: customerOrders } = await supabase
           .from('orders')
-          .select('customer_id', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id);
+          .select('customer_id')
+          .eq('vendor_id', vendor.id)
+          .not('customer_id', 'is', null);
+
+        const uniqueCustomerIds = new Set(
+          (customerOrders || []).map(o => o.customer_id).filter(Boolean)
+        );
+        const customers_count = uniqueCustomerIds.size;
+
+        // Marge estimée à 20% du CA - à remplacer par un calcul réel
+        // basé sur les coûts produits (cost_price) quand disponible
+        const ESTIMATED_MARGIN_RATE = 0.2;
 
         setStats({
           vendorId: vendor.id,
           revenue,
-          profit: revenue * 0.2, // Example: 20% profit margin
+          profit: revenue * ESTIMATED_MARGIN_RATE,
           orders_count,
           orders_pending,
-          customers_count: customers_count || 0,
+          customers_count,
           products_count: products_count || 0,
           low_stock_count: low_stock_count || 0,
-          overdue_payments: overdue_payments || 0
+          overdue_payments
         });
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
       } finally {
         setLoading(false);
       }
@@ -215,8 +231,8 @@ export function useProspects() {
 
         if (fetchError) throw fetchError;
         setProspects(data || []);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
       }
@@ -244,8 +260,8 @@ export function useProspects() {
       if (error) throw error;
       setProspects(prev => [data, ...prev]);
       return data;
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
       throw err;
     }
   };
@@ -262,8 +278,8 @@ export function useProspects() {
       if (error) throw error;
       setProspects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
       return data;
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
       throw err;
     }
   };
@@ -303,8 +319,8 @@ export function useCustomerCredits() {
 
         if (fetchError) throw fetchError;
         setCredits(data || []);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
       }
@@ -351,8 +367,8 @@ export function usePaymentSchedules() {
 
         if (fetchError) throw fetchError;
         setSchedules(data || []);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
       }
@@ -391,8 +407,8 @@ export function usePromoCodes() {
 
         if (fetchError) throw fetchError;
         setPromoCodes(data || []);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
       }
@@ -420,8 +436,8 @@ export function usePromoCodes() {
       if (error) throw error;
       setPromoCodes(prev => [data, ...prev]);
       return data;
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
       throw err;
     }
   };
@@ -456,8 +472,8 @@ export function useSupportTickets() {
 
         if (fetchError) throw fetchError;
         setTickets(data || []);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
       }
@@ -478,8 +494,8 @@ export function useSupportTickets() {
       if (error) throw error;
       setTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t));
       return data;
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
       throw err;
     }
   };

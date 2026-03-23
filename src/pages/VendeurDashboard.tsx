@@ -39,12 +39,6 @@ import type { RecentOrder, OrderFromSupabase } from '@/types/vendor-dashboard';
 const SubscriptionExpiryBanner = lazy(() =>
   import('@/components/vendor/SubscriptionExpiryBanner').then(m => ({ default: m.SubscriptionExpiryBanner }))
 );
-const CommunicationWidget = lazy(() =>
-  import('@/components/communication/CommunicationWidget')
-);
-const OfflineBanner = lazy(() =>
-  import('@/components/vendor/OfflineBanner')
-);
 
 // ============================================================================
 // Hook personnalisé pour charger les commandes récentes
@@ -77,7 +71,7 @@ function useRecentOrders(userId: string | undefined) {
           return;
         }
 
-        // 2. Récupérer les commandes
+        // 2. Récupérer les commandes avec profil client
         const { data, error } = await supabase
           .from('orders')
           .select(`
@@ -96,16 +90,43 @@ function useRecentOrders(userId: string | undefined) {
           return;
         }
 
-        // 3. Transformer les données avec types stricts
-        const formatted: RecentOrder[] = (data || []).map((order: OrderFromSupabase) => ({
-          order_number: order.order_number,
-          customer_label: order.customer?.user_id
-            ? `Client ${order.customer.user_id.slice(0, 6)}`
-            : 'Client',
-          status: (order.status as RecentOrder['status']) || 'pending',
-          total_amount: order.total_amount || 0,
-          created_at: order.created_at,
-        }));
+        // 3. Récupérer les profils des clients pour afficher leurs noms
+        const userIds = (data || [])
+          .map((o: OrderFromSupabase) => o.customer?.user_id)
+          .filter(Boolean) as string[];
+
+        let profilesMap: Record<string, string> = {};
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name')
+            .in('id', userIds);
+
+          if (profiles) {
+            for (const p of profiles) {
+              const name = [p.first_name, p.last_name].filter(Boolean).join(' ');
+              profilesMap[p.id] = name || '';
+            }
+          }
+        }
+
+        // 4. Transformer les données avec noms clients réels
+        const formatted: RecentOrder[] = (data || []).map((order: OrderFromSupabase) => {
+          const userId = order.customer?.user_id;
+          const clientName = userId && profilesMap[userId]
+            ? profilesMap[userId]
+            : userId
+              ? `Client #${userId.slice(0, 6)}`
+              : 'Client';
+
+          return {
+            order_number: order.order_number,
+            customer_label: clientName,
+            status: (order.status as RecentOrder['status']) || 'pending',
+            total_amount: order.total_amount || 0,
+            created_at: order.created_at,
+          };
+        });
 
         setOrders(formatted);
       } catch (error) {
@@ -276,6 +297,14 @@ export default function VendeurDashboard() {
           .maybeSingle();
         if (proService) {
           navigate(`/dashboard/service/${proService.id}`, { replace: true });
+        } else {
+          // Pas de service professionnel trouvé - rester sur le dashboard vendeur
+          console.warn('Vendeur de type service sans professional_service associé');
+          toast({
+            title: 'Configuration incomplète',
+            description: 'Votre profil de service n\'est pas encore configuré. Contactez le support.',
+            variant: 'destructive',
+          });
         }
       }
     };
@@ -341,7 +370,7 @@ export default function VendeurDashboard() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-x-hidden">
+      <div className="min-h-screen w-full flex bg-gradient-to-br from-muted/30 via-background to-primary/5 overflow-x-hidden">
         {/* Sidebar */}
         <VendorSidebar />
 
@@ -382,12 +411,7 @@ export default function VendeurDashboard() {
         </div>
       </div>
 
-      {/* Widget de communication flottant */}
-      <Suspense fallback={null}>
-        <CommunicationWidget position="bottom-right" showNotifications={true} />
-      </Suspense>
-
-      {/* Bannière offline supprimée - intégrée dans le header */}
+      {/* CommunicationWidget retiré - le composant global retourne null, évite le lazy load inutile */}
     </SidebarProvider>
   );
 }
