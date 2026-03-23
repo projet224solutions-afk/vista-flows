@@ -299,9 +299,67 @@ serve(async (req) => {
             logStep('✅ Delivery updated to paid', { deliveryId });
           }
           
+        } else if (source === 'marketplace') {
+          // =========================================================
+          // 🛒 PAIEMENT MARKETPLACE (multi-vendeurs)
+          // =========================================================
+          logStep('Processing marketplace payment');
+
+          const { data: transaction, error: fetchError } = await supabase
+            .from('stripe_transactions')
+            .select('*')
+            .eq('stripe_payment_intent_id', paymentIntent.id)
+            .single();
+
+          if (fetchError || !transaction) {
+            logStep('Marketplace transaction not found', { paymentIntentId: paymentIntent.id });
+            break;
+          }
+
+          // Mettre à jour la transaction
+          await supabase
+            .from('stripe_transactions')
+            .update({
+              status: 'SUCCEEDED',
+              stripe_charge_id: chargeId,
+              last4: last4,
+              card_brand: cardBrand,
+              three_ds_status: threeDsStatus,
+              paid_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', transaction.id);
+
+          logStep('✅ Marketplace transaction updated to SUCCEEDED');
+
+          // Les commandes sont créées côté frontend via createOrderAfterPayment
+          // Le webhook ne crée pas les commandes pour le marketplace car le frontend
+          // gère la logique multi-vendeurs et les escrows
+
+          // Enregistrer la commission PDG
+          if (transaction.commission_amount > 0) {
+            try {
+              await supabase.rpc('record_pdg_revenue', {
+                p_source_type: 'frais_achat_marketplace',
+                p_amount: transaction.commission_amount,
+                p_percentage: transaction.commission_rate || 5,
+                p_transaction_id: transaction.id,
+                p_user_id: transaction.buyer_id,
+                p_metadata: {
+                  payment_intent_id: paymentIntent.id,
+                  product_amount: transaction.seller_net_amount,
+                  total_amount: transaction.amount,
+                }
+              });
+              logStep('✅ PDG revenue recorded for marketplace');
+            } catch (revenueErr) {
+              logStep('⚠️ Error recording PDG revenue', { error: String(revenueErr) });
+            }
+          }
+
         } else {
-          // Paiement POS standard (marketplace)
-          logStep('Processing POS/marketplace payment');
+          // Paiement POS standard
+          logStep('Processing POS payment');
           
           const { data: transaction, error: fetchError } = await supabase
             .from('stripe_transactions')
