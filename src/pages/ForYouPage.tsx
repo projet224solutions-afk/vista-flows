@@ -19,6 +19,7 @@ export default function ForYouPage() {
 
   // Track behavior on this page
   useBehaviorTracking({ sessionType: 'browse' });
+  useRecommendationRealtimeInvalidation();
 
   // AI-powered recommendations
   const { data: personalized, isLoading: loadingPersonalized } = useAIPersonalized(20);

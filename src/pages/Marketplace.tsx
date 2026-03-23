@@ -85,6 +85,7 @@ export default function Marketplace() {
   const { data: discoveryProducts, isLoading: loadingDiscovery } = useDiscoveryProducts(8);
   // Behavior tracking
   useBehaviorTracking({ sessionType: 'browse' });
+  useRecommendationRealtimeInvalidation();
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
