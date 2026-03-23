@@ -39,12 +39,6 @@ import type { RecentOrder, OrderFromSupabase } from '@/types/vendor-dashboard';
 const SubscriptionExpiryBanner = lazy(() =>
   import('@/components/vendor/SubscriptionExpiryBanner').then(m => ({ default: m.SubscriptionExpiryBanner }))
 );
-const CommunicationWidget = lazy(() =>
-  import('@/components/communication/CommunicationWidget')
-);
-const OfflineBanner = lazy(() =>
-  import('@/components/vendor/OfflineBanner')
-);
 
 // ============================================================================
 // Hook personnalisé pour charger les commandes récentes
