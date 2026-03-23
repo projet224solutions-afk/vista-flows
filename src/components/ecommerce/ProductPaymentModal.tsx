@@ -735,7 +735,8 @@ export default function ProductPaymentModal({
                 amount={totalAmount}
                 currency="GNF"
                 description={`Achat ${cartItems.length} article(s) - Marketplace 224Solutions`}
-                edgeFunction="stripe-marketplace-payment"
+                edgeFunction="marketplace-escrow-payment"
+                extraParams={{ cartItems: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId: i.vendorId })) }}
                 onSuccess={handleCardSuccess}
                 onCancel={() => setShowCardInline(false)}
                 onError={(error) => { toast.error(error); setShowCardInline(false); }}
