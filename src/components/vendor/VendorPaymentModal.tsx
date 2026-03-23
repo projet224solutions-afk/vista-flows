@@ -1,7 +1,7 @@
 /**
  * MODAL PAIEMENT VENDEUR - 224SOLUTIONS
- * Support de 5 méthodes: wallet, cash, mobile_money, card, paypal
- * PayPal utilise les Smart Buttons (SDK) pour paiement sécurisé
+ * Support de 5 méthodes: wallet, cash, mobile_money, card, stripe
+ * Stripe utilise Elements pour paiement carte sécurisé
  */
 
 import { useState, lazy, Suspense } from 'react';
