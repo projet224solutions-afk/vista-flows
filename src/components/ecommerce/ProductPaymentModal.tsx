@@ -54,6 +54,8 @@ interface ProductPaymentModalProps {
   onPaymentSuccess: () => void;
   userId: string;
   customerId: string | null;
+  /** Devise source du produit/vendeur (ex: 'XOF', 'GNF'). Défaut: 'GNF' */
+  currency?: string;
 }
 
 export default function ProductPaymentModal({
@@ -63,9 +65,11 @@ export default function ProductPaymentModal({
   totalAmount,
   onPaymentSuccess,
   userId,
-  customerId
+  customerId,
+  currency = 'GNF'
 }: ProductPaymentModalProps) {
   const fc = useFormatCurrency();
+  const cur = currency.toUpperCase();
   const { initiatePullPayment, pollStatus, isLoading: ccpLoading } = useChapChapPay();
 
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
@@ -178,7 +182,7 @@ export default function ProductPaymentModal({
   const loadWalletBalance = async () => {
     setLoadingBalance(true);
     try {
-      const { data, error } = await supabase.from('wallets').select('balance').eq('user_id', userId).eq('currency', 'GNF').single();
+      const { data, error } = await supabase.from('wallets').select('balance').eq('user_id', userId).eq('currency', cur).single();
       if (error) throw error;
       setWalletBalance(data?.balance || 0);
     } catch { setWalletBalance(0); } finally { setLoadingBalance(false); }
@@ -192,7 +196,7 @@ export default function ProductPaymentModal({
       const { data: vendorData, error: vendorError } = await supabase.from('vendors').select('user_id, vendor_code').eq('id', firstVendorId).single();
       if (vendorError || !vendorData) { setVendorCode(null); return; }
       if (vendorData.vendor_code) { setVendorCode(vendorData.vendor_code); } else {
-        const { data: walletData, error: walletError } = await supabase.from('wallets').select('id').eq('user_id', vendorData.user_id).eq('currency', 'GNF').single();
+        const { data: walletData, error: walletError } = await supabase.from('wallets').select('id').eq('user_id', vendorData.user_id).eq('currency', cur).single();
         if (walletError || !walletData) { setVendorCode(vendorData.user_id.slice(0, 8).toUpperCase()); } else { setVendorCode(String(walletData.id).slice(0, 8).toUpperCase()); }
       }
     } catch { setVendorCode(null); } finally { setLoadingVendorCode(false); }
@@ -325,7 +329,7 @@ export default function ProductPaymentModal({
 
       setPaymentStep('success');
       toast.success('Paiement sécurisé par escrow !', {
-        description: `${fc(grandTotal, 'GNF')} bloqués — libérés après confirmation de réception`
+        description: `${fc(grandTotal, cur)} bloqués — libérés après confirmation de réception`
       });
       setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
     } catch (err) {
@@ -348,7 +352,7 @@ export default function ProductPaymentModal({
     try {
       const result = await initiatePullPayment({
         amount: grandTotal,
-        currency: 'GNF',
+        currency: cur,
         paymentMethod: ccpMethod,
         customerPhone: mobilePhone.trim(),
         description: `Achat 224Solutions - ${cartItems.length} article(s)`,
@@ -369,7 +373,7 @@ export default function ProductPaymentModal({
         if (finalStatus.status === 'completed') {
           await createOrderAfterPayment(result.transactionId, paymentMethod);
           setPaymentStep('success');
-          toast.success('Paiement mobile réussi !', { description: `${fc(grandTotal, 'GNF')} débité de votre compte` });
+          toast.success('Paiement mobile réussi !', { description: `${fc(grandTotal, cur)} débité de votre compte` });
           setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
         } else {
           toast.error('Paiement non confirmé', { description: 'Veuillez réessayer' });
@@ -428,7 +432,7 @@ export default function ProductPaymentModal({
 
       if (paymentMethod === 'wallet') {
         if (walletBalance !== null && walletBalance < grandTotal) {
-          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(grandTotal, 'GNF')}` });
+          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(grandTotal, cur)}` });
           setProcessing(false);
           return;
         }
@@ -459,7 +463,7 @@ export default function ProductPaymentModal({
       if (paymentMethod === 'wallet') {
         const escrowResult = await UniversalEscrowService.createEscrow({
           buyer_id: userId, seller_id: vendorData.user_id, order_id: orderId,
-          amount: vendorTotalWithCommission, currency: 'GNF', transaction_type: 'product', payment_provider: 'wallet',
+          amount: vendorTotalWithCommission, currency: cur, transaction_type: 'product', payment_provider: 'wallet',
           metadata: { product_ids: items.map(i => i.id), order_number: orderNumber, description: `Achat produits (${items.length} articles)`, product_total: vendorProductTotal, commission_fee: commissionPerVendor, commission_percent: commissionConfig?.commission_value || 10 },
           escrow_options: { commission_percent: commissionConfig?.commission_value || 10 }
         });
@@ -475,9 +479,9 @@ export default function ProductPaymentModal({
     }
 
     if (paymentMethod === 'wallet') {
-      toast.success('Paiement sécurisé effectué !', { description: `${fc(grandTotal, 'GNF')} bloqués en escrow (dont ${fc(commissionFee, 'GNF')} de frais)` });
+      toast.success('Paiement sécurisé effectué !', { description: `${fc(grandTotal, cur)} bloqués en escrow (dont ${fc(commissionFee, cur)} de frais)` });
     } else if (isCODMethod) {
-      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(grandTotal, 'GNF')}` });
+      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(grandTotal, cur)}` });
     }
 
     onPaymentSuccess();
@@ -497,7 +501,7 @@ export default function ProductPaymentModal({
               <CheckCircle2 className="w-10 h-10 text-green-600" />
             </div>
             <h3 className="text-xl font-bold text-green-700">Paiement réussi !</h3>
-            <p className="text-muted-foreground text-center">{fc(grandTotal, 'GNF')} — Votre commande a été créée</p>
+            <p className="text-muted-foreground text-center">{fc(grandTotal, cur)} — Votre commande a été créée</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -544,14 +548,14 @@ export default function ProductPaymentModal({
               </DialogTitle>
             </div>
             <DialogDescription>
-              Un débit de {fc(grandTotal, 'GNF')} sera envoyé sur votre téléphone
+              Un débit de {fc(grandTotal, cur)} sera envoyé sur votre téléphone
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className={`p-4 rounded-lg border ${providerBg}`}>
               <div className="text-center space-y-1">
-                <p className="text-2xl font-bold">{fc(grandTotal, 'GNF')}</p>
+                <p className="text-2xl font-bold">{fc(grandTotal, cur)}</p>
                 <p className="text-sm text-muted-foreground">Montant à débiter</p>
               </div>
             </div>
@@ -589,7 +593,7 @@ export default function ProductPaymentModal({
                 {mobileProcessing ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Traitement...</>
                 ) : (
-                  <>Payer {fc(grandTotal, 'GNF')}</>
+                  <>Payer {fc(grandTotal, cur)}</>
                 )}
               </Button>
             </div>
@@ -614,7 +618,7 @@ export default function ProductPaymentModal({
               <div className="bg-muted/50 rounded-lg p-3 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Sous-total produits:</span>
-                  <span>{fc(totalAmount, 'GNF')}</span>
+                  <span>{fc(totalAmount, cur)}</span>
                 </div>
                 {commissionFee > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground">
@@ -622,7 +626,7 @@ export default function ProductPaymentModal({
                       <Info className="w-3 h-3" />
                       Frais de service ({commissionConfig?.commission_value || 1.5}%):
                     </span>
-                    <span>+{fc(commissionFee, 'GNF')}</span>
+                    <span>+{fc(commissionFee, cur)}</span>
                   </div>
                 )}
                 {loadingCommission && (
@@ -632,7 +636,7 @@ export default function ProductPaymentModal({
                 )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total à payer:</span>
-                  <span className="text-primary">{fc(grandTotal, 'GNF')}</span>
+                  <span className="text-primary">{fc(grandTotal, cur)}</span>
                 </div>
               </div>
 
@@ -646,7 +650,7 @@ export default function ProductPaymentModal({
                   </div>
                   <div className="text-sm">
                     Solde disponible: <span className={`font-semibold ${insufficientBalance ? 'text-destructive' : 'text-green-600'}`}>
-                      {fc(walletBalance || 0, 'GNF')}
+                      {fc(walletBalance || 0, cur)}
                     </span>
                   </div>
                   {walletBalance === 0 && (
@@ -672,7 +676,7 @@ export default function ProductPaymentModal({
         {insufficientBalance && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Solde insuffisant. Il vous manque {fc(grandTotal - (walletBalance || 0), 'GNF')}.</AlertDescription>
+            <AlertDescription>Solde insuffisant. Il vous manque {fc(grandTotal - (walletBalance || 0), cur)}.</AlertDescription>
           </Alert>
         )}
 
@@ -711,7 +715,7 @@ export default function ProductPaymentModal({
                 <Truck className="h-4 w-4 text-emerald-600" />
                 <AlertDescription className="text-emerald-700">
                   <strong>Paiement à la livraison confirmé</strong><br/>
-                  Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(grandTotal, 'GNF')} en espèces.
+                  Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(grandTotal, cur)} en espèces.
                 </AlertDescription>
               </Alert>
             </div>
@@ -739,7 +743,7 @@ export default function ProductPaymentModal({
             }>
               <StripeCheckoutButton
                 amount={totalAmount}
-                currency="GNF"
+                currency={cur}
                 description={`Achat ${cartItems.length} article(s) - Marketplace 224Solutions`}
                 edgeFunction="marketplace-escrow-payment"
                 extraParams={{ cartItems: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId: i.vendorId })) }}
@@ -763,9 +767,9 @@ export default function ProductPaymentModal({
             loadingText="Traitement..."
             debounceMs={1000}
           >
-            {paymentMethod === 'card' ? `Payer maintenant ${fc(grandTotal, 'GNF')}` :
+            {paymentMethod === 'card' ? `Payer maintenant ${fc(grandTotal, cur)}` :
              paymentMethod === 'orange_money' || paymentMethod === 'mtn_money' ? 'Continuer' :
-             paymentMethod === 'wallet' ? `Payer ${fc(grandTotal, 'GNF')}` : `Confirmer ${fc(grandTotal, 'GNF')}`}
+             paymentMethod === 'wallet' ? `Payer ${fc(grandTotal, cur)}` : `Confirmer ${fc(grandTotal, cur)}`}
           </SecureButton>
         </div>
         </div>
