@@ -1500,9 +1500,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </Button>
                 </TabsContent>
 
-                {/* Onglet PayPal */}
-                <TabsContent value="paypal" className="space-y-4 mt-4">
-                  <PayPalInlineDeposit
+                {/* Onglet Carte Bancaire (Stripe) */}
+                <TabsContent value="card" className="space-y-4 mt-4">
+                  <StripeInlineDeposit
+                    userId={userId || ''}
+                    walletId={walletData?.id || ''}
                     onSuccess={async () => {
                       setDepositAmount('');
                       setDepositOpen(false);
