@@ -2139,7 +2139,7 @@ export function POSSystem() {
                         >
                         <CardContent className="p-0 flex flex-col">
                           {/* Image produit - Hauteur fixe pour éviter les débordements */}
-                          <div className="relative w-full h-20 md:h-28 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden flex-shrink-0">
+                          <div className="relative w-full h-24 md:h-28 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden flex-shrink-0">
                             {/* Badge stock (restant) */}
                             <div className="absolute top-1 right-1 z-10">
                               <Badge 
