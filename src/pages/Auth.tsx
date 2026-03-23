@@ -1008,25 +1008,11 @@ export default function Auth() {
           // Déterminer la route cible
           let targetRoute = '/home';
           if (profileData?.role) {
-            targetRoute = getDashboardRoute(profileData.role);
-            
-            if (profileData.role === 'vendeur' && vendorShopType === 'digital') {
-              targetRoute = '/vendeur-digital';
-            }
-            
-            // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service créé
-            if ((profileData.role as string) === 'prestataire') {
-              const { data: proService } = await supabase
-                .from('professional_services')
-                .select('id')
-                .eq('user_id', authData.user!.id)
-                .limit(1)
-                .maybeSingle();
-              
-              if (proService?.id) {
-                targetRoute = `/dashboard/service/${proService.id}`;
-              }
-            }
+            targetRoute = await resolvePostAuthRoute({
+              userId: authData.user!.id,
+              role: profileData.role,
+              vendorShopType,
+            });
           }
 
           // Afficher le modal de succès
