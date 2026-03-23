@@ -102,6 +102,13 @@ export function JomyPaymentSelector({
   const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
   const [showStripeInline, setShowStripeInline] = useState(false);
 
+  // Reset error state when switching payment methods
+  const handleMethodChange = (value: string) => {
+    setSelectedMethod(value as PaymentMethodId);
+    setPaymentStatus('idle');
+    setShowStripeInline(false);
+  };
+
   // État pour adresse de livraison (COD)
   const [deliveryAddress, setDeliveryAddress] = useState({
     street: '',
