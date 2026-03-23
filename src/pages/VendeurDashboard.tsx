@@ -71,7 +71,7 @@ function useRecentOrders(userId: string | undefined) {
           return;
         }
 
-        // 2. Récupérer les commandes
+        // 2. Récupérer les commandes avec profil client
         const { data, error } = await supabase
           .from('orders')
           .select(`
@@ -90,16 +90,43 @@ function useRecentOrders(userId: string | undefined) {
           return;
         }
 
-        // 3. Transformer les données avec types stricts
-        const formatted: RecentOrder[] = (data || []).map((order: OrderFromSupabase) => ({
-          order_number: order.order_number,
-          customer_label: order.customer?.user_id
-            ? `Client ${order.customer.user_id.slice(0, 6)}`
-            : 'Client',
-          status: (order.status as RecentOrder['status']) || 'pending',
-          total_amount: order.total_amount || 0,
-          created_at: order.created_at,
-        }));
+        // 3. Récupérer les profils des clients pour afficher leurs noms
+        const userIds = (data || [])
+          .map((o: OrderFromSupabase) => o.customer?.user_id)
+          .filter(Boolean) as string[];
+
+        let profilesMap: Record<string, string> = {};
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name')
+            .in('id', userIds);
+
+          if (profiles) {
+            for (const p of profiles) {
+              const name = [p.first_name, p.last_name].filter(Boolean).join(' ');
+              profilesMap[p.id] = name || '';
+            }
+          }
+        }
+
+        // 4. Transformer les données avec noms clients réels
+        const formatted: RecentOrder[] = (data || []).map((order: OrderFromSupabase) => {
+          const userId = order.customer?.user_id;
+          const clientName = userId && profilesMap[userId]
+            ? profilesMap[userId]
+            : userId
+              ? `Client #${userId.slice(0, 6)}`
+              : 'Client';
+
+          return {
+            order_number: order.order_number,
+            customer_label: clientName,
+            status: (order.status as RecentOrder['status']) || 'pending',
+            total_amount: order.total_amount || 0,
+            created_at: order.created_at,
+          };
+        });
 
         setOrders(formatted);
       } catch (error) {
