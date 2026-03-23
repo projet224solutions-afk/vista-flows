@@ -424,6 +424,11 @@ export default function PDGEscrowManagement() {
             )}
           </CardContent>
         </Card>
+        </TabsContent>
+
+        <TabsContent value="disputes">
+          <PDGEscrowDisputes />
+        </TabsContent>
       </div>
 
       {/* Dialog de confirmation */}
