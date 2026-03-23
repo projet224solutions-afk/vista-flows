@@ -740,38 +740,13 @@ export default function Payment() {
     }
   };
 
-  // Fonction pour paiement par carte
+  // Fonction pour paiement par carte — désormais géré par JomyPaymentSelector inline
+  // Cette fonction est conservée comme fallback si besoin
   const handleCardPayment = async () => {
     if (!user?.id || !paymentAmount) return;
-
-    setProcessing(true);
-    try {
-      toast({
-        title: "💳 Paiement par carte",
-        description: "Redirection vers la page de paiement sécurisé..."
-      });
-
-      // TODO: Intégrer avec Stripe ou autre provider
-      // Pour l'instant, afficher un message
-      setTimeout(() => {
-        toast({
-          title: "Information",
-          description: "Le paiement par carte sera bientôt disponible",
-        });
-        setProcessing(false);
-        setPaymentOpen(false);
-        setPaymentStep('form');
-      }, 1500);
-      
-    } catch (error: any) {
-      console.error('Erreur paiement carte:', error);
-      toast({
-        title: "Erreur",
-        description: error.message || "Impossible d'initier le paiement",
-        variant: "destructive"
-      });
-      setProcessing(false);
-    }
+    // Redirect to the JomyPaymentSelector card flow
+    setSelectedPaymentMethod('card');
+    setPaymentStep('method');
   };
 
   // Fonction pour confirmer et effectuer un paiement

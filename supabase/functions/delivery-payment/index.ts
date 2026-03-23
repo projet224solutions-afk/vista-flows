@@ -121,33 +121,34 @@ Deno.serve(async (req) => {
       console.log('[DeliveryPayment] Escrow created:', escrowId)
 
     } else if (payment_method === 'card') {
-      // Paiement Stripe avec escrow
+      // Paiement Stripe - créer Payment Intent pour confirmation côté client
       const stripe = (await import('https://esm.sh/stripe@13.6.0')).default(
         Deno.env.get('STRIPE_SECRET_KEY') ?? ''
       )
 
+      // Commission livraison (3%)
+      const commissionAmount = Math.round(amount * 0.03)
+      const totalAmount = amount + commissionAmount
+
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(amount), // Stripe veut le montant en centimes
+        amount: Math.round(totalAmount),
         currency: 'gnf',
-        payment_method: payment_method_id,
-        confirm: true,
+        automatic_payment_methods: { enabled: true },
         description: `Livraison ${delivery_id}`,
         metadata: {
           delivery_id: delivery_id,
           customer_id: customer_id,
           driver_id: driver_id,
-          type: 'delivery'
+          type: 'delivery',
+          commission_amount: commissionAmount.toString(),
+          driver_share: (amount - commissionAmount).toString(),
+          source: 'delivery',
         },
-        return_url: `${Deno.env.get('FRONTEND_URL')}/payment/callback`
       })
-
-      if (paymentIntent.status !== 'succeeded') {
-        throw new Error('Paiement Stripe échoué')
-      }
 
       stripePaymentIntentId = paymentIntent.id
 
-      // Créer l'escrow après paiement Stripe réussi
+      // Créer l'escrow (sera funded quand le paiement sera confirmé côté client)
       const { data: escrowData, error: escrowError } = await supabase.rpc('create_escrow', {
         p_buyer_id: customer_id,
         p_seller_id: driver_id,
@@ -160,12 +161,31 @@ Deno.serve(async (req) => {
         p_metadata: {
           delivery_id: delivery_id,
           stripe_payment_intent_id: stripePaymentIntentId,
-          payment_method: 'card'
+          payment_method: 'card',
+          status: 'awaiting_confirmation'
         }
       })
 
       if (escrowError) throw new Error('Échec création escrow')
       escrowId = escrowData
+
+      // Retourner le client_secret pour confirmation côté client
+      return new Response(
+        JSON.stringify({
+          success: true,
+          escrow_id: escrowId,
+          client_secret: paymentIntent.client_secret,
+          payment_intent_id: paymentIntent.id,
+          amount: totalAmount,
+          commission: commissionAmount,
+          requires_confirmation: true,
+          message: 'Confirmez le paiement côté client'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      )
 
     } else if (payment_method === 'mobile_money') {
       // Orange Money / MTN / Moov

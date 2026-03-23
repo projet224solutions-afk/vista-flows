@@ -34,6 +34,10 @@ interface StripeCardPaymentModalProps {
   orderId: string;
   sellerId: string;
   description?: string;
+  /** Edge function name to call. Defaults to 'stripe-pos-payment' */
+  edgeFunction?: string;
+  /** Extra body params to send to the edge function */
+  extraParams?: Record<string, unknown>;
   onSuccess: (paymentIntentId: string) => void;
   onError: (error: string) => void;
 }
@@ -285,6 +289,8 @@ export function StripeCardPaymentModal({
   orderId,
   sellerId,
   description,
+  edgeFunction = 'stripe-pos-payment',
+  extraParams,
   onSuccess,
   onError,
 }: StripeCardPaymentModalProps) {
@@ -337,13 +343,14 @@ export function StripeCardPaymentModal({
           setStripe(stripeInstance);
         }
 
-        const { data, error: fnError } = await supabase.functions.invoke('stripe-pos-payment', {
+        const { data, error: fnError } = await supabase.functions.invoke(edgeFunction, {
           body: {
             amount,
             currency,
             orderId,
             sellerId,
             description,
+            ...extraParams,
           },
         });
 

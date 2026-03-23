@@ -17,6 +17,7 @@ import { useRestaurantMenu, type MenuItem } from '@/hooks/useRestaurantMenu';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, Receipt,
   UtensilsCrossed, MapPin, Truck, ShoppingBag, Printer,
@@ -67,6 +68,8 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [lastOrder, setLastOrder] = useState<any>(null);
+  const [showStripeModal, setShowStripeModal] = useState(false);
+  const [pendingCardOrder, setPendingCardOrder] = useState<{ orderId: string; amount: number } | null>(null);
 
   // Filter available items
   const availableItems = useMemo(() => {
@@ -124,7 +127,9 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
 
     setSubmitting(true);
     try {
-      // Create order in restaurant_orders table
+      // Pour le paiement carte, créer la commande en statut 'pending' d'abord
+      const isPendingPayment = paymentMethod === 'card';
+      
       const orderData = {
         professional_service_id: serviceId,
         order_type: orderType,
@@ -133,7 +138,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
         table_number: orderType === 'sur_place' ? (tableNumber || null) : null,
         total_amount: subtotal,
         payment_method: paymentMethod,
-        payment_status: paymentMethod === 'cash' ? 'pending' : 'paid',
+        payment_status: paymentMethod === 'cash' ? 'pending' : (isPendingPayment ? 'pending' : 'paid'),
         notes: orderNotes || null,
         items: cart.map(c => ({
           menu_item_id: c.menuItemId,
@@ -153,6 +158,15 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
 
       if (error) throw error;
 
+      // Si paiement par carte, ouvrir le modal Stripe
+      if (isPendingPayment) {
+        setPendingCardOrder({ orderId: data.id, amount: subtotal });
+        setShowStripeModal(true);
+        setIsCheckoutOpen(false);
+        setSubmitting(false);
+        return;
+      }
+
       setLastOrder({ ...orderData, id: data.id, created_at: data.created_at });
       setIsCheckoutOpen(false);
       setIsReceiptOpen(true);
@@ -170,6 +184,49 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleStripeSuccess = async (paymentIntentId: string) => {
+    if (!pendingCardOrder) return;
+
+    try {
+      // Marquer la commande comme payée
+      await supabase
+        .from('restaurant_orders')
+        .update({ payment_status: 'paid' })
+        .eq('id', pendingCardOrder.orderId);
+
+      const { data: order } = await supabase
+        .from('restaurant_orders')
+        .select('*')
+        .eq('id', pendingCardOrder.orderId)
+        .single();
+
+      if (order) {
+        setLastOrder(order);
+      }
+
+      setShowStripeModal(false);
+      setPendingCardOrder(null);
+      setIsReceiptOpen(true);
+
+      // Reset
+      setCart([]);
+      setCustomerName('');
+      setTableNumber('');
+      setOrderNotes('');
+
+      toast.success('Paiement par carte réussi !');
+    } catch (err) {
+      console.error('Error updating order after payment:', err);
+      toast.error('Paiement reçu mais erreur de mise à jour');
+    }
+  };
+
+  const handleStripeError = (error: string) => {
+    console.error('Stripe payment error:', error);
+    toast.error(`Erreur de paiement: ${error}`);
+    setShowStripeModal(false);
   };
 
   if (loading) {
@@ -523,6 +580,25 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Stripe pour paiement par carte */}
+      {pendingCardOrder && (
+        <StripeCardPaymentModal
+          isOpen={showStripeModal}
+          onClose={() => {
+            setShowStripeModal(false);
+            setPendingCardOrder(null);
+          }}
+          amount={pendingCardOrder.amount}
+          orderId={pendingCardOrder.orderId}
+          sellerId={serviceId}
+          description={`Commande restaurant #${pendingCardOrder.orderId.slice(-6).toUpperCase()}`}
+          edgeFunction="restaurant-payment"
+          extraParams={{ serviceId }}
+          onSuccess={handleStripeSuccess}
+          onError={handleStripeError}
+        />
+      )}
     </div>
   );
 }
