@@ -73,41 +73,8 @@ function getSafePayPalReturnUrl(rawUrl: unknown, fallbackUrl: string): string {
 }
 
 async function getFxRateForDeposit(supabaseAdmin: any, from: string, to: string): Promise<number> {
-  if (from.toUpperCase() === to.toUpperCase()) return 1;
-
-  // Try currency_exchange_rates table first
-  try {
-    const { data } = await supabaseAdmin
-      .from("currency_exchange_rates")
-      .select("rate")
-      .eq("from_currency", from.toUpperCase())
-      .eq("to_currency", to.toUpperCase())
-      .eq("is_active", true)
-      .maybeSingle();
-    if (data?.rate && Number(data.rate) > 0) return Number(data.rate);
-  } catch {
-    // ignore
-  }
-
-  // Fallback: fx-rates edge function
-  const fxResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fx-rates`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-    },
-    body: JSON.stringify({ base: from, symbols: [to] }),
-  });
-
-  if (!fxResponse.ok) {
-    throw new Error(`Impossible d'obtenir le taux ${from}→${to}`);
-  }
-
-  const fxData = await fxResponse.json();
-  const rate = fxData?.rates?.[to.toUpperCase()];
-  if (typeof rate === "number" && Number.isFinite(rate) && rate > 0) return rate;
-
-  throw new Error(`Taux manquant pour ${from}→${to}`);
+  const result = await getInternalFxRate(supabaseAdmin, from, to);
+  return result.rate;
 }
 
 async function getPayPalAccessToken(): Promise<string> {

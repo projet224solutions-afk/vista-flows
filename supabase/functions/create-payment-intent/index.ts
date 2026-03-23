@@ -52,64 +52,8 @@ async function getPayPalAccessToken(clientId: string, secretKey: string): Promis
 }
 
 async function resolveFxRate(supabaseAdmin: any, fromCurrency: string, toCurrency: string): Promise<FxResolution> {
-  const from = fromCurrency.toUpperCase();
-  const to = toCurrency.toUpperCase();
-
-  if (from === to) {
-    return { rate: 1, source: "same-currency" };
-  }
-
-  // 1) Table locale
-  try {
-    const { data: direct } = await supabaseAdmin
-      .from("currency_exchange_rates")
-      .select("rate")
-      .eq("from_currency", from)
-      .eq("to_currency", to)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (direct?.rate && Number(direct.rate) > 0) {
-      return { rate: Number(direct.rate), source: "table" };
-    }
-
-    const { data: reverse } = await supabaseAdmin
-      .from("currency_exchange_rates")
-      .select("rate")
-      .eq("from_currency", to)
-      .eq("to_currency", from)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (reverse?.rate && Number(reverse.rate) > 0) {
-      return { rate: 1 / Number(reverse.rate), source: "table-inverse" };
-    }
-  } catch {
-    // fallback below
-  }
-
-  // 2) Fallback fx-rates
-  const fxResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fx-rates`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-    },
-    body: JSON.stringify({ base: from, symbols: [to] }),
-  });
-
-  if (!fxResponse.ok) {
-    throw new Error(`Impossible d'obtenir le taux de change ${from}→${to}`);
-  }
-
-  const fxData = await fxResponse.json();
-  const rate = Number(fxData?.rates?.[to]);
-
-  if (!Number.isFinite(rate) || rate <= 0) {
-    throw new Error(`Taux de change invalide pour ${from}→${to}`);
-  }
-
-  return { rate, source: "fx-rates" };
+  const result = await getInternalFxRate(supabaseAdmin, fromCurrency, toCurrency);
+  return { rate: result.rate, source: result.source };
 }
 
 async function resolvePayPalAmount(

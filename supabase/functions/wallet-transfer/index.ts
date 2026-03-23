@@ -108,54 +108,23 @@ async function logFinancialAudit(supabase: any, userId: string, action: string, 
 }
 
 // =============================================
-// 🌍 FX RATE - API externe uniquement
+// 🌍 FX RATE - Lecture interne depuis currency_exchange_rates
 // =============================================
 
+// Supabase admin client for FX lookups (created lazily)
+let _fxSupabase: any = null;
+function getFxSupabase() {
+  if (!_fxSupabase) {
+    _fxSupabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+  }
+  return _fxSupabase;
+}
+
 async function getFxRateFromAPI(from: string, to: string): Promise<{ rate: number; source: string; fetched_at: string }> {
-  if (from === to) return { rate: 1, source: "identity", fetched_at: new Date().toISOString() };
-
-  // Appeler notre edge function fx-rates qui utilise l'API open.er-api.com
-  try {
-    const fxResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fx-rates`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-      },
-      body: JSON.stringify({ base: from, symbols: [to] }),
-    });
-
-    if (fxResponse.ok) {
-      const fxData = await fxResponse.json();
-      if (fxData.rates?.[to] && Number(fxData.rates[to]) > 0) {
-        return {
-          rate: Number(fxData.rates[to]),
-          source: fxData.provider || "open-er-api",
-          fetched_at: fxData.fetched_at || new Date().toISOString(),
-        };
-      }
-    }
-  } catch (e) {
-    console.error("[FX] Edge function call failed:", e);
-  }
-
-  // Fallback direct API call
-  try {
-    const url = `https://open.er-api.com/v6/latest/${encodeURIComponent(from)}`;
-    const res = await fetch(url, { headers: { accept: "application/json" } });
-    const json = await res.json();
-    if (res.ok && json?.result === "success" && json.rates?.[to]) {
-      return {
-        rate: Number(json.rates[to]),
-        source: "open-er-api-direct",
-        fetched_at: new Date().toISOString(),
-      };
-    }
-  } catch (e) {
-    console.error("[FX] Direct API call failed:", e);
-  }
-
-  throw new Error(`Impossible d'obtenir le taux de change ${from} → ${to}. Réessayez plus tard.`);
+  return getInternalFxRate(getFxSupabase(), from, to);
 }
 
 // =============================================
