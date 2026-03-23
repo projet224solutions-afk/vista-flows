@@ -582,7 +582,7 @@ export default function SyndicatDashboardUltraPro() {
                                     </Button>
 
                                     <Button
-                                        onClick={() => toast.success('Permissions mises à jour !')}
+                                        onClick={() => setActiveTab('members')}
                                         variant="outline"
                                         className="w-full rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50"
                                     >
