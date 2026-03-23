@@ -555,9 +555,15 @@ export default function PDGServiceSubscriptions() {
         </div>
       )}
 
-      {/* Sub-tabs: Abonnements / Plans / Historique */}
+      {/* Sub-tabs: Prestataires / Validation / Abonnements / Plans / Historique */}
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="providers">
+            <UserCheck className="w-3.5 h-3.5 mr-1.5" />Prestataires
+          </TabsTrigger>
+          <TabsTrigger value="validation">
+            <ClipboardCheck className="w-3.5 h-3.5 mr-1.5" />Validation
+          </TabsTrigger>
           <TabsTrigger value="subscriptions">
             <Users className="w-3.5 h-3.5 mr-1.5" />Abonnements
           </TabsTrigger>
@@ -568,6 +574,16 @@ export default function PDGServiceSubscriptions() {
             <History className="w-3.5 h-3.5 mr-1.5" />Historique
           </TabsTrigger>
         </TabsList>
+
+        {/* Providers List */}
+        <TabsContent value="providers" className="space-y-4">
+          <PDGServiceProvidersList activeServiceTab={activeServiceTab} serviceTypes={serviceTypes} />
+        </TabsContent>
+
+        {/* Validation */}
+        <TabsContent value="validation" className="space-y-4">
+          <PDGServiceValidation activeServiceTab={activeServiceTab} serviceTypes={serviceTypes} onRefresh={fetchData} />
+        </TabsContent>
 
         {/* Subscriptions List */}
         <TabsContent value="subscriptions" className="space-y-4">
