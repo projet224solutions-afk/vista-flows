@@ -178,14 +178,20 @@ export default function StripeCheckoutButton({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  const initCalledRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
+    initCalledRef.current = false;
     return () => { mountedRef.current = false; };
   }, []);
 
   useEffect(() => {
+    // Guard against duplicate calls (StrictMode double-mount)
+    if (initCalledRef.current) return;
+
     const init = async () => {
+      initCalledRef.current = true;
       try {
         setLoading(true);
         setError(null);
@@ -240,7 +246,7 @@ export default function StripeCheckoutButton({
     };
 
     if (!disabled) init();
-  }, [amount, currency, orderId, description, creditWallet, disabled]);
+  }, [amount, currency, orderId, creditWallet, disabled]);
 
   if (disabled) {
     return (

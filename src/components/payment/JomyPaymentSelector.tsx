@@ -102,6 +102,13 @@ export function JomyPaymentSelector({
   const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
   const [showStripeInline, setShowStripeInline] = useState(false);
 
+  // Reset error state when switching payment methods
+  const handleMethodChange = (value: string) => {
+    setSelectedMethod(value as PaymentMethodId);
+    setPaymentStatus('idle');
+    setShowStripeInline(false);
+  };
+
   // État pour adresse de livraison (COD)
   const [deliveryAddress, setDeliveryAddress] = useState({
     street: '',
@@ -430,18 +437,20 @@ export function JomyPaymentSelector({
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {/* Erreur */}
-          {(error || paymentStatus === 'failed') && (
+          {/* Erreur — only show ChapChapPay error when a ChapChapPay method is selected */}
+          {paymentStatus === 'failed' && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error || 'Paiement échoué'}</AlertDescription>
+              <AlertDescription>
+                {(selectedMethod.startsWith('CCP_') && error) ? error : 'Paiement échoué. Veuillez réessayer.'}
+              </AlertDescription>
             </Alert>
           )}
 
           {/* Méthodes de paiement */}
           <RadioGroup
             value={selectedMethod}
-            onValueChange={(value) => setSelectedMethod(value as PaymentMethodId)}
+            onValueChange={handleMethodChange}
             className="space-y-2"
             disabled={processing}
           >
@@ -566,7 +575,7 @@ export function JomyPaymentSelector({
               </div>
               <StripeCheckoutButton
                 amount={amount}
-                currency={displayCurrency === 'GNF' ? 'USD' : displayCurrency}
+                currency={displayCurrency}
                 description={description || 'Paiement 224Solutions'}
                 orderId={orderId}
                 sellerId={sellerId || recipientId}
