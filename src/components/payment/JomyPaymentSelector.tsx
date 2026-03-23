@@ -234,10 +234,10 @@ export function JomyPaymentSelector({
       return;
     }
 
-    // Paiement par PayPal (carte ou solde PayPal)
-    if (selectedMethod === 'PAYPAL') {
-      console.log('🔵 [JomyPaymentSelector] Showing PayPal inline');
-      setShowPaypalInline(true);
+    // Paiement par Carte Bancaire (Stripe)
+    if (selectedMethod === 'CARD') {
+      console.log('🔵 [JomyPaymentSelector] Showing Stripe inline');
+      setShowStripeInline(true);
       return;
     }
 
