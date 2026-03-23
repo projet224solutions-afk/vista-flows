@@ -41,13 +41,15 @@ export default function ServiceDashboard() {
   // Auto-fill GPS is now handled globally via useAutoFillGps in App.tsx
 
   useEffect(() => {
-    if (!loading && userServices.length > 0) {
+    if (!loading) {
       const found = userServices.find((s) => s.id === serviceId);
       if (found) {
         setService(found);
-      } else {
+      } else if (userServices.length > 0 || !serviceId) {
+        // Services loaded but this one not found
         navigate('/services');
       }
+      // If userServices is empty, we still show "Service introuvable"
     }
   }, [serviceId, userServices, loading, navigate]);
 
