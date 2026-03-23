@@ -85,8 +85,9 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
       </div>
 
       <div className="flex-1 space-y-2">
-        <h2 className="font-semibold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+        <h2 className="font-semibold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors flex items-center gap-1">
           {vendor.business_name}
+          <VendorCertBadgeSmall vendorId={vendor.id} />
         </h2>
 
         {(vendor.city || vendor.neighborhood || vendor.address) && (
