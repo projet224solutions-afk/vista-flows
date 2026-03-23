@@ -23,7 +23,7 @@ const PAYPAL_NO_DECIMAL_CURRENCIES = new Set(["JPY", "HUF", "TWD"]);
 
 interface FxResolution {
   rate: number;
-  source: "same-currency" | "table" | "table-inverse" | "fx-rates";
+  source: string;
 }
 
 const json = (payload: Record<string, unknown>, status = 200) =>
