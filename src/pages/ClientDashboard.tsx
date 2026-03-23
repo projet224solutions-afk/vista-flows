@@ -467,7 +467,7 @@ export default function ClientDashboard() {
                     <CardTitle>Produits populaires</CardTitle>
                     <CardDescription>Découvrez nos meilleures ventes</CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab('products')}>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/marketplace')}>
                     Voir tout
                   </Button>
                 </div>
