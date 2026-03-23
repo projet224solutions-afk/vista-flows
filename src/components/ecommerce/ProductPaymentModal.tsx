@@ -54,6 +54,8 @@ interface ProductPaymentModalProps {
   onPaymentSuccess: () => void;
   userId: string;
   customerId: string | null;
+  /** Devise source du produit/vendeur (ex: 'XOF', 'GNF'). Défaut: 'GNF' */
+  currency?: string;
 }
 
 export default function ProductPaymentModal({
