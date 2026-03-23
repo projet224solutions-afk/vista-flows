@@ -238,8 +238,9 @@ export const useRoleRedirect = () => {
         return;
       }
       
-      // ✅ Pour les prestataires sur /home ou /service-selection, rediriger vers leur dashboard
-      if ((profile.role as string) === 'prestataire' && (currentPath === '/home' || currentPath === '/service-selection')) {
+      // ✅ Pour les prestataires sur /service-selection, rediriger vers leur dashboard
+      // NOTE: /home est exclu pour permettre aux prestataires de naviguer librement sur l'accueil
+      if ((profile.role as string) === 'prestataire' && currentPath === '/service-selection') {
         const redirectPrestaFromHome = async () => {
           const { data: proService } = await supabase
             .from('professional_services')
