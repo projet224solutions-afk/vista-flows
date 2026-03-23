@@ -161,7 +161,7 @@ serve(async (req) => {
           .eq('currency', 'GNF');
 
         // Créditer le wallet chauffeur (via RPC pour atomicité)
-        const { error: walletError } = await supabaseClient.rpc('process_wallet_transaction', {
+        const { error: walletError } = await supabaseAdmin.rpc('process_wallet_transaction', {
           p_sender_id: ride.customer_id,
           p_receiver_id: ride.driver_id,
           p_amount: driverShare,
@@ -286,7 +286,7 @@ serve(async (req) => {
         .single();
 
       if (driver) {
-        await supabaseClient.rpc('create_taxi_notification', {
+        await supabaseAdmin.rpc('create_taxi_notification', {
           p_user_id: driver.user_id,
           p_type: 'payment_received',
           p_title: 'Paiement reçu',
