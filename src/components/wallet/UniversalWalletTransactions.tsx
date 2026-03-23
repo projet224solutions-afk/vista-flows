@@ -83,7 +83,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   
   // États pour les formulaires
   const [depositAmount, setDepositAmount] = useState('');
-  const [depositMethod, setDepositMethod] = useState<'card' | 'mobile_money' | 'paypal'>('card');
+  const [depositMethod, setDepositMethod] = useState<'card' | 'mobile_money' | 'card_stripe'>('card');
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
   const [withdrawAmount, setWithdrawAmount] = useState('');
