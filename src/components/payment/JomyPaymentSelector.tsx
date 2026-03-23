@@ -557,26 +557,25 @@ export function JomyPaymentSelector({
             </Alert>
           )}
 
-          {/* PayPal inline — formulaire carte affiché directement */}
-          {showPaypalInline && selectedMethod === 'PAYPAL' ? (
+          {/* Stripe inline — formulaire carte affiché directement */}
+          {showStripeInline && selectedMethod === 'CARD' ? (
             <div className="pt-4 space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="h-5 w-5 text-primary" />
                 <span className="font-semibold text-sm">Saisissez vos informations de carte</span>
               </div>
-              <PayPalCheckoutButton
+              <StripeCheckoutButton
                 amount={amount}
                 currency={displayCurrency === 'GNF' ? 'USD' : displayCurrency}
                 description={description || 'Paiement 224Solutions'}
                 orderId={orderId}
-                onSuccess={handlePayPalSuccess}
-                onCancel={() => setShowPaypalInline(false)}
-                onError={handlePayPalError}
-                cardOnly
+                onSuccess={handleStripeSuccess}
+                onCancel={() => setShowStripeInline(false)}
+                onError={handleStripeError}
               />
               <Button
                 variant="outline"
-                onClick={() => setShowPaypalInline(false)}
+                onClick={() => setShowStripeInline(false)}
                 className="w-full"
               >
                 Retour
