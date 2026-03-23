@@ -23,9 +23,16 @@ import { resolvePostAuthRoute, cleanupOAuthFlags, cleanupAffiliateFlags } from "
 import { COUNTRY_PHONE_CODES, WORLD_PHONE_CODES, PHONE_VALIDATION_RULES, validatePhoneNumber, getPhoneExample, getPhoneLengthHint } from "@/utils/phoneData";
 
 // Validation schemas avec tous les rôles
+// Password strength: 8+ chars, uppercase, lowercase, digit
+const passwordSchema = z.string()
+  .min(8, "Le mot de passe doit faire au moins 8 caractères")
+  .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
+  .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
+  .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre");
+
 const loginSchema = z.object({
   email: z.string().email("Adresse email invalide"),
-  password: z.string().min(6, "Le mot de passe doit faire au moins 6 caractères")
+  password: z.string().min(1, "Le mot de passe est requis")
 });
 
 const signupSchema = loginSchema.extend({
