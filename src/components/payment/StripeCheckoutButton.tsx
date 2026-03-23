@@ -166,6 +166,7 @@ export default function StripeCheckoutButton({
   orderId,
   sellerId,
   edgeFunction,
+  extraParams,
   onSuccess,
   onCancel,
   onError,
