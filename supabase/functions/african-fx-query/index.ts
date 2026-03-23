@@ -52,7 +52,7 @@ serve(async (req) => {
       // Build query for current rates
       let query = supabase
         .from("currency_exchange_rates")
-        .select("from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, effective_date, retrieved_at, status")
+        .select("from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, effective_date, retrieved_at, status")
         .eq("is_active", true);
 
       if (currency) {

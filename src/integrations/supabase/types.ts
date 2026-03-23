@@ -4795,6 +4795,7 @@ export type Database = {
           rate_usd: number | null
           retrieved_at: string | null
           source: string | null
+          source_type: string | null
           source_url: string | null
           status: string | null
           to_currency: string
@@ -4814,6 +4815,7 @@ export type Database = {
           rate_usd?: number | null
           retrieved_at?: string | null
           source?: string | null
+          source_type?: string | null
           source_url?: string | null
           status?: string | null
           to_currency: string
@@ -4833,6 +4835,7 @@ export type Database = {
           rate_usd?: number | null
           retrieved_at?: string | null
           source?: string | null
+          source_type?: string | null
           source_url?: string | null
           status?: string | null
           to_currency?: string
@@ -9811,6 +9814,7 @@ export type Database = {
           rate_eur: number | null
           rate_usd: number | null
           source: string
+          source_type: string | null
           source_url: string | null
           status: string
         }
@@ -9822,6 +9826,7 @@ export type Database = {
           rate_eur?: number | null
           rate_usd?: number | null
           source: string
+          source_type?: string | null
           source_url?: string | null
           status?: string
         }
@@ -9833,6 +9838,7 @@ export type Database = {
           rate_eur?: number | null
           rate_usd?: number | null
           source?: string
+          source_type?: string | null
           source_url?: string | null
           status?: string
         }
@@ -11360,6 +11366,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      load_test_logs: {
+        Row: {
+          created_at: string | null
+          id: number
+          source: string | null
+          test_key: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: never
+          source?: string | null
+          test_key: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: never
+          source?: string | null
+          test_key?: string
+        }
+        Relationships: []
       }
       location_access: {
         Row: {
@@ -27937,6 +27964,7 @@ export type Database = {
         Args: { p_agent_id: string }
         Returns: Json
       }
+      benchmark_ping: { Args: never; Returns: Json }
       block_ip_address: {
         Args: {
           p_auto_block?: boolean
