@@ -25,6 +25,7 @@ import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { SecureButton } from "@/components/ui/SecureButton";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { useChapChapPay } from "@/hooks/useChapChapPay";
+import { usePriceConverter } from "@/hooks/usePriceConverter";
 
 const StripeCheckoutButton = lazy(() => import("@/components/payment/StripeCheckoutButton"));
 
