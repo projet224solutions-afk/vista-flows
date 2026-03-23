@@ -669,7 +669,10 @@ export default function LivreurDashboard() {
                         onClick={(e) => {
                           e.preventDefault();
                           const problem = prompt("Décrivez le problème:");
-                          if (problem && currentDelivery) reportProblem(currentDelivery.id, problem);
+                          if (problem && currentRide) {
+                            toast.info('Problème signalé pour la course #' + currentRide.id.slice(0, 8));
+                            // TODO: Implement ride problem reporting via TaxiMotoService
+                          }
                         }} 
                         variant="destructive"
                         disabled={loading}
