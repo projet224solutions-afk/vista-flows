@@ -34,7 +34,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Building2 } from 'lucide-react';
-import PayPalInlineDeposit from './PayPalInlineDeposit';
+import StripeInlineDeposit from './StripeWalletDeposit';
 import StripeWalletTopup from './StripeWalletTopup';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
