@@ -100,9 +100,8 @@ export default function SyndicatDashboardUltraPro() {
     const { members: syndicateMembers, drivers: taxiMotards, stats: syndicateStats, loading: dataLoading, error, refresh, bureauId, bureauName } = useSyndicatUltraProData();
 
     useEffect(() => {
-        // Data is managed by hook; keep UI loading state in sync
         setLoading(dataLoading);
-    }, []);
+    }, [dataLoading]);
 
     /**
      * Charge les données du bureau syndicat
