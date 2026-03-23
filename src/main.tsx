@@ -26,7 +26,10 @@ function isLikelyChunkOrAssetLoadError(err: unknown): boolean {
     /Failed to fetch dynamically imported module/i.test(message) ||
     /Loading chunk \d+ failed/i.test(message) ||
     /ChunkLoadError/i.test(message) ||
-    /Importing a module script failed/i.test(message)
+    /Importing a module script failed/i.test(message) ||
+    /Failed to load module script/i.test(message) ||
+    /disallowed MIME type/i.test(message) ||
+    /Unexpected token\s*</i.test(message)
   );
 }
 
@@ -34,6 +37,7 @@ async function recoverFromStaleCache(trigger: string, err?: unknown) {
   try {
     if (sessionStorage.getItem(RECOVERY_FLAG) === "1") return;
     sessionStorage.setItem(RECOVERY_FLAG, "1");
+    sessionStorage.removeItem("page_reloaded_for_chunk");
 
     console.warn("🧹 [Recovery] Tentative de récupération (cache/SW)", { trigger, err });
 

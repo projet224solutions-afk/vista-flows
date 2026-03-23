@@ -1,6 +1,6 @@
-// Service Worker v13 - PWA + Firebase Cloud Messaging + Mode Offline Complet + Background Sync
-// v13: Fix app shell caching + offline auth support robuste
-const CACHE_VERSION = "v13";
+// Service Worker v14 - PWA + Firebase Cloud Messaging + Mode Offline Complet + Background Sync
+// v14: anti-écran-blanc déploiement (assets network-first + invalidation cache)
+const CACHE_VERSION = "v14";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -421,25 +421,32 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Assets avec hash (immutables) - Cache First
-  if (url.pathname.match(/\/assets\/.*\.[a-f0-9]{8}\./)) {
+  // Assets Vite (/assets/*.js|css) - Network First + fallback cache
+  // Objectif: éviter les écrans blancs après déploiement (chunks supprimés/renommés)
+  if (url.pathname.startsWith('/assets/') && /\.(js|css)$/.test(url.pathname)) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((response) => {
+      fetch(event.request, { cache: 'no-cache' })
+        .then((response) => {
           if (response.ok) {
             const clone = response.clone();
             caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
           }
           return response;
-        });
-      })
+        })
+        .catch(async () => {
+          const cached = await caches.match(event.request);
+          if (cached) return cached;
+
+          // Si l'asset n'existe plus (nouveau déploiement), forcer un refresh app shell
+          const appShell = await caches.match('/') || await caches.match('/index.html');
+          return appShell || Response.error();
+        })
     );
     return;
   }
 
   // Autres ressources statiques - Cache First pour meilleur offline
-  if (url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/)) {
+  if (!url.pathname.startsWith('/assets/') && url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/)) {
     event.respondWith(
       caches.match(event.request)
         .then((cached) => {
