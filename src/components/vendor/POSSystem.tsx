@@ -2363,10 +2363,10 @@ export function POSSystem() {
                           <img 
                             src={item.images[0]} 
                             alt={item.name}
-                            className="w-8 h-8 rounded object-cover flex-shrink-0"
+                            className="w-10 h-10 rounded object-cover flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
                             <Package className="w-4 h-4 text-muted-foreground" />
                           </div>
                         )}
