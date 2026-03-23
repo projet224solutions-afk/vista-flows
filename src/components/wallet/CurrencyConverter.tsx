@@ -13,7 +13,7 @@ import { ArrowRightLeft, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { CurrencySelect } from '@/components/ui/currency-select';
 import { useFxRates } from '@/hooks/useFxRates';
-import { formatCurrency, getCurrencyByCode } from '@/data/currencies';
+import { formatCurrency } from '@/data/currencies';
 
 export function CurrencyConverter() {
   const [amount, setAmount] = useState('');
