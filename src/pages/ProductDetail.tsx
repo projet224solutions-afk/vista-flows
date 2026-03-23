@@ -18,6 +18,13 @@ import { getCurrencyForCountry } from "@/data/countryMappings";
 import { useVendorCertification } from "@/hooks/useVendorCertification";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
 
+// Mini composant pour afficher l'icône certifié à côté du nom vendeur
+function VendorCertBadge({ vendorId }: { vendorId: string }) {
+  const { certification } = useVendorCertification(vendorId);
+  if (!certification) return null;
+  return <CertifiedIcon status={certification.status} className="w-4 h-4" />;
+}
+
 interface Product {
   id: string;
   name: string;

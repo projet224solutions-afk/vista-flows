@@ -20,6 +20,13 @@ import { getCurrencyForCountry } from "@/data/countryMappings";
 import { useVendorCertification } from "@/hooks/useVendorCertification";
 import { CertifiedVendorBadge } from "@/components/vendor/CertifiedVendorBadge";
 
+// Mini composant pour afficher le badge de certification d'un vendeur
+function VendorCertBadgeInline({ vendorId }: { vendorId: string }) {
+  const { certification } = useVendorCertification(vendorId);
+  if (!certification || certification.status !== 'CERTIFIE') return null;
+  return <CertifiedVendorBadge status={certification.status} verifiedAt={certification.verified_at} />;
+}
+
 interface Vendor {
   id: string;
   business_name: string;
