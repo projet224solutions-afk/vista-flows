@@ -71,7 +71,12 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProviders((data || []) as Provider[]);
+      // Filtrer les boutiques/digital - ne garder que les services de proximité
+      const EXCLUDED_CODES = ['ecommerce', 'dropshipping', 'digital_livre', 'digital_logiciel'];
+      const filtered = (data || []).filter(
+        (p: any) => !p.service_type || !EXCLUDED_CODES.includes(p.service_type.code)
+      );
+      setProviders(filtered as Provider[]);
     } catch (err) {
       console.error('Error fetching providers:', err);
     } finally {

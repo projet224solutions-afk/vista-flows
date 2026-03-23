@@ -62,7 +62,11 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setServices((data || []) as PendingService[]);
+      const EXCLUDED_CODES = ['ecommerce', 'dropshipping', 'digital_livre', 'digital_logiciel'];
+      const proximityOnly = (data || []).filter(
+        (s: any) => !s.service_type || !EXCLUDED_CODES.includes(s.service_type.code)
+      );
+      setServices(proximityOnly as PendingService[]);
     } catch (err) {
       console.error('Error fetching pending services:', err);
     } finally {

@@ -34,6 +34,9 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
+// Codes de service qui sont des BOUTIQUES/DIGITAL, pas des services de proximité
+const EXCLUDED_SERVICE_CODES = ['ecommerce', 'dropshipping', 'digital_livre', 'digital_logiciel'];
+
 // Service type icon mapping
 const SERVICE_ICONS: Record<string, any> = {
   restaurant: UtensilsCrossed,
@@ -146,7 +149,11 @@ export default function PDGServiceSubscriptions() {
       setPriceHistory(historyData);
       setStats(statsData);
       setSubscriptions(subsData);
-      setServiceTypes(stData || []);
+      // Filtrer les boutiques/digital - ne garder que les services de proximité
+      const proximityServices = (stData || []).filter(
+        (st: any) => !EXCLUDED_SERVICE_CODES.includes(st.code)
+      );
+      setServiceTypes(proximityServices);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({ title: 'Erreur', description: 'Impossible de charger les données', variant: 'destructive' });
