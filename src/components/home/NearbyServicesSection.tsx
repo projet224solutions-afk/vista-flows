@@ -29,7 +29,6 @@ export function NearbyServicesSection({
   className,
 }: NearbyServicesSectionProps) {
   const { t } = useTranslation();
-  const { cityName, positionReady } = useGeoDistance();
 
   const services = [
     {
