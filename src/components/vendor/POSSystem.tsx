@@ -2578,26 +2578,26 @@ export function POSSystem() {
                 )}
 
                 {/* Boutons de validation */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 pt-1">
                   <Button 
                     onClick={openCreditSaleModal}
                     variant="outline"
-                    className="h-11 sm:h-12 font-semibold text-xs sm:text-sm"
+                    className="h-12 font-semibold text-sm"
                     disabled={cart.length === 0}
                   >
-                    <CreditCard className="h-4 w-4 mr-1" />
+                    <CreditCard className="h-4 w-4 mr-1.5" />
                     À crédit
                   </Button>
                   <Button 
                     onClick={validateOrder}
-                    className="h-11 sm:h-12 font-bold text-xs sm:text-sm shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+                    className="h-12 font-bold text-sm shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
                     disabled={cart.length === 0}
                   >
-                    <CheckSquare className="h-4 w-4 mr-1" />
+                    <CheckSquare className="h-4 w-4 mr-1.5" />
                     Valider
                   </Button>
                 </div>
-                <p className="text-center text-xs font-bold text-primary">{total.toLocaleString()} GNF</p>
+                <p className="text-center text-sm font-bold text-primary pb-1">{formatPriceWithCurrency(total)}</p>
               </div>
             )}
           </Card>
