@@ -49,7 +49,7 @@ export const VendorPaymentModal = ({
   const [cardToken, setCardToken] = useState('');
 
   const handlePayment = async () => {
-    if (selectedMethod === 'paypal') return; // PayPal handled by SDK buttons
+    if (selectedMethod === 'stripe') return; // Stripe handled by Elements
     setIsProcessing(true);
 
     try {
