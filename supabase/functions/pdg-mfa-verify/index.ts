@@ -129,8 +129,8 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({
         success: true,
-        message: 'MFA code sent',
-        ...(resendKey ? {} : { dev_code: mfaCode }),
+        message: emailSent ? 'MFA code sent to your email' : 'MFA code generated',
+        ...(emailSent ? {} : { dev_code: mfaCode }),
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
