@@ -411,9 +411,10 @@ export default function PDG224Solutions() {
         {error && (
           <div className="max-w-[1600px] mx-auto px-6 pt-4">
             <ErrorBanner
-              type={error.type}
+              title={`Erreur ${error.type}`}
               message={error.message}
-              onDismiss={clearError}
+              actionLabel="Fermer"
+              onAction={clearError}
             />
           </div>
         )}
