@@ -25,8 +25,10 @@ import {
   Store, Calendar, AlertCircle, CheckCircle, XCircle, Clock,
   UtensilsCrossed, Home, Wrench, Car, Dumbbell, Scissors, Laptop,
   BookOpen, Truck, Camera, Leaf, Heart, Hammer, Sparkles, Filter,
-  Shield, LayoutGrid, Eye, Ban, CreditCard, Settings2
+  Shield, LayoutGrid, Eye, Ban, CreditCard, Settings2, ClipboardCheck, UserCheck
 } from 'lucide-react';
+import { PDGServiceProvidersList } from './services/PDGServiceProvidersList';
+import { PDGServiceValidation } from './services/PDGServiceValidation';
 import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -95,7 +97,7 @@ export default function PDGServiceSubscriptions() {
   const [isFreeDialogOpen, setIsFreeDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeServiceTab, setActiveServiceTab] = useState<string>('all');
-  const [activeSubTab, setActiveSubTab] = useState<string>('subscriptions');
+  const [activeSubTab, setActiveSubTab] = useState<string>('providers');
   const [editLimitsForm, setEditLimitsForm] = useState({
     max_bookings_per_month: '' as string,
     max_products: '' as string,
@@ -553,9 +555,15 @@ export default function PDGServiceSubscriptions() {
         </div>
       )}
 
-      {/* Sub-tabs: Abonnements / Plans / Historique */}
+      {/* Sub-tabs: Prestataires / Validation / Abonnements / Plans / Historique */}
       <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="providers">
+            <UserCheck className="w-3.5 h-3.5 mr-1.5" />Prestataires
+          </TabsTrigger>
+          <TabsTrigger value="validation">
+            <ClipboardCheck className="w-3.5 h-3.5 mr-1.5" />Validation
+          </TabsTrigger>
           <TabsTrigger value="subscriptions">
             <Users className="w-3.5 h-3.5 mr-1.5" />Abonnements
           </TabsTrigger>
@@ -566,6 +574,16 @@ export default function PDGServiceSubscriptions() {
             <History className="w-3.5 h-3.5 mr-1.5" />Historique
           </TabsTrigger>
         </TabsList>
+
+        {/* Providers List */}
+        <TabsContent value="providers" className="space-y-4">
+          <PDGServiceProvidersList activeServiceTab={activeServiceTab} serviceTypes={serviceTypes} />
+        </TabsContent>
+
+        {/* Validation */}
+        <TabsContent value="validation" className="space-y-4">
+          <PDGServiceValidation activeServiceTab={activeServiceTab} serviceTypes={serviceTypes} onRefresh={fetchData} />
+        </TabsContent>
 
         {/* Subscriptions List */}
         <TabsContent value="subscriptions" className="space-y-4">
