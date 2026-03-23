@@ -85,15 +85,8 @@ export function NearbyServicesSection({
             <h2 className="text-lg md:text-xl font-bold text-foreground">
               {t('home.nearbyServices')}
             </h2>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              {cityName && positionReady ? (
-                <>
-                  <MapPin className="w-3 h-3" />
-                  {cityName}
-                </>
-              ) : (
-                t('home.findServicesNearby')
-              )}
+            <p className="text-xs text-muted-foreground">
+              {t('home.findServicesNearby')}
             </p>
           </div>
         </div>
