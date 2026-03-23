@@ -66,7 +66,7 @@ serve(async (req) => {
     }
 
     // Accept 'admin', 'PDG', 'ceo' roles (PDG in the system) as well as CEO/SUPER_ADMIN
-    if (!['CEO', 'SUPER_ADMIN', 'PDG', 'admin', 'ceo'].includes(adminProfile.role)) {
+    if (!['CEO', 'SUPER_ADMIN', 'PDG', 'admin', 'ceo', 'pdg'].includes(adminProfile.role)) {
       console.warn(`⚠️ Unauthorized certification attempt by ${user.email} (role: ${adminProfile.role})`);
       return new Response(
         JSON.stringify({ 
