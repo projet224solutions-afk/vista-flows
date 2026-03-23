@@ -1103,56 +1103,13 @@ export default function Auth() {
           }
           
           if (profileData?.role) {
-            // ✅ FIX: Pour les vendor_agents, rediriger vers leur interface dédiée
-            if (profileData.role === 'vendor_agent') {
-              const { data: vendorAgent } = await supabase
-                .from('vendor_agents')
-                .select('access_token')
-                .eq('user_id', userId)
-                .eq('is_active', true)
-                .maybeSingle();
-              
-              if (vendorAgent?.access_token) {
-                console.log('🚀 [Auth Login] Redirection agent vendeur vers /vendor-agent/');
-                await new Promise(resolve => setTimeout(resolve, 300));
-                navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
-              } else {
-                console.log('⚠️ [Auth Login] Agent vendeur sans token actif');
-                navigate('/home', { replace: true });
-              }
-            } else {
-              let targetRoute = getDashboardRoute(profileData.role);
-              
-              // ✅ Redirection intelligente pour les vendeurs selon leur business_type
-              if (profileData.role === 'vendeur') {
-                const { data: vendor } = await supabase
-                  .from('vendors')
-                  .select('business_type')
-                  .eq('user_id', userId)
-                  .maybeSingle();
-                
-                if (vendor?.business_type === 'digital') {
-                  targetRoute = '/vendeur-digital';
-                }
-              }
-              
-              // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
-              if ((profileData.role as string) === 'prestataire') {
-                const { data: proService } = await supabase
-                  .from('professional_services')
-                  .select('id')
-                  .eq('user_id', userId)
-                  .limit(1)
-                  .maybeSingle();
-                if (proService?.id) {
-                  targetRoute = `/dashboard/service/${proService.id}`;
-                }
-              }
-              
-              console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
-              await new Promise(resolve => setTimeout(resolve, 300));
-              navigate(targetRoute, { replace: true });
-            }
+            const targetRoute = await resolvePostAuthRoute({
+              userId,
+              role: profileData.role,
+            });
+            console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
+            await new Promise(resolve => setTimeout(resolve, 300));
+            navigate(targetRoute, { replace: true });
           } else {
             // Fallback: rediriger vers home, useRoleRedirect prendra le relais
             console.log('⚠️ [Auth Login] Pas de profil trouvé, redirection vers /home');
