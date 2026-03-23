@@ -569,6 +569,13 @@ export function JomyPaymentSelector({
                 currency={displayCurrency === 'GNF' ? 'USD' : displayCurrency}
                 description={description || 'Paiement 224Solutions'}
                 orderId={orderId}
+                sellerId={sellerId || recipientId}
+                edgeFunction={
+                  transactionType === 'taxi' ? 'taxi-payment' :
+                  transactionType === 'delivery' ? 'delivery-payment' :
+                  transactionType === 'service' ? 'service-payment' :
+                  sellerId ? 'stripe-pos-payment' : undefined
+                }
                 onSuccess={handleStripeSuccess}
                 onCancel={() => setShowStripeInline(false)}
                 onError={handleStripeError}
