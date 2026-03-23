@@ -182,7 +182,7 @@ export default function ProductPaymentModal({
   const loadWalletBalance = async () => {
     setLoadingBalance(true);
     try {
-      const { data, error } = await supabase.from('wallets').select('balance').eq('user_id', userId).eq('currency', 'GNF').single();
+      const { data, error } = await supabase.from('wallets').select('balance').eq('user_id', userId).eq('currency', cur).single();
       if (error) throw error;
       setWalletBalance(data?.balance || 0);
     } catch { setWalletBalance(0); } finally { setLoadingBalance(false); }
@@ -196,7 +196,7 @@ export default function ProductPaymentModal({
       const { data: vendorData, error: vendorError } = await supabase.from('vendors').select('user_id, vendor_code').eq('id', firstVendorId).single();
       if (vendorError || !vendorData) { setVendorCode(null); return; }
       if (vendorData.vendor_code) { setVendorCode(vendorData.vendor_code); } else {
-        const { data: walletData, error: walletError } = await supabase.from('wallets').select('id').eq('user_id', vendorData.user_id).eq('currency', 'GNF').single();
+        const { data: walletData, error: walletError } = await supabase.from('wallets').select('id').eq('user_id', vendorData.user_id).eq('currency', cur).single();
         if (walletError || !walletData) { setVendorCode(vendorData.user_id.slice(0, 8).toUpperCase()); } else { setVendorCode(String(walletData.id).slice(0, 8).toUpperCase()); }
       }
     } catch { setVendorCode(null); } finally { setLoadingVendorCode(false); }
@@ -352,7 +352,7 @@ export default function ProductPaymentModal({
     try {
       const result = await initiatePullPayment({
         amount: grandTotal,
-        currency: 'GNF',
+        currency: cur,
         paymentMethod: ccpMethod,
         customerPhone: mobilePhone.trim(),
         description: `Achat 224Solutions - ${cartItems.length} article(s)`,
@@ -463,7 +463,7 @@ export default function ProductPaymentModal({
       if (paymentMethod === 'wallet') {
         const escrowResult = await UniversalEscrowService.createEscrow({
           buyer_id: userId, seller_id: vendorData.user_id, order_id: orderId,
-          amount: vendorTotalWithCommission, currency: 'GNF', transaction_type: 'product', payment_provider: 'wallet',
+          amount: vendorTotalWithCommission, currency: cur, transaction_type: 'product', payment_provider: 'wallet',
           metadata: { product_ids: items.map(i => i.id), order_number: orderNumber, description: `Achat produits (${items.length} articles)`, product_total: vendorProductTotal, commission_fee: commissionPerVendor, commission_percent: commissionConfig?.commission_value || 10 },
           escrow_options: { commission_percent: commissionConfig?.commission_value || 10 }
         });
@@ -743,7 +743,7 @@ export default function ProductPaymentModal({
             }>
               <StripeCheckoutButton
                 amount={totalAmount}
-                currency="GNF"
+                currency={cur}
                 description={`Achat ${cartItems.length} article(s) - Marketplace 224Solutions`}
                 edgeFunction="marketplace-escrow-payment"
                 extraParams={{ cartItems: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId: i.vendorId })) }}
