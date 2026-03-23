@@ -114,7 +114,7 @@ export default function Home() {
         vendor_name: product.vendor_name,
         currency: product.currency || 'GNF',
       });
-      toast.success('Produit ajouté au panier');
+      toast.success(t('home.addedToCart'));
     },
     [addToCart]
   );
