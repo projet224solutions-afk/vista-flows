@@ -437,11 +437,13 @@ export function JomyPaymentSelector({
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {/* Erreur */}
-          {(error || paymentStatus === 'failed') && (
+          {/* Erreur — only show ChapChapPay error when a ChapChapPay method is selected */}
+          {paymentStatus === 'failed' && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error || 'Paiement échoué'}</AlertDescription>
+              <AlertDescription>
+                {(selectedMethod.startsWith('CCP_') && error) ? error : 'Paiement échoué. Veuillez réessayer.'}
+              </AlertDescription>
             </Alert>
           )}
 
