@@ -411,12 +411,7 @@ export default function VendeurDashboard() {
         </div>
       </div>
 
-      {/* Widget de communication flottant */}
-      <Suspense fallback={null}>
-        <CommunicationWidget position="bottom-right" showNotifications={true} />
-      </Suspense>
-
-      {/* Bannière offline supprimée - intégrée dans le header */}
+      {/* CommunicationWidget retiré - le composant global retourne null, évite le lazy load inutile */}
     </SidebarProvider>
   );
 }
