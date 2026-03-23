@@ -149,7 +149,11 @@ export default function PDGServiceSubscriptions() {
       setPriceHistory(historyData);
       setStats(statsData);
       setSubscriptions(subsData);
-      setServiceTypes(stData || []);
+      // Filtrer les boutiques/digital - ne garder que les services de proximité
+      const proximityServices = (stData || []).filter(
+        (st: any) => !EXCLUDED_SERVICE_CODES.includes(st.code)
+      );
+      setServiceTypes(proximityServices);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({ title: 'Erreur', description: 'Impossible de charger les données', variant: 'destructive' });
