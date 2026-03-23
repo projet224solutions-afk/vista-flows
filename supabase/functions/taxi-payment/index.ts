@@ -7,6 +7,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.10.0?target=deno";
+import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,8 +18,8 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[TAXI-PAYMENT] ${step}`, details ? JSON.stringify(details) : '');
 };
 
-// Commission plateforme taxi (15%)
-const PLATFORM_FEE_RATE = 15;
+// Fallback si pdg_settings n'a pas de taux taxi
+const DEFAULT_TAXI_FEE_RATE = 15;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
