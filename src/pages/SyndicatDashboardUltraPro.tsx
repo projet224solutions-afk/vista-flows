@@ -668,16 +668,26 @@ export default function SyndicatDashboardUltraPro() {
                                 <CardContent>
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                                            <span className="font-medium text-gray-700">Taux d'activité</span>
-                                            <span className="font-bold text-blue-600">92%</span>
+                                            <span className="font-medium text-gray-700">Taux d'activité membres</span>
+                                            <span className="font-bold text-blue-600">
+                                                {syndicateStats.total_members > 0 
+                                                    ? `${Math.round((syndicateStats.active_members / syndicateStats.total_members) * 100)}%` 
+                                                    : '0%'}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between items-center p-3 bg-green-50 rounded-xl">
                                             <span className="font-medium text-gray-700">Revenus mensuels</span>
-                                            <span className="font-bold text-green-600">+15%</span>
+                                            <span className="font-bold text-green-600">{syndicateStats.monthly_revenue.toLocaleString()} FCFA</span>
                                         </div>
                                         <div className="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
-                                            <span className="font-medium text-gray-700">Satisfaction</span>
-                                            <span className="font-bold text-purple-600">4.8/5</span>
+                                            <span className="font-medium text-gray-700">Motards actifs</span>
+                                            <span className="font-bold text-purple-600">
+                                                {syndicateStats.active_taxi_motards}/{syndicateStats.total_taxi_motards}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center p-3 bg-orange-50 rounded-xl">
+                                            <span className="font-medium text-gray-700">Alertes actives</span>
+                                            <span className="font-bold text-orange-600">{syndicateStats.active_alerts}</span>
                                         </div>
                                     </div>
                                 </CardContent>
