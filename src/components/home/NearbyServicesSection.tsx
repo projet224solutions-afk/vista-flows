@@ -8,7 +8,6 @@
 import { Store, Car, Truck, Zap, Utensils, MapPin } from 'lucide-react';
 import { HomeServiceCard } from './ServiceCard';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useGeoDistance } from '@/hooks/useGeoDistance';
 import { cn } from '@/lib/utils';
 
 interface ServiceStats {
