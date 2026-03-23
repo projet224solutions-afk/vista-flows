@@ -22,10 +22,10 @@ export class PaymentSecurity {
     try {
       // Vérifier que l'utilisateur existe et a un profil
       const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('role, kyc_verified, status')
-        .eq('user_id', userId)
-        .single();
+        .eq('id', userId)
+        .single() as { data: UserProfile | null; error: any };
 
       if (profileError || !profile) {
         return {
