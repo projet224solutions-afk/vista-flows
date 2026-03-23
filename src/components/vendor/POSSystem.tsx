@@ -2343,7 +2343,7 @@ export function POSSystem() {
             </div>
 
             {/* Liste des produits du panier - Zone scrollable optimisée */}
-            <div className="overflow-hidden p-1.5 sm:p-2 max-h-[180px] md:flex-1 md:max-h-none md:min-h-0">
+            <div className="overflow-hidden p-2 sm:p-2 flex-1 min-h-0">
               <ScrollArea className="h-full">
                 {cart.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-32 text-center">
