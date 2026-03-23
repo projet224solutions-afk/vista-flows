@@ -187,11 +187,11 @@ export default function PDGServiceSubscriptions() {
     return serviceTypes.filter(st => serviceTypeStats[st.id]?.total > 0);
   }, [serviceTypes, serviceTypeStats]);
 
-  // Filter plans by selected service type
+  // Filter plans STRICTLY by selected service type - no cross-contamination
   const filteredPlans = useMemo(() => {
     if (activeServiceTab === 'all') return plans;
-    // Show plans linked to this service type OR universal plans (no service_type_id)
-    return plans.filter(p => p.service_type_id === activeServiceTab || p.service_type_id === null);
+    // Show ONLY plans linked to this specific service type
+    return plans.filter(p => p.service_type_id === activeServiceTab);
   }, [plans, activeServiceTab]);
 
   const handleOpenPriceDialog = (plan: ServicePlan) => {

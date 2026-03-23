@@ -85,16 +85,23 @@ export interface ServicePriceHistory {
 
 export class ServiceSubscriptionService {
   /**
-   * Récupérer tous les plans de services disponibles
+   * Récupérer les plans de services disponibles
+   * @param serviceTypeId - Si fourni, retourne uniquement les plans de ce type de service
    */
-  static async getPlans(): Promise<ServicePlan[]> {
+  static async getPlans(serviceTypeId?: string): Promise<ServicePlan[]> {
     try {
-      console.log('[ServiceSubscription] Fetching plans...');
-      const { data, error, status } = await supabase
+      console.log('[ServiceSubscription] Fetching plans...', { serviceTypeId });
+      let query = supabase
         .from('service_plans')
         .select('*')
         .eq('is_active', true)
         .order('display_order');
+
+      if (serviceTypeId) {
+        query = query.eq('service_type_id', serviceTypeId);
+      }
+
+      const { data, error, status } = await query;
 
       console.log('[ServiceSubscription] Plans response:', { status, count: data?.length, error: error?.message });
 
