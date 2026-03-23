@@ -56,6 +56,14 @@ export const translations: Record<string, Record<string, string>> = {
     "home.available": "disponibles",
     "home.trending": "Tendance",
     "home.searchPlaceholder": "Rechercher un service ou produit...",
+    "home.localShops": "Commerces locaux",
+    "home.orderFood": "Commander à manger",
+    "home.fastTransport": "Transport rapide",
+    "home.expressDelivery": "Livraison express",
+    "home.findServicesNearby": "Trouvez les services autour de vous",
+    "home.live": "En direct",
+    "home.addedToCart": "Produit ajouté au panier",
+    "nav.tracking": "Suivi",
     
     // Proximity
     "proximity.title": "Services de Proximité",
@@ -959,6 +967,14 @@ export const translations: Record<string, Record<string, string>> = {
     "home.available": "available",
     "home.trending": "Trending",
     "home.searchPlaceholder": "Search services or products...",
+    "home.localShops": "Local shops",
+    "home.orderFood": "Order food",
+    "home.fastTransport": "Fast transport",
+    "home.expressDelivery": "Express delivery",
+    "home.findServicesNearby": "Find services around you",
+    "home.live": "Live",
+    "home.addedToCart": "Product added to cart",
+    "nav.tracking": "Tracking",
     
     // Proximity
     "proximity.title": "Nearby Services",
@@ -2565,6 +2581,14 @@ export const translations: Record<string, Record<string, string>> = {
     "home.available": "verfügbar",
     "home.trending": "Im Trend",
     "home.searchPlaceholder": "Dienste oder Produkte suchen...",
+    "home.localShops": "Lokale Geschäfte",
+    "home.orderFood": "Essen bestellen",
+    "home.fastTransport": "Schneller Transport",
+    "home.expressDelivery": "Expresslieferung",
+    "home.findServicesNearby": "Dienste in Ihrer Nähe finden",
+    "home.live": "Live",
+    "home.addedToCart": "Produkt zum Warenkorb hinzugefügt",
+    "nav.tracking": "Verfolgung",
     
     // Proximity
     "proximity.title": "Dienste in der Nähe",

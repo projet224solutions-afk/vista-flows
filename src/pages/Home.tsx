@@ -13,6 +13,7 @@ import { useRoleRedirect } from '@/hooks/useRoleRedirect';
 import { useCart } from '@/contexts/CartContext';
 import { useUniversalProducts } from '@/hooks/useUniversalProducts';
 import { useNearbyServiceStats } from '@/hooks/useNearbyServiceStats';
+import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 import { RecommendationsWidget } from '@/components/recommendations/RecommendationsWidget';
 
@@ -34,6 +35,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const { addToCart, getCartCount } = useCart();
+  const { t } = useTranslation();
   
   // ⚡ Redirection automatique vers le dashboard si connecté avec un rôle
   useRoleRedirect();
@@ -112,7 +114,7 @@ export default function Home() {
         vendor_name: product.vendor_name,
         currency: product.currency || 'GNF',
       });
-      toast.success('Produit ajouté au panier');
+      toast.success(t('home.addedToCart'));
     },
     [addToCart]
   );
@@ -132,7 +134,7 @@ export default function Home() {
         <HomeSearchBar
           value={searchQuery}
           onChange={setSearchQuery}
-          placeholder="Rechercher des produits, services..."
+          placeholder={t('home.searchPlaceholder')}
           showFilter
           showCamera
           onCameraCapture={(file) => {

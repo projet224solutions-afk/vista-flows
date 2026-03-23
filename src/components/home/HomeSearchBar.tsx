@@ -8,6 +8,7 @@ import { useState, useRef } from 'react';
 import { Search, Filter, X, Camera } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
 interface HomeSearchBarProps {
@@ -24,7 +25,7 @@ interface HomeSearchBarProps {
 export function HomeSearchBar({
   value,
   onChange,
-  placeholder = 'Rechercher des produits, services...',
+  placeholder,
   onFilter,
   showFilter = true,
   showCamera = false,
@@ -34,6 +35,8 @@ export function HomeSearchBar({
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
+  const displayPlaceholder = placeholder || t('home.searchPlaceholder');
 
   const handleCameraClick = () => {
     cameraInputRef.current?.click();
@@ -74,7 +77,7 @@ export function HomeSearchBar({
             ref={inputRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
+            placeholder={displayPlaceholder}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             className={cn(

@@ -1,17 +1,18 @@
 /**
  * BOTTOM NAVIGATION - Ultra Professional Design
  * 224Solutions - Apple/Uber-style Navigation
- * Floating design with blur effects
+ * Floating design with blur effects - Fully translated
  */
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, ShoppingBag, MapPin, User, ShoppingCart, LucideIcon } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
   id: string;
   icon: LucideIcon;
-  label: string;
+  labelKey: string;
   path: string | (() => string);
 }
 
@@ -22,14 +23,14 @@ interface BottomNavigationProps {
 export function BottomNavigation({ className }: BottomNavigationProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
-  // Le bouton Accueil va toujours vers /home pour accéder aux services
   const navItems: NavItem[] = [
-    { id: 'home', icon: Home, label: 'Accueil', path: '/home' },
-    { id: 'marketplace', icon: ShoppingBag, label: 'Marketplace', path: '/marketplace' },
-    { id: 'my-purchases', icon: ShoppingCart, label: 'Mes Achats', path: '/my-purchases' },
-    { id: 'tracking', icon: MapPin, label: 'Tracking', path: '/tracking' },
-    { id: 'profil', icon: User, label: 'Profil', path: '/profil' },
+    { id: 'home', icon: Home, labelKey: 'nav.home', path: '/home' },
+    { id: 'marketplace', icon: ShoppingBag, labelKey: 'nav.marketplace', path: '/marketplace' },
+    { id: 'my-purchases', icon: ShoppingCart, labelKey: 'nav.myPurchases', path: '/my-purchases' },
+    { id: 'tracking', icon: MapPin, labelKey: 'nav.tracking', path: '/tracking' },
+    { id: 'profil', icon: User, labelKey: 'nav.profile', path: '/profil' },
   ];
   
   const isActive = (path: string | (() => string)) => {
@@ -97,7 +98,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
                     active ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </span>
               </button>
             );
