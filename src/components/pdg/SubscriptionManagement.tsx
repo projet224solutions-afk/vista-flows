@@ -165,15 +165,31 @@ export default function SubscriptionManagement() {
     }
   };
 
+  // Calculer le statut réel basé sur current_period_end
+  const computeRealStatus = (sub: any): 'active' | 'expired' | 'past_due' | 'cancelled' => {
+    // Si déjà cancelled ou expired en base, garder ce statut
+    if (sub.status === 'cancelled') return 'cancelled';
+    if (sub.status === 'expired') return 'expired';
+    if (sub.status === 'past_due') return 'past_due';
+    
+    // Vérifier si current_period_end est dépassé
+    if (sub.current_period_end) {
+      const endDate = new Date(sub.current_period_end);
+      const now = new Date();
+      if (endDate < now) {
+        return 'expired';
+      }
+    }
+    
+    return sub.status || 'active';
+  };
+
   // Déterminer si l'abonnement est offert ou acheté
   const determineAcquisitionType = (sub: any): 'offered' | 'purchased' | 'free' => {
-    // Billing cycle custom ou lifetime = offert par le PDG
     if (sub.billing_cycle === 'custom' || sub.billing_cycle === 'lifetime') return 'offered';
-    // Prix payé = 0 ou plan gratuit = gratuit
     if (sub.price_paid_gnf === 0) return 'free';
     const planName = sub.plan_display?.toLowerCase() || sub.plans?.name?.toLowerCase() || '';
     if (planName === 'free' || planName === 'gratuit') return 'free';
-    // Sinon = acheté
     return 'purchased';
   };
 
