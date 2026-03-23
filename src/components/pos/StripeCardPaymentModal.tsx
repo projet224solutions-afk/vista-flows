@@ -343,13 +343,14 @@ export function StripeCardPaymentModal({
           setStripe(stripeInstance);
         }
 
-        const { data, error: fnError } = await supabase.functions.invoke('stripe-pos-payment', {
+        const { data, error: fnError } = await supabase.functions.invoke(edgeFunction, {
           body: {
             amount,
             currency,
             orderId,
             sellerId,
             description,
+            ...extraParams,
           },
         });
 
