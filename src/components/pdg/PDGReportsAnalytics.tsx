@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Download, Calendar, Package, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { usePDGReportsData } from '@/hooks/usePDGReportsData';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 export default function PDGReportsAnalytics() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
   const { analyticsData, stats, topProducts, topVendors, loading, exportToCSV } = usePDGReportsData(timeRange);
+  const fc = useFormatCurrency();
 
   if (loading) {
     return (
@@ -28,23 +30,26 @@ export default function PDGReportsAnalytics() {
         <div className="flex items-center gap-2">
           <Button 
             variant={timeRange === '7d' ? 'default' : 'outline'} 
+            size="sm"
             onClick={() => setTimeRange('7d')}
           >
             7 jours
           </Button>
           <Button 
             variant={timeRange === '30d' ? 'default' : 'outline'} 
+            size="sm"
             onClick={() => setTimeRange('30d')}
           >
             30 jours
           </Button>
           <Button 
             variant={timeRange === '90d' ? 'default' : 'outline'} 
+            size="sm"
             onClick={() => setTimeRange('90d')}
           >
             90 jours
           </Button>
-          <Button onClick={exportToCSV}>
+          <Button variant="outline" size="sm" onClick={exportToCSV}>
             <Download className="w-4 h-4 mr-2" />
             Exporter
           </Button>
@@ -59,7 +64,7 @@ export default function PDGReportsAnalytics() {
             <TrendingUp className="w-4 h-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalRevenue.toLocaleString()} GNF</div>
+            <div className="text-2xl font-bold">{fc(stats.totalRevenue, 'GNF')}</div>
             <div className="flex items-center gap-1 mt-1">
               {stats.revenueGrowth >= 0 ? (
                 <ArrowUpRight className="w-4 h-4 text-green-500" />
@@ -121,7 +126,7 @@ export default function PDGReportsAnalytics() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalOrders.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Valeur moy: {stats.averageTransactionValue.toLocaleString()} GNF
+              Valeur moy: {fc(stats.averageTransactionValue, 'GNF')}
             </p>
           </CardContent>
         </Card>
@@ -129,7 +134,6 @@ export default function PDGReportsAnalytics() {
 
       {/* Graphiques */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Graphique Revenu */}
         <Card>
           <CardHeader>
             <CardTitle>Évolution du Revenu</CardTitle>
@@ -142,13 +146,12 @@ export default function PDGReportsAnalytics() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="revenue" stroke="#8884d8" name="Revenu (GNF)" />
+                <Line type="monotone" dataKey="revenue" stroke="#8884d8" name="Revenu" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Graphique Transactions */}
         <Card>
           <CardHeader>
             <CardTitle>Transactions Quotidiennes</CardTitle>
@@ -170,7 +173,6 @@ export default function PDGReportsAnalytics() {
 
       {/* Top Produits et Vendeurs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Produits */}
         <Card>
           <CardHeader>
             <CardTitle>Top 5 Produits</CardTitle>
@@ -189,7 +191,7 @@ export default function PDGReportsAnalytics() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">{product.revenue.toLocaleString()} GNF</p>
+                    <p className="font-bold">{fc(product.revenue, 'GNF')}</p>
                   </div>
                 </div>
               ))}
@@ -202,7 +204,6 @@ export default function PDGReportsAnalytics() {
           </CardContent>
         </Card>
 
-        {/* Top Vendeurs */}
         <Card>
           <CardHeader>
             <CardTitle>Top 5 Vendeurs</CardTitle>
@@ -221,7 +222,7 @@ export default function PDGReportsAnalytics() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">{vendor.revenue.toLocaleString()} GNF</p>
+                    <p className="font-bold">{fc(vendor.revenue, 'GNF')}</p>
                   </div>
                 </div>
               ))}

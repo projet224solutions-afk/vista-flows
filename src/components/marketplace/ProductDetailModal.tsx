@@ -762,7 +762,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                 </Button>
                   <ShareButton
                     title={product.name}
-                    text={`Découvrez ${product.name} à ${product.price.toLocaleString()} ${product.currency || 'GNF'} sur 224 Solutions`}
+                    text={`${t('marketplace.discover') || 'Découvrez'} ${product.name} - 224 Solutions`}
                     url={`${window.location.origin}/product/${product.id}`}
                     variant="outline"
                     size="icon"

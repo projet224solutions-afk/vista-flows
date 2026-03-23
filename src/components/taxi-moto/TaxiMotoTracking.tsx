@@ -22,6 +22,7 @@ import {
     MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
+import { LocalPrice } from '@/components/ui/LocalPrice';
 import { supabase } from "@/integrations/supabase/client";
 import { RidesService } from "@/services/taxi/ridesService";
 import RidePaymentFlow from "./RidePaymentFlow";
@@ -464,9 +465,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
 
                     <div className="flex items-center justify-between pt-4 border-t">
                         <span className="font-medium">Prix estimé</span>
-                        <span className="text-lg font-bold text-green-600">
-                            {currentRide.estimatedPrice.toLocaleString()} GNF
-                        </span>
+                        <LocalPrice amount={currentRide.estimatedPrice} currency="GNF" size="lg" />
                     </div>
                 </CardContent>
             </Card>
