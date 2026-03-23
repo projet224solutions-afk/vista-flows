@@ -789,9 +789,9 @@ export default function ProductPaymentModal({
             loadingText="Traitement..."
             debounceMs={1000}
           >
-            {paymentMethod === 'card' ? `Payer maintenant ${fc(grandTotal, cur)}` :
+            {paymentMethod === 'card' ? `Payer maintenant ${priceText(grandTotal)}` :
              paymentMethod === 'orange_money' || paymentMethod === 'mtn_money' ? 'Continuer' :
-             paymentMethod === 'wallet' ? `Payer ${fc(grandTotal, cur)}` : `Confirmer ${fc(grandTotal, cur)}`}
+             paymentMethod === 'wallet' ? `Payer ${priceText(grandTotal)}` : `Confirmer ${priceText(grandTotal)}`}
           </SecureButton>
         </div>
         </div>
