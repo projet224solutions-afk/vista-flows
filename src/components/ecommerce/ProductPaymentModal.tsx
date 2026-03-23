@@ -65,9 +65,11 @@ export default function ProductPaymentModal({
   totalAmount,
   onPaymentSuccess,
   userId,
-  customerId
+  customerId,
+  currency = 'GNF'
 }: ProductPaymentModalProps) {
   const fc = useFormatCurrency();
+  const cur = currency.toUpperCase();
   const { initiatePullPayment, pollStatus, isLoading: ccpLoading } = useChapChapPay();
 
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
