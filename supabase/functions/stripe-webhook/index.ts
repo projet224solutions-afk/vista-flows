@@ -131,7 +131,6 @@ serve(async (req) => {
           // Dépôt wallet
           logStep('Processing wallet deposit');
           
-          // Récupérer la transaction
           const { data: transaction } = await supabase
             .from('stripe_transactions')
             .select('id')
@@ -139,7 +138,6 @@ serve(async (req) => {
             .single();
 
           if (transaction) {
-            // Mettre à jour le statut
             await supabase
               .from('stripe_transactions')
               .update({
@@ -153,7 +151,6 @@ serve(async (req) => {
               })
               .eq('id', transaction.id);
 
-            // Traiter le dépôt
             const { error: depositError } = await supabase.rpc('process_deposit_payment', {
               p_transaction_id: transaction.id
             });
@@ -164,12 +161,148 @@ serve(async (req) => {
               logStep('Deposit processed successfully');
             }
           }
+
+        } else if (source === 'restaurant') {
+          // =========================================================
+          // 🍽️ PAIEMENT RESTAURANT
+          // =========================================================
+          logStep('Processing restaurant payment');
+
+          const { data: transaction, error: fetchError } = await supabase
+            .from('stripe_transactions')
+            .select('*')
+            .eq('stripe_payment_intent_id', paymentIntent.id)
+            .single();
+
+          if (fetchError || !transaction) {
+            logStep('Restaurant transaction not found', { paymentIntentId: paymentIntent.id });
+            break;
+          }
+
+          // Mettre à jour la transaction stripe
+          await supabase
+            .from('stripe_transactions')
+            .update({
+              status: 'SUCCEEDED',
+              stripe_charge_id: chargeId,
+              last4: last4,
+              card_brand: cardBrand,
+              three_ds_status: threeDsStatus,
+              paid_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', transaction.id);
+
+          // Créditer le wallet du restaurateur
+          try {
+            const { data: walletResult, error: walletError } = await supabase
+              .rpc('force_credit_seller_wallet', {
+                p_transaction_id: transaction.id
+              });
+
+            if (walletError) {
+              logStep('❌ Error crediting restaurant wallet', { error: walletError.message });
+              const { error: fallbackError } = await supabase.rpc('process_successful_payment', {
+                p_transaction_id: transaction.id
+              });
+              if (fallbackError) {
+                logStep('❌ Fallback also failed', { error: fallbackError.message });
+              } else {
+                logStep('✅ Restaurant wallet credited via fallback');
+              }
+            } else {
+              logStep('✅ Restaurant wallet credited', { result: walletResult });
+            }
+          } catch (walletErr) {
+            logStep('❌ Exception crediting restaurant wallet', { error: String(walletErr) });
+          }
+
+          // Mettre à jour restaurant_orders
+          const orderId = transaction.order_id || paymentIntent.metadata?.order_id;
+          if (orderId) {
+            const { error: orderUpdateError } = await supabase
+              .from('restaurant_orders')
+              .update({
+                payment_status: 'paid',
+                status: 'confirmed',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', orderId);
+
+            if (orderUpdateError) {
+              logStep('⚠️ Error updating restaurant_orders', { error: orderUpdateError.message });
+              // Fallback: essayer la table orders classique
+              await supabase
+                .from('orders')
+                .update({
+                  payment_status: 'paid',
+                  status: 'confirmed',
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', orderId);
+            } else {
+              logStep('✅ Restaurant order updated to paid', { orderId });
+            }
+          }
+
+        } else if (source === 'delivery') {
+          // =========================================================
+          // 🚚 PAIEMENT LIVRAISON
+          // =========================================================
+          logStep('Processing delivery payment');
+
+          const { data: transaction } = await supabase
+            .from('stripe_transactions')
+            .select('*')
+            .eq('stripe_payment_intent_id', paymentIntent.id)
+            .single();
+
+          if (transaction) {
+            await supabase
+              .from('stripe_transactions')
+              .update({
+                status: 'SUCCEEDED',
+                stripe_charge_id: chargeId,
+                last4: last4,
+                card_brand: cardBrand,
+                three_ds_status: threeDsStatus,
+                paid_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', transaction.id);
+
+            // Créditer le wallet du livreur
+            try {
+              const { error: walletError } = await supabase.rpc('force_credit_seller_wallet', {
+                p_transaction_id: transaction.id
+              });
+              if (walletError) {
+                logStep('⚠️ Delivery wallet credit error', { error: walletError.message });
+              } else {
+                logStep('✅ Delivery wallet credited');
+              }
+            } catch (e) {
+              logStep('❌ Exception crediting delivery wallet', { error: String(e) });
+            }
+          }
+
+          // Mettre à jour la livraison
+          const deliveryId = paymentIntent.metadata?.delivery_id;
+          if (deliveryId) {
+            await supabase
+              .from('deliveries')
+              .update({
+                payment_status: 'paid',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', deliveryId);
+            logStep('✅ Delivery updated to paid', { deliveryId });
+          }
           
         } else {
           // Paiement POS standard (marketplace)
           logStep('Processing POS/marketplace payment');
           
-          // Récupérer transaction
           const { data: transaction, error: fetchError } = await supabase
             .from('stripe_transactions')
             .select('*')
@@ -181,11 +314,10 @@ serve(async (req) => {
             break;
           }
 
-          // Mettre à jour transaction
-          const { error: updateError } = await supabase
+          await supabase
             .from('stripe_transactions')
             .update({
-              payment_status: 'SUCCEEDED',
+              status: 'SUCCEEDED',
               stripe_charge_id: chargeId,
               last4: last4,
               card_brand: cardBrand,
@@ -195,57 +327,39 @@ serve(async (req) => {
             })
             .eq('id', transaction.id);
 
-          if (updateError) {
-            logStep('Error updating transaction', { error: updateError.message });
-          }
-
-          // =========================================================
-          // � CRÉER COMMANDE SI MANQUANTE
-          // =========================================================
+          // Créer commande si manquante
           let orderId = transaction.order_id;
           
           if (!orderId && transaction.product_id) {
             logStep('📦 Creating order from payment...');
-            
             try {
               const { data: orderResult, error: orderError } = await supabase
                 .rpc('create_order_from_payment', {
                   p_transaction_id: transaction.id
                 });
-
               if (orderError) {
                 logStep('⚠️ Error creating order', { error: orderError.message });
               } else if (orderResult?.success) {
                 orderId = orderResult.order_id;
-                logStep('✅ Order created', { 
-                  orderId, 
-                  orderNumber: orderResult.order_number 
-                });
+                logStep('✅ Order created', { orderId, orderNumber: orderResult.order_number });
               }
             } catch (orderErr) {
               logStep('⚠️ Exception creating order', { error: String(orderErr) });
             }
           }
 
-          // =========================================================
-          // 💰 CRÉDITER WALLET VENDEUR DIRECTEMENT
-          // =========================================================
+          // Créditer wallet vendeur
           logStep('💰 Crediting seller wallet...');
-          
           try {
             const { data: walletResult, error: walletError } = await supabase
               .rpc('force_credit_seller_wallet', {
                 p_transaction_id: transaction.id
               });
-
             if (walletError) {
               logStep('❌ Error crediting wallet', { error: walletError.message });
-              
-              // Fallback: essayer process_successful_payment
               const { error: processError } = await supabase.rpc('process_successful_payment', {
                 p_transaction_id: transaction.id
               });
-              
               if (processError) {
                 logStep('❌ Error in fallback wallet credit', { error: processError.message });
               } else {
@@ -263,9 +377,7 @@ serve(async (req) => {
             logStep('❌ Exception crediting wallet', { error: String(walletErr) });
           }
 
-          // =========================================================
-          // 📋 METTRE À JOUR LA COMMANDE
-          // =========================================================
+          // Mettre à jour la commande
           if (orderId) {
             await supabase
               .from('orders')
@@ -275,7 +387,6 @@ serve(async (req) => {
                 updated_at: new Date().toISOString(),
               })
               .eq('id', orderId);
-            
             logStep('✅ Order updated', { orderId });
           }
         }

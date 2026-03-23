@@ -7,6 +7,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.10.0?target=deno";
+import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,27 +18,35 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[TAXI-PAYMENT] ${step}`, details ? JSON.stringify(details) : '');
 };
 
-// Commission plateforme taxi (15%)
-const PLATFORM_FEE_RATE = 15;
+// Fallback si pdg_settings n'a pas de taux taxi
+const DEFAULT_TAXI_FEE_RATE = 15;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
+   // Client admin pour les opérations DB
+   const supabaseAdmin = createClient(
+     Deno.env.get("SUPABASE_URL") ?? "",
+     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+   );
+
+   // Client authentifié pour vérifier l'utilisateur
+   const supabaseClient = createClient(
+     Deno.env.get("SUPABASE_URL") ?? "",
+     Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+     {
+       global: {
+         headers: { Authorization: req.headers.get('Authorization')! },
+       },
+     }
+   );
 
   try {
     logStep('Payment started');
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
-    
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) throw new Error("Authentication failed");
     
     logStep('User authenticated', { userId: user.id });
@@ -49,7 +58,7 @@ serve(async (req) => {
 
     // Check for duplicate
     if (idempotencyKey) {
-      const { data: existing } = await supabaseClient
+      const { data: existing } = await supabaseAdmin
         .from('taxi_transactions')
         .select('id, status')
         .eq('idempotency_key', idempotencyKey)
@@ -65,7 +74,7 @@ serve(async (req) => {
     }
 
     // Get ride details
-    const { data: ride, error: rideError } = await supabaseClient
+    const { data: ride, error: rideError } = await supabaseAdmin
       .from('taxi_trips')
       .select('*')
       .eq('id', rideId)
@@ -73,7 +82,20 @@ serve(async (req) => {
 
     if (rideError || !ride) throw new Error('Ride not found');
 
-    // Calculer la commission plateforme et la part chauffeur
+    // Récupérer le taux de commission dynamique pour le taxi
+    // On utilise une clé dédiée si elle existe, sinon fallback
+    let PLATFORM_FEE_RATE = DEFAULT_TAXI_FEE_RATE;
+    try {
+      const dynamicRate = await getPdgFeeRate(supabaseAdmin, 'commission_taxi');
+      // Si la clé n'existe pas, getPdgFeeRate retournera 0 (pas dans DEFAULT_FEES)
+      // Dans ce cas, utiliser le fallback
+      if (dynamicRate > 0) {
+        PLATFORM_FEE_RATE = dynamicRate;
+      }
+    } catch {
+      // Utiliser le taux par défaut
+    }
+
     const totalAmount = ride.price_total;
     const platformFee = Math.round(totalAmount * (PLATFORM_FEE_RATE / 100));
     const driverShare = totalAmount - platformFee;
@@ -81,6 +103,7 @@ serve(async (req) => {
     logStep('Ride found', { 
       price: totalAmount, 
       platformFee,
+      platformFeeRate: PLATFORM_FEE_RATE,
       driverShare,
       driverId: ride.driver_id 
     });
@@ -138,7 +161,7 @@ serve(async (req) => {
           .eq('currency', 'GNF');
 
         // Créditer le wallet chauffeur (via RPC pour atomicité)
-        const { error: walletError } = await supabaseClient.rpc('process_wallet_transaction', {
+        const { error: walletError } = await supabaseAdmin.rpc('process_wallet_transaction', {
           p_sender_id: ride.customer_id,
           p_receiver_id: ride.driver_id,
           p_amount: driverShare,
@@ -263,7 +286,7 @@ serve(async (req) => {
         .single();
 
       if (driver) {
-        await supabaseClient.rpc('create_taxi_notification', {
+        await supabaseAdmin.rpc('create_taxi_notification', {
           p_user_id: driver.user_id,
           p_type: 'payment_received',
           p_title: 'Paiement reçu',
