@@ -4,5 +4,5 @@
  */
 
 export const backendConfig = {
-  baseUrl: import.meta.env.VITE_BACKEND_URL || 'https://api.224solution.net',
+  baseUrl: import.meta.env.VITE_BACKEND_URL || '',
 };

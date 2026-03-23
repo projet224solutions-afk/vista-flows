@@ -39,7 +39,7 @@ const recentEvents: SecurityEvent[] = [
     timestamp: new Date(Date.now() - 300000).toISOString(),
     type: 'Anomalie de trafic',
     severity: 'high',
-    source: 'api.224solution.net',
+    source: 'backend-api',
     description: 'Unusual spike in API requests',
     correlated: true
   },

@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, data } = body;
     
-    const backendUrl = Deno.env.get('AWS_BACKEND_URL') || 'https://api.224solution.net';
+    const backendUrl = Deno.env.get('AWS_BACKEND_URL') || '';
     const syncApiKey = Deno.env.get('CLOUD_SQL_SYNC_API_KEY') || '';
 
     const supabaseAdmin = createClient(
