@@ -119,6 +119,7 @@ const ServiceRedirect = lazyWithRetry(() => import("./pages/ServiceRedirect"));
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const UniversalLoginPage = lazyWithRetry(() => import("./pages/UniversalLoginPage"));
 const SetPasswordAfterOAuth = lazyWithRetry(() => import("./pages/SetPasswordAfterOAuth"));
+const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const AgentCreation = lazyWithRetry(() => import("./pages/AgentCreation"));
 const WorkerSettings = lazyWithRetry(() => import("./pages/WorkerSettings"));
 const BadgeVerification = lazyWithRetry(() => import("./pages/BadgeVerification"));
