@@ -7,6 +7,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { CACHE_TTL, filterByAllowedVendors } from '@/config/recommendationConfig';
 
 interface AIProduct {
   product_id: string;
@@ -65,12 +66,7 @@ export function useAIPersonalized(limit = 20) {
         .order('created_at', { ascending: false })
         .limit(limit * 2);
 
-      const allowedTypes = ['hybrid', 'online'];
-      return (data || [])
-        .filter(p => {
-          const vendor = (p as any).vendors;
-          return vendor?.business_type && allowedTypes.includes(vendor.business_type);
-        })
+      return filterByAllowedVendors(data || [])
         .slice(0, limit)
         .map(p => ({
           product_id: p.id,
@@ -82,8 +78,8 @@ export function useAIPersonalized(limit = 20) {
         }));
     },
     enabled: !authLoading,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    staleTime: CACHE_TTL.personalized.staleTime,
+    gcTime: CACHE_TTL.personalized.gcTime,
     retry: 1,
     refetchOnWindowFocus: false,
   });
@@ -108,8 +104,8 @@ export function useAIContextual(context: Record<string, unknown> = {}, limit = 1
       return result.products.slice(0, limit);
     },
     enabled: !authLoading && !!user,
-    staleTime: 30 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
+    staleTime: CACHE_TTL.contextual.staleTime,
+    gcTime: CACHE_TTL.contextual.gcTime,
     retry: 1,
     refetchOnWindowFocus: false,
   });
@@ -122,27 +118,44 @@ export function useAITrending(limit = 16) {
   return useQuery({
     queryKey: ['ai-recommendations', 'trending', user?.id ?? 'anon'],
     queryFn: async () => {
-      // Si l'utilisateur est connecté, utiliser l'IA
       if (user) {
         try {
           const result = await fetchAIRecommendations('trending');
           if (result.products.length > 0) return result.products.slice(0, limit);
         } catch { /* fallback ci-dessous */ }
       }
-      // Fallback: produits populaires directs depuis la DB
+
+      // Fallback amélioré : combiner commandes récentes + avis + note
+      const { data: orderData } = await supabase
+        .from('order_items')
+        .select('product_id, quantity')
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        .limit(200);
+
+      // Compter les commandes par produit
+      const orderCounts = new Map<string, number>();
+      (orderData || []).forEach(item => {
+        orderCounts.set(item.product_id, (orderCounts.get(item.product_id) || 0) + (item.quantity || 1));
+      });
+
       const { data } = await supabase
         .from('products')
-        .select('id, name, price, images, rating, vendor_id, vendors(business_type)')
+        .select('id, name, price, images, rating, reviews_count, vendor_id, vendors(business_type)')
         .eq('is_active', true)
         .order('reviews_count', { ascending: false })
-        .limit(limit * 2);
+        .limit(limit * 3);
 
-      const allowedTypes = ['hybrid', 'online'];
-      return (data || [])
-        .filter(p => {
-          const vendor = (p as any).vendors;
-          return vendor?.business_type && allowedTypes.includes(vendor.business_type);
-        })
+      const filtered = filterByAllowedVendors(data || []);
+
+      // Score composite : commandes récentes × 3 + avis × 1 + note × 2
+      const scored = filtered.map(p => ({
+        ...p,
+        _score: (orderCounts.get(p.id) || 0) * 3 + (p.reviews_count || 0) * 1 + (p.rating || 0) * 2,
+      }));
+
+      scored.sort((a, b) => b._score - a._score);
+
+      return scored
         .slice(0, limit)
         .map(p => ({
           product_id: p.id,
@@ -153,8 +166,8 @@ export function useAITrending(limit = 16) {
         }));
     },
     enabled: !authLoading,
-    staleTime: 15 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    staleTime: CACHE_TTL.trending.staleTime,
+    gcTime: CACHE_TTL.trending.gcTime,
     retry: 1,
     refetchOnWindowFocus: false,
   });
@@ -171,8 +184,8 @@ export function useAIPostPurchase(productId: string | undefined, limit = 10) {
       return result.products.slice(0, limit);
     },
     enabled: !authLoading && !!user && !!productId,
-    staleTime: 30 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
+    staleTime: CACHE_TTL.postPurchase.staleTime,
+    gcTime: CACHE_TTL.postPurchase.gcTime,
     retry: 1,
     refetchOnWindowFocus: false,
   });

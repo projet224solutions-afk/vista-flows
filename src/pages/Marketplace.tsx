@@ -30,6 +30,7 @@ import { useAIPersonalized, useAITrending } from "@/hooks/useAIRecommendations";
 import { useDiscoveryProducts } from "@/hooks/useDiscoveryProducts";
 import { AIRecommendationSection } from "@/components/marketplace/AIRecommendationSection";
 import { useBehaviorTracking } from "@/hooks/useBehaviorTracking";
+import { useRecommendationRealtimeInvalidation } from "@/hooks/useRecommendationRealtimeInvalidation";
 import { cn } from "@/lib/utils";
 import { ScrollToTopButton } from "@/components/marketplace/ScrollToTopButton";
 import { InfiniteScrollTrigger } from "@/components/marketplace/InfiniteScrollTrigger";
@@ -84,6 +85,7 @@ export default function Marketplace() {
   const { data: discoveryProducts, isLoading: loadingDiscovery } = useDiscoveryProducts(8);
   // Behavior tracking
   useBehaviorTracking({ sessionType: 'browse' });
+  useRecommendationRealtimeInvalidation();
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<string[]>([]);

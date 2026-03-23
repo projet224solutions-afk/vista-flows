@@ -7,6 +7,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { CACHE_TTL, DISCOVERY_MIN_PRODUCTS, filterByAllowedVendors } from '@/config/recommendationConfig';
 
 interface DiscoveryProduct {
   product_id: string;
@@ -24,8 +25,6 @@ export function useDiscoveryProducts(limit = 12) {
   return useQuery({
     queryKey: ['discovery-products', user?.id ?? 'anon'],
     queryFn: async (): Promise<DiscoveryProduct[]> => {
-      const allowedTypes = ['hybrid', 'online'];
-
       // 1. Récupérer les produits vus (si connecté)
       let viewedIds: string[] = [];
       let viewedCategoryIds: string[] = [];
@@ -51,12 +50,12 @@ export function useDiscoveryProducts(limit = 12) {
         }
       }
 
-      // 2. Récupérer des produits de catégories NON explorées
+      // 2. Priorité aux produits récents et aux nouvelles catégories
       let query = supabase
         .from('products')
         .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type)')
         .eq('is_active', true)
-        .order('rating', { ascending: false })
+        .order('created_at', { ascending: false }) // Nouveautés en premier
         .limit(limit * 3);
 
       if (viewedCategoryIds.length > 0 && viewedCategoryIds.length < 10) {
@@ -68,16 +67,12 @@ export function useDiscoveryProducts(limit = 12) {
       const { data: discoveryData, error } = await query;
       if (error) throw error;
 
-      const unseen = (discoveryData || [])
-        .filter(p => {
-          const vendor = (p as any).vendors;
-          if (!vendor || !vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
-          return !viewedIds.includes(p.id);
-        })
+      const unseen = filterByAllowedVendors(discoveryData || [])
+        .filter(p => !viewedIds.includes(p.id))
         .slice(0, limit);
 
       // Si pas assez, compléter avec des produits populaires
-      if (unseen.length < 4) {
+      if (unseen.length < DISCOVERY_MIN_PRODUCTS) {
         const { data: fallback } = await supabase
           .from('products')
           .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type)')
@@ -85,12 +80,8 @@ export function useDiscoveryProducts(limit = 12) {
           .order('reviews_count', { ascending: false })
           .limit(limit * 2);
 
-        const fallbackFiltered = (fallback || [])
-          .filter(p => {
-            const vendor = (p as any).vendors;
-            if (!vendor || !vendor.business_type || !allowedTypes.includes(vendor.business_type)) return false;
-            return !viewedIds.includes(p.id) && !unseen.find(u => u.id === p.id);
-          })
+        const fallbackFiltered = filterByAllowedVendors(fallback || [])
+          .filter(p => !viewedIds.includes(p.id) && !unseen.find(u => u.id === p.id))
           .slice(0, limit - unseen.length);
 
         unseen.push(...fallbackFiltered);
@@ -107,8 +98,8 @@ export function useDiscoveryProducts(limit = 12) {
       }));
     },
     enabled: !authLoading,
-    staleTime: 20 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
+    staleTime: CACHE_TTL.discovery.staleTime,
+    gcTime: CACHE_TTL.discovery.gcTime,
     retry: 1,
     refetchOnWindowFocus: false,
   });
