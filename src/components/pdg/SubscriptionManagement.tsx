@@ -553,6 +553,117 @@ export default function SubscriptionManagement() {
     return warnings;
   };
 
+  const renderSubscriptionTable = (subs: any[], title: string, description: string, showExpiredBadge: boolean) => (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              {title}
+            </CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </div>
+          <Button onClick={loadAllSubscriptions} variant="outline" size="sm" disabled={loadingSubscriptions}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${loadingSubscriptions ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loadingSubscriptions ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-3">Chargement...</span>
+          </div>
+        ) : subs.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>{showExpiredBadge ? 'Aucun abonnement expiré' : 'Aucun abonnement actif'}</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">{subs.length} abonnement(s)</div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vendeur</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Acquisition</TableHead>
+                  <TableHead>Cycle</TableHead>
+                  <TableHead>Début</TableHead>
+                  <TableHead>Fin</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {subs.map((sub) => (
+                  <TableRow key={`${sub.source}-${sub.id}`}>
+                    <TableCell className="font-medium">
+                      {sub.profiles?.first_name} {sub.profiles?.last_name}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {sub.profiles?.email}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={sub.source === 'service' ? 'secondary' : 'outline'}>
+                        {sub.source === 'service' ? '🏪 Service' : '🛒 Boutique'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{sub.plan_display}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {sub.real_status === 'active' ? (
+                        <Badge variant="default">✓ Actif</Badge>
+                      ) : sub.real_status === 'expired' ? (
+                        <Badge variant="destructive">⛔ Expiré</Badge>
+                      ) : sub.real_status === 'past_due' ? (
+                        <Badge variant="destructive">⚠️ Impayé</Badge>
+                      ) : sub.real_status === 'cancelled' ? (
+                        <Badge variant="outline" className="text-muted-foreground">Annulé</Badge>
+                      ) : (
+                        <Badge variant="outline">{sub.status}</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {sub.acquisition_type === 'offered' ? (
+                        <Badge variant="outline" className="border-primary text-primary">🎁 Offert</Badge>
+                      ) : sub.acquisition_type === 'free' ? (
+                        <Badge variant="outline" className="text-muted-foreground">Gratuit</Badge>
+                      ) : (
+                        <Badge variant="default">💰 Acheté</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {sub.billing_cycle === 'lifetime' ? (
+                        <Badge variant="default">À vie</Badge>
+                      ) : sub.billing_cycle === 'yearly' ? (
+                        <Badge variant="outline">Annuel</Badge>
+                      ) : sub.billing_cycle === 'custom' ? (
+                        <Badge variant="outline">Personnalisé</Badge>
+                      ) : (
+                        <Badge variant="outline">{sub.billing_cycle || 'Mensuel'}</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {sub.started_at ? format(new Date(sub.started_at), 'dd/MM/yyyy', { locale: fr }) : '-'}
+                    </TableCell>
+                    <TableCell className={`text-sm font-medium ${sub.real_status === 'expired' ? 'text-destructive' : ''}`}>
+                      {sub.current_period_end ? format(new Date(sub.current_period_end), 'dd/MM/yyyy', { locale: fr }) : '-'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
