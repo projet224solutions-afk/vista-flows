@@ -24,10 +24,18 @@ serve(async (req) => {
     // AWS Backend Health Check
     if (!service || service === 'aws-backend') {
       const start = Date.now();
+      const awsBackendUrl = Deno.env.get('AWS_BACKEND_URL') || '';
+      if (!awsBackendUrl) {
+        results['aws-backend'] = {
+          status: 'outage',
+          responseTime: 0,
+          message: 'AWS_BACKEND_URL non configuré',
+        };
+      } else {
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 8000);
-        const res = await fetch('https://api.224solution.net/health', {
+        const res = await fetch(`${awsBackendUrl}/health`, {
           signal: controller.signal,
         });
         clearTimeout(timeout);
