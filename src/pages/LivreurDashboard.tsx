@@ -935,7 +935,7 @@ export default function LivreurDashboard() {
                 <Button 
                   onClick={() => {
                     if (currentDelivery) {
-                      processDeliveryPayment(currentDelivery.id, 'mobile_money', currentDelivery.delivery_fee || 0);
+                      processDeliveryPayment(currentDelivery.id, 'mobile_money');
                     }
                     setShowPaymentModal(false);
                     toast.success('Paiement mobile money enregistré');
