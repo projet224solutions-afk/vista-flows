@@ -2430,7 +2430,7 @@ export function POSSystem() {
 
             {/* Section paiement ultra compacte mobile */}
             {cart.length > 0 && (
-              <div className="border-t border-primary/20 bg-gradient-to-b from-muted/20 to-background flex-shrink-0 p-2 sm:p-3 space-y-2">
+              <div className="border-t border-primary/20 bg-gradient-to-b from-muted/20 to-background flex-shrink-0 p-3 space-y-2.5">
                 {/* Remise - Version compacte collapsible */}
                 <details className="group">
                   <summary className="flex items-center justify-between cursor-pointer list-none">
