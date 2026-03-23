@@ -2373,11 +2373,11 @@ export function POSSystem() {
                         
                         {/* Nom + Prix - zone flexible */}
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[11px] sm:text-xs truncate">
+                          <p className="font-semibold text-xs truncate">
                             {item.saleType === 'carton' && '📦 '}
                             {item.name}
                           </p>
-                          <p className="text-[9px] sm:text-[10px] text-muted-foreground">
+                          <p className="text-[10px] text-muted-foreground">
                             {formatPriceWithCurrency(item.price)}
                           </p>
                         </div>
