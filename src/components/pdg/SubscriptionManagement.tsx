@@ -733,9 +733,17 @@ export default function SubscriptionManagement() {
                             <Badge variant="secondary">{sub.plan_display}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={sub.status === 'active' ? 'default' : 'destructive'}>
-                              {sub.status === 'active' ? '✓ Actif' : sub.status}
-                            </Badge>
+                            {sub.real_status === 'active' ? (
+                              <Badge variant="default">✓ Actif</Badge>
+                            ) : sub.real_status === 'expired' ? (
+                              <Badge variant="destructive">⛔ Expiré</Badge>
+                            ) : sub.real_status === 'past_due' ? (
+                              <Badge variant="destructive" className="bg-orange-500">⚠️ Impayé</Badge>
+                            ) : sub.real_status === 'cancelled' ? (
+                              <Badge variant="outline" className="text-muted-foreground">Annulé</Badge>
+                            ) : (
+                              <Badge variant="outline">{sub.status}</Badge>
+                            )}
                           </TableCell>
                           <TableCell>
                             {sub.acquisition_type === 'offered' ? (
