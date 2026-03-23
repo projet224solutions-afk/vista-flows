@@ -8,6 +8,7 @@ import { useState, useRef } from 'react';
 import { Search, Filter, X, Camera } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
 interface HomeSearchBarProps {
