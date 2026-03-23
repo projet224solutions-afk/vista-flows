@@ -1239,10 +1239,8 @@ export default function Auth() {
     setSuccess(null);
 
     try {
-      // Validation du nouveau mot de passe
-      if (newPassword.length < 6) {
-        throw new Error("Le mot de passe doit faire au moins 6 caractères");
-      }
+      // Validation du nouveau mot de passe (mêmes règles que l'inscription)
+      passwordSchema.parse(newPassword);
 
       if (newPassword !== confirmNewPassword) {
         throw new Error("Les mots de passe ne correspondent pas");
