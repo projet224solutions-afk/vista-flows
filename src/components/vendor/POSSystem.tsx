@@ -100,6 +100,7 @@ export function POSSystem() {
   const { user: authUser, session } = useAuth();
   const { vendorId: agentVendorId, agent } = useAgent(); // Récupérer le vendor_id depuis le contexte agent
   const isMobile = useIsMobile();
+  const isAgentMode = !!agent; // Détecte si on est dans l'interface agent
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   
   // Hook ChapChapPay pour paiements sécurisés
@@ -1705,7 +1706,11 @@ export function POSSystem() {
   }, [barcodeInput]);
 
   return (
-    <div className="flex flex-col h-[100dvh] md:h-full w-full overflow-hidden bg-transparent max-w-full -m-2 sm:-m-3 md:-m-6">
+    <div className={`flex flex-col w-full overflow-hidden bg-transparent max-w-full ${
+      isAgentMode && isMobile 
+        ? 'h-full' 
+        : 'h-[100dvh] md:h-full -m-2 sm:-m-3 md:-m-6'
+    }`}>
       {/* En-tête professionnel - Compact sur mobile */}
       <div className="border-b border-border/50 flex-shrink-0 w-full max-w-full">
         <div className="flex items-center justify-between px-3 py-2 md:p-6 max-w-full overflow-hidden">

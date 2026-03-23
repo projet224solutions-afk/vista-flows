@@ -295,11 +295,9 @@ export default function VendorAgentInterface() {
       case 'wallet':
         return <AgentModuleWrapper permission="access_wallet"><VendorAgentWalletView vendorId={agent.vendor_id} agentName={agent.name} /></AgentModuleWrapper>;
       case 'pos':
-        return (
+        return canAccessPOS ? <POSSystemWrapper /> : (
           <AgentModuleWrapper>
-            {canAccessPOS ? <POSSystemWrapper /> : (
-              <Card><CardHeader><CardTitle>POS verrouillé</CardTitle><CardDescription>Le vendeur est configuré en "En ligne uniquement".</CardDescription></CardHeader></Card>
-            )}
+            <Card><CardHeader><CardTitle>POS verrouillé</CardTitle><CardDescription>Le vendeur est configuré en "En ligne uniquement".</CardDescription></CardHeader></Card>
           </AgentModuleWrapper>
         );
       case 'inventory':
@@ -377,39 +375,47 @@ export default function VendorAgentInterface() {
             </header>
 
             {/* Mobile Content */}
-            <ScrollArea className="flex-1">
-              <div className="p-3 pb-20">
+            {activeTab === 'pos' ? (
+              <div className="flex-1 min-h-0 overflow-hidden">
                 {renderTabContent()}
               </div>
-            </ScrollArea>
+            ) : (
+              <ScrollArea className="flex-1">
+                <div className="p-3 pb-20">
+                  {renderTabContent()}
+                </div>
+              </ScrollArea>
+            )}
 
-            {/* Mobile Bottom Nav - Quick access to top 5 items */}
-            <nav className="bg-background/95 backdrop-blur-md border-t border-border/50 px-2 py-1.5 safe-area-pb">
-              <div className="flex items-center justify-around">
-                {[
-                  { id: 'overview', icon: Home, label: 'Accueil' },
-                  { id: 'products', icon: Package, label: 'Produits' },
-                  { id: 'orders', icon: ShoppingCart, label: 'Commandes' },
-                  { id: 'wallet', icon: Wallet, label: 'Wallet' },
-                  { id: 'commissions', icon: DollarSign, label: 'Commissions' },
-                ].map(item => {
-                  const active = activeTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavClick(item.id)}
-                      className={cn(
-                        "flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg transition-colors min-w-0",
-                        active ? "text-vendeur-primary" : "text-muted-foreground"
-                      )}
-                    >
-                      <item.icon className={cn("w-5 h-5", active && "text-vendeur-primary")} />
-                      <span className="text-[10px] font-medium truncate">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </nav>
+            {/* Mobile Bottom Nav - Hidden when POS is active (POS has its own tabs) */}
+            {activeTab !== 'pos' && (
+              <nav className="bg-background/95 backdrop-blur-md border-t border-border/50 px-2 py-1.5 safe-area-pb">
+                <div className="flex items-center justify-around">
+                  {[
+                    { id: 'overview', icon: Home, label: 'Accueil' },
+                    { id: 'products', icon: Package, label: 'Produits' },
+                    { id: 'orders', icon: ShoppingCart, label: 'Commandes' },
+                    { id: 'wallet', icon: Wallet, label: 'Wallet' },
+                    { id: 'commissions', icon: DollarSign, label: 'Commissions' },
+                  ].map(item => {
+                    const active = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleNavClick(item.id)}
+                        className={cn(
+                          "flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg transition-colors min-w-0",
+                          active ? "text-vendeur-primary" : "text-muted-foreground"
+                        )}
+                      >
+                        <item.icon className={cn("w-5 h-5", active && "text-vendeur-primary")} />
+                        <span className="text-[10px] font-medium truncate">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </nav>
+            )}
           </div>
         ) : (
           /* === DESKTOP LAYOUT === */
