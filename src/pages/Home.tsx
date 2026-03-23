@@ -134,7 +134,7 @@ export default function Home() {
         <HomeSearchBar
           value={searchQuery}
           onChange={setSearchQuery}
-          placeholder="Rechercher des produits, services..."
+          placeholder={t('home.searchPlaceholder')}
           showFilter
           showCamera
           onCameraCapture={(file) => {

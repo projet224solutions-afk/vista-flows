@@ -77,7 +77,7 @@ export function HomeSearchBar({
             ref={inputRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
+            placeholder={displayPlaceholder}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             className={cn(
