@@ -385,7 +385,10 @@ export default function VendorShop() {
       <div className="px-4 pt-16 pb-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-foreground mb-1">{vendor.business_name}</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-2xl font-bold text-foreground">{vendor.business_name}</h2>
+              <VendorCertificationBadge vendorId={vendor.id} />
+            </div>
             
             <div className="flex flex-wrap gap-2 mb-3">
               {vendor.business_type && (

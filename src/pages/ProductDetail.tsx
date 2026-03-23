@@ -459,8 +459,9 @@ export default function ProductDetail() {
                       to={`/boutique/${product.vendors.shop_slug || product.vendors.id}`}
                       className="flex items-center justify-between gap-2 group hover:text-primary transition-colors"
                     >
-                      <span className="text-foreground group-hover:text-primary truncate">
+                      <span className="text-foreground group-hover:text-primary truncate flex items-center gap-1.5">
                         {product.vendors.business_name}
+                        <VendorCertBadge vendorId={product.vendor_id} />
                       </span>
                       <ExternalLink className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-primary" />
                     </Link>
