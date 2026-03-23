@@ -22,9 +22,9 @@ serve(async (req) => {
     const results: Record<string, any> = {};
 
     // AWS Backend Health Check
+    const awsBackendUrl = Deno.env.get('AWS_BACKEND_URL') || '';
+
     if (!service || service === 'aws-backend') {
-      const start = Date.now();
-      const awsBackendUrl = Deno.env.get('AWS_BACKEND_URL') || '';
       if (!awsBackendUrl) {
         results['aws-backend'] = {
           status: 'outage',
@@ -32,59 +32,65 @@ serve(async (req) => {
           message: 'AWS_BACKEND_URL non configuré',
         };
       } else {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
-        const res = await fetch(`${awsBackendUrl}/health`, {
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        const rt = Date.now() - start;
-        // Any HTTP response means the server is UP — even 404 (no /health route) or 401/403
-        const isReachable = res.status < 500;
-        results['aws-backend'] = {
-          status: isReachable ? (rt > 2000 ? 'degraded' : 'operational') : 'degraded',
-          responseTime: rt,
-          message: isReachable ? `OK - ${rt}ms` : `HTTP ${res.status}`,
-          httpStatus: res.status,
-        };
-      } catch (e: any) {
-        results['aws-backend'] = {
-          status: 'outage',
-          responseTime: Date.now() - start,
-          message: e?.name === 'AbortError' ? 'Timeout (>8s)' : `Serveur inaccessible: ${e?.message || 'Erreur réseau'}`,
-        };
+        const start = Date.now();
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          const res = await fetch(`${awsBackendUrl}/health`, { signal: controller.signal });
+          clearTimeout(timeout);
+          const rt = Date.now() - start;
+          const isReachable = res.status < 500;
+          results['aws-backend'] = {
+            status: isReachable ? (rt > 2000 ? 'degraded' : 'operational') : 'degraded',
+            responseTime: rt,
+            message: isReachable ? `OK - ${rt}ms` : `HTTP ${res.status}`,
+            httpStatus: res.status,
+          };
+        } catch (e: any) {
+          results['aws-backend'] = {
+            status: 'outage',
+            responseTime: Date.now() - start,
+            message: e?.name === 'AbortError' ? 'Timeout (>8s)' : `Serveur inaccessible: ${e?.message || 'Erreur réseau'}`,
+          };
+        }
       }
     }
 
     // AWS Cognito Check
     if (!service || service === 'aws-cognito') {
-      const start = Date.now();
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
-        const res = await fetch('https://api.224solution.net/api/cognito/validate-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: 'health-check' }),
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        const rt = Date.now() - start;
-        // Any response < 500 means Cognito gateway is reachable
-        const isReachable = res.status < 500;
-        results['aws-cognito'] = {
-          status: isReachable ? (rt > 2000 ? 'degraded' : 'operational') : 'degraded',
-          responseTime: rt,
-          message: `Cognito accessible - ${rt}ms`,
-          httpStatus: res.status,
-        };
-      } catch (e: any) {
+      if (!awsBackendUrl) {
         results['aws-cognito'] = {
           status: 'outage',
-          responseTime: Date.now() - start,
-          message: e?.name === 'AbortError' ? 'Timeout' : `Inaccessible: ${e?.message || 'Erreur'}`,
+          responseTime: 0,
+          message: 'AWS_BACKEND_URL non configuré',
         };
+      } else {
+        const start = Date.now();
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          const res = await fetch(`${awsBackendUrl}/api/cognito/validate-token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: 'health-check' }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeout);
+          const rt = Date.now() - start;
+          const isReachable = res.status < 500;
+          results['aws-cognito'] = {
+            status: isReachable ? (rt > 2000 ? 'degraded' : 'operational') : 'degraded',
+            responseTime: rt,
+            message: `Cognito accessible - ${rt}ms`,
+            httpStatus: res.status,
+          };
+        } catch (e: any) {
+          results['aws-cognito'] = {
+            status: 'outage',
+            responseTime: Date.now() - start,
+            message: e?.name === 'AbortError' ? 'Timeout' : `Inaccessible: ${e?.message || 'Erreur'}`,
+          };
+        }
       }
     }
 
