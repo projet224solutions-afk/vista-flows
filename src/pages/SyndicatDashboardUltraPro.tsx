@@ -408,12 +408,12 @@ export default function SyndicatDashboardUltraPro() {
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-4">
                                     <Button
-                                        onClick={() => toast.info('Formulaire d\'ajout de taxi-motard')}
+                                        onClick={() => setActiveTab('taxi-motards')}
                                         variant="outline"
                                         className="w-full rounded-xl border-green-200 text-green-600 hover:bg-green-50"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
-                                        Ajouter un Taxi-Motard
+                                        Gérer les Taxi-Motards
                                     </Button>
 
                                     <Button
@@ -422,7 +422,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
-                                        Ajouter un Membre Bureau
+                                        Gérer les Membres Bureau
                                     </Button>
 
                                     <Button
@@ -435,7 +435,7 @@ export default function SyndicatDashboardUltraPro() {
                                     </Button>
 
                                     <Button
-                                        onClick={() => toast.info('Paramètres du bureau')}
+                                        onClick={() => setActiveTab('gestion')}
                                         variant="outline"
                                         className="w-full rounded-xl border-orange-200 text-orange-600 hover:bg-orange-50"
                                     >
