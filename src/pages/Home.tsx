@@ -35,6 +35,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading, profileLoading } = useAuth();
   const { addToCart, getCartCount } = useCart();
+  const { t } = useTranslation();
   
   // ⚡ Redirection automatique vers le dashboard si connecté avec un rôle
   useRoleRedirect();

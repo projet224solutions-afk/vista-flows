@@ -5,7 +5,7 @@
  * Fully translated + proximity location info
  */
 
-import { Store, Car, Truck, Zap, Utensils, MapPin } from 'lucide-react';
+import { Store, Car, Truck, Zap, Utensils } from 'lucide-react';
 import { HomeServiceCard } from './ServiceCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';

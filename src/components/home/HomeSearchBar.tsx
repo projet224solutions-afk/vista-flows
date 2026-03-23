@@ -24,7 +24,7 @@ interface HomeSearchBarProps {
 export function HomeSearchBar({
   value,
   onChange,
-  placeholder = 'Rechercher des produits, services...',
+  placeholder,
   onFilter,
   showFilter = true,
   showCamera = false,
@@ -34,6 +34,8 @@ export function HomeSearchBar({
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
+  const displayPlaceholder = placeholder || t('home.searchPlaceholder');
 
   const handleCameraClick = () => {
     cameraInputRef.current?.click();
