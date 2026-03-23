@@ -52,6 +52,7 @@ export default function BureauDashboard() {
   const [isSubmittingMember, setIsSubmittingMember] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [showToken, setShowToken] = useState(false);
   const [workerForm, setWorkerForm] = useState({
     nom: '',
     email: '',
