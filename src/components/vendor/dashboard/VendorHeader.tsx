@@ -8,6 +8,7 @@ import { memo, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Activity, LogOut, Settings } from 'lucide-react';
+import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
 // Lazy loaded header components (UI non-critique)
@@ -126,6 +127,9 @@ const HeaderActions = memo(function HeaderActions({
       <Suspense fallback={null}>
         <PushNotificationButton className="h-8 w-8 md:h-10 md:w-10" />
       </Suspense>
+
+      {/* Notification Bell */}
+      <NotificationBellButton className="h-8 w-8 md:h-10 md:w-10" iconSize="w-4 h-4 md:w-5 md:h-5" />
 
       {/* Settings */}
       <Button

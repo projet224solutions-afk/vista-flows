@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ShoppingBag, Heart, Package, Search, CreditCard, MessageSquare,
   LogOut, Home, Grid3X3, ShoppingCart, TrendingUp, Star, Eye,
-  Plus, Truck, Bot, User, Settings
+  Plus, Truck, Bot, User, Settings, Bell
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -40,6 +40,7 @@ const ResponsiveGrid = lazy(() => import("@/components/responsive/ResponsiveCont
 const ResponsiveStack = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveStack })));
 const ProductDetailModal = lazy(() => import("@/components/marketplace/ProductDetailModal"));
 const ClientSettings = lazy(() => import("@/components/client/ClientSettings"));
+const NotificationBellButton = lazy(() => import("@/components/shared/NotificationBellButton").then(m => ({ default: m.NotificationBellButton })));
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -260,6 +261,9 @@ export default function ClientDashboard() {
 
           {/* Actions - Responsive */}
           <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+            <Suspense fallback={null}>
+              <NotificationBellButton className={responsive.isMobile ? 'h-8 w-8' : 'h-9 w-9'} iconSize={responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} />
+            </Suspense>
             <QuickTransferButton 
               variant="ghost" 
               size={responsive.isMobile ? 'icon' : 'icon'} 

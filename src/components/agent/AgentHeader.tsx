@@ -4,6 +4,7 @@
 
 import { AgentIdDisplay } from '@/components/agent/AgentIdDisplay';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
+import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 
 interface AgentHeaderProps {
   agentCode: string;
@@ -26,6 +27,7 @@ export default function AgentHeader({ agentCode, pdgUserId, sectionTitle }: Agen
             {pdgUserId && (
               <WalletBalanceDisplay userId={pdgUserId} compact={true} className="max-w-xs" />
             )}
+            <NotificationBellButton className="h-9 w-9" />
           </div>
         </div>
       </div>
