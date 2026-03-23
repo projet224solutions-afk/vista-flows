@@ -418,30 +418,31 @@ export default function LivreurDashboard() {
 
         {/* Onglets de navigation - Responsive */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-5'} border border-orange-500/20`}>
+          <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-4' : 'grid-cols-5'} border border-orange-500/20`}>
             <TabsTrigger value="missions" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
               📦 {isMobile ? 'Missions' : 'Missions disponibles'}
               {nearbyDeliveries.length > 0 && (
-                <Badge variant="secondary" className="ml-2 text-xs bg-white text-orange-600">{nearbyDeliveries.length}</Badge>
+                <Badge variant="secondary" className="ml-1 text-xs bg-white text-orange-600">{nearbyDeliveries.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="active" disabled={!currentDelivery && !currentRide} className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-700 data-[state=active]:text-white">
               🚚 {isMobile ? 'Active' : 'En cours'}
-              {(currentDelivery || currentRide) && <Badge variant="default" className="ml-2 text-xs bg-white text-green-600">1</Badge>}
+              {(currentDelivery || currentRide) && <Badge variant="default" className="ml-1 text-xs bg-white text-green-600">1</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white">
+              📋 {isMobile ? 'Historique' : 'Historique'}
+              {(deliveryHistory.length + rideHistory.length) > 0 && (
+                <Badge variant="outline" className="ml-1 text-xs">{deliveryHistory.length + rideHistory.length}</Badge>
+              )}
             </TabsTrigger>
             {!isMobile && (
-              <>
-                <TabsTrigger value="history" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white">
-                  📋 Historique
-                  {(deliveryHistory.length + rideHistory.length) > 0 && (
-                    <Badge variant="outline" className="ml-2 text-xs">{deliveryHistory.length + rideHistory.length}</Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="my-purchases" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:text-white">
-                  🛒 Mes Achats
-                </TabsTrigger>
-              </>
+              <TabsTrigger value="my-purchases" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:text-white">
+                🛒 Mes Achats
+              </TabsTrigger>
             )}
+            <TabsTrigger value="wallet" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white">
+              💰 {isMobile ? 'Wallet' : 'Portefeuille'}
+            </TabsTrigger>
           </TabsList>
 
           {/* 📦 Liste des livraisons disponibles */}
