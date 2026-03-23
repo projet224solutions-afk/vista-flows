@@ -130,12 +130,16 @@ export default function SubscriptionManagement() {
         profiles = profilesData || [];
       }
 
-      // 5. Enrichir avec profils
-      const enrichedData = allSubs.map(sub => ({
-        ...sub,
-        profiles: profiles.find(p => p.id === sub.user_id),
-        acquisition_type: determineAcquisitionType(sub),
-      }));
+      // 5. Enrichir avec profils + statut réel calculé
+      const enrichedData = allSubs.map(sub => {
+        const realStatus = computeRealStatus(sub);
+        return {
+          ...sub,
+          profiles: profiles.find(p => p.id === sub.user_id),
+          acquisition_type: determineAcquisitionType(sub),
+          real_status: realStatus,
+        };
+      });
 
       // 6. Garder le plus récent par user
       const uniqueSubscriptions = enrichedData.reduce((acc, sub) => {
