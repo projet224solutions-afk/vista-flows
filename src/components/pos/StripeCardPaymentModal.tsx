@@ -34,6 +34,10 @@ interface StripeCardPaymentModalProps {
   orderId: string;
   sellerId: string;
   description?: string;
+  /** Edge function name to call. Defaults to 'stripe-pos-payment' */
+  edgeFunction?: string;
+  /** Extra body params to send to the edge function */
+  extraParams?: Record<string, unknown>;
   onSuccess: (paymentIntentId: string) => void;
   onError: (error: string) => void;
 }
