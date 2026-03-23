@@ -409,12 +409,12 @@ export function VendorCertificationManager() {
 
                   {/* Actions */}
                   <div className="flex gap-2 flex-shrink-0">
-                    {vendor.certification?.status !== 'CERTIFIE' && (
+                    {(!vendor.certification || vendor.certification.status !== 'CERTIFIE') && (
                       <Button
                         size="sm"
                         variant="default"
                         onClick={() => openDialog(vendor, 'CERTIFY')}
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-[#04439e] hover:bg-[#033580]"
                       >
                         <CheckCircle2 className="w-4 h-4 mr-1" />
                         Certifier
@@ -432,7 +432,7 @@ export function VendorCertificationManager() {
                       </Button>
                     )}
                     
-                    {vendor.certification?.status !== 'NON_CERTIFIE' && (
+                    {vendor.certification && vendor.certification.status !== 'NON_CERTIFIE' && (
                       <Button
                         size="sm"
                         variant="outline"
