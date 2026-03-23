@@ -575,7 +575,7 @@ export function JomyPaymentSelector({
               </div>
               <StripeCheckoutButton
                 amount={amount}
-                currency={displayCurrency === 'GNF' ? 'USD' : displayCurrency}
+                currency={displayCurrency}
                 description={description || 'Paiement 224Solutions'}
                 orderId={orderId}
                 sellerId={sellerId || recipientId}
