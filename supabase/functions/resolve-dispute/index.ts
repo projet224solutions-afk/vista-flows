@@ -35,7 +35,7 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
 
-    if (!profile || !["admin", "pdg"].includes(profile.role)) {
+    if (!profile || !["admin", "pdg", "ceo"].includes(profile.role)) {
       return new Response(JSON.stringify({ error: "Réservé aux administrateurs" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
