@@ -36,6 +36,8 @@ interface StripeCheckoutButtonProps {
   sellerId?: string;
   /** Custom edge function name override */
   edgeFunction?: string;
+  /** Extra params to send to the edge function */
+  extraParams?: Record<string, unknown>;
   onSuccess: (data: {
     paymentIntentId: string;
     amount: number;
