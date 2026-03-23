@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  ShoppingBag, Heart, Package, Search, CreditCard, MessageSquare,
-  LogOut, Home, Grid3X3, ShoppingCart, TrendingUp, Star, Eye,
-  Plus, Truck, Bot, User, Settings
+  ShoppingBag, Heart, Package, Search, CreditCard,
+  LogOut, Home, ShoppingCart, TrendingUp, Bot, User, Settings, Trash2
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -19,14 +17,11 @@ import { useUniversalProducts } from "@/hooks/useUniversalProducts";
 import { supabase } from "@/lib/supabaseClient";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useCart } from "@/contexts/CartContext";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { useClientErrorBoundary } from "@/hooks/useClientErrorBoundary";
 import { useClientStats } from "@/hooks/useClientStats";
 
 // Lazy loading des composants lourds
 const ProductCard = lazy(() => import("@/components/ProductCard"));
 const UserProfileCard = lazy(() => import("@/components/UserProfileCard"));
-const UniversalCommunicationHub = lazy(() => import("@/components/communication/UniversalCommunicationHub"));
 const CopiloteChat = lazy(() => import("@/components/copilot/CopiloteChat"));
 const UniversalWalletTransactions = lazy(() => import("@/components/wallet/UniversalWalletTransactions"));
 const WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
@@ -37,7 +32,6 @@ const ProductPaymentModal = lazy(() => import("@/components/ecommerce/ProductPay
 const ClientStatDetailModal = lazy(() => import("@/components/client/ClientStatDetailModal").then(m => ({ default: m.ClientStatDetailModal })));
 const ClientOrdersList = lazy(() => import("@/components/client/ClientOrdersList"));
 const ResponsiveGrid = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveGrid })));
-const ResponsiveStack = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveStack })));
 const ProductDetailModal = lazy(() => import("@/components/marketplace/ProductDetailModal"));
 const ClientSettings = lazy(() => import("@/components/client/ClientSettings"));
 const NotificationBellButton = lazy(() => import("@/components/shared/NotificationBellButton").then(m => ({ default: m.NotificationBellButton })));
@@ -49,14 +43,11 @@ export default function ClientDashboard() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Gestion des erreurs centralisée
-  const { error, captureError, clearError } = useClientErrorBoundary();
-  
-  // Stats optimisées avec SQL
-  const { stats: clientStats, loading: statsLoading } = useClientStats();
 
-  // Utiliser le hook universel pour les produits
+  // Stats optimisées avec SQL
+  const { stats: clientStats, loading: statsLoading, refresh: refreshStats } = useClientStats();
+
+  // Produits via hook universel
   const { products: universalProducts, loading: productsLoading } = useUniversalProducts({
     limit: 50,
     sortBy: 'newest',
@@ -64,24 +55,22 @@ export default function ClientDashboard() {
     searchQuery
   });
 
+  // Données client: commandes, favoris, contact vendeur
   const {
     orders,
-    cartItems,
     favorites,
-    addToCart,
-    removeFromCart,
-    clearCart,
-    createOrder,
     toggleFavorite,
     contactVendor,
     loadAllData
   } = useClientData();
 
+  // Panier unifié via CartContext (seule source de vérité)
+  const { cartItems, addToCart: addToCartContext, removeFromCart, clearCart, getCartTotal, getCartCount } = useCart();
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
-  const { addToCart: addToCartContext } = useCart();
   const [statDetailType, setStatDetailType] = useState<'orders' | 'active' | 'favorites' | 'spent' | null>(null);
 
   const handleSignOut = async () => {
@@ -89,7 +78,7 @@ export default function ClientDashboard() {
       await signOut();
       toast.success(t('common.signOutSuccess'));
       navigate('/');
-    } catch (error) {
+    } catch {
       toast.error(t('common.error'));
     }
   };
@@ -98,113 +87,80 @@ export default function ClientDashboard() {
     return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
   };
 
-  // Charger le customer_id
+  // Charger le customer_id + données client
   useEffect(() => {
+    if (!user?.id) return;
+
     const loadCustomerId = async () => {
-      if (!user?.id) return;
-      
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('customers')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
-      
+
       if (data) {
         setCustomerId(data.id);
       } else {
-        // Créer automatiquement le customer si inexistant
-        console.log('🔄 Création automatique du customer pour:', user.id);
         const { data: newCustomer, error: createError } = await supabase
           .from('customers')
           .insert({ user_id: user.id })
           .select('id')
           .single();
-        
+
         if (newCustomer) {
           setCustomerId(newCustomer.id);
-          console.log('✅ Customer créé:', newCustomer.id);
-          toast.success('Compte client initialisé');
         } else {
           console.error('❌ Échec création customer:', createError);
-          toast.error('Erreur d\'initialisation du compte');
         }
       }
     };
-    
-    loadCustomerId();
-  }, [user?.id]);
 
-  const handleCheckout = async () => {
-    console.log('🛒 handleCheckout appelé', { 
-      hasUser: !!user?.id, 
-      cartItemsCount: cartItems.length,
-      customerId 
-    });
-    
+    loadCustomerId();
+    loadAllData(user.id);
+  }, [user?.id, loadAllData]);
+
+  const handleCheckout = () => {
     if (!user?.id) {
       toast.error(t('client.connectionRequired'));
       return;
     }
-    
-    if (cartItems.length === 0) {
+    if (getCartCount() === 0) {
       toast.error(t('client.emptyCart'));
       return;
     }
-    
-    console.log('✅ Ouverture du modal de paiement');
-    // Ouvrir le modal même si customerId n'existe pas encore
-    // Le modal gérera la création du customer si nécessaire
     setShowPaymentModal(true);
   };
 
   const handlePaymentSuccess = () => {
     clearCart();
     loadAllData(user?.id);
+    refreshStats();
     setActiveTab('orders');
     toast.success('Commande créée avec succès');
   };
 
-  // Ouvrir le modal de détails du produit
   const handleProductClick = (productId: string) => {
     setSelectedProductId(productId);
     setShowProductModal(true);
   };
 
-  // Contacter le vendeur via modal ou direct
+  // Contact vendeur unifié via edge function
   const handleContactVendor = async (product: any) => {
-    if (!product.vendor_user_id) {
+    const vendorUserId = product.vendor_user_id;
+    if (!vendorUserId) {
       toast.error('Informations du vendeur non disponibles');
       return;
     }
+    if (!user) {
+      toast.error('Veuillez vous connecter');
+      return;
+    }
 
-    try {
-      if (!user) {
-        toast.error('Veuillez vous connecter');
-        return;
-      }
-
-      const initialMessage = `Bonjour, je suis intéressé par votre produit "${product.name}". Pouvez-vous me donner plus d'informations ?`;
-      
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: user.id,
-          recipient_id: product.vendor_user_id,
-          content: initialMessage,
-          type: 'text'
-        });
-
-      if (error) throw error;
-
-      toast.success('Message envoyé au vendeur!');
+    const conversationId = await contactVendor(vendorUserId, product.vendor_name || product.name);
+    if (conversationId) {
       navigate('/messages');
-    } catch (error) {
-      console.error('Erreur contact vendeur:', error);
-      toast.error('Impossible de contacter le vendeur');
     }
   };
-
-  const activeOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing');
 
   return (
     <Suspense fallback={
@@ -216,7 +172,7 @@ export default function ClientDashboard() {
       </div>
     }>
     <div className="min-h-screen bg-background pb-24">
-      {/* Header Premium - Responsive */}
+      {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className={`container flex ${responsive.isMobile ? 'h-14' : 'h-16'} items-center justify-between ${responsive.isMobile ? 'px-3' : 'px-4'}`}>
           <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
@@ -230,10 +186,7 @@ export default function ClientDashboard() {
                     {responsive.isMobile ? '224SOL' : '224SOLUTIONS'}
                   </h1>
                   {!responsive.isMobile && (
-                    <>
-                      <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
-                      
-                    </>
+                    <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground hidden sm:block">Marketplace</p>
@@ -241,7 +194,7 @@ export default function ClientDashboard() {
             </div>
           </div>
 
-          {/* Barre de recherche - Cachée sur mobile, visible sur tablette+ */}
+          {/* Barre de recherche desktop */}
           {!responsive.isMobile && (
             <div className="flex-1 max-w-md mx-4 lg:mx-8">
               <div className="relative">
@@ -256,63 +209,45 @@ export default function ClientDashboard() {
             </div>
           )}
 
-          {/* Actions - Responsive */}
+          {/* Actions */}
           <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             <Suspense fallback={null}>
               <NotificationBellButton className={responsive.isMobile ? 'h-8 w-8' : 'h-9 w-9'} iconSize={responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} />
             </Suspense>
-            <QuickTransferButton 
-              variant="ghost" 
-              size={responsive.isMobile ? 'icon' : 'icon'} 
-              showText={false} 
-            />
+            <QuickTransferButton variant="ghost" size="icon" showText={false} />
             <Button
               variant="ghost"
-              size={responsive.isMobile ? 'icon' : 'icon'}
+              size="icon"
               className="relative"
               onClick={() => setActiveTab('cart')}
             >
               <ShoppingCart className={responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} />
-              {cartItems.length > 0 && (
+              {getCartCount() > 0 && (
                 <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 flex items-center justify-center bg-client-primary text-xs">
-                  {cartItems.length}
+                  {getCartCount()}
                 </Badge>
               )}
             </Button>
 
             {!responsive.isMobile && (
               <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setActiveTab('settings')}
-                >
+                <Button variant="ghost" size="icon" onClick={() => setActiveTab('settings')}>
                   <User className="w-5 h-5" />
                 </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleSignOut}
-                >
+                <Button variant="ghost" size="icon" onClick={handleSignOut}>
                   <LogOut className="w-5 h-5" />
                 </Button>
               </>
             )}
-            
-            {/* Menu mobile */}
+
             {responsive.isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleSignOut}
-              >
+              <Button variant="ghost" size="icon" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4" />
               </Button>
             )}
           </div>
         </div>
-        
+
         {/* Barre de recherche mobile */}
         {responsive.isMobile && (
           <div className="px-3 pb-3">
@@ -332,47 +267,27 @@ export default function ClientDashboard() {
       {/* Main Content */}
       <main className={`container ${responsive.isMobile ? 'px-3 py-4' : 'px-4 py-6'}`}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
-          {/* Navigation par onglets - Responsive */}
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
-            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-7 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
-              <TabsTrigger 
-                value="overview" 
-                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
-              >
+            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-5 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
+              <TabsTrigger value="overview" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Home className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                <span className={responsive.isMobile ? 'hidden' : ''}>Vue d'ensemble</span>
-                <span className={responsive.isMobile ? '' : 'hidden'}>Vue</span>
+                {responsive.isMobile ? 'Vue' : "Vue d'ensemble"}
               </TabsTrigger>
-              <TabsTrigger 
-                value="cart" 
-                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
-              >
+              <TabsTrigger value="cart" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <ShoppingCart className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 Panier
               </TabsTrigger>
-              <TabsTrigger 
-                value="orders" 
-                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
-              >
+              <TabsTrigger value="orders" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Package className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                <span className={responsive.isMobile ? 'hidden' : ''}>Commandes</span>
-                <span className={responsive.isMobile ? '' : 'hidden'}>Cmd</span>
+                {responsive.isMobile ? 'Cmd' : 'Commandes'}
               </TabsTrigger>
-              <TabsTrigger 
-                value="copilot" 
-                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
-              >
+              <TabsTrigger value="copilot" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Bot className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                <span className={responsive.isMobile ? 'hidden' : ''}>Assistant IA</span>
-                <span className={responsive.isMobile ? '' : 'hidden'}>IA</span>
+                {responsive.isMobile ? 'IA' : 'Assistant IA'}
               </TabsTrigger>
-              <TabsTrigger 
-                value="settings" 
-                className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}
-              >
+              <TabsTrigger value="settings" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Settings className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                <span className={responsive.isMobile ? 'hidden' : ''}>Paramètres</span>
-                <span className={responsive.isMobile ? '' : 'hidden'}>⚙️</span>
+                {responsive.isMobile ? '⚙️' : 'Paramètres'}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -380,23 +295,19 @@ export default function ClientDashboard() {
           {/* Vue d'ensemble */}
           <TabsContent value="overview" className="space-y-4 md:space-y-6 animate-fade-in">
             <ResponsiveGrid mobileCols={1} tabletCols={2} desktopCols={3} gap="md">
-              {/* Profil utilisateur */}
               <div className="lg:col-span-2">
                 <UserProfileCard showWalletDetails={false} />
               </div>
-
-              {/* Système d'ID */}
               <div>
                 <IdSystemIndicator />
               </div>
             </ResponsiveGrid>
 
             <ResponsiveGrid mobileCols={1} tabletCols={2} desktopCols={3} gap="md">
-              {/* Wallet et transactions */}
               <div className="lg:col-span-2">
                 <UniversalWalletTransactions />
               </div>
-              {/* Statistiques rapides - SQL optimisées */}
+              {/* Statistiques */}
               <Card className="shadow-elegant">
                 <CardHeader>
                   <CardTitle className={responsive.isMobile ? 'text-base' : 'text-lg'}>Statistiques</CardTitle>
@@ -407,47 +318,35 @@ export default function ClientDashboard() {
                     <div className="text-center py-4 text-muted-foreground">Chargement...</div>
                   ) : (
                     <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                      {/* Commandes */}
                       <button onClick={() => setStatDetailType('orders')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-client-accent rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-client-primary/40 transition-all active:scale-95">
                         <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-client-primary/10 flex items-center justify-center mb-1`}>
                           <Package className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-client-primary`} />
                         </div>
-                        <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>
-                          {clientStats?.total_orders || 0}
-                        </p>
+                        <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>{clientStats?.total_orders || 0}</p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">Commandes</p>
                       </button>
 
-                      {/* En cours */}
                       <button onClick={() => setStatDetailType('active')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-orange-400/40 transition-all active:scale-95">
                         <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-1`}>
                           <TrendingUp className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-orange-600`} />
                         </div>
-                        <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>
-                          {clientStats?.active_orders || 0}
-                        </p>
+                        <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>{clientStats?.active_orders || 0}</p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">En cours</p>
                       </button>
 
-                      {/* Favoris */}
                       <button onClick={() => setStatDetailType('favorites')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-purple-400/40 transition-all active:scale-95">
                         <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-1`}>
                           <Heart className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-purple-600`} />
                         </div>
-                        <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>
-                          {clientStats?.favorites_count || 0}
-                        </p>
+                        <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>{clientStats?.favorites_count || 0}</p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">Favoris</p>
                       </button>
 
-                      {/* Total dépensé */}
                       <button onClick={() => setStatDetailType('spent')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-green-50 dark:bg-green-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-green-400/40 transition-all active:scale-95">
                         <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-1`}>
                           <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-green-600`} />
                         </div>
-                        <p className={`${responsive.isMobile ? 'text-sm' : 'text-base'} font-bold text-foreground truncate max-w-full`}>
-                          {formatPrice(clientStats?.total_spent || 0)}
-                        </p>
+                        <p className={`${responsive.isMobile ? 'text-sm' : 'text-base'} font-bold text-foreground truncate max-w-full`}>{formatPrice(clientStats?.total_spent || 0)}</p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">Total dépensé</p>
                       </button>
                     </div>
@@ -456,7 +355,7 @@ export default function ClientDashboard() {
               </Card>
             </ResponsiveGrid>
 
-            {/* Produits recommandés */}
+            {/* Produits populaires */}
             <Card className="shadow-elegant">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -492,7 +391,6 @@ export default function ClientDashboard() {
                           vendor_id: product.vendor_id,
                           vendor_name: product.vendor_name
                         });
-                        toast.success('Produit ajouté au panier');
                       }}
                       onContact={() => handleContactVendor(product)}
                       isPremium={product.is_hot}
@@ -503,13 +401,13 @@ export default function ClientDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Panier */}
+          {/* Panier - utilise CartContext comme seule source */}
           <TabsContent value="cart" className="space-y-6 animate-fade-in">
             <Card className="shadow-elegant">
               <CardHeader>
                 <CardTitle>Mon panier</CardTitle>
                 <CardDescription>
-                  {cartItems.length} article{cartItems.length > 1 ? 's' : ''} dans votre panier
+                  {getCartCount()} article{getCartCount() > 1 ? 's' : ''} dans votre panier
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -527,23 +425,30 @@ export default function ClientDashboard() {
                     {cartItems.map((item) => (
                       <Card key={item.id}>
                         <CardContent className="p-4 flex items-center gap-4">
-                          <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
-                            <ShoppingBag className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold">{item.name}</h4>
-                            <p className="text-sm text-muted-foreground">Prix unitaire: {formatPrice(item.price)}</p>
+                          {item.image ? (
+                            <img src={item.image} alt={item.name} className="w-20 h-20 rounded-lg object-cover" />
+                          ) : (
+                            <div className="w-20 h-20 bg-muted rounded-lg flex items-center justify-center">
+                              <ShoppingBag className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold truncate">{item.name}</h4>
+                            <p className="text-sm text-muted-foreground">Qté: {item.quantity}</p>
+                            {item.vendor_name && (
+                              <p className="text-xs text-muted-foreground">{item.vendor_name}</p>
+                            )}
                             <p className="text-lg font-bold text-client-primary mt-1">
-                              {formatPrice(item.price)}
+                              {formatPrice(item.price * item.quantity)}
                             </p>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-destructive"
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
                             onClick={() => removeFromCart(item.id)}
                           >
-                            <LogOut className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </CardContent>
                       </Card>
@@ -553,11 +458,11 @@ export default function ClientDashboard() {
                         <div className="flex items-center justify-between mb-4">
                           <span className="text-lg font-semibold">Total</span>
                           <span className="text-2xl font-bold text-client-primary">
-                            {formatPrice(cartItems.reduce((sum, item) => sum + item.price, 0))}
+                            {formatPrice(getCartTotal())}
                           </span>
                         </div>
-                        <Button 
-                          className="w-full bg-client-primary hover:bg-client-primary/90" 
+                        <Button
+                          className="w-full bg-client-primary hover:bg-client-primary/90"
                           size="lg"
                           onClick={handleCheckout}
                         >
@@ -585,7 +490,6 @@ export default function ClientDashboard() {
             </Card>
           </TabsContent>
 
-
           {/* Copilote */}
           <TabsContent value="copilot" className="animate-fade-in">
             <Card className="shadow-elegant">
@@ -610,18 +514,21 @@ export default function ClientDashboard() {
       {user?.id && (
         <ProductPaymentModal
           open={showPaymentModal}
-          onClose={() => {
-            console.log('🔴 Fermeture du modal de paiement');
-            setShowPaymentModal(false);
-          }}
-          cartItems={cartItems}
-          totalAmount={cartItems.reduce((sum, item) => sum + item.price, 0)}
+          onClose={() => setShowPaymentModal(false)}
+          cartItems={cartItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image || '',
+            vendorId: item.vendor_id,
+          }))}
+          totalAmount={getCartTotal()}
           onPaymentSuccess={handlePaymentSuccess}
           userId={user.id}
           customerId={customerId}
         />
       )}
-      
+
       {/* Modal de détails du produit */}
       <ProductDetailModal
         productId={selectedProductId}
@@ -638,8 +545,6 @@ export default function ClientDashboard() {
         onClose={() => setStatDetailType(null)}
         statType={statDetailType}
       />
-
-      {/* Note: CommunicationWidget et QuickFooter sont rendus globalement dans App.tsx */}
     </div>
     </Suspense>
   );
