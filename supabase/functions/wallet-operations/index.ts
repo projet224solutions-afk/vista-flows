@@ -634,21 +634,19 @@ serve(async (req) => {
             return new Response(JSON.stringify({ error: 'Limite quotidienne de transfert international atteinte' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
 
-          // Apply international fees
-          const commission = Math.round(amount * intlSettings.commission_conversion_percent / 100);
-          const frais = Math.round(amount * intlSettings.frais_transaction_international_percent / 100);
-          feeAmount = commission + frais;
-          const amountAfterFee = amount - feeAmount;
+          // La marge de 3% est DÉJÀ incluse dans le taux (via african-fx-collect).
+          // NE PAS appliquer de commission/frais supplémentaires sur le montant.
+          feeAmount = 0;
 
-          // Currency conversion
+          // Currency conversion avec le taux final (marge incluse)
           if (senderCurrency !== receiverCurrency) {
             rateUsed = await getFxRate(serviceClient, senderCurrency, receiverCurrency);
-            amountToCredit = Math.round(amountAfterFee * rateUsed * 100) / 100;
+            amountToCredit = Math.round(amount * rateUsed * 100) / 100;
           } else {
-            amountToCredit = amountAfterFee;
+            amountToCredit = amount;
           }
 
-          console.log(`🌍 Intl fees: commission=${commission}, frais=${frais}, rate=${rateUsed}, credit=${amountToCredit}`);
+          console.log(`🌍 Intl transfer: rate=${rateUsed} (margin included), credit=${amountToCredit}`);
         }
 
         // Execute atomic transfer

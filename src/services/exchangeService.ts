@@ -39,9 +39,9 @@ async function loadAllRates(): Promise<Map<string, number>> {
     for (const row of data) {
       if (typeof row.rate === 'number' && row.rate > 0) {
         const key = `${row.from_currency}→${row.to_currency}`;
-        // Le taux stocké est le taux officiel ; on applique la marge
-        const margin = typeof row.margin === 'number' ? row.margin : 0.03;
-        map.set(key, row.rate * (1 + margin));
+        // Le taux stocké inclut DÉJÀ la marge de 3% (appliquée par african-fx-collect).
+        // NE PAS réappliquer la marge ici — sinon double commission.
+        map.set(key, row.rate);
       }
     }
   }

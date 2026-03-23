@@ -442,16 +442,14 @@ async function handleTransfer(supabase: any, body: { sender_id: string; receiver
   let amountReceived: number;
 
   if (isInternational) {
-    // 🌍 International: taux API + marge PDG
+    // 🌍 International: taux final (marge 3% déjà incluse dans le taux)
     const fxResult = await getFxRateFromAPI(senderCurrency, receiverCurrency);
-    const realRate = fxResult.rate;
-
-    feePercentage = await getPdgFeeRate(supabase, FEE_KEYS.INTERNATIONAL_TRANSFER);
-    rateDisplayed = realRate * (1 - feePercentage / 100);
+    rateDisplayed = fxResult.rate;
     rateInternal = rateDisplayed;
-    // ✅ FIX: fee_amount must be in sender's currency (amount * feePercentage/100)
-    // to satisfy check constraint: fee_amount = requested_amount * fee_percentage
-    feeAmount = Math.round(amount * feePercentage / 100 * 100) / 100;
+
+    // La marge est DANS le taux — pas de fee séparée
+    feePercentage = 0;
+    feeAmount = 0;
     amountReceived = Math.round(amount * rateDisplayed * 100) / 100;
   } else {
     // 🏠 Local: frais PDG uniquement, pas de conversion
