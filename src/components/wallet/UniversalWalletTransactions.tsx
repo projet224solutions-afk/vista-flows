@@ -1503,8 +1503,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                 {/* Onglet Carte Bancaire (Stripe) */}
                 <TabsContent value="card" className="space-y-4 mt-4">
                   <StripeInlineDeposit
-                    userId={userId || ''}
-                    walletId={walletData?.id || ''}
+                    userId={effectiveUserId || ''}
+                    walletId={wallet?.id || ''}
                     onSuccess={async () => {
                       setDepositAmount('');
                       setDepositOpen(false);
