@@ -289,6 +289,8 @@ export function StripeCardPaymentModal({
   orderId,
   sellerId,
   description,
+  edgeFunction = 'stripe-pos-payment',
+  extraParams,
   onSuccess,
   onError,
 }: StripeCardPaymentModalProps) {
