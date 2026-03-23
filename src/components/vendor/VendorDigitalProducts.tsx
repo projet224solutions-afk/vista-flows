@@ -1,15 +1,18 @@
 /**
  * Gestion des produits numériques du vendeur
- * Optimisé mobile-first
+ * - Suppression sécurisée (vérifie achats/abonnements avant suppression)
+ * - Archivage comme alternative à la suppression
+ * - Republication de produits rejetés/archivés
  */
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Package, Plus, Eye, Edit, Trash2, ExternalLink, 
-  Laptop, FileText, BookOpen, Plane, Box, Loader2
+import {
+  Package, Plus, Eye, Edit, Trash2, ExternalLink,
+  Laptop, FileText, BookOpen, Plane, Box, Loader2,
+  Archive, RotateCcw, AlertTriangle
 } from "lucide-react";
 import { useMerchantDigitalProducts, DigitalProduct } from "@/hooks/useDigitalProducts";
 import { useNavigate } from "react-router-dom";
@@ -36,15 +39,7 @@ const categoryIcons: Record<string, React.ComponentType<any>> = {
   livre: BookOpen,
   dropshipping: Box,
   custom: Package,
-};
-
-const categoryColors: Record<string, string> = {
-  voyage: "bg-accent text-accent-foreground",
-  logiciel: "bg-accent text-accent-foreground",
-  formation: "bg-accent text-accent-foreground",
-  livre: "bg-accent text-accent-foreground",
-  dropshipping: "bg-accent text-accent-foreground",
-  custom: "bg-accent text-accent-foreground",
+  ai: Laptop,
 };
 
 const statusColors: Record<string, string> = {
@@ -69,23 +64,68 @@ export default function VendorDigitalProducts() {
   const [deleteProduct, setDeleteProduct] = useState<DigitalProduct | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingProduct, setEditingProduct] = useState<DigitalProduct | null>(null);
+  const [deleteHasPurchases, setDeleteHasPurchases] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  /** Check if product has active purchases/subscriptions before allowing deletion */
+  const handleRequestDelete = async (product: DigitalProduct) => {
+    try {
+      const [purchasesRes, subsRes] = await Promise.all([
+        supabase
+          .from('digital_product_purchases')
+          .select('id', { count: 'exact', head: true })
+          .eq('product_id', product.id),
+        supabase
+          .from('digital_subscriptions')
+          .select('id', { count: 'exact', head: true })
+          .eq('product_id', product.id)
+          .eq('status', 'active'),
+      ]);
+
+      const totalPurchases = (purchasesRes.count || 0) + (subsRes.count || 0);
+      setDeleteHasPurchases(totalPurchases > 0);
+      setDeleteProduct(product);
+    } catch {
+      setDeleteHasPurchases(false);
+      setDeleteProduct(product);
+    }
+  };
+
+  /** Archive instead of hard delete */
+  const handleArchive = async () => {
+    if (!deleteProduct) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('digital_products')
+        .update({ status: 'archived' as any })
+        .eq('id', deleteProduct.id);
+      if (error) throw error;
+      toast.success("Produit archivé", { description: "Le produit reste accessible pour les acheteurs existants." });
+      refresh();
+    } catch (err: unknown) {
+      console.error("Erreur archivage:", err);
+      toast.error("Impossible d'archiver le produit");
+    } finally {
+      setIsDeleting(false);
+      setDeleteProduct(null);
+    }
+  };
+
+  /** Hard delete (only for products without purchases) */
   const handleDelete = async () => {
     if (!deleteProduct) return;
-    
     setIsDeleting(true);
     try {
       const { error } = await supabase
         .from('digital_products')
         .delete()
         .eq('id', deleteProduct.id);
-      
       if (error) throw error;
-      
-      toast.success("Produit supprimé avec succès");
+      toast.success("Produit supprimé définitivement");
       refresh();
-    } catch (error) {
-      console.error("Erreur suppression:", error);
+    } catch (err: unknown) {
+      console.error("Erreur suppression:", err);
       toast.error("Impossible de supprimer le produit");
     } finally {
       setIsDeleting(false);
@@ -93,12 +133,39 @@ export default function VendorDigitalProducts() {
     }
   };
 
+  /** Republish a rejected or archived product (sets status back to pending for review) */
+  const handleRepublish = async (product: DigitalProduct) => {
+    setActionLoading(product.id);
+    try {
+      const newStatus = product.status === 'archived' ? 'draft' : 'pending';
+      const { error } = await supabase
+        .from('digital_products')
+        .update({ status: newStatus as any })
+        .eq('id', product.id);
+      if (error) throw error;
+      toast.success(
+        product.status === 'archived' ? "Produit restauré en brouillon" : "Produit soumis pour réexamen",
+        { description: product.status === 'rejected' ? "Le produit sera réexaminé par l'équipe." : "Vous pouvez maintenant le modifier et le republier." }
+      );
+      refresh();
+    } catch (err: unknown) {
+      console.error("Erreur republication:", err);
+      toast.error("Impossible de republier le produit");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const formatPrice = (price: number, currency: string = 'GNF') => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: currency,
-      maximumFractionDigits: 0
-    }).format(price);
+    try {
+      return new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency,
+        maximumFractionDigits: 0
+      }).format(price);
+    } catch {
+      return `${price.toLocaleString('fr-FR')} ${currency}`;
+    }
   };
 
   if (editingProduct) {
@@ -126,7 +193,7 @@ export default function VendorDigitalProducts() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Header - Mobile optimized */}
+      {/* Header */}
       <div className="flex flex-col gap-3">
         <div>
           <h2 className="text-lg sm:text-2xl font-bold text-foreground">Produits Numériques</h2>
@@ -140,7 +207,7 @@ export default function VendorDigitalProducts() {
         </Button>
       </div>
 
-      {/* Stats rapides - Compact sur mobile */}
+      {/* Stats */}
       <div className="grid grid-cols-2 gap-2 sm:gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="p-3 sm:pt-4">
@@ -174,7 +241,7 @@ export default function VendorDigitalProducts() {
         </Card>
       </div>
 
-      {/* Liste des produits */}
+      {/* Product List */}
       {products.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
@@ -194,22 +261,20 @@ export default function VendorDigitalProducts() {
           {products.map((product) => {
             const CategoryIcon = categoryIcons[product.category] || Package;
             const mainImage = product.images?.[0] || '/placeholder.svg';
-            
+            const canRepublish = product.status === 'rejected' || product.status === 'archived';
+
             return (
               <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                {/* Image - Plus compacte sur mobile */}
+                {/* Image */}
                 <div className="relative h-32 sm:h-40 bg-muted">
                   <img
                     src={mainImage}
                     alt={product.title}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder.svg';
-                    }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
                   />
-                  {/* Badges positionnés */}
                   <div className="absolute top-2 left-2 flex gap-1">
-                    <Badge className={`text-[10px] px-1.5 py-0.5 ${categoryColors[product.category] || categoryColors.custom}`}>
+                    <Badge className="text-[10px] px-1.5 py-0.5 bg-accent text-accent-foreground">
                       <CategoryIcon className="w-3 h-3 mr-1" />
                       {product.category}
                     </Badge>
@@ -229,7 +294,7 @@ export default function VendorDigitalProducts() {
                   )}
                 </div>
 
-                {/* Content - Compact sur mobile */}
+                {/* Content */}
                 <CardContent className="p-3 sm:p-4">
                   <h3 className="font-semibold text-sm sm:text-base text-foreground line-clamp-1 mb-1">
                     {product.title}
@@ -238,7 +303,7 @@ export default function VendorDigitalProducts() {
                     {product.short_description || product.description || 'Aucune description'}
                   </p>
 
-                  {/* Prix */}
+                  {/* Price */}
                   <div className="flex items-center justify-between mb-2 sm:mb-3">
                     <div>
                       {product.price > 0 ? (
@@ -269,16 +334,15 @@ export default function VendorDigitalProducts() {
                       <Eye className="w-3 h-3" />
                       {product.views_count || 0} vues
                     </span>
+                    <span>•</span>
+                    <span>{product.sales_count || 0} ventes</span>
                     <span className="truncate">
-                      {formatDistanceToNow(new Date(product.created_at), {
-                        addSuffix: true,
-                        locale: fr
-                      })}
+                      {formatDistanceToNow(new Date(product.created_at), { addSuffix: true, locale: fr })}
                     </span>
                   </div>
 
-                  {/* Actions - Layout optimisé mobile */}
-                  <div className="flex items-center gap-2">
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       variant="outline"
                       size="sm"
@@ -288,6 +352,24 @@ export default function VendorDigitalProducts() {
                       <Eye className="w-4 h-4 mr-1.5" />
                       Voir
                     </Button>
+
+                    {canRepublish && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 text-xs gap-1"
+                        disabled={actionLoading === product.id}
+                        onClick={() => handleRepublish(product)}
+                      >
+                        {actionLoading === product.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <RotateCcw className="w-3.5 h-3.5" />
+                        )}
+                        {product.status === 'archived' ? 'Restaurer' : 'Resoumettre'}
+                      </Button>
+                    )}
+
                     <Button
                       variant="ghost"
                       size="icon"
@@ -297,12 +379,13 @@ export default function VendorDigitalProducts() {
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
+
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-9 w-9 shrink-0"
-                      onClick={() => setDeleteProduct(product)}
-                      aria-label="Supprimer le produit"
+                      onClick={() => handleRequestDelete(product)}
+                      aria-label="Supprimer / Archiver"
                     >
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
@@ -314,31 +397,50 @@ export default function VendorDigitalProducts() {
         </div>
       )}
 
-      {/* Dialog de confirmation de suppression */}
-      <AlertDialog open={!!deleteProduct} onOpenChange={() => setDeleteProduct(null)}>
+      {/* Safe Delete / Archive Dialog */}
+      <AlertDialog open={!!deleteProduct} onOpenChange={() => { setDeleteProduct(null); setDeleteHasPurchases(false); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce produit ?</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {deleteHasPurchases && <AlertTriangle className="w-5 h-5 text-orange-500" />}
+              {deleteHasPurchases ? "Ce produit a des achats existants" : "Supprimer ce produit ?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Le produit "{deleteProduct?.title}" sera définitivement supprimé.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? (
+              {deleteHasPurchases ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Suppression...
+                  Le produit <strong>"{deleteProduct?.title}"</strong> possède des achats ou abonnements actifs.
+                  La suppression définitive n'est pas possible. Vous pouvez <strong>l'archiver</strong> pour
+                  le retirer de la vente tout en conservant l'accès pour les acheteurs existants.
                 </>
               ) : (
-                "Supprimer"
+                <>
+                  Vous pouvez <strong>archiver</strong> le produit (retrait de la vente, données conservées)
+                  ou le <strong>supprimer définitivement</strong> (irréversible).
+                </>
               )}
-            </AlertDialogAction>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={handleArchive}
+              disabled={isDeleting}
+              className="gap-2"
+            >
+              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Archive className="w-4 h-4" />}
+              Archiver
+            </Button>
+            {!deleteHasPurchases && (
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Supprimer définitivement
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
