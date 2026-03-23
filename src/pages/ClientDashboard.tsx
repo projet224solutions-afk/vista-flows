@@ -77,8 +77,6 @@ export default function ClientDashboard() {
     loadAllData
   } = useClientData();
 
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [communicationRefresh, setCommunicationRefresh] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
