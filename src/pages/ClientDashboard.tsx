@@ -199,8 +199,7 @@ export default function ClientDashboard() {
       if (error) throw error;
 
       toast.success('Message envoyé au vendeur!');
-      setActiveTab('communication');
-      setCommunicationRefresh(prev => prev + 1);
+      navigate('/messages');
     } catch (error) {
       console.error('Erreur contact vendeur:', error);
       toast.error('Impossible de contacter le vendeur');
