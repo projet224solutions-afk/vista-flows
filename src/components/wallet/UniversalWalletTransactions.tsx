@@ -1400,7 +1400,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   Ajoutez des fonds à votre wallet
                 </DialogDescription>
               </DialogHeader>
-              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'card' | 'mobile_money' | 'paypal')}>
+              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'card' | 'mobile_money' | 'card_stripe')}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="card" className="gap-1 text-xs">
                     <CreditCard className="w-3 h-3" />
