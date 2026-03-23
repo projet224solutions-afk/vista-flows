@@ -1705,12 +1705,12 @@ export function POSSystem() {
   }, [barcodeInput]);
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-transparent max-w-full -m-2 sm:-m-3 md:-m-6">
+    <div className="flex flex-col h-[100dvh] md:h-full w-full overflow-hidden bg-transparent max-w-full -m-2 sm:-m-3 md:-m-6">
       {/* En-tête professionnel - Compact sur mobile */}
       <div className="border-b border-border/50 flex-shrink-0 w-full max-w-full">
-        <div className="flex items-center justify-between p-2 sm:p-3 md:p-6 max-w-full overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-2 md:p-6 max-w-full overflow-hidden">
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-primary to-primary/80 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+            <div className="w-8 h-8 md:w-14 md:h-14 bg-gradient-to-br from-primary to-primary/80 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
               {settings?.logo_url ? (
                 <img
                   src={settings.logo_url}
@@ -1718,14 +1718,14 @@ export function POSSystem() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Store className="h-5 w-5 md:h-7 md:w-7 text-primary-foreground" />
+                <Store className="h-4 w-4 md:h-7 md:w-7 text-primary-foreground" />
               )}
             </div>
-            <div>
-              <h1 className="text-base md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent truncate max-w-[140px] md:max-w-none">
-                {companyName}
+            <div className="min-w-0">
+              <h1 className="text-sm md:text-2xl font-bold text-foreground truncate max-w-[120px] md:max-w-none">
+                POS
               </h1>
-              <p className="text-[10px] md:text-sm text-muted-foreground font-medium hidden sm:block">Point de Vente</p>
+              <p className="text-[10px] md:text-sm text-muted-foreground font-medium truncate max-w-[120px] md:max-w-none">{vendorProfile?.business_name || 'Point de Vente'}</p>
             </div>
           </div>
 
@@ -1920,24 +1920,25 @@ export function POSSystem() {
 
       {/* Mobile: Tabs pour basculer entre Produits et Panier */}
       {isMobile && (
-        <div className="bg-card border-b border-border/50 px-2 py-2 sticky top-0 z-30">
+        <div className="bg-card/95 backdrop-blur-sm border-b border-border/50 px-3 py-1.5 sticky top-0 z-30">
           <div className="flex gap-2">
             <Button
               variant={mobileTab === 'products' ? 'default' : 'outline'}
               onClick={() => setMobileTab('products')}
-              className="h-10 flex-1"
+              className="h-9 flex-1 text-xs font-semibold"
             >
-              <Package className="h-4 w-4 mr-2" />
+              <Package className="h-4 w-4 mr-1.5" />
               Produits
             </Button>
             <Button
               variant={mobileTab === 'cart' ? 'default' : 'outline'}
               onClick={() => setMobileTab('cart')}
-              className="h-10 px-4 relative"
+              className="h-9 flex-1 relative text-xs font-semibold"
             >
-              <ShoppingCart className="h-4 w-4" />
+              <ShoppingCart className="h-4 w-4 mr-1.5" />
+              Panier
               {cart.length > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[9px] font-bold bg-destructive text-destructive-foreground">
+                <Badge className="absolute -top-1.5 -right-1.5 h-5 min-w-[20px] p-0 flex items-center justify-center text-[10px] font-bold bg-destructive text-destructive-foreground">
                   {cart.reduce((sum, item) => sum + item.quantity, 0)}
                 </Badge>
               )}
@@ -2104,7 +2105,7 @@ export function POSSystem() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3 p-1 md:p-2">
+                  <div className="grid grid-cols-2 gap-2 p-1 md:p-2">
                     {sortedProducts.map(product => {
                       const isRecent = recentlySelected.includes(product.id);
 
@@ -2138,7 +2139,7 @@ export function POSSystem() {
                         >
                         <CardContent className="p-0 flex flex-col">
                           {/* Image produit - Hauteur fixe pour éviter les débordements */}
-                          <div className="relative w-full h-20 md:h-28 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden flex-shrink-0">
+                          <div className="relative w-full h-24 md:h-28 bg-gradient-to-br from-muted/50 to-muted/30 overflow-hidden flex-shrink-0">
                             {/* Badge stock (restant) */}
                             <div className="absolute top-1 right-1 z-10">
                               <Badge 
@@ -2233,10 +2234,10 @@ export function POSSystem() {
                               </div>
                             )}
 
-                            {/* Boutons d'action - Compact */}
-                            <div className="flex flex-col gap-1 pt-1">
+                            {/* Boutons d'action - Touch friendly */}
+                            <div className="flex flex-col gap-1.5 pt-1.5">
                               {/* Ligne 1: Quantité + Unité */}
-                              <div className="flex gap-1">
+                              <div className="flex gap-1.5">
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -2246,9 +2247,9 @@ export function POSSystem() {
                                     if (qty > 0) updateQuantity(product.id, qty - 1);
                                   }}
                                   disabled={!cart.find(item => item.id === product.id && item.saleType !== 'carton')}
-                                  className="h-4 w-4 p-0"
+                                  className="h-8 w-8 p-0 flex-shrink-0"
                                 >
-                                  <Minus className="h-3 w-3" />
+                                  <Minus className="h-3.5 w-3.5" />
                                 </Button>
                                 
                                 {/* Bouton pavé numérique pour quantité multiple */}
@@ -2260,10 +2261,10 @@ export function POSSystem() {
                                     setSelectedProductForQuantity(product);
                                     setShowQuantityKeypad(true);
                                   }}
-                                  className="h-4 w-4 p-0 border-primary/30 hover:border-primary hover:bg-primary/10"
+                                  className="h-8 w-8 p-0 flex-shrink-0 border-primary/30 hover:border-primary hover:bg-primary/10"
                                   title="Saisir quantité"
                                 >
-                                  <Calculator className="h-3 w-3 text-primary" />
+                                  <Calculator className="h-3.5 w-3.5 text-primary" />
                                 </Button>
                                 
                                 <Button
@@ -2273,14 +2274,14 @@ export function POSSystem() {
                                     e.stopPropagation();
                                     addToCart(product);
                                   }}
-                                  className="flex-1 h-4 text-[8px] md:text-xs font-semibold"
+                                  className="flex-1 h-8 text-[10px] md:text-xs font-semibold"
                                 >
-                                  <Plus className="h-3 w-3 mr-0.5" />
+                                  <Plus className="h-3.5 w-3.5 mr-0.5" />
                                   Unité
                                 </Button>
                               </div>
 
-                              {/* Ligne 2: Bouton Carton (visible même si stock insuffisant) */}
+                              {/* Ligne 2: Bouton Carton */}
                               {canSellCarton && (
                                 <Button
                                   variant="secondary"
@@ -2290,7 +2291,7 @@ export function POSSystem() {
                                     if (cartonsAvailable > 0) addToCartByCarton(product);
                                   }}
                                   disabled={cartonsAvailable <= 0}
-                                  className="w-auto h-4 px-2 text-[7px] md:text-xs font-semibold bg-vendeur-secondary hover:bg-vendeur-secondary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-full h-8 text-[10px] md:text-xs font-semibold bg-vendeur-secondary hover:bg-vendeur-secondary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   📦 Carton ({cartonsAvailable > 0 ? product.units_per_carton : 0}u)
                                 </Button>
@@ -2307,9 +2308,9 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive optimisé mobile */}
-        <div className={`w-full md:w-80 lg:w-[380px] flex-shrink-0 flex flex-col min-w-0 max-w-full md:min-h-0 md:max-h-full ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
-          {/* Panier - Design ultra compact mobile */}
-          <Card className="shadow-xl border-0 bg-card overflow-hidden flex flex-col max-w-full md:flex-1 md:max-h-full">
+        <div className={`w-full md:w-80 lg:w-[380px] flex-shrink-0 flex flex-col min-w-0 max-w-full ${isMobile ? 'flex-1 min-h-0' : 'md:min-h-0 md:max-h-full'} ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
+          {/* Panier - Design optimisé mobile */}
+          <Card className="shadow-xl border-0 bg-card overflow-hidden flex flex-col max-w-full flex-1">
             {/* En-tête compact */}
             <div className="p-1.5 sm:p-2 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border-b border-primary/20 flex-shrink-0">
               <div className="flex items-center justify-between gap-2">
@@ -2342,7 +2343,7 @@ export function POSSystem() {
             </div>
 
             {/* Liste des produits du panier - Zone scrollable optimisée */}
-            <div className="overflow-hidden p-1.5 sm:p-2 max-h-[180px] md:flex-1 md:max-h-none md:min-h-0">
+            <div className="overflow-hidden p-2 sm:p-2 flex-1 min-h-0">
               <ScrollArea className="h-full">
                 {cart.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-32 text-center">
@@ -2355,34 +2356,34 @@ export function POSSystem() {
                     {cart.map(item => (
                       <div 
                         key={`${item.id}-${item.saleType || 'unit'}`} 
-                        className="flex items-center gap-2 p-1.5 sm:p-2 bg-background/80 rounded-lg border border-border/30"
+                        className="flex items-center gap-2 p-2 bg-background/80 rounded-lg border border-border/30"
                       >
                         {/* Image produit - petite */}
                         {item.images && item.images[0] ? (
                           <img 
                             src={item.images[0]} 
                             alt={item.name}
-                            className="w-8 h-8 rounded object-cover flex-shrink-0"
+                            className="w-10 h-10 rounded object-cover flex-shrink-0"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
                             <Package className="w-4 h-4 text-muted-foreground" />
                           </div>
                         )}
                         
                         {/* Nom + Prix - zone flexible */}
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[11px] sm:text-xs truncate">
+                          <p className="font-semibold text-xs truncate">
                             {item.saleType === 'carton' && '📦 '}
                             {item.name}
                           </p>
-                          <p className="text-[9px] sm:text-[10px] text-muted-foreground">
+                          <p className="text-[10px] text-muted-foreground">
                             {formatPriceWithCurrency(item.price)}
                           </p>
                         </div>
                         
                         {/* Contrôles quantité - taille fixe */}
-                        <div className="flex items-center bg-muted/40 rounded-md shrink-0 mr-1">
+                        <div className="flex items-center bg-muted/40 rounded-lg shrink-0">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -2392,11 +2393,11 @@ export function POSSystem() {
                                 : 1;
                               updateQuantity(item.id, item.quantity - decrementBy);
                             }}
-                            className="h-6 w-6 p-0 hover:bg-destructive/20"
+                            className="h-8 w-8 p-0 hover:bg-destructive/20"
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-3.5 w-3.5" />
                           </Button>
-                          <span className="font-mono font-bold text-xs w-5 text-center">
+                          <span className="font-mono font-bold text-sm w-6 text-center">
                             {item.saleType === 'carton' && item.units_per_carton 
                               ? Math.floor(item.quantity / item.units_per_carton)
                               : item.quantity}
@@ -2405,23 +2406,21 @@ export function POSSystem() {
                             variant="ghost"
                             size="icon"
                             onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
-                            className="h-6 w-6 p-0 hover:bg-primary/20"
+                            className="h-8 w-8 p-0 hover:bg-primary/20"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                         
-                        {/* Total + Supprimer - taille fixe */}
-                        <div className="flex items-center shrink-0">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => removeFromCart(item.id)}
-                            className="text-muted-foreground hover:text-destructive h-5 w-5 p-0"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
+                        {/* Supprimer */}
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-muted-foreground hover:text-destructive h-8 w-8 p-0 flex-shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -2431,7 +2430,7 @@ export function POSSystem() {
 
             {/* Section paiement ultra compacte mobile */}
             {cart.length > 0 && (
-              <div className="border-t border-primary/20 bg-gradient-to-b from-muted/20 to-background flex-shrink-0 p-2 sm:p-3 space-y-2">
+              <div className="border-t border-primary/20 bg-gradient-to-b from-muted/20 to-background flex-shrink-0 p-3 space-y-2.5">
                 {/* Remise - Version compacte collapsible */}
                 <details className="group">
                   <summary className="flex items-center justify-between cursor-pointer list-none">
@@ -2579,26 +2578,26 @@ export function POSSystem() {
                 )}
 
                 {/* Boutons de validation */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 pt-1">
                   <Button 
                     onClick={openCreditSaleModal}
                     variant="outline"
-                    className="h-11 sm:h-12 font-semibold text-xs sm:text-sm"
+                    className="h-12 font-semibold text-sm"
                     disabled={cart.length === 0}
                   >
-                    <CreditCard className="h-4 w-4 mr-1" />
+                    <CreditCard className="h-4 w-4 mr-1.5" />
                     À crédit
                   </Button>
                   <Button 
                     onClick={validateOrder}
-                    className="h-11 sm:h-12 font-bold text-xs sm:text-sm shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+                    className="h-12 font-bold text-sm shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
                     disabled={cart.length === 0}
                   >
-                    <CheckSquare className="h-4 w-4 mr-1" />
+                    <CheckSquare className="h-4 w-4 mr-1.5" />
                     Valider
                   </Button>
                 </div>
-                <p className="text-center text-xs font-bold text-primary">{total.toLocaleString()} GNF</p>
+                <p className="text-center text-sm font-bold text-primary pb-1">{formatPriceWithCurrency(total)}</p>
               </div>
             )}
           </Card>
