@@ -3,17 +3,19 @@
  * Interface complète de gestion des transactions escrow pour le PDG
  */
 
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEscrowTransactions } from '@/hooks/useEscrowTransactions';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Shield, AlertCircle, CheckCircle, Clock, XCircle, Bell, 
   RefreshCw, Search, Filter, Download, TrendingUp, DollarSign
 } from 'lucide-react';
+import PDGEscrowDisputes from './PDGEscrowDisputes';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -152,6 +154,7 @@ export default function PDGEscrowManagement() {
 
   return (
     <>
+      <Tabs defaultValue="transactions" className="space-y-6">
       <div className="space-y-6">
         {/* En-tête */}
         <div className="flex items-center justify-between">
@@ -173,10 +176,12 @@ export default function PDGEscrowManagement() {
               <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               Actualiser
             </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Exporter
-            </Button>
+            <TabsList>
+              <TabsTrigger value="transactions">Transactions</TabsTrigger>
+              <TabsTrigger value="disputes" className="text-destructive">
+                🚨 Litiges ({stats.dispute})
+              </TabsTrigger>
+            </TabsList>
           </div>
         </div>
 
@@ -225,6 +230,7 @@ export default function PDGEscrowManagement() {
           </Card>
         </div>
 
+        <TabsContent value="transactions">
         {/* Filtres */}
         <Card>
           <CardContent className="p-4">
@@ -418,6 +424,11 @@ export default function PDGEscrowManagement() {
             )}
           </CardContent>
         </Card>
+        </TabsContent>
+
+        <TabsContent value="disputes">
+          <PDGEscrowDisputes />
+        </TabsContent>
       </div>
 
       {/* Dialog de confirmation */}
@@ -450,6 +461,7 @@ export default function PDGEscrowManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </Tabs>
     </>
   );
 }
