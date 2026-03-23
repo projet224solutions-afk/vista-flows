@@ -580,6 +580,25 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Stripe pour paiement par carte */}
+      {pendingCardOrder && (
+        <StripeCardPaymentModal
+          isOpen={showStripeModal}
+          onClose={() => {
+            setShowStripeModal(false);
+            setPendingCardOrder(null);
+          }}
+          amount={pendingCardOrder.amount}
+          orderId={pendingCardOrder.orderId}
+          sellerId={serviceId}
+          description={`Commande restaurant #${pendingCardOrder.orderId.slice(-6).toUpperCase()}`}
+          edgeFunction="restaurant-payment"
+          extraParams={{ serviceId }}
+          onSuccess={handleStripeSuccess}
+          onError={handleStripeError}
+        />
+      )}
     </div>
   );
 }
