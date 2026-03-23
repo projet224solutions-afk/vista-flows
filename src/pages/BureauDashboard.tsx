@@ -52,6 +52,7 @@ export default function BureauDashboard() {
   const [isSubmittingMember, setIsSubmittingMember] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [showToken, setShowToken] = useState(false);
   const [workerForm, setWorkerForm] = useState({
     nom: '',
     email: '',
@@ -666,7 +667,19 @@ export default function BureauDashboard() {
                 <div>
                   <Label className="text-sm text-slate-500">Token d'accès permanent</Label>
                   <div className="flex gap-2 mt-2">
-                    <Input value={bureau?.access_token || ''} readOnly className="font-mono text-xs" />
+                    <Input 
+                      value={showToken ? (bureau?.access_token || '') : '••••••••••••••••••••••••'} 
+                      readOnly 
+                      className="font-mono text-xs" 
+                    />
+                    <Button 
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowToken(!showToken)}
+                      title={showToken ? 'Masquer' : 'Afficher'}
+                    >
+                      {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
                     <Button 
                       variant="outline" 
                       onClick={() => {
@@ -677,8 +690,9 @@ export default function BureauDashboard() {
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">
-                    Utilisez ce token pour accéder à votre bureau depuis n'importe quel appareil
+                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Ne partagez jamais ce token. Il donne un accès complet à votre bureau.
                   </p>
                 </div>
               </CardContent>
