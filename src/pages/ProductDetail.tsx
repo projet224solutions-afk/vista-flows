@@ -15,6 +15,8 @@ import SEOHead from "@/components/SEOHead";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 import { usePriceConverter } from "@/hooks/usePriceConverter";
 import { getCurrencyForCountry } from "@/data/countryMappings";
+import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
 
 interface Product {
   id: string;
