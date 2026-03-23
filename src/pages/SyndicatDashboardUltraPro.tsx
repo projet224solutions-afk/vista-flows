@@ -474,7 +474,7 @@ export default function SyndicatDashboardUltraPro() {
                                         Taxi-Motards ({taxiMotards.length})
                                     </CardTitle>
                                     <Button
-                                        onClick={() => toast.info('Formulaire d\'ajout de taxi-motard')}
+                                        onClick={() => setActiveTab('members')}
                                         size="sm"
                                         className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
                                     >
