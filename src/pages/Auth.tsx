@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, User as UserIcon, Store, Truck, Bike, Users, Ship, Crown, Utensils, ShoppingBag, Scissors, Car, GraduationCap, Stethoscope, Wrench, Home, Plane, Camera, ArrowLeft, Eye, EyeOff, Chrome, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus, Briefcase, CheckCircle2, Laptop } from "lucide-react";
+import { AlertCircle, Loader2, Store, ArrowLeft, Eye, EyeOff, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus, Briefcase, CheckCircle2, Laptop, ShoppingBag } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
@@ -19,6 +19,8 @@ import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSelector from "@/components/LanguageSelector";
 import { getDashboardRoute } from "@/hooks/useRoleRedirect";
 import { syncCognitoProfile } from "@/services/cognitoSyncService";
+import { resolvePostAuthRoute, cleanupOAuthFlags, cleanupAffiliateFlags } from "@/utils/postAuthRoute";
+import { COUNTRY_PHONE_CODES, WORLD_PHONE_CODES, PHONE_VALIDATION_RULES, validatePhoneNumber, getPhoneExample, getPhoneLengthHint } from "@/utils/phoneData";
 
 // Validation schemas avec tous les rôles
 const loginSchema = z.object({
@@ -427,64 +429,13 @@ export default function Auth() {
           }
           
           if (effectiveRole) {
-            // ✅ FIX: Pour les vendor_agents, chercher leur access_token et rediriger
-            if (effectiveRole === 'vendor_agent') {
-              const { data: vendorAgent } = await supabase
-                .from('vendor_agents')
-                .select('access_token')
-                .eq('user_id', session.user.id)
-                .eq('is_active', true)
-                .maybeSingle();
-              
-              if (vendorAgent?.access_token) {
-                console.log('🚀 [Auth] Redirection agent vendeur vers /vendor-agent/');
-                localStorage.removeItem('oauth_intent_role');
-                localStorage.removeItem('oauth_is_new_signup');
-                navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
-                setIsAuthenticating(false);
-                return;
-              }
-            }
-            
-            // ✅ Redirection intelligente selon le type de vendeur/prestataire
             const oauthShopType = localStorage.getItem('oauth_vendor_shop_type');
-            const oauthServiceType = localStorage.getItem('oauth_service_type');
-            let targetRoute = getDashboardRoute(effectiveRole);
+            const targetRoute = await resolvePostAuthRoute({
+              userId: session.user.id,
+              role: effectiveRole,
+              vendorShopType: oauthShopType,
+            });
             
-            if (effectiveRole === 'vendeur') {
-              if (oauthShopType === 'digital') {
-                targetRoute = '/vendeur-digital';
-              }
-            }
-            
-            // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
-            if (effectiveRole === 'prestataire') {
-              let proServiceId: string | null = null;
-              for (let attempt = 0; attempt < 8; attempt++) {
-                try {
-                  const { data: proService } = await supabase
-                    .from('professional_services')
-                    .select('id')
-                    .eq('user_id', session.user.id)
-                    .limit(1)
-                    .maybeSingle();
-                  if (proService) {
-                    proServiceId = proService.id;
-                    break;
-                  }
-                } catch (e) {
-                  console.warn('⚠️ Erreur récupération service:', e);
-                }
-                await new Promise(resolve => setTimeout(resolve, 800));
-              }
-              if (proServiceId) {
-                targetRoute = `/dashboard/service/${proServiceId}`;
-              } else {
-                console.warn('⚠️ Professional service non trouvé après attente, redirection par défaut');
-              }
-            }
-            localStorage.removeItem('oauth_vendor_shop_type');
-            localStorage.removeItem('oauth_service_type');
             console.log(`🚀 [Auth] Redirection vers ${targetRoute} (rôle effectif: ${effectiveRole}, DB: ${profile?.role})`);
             
             toast({
@@ -492,10 +443,7 @@ export default function Auth() {
               description: `Bienvenue ! Redirection vers votre espace ${effectiveRole}...`,
             });
             
-            // Nettoyer les flags OAuth
-            localStorage.removeItem('oauth_intent_role');
-            localStorage.removeItem('oauth_is_new_signup');
-            
+            cleanupOAuthFlags();
             navigate(targetRoute, { replace: true });
           } else {
             console.log('⚠️ [Auth] Pas de rôle trouvé, reste sur /auth');
@@ -545,34 +493,10 @@ export default function Auth() {
           .maybeSingle();
         
         if (profileData?.role && isMounted) {
-          let targetRoute = getDashboardRoute(profileData.role);
-          
-          // ✅ FIX: Vérifier le business_type pour les vendeurs
-          if (profileData.role === 'vendeur') {
-            const { data: vendor } = await supabase
-              .from('vendors')
-              .select('business_type')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-            
-            if (vendor?.business_type === 'digital') {
-              targetRoute = '/vendeur-digital';
-            }
-          }
-          
-          // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
-          if ((profileData.role as string) === 'prestataire') {
-            const { data: proService } = await supabase
-              .from('professional_services')
-              .select('id')
-              .eq('user_id', session.user.id)
-              .limit(1)
-              .maybeSingle();
-            if (proService) {
-              targetRoute = `/dashboard/service/${proService.id}`;
-            }
-          }
-          
+          const targetRoute = await resolvePostAuthRoute({
+            userId: session.user.id,
+            role: profileData.role,
+          });
           console.log('🚀 [Auth Mount] Redirection utilisateur existant vers:', targetRoute);
           navigate(targetRoute, { replace: true });
         }
@@ -722,296 +646,11 @@ export default function Auth() {
     }
   }, []);
 
-  // Mapping pays → indicatif téléphonique (pour auto-détection)
-  const COUNTRY_PHONE_CODES: Record<string, string> = {
-    'guinée': '+224',
-    'guinee': '+224',
-    'guinea': '+224',
-    'sénégal': '+221',
-    'senegal': '+221',
-    'mali': '+223',
-    'côte d\'ivoire': '+225',
-    'cote d\'ivoire': '+225',
-    'ivory coast': '+225',
-    'burkina faso': '+226',
-    'burkina': '+226',
-    'niger': '+227',
-    'togo': '+228',
-    'bénin': '+229',
-    'benin': '+229',
-    'mauritanie': '+222',
-    'mauritania': '+222',
-    'gambie': '+220',
-    'gambia': '+220',
-    'guinée-bissau': '+245',
-    'guinee bissau': '+245',
-    'guinea bissau': '+245',
-    'cap-vert': '+238',
-    'cap vert': '+238',
-    'cape verde': '+238',
-    'liberia': '+231',
-    'sierra leone': '+232',
-    'ghana': '+233',
-    'nigeria': '+234',
-    'cameroun': '+237',
-    'cameroon': '+237',
-    'gabon': '+241',
-    'congo': '+242',
-    'rdc': '+243',
-    'maroc': '+212',
-    'morocco': '+212',
-    'algérie': '+213',
-    'algerie': '+213',
-    'algeria': '+213',
-    'tunisie': '+216',
-    'tunisia': '+216',
-    'france': '+33',
-    'belgique': '+32',
-    'belgium': '+32',
-    'suisse': '+41',
-    'switzerland': '+41',
-    'canada': '+1',
-    'états-unis': '+1',
-    'etats-unis': '+1',
-    'usa': '+1',
-    'united states': '+1',
-  };
+  // Phone code data is now imported from @/utils/phoneData
 
-  // Liste complète des indicatifs téléphoniques du monde pour le sélecteur
-  const WORLD_PHONE_CODES = [
-    { code: '+93', country: 'Afghanistan', flag: '🇦🇫' },
-    { code: '+355', country: 'Albanie', flag: '🇦🇱' },
-    { code: '+49', country: 'Allemagne', flag: '🇩🇪' },
-    { code: '+213', country: 'Algérie', flag: '🇩🇿' },
-    { code: '+376', country: 'Andorre', flag: '🇦🇩' },
-    { code: '+244', country: 'Angola', flag: '🇦🇴' },
-    { code: '+54', country: 'Argentine', flag: '🇦🇷' },
-    { code: '+374', country: 'Arménie', flag: '🇦🇲' },
-    { code: '+61', country: 'Australie', flag: '🇦🇺' },
-    { code: '+43', country: 'Autriche', flag: '🇦🇹' },
-    { code: '+994', country: 'Azerbaïdjan', flag: '🇦🇿' },
-    { code: '+973', country: 'Bahreïn', flag: '🇧🇭' },
-    { code: '+880', country: 'Bangladesh', flag: '🇧🇩' },
-    { code: '+32', country: 'Belgique', flag: '🇧🇪' },
-    { code: '+229', country: 'Bénin', flag: '🇧🇯' },
-    { code: '+975', country: 'Bhoutan', flag: '🇧🇹' },
-    { code: '+591', country: 'Bolivie', flag: '🇧🇴' },
-    { code: '+387', country: 'Bosnie', flag: '🇧🇦' },
-    { code: '+267', country: 'Botswana', flag: '🇧🇼' },
-    { code: '+55', country: 'Brésil', flag: '🇧🇷' },
-    { code: '+359', country: 'Bulgarie', flag: '🇧🇬' },
-    { code: '+226', country: 'Burkina Faso', flag: '🇧🇫' },
-    { code: '+257', country: 'Burundi', flag: '🇧🇮' },
-    { code: '+855', country: 'Cambodge', flag: '🇰🇭' },
-    { code: '+237', country: 'Cameroun', flag: '🇨🇲' },
-    { code: '+1', country: 'Canada/USA', flag: '🇨🇦' },
-    { code: '+238', country: 'Cap-Vert', flag: '🇨🇻' },
-    { code: '+236', country: 'Centrafrique', flag: '🇨🇫' },
-    { code: '+56', country: 'Chili', flag: '🇨🇱' },
-    { code: '+86', country: 'Chine', flag: '🇨🇳' },
-    { code: '+57', country: 'Colombie', flag: '🇨🇴' },
-    { code: '+269', country: 'Comores', flag: '🇰🇲' },
-    { code: '+242', country: 'Congo', flag: '🇨🇬' },
-    { code: '+243', country: 'RD Congo', flag: '🇨🇩' },
-    { code: '+82', country: 'Corée du Sud', flag: '🇰🇷' },
-    { code: '+225', country: 'Côte d\'Ivoire', flag: '🇨🇮' },
-    { code: '+385', country: 'Croatie', flag: '🇭🇷' },
-    { code: '+53', country: 'Cuba', flag: '🇨🇺' },
-    { code: '+45', country: 'Danemark', flag: '🇩🇰' },
-    { code: '+253', country: 'Djibouti', flag: '🇩🇯' },
-    { code: '+20', country: 'Égypte', flag: '🇪🇬' },
-    { code: '+971', country: 'Émirats Arabes Unis', flag: '🇦🇪' },
-    { code: '+593', country: 'Équateur', flag: '🇪🇨' },
-    { code: '+291', country: 'Érythrée', flag: '🇪🇷' },
-    { code: '+34', country: 'Espagne', flag: '🇪🇸' },
-    { code: '+372', country: 'Estonie', flag: '🇪🇪' },
-    { code: '+251', country: 'Éthiopie', flag: '🇪🇹' },
-    { code: '+679', country: 'Fidji', flag: '🇫🇯' },
-    { code: '+358', country: 'Finlande', flag: '🇫🇮' },
-    { code: '+33', country: 'France', flag: '🇫🇷' },
-    { code: '+241', country: 'Gabon', flag: '🇬🇦' },
-    { code: '+220', country: 'Gambie', flag: '🇬🇲' },
-    { code: '+995', country: 'Géorgie', flag: '🇬🇪' },
-    { code: '+233', country: 'Ghana', flag: '🇬🇭' },
-    { code: '+30', country: 'Grèce', flag: '🇬🇷' },
-    { code: '+502', country: 'Guatemala', flag: '🇬🇹' },
-    { code: '+224', country: 'Guinée', flag: '🇬🇳' },
-    { code: '+245', country: 'Guinée-Bissau', flag: '🇬🇼' },
-    { code: '+240', country: 'Guinée Équatoriale', flag: '🇬🇶' },
-    { code: '+509', country: 'Haïti', flag: '🇭🇹' },
-    { code: '+504', country: 'Honduras', flag: '🇭🇳' },
-    { code: '+852', country: 'Hong Kong', flag: '🇭🇰' },
-    { code: '+36', country: 'Hongrie', flag: '🇭🇺' },
-    { code: '+91', country: 'Inde', flag: '🇮🇳' },
-    { code: '+62', country: 'Indonésie', flag: '🇮🇩' },
-    { code: '+98', country: 'Iran', flag: '🇮🇷' },
-    { code: '+964', country: 'Irak', flag: '🇮🇶' },
-    { code: '+353', country: 'Irlande', flag: '🇮🇪' },
-    { code: '+354', country: 'Islande', flag: '🇮🇸' },
-    { code: '+972', country: 'Israël', flag: '🇮🇱' },
-    { code: '+39', country: 'Italie', flag: '🇮🇹' },
-    { code: '+81', country: 'Japon', flag: '🇯🇵' },
-    { code: '+962', country: 'Jordanie', flag: '🇯🇴' },
-    { code: '+7', country: 'Kazakhstan', flag: '🇰🇿' },
-    { code: '+254', country: 'Kenya', flag: '🇰🇪' },
-    { code: '+996', country: 'Kirghizistan', flag: '🇰🇬' },
-    { code: '+965', country: 'Koweït', flag: '🇰🇼' },
-    { code: '+856', country: 'Laos', flag: '🇱🇦' },
-    { code: '+371', country: 'Lettonie', flag: '🇱🇻' },
-    { code: '+961', country: 'Liban', flag: '🇱🇧' },
-    { code: '+231', country: 'Liberia', flag: '🇱🇷' },
-    { code: '+218', country: 'Libye', flag: '🇱🇾' },
-    { code: '+423', country: 'Liechtenstein', flag: '🇱🇮' },
-    { code: '+370', country: 'Lituanie', flag: '🇱🇹' },
-    { code: '+352', country: 'Luxembourg', flag: '🇱🇺' },
-    { code: '+261', country: 'Madagascar', flag: '🇲🇬' },
-    { code: '+60', country: 'Malaisie', flag: '🇲🇾' },
-    { code: '+265', country: 'Malawi', flag: '🇲🇼' },
-    { code: '+960', country: 'Maldives', flag: '🇲🇻' },
-    { code: '+223', country: 'Mali', flag: '🇲🇱' },
-    { code: '+356', country: 'Malte', flag: '🇲🇹' },
-    { code: '+212', country: 'Maroc', flag: '🇲🇦' },
-    { code: '+230', country: 'Maurice', flag: '🇲🇺' },
-    { code: '+222', country: 'Mauritanie', flag: '🇲🇷' },
-    { code: '+52', country: 'Mexique', flag: '🇲🇽' },
-    { code: '+373', country: 'Moldavie', flag: '🇲🇩' },
-    { code: '+377', country: 'Monaco', flag: '🇲🇨' },
-    { code: '+976', country: 'Mongolie', flag: '🇲🇳' },
-    { code: '+382', country: 'Monténégro', flag: '🇲🇪' },
-    { code: '+258', country: 'Mozambique', flag: '🇲🇿' },
-    { code: '+95', country: 'Myanmar', flag: '🇲🇲' },
-    { code: '+264', country: 'Namibie', flag: '🇳🇦' },
-    { code: '+977', country: 'Népal', flag: '🇳🇵' },
-    { code: '+505', country: 'Nicaragua', flag: '🇳🇮' },
-    { code: '+227', country: 'Niger', flag: '🇳🇪' },
-    { code: '+234', country: 'Nigeria', flag: '🇳🇬' },
-    { code: '+47', country: 'Norvège', flag: '🇳🇴' },
-    { code: '+64', country: 'Nouvelle-Zélande', flag: '🇳🇿' },
-    { code: '+968', country: 'Oman', flag: '🇴🇲' },
-    { code: '+256', country: 'Ouganda', flag: '🇺🇬' },
-    { code: '+998', country: 'Ouzbékistan', flag: '🇺🇿' },
-    { code: '+92', country: 'Pakistan', flag: '🇵🇰' },
-    { code: '+970', country: 'Palestine', flag: '🇵🇸' },
-    { code: '+507', country: 'Panama', flag: '🇵🇦' },
-    { code: '+595', country: 'Paraguay', flag: '🇵🇾' },
-    { code: '+31', country: 'Pays-Bas', flag: '🇳🇱' },
-    { code: '+51', country: 'Pérou', flag: '🇵🇪' },
-    { code: '+63', country: 'Philippines', flag: '🇵🇭' },
-    { code: '+48', country: 'Pologne', flag: '🇵🇱' },
-    { code: '+351', country: 'Portugal', flag: '🇵🇹' },
-    { code: '+974', country: 'Qatar', flag: '🇶🇦' },
-    { code: '+40', country: 'Roumanie', flag: '🇷🇴' },
-    { code: '+44', country: 'Royaume-Uni', flag: '🇬🇧' },
-    { code: '+7', country: 'Russie', flag: '🇷🇺' },
-    { code: '+250', country: 'Rwanda', flag: '🇷🇼' },
-    { code: '+221', country: 'Sénégal', flag: '🇸🇳' },
-    { code: '+381', country: 'Serbie', flag: '🇷🇸' },
-    { code: '+232', country: 'Sierra Leone', flag: '🇸🇱' },
-    { code: '+65', country: 'Singapour', flag: '🇸🇬' },
-    { code: '+421', country: 'Slovaquie', flag: '🇸🇰' },
-    { code: '+386', country: 'Slovénie', flag: '🇸🇮' },
-    { code: '+252', country: 'Somalie', flag: '🇸🇴' },
-    { code: '+249', country: 'Soudan', flag: '🇸🇩' },
-    { code: '+211', country: 'Soudan du Sud', flag: '🇸🇸' },
-    { code: '+94', country: 'Sri Lanka', flag: '🇱🇰' },
-    { code: '+46', country: 'Suède', flag: '🇸🇪' },
-    { code: '+41', country: 'Suisse', flag: '🇨🇭' },
-    { code: '+963', country: 'Syrie', flag: '🇸🇾' },
-    { code: '+886', country: 'Taïwan', flag: '🇹🇼' },
-    { code: '+992', country: 'Tadjikistan', flag: '🇹🇯' },
-    { code: '+255', country: 'Tanzanie', flag: '🇹🇿' },
-    { code: '+235', country: 'Tchad', flag: '🇹🇩' },
-    { code: '+420', country: 'Tchéquie', flag: '🇨🇿' },
-    { code: '+66', country: 'Thaïlande', flag: '🇹🇭' },
-    { code: '+228', country: 'Togo', flag: '🇹🇬' },
-    { code: '+216', country: 'Tunisie', flag: '🇹🇳' },
-    { code: '+993', country: 'Turkménistan', flag: '🇹🇲' },
-    { code: '+90', country: 'Turquie', flag: '🇹🇷' },
-    { code: '+380', country: 'Ukraine', flag: '🇺🇦' },
-    { code: '+598', country: 'Uruguay', flag: '🇺🇾' },
-    { code: '+58', country: 'Venezuela', flag: '🇻🇪' },
-    { code: '+84', country: 'Vietnam', flag: '🇻🇳' },
-    { code: '+967', country: 'Yémen', flag: '🇾🇪' },
-    { code: '+260', country: 'Zambie', flag: '🇿🇲' },
-    { code: '+263', country: 'Zimbabwe', flag: '🇿🇼' },
-  ];
+  // Phone validation rules and helpers are now imported from @/utils/phoneData
 
-  // Règles de validation des numéros par indicatif (longueur min/max sans l'indicatif)
-  const PHONE_VALIDATION_RULES: Record<string, { minLength: number; maxLength: number; example: string }> = {
-    '+224': { minLength: 9, maxLength: 9, example: '621234567' },      // Guinée
-    '+221': { minLength: 9, maxLength: 9, example: '771234567' },      // Sénégal
-    '+223': { minLength: 8, maxLength: 8, example: '76123456' },       // Mali
-    '+225': { minLength: 10, maxLength: 10, example: '0712345678' },   // Côte d'Ivoire
-    '+226': { minLength: 8, maxLength: 8, example: '70123456' },       // Burkina Faso
-    '+227': { minLength: 8, maxLength: 8, example: '90123456' },       // Niger
-    '+228': { minLength: 8, maxLength: 8, example: '90123456' },       // Togo
-    '+229': { minLength: 8, maxLength: 8, example: '97123456' },       // Bénin
-    '+222': { minLength: 8, maxLength: 8, example: '22123456' },       // Mauritanie
-    '+220': { minLength: 7, maxLength: 7, example: '3012345' },        // Gambie
-    '+245': { minLength: 7, maxLength: 7, example: '9551234' },        // Guinée-Bissau
-    '+238': { minLength: 7, maxLength: 7, example: '9911234' },        // Cap-Vert
-    '+231': { minLength: 7, maxLength: 9, example: '770123456' },      // Liberia
-    '+232': { minLength: 8, maxLength: 8, example: '76123456' },       // Sierra Leone
-    '+233': { minLength: 9, maxLength: 9, example: '241234567' },      // Ghana
-    '+234': { minLength: 10, maxLength: 11, example: '8012345678' },   // Nigeria
-    '+237': { minLength: 9, maxLength: 9, example: '671234567' },      // Cameroun
-    '+241': { minLength: 7, maxLength: 8, example: '06123456' },       // Gabon
-    '+242': { minLength: 9, maxLength: 9, example: '066123456' },      // Congo
-    '+243': { minLength: 9, maxLength: 9, example: '812345678' },      // RDC
-    '+212': { minLength: 9, maxLength: 9, example: '612345678' },      // Maroc
-    '+213': { minLength: 9, maxLength: 9, example: '551234567' },      // Algérie
-    '+216': { minLength: 8, maxLength: 8, example: '22123456' },       // Tunisie
-    '+33': { minLength: 9, maxLength: 9, example: '612345678' },       // France
-    '+32': { minLength: 9, maxLength: 9, example: '471234567' },       // Belgique
-    '+41': { minLength: 9, maxLength: 9, example: '791234567' },       // Suisse
-    '+1': { minLength: 10, maxLength: 10, example: '2025551234' },     // USA/Canada
-    '+44': { minLength: 10, maxLength: 10, example: '7911123456' },    // UK
-    '+49': { minLength: 10, maxLength: 11, example: '15123456789' },   // Allemagne
-    '+34': { minLength: 9, maxLength: 9, example: '612345678' },       // Espagne
-    '+39': { minLength: 9, maxLength: 10, example: '3123456789' },     // Italie
-    '+86': { minLength: 11, maxLength: 11, example: '13123456789' },   // Chine
-    '+91': { minLength: 10, maxLength: 10, example: '9876543210' },    // Inde
-    '+81': { minLength: 10, maxLength: 10, example: '9012345678' },    // Japon
-    '+55': { minLength: 10, maxLength: 11, example: '11987654321' },   // Brésil
-    '+7': { minLength: 10, maxLength: 10, example: '9123456789' },     // Russie
-    '+20': { minLength: 10, maxLength: 10, example: '1012345678' },    // Égypte
-    '+27': { minLength: 9, maxLength: 9, example: '712345678' },       // Afrique du Sud
-    '+254': { minLength: 9, maxLength: 9, example: '712345678' },      // Kenya
-    '+255': { minLength: 9, maxLength: 9, example: '712345678' },      // Tanzanie
-    '+256': { minLength: 9, maxLength: 9, example: '712345678' },      // Ouganda
-    '+250': { minLength: 9, maxLength: 9, example: '781234567' },      // Rwanda
-    '+251': { minLength: 9, maxLength: 9, example: '911234567' },      // Éthiopie
-    '+971': { minLength: 9, maxLength: 9, example: '501234567' },      // Émirats
-    '+966': { minLength: 9, maxLength: 9, example: '512345678' },      // Arabie Saoudite
-    '+90': { minLength: 10, maxLength: 10, example: '5321234567' },    // Turquie
-  };
-
-  // Validation du numéro de téléphone
   const [phoneError, setPhoneError] = useState<string | null>(null);
-  
-  const validatePhoneNumber = (phone: string, code: string): boolean => {
-    const rule = PHONE_VALIDATION_RULES[code];
-    if (!rule) {
-      // Si pas de règle spécifique, accepter entre 7 et 15 chiffres (norme internationale)
-      return phone.length >= 7 && phone.length <= 15;
-    }
-    return phone.length >= rule.minLength && phone.length <= rule.maxLength;
-  };
-
-  const getPhoneExample = (code: string): string => {
-    const rule = PHONE_VALIDATION_RULES[code];
-    return rule?.example || '123456789';
-  };
-
-  const getPhoneLengthHint = (code: string): string => {
-    const rule = PHONE_VALIDATION_RULES[code];
-    if (!rule) return '7-15 chiffres';
-    if (rule.minLength === rule.maxLength) {
-      return `${rule.minLength} chiffres`;
-    }
-    return `${rule.minLength}-${rule.maxLength} chiffres`;
-  };
-
   const [phoneCode, setPhoneCode] = useState('+224');
   const [phoneCodeOpen, setPhoneCodeOpen] = useState(false);
 
