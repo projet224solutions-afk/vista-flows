@@ -193,16 +193,23 @@ export default function StripeCheckoutButton({
           throw new Error('Impossible de charger Stripe');
         }
 
-        // Créer un PaymentIntent via l'Edge Function stripe-deposit (pour wallet) ou create-payment-intent
-        const functionName = creditWallet ? 'stripe-deposit' : 'create-payment-intent';
-        const body = creditWallet
-          ? { amount, currency: currency.toLowerCase() }
-          : {
-              amount,
-              currency: currency.toLowerCase(),
-              orderId,
-              description,
-            };
+        // Determine which edge function to use
+        let functionName: string;
+        let body: Record<string, unknown>;
+
+        if (edgeFunction) {
+          functionName = edgeFunction;
+          body = { amount, currency: currency.toLowerCase(), orderId, sellerId, description };
+        } else if (creditWallet) {
+          functionName = 'stripe-deposit';
+          body = { amount, currency: currency.toLowerCase() };
+        } else if (sellerId) {
+          functionName = 'stripe-pos-payment';
+          body = { amount, currency: currency.toLowerCase(), orderId, sellerId, description };
+        } else {
+          functionName = 'stripe-deposit';
+          body = { amount, currency: currency.toLowerCase() };
+        }
 
         const { data, error: apiError } = await supabase.functions.invoke(functionName, { body });
 
