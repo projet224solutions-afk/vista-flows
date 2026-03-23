@@ -1,8 +1,9 @@
 /**
  * 🔐 WALLET TRANSFER SÉCURISÉ - V2 INTELLIGENT
  * ✅ Même devise = transfert local direct (pas de conversion)
- * ✅ Devise différente = conversion automatique via API taux du jour
- * ✅ Frais PDG configurables (pas le taux de change)
+ * ✅ Devise différente = conversion via taux internes (table currency_exchange_rates)
+ * ✅ Aucun appel API externe — taux déjà collectés par african-fx-collect (cron horaire)
+ * ✅ Marge de 3% incluse dans le taux, pas de commission supplémentaire
  * ✅ Signature HMAC, verrouillage optimiste, audit
  */
 
