@@ -189,7 +189,7 @@ export function CertificationShield({
       className
     )}>
       <Shield className={cn(
-        "text-green-500 fill-green-50",
+        "text-[#04439e] fill-blue-50",
         sizeClass
       )} />
       <CheckCircle2 className={cn(
