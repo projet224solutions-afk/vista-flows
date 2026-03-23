@@ -1501,7 +1501,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                 </TabsContent>
 
                 {/* Onglet Carte Bancaire (Stripe) */}
-                <TabsContent value="card" className="space-y-4 mt-4">
+                <TabsContent value="card_stripe" className="space-y-4 mt-4">
                   <StripeInlineDeposit
                     userId={effectiveUserId || ''}
                     walletId={wallet?.id || ''}
