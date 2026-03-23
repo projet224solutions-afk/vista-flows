@@ -676,17 +676,18 @@ export default function SubscriptionManagement() {
                       <TableRow>
                         <TableHead>Vendeur</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>Rôle</TableHead>
+                        <TableHead>Source</TableHead>
                         <TableHead>Plan</TableHead>
                         <TableHead>Statut</TableHead>
-                        <TableHead>Type</TableHead>
+                        <TableHead>Acquisition</TableHead>
+                        <TableHead>Cycle</TableHead>
                         <TableHead>Début</TableHead>
                         <TableHead>Fin</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {allSubscriptions.map((sub) => (
-                        <TableRow key={sub.id}>
+                        <TableRow key={`${sub.source}-${sub.id}`}>
                           <TableCell className="font-medium">
                             {sub.profiles?.first_name} {sub.profiles?.last_name}
                           </TableCell>
@@ -694,10 +695,12 @@ export default function SubscriptionManagement() {
                             {sub.profiles?.email}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{sub.profiles?.role}</Badge>
+                            <Badge variant={sub.source === 'service' ? 'secondary' : 'outline'}>
+                              {sub.source === 'service' ? '🏪 Service' : '🛒 Boutique'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary">{sub.plans?.display_name}</Badge>
+                            <Badge variant="secondary">{sub.plan_display}</Badge>
                           </TableCell>
                           <TableCell>
                             <Badge variant={sub.status === 'active' ? 'default' : 'destructive'}>
@@ -705,18 +708,31 @@ export default function SubscriptionManagement() {
                             </Badge>
                           </TableCell>
                           <TableCell>
+                            {sub.acquisition_type === 'offered' ? (
+                              <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-400">
+                                🎁 Offert
+                              </Badge>
+                            ) : sub.acquisition_type === 'free' ? (
+                              <Badge variant="outline" className="text-muted-foreground">
+                                Gratuit
+                              </Badge>
+                            ) : (
+                              <Badge variant="default" className="bg-blue-600 text-white">
+                                💰 Acheté
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
                             {sub.billing_cycle === 'lifetime' ? (
                               <Badge variant="default" className="bg-primary text-primary-foreground">
-                                🎁 À vie
-                              </Badge>
-                            ) : sub.billing_cycle === 'custom' ? (
-                              <Badge variant="outline" className="border-accent text-accent-foreground">
-                                🎁 Offert
+                                À vie
                               </Badge>
                             ) : sub.billing_cycle === 'yearly' ? (
                               <Badge variant="outline">Annuel</Badge>
+                            ) : sub.billing_cycle === 'custom' ? (
+                              <Badge variant="outline">Personnalisé</Badge>
                             ) : (
-                              <Badge variant="outline">{sub.billing_cycle}</Badge>
+                              <Badge variant="outline">{sub.billing_cycle || 'Mensuel'}</Badge>
                             )}
                           </TableCell>
                           <TableCell className="text-sm">
