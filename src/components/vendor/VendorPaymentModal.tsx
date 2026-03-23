@@ -221,19 +221,19 @@ export const VendorPaymentModal = ({
             </div>
           )}
 
-          {selectedMethod === 'paypal' && (
+          {selectedMethod === 'stripe' && (
             <Suspense fallback={
               <div className="flex items-center justify-center p-4 gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm">Chargement PayPal...</span>
+                <span className="text-sm">Chargement Stripe...</span>
               </div>
             }>
-              <PayPalCheckoutButton
+              <StripeCheckoutButton
                 amount={amount}
                 currency="USD"
                 description={`Commande ${orderId}`}
                 orderId={orderId}
-                onSuccess={handlePayPalSuccess}
+                onSuccess={handleStripeSuccess}
                 onCancel={() => toast.info('Paiement annulé')}
               />
             </Suspense>
