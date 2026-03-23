@@ -404,10 +404,7 @@ export default function PDG224Solutions() {
                     IA
                   </Badge>
                 )}
-                <Button variant="ghost" size="icon" className="relative flex-shrink-0 h-8 w-8" onClick={() => navigate('/notifications')}>
-                  <Bell className="w-4 h-4" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                </Button>
+                <NotificationBellButton className="h-8 w-8" iconSize="w-4 h-4" />
                 <Button
                   variant="outline"
                   size="sm"

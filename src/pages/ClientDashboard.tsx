@@ -287,7 +287,7 @@ export default function ClientDashboard() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setActiveTab('profile')}
+                  onClick={() => setActiveTab('settings')}
                 >
                   <User className="w-5 h-5" />
                 </Button>
