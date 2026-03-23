@@ -969,12 +969,7 @@ export default function Auth() {
               });
             }
             
-            // Nettoyer les données d'affiliation de localStorage
-            localStorage.removeItem('affiliate_token');
-            localStorage.removeItem('affiliate_agent_name');
-            localStorage.removeItem('affiliate_agent_id');
-            localStorage.removeItem('affiliate_target_role');
-            localStorage.removeItem('affiliate_timestamp');
+            cleanupAffiliateFlags();
           } catch (affiliateErr) {
             console.error('⚠️ [Affiliation] Erreur inattendue:', affiliateErr);
           }
