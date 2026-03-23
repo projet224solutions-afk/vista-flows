@@ -8,6 +8,7 @@ import { memo, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Activity, LogOut, Settings } from 'lucide-react';
+import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
 // Lazy loaded header components (UI non-critique)
