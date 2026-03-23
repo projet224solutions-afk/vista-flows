@@ -562,52 +562,62 @@ export default function SubscriptionManagement() {
         </div>
       </div>
 
-      {/* Statistiques */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={loadAllSubscriptions}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Abonnements</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_subscriptions}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.active_subscriptions} actifs
-              </p>
-            </CardContent>
-          </Card>
+      {/* Statistiques - Utilise les données chargées */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={loadAllSubscriptions}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Abonnements</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{allSubscriptions.length || stats?.total_subscriptions || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {allSubscriptions.filter(s => s.status === 'active').length || stats?.active_subscriptions || 0} actifs
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenus Totaux</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {SubscriptionService.formatAmount(stats.total_revenue)}
-              </div>
-              <p className="text-xs text-muted-foreground">Tous les abonnements</p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenus Totaux</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {SubscriptionService.formatAmount(
+                allSubscriptions.reduce((sum, s) => sum + (s.price_paid_gnf || 0), 0) || stats?.total_revenue || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">Tous les abonnements</p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Taux de Conversion</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.total_subscriptions > 0
-                  ? ((stats.active_subscriptions / stats.total_subscriptions) * 100).toFixed(1)
-                  : 0}
-                %
-              </div>
-              <p className="text-xs text-muted-foreground">Abonnements actifs</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">🎁 Offerts</CardTitle>
+            <Gift className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {allSubscriptions.filter(s => s.acquisition_type === 'offered').length}
+            </div>
+            <p className="text-xs text-muted-foreground">Abonnements gratuits offerts</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">💰 Achetés</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {allSubscriptions.filter(s => s.acquisition_type === 'purchased').length}
+            </div>
+            <p className="text-xs text-muted-foreground">Abonnements payants</p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Alerte pour les incohérences de limites */}
       {getLimitWarnings().length > 0 && (
