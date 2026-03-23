@@ -193,7 +193,7 @@ export function CertificationShield({
         sizeClass
       )} />
       <CheckCircle2 className={cn(
-        "absolute text-green-600",
+        "absolute text-[#04439e]",
         size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-6 h-6' : 'w-8 h-8'
       )} />
     </div>
