@@ -2105,7 +2105,7 @@ export function POSSystem() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3 p-1 md:p-2">
+                  <div className="grid grid-cols-2 gap-2 p-1 md:p-2">
                     {sortedProducts.map(product => {
                       const isRecent = recentlySelected.includes(product.id);
 
