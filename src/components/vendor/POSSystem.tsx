@@ -100,6 +100,7 @@ export function POSSystem() {
   const { user: authUser, session } = useAuth();
   const { vendorId: agentVendorId, agent } = useAgent(); // Récupérer le vendor_id depuis le contexte agent
   const isMobile = useIsMobile();
+  const isAgentMode = !!agent; // Détecte si on est dans l'interface agent
   const [mobileTab, setMobileTab] = useState<'products' | 'cart'>('products');
   
   // Hook ChapChapPay pour paiements sécurisés
