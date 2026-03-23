@@ -288,26 +288,23 @@ async function handlePreview(supabase: any, body: { sender_id: string; receiver_
     // 🌍 TRANSFERT INTERNATIONAL
     // =============================================
 
-    // 1. Récupérer le taux du jour via API externe (JAMAIS manuel)
+    // 1. Récupérer le taux final (inclut déjà la marge de 3%)
     const fxResult = await getFxRateFromAPI(senderCurrency, receiverCurrency);
-    const realRate = fxResult.rate;
+    rateDisplayed = fxResult.rate;
     rateSource = fxResult.source;
     rateFetchedAt = fxResult.fetched_at;
 
-    // 2. Récupérer les frais PDG (commission sur le taux)
-    feePercentage = await getPdgFeeRate(supabase, FEE_KEYS.INTERNATIONAL_TRANSFER);
+    // 2. La marge est DANS le taux — pas de fee séparée sur la conversion
+    feePercentage = 0;
+    feeAmount = 0;
 
-    // 3. Appliquer la marge PDG sur le taux (le PDG ne modifie PAS le taux, il prend une commission)
-    rateDisplayed = realRate * (1 - feePercentage / 100);
-
-    // 4. Calculer le montant reçu
+    // 3. Montant reçu = montant × taux final (commission incluse dans le taux)
     amountReceived = Math.round(amount * rateDisplayed * 100) / 100;
 
-    // 5. Le total débité = montant envoyé (la commission est intégrée au taux)
+    // 4. Total débité = montant envoyé
     totalDebit = amount;
-    feeAmount = Math.round(amount * feePercentage / 100 * 100) / 100; // Fee in sender's currency
 
-    console.log(`💱 Taux réel: ${realRate} | Marge PDG: ${feePercentage}% | Taux affiché: ${rateDisplayed} | Reçu: ${amountReceived} ${receiverCurrency}`);
+    console.log(`💱 Taux final (marge incluse): ${rateDisplayed} | Reçu: ${amountReceived} ${receiverCurrency}`);
   } else {
     // =============================================
     // 🏠 TRANSFERT LOCAL (même devise)
