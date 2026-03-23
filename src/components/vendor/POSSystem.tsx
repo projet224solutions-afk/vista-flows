@@ -2356,7 +2356,7 @@ export function POSSystem() {
                     {cart.map(item => (
                       <div 
                         key={`${item.id}-${item.saleType || 'unit'}`} 
-                        className="flex items-center gap-2 p-1.5 sm:p-2 bg-background/80 rounded-lg border border-border/30"
+                        className="flex items-center gap-2 p-2 bg-background/80 rounded-lg border border-border/30"
                       >
                         {/* Image produit - petite */}
                         {item.images && item.images[0] ? (
