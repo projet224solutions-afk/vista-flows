@@ -8,6 +8,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
+import { getInternalFxRate } from "../_shared/fx-internal.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -203,32 +204,12 @@ async function getUserGeoInfo(supabase: any, userId: string) {
 async function getFxRate(supabase: any, from: string, to: string): Promise<number> {
   if (from === to) return 1;
   try {
-    const { data } = await supabase
-      .from("currency_exchange_rates")
-      .select("rate")
-      .eq("from_currency", from.toUpperCase())
-      .eq("to_currency", to.toUpperCase())
-      .eq("is_active", true)
-      .maybeSingle();
-    if (data?.rate && data.rate > 0) return Number(data.rate);
-  } catch {}
-
-  try {
-    const fxResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/fx-rates`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-      },
-      body: JSON.stringify({ base: from, symbols: [to] }),
-    });
-    if (fxResponse.ok) {
-      const fxData = await fxResponse.json();
-      if (fxData.rates?.[to]) return Number(fxData.rates[to]);
-    }
-  } catch {}
-
-  return 1; // fallback
+    const result = await getInternalFxRate(supabase, from, to);
+    return result.rate;
+  } catch (e) {
+    console.error("[getFxRate] Internal rate lookup failed:", e);
+    return 1; // fallback
+  }
 }
 
 // =============================================
