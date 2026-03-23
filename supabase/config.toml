@@ -353,3 +353,6 @@ verify_jwt = false
 
 [functions.process-digital-renewals]
 verify_jwt = false
+
+[functions.sync-to-cloudsql]
+verify_jwt = false
