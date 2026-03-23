@@ -46,10 +46,15 @@ export const useProfessionalServices = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchServiceTypes();
-    if (user) {
-      fetchUserServices();
-    }
+    const load = async () => {
+      setLoading(true);
+      await fetchServiceTypes();
+      if (user) {
+        await fetchUserServices();
+      }
+      setLoading(false);
+    };
+    load();
   }, [user]);
 
   const fetchServiceTypes = async () => {
@@ -75,8 +80,6 @@ export const useProfessionalServices = () => {
     } catch (error: any) {
       console.error('Erreur lors du chargement des types de service:', error);
       toast.error('Impossible de charger les services');
-    } finally {
-      setLoading(false);
     }
   };
 
