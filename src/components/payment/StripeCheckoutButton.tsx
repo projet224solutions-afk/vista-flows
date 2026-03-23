@@ -36,6 +36,8 @@ interface StripeCheckoutButtonProps {
   sellerId?: string;
   /** Custom edge function name override */
   edgeFunction?: string;
+  /** Extra params to send to the edge function */
+  extraParams?: Record<string, unknown>;
   onSuccess: (data: {
     paymentIntentId: string;
     amount: number;
@@ -90,8 +92,10 @@ function CheckoutForm({
         setErrorMessage(msg);
         onError?.(msg);
         toast.error(msg);
-      } else if (paymentIntent?.status === 'succeeded') {
-        toast.success('Paiement réussi !');
+      } else if (paymentIntent?.status === 'succeeded' || paymentIntent?.status === 'requires_capture') {
+        // requires_capture = escrow (capture manuelle), succeeded = capture immédiate
+        const isEscrow = paymentIntent.status === 'requires_capture';
+        toast.success(isEscrow ? 'Fonds sécurisés en escrow !' : 'Paiement réussi !');
         if (creditWallet) {
           window.dispatchEvent(new Event('wallet-updated'));
         }
@@ -162,6 +166,7 @@ export default function StripeCheckoutButton({
   orderId,
   sellerId,
   edgeFunction,
+  extraParams,
   onSuccess,
   onCancel,
   onError,
@@ -199,7 +204,7 @@ export default function StripeCheckoutButton({
 
         if (edgeFunction) {
           functionName = edgeFunction;
-          body = { amount, currency: currency.toLowerCase(), orderId, sellerId, description };
+          body = { amount, currency: currency.toLowerCase(), orderId, sellerId, description, ...extraParams };
         } else if (creditWallet) {
           functionName = 'stripe-deposit';
           body = { amount, currency: currency.toLowerCase() };

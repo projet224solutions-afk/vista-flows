@@ -299,11 +299,52 @@ serve(async (req) => {
             logStep('✅ Delivery updated to paid', { deliveryId });
           }
           
+        } else if (source === 'marketplace_escrow') {
+          // =========================================================
+          // 🛒🔒 PAIEMENT MARKETPLACE ESCROW (fonds bloqués)
+          // =========================================================
+          logStep('Processing marketplace escrow payment (requires_capture)');
+
+          const { data: transaction, error: fetchError } = await supabase
+            .from('stripe_transactions')
+            .select('*')
+            .eq('stripe_payment_intent_id', paymentIntent.id)
+            .single();
+
+          if (fetchError || !transaction) {
+            logStep('Marketplace escrow transaction not found', { paymentIntentId: paymentIntent.id });
+            break;
+          }
+
+          // Mettre à jour la transaction — statut HELD (pas SUCCEEDED, fonds pas encore capturés)
+          await supabase
+            .from('stripe_transactions')
+            .update({
+              status: 'HELD',
+              stripe_charge_id: chargeId,
+              last4: last4,
+              card_brand: cardBrand,
+              three_ds_status: threeDsStatus,
+              paid_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', transaction.id);
+
+          // Mettre à jour les escrow_transactions liés
+          await supabase
+            .from('escrow_transactions')
+            .update({ status: 'held', updated_at: new Date().toISOString() })
+            .eq('stripe_payment_intent_id', paymentIntent.id)
+            .in('status', ['pending']);
+
+          logStep('✅ Marketplace escrow: transaction HELD, escrows updated to held');
+          // ⚠️ PAS de crédit vendeur ici — les fonds seront libérés via confirm-delivery
+
         } else if (source === 'marketplace') {
           // =========================================================
-          // 🛒 PAIEMENT MARKETPLACE (multi-vendeurs)
+          // 🛒 PAIEMENT MARKETPLACE DIRECT (legacy, capture immédiate)
           // =========================================================
-          logStep('Processing marketplace payment');
+          logStep('Processing marketplace payment (direct)');
 
           const { data: transaction, error: fetchError } = await supabase
             .from('stripe_transactions')
@@ -316,7 +357,6 @@ serve(async (req) => {
             break;
           }
 
-          // Mettre à jour la transaction
           await supabase
             .from('stripe_transactions')
             .update({
@@ -332,11 +372,6 @@ serve(async (req) => {
 
           logStep('✅ Marketplace transaction updated to SUCCEEDED');
 
-          // Les commandes sont créées côté frontend via createOrderAfterPayment
-          // Le webhook ne crée pas les commandes pour le marketplace car le frontend
-          // gère la logique multi-vendeurs et les escrows
-
-          // Enregistrer la commission PDG
           if (transaction.commission_amount > 0) {
             try {
               await supabase.rpc('record_pdg_revenue', {

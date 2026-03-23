@@ -260,16 +260,76 @@ export default function ProductPaymentModal({
     }
   };
 
-  // Handle Stripe success
+  // Handle Stripe escrow success (capture manuelle — fonds bloqués)
   const handleCardSuccess = async (data: { paymentIntentId: string; amount: number; currency: string }) => {
     setPaymentStep('processing');
     try {
-      await createOrderAfterPayment(data.paymentIntentId, 'card');
+      // Créer les commandes avec payment_status = 'pending' (fonds en escrow)
+      let effectiveCustomerId = customerId;
+      if (!effectiveCustomerId) {
+        const { data: existingCustomer } = await supabase.from('customers').select('id').eq('user_id', userId).maybeSingle();
+        if (existingCustomer) { effectiveCustomerId = existingCustomer.id; }
+        else {
+          const { data: newCustomer } = await supabase.from('customers').insert({ user_id: userId }).select('id').single();
+          if (newCustomer) effectiveCustomerId = newCustomer.id;
+        }
+      }
+
+      const itemsByVendor = cartItems.reduce((acc, item) => {
+        const vendorKey = item.vendorId || 'unknown';
+        if (!acc[vendorKey]) acc[vendorKey] = [];
+        acc[vendorKey].push(item);
+        return acc;
+      }, {} as Record<string, CartItem[]>);
+
+      const vendorCount = Object.keys(itemsByVendor).filter(k => k !== 'unknown').length;
+      const commissionPerVendor = vendorCount > 0 ? Math.round(commissionFee / vendorCount) : 0;
+
+      for (const [vendorId, items] of Object.entries(itemsByVendor)) {
+        if (vendorId === 'unknown') continue;
+        const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+        const vendorTotalWithCommission = vendorProductTotal + commissionPerVendor;
+
+        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
+          p_user_id: userId, p_vendor_id: vendorId,
+          p_items: items.map(item => ({ product_id: item.id, quantity: item.quantity || 1, price: item.price })),
+          p_total_amount: vendorTotalWithCommission, p_payment_method: 'card',
+          p_shipping_address: { address: 'Adresse de livraison', city: 'Conakry', country: 'Guinée', commission_fee: commissionPerVendor, product_total: vendorProductTotal, external_payment_id: data.paymentIntentId }
+        });
+
+        if (orderError || !orderResult?.length) {
+          console.error('[ProductPayment] Order creation failed:', orderError);
+          continue;
+        }
+
+        const orderId = orderResult[0].order_id;
+
+        // payment_status = 'pending' car fonds en escrow (pas encore capturés)
+        await supabase.from('orders').update({
+          payment_status: 'pending',
+          metadata: {
+            external_payment_id: data.paymentIntentId,
+            escrow_active: true,
+            commission_fee: commissionPerVendor,
+            product_total: vendorProductTotal,
+            commission_percent: commissionConfig?.commission_value || 10
+          }
+        }).eq('id', orderId);
+
+        // Lier l'escrow à l'order_id
+        await supabase.from('escrow_transactions')
+          .update({ order_id: orderId })
+          .eq('stripe_payment_intent_id', data.paymentIntentId)
+          .eq('seller_id', (await supabase.from('vendors').select('user_id').eq('id', vendorId).single()).data?.user_id);
+      }
+
       setPaymentStep('success');
-      toast.success('Paiement par carte réussi !', { description: `${fc(grandTotal, 'GNF')} débité` });
+      toast.success('Paiement sécurisé par escrow !', {
+        description: `${fc(grandTotal, 'GNF')} bloqués — libérés après confirmation de réception`
+      });
       setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
     } catch (err) {
-      console.error('Order creation after card payment failed:', err);
+      console.error('Order creation after escrow payment failed:', err);
       toast.error('Paiement réussi mais erreur lors de la commande');
       onClose();
     }
@@ -661,9 +721,15 @@ export default function ProductPaymentModal({
         {/* Carte bancaire Stripe inline */}
         {showCardInline && paymentMethod === 'card' && (
           <div className="space-y-3 py-2 border-t">
+            <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
+              <Shield className="w-4 h-4 text-green-600" />
+              <span className="text-xs text-green-800 dark:text-green-200">
+                Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de réception
+              </span>
+            </div>
             <div className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-sm">Paiement sécurisé par carte</span>
+              <span className="font-semibold text-sm">Paiement sécurisé par carte (Escrow)</span>
             </div>
             <Suspense fallback={
               <div className="flex items-center justify-center p-4 gap-2">
@@ -675,7 +741,8 @@ export default function ProductPaymentModal({
                 amount={totalAmount}
                 currency="GNF"
                 description={`Achat ${cartItems.length} article(s) - Marketplace 224Solutions`}
-                edgeFunction="stripe-marketplace-payment"
+                edgeFunction="marketplace-escrow-payment"
+                extraParams={{ cartItems: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId: i.vendorId })) }}
                 onSuccess={handleCardSuccess}
                 onCancel={() => setShowCardInline(false)}
                 onError={(error) => { toast.error(error); setShowCardInline(false); }}
