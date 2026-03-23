@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,8 +13,10 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization');
+    console.log('[MFA] Auth header present:', !!authHeader);
+    
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'Unauthorized - no bearer token' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -23,29 +25,26 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Use getClaims for fast JWT verification instead of getUser network call
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
+    // Use service role client to verify user from token
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    
     const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      console.error('getClaims error:', claimsError);
+    const { data: { user }, error: authError } = await adminClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error('[MFA] Auth error:', authError?.message);
       return new Response(JSON.stringify({ error: 'Authentication failed' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const userId = claimsData.claims.sub as string;
-    const userEmail = claimsData.claims.email as string;
+    console.log('[MFA] User authenticated:', user.email);
 
     // Verify user is PDG/admin/ceo
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: profile } = await adminClient
       .from('profiles')
       .select('role')
-      .eq('id', userId)
+      .eq('id', user.id)
       .single();
 
     const role = (profile?.role || '').toString().toLowerCase();
@@ -58,20 +57,21 @@ serve(async (req) => {
     // Parse body ONCE
     const body = await req.json();
     const { action, code } = body;
+    console.log('[MFA] Action:', action);
 
     if (action === 'send') {
       const mfaCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
       await adminClient.from('audit_logs').insert({
-        actor_id: userId,
+        actor_id: user.id,
         action: 'MFA_CODE_GENERATED',
         target_type: 'pdg_mfa',
-        target_id: userId,
+        target_id: user.id,
         data_json: {
           code_hash: await hashCode(mfaCode),
           expires_at: expiresAt,
-          email: userEmail,
+          email: user.email,
         }
       });
 
@@ -86,16 +86,17 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               from: Deno.env.get('FROM_EMAIL') || 'noreply@224solutions.com',
-              to: [userEmail],
+              to: [user.email],
               subject: '🔐 Code MFA PDG - 224Solutions',
               html: generateMfaEmail(mfaCode),
             }),
           });
+          console.log('[MFA] Email sent to', user.email);
         } catch (emailErr) {
-          console.error('Email send error:', emailErr);
+          console.error('[MFA] Email send error:', emailErr);
         }
       } else {
-        console.log(`[DEV MODE] MFA code for ${userEmail}: ${mfaCode}`);
+        console.log(`[DEV MODE] MFA code for ${user.email}: ${mfaCode}`);
       }
 
       return new Response(JSON.stringify({
@@ -117,7 +118,7 @@ serve(async (req) => {
       const { data: logs } = await adminClient
         .from('audit_logs')
         .select('data_json, created_at')
-        .eq('actor_id', userId)
+        .eq('actor_id', user.id)
         .eq('action', 'MFA_CODE_GENERATED')
         .eq('target_type', 'pdg_mfa')
         .order('created_at', { ascending: false })
@@ -140,10 +141,10 @@ serve(async (req) => {
       const inputHash = await hashCode(code);
       if (inputHash !== dataJson.code_hash) {
         await adminClient.from('audit_logs').insert({
-          actor_id: userId,
+          actor_id: user.id,
           action: 'MFA_VERIFICATION_FAILED',
           target_type: 'pdg_mfa',
-          target_id: userId,
+          target_id: user.id,
           data_json: { timestamp: new Date().toISOString() }
         });
         return new Response(JSON.stringify({ error: 'Invalid MFA code' }), {
@@ -152,12 +153,14 @@ serve(async (req) => {
       }
 
       await adminClient.from('audit_logs').insert({
-        actor_id: userId,
+        actor_id: user.id,
         action: 'MFA_VERIFIED',
         target_type: 'pdg_mfa',
-        target_id: userId,
+        target_id: user.id,
         data_json: { timestamp: new Date().toISOString() }
       });
+
+      console.log('[MFA] Verification successful for', user.email);
 
       return new Response(JSON.stringify({
         success: true,
@@ -173,7 +176,7 @@ serve(async (req) => {
     });
 
   } catch (err) {
-    console.error('MFA error:', err);
+    console.error('[MFA] Unhandled error:', err);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
