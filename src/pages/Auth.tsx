@@ -35,7 +35,9 @@ const loginSchema = z.object({
   password: z.string().min(1, "Le mot de passe est requis")
 });
 
-const signupSchema = loginSchema.extend({
+const signupSchema = z.object({
+  email: z.string().email("Adresse email invalide"),
+  password: passwordSchema,
   firstName: z.string().min(1, "Le prénom est requis"),
   lastName: z.string().min(1, "Le nom est requis"),
   role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'admin', 'prestataire']),
