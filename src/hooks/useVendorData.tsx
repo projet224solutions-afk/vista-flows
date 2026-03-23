@@ -191,8 +191,8 @@ export function useVendorStats() {
           low_stock_count: low_stock_count || 0,
           overdue_payments
         });
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
       } finally {
         setLoading(false);
       }
