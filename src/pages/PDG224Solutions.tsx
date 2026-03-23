@@ -145,13 +145,24 @@ export default function PDG224Solutions() {
       if (fnError) throw fnError;
 
       if (data?.success) {
-        toast.success('Code MFA envoyé à votre email');
+        toast.success(`Code MFA envoyé à ${data?.recipient_email || user.email}`);
         // In dev mode, show the code if returned
         if (data.dev_code) {
-          toast.info(`🔑 Mode dev - Code: ${data.dev_code}`, { duration: 60000 });
+          setMfaCode(data.dev_code);
+          toast.info(`🔑 Mode secours - Code: ${data.dev_code}`, { duration: 60000 });
         }
       } else {
-        toast.error(data?.error || 'Erreur envoi MFA');
+        if (data?.error_code === 'RESEND_TEST_MODE_RECIPIENT_RESTRICTED') {
+          toast.error('Envoi email bloqué par Resend (mode test)');
+          toast.info(`Destinataire demandé: ${data?.recipient_email || user.email}`);
+        } else {
+          toast.error(data?.error || 'Erreur envoi MFA');
+        }
+
+        if (data?.dev_code) {
+          setMfaCode(data.dev_code);
+          toast.info(`🔑 Code temporaire: ${data.dev_code}`, { duration: 60000 });
+        }
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Échec envoi code MFA';
