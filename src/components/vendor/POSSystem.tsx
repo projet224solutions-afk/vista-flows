@@ -2383,7 +2383,7 @@ export function POSSystem() {
                         </div>
                         
                         {/* Contrôles quantité - taille fixe */}
-                        <div className="flex items-center bg-muted/40 rounded-md shrink-0 mr-1">
+                        <div className="flex items-center bg-muted/40 rounded-lg shrink-0">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -2393,11 +2393,11 @@ export function POSSystem() {
                                 : 1;
                               updateQuantity(item.id, item.quantity - decrementBy);
                             }}
-                            className="h-6 w-6 p-0 hover:bg-destructive/20"
+                            className="h-8 w-8 p-0 hover:bg-destructive/20"
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-3.5 w-3.5" />
                           </Button>
-                          <span className="font-mono font-bold text-xs w-5 text-center">
+                          <span className="font-mono font-bold text-sm w-6 text-center">
                             {item.saleType === 'carton' && item.units_per_carton 
                               ? Math.floor(item.quantity / item.units_per_carton)
                               : item.quantity}
@@ -2406,23 +2406,21 @@ export function POSSystem() {
                             variant="ghost"
                             size="icon"
                             onClick={() => item.saleType === 'carton' ? addToCartByCarton(item) : addToCart(item)}
-                            className="h-6 w-6 p-0 hover:bg-primary/20"
+                            className="h-8 w-8 p-0 hover:bg-primary/20"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                         
-                        {/* Total + Supprimer - taille fixe */}
-                        <div className="flex items-center shrink-0">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => removeFromCart(item.id)}
-                            className="text-muted-foreground hover:text-destructive h-5 w-5 p-0"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
+                        {/* Supprimer */}
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-muted-foreground hover:text-destructive h-8 w-8 p-0 flex-shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
