@@ -21,6 +21,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface FreelanceModuleProps {
   serviceId: string;
@@ -116,6 +117,7 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
   const pendingPayments = missions.reduce((acc, m) => acc + (m.budget - m.paid), 0);
   const totalHours = missions.reduce((acc, m) => acc + m.hoursWorked, 0);
   const avgHourlyRate = totalHours > 0 ? Math.round(totalRevenue / totalHours) : 0;
+  const fc = useFormatCurrency();
 
   return (
     <div className="space-y-6">
@@ -245,8 +247,8 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
                         <p className="text-sm text-muted-foreground">{mission.client}</p>
                       </div>
                       <div className="text-right shrink-0 ml-4">
-                        <p className="font-bold text-primary">{mission.budget.toLocaleString()} GNF</p>
-                        <p className="text-xs text-muted-foreground">Payé: {mission.paid.toLocaleString()}</p>
+                        <p className="font-bold text-primary">{fc(mission.budget, 'GNF')}</p>
+                        <p className="text-xs text-muted-foreground">Payé: {fc(mission.paid, 'GNF')}</p>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -286,7 +288,7 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
                         <span className="text-xs font-medium">{client.rating}</span>
                         <span className="text-xs text-muted-foreground ml-2">{client.totalMissions} missions</span>
                       </div>
-                      <p className="text-sm font-semibold text-primary mt-1">{client.totalPaid.toLocaleString()} GNF</p>
+                      <p className="text-sm font-semibold text-primary mt-1">{fc(client.totalPaid, 'GNF')}</p>
                       <div className="flex gap-3 mt-2">
                         <a href={`tel:${client.phone}`} className="text-xs text-primary flex items-center gap-0.5"><Phone className="h-3 w-3" /></a>
                         <a href={`mailto:${client.email}`} className="text-xs text-primary flex items-center gap-0.5"><Mail className="h-3 w-3" /></a>

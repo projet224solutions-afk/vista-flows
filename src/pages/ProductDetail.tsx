@@ -256,7 +256,7 @@ export default function ProductDetail() {
       {/* SEO Meta Tags */}
       <SEOHead
         title={product.name}
-        description={product.description || `${product.price?.toLocaleString()} GNF - Disponible chez ${product.vendors?.business_name || '224Solutions'}`}
+        description={product.description || `${product.vendors?.business_name || '224Solutions'}`}
         image={images[0]}
         type="product"
         price={product.price}
@@ -447,7 +447,7 @@ export default function ProductDetail() {
               </Button>
               <ShareButton
                 title={product.name}
-                text={`Découvrez ${product.name} à ${product.price.toLocaleString()} ${product.currency || 'GNF'} sur 224 Solutions`}
+                text={`Découvrez ${product.name} - 224 Solutions`}
                 url={`${window.location.origin}/product/${product.id}`}
                 resourceType="product"
                 resourceId={product.id}

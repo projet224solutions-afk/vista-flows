@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { LocalPrice } from '@/components/ui/LocalPrice';
 import {
   AlertTriangle, CheckCircle, XCircle, User, Phone, Mail,
   DollarSign, Clock, Shield, RefreshCw
@@ -189,7 +190,7 @@ export default function PDGEscrowDisputes() {
                         </span>
                       </div>
                       <p className="font-semibold text-lg">
-                        Montant: {dispute.escrow?.amount?.toLocaleString()} {dispute.escrow?.currency || 'GNF'}
+                        Montant: <LocalPrice amount={dispute.escrow?.amount || 0} currency={dispute.escrow?.currency || 'GNF'} size="lg" />
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -289,7 +290,7 @@ export default function PDGEscrowDisputes() {
                         {dispute.resolution === 'release_to_seller' ? '→ Vendeur' : '← Acheteur'}
                       </Badge>
                       <span className="text-sm">
-                        {dispute.escrow?.amount?.toLocaleString()} {dispute.escrow?.currency || 'GNF'}
+                        <LocalPrice amount={dispute.escrow?.amount || 0} currency={dispute.escrow?.currency || 'GNF'} size="sm" />
                       </span>
                       <span className="text-xs text-muted-foreground">
                         Résolu le {dispute.resolved_at ? new Date(dispute.resolved_at).toLocaleDateString('fr-FR') : 'N/A'}

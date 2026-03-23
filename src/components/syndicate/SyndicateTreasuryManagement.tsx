@@ -9,12 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, TrendingDown, PieChart, Download } from "lucide-react";
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface SyndicateTreasuryManagementProps {
     bureauId: string;
 }
 
 export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreasuryManagementProps) {
+    const fc = useFormatCurrency();
     const [treasuryData, setTreasuryData] = useState({
         balance: 1850000,
         monthlyIncome: 225000,
@@ -29,9 +31,9 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                     <CardContent className="p-6 text-center">
                         <DollarSign className="w-8 h-8 mx-auto mb-2 text-green-600" />
                         <div className="text-2xl font-bold text-green-600">
-                            {treasuryData.balance.toLocaleString()} GNF
+                            {fc(treasuryData.balance, 'GNF')}
                         </div>
-                        <div className="text-sm text-gray-600">Solde de Caisse</div>
+                        <div className="text-sm text-muted-foreground">Solde de Caisse</div>
                     </CardContent>
                 </Card>
 
@@ -39,9 +41,9 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                     <CardContent className="p-6 text-center">
                         <TrendingUp className="w-8 h-8 mx-auto mb-2 text-blue-600" />
                         <div className="text-2xl font-bold text-blue-600">
-                            {treasuryData.monthlyIncome.toLocaleString()} GNF
+                            {fc(treasuryData.monthlyIncome, 'GNF')}
                         </div>
-                        <div className="text-sm text-gray-600">Revenus ce mois</div>
+                        <div className="text-sm text-muted-foreground">Revenus ce mois</div>
                     </CardContent>
                 </Card>
 
@@ -49,9 +51,9 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                     <CardContent className="p-6 text-center">
                         <TrendingDown className="w-8 h-8 mx-auto mb-2 text-red-600" />
                         <div className="text-2xl font-bold text-red-600">
-                            {treasuryData.monthlyExpenses.toLocaleString()} GNF
+                            {fc(treasuryData.monthlyExpenses, 'GNF')}
                         </div>
-                        <div className="text-sm text-gray-600">Dépenses ce mois</div>
+                        <div className="text-sm text-muted-foreground">Dépenses ce mois</div>
                     </CardContent>
                 </Card>
 
@@ -59,9 +61,9 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                     <CardContent className="p-6 text-center">
                         <PieChart className="w-8 h-8 mx-auto mb-2 text-orange-600" />
                         <div className="text-2xl font-bold text-orange-600">
-                            {treasuryData.pendingCotisations.toLocaleString()} GNF
+                            {fc(treasuryData.pendingCotisations, 'GNF')}
                         </div>
-                        <div className="text-sm text-gray-600">Cotisations en attente</div>
+                        <div className="text-sm text-muted-foreground">Cotisations en attente</div>
                     </CardContent>
                 </Card>
             </div>
@@ -72,11 +74,11 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                 </CardHeader>
                 <CardContent>
                     <div className="text-center py-8">
-                        <DollarSign className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        <DollarSign className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                        <h3 className="text-lg font-semibold mb-2">
                             Module de Trésorerie
                         </h3>
-                        <p className="text-gray-600 mb-4">
+                        <p className="text-muted-foreground mb-4">
                             Gestion complète des cotisations, paiements et budget syndical
                         </p>
                         <div className="space-y-2">
