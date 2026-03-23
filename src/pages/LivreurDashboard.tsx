@@ -922,7 +922,7 @@ export default function LivreurDashboard() {
                 <Button 
                   onClick={() => {
                     if (currentDelivery) {
-                      processDeliveryPayment(currentDelivery.id, 'cash', currentDelivery.delivery_fee || 0);
+                      processDeliveryPayment(currentDelivery.id, 'cash');
                     }
                     setShowPaymentModal(false);
                     toast.success('Paiement en espèces enregistré');
