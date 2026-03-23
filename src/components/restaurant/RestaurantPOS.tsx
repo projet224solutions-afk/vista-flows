@@ -68,6 +68,8 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [lastOrder, setLastOrder] = useState<any>(null);
+  const [showStripeModal, setShowStripeModal] = useState(false);
+  const [pendingCardOrder, setPendingCardOrder] = useState<{ orderId: string; amount: number } | null>(null);
 
   // Filter available items
   const availableItems = useMemo(() => {
