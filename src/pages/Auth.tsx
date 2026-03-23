@@ -17,7 +17,7 @@ import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
 import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSelector from "@/components/LanguageSelector";
-import { getDashboardRoute } from "@/hooks/useRoleRedirect";
+
 import { syncCognitoProfile } from "@/services/cognitoSyncService";
 import { resolvePostAuthRoute, cleanupOAuthFlags, cleanupAffiliateFlags } from "@/utils/postAuthRoute";
 import { COUNTRY_PHONE_CODES, WORLD_PHONE_CODES, PHONE_VALIDATION_RULES, validatePhoneNumber, getPhoneExample, getPhoneLengthHint } from "@/utils/phoneData";
