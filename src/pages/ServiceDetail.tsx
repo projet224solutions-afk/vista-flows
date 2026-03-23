@@ -181,18 +181,13 @@ export default function ServiceDetailPage() {
   }, [service?.vendor_user_id, user?.id]);
 
   const loadFavoriteStatus = async () => {
-    if (!user || !id) return;
+    // Favorites stored in localStorage for now (no user_favorites table)
+    if (!id) return;
     try {
-      const { data } = await supabase
-        .from('user_favorites')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('item_id', id)
-        .eq('item_type', 'service')
-        .maybeSingle();
-      setIsFavorite(!!data);
+      const favs = JSON.parse(localStorage.getItem('service_favorites') || '[]');
+      setIsFavorite(favs.includes(id));
     } catch {
-      // Table might not exist yet, silently ignore
+      // Silently ignore
     }
   };
 
