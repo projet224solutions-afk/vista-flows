@@ -130,8 +130,7 @@ export function AIRecommendationSection({
         >
           {displayProducts.map((p) => (
             <ScrollItem key={p.product_id} width={cardWidth} snapAlign="start">
-              <div className="relative">
-                <TranslatedProductCard
+              <TranslatedProductCard
                   id={p.product_id}
                   title={p.name}
                   price={p.price}
@@ -143,14 +142,6 @@ export function AIRecommendationSection({
                   onBuy={() => navigate(`/product/${p.product_id}`)}
                   onAddToCart={() => handleAddToCart(p)}
                 />
-                {showReason && p.reason && (
-                  <div className="absolute top-2 left-2 z-10">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full text-primary font-medium">
-                      {p.reason}
-                    </span>
-                  </div>
-                )}
-              </div>
             </ScrollItem>
           ))}
         </HorizontalScrollRow>
