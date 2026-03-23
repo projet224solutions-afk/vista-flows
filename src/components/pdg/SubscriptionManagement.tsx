@@ -592,7 +592,7 @@ export default function SubscriptionManagement() {
           <CardContent>
             <div className="text-2xl font-bold">{allSubscriptions.length || stats?.total_subscriptions || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {allSubscriptions.filter(s => s.status === 'active').length || stats?.active_subscriptions || 0} actifs
+              {allSubscriptions.filter(s => s.real_status === 'active').length || stats?.active_subscriptions || 0} actifs · {allSubscriptions.filter(s => s.real_status === 'expired').length} expirés
             </p>
           </CardContent>
         </Card>
