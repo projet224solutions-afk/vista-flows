@@ -776,8 +776,15 @@ export default function SubscriptionManagement() {
                           <TableCell className="text-sm">
                             {sub.started_at ? format(new Date(sub.started_at), 'dd/MM/yyyy', { locale: fr }) : '-'}
                           </TableCell>
-                          <TableCell className="text-sm">
-                            {sub.current_period_end ? format(new Date(sub.current_period_end), 'dd/MM/yyyy', { locale: fr }) : '-'}
+                          <TableCell className={`text-sm font-medium ${sub.real_status === 'expired' ? 'text-destructive' : ''}`}>
+                            {sub.current_period_end ? (
+                              <>
+                                {format(new Date(sub.current_period_end), 'dd/MM/yyyy', { locale: fr })}
+                                {sub.real_status === 'expired' && (
+                                  <span className="block text-xs text-destructive">Expiré</span>
+                                )}
+                              </>
+                            ) : '-'}
                           </TableCell>
                         </TableRow>
                       ))}
