@@ -98,14 +98,20 @@ serve(async (req) => {
           });
 
           const emailResult = await emailResponse.json();
-          
+
           if (!emailResponse.ok) {
             console.error('[MFA] Resend API error:', emailResponse.status, JSON.stringify(emailResult));
-            // Return error to user so they know email failed
+            const resendMessage = String(emailResult?.message || emailResult?.name || 'Erreur Resend');
+            const isRecipientRestricted = resendMessage.includes('You can only send testing emails to your own email address');
+
             return new Response(JSON.stringify({
               success: false,
-              error: `Échec envoi email: ${emailResult?.message || emailResult?.name || 'Erreur Resend'}`,
-              dev_code: mfaCode, // Fallback: show code since email failed
+              error_code: isRecipientRestricted ? 'RESEND_TEST_MODE_RECIPIENT_RESTRICTED' : 'RESEND_SEND_FAILED',
+              error: isRecipientRestricted
+                ? 'Envoi bloqué : la clé Resend est en mode test et n’autorise qu’un seul destinataire. Vérifiez un domaine Resend pour envoyer vers tous les emails.'
+                : `Échec envoi email: ${resendMessage}`,
+              recipient_email: user.email,
+              dev_code: mfaCode,
             }), {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
@@ -130,6 +136,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         message: emailSent ? 'MFA code sent to your email' : 'MFA code generated',
+        recipient_email: user.email,
+        email_sent: emailSent,
         ...(emailSent ? {} : { dev_code: mfaCode }),
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
