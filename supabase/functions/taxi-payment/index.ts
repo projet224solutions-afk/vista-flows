@@ -26,10 +26,22 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-  );
+   // Client admin pour les opérations DB
+   const supabaseAdmin = createClient(
+     Deno.env.get("SUPABASE_URL") ?? "",
+     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+   );
+
+   // Client authentifié pour vérifier l'utilisateur
+   const supabaseClient = createClient(
+     Deno.env.get("SUPABASE_URL") ?? "",
+     Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+     {
+       global: {
+         headers: { Authorization: req.headers.get('Authorization')! },
+       },
+     }
+   );
 
   try {
     logStep('Payment started');
