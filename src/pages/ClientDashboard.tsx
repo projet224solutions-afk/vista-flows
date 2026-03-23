@@ -521,7 +521,7 @@ export default function ClientDashboard() {
                     <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Votre panier est vide</h3>
                     <p className="text-muted-foreground mb-6">Ajoutez des produits pour commencer vos achats</p>
-                    <Button onClick={() => setActiveTab('products')} className="bg-client-primary hover:bg-client-primary/90">
+                    <Button onClick={() => navigate('/marketplace')} className="bg-client-primary hover:bg-client-primary/90">
                       Parcourir les produits
                     </Button>
                   </div>
