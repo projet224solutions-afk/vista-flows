@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 serve(async (req) => {
@@ -11,10 +11,17 @@ serve(async (req) => {
   }
 
   try {
-    const { service } = await req.json();
+    let service: string | undefined;
+    try {
+      const body = await req.json();
+      service = body?.service;
+    } catch {
+      // Empty body is fine — check all services
+    }
+
     const results: Record<string, any> = {};
 
-    // AWS Backend Health Check (server-side, no CORS issue)
+    // AWS Backend Health Check
     if (!service || service === 'aws-backend') {
       const start = Date.now();
       try {
@@ -25,10 +32,12 @@ serve(async (req) => {
         });
         clearTimeout(timeout);
         const rt = Date.now() - start;
+        // Any HTTP response means the server is UP — even 404 (no /health route) or 401/403
+        const isReachable = res.status < 500;
         results['aws-backend'] = {
-          status: res.ok ? (rt > 2000 ? 'degraded' : 'operational') : 'degraded',
+          status: isReachable ? (rt > 2000 ? 'degraded' : 'operational') : 'degraded',
           responseTime: rt,
-          message: res.ok ? `OK - ${rt}ms` : `HTTP ${res.status}`,
+          message: isReachable ? `OK - ${rt}ms` : `HTTP ${res.status}`,
           httpStatus: res.status,
         };
       } catch (e: any) {
@@ -40,7 +49,7 @@ serve(async (req) => {
       }
     }
 
-    // AWS Cognito Check (server-side)
+    // AWS Cognito Check
     if (!service || service === 'aws-cognito') {
       const start = Date.now();
       try {
@@ -54,9 +63,10 @@ serve(async (req) => {
         });
         clearTimeout(timeout);
         const rt = Date.now() - start;
-        // 401 is expected for invalid token = service is up
+        // Any response < 500 means Cognito gateway is reachable
+        const isReachable = res.status < 500;
         results['aws-cognito'] = {
-          status: (res.ok || res.status === 401 || res.status === 400) ? 'operational' : 'degraded',
+          status: isReachable ? (rt > 2000 ? 'degraded' : 'operational') : 'degraded',
           responseTime: rt,
           message: `Cognito accessible - ${rt}ms`,
           httpStatus: res.status,
