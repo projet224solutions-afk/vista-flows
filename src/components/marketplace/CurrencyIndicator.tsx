@@ -51,7 +51,7 @@ export function CurrencyIndicator({
   variant = 'default',
   showToggle = true 
 }: CurrencyIndicatorProps) {
-  const { userCurrency, userCountry, loading, lastUpdated, refreshRates } = usePriceConverter();
+  const { userCurrency, userCountry, loading, lastUpdated } = usePriceConverter();
   const { forceRefresh: forceGeoRefresh, loading: geoLoading } = useGeoDetection();
   const { setCurrency: setGlobalCurrency } = useCurrency();
   const { t } = useTranslation();
