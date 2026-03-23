@@ -10,6 +10,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAIPersonalized, useAITrending, useAIContextual } from "@/hooks/useAIRecommendations";
 import { AIRecommendationSection } from "@/components/marketplace/AIRecommendationSection";
 import { useBehaviorTracking } from "@/hooks/useBehaviorTracking";
+import { useRecommendationRealtimeInvalidation } from "@/hooks/useRecommendationRealtimeInvalidation";
 import QuickFooter from "@/components/QuickFooter";
 
 export default function ForYouPage() {
