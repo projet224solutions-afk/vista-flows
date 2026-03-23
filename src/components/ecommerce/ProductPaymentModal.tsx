@@ -25,6 +25,7 @@ import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { SecureButton } from "@/components/ui/SecureButton";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { useChapChapPay } from "@/hooks/useChapChapPay";
+import { usePriceConverter } from "@/hooks/usePriceConverter";
 
 const StripeCheckoutButton = lazy(() => import("@/components/payment/StripeCheckoutButton"));
 
@@ -69,7 +70,28 @@ export default function ProductPaymentModal({
   currency = 'GNF'
 }: ProductPaymentModalProps) {
   const fc = useFormatCurrency();
+  const { convert, userCurrency } = usePriceConverter();
   const cur = currency.toUpperCase();
+
+  /** Affiche le montant converti en devise locale, avec l'original en dessous si conversion */
+  const renderPrice = (amount: number, className?: string) => {
+    const converted = convert(amount, cur);
+    if (!converted.wasConverted) {
+      return <span className={className}>{converted.formatted}</span>;
+    }
+    return (
+      <span className={`inline-flex flex-col ${className || ''}`}>
+        <span>{converted.formatted}</span>
+        <span className="text-xs text-muted-foreground font-normal">({converted.originalFormatted})</span>
+      </span>
+    );
+  };
+
+  /** Version inline texte pour les boutons / toasts */
+  const priceText = (amount: number) => {
+    const converted = convert(amount, cur);
+    return converted.formatted;
+  };
   const { initiatePullPayment, pollStatus, isLoading: ccpLoading } = useChapChapPay();
 
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
@@ -616,17 +638,17 @@ export default function ProductPaymentModal({
           <DialogDescription asChild>
             <div className="space-y-3 mt-2">
               <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm items-start">
                   <span>Sous-total produits:</span>
-                  <span>{fc(totalAmount, cur)}</span>
+                  {renderPrice(totalAmount)}
                 </div>
                 {commissionFee > 0 && (
-                  <div className="flex justify-between text-sm text-muted-foreground">
+                  <div className="flex justify-between text-sm text-muted-foreground items-start">
                     <span className="flex items-center gap-1">
                       <Info className="w-3 h-3" />
                       Frais de service ({commissionConfig?.commission_value || 1.5}%):
                     </span>
-                    <span>+{fc(commissionFee, cur)}</span>
+                    <span>+{priceText(commissionFee)}</span>
                   </div>
                 )}
                 {loadingCommission && (
@@ -634,9 +656,9 @@ export default function ProductPaymentModal({
                     <Loader2 className="w-3 h-3 animate-spin" /> Calcul des frais...
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                <div className="flex justify-between font-bold text-lg border-t pt-2 items-start">
                   <span>Total à payer:</span>
-                  <span className="text-primary">{fc(grandTotal, cur)}</span>
+                  {renderPrice(grandTotal, 'text-primary')}
                 </div>
               </div>
 
@@ -767,9 +789,9 @@ export default function ProductPaymentModal({
             loadingText="Traitement..."
             debounceMs={1000}
           >
-            {paymentMethod === 'card' ? `Payer maintenant ${fc(grandTotal, cur)}` :
+            {paymentMethod === 'card' ? `Payer maintenant ${priceText(grandTotal)}` :
              paymentMethod === 'orange_money' || paymentMethod === 'mtn_money' ? 'Continuer' :
-             paymentMethod === 'wallet' ? `Payer ${fc(grandTotal, cur)}` : `Confirmer ${fc(grandTotal, cur)}`}
+             paymentMethod === 'wallet' ? `Payer ${priceText(grandTotal)}` : `Confirmer ${priceText(grandTotal)}`}
           </SecureButton>
         </div>
         </div>
