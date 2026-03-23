@@ -901,15 +901,70 @@ export default function LivreurDashboard() {
         />
       )}
 
-      {/* Modal de paiement avec 5 méthodes */}
-      {showPaymentModal && currentDelivery && user && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md">
-            <h3 className="font-bold mb-4">Traitement du paiement</h3>
-            <p>Montant: {currentDelivery.delivery_fee} GNF</p>
-            <Button onClick={() => setShowPaymentModal(false)} className="mt-4 w-full">Fermer</Button>
-          </div>
-        </div>
+      {/* Modal de paiement */}
+      {showPaymentModal && (currentDelivery || currentRide) && user && (
+        <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Traitement du paiement</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-lg text-center">
+                <p className="text-sm text-muted-foreground mb-1">Montant à encaisser</p>
+                <p className="text-3xl font-bold text-primary">
+                  {currentDelivery 
+                    ? (currentDelivery.delivery_fee || 0).toLocaleString() 
+                    : (currentRide?.price_total || 0).toLocaleString()
+                  } GNF
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => {
+                    if (currentDelivery) {
+                      processDeliveryPayment(currentDelivery.id, 'cash', currentDelivery.delivery_fee || 0);
+                    }
+                    setShowPaymentModal(false);
+                    toast.success('Paiement en espèces enregistré');
+                  }}
+                  className="w-full"
+                  variant="outline"
+                >
+                  💵 Paiement en espèces
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (currentDelivery) {
+                      processDeliveryPayment(currentDelivery.id, 'mobile_money', currentDelivery.delivery_fee || 0);
+                    }
+                    setShowPaymentModal(false);
+                    toast.success('Paiement mobile money enregistré');
+                  }}
+                  className="w-full"
+                  variant="outline"
+                >
+                  📱 Mobile Money
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (currentDelivery) {
+                      processDeliveryPayment(currentDelivery.id, 'wallet', currentDelivery.delivery_fee || 0);
+                    }
+                    setShowPaymentModal(false);
+                    toast.success('Paiement wallet enregistré');
+                  }}
+                  className="w-full"
+                  variant="outline"
+                >
+                  💰 Wallet 224Solutions
+                </Button>
+              </div>
+              <Button onClick={() => setShowPaymentModal(false)} variant="ghost" className="w-full">
+                Annuler
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
     </DriverLayout>
