@@ -75,14 +75,8 @@ Deno.serve(async (req) => {
 
         if (!vendor) continue;
 
-        // Mark vendor as restricted (keep is_active but add restriction flag)
-        await supabase
-          .from('vendors')
-          .update({ 
-            is_verified: false, // Use is_verified as restriction flag
-            updated_at: now 
-          })
-          .eq('id', vendor.id);
+        // Note: Ne PAS modifier is_verified - ce champ est réservé au KYC/vérification.
+        // La restriction se fait via le statut de l'abonnement (expired/past_due).
 
         // Disable virtual cards
         await supabase
