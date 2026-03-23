@@ -27,6 +27,7 @@ export default function AgentHeader({ agentCode, pdgUserId, sectionTitle }: Agen
             {pdgUserId && (
               <WalletBalanceDisplay userId={pdgUserId} compact={true} className="max-w-xs" />
             )}
+            <NotificationBellButton className="h-9 w-9" />
           </div>
         </div>
       </div>

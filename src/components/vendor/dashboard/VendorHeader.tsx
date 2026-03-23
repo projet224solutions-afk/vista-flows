@@ -128,6 +128,9 @@ const HeaderActions = memo(function HeaderActions({
         <PushNotificationButton className="h-8 w-8 md:h-10 md:w-10" />
       </Suspense>
 
+      {/* Notification Bell */}
+      <NotificationBellButton className="h-8 w-8 md:h-10 md:w-10" iconSize="w-4 h-4 md:w-5 md:h-5" />
+
       {/* Settings */}
       <Button
         variant="ghost"

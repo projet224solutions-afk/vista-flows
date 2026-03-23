@@ -40,6 +40,7 @@ const ResponsiveGrid = lazy(() => import("@/components/responsive/ResponsiveCont
 const ResponsiveStack = lazy(() => import("@/components/responsive/ResponsiveContainer").then(m => ({ default: m.ResponsiveStack })));
 const ProductDetailModal = lazy(() => import("@/components/marketplace/ProductDetailModal"));
 const ClientSettings = lazy(() => import("@/components/client/ClientSettings"));
+const NotificationBellButton = lazy(() => import("@/components/shared/NotificationBellButton").then(m => ({ default: m.NotificationBellButton })));
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
