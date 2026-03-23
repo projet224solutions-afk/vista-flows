@@ -231,8 +231,8 @@ export function useProspects() {
 
         if (fetchError) throw fetchError;
         setProspects(data || []);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
       }
@@ -260,8 +260,8 @@ export function useProspects() {
       if (error) throw error;
       setProspects(prev => [data, ...prev]);
       return data;
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
       throw err;
     }
   };
@@ -278,8 +278,8 @@ export function useProspects() {
       if (error) throw error;
       setProspects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
       return data;
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
       throw err;
     }
   };
@@ -319,8 +319,8 @@ export function useCustomerCredits() {
 
         if (fetchError) throw fetchError;
         setCredits(data || []);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
       }
@@ -367,8 +367,8 @@ export function usePaymentSchedules() {
 
         if (fetchError) throw fetchError;
         setSchedules(data || []);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
       }
@@ -407,8 +407,8 @@ export function usePromoCodes() {
 
         if (fetchError) throw fetchError;
         setPromoCodes(data || []);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
       }
@@ -436,8 +436,8 @@ export function usePromoCodes() {
       if (error) throw error;
       setPromoCodes(prev => [data, ...prev]);
       return data;
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
       throw err;
     }
   };
@@ -472,8 +472,8 @@ export function useSupportTickets() {
 
         if (fetchError) throw fetchError;
         setTickets(data || []);
-      } catch (err) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
       }
@@ -494,8 +494,8 @@ export function useSupportTickets() {
       if (error) throw error;
       setTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t));
       return data;
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
       throw err;
     }
   };
