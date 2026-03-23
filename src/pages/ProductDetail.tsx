@@ -512,22 +512,28 @@ export default function ProductDetail() {
       </div>
 
       {/* Modal de paiement */}
-      {product && customerId && userId && (
-        <ProductPaymentModal
-          open={showPaymentModal}
-          onClose={() => setShowPaymentModal(false)}
-          cartItems={[{
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            vendorId: product.vendor_id,
-            quantity: quantity
-          }]}
-          totalAmount={product.price * quantity}
-          onPaymentSuccess={handlePaymentSuccess}
-          userId={userId}
-          customerId={customerId}
-        />
+      {product && customerId && userId && (() => {
+        const vc = (() => { const v = product.vendors; if (Array.isArray(v)) return v[0]?.country; return v?.country; })();
+        const pCur = product.currency || (vc ? getCurrencyForCountry(vc) : 'GNF');
+        return (
+          <ProductPaymentModal
+            open={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            cartItems={[{
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              vendorId: product.vendor_id,
+              quantity: quantity
+            }]}
+            totalAmount={product.price * quantity}
+            onPaymentSuccess={handlePaymentSuccess}
+            userId={userId}
+            customerId={customerId}
+            currency={pCur}
+          />
+        );
+      })()}
       )}
     </div>
   );
