@@ -176,10 +176,12 @@ export default function PDGEscrowManagement() {
               <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
               Actualiser
             </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Exporter
-            </Button>
+            <TabsList>
+              <TabsTrigger value="transactions">Transactions</TabsTrigger>
+              <TabsTrigger value="disputes" className="text-destructive">
+                🚨 Litiges ({stats.dispute})
+              </TabsTrigger>
+            </TabsList>
           </div>
         </div>
 
