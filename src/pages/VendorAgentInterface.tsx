@@ -375,11 +375,17 @@ export default function VendorAgentInterface() {
             </header>
 
             {/* Mobile Content */}
-            <ScrollArea className="flex-1">
-              <div className="p-3 pb-20">
+            {activeTab === 'pos' ? (
+              <div className="flex-1 min-h-0 overflow-hidden">
                 {renderTabContent()}
               </div>
-            </ScrollArea>
+            ) : (
+              <ScrollArea className="flex-1">
+                <div className="p-3 pb-20">
+                  {renderTabContent()}
+                </div>
+              </ScrollArea>
+            )}
 
             {/* Mobile Bottom Nav - Quick access to top 5 items */}
             <nav className="bg-background/95 backdrop-blur-md border-t border-border/50 px-2 py-1.5 safe-area-pb">
