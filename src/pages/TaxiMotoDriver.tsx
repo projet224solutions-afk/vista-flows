@@ -577,19 +577,13 @@ export default function TaxiMotoDriver() {
             )}
 
             {/* Widget de communication */}
-            {user && (
-                <CommunicationWidget 
-                    currentUserId={user.id}
-                    currentUserName={`${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'Conducteur'}
-                />
-            )}
+            {user && <CommunicationWidget />}
 
             {/* Navigation bottom */}
             <BottomNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 hasActiveRide={!!activeRide}
-                isOnline={isOnline}
             />
         </div>
     );
