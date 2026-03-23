@@ -570,15 +570,12 @@ export default function SyndicatDashboardUltraPro() {
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-4">
                                     <Button
-                                        onClick={() => setActiveTab('gestion')}
-                                        className="w-full bg-purple-600 hover:bg-purple-700 rounded-xl shadow-lg shadow-purple-600/40"
+                                        onClick={() => setActiveTab('members')}
+                                        variant="outline"
+                                        className="w-full rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50"
                                     >
-                                        <Settings className="w-4 h-4 mr-2" />
-                                        Ouvrir les Paramètres
-                                    </Button>
-                                    >
-                                        <Settings className="w-4 h-4 mr-2" />
-                                        Configurer le Bureau
+                                        <Shield className="w-4 h-4 mr-2" />
+                                        Gérer les Membres & Permissions
                                     </Button>
 
                                     <Button
