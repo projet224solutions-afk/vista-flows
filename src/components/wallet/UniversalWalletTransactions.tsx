@@ -1898,10 +1898,18 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       <span className="text-sm font-medium">💰 Montant à transférer</span>
                       <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.amount || 0)}</span>
                     </div>
-                    <div className="flex justify-between items-center text-orange-600">
-                      <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
-                      <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.fee_amount || 0)}</span>
-                    </div>
+                    {transferPreview?.is_international && (
+                      <div className="flex justify-between items-center text-muted-foreground">
+                        <span className="text-sm font-medium">📊 Frais de conversion</span>
+                        <span className="text-sm">Intégrés au taux (3%)</span>
+                      </div>
+                    )}
+                    {!transferPreview?.is_international && (transferPreview?.fee_amount || 0) > 0 && (
+                      <div className="flex justify-between items-center text-orange-600">
+                        <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
+                        <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.fee_amount || 0)}</span>
+                      </div>
+                    )}
                     <div className="border-t pt-3 flex justify-between items-center">
                       <span className="text-sm font-medium">📉 Total débité de votre compte</span>
                       <span className="text-xl font-bold text-destructive">{formatWalletBalance(transferPreview?.total_debit || 0)}</span>
