@@ -570,8 +570,12 @@ export default function SyndicatDashboardUltraPro() {
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-4">
                                     <Button
-                                        onClick={() => toast.success('Paramètres mis à jour !')}
+                                        onClick={() => setActiveTab('gestion')}
                                         className="w-full bg-purple-600 hover:bg-purple-700 rounded-xl shadow-lg shadow-purple-600/40"
+                                    >
+                                        <Settings className="w-4 h-4 mr-2" />
+                                        Ouvrir les Paramètres
+                                    </Button>
                                     >
                                         <Settings className="w-4 h-4 mr-2" />
                                         Configurer le Bureau
