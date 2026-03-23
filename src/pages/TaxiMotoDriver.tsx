@@ -136,8 +136,8 @@ export default function TaxiMotoDriver() {
     useEffect(() => { driverIdRef.current = driverId; }, [driverId]);
     useEffect(() => { isOnlineRef.current = isOnline; }, [isOnline]);
 
-    // ID affichable (code métier) : priorité à hookDriverDisplayId (custom_id format DRV0001)
-    const driverDisplayId = hookDriverDisplayId || profile?.custom_id || profile?.public_id || driverId;
+    // ID affichable (code métier)
+    const driverDisplayId = hookDriverDisplayId || driverId;
 
     // Fonction de démarrage de navigation (passée aux hooks)
     const startNavigation = useCallback(async (destination: { latitude: number; longitude: number }) => {
