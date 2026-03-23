@@ -130,12 +130,16 @@ export default function SubscriptionManagement() {
         profiles = profilesData || [];
       }
 
-      // 5. Enrichir avec profils
-      const enrichedData = allSubs.map(sub => ({
-        ...sub,
-        profiles: profiles.find(p => p.id === sub.user_id),
-        acquisition_type: determineAcquisitionType(sub),
-      }));
+      // 5. Enrichir avec profils + statut réel calculé
+      const enrichedData = allSubs.map(sub => {
+        const realStatus = computeRealStatus(sub);
+        return {
+          ...sub,
+          profiles: profiles.find(p => p.id === sub.user_id),
+          acquisition_type: determineAcquisitionType(sub),
+          real_status: realStatus,
+        };
+      });
 
       // 6. Garder le plus récent par user
       const uniqueSubscriptions = enrichedData.reduce((acc, sub) => {
@@ -161,15 +165,31 @@ export default function SubscriptionManagement() {
     }
   };
 
+  // Calculer le statut réel basé sur current_period_end
+  const computeRealStatus = (sub: any): 'active' | 'expired' | 'past_due' | 'cancelled' => {
+    // Si déjà cancelled ou expired en base, garder ce statut
+    if (sub.status === 'cancelled') return 'cancelled';
+    if (sub.status === 'expired') return 'expired';
+    if (sub.status === 'past_due') return 'past_due';
+    
+    // Vérifier si current_period_end est dépassé
+    if (sub.current_period_end) {
+      const endDate = new Date(sub.current_period_end);
+      const now = new Date();
+      if (endDate < now) {
+        return 'expired';
+      }
+    }
+    
+    return sub.status || 'active';
+  };
+
   // Déterminer si l'abonnement est offert ou acheté
   const determineAcquisitionType = (sub: any): 'offered' | 'purchased' | 'free' => {
-    // Billing cycle custom ou lifetime = offert par le PDG
     if (sub.billing_cycle === 'custom' || sub.billing_cycle === 'lifetime') return 'offered';
-    // Prix payé = 0 ou plan gratuit = gratuit
     if (sub.price_paid_gnf === 0) return 'free';
     const planName = sub.plan_display?.toLowerCase() || sub.plans?.name?.toLowerCase() || '';
     if (planName === 'free' || planName === 'gratuit') return 'free';
-    // Sinon = acheté
     return 'purchased';
   };
 
@@ -572,7 +592,7 @@ export default function SubscriptionManagement() {
           <CardContent>
             <div className="text-2xl font-bold">{allSubscriptions.length || stats?.total_subscriptions || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {allSubscriptions.filter(s => s.status === 'active').length || stats?.active_subscriptions || 0} actifs
+              {allSubscriptions.filter(s => s.real_status === 'active').length || stats?.active_subscriptions || 0} actifs · {allSubscriptions.filter(s => s.real_status === 'expired').length} expirés
             </p>
           </CardContent>
         </Card>
@@ -713,9 +733,17 @@ export default function SubscriptionManagement() {
                             <Badge variant="secondary">{sub.plan_display}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={sub.status === 'active' ? 'default' : 'destructive'}>
-                              {sub.status === 'active' ? '✓ Actif' : sub.status}
-                            </Badge>
+                            {sub.real_status === 'active' ? (
+                              <Badge variant="default">✓ Actif</Badge>
+                            ) : sub.real_status === 'expired' ? (
+                              <Badge variant="destructive">⛔ Expiré</Badge>
+                            ) : sub.real_status === 'past_due' ? (
+                              <Badge variant="destructive" className="bg-orange-500">⚠️ Impayé</Badge>
+                            ) : sub.real_status === 'cancelled' ? (
+                              <Badge variant="outline" className="text-muted-foreground">Annulé</Badge>
+                            ) : (
+                              <Badge variant="outline">{sub.status}</Badge>
+                            )}
                           </TableCell>
                           <TableCell>
                             {sub.acquisition_type === 'offered' ? (
@@ -748,8 +776,15 @@ export default function SubscriptionManagement() {
                           <TableCell className="text-sm">
                             {sub.started_at ? format(new Date(sub.started_at), 'dd/MM/yyyy', { locale: fr }) : '-'}
                           </TableCell>
-                          <TableCell className="text-sm">
-                            {sub.current_period_end ? format(new Date(sub.current_period_end), 'dd/MM/yyyy', { locale: fr }) : '-'}
+                          <TableCell className={`text-sm font-medium ${sub.real_status === 'expired' ? 'text-destructive' : ''}`}>
+                            {sub.current_period_end ? (
+                              <>
+                                {format(new Date(sub.current_period_end), 'dd/MM/yyyy', { locale: fr })}
+                                {sub.real_status === 'expired' && (
+                                  <span className="block text-xs text-destructive">Expiré</span>
+                                )}
+                              </>
+                            ) : '-'}
                           </TableCell>
                         </TableRow>
                       ))}
