@@ -70,7 +70,28 @@ export default function ProductPaymentModal({
   currency = 'GNF'
 }: ProductPaymentModalProps) {
   const fc = useFormatCurrency();
+  const { convert, userCurrency } = usePriceConverter();
   const cur = currency.toUpperCase();
+
+  /** Affiche le montant converti en devise locale, avec l'original en dessous si conversion */
+  const renderPrice = (amount: number, className?: string) => {
+    const converted = convert(amount, cur);
+    if (!converted.wasConverted) {
+      return <span className={className}>{converted.formatted}</span>;
+    }
+    return (
+      <span className={`inline-flex flex-col ${className || ''}`}>
+        <span>{converted.formatted}</span>
+        <span className="text-xs text-muted-foreground font-normal">({converted.originalFormatted})</span>
+      </span>
+    );
+  };
+
+  /** Version inline texte pour les boutons / toasts */
+  const priceText = (amount: number) => {
+    const converted = convert(amount, cur);
+    return converted.formatted;
+  };
   const { initiatePullPayment, pollStatus, isLoading: ccpLoading } = useChapChapPay();
 
   const [paymentMethod, setPaymentMethod] = useState<ProductPaymentMethod>('wallet');
