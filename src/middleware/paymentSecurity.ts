@@ -1,5 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
 
+// Types locaux pour éviter les erreurs TS avec les tables non-standard
+interface UserProfile {
+  role: string;
+  kyc_verified: boolean;
+  status: string;
+}
+
 export interface SecurityValidation {
   isValid: boolean;
   error?: string;
