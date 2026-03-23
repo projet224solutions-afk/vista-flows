@@ -76,24 +76,52 @@ serve(async (req) => {
       });
 
       const resendKey = Deno.env.get('RESEND_API_KEY');
+      let emailSent = false;
       if (resendKey) {
         try {
-          await fetch('https://api.resend.com/emails', {
+          // Use FROM_EMAIL if set, otherwise fallback to Resend's test sender
+          const fromEmail = Deno.env.get('FROM_EMAIL') || 'onboarding@resend.dev';
+          console.log('[MFA] Sending email from:', fromEmail, 'to:', user.email);
+          
+          const emailResponse = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${resendKey}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: Deno.env.get('FROM_EMAIL') || 'noreply@224solutions.com',
+              from: fromEmail,
               to: [user.email],
               subject: '🔐 Code MFA PDG - 224Solutions',
               html: generateMfaEmail(mfaCode),
             }),
           });
-          console.log('[MFA] Email sent to', user.email);
+
+          const emailResult = await emailResponse.json();
+          
+          if (!emailResponse.ok) {
+            console.error('[MFA] Resend API error:', emailResponse.status, JSON.stringify(emailResult));
+            // Return error to user so they know email failed
+            return new Response(JSON.stringify({
+              success: false,
+              error: `Échec envoi email: ${emailResult?.message || emailResult?.name || 'Erreur Resend'}`,
+              dev_code: mfaCode, // Fallback: show code since email failed
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+          
+          console.log('[MFA] Email sent successfully:', JSON.stringify(emailResult));
+          emailSent = true;
         } catch (emailErr) {
           console.error('[MFA] Email send error:', emailErr);
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'Erreur réseau lors de l\'envoi de l\'email',
+            dev_code: mfaCode,
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
         }
       } else {
         console.log(`[DEV MODE] MFA code for ${user.email}: ${mfaCode}`);
