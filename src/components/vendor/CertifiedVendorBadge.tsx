@@ -39,7 +39,7 @@ export function CertifiedVendorBadge({
         return {
           icon: CheckCircle2,
           label: 'Vendeur certifié',
-          color: 'bg-green-500 text-white border-green-600',
+          color: 'bg-[#04439e] text-white border-[#04439e]',
           iconColor: 'text-white',
           tooltipText: verifiedAt 
             ? `Vendeur certifié le ${new Date(verifiedAt).toLocaleDateString('fr-FR')}`
