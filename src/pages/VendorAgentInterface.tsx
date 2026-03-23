@@ -295,11 +295,9 @@ export default function VendorAgentInterface() {
       case 'wallet':
         return <AgentModuleWrapper permission="access_wallet"><VendorAgentWalletView vendorId={agent.vendor_id} agentName={agent.name} /></AgentModuleWrapper>;
       case 'pos':
-        return (
+        return canAccessPOS ? <POSSystemWrapper /> : (
           <AgentModuleWrapper>
-            {canAccessPOS ? <POSSystemWrapper /> : (
-              <Card><CardHeader><CardTitle>POS verrouillé</CardTitle><CardDescription>Le vendeur est configuré en "En ligne uniquement".</CardDescription></CardHeader></Card>
-            )}
+            <Card><CardHeader><CardTitle>POS verrouillé</CardTitle><CardDescription>Le vendeur est configuré en "En ligne uniquement".</CardDescription></CardHeader></Card>
           </AgentModuleWrapper>
         );
       case 'inventory':
