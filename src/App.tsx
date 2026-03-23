@@ -12,15 +12,15 @@ import { CognitoAuthProvider } from "@/contexts/CognitoAuthContext";
 import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
 import { ThemeProvider } from "next-themes";
 // OfflineBanner retiré du global - maintenant uniquement dans VendeurDashboard
-
-const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
-const WebRTCCallProvider = lazyWithRetry(() => import("@/components/communication/WebRTCCallProvider"));
 import { CartProvider } from "@/contexts/CartContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { NotificationsRealtimeListener } from "@/components/common/NotificationsRealtimeListener";
+
+const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
+const WebRTCCallProvider = lazyWithRetry(() => import("@/components/communication/WebRTCCallProvider"));
 
 // Lazy load TOUT - même la page d'accueil pour réduire TBT
 const Index = lazyWithRetry(() => import("./pages/Index"));
