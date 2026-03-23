@@ -17,6 +17,8 @@ import { useVendorDigitalProducts } from "@/hooks/useHasDigitalProducts";
 import { trackShopVisit } from "@/services/analyticsTrackingService";
 import SEOHead from "@/components/SEOHead";
 import { getCurrencyForCountry } from "@/data/countryMappings";
+import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { CertifiedVendorBadge } from "@/components/vendor/CertifiedVendorBadge";
 
 interface Vendor {
   id: string;
