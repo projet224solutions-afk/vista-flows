@@ -1,6 +1,3 @@
-// ============================================================================
-// PDG MFA - SERVER-SIDE CODE GENERATION & VERIFICATION
-// ============================================================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
@@ -26,23 +23,29 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+    // Use getClaims for fast JWT verification instead of getUser network call
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      console.error('getClaims error:', claimsError);
       return new Response(JSON.stringify({ error: 'Authentication failed' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
 
     // Verify user is PDG/admin/ceo
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: profile } = await adminClient
       .from('profiles')
       .select('role')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     const role = (profile?.role || '').toString().toLowerCase();
@@ -52,29 +55,26 @@ serve(async (req) => {
       });
     }
 
-    const { action } = await req.json();
+    // Parse body ONCE
+    const body = await req.json();
+    const { action, code } = body;
 
     if (action === 'send') {
-      // Generate a 6-digit code server-side
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
+      const mfaCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-      // Store code in DB (use audit_logs or a dedicated table)
-      // We'll use a simple approach: store hashed code in user metadata via service role
-      // For security, we store the code server-side only
       await adminClient.from('audit_logs').insert({
-        actor_id: user.id,
+        actor_id: userId,
         action: 'MFA_CODE_GENERATED',
         target_type: 'pdg_mfa',
-        target_id: user.id,
+        target_id: userId,
         data_json: {
-          code_hash: await hashCode(code),
+          code_hash: await hashCode(mfaCode),
           expires_at: expiresAt,
-          email: user.email,
+          email: userEmail,
         }
       });
 
-      // Send email via Resend if configured, otherwise log
       const resendKey = Deno.env.get('RESEND_API_KEY');
       if (resendKey) {
         try {
@@ -86,41 +86,38 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               from: Deno.env.get('FROM_EMAIL') || 'noreply@224solutions.com',
-              to: [user.email],
+              to: [userEmail],
               subject: '🔐 Code MFA PDG - 224Solutions',
-              html: generateMfaEmail(code),
+              html: generateMfaEmail(mfaCode),
             }),
           });
         } catch (emailErr) {
           console.error('Email send error:', emailErr);
         }
       } else {
-        console.log(`[DEV MODE] MFA code for ${user.email}: ${code}`);
+        console.log(`[DEV MODE] MFA code for ${userEmail}: ${mfaCode}`);
       }
 
       return new Response(JSON.stringify({
         success: true,
         message: 'MFA code sent',
-        // In dev mode without Resend, include the code for testing
-        ...(resendKey ? {} : { dev_code: code }),
+        ...(resendKey ? {} : { dev_code: mfaCode }),
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     if (action === 'verify') {
-      const { code } = await req.json();
       if (!code || code.length !== 6) {
         return new Response(JSON.stringify({ error: 'Invalid code format' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      // Find the latest MFA code for this user
       const { data: logs } = await adminClient
         .from('audit_logs')
         .select('data_json, created_at')
-        .eq('actor_id', user.id)
+        .eq('actor_id', userId)
         .eq('action', 'MFA_CODE_GENERATED')
         .eq('target_type', 'pdg_mfa')
         .order('created_at', { ascending: false })
@@ -132,25 +129,21 @@ serve(async (req) => {
         });
       }
 
-      const latestLog = logs[0];
-      const dataJson = latestLog.data_json as any;
+      const dataJson = logs[0].data_json as any;
 
-      // Check expiry
       if (new Date(dataJson.expires_at) < new Date()) {
         return new Response(JSON.stringify({ error: 'Code expired. Request a new one.' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      // Verify code hash
       const inputHash = await hashCode(code);
       if (inputHash !== dataJson.code_hash) {
-        // Log failed attempt
         await adminClient.from('audit_logs').insert({
-          actor_id: user.id,
+          actor_id: userId,
           action: 'MFA_VERIFICATION_FAILED',
           target_type: 'pdg_mfa',
-          target_id: user.id,
+          target_id: userId,
           data_json: { timestamp: new Date().toISOString() }
         });
         return new Response(JSON.stringify({ error: 'Invalid MFA code' }), {
@@ -158,12 +151,11 @@ serve(async (req) => {
         });
       }
 
-      // Log successful verification
       await adminClient.from('audit_logs').insert({
-        actor_id: user.id,
+        actor_id: userId,
         action: 'MFA_VERIFIED',
         target_type: 'pdg_mfa',
-        target_id: user.id,
+        target_id: userId,
         data_json: { timestamp: new Date().toISOString() }
       });
 
