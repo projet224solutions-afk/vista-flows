@@ -459,7 +459,18 @@ export default function TaxiMotoDriver() {
                         />
                     ) : (
                         <GoogleMapsNavigation
-                            activeRide={activeRide}
+                            activeRide={activeRide ? {
+                                id: activeRide.id,
+                                customerId: activeRide.customer.name,
+                                customerName: activeRide.customer.name,
+                                customerPhone: activeRide.customer.phone,
+                                pickup: activeRide.pickup,
+                                destination: activeRide.destination,
+                                status: activeRide.status,
+                                estimatedPrice: activeRide.estimatedEarnings / 0.85,
+                                estimatedEarnings: activeRide.estimatedEarnings,
+                                requestedAt: activeRide.startTime
+                            } : null}
                             currentLocation={location}
                             onContactCustomer={contactCustomer}
                         />
