@@ -2234,10 +2234,10 @@ export function POSSystem() {
                               </div>
                             )}
 
-                            {/* Boutons d'action - Compact */}
-                            <div className="flex flex-col gap-1 pt-1">
+                            {/* Boutons d'action - Touch friendly */}
+                            <div className="flex flex-col gap-1.5 pt-1.5">
                               {/* Ligne 1: Quantité + Unité */}
-                              <div className="flex gap-1">
+                              <div className="flex gap-1.5">
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -2247,9 +2247,9 @@ export function POSSystem() {
                                     if (qty > 0) updateQuantity(product.id, qty - 1);
                                   }}
                                   disabled={!cart.find(item => item.id === product.id && item.saleType !== 'carton')}
-                                  className="h-4 w-4 p-0"
+                                  className="h-8 w-8 p-0 flex-shrink-0"
                                 >
-                                  <Minus className="h-3 w-3" />
+                                  <Minus className="h-3.5 w-3.5" />
                                 </Button>
                                 
                                 {/* Bouton pavé numérique pour quantité multiple */}
@@ -2261,10 +2261,10 @@ export function POSSystem() {
                                     setSelectedProductForQuantity(product);
                                     setShowQuantityKeypad(true);
                                   }}
-                                  className="h-4 w-4 p-0 border-primary/30 hover:border-primary hover:bg-primary/10"
+                                  className="h-8 w-8 p-0 flex-shrink-0 border-primary/30 hover:border-primary hover:bg-primary/10"
                                   title="Saisir quantité"
                                 >
-                                  <Calculator className="h-3 w-3 text-primary" />
+                                  <Calculator className="h-3.5 w-3.5 text-primary" />
                                 </Button>
                                 
                                 <Button
@@ -2274,14 +2274,14 @@ export function POSSystem() {
                                     e.stopPropagation();
                                     addToCart(product);
                                   }}
-                                  className="flex-1 h-4 text-[8px] md:text-xs font-semibold"
+                                  className="flex-1 h-8 text-[10px] md:text-xs font-semibold"
                                 >
-                                  <Plus className="h-3 w-3 mr-0.5" />
+                                  <Plus className="h-3.5 w-3.5 mr-0.5" />
                                   Unité
                                 </Button>
                               </div>
 
-                              {/* Ligne 2: Bouton Carton (visible même si stock insuffisant) */}
+                              {/* Ligne 2: Bouton Carton */}
                               {canSellCarton && (
                                 <Button
                                   variant="secondary"
@@ -2291,7 +2291,7 @@ export function POSSystem() {
                                     if (cartonsAvailable > 0) addToCartByCarton(product);
                                   }}
                                   disabled={cartonsAvailable <= 0}
-                                  className="w-auto h-4 px-2 text-[7px] md:text-xs font-semibold bg-vendeur-secondary hover:bg-vendeur-secondary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-full h-8 text-[10px] md:text-xs font-semibold bg-vendeur-secondary hover:bg-vendeur-secondary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   📦 Carton ({cartonsAvailable > 0 ? product.units_per_carton : 0}u)
                                 </Button>
