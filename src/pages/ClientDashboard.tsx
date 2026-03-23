@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ShoppingBag, Heart, Package, Search, CreditCard, MessageSquare,
   LogOut, Home, Grid3X3, ShoppingCart, TrendingUp, Star, Eye,
-  Plus, Truck, Bot, User, Settings, Bell
+  Plus, Truck, Bot, User, Settings
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
