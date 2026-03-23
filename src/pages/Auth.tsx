@@ -17,18 +17,27 @@ import QuickFooter from "@/components/QuickFooter";
 import { z } from "zod";
 import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSelector from "@/components/LanguageSelector";
-import { getDashboardRoute } from "@/hooks/useRoleRedirect";
+
 import { syncCognitoProfile } from "@/services/cognitoSyncService";
 import { resolvePostAuthRoute, cleanupOAuthFlags, cleanupAffiliateFlags } from "@/utils/postAuthRoute";
 import { COUNTRY_PHONE_CODES, WORLD_PHONE_CODES, PHONE_VALIDATION_RULES, validatePhoneNumber, getPhoneExample, getPhoneLengthHint } from "@/utils/phoneData";
 
 // Validation schemas avec tous les rôles
+// Password strength: 8+ chars, uppercase, lowercase, digit
+const passwordSchema = z.string()
+  .min(8, "Le mot de passe doit faire au moins 8 caractères")
+  .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
+  .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
+  .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre");
+
 const loginSchema = z.object({
   email: z.string().email("Adresse email invalide"),
-  password: z.string().min(6, "Le mot de passe doit faire au moins 6 caractères")
+  password: z.string().min(1, "Le mot de passe est requis")
 });
 
-const signupSchema = loginSchema.extend({
+const signupSchema = z.object({
+  email: z.string().email("Adresse email invalide"),
+  password: passwordSchema,
   firstName: z.string().min(1, "Le prénom est requis"),
   lastName: z.string().min(1, "Le nom est requis"),
   role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'admin', 'prestataire']),
@@ -960,12 +969,7 @@ export default function Auth() {
               });
             }
             
-            // Nettoyer les données d'affiliation de localStorage
-            localStorage.removeItem('affiliate_token');
-            localStorage.removeItem('affiliate_agent_name');
-            localStorage.removeItem('affiliate_agent_id');
-            localStorage.removeItem('affiliate_target_role');
-            localStorage.removeItem('affiliate_timestamp');
+            cleanupAffiliateFlags();
           } catch (affiliateErr) {
             console.error('⚠️ [Affiliation] Erreur inattendue:', affiliateErr);
           }
@@ -999,25 +1003,11 @@ export default function Auth() {
           // Déterminer la route cible
           let targetRoute = '/home';
           if (profileData?.role) {
-            targetRoute = getDashboardRoute(profileData.role);
-            
-            if (profileData.role === 'vendeur' && vendorShopType === 'digital') {
-              targetRoute = '/vendeur-digital';
-            }
-            
-            // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service créé
-            if ((profileData.role as string) === 'prestataire') {
-              const { data: proService } = await supabase
-                .from('professional_services')
-                .select('id')
-                .eq('user_id', authData.user!.id)
-                .limit(1)
-                .maybeSingle();
-              
-              if (proService?.id) {
-                targetRoute = `/dashboard/service/${proService.id}`;
-              }
-            }
+            targetRoute = await resolvePostAuthRoute({
+              userId: authData.user!.id,
+              role: profileData.role,
+              vendorShopType,
+            });
           }
 
           // Afficher le modal de succès
@@ -1094,56 +1084,13 @@ export default function Auth() {
           }
           
           if (profileData?.role) {
-            // ✅ FIX: Pour les vendor_agents, rediriger vers leur interface dédiée
-            if (profileData.role === 'vendor_agent') {
-              const { data: vendorAgent } = await supabase
-                .from('vendor_agents')
-                .select('access_token')
-                .eq('user_id', userId)
-                .eq('is_active', true)
-                .maybeSingle();
-              
-              if (vendorAgent?.access_token) {
-                console.log('🚀 [Auth Login] Redirection agent vendeur vers /vendor-agent/');
-                await new Promise(resolve => setTimeout(resolve, 300));
-                navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
-              } else {
-                console.log('⚠️ [Auth Login] Agent vendeur sans token actif');
-                navigate('/home', { replace: true });
-              }
-            } else {
-              let targetRoute = getDashboardRoute(profileData.role);
-              
-              // ✅ Redirection intelligente pour les vendeurs selon leur business_type
-              if (profileData.role === 'vendeur') {
-                const { data: vendor } = await supabase
-                  .from('vendors')
-                  .select('business_type')
-                  .eq('user_id', userId)
-                  .maybeSingle();
-                
-                if (vendor?.business_type === 'digital') {
-                  targetRoute = '/vendeur-digital';
-                }
-              }
-              
-              // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
-              if ((profileData.role as string) === 'prestataire') {
-                const { data: proService } = await supabase
-                  .from('professional_services')
-                  .select('id')
-                  .eq('user_id', userId)
-                  .limit(1)
-                  .maybeSingle();
-                if (proService?.id) {
-                  targetRoute = `/dashboard/service/${proService.id}`;
-                }
-              }
-              
-              console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
-              await new Promise(resolve => setTimeout(resolve, 300));
-              navigate(targetRoute, { replace: true });
-            }
+            const targetRoute = await resolvePostAuthRoute({
+              userId,
+              role: profileData.role,
+            });
+            console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
+            await new Promise(resolve => setTimeout(resolve, 300));
+            navigate(targetRoute, { replace: true });
           } else {
             // Fallback: rediriger vers home, useRoleRedirect prendra le relais
             console.log('⚠️ [Auth Login] Pas de profil trouvé, redirection vers /home');
@@ -1287,10 +1234,8 @@ export default function Auth() {
     setSuccess(null);
 
     try {
-      // Validation du nouveau mot de passe
-      if (newPassword.length < 6) {
-        throw new Error("Le mot de passe doit faire au moins 6 caractères");
-      }
+      // Validation du nouveau mot de passe (mêmes règles que l'inscription)
+      passwordSchema.parse(newPassword);
 
       if (newPassword !== confirmNewPassword) {
         throw new Error("Les mots de passe ne correspondent pas");
