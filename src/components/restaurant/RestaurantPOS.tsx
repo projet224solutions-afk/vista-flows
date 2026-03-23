@@ -127,7 +127,9 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
 
     setSubmitting(true);
     try {
-      // Create order in restaurant_orders table
+      // Pour le paiement carte, créer la commande en statut 'pending' d'abord
+      const isPendingPayment = paymentMethod === 'card';
+      
       const orderData = {
         professional_service_id: serviceId,
         order_type: orderType,
@@ -136,7 +138,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
         table_number: orderType === 'sur_place' ? (tableNumber || null) : null,
         total_amount: subtotal,
         payment_method: paymentMethod,
-        payment_status: paymentMethod === 'cash' ? 'pending' : 'paid',
+        payment_status: paymentMethod === 'cash' ? 'pending' : (isPendingPayment ? 'pending' : 'paid'),
         notes: orderNotes || null,
         items: cart.map(c => ({
           menu_item_id: c.menuItemId,
@@ -156,6 +158,15 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
 
       if (error) throw error;
 
+      // Si paiement par carte, ouvrir le modal Stripe
+      if (isPendingPayment) {
+        setPendingCardOrder({ orderId: data.id, amount: subtotal });
+        setShowStripeModal(true);
+        setIsCheckoutOpen(false);
+        setSubmitting(false);
+        return;
+      }
+
       setLastOrder({ ...orderData, id: data.id, created_at: data.created_at });
       setIsCheckoutOpen(false);
       setIsReceiptOpen(true);
@@ -173,6 +184,49 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleStripeSuccess = async (paymentIntentId: string) => {
+    if (!pendingCardOrder) return;
+
+    try {
+      // Marquer la commande comme payée
+      await supabase
+        .from('restaurant_orders')
+        .update({ payment_status: 'paid' })
+        .eq('id', pendingCardOrder.orderId);
+
+      const { data: order } = await supabase
+        .from('restaurant_orders')
+        .select('*')
+        .eq('id', pendingCardOrder.orderId)
+        .single();
+
+      if (order) {
+        setLastOrder(order);
+      }
+
+      setShowStripeModal(false);
+      setPendingCardOrder(null);
+      setIsReceiptOpen(true);
+
+      // Reset
+      setCart([]);
+      setCustomerName('');
+      setTableNumber('');
+      setOrderNotes('');
+
+      toast.success('Paiement par carte réussi !');
+    } catch (err) {
+      console.error('Error updating order after payment:', err);
+      toast.error('Paiement reçu mais erreur de mise à jour');
+    }
+  };
+
+  const handleStripeError = (error: string) => {
+    console.error('Stripe payment error:', error);
+    toast.error(`Erreur de paiement: ${error}`);
+    setShowStripeModal(false);
   };
 
   if (loading) {
