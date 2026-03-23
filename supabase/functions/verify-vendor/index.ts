@@ -109,22 +109,22 @@ serve(async (req) => {
       );
     }
 
-    // ✅ CRITICAL: Verify KYC is VERIFIED before certification
+    // ✅ KYC check: Log warning but allow PDG to certify regardless
     if (action === 'CERTIFY') {
       let kycVerified = false;
-      let kycStatus = null;
+      let kycStatus = 'unknown';
 
       // Try vendor_kyc table first
       try {
-        const { data: kycData, error: kycError } = await supabase
+        const { data: kycData } = await supabase
           .from('vendor_kyc')
           .select('status, verified_at')
           .eq('vendor_id', vendor_id)
           .single();
 
-        if (kycData && kycData.status === 'verified') {
-          kycVerified = true;
+        if (kycData) {
           kycStatus = kycData.status;
+          kycVerified = kycData.status === 'verified';
         }
       } catch (error) {
         console.log('vendor_kyc table not found, trying vendors.kyc_status');
@@ -139,29 +139,20 @@ serve(async (req) => {
             .eq('user_id', vendor_id)
             .single();
 
-          if (vendorData && vendorData.kyc_status === 'verified') {
-            kycVerified = true;
-            kycStatus = vendorData.kyc_status;
+          if (vendorData) {
+            kycStatus = vendorData.kyc_status || 'unknown';
+            kycVerified = vendorData.kyc_status === 'verified';
           }
         } catch (error) {
           console.log('vendors.kyc_status check failed');
         }
       }
 
-      // Reject certification if KYC not verified
       if (!kycVerified) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'KYC non vérifié',
-            message: 'Le vendeur doit avoir un KYC validé (status=verified) avant de pouvoir être certifié.',
-            kyc_status: kycStatus || 'unknown',
-            action_required: 'Valider le KYC du vendeur avant certification'
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        console.warn(`⚠️ KYC not verified for vendor ${vendor_id} (status: ${kycStatus}), but PDG is forcing certification`);
+      } else {
+        console.log(`✅ KYC verified for vendor ${vendor_id}`);
       }
-
-      console.log(`✅ KYC verified for vendor ${vendor_id}, proceeding with certification`);
     }
 
     // Determine new status based on action
