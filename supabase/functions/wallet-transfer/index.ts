@@ -109,7 +109,9 @@ async function logFinancialAudit(supabase: any, userId: string, action: string, 
 }
 
 // =============================================
-// 🌍 FX RATE - Lecture interne depuis currency_exchange_rates
+// 🌍 FX RATE — Lecture interne depuis currency_exchange_rates
+// Aucun appel API externe. Les taux sont collectés par african-fx-collect
+// (banques centrales + fallback documenté) et incluent déjà la marge de 3%.
 // =============================================
 
 // Supabase admin client for FX lookups (created lazily)

@@ -5,14 +5,18 @@ import { corsHeaders } from "../_shared/cors.ts";
 /**
  * 🌍 African FX Query API
  *
+ * Lit les taux depuis la table currency_exchange_rates
+ * (alimentée par african-fx-collect via banques centrales + fallback documenté).
+ * Aucun appel API externe lors de la consultation.
+ *
  * GET /african-fx-query?currency=GNF
- *   → Returns current rates + margin for a specific currency
+ *   → Taux actuels + marge pour une devise
  *
  * GET /african-fx-query?currency=GNF&history=true
- *   → Returns collection history (admin only, requires auth)
+ *   → Historique de collecte
  *
  * POST /african-fx-query  { action: "update_margin", margin: 0.05 }
- *   → Updates default margin (admin only)
+ *   → Met à jour la marge par défaut
  */
 
 serve(async (req) => {
