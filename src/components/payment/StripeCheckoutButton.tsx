@@ -92,8 +92,10 @@ function CheckoutForm({
         setErrorMessage(msg);
         onError?.(msg);
         toast.error(msg);
-      } else if (paymentIntent?.status === 'succeeded') {
-        toast.success('Paiement réussi !');
+      } else if (paymentIntent?.status === 'succeeded' || paymentIntent?.status === 'requires_capture') {
+        // requires_capture = escrow (capture manuelle), succeeded = capture immédiate
+        const isEscrow = paymentIntent.status === 'requires_capture';
+        toast.success(isEscrow ? 'Fonds sécurisés en escrow !' : 'Paiement réussi !');
         if (creditWallet) {
           window.dispatchEvent(new Event('wallet-updated'));
         }
