@@ -160,6 +160,8 @@ export default function StripeCheckoutButton({
   currency = 'USD',
   description = 'Paiement 224Solutions',
   orderId,
+  sellerId,
+  edgeFunction,
   onSuccess,
   onCancel,
   onError,
