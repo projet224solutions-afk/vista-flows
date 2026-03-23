@@ -1,7 +1,7 @@
 /**
  * 💳 SÉLECTEUR DE PAIEMENT - MULTI-PROVIDERS
- * PayPal pour les cartes bancaires et solde PayPal, ChapChapPay pour Mobile Money (Orange, MTN, PayCard)
- * Méthodes: PayPal (Carte + Solde), Orange Money, MTN MoMo, PayCard (ChapChapPay)
+ * Stripe pour les cartes bancaires, ChapChapPay pour Mobile Money (Orange, MTN, PayCard)
+ * Méthodes: Carte Bancaire (Stripe), Orange Money, MTN MoMo, PayCard (ChapChapPay)
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -28,7 +28,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import PayPalCheckoutButton from '@/components/payment/PayPalCheckoutButton';
+import StripeCheckoutButton from '@/components/payment/StripeCheckoutButton';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { formatCurrency } from '@/lib/formatters';
 
@@ -49,7 +49,7 @@ interface JomyPaymentSelectorProps {
   sellerId?: string;
 }
 
-type PaymentMethodId = 'PAYPAL' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD';
+type PaymentMethodId = 'CARD' | 'WALLET' | 'CASH_ON_DELIVERY' | 'CCP_ORANGE' | 'CCP_MTN' | 'CCP_PAYCARD';
 
 interface PaymentMethodOption {
   id: PaymentMethodId;
@@ -60,7 +60,7 @@ interface PaymentMethodOption {
   requiresPhone: boolean;
   phonePrefix?: string;
   phonePlaceholder?: string;
-  provider?: 'chapchappay' | 'wallet' | 'paypal';
+  provider?: 'chapchappay' | 'wallet' | 'stripe';
 }
 
 export function JomyPaymentSelector({
@@ -94,13 +94,13 @@ export function JomyPaymentSelector({
     return convert(amount, displayCurrency);
   }, [amount, displayCurrency, userCurrency, convert]);
   
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'PAYPAL');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'CARD');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
-  const [showPaypalInline, setShowPaypalInline] = useState(false);
+  const [showStripeInline, setShowStripeInline] = useState(false);
 
   // État pour adresse de livraison (COD)
   const [deliveryAddress, setDeliveryAddress] = useState({
@@ -145,13 +145,13 @@ export function JomyPaymentSelector({
       provider: 'wallet' as const
     }] : []),
     {
-      id: 'PAYPAL' as const,
+      id: 'CARD' as const,
       name: 'Carte Bancaire',
-      description: 'Paiement sécurisé par carte VISA / Mastercard via PayPal',
+      description: 'Paiement sécurisé par carte VISA / Mastercard via Stripe',
       icon: <CreditCard className="h-5 w-5 text-blue-600" />,
       iconBg: 'bg-blue-100',
       requiresPhone: false,
-      provider: 'paypal' as const
+      provider: 'stripe' as const
     },
     // ChapChapPay - Orange Money (prioritaire)
     {
@@ -234,10 +234,10 @@ export function JomyPaymentSelector({
       return;
     }
 
-    // Paiement par PayPal (carte ou solde PayPal)
-    if (selectedMethod === 'PAYPAL') {
-      console.log('🔵 [JomyPaymentSelector] Showing PayPal inline');
-      setShowPaypalInline(true);
+    // Paiement par Carte Bancaire (Stripe)
+    if (selectedMethod === 'CARD') {
+      console.log('🔵 [JomyPaymentSelector] Showing Stripe inline');
+      setShowStripeInline(true);
       return;
     }
 
@@ -362,16 +362,16 @@ export function JomyPaymentSelector({
     setProcessing(false);
   };
 
-  const handlePayPalSuccess = (captureData: { paypalOrderId: string; captureId: string; amount: number; currency: string }) => {
-    console.log('✅ [JomyPaymentSelector] PayPal payment success:', captureData);
-    setShowPaypalInline(false);
+  const handleStripeSuccess = (data: { paymentIntentId: string; amount: number; currency: string }) => {
+    console.log('✅ [JomyPaymentSelector] Stripe payment success:', data);
+    setShowStripeInline(false);
     setPaymentStatus('success');
-    onPaymentSuccess(captureData.captureId || captureData.paypalOrderId, 'SUCCESS');
+    onPaymentSuccess(data.paymentIntentId, 'SUCCESS');
   };
 
-  const handlePayPalError = (errorMsg: string) => {
-    console.error('❌ [JomyPaymentSelector] PayPal payment error:', errorMsg);
-    setShowPaypalInline(false);
+  const handleStripeError = (errorMsg: string) => {
+    console.error('❌ [JomyPaymentSelector] Stripe payment error:', errorMsg);
+    setShowStripeInline(false);
     setPaymentStatus('failed');
     onPaymentFailed?.(errorMsg);
   };
@@ -557,26 +557,25 @@ export function JomyPaymentSelector({
             </Alert>
           )}
 
-          {/* PayPal inline — formulaire carte affiché directement */}
-          {showPaypalInline && selectedMethod === 'PAYPAL' ? (
+          {/* Stripe inline — formulaire carte affiché directement */}
+          {showStripeInline && selectedMethod === 'CARD' ? (
             <div className="pt-4 space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="h-5 w-5 text-primary" />
                 <span className="font-semibold text-sm">Saisissez vos informations de carte</span>
               </div>
-              <PayPalCheckoutButton
+              <StripeCheckoutButton
                 amount={amount}
                 currency={displayCurrency === 'GNF' ? 'USD' : displayCurrency}
                 description={description || 'Paiement 224Solutions'}
                 orderId={orderId}
-                onSuccess={handlePayPalSuccess}
-                onCancel={() => setShowPaypalInline(false)}
-                onError={handlePayPalError}
-                cardOnly
+                onSuccess={handleStripeSuccess}
+                onCancel={() => setShowStripeInline(false)}
+                onError={handleStripeError}
               />
               <Button
                 variant="outline"
-                onClick={() => setShowPaypalInline(false)}
+                onClick={() => setShowStripeInline(false)}
                 className="w-full"
               >
                 Retour

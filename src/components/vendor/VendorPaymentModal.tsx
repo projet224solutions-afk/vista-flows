@@ -1,7 +1,7 @@
 /**
  * MODAL PAIEMENT VENDEUR - 224SOLUTIONS
- * Support de 5 méthodes: wallet, cash, mobile_money, card, paypal
- * PayPal utilise les Smart Buttons (SDK) pour paiement sécurisé
+ * Support de 5 méthodes: wallet, cash, mobile_money, card, stripe
+ * Stripe utilise Elements pour paiement carte sécurisé
  */
 
 import { useState, lazy, Suspense } from 'react';
@@ -17,7 +17,7 @@ import { Wallet, Banknote, Smartphone, CreditCard, DollarSign, Loader2 } from 'l
 import { VendorPaymentService } from '@/services/vendor/VendorPaymentService';
 import { toast } from 'sonner';
 
-const PayPalCheckoutButton = lazy(() => import('@/components/payment/PayPalCheckoutButton'));
+const StripeCheckoutButton = lazy(() => import('@/components/payment/StripeCheckoutButton'));
 
 interface VendorPaymentModalProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ interface VendorPaymentModalProps {
   onPaymentSuccess?: () => void;
 }
 
-type PaymentMethodType = 'wallet' | 'cash' | 'mobile_money' | 'card' | 'paypal';
+type PaymentMethodType = 'wallet' | 'cash' | 'mobile_money' | 'card' | 'stripe';
 
 export const VendorPaymentModal = ({
   isOpen,
@@ -49,7 +49,7 @@ export const VendorPaymentModal = ({
   const [cardToken, setCardToken] = useState('');
 
   const handlePayment = async () => {
-    if (selectedMethod === 'paypal') return; // PayPal handled by SDK buttons
+    if (selectedMethod === 'stripe') return; // Stripe handled by Elements
     setIsProcessing(true);
 
     try {
@@ -97,14 +97,13 @@ export const VendorPaymentModal = ({
     }
   };
 
-  const handlePayPalSuccess = async (captureData: any) => {
-    // Mark order as paid after PayPal capture
+  const handleStripeSuccess = async (data: { paymentIntentId: string; amount: number; currency: string }) => {
     try {
-      await VendorPaymentService.payWithPayPal(orderId, amount, customerId, captureData.paypalOrderId);
+      await VendorPaymentService.payWithCard(orderId, amount, customerId, data.paymentIntentId);
       onPaymentSuccess?.();
       onClose();
     } catch (error: any) {
-      console.error('[VendorPaymentModal] PayPal post-capture error:', error);
+      console.error('[VendorPaymentModal] Stripe post-payment error:', error);
     }
   };
 
@@ -166,10 +165,10 @@ export const VendorPaymentModal = ({
               </div>
 
               <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted cursor-pointer">
-                <RadioGroupItem value="paypal" id="paypal" />
-                <Label htmlFor="paypal" className="flex items-center gap-2 cursor-pointer flex-1">
-                  <DollarSign className="h-4 w-4" />
-                  PayPal / Carte via PayPal
+                <RadioGroupItem value="stripe" id="stripe" />
+                <Label htmlFor="stripe" className="flex items-center gap-2 cursor-pointer flex-1">
+                  <CreditCard className="h-4 w-4" />
+                  Carte bancaire (Stripe)
                 </Label>
               </div>
             </RadioGroup>
@@ -222,19 +221,19 @@ export const VendorPaymentModal = ({
             </div>
           )}
 
-          {selectedMethod === 'paypal' && (
+          {selectedMethod === 'stripe' && (
             <Suspense fallback={
               <div className="flex items-center justify-center p-4 gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm">Chargement PayPal...</span>
+                <span className="text-sm">Chargement Stripe...</span>
               </div>
             }>
-              <PayPalCheckoutButton
+              <StripeCheckoutButton
                 amount={amount}
                 currency="USD"
                 description={`Commande ${orderId}`}
                 orderId={orderId}
-                onSuccess={handlePayPalSuccess}
+                onSuccess={handleStripeSuccess}
                 onCancel={() => toast.info('Paiement annulé')}
               />
             </Suspense>
@@ -256,8 +255,8 @@ export const VendorPaymentModal = ({
             </Alert>
           )}
 
-          {/* Actions — masqué pour PayPal (géré par les boutons SDK) */}
-          {selectedMethod !== 'paypal' && (
+          {/* Actions — masqué pour Stripe (géré par Elements) */}
+          {selectedMethod !== 'stripe' && (
             <div className="flex gap-2 pt-4">
               <Button variant="outline" onClick={onClose} disabled={isProcessing} className="flex-1">
                 Annuler

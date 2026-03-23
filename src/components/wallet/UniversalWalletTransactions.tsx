@@ -34,7 +34,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Building2 } from 'lucide-react';
-import PayPalInlineDeposit from './PayPalInlineDeposit';
+import StripeInlineDeposit from './StripeWalletDeposit';
 import StripeWalletTopup from './StripeWalletTopup';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
@@ -83,7 +83,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   
   // États pour les formulaires
   const [depositAmount, setDepositAmount] = useState('');
-  const [depositMethod, setDepositMethod] = useState<'card' | 'mobile_money' | 'paypal'>('card');
+  const [depositMethod, setDepositMethod] = useState<'card' | 'mobile_money' | 'card_stripe'>('card');
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<'orange' | 'mtn'>('orange');
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -1400,7 +1400,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   Ajoutez des fonds à votre wallet
                 </DialogDescription>
               </DialogHeader>
-              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'card' | 'mobile_money' | 'paypal')}>
+              <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'card' | 'mobile_money' | 'card_stripe')}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="card" className="gap-1 text-xs">
                     <CreditCard className="w-3 h-3" />
@@ -1410,8 +1410,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                     <Smartphone className="w-3 h-3" />
                     Mobile
                   </TabsTrigger>
-                  <TabsTrigger value="paypal" className="gap-1 text-xs">
-                    PayPal
+                  <TabsTrigger value="card_stripe" className="gap-1 text-xs">
+                    Carte
                   </TabsTrigger>
                 </TabsList>
                 
@@ -1500,9 +1500,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </Button>
                 </TabsContent>
 
-                {/* Onglet PayPal */}
-                <TabsContent value="paypal" className="space-y-4 mt-4">
-                  <PayPalInlineDeposit
+                {/* Onglet Carte Bancaire (Stripe) */}
+                <TabsContent value="card_stripe" className="space-y-4 mt-4">
+                  <StripeInlineDeposit
+                    userId={effectiveUserId || ''}
+                    walletId={wallet?.id || ''}
                     onSuccess={async () => {
                       setDepositAmount('');
                       setDepositOpen(false);
