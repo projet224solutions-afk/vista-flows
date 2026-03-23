@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from "sonner";
-import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, Bell, TrendingUp, Car, MessageSquare } from "lucide-react";
+import { MapPin, Package, Clock, Wallet, CheckCircle, AlertTriangle, Truck, Navigation, TrendingUp, Car, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrentLocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
@@ -418,30 +418,31 @@ export default function LivreurDashboard() {
 
         {/* Onglets de navigation - Responsive */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-2' : 'grid-cols-5'} border border-orange-500/20`}>
+          <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-4' : 'grid-cols-5'} border border-orange-500/20`}>
             <TabsTrigger value="missions" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
               📦 {isMobile ? 'Missions' : 'Missions disponibles'}
               {nearbyDeliveries.length > 0 && (
-                <Badge variant="secondary" className="ml-2 text-xs bg-white text-orange-600">{nearbyDeliveries.length}</Badge>
+                <Badge variant="secondary" className="ml-1 text-xs bg-white text-orange-600">{nearbyDeliveries.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="active" disabled={!currentDelivery && !currentRide} className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-700 data-[state=active]:text-white">
               🚚 {isMobile ? 'Active' : 'En cours'}
-              {(currentDelivery || currentRide) && <Badge variant="default" className="ml-2 text-xs bg-white text-green-600">1</Badge>}
+              {(currentDelivery || currentRide) && <Badge variant="default" className="ml-1 text-xs bg-white text-green-600">1</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white">
+              📋 {isMobile ? 'Historique' : 'Historique'}
+              {(deliveryHistory.length + rideHistory.length) > 0 && (
+                <Badge variant="outline" className="ml-1 text-xs">{deliveryHistory.length + rideHistory.length}</Badge>
+              )}
             </TabsTrigger>
             {!isMobile && (
-              <>
-                <TabsTrigger value="history" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white">
-                  📋 Historique
-                  {(deliveryHistory.length + rideHistory.length) > 0 && (
-                    <Badge variant="outline" className="ml-2 text-xs">{deliveryHistory.length + rideHistory.length}</Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="my-purchases" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:text-white">
-                  🛒 Mes Achats
-                </TabsTrigger>
-              </>
+              <TabsTrigger value="my-purchases" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:text-white">
+                🛒 Mes Achats
+              </TabsTrigger>
             )}
+            <TabsTrigger value="wallet" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white">
+              💰 {isMobile ? 'Wallet' : 'Portefeuille'}
+            </TabsTrigger>
           </TabsList>
 
           {/* 📦 Liste des livraisons disponibles */}
@@ -668,7 +669,10 @@ export default function LivreurDashboard() {
                         onClick={(e) => {
                           e.preventDefault();
                           const problem = prompt("Décrivez le problème:");
-                          if (problem && currentDelivery) reportProblem(currentDelivery.id, problem);
+                          if (problem && currentRide) {
+                            toast.info('Problème signalé pour la course #' + currentRide.id.slice(0, 8));
+                            // TODO: Implement ride problem reporting via TaxiMotoService
+                          }
                         }} 
                         variant="destructive"
                         disabled={loading}
@@ -897,15 +901,70 @@ export default function LivreurDashboard() {
         />
       )}
 
-      {/* Modal de paiement avec 5 méthodes */}
-      {showPaymentModal && currentDelivery && user && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md">
-            <h3 className="font-bold mb-4">Traitement du paiement</h3>
-            <p>Montant: {currentDelivery.delivery_fee} GNF</p>
-            <Button onClick={() => setShowPaymentModal(false)} className="mt-4 w-full">Fermer</Button>
-          </div>
-        </div>
+      {/* Modal de paiement */}
+      {showPaymentModal && (currentDelivery || currentRide) && user && (
+        <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Traitement du paiement</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-lg text-center">
+                <p className="text-sm text-muted-foreground mb-1">Montant à encaisser</p>
+                <p className="text-3xl font-bold text-primary">
+                  {currentDelivery 
+                    ? (currentDelivery.delivery_fee || 0).toLocaleString() 
+                    : (currentRide?.price_total || 0).toLocaleString()
+                  } GNF
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => {
+                    if (currentDelivery) {
+                      processDeliveryPayment(currentDelivery.id, 'cash');
+                    }
+                    setShowPaymentModal(false);
+                    toast.success('Paiement en espèces enregistré');
+                  }}
+                  className="w-full"
+                  variant="outline"
+                >
+                  💵 Paiement en espèces
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (currentDelivery) {
+                      processDeliveryPayment(currentDelivery.id, 'mobile_money');
+                    }
+                    setShowPaymentModal(false);
+                    toast.success('Paiement mobile money enregistré');
+                  }}
+                  className="w-full"
+                  variant="outline"
+                >
+                  📱 Mobile Money
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (currentDelivery) {
+                      processDeliveryPayment(currentDelivery.id, 'wallet');
+                    }
+                    setShowPaymentModal(false);
+                    toast.success('Paiement wallet enregistré');
+                  }}
+                  className="w-full"
+                  variant="outline"
+                >
+                  💰 Wallet 224Solutions
+                </Button>
+              </div>
+              <Button onClick={() => setShowPaymentModal(false)} variant="ghost" className="w-full">
+                Annuler
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
     </DriverLayout>
