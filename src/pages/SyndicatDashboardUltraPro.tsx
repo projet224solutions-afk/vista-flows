@@ -591,7 +591,7 @@ export default function SyndicatDashboardUltraPro() {
                                     </Button>
 
                                     <Button
-                                        onClick={() => toast.success('Notifications configurées !')}
+                                        onClick={() => setActiveTab('sos')}
                                         variant="outline"
                                         className="w-full rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50"
                                     >
