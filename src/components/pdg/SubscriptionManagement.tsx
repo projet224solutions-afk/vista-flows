@@ -64,7 +64,9 @@ export default function SubscriptionManagement() {
   const loadAllSubscriptionsOnMount = async () => {
     try {
       setLoadingSubscriptions(true);
-      const { data, error } = await supabase
+      
+      // 1. Charger les abonnements vendeurs (table subscriptions)
+      const { data: vendorSubs, error: vendorError } = await supabase
         .from('subscriptions')
         .select(`
           id,
@@ -75,48 +77,100 @@ export default function SubscriptionManagement() {
           started_at,
           current_period_end,
           created_at,
+          price_paid_gnf,
           plans (display_name, name)
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (vendorError) throw vendorError;
 
-      const userIds = [...new Set(data?.map(sub => sub.user_id) || [])];
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, email, first_name, last_name, role')
-        .in('id', userIds);
+      // 2. Charger les abonnements services (table service_subscriptions)
+      const { data: serviceSubs, error: serviceError } = await supabase
+        .from('service_subscriptions')
+        .select(`
+          id,
+          user_id,
+          plan_id,
+          status,
+          billing_cycle,
+          started_at,
+          current_period_end,
+          created_at,
+          price_paid_gnf,
+          professional_service_id,
+          service_plans (display_name, name, service_type_id)
+        `)
+        .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (serviceError) throw serviceError;
 
-      const enrichedData = data?.map(sub => ({
+      // 3. Normaliser les deux sources
+      const normalizedVendor = (vendorSubs || []).map(sub => ({
         ...sub,
-        profiles: profiles?.find(p => p.id === sub.user_id)
+        source: 'vendor' as const,
+        plan_display: (sub.plans as any)?.display_name || (sub.plans as any)?.name || 'N/A',
       }));
 
-      const uniqueSubscriptions = enrichedData?.reduce((acc, sub) => {
-        const existingIndex = acc.findIndex(s => s.user_id === sub.user_id);
+      const normalizedService = (serviceSubs || []).map(sub => ({
+        ...sub,
+        source: 'service' as const,
+        plan_display: (sub.service_plans as any)?.display_name || (sub.service_plans as any)?.name || 'N/A',
+      }));
+
+      const allSubs = [...normalizedVendor, ...normalizedService];
+
+      // 4. Récupérer les profils
+      const userIds = [...new Set(allSubs.map(sub => sub.user_id))];
+      let profiles: any[] = [];
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, email, first_name, last_name, role')
+          .in('id', userIds);
+        profiles = profilesData || [];
+      }
+
+      // 5. Enrichir avec profils
+      const enrichedData = allSubs.map(sub => ({
+        ...sub,
+        profiles: profiles.find(p => p.id === sub.user_id),
+        acquisition_type: determineAcquisitionType(sub),
+      }));
+
+      // 6. Garder le plus récent par user
+      const uniqueSubscriptions = enrichedData.reduce((acc, sub) => {
+        const existingIndex = acc.findIndex(s => s.user_id === sub.user_id && s.source === sub.source);
         
         if (existingIndex === -1) {
           acc.push(sub);
         } else {
           const existingDate = new Date(acc[existingIndex].created_at);
           const currentDate = new Date(sub.created_at);
-          
           if (currentDate > existingDate) {
             acc[existingIndex] = sub;
           }
         }
-        
         return acc;
       }, [] as any[]);
 
-      setAllSubscriptions(uniqueSubscriptions || []);
+      setAllSubscriptions(uniqueSubscriptions);
     } catch (error) {
       console.error('Error loading subscriptions:', error);
     } finally {
       setLoadingSubscriptions(false);
     }
+  };
+
+  // Déterminer si l'abonnement est offert ou acheté
+  const determineAcquisitionType = (sub: any): 'offered' | 'purchased' | 'free' => {
+    // Billing cycle custom ou lifetime = offert par le PDG
+    if (sub.billing_cycle === 'custom' || sub.billing_cycle === 'lifetime') return 'offered';
+    // Prix payé = 0 ou plan gratuit = gratuit
+    if (sub.price_paid_gnf === 0) return 'free';
+    const planName = sub.plan_display?.toLowerCase() || sub.plans?.name?.toLowerCase() || '';
+    if (planName === 'free' || planName === 'gratuit') return 'free';
+    // Sinon = acheté
+    return 'purchased';
   };
 
   const fetchData = async () => {
