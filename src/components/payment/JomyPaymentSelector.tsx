@@ -184,16 +184,6 @@ export function JomyPaymentSelector({
       phonePlaceholder: '660 XX XX XX',
       provider: 'chapchappay' as const
     },
-    // ChapChapPay - PayCard
-    {
-      id: 'CCP_PAYCARD' as const,
-      name: 'PayCard',
-      description: 'Carte de paiement locale (ChapChapPay)',
-      icon: <CreditCard className="h-5 w-5 text-green-600" />,
-      iconBg: 'bg-green-100',
-      requiresPhone: false,
-      provider: 'chapchappay' as const
-    },
     // Paiement à la livraison - uniquement pour produits physiques
     ...(productType === 'physical' && transactionType === 'product' && onCashOnDelivery ? [{
       id: 'CASH_ON_DELIVERY' as const,
