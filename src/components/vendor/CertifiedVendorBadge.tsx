@@ -39,7 +39,7 @@ export function CertifiedVendorBadge({
         return {
           icon: CheckCircle2,
           label: 'Vendeur certifié',
-          color: 'bg-green-500 text-white border-green-600',
+          color: 'bg-[#04439e] text-white border-[#04439e]',
           iconColor: 'text-white',
           tooltipText: verifiedAt 
             ? `Vendeur certifié le ${new Date(verifiedAt).toLocaleDateString('fr-FR')}`
@@ -159,7 +159,7 @@ export function CertifiedIcon({
 
   return (
     <CheckCircle2 
-      className={cn("text-green-500", className)} 
+      className={cn("text-[#04439e]", className)} 
       aria-label="Vendeur certifié"
     />
   );
@@ -189,11 +189,11 @@ export function CertificationShield({
       className
     )}>
       <Shield className={cn(
-        "text-green-500 fill-green-50",
+        "text-[#04439e] fill-blue-50",
         sizeClass
       )} />
       <CheckCircle2 className={cn(
-        "absolute text-green-600",
+        "absolute text-[#04439e]",
         size === 'sm' ? 'w-4 h-4' : size === 'md' ? 'w-6 h-6' : 'w-8 h-8'
       )} />
     </div>
