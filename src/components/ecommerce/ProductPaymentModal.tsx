@@ -638,17 +638,17 @@ export default function ProductPaymentModal({
           <DialogDescription asChild>
             <div className="space-y-3 mt-2">
               <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-sm items-start">
                   <span>Sous-total produits:</span>
-                  <span>{fc(totalAmount, cur)}</span>
+                  {renderPrice(totalAmount)}
                 </div>
                 {commissionFee > 0 && (
-                  <div className="flex justify-between text-sm text-muted-foreground">
+                  <div className="flex justify-between text-sm text-muted-foreground items-start">
                     <span className="flex items-center gap-1">
                       <Info className="w-3 h-3" />
                       Frais de service ({commissionConfig?.commission_value || 1.5}%):
                     </span>
-                    <span>+{fc(commissionFee, cur)}</span>
+                    <span>+{priceText(commissionFee)}</span>
                   </div>
                 )}
                 {loadingCommission && (
@@ -656,9 +656,9 @@ export default function ProductPaymentModal({
                     <Loader2 className="w-3 h-3 animate-spin" /> Calcul des frais...
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                <div className="flex justify-between font-bold text-lg border-t pt-2 items-start">
                   <span>Total à payer:</span>
-                  <span className="text-primary">{fc(grandTotal, cur)}</span>
+                  {renderPrice(grandTotal, 'text-primary')}
                 </div>
               </div>
 
