@@ -159,7 +159,7 @@ export function CertifiedIcon({
 
   return (
     <CheckCircle2 
-      className={cn("text-green-500", className)} 
+      className={cn("text-[#04439e]", className)} 
       aria-label="Vendeur certifié"
     />
   );
