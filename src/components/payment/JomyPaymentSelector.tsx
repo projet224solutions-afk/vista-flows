@@ -100,7 +100,7 @@ export function JomyPaymentSelector({
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
-  const [showPaypalInline, setShowPaypalInline] = useState(false);
+  const [showStripeInline, setShowStripeInline] = useState(false);
 
   // État pour adresse de livraison (COD)
   const [deliveryAddress, setDeliveryAddress] = useState({
