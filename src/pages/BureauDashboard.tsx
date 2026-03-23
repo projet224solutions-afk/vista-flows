@@ -96,10 +96,10 @@ export default function BureauDashboard() {
       setBureau(bureauData);
 
       const workersRes = await (supabase as any).from('syndicate_workers').select('*').eq('bureau_id', bureauData.id).eq('is_staff', true);
-      const membersRes = await supabase.from('syndicate_workers').select('*').eq('bureau_id', bureauData.id).eq('is_staff', false);
-      const motosRes = await supabase.from('vehicles').select('*').eq('bureau_id', bureauData.id);
-      const alertsRes = await supabase.from('syndicate_alerts').select('*').eq('bureau_id', bureauData.id).order('created_at', { ascending: false });
-      const walletRes = await supabase.from('bureau_wallets').select('balance').eq('bureau_id', bureauData.id).single();
+      const membersRes = await (supabase as any).from('syndicate_workers').select('*').eq('bureau_id', bureauData.id).eq('is_staff', false);
+      const motosRes = await (supabase as any).from('vehicles').select('*').eq('bureau_id', bureauData.id);
+      const alertsRes = await (supabase as any).from('syndicate_alerts').select('*').eq('bureau_id', bureauData.id).order('created_at', { ascending: false });
+      const walletRes = await (supabase as any).from('bureau_wallets').select('balance').eq('bureau_id', bureauData.id).single();
 
       setWorkers(workersRes.data || []);
       setMembers(membersRes.data || []);
