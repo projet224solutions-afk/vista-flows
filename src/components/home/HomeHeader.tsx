@@ -1,15 +1,16 @@
 /**
  * HOME HEADER - Ultra Professional Design
  * 224Solutions - Marketplace Header Component
- * Glassmorphism + Premium animations
+ * Uses NotificationBellButton for unified notification logic
  */
 
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ShoppingCart, Bell, Loader2, RefreshCw, Download } from 'lucide-react';
+import { MapPin, ShoppingCart, Loader2, RefreshCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import LanguageSelector from '@/components/LanguageSelector';
+import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
@@ -17,17 +18,13 @@ import { cn } from '@/lib/utils';
 
 interface HomeHeaderProps {
   cartCount?: number;
-  notificationCount?: number;
   onCartClick?: () => void;
-  onNotificationClick?: () => void;
   className?: string;
 }
 
 export function HomeHeader({
   cartCount = 0,
-  notificationCount = 0,
   onCartClick,
-  onNotificationClick,
   className,
 }: HomeHeaderProps) {
   const navigate = useNavigate();
@@ -123,30 +120,15 @@ export function HomeHeader({
               )}
             </Button>
 
-            {/* Notification Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onNotificationClick || (() => navigate('/notifications'))}
-              className="relative h-10 w-10 rounded-full hover:bg-primary/10 transition-colors"
-            >
-              <Bell className="w-5 h-5 text-foreground" />
-              {notificationCount > 0 && (
-                <Badge 
-                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-2 border-card"
-                >
-                  {notificationCount > 99 ? '99+' : notificationCount}
-                </Badge>
-              )}
-            </Button>
+            {/* Unified Notification Bell - uses communication_notifications + realtime */}
+            <NotificationBellButton />
           </div>
         </div>
       </div>
 
-      {/* Professional Ticker Banner - Below MarketPlace */}
+      {/* Professional Ticker Banner */}
       <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-t border-primary/20 overflow-hidden relative">
         <div className="flex animate-ticker py-2">
-          {/* First set of phrases */}
           <span className="ticker-item text-base md:text-lg font-semibold text-primary whitespace-nowrap px-8">
             🎉 Bienvenue sur 224SOLUTIONS
           </span>
