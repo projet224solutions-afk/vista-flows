@@ -2308,9 +2308,9 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive optimisé mobile */}
-        <div className={`w-full md:w-80 lg:w-[380px] flex-shrink-0 flex flex-col min-w-0 max-w-full md:min-h-0 md:max-h-full ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
-          {/* Panier - Design ultra compact mobile */}
-          <Card className="shadow-xl border-0 bg-card overflow-hidden flex flex-col max-w-full md:flex-1 md:max-h-full">
+        <div className={`w-full md:w-80 lg:w-[380px] flex-shrink-0 flex flex-col min-w-0 max-w-full ${isMobile ? 'flex-1 min-h-0' : 'md:min-h-0 md:max-h-full'} ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
+          {/* Panier - Design optimisé mobile */}
+          <Card className="shadow-xl border-0 bg-card overflow-hidden flex flex-col max-w-full flex-1">
             {/* En-tête compact */}
             <div className="p-1.5 sm:p-2 bg-gradient-to-r from-primary/15 via-primary/10 to-primary/5 border-b border-primary/20 flex-shrink-0">
               <div className="flex items-center justify-between gap-2">
