@@ -429,64 +429,13 @@ export default function Auth() {
           }
           
           if (effectiveRole) {
-            // ✅ FIX: Pour les vendor_agents, chercher leur access_token et rediriger
-            if (effectiveRole === 'vendor_agent') {
-              const { data: vendorAgent } = await supabase
-                .from('vendor_agents')
-                .select('access_token')
-                .eq('user_id', session.user.id)
-                .eq('is_active', true)
-                .maybeSingle();
-              
-              if (vendorAgent?.access_token) {
-                console.log('🚀 [Auth] Redirection agent vendeur vers /vendor-agent/');
-                localStorage.removeItem('oauth_intent_role');
-                localStorage.removeItem('oauth_is_new_signup');
-                navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
-                setIsAuthenticating(false);
-                return;
-              }
-            }
-            
-            // ✅ Redirection intelligente selon le type de vendeur/prestataire
             const oauthShopType = localStorage.getItem('oauth_vendor_shop_type');
-            const oauthServiceType = localStorage.getItem('oauth_service_type');
-            let targetRoute = getDashboardRoute(effectiveRole);
+            const targetRoute = await resolvePostAuthRoute({
+              userId: session.user.id,
+              role: effectiveRole,
+              vendorShopType: oauthShopType,
+            });
             
-            if (effectiveRole === 'vendeur') {
-              if (oauthShopType === 'digital') {
-                targetRoute = '/vendeur-digital';
-              }
-            }
-            
-            // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
-            if (effectiveRole === 'prestataire') {
-              let proServiceId: string | null = null;
-              for (let attempt = 0; attempt < 8; attempt++) {
-                try {
-                  const { data: proService } = await supabase
-                    .from('professional_services')
-                    .select('id')
-                    .eq('user_id', session.user.id)
-                    .limit(1)
-                    .maybeSingle();
-                  if (proService) {
-                    proServiceId = proService.id;
-                    break;
-                  }
-                } catch (e) {
-                  console.warn('⚠️ Erreur récupération service:', e);
-                }
-                await new Promise(resolve => setTimeout(resolve, 800));
-              }
-              if (proServiceId) {
-                targetRoute = `/dashboard/service/${proServiceId}`;
-              } else {
-                console.warn('⚠️ Professional service non trouvé après attente, redirection par défaut');
-              }
-            }
-            localStorage.removeItem('oauth_vendor_shop_type');
-            localStorage.removeItem('oauth_service_type');
             console.log(`🚀 [Auth] Redirection vers ${targetRoute} (rôle effectif: ${effectiveRole}, DB: ${profile?.role})`);
             
             toast({
@@ -494,10 +443,7 @@ export default function Auth() {
               description: `Bienvenue ! Redirection vers votre espace ${effectiveRole}...`,
             });
             
-            // Nettoyer les flags OAuth
-            localStorage.removeItem('oauth_intent_role');
-            localStorage.removeItem('oauth_is_new_signup');
-            
+            cleanupOAuthFlags();
             navigate(targetRoute, { replace: true });
           } else {
             console.log('⚠️ [Auth] Pas de rôle trouvé, reste sur /auth');
