@@ -728,6 +728,7 @@ export default function Auth() {
 
   // Phone validation rules and helpers are now imported from @/utils/phoneData
 
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [phoneCode, setPhoneCode] = useState('+224');
   const [phoneCodeOpen, setPhoneCodeOpen] = useState(false);
 
