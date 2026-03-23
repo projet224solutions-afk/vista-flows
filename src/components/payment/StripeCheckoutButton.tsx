@@ -32,6 +32,10 @@ interface StripeCheckoutButtonProps {
   currency?: string;
   description?: string;
   orderId?: string;
+  /** If provided, uses stripe-pos-payment with commission logic */
+  sellerId?: string;
+  /** Custom edge function name override */
+  edgeFunction?: string;
   onSuccess: (data: {
     paymentIntentId: string;
     amount: number;
