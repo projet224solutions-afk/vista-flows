@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ShoppingBag, Heart, Package, Search, CreditCard, MessageSquare,
   LogOut, Home, Grid3X3, ShoppingCart, TrendingUp, Star, Eye,
-  Plus, Truck, Bot, User, Settings, Bell
+  Plus, Truck, Bot, User, Settings
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -77,8 +77,6 @@ export default function ClientDashboard() {
     loadAllData
   } = useClientData();
 
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [communicationRefresh, setCommunicationRefresh] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
@@ -199,8 +197,7 @@ export default function ClientDashboard() {
       if (error) throw error;
 
       toast.success('Message envoyé au vendeur!');
-      setActiveTab('communication');
-      setCommunicationRefresh(prev => prev + 1);
+      navigate('/messages');
     } catch (error) {
       console.error('Erreur contact vendeur:', error);
       toast.error('Impossible de contacter le vendeur');
@@ -288,7 +285,7 @@ export default function ClientDashboard() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setActiveTab('profile')}
+                  onClick={() => setActiveTab('settings')}
                 >
                   <User className="w-5 h-5" />
                 </Button>
@@ -467,7 +464,7 @@ export default function ClientDashboard() {
                     <CardTitle>Produits populaires</CardTitle>
                     <CardDescription>Découvrez nos meilleures ventes</CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setActiveTab('products')}>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/marketplace')}>
                     Voir tout
                   </Button>
                 </div>
@@ -521,7 +518,7 @@ export default function ClientDashboard() {
                     <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Votre panier est vide</h3>
                     <p className="text-muted-foreground mb-6">Ajoutez des produits pour commencer vos achats</p>
-                    <Button onClick={() => setActiveTab('products')} className="bg-client-primary hover:bg-client-primary/90">
+                    <Button onClick={() => navigate('/marketplace')} className="bg-client-primary hover:bg-client-primary/90">
                       Parcourir les produits
                     </Button>
                   </div>

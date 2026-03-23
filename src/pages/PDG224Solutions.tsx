@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { resendEmailService } from '@/services/resendEmailService';
-import { Shield, LogOut, Lock, Brain, Bell, Mail, UserCog, Activity } from 'lucide-react';
+import { Shield, LogOut, Lock, Brain, Mail, UserCog, Activity } from 'lucide-react';
+import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -404,10 +405,7 @@ export default function PDG224Solutions() {
                     IA
                   </Badge>
                 )}
-                <Button variant="ghost" size="icon" className="relative flex-shrink-0 h-8 w-8" onClick={() => navigate('/notifications')}>
-                  <Bell className="w-4 h-4" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                </Button>
+                <NotificationBellButton className="h-8 w-8" iconSize="w-4 h-4" />
                 <Button
                   variant="outline"
                   size="sm"
