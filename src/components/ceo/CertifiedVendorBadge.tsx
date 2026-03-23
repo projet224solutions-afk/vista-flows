@@ -24,7 +24,7 @@ const statusConfig: Record<VendorCertificationStatus, {
   CERTIFIE: {
     icon: CheckCircle2,
     variant: 'default',
-    className: 'bg-green-500 hover:bg-green-600 text-white'
+    className: 'bg-[#04439e] hover:bg-[#033580] text-white'
   },
   NON_CERTIFIE: {
     icon: Clock,
