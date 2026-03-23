@@ -25,8 +25,10 @@ import {
   Store, Calendar, AlertCircle, CheckCircle, XCircle, Clock,
   UtensilsCrossed, Home, Wrench, Car, Dumbbell, Scissors, Laptop,
   BookOpen, Truck, Camera, Leaf, Heart, Hammer, Sparkles, Filter,
-  Shield, LayoutGrid, Eye, Ban, CreditCard, Settings2
+  Shield, LayoutGrid, Eye, Ban, CreditCard, Settings2, ClipboardCheck, UserCheck
 } from 'lucide-react';
+import { PDGServiceProvidersList } from './services/PDGServiceProvidersList';
+import { PDGServiceValidation } from './services/PDGServiceValidation';
 import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
