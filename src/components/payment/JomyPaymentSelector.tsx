@@ -450,7 +450,7 @@ export function JomyPaymentSelector({
           {/* Méthodes de paiement */}
           <RadioGroup
             value={selectedMethod}
-            onValueChange={(value) => setSelectedMethod(value as PaymentMethodId)}
+            onValueChange={handleMethodChange}
             className="space-y-2"
             disabled={processing}
           >
