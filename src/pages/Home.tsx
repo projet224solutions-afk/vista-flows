@@ -13,6 +13,7 @@ import { useRoleRedirect } from '@/hooks/useRoleRedirect';
 import { useCart } from '@/contexts/CartContext';
 import { useUniversalProducts } from '@/hooks/useUniversalProducts';
 import { useNearbyServiceStats } from '@/hooks/useNearbyServiceStats';
+import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 import { RecommendationsWidget } from '@/components/recommendations/RecommendationsWidget';
 
