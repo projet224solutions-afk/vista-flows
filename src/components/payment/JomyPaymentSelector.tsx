@@ -94,7 +94,7 @@ export function JomyPaymentSelector({
     return convert(amount, displayCurrency);
   }, [amount, displayCurrency, userCurrency, convert]);
   
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'PAYPAL');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>(recipientId ? 'WALLET' : 'CARD');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'polling' | 'success' | 'failed'>('idle');
