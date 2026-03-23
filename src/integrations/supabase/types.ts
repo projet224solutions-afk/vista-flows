@@ -8362,6 +8362,69 @@ export type Database = {
           },
         ]
       }
+      escrow_disputes: {
+        Row: {
+          created_at: string | null
+          escrow_id: string
+          evidence_urls: string[] | null
+          id: string
+          initiator_role: string
+          initiator_user_id: string
+          metadata: Json | null
+          reason: string
+          resolution: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          escrow_id: string
+          evidence_urls?: string[] | null
+          id?: string
+          initiator_role: string
+          initiator_user_id: string
+          metadata?: Json | null
+          reason: string
+          resolution?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          escrow_id?: string
+          evidence_urls?: string[] | null
+          id?: string
+          initiator_role?: string
+          initiator_user_id?: string
+          metadata?: Json | null
+          reason?: string
+          resolution?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_disputes_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_disputes_escrow_id_fkey"
+            columns: ["escrow_id"]
+            isOneToOne: false
+            referencedRelation: "escrow_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       escrow_logs: {
         Row: {
           action: string
@@ -8412,6 +8475,7 @@ export type Database = {
           admin_action: string | null
           admin_id: string | null
           amount: number
+          auto_release_date: string | null
           auto_release_enabled: boolean | null
           available_to_release_at: string | null
           buyer_id: string | null
@@ -8420,6 +8484,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           dispute_reason: string | null
+          dispute_status: string | null
           id: string
           metadata: Json | null
           notes: string | null
@@ -8429,6 +8494,7 @@ export type Database = {
           refunded_at: string | null
           released_at: string | null
           released_by: string | null
+          seller_confirmed_at: string | null
           seller_id: string | null
           status: string | null
           stripe_charge_id: string | null
@@ -8441,6 +8507,7 @@ export type Database = {
           admin_action?: string | null
           admin_id?: string | null
           amount: number
+          auto_release_date?: string | null
           auto_release_enabled?: boolean | null
           available_to_release_at?: string | null
           buyer_id?: string | null
@@ -8449,6 +8516,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           dispute_reason?: string | null
+          dispute_status?: string | null
           id?: string
           metadata?: Json | null
           notes?: string | null
@@ -8458,6 +8526,7 @@ export type Database = {
           refunded_at?: string | null
           released_at?: string | null
           released_by?: string | null
+          seller_confirmed_at?: string | null
           seller_id?: string | null
           status?: string | null
           stripe_charge_id?: string | null
@@ -8470,6 +8539,7 @@ export type Database = {
           admin_action?: string | null
           admin_id?: string | null
           amount?: number
+          auto_release_date?: string | null
           auto_release_enabled?: boolean | null
           available_to_release_at?: string | null
           buyer_id?: string | null
@@ -8478,6 +8548,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           dispute_reason?: string | null
+          dispute_status?: string | null
           id?: string
           metadata?: Json | null
           notes?: string | null
@@ -8487,6 +8558,7 @@ export type Database = {
           refunded_at?: string | null
           released_at?: string | null
           released_by?: string | null
+          seller_confirmed_at?: string | null
           seller_id?: string | null
           status?: string | null
           stripe_charge_id?: string | null
@@ -12794,6 +12866,7 @@ export type Database = {
       orders: {
         Row: {
           billing_address: Json | null
+          cancellable: boolean | null
           created_at: string | null
           customer_id: string
           discount_amount: number | null
@@ -12818,6 +12891,7 @@ export type Database = {
         }
         Insert: {
           billing_address?: Json | null
+          cancellable?: boolean | null
           created_at?: string | null
           customer_id: string
           discount_amount?: number | null
@@ -12842,6 +12916,7 @@ export type Database = {
         }
         Update: {
           billing_address?: Json | null
+          cancellable?: boolean | null
           created_at?: string | null
           customer_id?: string
           discount_amount?: number | null
