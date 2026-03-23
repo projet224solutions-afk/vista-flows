@@ -273,6 +273,7 @@ function App() {
               <Route path="/login" element={<Navigate to="/auth" replace />} />
 <Route path="/universal-login" element={<UniversalLoginPage />} />
               <Route path="/auth/set-password" element={<SetPasswordAfterOAuth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/agent/create" element={<AgentCreation />} />
               <Route path="/worker/settings" element={<WorkerSettings />} />
               {/* <Route path="/install" element={<InstallPWA />} /> PWA désactivée */}
