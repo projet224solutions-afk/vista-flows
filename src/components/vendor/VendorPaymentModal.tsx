@@ -17,7 +17,7 @@ import { Wallet, Banknote, Smartphone, CreditCard, DollarSign, Loader2 } from 'l
 import { VendorPaymentService } from '@/services/vendor/VendorPaymentService';
 import { toast } from 'sonner';
 
-const PayPalCheckoutButton = lazy(() => import('@/components/payment/PayPalCheckoutButton'));
+const StripeCheckoutButton = lazy(() => import('@/components/payment/StripeCheckoutButton'));
 
 interface VendorPaymentModalProps {
   isOpen: boolean;
