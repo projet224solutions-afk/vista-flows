@@ -1,10 +1,10 @@
 /**
  * MODAL PAIEMENT PRODUITS
- * Support: Wallet, Card (Stripe inline), Orange Money, MTN MoMo (ChapChapPay PULL), Cash
+ * Support: Wallet, Card (Stripe), Orange Money, MTN MoMo (ChapChapPay PULL), Cash
  * Inclut le calcul et la facturation des commissions
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -24,12 +24,12 @@ import { Escrow224Service } from "@/services/escrow224Service";
 import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { SecureButton } from "@/components/ui/SecureButton";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
-import { Custom224PaymentWrapper } from "@/components/payment/Custom224PaymentWrapper";
 import { useChapChapPay } from "@/hooks/useChapChapPay";
+
+const StripeCheckoutButton = lazy(() => import("@/components/payment/StripeCheckoutButton"));
 
 export type ProductPaymentMethod = 'wallet' | 'cash' | 'cash_on_delivery' | 'orange_money' | 'mtn_money' | 'card';
 
-// Step within the modal
 type PaymentStep = 'select_method' | 'card_form' | 'mobile_money_form' | 'processing' | 'success';
 
 interface CartItem {
@@ -79,20 +79,16 @@ export default function ProductPaymentModal({
   const [codPhone, setCodPhone] = useState('');
   const [codCity, setCodCity] = useState('');
   
-  // Mobile money state
   const [mobilePhone, setMobilePhone] = useState('');
   const [mobileProcessing, setMobileProcessing] = useState(false);
   
-  // Resolved seller user_id (from profiles) for Stripe
   const [sellerUserId, setSellerUserId] = useState<string>('');
   
-  // Commission state
   const [commissionConfig, setCommissionConfig] = useState<CommissionConfig | null>(null);
   const [loadingCommission, setLoadingCommission] = useState(false);
   const [commissionFee, setCommissionFee] = useState(0);
   const [grandTotal, setGrandTotal] = useState(totalAmount);
 
-  // Resolve vendor user_id when modal opens
   useEffect(() => {
     if (open && cartItems.length > 0) {
       const vendorId = cartItems.find(item => item.vendorId)?.vendorId;
@@ -105,7 +101,6 @@ export default function ProductPaymentModal({
     }
   }, [open, cartItems]);
 
-  // Reset step when modal opens/closes
   useEffect(() => {
     if (open) {
       setPaymentStep('select_method');
@@ -144,9 +139,7 @@ export default function ProductPaymentModal({
   }, [open, paymentMethod, cartItems]);
 
   useEffect(() => {
-    if (!open) {
-      setVendorCode(null);
-    }
+    if (!open) setVendorCode(null);
   }, [open]);
 
   const loadCommissionConfig = async () => {
@@ -207,13 +200,12 @@ export default function ProductPaymentModal({
 
   const paymentMethods = [
     { id: 'wallet' as ProductPaymentMethod, name: 'Wallet 224Solutions', description: 'Paiement instantané depuis votre wallet', icon: Wallet, color: 'text-primary' },
-    { id: 'card' as ProductPaymentMethod, name: 'Carte Bancaire', description: 'Paiement sécurisé VISA / Mastercard via PayPal', icon: CreditCard, color: 'text-primary' },
+    { id: 'card' as ProductPaymentMethod, name: 'Carte Bancaire', description: 'Paiement sécurisé VISA / Mastercard via Stripe', icon: CreditCard, color: 'text-primary' },
     { id: 'orange_money' as ProductPaymentMethod, name: 'Orange Money', description: 'Débit instantané sur votre téléphone', icon: Smartphone, color: 'text-orange-500' },
     { id: 'mtn_money' as ProductPaymentMethod, name: 'MTN Mobile Money', description: 'Débit instantané via MTN MoMo', icon: Smartphone, color: 'text-yellow-600' },
     { id: 'cash' as ProductPaymentMethod, name: 'Paiement à la livraison', description: 'Payez en espèces à la réception', icon: Banknote, color: 'text-green-600' },
   ];
 
-  // Create order after successful payment
   const createOrderAfterPayment = async (paymentId: string, method: string) => {
     let effectiveCustomerId = customerId;
     if (!effectiveCustomerId) {
@@ -269,10 +261,10 @@ export default function ProductPaymentModal({
   };
 
   // Handle Stripe success
-  const handleCardSuccess = async (paymentIntentId: string) => {
+  const handleCardSuccess = async (data: { paymentIntentId: string; amount: number; currency: string }) => {
     setPaymentStep('processing');
     try {
-      await createOrderAfterPayment(paymentIntentId, 'card');
+      await createOrderAfterPayment(data.paymentIntentId, 'card');
       setPaymentStep('success');
       toast.success('Paiement par carte réussi !', { description: `${fc(grandTotal, 'GNF')} débité` });
       setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
@@ -310,7 +302,6 @@ export default function ProductPaymentModal({
         return;
       }
 
-      // Poll for completion
       if (result.transactionId) {
         toast.info('Confirmez le paiement sur votre téléphone...');
         const finalStatus = await pollStatus(result.transactionId);
@@ -325,7 +316,6 @@ export default function ProductPaymentModal({
           setPaymentStep('mobile_money_form');
         }
       } else {
-        // No transactionId but success — treat as success
         await createOrderAfterPayment(`mobile-${Date.now()}`, paymentMethod);
         setPaymentStep('success');
         toast.success('Paiement initié avec succès !');
@@ -340,11 +330,10 @@ export default function ProductPaymentModal({
     }
   };
 
-  // Handle wallet + COD (existing logic)
+  // Handle wallet + COD
   const executePayment = useCallback(async () => {
     if (!userId || cartItems.length === 0) { toast.error('Informations manquantes'); throw new Error('Informations manquantes'); }
 
-    // For card & mobile money, go to their respective forms
     if (paymentMethod === 'card') { setShowCardInline(true); return; }
     if (paymentMethod === 'orange_money' || paymentMethod === 'mtn_money') { setPaymentStep('mobile_money_form'); return; }
 
@@ -628,12 +617,12 @@ export default function ProductPaymentModal({
         )}
 
         <div className="space-y-4 py-4">
-          <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as ProductPaymentMethod)}>
+          <RadioGroup value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v as ProductPaymentMethod); setShowCardInline(false); }}>
             {paymentMethods.map((method) => {
               const Icon = method.icon;
               return (
                 <div key={method.id} className="flex items-center space-x-3 rounded-lg border p-4 cursor-pointer hover:bg-accent"
-                     onClick={() => setPaymentMethod(method.id)}>
+                     onClick={() => { setPaymentMethod(method.id); setShowCardInline(false); }}>
                   <RadioGroupItem value={method.id} id={method.id} />
                   <Icon className={`w-6 h-6 ${method.color}`} />
                   <div className="flex-1">
@@ -669,23 +658,29 @@ export default function ProductPaymentModal({
           )}
         </div>
 
-        {/* Carte bancaire PayPal inline — affiché directement sans étape intermédiaire */}
+        {/* Carte bancaire Stripe inline */}
         {showCardInline && paymentMethod === 'card' && (
           <div className="space-y-3 py-2 border-t">
             <div className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-sm">Saisissez vos informations de carte</span>
+              <span className="font-semibold text-sm">Paiement sécurisé par carte</span>
             </div>
-            <Custom224PaymentWrapper
-              amount={grandTotal}
-              currency="GNF"
-              sellerName="224Solutions Marketplace"
-              sellerId={sellerUserId || firstVendorId}
-              orderDescription={`Achat ${cartItems.length} article(s)`}
-              metadata={{ user_id: userId, items_count: String(cartItems.length) }}
-              onSuccess={handleCardSuccess}
-              onError={(error) => { toast.error(error); setShowCardInline(false); }}
-            />
+            <Suspense fallback={
+              <div className="flex items-center justify-center p-4 gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <span className="text-sm text-muted-foreground">Chargement...</span>
+              </div>
+            }>
+              <StripeCheckoutButton
+                amount={totalAmount}
+                currency="GNF"
+                description={`Achat ${cartItems.length} article(s) - Marketplace 224Solutions`}
+                edgeFunction="stripe-marketplace-payment"
+                onSuccess={handleCardSuccess}
+                onCancel={() => setShowCardInline(false)}
+                onError={(error) => { toast.error(error); setShowCardInline(false); }}
+              />
+            </Suspense>
             <Button variant="outline" onClick={() => setShowCardInline(false)} className="w-full" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" /> Changer de méthode
             </Button>

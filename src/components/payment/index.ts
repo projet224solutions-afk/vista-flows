@@ -21,6 +21,8 @@ export { WithdrawalForm } from './WithdrawalForm';
 // Escrow
 export { EscrowPaymentWrapper } from './EscrowPaymentWrapper';
 
-// Custom 224Solutions
+// Custom 224Solutions (legacy - Stripe-based form)
 export { Custom224PaymentForm } from './Custom224PaymentForm';
-export { Custom224PaymentWrapper } from './Custom224PaymentWrapper';
+
+// Stripe Checkout
+export { default as StripeCheckoutButton } from './StripeCheckoutButton';
