@@ -165,9 +165,48 @@ serve(async (req) => {
         );
       }
 
-      // Note: En production, déchiffrer le secret côté serveur avec une clé sécurisée
-      // Pour cette démo, on suppose que le secret est passé déjà déchiffré
-      const isValid = code && code.length === 6;
+      if (!code || code.length !== 6) {
+        return new Response(
+          JSON.stringify({ error: "Code TOTP requis (6 chiffres)" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Déchiffrer le secret TOTP stocké en base
+      const encryptionKey = Deno.env.get("TOTP_ENCRYPTION_KEY") || Deno.env.get("VITE_ENCRYPTION_KEY");
+      if (!encryptionKey) {
+        console.error("Missing TOTP_ENCRYPTION_KEY");
+        return new Response(
+          JSON.stringify({ error: "Configuration serveur incomplète" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      let decryptedSecret: string;
+      try {
+        // Déchiffrement AES-GCM
+        const keyData = new TextEncoder().encode(encryptionKey.padEnd(32, '0').substring(0, 32));
+        const cryptoKey = await crypto.subtle.importKey("raw", keyData, { name: "AES-GCM" }, false, ["decrypt"]);
+        
+        const encryptedBytes = Uint8Array.from(atob(settings.totp_secret_encrypted), c => c.charCodeAt(0));
+        const ivBytes = Uint8Array.from(atob(settings.totp_secret_iv), c => c.charCodeAt(0));
+        
+        const decryptedBuffer = await crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: ivBytes },
+          cryptoKey,
+          encryptedBytes
+        );
+        decryptedSecret = new TextDecoder().decode(decryptedBuffer);
+      } catch (decryptErr) {
+        console.error("TOTP decryption failed:", decryptErr);
+        return new Response(
+          JSON.stringify({ error: "Erreur de déchiffrement" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Vérifier le code TOTP avec le secret déchiffré
+      const isValid = await verifyTOTP(decryptedSecret, code);
 
       // Logger la tentative
       await supabase.from("totp_verification_attempts").insert({
@@ -175,7 +214,7 @@ serve(async (req) => {
         success: isValid,
         ip_address: clientIP || null,
         user_agent: userAgent,
-        failure_reason: isValid ? null : "Code invalide",
+        failure_reason: isValid ? null : "Code TOTP invalide",
       });
 
       if (isValid) {

@@ -1,9 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Types locaux pour éviter les erreurs TS avec les tables non-standard
+interface UserProfile {
+  role: string;
+  kyc_verified: boolean;
+  status: string;
+}
 
 export interface SecurityValidation {
   isValid: boolean;
@@ -20,10 +22,10 @@ export class PaymentSecurity {
     try {
       // Vérifier que l'utilisateur existe et a un profil
       const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('role, kyc_verified, status')
-        .eq('user_id', userId)
-        .single();
+        .eq('id', userId)
+        .single() as { data: UserProfile | null; error: any };
 
       if (profileError || !profile) {
         return {
