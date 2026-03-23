@@ -509,17 +509,26 @@ export default function VendorShop() {
       <div className="px-4">
         {/* Tabs pour produits physiques et numériques */}
         {digitalProducts.length > 0 ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="physical" className="gap-2">
-                <Package className="w-4 h-4" />
-                Produits ({products.length})
-              </TabsTrigger>
-              <TabsTrigger value="digital" className="gap-2">
-                <Laptop className="w-4 h-4" />
-                Numériques ({digitalProducts.length})
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={vendor?.business_type === 'digital' ? 'digital' : activeTab} onValueChange={setActiveTab} className="w-full">
+            {/* Masquer les onglets pour les boutiques 100% digitales */}
+            {vendor?.business_type !== 'digital' && (
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="physical" className="gap-2">
+                  <Package className="w-4 h-4" />
+                  Produits ({products.length})
+                </TabsTrigger>
+                <TabsTrigger value="digital" className="gap-2">
+                  <Laptop className="w-4 h-4" />
+                  Numériques ({digitalProducts.length})
+                </TabsTrigger>
+              </TabsList>
+            )}
+            {vendor?.business_type === 'digital' && (
+              <div className="flex items-center gap-2 mb-4">
+                <Laptop className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Produits numériques ({digitalProducts.length})</h3>
+              </div>
+            )}
 
             {/* Produits physiques */}
             <TabsContent value="physical">
