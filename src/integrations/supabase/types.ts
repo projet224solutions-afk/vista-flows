@@ -4584,6 +4584,54 @@ export type Database = {
         }
         Relationships: []
       }
+      conversion_logs: {
+        Row: {
+          conversion_date: string | null
+          conversion_time: string | null
+          conversion_type: string | null
+          created_at: string | null
+          final_amount: number
+          final_currency: string
+          id: string
+          initial_amount: number
+          initial_currency: string
+          margin: number
+          rate_applied: number
+          transaction_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          conversion_date?: string | null
+          conversion_time?: string | null
+          conversion_type?: string | null
+          created_at?: string | null
+          final_amount: number
+          final_currency: string
+          id?: string
+          initial_amount: number
+          initial_currency: string
+          margin?: number
+          rate_applied: number
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          conversion_date?: string | null
+          conversion_time?: string | null
+          conversion_type?: string | null
+          created_at?: string | null
+          final_amount?: number
+          final_currency?: string
+          id?: string
+          initial_amount?: number
+          initial_currency?: string
+          margin?: number
+          rate_applied?: number
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       copilot_conversations: {
         Row: {
           actions: Json | null
@@ -4736,30 +4784,57 @@ export type Database = {
         Row: {
           created_at: string | null
           effective_date: string
+          final_rate_eur: number | null
+          final_rate_usd: number | null
           from_currency: string
           id: string
+          is_active: boolean | null
+          margin: number | null
           rate: number
+          rate_eur: number | null
+          rate_usd: number | null
+          retrieved_at: string | null
           source: string | null
+          source_url: string | null
+          status: string | null
           to_currency: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           effective_date?: string
+          final_rate_eur?: number | null
+          final_rate_usd?: number | null
           from_currency: string
           id?: string
+          is_active?: boolean | null
+          margin?: number | null
           rate: number
+          rate_eur?: number | null
+          rate_usd?: number | null
+          retrieved_at?: string | null
           source?: string | null
+          source_url?: string | null
+          status?: string | null
           to_currency: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           effective_date?: string
+          final_rate_eur?: number | null
+          final_rate_usd?: number | null
           from_currency?: string
           id?: string
+          is_active?: boolean | null
+          margin?: number | null
           rate?: number
+          rate_eur?: number | null
+          rate_usd?: number | null
+          retrieved_at?: string | null
           source?: string | null
+          source_url?: string | null
+          status?: string | null
           to_currency?: string
           updated_at?: string | null
         }
@@ -9727,6 +9802,42 @@ export type Database = {
           },
         ]
       }
+      fx_collection_log: {
+        Row: {
+          collected_at: string | null
+          currency_code: string
+          error_message: string | null
+          id: string
+          rate_eur: number | null
+          rate_usd: number | null
+          source: string
+          source_url: string | null
+          status: string
+        }
+        Insert: {
+          collected_at?: string | null
+          currency_code: string
+          error_message?: string | null
+          id?: string
+          rate_eur?: number | null
+          rate_usd?: number | null
+          source: string
+          source_url?: string | null
+          status?: string
+        }
+        Update: {
+          collected_at?: string | null
+          currency_code?: string
+          error_message?: string | null
+          id?: string
+          rate_eur?: number | null
+          rate_usd?: number | null
+          source?: string
+          source_url?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       generated_reports: {
         Row: {
           expires_at: string | null
@@ -12065,6 +12176,36 @@ export type Database = {
           started_at?: string
           total_checks?: number | null
           triggered_by?: string | null
+        }
+        Relationships: []
+      }
+      margin_config: {
+        Row: {
+          config_key: string
+          config_value: number
+          created_at: string | null
+          description: string | null
+          id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          config_key: string
+          config_value: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          config_key?: string
+          config_value?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -28057,6 +28198,21 @@ export type Database = {
           p_to_currency: string
         }
         Returns: number
+      }
+      convert_with_margin: {
+        Args: {
+          p_amount: number
+          p_conversion_type?: string
+          p_from_currency: string
+          p_to_currency: string
+          p_transaction_id?: string
+          p_user_id?: string
+        }
+        Returns: {
+          converted_amount: number
+          margin_applied: number
+          rate_used: number
+        }[]
       }
       create_admin_notification: {
         Args: {
