@@ -370,7 +370,7 @@ export default function VendeurDashboard() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen w-full flex bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-x-hidden">
+      <div className="min-h-screen w-full flex bg-gradient-to-br from-muted/30 via-background to-primary/5 overflow-x-hidden">
         {/* Sidebar */}
         <VendorSidebar />
 
