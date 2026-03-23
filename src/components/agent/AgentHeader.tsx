@@ -4,6 +4,7 @@
 
 import { AgentIdDisplay } from '@/components/agent/AgentIdDisplay';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
+import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 
 interface AgentHeaderProps {
   agentCode: string;
