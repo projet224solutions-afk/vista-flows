@@ -260,6 +260,9 @@ export default function ClientDashboard() {
 
           {/* Actions - Responsive */}
           <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+            <Suspense fallback={null}>
+              <NotificationBellButton className={responsive.isMobile ? 'h-8 w-8' : 'h-9 w-9'} iconSize={responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} />
+            </Suspense>
             <QuickTransferButton 
               variant="ghost" 
               size={responsive.isMobile ? 'icon' : 'icon'} 
