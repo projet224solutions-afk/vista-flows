@@ -46,11 +46,7 @@ serve(async (req) => {
   try {
     logStep('Payment started');
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
-    
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) throw new Error("Authentication failed");
     
     logStep('User authenticated', { userId: user.id });
@@ -62,7 +58,7 @@ serve(async (req) => {
 
     // Check for duplicate
     if (idempotencyKey) {
-      const { data: existing } = await supabaseClient
+      const { data: existing } = await supabaseAdmin
         .from('taxi_transactions')
         .select('id, status')
         .eq('idempotency_key', idempotencyKey)
@@ -78,7 +74,7 @@ serve(async (req) => {
     }
 
     // Get ride details
-    const { data: ride, error: rideError } = await supabaseClient
+    const { data: ride, error: rideError } = await supabaseAdmin
       .from('taxi_trips')
       .select('*')
       .eq('id', rideId)
@@ -86,7 +82,20 @@ serve(async (req) => {
 
     if (rideError || !ride) throw new Error('Ride not found');
 
-    // Calculer la commission plateforme et la part chauffeur
+    // Récupérer le taux de commission dynamique pour le taxi
+    // On utilise une clé dédiée si elle existe, sinon fallback
+    let PLATFORM_FEE_RATE = DEFAULT_TAXI_FEE_RATE;
+    try {
+      const dynamicRate = await getPdgFeeRate(supabaseAdmin, 'commission_taxi');
+      // Si la clé n'existe pas, getPdgFeeRate retournera 0 (pas dans DEFAULT_FEES)
+      // Dans ce cas, utiliser le fallback
+      if (dynamicRate > 0) {
+        PLATFORM_FEE_RATE = dynamicRate;
+      }
+    } catch {
+      // Utiliser le taux par défaut
+    }
+
     const totalAmount = ride.price_total;
     const platformFee = Math.round(totalAmount * (PLATFORM_FEE_RATE / 100));
     const driverShare = totalAmount - platformFee;
@@ -94,6 +103,7 @@ serve(async (req) => {
     logStep('Ride found', { 
       price: totalAmount, 
       platformFee,
+      platformFeeRate: PLATFORM_FEE_RATE,
       driverShare,
       driverId: ride.driver_id 
     });
