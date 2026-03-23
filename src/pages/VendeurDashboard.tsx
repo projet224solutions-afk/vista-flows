@@ -297,6 +297,14 @@ export default function VendeurDashboard() {
           .maybeSingle();
         if (proService) {
           navigate(`/dashboard/service/${proService.id}`, { replace: true });
+        } else {
+          // Pas de service professionnel trouvé - rester sur le dashboard vendeur
+          console.warn('Vendeur de type service sans professional_service associé');
+          toast({
+            title: 'Configuration incomplète',
+            description: 'Votre profil de service n\'est pas encore configuré. Contactez le support.',
+            variant: 'destructive',
+          });
         }
       }
     };
