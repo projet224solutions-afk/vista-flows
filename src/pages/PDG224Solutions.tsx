@@ -124,8 +124,8 @@ export default function PDG224Solutions() {
         action: 'PDG_ACCESS',
         target_type: 'dashboard',
         data_json: { timestamp: new Date().toISOString() }
-      }).then(() => {}).catch((err: unknown) => {
-        console.warn('Audit log error:', err);
+      }).then(() => {
+        // logged
       });
     }
   }, [user, profile, profileLoading, navigate, mfaVerified]);
