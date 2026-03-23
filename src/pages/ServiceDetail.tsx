@@ -536,34 +536,23 @@ export default function ServiceDetailPage() {
     }
   };
 
-  const toggleFavorite = async () => {
-    if (!user) {
-      toast.error('Veuillez vous connecter pour ajouter aux favoris');
-      return;
-    }
+  const toggleFavorite = () => {
     if (!id) return;
-
     try {
+      const favs: string[] = JSON.parse(localStorage.getItem('service_favorites') || '[]');
+      let newFavs: string[];
       if (isFavorite) {
-        await supabase
-          .from('user_favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('item_id', id)
-          .eq('item_type', 'service');
+        newFavs = favs.filter(f => f !== id);
         setIsFavorite(false);
         toast.success('Retiré des favoris');
       } else {
-        await supabase
-          .from('user_favorites')
-          .insert({ user_id: user.id, item_id: id, item_type: 'service' });
+        newFavs = [...favs, id];
         setIsFavorite(true);
         toast.success('Ajouté aux favoris');
       }
+      localStorage.setItem('service_favorites', JSON.stringify(newFavs));
     } catch {
-      // If user_favorites table doesn't exist, just toggle UI
       setIsFavorite(!isFavorite);
-      toast.success(isFavorite ? 'Retiré des favoris' : 'Ajouté aux favoris');
     }
   };
 
