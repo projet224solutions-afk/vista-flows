@@ -255,8 +255,8 @@ export const VendorPaymentModal = ({
             </Alert>
           )}
 
-          {/* Actions — masqué pour PayPal (géré par les boutons SDK) */}
-          {selectedMethod !== 'paypal' && (
+          {/* Actions — masqué pour Stripe (géré par Elements) */}
+          {selectedMethod !== 'stripe' && (
             <div className="flex gap-2 pt-4">
               <Button variant="outline" onClick={onClose} disabled={isProcessing} className="flex-1">
                 Annuler
