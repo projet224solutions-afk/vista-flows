@@ -28,7 +28,7 @@ interface VendorPaymentModalProps {
   onPaymentSuccess?: () => void;
 }
 
-type PaymentMethodType = 'wallet' | 'cash' | 'mobile_money' | 'card' | 'paypal';
+type PaymentMethodType = 'wallet' | 'cash' | 'mobile_money' | 'card' | 'stripe';
 
 export const VendorPaymentModal = ({
   isOpen,
