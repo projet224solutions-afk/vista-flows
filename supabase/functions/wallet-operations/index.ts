@@ -685,7 +685,8 @@ serve(async (req) => {
         );
 
         if (!transferResult.success) {
-          return new Response(JSON.stringify({ error: transferResult.error || 'Échec du transfert' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          console.error('[wallet-ops] Transfer failed:', transferResult.error);
+          return new Response(JSON.stringify({ error: 'Échec du transfert' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
         await syncAgentWallet(supabaseClient, user.id, transferResult.senderBalance!, 'transfer_sender', userRole);
