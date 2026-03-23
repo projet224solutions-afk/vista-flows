@@ -10,6 +10,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 import { getPdgFeeRate, calculateFee, FEE_KEYS } from "../_shared/pdg-fees.ts";
+import { getInternalFxRate } from "../_shared/fx-internal.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
