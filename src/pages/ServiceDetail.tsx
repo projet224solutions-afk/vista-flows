@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -17,10 +17,8 @@ import {
   Settings,
   Camera,
   ImagePlus,
-  X,
   Trash2,
   LocateFixed,
-  Map,
   PhoneCall,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +26,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,30 +38,31 @@ interface ServiceDetail {
   name: string;
   description: string;
   category: string;
-  service_type_code?: string; // Code du type de service (restaurant, salon, etc.)
+  service_type_code?: string;
   address?: string;
   phone?: string;
   email?: string;
   website?: string;
   rating: number;
   reviews_count: number;
-  is_open: boolean;
+  is_open: boolean | null; // null = unknown
   image_url?: string;
   opening_hours?: OpeningHours;
-  latitude?: number;
-  longitude?: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  has_real_coordinates: boolean; // true if coordinates are from DB, not fallback
   features?: string[];
   vendor_user_id?: string;
 }
 
 interface OpeningHours {
-  monday?: string;
-  tuesday?: string;
-  wednesday?: string;
-  thursday?: string;
-  friday?: string;
-  saturday?: string;
-  sunday?: string;
+  monday?: string | { open?: string; close?: string; closed?: boolean };
+  tuesday?: string | { open?: string; close?: string; closed?: boolean };
+  wednesday?: string | { open?: string; close?: string; closed?: boolean };
+  thursday?: string | { open?: string; close?: string; closed?: boolean };
+  friday?: string | { open?: string; close?: string; closed?: boolean };
+  saturday?: string | { open?: string; close?: string; closed?: boolean };
+  sunday?: string | { open?: string; close?: string; closed?: boolean };
 }
 
 interface Review {
@@ -96,7 +96,50 @@ interface MenuItem {
   preparation_time?: number;
 }
 
-export default function ServiceDetail() {
+/**
+ * Compute open/closed based on opening_hours and current time.
+ * Returns null if we can't determine (no hours data).
+ */
+function computeIsOpen(hours: OpeningHours | undefined): boolean | null {
+  if (!hours) return null;
+
+  const now = new Date();
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const todayKey = dayNames[now.getDay()];
+  const todayHours = (hours as any)[todayKey];
+
+  if (!todayHours) return null;
+
+  if (typeof todayHours === 'string') {
+    const lower = todayHours.toLowerCase().trim();
+    if (lower === 'fermé' || lower === 'closed') return false;
+    // Try to parse "HH:MM - HH:MM"
+    const match = lower.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+    if (match) {
+      const openMinutes = parseInt(match[1]) * 60 + parseInt(match[2]);
+      const closeMinutes = parseInt(match[3]) * 60 + parseInt(match[4]);
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      return currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
+    }
+    return null; // Can't determine
+  }
+
+  if (typeof todayHours === 'object' && todayHours !== null) {
+    if (todayHours.closed) return false;
+    if (todayHours.open && todayHours.close) {
+      const [oh, om] = todayHours.open.split(':').map(Number);
+      const [ch, cm] = todayHours.close.split(':').map(Number);
+      const openMinutes = oh * 60 + (om || 0);
+      const closeMinutes = ch * 60 + (cm || 0);
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      return currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
+    }
+  }
+
+  return null;
+}
+
+export default function ServiceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -112,7 +155,11 @@ export default function ServiceDetail() {
   const [galleryImages, setGalleryImages] = useState<{ id: string; image_url: string; caption?: string }[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
-
+  // Review form
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     if (id && positionReady) {
@@ -120,6 +167,7 @@ export default function ServiceDetail() {
       loadReviews();
       loadRestaurantMenu();
       loadGalleryImages();
+      loadFavoriteStatus();
     }
   }, [id, positionReady]);
 
@@ -132,28 +180,19 @@ export default function ServiceDetail() {
     }
   }, [service?.vendor_user_id, user?.id]);
 
-  // Géocoder une adresse pour obtenir les coordonnées
-  const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
+  const loadFavoriteStatus = async () => {
+    if (!user || !id) return;
     try {
-      console.log('[ServiceDetail] Géocodage de l\'adresse:', address);
-      const { data, error } = await supabase.functions.invoke('geocode-address', {
-        body: { address, type: 'geocode' }
-      });
-
-      if (error) {
-        console.warn('[ServiceDetail] Erreur géocodage:', error);
-        return null;
-      }
-
-      if (data?.lat && data?.lng) {
-        console.log('[ServiceDetail] Coordonnées trouvées:', data.lat, data.lng);
-        return { lat: data.lat, lng: data.lng };
-      }
-
-      return null;
-    } catch (err) {
-      console.warn('[ServiceDetail] Géocodage échoué:', err);
-      return null;
+      const { data } = await supabase
+        .from('user_favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('item_id', id)
+        .eq('item_type', 'service')
+        .maybeSingle();
+      setIsFavorite(!!data);
+    } catch {
+      // Table might not exist yet, silently ignore
     }
   };
 
@@ -161,7 +200,6 @@ export default function ServiceDetail() {
     try {
       setLoading(true);
       
-      // D'abord essayer de charger depuis professional_services (pour les services du marketplace)
       const { data: proService, error: proError } = await supabase
         .from('professional_services')
         .select(`
@@ -190,42 +228,18 @@ export default function ServiceDetail() {
         .single();
 
       if (!proError && proService) {
-        // C'est un service professionnel du marketplace
-        const openingHours = proService.opening_hours as OpeningHours || {
-          monday: "08:00 - 18:00",
-          tuesday: "08:00 - 18:00",
-          wednesday: "08:00 - 18:00",
-          thursday: "08:00 - 18:00",
-          friday: "08:00 - 18:00",
-          saturday: "09:00 - 14:00",
-          sunday: "Fermé"
-        };
-
-        // Utiliser les coordonnées réelles de la base de données
-        let lat = proService.latitude || null;
-        let lng = proService.longitude || null;
-
-        // Si pas de coordonnées en DB, tenter le géocodage
-        if (!lat || !lng) {
-          if (proService.address) {
-            const coords = await geocodeAddress(proService.address);
-            if (coords) {
-              lat = coords.lat;
-              lng = coords.lng;
-            }
-          }
-          // Fallback Conakry si rien ne marche
-          if (!lat || !lng) {
-            lat = 9.6412;
-            lng = -13.5784;
-          }
-        }
+        const openingHours = proService.opening_hours as OpeningHours | undefined;
+        
+        // Only use real coordinates from the DB
+        const hasRealCoords = proService.latitude != null && proService.longitude != null &&
+          Number.isFinite(Number(proService.latitude)) && Number.isFinite(Number(proService.longitude)) &&
+          !(Number(proService.latitude) === 0 && Number(proService.longitude) === 0);
 
         const serviceData: ServiceDetail = {
           id: proService.id,
           name: proService.business_name,
           description: proService.description || 'Aucune description disponible',
-          category: proService.service_types?.category || 'service',
+          category: proService.service_types?.category || proService.service_types?.name || 'service',
           service_type_code: proService.service_types?.code,
           address: proService.address,
           phone: proService.phone,
@@ -233,22 +247,29 @@ export default function ServiceDetail() {
           website: proService.website,
           rating: Number(proService.rating) || 0,
           reviews_count: proService.total_reviews || 0,
-          is_open: true,
+          is_open: computeIsOpen(openingHours),
           image_url: proService.cover_image_url || proService.logo_url,
           features: [],
-          latitude: lat,
-          longitude: lng,
-          opening_hours: openingHours,
+          latitude: hasRealCoords ? Number(proService.latitude) : null,
+          longitude: hasRealCoords ? Number(proService.longitude) : null,
+          has_real_coordinates: hasRealCoords,
+          opening_hours: openingHours || undefined,
           vendor_user_id: proService.user_id
         };
 
         setService(serviceData);
-        const dist = getDistanceTo(serviceData.latitude!, serviceData.longitude!);
-        setDistance(dist);
+        
+        // Only compute distance if we have real coordinates
+        if (hasRealCoords) {
+          const dist = getDistanceTo(serviceData.latitude!, serviceData.longitude!);
+          setDistance(dist);
+        } else {
+          setDistance(null);
+        }
         return;
       }
 
-      // Sinon, essayer depuis service_types (pour les types de services génériques)
+      // Fallback: service_types (generic)
       const { data, error } = await supabase
         .from('service_types')
         .select('*')
@@ -257,33 +278,24 @@ export default function ServiceDetail() {
 
       if (error) throw error;
 
-      // Transformer les données
       const serviceData: ServiceDetail = {
         id: data.id,
         name: data.name,
         description: data.description || 'Aucune description disponible',
         category: data.category || 'service',
-        rating: 4.5,
+        rating: 0,
         reviews_count: 0,
-        is_open: true,
+        is_open: null,
         image_url: data.icon,
         features: (Array.isArray(data.features) ? data.features : []) as string[],
-        latitude: 9.6412,
-        longitude: -13.5784,
-        opening_hours: {
-          monday: "08:00 - 18:00",
-          tuesday: "08:00 - 18:00",
-          wednesday: "08:00 - 18:00",
-          thursday: "08:00 - 18:00",
-          friday: "08:00 - 18:00",
-          saturday: "09:00 - 14:00",
-          sunday: "Fermé"
-        }
+        latitude: null,
+        longitude: null,
+        has_real_coordinates: false,
+        opening_hours: undefined
       };
 
       setService(serviceData);
-      const dist = getDistanceTo(serviceData.latitude!, serviceData.longitude!);
-      setDistance(dist);
+      setDistance(null);
 
     } catch (error) {
       console.error('Erreur chargement service:', error);
@@ -296,17 +308,9 @@ export default function ServiceDetail() {
 
   const loadReviews = async () => {
     try {
-      // Charger les avis réels depuis service_reviews
       const { data, error } = await supabase
         .from('service_reviews')
-        .select(`
-          id,
-          rating,
-          comment,
-          created_at,
-          client_id,
-          is_verified
-        `)
+        .select(`id, rating, comment, created_at, client_id, is_verified`)
         .eq('professional_service_id', id)
         .order('created_at', { ascending: false });
 
@@ -321,7 +325,6 @@ export default function ServiceDetail() {
         return;
       }
 
-      // Récupérer les infos des clients pour chaque avis
       const clientIds = data.map(r => r.client_id).filter(Boolean);
       let clientsMap: Record<string, any> = {};
       
@@ -345,7 +348,6 @@ export default function ServiceDetail() {
           rating: review.rating,
           comment: review.comment,
           created_at: review.created_at,
-          is_verified: review.is_verified
         };
       });
 
@@ -357,7 +359,6 @@ export default function ServiceDetail() {
 
   const loadRestaurantMenu = async () => {
     try {
-      // Charger les catégories du menu
       const { data: categories } = await supabase
         .from('restaurant_menu_categories')
         .select('*')
@@ -365,11 +366,8 @@ export default function ServiceDetail() {
         .eq('is_active', true)
         .order('display_order');
 
-      if (categories) {
-        setMenuCategories(categories);
-      }
+      if (categories) setMenuCategories(categories);
 
-      // Charger les plats du menu
       const { data: items } = await supabase
         .from('restaurant_menu_items')
         .select('*')
@@ -377,9 +375,7 @@ export default function ServiceDetail() {
         .eq('is_available', true)
         .order('display_order');
 
-      if (items) {
-        setMenuItems(items);
-      }
+      if (items) setMenuItems(items);
     } catch (error) {
       console.error('Erreur chargement menu:', error);
     }
@@ -440,7 +436,7 @@ export default function ServiceDetail() {
       loadGalleryImages();
     } catch (err: any) {
       console.error('Erreur upload galerie:', err);
-      toast.error('Erreur lors de l\'upload');
+      toast.error("Erreur lors de l'upload");
     } finally {
       setUploadingImage(false);
       e.target.value = '';
@@ -456,14 +452,13 @@ export default function ServiceDetail() {
       if (error) throw error;
       toast.success('Image supprimée');
       setGalleryImages(prev => prev.filter(img => img.id !== imageId));
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors de la suppression');
     }
   };
 
   const handleContact = () => {
     if (service?.phone) {
-      // Appeler directement le numéro du restaurant
       window.open(`tel:${service.phone}`, '_self');
     } else if (service?.vendor_user_id) {
       if (!user) {
@@ -499,16 +494,14 @@ export default function ServiceDetail() {
   };
 
   const handleLocateRestaurant = () => {
-    if (service?.latitude && service?.longitude && 
-        !(service.latitude === 9.6412 && service.longitude === -13.5784)) {
-      // Ouvrir Google Maps avec navigation vers le restaurant
+    if (service?.has_real_coordinates && service.latitude && service.longitude) {
       const url = `https://www.google.com/maps/dir/?api=1&destination=${service.latitude},${service.longitude}&travelmode=driving`;
       window.open(url, '_blank');
     } else if (service?.address) {
       const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(service.address)}&travelmode=driving`;
       window.open(url, '_blank');
     } else {
-      toast.error('Position du restaurant non disponible');
+      toast.error('Position du service non disponible');
     }
   };
 
@@ -518,22 +511,17 @@ export default function ServiceDetail() {
       navigate('/auth');
       return;
     }
-    
-    // Ouvrir le modal de réservation professionnel pour les restaurants
     if (isRestaurant) {
       setIsReservationModalOpen(true);
     } else {
-      // Pour les autres types de services, rediriger vers la réservation générique
       toast.info('Contactez le prestataire pour réserver');
     }
   };
 
-  // Naviguer vers le menu restaurant pour passer commande
   const handleOrderFromRestaurant = () => {
     navigate(`/restaurant/${id}/menu`);
   };
 
-  // Vérifier si c'est un restaurant (via le code du type de service)
   const isRestaurant = service?.service_type_code === 'restaurant';
 
   const handleShare = async () => {
@@ -558,14 +546,34 @@ export default function ServiceDetail() {
       toast.error('Veuillez vous connecter pour ajouter aux favoris');
       return;
     }
-    
-    setIsFavorite(!isFavorite);
-    toast.success(isFavorite ? 'Retiré des favoris' : 'Ajouté aux favoris');
+    if (!id) return;
+
+    try {
+      if (isFavorite) {
+        await supabase
+          .from('user_favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('item_id', id)
+          .eq('item_type', 'service');
+        setIsFavorite(false);
+        toast.success('Retiré des favoris');
+      } else {
+        await supabase
+          .from('user_favorites')
+          .insert({ user_id: user.id, item_id: id, item_type: 'service' });
+        setIsFavorite(true);
+        toast.success('Ajouté aux favoris');
+      }
+    } catch {
+      // If user_favorites table doesn't exist, just toggle UI
+      setIsFavorite(!isFavorite);
+      toast.success(isFavorite ? 'Retiré des favoris' : 'Ajouté aux favoris');
+    }
   };
 
   const openInMaps = () => {
-    if (service?.latitude && service?.longitude &&
-        !(service.latitude === 9.6412 && service.longitude === -13.5784)) {
+    if (service?.has_real_coordinates && service.latitude && service.longitude) {
       const url = `https://www.google.com/maps/place/${service.latitude},${service.longitude}/@${service.latitude},${service.longitude},17z`;
       window.open(url, '_blank');
     } else if (service?.address) {
@@ -574,6 +582,58 @@ export default function ServiceDetail() {
     } else {
       toast.error('Coordonnées non disponibles');
     }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user) {
+      toast.error('Veuillez vous connecter pour laisser un avis');
+      navigate('/auth');
+      return;
+    }
+    if (!reviewComment.trim()) {
+      toast.error('Veuillez écrire un commentaire');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const { error } = await supabase.from('service_reviews').insert({
+        professional_service_id: id,
+        client_id: user.id,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      });
+      if (error) throw error;
+      toast.success('Merci pour votre avis !');
+      setShowReviewForm(false);
+      setReviewComment("");
+      setReviewRating(5);
+      loadReviews();
+    } catch (err: any) {
+      console.error('Erreur soumission avis:', err);
+      toast.error("Erreur lors de l'envoi de l'avis");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  // Render open/closed status
+  const renderStatusBadge = () => {
+    if (service?.is_open === true) {
+      return (
+        <Badge className="text-sm px-4 py-2 font-semibold shadow-lg backdrop-blur-sm border-0 bg-primary text-primary-foreground">
+          ✅ Ouvert
+        </Badge>
+      );
+    }
+    if (service?.is_open === false) {
+      return (
+        <Badge className="text-sm px-4 py-2 font-semibold shadow-lg backdrop-blur-sm border-0 bg-destructive text-destructive-foreground">
+          🔴 Fermé
+        </Badge>
+      );
+    }
+    // null = unknown, don't show misleading status
+    return null;
   };
 
   if (loading) {
@@ -605,11 +665,7 @@ export default function ServiceDetail() {
       {/* ═══ Hero Image ═══ */}
       <div className="relative h-72 md:h-[420px] bg-muted overflow-hidden">
         {service.image_url ? (
-          <img
-            src={service.image_url}
-            alt={service.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-primary/10 flex items-center justify-center">
             <span className="text-7xl opacity-60">
@@ -622,14 +678,12 @@ export default function ServiceDetail() {
           </div>
         )}
 
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/40" />
 
         {/* Top navigation */}
         <div className="absolute top-0 left-0 right-0 p-3 flex items-center justify-between z-10">
           <Button
-            variant="ghost"
-            size="icon"
+            variant="ghost" size="icon"
             className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full w-10 h-10"
             onClick={() => navigate('/services-proximite')}
           >
@@ -638,26 +692,20 @@ export default function ServiceDetail() {
 
           <div className="flex gap-2">
             {isOwner && (
-              <Button
-                variant="ghost"
-                size="icon"
+              <Button variant="ghost" size="icon"
                 className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full w-10 h-10"
                 onClick={() => navigate(`/dashboard/service/${id}`)}
               >
                 <Settings className="w-5 h-5" />
               </Button>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
+            <Button variant="ghost" size="icon"
               className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full w-10 h-10"
               onClick={handleShare}
             >
               <Share2 className="w-5 h-5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
+            <Button variant="ghost" size="icon"
               className="text-white bg-black/30 backdrop-blur-sm hover:bg-black/50 rounded-full w-10 h-10"
               onClick={toggleFavorite}
             >
@@ -666,54 +714,53 @@ export default function ServiceDetail() {
           </div>
         </div>
 
-        {/* Status badge on image */}
+        {/* Status badge on image - only if determinable */}
         <div className="absolute bottom-4 right-4 z-10">
-          <Badge
-            className={`text-sm px-4 py-2 font-semibold shadow-lg backdrop-blur-sm border-0 ${
-              service.is_open
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-destructive text-destructive-foreground'
-            }`}
-          >
-            {service.is_open ? '✅ Ouvert' : '🔴 Fermé'}
-          </Badge>
+          {renderStatusBadge()}
         </div>
       </div>
 
       {/* ═══ Main Content ═══ */}
       <div className="max-w-3xl mx-auto px-4 relative">
-        {/* Profile card overlapping hero */}
         <Card className="relative -mt-16 z-20 border-0 shadow-xl rounded-2xl overflow-hidden">
           <CardContent className="p-5 md:p-8">
-            {/* Name & rating */}
             <h1 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight mb-3">
               {service.name}
             </h1>
 
             <div className="flex flex-wrap items-center gap-3 mb-4">
-              {/* Rating */}
-              <div className="flex items-center gap-1.5">
-                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span className="font-bold text-lg">{service.rating}</span>
-                <span className="text-muted-foreground text-sm">
-                  ({service.reviews_count} avis)
-                </span>
-              </div>
+              {/* Rating - only show if real */}
+              {service.rating > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  <span className="font-bold text-lg">{service.rating.toFixed(1)}</span>
+                  <span className="text-muted-foreground text-sm">
+                    ({service.reviews_count} avis)
+                  </span>
+                </div>
+              )}
 
-              {/* Distance */}
-              <Badge variant="outline" className="flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full border-primary/30">
-                <Navigation className="w-3.5 h-3.5 text-primary" />
-                {formatDistance(distance)}
-                {usingRealLocation && <span className="text-green-500 text-xs">●</span>}
-              </Badge>
+              {/* Distance - only show if real coordinates exist */}
+              {distance !== null && service.has_real_coordinates && (
+                <Badge variant="outline" className="flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full border-primary/30">
+                  <Navigation className="w-3.5 h-3.5 text-primary" />
+                  {formatDistance(distance)}
+                  {usingRealLocation && <span className="text-green-500 text-xs">●</span>}
+                </Badge>
+              )}
+
+              {/* No coordinates message */}
+              {!service.has_real_coordinates && (
+                <Badge variant="secondary" className="text-xs">
+                  📍 Position non renseignée
+                </Badge>
+              )}
             </div>
 
-            {/* Category badge */}
             <Badge className="bg-primary/10 text-primary border-0 font-semibold mb-4">
               {service.category}
             </Badge>
 
-            {/* Description */}
             <p className="text-muted-foreground leading-relaxed mb-6">
               {service.description}
             </p>
@@ -721,52 +768,36 @@ export default function ServiceDetail() {
             {/* ═══ Action Buttons ═══ */}
             <div className="flex flex-wrap gap-3">
               {service.phone && (
-                <Button
-                  onClick={handleContact}
-                  className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-primary hover:bg-primary/90"
-                >
+                <Button onClick={handleContact} className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-primary hover:bg-primary/90">
                   <PhoneCall className="w-4 h-4 mr-2" />
                   Appeler
                 </Button>
               )}
-              <Button
-                onClick={handleMessage}
-                variant="outline"
-                className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5"
-              >
+              <Button onClick={handleMessage} variant="outline" className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5">
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Message
               </Button>
-              <Button
-                onClick={handleReservation}
-                variant="outline"
-                className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5"
-              >
+              <Button onClick={handleReservation} variant="outline" className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5">
                 <Calendar className="w-4 h-4 mr-2" />
                 Réserver
               </Button>
               {isRestaurant && (
-                <Button
-                  onClick={handleOrderFromRestaurant}
-                  className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-accent text-accent-foreground hover:bg-accent/90"
-                >
+                <Button onClick={handleOrderFromRestaurant} className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-accent text-accent-foreground hover:bg-accent/90">
                   <UtensilsCrossed className="w-4 h-4 mr-2" />
                   Commander
                 </Button>
               )}
             </div>
 
-            {/* ═══ Location Button ═══ */}
-            <div className="mt-4">
-              <Button
-                onClick={handleLocateRestaurant}
-                variant="outline"
-                className="w-full h-11 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5 gap-2"
-              >
-                <LocateFixed className="w-4 h-4" />
-                📍 Localiser sur la carte
-              </Button>
-            </div>
+            {/* Location Button - only if locatable */}
+            {(service.has_real_coordinates || service.address) && (
+              <div className="mt-4">
+                <Button onClick={handleLocateRestaurant} variant="outline" className="w-full h-11 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5 gap-2">
+                  <LocateFixed className="w-4 h-4" />
+                  📍 Localiser sur la carte
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -796,11 +827,7 @@ export default function ServiceDetail() {
                     <div className="flex-1">
                       <p className="font-semibold text-foreground">Adresse</p>
                       <p className="text-muted-foreground text-sm mt-0.5">{service.address}</p>
-                      <Button
-                        variant="link"
-                        className="px-0 h-auto mt-1 text-primary font-medium text-sm"
-                        onClick={openInMaps}
-                      >
+                      <Button variant="link" className="px-0 h-auto mt-1 text-primary font-medium text-sm" onClick={openInMaps}>
                         Voir sur la carte
                       </Button>
                     </div>
@@ -840,9 +867,7 @@ export default function ServiceDetail() {
                     <p className="font-semibold text-foreground mb-2">Caractéristiques</p>
                     <div className="flex flex-wrap gap-2">
                       {service.features.map((feature, index) => (
-                        <Badge key={index} variant="outline" className="rounded-full">
-                          {feature}
-                        </Badge>
+                        <Badge key={index} variant="outline" className="rounded-full">{feature}</Badge>
                       ))}
                     </div>
                   </div>
@@ -855,41 +880,49 @@ export default function ServiceDetail() {
           <TabsContent value="hours">
             <Card className="rounded-2xl border-0 shadow-md">
               <CardContent className="p-5 md:p-6">
-                <div className="space-y-1">
-                  {service.opening_hours && Object.entries(service.opening_hours).map(([day, hours]) => {
-                    const dayName = day === 'monday' ? 'Lundi' :
-                      day === 'tuesday' ? 'Mardi' :
-                      day === 'wednesday' ? 'Mercredi' :
-                      day === 'thursday' ? 'Jeudi' :
-                      day === 'friday' ? 'Vendredi' :
-                      day === 'saturday' ? 'Samedi' : 'Dimanche';
+                {service.opening_hours ? (
+                  <div className="space-y-1">
+                    {Object.entries(service.opening_hours).map(([day, hours]) => {
+                      const dayName = day === 'monday' ? 'Lundi' :
+                        day === 'tuesday' ? 'Mardi' :
+                        day === 'wednesday' ? 'Mercredi' :
+                        day === 'thursday' ? 'Jeudi' :
+                        day === 'friday' ? 'Vendredi' :
+                        day === 'saturday' ? 'Samedi' : 'Dimanche';
 
-                    let hoursDisplay: string;
-                    if (typeof hours === 'string') {
-                      hoursDisplay = hours;
-                    } else if (typeof hours === 'object' && hours !== null) {
-                      const hoursObj = hours as { open?: string; close?: string; closed?: boolean };
-                      if (hoursObj.closed) {
-                        hoursDisplay = 'Fermé';
+                      let hoursDisplay: string;
+                      if (typeof hours === 'string') {
+                        hoursDisplay = hours;
+                      } else if (typeof hours === 'object' && hours !== null) {
+                        const hoursObj = hours as { open?: string; close?: string; closed?: boolean };
+                        if (hoursObj.closed) {
+                          hoursDisplay = 'Fermé';
+                        } else {
+                          hoursDisplay = `${hoursObj.open || '08:00'} - ${hoursObj.close || '18:00'}`;
+                        }
                       } else {
-                        hoursDisplay = `${hoursObj.open || '08:00'} - ${hoursObj.close || '18:00'}`;
+                        hoursDisplay = 'Non défini';
                       }
-                    } else {
-                      hoursDisplay = 'Non défini';
-                    }
 
-                    const isClosed = hoursDisplay.toLowerCase() === 'fermé';
+                      const isClosed = hoursDisplay.toLowerCase() === 'fermé';
 
-                    return (
-                      <div key={day} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
-                        <span className="font-medium text-foreground">{dayName}</span>
-                        <span className={`text-sm font-medium ${isClosed ? 'text-red-500' : 'text-muted-foreground'}`}>
-                          {hoursDisplay}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                      return (
+                        <div key={day} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
+                          <span className="font-medium text-foreground">{dayName}</span>
+                          <span className={`text-sm font-medium ${isClosed ? 'text-red-500' : 'text-muted-foreground'}`}>
+                            {hoursDisplay}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Clock className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-muted-foreground">Horaires non renseignés</p>
+                    <p className="text-sm text-muted-foreground/70 mt-1">Contactez le prestataire pour connaître ses horaires</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -898,50 +931,89 @@ export default function ServiceDetail() {
           <TabsContent value="reviews">
             <Card className="rounded-2xl border-0 shadow-md">
               <CardContent className="p-5 md:p-6">
-                {reviews.length === 0 ? (
+                {reviews.length === 0 && !showReviewForm ? (
                   <div className="text-center py-10">
                     <Star className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-muted-foreground mb-4">Aucun avis pour le moment</p>
-                    <Button variant="outline" className="rounded-xl">
+                    <Button variant="outline" className="rounded-xl" onClick={() => {
+                      if (!user) {
+                        toast.error('Veuillez vous connecter');
+                        navigate('/auth');
+                        return;
+                      }
+                      setShowReviewForm(true);
+                    }}>
                       Soyez le premier à donner votre avis
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-5">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="border-b border-border/50 pb-5 last:border-0 last:pb-0">
-                        <div className="flex items-start gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={review.user_avatar} />
-                            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                              {review.user_name[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-semibold text-foreground text-sm">{review.user_name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(review.created_at).toLocaleDateString('fr-FR')}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-0.5 mb-2">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-3.5 h-3.5 ${
-                                    i < review.rating
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-muted-foreground/30'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <p className="text-muted-foreground text-sm leading-relaxed">{review.comment}</p>
-                          </div>
+                  <>
+                    {/* Review form */}
+                    {!showReviewForm && user && !isOwner && (
+                      <div className="mb-4">
+                        <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setShowReviewForm(true)}>
+                          Laisser un avis
+                        </Button>
+                      </div>
+                    )}
+
+                    {showReviewForm && (
+                      <div className="mb-6 p-4 rounded-xl bg-muted/50 space-y-3">
+                        <p className="font-semibold text-sm">Votre avis</p>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button key={star} onClick={() => setReviewRating(star)}>
+                              <Star className={`w-6 h-6 ${star <= reviewRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}`} />
+                            </button>
+                          ))}
+                        </div>
+                        <Textarea
+                          placeholder="Décrivez votre expérience..."
+                          value={reviewComment}
+                          onChange={(e) => setReviewComment(e.target.value)}
+                          rows={3}
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleSubmitReview} disabled={submittingReview} className="rounded-xl">
+                            {submittingReview ? 'Envoi...' : 'Envoyer'}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setShowReviewForm(false)} className="rounded-xl">
+                            Annuler
+                          </Button>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    )}
+
+                    {/* Existing reviews */}
+                    <div className="space-y-5">
+                      {reviews.map((review) => (
+                        <div key={review.id} className="border-b border-border/50 pb-5 last:border-0 last:pb-0">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src={review.user_avatar} />
+                              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                                {review.user_name[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-semibold text-foreground text-sm">{review.user_name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(review.created_at).toLocaleDateString('fr-FR')}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-0.5 mb-2">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}`} />
+                                ))}
+                              </div>
+                              <p className="text-muted-foreground text-sm leading-relaxed">{review.comment}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -959,13 +1031,7 @@ export default function ServiceDetail() {
               </div>
               {isOwner && (
                 <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                    disabled={uploadingImage}
-                  />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
                   <Button asChild variant="outline" size="sm" disabled={uploadingImage} className="rounded-xl">
                     <span>
                       {uploadingImage ? (
@@ -984,17 +1050,9 @@ export default function ServiceDetail() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {galleryImages.map((img) => (
                   <div key={img.id} className="relative group rounded-2xl overflow-hidden aspect-square bg-muted shadow-sm">
-                    <img
-                      src={img.image_url}
-                      alt={img.caption || 'Photo du service'}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      loading="lazy"
-                    />
+                    <img src={img.image_url} alt={img.caption || 'Photo du service'} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
                     {isOwner && (
-                      <button
-                        onClick={() => handleDeleteGalleryImage(img.id)}
-                        className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
+                      <button onClick={() => handleDeleteGalleryImage(img.id)} className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/80 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
@@ -1006,9 +1064,7 @@ export default function ServiceDetail() {
                 <CardContent className="p-8 text-center">
                   <Camera className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
                   <p className="text-muted-foreground mb-1">Aucune photo pour le moment</p>
-                  <p className="text-sm text-muted-foreground/70">
-                    Ajoutez des photos pour attirer plus de clients
-                  </p>
+                  <p className="text-sm text-muted-foreground/70">Ajoutez des photos pour attirer plus de clients</p>
                 </CardContent>
               </Card>
             ) : null}
@@ -1026,11 +1082,7 @@ export default function ServiceDetail() {
             {menuCategories.length > 0 && (
               <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
                 {menuCategories.map((category) => (
-                  <Badge
-                    key={category.id}
-                    variant="secondary"
-                    className="whitespace-nowrap px-4 py-1.5 rounded-full font-medium"
-                  >
+                  <Badge key={category.id} variant="secondary" className="whitespace-nowrap px-4 py-1.5 rounded-full font-medium">
                     {category.icon && <span className="mr-1">{category.icon}</span>}
                     {category.name}
                   </Badge>
@@ -1044,36 +1096,22 @@ export default function ServiceDetail() {
                   <div className="flex">
                     <div className="w-28 h-28 flex-shrink-0 bg-muted">
                       {item.image_url ? (
-                        <img
-                          src={item.image_url}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl bg-primary/5">
-                          🍽️
-                        </div>
+                        <div className="w-full h-full flex items-center justify-center text-3xl bg-primary/5">🍽️</div>
                       )}
                     </div>
-
                     <CardContent className="p-3 flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <h3 className="font-semibold text-foreground line-clamp-1 text-sm">
-                            {item.name}
-                          </h3>
+                          <h3 className="font-semibold text-foreground line-clamp-1 text-sm">{item.name}</h3>
                           {item.is_featured && (
-                            <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5">
-                              ⭐
-                            </Badge>
+                            <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5">⭐</Badge>
                           )}
                         </div>
                         {item.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">
-                            {item.description}
-                          </p>
+                          <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">{item.description}</p>
                         )}
-
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {item.spicy_level && item.spicy_level > 0 && (
                             <div className="flex items-center text-accent">
@@ -1083,28 +1121,18 @@ export default function ServiceDetail() {
                             </div>
                           )}
                           {item.dietary_tags?.map((tag, i) => (
-                            <Badge key={i} variant="outline" className="text-[10px] rounded-full px-1.5">
-                              {tag}
-                            </Badge>
+                            <Badge key={i} variant="outline" className="text-[10px] rounded-full px-1.5">{tag}</Badge>
                           ))}
                           {item.preparation_time && (
                             <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                              <Clock className="w-3 h-3" />
-                              {item.preparation_time}min
+                              <Clock className="w-3 h-3" />{item.preparation_time}min
                             </span>
                           )}
                         </div>
                       </div>
-
                       <div className="flex items-center justify-between mt-2">
-                        <span className="text-base font-bold text-primary">
-                          {item.price.toLocaleString()} FG
-                        </span>
-                        <Button
-                          size="sm"
-                          onClick={handleOrderFromRestaurant}
-                          className="h-8 rounded-lg text-xs bg-accent hover:bg-accent/90 text-accent-foreground"
-                        >
+                        <span className="text-base font-bold text-primary">{item.price.toLocaleString()} FG</span>
+                        <Button size="sm" onClick={handleOrderFromRestaurant} className="h-8 rounded-lg text-xs bg-accent hover:bg-accent/90 text-accent-foreground">
                           Commander
                         </Button>
                       </div>
@@ -1115,11 +1143,7 @@ export default function ServiceDetail() {
             </div>
 
             <div className="text-center mt-5">
-              <Button
-                variant="outline"
-                onClick={handleOrderFromRestaurant}
-                className="w-full md:w-auto rounded-xl h-12 font-semibold"
-              >
+              <Button variant="outline" onClick={handleOrderFromRestaurant} className="w-full md:w-auto rounded-xl h-12 font-semibold">
                 <UtensilsCrossed className="w-4 h-4 mr-2" />
                 Voir le menu complet et commander
               </Button>

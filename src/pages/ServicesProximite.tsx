@@ -38,35 +38,56 @@ interface ProfessionalService {
 
 const RADIUS_KM = 20;
 
+/**
+ * Single source of truth for category filters.
+ * The `id` matches the `service_types.code` values stored in the database,
+ * AND the `?type=` values sent from Proximite.tsx.
+ */
+const SERVICE_CATEGORIES = [
+  { id: "all", name: "Tous", icon: "🏪" },
+  { id: "restaurant", name: "Restaurants", icon: "🍽️" },
+  { id: "beaute", name: "Beauté & Coiffure", icon: "💇" },
+  { id: "reparation", name: "Réparation", icon: "🔧" },
+  { id: "menage", name: "Nettoyage & Ménage", icon: "✨" },
+  { id: "location", name: "Immobilier", icon: "🏢" },
+  { id: "education", name: "Éducation & Formation", icon: "🎓" },
+  { id: "media", name: "Photo & Vidéo", icon: "📸" },
+  { id: "sport", name: "Sport & Fitness", icon: "🏋️" },
+  { id: "sante", name: "Santé & Bien-être", icon: "🏥" },
+  { id: "informatique", name: "Informatique & Tech", icon: "💻" },
+  { id: "construction", name: "Construction & BTP", icon: "🏗️" },
+  { id: "agriculture", name: "Agriculture", icon: "🌾" },
+  { id: "freelance", name: "Services Pro", icon: "💼" },
+  { id: "maison", name: "Maison & Déco", icon: "🏠" },
+  { id: "ecommerce", name: "Boutique / E-commerce", icon: "🛍️" },
+  { id: "vtc", name: "Transport VTC", icon: "🚗" },
+  { id: "livraison", name: "Livraison", icon: "📦" },
+];
+
 export default function ServicesProximite() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { userPosition, positionReady, usingRealLocation } = useGeoDistance();
   const [services, setServices] = useState<ProfessionalService[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("type") || "all");
-  
+
+  // Sync selectedCategory with URL ?type= param
+  const selectedCategory = searchParams.get("type") || "all";
+
+  const setSelectedCategory = useCallback((cat: string) => {
+    if (cat === "all") {
+      searchParams.delete("type");
+    } else {
+      searchParams.set("type", cat);
+    }
+    setSearchParams(searchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   // Stabiliser la position pour éviter les re-renders infinis
   const positionRef = useRef({ lat: userPosition.latitude, lng: userPosition.longitude });
   const loadingRef = useRef(false);
   const hasLoadedRef = useRef(false);
-
-  const categories = [
-    { id: "all", name: "Tous", icon: "🏪" },
-    { id: "restaurant", name: "Restaurants", icon: "🍽️" },
-    { id: "beaute", name: "Beauté & Coiffure", icon: "💇" },
-    { id: "reparation", name: "Réparation", icon: "🔧" },
-    { id: "nettoyage", name: "Nettoyage", icon: "✨" },
-    { id: "immobilier", name: "Immobilier", icon: "🏢" },
-    { id: "formation", name: "Formation", icon: "🎓" },
-    { id: "photo-video", name: "Photo & Vidéo", icon: "📸" },
-    { id: "sport", name: "Sport & Fitness", icon: "🏋️" },
-    { id: "sante", name: "Santé", icon: "🏥" },
-    { id: "education", name: "Éducation", icon: "📚" },
-    { id: "commerce", name: "Commerce", icon: "🛍️" },
-    { id: "service", name: "Autres Services", icon: "⚙️" },
-  ];
 
   useEffect(() => {
     document.title = "Services de Proximité | 224SOLUTIONS";
@@ -79,7 +100,6 @@ export default function ServicesProximite() {
     try {
       setLoading(true);
       
-      // Filtrer dès la requête: uniquement les services actifs avec GPS ou récupérable
       const { data, error } = await supabase
         .from('professional_services')
         .select(`
@@ -135,7 +155,7 @@ export default function ServicesProximite() {
               return s;
             });
 
-            // Mettre à jour en arrière-plan dans la DB pour que le GPS soit persisté
+            // Mettre à jour en arrière-plan dans la DB
             for (const s of servicesWithoutGps) {
               const vendorGps = vendorGpsMap.get((s as any).user_id);
               if (vendorGps) {
@@ -159,7 +179,7 @@ export default function ServicesProximite() {
           const hasValidCoords = 
             s.latitude != null && s.longitude != null &&
             Number.isFinite(lat_val) && Number.isFinite(lng_val) &&
-            !(lat_val === 0 && lng_val === 0); // Exclure 0,0 (coordonnées invalides)
+            !(lat_val === 0 && lng_val === 0);
           
           const distance = hasValidCoords 
             ? calculateDistance(lat, lng, lat_val, lng_val) 
@@ -167,15 +187,13 @@ export default function ServicesProximite() {
           return { ...s, distance };
         })
         .filter((s) => {
-          // Exclure les services sans coordonnées GPS
           if (s.distance === null) return false;
-          // Garder uniquement ceux dans le rayon défini
           return s.distance <= RADIUS_KM;
         });
       
       console.log(`📍 Proximité: ${beforeFilterCount} services trouvés, ${list.length} dans le rayon de ${RADIUS_KM}km`);
 
-      // Tri: services avec distance d'abord (plus proches en premier), puis sans GPS à la fin
+      // Tri: plus proches en premier
       list.sort((a, b) => {
         if (a.distance !== null && b.distance !== null) {
           if (a.distance === b.distance) return (b.rating || 0) - (a.rating || 0);
@@ -187,7 +205,6 @@ export default function ServicesProximite() {
       });
 
       setServices(list);
-      console.log(`📍 Services chargés: ${list.length}, position: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
     } catch (error) {
       console.error('Erreur chargement services:', error);
       toast.error('Erreur lors du chargement des services');
@@ -197,7 +214,7 @@ export default function ServicesProximite() {
     }
   }, []);
 
-  // Charger une seule fois quand positionReady, puis re-charger seulement si la position change significativement
+  // Charger une seule fois quand positionReady, puis re-charger si la position change de +100m
   useEffect(() => {
     if (!positionReady) return;
     
@@ -206,7 +223,6 @@ export default function ServicesProximite() {
     const prevLat = positionRef.current.lat;
     const prevLng = positionRef.current.lng;
     
-    // Ne re-charger que si c'est le premier chargement OU si la position a changé de plus de 100m
     const moved = hasLoadedRef.current 
       ? calculateDistance(prevLat, prevLng, newLat, newLng) > 0.1 
       : true;
@@ -221,12 +237,11 @@ export default function ServicesProximite() {
   const filteredServices = useMemo(() => {
     let result = services;
 
-    // Filtrer par catégorie
+    // Filtrer par catégorie — match exact sur service_types.code
     if (selectedCategory !== 'all') {
       result = result.filter((s) => {
-        const category = s.service_type?.category?.toLowerCase() || '';
         const code = s.service_type?.code?.toLowerCase() || '';
-        return category.includes(selectedCategory) || code.includes(selectedCategory);
+        return code === selectedCategory.toLowerCase();
       });
     }
 
@@ -296,7 +311,7 @@ export default function ServicesProximite() {
       {/* Catégories */}
       <section className="px-4 py-4 border-b border-border bg-card">
         <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {categories.map((category) => (
+          {SERVICE_CATEGORIES.map((category) => (
             <Button
               key={category.id}
               variant={selectedCategory === category.id ? "default" : "outline"}
@@ -386,7 +401,6 @@ export default function ServicesProximite() {
                     <p className="text-xs text-muted-foreground line-clamp-2">{service.description}</p>
                   )}
 
-                  {/* Rating - seulement si disponible (pas de valeur par défaut fake) */}
                   {(service.rating !== null && service.rating !== undefined && service.rating > 0) && (
                     <div className="flex items-center gap-2 pt-1">
                       <div className="flex items-center gap-1">
