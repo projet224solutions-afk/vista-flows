@@ -28,7 +28,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import PayPalCheckoutButton from '@/components/payment/PayPalCheckoutButton';
+import StripeCheckoutButton from '@/components/payment/StripeCheckoutButton';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { formatCurrency } from '@/lib/formatters';
 
