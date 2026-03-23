@@ -1920,24 +1920,25 @@ export function POSSystem() {
 
       {/* Mobile: Tabs pour basculer entre Produits et Panier */}
       {isMobile && (
-        <div className="bg-card border-b border-border/50 px-2 py-2 sticky top-0 z-30">
+        <div className="bg-card/95 backdrop-blur-sm border-b border-border/50 px-3 py-1.5 sticky top-0 z-30">
           <div className="flex gap-2">
             <Button
               variant={mobileTab === 'products' ? 'default' : 'outline'}
               onClick={() => setMobileTab('products')}
-              className="h-10 flex-1"
+              className="h-9 flex-1 text-xs font-semibold"
             >
-              <Package className="h-4 w-4 mr-2" />
+              <Package className="h-4 w-4 mr-1.5" />
               Produits
             </Button>
             <Button
               variant={mobileTab === 'cart' ? 'default' : 'outline'}
               onClick={() => setMobileTab('cart')}
-              className="h-10 px-4 relative"
+              className="h-9 flex-1 relative text-xs font-semibold"
             >
-              <ShoppingCart className="h-4 w-4" />
+              <ShoppingCart className="h-4 w-4 mr-1.5" />
+              Panier
               {cart.length > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[9px] font-bold bg-destructive text-destructive-foreground">
+                <Badge className="absolute -top-1.5 -right-1.5 h-5 min-w-[20px] p-0 flex items-center justify-center text-[10px] font-bold bg-destructive text-destructive-foreground">
                   {cart.reduce((sum, item) => sum + item.quantity, 0)}
                 </Badge>
               )}
