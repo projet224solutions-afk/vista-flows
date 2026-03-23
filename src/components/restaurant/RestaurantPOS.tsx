@@ -17,6 +17,7 @@ import { useRestaurantMenu, type MenuItem } from '@/hooks/useRestaurantMenu';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, Receipt,
   UtensilsCrossed, MapPin, Truck, ShoppingBag, Printer,
