@@ -34,35 +34,70 @@ export function useVendorCertification(vendorId: string | undefined): UseVendorC
       setLoading(true);
       setError(null);
 
-      // Récupérer la vraie certification depuis vendor_certifications
-      const { data: certification, error: certError } = await supabase
-        .from('vendor_certifications')
-        .select('*')
-        .eq('vendor_id', vendorId)
-        .maybeSingle();
+      const fetchByCertificationVendorId = async (certVendorId: string) => {
+        const { data, error } = await supabase
+          .from('vendor_certifications')
+          .select('*')
+          .eq('vendor_id', certVendorId)
+          .maybeSingle();
 
-      if (certError && certError.code !== 'PGRST116') {
-        console.warn('Could not fetch vendor certification:', certError);
-        setError(certError);
-        setCertification(null);
-        setLoading(false);
-        return;
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+
+        return data;
+      };
+
+      // 1) Cas nominal: vendorId correspond directement à vendor_certifications.vendor_id
+      let certificationRecord = await fetchByCertificationVendorId(vendorId);
+
+      // 2) Fallback: certaines certifications sont stockées avec le user_id du vendeur
+      if (!certificationRecord) {
+        const { data: vendorById, error: vendorByIdError } = await supabase
+          .from('vendors')
+          .select('user_id')
+          .eq('id', vendorId)
+          .maybeSingle();
+
+        if (vendorByIdError && vendorByIdError.code !== 'PGRST116') {
+          console.warn('Could not resolve vendor user_id from vendors.id:', vendorByIdError);
+        }
+
+        if (vendorById?.user_id) {
+          certificationRecord = await fetchByCertificationVendorId(vendorById.user_id);
+        }
       }
 
-      // Si pas de certification trouvée (PGRST116 = not found), c'est OK
-      if (certification) {
+      // 3) Fallback inverse: vendorId reçu = user_id (sécurité/compatibilité)
+      if (!certificationRecord) {
+        const { data: vendorByUserId, error: vendorByUserIdError } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', vendorId)
+          .maybeSingle();
+
+        if (vendorByUserIdError && vendorByUserIdError.code !== 'PGRST116') {
+          console.warn('Could not resolve vendor id from vendors.user_id:', vendorByUserIdError);
+        }
+
+        if (vendorByUserId?.id) {
+          certificationRecord = await fetchByCertificationVendorId(vendorByUserId.id);
+        }
+      }
+
+      if (certificationRecord) {
         setCertification({
-          id: certification.id,
-          vendor_id: certification.vendor_id,
-          status: certification.status as VendorCertificationStatus,
-          verified_at: certification.verified_at,
-          kyc_verified_at: certification.kyc_verified_at,
-          kyc_status: certification.kyc_status,
-          last_status_change: certification.last_status_change,
-          internal_notes: certification.internal_notes,
-          rejection_reason: certification.rejection_reason,
-          created_at: certification.created_at,
-          updated_at: certification.updated_at
+          id: certificationRecord.id,
+          vendor_id: certificationRecord.vendor_id,
+          status: certificationRecord.status as VendorCertificationStatus,
+          verified_at: certificationRecord.verified_at,
+          kyc_verified_at: certificationRecord.kyc_verified_at,
+          kyc_status: certificationRecord.kyc_status,
+          last_status_change: certificationRecord.last_status_change,
+          internal_notes: certificationRecord.internal_notes,
+          rejection_reason: certificationRecord.rejection_reason,
+          created_at: certificationRecord.created_at,
+          updated_at: certificationRecord.updated_at
         });
       } else {
         setCertification(null);
@@ -70,6 +105,7 @@ export function useVendorCertification(vendorId: string | undefined): UseVendorC
     } catch (err) {
       console.error('Error fetching vendor certification:', err);
       setError(err as Error);
+      setCertification(null);
     } finally {
       setLoading(false);
     }
