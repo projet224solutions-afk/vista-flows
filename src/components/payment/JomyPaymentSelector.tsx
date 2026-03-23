@@ -145,13 +145,13 @@ export function JomyPaymentSelector({
       provider: 'wallet' as const
     }] : []),
     {
-      id: 'PAYPAL' as const,
+      id: 'CARD' as const,
       name: 'Carte Bancaire',
-      description: 'Paiement sécurisé par carte VISA / Mastercard via PayPal',
+      description: 'Paiement sécurisé par carte VISA / Mastercard via Stripe',
       icon: <CreditCard className="h-5 w-5 text-blue-600" />,
       iconBg: 'bg-blue-100',
       requiresPhone: false,
-      provider: 'paypal' as const
+      provider: 'stripe' as const
     },
     // ChapChapPay - Orange Money (prioritaire)
     {
