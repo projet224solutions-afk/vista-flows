@@ -154,6 +154,7 @@ export default function PDGEscrowManagement() {
 
   return (
     <>
+      <Tabs defaultValue="transactions" className="space-y-6">
       <div className="space-y-6">
         {/* En-tête */}
         <div className="flex items-center justify-between">
