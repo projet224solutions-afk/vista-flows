@@ -165,10 +165,10 @@ export const VendorPaymentModal = ({
               </div>
 
               <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted cursor-pointer">
-                <RadioGroupItem value="paypal" id="paypal" />
-                <Label htmlFor="paypal" className="flex items-center gap-2 cursor-pointer flex-1">
-                  <DollarSign className="h-4 w-4" />
-                  PayPal / Carte via PayPal
+                <RadioGroupItem value="stripe" id="stripe" />
+                <Label htmlFor="stripe" className="flex items-center gap-2 cursor-pointer flex-1">
+                  <CreditCard className="h-4 w-4" />
+                  Carte bancaire (Stripe)
                 </Label>
               </div>
             </RadioGroup>
