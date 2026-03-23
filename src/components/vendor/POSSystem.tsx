@@ -1708,9 +1708,9 @@ export function POSSystem() {
     <div className="flex flex-col h-[100dvh] md:h-full w-full overflow-hidden bg-transparent max-w-full -m-2 sm:-m-3 md:-m-6">
       {/* En-tête professionnel - Compact sur mobile */}
       <div className="border-b border-border/50 flex-shrink-0 w-full max-w-full">
-        <div className="flex items-center justify-between p-2 sm:p-3 md:p-6 max-w-full overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-2 md:p-6 max-w-full overflow-hidden">
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-primary to-primary/80 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+            <div className="w-8 h-8 md:w-14 md:h-14 bg-gradient-to-br from-primary to-primary/80 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
               {settings?.logo_url ? (
                 <img
                   src={settings.logo_url}
@@ -1718,14 +1718,14 @@ export function POSSystem() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Store className="h-5 w-5 md:h-7 md:w-7 text-primary-foreground" />
+                <Store className="h-4 w-4 md:h-7 md:w-7 text-primary-foreground" />
               )}
             </div>
-            <div>
-              <h1 className="text-base md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent truncate max-w-[140px] md:max-w-none">
-                {companyName}
+            <div className="min-w-0">
+              <h1 className="text-sm md:text-2xl font-bold text-foreground truncate max-w-[120px] md:max-w-none">
+                POS
               </h1>
-              <p className="text-[10px] md:text-sm text-muted-foreground font-medium hidden sm:block">Point de Vente</p>
+              <p className="text-[10px] md:text-sm text-muted-foreground font-medium truncate max-w-[120px] md:max-w-none">{vendorProfile?.business_name || 'Point de Vente'}</p>
             </div>
           </div>
 
