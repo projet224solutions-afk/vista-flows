@@ -1,9 +1,19 @@
 import { memo, useCallback } from "react";
-import { MapPin, Star, Store } from "lucide-react";
+import { MapPin, Star, Store, CheckCircle2 } from "lucide-react";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDistance } from "@/hooks/useGeoDistance";
+import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
+
+function VendorCertBadgeSmall({ vendorId }: { vendorId: string }) {
+  const { certification } = useVendorCertification(vendorId);
+  if (!certification) return null;
+  return <CertifiedIcon status={certification.status} className="w-3.5 h-3.5 shrink-0" />;
+}
+
+
 
 interface VendorCardProps {
   vendor: {
@@ -83,8 +93,9 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
       </div>
 
       <div className="flex-1 space-y-2">
-        <h2 className="font-semibold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+        <h2 className="font-semibold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors flex items-center gap-1">
           {vendor.business_name}
+          <VendorCertBadgeSmall vendorId={vendor.id} />
         </h2>
 
         {(vendor.city || vendor.neighborhood || vendor.address) && (

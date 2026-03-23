@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck, AlertTriangle, Laptop, ExternalLink } from "lucide-react";
+import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck, AlertTriangle, Laptop, ExternalLink, CheckCircle2 } from "lucide-react";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,15 @@ import { useVendorDigitalProducts } from "@/hooks/useHasDigitalProducts";
 import { trackShopVisit } from "@/services/analyticsTrackingService";
 import SEOHead from "@/components/SEOHead";
 import { getCurrencyForCountry } from "@/data/countryMappings";
+import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { CertifiedVendorBadge } from "@/components/vendor/CertifiedVendorBadge";
+
+// Mini composant pour afficher le badge de certification d'un vendeur
+function VendorCertBadgeInline({ vendorId }: { vendorId: string }) {
+  const { certification } = useVendorCertification(vendorId);
+  if (!certification || certification.status !== 'CERTIFIE') return null;
+  return <CertifiedVendorBadge status={certification.status} verifiedAt={certification.verified_at} />;
+}
 
 interface Vendor {
   id: string;
@@ -383,7 +392,10 @@ export default function VendorShop() {
       <div className="px-4 pt-16 pb-6">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-foreground mb-1">{vendor.business_name}</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-2xl font-bold text-foreground">{vendor.business_name}</h2>
+              <VendorCertBadgeInline vendorId={vendor.id} />
+            </div>
             
             <div className="flex flex-wrap gap-2 mb-3">
               {vendor.business_type && (

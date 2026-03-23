@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState, useMemo, useRef } from "react";
-import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink, Play, Pause } from "lucide-react";
+import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink, Play, Pause, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -15,6 +15,15 @@ import SEOHead from "@/components/SEOHead";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 import { usePriceConverter } from "@/hooks/usePriceConverter";
 import { getCurrencyForCountry } from "@/data/countryMappings";
+import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
+
+// Mini composant pour afficher l'icône certifié à côté du nom vendeur
+function VendorCertBadge({ vendorId }: { vendorId: string }) {
+  const { certification } = useVendorCertification(vendorId);
+  if (!certification) return null;
+  return <CertifiedIcon status={certification.status} className="w-4 h-4" />;
+}
 
 interface Product {
   id: string;
@@ -457,8 +466,9 @@ export default function ProductDetail() {
                       to={`/boutique/${product.vendors.shop_slug || product.vendors.id}`}
                       className="flex items-center justify-between gap-2 group hover:text-primary transition-colors"
                     >
-                      <span className="text-foreground group-hover:text-primary truncate">
+                      <span className="text-foreground group-hover:text-primary truncate flex items-center gap-1.5">
                         {product.vendors.business_name}
+                        <VendorCertBadge vendorId={product.vendor_id} />
                       </span>
                       <ExternalLink className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-primary" />
                     </Link>
