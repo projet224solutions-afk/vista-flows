@@ -948,7 +948,7 @@ export default function LivreurDashboard() {
                 <Button 
                   onClick={() => {
                     if (currentDelivery) {
-                      processDeliveryPayment(currentDelivery.id, 'wallet', currentDelivery.delivery_fee || 0);
+                      processDeliveryPayment(currentDelivery.id, 'wallet');
                     }
                     setShowPaymentModal(false);
                     toast.success('Paiement wallet enregistré');
