@@ -11,19 +11,18 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: req.headers.get('Authorization')! },
+      },
+    });
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      console.error('[escrow-dispute] Unauthorized:', userError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -40,52 +39,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log('[escrow-dispute] Opening dispute for escrow:', escrow_id);
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     // Get user profile to check role
-    const { data: profile } = await supabaseClient
+    const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('role')
+      .select('role, full_name, phone, email')
       .eq('id', user.id)
       .single();
 
-    const isAdmin = profile?.role === 'admin' || profile?.role === 'ceo';
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'ceo' || profile?.role === 'pdg';
 
     // Get escrow transaction details
-    const { data: escrow, error: escrowFetchError } = await supabaseClient
+    const { data: escrow, error: escrowFetchError } = await supabaseAdmin
       .from('escrow_transactions')
-      .select('*')
+      .select('id, payer_id, receiver_id, status, dispute_status, order_id, amount, currency')
       .eq('id', escrow_id)
       .single();
 
     if (escrowFetchError || !escrow) {
-      console.error('[escrow-dispute] Escrow not found:', escrowFetchError);
       return new Response(JSON.stringify({ error: 'Escrow transaction not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Get vendor details separately
-    const { data: vendor, error: vendorError } = await supabaseClient
-      .from('vendors')
-      .select('user_id')
-      .eq('id', escrow.receiver_id)
-      .single();
-
-    console.log('[escrow-dispute] Permission check:', {
-      user_id: user.id,
-      payer_id: escrow.payer_id,
-      receiver_id: escrow.receiver_id,
-      vendor_user_id: vendor?.user_id,
-      vendor_error: vendorError,
-      is_admin: isAdmin,
-      profile_role: profile?.role
-    });
-
     // Check if status allows dispute
     if (!['pending', 'held'].includes(escrow.status)) {
-      console.log('[escrow-dispute] Cannot dispute - status is:', escrow.status);
       return new Response(JSON.stringify({ 
         error: escrow.status === 'dispute' 
           ? 'Un litige est déjà ouvert pour cette transaction'
@@ -96,91 +76,116 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check permissions - admin/ceo, payer, or receiver (vendor) can open a dispute
-    const isPayerOrReceiver = user.id === escrow.payer_id || (vendor?.user_id && user.id === vendor.user_id);
-    
-    if (!isAdmin && !isPayerOrReceiver) {
-      console.error('[escrow-dispute] Authorization failed:', {
-        user_id: user.id,
-        is_admin: isAdmin,
-        is_payer: user.id === escrow.payer_id,
-        is_vendor: vendor?.user_id && user.id === vendor.user_id,
-        vendor_exists: !!vendor
+    if (escrow.dispute_status === 'open') {
+      return new Response(JSON.stringify({ error: 'Un litige est déjà ouvert' }), {
+        status: 409,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-      return new Response(JSON.stringify({ 
-        error: 'Not authorized to dispute this escrow',
-        debug: {
-          user_id: user.id,
-          payer_id: escrow.payer_id,
-          receiver_id: escrow.receiver_id,
-          vendor_found: !!vendor,
-          vendor_user_id: vendor?.user_id
-        }
-      }), {
+    }
+
+    // Check permissions
+    const isBuyer = user.id === escrow.payer_id;
+    const isSeller = user.id === escrow.receiver_id;
+    
+    if (!isAdmin && !isBuyer && !isSeller) {
+      return new Response(JSON.stringify({ error: 'Not authorized to dispute this escrow' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Update escrow status to dispute
-    const { error: updateError } = await supabaseClient
+    const initiatorRole = isBuyer ? 'buyer' : isSeller ? 'seller' : 'admin';
+    const disputeReason = reason || 'Litige ouvert';
+
+    // Create escrow_disputes record
+    const { data: dispute, error: disputeError } = await supabaseAdmin
+      .from('escrow_disputes')
+      .insert({
+        escrow_id,
+        initiator_user_id: user.id,
+        initiator_role: initiatorRole,
+        reason: disputeReason,
+        status: 'open',
+      })
+      .select('id')
+      .single();
+
+    if (disputeError) {
+      console.error('[escrow-dispute] Error creating dispute record:', disputeError);
+      throw disputeError;
+    }
+
+    // Update escrow status
+    const { error: updateError } = await supabaseAdmin
       .from('escrow_transactions')
       .update({ 
         status: 'dispute',
-        dispute_reason: reason || 'Dispute opened',
+        dispute_status: 'open',
         updated_at: new Date().toISOString()
       })
       .eq('id', escrow_id);
 
     if (updateError) {
       console.error('[escrow-dispute] Error updating escrow:', updateError);
-      return new Response(JSON.stringify({ error: updateError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      throw updateError;
     }
 
     // Log the action
-    await supabaseClient.from('escrow_logs').insert({
-      escrow_id: escrow_id,
+    await supabaseAdmin.from('escrow_logs').insert({
+      escrow_id,
       action: 'dispute_opened',
       performed_by: user.id,
-      note: reason || 'Litige ouvert',
-      metadata: { reason, opened_by_role: profile?.role }
+      note: disputeReason,
+      metadata: { reason: disputeReason, opened_by_role: initiatorRole, dispute_id: dispute.id }
     });
 
-    // Send notifications
-    const notifications = [];
-    
-    // Notify the receiver (vendor)
-    if (vendor?.user_id) {
-      notifications.push({
-        user_id: vendor.user_id,
+    // Notify PDG/Admins
+    const { data: admins } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .in('role', ['admin', 'pdg']);
+
+    if (admins && admins.length > 0) {
+      const adminNotifications = admins
+        .filter((a: any) => a.id !== user.id)
+        .map((admin: any) => ({
+          user_id: admin.id,
+          title: '🚨 Litige Escrow ouvert',
+          message: `${profile?.full_name || 'Utilisateur'} (${initiatorRole === 'buyer' ? 'Acheteur' : initiatorRole === 'seller' ? 'Vendeur' : 'Admin'}) a ouvert un litige. Montant: ${escrow.amount?.toLocaleString()} ${escrow.currency || 'GNF'}. Raison: ${disputeReason}`,
+          type: 'escrow_dispute',
+          metadata: {
+            dispute_id: dispute.id,
+            escrow_id,
+            order_id: escrow.order_id,
+            initiator_id: user.id,
+            initiator_role: initiatorRole,
+            initiator_name: profile?.full_name,
+            initiator_phone: profile?.phone,
+            initiator_email: profile?.email,
+            amount: escrow.amount,
+            currency: escrow.currency,
+          },
+        }));
+      if (adminNotifications.length > 0) {
+        await supabaseAdmin.from('notifications').insert(adminNotifications);
+      }
+    }
+
+    // Notify the other party
+    const otherPartyId = isBuyer ? escrow.receiver_id : escrow.payer_id;
+    if (otherPartyId && otherPartyId !== user.id) {
+      await supabaseAdmin.from('notifications').insert({
+        user_id: otherPartyId,
+        title: '⚠️ Litige ouvert sur votre transaction',
+        message: `Un litige a été ouvert sur votre transaction escrow de ${escrow.amount?.toLocaleString()} ${escrow.currency || 'GNF'}. L'équipe de gestion va intervenir.`,
         type: 'escrow_dispute',
-        title: '⚠️ Litige ouvert',
-        body: `Un litige a été ouvert pour votre transaction escrow de ${escrow.amount} ${escrow.currency}`,
-        data: { escrow_id, type: 'escrow_dispute' }
+        metadata: { dispute_id: dispute.id, escrow_id, order_id: escrow.order_id },
       });
     }
 
-    // Notify the payer if admin opened the dispute
-    if (isAdmin && user.id !== escrow.payer_id) {
-      notifications.push({
-        user_id: escrow.payer_id,
-        type: 'escrow_dispute',
-        title: '⚠️ Litige ouvert',
-        body: `Un litige a été ouvert pour votre transaction escrow de ${escrow.amount} ${escrow.currency}`,
-        data: { escrow_id, type: 'escrow_dispute' }
-      });
-    }
+    console.log(`✅ [escrow-dispute] Dispute ${dispute.id} opened on escrow ${escrow_id} by ${initiatorRole}`);
 
-    if (notifications.length > 0) {
-      await supabaseClient.from('communication_notifications').insert(notifications);
-    }
-
-    console.log('[escrow-dispute] Dispute opened successfully:', escrow_id);
-
-    return new Response(JSON.stringify({ success: true, escrow_id }), {
+    return new Response(JSON.stringify({ success: true, escrow_id, dispute_id: dispute.id }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
