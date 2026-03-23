@@ -230,6 +230,7 @@ export default function PDGEscrowManagement() {
           </Card>
         </div>
 
+        <TabsContent value="transactions">
         {/* Filtres */}
         <Card>
           <CardContent className="p-4">
