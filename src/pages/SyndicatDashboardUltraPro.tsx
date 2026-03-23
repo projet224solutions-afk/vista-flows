@@ -359,40 +359,42 @@ export default function SyndicatDashboardUltraPro() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
-                                            <div className="flex items-center gap-3">
-                                                <UserPlus className="w-8 h-8 text-green-600" />
-                                                <div>
-                                                    <p className="font-semibold text-gray-800">Nouveau taxi-motard ajouté</p>
-                                                    <p className="text-sm text-gray-600">Ibrahima Ndiaye - TM-2025-002</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-xs text-gray-500">Il y a 2h</span>
+                                    {syndicateMembers.length === 0 && taxiMotards.length === 0 ? (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                            <p>Aucune activité récente</p>
+                                            <p className="text-sm">Les données apparaîtront ici quand le bureau sera actif</p>
                                         </div>
-
-                                        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200">
-                                            <div className="flex items-center gap-3">
-                                                <HandCoins className="w-8 h-8 text-blue-600" />
-                                                <div>
-                                                    <p className="font-semibold text-gray-800">Cotisation reçue</p>
-                                                    <p className="text-sm text-gray-600">Amadou Ba - 5,000 FCFA</p>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {syndicateMembers.slice(0, 2).map((m) => (
+                                                <div key={m.id} className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
+                                                    <div className="flex items-center gap-3">
+                                                        <UserPlus className="w-8 h-8 text-green-600" />
+                                                        <div>
+                                                            <p className="font-semibold text-gray-800">{m.name}</p>
+                                                            <p className="text-sm text-gray-600">{getRoleLabel(m.role)} - {m.badge_number || 'N/A'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Badge className={m.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
+                                                        {m.status === 'active' ? 'Actif' : 'Inactif'}
+                                                    </Badge>
                                                 </div>
-                                            </div>
-                                            <span className="text-xs text-gray-500">Il y a 4h</span>
-                                        </div>
-
-                                        <div className="flex items-center justify-between p-4 bg-purple-50 rounded-xl border border-purple-200">
-                                            <div className="flex items-center gap-3">
-                                                <QrCode className="w-8 h-8 text-purple-600" />
-                                                <div>
-                                                    <p className="font-semibold text-gray-800">Badge généré</p>
-                                                    <p className="text-sm text-gray-600">Badge numérique TM-2025-002</p>
+                                            ))}
+                                            {taxiMotards.slice(0, 1).map((d) => (
+                                                <div key={d.id} className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200">
+                                                    <div className="flex items-center gap-3">
+                                                        <Bike className="w-8 h-8 text-blue-600" />
+                                                        <div>
+                                                            <p className="font-semibold text-gray-800">{d.name}</p>
+                                                            <p className="text-sm text-gray-600">{d.plate_number}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Badge className="bg-blue-100 text-blue-700">{d.status}</Badge>
                                                 </div>
-                                            </div>
-                                            <span className="text-xs text-gray-500">Il y a 6h</span>
+                                            ))}
                                         </div>
-                                    </div>
+                                    )}
                                 </CardContent>
                             </Card>
 
