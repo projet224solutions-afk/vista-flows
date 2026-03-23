@@ -95,7 +95,7 @@ export default function BureauDashboard() {
 
       setBureau(bureauData);
 
-      const workersRes = await supabase.from('syndicate_workers').select('*').eq('bureau_id', bureauData.id).eq('is_staff', true);
+      const workersRes = await (supabase as any).from('syndicate_workers').select('*').eq('bureau_id', bureauData.id).eq('is_staff', true);
       const membersRes = await supabase.from('syndicate_workers').select('*').eq('bureau_id', bureauData.id).eq('is_staff', false);
       const motosRes = await supabase.from('vehicles').select('*').eq('bureau_id', bureauData.id);
       const alertsRes = await supabase.from('syndicate_alerts').select('*').eq('bureau_id', bureauData.id).order('created_at', { ascending: false });
