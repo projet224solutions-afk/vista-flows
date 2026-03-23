@@ -64,7 +64,9 @@ export default function SubscriptionManagement() {
   const loadAllSubscriptionsOnMount = async () => {
     try {
       setLoadingSubscriptions(true);
-      const { data, error } = await supabase
+      
+      // 1. Charger les abonnements vendeurs (table subscriptions)
+      const { data: vendorSubs, error: vendorError } = await supabase
         .from('subscriptions')
         .select(`
           id,
@@ -75,48 +77,100 @@ export default function SubscriptionManagement() {
           started_at,
           current_period_end,
           created_at,
+          price_paid_gnf,
           plans (display_name, name)
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (vendorError) throw vendorError;
 
-      const userIds = [...new Set(data?.map(sub => sub.user_id) || [])];
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, email, first_name, last_name, role')
-        .in('id', userIds);
+      // 2. Charger les abonnements services (table service_subscriptions)
+      const { data: serviceSubs, error: serviceError } = await supabase
+        .from('service_subscriptions')
+        .select(`
+          id,
+          user_id,
+          plan_id,
+          status,
+          billing_cycle,
+          started_at,
+          current_period_end,
+          created_at,
+          price_paid_gnf,
+          professional_service_id,
+          service_plans (display_name, name, service_type_id)
+        `)
+        .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (serviceError) throw serviceError;
 
-      const enrichedData = data?.map(sub => ({
+      // 3. Normaliser les deux sources
+      const normalizedVendor = (vendorSubs || []).map(sub => ({
         ...sub,
-        profiles: profiles?.find(p => p.id === sub.user_id)
+        source: 'vendor' as const,
+        plan_display: (sub.plans as any)?.display_name || (sub.plans as any)?.name || 'N/A',
       }));
 
-      const uniqueSubscriptions = enrichedData?.reduce((acc, sub) => {
-        const existingIndex = acc.findIndex(s => s.user_id === sub.user_id);
+      const normalizedService = (serviceSubs || []).map(sub => ({
+        ...sub,
+        source: 'service' as const,
+        plan_display: (sub.service_plans as any)?.display_name || (sub.service_plans as any)?.name || 'N/A',
+      }));
+
+      const allSubs = [...normalizedVendor, ...normalizedService];
+
+      // 4. Récupérer les profils
+      const userIds = [...new Set(allSubs.map(sub => sub.user_id))];
+      let profiles: any[] = [];
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, email, first_name, last_name, role')
+          .in('id', userIds);
+        profiles = profilesData || [];
+      }
+
+      // 5. Enrichir avec profils
+      const enrichedData = allSubs.map(sub => ({
+        ...sub,
+        profiles: profiles.find(p => p.id === sub.user_id),
+        acquisition_type: determineAcquisitionType(sub),
+      }));
+
+      // 6. Garder le plus récent par user
+      const uniqueSubscriptions = enrichedData.reduce((acc, sub) => {
+        const existingIndex = acc.findIndex(s => s.user_id === sub.user_id && s.source === sub.source);
         
         if (existingIndex === -1) {
           acc.push(sub);
         } else {
           const existingDate = new Date(acc[existingIndex].created_at);
           const currentDate = new Date(sub.created_at);
-          
           if (currentDate > existingDate) {
             acc[existingIndex] = sub;
           }
         }
-        
         return acc;
       }, [] as any[]);
 
-      setAllSubscriptions(uniqueSubscriptions || []);
+      setAllSubscriptions(uniqueSubscriptions);
     } catch (error) {
       console.error('Error loading subscriptions:', error);
     } finally {
       setLoadingSubscriptions(false);
     }
+  };
+
+  // Déterminer si l'abonnement est offert ou acheté
+  const determineAcquisitionType = (sub: any): 'offered' | 'purchased' | 'free' => {
+    // Billing cycle custom ou lifetime = offert par le PDG
+    if (sub.billing_cycle === 'custom' || sub.billing_cycle === 'lifetime') return 'offered';
+    // Prix payé = 0 ou plan gratuit = gratuit
+    if (sub.price_paid_gnf === 0) return 'free';
+    const planName = sub.plan_display?.toLowerCase() || sub.plans?.name?.toLowerCase() || '';
+    if (planName === 'free' || planName === 'gratuit') return 'free';
+    // Sinon = acheté
+    return 'purchased';
   };
 
   const fetchData = async () => {
@@ -175,72 +229,7 @@ export default function SubscriptionManagement() {
   };
 
   const loadAllSubscriptions = async () => {
-    try {
-      setLoadingSubscriptions(true);
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select(`
-          id,
-          user_id,
-          plan_id,
-          status,
-          billing_cycle,
-          started_at,
-          current_period_end,
-          created_at,
-          plans (display_name, name)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Récupérer les profils utilisateurs séparément
-      const userIds = [...new Set(data?.map(sub => sub.user_id) || [])];
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, email, first_name, last_name, role')
-        .in('id', userIds);
-
-      if (profilesError) throw profilesError;
-
-      // Fusionner les données
-      const enrichedData = data?.map(sub => ({
-        ...sub,
-        profiles: profiles?.find(p => p.id === sub.user_id)
-      }));
-
-      // Filtrer pour garder seulement le dernier abonnement par utilisateur
-      const uniqueSubscriptions = enrichedData?.reduce((acc, sub) => {
-        const existingIndex = acc.findIndex(s => s.user_id === sub.user_id);
-        
-        if (existingIndex === -1) {
-          // Pas encore d'abonnement pour cet utilisateur
-          acc.push(sub);
-        } else {
-          // Comparer les dates pour garder le plus récent
-          const existingDate = new Date(acc[existingIndex].created_at);
-          const currentDate = new Date(sub.created_at);
-          
-          if (currentDate > existingDate) {
-            acc[existingIndex] = sub;
-          }
-        }
-        
-        return acc;
-      }, [] as any[]);
-
-      setAllSubscriptions(uniqueSubscriptions || []);
-      setIsSubscriptionsListOpen(true);
-    } catch (error) {
-      console.error('Error loading subscriptions:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de charger les abonnements',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoadingSubscriptions(false);
-    }
+    await loadAllSubscriptionsOnMount();
   };
 
   const handleOpenDialog = (plan: Plan) => {
@@ -573,52 +562,62 @@ export default function SubscriptionManagement() {
         </div>
       </div>
 
-      {/* Statistiques */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={loadAllSubscriptions}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Abonnements</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_subscriptions}</div>
-              <p className="text-xs text-muted-foreground">
-                {stats.active_subscriptions} actifs
-              </p>
-            </CardContent>
-          </Card>
+      {/* Statistiques - Utilise les données chargées */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={loadAllSubscriptions}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Abonnements</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{allSubscriptions.length || stats?.total_subscriptions || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {allSubscriptions.filter(s => s.status === 'active').length || stats?.active_subscriptions || 0} actifs
+            </p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenus Totaux</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {SubscriptionService.formatAmount(stats.total_revenue)}
-              </div>
-              <p className="text-xs text-muted-foreground">Tous les abonnements</p>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenus Totaux</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {SubscriptionService.formatAmount(
+                allSubscriptions.reduce((sum, s) => sum + (s.price_paid_gnf || 0), 0) || stats?.total_revenue || 0
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">Tous les abonnements</p>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Taux de Conversion</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats.total_subscriptions > 0
-                  ? ((stats.active_subscriptions / stats.total_subscriptions) * 100).toFixed(1)
-                  : 0}
-                %
-              </div>
-              <p className="text-xs text-muted-foreground">Abonnements actifs</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">🎁 Offerts</CardTitle>
+            <Gift className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {allSubscriptions.filter(s => s.acquisition_type === 'offered').length}
+            </div>
+            <p className="text-xs text-muted-foreground">Abonnements gratuits offerts</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">💰 Achetés</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {allSubscriptions.filter(s => s.acquisition_type === 'purchased').length}
+            </div>
+            <p className="text-xs text-muted-foreground">Abonnements payants</p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Alerte pour les incohérences de limites */}
       {getLimitWarnings().length > 0 && (
@@ -687,17 +686,18 @@ export default function SubscriptionManagement() {
                       <TableRow>
                         <TableHead>Vendeur</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>Rôle</TableHead>
+                        <TableHead>Source</TableHead>
                         <TableHead>Plan</TableHead>
                         <TableHead>Statut</TableHead>
-                        <TableHead>Type</TableHead>
+                        <TableHead>Acquisition</TableHead>
+                        <TableHead>Cycle</TableHead>
                         <TableHead>Début</TableHead>
                         <TableHead>Fin</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {allSubscriptions.map((sub) => (
-                        <TableRow key={sub.id}>
+                        <TableRow key={`${sub.source}-${sub.id}`}>
                           <TableCell className="font-medium">
                             {sub.profiles?.first_name} {sub.profiles?.last_name}
                           </TableCell>
@@ -705,10 +705,12 @@ export default function SubscriptionManagement() {
                             {sub.profiles?.email}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{sub.profiles?.role}</Badge>
+                            <Badge variant={sub.source === 'service' ? 'secondary' : 'outline'}>
+                              {sub.source === 'service' ? '🏪 Service' : '🛒 Boutique'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary">{sub.plans?.display_name}</Badge>
+                            <Badge variant="secondary">{sub.plan_display}</Badge>
                           </TableCell>
                           <TableCell>
                             <Badge variant={sub.status === 'active' ? 'default' : 'destructive'}>
@@ -716,18 +718,31 @@ export default function SubscriptionManagement() {
                             </Badge>
                           </TableCell>
                           <TableCell>
+                            {sub.acquisition_type === 'offered' ? (
+                              <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-400">
+                                🎁 Offert
+                              </Badge>
+                            ) : sub.acquisition_type === 'free' ? (
+                              <Badge variant="outline" className="text-muted-foreground">
+                                Gratuit
+                              </Badge>
+                            ) : (
+                              <Badge variant="default" className="bg-blue-600 text-white">
+                                💰 Acheté
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
                             {sub.billing_cycle === 'lifetime' ? (
                               <Badge variant="default" className="bg-primary text-primary-foreground">
-                                🎁 À vie
-                              </Badge>
-                            ) : sub.billing_cycle === 'custom' ? (
-                              <Badge variant="outline" className="border-accent text-accent-foreground">
-                                🎁 Offert
+                                À vie
                               </Badge>
                             ) : sub.billing_cycle === 'yearly' ? (
                               <Badge variant="outline">Annuel</Badge>
+                            ) : sub.billing_cycle === 'custom' ? (
+                              <Badge variant="outline">Personnalisé</Badge>
                             ) : (
-                              <Badge variant="outline">{sub.billing_cycle}</Badge>
+                              <Badge variant="outline">{sub.billing_cycle || 'Mensuel'}</Badge>
                             )}
                           </TableCell>
                           <TableCell className="text-sm">
