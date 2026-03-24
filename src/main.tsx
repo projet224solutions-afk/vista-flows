@@ -143,23 +143,24 @@ const initApp = () => {
 // Start app
 initApp();
 
-// Service Worker
-// Par défaut on évite le SW en DEV (pour ne pas casser le hot-reload).
-// Mais on l'autorise en preview si on veut tester l'installation PWA sur mobile.
-const params = new URLSearchParams(window.location.search);
-const enablePwaPreview =
-  params.has('pwa') ||
-  window.localStorage.getItem('enable_pwa_preview') === '1';
-
-if (import.meta.env.DEV && !enablePwaPreview) {
-  unregisterServiceWorker();
-  // Nettoyer les caches éventuels (corrige les écrans blancs après déploiement)
-  if ('caches' in window) {
-    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
-  }
+// Universal SW reset: works on ALL domains (224solution.net, lovable, etc.)
+const resetParams = new URLSearchParams(window.location.search);
+if (resetParams.has('resetSw')) {
+  import('./lib/serviceWorkerRegistration').then(({ resetPWA }) => resetPWA());
 } else {
-  // En prod / preview mobile, on enregistre le SW le plus tôt possible
-  registerServiceWorker({ force: enablePwaPreview });
+  // Service Worker registration
+  const enablePwaPreview =
+    resetParams.has('pwa') ||
+    window.localStorage.getItem('enable_pwa_preview') === '1';
+
+  if (import.meta.env.DEV && !enablePwaPreview) {
+    unregisterServiceWorker();
+    if ('caches' in window) {
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+    }
+  } else {
+    registerServiceWorker({ force: enablePwaPreview });
+  }
 }
 
 // Capturer les erreurs globales
