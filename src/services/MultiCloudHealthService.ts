@@ -2,18 +2,7 @@
  * UNIFIED MULTI-CLOUD HEALTH CHECK SERVICE
  * 224Solutions - Real production monitoring for all cloud providers
  * Supabase | AWS | Google Cloud | Firebase
- * 
- * WHAT'S REAL:
- * - Supabase DB: actual SELECT query to profiles table
- * - Supabase Auth: actual getSession() call
- * - Supabase Realtime: actual channel subscription test
- * - Supabase Edge Functions: actual function invocation (geo-detect)
- * - Supabase Storage: actual listBuckets() call
- * - AWS Lambda/Cognito: actual HTTP call via cloud-health-proxy edge function
- * - GCP Storage: actual invocation of gcs-signed-url edge function
- * - GCP Functions: actual invocation of google-cloud-test edge function
- * - Firebase FCM: SDK presence check (passive service, no active endpoint)
- *   ⚠️ Firebase check is HONEST: returns 'unknown' if SDK not initialized
+ * Persists to monitoring_providers + monitoring_services + monitoring_incidents
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -46,26 +35,14 @@ export interface MultiCloudReport {
   uptimePercent: number;
 }
 
-// Map service_name to provider for correlation
-const SERVICE_PROVIDER_MAP: Record<string, CloudProvider> = {
-  supabase_database: 'supabase',
-  supabase_auth: 'supabase',
-  supabase_realtime: 'supabase',
-  supabase_edge_functions: 'supabase',
-  supabase_storage: 'supabase',
-  aws_lambda: 'aws',
-  aws_cognito: 'aws',
-  gcp_storage: 'google_cloud',
-  gcp_functions: 'google_cloud',
-  firebase_fcm: 'firebase',
-};
-
 class MultiCloudHealthService {
   private static instance: MultiCloudHealthService;
   private lastReport: MultiCloudReport | null = null;
   private checkHistory: MultiCloudReport[] = [];
   private readonly MAX_HISTORY = 60;
   private isRunning = false;
+  private providerIdCache: Record<string, string> = {};
+  private serviceIdCache: Record<string, string> = {};
 
   static getInstance(): MultiCloudHealthService {
     if (!this.instance) this.instance = new MultiCloudHealthService();
@@ -73,17 +50,14 @@ class MultiCloudHealthService {
   }
 
   async checkAll(): Promise<MultiCloudReport> {
-    if (this.isRunning) {
-      return this.lastReport || this.emptyReport();
-    }
+    if (this.isRunning) return this.lastReport || this.emptyReport();
     this.isRunning = true;
 
     try {
+      if (Object.keys(this.providerIdCache).length === 0) await this.loadIdCaches();
+
       const [supabaseChecks, awsChecks, gcpChecks, firebaseChecks] = await Promise.allSettled([
-        this.checkSupabase(),
-        this.checkAWS(),
-        this.checkGoogleCloud(),
-        this.checkFirebase()
+        this.checkSupabase(), this.checkAWS(), this.checkGoogleCloud(), this.checkFirebase()
       ]).then(results => results.map((r, i) => {
         if (r.status === 'fulfilled') return r.value;
         const providers: CloudProvider[] = ['supabase', 'aws', 'google_cloud', 'firebase'];
@@ -97,9 +71,7 @@ class MultiCloudHealthService {
       const providerReport = (checks: CloudServiceCheck[]) => ({
         status: this.aggregateStatus(checks),
         services: checks,
-        avgResponseTime: checks.length > 0 
-          ? Math.round(checks.reduce((s, c) => s + c.responseTime, 0) / checks.length)
-          : 0
+        avgResponseTime: checks.length > 0 ? Math.round(checks.reduce((s, c) => s + c.responseTime, 0) / checks.length) : 0
       });
 
       const report: MultiCloudReport = {
@@ -110,9 +82,7 @@ class MultiCloudHealthService {
           google_cloud: providerReport(gcpChecks),
           firebase: providerReport(firebaseChecks)
         },
-        timestamp: new Date().toISOString(),
-        totalChecks,
-        healthyChecks,
+        timestamp: new Date().toISOString(), totalChecks, healthyChecks,
         uptimePercent: totalChecks > 0 ? Math.round((healthyChecks / totalChecks) * 100) : 0
       };
 
@@ -120,8 +90,7 @@ class MultiCloudHealthService {
       this.checkHistory.push(report);
       if (this.checkHistory.length > this.MAX_HISTORY) this.checkHistory.shift();
 
-      // Persist to monitoring_service_status
-      this.persistToDatabase(allChecks);
+      this.persistReal(report, allChecks);
 
       return report;
     } finally {
@@ -129,53 +98,69 @@ class MultiCloudHealthService {
     }
   }
 
-  getLastReport(): MultiCloudReport | null {
-    return this.lastReport;
-  }
+  getLastReport(): MultiCloudReport | null { return this.lastReport; }
+  getHistory(): MultiCloudReport[] { return [...this.checkHistory]; }
 
-  getHistory(): MultiCloudReport[] {
-    return [...this.checkHistory];
-  }
-
-  // ==================== PERSIST TO DB ====================
-  private async persistToDatabase(checks: CloudServiceCheck[]): Promise<void> {
+  // ==================== LOAD ID CACHES ====================
+  private async loadIdCaches(): Promise<void> {
     try {
-      for (const check of checks) {
-        const statusMap: Record<ServiceStatus, string> = {
-          operational: 'healthy',
-          degraded: 'degraded',
-          outage: 'critical',
-          unknown: 'unknown',
-        };
+      const { data: providers } = await supabase.from('monitoring_providers' as any).select('id, name');
+      if (providers) for (const p of providers as any[]) this.providerIdCache[p.name] = p.id;
+      const { data: services } = await supabase.from('monitoring_services' as any).select('id, name');
+      if (services) for (const s of services as any[]) this.serviceIdCache[s.name] = s.id;
+    } catch (e) {
+      console.error('[MultiCloudHealth] Failed to load ID caches:', e);
+    }
+  }
 
-        await supabase.from('monitoring_service_status' as any).upsert({
-          service_name: check.serviceName,
-          display_name: check.service,
-          provider: check.provider,
-          status: statusMap[check.status],
-          last_check_at: new Date().toISOString(),
-          last_healthy_at: check.status === 'operational' ? new Date().toISOString() : undefined,
-          response_time_ms: check.responseTime,
-          metadata: { 
-            message: check.message, 
-            is_real_check: check.isRealCheck,
-            provider: check.provider,
-          },
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'service_name' });
-
-        // Emit monitoring event on outage/degraded
+  // ==================== PERSIST TO REAL DB ====================
+  private async persistReal(report: MultiCloudReport, allChecks: CloudServiceCheck[]): Promise<void> {
+    const now = new Date().toISOString();
+    try {
+      // Update monitoring_providers
+      for (const [provName, provData] of Object.entries(report.providers)) {
+        const pid = this.providerIdCache[provName];
+        if (!pid) continue;
+        const dbSt = provData.status === 'operational' ? 'healthy' : provData.status === 'degraded' ? 'degraded' : provData.status === 'outage' ? 'down' : 'unknown';
+        await supabase.from('monitoring_providers' as any).update({ status: dbSt, latency: provData.avgResponseTime, last_check: now, updated_at: now }).eq('id', pid);
+      }
+      // Update monitoring_services + create incidents
+      for (const check of allChecks) {
+        const sid = this.serviceIdCache[check.serviceName];
+        if (!sid) continue;
+        const dbSt = check.status === 'operational' ? 'healthy' : check.status === 'degraded' ? 'degraded' : check.status === 'outage' ? 'down' : 'unknown';
+        await supabase.from('monitoring_services' as any).update({
+          status: dbSt, latency: check.responseTime, last_check: now,
+          last_healthy_at: check.status === 'operational' ? now : undefined,
+          metadata: { message: check.message, is_real_check: check.isRealCheck }, updated_at: now,
+        }).eq('id', sid);
+        if (check.status === 'outage') {
+          await supabase.from('monitoring_incidents' as any).upsert({
+            provider_id: this.providerIdCache[check.provider] || null, service_id: sid,
+            severity: 'critical', status: 'open', title: `${check.service} en panne`,
+            message: check.message, dedupe_key: `incident_${check.serviceName}`, last_seen_at: now,
+            metadata: { provider: check.provider, response_time: check.responseTime },
+          }, { onConflict: 'dedupe_key' });
+        }
         if (check.status === 'outage' || check.status === 'degraded') {
-          monitoringBus.emit({
-            event_type: 'service_status_change',
-            source: 'multi_cloud_health',
+          monitoringBus.emit({ event_type: 'service_status_change', source: 'multi_cloud_health',
             severity: check.status === 'outage' ? 'critical' : 'medium',
             message: `${check.service} (${check.provider}): ${check.status} - ${check.message}`,
-            service_name: check.serviceName,
-            response_time_ms: check.responseTime,
+            service_name: check.serviceName, response_time_ms: check.responseTime,
             metadata: { provider: check.provider, is_real: check.isRealCheck },
           });
         }
+      }
+      // Legacy compat: monitoring_service_status
+      for (const check of allChecks) {
+        const statusMap: Record<ServiceStatus, string> = { operational: 'healthy', degraded: 'degraded', outage: 'critical', unknown: 'unknown' };
+        await supabase.from('monitoring_service_status' as any).upsert({
+          service_name: check.serviceName, display_name: check.service, provider: check.provider,
+          status: statusMap[check.status], last_check_at: now,
+          last_healthy_at: check.status === 'operational' ? now : undefined,
+          response_time_ms: check.responseTime,
+          metadata: { message: check.message, is_real_check: check.isRealCheck }, updated_at: now,
+        }, { onConflict: 'service_name' });
       }
     } catch (e) {
       console.error('[MultiCloudHealth] DB persist error:', e);
@@ -185,11 +170,8 @@ class MultiCloudHealthService {
   // ==================== SUPABASE (ALL REAL) ====================
   private async checkSupabase(): Promise<CloudServiceCheck[]> {
     const results = await Promise.allSettled([
-      this.checkSupabaseDB(),
-      this.checkSupabaseAuth(),
-      this.checkSupabaseRealtime(),
-      this.checkSupabaseEdgeFunctions(),
-      this.checkSupabaseStorage(),
+      this.checkSupabaseDB(), this.checkSupabaseAuth(), this.checkSupabaseRealtime(),
+      this.checkSupabaseEdgeFunctions(), this.checkSupabaseStorage(),
     ]);
     return results.map((r, i) => {
       if (r.status === 'fulfilled') return r.value;
@@ -205,7 +187,7 @@ class MultiCloudHealthService {
       const { error } = await supabase.from('profiles').select('id').limit(1);
       const rt = Date.now() - start;
       if (error) return this.makeCheck('supabase', 'PostgreSQL Database', 'supabase_database', 'degraded', rt, error.message, true);
-      return this.makeCheck('supabase', 'PostgreSQL Database', 'supabase_database', rt > 2000 ? 'degraded' : 'operational', rt, `Latence ${rt}ms`, true);
+      return this.makeCheck('supabase', 'PostgreSQL Database', 'supabase_database', rt > 2000 ? 'degraded' : 'operational', rt, `${rt}ms`, true);
     } catch (e) {
       return this.makeCheck('supabase', 'PostgreSQL Database', 'supabase_database', 'outage', Date.now() - start, String(e), true);
     }
@@ -217,7 +199,7 @@ class MultiCloudHealthService {
       const { error } = await supabase.auth.getSession();
       const rt = Date.now() - start;
       if (error) return this.makeCheck('supabase', 'Auth Service', 'supabase_auth', 'degraded', rt, error.message, true);
-      return this.makeCheck('supabase', 'Auth Service', 'supabase_auth', rt > 2000 ? 'degraded' : 'operational', rt, `Latence ${rt}ms`, true);
+      return this.makeCheck('supabase', 'Auth Service', 'supabase_auth', rt > 2000 ? 'degraded' : 'operational', rt, `${rt}ms`, true);
     } catch (e) {
       return this.makeCheck('supabase', 'Auth Service', 'supabase_auth', 'outage', Date.now() - start, String(e), true);
     }
@@ -229,7 +211,7 @@ class MultiCloudHealthService {
       const channel = supabase.channel('health-test-' + Date.now());
       const rt = Date.now() - start;
       supabase.removeChannel(channel);
-      return this.makeCheck('supabase', 'Realtime WebSocket', 'supabase_realtime', 'operational', rt, `Latence ${rt}ms`, true);
+      return this.makeCheck('supabase', 'Realtime WebSocket', 'supabase_realtime', 'operational', rt, `${rt}ms`, true);
     } catch (e) {
       return this.makeCheck('supabase', 'Realtime WebSocket', 'supabase_realtime', 'degraded', Date.now() - start, String(e), true);
     }
@@ -241,9 +223,9 @@ class MultiCloudHealthService {
       const { error } = await supabase.functions.invoke('geo-detect', { body: { test: true } });
       const rt = Date.now() - start;
       if (error) return this.makeCheck('supabase', 'Edge Functions', 'supabase_edge_functions', 'degraded', rt, error.message || 'Erreur', true);
-      return this.makeCheck('supabase', 'Edge Functions', 'supabase_edge_functions', rt > 5000 ? 'degraded' : 'operational', rt, `Latence ${rt}ms`, true);
+      return this.makeCheck('supabase', 'Edge Functions', 'supabase_edge_functions', rt > 5000 ? 'degraded' : 'operational', rt, `${rt}ms`, true);
     } catch (e) {
-      return this.makeCheck('supabase', 'Edge Functions', 'supabase_edge_functions', 'degraded', Date.now() - start, 'Timeout ou non accessible', true);
+      return this.makeCheck('supabase', 'Edge Functions', 'supabase_edge_functions', 'degraded', Date.now() - start, 'Timeout', true);
     }
   }
 
@@ -253,23 +235,22 @@ class MultiCloudHealthService {
       const { error } = await supabase.storage.listBuckets();
       const rt = Date.now() - start;
       if (error) return this.makeCheck('supabase', 'Storage', 'supabase_storage', 'degraded', rt, error.message, true);
-      return this.makeCheck('supabase', 'Storage', 'supabase_storage', rt > 3000 ? 'degraded' : 'operational', rt, `Latence ${rt}ms`, true);
+      return this.makeCheck('supabase', 'Storage', 'supabase_storage', rt > 3000 ? 'degraded' : 'operational', rt, `${rt}ms`, true);
     } catch (e) {
       return this.makeCheck('supabase', 'Storage', 'supabase_storage', 'outage', Date.now() - start, String(e), true);
     }
   }
 
-  // ==================== AWS (REAL via Edge Function proxy) ====================
+  // ==================== AWS ====================
   private async checkAWS(): Promise<CloudServiceCheck[]> {
     const start = Date.now();
     try {
       const { data, error } = await supabase.functions.invoke('cloud-health-proxy', { body: {} });
       const rt = Date.now() - start;
-
       if (error || !data?.results) {
         return [
-          this.makeCheck('aws', 'Lambda Backend', 'aws_lambda', 'degraded', rt, 'Proxy health check échoué', true),
-          this.makeCheck('aws', 'Cognito Auth', 'aws_cognito', 'degraded', rt, 'Proxy health check échoué', true)
+          this.makeCheck('aws', 'Lambda Backend', 'aws_lambda', 'degraded', rt, 'Proxy échoué', true),
+          this.makeCheck('aws', 'Cognito Auth', 'aws_cognito', 'degraded', rt, 'Proxy échoué', true)
         ];
       }
 
@@ -295,12 +276,9 @@ class MultiCloudHealthService {
     }
   }
 
-  // ==================== GOOGLE CLOUD (REAL via Edge Functions) ====================
+  // ==================== GOOGLE CLOUD ====================
   private async checkGoogleCloud(): Promise<CloudServiceCheck[]> {
-    const results = await Promise.allSettled([
-      this.checkGCSStorage(),
-      this.checkCloudFunctions()
-    ]);
+    const results = await Promise.allSettled([this.checkGCSStorage(), this.checkCloudFunctions()]);
     return results.map((r, i) => {
       if (r.status === 'fulfilled') return r.value;
       const names = ['Cloud Storage (GCS)', 'Cloud Functions'];
@@ -312,13 +290,10 @@ class MultiCloudHealthService {
   private async checkGCSStorage(): Promise<CloudServiceCheck> {
     const start = Date.now();
     try {
-      const { error } = await supabase.functions.invoke('gcs-signed-url', {
-        method: 'POST',
-        body: { healthCheck: true }
-      });
+      const { error } = await supabase.functions.invoke('gcs-signed-url', { method: 'POST', body: { healthCheck: true } });
       const rt = Date.now() - start;
-      if (error) return this.makeCheck('google_cloud', 'Cloud Storage (GCS)', 'gcp_storage', 'degraded', rt, error.message || 'Erreur', true);
-      return this.makeCheck('google_cloud', 'Cloud Storage (GCS)', 'gcp_storage', rt > 5000 ? 'degraded' : 'operational', rt, `Latence ${rt}ms`, true);
+      if (error) return this.makeCheck('google_cloud', 'Cloud Storage (GCS)', 'gcp_storage', 'degraded', rt, error.message||'Erreur', true);
+      return this.makeCheck('google_cloud', 'Cloud Storage (GCS)', 'gcp_storage', rt > 5000 ? 'degraded' : 'operational', rt, `${rt}ms`, true);
     } catch (e) {
       return this.makeCheck('google_cloud', 'Cloud Storage (GCS)', 'gcp_storage', 'unknown', Date.now() - start, 'Erreur check', true);
     }
@@ -329,73 +304,49 @@ class MultiCloudHealthService {
     try {
       const { data, error } = await supabase.functions.invoke('google-cloud-test');
       const rt = Date.now() - start;
-      if (error) return this.makeCheck('google_cloud', 'Cloud Functions', 'gcp_functions', 'degraded', rt, error.message || 'Erreur', true);
-      if (data?.status === 'success') return this.makeCheck('google_cloud', 'Cloud Functions', 'gcp_functions', 'operational', rt, `Latence ${rt}ms`, true);
+      if (error) return this.makeCheck('google_cloud', 'Cloud Functions', 'gcp_functions', 'degraded', rt, error.message||'Erreur', true);
+      if (data?.status === 'success') return this.makeCheck('google_cloud', 'Cloud Functions', 'gcp_functions', 'operational', rt, `${rt}ms`, true);
       return this.makeCheck('google_cloud', 'Cloud Functions', 'gcp_functions', 'degraded', rt, data?.error || 'Config manquante', true);
     } catch (e) {
       return this.makeCheck('google_cloud', 'Cloud Functions', 'gcp_functions', 'outage', Date.now() - start, String(e), true);
     }
   }
 
-  // ==================== FIREBASE (HONEST - passive service) ====================
+  // ==================== FIREBASE ====================
   private async checkFirebase(): Promise<CloudServiceCheck[]> {
     const start = Date.now();
     try {
-      // Firebase FCM is a passive push service - no active health endpoint
-      // We honestly check if the SDK is available
       const firebaseApp = (window as any).__firebaseApp;
       const rt = Date.now() - start;
-      
-      if (firebaseApp) {
-        return [this.makeCheck('firebase', 'Cloud Messaging (FCM)', 'firebase_fcm', 'operational', rt, 'Firebase SDK initialisé', true)];
-      }
-      
-      // Check for service worker registration
+      if (firebaseApp) return [this.makeCheck('firebase', 'Cloud Messaging (FCM)', 'firebase_fcm', 'operational', rt, 'SDK initialisé', true)];
       if ('serviceWorker' in navigator) {
         const regs = await navigator.serviceWorker?.getRegistrations();
-        const hasFCM = regs?.some(r => r.active?.scriptURL.includes('firebase'));
-        if (hasFCM) {
+        if (regs?.some(r => r.active?.scriptURL.includes('firebase')))
           return [this.makeCheck('firebase', 'Cloud Messaging (FCM)', 'firebase_fcm', 'operational', Date.now() - start, 'SW FCM actif', true)];
-        }
       }
-
-      // ⚠️ HONEST: Firebase not actively initialized = unknown, not fake "operational"
-      return [this.makeCheck('firebase', 'Cloud Messaging (FCM)', 'firebase_fcm', 'unknown', rt, 'SDK non initialisé (init paresseuse)', false)];
+      return [this.makeCheck('firebase', 'Cloud Messaging (FCM)', 'firebase_fcm', 'unknown', rt, 'SDK non initialisé', false)];
     } catch (e) {
       return [this.makeCheck('firebase', 'Cloud Messaging (FCM)', 'firebase_fcm', 'unknown', Date.now() - start, 'Vérification impossible', false)];
     }
   }
 
   // ==================== HELPERS ====================
-  private makeCheck(
-    provider: CloudProvider, 
-    service: string, 
-    serviceName: string,
-    status: ServiceStatus, 
-    responseTime: number, 
-    message: string,
-    isRealCheck: boolean
-  ): CloudServiceCheck {
+  private makeCheck(provider: CloudProvider, service: string, serviceName: string, status: ServiceStatus, responseTime: number, message: string, isRealCheck: boolean): CloudServiceCheck {
     return { provider, service, serviceName, status, responseTime, message, lastChecked: new Date().toISOString(), isRealCheck };
   }
 
   private aggregateStatus(checks: CloudServiceCheck[]): ServiceStatus {
     if (checks.length === 0) return 'unknown';
-    const knownChecks = checks.filter(c => c.status !== 'unknown');
-    if (knownChecks.length === 0) return 'operational';
-    if (knownChecks.some(c => c.status === 'outage')) return 'outage';
-    if (knownChecks.some(c => c.status === 'degraded')) return 'degraded';
+    const known = checks.filter(c => c.status !== 'unknown');
+    if (known.length === 0) return 'operational';
+    if (known.some(c => c.status === 'outage')) return 'outage';
+    if (known.some(c => c.status === 'degraded')) return 'degraded';
     return 'operational';
   }
 
   private emptyReport(): MultiCloudReport {
-    const empty = { status: 'unknown' as ServiceStatus, services: [], avgResponseTime: 0 };
-    return {
-      overall: 'unknown',
-      providers: { supabase: empty, aws: empty, google_cloud: empty, firebase: empty },
-      timestamp: new Date().toISOString(),
-      totalChecks: 0, healthyChecks: 0, uptimePercent: 0,
-    };
+    const e = { status: 'unknown' as ServiceStatus, services: [], avgResponseTime: 0 };
+    return { overall: 'unknown', providers: { supabase: e, aws: e, google_cloud: e, firebase: e }, timestamp: new Date().toISOString(), totalChecks: 0, healthyChecks: 0, uptimePercent: 0 };
   }
 }
 
