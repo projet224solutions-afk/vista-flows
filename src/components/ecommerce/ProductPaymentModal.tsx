@@ -503,14 +503,15 @@ export default function ProductPaymentModal({
     }
 
     if (paymentMethod === 'wallet') {
-      toast.success('Paiement sécurisé effectué !', { description: `${fc(grandTotal, cur)} bloqués en escrow (dont ${fc(commissionFee, cur)} de frais)` });
+      toast.success('Paiement sécurisé effectué !', { description: `${fc(grandTotal, cur)} bloqués en escrow. Redirection vers vos achats...` });
     } else if (isCODMethod) {
-      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(grandTotal, cur)}` });
+      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(grandTotal, cur)}. Redirection...` });
     }
 
     onPaymentSuccess();
     onClose();
-  }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose, codPhone, codCity, fc]);
+    navigate('/mes-commandes');
+  }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose, codPhone, codCity, fc, navigate]);
 
   const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < grandTotal;
   const firstVendorId = cartItems.find(item => item.vendorId)?.vendorId || '';
