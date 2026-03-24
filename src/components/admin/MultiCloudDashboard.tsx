@@ -81,7 +81,7 @@ function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
 }
 
 export default function MultiCloudDashboard() {
-  const { report, isChecking, refresh, history, dbServices, lastUpdate } = useMultiCloudHealth(30000);
+  const { report, isChecking, refresh, history, providers: dbProviders, services: dbServices, incidents: dbIncidents, lastUpdate } = useMultiCloudHealth(30000);
   const [showHistory, setShowHistory] = useState(false);
 
   if (!report) {
@@ -199,27 +199,49 @@ export default function MultiCloudDashboard() {
       </Card>
 
       {/* === DB STATUS (REALTIME) === */}
-      {dbServices.length > 0 && (
+      {dbProviders.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Eye className="h-4 w-4 text-primary" />
-              Statut persisté en base (Realtime)
+              Providers & Services (DB Realtime)
               <Badge variant="outline" className="text-[10px]">LIVE</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {dbServices.map(svc => {
-                const st = svc.status === 'healthy' ? 'operational' : svc.status === 'degraded' ? 'degraded' : svc.status === 'critical' ? 'outage' : 'unknown';
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+              {dbProviders.map(prov => {
+                const st = prov.status === 'healthy' ? 'operational' : prov.status === 'degraded' ? 'degraded' : prov.status === 'down' ? 'outage' : 'unknown';
                 return (
-                  <div key={svc.service_name} className="flex items-center gap-1.5 p-1.5 rounded bg-muted/20 text-xs">
+                  <div key={prov.id} className="flex items-center gap-1.5 p-2 rounded bg-muted/30 text-xs border">
                     <StatusDot status={st as ServiceStatus} />
-                    <span className="truncate font-medium">{svc.display_name}</span>
+                    <span className="truncate font-semibold capitalize">{prov.name}</span>
+                    {prov.latency != null && <span className="ml-auto text-muted-foreground font-mono">{prov.latency}ms</span>}
                   </div>
                 );
               })}
             </div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {dbServices.map(svc => {
+                const st = svc.status === 'healthy' ? 'operational' : svc.status === 'degraded' ? 'degraded' : svc.status === 'down' ? 'outage' : 'unknown';
+                return (
+                  <div key={svc.id} className="flex items-center gap-1.5 p-1.5 rounded bg-muted/20 text-xs">
+                    <StatusDot status={st as ServiceStatus} />
+                    <span className="truncate font-medium">{svc.display_name || svc.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {dbIncidents.length > 0 && (
+              <div className="mt-3 space-y-1">
+                <p className="text-xs font-semibold text-destructive">Incidents ouverts ({dbIncidents.length})</p>
+                {dbIncidents.slice(0, 5).map(inc => (
+                  <div key={inc.id} className="text-xs p-1.5 rounded bg-destructive/10 text-destructive">
+                    {inc.title} — {inc.message}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
