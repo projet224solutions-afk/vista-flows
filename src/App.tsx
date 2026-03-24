@@ -165,6 +165,34 @@ const PageLoader = memo(() => (
 ));
 PageLoader.displayName = 'PageLoader';
 
+/**
+ * RootRedirect - Logique intelligente pour la route "/"
+ * Connecté → dashboard selon rôle | Non connecté → landing page
+ */
+function RootRedirect() {
+  const { user, profile, loading, profileLoading } = useAuth();
+  const navigate = useNavigate();
+  const hasRedirected = useRef(false);
+
+  useEffect(() => {
+    if (loading || (user && profileLoading)) return;
+    if (!user || !profile?.role || hasRedirected.current) return;
+    hasRedirected.current = true;
+
+    resolvePostAuthRoute({ userId: user.id, role: profile.role })
+      .then((route) => {
+        console.log(`🚀 [RootRedirect] → ${route} (rôle: ${profile.role})`);
+        navigate(route, { replace: true });
+      })
+      .catch(() => navigate('/home', { replace: true }));
+  }, [user, profile, loading, profileLoading, navigate]);
+
+  if (loading || (user && profileLoading) || (user && profile?.role)) {
+    return <PageLoader />;
+  }
+  return <Index />;
+}
+
 // Auto-fill GPS component - runs once when user is authenticated
 function GpsAutoFill() {
   const { autoFillGps } = useAutoFillGpsHook();
