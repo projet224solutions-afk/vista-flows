@@ -13,8 +13,8 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { toast } from 'sonner';
 
-// Utiliser la clé Mapbox (à configurer dans les variables d'environnement)
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiMjI0c29sdXRpb25zIiwiYSI6ImNtNWNzZmMzeTBoMGgya3NhcTI4YWsxc2cifQ.vD9vdGhklaXj8K0mW0XLbw';
+// Clé Mapbox depuis les variables d'environnement
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 interface ClientDeliveryTrackingProps {
   deliveryId: string;

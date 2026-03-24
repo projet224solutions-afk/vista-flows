@@ -8,8 +8,8 @@ import { Navigation, Phone, Clock, MapPin, ArrowRight, Maximize2 } from 'lucide-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Clé Mapbox publique (à ajouter dans les secrets Supabase si nécessaire)
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZXhhbXBsZSIsImEiOiJjbHhleGFtcGxlIn0.example';
+// Clé Mapbox depuis les variables d'environnement
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 interface Coordinates {
   latitude: number;
