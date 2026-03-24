@@ -12,7 +12,7 @@ export interface PostAuthRouteOptions {
   vendorShopType?: string | null;
 }
 
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string, fallback: T): Promise<T> {
+async function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, label: string, fallback: T): Promise<T> {
   let timeoutId: number | undefined;
   const timeoutPromise = new Promise<T>((resolve) => {
     timeoutId = window.setTimeout(() => {
@@ -22,7 +22,7 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: str
   });
 
   try {
-    return await Promise.race([promise, timeoutPromise]);
+    return await Promise.race([Promise.resolve(promise), timeoutPromise]);
   } finally {
     if (timeoutId) {
       window.clearTimeout(timeoutId);
