@@ -8,6 +8,7 @@ import {
 
 interface UseServiceSubscriptionProps {
   serviceId?: string;
+  serviceTypeId?: string;
 }
 
 export function useServiceSubscription({ serviceId }: UseServiceSubscriptionProps = {}) {
