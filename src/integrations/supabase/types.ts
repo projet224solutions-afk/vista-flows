@@ -13002,6 +13002,7 @@ export type Database = {
           last_check_at: string | null
           last_healthy_at: string | null
           metadata: Json | null
+          provider: string | null
           response_time_ms: number | null
           service_name: string
           status: string
@@ -13017,6 +13018,7 @@ export type Database = {
           last_check_at?: string | null
           last_healthy_at?: string | null
           metadata?: Json | null
+          provider?: string | null
           response_time_ms?: number | null
           service_name: string
           status?: string
@@ -13032,6 +13034,7 @@ export type Database = {
           last_check_at?: string | null
           last_healthy_at?: string | null
           metadata?: Json | null
+          provider?: string | null
           response_time_ms?: number | null
           service_name?: string
           status?: string
