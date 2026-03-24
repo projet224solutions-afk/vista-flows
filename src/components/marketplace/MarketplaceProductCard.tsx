@@ -86,8 +86,8 @@ export function MarketplaceProductCard({
   const { t } = useTranslation();
   const { displayCurrency } = useDisplayCurrency();
   
-  // Hook pour certification vendeur
-  const { certification } = useVendorCertification(vendorId);
+  // Hook pour certification vendeur (cache global)
+  const { isCertified } = useVendorCertificationCached(vendorId);
 
   const formatPrice = (value: number) => {
     if (priceLoading) {
