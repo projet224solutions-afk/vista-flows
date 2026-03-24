@@ -297,6 +297,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setProfileLoading(true);
     console.log('🔄 Chargement profil pour:', user.email);
+    
+    // Timeout sécurité: ne jamais bloquer plus de 4 secondes
+    const profileTimeout = setTimeout(() => {
+      console.warn('⚠️ Timeout profil (4s) - utilisation cache ou fallback');
+      const cachedProfile = localStorage.getItem(profileCacheKey);
+      if (cachedProfile && !profileRef.current) {
+        try {
+          setProfile(JSON.parse(cachedProfile) as Profile);
+        } catch (e) {}
+      }
+      setProfileLoading(false);
+    }, 4000);
 
     try {
       // ✨ NOUVEAU: En mode offline, utiliser le profil en cache
@@ -564,6 +576,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem('oauth_intent_role');
       localStorage.removeItem('oauth_is_new_signup');
     } finally {
+      clearTimeout(profileTimeout);
       setProfileLoading(false);
     }
   }, [user]);
@@ -598,8 +611,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const init = async () => {
       console.log('🔍 Vérification session...');
 
-      // Timeout de sécurité - plus court si offline
-      const timeoutMs = isOffline() ? 1000 : 5000;
+      // Timeout de sécurité - court pour ne pas bloquer l'UI
+      const timeoutMs = isOffline() ? 1000 : 3000;
       const timeoutId = setTimeout(() => {
         console.log('⚠️ Timeout session - continuer sans auth');
         // En mode offline, essayer la session locale avant d'abandonner
@@ -724,13 +737,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, refreshProfile]);
 
-  // Setup automatique: 1 seule fois par utilisateur (évite les boucles + lenteurs)
+  // Setup automatique: NON-BLOQUANT, en arrière-plan après un délai
+  // Ne doit JAMAIS bloquer l'affichage de l'UI
   useEffect(() => {
     if (!user || profileLoading || !profile) return;
     if (ensuredSetupForUserRef.current === user.id) return;
 
     ensuredSetupForUserRef.current = user.id;
-    ensureUserSetup();
+    
+    // Lancer le setup en arrière-plan après 2s pour ne pas bloquer le rendu
+    const timer = setTimeout(() => {
+      ensureUserSetup().catch((err) => {
+        console.warn('⚠️ Setup arrière-plan échoué (non bloquant):', err);
+      });
+    }, 2000);
+    
+    return () => clearTimeout(timer);
   }, [user, profile, profileLoading, ensureUserSetup]);
 
   const signOut = async () => {

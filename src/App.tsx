@@ -173,9 +173,22 @@ function RootRedirect() {
   const { user, profile, loading, profileLoading } = useAuth();
   const navigate = useNavigate();
   const hasRedirected = useRef(false);
+  const timedOut = useRef(false);
+
+  // Safety timeout: never stay on loader more than 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!timedOut.current && !hasRedirected.current) {
+        timedOut.current = true;
+        console.warn('⚠️ [RootRedirect] Timeout 3s - affichage landing page');
+        // Force re-render to show Index
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-    if (loading || (user && profileLoading)) return;
+    if (loading || (user && profileLoading && !timedOut.current)) return;
     if (!user || !profile?.role || hasRedirected.current) return;
     hasRedirected.current = true;
 
@@ -187,10 +200,25 @@ function RootRedirect() {
       .catch(() => navigate('/home', { replace: true }));
   }, [user, profile, loading, profileLoading, navigate]);
 
-  if (loading || (user && profileLoading) || (user && profile?.role)) {
+  console.log('🔍 [RootRedirect]', { loading, user: !!user, profile: !!profile, profileLoading, timedOut: timedOut.current });
+
+  // Not logged in → show landing immediately
+  if (!loading && !user) {
+    return <Index />;
+  }
+
+  // Timed out → show landing (will redirect later if auth completes)
+  if (timedOut.current && !hasRedirected.current && (!user || !profile?.role)) {
+    return <Index />;
+  }
+
+  // Still loading auth or profile → brief loader (max 3s due to timeout)
+  if (loading || (user && !profile?.role && !hasRedirected.current)) {
     return <PageLoader />;
   }
-  return <Index />;
+
+  // User has profile and redirect is pending
+  return <PageLoader />;
 }
 
 // Auto-fill GPS component - runs once when user is authenticated
