@@ -487,7 +487,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // NE JAMAIS modifier le rôle d'un profil existant (sauf cas OAuth ci-dessus)
         setProfile(current);
-        
+        console.log('[PROFILE LOADED]', { source: 'existing_profile', role: current.role, userId: current.id });
+
         // ✨ NOUVEAU: Mettre en cache le profil pour mode offline
         localStorage.setItem(profileCacheKey, JSON.stringify(current));
 
