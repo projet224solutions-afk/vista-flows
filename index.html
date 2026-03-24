@@ -124,42 +124,46 @@
   <script type="module" src="/src/main.tsx"></script>
   
   <script>
-    // Hide loader when app is ready - ultra simple version
+    // Hide loader when app is ready + error recovery
     (function() {
       var loader = document.getElementById('app-loader');
-      var maxWait = 10000; // 10 seconds max
+      var textEl = loader && loader.querySelector('.text');
+      var maxWait = 15000;
       
       function hide() {
         if (loader) {
           loader.classList.add('fade-out');
-          setTimeout(function() { 
-            if (loader) loader.style.display = 'none'; 
-          }, 400);
+          setTimeout(function() { if (loader) loader.style.display = 'none'; }, 400);
         }
       }
       
-      // Check if React mounted
       function check() {
         var root = document.getElementById('root');
         return root && root.innerHTML.length > 50;
       }
       
-      // Poll every 100ms
       var interval = setInterval(function() {
-        if (check()) {
-          clearInterval(interval);
-          hide();
-        }
-      }, 100);
+        if (check()) { clearInterval(interval); hide(); }
+      }, 200);
       
-      // Force hide after max wait
+      // After max wait, show error + reload option
       setTimeout(function() {
         clearInterval(interval);
-        hide();
+        if (!check() && loader && textEl) {
+          textEl.innerHTML = 'Le chargement prend plus de temps que prévu.<br><a href="/?resetSw=1" style="color:#023288;text-decoration:underline;margin-top:8px;display:inline-block">Recharger l\'application</a>';
+        } else {
+          hide();
+        }
       }, maxWait);
       
-      // Expose globally for manual hide
       window.__hideLoader = hide;
+
+      // Global error handler - show error in loader
+      window.addEventListener('error', function(e) {
+        if (textEl && !check()) {
+          textEl.innerHTML = 'Erreur de chargement.<br><a href="/?resetSw=1" style="color:#023288;text-decoration:underline;margin-top:8px;display:inline-block">Recharger</a>';
+        }
+      });
     })();
   </script>
   
