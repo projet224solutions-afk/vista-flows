@@ -295,6 +295,8 @@ function App() {
               <Routes>
               {/* Route racine: redirige vers dashboard si connecté, sinon landing */}
               <Route path="/" element={<RootRedirect />} />
+              <Route path="/index" element={<Navigate to="/" replace />} />
+              <Route path="/index.html" element={<Navigate to="/" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               {/* Accueil application (avec footer + services) */}
               <Route path="/home" element={<Home />} />
