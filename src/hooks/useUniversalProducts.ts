@@ -80,7 +80,10 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
   // Permet d'ignorer les réponses "anciennes" quand l'utilisateur change rapidement les filtres/tri
   const requestIdRef = useRef(0);
+  const loadingOwnerRequestIdRef = useRef<number | null>(null);
   const lastLoadedAtRef = useRef(0);
+  const hasLoadedOnceRef = useRef(false);
+  const loadingRef = useRef(false);
   const refreshRef = useRef<(silent?: boolean) => void>(() => {});
   const realtimeRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -111,6 +114,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
     try {
       if (shouldShowLoading) {
+        loadingOwnerRequestIdRef.current = requestId;
         setLoading(true);
       }
 
@@ -308,6 +312,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       setTotal(count || 0);
       setHasMore(formattedProducts.length === pageLimit);
       lastLoadedAtRef.current = Date.now();
+      hasLoadedOnceRef.current = true;
       return; // Success — exit retry loop
     } catch (error) {
       lastError = error;
@@ -336,7 +341,8 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     } // end retry loop
 
     } finally {
-      if (shouldShowLoading && requestId === requestIdRef.current) {
+      if (shouldShowLoading && requestId === loadingOwnerRequestIdRef.current) {
+        loadingOwnerRequestIdRef.current = null;
         setLoading(false);
       }
     }
@@ -365,6 +371,10 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
   const refresh = useCallback(() => {
     loadProducts(true, { silent: false });
   }, [loadProducts]);
+
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
 
   useEffect(() => {
     refreshRef.current = (silent = false) => {
@@ -406,6 +416,8 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     if (!autoLoad) return;
 
     const scheduleRefresh = () => {
+      if (!hasLoadedOnceRef.current) return;
+
       if (realtimeRefreshTimerRef.current) {
         clearTimeout(realtimeRefreshTimerRef.current);
       }
@@ -433,6 +445,8 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     if (!autoLoad) return;
 
     const refreshIfStale = () => {
+      if (!hasLoadedOnceRef.current || loadingRef.current) return;
+
       const isVisible = document.visibilityState === 'visible';
       const staleForMs = Date.now() - lastLoadedAtRef.current;
 
