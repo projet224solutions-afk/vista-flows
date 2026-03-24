@@ -694,19 +694,7 @@ export default function Marketplace() {
 
 
             {marketplaceLoading ? (
-              <div className="marketplace-grid">
-                {/* Skeleton Loading */}
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <div key={i} className="marketplace-card animate-pulse">
-                    <div className="marketplace-card-image-container bg-muted" />
-                    <div className="marketplace-card-content space-y-2">
-                      <div className="h-4 bg-muted rounded w-3/4" />
-                      <div className="h-3 bg-muted rounded w-1/2" />
-                      <div className="h-5 bg-muted rounded w-1/3" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <MarketplaceLoadingState onRetry={() => window.location.reload()} />
             ) : marketplaceItems.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-2">
