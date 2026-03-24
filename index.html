@@ -87,33 +87,32 @@
   -->
   <script>
     (function () {
-      var isLovablePreview = location.hostname.indexOf('lovableproject.com') !== -1;
-      if (!isLovablePreview) return;
-
       var params = new URLSearchParams(location.search);
       if (!params.has('resetSw')) return;
 
-      function safe(p) { return p && typeof p.then === 'function' ? p : Promise.resolve(); }
+      console.log('[PWA Reset] Cleaning SW + caches on', location.hostname);
 
-      safe(
-        (async function () {
-          try {
-            if ('serviceWorker' in navigator) {
-              var regs = await navigator.serviceWorker.getRegistrations();
-              await Promise.all((regs || []).map(function (r) { return r.unregister(); }));
-            }
-            if ('caches' in window) {
-              var keys = await caches.keys();
-              await Promise.all((keys || []).map(function (k) { return caches.delete(k); }));
-            }
-          } catch (e) {
-            // ignore
+      (async function () {
+        try {
+          if ('serviceWorker' in navigator) {
+            var regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all((regs || []).map(function (r) { return r.unregister(); }));
+            console.log('[PWA Reset] SW unregistered:', regs.length);
           }
-        })()
-      ).finally(function () {
-        // Recharge une fois pour repartir sur des bundles propres
-        location.replace(location.pathname + location.hash);
-      });
+          if ('caches' in window) {
+            var keys = await caches.keys();
+            await Promise.all((keys || []).map(function (k) { return caches.delete(k); }));
+            console.log('[PWA Reset] Caches cleared:', keys.length);
+          }
+        } catch (e) {
+          console.warn('[PWA Reset] Error:', e);
+        }
+        // Reload without resetSw param
+        var clean = new URL(location.href);
+        clean.searchParams.delete('resetSw');
+        clean.searchParams.delete('__reload');
+        location.replace(clean.pathname + clean.search + clean.hash || '/');
+      })();
     })();
   </script>
 

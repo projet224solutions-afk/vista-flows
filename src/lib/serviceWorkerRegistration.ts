@@ -1,135 +1,108 @@
 /**
- * Service Worker Registration
- * Gère l'enregistrement du SW de manière non-bloquante
+ * Service Worker Registration v2
+ * Non-blocking, with PWA diagnostics and universal reset
  */
 
-export function registerServiceWorker(options?: { force?: boolean }) {
-  // IMPORTANT: par défaut on n'enregistre pas le SW en dev (évite cache + invalid hook call)
-  // `force` permet de tester l'installation PWA en preview/mobile si nécessaire.
-  if (import.meta.env.DEV && !options?.force) return;
+const isPWAStandalone = () =>
+  window.matchMedia('(display-mode: standalone)').matches ||
+  (navigator as any).standalone === true;
 
-  if ("serviceWorker" in navigator) {
-    // Attendre que l'app soit chargée avant d'enregistrer le SW
-    if (document.readyState === 'complete') {
-      registerSW();
-    } else {
-      window.addEventListener("load", registerSW);
-    }
+export function registerServiceWorker(options?: { force?: boolean }) {
+  if (import.meta.env.DEV && !options?.force) return;
+  if (!("serviceWorker" in navigator)) return;
+
+  console.log(`[PWA] Mode: ${isPWAStandalone() ? 'standalone (installed)' : 'browser'}`);
+
+  if (document.readyState === 'complete') {
+    registerSW();
+  } else {
+    window.addEventListener("load", registerSW);
   }
 }
 
 function registerSW() {
-  // Petit délai pour s'assurer que l'app React est montée
-  // (réduit pour fiabiliser l'offline mobile: SW installé avant que l'utilisateur ferme l'app)
   setTimeout(async () => {
     try {
-      // Vérifier la connexion avant d'enregistrer le SW
       if (!navigator.onLine) {
-        console.log("[PWA] Mode hors ligne - SW sera enregistré au retour en ligne");
+        console.log("[PWA] Offline — will register SW when online");
         window.addEventListener('online', () => registerSW(), { once: true });
         return;
       }
 
-      const registration = await navigator.serviceWorker.register("/service-worker.js", { 
-        updateViaCache: 'none' as any 
+      const registration = await navigator.serviceWorker.register("/service-worker.js", {
+        updateViaCache: 'none' as any
       });
-      
-      console.log("[PWA] Service Worker enregistré");
 
-      // Détection nouvelle version
+      console.log("[PWA] SW registered, scope:", registration.scope);
+
+      // On installed PWA, check for updates immediately
+      if (isPWAStandalone()) {
+        console.log("[PWA] Standalone mode — checking for SW update...");
+        registration.update().catch(() => {});
+      }
+
       registration.onupdatefound = () => {
         const newWorker = registration.installing;
         if (newWorker) {
           newWorker.onstatechange = () => {
             if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              showUpdateMessage();
+              console.log("[PWA] New SW version available");
+              // On standalone PWA, auto-activate new SW
+              if (isPWAStandalone()) {
+                console.log("[PWA] Auto-activating new SW for standalone...");
+                newWorker.postMessage("skipWaiting");
+                // Reload after a short delay to let SW activate
+                setTimeout(() => window.location.reload(), 500);
+              } else {
+                showUpdateMessage();
+              }
             }
           };
         }
       };
 
-      // Vérifier les mises à jour périodiquement (toutes les heures)
+      // Check for updates every 30 min (more aggressive for PWA)
+      const interval = isPWAStandalone() ? 30 * 60 * 1000 : 60 * 60 * 1000;
       setInterval(() => {
         if (navigator.onLine) {
-          registration.update().catch(() => {
-            // Ignorer les erreurs de mise à jour silencieusement
-          });
+          registration.update().catch(() => {});
         }
-      }, 60 * 60 * 1000);
+      }, interval);
+
     } catch (error) {
-      // Ignorer les erreurs SW silencieusement - ne pas bloquer l'app
-      console.warn("[PWA] SW non critique:", error);
+      console.warn("[PWA] SW registration failed (non-blocking):", error);
     }
-  }, 500); // 500ms de délai pour plus de stabilité
+  }, 500);
 }
 
 function showUpdateMessage() {
-  // Éviter les doublons
   if (document.getElementById("pwa-update-banner")) return;
 
   const alertBox = document.createElement("div");
   alertBox.id = "pwa-update-banner";
   alertBox.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        <path d="M12 8v4l3 3"/>
-      </svg>
-      <span>Nouvelle mise à jour disponible</span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span>🔄</span>
+      <span>Nouvelle version disponible</span>
     </div>
-    <button id="pwa-update-btn" style="
-      background: white;
-      color: #2563eb;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 13px;
-    ">Actualiser</button>
+    <button id="pwa-update-btn" style="background:white;color:#023288;border:none;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px">Actualiser</button>
   `;
-  
   alertBox.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: white;
-    border-radius: 12px;
-    cursor: pointer;
-    z-index: 99999;
-    box-shadow: 0 10px 40px rgba(37, 99, 235, 0.3);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 14px;
-    animation: slideUp 0.3s ease-out;
+    position:fixed;bottom:20px;left:20px;right:20px;max-width:400px;margin:0 auto;
+    padding:12px 16px;background:#023288;color:white;border-radius:12px;z-index:99999;
+    box-shadow:0 10px 40px rgba(2,50,136,0.3);display:flex;justify-content:space-between;
+    align-items:center;font-family:system-ui;font-size:14px;animation:pwaSlideUp .3s ease-out
   `;
 
-  // Ajouter animation
   const style = document.createElement("style");
-  style.textContent = `
-    @keyframes slideUp {
-      from { transform: translateY(100px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-  `;
+  style.textContent = `@keyframes pwaSlideUp{from{transform:translateY(100px);opacity:0}to{transform:translateY(0);opacity:1}}`;
   document.head.appendChild(style);
-
   document.body.appendChild(alertBox);
 
-  // Gestionnaire de clic
   document.getElementById("pwa-update-btn")?.addEventListener("click", (e) => {
     e.stopPropagation();
-    navigator.serviceWorker.getRegistration().then((reg) => {
-      if (reg?.waiting) {
-        reg.waiting.postMessage("skipWaiting");
-      }
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (reg?.waiting) reg.waiting.postMessage("skipWaiting");
     });
     window.location.reload();
   });
@@ -137,8 +110,35 @@ function showUpdateMessage() {
 
 export function unregisterServiceWorker() {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.unregister();
-    });
+    navigator.serviceWorker.ready.then(reg => reg.unregister());
   }
+}
+
+/**
+ * Full PWA reset — clears all SW + caches
+ * Can be called from console: window.__resetPWA()
+ */
+export async function resetPWA(): Promise<void> {
+  console.log("[PWA] Full reset...");
+  try {
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+      console.log(`[PWA] Unregistered ${regs.length} SW(s)`);
+    }
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+      console.log(`[PWA] Cleared ${keys.length} cache(s)`);
+    }
+    window.location.reload();
+  } catch (e) {
+    console.error("[PWA] Reset error:", e);
+    window.location.reload();
+  }
+}
+
+// Expose globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).__resetPWA = resetPWA;
 }
