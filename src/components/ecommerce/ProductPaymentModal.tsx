@@ -398,7 +398,7 @@ export default function ProductPaymentModal({
           await createOrderAfterPayment(result.transactionId, paymentMethod);
           setPaymentStep('success');
           toast.success('Paiement mobile réussi !', { description: `${fc(grandTotal, cur)} débité de votre compte` });
-          setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
+          setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/mes-commandes'); }, 2000);
         } else {
           toast.error('Paiement non confirmé', { description: 'Veuillez réessayer' });
           setPaymentStep('mobile_money_form');
