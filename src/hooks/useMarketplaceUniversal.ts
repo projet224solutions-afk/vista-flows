@@ -724,16 +724,20 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const staleForMs = Date.now() - lastLoadedAtRef.current;
 
       if (isVisible && staleForMs > 45_000) {
-        console.log('[MarketplaceRealtime] Foreground refresh', { staleForMs });
+        console.log('[MarketplaceRealtime] Foreground/safety refresh', { staleForMs });
         refreshRef.current();
       }
     };
 
+    const safetyInterval = setInterval(refreshIfStale, 60_000);
     window.addEventListener('focus', refreshIfStale);
+    window.addEventListener('online', refreshIfStale);
     document.addEventListener('visibilitychange', refreshIfStale);
 
     return () => {
+      clearInterval(safetyInterval);
       window.removeEventListener('focus', refreshIfStale);
+      window.removeEventListener('online', refreshIfStale);
       document.removeEventListener('visibilitychange', refreshIfStale);
     };
   }, [autoLoad]);
