@@ -53,7 +53,6 @@ const PUBLIC_ROUTES = [
  * ⚠️ NOTE: /home est exclu pour permettre l'accès via le bouton Accueil du footer
  */
 const REDIRECT_TRIGGER_ROUTES = [
-  '/',
   '/auth',
 ];
 

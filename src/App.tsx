@@ -1,4 +1,6 @@
-import { Suspense, memo, useEffect } from "react";
+import { Suspense, memo, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { resolvePostAuthRoute } from "@/utils/postAuthRoute";
 import { usePrefetchCriticalData } from "@/hooks/usePrefetchCriticalData";
 import { useAutoFillGps as useAutoFillGpsHook } from "@/hooks/useAutoFillGps";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -7,7 +9,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { CognitoAuthProvider } from "@/contexts/CognitoAuthContext";
 import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
 import { ThemeProvider } from "next-themes";
@@ -163,6 +165,34 @@ const PageLoader = memo(() => (
 ));
 PageLoader.displayName = 'PageLoader';
 
+/**
+ * RootRedirect - Logique intelligente pour la route "/"
+ * Connecté → dashboard selon rôle | Non connecté → landing page
+ */
+function RootRedirect() {
+  const { user, profile, loading, profileLoading } = useAuth();
+  const navigate = useNavigate();
+  const hasRedirected = useRef(false);
+
+  useEffect(() => {
+    if (loading || (user && profileLoading)) return;
+    if (!user || !profile?.role || hasRedirected.current) return;
+    hasRedirected.current = true;
+
+    resolvePostAuthRoute({ userId: user.id, role: profile.role })
+      .then((route) => {
+        console.log(`🚀 [RootRedirect] → ${route} (rôle: ${profile.role})`);
+        navigate(route, { replace: true });
+      })
+      .catch(() => navigate('/home', { replace: true }));
+  }, [user, profile, loading, profileLoading, navigate]);
+
+  if (loading || (user && profileLoading) || (user && profile?.role)) {
+    return <PageLoader />;
+  }
+  return <Index />;
+}
+
 // Auto-fill GPS component - runs once when user is authenticated
 function GpsAutoFill() {
   const { autoFillGps } = useAutoFillGpsHook();
@@ -263,12 +293,11 @@ function App() {
                 <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
               <Routes>
-              {/* Page d'accueil publique - toujours accessible */}
-              <Route path="/" element={<Index />} />
+              {/* Route racine: redirige vers dashboard si connecté, sinon landing */}
+              <Route path="/" element={<RootRedirect />} />
               <Route path="/dashboard" element={<Dashboard />} />
               {/* Accueil application (avec footer + services) */}
               <Route path="/home" element={<Home />} />
-              <Route path="/auth" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Navigate to="/auth" replace />} />
 <Route path="/universal-login" element={<UniversalLoginPage />} />
