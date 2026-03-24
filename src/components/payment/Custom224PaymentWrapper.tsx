@@ -101,7 +101,7 @@ export function Custom224PaymentWrapper({
     try {
       setError('');
 
-      const { data, error: fnError } = await supabase.functions.invoke('create-payment-intent', {
+      const { data, error: fnError } = await supabase.functions.invoke('create-paypal-order', {
         body: {
           amount,
           currency: sourceCurrency,
