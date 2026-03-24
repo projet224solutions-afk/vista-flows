@@ -51,14 +51,21 @@ export function useStripePayment(options: UseStripePaymentOptions = {}) {
         throw new Error(apiError.message || 'Failed to create payment intent');
       }
 
-      if (!data?.client_secret && !data?.clientSecret) {
-        throw new Error(data?.error || 'No client secret returned');
+      const response = data as any;
+      const secret = response?.client_secret || response?.clientSecret;
+      if (!secret) {
+        throw new Error(response?.error || 'No client secret returned');
       }
 
-      const normalized = {
-        ...data,
-        client_secret: data.client_secret || data.clientSecret,
-        payment_intent_id: data.payment_intent_id || data.paymentIntentId,
+      const normalized: CreatePaymentIntentResponse = {
+        success: true,
+        client_secret: secret,
+        payment_intent_id: response.payment_intent_id || response.paymentIntentId || '',
+        transaction_id: response.transaction_id || '',
+        amount: response.amount || request.amount,
+        currency: response.currency || request.currency || 'GNF',
+        commission_amount: response.commission_amount || 0,
+        seller_net_amount: response.seller_net_amount || 0,
       };
 
       console.log('✅ PaymentIntent created:', normalized.payment_intent_id);
