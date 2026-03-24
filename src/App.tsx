@@ -1,6 +1,6 @@
 import { Suspense, memo, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { resolvePostAuthRoute } from "@/utils/postAuthRoute";
+import { resolvePostAuthRouteSync } from "@/utils/postAuthRoute";
 import { usePrefetchCriticalData } from "@/hooks/usePrefetchCriticalData";
 import { useAutoFillGps as useAutoFillGpsHook } from "@/hooks/useAutoFillGps";
 import ErrorBoundary from "@/components/ErrorBoundary";
