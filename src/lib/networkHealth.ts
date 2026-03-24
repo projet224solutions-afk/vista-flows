@@ -14,7 +14,7 @@ interface NetworkHealthOptions {
 const HEALTH_CHECK_PATH = '/healthz.json';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
-const DEFAULT_TIMEOUT_MS = 3000;
+const DEFAULT_TIMEOUT_MS = 6000;
 const DEFAULT_RETRIES = 1;
 /** Cache results for 15s to prevent flooding on mobile */
 const RESULT_CACHE_WINDOW_MS = 15_000;

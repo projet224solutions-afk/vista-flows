@@ -53,7 +53,7 @@ interface UseUniversalProductsOptions {
   autoLoad?: boolean;
 }
 
-const PRODUCT_QUERY_TIMEOUT_MS = 10_000;
+const PRODUCT_QUERY_TIMEOUT_MS = 25_000;
 
 export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) => {
   const {

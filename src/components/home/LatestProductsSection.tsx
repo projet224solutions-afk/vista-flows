@@ -45,7 +45,7 @@ export function LatestProductsSection({
 }: LatestProductsSectionProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { timedOut, resetTimeout } = useLoadingTimeout(loading, 10000);
+  const { timedOut, resetTimeout } = useLoadingTimeout(loading, 25000);
 
   return (
     <section className={cn('px-4 py-6 md:px-6', className)}>
