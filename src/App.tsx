@@ -366,6 +366,7 @@ function App() {
               <Route path="/client-tracking" element={<ClientTrackingPage />} />
               <Route path="/profil" element={<Profil />} />
               <Route path="/my-purchases" element={<MyPurchases />} />
+              <Route path="/payment/success" element={<PaymentSuccessRedirect />} />
               <Route path="/mes-commandes" element={<MesCommandes />} />
               <Route path="/profile/:userId" element={<UserPublicProfile />} />
               
