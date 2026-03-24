@@ -662,6 +662,7 @@ export default function Auth() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [phoneCode, setPhoneCode] = useState('+224');
   const [phoneCodeOpen, setPhoneCodeOpen] = useState(false);
+  const [countrySelectOpen, setCountrySelectOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
