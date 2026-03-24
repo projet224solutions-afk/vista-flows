@@ -54,16 +54,14 @@ export function HomeHeader({
         <div className="flex items-center justify-between gap-3">
           {/* Logo & Location */}
           <div className="flex items-center gap-3 min-w-0">
-            {/* Animated Logo */}
+            {/* Logo */}
             <div className="relative">
-              <div className="w-10 h-10 md:w-11 md:h-11 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
-                <span className="text-white font-bold text-lg md:text-xl">M</span>
-              </div>
+              <img src="/logo-224solutions.png" alt="224Solutions" className="w-10 h-10 md:w-11 md:h-11 rounded-xl object-contain bg-white/10 p-0.5" />
             </div>
 
             <div className="min-w-0 text-center">
               <h1 className="font-bold text-white text-lg md:text-xl tracking-tight truncate">
-                224SOLUTIONS
+                224Solutions
               </h1>
               <button 
                 className="flex items-center gap-1 text-xs text-white/70 hover:text-white transition-colors group no-hover-effect"
