@@ -159,12 +159,15 @@ export function StripePaymentWrapper({
           throw new Error(apiError.message || 'Failed to create payment intent');
         }
 
-        if (!data?.client_secret) {
-          throw new Error('No client secret returned');
+        // Support both camelCase and snake_case responses
+        const secret = data?.client_secret || data?.clientSecret;
+        if (!secret) {
+          throw new Error(data?.error || 'No client secret returned from Stripe');
         }
 
-        console.log('✅ PaymentIntent created:', data.payment_intent_id);
-        setClientSecret(data.client_secret);
+        const piId = data?.payment_intent_id || data?.paymentIntentId;
+        console.log('✅ Stripe PaymentIntent created:', piId);
+        setClientSecret(secret);
 
       } catch (err) {
         console.error('❌ Payment initialization error:', err);
