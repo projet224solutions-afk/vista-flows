@@ -2590,15 +2590,51 @@ export default function Auth() {
               <div>
                 <Label htmlFor="modal-phone" className="text-xs">{t('auth.phone')}</Label>
                 <div className="flex gap-1">
-                  <span className="inline-flex items-center px-2 bg-muted rounded-md text-xs font-medium border">
-                    {phoneCode}
-                  </span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-28 h-9 justify-between px-2 text-xs font-medium shrink-0"
+                      >
+                        <span className="flex items-center gap-1 truncate">
+                          {WORLD_PHONE_CODES.find(c => c.code === phoneCode)?.flag} {phoneCode}
+                        </span>
+                        <ChevronDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-0 z-[200]" align="start">
+                      <Command>
+                        <CommandInput placeholder="Rechercher..." className="h-9" />
+                        <CommandList>
+                          <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                          <CommandGroup className="max-h-60 overflow-auto">
+                            {WORLD_PHONE_CODES.map((item) => (
+                              <CommandItem
+                                key={`modal-${item.code}-${item.country}`}
+                                value={`${item.country} ${item.code}`}
+                                onSelect={() => setPhoneCode(item.code)}
+                                className="cursor-pointer"
+                              >
+                                <span className="mr-2">{item.flag}</span>
+                                <span className="flex-1 truncate text-xs">{item.country}</span>
+                                <span className="ml-2 text-muted-foreground text-xs">{item.code}</span>
+                                {phoneCode === item.code && (
+                                  <Check className="ml-1 h-3 w-3 text-primary" />
+                                )}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <Input
                     id="modal-phone"
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, ''))}
-                    placeholder="Numéro"
+                    placeholder={getPhoneExample(phoneCode)}
                     className="h-9 text-sm flex-1"
                     required
                   />
