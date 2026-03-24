@@ -510,7 +510,7 @@ export default function ProductPaymentModal({
 
     onPaymentSuccess();
     onClose();
-    navigate('/mes-commandes');
+    navigate('/my-purchases');
   }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose, codPhone, codCity, fc, navigate]);
 
   const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < grandTotal;

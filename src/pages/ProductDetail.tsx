@@ -185,9 +185,9 @@ export default function ProductDetail() {
   };
 
   const handlePaymentSuccess = () => {
-    toast.success('Commande créée avec succès !');
+    toast.success('Paiement réussi ! Redirection vers vos achats...', { duration: 2000 });
     setShowPaymentModal(false);
-    navigate('/mes-commandes');
+    setTimeout(() => navigate('/my-purchases'), 1500);
   };
 
   const handleContact = async () => {
