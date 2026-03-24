@@ -4,11 +4,12 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Package } from 'lucide-react';
+import { ArrowRight, Package, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MarketplaceGrid } from '@/components/marketplace/MarketplaceGrid';
 import { TranslatedProductCard } from '@/components/marketplace/TranslatedProductCard';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useLoadingTimeout } from '@/hooks/useLoadingTimeout';
 import { cn } from '@/lib/utils';
 
 interface Product {
@@ -30,6 +31,7 @@ interface LatestProductsSectionProps {
   loading: boolean;
   onProductClick: (productId: string) => void;
   onAddToCart: (product: Product) => void;
+  onRetry?: () => void;
   className?: string;
 }
 
@@ -38,10 +40,12 @@ export function LatestProductsSection({
   loading,
   onProductClick,
   onAddToCart,
+  onRetry,
   className,
 }: LatestProductsSectionProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { timedOut, resetTimeout } = useLoadingTimeout(loading, 10000);
 
   return (
     <section className={cn('px-4 py-6 md:px-6', className)}>
@@ -67,7 +71,37 @@ export function LatestProductsSection({
       </div>
 
       {/* Content */}
-      {loading ? (
+      {timedOut ? (
+        <div className="rounded-xl border border-border bg-card p-5 md:p-6">
+          <div className="flex flex-col items-center text-center gap-3">
+            <p className="text-base font-semibold text-foreground">Impossible de charger les produits</p>
+            <p className="text-sm text-muted-foreground">
+              Le chargement prend trop de temps. Vérifiez votre connexion puis réessayez.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+              <Button
+                variant="default"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  resetTimeout();
+                  if (onRetry) {
+                    onRetry();
+                    return;
+                  }
+                  window.location.reload();
+                }}
+              >
+                <RefreshCw className="w-4 h-4" />
+                Réessayer
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                Recharger l'application
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
