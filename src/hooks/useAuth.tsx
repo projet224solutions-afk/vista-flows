@@ -378,20 +378,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // ✨ NOUVEAU: Ignorer erreurs réseau et utiliser cache
         if (profileError.message?.includes('network') || profileError.message?.includes('fetch')) {
           console.warn('⚠️ Erreur réseau - utilisation profil en cache');
+          logFirstSupabaseError('refreshProfile.profile_query.network', profileError);
           const cachedProfile = localStorage.getItem(profileCacheKey);
           if (cachedProfile) {
             try {
-              setProfile(JSON.parse(cachedProfile) as Profile);
+              const parsedProfile = JSON.parse(cachedProfile) as Profile;
+              setProfile(parsedProfile);
+              console.log('[PROFILE LOADED]', { source: 'cache_after_network_error', role: parsedProfile.role });
             } catch (e) {}
           }
           setProfileLoading(false);
           return;
         }
-        
+
         console.error('❌ Erreur chargement profil:', profileError);
+        logFirstSupabaseError('refreshProfile.profile_query.error', profileError);
         localStorage.removeItem('oauth_intent_role');
         localStorage.removeItem('oauth_is_new_signup');
         applyMinimalProfileFallback('profile_query_error');
+        console.log('[PROFILE LOADED]', { source: 'minimal_fallback', role: 'client' });
         return;
       }
 
