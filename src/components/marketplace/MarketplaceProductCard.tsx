@@ -202,8 +202,8 @@ export function MarketplaceProductCard({
             )}
             {vendorPublicId && <span className="text-muted-foreground">•</span>}
             {vendor}
-            {certification && (
-              <CertifiedIcon status={certification.status} className="w-3.5 h-3.5" />
+            {isCertified && (
+              <CertifiedIcon status="CERTIFIE" className="w-3.5 h-3.5" />
             )}
           </span>
           {vendorLocation && (
