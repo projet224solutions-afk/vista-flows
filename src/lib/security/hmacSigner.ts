@@ -14,8 +14,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// API Key (publishable PayPal Client ID, safe for client)
-const HMAC_API_KEY = import.meta.env.VITE_PAYPAL_CLIENT_ID || "AUFfL3JGArOz2JdmKwIb-rLqSFPMqiRvpqAJENs-oCDq4LaYLDjxcy6Kh6I9d18vZG2JLxHQHwjnZRPO";
+// API Key (publishable PayPal Client ID - from env only)
+const HMAC_API_KEY = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
 
 // Signing secret - uses TRANSACTION_SECRET_KEY
 const HMAC_SECRET = import.meta.env.VITE_TRANSACTION_SECRET_KEY || import.meta.env.VITE_HMAC_SECRET || "";

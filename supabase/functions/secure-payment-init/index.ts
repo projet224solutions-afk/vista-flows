@@ -14,7 +14,8 @@ const corsHeaders = {
 };
 
 const FEE_PERCENTAGE = 0.025; // 2.5%
-const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY") || "secure-transaction-key-224sol";
+const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY");
+if (!TRANSACTION_SECRET) throw new Error("CRITICAL: TRANSACTION_SECRET_KEY not configured");
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";

@@ -34,8 +34,7 @@ function smartRound(amount: number, currency: string): number {
 function getTransactionSecret(): string {
   const secret = Deno.env.get("TRANSACTION_SECRET_KEY");
   if (!secret) {
-    console.error("🔴 TRANSACTION_SECRET_KEY non configuré, utilisant fallback");
-    return "default-fallback-secret-key";
+    throw new Error("🔴 CRITICAL: TRANSACTION_SECRET_KEY not configured");
   }
   return secret;
 }

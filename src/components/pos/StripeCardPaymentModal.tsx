@@ -42,10 +42,8 @@ interface StripeCardPaymentModalProps {
   onError: (error: string) => void;
 }
 
-// Clé publique Stripe (sécuritaire - c'est une clé PUBLIQUE)
-const STRIPE_PUBLISHABLE_KEY =
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 
-  'pk_live_51RdKJzRxqizQJVjLFseVlmZ7qOJmOIx9PlsGPY600C0CifOqNyNlbfTb2NZAbW1cyVgk8hUt6vGAD3KQqMCIc7NB00F0KjYCqc';
+// Clé publique Stripe (variable d'environnement obligatoire)
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
 
 // Charger Stripe une seule fois
 let stripePromise: Promise<Stripe | null> | null = null;

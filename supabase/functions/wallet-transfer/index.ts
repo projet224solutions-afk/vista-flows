@@ -85,7 +85,8 @@ function currencyToCountry(currency: string): string {
 // 🔑 SECURITY
 // =============================================
 
-const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY") || "default-fallback-secret-key";
+const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY");
+if (!TRANSACTION_SECRET) throw new Error("CRITICAL: TRANSACTION_SECRET_KEY not configured");
 
 async function generateSignature(transactionId: string, amount: number): Promise<string> {
   const encoder = new TextEncoder();
