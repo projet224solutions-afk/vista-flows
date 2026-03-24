@@ -1,4 +1,5 @@
-import { Suspense, memo, useEffect } from "react";
+import { Suspense, memo, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { resolvePostAuthRoute } from "@/utils/postAuthRoute";
 import { usePrefetchCriticalData } from "@/hooks/usePrefetchCriticalData";
 import { useAutoFillGps as useAutoFillGpsHook } from "@/hooks/useAutoFillGps";
