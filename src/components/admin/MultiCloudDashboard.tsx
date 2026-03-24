@@ -54,11 +54,6 @@ function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
             <div className="flex items-center gap-2.5">
               <Icon className={cn('h-3.5 w-3.5', config.textColor)} />
               <span className="text-sm font-medium">{svc.service}</span>
-              {!svc.isRealCheck && (
-                <Badge variant="outline" className="text-[9px] px-1 py-0 text-muted-foreground">
-                  passif
-                </Badge>
-              )}
             </div>
             <span className={cn('text-xs font-mono font-medium', latencyColor)}>{svc.responseTime}ms</span>
           </div>
