@@ -2610,14 +2610,48 @@ export default function Auth() {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label htmlFor="modal-country" className="text-xs">{t('auth.country')}</Label>
-                  <Input
-                    id="modal-country"
-                    value={formData.country}
-                    onChange={(e) => handleInputChange('country', e.target.value)}
-                    placeholder="Pays"
-                    className="h-9 text-sm"
-                    required
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full h-9 text-sm justify-between font-normal"
+                      >
+                        <span className="truncate">
+                          {formData.country
+                            ? WORLD_PHONE_CODES.find(c => c.country === formData.country)
+                              ? `${WORLD_PHONE_CODES.find(c => c.country === formData.country)!.flag} ${formData.country}`
+                              : formData.country
+                            : 'Sélectionner...'}
+                        </span>
+                        <ChevronDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[240px] p-0 z-[200]" align="start">
+                      <Command>
+                        <CommandInput placeholder="Rechercher un pays..." className="h-8 text-sm" />
+                        <CommandList className="max-h-[200px]">
+                          <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                          <CommandGroup>
+                            {WORLD_PHONE_CODES.map((entry) => (
+                              <CommandItem
+                                key={entry.code + entry.country}
+                                value={entry.country}
+                                onSelect={() => handleInputChange('country', entry.country)}
+                                className="text-sm"
+                              >
+                                <span className="mr-2">{entry.flag}</span>
+                                <span className="truncate">{entry.country}</span>
+                                {formData.country === entry.country && (
+                                  <Check className="ml-auto h-3 w-3" />
+                                )}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
                   <Label htmlFor="modal-city" className="text-xs">{t('auth.city')}</Label>
