@@ -19,35 +19,50 @@ interface CachedRates {
 
 let ratesCache: CachedRates | null = null;
 
+/** Promesse en cours pour dédupliquer les requêtes concurrentes (thundering herd) */
+let inflightPromise: Promise<Map<string, number>> | null = null;
+
 /**
  * Charge tous les taux actifs depuis la DB en une seule requête.
  * Résultat mis en cache 5 min côté client.
+ * Déduplique les appels concurrents pour éviter les requêtes N+1.
  */
 async function loadAllRates(): Promise<Map<string, number>> {
   if (ratesCache && Date.now() - ratesCache.fetchedAt < CACHE_TTL_MS) {
     return ratesCache.rates;
   }
 
-  const { data, error } = await (supabase as any)
-    .from('currency_exchange_rates')
-    .select('from_currency, to_currency, rate, margin')
-    .eq('is_active', true);
-
-  const map = new Map<string, number>();
-
-  if (!error && data && Array.isArray(data)) {
-    for (const row of data) {
-      if (typeof row.rate === 'number' && row.rate > 0) {
-        const key = `${row.from_currency}→${row.to_currency}`;
-        // Le taux stocké inclut DÉJÀ la marge de 3% (appliquée par african-fx-collect).
-        // NE PAS réappliquer la marge ici — sinon double commission.
-        map.set(key, row.rate);
-      }
-    }
+  // Si une requête est déjà en cours, réutiliser la même promesse
+  if (inflightPromise) {
+    return inflightPromise;
   }
 
-  ratesCache = { rates: map, fetchedAt: Date.now() };
-  return map;
+  inflightPromise = (async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('currency_exchange_rates')
+        .select('from_currency, to_currency, rate, margin')
+        .eq('is_active', true);
+
+      const map = new Map<string, number>();
+
+      if (!error && data && Array.isArray(data)) {
+        for (const row of data) {
+          if (typeof row.rate === 'number' && row.rate > 0) {
+            const key = `${row.from_currency}→${row.to_currency}`;
+            map.set(key, row.rate);
+          }
+        }
+      }
+
+      ratesCache = { rates: map, fetchedAt: Date.now() };
+      return map;
+    } finally {
+      inflightPromise = null;
+    }
+  })();
+
+  return inflightPromise;
 }
 
 /**
