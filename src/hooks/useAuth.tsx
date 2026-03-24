@@ -330,11 +330,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     setProfileLoading(true);
-    console.log('🔄 Chargement profil pour:', user.email);
-    
+    console.log('[PROFILE] Loading profile...', { email: user.email, userId: user.id });
+
     // Timeout sécurité: ne jamais bloquer plus de 4 secondes
     const profileTimeout = setTimeout(() => {
-      console.warn('⚠️ Timeout profil (4s) - utilisation cache ou fallback');
+      console.warn('[TIMEOUT TRIGGERED] Profile load timeout (4s) - usage cache/fallback');
       const cachedProfile = localStorage.getItem(profileCacheKey);
       if (cachedProfile && !profileRef.current) {
         try {
