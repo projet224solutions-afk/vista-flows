@@ -20,6 +20,9 @@ const AffiliateManagement = lazy(() => import('@/components/vendor/AffiliateMana
 // Finance
 const UniversalWalletTransactions = lazy(() => import('@/components/wallet/UniversalWalletTransactions'));
 
+// Mes Achats
+const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
+
 // Système
 const VendorSettings = lazy(() => import('@/pages/vendor/Settings'));
 
