@@ -791,7 +791,11 @@ export default function PDGServiceSubscriptions() {
         <TabsContent value="history" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des Changements de Prix</CardTitle>
+              <CardTitle>
+                {activeServiceTab !== 'all'
+                  ? `Historique des Prix — ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
+                  : 'Historique des Changements de Prix'}
+              </CardTitle>
               <CardDescription>Traçabilité des modifications tarifaires</CardDescription>
             </CardHeader>
             <CardContent>
@@ -807,18 +811,28 @@ export default function PDGServiceSubscriptions() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {priceHistory.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
-                        <div className="flex flex-col items-center gap-2">
-                          <History className="w-8 h-8 opacity-30" />
-                          <span>Aucun historique de prix</span>
-                          <p className="text-xs">Les changements de prix apparaîtront ici après modification d'un plan</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    priceHistory.map((h) => {
+                  {(() => {
+                    // Filter history by active service tab
+                    const filteredPlanIds = activeServiceTab === 'all' ? null : new Set(filteredPlans.map(p => p.id));
+                    const filteredHistory = filteredPlanIds
+                      ? priceHistory.filter(h => filteredPlanIds.has(h.plan_id))
+                      : priceHistory;
+
+                    if (filteredHistory.length === 0) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                            <div className="flex flex-col items-center gap-2">
+                              <History className="w-8 h-8 opacity-30" />
+                              <span>Aucun historique de prix</span>
+                              <p className="text-xs">Les changements de prix apparaîtront ici après modification d'un plan</p>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+
+                    return filteredHistory.map((h) => {
                       const diff = h.new_price - h.old_price;
                       const pctChange = h.old_price > 0 ? ((diff / h.old_price) * 100).toFixed(1) : '0';
                       return (
@@ -839,8 +853,8 @@ export default function PDGServiceSubscriptions() {
                           <TableCell className="text-sm">{h.reason || '-'}</TableCell>
                         </TableRow>
                       );
-                    })
-                  )}
+                    });
+                  })()}
                 </TableBody>
               </Table>
             </CardContent>
@@ -900,7 +914,7 @@ export default function PDGServiceSubscriptions() {
                 onChange={e => setFreeSubscriptionData(prev => ({ ...prev, planId: e.target.value }))}
               >
                 <option value="">Sélectionner un plan</option>
-                {plans.map(plan => (
+                {filteredPlans.map(plan => (
                   <option key={plan.id} value={plan.id}>{plan.display_name} — {ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}/mois</option>
                 ))}
               </select>
