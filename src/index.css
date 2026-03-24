@@ -9,9 +9,9 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* 224SOLUTIONS Brand System — Charte officielle */
-    /* #023288 Bleu Royal · #04439e Bleu Profond · #ff4000 Orange Vif · #ce3d11 Orange Foncé · #000000 Noir */
+    /* #023288 Bleu Royal · #04439e Bleu Profond · #ff4000 Orange CTA · #ce3d11 Orange Foncé · #000000 Noir */
 
-    --background: 0 0% 99%;
+    --background: 0 0% 100%;
     --foreground: 0 0% 0%;
 
     --card: 0 0% 100%;
@@ -20,18 +20,18 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    /* Primary: Bleu Royal #023288 */
-    --primary: 220 97% 27%;
+    /* Primary: Bleu Royal #023288 — hsl(220, 96%, 27%) */
+    --primary: 220 96% 27%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: Bleu Profond #04439e */
     --secondary: 220 96% 32%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 20% 95%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 46%;
 
-    /* Accent: Orange Vif #ff4000 */
+    /* Accent / CTA: Orange Vif #ff4000 */
     --accent: 15 100% 50%;
     --accent-foreground: 0 0% 100%;
 
@@ -39,9 +39,9 @@ All colors MUST be HSL.
     --destructive: 15 85% 44%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 90%;
-    --input: 220 10% 96%;
-    --ring: 220 97% 27%;
+    --border: 220 13% 91%;
+    --input: 220 14% 96%;
+    --ring: 220 96% 27%;
 
     /* Role-based — tous basés sur la charte */
     --vendeur-primary: 220 97% 27%;
@@ -82,32 +82,32 @@ All colors MUST be HSL.
     --client-gradient: hsl(220 97% 27%);
 
     /* Gradients & effects — charte officielle */
-    --gradient-elegant: linear-gradient(135deg, hsl(220 97% 96%), hsl(0 0% 99%));
-    --gradient-neon: linear-gradient(135deg, hsl(220 97% 27%), hsl(15 100% 50%));
-    --gradient-hero: linear-gradient(180deg, hsl(220 97% 97%) 0%, hsl(0 0% 100%) 50%, hsl(220 97% 96%) 100%);
-    --gradient-hero-accent: linear-gradient(135deg, hsl(220 97% 27% / 0.08) 0%, hsl(15 100% 50% / 0.05) 100%);
-    --gradient-glass: linear-gradient(180deg, hsl(0 0% 100% / 0.92) 0%, hsl(0 0% 100% / 0.7) 100%);
-    --gradient-bottom-nav: linear-gradient(180deg, hsl(0 0% 100% / 0) 0%, hsl(0 0% 100%) 20%);
-    --shadow-elegant: 0 4px 20px hsl(220 97% 27% / 0.08);
-    --shadow-glow: 0 0 30px hsl(220 97% 27% / 0.2);
-    --shadow-card: 0 2px 8px hsl(220 20% 50% / 0.06);
-    --shadow-hero: 0 8px 40px hsl(220 97% 27% / 0.12);
-    --shadow-bottom-nav: 0 -4px 30px hsl(0 0% 0% / 0.08);
-    --shadow-service-card: 0 4px 24px hsl(220 97% 27% / 0.08);
+    --gradient-elegant: linear-gradient(135deg, hsl(220 96% 97%), hsl(0 0% 100%));
+    --gradient-neon: linear-gradient(135deg, hsl(220 96% 27%), hsl(15 100% 50%));
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
+    --gradient-hero-accent: linear-gradient(135deg, hsl(220 96% 27% / 0.06) 0%, hsl(15 100% 50% / 0.04) 100%);
+    --gradient-glass: linear-gradient(180deg, hsl(0 0% 100% / 0.95) 0%, hsl(0 0% 100% / 0.85) 100%);
+    --gradient-bottom-nav: linear-gradient(180deg, hsl(0 0% 100% / 0) 0%, hsl(0 0% 100%) 30%);
+    --shadow-elegant: 0 4px 24px hsl(220 96% 27% / 0.07);
+    --shadow-glow: 0 0 30px hsl(220 96% 27% / 0.15);
+    --shadow-card: 0 1px 3px hsl(220 20% 50% / 0.04), 0 4px 12px hsl(220 20% 50% / 0.06);
+    --shadow-hero: 0 8px 40px hsl(220 96% 27% / 0.10);
+    --shadow-bottom-nav: 0 -2px 20px hsl(0 0% 0% / 0.06);
+    --shadow-service-card: 0 2px 8px hsl(220 96% 27% / 0.05), 0 8px 24px hsl(220 96% 27% / 0.08);
 
     /* Hover global */
-    --hover-bg: 220 97% 27%;
-    --hover-shadow: 0 8px 25px hsl(220 97% 27% / 0.4);
+    --hover-bg: 220 96% 27%;
+    --hover-shadow: 0 6px 20px hsl(220 96% 27% / 0.35);
 
     --radius: 0.75rem;
 
-    --sidebar-background: 220 97% 27%;
+    --sidebar-background: 220 96% 27%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 15 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 96% 32%;
+    --sidebar-accent: 220 80% 36%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 97% 22%;
+    --sidebar-border: 220 90% 22%;
     --sidebar-ring: 15 100% 50%;
   }
 

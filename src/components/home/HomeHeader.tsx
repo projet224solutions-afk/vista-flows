@@ -44,36 +44,36 @@ export function HomeHeader({
     <header
       className={cn(
         'sticky top-0 z-50',
-        'bg-card/80 backdrop-blur-xl border-b border-border/50',
-        'transition-all duration-300',
+        'bg-primary text-primary-foreground',
+        'shadow-md',
+        'transition-all duration-200',
         className
       )}
     >
-      <div className="px-4 py-3 md:px-6 md:py-4">
+      <div className="px-4 py-3 md:px-6 md:py-3.5">
         <div className="flex items-center justify-between gap-3">
           {/* Logo & Location */}
           <div className="flex items-center gap-3 min-w-0">
             {/* Animated Logo */}
-            <div className="relative group">
-              <div className="absolute inset-0 bg-primary rounded-xl blur-md opacity-50 group-hover:opacity-70 transition-opacity" />
-              <div className="relative w-10 h-10 md:w-12 md:h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/40">
-                <span className="text-primary-foreground font-bold text-lg md:text-xl">M</span>
+            <div className="relative">
+              <div className="w-10 h-10 md:w-11 md:h-11 bg-white/15 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
+                <span className="text-white font-bold text-lg md:text-xl">M</span>
               </div>
             </div>
 
             <div className="min-w-0 text-center">
-              <h1 className="font-bold text-primary text-lg md:text-xl tracking-tight truncate">
+              <h1 className="font-bold text-white text-lg md:text-xl tracking-tight truncate">
                 224SOLUTIONS
               </h1>
               <button 
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors group"
+                className="flex items-center gap-1 text-xs text-white/70 hover:text-white transition-colors group no-hover-effect"
                 onClick={() => refresh()}
                 disabled={loading}
               >
                 {loading ? (
-                  <Loader2 className="w-3 h-3 text-primary animate-spin" />
+                  <Loader2 className="w-3 h-3 text-white/70 animate-spin" />
                 ) : (
-                  <MapPin className="w-3 h-3 text-primary group-hover:scale-110 transition-transform" />
+                  <MapPin className="w-3 h-3 text-white/70 group-hover:scale-110 transition-transform" />
                 )}
                 <span className="truncate max-w-[150px]">
                   {loading ? 'Détection...' : location?.address || 'Conakry, Guinée'}
@@ -93,27 +93,31 @@ export function HomeHeader({
                 variant="ghost"
                 size="icon"
                 onClick={handleInstall}
-                className="relative h-10 w-10 rounded-full hover:bg-primary/10 transition-colors animate-pulse"
+                className="relative h-10 w-10 rounded-full hover:bg-white/15 transition-colors animate-pulse no-hover-effect"
                 title="Installer l'application"
               >
-                <Download className="w-5 h-5 text-primary" />
+                <Download className="w-5 h-5 text-white" />
               </Button>
             )}
 
-            <ThemeToggle />
-            <LanguageSelector variant="minimal" />
+            <div className="[&_button]:text-white [&_button]:hover:bg-white/15 [&_button]:no-hover-effect">
+              <ThemeToggle />
+            </div>
+            <div className="[&_button]:text-white [&_button]:hover:bg-white/15 [&_button]:no-hover-effect">
+              <LanguageSelector variant="minimal" />
+            </div>
 
             {/* Cart Button */}
             <Button
               variant="ghost"
               size="icon"
               onClick={onCartClick || (() => navigate('/cart'))}
-              className="relative h-10 w-10 rounded-full hover:bg-primary/10 transition-colors"
+              className="relative h-10 w-10 rounded-full hover:bg-white/15 transition-colors no-hover-effect"
             >
-              <ShoppingCart className="w-5 h-5 text-foreground" />
+              <ShoppingCart className="w-5 h-5 text-white" />
               {cartCount > 0 && (
                 <Badge 
-                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-primary text-primary-foreground border-2 border-card"
+                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-accent text-accent-foreground border-2 border-primary"
                 >
                   {cartCount > 99 ? '99+' : cartCount}
                 </Badge>
@@ -121,43 +125,45 @@ export function HomeHeader({
             </Button>
 
             {/* Unified Notification Bell - uses communication_notifications + realtime */}
-            <NotificationBellButton />
+            <div className="[&_button]:text-white [&_button]:hover:bg-white/15 [&_button]:no-hover-effect">
+              <NotificationBellButton />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Professional Ticker Banner */}
-      <div className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-t border-primary/20 overflow-hidden relative">
+      <div className="bg-white/10 border-t border-white/15 overflow-hidden relative">
         <div className="flex animate-ticker py-2">
-          <span className="ticker-item text-base md:text-lg font-semibold text-primary whitespace-nowrap px-8">
+          <span className="ticker-item text-base md:text-lg font-semibold text-white whitespace-nowrap px-8">
             🎉 Bienvenue sur 224SOLUTIONS
           </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+          <span className="ticker-item text-sm md:text-base font-medium text-white/85 whitespace-nowrap px-8">
             🌍 Une plateforme africaine
           </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+          <span className="ticker-item text-sm md:text-base font-medium text-white/85 whitespace-nowrap px-8">
             🚀 Des opportunités sans frontières
           </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+          <span className="ticker-item text-sm md:text-base font-medium text-white/85 whitespace-nowrap px-8">
             🏪 Tout votre marché en un seul endroit
           </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+          <span className="ticker-item text-sm md:text-base font-medium text-white/85 whitespace-nowrap px-8">
             💎 Découvrez, achetez et vendez simplement
           </span>
           {/* Duplicate for seamless loop */}
-          <span className="ticker-item text-base md:text-lg font-semibold text-primary whitespace-nowrap px-8">
+          <span className="ticker-item text-base md:text-lg font-semibold text-white whitespace-nowrap px-8">
             🎉 Bienvenue sur 224SOLUTIONS
           </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+          <span className="ticker-item text-sm md:text-base font-medium text-white/85 whitespace-nowrap px-8">
             🌍 Une plateforme africaine
           </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+          <span className="ticker-item text-sm md:text-base font-medium text-white/85 whitespace-nowrap px-8">
             🚀 Des opportunités sans frontières
           </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+          <span className="ticker-item text-sm md:text-base font-medium text-white/85 whitespace-nowrap px-8">
             🏪 Tout votre marché en un seul endroit
           </span>
-          <span className="ticker-item text-sm md:text-base font-medium text-primary/90 whitespace-nowrap px-8">
+          <span className="ticker-item text-sm md:text-base font-medium text-white/85 whitespace-nowrap px-8">
             💎 Découvrez, achetez et vendez simplement
           </span>
         </div>

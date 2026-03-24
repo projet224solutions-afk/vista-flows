@@ -82,21 +82,21 @@ export function HeroSection({ className }: HeroSectionProps) {
   return (
     <section className={cn('relative', className)}>
       {/* Compact Header */}
-      <div className="relative z-10 px-4 pt-4 pb-6">
+      <div className="relative z-10 px-4 pt-6 pb-8 md:pt-8 md:pb-10">
         {/* Welcome Badge */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full">
-            <span className="text-xs font-medium text-primary">224Solutions</span>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/8 rounded-full border border-primary/15">
+            <span className="text-xs font-semibold text-primary tracking-wide uppercase">224Solutions</span>
           </div>
         </div>
 
         {/* Main Title - Compact */}
-        <h1 className="text-xl font-bold text-foreground leading-tight mb-2">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight mb-2">
           {t('home.createService')}
         </h1>
         
         {/* Subtitle - Short */}
-        <p className="text-sm text-muted-foreground mb-5">
+        <p className="text-sm md:text-base text-muted-foreground mb-6">
           {t('home.professionalCategories')} • {t('home.completeTools') || t('home.withCompleteTools')}
         </p>
 
@@ -109,8 +109,8 @@ export function HeroSection({ className }: HeroSectionProps) {
               size="lg"
               className={cn(
                 'w-full gap-2 h-12 rounded-xl text-base font-semibold',
-                'bg-primary hover:bg-primary/90',
-                'shadow-lg shadow-primary/25',
+                'bg-accent hover:bg-accent/90 text-accent-foreground',
+                'shadow-lg shadow-accent/30',
                 'active:scale-[0.98] transition-all duration-200'
               )}
             >
@@ -125,8 +125,8 @@ export function HeroSection({ className }: HeroSectionProps) {
               size="lg"
               className={cn(
                 'w-full gap-2 h-12 rounded-xl text-base font-semibold',
-                'bg-primary hover:bg-primary/90',
-                'shadow-lg shadow-primary/25',
+                'bg-accent hover:bg-accent/90 text-accent-foreground',
+                'shadow-lg shadow-accent/30',
                 'active:scale-[0.98] transition-all duration-200'
               )}
             >
@@ -143,7 +143,7 @@ export function HeroSection({ className }: HeroSectionProps) {
           size="lg"
           className={cn(
             'w-full gap-2 h-11 rounded-xl text-base font-medium mt-3',
-            'border-primary/30 text-primary',
+            'border-primary/25 text-primary bg-primary/5',
             'hover:bg-primary/10 hover:border-primary/50',
             'active:scale-[0.98] transition-all duration-200'
           )}

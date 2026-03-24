@@ -71,9 +71,9 @@ export function HomeSearchBar({
         <div
           className={cn(
             'relative flex-1 rounded-2xl transition-all duration-300',
-            'bg-muted/50 border border-border/50',
-            'hover:bg-muted/70 hover:border-border',
-            isFocused && 'bg-card border-primary/30 shadow-lg ring-2 ring-primary/10'
+            'bg-muted/60 border border-border/60',
+            'hover:bg-muted/80 hover:border-border',
+            isFocused && 'bg-card border-primary/40 shadow-lg ring-2 ring-primary/15'
           )}
         >
           <Search

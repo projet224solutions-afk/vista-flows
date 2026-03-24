@@ -41,17 +41,18 @@ export function HomeServiceCard({
         onClick={onClick}
         className={cn(
           'group relative w-full overflow-hidden',
-          'p-3 rounded-2xl text-center',
-          'bg-card border border-border/50',
-          'hover:border-primary hover:bg-primary hover:shadow-lg hover:shadow-primary/20',
-          'transition-all duration-300 ease-out',
-          'active:scale-[0.98] active:bg-primary',
+          'p-4 rounded-2xl text-center',
+          'bg-card border border-border/60',
+          'shadow-[var(--shadow-card)]',
+          'hover:border-primary/60 hover:bg-primary hover:shadow-lg hover:shadow-primary/20',
+          'transition-all duration-250 ease-out',
+          'active:scale-[0.97] active:bg-primary',
           className
         )}
       >
         {/* Trending indicator */}
         {trending && count > 0 && (
-          <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-bold rounded-full shadow-lg shadow-amber-500/40">
+          <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 px-1.5 py-0.5 bg-accent text-accent-foreground text-[8px] font-bold rounded-full shadow-sm">
             <TrendingUp className="w-2 h-2" />
           </div>
         )}
@@ -60,9 +61,9 @@ export function HomeServiceCard({
           {/* Icon Container */}
           <div
             className={cn(
-              'p-3 rounded-xl',
+              'p-3 rounded-xl bg-muted/60',
               'transition-all duration-300',
-              'group-hover:scale-105',
+              'group-hover:scale-105 group-hover:bg-white/20',
               '[&_svg]:transition-colors [&_svg]:duration-300 group-hover:[&_svg]:text-white group-active:[&_svg]:text-white'
             )}
           >
