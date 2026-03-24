@@ -1,6 +1,6 @@
-// Service Worker v15 - PWA + FCM + Offline + Anti-stale-data
-// v15: fix data loading on installed PWA - never cache API calls
-const CACHE_VERSION = "v15";
+// Service Worker v16 - PWA + FCM + Offline + Anti-stale-data
+// v16: add healthz endpoint to app shell and force SW refresh on mobile installs
+const CACHE_VERSION = "v16";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -48,6 +48,7 @@ const PRECACHE_ASSETS = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
+  "/healthz.json",
   "/offline.html",
   "/favicon.png",
   "/icon-192.png",
