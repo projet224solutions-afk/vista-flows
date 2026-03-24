@@ -47,34 +47,40 @@ async function executeHealthCheck(timeoutMs: number, retries: number): Promise<N
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const startedAt = nowPerf();
     try {
-      const appHealthResponse = await withTimeout(
-        fetch(`${HEALTH_CHECK_PATH}?t=${Date.now()}&a=${attempt}`, {
-          method: 'GET',
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache' },
-        }),
-        timeoutMs,
-      );
+      // Try local healthz first
+      let appOk = false;
+      try {
+        const appHealthResponse = await withTimeout(
+          fetch(`${HEALTH_CHECK_PATH}?t=${Date.now()}&a=${attempt}`, {
+            method: 'GET',
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache' },
+          }),
+          timeoutMs,
+        );
 
-      const latencyMs = Math.round(nowPerf() - startedAt);
+        const latencyMs = Math.round(nowPerf() - startedAt);
 
-      if (appHealthResponse.ok) {
-        const contentType = appHealthResponse.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-          try {
-            const payload = await appHealthResponse.clone().json();
-            if (payload?.status === 'ok') {
-              return { ok: true, reason: 'ok:app_health', statusCode: appHealthResponse.status, latencyMs };
-            }
-            lastErrorReason = 'invalid_payload';
-          } catch {
-            lastErrorReason = 'invalid_json';
+        if (appHealthResponse.ok) {
+          const contentType = appHealthResponse.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            try {
+              const payload = await appHealthResponse.json();
+              if (payload?.status === 'ok') {
+                return { ok: true, reason: 'ok:app_health', statusCode: appHealthResponse.status, latencyMs };
+              }
+            } catch { /* invalid json, fall through to supabase */ }
+          } else if (contentType.includes('text/html')) {
+            // SPA rewrite returned HTML instead of JSON — not a real healthz response
+            lastErrorReason = 'healthz_spa_rewrite';
+          } else {
+            return { ok: true, reason: 'ok:app_health_non_json', statusCode: appHealthResponse.status, latencyMs };
           }
         } else {
-          return { ok: true, reason: 'ok:app_health_non_json', statusCode: appHealthResponse.status, latencyMs };
+          lastErrorReason = `app_http_${appHealthResponse.status}`;
         }
-      } else {
-        lastErrorReason = `app_http_${appHealthResponse.status}`;
+      } catch {
+        // healthz fetch failed, try supabase fallback
       }
 
       // Fallback réel: tester la reachability Supabase si /healthz.json échoue (preview/PWA custom host)
