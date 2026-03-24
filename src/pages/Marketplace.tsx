@@ -39,6 +39,55 @@ import { InfiniteScrollTrigger } from "@/components/marketplace/InfiniteScrollTr
 const BRAND_BLUE = '#04439e';
 const BRAND_ORANGE = '#ff4000';
 
+/** Loading state with 10s timeout — prevents infinite skeleton on mobile PWA */
+function MarketplaceLoadingState({ onRetry }: { onRetry: () => void }) {
+  const [timedOut, setTimedOut] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setTimedOut(true), 10000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (timedOut) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4">
+        <div className="text-center space-y-2">
+          <p className="text-sm font-medium text-foreground">Impossible de charger les produits</p>
+          <p className="text-xs text-muted-foreground">Vérifiez votre connexion internet</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="default" size="sm" onClick={onRetry}>
+            Réessayer
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => {
+            if ('caches' in window) {
+              caches.keys().then(names => names.forEach(n => caches.delete(n)));
+            }
+            window.location.reload();
+          }}>
+            Vider le cache
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="marketplace-grid">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="marketplace-card animate-pulse">
+          <div className="marketplace-card-image-container bg-muted" />
+          <div className="marketplace-card-content space-y-2">
+            <div className="h-4 bg-muted rounded w-3/4" />
+            <div className="h-3 bg-muted rounded w-1/2" />
+            <div className="h-5 bg-muted rounded w-1/3" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Configuration des catégories numériques pour le filtre
 const DIGITAL_CATEGORIES = [
   { id: 'all', name: 'Tous', icon: Package },
