@@ -136,17 +136,33 @@ export function invalidateRatesCache() {
 
 /**
  * Retourne la date de dernière mise à jour des taux.
+ * Dédupliquée et cachée pour éviter les requêtes multiples.
  */
-export async function getLastUpdated(): Promise<Date | null> {
-  const { data } = await (supabase as any)
-    .from('currency_exchange_rates')
-    .select('retrieved_at')
-    .eq('is_active', true)
-    .order('retrieved_at', { ascending: false })
-    .limit(1);
+let lastUpdatedCache: { value: Date | null; fetchedAt: number } | null = null;
+let lastUpdatedInflight: Promise<Date | null> | null = null;
 
-  if (data && data[0]?.retrieved_at) {
-    return new Date(data[0].retrieved_at);
+export async function getLastUpdated(): Promise<Date | null> {
+  if (lastUpdatedCache && Date.now() - lastUpdatedCache.fetchedAt < CACHE_TTL_MS) {
+    return lastUpdatedCache.value;
   }
-  return null;
+  if (lastUpdatedInflight) return lastUpdatedInflight;
+
+  lastUpdatedInflight = (async () => {
+    try {
+      const { data } = await (supabase as any)
+        .from('currency_exchange_rates')
+        .select('retrieved_at')
+        .eq('is_active', true)
+        .order('retrieved_at', { ascending: false })
+        .limit(1);
+
+      const value = data?.[0]?.retrieved_at ? new Date(data[0].retrieved_at) : null;
+      lastUpdatedCache = { value, fetchedAt: Date.now() };
+      return value;
+    } finally {
+      lastUpdatedInflight = null;
+    }
+  })();
+
+  return lastUpdatedInflight;
 }

@@ -15,14 +15,14 @@ import SEOHead from "@/components/SEOHead";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 import { usePriceConverter } from "@/hooks/usePriceConverter";
 import { getCurrencyForCountry } from "@/data/countryMappings";
-import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
 
 // Mini composant pour afficher l'icône certifié à côté du nom vendeur
 function VendorCertBadge({ vendorId }: { vendorId: string }) {
-  const { certification } = useVendorCertification(vendorId);
-  if (!certification) return null;
-  return <CertifiedIcon status={certification.status} className="w-4 h-4" />;
+  const { isCertified } = useVendorCertificationCached(vendorId);
+  if (!isCertified) return null;
+  return <CertifiedIcon status="CERTIFIE" className="w-4 h-4" />;
 }
 
 interface Product {
