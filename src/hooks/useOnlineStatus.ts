@@ -15,6 +15,10 @@ interface OnlineStatus {
   checkConnection: () => Promise<boolean>;
 }
 
+const HEALTH_TIMEOUT_MS = 4500;
+const OFFLINE_CONFIRMATION_FAILURES = 2;
+const OFFLINE_RECOVERY_POLL_MS = 15000;
+
 export function useOnlineStatus(): OnlineStatus {
   const [isOnline, setIsOnline] = useState<boolean>(
     typeof navigator !== 'undefined' ? navigator.onLine : true
@@ -25,6 +29,7 @@ export function useOnlineStatus(): OnlineStatus {
   const [offlineDuration, setOfflineDuration] = useState<number>(0);
 
   const offlineStartRef = useRef<Date | null>(isOnline ? null : new Date());
+  const consecutiveFailuresRef = useRef(0);
 
   const markOffline = useCallback((reason: string) => {
     if (!offlineStartRef.current) offlineStartRef.current = new Date();
@@ -42,22 +47,45 @@ export function useOnlineStatus(): OnlineStatus {
     setIsOnline(true);
     setLastOnline(now);
     setLastError(null);
+    consecutiveFailuresRef.current = 0;
   }, []);
 
   const checkConnection = useCallback(async (): Promise<boolean> => {
-    // Don't force — let the shared cache deduplicate across all hooks
-    const result = await checkNetworkHealth({ timeoutMs: 3000, retries: 1 });
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      consecutiveFailuresRef.current = OFFLINE_CONFIRMATION_FAILURES;
+      markOffline('navigator_offline');
+      return false;
+    }
+
+    // Don't force by default: shared cache deduplicates all calls
+    const result = await checkNetworkHealth({ timeoutMs: HEALTH_TIMEOUT_MS, retries: 1, force: !isOnline });
     if (result.ok) {
       markOnline();
       return true;
     }
+
+    consecutiveFailuresRef.current += 1;
+    setLastError(result.reason);
+
+    // Avoid false offline on one transient failure when navigator is still online
+    if (consecutiveFailuresRef.current < OFFLINE_CONFIRMATION_FAILURES) {
+      console.warn('[HEALTH CHECK FAIL] transient', {
+        reason: result.reason,
+        failures: consecutiveFailuresRef.current,
+      });
+      return false;
+    }
+
     markOffline(result.reason);
     return false;
-  }, [markOffline, markOnline]);
+  }, [isOnline, markOffline, markOnline]);
 
   useEffect(() => {
     const handleOnline = () => void checkConnection();
-    const handleOffline = () => markOffline('browser_offline_event');
+    const handleOffline = () => {
+      consecutiveFailuresRef.current = OFFLINE_CONFIRMATION_FAILURES;
+      markOffline('browser_offline_event');
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -68,7 +96,7 @@ export function useOnlineStatus(): OnlineStatus {
     // Only poll when offline to detect recovery
     let interval: ReturnType<typeof setInterval> | undefined;
     if (!isOnline) {
-      interval = setInterval(() => void checkConnection(), 30000);
+      interval = setInterval(() => void checkConnection(), OFFLINE_RECOVERY_POLL_MS);
     }
 
     return () => {
