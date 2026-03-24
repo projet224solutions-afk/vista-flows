@@ -12959,6 +12959,75 @@ export type Database = {
         }
         Relationships: []
       }
+      monitoring_incidents: {
+        Row: {
+          created_at: string
+          dedupe_key: string | null
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          message: string
+          metadata: Json
+          occurrence_count: number
+          provider_id: string | null
+          resolved_at: string | null
+          service_id: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          message: string
+          metadata?: Json
+          occurrence_count?: number
+          provider_id?: string | null
+          resolved_at?: string | null
+          service_id?: string | null
+          severity: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          message?: string
+          metadata?: Json
+          occurrence_count?: number
+          provider_id?: string | null
+          resolved_at?: string | null
+          service_id?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoring_incidents_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "monitoring_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monitoring_incidents_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "monitoring_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monitoring_metrics: {
         Row: {
           created_at: string
@@ -12989,6 +13058,45 @@ export type Database = {
           period_start?: string
           service_name?: string | null
           tags?: Json | null
+        }
+        Relationships: []
+      }
+      monitoring_providers: {
+        Row: {
+          created_at: string
+          error_rate: number
+          id: string
+          last_check: string | null
+          latency: number | null
+          metadata: Json
+          name: string
+          status: string
+          updated_at: string
+          uptime_percent: number
+        }
+        Insert: {
+          created_at?: string
+          error_rate?: number
+          id?: string
+          last_check?: string | null
+          latency?: number | null
+          metadata?: Json
+          name: string
+          status?: string
+          updated_at?: string
+          uptime_percent?: number
+        }
+        Update: {
+          created_at?: string
+          error_rate?: number
+          id?: string
+          last_check?: string | null
+          latency?: number | null
+          metadata?: Json
+          name?: string
+          status?: string
+          updated_at?: string
+          uptime_percent?: number
         }
         Relationships: []
       }
@@ -13042,6 +13150,68 @@ export type Database = {
           uptime_percent?: number | null
         }
         Relationships: []
+      }
+      monitoring_services: {
+        Row: {
+          check_count: number
+          created_at: string
+          display_name: string | null
+          error_rate: number
+          fail_count: number
+          id: string
+          last_check: string | null
+          last_healthy_at: string | null
+          latency: number | null
+          metadata: Json
+          name: string
+          provider_id: string
+          requests_per_minute: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          check_count?: number
+          created_at?: string
+          display_name?: string | null
+          error_rate?: number
+          fail_count?: number
+          id?: string
+          last_check?: string | null
+          last_healthy_at?: string | null
+          latency?: number | null
+          metadata?: Json
+          name: string
+          provider_id: string
+          requests_per_minute?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          check_count?: number
+          created_at?: string
+          display_name?: string | null
+          error_rate?: number
+          fail_count?: number
+          id?: string
+          last_check?: string | null
+          last_healthy_at?: string | null
+          latency?: number | null
+          metadata?: Json
+          name?: string
+          provider_id?: string
+          requests_per_minute?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoring_services_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "monitoring_providers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       moto_security_alerts: {
         Row: {
