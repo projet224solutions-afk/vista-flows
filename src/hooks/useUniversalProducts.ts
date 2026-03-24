@@ -81,7 +81,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
   // Permet d'ignorer les réponses "anciennes" quand l'utilisateur change rapidement les filtres/tri
   const requestIdRef = useRef(0);
   const lastLoadedAtRef = useRef(0);
-  const refreshRef = useRef<() => void>(() => {});
+  const refreshRef = useRef<(silent?: boolean) => void>(() => {});
   const realtimeRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const STALE_REFRESH_MS = 45_000;
@@ -90,8 +90,10 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
   const normalizeLocation = (value: string) => value.trim().replace(/\s+/g, ' ');
 
-  const loadProducts = useCallback(async (reset = false) => {
+  const loadProducts = useCallback(async (reset = false, loadOptions: { silent?: boolean } = {}) => {
+    const { silent = false } = loadOptions;
     const requestId = ++requestIdRef.current;
+    const shouldShowLoading = !silent && (!reset || products.length === 0);
     const filters = {
       category,
       searchQuery,
@@ -108,7 +110,9 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     let lastError: any = null;
 
     try {
-      setLoading(true);
+      if (shouldShowLoading) {
+        setLoading(true);
+      }
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
@@ -314,7 +318,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
         continue;
       }
       // Last attempt failed — show error
-      if (requestId === requestIdRef.current) {
+      if (!silent && requestId === requestIdRef.current) {
         const errorMessage = error instanceof Error ? error.message : 'unknown_error';
         if (errorMessage === 'products_query_timeout') {
           console.error('[TIMEOUT TRIGGERED] Produits accueil - timeout', {
@@ -332,7 +336,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     } // end retry loop
 
     } finally {
-      if (requestId === requestIdRef.current) {
+      if (shouldShowLoading && requestId === requestIdRef.current) {
         setLoading(false);
       }
     }
@@ -347,6 +351,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     vendorId,
     country,
     city,
+    products.length,
     includePhysicalVendors,
     sortBy,
   ]);
@@ -358,11 +363,13 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
   }, [loading, hasMore]);
 
   const refresh = useCallback(() => {
-    loadProducts(true);
+    loadProducts(true, { silent: false });
   }, [loadProducts]);
 
   useEffect(() => {
-    refreshRef.current = () => loadProducts(true);
+    refreshRef.current = (silent = false) => {
+      void loadProducts(true, { silent });
+    };
   }, [loadProducts]);
 
   // Charger automatiquement au montage et quand les options changent
@@ -404,7 +411,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       }
 
       realtimeRefreshTimerRef.current = setTimeout(() => {
-        refreshRef.current();
+        refreshRef.current(true);
       }, REALTIME_DEBOUNCE_MS);
     };
 
@@ -430,7 +437,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       const staleForMs = Date.now() - lastLoadedAtRef.current;
 
       if (isVisible && staleForMs > STALE_REFRESH_MS) {
-        refreshRef.current();
+        refreshRef.current(true);
       }
     };
 
