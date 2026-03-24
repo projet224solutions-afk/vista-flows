@@ -407,7 +407,7 @@ export default function ProductPaymentModal({
         await createOrderAfterPayment(`mobile-${Date.now()}`, paymentMethod);
         setPaymentStep('success');
         toast.success('Paiement initié avec succès !');
-        setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
+        setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/mes-commandes'); }, 2000);
       }
     } catch (err) {
       console.error('Mobile money payment failed:', err);
