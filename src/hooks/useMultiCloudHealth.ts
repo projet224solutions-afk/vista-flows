@@ -1,25 +1,55 @@
 /**
- * Hook pour le monitoring multi-cloud temps réel
- * Combines polling health checks with Supabase Realtime for service status
+ * Hook multi-cloud monitoring temps réel
+ * Reads from monitoring_providers + monitoring_services + monitoring_incidents via Realtime
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { multiCloudHealth, type MultiCloudReport } from '@/services/MultiCloudHealthService';
 
-interface RealtimeServiceStatus {
-  service_name: string;
-  display_name: string;
-  provider: string;
+export interface DbProvider {
+  id: string;
+  name: string;
   status: string;
-  response_time_ms: number | null;
-  last_check_at: string | null;
+  latency: number | null;
+  error_rate: number;
+  last_check: string | null;
+  uptime_percent: number;
+}
+
+export interface DbService {
+  id: string;
+  name: string;
+  display_name: string;
+  provider_id: string;
+  status: string;
+  latency: number | null;
+  error_rate: number;
+  requests_per_minute: number;
+  last_check: string | null;
+  last_healthy_at: string | null;
   metadata: Record<string, any>;
+}
+
+export interface DbIncident {
+  id: string;
+  provider_id: string | null;
+  service_id: string | null;
+  severity: string;
+  status: string;
+  title: string;
+  message: string;
+  occurrence_count: number;
+  first_seen_at: string;
+  last_seen_at: string;
+  resolved_at: string | null;
 }
 
 export function useMultiCloudHealth(autoRefreshMs = 30000) {
   const [report, setReport] = useState<MultiCloudReport | null>(null);
   const [isChecking, setIsChecking] = useState(false);
-  const [dbServices, setDbServices] = useState<RealtimeServiceStatus[]>([]);
+  const [providers, setProviders] = useState<DbProvider[]>([]);
+  const [services, setServices] = useState<DbService[]>([]);
+  const [incidents, setIncidents] = useState<DbIncident[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -36,14 +66,16 @@ export function useMultiCloudHealth(autoRefreshMs = 30000) {
     }
   }, []);
 
-  // Load DB service statuses
-  const loadDbServices = useCallback(async () => {
+  const loadDb = useCallback(async () => {
     try {
-      const { data } = await supabase
-        .from('monitoring_service_status' as any)
-        .select('*')
-        .order('service_name');
-      if (data) setDbServices(data as unknown as RealtimeServiceStatus[]);
+      const [pRes, sRes, iRes] = await Promise.all([
+        supabase.from('monitoring_providers' as any).select('*').order('name'),
+        supabase.from('monitoring_services' as any).select('*').order('name'),
+        supabase.from('monitoring_incidents' as any).select('*').eq('status', 'open').order('last_seen_at', { ascending: false }).limit(20),
+      ]);
+      if (pRes.data) setProviders(pRes.data as unknown as DbProvider[]);
+      if (sRes.data) setServices(sRes.data as unknown as DbService[]);
+      if (iRes.data) setIncidents(iRes.data as unknown as DbIncident[]);
     } catch (e) {
       console.error('[MultiCloudHealth] DB load error:', e);
     }
@@ -51,44 +83,56 @@ export function useMultiCloudHealth(autoRefreshMs = 30000) {
 
   useEffect(() => {
     refresh();
-    loadDbServices();
+    loadDb();
 
-    if (autoRefreshMs > 0) {
-      intervalRef.current = setInterval(refresh, autoRefreshMs);
-    }
+    if (autoRefreshMs > 0) intervalRef.current = setInterval(() => { refresh(); loadDb(); }, autoRefreshMs);
 
-    // Realtime subscription for instant status changes
-    const channel = supabase
-      .channel('multicloud-service-status')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'monitoring_service_status',
-      }, (payload) => {
+    // Realtime on providers
+    const provCh = supabase.channel('mc-providers-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'monitoring_providers' }, (payload) => {
         if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-          const updated = payload.new as RealtimeServiceStatus;
-          setDbServices(prev => {
-            const exists = prev.find(s => s.service_name === updated.service_name);
-            if (exists) return prev.map(s => s.service_name === updated.service_name ? updated : s);
-            return [...prev, updated];
+          const u = payload.new as DbProvider;
+          setProviders(prev => prev.map(p => p.id === u.id ? u : p));
+          setLastUpdate(new Date());
+        }
+      }).subscribe();
+
+    // Realtime on services
+    const svcCh = supabase.channel('mc-services-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'monitoring_services' }, (payload) => {
+        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+          const u = payload.new as DbService;
+          setServices(prev => {
+            const exists = prev.find(s => s.id === u.id);
+            return exists ? prev.map(s => s.id === u.id ? u : s) : [...prev, u];
           });
           setLastUpdate(new Date());
         }
-      })
-      .subscribe();
+      }).subscribe();
+
+    // Realtime on incidents
+    const incCh = supabase.channel('mc-incidents-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'monitoring_incidents' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setIncidents(prev => [payload.new as DbIncident, ...prev].slice(0, 20));
+        } else if (payload.eventType === 'UPDATE') {
+          const u = payload.new as DbIncident;
+          setIncidents(prev => prev.map(i => i.id === u.id ? u : i));
+        }
+        setLastUpdate(new Date());
+      }).subscribe();
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      supabase.removeChannel(channel);
+      supabase.removeChannel(provCh);
+      supabase.removeChannel(svcCh);
+      supabase.removeChannel(incCh);
     };
-  }, [refresh, autoRefreshMs, loadDbServices]);
+  }, [refresh, autoRefreshMs, loadDb]);
 
-  return { 
-    report, 
-    isChecking, 
-    refresh, 
+  return {
+    report, isChecking, refresh,
     history: multiCloudHealth.getHistory(),
-    dbServices,
-    lastUpdate,
+    providers, services, incidents, lastUpdate,
   };
 }
