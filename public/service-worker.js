@@ -1,14 +1,9 @@
-// Service Worker v14 - PWA + Firebase Cloud Messaging + Mode Offline Complet + Background Sync
-// v14: anti-écran-blanc déploiement (assets network-first + invalidation cache)
-const CACHE_VERSION = "v14";
+// Service Worker v15 - PWA + FCM + Offline + Anti-stale-data
+// v15: fix data loading on installed PWA - never cache API calls
+const CACHE_VERSION = "v15";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
-const API_CACHE = `224solutions-api-${CACHE_VERSION}`;
-
-// Configuration du Background Sync
-const SYNC_TAG_SALES = 'sync-offline-sales';
-const SYNC_TAG_DATA = 'sync-offline-data';
 
 // --- Firebase Cloud Messaging (FCM) ---
 let firebaseAvailable = false;
@@ -17,403 +12,201 @@ try {
   importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
   firebaseAvailable = true;
 } catch (e) {
-  console.warn('[FCM SW] Firebase scripts non chargés — notifications désactivées', e);
+  console.warn('[FCM SW] Firebase scripts non chargés', e);
 }
 
 let firebaseConfig = null;
 let fcmInitialized = false;
 
 function initFCM() {
-  if (fcmInitialized) return;
-  if (!firebaseAvailable) {
-    console.log('[FCM SW] Firebase indisponible, init FCM ignorée');
-    return;
-  }
-  if (!firebaseConfig) {
-    console.log('[FCM SW] Config Firebase non disponible');
-    return;
-  }
-
+  if (fcmInitialized || !firebaseAvailable || !firebaseConfig) return;
   try {
     if (!firebase.apps || !firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
-
     const messaging = firebase.messaging();
-
     messaging.onBackgroundMessage((payload) => {
-      console.log('[FCM SW] Message reçu en arrière-plan:', payload);
-
-      const notificationTitle = payload.notification?.title || 'Nouvelle notification';
-      const notificationOptions = {
+      const title = payload.notification?.title || 'Nouvelle notification';
+      self.registration.showNotification(title, {
         body: payload.notification?.body || '',
         icon: '/icon-192.png',
         badge: '/favicon.png',
         tag: payload.data?.notification_id || 'default',
         data: payload.data,
         vibrate: [200, 100, 200],
-        requireInteraction: payload.data?.type === 'emergency',
-        actions: getNotificationActions(payload.data?.type),
-      };
-
-      self.registration.showNotification(notificationTitle, notificationOptions);
+      });
     });
-
     fcmInitialized = true;
-    console.log('[FCM SW] Firebase Messaging initialisé');
+    console.log('[FCM SW] Initialisé');
   } catch (error) {
-    console.error('[FCM SW] Erreur initialisation:', error);
+    console.error('[FCM SW] Erreur init:', error);
   }
 }
 
-function getNotificationActions(type) {
-  switch (type) {
-    case 'emergency':
-      return [
-        { action: 'view', title: '🚨 Voir l\'urgence' },
-        { action: 'call', title: '📞 Appeler' },
-      ];
-    case 'transaction':
-      return [{ action: 'view', title: '💰 Voir détails' }];
-    case 'message':
-      return [
-        { action: 'reply', title: '💬 Répondre' },
-        { action: 'view', title: '👁️ Voir' },
-      ];
-    default:
-      return [{ action: 'view', title: 'Voir' }];
-  }
-}
-
-// Assets essentiels à précacher pour le mode offline
-// NOTE: On ne précache que les icônes essentiels pour réduire la taille du cache initial
+// Assets to precache for offline shell
 const PRECACHE_ASSETS = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
   "/offline.html",
   "/favicon.png",
-  "/icon-192.png",  // Icône principal pour PWA
+  "/icon-192.png",
 ];
 
-// Icônes additionnels (cachés à la demande, pas au précache)
-const OPTIONAL_ICONS = [
-  "/icon-72.png",
-  "/icon-96.png", 
-  "/icon-128.png",
-  "/icon-144.png",
-  "/icon-152.png",
-  "/icon-384.png",
-  "/icon-512.png",
-  "/apple-touch-icon.png"
+// Domains that must NEVER be cached — always go to network
+const EXTERNAL_API_DOMAINS = [
+  "supabase",
+  "googleapis",
+  "mapbox",
+  "agora",
+  "stripe",
+  "gstatic",
+  "firebase",
+  "paypal",
+  "cognito",
+  "amazoncognito",
+  "sentry",
+  "emailjs",
 ];
 
-// Routes principales de l'app vendeur à mettre en cache dynamiquement (desktop & mobile)
-const VENDOR_ROUTES = [
-  "/vendeur",
-  "/vendeur/dashboard",
-  "/vendeur/products",
-  "/vendeur/orders",
-  "/vendeur/pos",
-  "/vendeur/clients",
-  "/vendeur/inventory",
-  "/vendeur/wallet",
-  "/vendeur/settings",
-  "/vendeur/analytics",
-  "/vendeur/marketing",
-  "/vendeur/support",
-  "/vendeur/agents",
-  "/vendeur/expenses",
-  "/vendeur/payments"
-];
-
-// Routes additionnelles pour marketplace/auth (desktop)
-const CORE_ROUTES = [
-  "/",
-  "/marketplace",
-  "/login",
-  "/signup"
-];
-
-// Timeout pour fetch avec limite
 function fetchWithTimeout(url, timeout = 5000) {
   return Promise.race([
     fetch(url),
-    new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Timeout')), timeout)
-    )
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
   ]);
 }
 
-// Pré-cache robuste: index.html + assets build (/assets/...) pour éviter l'écran blanc au redémarrage offline (iOS)
-async function precacheIndexAndBuildAssets() {
+async function precacheShell() {
   const staticCache = await caches.open(STATIC_CACHE);
+  console.log(`[SW ${CACHE_VERSION}] Precaching shell...`);
 
-  // 1) Assets essentiels avec timeout pour éviter blocage
-  console.log('[SW] Précache des assets essentiels...');
   await Promise.allSettled(
     PRECACHE_ASSETS.map(async (url) => {
       try {
         const response = await fetchWithTimeout(url, 10000);
-        if (response.ok) {
-          await staticCache.put(url, response);
-          console.log(`[SW] ✓ ${url}`);
-        }
+        if (response.ok) await staticCache.put(url, response);
       } catch (err) {
-        console.warn(`[SW] Échec cache ${url}:`, err.message || err);
+        console.warn(`[SW] Skip ${url}:`, err.message);
       }
     })
   );
 
-  // 2) Index + extraction des assets Vite (/assets/*.js|css)
+  // Extract and cache Vite build assets from index.html
   try {
     const res = await fetchWithTimeout('/index.html', 10000);
+    if (res?.ok) {
+      const shellCache = await caches.open(APP_SHELL_CACHE);
+      await shellCache.put('/', res.clone());
+      await staticCache.put('/index.html', res.clone());
 
-    if (!res || !res.ok) {
-      console.warn('[SW] index.html non disponible');
-      return;
+      const html = await res.text();
+      const assetUrls = [...new Set(
+        Array.from(html.matchAll(/(?:href|src)=["'](\/assets\/[^"']+)["']/g)).map(m => m[1])
+      )].filter(u => /\.(js|css)$/.test(u));
+
+      await Promise.allSettled(
+        assetUrls.map(async (u) => {
+          try {
+            const r = await fetchWithTimeout(u, 15000);
+            if (r.ok) await staticCache.put(u, r);
+          } catch (_) {}
+        })
+      );
+      console.log(`[SW] Cached ${assetUrls.length} build assets`);
     }
-
-    // Garder une copie "app shell" pour les routes SPA
-    const shellCache = await caches.open(APP_SHELL_CACHE);
-    await shellCache.put('/', res.clone());
-
-    // Mettre aussi /index.html en cache
-    await staticCache.put('/index.html', res.clone());
-
-    const html = await res.text();
-    const assetUrls = Array.from(
-      html.matchAll(/(?:href|src)=["'](\/assets\/[^"']+)["']/g)
-    ).map((m) => m[1]);
-
-    const uniqueAssetUrls = Array.from(new Set(assetUrls));
-    console.log(`[SW] ${uniqueAssetUrls.length} assets Vite détectés`);
-
-    // Précacher les assets JS/CSS critiques
-    const criticalAssets = uniqueAssetUrls.filter(u => /\.(js|css)$/.test(u));
-    
-    await Promise.allSettled(
-      criticalAssets.map(async (u) => {
-        try {
-          const response = await fetchWithTimeout(u, 15000);
-          if (response.ok) {
-            await staticCache.put(u, response);
-          }
-        } catch (e) {
-          // Silencieux
-        }
-      })
-    );
-
-    console.log('[SW] Précache build assets:', criticalAssets.length);
   } catch (e) {
-    console.warn('[SW] Impossible de précacher index/assets:', e.message || e);
+    console.warn('[SW] Shell precache failed:', e.message);
   }
 }
 
-// INSTALL - Précacher les assets essentiels (mobile + desktop)
+// INSTALL
 self.addEventListener("install", (event) => {
-  console.log("[SW] Installation v13 - Mode offline complet + POS + Auth");
-
-  event.waitUntil(
-    precacheIndexAndBuildAssets().then(() => {
-      console.log("[SW] Précache terminé");
-      self.skipWaiting();
-    })
-  );
+  console.log(`[SW] Install ${CACHE_VERSION}`);
+  event.waitUntil(precacheShell().then(() => self.skipWaiting()));
 });
 
-// ACTIVATE - Nettoyer anciens caches et mettre en cache les routes vendeur + core
+// ACTIVATE — clean old caches + claim clients immediately
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activation v13");
-
+  console.log(`[SW] Activate ${CACHE_VERSION}`);
   event.waitUntil(
     Promise.all([
-      // Nettoyer les anciens caches
-      caches.keys().then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => !key.includes(CACHE_VERSION))
-            .map((key) => {
-              console.log("[SW] Suppression cache:", key);
-              return caches.delete(key);
-            })
-        )
+      caches.keys().then(keys =>
+        Promise.all(keys.filter(k => !k.includes(CACHE_VERSION)).map(k => {
+          console.log("[SW] Delete old cache:", k);
+          return caches.delete(k);
+        }))
       ),
-      // Prendre le contrôle immédiatement
       self.clients.claim(),
-      // Précacher les routes vendeur + core en arrière-plan
-      caches.open(DYNAMIC_CACHE).then((cache) => {
-        console.log("[SW] Mise en cache des routes vendeur + core...");
-        const allRoutes = [...VENDOR_ROUTES, ...CORE_ROUTES];
-        return Promise.allSettled(
-          allRoutes.map(route => 
-            fetch(route, { cache: 'reload' })
-              .then(response => {
-                if (response.ok) {
-                  cache.put(route, response);
-                  console.log(`[SW] Route en cache: ${route}`);
-                }
-              })
-              .catch(() => {})
-          )
-        );
-      })
     ])
   );
 });
 
-// FETCH - Stratégie optimisée pour mode offline vendeur
+// FETCH — strict separation: API = network only, shell = network-first
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   const url = new URL(event.request.url);
 
-  // Ne jamais intercepter le manifest (critique pour iOS PWA)
-  if (url.pathname === '/manifest.webmanifest' || url.pathname === '/manifest.json') {
-    return;
-  }
+  // NEVER intercept manifest
+  if (url.pathname === '/manifest.webmanifest' || url.pathname === '/manifest.json') return;
 
-  // Ne jamais intercepter les routes OAuth
-  if (url.pathname.startsWith('/~oauth')) {
-    return;
-  }
+  // NEVER intercept OAuth
+  if (url.pathname.startsWith('/~oauth')) return;
 
-  // Ignorer les APIs externes
-  if (
-    url.hostname.includes("supabase") ||
-    url.hostname.includes("googleapis") ||
-    url.hostname.includes("mapbox") ||
-    url.hostname.includes("agora") ||
-    url.hostname.includes("stripe") ||
-    url.hostname.includes("gstatic") ||
-    url.hostname.includes("firebase")
-  ) {
-    return;
-  }
-
-  // Si hostname différent et pas une extension connue, ignorer
+  // NEVER cache external API calls — this is the critical fix for PWA data loading
   if (url.hostname !== self.location.hostname) {
+    const isExternalApi = EXTERNAL_API_DOMAINS.some(d => url.hostname.includes(d));
+    if (isExternalApi) {
+      // Let the browser handle it directly — no SW interception
+      return;
+    }
+    // Other external resources (CDN fonts, etc.) — also pass through
     return;
   }
 
-  // Navigation (HTML) - Network First avec fallback app shell
-  // IMPORTANT: Pour les SPAs, on doit TOUJOURS servir /index.html et laisser React Router gérer l'URL
+  // NEVER cache Supabase edge functions called on same domain
+  if (url.pathname.startsWith('/rest/') || url.pathname.startsWith('/auth/') || 
+      url.pathname.startsWith('/functions/') || url.pathname.startsWith('/storage/')) {
+    return;
+  }
+
+  // Navigation (HTML) — Network First with app shell fallback
   if (event.request.mode === "navigate") {
     event.respondWith(
       (async () => {
         try {
-          // Pour les routes SPA, fetch /index.html au lieu de l'URL complète
-          // Cela évite de cacher des pages spécifiques qui causent des problèmes de routing
-          const requestUrl = event.request.url;
-          const isRootOrIndex = url.pathname === '/' || url.pathname === '/index.html';
-
-          // Fetch request - toujours /index.html pour les routes SPA
-          const fetchRequest = isRootOrIndex
-            ? event.request
-            : new Request('/', {
-                method: 'GET',
-                headers: event.request.headers,
-                credentials: 'same-origin'
-              });
-
-          const networkResponse = await fetch(fetchRequest, {
+          const networkResponse = await fetch(event.request, {
             cache: 'no-cache',
             credentials: 'same-origin'
           });
 
-          if (networkResponse && networkResponse.ok) {
-            // Mettre en cache SEULEMENT /index.html, pas les routes individuelles
+          if (networkResponse?.ok) {
             const cache = await caches.open(DYNAMIC_CACHE);
             cache.put('/', networkResponse.clone());
             cache.put('/index.html', networkResponse.clone());
           }
           return networkResponse;
         } catch (error) {
-          console.log("[SW] Mode offline - Récupération depuis cache pour:", url.pathname);
+          console.log(`[SW] Offline navigation: ${url.pathname}`);
+          // Serve app shell for any SPA route
+          const shell = await caches.match('/') ||
+                        await caches.match('/index.html') ||
+                        await caches.open(APP_SHELL_CACHE).then(c => c.match('/'));
 
-          // En mode offline, servir l'app shell (/index.html) pour TOUTES les routes SPA
-          // React Router gérera l'URL correcte une fois l'app chargée
-          const appShell = await caches.match('/') ||
-                          await caches.match('/index.html') ||
-                          await caches.open(APP_SHELL_CACHE).then(c => c.match('/'));
+          if (shell) return shell;
 
-          if (appShell) {
-            console.log("[SW] Serving app shell for offline SPA route:", url.pathname);
-            return appShell;
-          }
-          
-          // 4. Page offline d'urgence avec toutes les infos
-          console.log("[SW] Serving emergency offline page");
           return new Response(
-            `<!DOCTYPE html>
-            <html lang="fr">
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1">
-              <title>224Solutions - Mode Hors Ligne</title>
-              <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { 
-                  font-family: system-ui, -apple-system, sans-serif;
-                  background: linear-gradient(135deg, #667eea, #764ba2);
-                  min-height: 100vh;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  padding: 20px;
-                }
-                .container {
-                  background: white;
-                  padding: 40px;
-                  border-radius: 20px;
-                  text-align: center;
-                  max-width: 400px;
-                  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                }
-                h1 { color: #2c3e50; margin-bottom: 15px; }
-                p { color: #7f8c8d; margin-bottom: 25px; line-height: 1.6; }
-                .icon { font-size: 60px; margin-bottom: 20px; }
-                button {
-                  padding: 14px 28px;
-                  background: linear-gradient(135deg, #667eea, #764ba2);
-                  color: white;
-                  border: none;
-                  border-radius: 50px;
-                  font-size: 16px;
-                  cursor: pointer;
-                  font-weight: 600;
-                }
-                button:hover { transform: scale(1.05); }
-                .info { 
-                  margin-top: 20px;
-                  padding: 15px;
-                  background: #f8f9fa;
-                  border-radius: 10px;
-                  font-size: 13px;
-                  color: #666;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="icon">📡</div>
-                <h1>Mode Hors Ligne</h1>
-                <p>Vous n'êtes pas connecté à Internet. L'interface vendeur nécessite une connexion pour charger initialement.</p>
-                <button onclick="location.reload()">🔄 Réessayer</button>
-                <div class="info">
-                  <strong>💡 Conseil:</strong> Visitez l'interface une première fois avec Internet pour activer le mode hors-ligne.
-                </div>
-              </div>
-              <script>
-                window.addEventListener('online', () => location.reload());
-              </script>
-            </body>
-            </html>`,
-            { 
-              status: 503,
-              headers: { 'Content-Type': 'text/html; charset=utf-8' } 
-            }
+            `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hors ligne</title></head>
+            <body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f5f5;margin:0">
+            <div style="text-align:center;max-width:400px;padding:40px">
+              <div style="font-size:60px;margin-bottom:16px">📡</div>
+              <h1 style="margin-bottom:12px">Mode Hors Ligne</h1>
+              <p style="color:#666;margin-bottom:24px">Connexion Internet requise pour charger l'application.</p>
+              <button onclick="location.reload()" style="padding:12px 24px;background:#023288;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer">Réessayer</button>
+            </div>
+            <script>window.addEventListener('online',()=>location.reload())</script>
+            </body></html>`,
+            { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
           );
         }
       })()
@@ -421,64 +214,46 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Assets Vite (/assets/*.js|css) - Network First + fallback cache
-  // Objectif: éviter les écrans blancs après déploiement (chunks supprimés/renommés)
+  // Vite build assets (/assets/*.js|css) — Network First
   if (url.pathname.startsWith('/assets/') && /\.(js|css)$/.test(url.pathname)) {
     event.respondWith(
       fetch(event.request, { cache: 'no-cache' })
-        .then((response) => {
+        .then(response => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, clone));
+            caches.open(STATIC_CACHE).then(c => c.put(event.request, clone));
           }
           return response;
         })
         .catch(async () => {
           const cached = await caches.match(event.request);
-          if (cached) return cached;
-
-          // Si l'asset n'existe plus (nouveau déploiement), forcer un refresh app shell
-          const appShell = await caches.match('/') || await caches.match('/index.html');
-          return appShell || Response.error();
+          return cached || Response.error();
         })
     );
     return;
   }
 
-  // Autres ressources statiques - Cache First pour meilleur offline
-  if (!url.pathname.startsWith('/assets/') && url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/)) {
+  // Static resources (images, fonts, etc.) — Cache First
+  if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|webp)$/)) {
     event.respondWith(
-      caches.match(event.request)
-        .then((cached) => {
-          if (cached) {
-            console.log("[SW] Serving from cache:", url.pathname);
-            return cached;
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(response => {
+          if (response?.ok) {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then(c => c.put(event.request, clone));
           }
-          
-          // Pas en cache, fetch depuis réseau
-          return fetch(event.request)
-            .then((response) => {
-              if (response && response.ok) {
-                const clone = response.clone();
-                caches.open(STATIC_CACHE).then((cache) => {
-                  cache.put(event.request, clone);
-                  console.log("[SW] Cached:", url.pathname);
-                });
-              }
-              return response;
-            })
-            .catch((err) => {
-              console.warn("[SW] Network failed, no cache available:", url.pathname);
-              // Retourner une image placeholder pour les images
-              if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg)$/)) {
-                return new Response(
-                  '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="#ddd" width="200" height="200"/><text fill="#999" x="50%" y="50%" text-anchor="middle" dy=".3em">Offline</text></svg>',
-                  { headers: { 'Content-Type': 'image/svg+xml' } }
-                );
-              }
-              throw err;
-            });
-        })
+          return response;
+        }).catch(() => {
+          if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp)$/)) {
+            return new Response(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="#ddd" width="200" height="200"/><text fill="#999" x="50%" y="50%" text-anchor="middle" dy=".3em">Offline</text></svg>',
+              { headers: { 'Content-Type': 'image/svg+xml' } }
+            );
+          }
+          return Response.error();
+        });
+      })
     );
     return;
   }
@@ -486,262 +261,69 @@ self.addEventListener("fetch", (event) => {
 
 // Message handler
 self.addEventListener("message", (event) => {
-  // PWA: skip waiting
   if (event.data === "skipWaiting") {
     self.skipWaiting();
     return;
   }
-
-  // PWA: refresh clients
   if (event.data === "forceRefresh") {
-    self.clients.matchAll().then((clients) => {
-      clients.forEach((client) => client.navigate(client.url));
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => client.navigate(client.url));
     });
     return;
   }
-
-  // FCM: inject config
-  if (event.data && event.data.type === "FIREBASE_CONFIG") {
+  if (event.data?.type === "FIREBASE_CONFIG") {
     firebaseConfig = event.data.config;
     initFCM();
+    return;
+  }
+  // Force clear all caches
+  if (event.data === "clearAllCaches") {
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+    return;
   }
 });
 
-// Gérer les clics sur les notifications
-self.addEventListener("notificationclick", (event) => {
-  console.log("[FCM SW] Clic sur notification:", event);
-
-  event.notification.close();
-
-  const data = event.notification.data || {};
-  let targetUrl = "/";
-
-  if (event.action === "view" || !event.action) {
-    if (data.action_url) {
-      targetUrl = data.action_url;
-    } else if (data.type === "emergency" && data.alert_id) {
-      targetUrl = `/emergency/${data.alert_id}`;
-    } else if (data.type === "transaction" && data.transaction_id) {
-      targetUrl = `/wallet/transactions/${data.transaction_id}`;
-    } else if (data.type === "message" && data.conversation_id) {
-      targetUrl = `/messages/${data.conversation_id}`;
-    }
+// Push notifications
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  try {
+    const data = event.data.json();
+    event.waitUntil(
+      self.registration.showNotification(data.title || "224Solutions", {
+        body: data.body || "",
+        icon: "/icon-192.png",
+        badge: "/favicon.png",
+        data: data.data || {},
+        tag: data.tag || "default",
+        vibrate: [200, 100, 200],
+      })
+    );
+  } catch (e) {
+    console.warn("[SW] Push parse error:", e);
   }
+});
 
+// Notification click
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const urlToOpen = event.notification.data?.url || "/";
   event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && "focus" in client) {
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(clients => {
+      for (const client of clients) {
+        if (client.url.includes(self.location.origin)) {
           client.focus();
-          client.postMessage({
-            type: "NOTIFICATION_CLICK",
-            url: targetUrl,
-            data: data,
-          });
+          client.navigate(urlToOpen);
           return;
         }
       }
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
-      }
+      return self.clients.openWindow(urlToOpen);
     })
   );
 });
 
-self.addEventListener("notificationclose", (event) => {
-  console.log("[FCM SW] Notification fermée:", event.notification.tag);
-});
-
-// ============================================================
-// BACKGROUND SYNC - Synchronisation automatique des données offline
-// ============================================================
-
-// Enregistrer un sync event quand des données offline sont créées
+// Background sync
 self.addEventListener("sync", (event) => {
-  console.log("[SW] Background Sync déclenché:", event.tag);
-
-  if (event.tag === SYNC_TAG_SALES || event.tag === SYNC_TAG_DATA) {
-    event.waitUntil(
-      (async () => {
-        try {
-          // Notifier tous les clients qu'une sync est disponible
-          const allClients = await clients.matchAll({ type: 'window' });
-
-          for (const client of allClients) {
-            client.postMessage({
-              type: 'BACKGROUND_SYNC_READY',
-              tag: event.tag,
-              timestamp: Date.now()
-            });
-          }
-
-          console.log("[SW] Clients notifiés pour sync:", event.tag);
-        } catch (error) {
-          console.error("[SW] Erreur Background Sync:", error);
-          throw error; // Rejeter pour que le navigateur réessaie
-        }
-      })()
-    );
-  }
+  console.log("[SW] Sync event:", event.tag);
 });
 
-// Periodic Sync (si supporté) - Pour rafraîchir le cache périodiquement
-self.addEventListener("periodicsync", (event) => {
-  console.log("[SW] Periodic Sync déclenché:", event.tag);
-
-  if (event.tag === 'refresh-vendor-data') {
-    event.waitUntil(
-      (async () => {
-        try {
-          const allClients = await clients.matchAll({ type: 'window' });
-
-          for (const client of allClients) {
-            client.postMessage({
-              type: 'PERIODIC_SYNC_REFRESH',
-              timestamp: Date.now()
-            });
-          }
-        } catch (error) {
-          console.error("[SW] Erreur Periodic Sync:", error);
-        }
-      })()
-    );
-  }
-});
-
-// ============================================================
-// GESTION DU CACHE API POUR MODE OFFLINE
-// ============================================================
-
-// Cache les réponses API importantes pour le mode offline
-async function cacheApiResponse(request, response) {
-  if (!response || !response.ok) return response;
-
-  const url = new URL(request.url);
-
-  // Ne pas cacher les endpoints sensibles ou les mutations
-  if (request.method !== 'GET') return response;
-
-  // Cacher uniquement les endpoints spécifiques
-  const cachableEndpoints = [
-    '/rest/v1/products',
-    '/rest/v1/categories',
-    '/rest/v1/profiles'
-  ];
-
-  const shouldCache = cachableEndpoints.some(endpoint =>
-    url.pathname.includes(endpoint)
-  );
-
-  if (shouldCache) {
-    try {
-      const cache = await caches.open(API_CACHE);
-      // Ajouter un timestamp pour gérer l'expiration
-      const headers = new Headers(response.headers);
-      headers.set('sw-cached-at', Date.now().toString());
-
-      const cachedResponse = new Response(response.clone().body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: headers
-      });
-
-      await cache.put(request, cachedResponse);
-      console.log("[SW] API response cached:", url.pathname);
-    } catch (e) {
-      console.warn("[SW] Erreur cache API:", e);
-    }
-  }
-
-  return response;
-}
-
-// Récupérer une réponse API depuis le cache
-async function getApiFromCache(request) {
-  try {
-    const cache = await caches.open(API_CACHE);
-    const cachedResponse = await cache.match(request);
-
-    if (cachedResponse) {
-      const cachedAt = cachedResponse.headers.get('sw-cached-at');
-      const age = cachedAt ? Date.now() - parseInt(cachedAt) : Infinity;
-
-      // Cache valide pendant 1 heure maximum
-      if (age < 3600000) {
-        console.log("[SW] Serving API from cache:", request.url);
-        return cachedResponse;
-      } else {
-        // Cache expiré, supprimer
-        await cache.delete(request);
-      }
-    }
-  } catch (e) {
-    console.warn("[SW] Erreur lecture cache API:", e);
-  }
-
-  return null;
-}
-
-// ============================================================
-// PUSH NOTIFICATIONS AVEC OFFLINE QUEUE
-// ============================================================
-
-// Stocker les notifications reçues offline pour affichage ultérieur
-self.addEventListener("push", (event) => {
-  // Le handler FCM gère déjà les notifications push
-  // Ce handler est pour les cas où FCM n'est pas initialisé
-  if (fcmInitialized) return;
-
-  if (event.data) {
-    try {
-      const payload = event.data.json();
-
-      event.waitUntil(
-        self.registration.showNotification(
-          payload.notification?.title || "224Solutions",
-          {
-            body: payload.notification?.body || "",
-            icon: "/icon-192.png",
-            badge: "/favicon.png",
-            data: payload.data,
-            vibrate: [200, 100, 200]
-          }
-        )
-      );
-    } catch (e) {
-      console.warn("[SW] Erreur parsing push notification:", e);
-    }
-  }
-});
-
-// ============================================================
-// UTILITAIRES
-// ============================================================
-
-// Nettoyer les caches expirés
-async function cleanExpiredCaches() {
-  try {
-    const apiCache = await caches.open(API_CACHE);
-    const keys = await apiCache.keys();
-    const now = Date.now();
-    const maxAge = 24 * 60 * 60 * 1000; // 24 heures
-
-    for (const request of keys) {
-      const response = await apiCache.match(request);
-      if (response) {
-        const cachedAt = response.headers.get('sw-cached-at');
-        if (cachedAt && (now - parseInt(cachedAt)) > maxAge) {
-          await apiCache.delete(request);
-          console.log("[SW] Cache API expiré nettoyé:", request.url);
-        }
-      }
-    }
-  } catch (e) {
-    console.warn("[SW] Erreur nettoyage cache:", e);
-  }
-}
-
-// Programmer le nettoyage périodique
-setInterval(cleanExpiredCaches, 6 * 60 * 60 * 1000); // Toutes les 6 heures
-
-console.log("[SW] Service Worker chargé (v12 - Mode Offline Complet + Background Sync)");
+console.log("[SW] Service Worker chargé (v15 - PWA + FCM + Offline + Anti-stale-data)");
