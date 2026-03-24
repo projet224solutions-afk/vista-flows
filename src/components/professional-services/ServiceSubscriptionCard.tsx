@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 
 interface ServiceSubscriptionCardProps {
   serviceId: string;
+  serviceTypeId?: string;
   compact?: boolean;
 }
 
