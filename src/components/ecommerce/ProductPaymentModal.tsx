@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -69,6 +70,7 @@ export default function ProductPaymentModal({
   customerId,
   currency = 'GNF'
 }: ProductPaymentModalProps) {
+  const navigate = useNavigate();
   const fc = useFormatCurrency();
   const { convert, userCurrency } = usePriceConverter();
   const cur = currency.toUpperCase();
@@ -353,7 +355,7 @@ export default function ProductPaymentModal({
       toast.success('Paiement sécurisé par escrow !', {
         description: `${fc(grandTotal, cur)} bloqués — libérés après confirmation de réception`
       });
-      setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
+      setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/mes-commandes'); }, 2000);
     } catch (err) {
       console.error('Order creation after escrow payment failed:', err);
       toast.error('Paiement réussi mais erreur lors de la commande');
@@ -396,7 +398,7 @@ export default function ProductPaymentModal({
           await createOrderAfterPayment(result.transactionId, paymentMethod);
           setPaymentStep('success');
           toast.success('Paiement mobile réussi !', { description: `${fc(grandTotal, cur)} débité de votre compte` });
-          setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
+          setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/mes-commandes'); }, 2000);
         } else {
           toast.error('Paiement non confirmé', { description: 'Veuillez réessayer' });
           setPaymentStep('mobile_money_form');
@@ -405,7 +407,7 @@ export default function ProductPaymentModal({
         await createOrderAfterPayment(`mobile-${Date.now()}`, paymentMethod);
         setPaymentStep('success');
         toast.success('Paiement initié avec succès !');
-        setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
+        setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/mes-commandes'); }, 2000);
       }
     } catch (err) {
       console.error('Mobile money payment failed:', err);
@@ -501,14 +503,15 @@ export default function ProductPaymentModal({
     }
 
     if (paymentMethod === 'wallet') {
-      toast.success('Paiement sécurisé effectué !', { description: `${fc(grandTotal, cur)} bloqués en escrow (dont ${fc(commissionFee, cur)} de frais)` });
+      toast.success('Paiement sécurisé effectué !', { description: `${fc(grandTotal, cur)} bloqués en escrow. Redirection vers vos achats...` });
     } else if (isCODMethod) {
-      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(grandTotal, cur)}` });
+      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(grandTotal, cur)}. Redirection...` });
     }
 
     onPaymentSuccess();
     onClose();
-  }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose, codPhone, codCity, fc]);
+    navigate('/mes-commandes');
+  }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose, codPhone, codCity, fc, navigate]);
 
   const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < grandTotal;
   const firstVendorId = cartItems.find(item => item.vendorId)?.vendorId || '';
@@ -519,11 +522,12 @@ export default function ProductPaymentModal({
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-green-600" />
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10 text-primary" />
             </div>
-            <h3 className="text-xl font-bold text-green-700">Paiement réussi !</h3>
+            <h3 className="text-xl font-bold text-primary">Paiement réussi !</h3>
             <p className="text-muted-foreground text-center">{fc(grandTotal, cur)} — Votre commande a été créée</p>
+            <p className="text-sm text-muted-foreground animate-pulse">Redirection vers vos achats...</p>
           </div>
         </DialogContent>
       </Dialog>

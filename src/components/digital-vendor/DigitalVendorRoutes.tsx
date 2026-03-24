@@ -20,6 +20,9 @@ const AffiliateManagement = lazy(() => import('@/components/vendor/AffiliateMana
 // Finance
 const UniversalWalletTransactions = lazy(() => import('@/components/wallet/UniversalWalletTransactions'));
 
+// Mes Achats
+const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
+
 // Système
 const VendorSettings = lazy(() => import('@/pages/vendor/Settings'));
 
@@ -53,6 +56,9 @@ const DigitalVendorRoutes = memo(function DigitalVendorRoutes({ vendorId }: Digi
 
         {/* Finance */}
         <Route path="wallet" element={<UniversalWalletTransactions />} />
+
+        {/* Mes Achats */}
+        <Route path="my-purchases" element={<MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" />} />
 
         {/* Paramètres */}
         <Route path="settings" element={<VendorSettings />} />

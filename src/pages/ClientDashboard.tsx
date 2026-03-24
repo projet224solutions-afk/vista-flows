@@ -135,8 +135,9 @@ export default function ClientDashboard() {
     clearCart();
     loadAllData(user?.id);
     refreshStats();
-    setActiveTab('orders');
-    toast.success('Commande créée avec succès');
+    setShowPaymentModal(false);
+    toast.success('Commande créée avec succès ! Redirection...', { duration: 2000 });
+    setTimeout(() => navigate('/mes-commandes'), 1500);
   };
 
   const handleProductClick = (productId: string) => {
