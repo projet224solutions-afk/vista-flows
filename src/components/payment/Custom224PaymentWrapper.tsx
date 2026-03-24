@@ -1,6 +1,6 @@
 /**
- * WRAPPER PAIEMENT 224SOLUTIONS
- * Paiement carte bancaire via PayPal (fenêtre officielle PayPal)
+ * WRAPPER PAIEMENT PAYPAL 224SOLUTIONS
+ * Paiement via compte PayPal (PAS pour carte bancaire - utiliser StripePaymentWrapper)
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
