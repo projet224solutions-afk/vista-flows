@@ -1,6 +1,5 @@
-import { Suspense, memo, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { resolvePostAuthRoute } from "@/utils/postAuthRoute";
+import { Suspense, memo, useEffect } from "react";
+import { resolvePostAuthRouteSync } from "@/utils/postAuthRoute";
 import { usePrefetchCriticalData } from "@/hooks/usePrefetchCriticalData";
 import { useAutoFillGps as useAutoFillGpsHook } from "@/hooks/useAutoFillGps";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -171,69 +170,25 @@ PageLoader.displayName = 'PageLoader';
  */
 function RootRedirect() {
   const { user, profile, loading, profileLoading } = useAuth();
-  const navigate = useNavigate();
-  const hasRedirectedRef = useRef(false);
-  const mountStartedAtRef = useRef<number>(performance.now());
-  const [hasTimedOut, setHasTimedOut] = useState(false);
 
-  useEffect(() => {
-    const timeoutMs = 2500;
-    const timer = window.setTimeout(() => {
-      const elapsedMs = Math.round(performance.now() - mountStartedAtRef.current);
-      console.warn('⚠️ [RootRedirect] Timeout sécurité atteint, fallback non bloquant', { elapsedMs, timeoutMs });
-      setHasTimedOut(true);
-    }, timeoutMs);
-
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    const elapsedMs = Math.round(performance.now() - mountStartedAtRef.current);
-    console.log('ROOTREDIRECT STATE', {
-      loading,
-      profileLoading,
-      hasUser: !!user,
-      role: profile?.role,
-      pathname: window.location.pathname,
-      elapsedMs,
-      hasTimedOut,
-    });
-  }, [loading, profileLoading, user, profile?.role, hasTimedOut]);
-
-  useEffect(() => {
-    if (loading || profileLoading || !user || !profile?.role || hasRedirectedRef.current) return;
-
-    hasRedirectedRef.current = true;
-    const startedAt = performance.now();
-
-    resolvePostAuthRoute({ userId: user.id, role: profile.role })
-      .then((route) => {
-        const durationMs = Math.round(performance.now() - startedAt);
-        console.log('🚀 [RootRedirect] Redirection résolue', { route, role: profile.role, durationMs });
-        navigate(route, { replace: true });
-      })
-      .catch((error) => {
-        console.error('❌ [RootRedirect] Erreur résolution route, fallback /home', error);
-        navigate('/home', { replace: true });
-      });
-  }, [user, profile?.role, loading, profileLoading, navigate]);
-
-  // Non connecté: ne jamais bloquer
+  // 1. Non connecté → landing immédiate
   if (!user && !loading) {
     return <Index />;
   }
 
-  // Connecté avec profil prêt: redirection en cours
+  // 2. Connecté + rôle → redirection instantanée (déclaratif, pas de useEffect)
   if (user && profile?.role) {
+    const route = resolvePostAuthRouteSync(profile.role);
+    return <Navigate to={route} replace />;
+  }
+
+  // 3. Encore en chargement → loader léger
+  if (loading || profileLoading) {
     return <PageLoader />;
   }
 
-  // Timeout auth/profil: fallback visible au lieu d'un loader infini
-  if (hasTimedOut) {
-    return <Index />;
-  }
-
-  return <PageLoader />;
+  // 4. Fallback sécurité (connecté sans profil chargé)
+  return <Index />;
 }
 
 // Auto-fill GPS component - runs once when user is authenticated

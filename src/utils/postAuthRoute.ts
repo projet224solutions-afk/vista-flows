@@ -127,6 +127,22 @@ export async function resolvePostAuthRoute(opts: PostAuthRouteOptions): Promise<
  * Cleans up all OAuth-related localStorage flags.
  * Call after any post-auth redirect is complete.
  */
+/**
+ * Synchronous route resolution for instant redirects (no DB lookups).
+ * Uses getDashboardRoute mapping + known special cases.
+ */
+export function resolvePostAuthRouteSync(role: string): string {
+  const r = role.toLowerCase();
+  if (r === 'vendeur') return '/vendeur';
+  if (r === 'vendeur_digital') return '/vendeur-digital';
+  if (r === 'client') return '/client';
+  if (r === 'livreur') return '/livreur';
+  if (r === 'pdg' || r === 'admin') return '/pdg';
+  if (r === 'prestataire') return '/service-selection';
+  if (r === 'vendor_agent') return '/home';
+  return getDashboardRoute(role);
+}
+
 export function cleanupOAuthFlags(): void {
   const keysToRemove = [
     'oauth_intent_role',
