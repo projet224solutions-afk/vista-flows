@@ -355,7 +355,7 @@ export default function ProductPaymentModal({
       toast.success('Paiement sécurisé par escrow !', {
         description: `${fc(grandTotal, cur)} bloqués — libérés après confirmation de réception`
       });
-      setTimeout(() => { onPaymentSuccess(); onClose(); }, 2000);
+      setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/mes-commandes'); }, 2000);
     } catch (err) {
       console.error('Order creation after escrow payment failed:', err);
       toast.error('Paiement réussi mais erreur lors de la commande');
