@@ -35,7 +35,7 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
     } finally {
       setLoading(false);
     }
-  }, [serviceId]);
+  }, [serviceId, serviceTypeId]);
 
   useEffect(() => {
     loadData();
