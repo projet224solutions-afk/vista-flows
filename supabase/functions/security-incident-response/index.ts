@@ -5,11 +5,12 @@ import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Rôles autorisés pour la gestion des incidents
-const ALLOWED_ROLES = ['admin', 'ceo'];
+// Rôles autorisés pour la gestion des incidents sécurité
+// admin = administrateur système, pdg = CEO/directeur général
+const ALLOWED_SECURITY_ROLES = ['admin', 'pdg'];
 
 // Schémas de validation Zod
 const CreateIncidentSchema = z.object({
@@ -66,8 +67,6 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    
-    // Vérifier le token et récupérer l'utilisateur
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     
     if (authError || !user) {
@@ -93,21 +92,16 @@ serve(async (req) => {
       );
     }
 
-    // Vérifier que l'utilisateur a un rôle autorisé
-    if (!ALLOWED_ROLES.includes(profile.role)) {
+    if (!ALLOWED_SECURITY_ROLES.includes(profile.role)) {
       console.error('❌ Rôle non autorisé:', profile.role);
       
-      // Log la tentative non autorisée
       await supabaseClient.from('security_audit_logs').insert({
         action: 'unauthorized_incident_response_access',
         actor_id: user.id,
         actor_type: 'user',
         target_type: 'security_incident',
         ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
-        details: { 
-          attempted_action: 'incident_management',
-          user_role: profile.role 
-        }
+        details: { attempted_action: 'incident_management', user_role: profile.role }
       });
 
       return new Response(
@@ -143,7 +137,6 @@ serve(async (req) => {
 
     switch (body.action) {
       case 'create': {
-        // Créer un incident
         const { data: incident, error: incidentError } = await supabaseClient
           .rpc('create_security_incident', {
             p_incident_type: body.incidentType,
@@ -158,28 +151,25 @@ serve(async (req) => {
         if (incidentError) throw incidentError;
 
         // Actions automatiques si demandées
-        if (body.autoActions) {
-          // Bloquer l'IP source si présente
-          if (body.sourceIp && body.severity === 'critical') {
-            await supabaseClient.rpc('block_ip_address', {
-              p_ip_address: body.sourceIp,
-              p_reason: `Auto-blocked: ${body.title}`,
-              p_incident_id: incident,
-              p_expires_hours: 24
-            });
-            console.log('Auto-blocked IP:', body.sourceIp);
-          }
+        if (body.autoActions && body.sourceIp && body.severity === 'critical') {
+          // Signature SQL: block_ip_address(p_ip_address, p_reason, p_duration_hours, p_auto_block)
+          await supabaseClient.rpc('block_ip_address', {
+            p_ip_address: body.sourceIp,
+            p_reason: `Auto-blocked: ${body.title}`,
+            p_duration_hours: 24,
+            p_auto_block: true
+          });
+          console.log('🔒 Auto-blocked IP:', body.sourceIp);
+        }
 
-          // Créer un snapshot si incident critique
-          if (body.severity === 'critical') {
-            await supabaseClient.from('security_snapshots').insert({
-              snapshot_type: 'system_state',
-              incident_id: incident,
-              storage_path: `/snapshots/${incident}_${Date.now()}.json`,
-              metadata: { auto_created: true, timestamp: new Date().toISOString() }
-            });
-            console.log('Auto-created forensic snapshot');
-          }
+        if (body.autoActions && body.severity === 'critical') {
+          await supabaseClient.from('security_snapshots').insert({
+            snapshot_type: 'system_state',
+            incident_id: incident,
+            storage_path: `/snapshots/${incident}_${Date.now()}.json`,
+            metadata: { auto_created: true, timestamp: new Date().toISOString() }
+          });
+          console.log('📸 Auto-created forensic snapshot');
         }
 
         // Log audit
@@ -197,18 +187,13 @@ serve(async (req) => {
       }
 
       case 'contain': {
-        // Contenir un incident
         const { error: containError } = await supabaseClient
           .from('security_incidents')
-          .update({
-            status: 'contained',
-            contained_at: new Date().toISOString()
-          })
+          .update({ status: 'contained', contained_at: new Date().toISOString() })
           .eq('id', body.incidentId);
 
         if (containError) throw containError;
 
-        // Log audit
         await supabaseClient.from('security_audit_logs').insert({
           action: 'incident_contained',
           actor_id: user.id,
@@ -224,18 +209,13 @@ serve(async (req) => {
       }
 
       case 'resolve': {
-        // Résoudre un incident
         const { error: resolveError } = await supabaseClient
           .from('security_incidents')
-          .update({
-            status: 'resolved',
-            resolved_at: new Date().toISOString()
-          })
+          .update({ status: 'resolved', resolved_at: new Date().toISOString() })
           .eq('id', body.incidentId);
 
         if (resolveError) throw resolveError;
 
-        // Log audit
         await supabaseClient.from('security_audit_logs').insert({
           action: 'incident_resolved',
           actor_id: user.id,
@@ -246,7 +226,6 @@ serve(async (req) => {
           details: { timestamp: new Date().toISOString() }
         });
 
-        // Mettre à jour les métriques
         const today = new Date().toISOString().split('T')[0];
         await supabaseClient.rpc('update_security_metrics', { p_date: today });
 
@@ -255,7 +234,6 @@ serve(async (req) => {
       }
 
       case 'update': {
-        // Mettre à jour un incident
         const updateData: any = {};
         if (body.title) updateData.title = body.title;
         if (body.description) updateData.description = body.description;
@@ -269,7 +247,6 @@ serve(async (req) => {
 
         if (updateError) throw updateError;
 
-        // Log audit
         await supabaseClient.from('security_audit_logs').insert({
           action: 'incident_updated',
           actor_id: user.id,
@@ -291,7 +268,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Security incident response error:', error);
-    // Message d'erreur générique pour éviter la fuite d'informations
     return new Response(
       JSON.stringify({ error: 'Une erreur est survenue lors du traitement de la requête' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
