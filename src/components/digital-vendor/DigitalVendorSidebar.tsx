@@ -7,7 +7,7 @@ import { memo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Laptop, Link, Wallet, Settings,
-  BarChart3, LogOut, Home, Plus, Eye
+  BarChart3, LogOut, Home, Plus, Eye, ShoppingBag
 } from "lucide-react";
 import {
   Sidebar,
