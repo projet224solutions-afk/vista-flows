@@ -1,6 +1,6 @@
 /**
- * Dashboard Multi-Cloud Health Check - Ultra Professionnel
- * Surveillance temps réel de tous les services cloud 224Solutions
+ * Dashboard Multi-Cloud Health Check - Production-grade
+ * Real-time monitoring with DB-backed status and Supabase Realtime
  */
 import { useState } from 'react';
 import { useMultiCloudHealth } from '@/hooks/useMultiCloudHealth';
@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { 
   RefreshCw, Cloud, Database, Shield, Bell, Server, 
   CheckCircle, AlertTriangle, XCircle, HelpCircle,
-  Activity, Clock, Wifi, WifiOff, Globe, Zap, TrendingUp
+  Activity, Clock, Wifi, Globe, Zap, TrendingUp, Eye
 } from 'lucide-react';
 import type { ServiceStatus, CloudProvider, CloudServiceCheck } from '@/services/MultiCloudHealthService';
 import { cn } from '@/lib/utils';
@@ -25,18 +25,11 @@ const statusConfig: Record<ServiceStatus, { color: string; bgColor: string; icon
 };
 
 const providerConfig: Record<CloudProvider, { label: string; icon: typeof Cloud; color: string; bgGradient: string; description: string }> = {
-  supabase: { label: 'Supabase', icon: Database, color: 'text-emerald-600', bgGradient: 'from-emerald-500/5 to-emerald-500/10', description: 'Base de données, Auth, Realtime, Edge Functions' },
+  supabase: { label: 'Supabase', icon: Database, color: 'text-emerald-600', bgGradient: 'from-emerald-500/5 to-emerald-500/10', description: 'DB, Auth, Realtime, Edge Functions, Storage' },
   aws: { label: 'AWS', icon: Server, color: 'text-orange-500', bgGradient: 'from-orange-500/5 to-orange-500/10', description: 'Lambda Backend, Cognito Auth' },
   google_cloud: { label: 'Google Cloud', icon: Cloud, color: 'text-blue-500', bgGradient: 'from-blue-500/5 to-blue-500/10', description: 'Cloud Storage, Cloud Functions' },
   firebase: { label: 'Firebase', icon: Bell, color: 'text-yellow-500', bgGradient: 'from-yellow-500/5 to-yellow-500/10', description: 'Cloud Messaging (FCM)' }
 };
-
-function StatusIcon({ status, size = 'sm' }: { status: ServiceStatus; size?: 'sm' | 'md' | 'lg' }) {
-  const config = statusConfig[status];
-  const Icon = config.icon;
-  const sizeClass = size === 'lg' ? 'h-6 w-6' : size === 'md' ? 'h-5 w-5' : 'h-3.5 w-3.5';
-  return <Icon className={cn(sizeClass, config.textColor)} />;
-}
 
 function StatusDot({ status, pulse = false }: { status: ServiceStatus; pulse?: boolean }) {
   return (
@@ -48,28 +41,35 @@ function StatusDot({ status, pulse = false }: { status: ServiceStatus; pulse?: b
   );
 }
 
-function LatencyBadge({ ms }: { ms: number }) {
-  const color = ms < 500 ? 'text-emerald-600' : ms < 1500 ? 'text-amber-600' : 'text-red-600';
-  return <span className={cn('text-xs font-mono font-medium', color)}>{ms}ms</span>;
-}
-
 function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
+  const config = statusConfig[svc.status];
+  const Icon = config.icon;
+  const latencyColor = svc.responseTime < 500 ? 'text-emerald-600' : svc.responseTime < 1500 ? 'text-amber-600' : 'text-red-600';
+  
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center justify-between py-2 px-2 rounded-md hover:bg-muted/50 transition-colors cursor-default">
             <div className="flex items-center gap-2.5">
-              <StatusIcon status={svc.status} />
+              <Icon className={cn('h-3.5 w-3.5', config.textColor)} />
               <span className="text-sm font-medium">{svc.service}</span>
+              {!svc.isRealCheck && (
+                <Badge variant="outline" className="text-[9px] px-1 py-0 text-muted-foreground">
+                  passif
+                </Badge>
+              )}
             </div>
-            <LatencyBadge ms={svc.responseTime} />
+            <span className={cn('text-xs font-mono font-medium', latencyColor)}>{svc.responseTime}ms</span>
           </div>
         </TooltipTrigger>
         <TooltipContent side="left" className="max-w-xs">
           <div className="space-y-1">
             <p className="font-semibold text-sm">{svc.service}</p>
             <p className="text-xs text-muted-foreground">{svc.message}</p>
+            <p className="text-xs text-muted-foreground">
+              {svc.isRealCheck ? '✅ Vérification réelle' : '⚠️ Check passif (pas d\'endpoint actif)'}
+            </p>
             <p className="text-xs text-muted-foreground">
               Vérifié : {new Date(svc.lastChecked).toLocaleTimeString('fr-FR')}
             </p>
@@ -81,7 +81,7 @@ function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
 }
 
 export default function MultiCloudDashboard() {
-  const { report, isChecking, refresh, history } = useMultiCloudHealth(30000); // 30s refresh
+  const { report, isChecking, refresh, history, dbServices, lastUpdate } = useMultiCloudHealth(30000);
   const [showHistory, setShowHistory] = useState(false);
 
   if (!report) {
@@ -93,7 +93,7 @@ export default function MultiCloudDashboard() {
         </div>
         <div className="text-center space-y-1">
           <p className="font-medium text-foreground">Analyse de l'infrastructure...</p>
-          <p className="text-sm text-muted-foreground">Vérification de 9 services cloud en cours</p>
+          <p className="text-sm text-muted-foreground">Vérification de 10 services cloud en cours</p>
         </div>
       </div>
     );
@@ -101,8 +101,9 @@ export default function MultiCloudDashboard() {
 
   const overallConfig = statusConfig[report.overall];
   const OverallIcon = overallConfig.icon;
+  const realChecks = Object.values(report.providers).flatMap(p => p.services).filter(s => s.isRealCheck).length;
+  const totalServices = report.totalChecks;
 
-  // Calcul tendance depuis l'historique
   const lastFive = history.slice(-5);
   const avgUptime = lastFive.length > 0
     ? Math.round(lastFive.reduce((s, r) => s + r.uptimePercent, 0) / lastFive.length)
@@ -119,13 +120,15 @@ export default function MultiCloudDashboard() {
           </div>
           <div>
             <h2 className="text-xl font-bold text-foreground">Infrastructure Multi-Cloud</h2>
-            <p className="text-sm text-muted-foreground">Surveillance temps réel — 4 providers, {report.totalChecks} services</p>
+            <p className="text-sm text-muted-foreground">
+              Monitoring temps réel — 4 providers, {totalServices} services ({realChecks} checks réels)
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="gap-1.5 text-xs">
             <Activity className="h-3 w-3" />
-            Refresh: 30s
+            Refresh: 30s + Realtime
           </Badge>
           <Button 
             variant="outline" 
@@ -171,17 +174,14 @@ export default function MultiCloudDashboard() {
               </div>
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>{new Date(report.timestamp).toLocaleTimeString('fr-FR')}</span>
+                <span>{lastUpdate.toLocaleTimeString('fr-FR')}</span>
               </div>
             </div>
           </div>
 
-          <Progress 
-            value={report.uptimePercent} 
-            className="h-3 rounded-full" 
-          />
+          <Progress value={report.uptimePercent} className="h-3 rounded-full" />
 
-          {/* Mini stats */}
+          {/* Mini stats par provider */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
             {(Object.keys(report.providers) as CloudProvider[]).map(provider => {
               const prov = report.providers[provider];
@@ -197,6 +197,32 @@ export default function MultiCloudDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* === DB STATUS (REALTIME) === */}
+      {dbServices.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Eye className="h-4 w-4 text-primary" />
+              Statut persisté en base (Realtime)
+              <Badge variant="outline" className="text-[10px]">LIVE</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {dbServices.map(svc => {
+                const st = svc.status === 'healthy' ? 'operational' : svc.status === 'degraded' ? 'degraded' : svc.status === 'critical' ? 'outage' : 'unknown';
+                return (
+                  <div key={svc.service_name} className="flex items-center gap-1.5 p-1.5 rounded bg-muted/20 text-xs">
+                    <StatusDot status={st as ServiceStatus} />
+                    <span className="truncate font-medium">{svc.display_name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* === PROVIDERS DETAIL === */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -248,14 +274,9 @@ export default function MultiCloudDashboard() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <Activity className="h-4 w-4 text-primary" />
-                Historique des vérifications ({history.length})
+                Historique ({history.length} checks)
               </CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowHistory(!showHistory)}
-                className="text-xs"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setShowHistory(!showHistory)} className="text-xs">
                 {showHistory ? 'Masquer' : 'Afficher'}
               </Button>
             </div>
@@ -284,7 +305,7 @@ export default function MultiCloudDashboard() {
                 ))}
               </div>
               <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
-                <span className="flex items-center gap-1"><Wifi className="h-3 w-3" /> Premier check: {new Date(history[0].timestamp).toLocaleTimeString('fr-FR')}</span>
+                <span className="flex items-center gap-1"><Wifi className="h-3 w-3" /> Premier: {new Date(history[0].timestamp).toLocaleTimeString('fr-FR')}</span>
                 <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> Dernier: {new Date(history[history.length - 1].timestamp).toLocaleTimeString('fr-FR')}</span>
               </div>
             </CardContent>
@@ -300,6 +321,7 @@ export default function MultiCloudDashboard() {
             <span>{val.label}</span>
           </div>
         ))}
+        <span className="ml-2 text-[10px]">• Données persistées en DB + Supabase Realtime</span>
       </div>
     </div>
   );
