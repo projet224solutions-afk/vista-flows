@@ -1,5 +1,6 @@
 /**
  * Hook pour détecter et gérer le statut de connexion (online/offline)
+ * Uses shared networkHealth with aggressive caching to prevent flooding
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -18,9 +19,7 @@ export function useOnlineStatus(): OnlineStatus {
   const [isOnline, setIsOnline] = useState<boolean>(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
-  const [lastOnline, setLastOnline] = useState<Date | null>(
-    isOnline ? new Date() : null
-  );
+  const [lastOnline, setLastOnline] = useState<Date | null>(isOnline ? new Date() : null);
   const [wasOffline, setWasOffline] = useState<boolean>(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const [offlineDuration, setOfflineDuration] = useState<number>(0);
@@ -28,70 +27,48 @@ export function useOnlineStatus(): OnlineStatus {
   const offlineStartRef = useRef<Date | null>(isOnline ? null : new Date());
 
   const markOffline = useCallback((reason: string) => {
-    if (!offlineStartRef.current) {
-      offlineStartRef.current = new Date();
-    }
-
+    if (!offlineStartRef.current) offlineStartRef.current = new Date();
     setIsOnline(false);
     setLastError(reason);
   }, []);
 
   const markOnline = useCallback(() => {
     const now = new Date();
-
     if (offlineStartRef.current) {
-      const duration = Math.floor((now.getTime() - offlineStartRef.current.getTime()) / 1000);
-      setOfflineDuration(duration);
+      setOfflineDuration(Math.floor((now.getTime() - offlineStartRef.current.getTime()) / 1000));
       setWasOffline(true);
       offlineStartRef.current = null;
     }
-
     setIsOnline(true);
     setLastOnline(now);
     setLastError(null);
   }, []);
 
   const checkConnection = useCallback(async (): Promise<boolean> => {
-    const result = await checkNetworkHealth({ timeoutMs: 3000, retries: 1, force: true });
-
+    // Don't force — let the shared cache deduplicate across all hooks
+    const result = await checkNetworkHealth({ timeoutMs: 3000, retries: 1 });
     if (result.ok) {
-      console.log('[HEALTH CHECK OK]', {
-        latencyMs: result.latencyMs,
-        source: 'useOnlineStatus',
-      });
       markOnline();
       return true;
     }
-
-    console.warn('[HEALTH CHECK FAIL]', {
-      reason: result.reason,
-      latencyMs: result.latencyMs,
-      source: 'useOnlineStatus',
-    });
     markOffline(result.reason);
     return false;
   }, [markOffline, markOnline]);
 
   useEffect(() => {
-    const handleOnline = () => {
-      void checkConnection();
-    };
-
-    const handleOffline = () => {
-      console.warn('[HEALTH CHECK FAIL]', { reason: 'browser_offline_event', source: 'useOnlineStatus' });
-      markOffline('browser_offline_event');
-    };
+    const handleOnline = () => void checkConnection();
+    const handleOffline = () => markOffline('browser_offline_event');
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    // Single check on mount — no polling when online (save bandwidth)
     void checkConnection();
 
-    let interval: NodeJS.Timeout | undefined;
+    // Only poll when offline to detect recovery
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (!isOnline) {
-      interval = setInterval(() => {
-        void checkConnection();
-      }, 15000);
+      interval = setInterval(() => void checkConnection(), 30000);
     }
 
     return () => {
@@ -108,14 +85,7 @@ export function useOnlineStatus(): OnlineStatus {
     }
   }, [wasOffline]);
 
-  return {
-    isOnline,
-    lastOnline,
-    wasOffline,
-    lastError,
-    offlineDuration,
-    checkConnection,
-  };
+  return { isOnline, lastOnline, wasOffline, lastError, offlineDuration, checkConnection };
 }
 
 export default useOnlineStatus;
