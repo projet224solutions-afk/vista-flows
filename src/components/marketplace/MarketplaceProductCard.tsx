@@ -26,7 +26,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useDisplayCurrency } from "./CurrencyIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
-import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { ProductImageCarousel } from "./ProductImageCarousel";
 
 interface MarketplaceProductCardProps {
@@ -86,8 +86,8 @@ export function MarketplaceProductCard({
   const { t } = useTranslation();
   const { displayCurrency } = useDisplayCurrency();
   
-  // Hook pour certification vendeur
-  const { certification } = useVendorCertification(vendorId);
+  // Hook pour certification vendeur (cache global)
+  const { isCertified } = useVendorCertificationCached(vendorId);
 
   const formatPrice = (value: number) => {
     if (priceLoading) {
@@ -202,8 +202,8 @@ export function MarketplaceProductCard({
             )}
             {vendorPublicId && <span className="text-muted-foreground">•</span>}
             {vendor}
-            {certification && (
-              <CertifiedIcon status={certification.status} className="w-3.5 h-3.5" />
+            {isCertified && (
+              <CertifiedIcon status="CERTIFIE" className="w-3.5 h-3.5" />
             )}
           </span>
           {vendorLocation && (

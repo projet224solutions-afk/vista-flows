@@ -4,13 +4,13 @@ import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatDistance } from "@/hooks/useGeoDistance";
-import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
 
 function VendorCertBadgeSmall({ vendorId }: { vendorId: string }) {
-  const { certification } = useVendorCertification(vendorId);
-  if (!certification) return null;
-  return <CertifiedIcon status={certification.status} className="w-3.5 h-3.5 shrink-0" />;
+  const { isCertified } = useVendorCertificationCached(vendorId);
+  if (!isCertified) return null;
+  return <CertifiedIcon status="CERTIFIE" className="w-3.5 h-3.5 shrink-0" />;
 }
 
 
