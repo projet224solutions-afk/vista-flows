@@ -611,8 +611,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const init = async () => {
       console.log('🔍 Vérification session...');
 
-      // Timeout de sécurité - plus court si offline
-      const timeoutMs = isOffline() ? 1000 : 5000;
+      // Timeout de sécurité - court pour ne pas bloquer l'UI
+      const timeoutMs = isOffline() ? 1000 : 3000;
       const timeoutId = setTimeout(() => {
         console.log('⚠️ Timeout session - continuer sans auth');
         // En mode offline, essayer la session locale avant d'abandonner
