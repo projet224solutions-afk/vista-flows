@@ -1,4 +1,4 @@
-import { Suspense, memo, useEffect, useRef } from "react";
+import { Suspense, memo, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { resolvePostAuthRoute } from "@/utils/postAuthRoute";
 import { usePrefetchCriticalData } from "@/hooks/usePrefetchCriticalData";
@@ -20,6 +20,7 @@ import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { NotificationsRealtimeListener } from "@/components/common/NotificationsRealtimeListener";
+import DeepLinkInitializer from "@/components/DeepLinkInitializer";
 
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 const WebRTCCallProvider = lazyWithRetry(() => import("@/components/communication/WebRTCCallProvider"));
@@ -30,7 +31,6 @@ const Index = lazyWithRetry(() => import("./pages/Index"));
 // Lazy load avec retry automatique pour éviter les erreurs de cache après déploiement
 const QuickFooter = lazyWithRetry(() => import("@/components/QuickFooter"));
 const CommunicationWidget = lazyWithRetry(() => import("@/components/communication/CommunicationWidget"));
-const DeepLinkInitializer = lazyWithRetry(() => import("@/components/DeepLinkInitializer"));
 const _PWAInstallPrompt = lazyWithRetry(() => import("@/components/pwa/PWAInstallPrompt"));
 const _InstallPromptBanner = lazyWithRetry(() =>
   import("@/components/pwa/InstallPromptBanner").then((m) => ({ default: m.InstallPromptBanner }))
@@ -172,52 +172,67 @@ PageLoader.displayName = 'PageLoader';
 function RootRedirect() {
   const { user, profile, loading, profileLoading } = useAuth();
   const navigate = useNavigate();
-  const hasRedirected = useRef(false);
-  const timedOut = useRef(false);
+  const hasRedirectedRef = useRef(false);
+  const mountStartedAtRef = useRef<number>(performance.now());
+  const [hasTimedOut, setHasTimedOut] = useState(false);
 
-  // Safety timeout: never stay on loader more than 3 seconds
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!timedOut.current && !hasRedirected.current) {
-        timedOut.current = true;
-        console.warn('⚠️ [RootRedirect] Timeout 3s - affichage landing page');
-        // Force re-render to show Index
-      }
-    }, 3000);
-    return () => clearTimeout(timer);
+    const timeoutMs = 2500;
+    const timer = window.setTimeout(() => {
+      const elapsedMs = Math.round(performance.now() - mountStartedAtRef.current);
+      console.warn('⚠️ [RootRedirect] Timeout sécurité atteint, fallback non bloquant', { elapsedMs, timeoutMs });
+      setHasTimedOut(true);
+    }, timeoutMs);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (loading || (user && profileLoading && !timedOut.current)) return;
-    if (!user || !profile?.role || hasRedirected.current) return;
-    hasRedirected.current = true;
+    const elapsedMs = Math.round(performance.now() - mountStartedAtRef.current);
+    console.log('ROOTREDIRECT STATE', {
+      loading,
+      profileLoading,
+      hasUser: !!user,
+      role: profile?.role,
+      pathname: window.location.pathname,
+      elapsedMs,
+      hasTimedOut,
+    });
+  }, [loading, profileLoading, user, profile?.role, hasTimedOut]);
+
+  useEffect(() => {
+    if (loading || profileLoading || !user || !profile?.role || hasRedirectedRef.current) return;
+
+    hasRedirectedRef.current = true;
+    const startedAt = performance.now();
 
     resolvePostAuthRoute({ userId: user.id, role: profile.role })
       .then((route) => {
-        console.log(`🚀 [RootRedirect] → ${route} (rôle: ${profile.role})`);
+        const durationMs = Math.round(performance.now() - startedAt);
+        console.log('🚀 [RootRedirect] Redirection résolue', { route, role: profile.role, durationMs });
         navigate(route, { replace: true });
       })
-      .catch(() => navigate('/home', { replace: true }));
-  }, [user, profile, loading, profileLoading, navigate]);
+      .catch((error) => {
+        console.error('❌ [RootRedirect] Erreur résolution route, fallback /home', error);
+        navigate('/home', { replace: true });
+      });
+  }, [user, profile?.role, loading, profileLoading, navigate]);
 
-  console.log('🔍 [RootRedirect]', { loading, user: !!user, profile: !!profile, profileLoading, timedOut: timedOut.current });
-
-  // Not logged in → show landing immediately
-  if (!loading && !user) {
+  // Non connecté: ne jamais bloquer
+  if (!user && !loading) {
     return <Index />;
   }
 
-  // Timed out → show landing (will redirect later if auth completes)
-  if (timedOut.current && !hasRedirected.current && (!user || !profile?.role)) {
-    return <Index />;
-  }
-
-  // Still loading auth or profile → brief loader (max 3s due to timeout)
-  if (loading || (user && !profile?.role && !hasRedirected.current)) {
+  // Connecté avec profil prêt: redirection en cours
+  if (user && profile?.role) {
     return <PageLoader />;
   }
 
-  // User has profile and redirect is pending
+  // Timeout auth/profil: fallback visible au lieu d'un loader infini
+  if (hasTimedOut) {
+    return <Index />;
+  }
+
   return <PageLoader />;
 }
 
@@ -308,7 +323,6 @@ function App() {
                 <Suspense fallback={null}>
                   <AutoInstallPrompt delayMs={8000} />
                 </Suspense>
-                <DeepLinkInitializer />
                 <Suspense fallback={null}>
                   <MerchantOnboarding />
                 </Suspense>
@@ -319,6 +333,7 @@ function App() {
                 </Suspense>
 
                 <ErrorBoundary>
+              <DeepLinkInitializer />
               <Suspense fallback={<PageLoader />}>
               <Routes>
               {/* Route racine: redirige vers dashboard si connecté, sinon landing */}
