@@ -94,7 +94,6 @@ export default function MultiCloudDashboard() {
 
   const overallConfig = statusConfig[report.overall];
   const OverallIcon = overallConfig.icon;
-  const realChecks = Object.values(report.providers).flatMap(p => p.services).filter(s => s.isRealCheck).length;
   const totalServices = report.totalChecks;
 
   const lastFive = history.slice(-5);
