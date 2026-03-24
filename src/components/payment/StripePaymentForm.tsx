@@ -105,6 +105,9 @@ export function StripePaymentForm({
               <p className="text-muted-foreground mt-2">
                 Votre paiement de <strong>{formatAmount(amount, currency)}</strong> a été traité avec succès.
               </p>
+              <p className="text-sm text-muted-foreground mt-1 animate-pulse">
+                Redirection vers vos achats…
+              </p>
             </div>
           </div>
         </CardContent>
