@@ -355,7 +355,7 @@ export default function ProductPaymentModal({
       toast.success('Paiement sécurisé par escrow !', {
         description: `${fc(grandTotal, cur)} bloqués — libérés après confirmation de réception`
       });
-      setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/mes-commandes'); }, 2000);
+      setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/my-purchases'); }, 2000);
     } catch (err) {
       console.error('Order creation after escrow payment failed:', err);
       toast.error('Paiement réussi mais erreur lors de la commande');
@@ -398,7 +398,7 @@ export default function ProductPaymentModal({
           await createOrderAfterPayment(result.transactionId, paymentMethod);
           setPaymentStep('success');
           toast.success('Paiement mobile réussi !', { description: `${fc(grandTotal, cur)} débité de votre compte` });
-          setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/mes-commandes'); }, 2000);
+          setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/my-purchases'); }, 2000);
         } else {
           toast.error('Paiement non confirmé', { description: 'Veuillez réessayer' });
           setPaymentStep('mobile_money_form');
@@ -407,7 +407,7 @@ export default function ProductPaymentModal({
         await createOrderAfterPayment(`mobile-${Date.now()}`, paymentMethod);
         setPaymentStep('success');
         toast.success('Paiement initié avec succès !');
-        setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/mes-commandes'); }, 2000);
+        setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/my-purchases'); }, 2000);
       }
     } catch (err) {
       console.error('Mobile money payment failed:', err);
@@ -510,7 +510,7 @@ export default function ProductPaymentModal({
 
     onPaymentSuccess();
     onClose();
-    navigate('/mes-commandes');
+    navigate('/my-purchases');
   }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose, codPhone, codCity, fc, navigate]);
 
   const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < grandTotal;

@@ -136,8 +136,8 @@ export default function ClientDashboard() {
     loadAllData(user?.id);
     refreshStats();
     setShowPaymentModal(false);
-    toast.success('Commande créée avec succès ! Redirection...', { duration: 2000 });
-    setTimeout(() => navigate('/mes-commandes'), 1500);
+    toast.success('Paiement réussi ! Redirection vers vos achats...', { duration: 2000 });
+    setTimeout(() => navigate('/my-purchases'), 1500);
   };
 
   const handleProductClick = (productId: string) => {
