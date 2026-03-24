@@ -82,6 +82,7 @@ const CompetitiveAnalysis = lazyWithRetry(() => import("./pages/pdg/CompetitiveA
 const ApiSupervision = lazyWithRetry(() => import("./pages/pdg/ApiSupervision"));
 const SystemDebugPage = lazyWithRetry(() => import("./pages/pdg/SystemDebugPage"));
 const PDGCopilotDashboard = lazyWithRetry(() => import("./components/pdg/PDGCopilotDashboard"));
+const MonitoringDashboard = lazyWithRetry(() => import("./pages/pdg/MonitoringDashboard"));
 const BureauDashboard = lazyWithRetry(() => import("./pages/BureauDashboard"));
 const BureauMonitoringPage = lazyWithRetry(() => import("./pages/BureauMonitoringPage"));
 const WorkerDashboard = lazyWithRetry(() => import("./pages/WorkerDashboard"));
