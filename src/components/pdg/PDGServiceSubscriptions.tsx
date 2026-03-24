@@ -900,7 +900,7 @@ export default function PDGServiceSubscriptions() {
                 onChange={e => setFreeSubscriptionData(prev => ({ ...prev, planId: e.target.value }))}
               >
                 <option value="">Sélectionner un plan</option>
-                {plans.map(plan => (
+                {filteredPlans.map(plan => (
                   <option key={plan.id} value={plan.id}>{plan.display_name} — {ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}/mois</option>
                 ))}
               </select>
