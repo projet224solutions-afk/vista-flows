@@ -53,7 +53,8 @@ interface UseUniversalProductsOptions {
   autoLoad?: boolean;
 }
 
-const PRODUCT_QUERY_TIMEOUT_MS = 25_000;
+const PRODUCT_QUERY_TIMEOUT_MS = 45_000;
+const MAX_RETRIES = 2;
 
 export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) => {
   const {
@@ -91,7 +92,6 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
   const loadProducts = useCallback(async (reset = false) => {
     const requestId = ++requestIdRef.current;
-
     const filters = {
       category,
       searchQuery,
@@ -105,8 +105,13 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       sortBy,
     };
 
+    let lastError: any = null;
+
     try {
       setLoading(true);
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
       const currentPage = reset ? 1 : page;
       const pageLimit = limit || 12;
       const from = (currentPage - 1) * pageLimit;
@@ -235,7 +240,15 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
       const { data, error, count } = result;
 
-      if (error) throw error;
+      if (error) {
+        lastError = error;
+        if (attempt < MAX_RETRIES) {
+          console.warn(`[Products] Attempt ${attempt} failed, retrying...`, error.message);
+          await new Promise(r => setTimeout(r, 1000 * attempt));
+          continue;
+        }
+        throw error;
+      }
 
       // Filtrer côté client: uniquement les vendeurs avec vente en ligne activée
       let filteredData = data || [];
@@ -291,9 +304,16 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       setTotal(count || 0);
       setHasMore(formattedProducts.length === pageLimit);
       lastLoadedAtRef.current = Date.now();
-
+      return; // Success — exit retry loop
     } catch (error) {
-      // Ne pas afficher d'erreur si cette requête n'est plus la dernière
+      lastError = error;
+      if (attempt < MAX_RETRIES) {
+        const errorMessage = error instanceof Error ? error.message : 'unknown';
+        console.warn(`[Products] Attempt ${attempt} failed (${errorMessage}), retrying in ${attempt}s...`);
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+        continue;
+      }
+      // Last attempt failed — show error
       if (requestId === requestIdRef.current) {
         const errorMessage = error instanceof Error ? error.message : 'unknown_error';
         if (errorMessage === 'products_query_timeout') {
@@ -302,14 +322,16 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
             timeoutMs: PRODUCT_QUERY_TIMEOUT_MS,
             filters,
           });
-          toast.error('Le chargement des produits a expiré. Réessayez.');
+          toast.error('Connexion lente. Tirez vers le bas pour réessayer.');
         } else {
           console.error('Erreur chargement produits:', error);
-          toast.error('Erreur lors du chargement des produits');
+          toast.error('Erreur de chargement. Réessayez.');
         }
       }
+    }
+    } // end retry loop
+
     } finally {
-      // Éviter qu'une ancienne requête "éteigne" le loading d'une nouvelle
       if (requestId === requestIdRef.current) {
         setLoading(false);
       }
