@@ -70,6 +70,7 @@ export default function ProductPaymentModal({
   customerId,
   currency = 'GNF'
 }: ProductPaymentModalProps) {
+  const navigate = useNavigate();
   const fc = useFormatCurrency();
   const { convert, userCurrency } = usePriceConverter();
   const cur = currency.toUpperCase();
