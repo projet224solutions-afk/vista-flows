@@ -86,6 +86,7 @@ const BureauDashboard = lazyWithRetry(() => import("./pages/BureauDashboard"));
 const BureauMonitoringPage = lazyWithRetry(() => import("./pages/BureauMonitoringPage"));
 const WorkerDashboard = lazyWithRetry(() => import("./pages/WorkerDashboard"));
 const Payment = lazyWithRetry(() => import("./pages/Payment"));
+const PaymentSuccessRedirect = lazyWithRetry(() => import("./pages/PaymentSuccessRedirect"));
 const DjomyPayment = lazyWithRetry(() => import("./pages/DjomyPayment"));
 const PaymentCorePage = lazyWithRetry(() => import("./pages/PaymentCore"));
 const Orders = lazyWithRetry(() => import("./pages/Orders"));
