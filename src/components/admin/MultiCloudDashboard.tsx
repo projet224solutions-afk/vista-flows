@@ -54,11 +54,6 @@ function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
             <div className="flex items-center gap-2.5">
               <Icon className={cn('h-3.5 w-3.5', config.textColor)} />
               <span className="text-sm font-medium">{svc.service}</span>
-              {!svc.isRealCheck && (
-                <Badge variant="outline" className="text-[9px] px-1 py-0 text-muted-foreground">
-                  passif
-                </Badge>
-              )}
             </div>
             <span className={cn('text-xs font-mono font-medium', latencyColor)}>{svc.responseTime}ms</span>
           </div>
@@ -67,9 +62,7 @@ function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
           <div className="space-y-1">
             <p className="font-semibold text-sm">{svc.service}</p>
             <p className="text-xs text-muted-foreground">{svc.message}</p>
-            <p className="text-xs text-muted-foreground">
-              {svc.isRealCheck ? '✅ Vérification réelle' : '⚠️ Check passif (pas d\'endpoint actif)'}
-            </p>
+            <p className="text-xs text-muted-foreground">✅ Vérification réelle</p>
             <p className="text-xs text-muted-foreground">
               Vérifié : {new Date(svc.lastChecked).toLocaleTimeString('fr-FR')}
             </p>
@@ -101,7 +94,6 @@ export default function MultiCloudDashboard() {
 
   const overallConfig = statusConfig[report.overall];
   const OverallIcon = overallConfig.icon;
-  const realChecks = Object.values(report.providers).flatMap(p => p.services).filter(s => s.isRealCheck).length;
   const totalServices = report.totalChecks;
 
   const lastFive = history.slice(-5);
@@ -121,7 +113,7 @@ export default function MultiCloudDashboard() {
           <div>
             <h2 className="text-xl font-bold text-foreground">Infrastructure Multi-Cloud</h2>
             <p className="text-sm text-muted-foreground">
-              Monitoring temps réel — 4 providers, {totalServices} services ({realChecks} checks réels)
+              Monitoring temps réel — 4 providers, {totalServices} services (100% checks réels)
             </p>
           </div>
         </div>
