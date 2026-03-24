@@ -297,6 +297,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setProfileLoading(true);
     console.log('🔄 Chargement profil pour:', user.email);
+    
+    // Timeout sécurité: ne jamais bloquer plus de 4 secondes
+    const profileTimeout = setTimeout(() => {
+      console.warn('⚠️ Timeout profil (4s) - utilisation cache ou fallback');
+      const cachedProfile = localStorage.getItem(profileCacheKey);
+      if (cachedProfile && !profileRef.current) {
+        try {
+          setProfile(JSON.parse(cachedProfile) as Profile);
+        } catch (e) {}
+      }
+      setProfileLoading(false);
+    }, 4000);
 
     try {
       // ✨ NOUVEAU: En mode offline, utiliser le profil en cache
