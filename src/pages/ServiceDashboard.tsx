@@ -103,7 +103,7 @@ export default function ServiceDashboard() {
            </div>
 
           {/* Barre d'abonnement compacte */}
-          <ServiceSubscriptionCard serviceId={service.id} compact />
+          <ServiceSubscriptionCard serviceId={service.id} serviceTypeId={service.service_type_id} compact />
 
           <ServiceModuleManager
             serviceId={service.id}
@@ -247,7 +247,7 @@ export default function ServiceDashboard() {
 
         {/* Carte abonnement */}
         <div className="mb-6">
-          <ServiceSubscriptionCard serviceId={service.id} />
+          <ServiceSubscriptionCard serviceId={service.id} serviceTypeId={service.service_type_id} />
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">

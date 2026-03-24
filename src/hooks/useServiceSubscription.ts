@@ -8,9 +8,10 @@ import {
 
 interface UseServiceSubscriptionProps {
   serviceId?: string;
+  serviceTypeId?: string;
 }
 
-export function useServiceSubscription({ serviceId }: UseServiceSubscriptionProps = {}) {
+export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceSubscriptionProps = {}) {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<ActiveServiceSubscription | null>(null);
   const [plans, setPlans] = useState<ServicePlan[]>([]);
@@ -20,8 +21,8 @@ export function useServiceSubscription({ serviceId }: UseServiceSubscriptionProp
     try {
       setLoading(true);
       
-      // Charger les plans
-      const plansData = await ServiceSubscriptionService.getPlans();
+      // Charger les plans filtrés par type de service
+      const plansData = await ServiceSubscriptionService.getPlans(serviceTypeId);
       setPlans(plansData);
 
       // Charger l'abonnement si un serviceId est fourni
@@ -34,7 +35,7 @@ export function useServiceSubscription({ serviceId }: UseServiceSubscriptionProp
     } finally {
       setLoading(false);
     }
-  }, [serviceId]);
+  }, [serviceId, serviceTypeId]);
 
   useEffect(() => {
     loadData();

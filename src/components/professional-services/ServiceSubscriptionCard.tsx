@@ -15,10 +15,11 @@ import { cn } from '@/lib/utils';
 
 interface ServiceSubscriptionCardProps {
   serviceId: string;
+  serviceTypeId?: string;
   compact?: boolean;
 }
 
-export function ServiceSubscriptionCard({ serviceId, compact = false }: ServiceSubscriptionCardProps) {
+export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = false }: ServiceSubscriptionCardProps) {
   const { user } = useAuth();
   const {
     subscription,
@@ -32,7 +33,7 @@ export function ServiceSubscriptionCard({ serviceId, compact = false }: ServiceS
     canAccessFeature,
     formatAmount,
     refresh
-  } = useServiceSubscription({ serviceId });
+  } = useServiceSubscription({ serviceId, serviceTypeId });
 
   const [showPlans, setShowPlans] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
