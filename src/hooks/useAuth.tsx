@@ -43,6 +43,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const profileRef = useRef<Profile | null>(null);
   const ensuredSetupForUserRef = useRef<string | null>(null);
   const isRefreshingProfileRef = useRef(false);
+  const firstSupabaseErrorLoggedRef = useRef(false);
+
+  const logFirstSupabaseError = useCallback((scope: string, error: unknown) => {
+    if (firstSupabaseErrorLoggedRef.current) return;
+    firstSupabaseErrorLoggedRef.current = true;
+    console.error('FIRST SUPABASE ERROR', { scope, error });
+  }, []);
 
   useEffect(() => {
     profileRef.current = profile;
