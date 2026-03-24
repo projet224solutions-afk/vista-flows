@@ -12,6 +12,8 @@ interface NetworkHealthOptions {
 }
 
 const HEALTH_CHECK_PATH = '/healthz.json';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 const DEFAULT_TIMEOUT_MS = 3000;
 const DEFAULT_RETRIES = 1;
 /** Cache results for 15s to prevent flooding on mobile */
@@ -20,6 +22,10 @@ const RESULT_CACHE_WINDOW_MS = 15_000;
 let inFlightHealthCheck: Promise<NetworkHealthResult> | null = null;
 let lastHealthCheckAt = 0;
 let lastHealthResult: NetworkHealthResult | null = null;
+let lastReportedState: boolean | null = null;
+let lastReportedReason = '';
+
+const nowPerf = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -39,9 +45,9 @@ async function executeHealthCheck(timeoutMs: number, retries: number): Promise<N
   const maxAttempts = Math.max(1, retries + 1);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const startedAt = performance.now();
+    const startedAt = nowPerf();
     try {
-      const response = await withTimeout(
+      const appHealthResponse = await withTimeout(
         fetch(`${HEALTH_CHECK_PATH}?t=${Date.now()}&a=${attempt}`, {
           method: 'GET',
           cache: 'no-store',
@@ -50,34 +56,93 @@ async function executeHealthCheck(timeoutMs: number, retries: number): Promise<N
         timeoutMs,
       );
 
-      const latencyMs = Math.round(performance.now() - startedAt);
+      const latencyMs = Math.round(nowPerf() - startedAt);
 
-      if (!response.ok) {
-        lastErrorReason = `http_${response.status}`;
-        continue;
+      if (appHealthResponse.ok) {
+        const contentType = appHealthResponse.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          try {
+            const payload = await appHealthResponse.clone().json();
+            if (payload?.status === 'ok') {
+              return { ok: true, reason: 'ok:app_health', statusCode: appHealthResponse.status, latencyMs };
+            }
+            lastErrorReason = 'invalid_payload';
+          } catch {
+            lastErrorReason = 'invalid_json';
+          }
+        } else {
+          return { ok: true, reason: 'ok:app_health_non_json', statusCode: appHealthResponse.status, latencyMs };
+        }
+      } else {
+        lastErrorReason = `app_http_${appHealthResponse.status}`;
       }
 
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        try {
-          const payload = await response.clone().json();
-          if (payload?.status !== 'ok') { lastErrorReason = 'invalid_payload'; continue; }
-        } catch { lastErrorReason = 'invalid_json'; continue; }
+      // Fallback réel: tester la reachability Supabase si /healthz.json échoue (preview/PWA custom host)
+      if (SUPABASE_URL && SUPABASE_KEY) {
+        const supabaseStartedAt = nowPerf();
+        const supabaseResponse = await withTimeout(
+          fetch(`${SUPABASE_URL}/rest/v1/`, {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: `Bearer ${SUPABASE_KEY}`,
+              Accept: 'application/json',
+            },
+          }),
+          timeoutMs,
+        );
+
+        const supabaseLatencyMs = Math.round(nowPerf() - supabaseStartedAt);
+        if (supabaseResponse.ok) {
+          return {
+            ok: true,
+            reason: 'ok:supabase_reachable',
+            statusCode: supabaseResponse.status,
+            latencyMs: supabaseLatencyMs,
+          };
+        }
+        lastErrorReason = `supabase_http_${supabaseResponse.status}`;
       }
 
-      return { ok: true, reason: 'ok', statusCode: response.status, latencyMs };
+      if (attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
+      }
     } catch (error) {
-      const latencyMs = Math.round(performance.now() - startedAt);
+      const latencyMs = Math.round(nowPerf() - startedAt);
       const message = error instanceof Error ? error.message : 'unknown_error';
       lastErrorReason = message === 'timeout' ? 'timeout' : message;
 
       if (attempt === maxAttempts) {
         return { ok: false, reason: lastErrorReason, latencyMs };
       }
+
+      await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
     }
   }
 
   return { ok: false, reason: lastErrorReason, latencyMs: 0 };
+}
+
+function logHealthTransition(result: NetworkHealthResult) {
+  if (lastReportedState === result.ok && lastReportedReason === result.reason) return;
+  lastReportedState = result.ok;
+  lastReportedReason = result.reason;
+
+  if (result.ok) {
+    console.info('[HEALTH CHECK OK]', {
+      reason: result.reason,
+      latencyMs: result.latencyMs,
+      statusCode: result.statusCode,
+    });
+  } else {
+    console.warn('[HEALTH CHECK FAIL]', {
+      reason: result.reason,
+      latencyMs: result.latencyMs,
+      statusCode: result.statusCode,
+      navigatorOnline: typeof navigator !== 'undefined' ? navigator.onLine : undefined,
+    });
+  }
 }
 
 export async function checkNetworkHealth(options: NetworkHealthOptions = {}): Promise<NetworkHealthResult> {
@@ -99,6 +164,7 @@ export async function checkNetworkHealth(options: NetworkHealthOptions = {}): Pr
     .then((result) => {
       lastHealthCheckAt = Date.now();
       lastHealthResult = result;
+      logHealthTransition(result);
       return result;
     })
     .finally(() => {

@@ -49,7 +49,7 @@ export default function Home() {
     autoLoad: true,
   }), []);
   
-  const { products: universalProducts, loading: productsLoading } = useUniversalProducts(productOptions);
+  const { products: universalProducts, loading: productsLoading, refresh: refreshProducts } = useUniversalProducts(productOptions);
 
   // Search submit: navigate to marketplace with query
   const handleSearchSubmit = useCallback(() => {
@@ -136,6 +136,7 @@ export default function Home() {
         <LatestProductsSection
           products={universalProducts}
           loading={productsLoading}
+          onRetry={refreshProducts}
           onProductClick={handleProductClick}
           onAddToCart={handleAddToCart}
         />
