@@ -55,7 +55,7 @@ export const cachedQueries = {
     cachedQuery('products:list:' + JSON.stringify(filters || {}), async () => {
       const q = supabase
         .from('products')
-        .select('id, name, price, images, vendor_id, category, stock_quantity, rating_average')
+        .select('id, name, price, images, vendor_id, category_id, stock_quantity, rating')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -89,7 +89,7 @@ export const cachedQueries = {
     cachedQuery('vendors:active', async () => {
       const { data, error } = await supabase
         .from('vendors')
-        .select('id, shop_name, logo_url, latitude, longitude, business_type, rating_average')
+        .select('id, business_name, logo_url, latitude, longitude, business_type, rating')
         .eq('is_active', true)
         .limit(100);
       if (error) throw error;

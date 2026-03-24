@@ -39,6 +39,8 @@ interface CachedGeo {
   version?: string;
 }
 
+let inFlightGeoDetectRequest: Promise<{ data: any; error: any }> | null = null;
+
 function getCachedGeoRaw(): CachedGeo | null {
   try {
     const cached = localStorage.getItem(GEO_CACHE_KEY);
@@ -85,6 +87,25 @@ function clearGeoCache() {
   try {
     localStorage.removeItem(GEO_CACHE_KEY);
   } catch {}
+}
+
+async function invokeGeoDetect(
+  body: Record<string, unknown>,
+  dedupe: boolean
+): Promise<{ data: any; error: any }> {
+  if (!dedupe) {
+    return supabase.functions.invoke('geo-detect', { body });
+  }
+
+  if (!inFlightGeoDetectRequest) {
+    inFlightGeoDetectRequest = supabase.functions
+      .invoke('geo-detect', { body })
+      .finally(() => {
+        inFlightGeoDetectRequest = null;
+      });
+  }
+
+  return inFlightGeoDetectRequest;
 }
 
 // Helper pour obtenir la position GPS
@@ -162,8 +183,9 @@ export function useGeoDetection(): UseGeoDetectionResult {
 
       // Utiliser l'Edge Function geo-detect (fonctionne pour tous, connectés ou non)
       try {
-        const { data, error: fnError } = await supabase.functions.invoke('geo-detect', {
-          body: {
+        const shouldDedupe = !gpsCoords && !forceRefresh;
+        const { data, error: fnError } = await invokeGeoDetect(
+          {
             user_id: user?.id || null,
             update_profile: !!user?.id, // Mettre à jour le profil seulement si connecté
             ...(gpsCoords && {
@@ -171,7 +193,8 @@ export function useGeoDetection(): UseGeoDetectionResult {
               gps_longitude: gpsCoords.lng,
             }),
           },
-        });
+          shouldDedupe
+        );
 
         if (!fnError && data?.success) {
           const info: GeoInfo = {
