@@ -11,7 +11,7 @@ interface UseServiceSubscriptionProps {
   serviceTypeId?: string;
 }
 
-export function useServiceSubscription({ serviceId }: UseServiceSubscriptionProps = {}) {
+export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceSubscriptionProps = {}) {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<ActiveServiceSubscription | null>(null);
   const [plans, setPlans] = useState<ServicePlan[]>([]);
