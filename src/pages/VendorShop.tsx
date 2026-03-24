@@ -17,14 +17,14 @@ import { useVendorDigitalProducts } from "@/hooks/useHasDigitalProducts";
 import { trackShopVisit } from "@/services/analyticsTrackingService";
 import SEOHead from "@/components/SEOHead";
 import { getCurrencyForCountry } from "@/data/countryMappings";
-import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { CertifiedVendorBadge } from "@/components/vendor/CertifiedVendorBadge";
 
 // Mini composant pour afficher le badge de certification d'un vendeur
 function VendorCertBadgeInline({ vendorId }: { vendorId: string }) {
-  const { certification } = useVendorCertification(vendorId);
-  if (!certification || certification.status !== 'CERTIFIE') return null;
-  return <CertifiedVendorBadge status={certification.status} verifiedAt={certification.verified_at} />;
+  const { isCertified } = useVendorCertificationCached(vendorId);
+  if (!isCertified) return null;
+  return <CertifiedVendorBadge status="CERTIFIE" />;
 }
 
 interface Vendor {
