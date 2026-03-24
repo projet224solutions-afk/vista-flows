@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface DetectionRequest {
@@ -15,8 +15,9 @@ interface DetectionRequest {
   threshold?: number;
 }
 
-// Rôles autorisés pour la détection d'anomalies
-const ALLOWED_ROLES = ['admin', 'pdg', 'service_role'];
+// Rôles autorisés — alignés avec security-incident-response
+// admin = administrateur système, pdg = CEO/directeur général
+const ALLOWED_SECURITY_ROLES = ['admin', 'pdg'];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -40,8 +41,6 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    
-    // Vérifier le token et récupérer l'utilisateur
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     
     if (authError || !user) {
@@ -52,7 +51,7 @@ serve(async (req) => {
       );
     }
 
-    // 🔐 VALIDATION DU RÔLE - Vérifier dans la table profiles
+    // 🔐 VALIDATION DU RÔLE
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('role')
@@ -67,21 +66,16 @@ serve(async (req) => {
       );
     }
 
-    // Vérifier que l'utilisateur a un rôle autorisé
-    if (!ALLOWED_ROLES.includes(profile.role)) {
+    if (!ALLOWED_SECURITY_ROLES.includes(profile.role)) {
       console.error('❌ Rôle non autorisé:', profile.role);
       
-      // Log l'tentative non autorisée
       await supabaseClient.from('security_audit_logs').insert({
         action: 'unauthorized_anomaly_detection_access',
         actor_id: user.id,
         actor_type: 'user',
         target_type: 'security_detect_anomaly',
         ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
-        details: { 
-          attempted_action: 'detect_anomaly',
-          user_role: profile.role 
-        }
+        details: { attempted_action: 'detect_anomaly', user_role: profile.role }
       });
 
       return new Response(
@@ -124,7 +118,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('Anomaly detection:', body.type, 'by:', user.id);
+    console.log('🔍 Anomaly detection:', body.type, 'by:', user.id);
 
     let anomalyDetected = false;
     let details: any = {};
@@ -157,11 +151,12 @@ serve(async (req) => {
             ipAddress: body.ipAddress
           };
 
-          // Auto-bloquer l'IP
+          // Auto-bloquer l'IP — signature: (p_ip_address, p_reason, p_duration_hours, p_auto_block)
           await supabaseClient.rpc('block_ip_address', {
             p_ip_address: body.ipAddress,
             p_reason: `Brute force detected: ${failedAttempts.length} failed login attempts`,
-            p_expires_hours: 2
+            p_duration_hours: 2,
+            p_auto_block: true
           });
 
           // Créer un incident
@@ -173,6 +168,8 @@ serve(async (req) => {
             p_source_ip: body.ipAddress,
             p_target_service: 'authentication'
           });
+
+          console.log('🔒 Auto-blocked IP for brute force:', body.ipAddress);
         }
         break;
       }
@@ -185,7 +182,7 @@ serve(async (req) => {
           );
         }
 
-        // Détecter dépassement de rate limit
+        // Détecter dépassement de rate limit (100+ requêtes en 1 min)
         const { data: recentRequests } = await supabaseClient
           .from('security_audit_logs')
           .select('*')
@@ -202,7 +199,6 @@ serve(async (req) => {
             ipAddress: body.ipAddress
           };
 
-          // Créer une alerte
           await supabaseClient.from('security_alerts').insert({
             alert_type: 'rate_limit_exceeded',
             severity: 'medium',
@@ -224,6 +220,9 @@ serve(async (req) => {
         }
 
         // Détecter changement géographique suspect
+        // NOTE SIMPLIFICATION: compare les 2 dernières connexions par IP et temps.
+        // Un vrai système utiliserait un service de géolocalisation pour vérifier
+        // si les IPs proviennent de pays/régions physiquement incompatibles.
         const { data: recentLogins } = await supabaseClient
           .from('security_audit_logs')
           .select('*, details')
@@ -233,23 +232,25 @@ serve(async (req) => {
           .limit(2);
 
         if (recentLogins && recentLogins.length === 2) {
-          // Simuler détection de pays différents (à implémenter avec vraie géolocalisation)
+          const ip1 = recentLogins[0].ip_address;
+          const ip2 = recentLogins[1].ip_address;
           const timeDiff = new Date(recentLogins[0].created_at).getTime() - 
                           new Date(recentLogins[1].created_at).getTime();
           
-          if (timeDiff < 3600000) { // Moins d'1h entre 2 connexions
+          // Deux IPs différentes en moins d'1h = suspect
+          if (ip1 !== ip2 && timeDiff < 3600000) {
             anomalyDetected = true;
             details = {
               userId: body.userId,
               timeDifference: `${Math.round(timeDiff / 60000)} minutes`,
-              logins: recentLogins.map(l => ({ created_at: l.created_at, ip: l.ip_address }))
+              logins: recentLogins.map(l => ({ created_at: l.created_at, ip: l.ip_address })),
+              note: 'Simplified detection: different IPs within 1 hour. Real geo-IP check not yet implemented.'
             };
 
-            // Créer une alerte
             await supabaseClient.from('security_alerts').insert({
               alert_type: 'geo_anomaly',
               severity: 'medium',
-              message: `Suspicious geographic activity detected for user`,
+              message: `Suspicious geographic activity: 2 different IPs in ${Math.round(timeDiff / 60000)} min`,
               auto_action_taken: 'ALERT',
               metadata: { ...details, detected_by: user.id }
             });
@@ -266,7 +267,10 @@ serve(async (req) => {
           );
         }
 
-        // Détecter comportement anormal
+        // Détecter comportement anormal (volume brut d'actions)
+        // NOTE SIMPLIFICATION: ce check ne mesure que le volume total.
+        // Un vrai système analyserait les patterns (actions sensibles, heures inhabituelles,
+        // endpoints critiques accédés en rafale, etc.)
         const { data: userActions } = await supabaseClient
           .from('security_audit_logs')
           .select('*')
@@ -280,10 +284,10 @@ serve(async (req) => {
             actions: userActions.length,
             threshold,
             timeWindow: '1 hour',
-            userId: body.userId
+            userId: body.userId,
+            note: 'Simplified detection: raw action volume only. Pattern analysis not yet implemented.'
           };
 
-          // Créer une alerte
           await supabaseClient.from('security_alerts').insert({
             alert_type: 'behavior_anomaly',
             severity: 'medium',
@@ -296,7 +300,7 @@ serve(async (req) => {
       }
     }
 
-    // Log l'opération de détection
+    // Log l'opération de détection dans l'audit
     await supabaseClient.from('security_audit_logs').insert({
       action: 'anomaly_detection',
       actor_id: user.id,
@@ -305,7 +309,7 @@ serve(async (req) => {
       details: {
         detected: anomalyDetected,
         type: body.type,
-        parameters: body,
+        parameters: { type: body.type, userId: body.userId, ipAddress: body.ipAddress, threshold: body.threshold },
         result: details
       }
     });
@@ -322,7 +326,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Anomaly detection error:', error);
-    // Message d'erreur générique pour éviter la fuite d'informations
     return new Response(
       JSON.stringify({ error: 'Une erreur est survenue lors de la détection' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
