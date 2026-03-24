@@ -724,13 +724,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, refreshProfile]);
 
-  // Setup automatique: 1 seule fois par utilisateur (évite les boucles + lenteurs)
+  // Setup automatique: NON-BLOQUANT, en arrière-plan après un délai
+  // Ne doit JAMAIS bloquer l'affichage de l'UI
   useEffect(() => {
     if (!user || profileLoading || !profile) return;
     if (ensuredSetupForUserRef.current === user.id) return;
 
     ensuredSetupForUserRef.current = user.id;
-    ensureUserSetup();
+    
+    // Lancer le setup en arrière-plan après 2s pour ne pas bloquer le rendu
+    const timer = setTimeout(() => {
+      ensureUserSetup().catch((err) => {
+        console.warn('⚠️ Setup arrière-plan échoué (non bloquant):', err);
+      });
+    }, 2000);
+    
+    return () => clearTimeout(timer);
   }, [user, profile, profileLoading, ensureUserSetup]);
 
   const signOut = async () => {
