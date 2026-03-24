@@ -12848,6 +12848,198 @@ export type Database = {
         }
         Relationships: []
       }
+      monitoring_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          auto_action_taken: string | null
+          cooldown_until: string | null
+          created_at: string
+          dedupe_key: string | null
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          message: string
+          metadata: Json | null
+          occurrence_count: number | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          source: string
+          status: string
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          auto_action_taken?: string | null
+          cooldown_until?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          message: string
+          metadata?: Json | null
+          occurrence_count?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source: string
+          status?: string
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          auto_action_taken?: string | null
+          cooldown_until?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          message?: string
+          metadata?: Json | null
+          occurrence_count?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      monitoring_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          message: string
+          metadata: Json | null
+          response_time_ms: number | null
+          service_name: string | null
+          severity: string
+          source: string
+          status_code: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          message: string
+          metadata?: Json | null
+          response_time_ms?: number | null
+          service_name?: string | null
+          severity?: string
+          source: string
+          status_code?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          message?: string
+          metadata?: Json | null
+          response_time_ms?: number | null
+          service_name?: string | null
+          severity?: string
+          source?: string
+          status_code?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      monitoring_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          metric_name: string
+          metric_value: number
+          period_end: string | null
+          period_start: string
+          service_name: string | null
+          tags: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metric_name: string
+          metric_value: number
+          period_end?: string | null
+          period_start?: string
+          service_name?: string | null
+          tags?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          period_end?: string | null
+          period_start?: string
+          service_name?: string | null
+          tags?: Json | null
+        }
+        Relationships: []
+      }
+      monitoring_service_status: {
+        Row: {
+          check_count: number | null
+          display_name: string
+          error_rate: number | null
+          fail_count: number | null
+          id: string
+          last_check_at: string | null
+          last_healthy_at: string | null
+          metadata: Json | null
+          response_time_ms: number | null
+          service_name: string
+          status: string
+          updated_at: string
+          uptime_percent: number | null
+        }
+        Insert: {
+          check_count?: number | null
+          display_name: string
+          error_rate?: number | null
+          fail_count?: number | null
+          id?: string
+          last_check_at?: string | null
+          last_healthy_at?: string | null
+          metadata?: Json | null
+          response_time_ms?: number | null
+          service_name: string
+          status?: string
+          updated_at?: string
+          uptime_percent?: number | null
+        }
+        Update: {
+          check_count?: number | null
+          display_name?: string
+          error_rate?: number | null
+          fail_count?: number | null
+          id?: string
+          last_check_at?: string | null
+          last_healthy_at?: string | null
+          metadata?: Json | null
+          response_time_ms?: number | null
+          service_name?: string
+          status?: string
+          updated_at?: string
+          uptime_percent?: number | null
+        }
+        Relationships: []
+      }
       moto_security_alerts: {
         Row: {
           brand: string
@@ -28196,6 +28388,7 @@ export type Database = {
       cleanup_expired_tokens: { Args: never; Returns: undefined }
       cleanup_old_analytics_data: { Args: never; Returns: number }
       cleanup_old_errors: { Args: never; Returns: undefined }
+      cleanup_old_monitoring_data: { Args: never; Returns: undefined }
       cleanup_old_product_views: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_surveillance_data: {
