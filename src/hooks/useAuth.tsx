@@ -576,6 +576,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem('oauth_intent_role');
       localStorage.removeItem('oauth_is_new_signup');
     } finally {
+      clearTimeout(profileTimeout);
       setProfileLoading(false);
     }
   }, [user]);
