@@ -7,9 +7,11 @@ import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWor
 import { initPWAInstallPromptListener } from "./lib/pwaInstallPrompt";
 import { initMonitoring } from "./lib/monitoring";
 import { initializeSecurity } from "./lib/security";
+import { initFrontendObserver } from "./services/monitoring/FrontendObserver";
 
 // Initialiser le monitoring (Sentry, erreurs globales, performance)
 initMonitoring().catch(console.error);
+initFrontendObserver();
 
 // Initialiser la sécurité (watermark, anti-debug, validation env)
 initializeSecurity().catch(console.error);
