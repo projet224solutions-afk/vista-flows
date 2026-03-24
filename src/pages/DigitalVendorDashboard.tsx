@@ -14,27 +14,55 @@ import { DigitalVendorSidebar } from '@/components/digital-vendor/DigitalVendorS
 import { DigitalVendorHeader } from '@/components/digital-vendor/DigitalVendorHeader';
 import { DigitalVendorRoutes } from '@/components/digital-vendor/DigitalVendorRoutes';
 import { PageLoader } from '@/components/ui/GlobalLoader';
+import { DataLoadTimeoutState } from '@/components/ui/DataLoadTimeoutState';
+import { useLoadingTimeout } from '@/hooks/useLoadingTimeout';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function DigitalVendorDashboard() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading: authLoading, profileLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   useRoleRedirect();
 
   const [vendorId, setVendorId] = useState<string>('');
+  const [vendorLoading, setVendorLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setVendorLoading(false);
+      setVendorId('');
+      return;
+    }
+
     const loadVendorId = async () => {
-      const { data } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (data?.id) setVendorId(data.id);
+      setVendorLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('vendors')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('FIRST SUPABASE ERROR', {
+            scope: 'DigitalVendorDashboard.loadVendorId',
+            message: error.message,
+          });
+          return;
+        }
+
+        if (data?.id) setVendorId(data.id);
+      } catch (error) {
+        console.error('FIRST SUPABASE ERROR', {
+          scope: 'DigitalVendorDashboard.loadVendorId.catch',
+          error,
+        });
+      } finally {
+        setVendorLoading(false);
+      }
     };
-    loadVendorId();
+
+    void loadVendorId();
   }, [user?.id]);
 
   const handleSignOut = useCallback(async () => {
@@ -48,8 +76,33 @@ export default function DigitalVendorDashboard() {
     }
   }, [signOut, toast, navigate]);
 
+  const isLoading = authLoading || profileLoading || (!!user && vendorLoading);
+  const { timedOut: loadingTimedOut, resetTimeout } = useLoadingTimeout(isLoading, 8000);
+
+  if (loadingTimedOut) {
+    return (
+      <DataLoadTimeoutState
+        title="Impossible de charger le dashboard vendeur digital"
+        description="Le chargement est trop long. Réessayez ou rechargez l’application."
+        onRetry={resetTimeout}
+        onReload={() => window.location.reload()}
+      />
+    );
+  }
+
+  if (isLoading) {
+    return <PageLoader text="Chargement des données..." />;
+  }
+
   if (!user) {
-    return <PageLoader text="Chargement..." />;
+    return (
+      <DataLoadTimeoutState
+        title="Session non disponible"
+        description="Impossible de restaurer la session utilisateur."
+        onRetry={resetTimeout}
+        onReload={() => window.location.reload()}
+      />
+    );
   }
 
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Vendeur Digital';
