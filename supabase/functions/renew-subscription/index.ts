@@ -8,7 +8,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
-const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY") || "secure-transaction-key-224sol";
+const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY");
+if (!TRANSACTION_SECRET) throw new Error("CRITICAL: TRANSACTION_SECRET_KEY not configured");
 
 interface RenewalRequest {
   subscription_id: string;

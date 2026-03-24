@@ -14,8 +14,9 @@ serve(async (req) => {
   try {
     const { user_id, new_password, admin_key } = await req.json();
 
-    // Clé de sécurité simple pour cette opération
-    if (admin_key !== 'RESET_PDG_2024_SECURE') {
+    // Clé de sécurité depuis variable d'environnement
+    const expectedKey = Deno.env.get('RESET_PDG_ADMIN_KEY');
+    if (!expectedKey || admin_key !== expectedKey) {
       return new Response(
         JSON.stringify({ error: 'Clé admin invalide' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

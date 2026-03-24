@@ -13,7 +13,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY") || "secure-transaction-key-224sol";
+const TRANSACTION_SECRET = Deno.env.get("TRANSACTION_SECRET_KEY");
+if (!TRANSACTION_SECRET) throw new Error("CRITICAL: TRANSACTION_SECRET_KEY not configured");
 
 // 🔐 Génère une signature HMAC-SHA256
 async function generateSignature(transactionId: string, amount: number): Promise<string> {
