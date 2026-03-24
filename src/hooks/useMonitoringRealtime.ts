@@ -66,8 +66,8 @@ export function useMonitoringRealtime() {
         supabase.from('monitoring_service_status' as any).select('*').order('service_name'),
       ]);
 
-      if (alertsRes.data) setAlerts(alertsRes.data as MonitoringAlert[]);
-      if (servicesRes.data) setServices(servicesRes.data as ServiceStatus[]);
+      if (alertsRes.data) setAlerts(alertsRes.data as unknown as MonitoringAlert[]);
+      if (servicesRes.data) setServices(servicesRes.data as unknown as ServiceStatus[]);
       setLastRefresh(new Date());
     } catch (e) {
       console.error('[Monitoring] Failed to load data:', e);
