@@ -53,6 +53,8 @@ interface UseUniversalProductsOptions {
   autoLoad?: boolean;
 }
 
+const PRODUCT_QUERY_TIMEOUT_MS = 10_000;
+
 export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) => {
   const {
     limit,
@@ -203,7 +205,22 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
       // Pagination
       query = query.range(from, to);
 
-      const { data, error, count } = await query;
+      let queryTimeout: ReturnType<typeof setTimeout> | null = null;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        queryTimeout = setTimeout(() => reject(new Error('products_query_timeout')), PRODUCT_QUERY_TIMEOUT_MS);
+      });
+
+      const result = await Promise.race([query, timeoutPromise]) as {
+        data: any[] | null;
+        error: any;
+        count: number | null;
+      };
+
+      if (queryTimeout) {
+        clearTimeout(queryTimeout);
+      }
+
+      const { data, error, count } = result;
 
       if (error) throw error;
 
@@ -264,8 +281,18 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     } catch (error) {
       // Ne pas afficher d'erreur si cette requête n'est plus la dernière
       if (requestId === requestIdRef.current) {
-        console.error('Erreur chargement produits:', error);
-        toast.error('Erreur lors du chargement des produits');
+        const errorMessage = error instanceof Error ? error.message : 'unknown_error';
+        if (errorMessage === 'products_query_timeout') {
+          console.error('[TIMEOUT TRIGGERED] Produits accueil - timeout', {
+            scope: 'useUniversalProducts',
+            timeoutMs: PRODUCT_QUERY_TIMEOUT_MS,
+            filters,
+          });
+          toast.error('Le chargement des produits a expiré. Réessayez.');
+        } else {
+          console.error('Erreur chargement produits:', error);
+          toast.error('Erreur lors du chargement des produits');
+        }
       }
     } finally {
       // Éviter qu'une ancienne requête "éteigne" le loading d'une nouvelle
