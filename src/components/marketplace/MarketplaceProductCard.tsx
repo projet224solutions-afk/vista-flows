@@ -26,7 +26,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useDisplayCurrency } from "./CurrencyIndicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
-import { useVendorCertification } from "@/hooks/useVendorCertification";
+import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { ProductImageCarousel } from "./ProductImageCarousel";
 
 interface MarketplaceProductCardProps {
