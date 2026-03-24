@@ -150,6 +150,12 @@ self.addEventListener("fetch", (event) => {
   // NEVER intercept manifest
   if (url.pathname === '/manifest.webmanifest' || url.pathname === '/manifest.json') return;
 
+  // Health check must always bypass cache
+  if (url.pathname === '/healthz.json') {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }));
+    return;
+  }
+
   // NEVER intercept OAuth
   if (url.pathname.startsWith('/~oauth')) return;
 
