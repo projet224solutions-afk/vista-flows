@@ -35,9 +35,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
             className="h-[60px] w-[60px] sm:h-10 sm:w-10 md:h-8 md:w-8 sm:mr-2 [&_svg]:h-8 [&_svg]:w-8 sm:[&_svg]:h-5 sm:[&_svg]:w-5"
             aria-label="Ouvrir/Fermer le menu"
           />
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0">
-            <Laptop className="w-4 h-4 md:w-6 md:h-6 text-white" />
-          </div>
+          <img src="/logo-224solutions.png" alt="224Solutions" className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-contain" />
           <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-700 bg-clip-text text-transparent whitespace-nowrap">
             Digital Store
           </h1>
