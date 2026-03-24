@@ -572,14 +572,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (createdProfile) {
         console.log('✅ Nouveau profil créé avec succès:', createdProfile.role);
-        
+
         // ✅ Créer le vendor pour les vendeurs OU le service pour les prestataires
         if (createdProfile.role === 'vendeur') {
           void createVendorForOAuth(user);
         } else if ((createdProfile.role as string) === 'prestataire') {
           void createServiceForOAuthPrestataire(user);
         }
-        
+
         const roleLabels: Record<string, string> = {
           client: 'Client',
           vendeur: 'Marchand',
@@ -588,7 +588,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           taxi: 'Taxi Moto',
           transitaire: 'Transitaire',
         };
-        
+
         toast.success(
           `Compte créé avec succès !`,
           {
@@ -596,15 +596,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             description: `Vous êtes inscrit en tant que ${roleLabels[createdProfile.role] || createdProfile.role}. Complétez votre profil pour continuer.`,
           }
         );
-        
+
         // Marquer que le profil doit être complété
         localStorage.setItem('needs_profile_completion', 'true');
-        
+
         setProfile(createdProfile as Profile);
+        console.log('[PROFILE LOADED]', { source: 'created_profile', role: createdProfile.role, userId: createdProfile.id });
         // ✨ NOUVEAU: Mettre en cache le profil pour mode offline
         localStorage.setItem(profileCacheKey, JSON.stringify(createdProfile));
       } else {
         setProfile(profileToCreate as any);
+        console.log('[PROFILE LOADED]', { source: 'profile_fallback_object', role: profileToCreate.role, userId: profileToCreate.id });
         // ✨ NOUVEAU: Mettre en cache le profil pour mode offline
         localStorage.setItem(profileCacheKey, JSON.stringify(profileToCreate));
       }
