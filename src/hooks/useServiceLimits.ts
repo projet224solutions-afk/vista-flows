@@ -24,8 +24,8 @@ interface LimitCheck {
   message: string;
 }
 
-export function useServiceLimits(serviceId?: string) {
-  const { subscription, isActive, loading } = useServiceSubscription({ serviceId });
+export function useServiceLimits(serviceId?: string, serviceTypeId?: string) {
+  const { subscription, isActive, loading } = useServiceSubscription({ serviceId, serviceTypeId });
 
   const limits: ServiceLimits = {
     maxBookings: subscription?.max_bookings ?? null,
