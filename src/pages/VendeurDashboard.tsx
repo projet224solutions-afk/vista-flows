@@ -31,8 +31,10 @@ import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { useVendorErrorBoundary } from '@/hooks/useVendorErrorBoundary';
 import { PageLoader } from '@/components/ui/GlobalLoader';
+import { DataLoadTimeoutState } from '@/components/ui/DataLoadTimeoutState';
 import { VendorHeader, VendorRoutes } from '@/components/vendor/dashboard';
 import { useOfflineInitialization } from '@/hooks/useOfflineInitialization';
+import { useLoadingTimeout } from '@/hooks/useLoadingTimeout';
 import type { RecentOrder, OrderFromSupabase } from '@/types/vendor-dashboard';
 
 // Lazy loaded components pour le layout
@@ -95,7 +97,7 @@ function useRecentOrders(userId: string | undefined) {
           .map((o: OrderFromSupabase) => o.customer?.user_id)
           .filter(Boolean) as string[];
 
-        let profilesMap: Record<string, string> = {};
+        const profilesMap: Record<string, string> = {};
         if (userIds.length > 0) {
           const { data: profiles } = await supabase
             .from('profiles')
@@ -112,11 +114,11 @@ function useRecentOrders(userId: string | undefined) {
 
         // 4. Transformer les données avec noms clients réels
         const formatted: RecentOrder[] = (data || []).map((order: OrderFromSupabase) => {
-          const userId = order.customer?.user_id;
-          const clientName = userId && profilesMap[userId]
-            ? profilesMap[userId]
-            : userId
-              ? `Client #${userId.slice(0, 6)}`
+          const orderUserId = order.customer?.user_id;
+          const clientName = orderUserId && profilesMap[orderUserId]
+            ? profilesMap[orderUserId]
+            : orderUserId
+              ? `Client #${orderUserId.slice(0, 6)}`
               : 'Client';
 
           return {
@@ -240,7 +242,7 @@ function ErrorState({
 // ============================================================================
 
 export default function VendeurDashboard() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, loading: authLoading, profileLoading } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -248,7 +250,7 @@ export default function VendeurDashboard() {
   useRoleRedirect();
 
   // 🔄 Initialisation automatique du mode offline (cache catalogue, stock, sync)
-  const { isInitialized: offlineReady, isInitializing: offlineLoading, reinitialize: reinitOffline } = useOfflineInitialization();
+  const { reinitialize: reinitOffline } = useOfflineInitialization();
 
   // Business type pour règles POS
   const { canAccessPOS } = useCurrentVendor();
@@ -262,6 +264,20 @@ export default function VendeurDashboard() {
   // Commandes récentes (hook personnalisé)
   const { orders: recentOrders } = useRecentOrders(user?.id);
   const [showAllOrders, setShowAllOrders] = useState(false);
+
+  const isLoading = authLoading || profileLoading || statsLoading;
+  const { timedOut: loadingTimedOut, resetTimeout } = useLoadingTimeout(isLoading, 8000);
+
+  useEffect(() => {
+    if (loadingTimedOut) {
+      console.error('[TIMEOUT TRIGGERED]', {
+        scope: 'VendeurDashboard',
+        authLoading,
+        profileLoading,
+        statsLoading,
+      });
+    }
+  }, [loadingTimedOut, authLoading, profileLoading, statsLoading]);
 
   // Toggle pour afficher plus/moins de commandes
   const handleToggleShowAllOrders = useCallback(() => {
@@ -298,7 +314,6 @@ export default function VendeurDashboard() {
         if (proService) {
           navigate(`/dashboard/service/${proService.id}`, { replace: true });
         } else {
-          // Pas de service professionnel trouvé - rester sur le dashboard vendeur
           console.warn('Vendeur de type service sans professional_service associé');
           toast({
             title: 'Configuration incomplète',
@@ -308,8 +323,8 @@ export default function VendeurDashboard() {
         }
       }
     };
-    checkBusinessType();
-  }, [user?.id, navigate, location.pathname]);
+    void checkBusinessType();
+  }, [user?.id, navigate, location.pathname, toast]);
 
   // Handler de déconnexion stabilisé
   const handleSignOut = useCallback(async () => {
@@ -333,12 +348,29 @@ export default function VendeurDashboard() {
   // Navigation handlers
   const handleGoHome = useCallback(() => navigate('/'), [navigate]);
   const handleReload = useCallback(() => window.location.reload(), []);
+  const handleRetryAfterTimeout = useCallback(() => {
+    resetTimeout();
+    void reinitOffline();
+  }, [resetTimeout, reinitOffline]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // États de chargement et d'erreur
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const isLoading = !user || statsLoading;
+  if (loadingTimedOut) {
+    return (
+      <DataLoadTimeoutState
+        title="Impossible de charger les données vendeur"
+        description="Le chargement a dépassé le délai attendu. Vérifiez votre connexion puis réessayez."
+        onRetry={handleRetryAfterTimeout}
+        onReload={handleReload}
+      />
+    );
+  }
+
+  if (!isLoading && !user) {
+    return <ErrorState onGoHome={handleGoHome} onReload={handleReload} t={t} />;
+  }
 
   // État: Stats non chargées (après le loading)
   if (!isLoading && stats === null) {

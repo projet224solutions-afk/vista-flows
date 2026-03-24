@@ -43,6 +43,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const profileRef = useRef<Profile | null>(null);
   const ensuredSetupForUserRef = useRef<string | null>(null);
   const isRefreshingProfileRef = useRef(false);
+  const firstSupabaseErrorLoggedRef = useRef(false);
+
+  const logFirstSupabaseError = useCallback((scope: string, error: unknown) => {
+    if (firstSupabaseErrorLoggedRef.current) return;
+    firstSupabaseErrorLoggedRef.current = true;
+    console.error('FIRST SUPABASE ERROR', { scope, error });
+  }, []);
 
   useEffect(() => {
     profileRef.current = profile;
@@ -323,11 +330,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     setProfileLoading(true);
-    console.log('🔄 Chargement profil pour:', user.email);
-    
+    console.log('[PROFILE] Loading profile...', { email: user.email, userId: user.id });
+
     // Timeout sécurité: ne jamais bloquer plus de 4 secondes
     const profileTimeout = setTimeout(() => {
-      console.warn('⚠️ Timeout profil (4s) - utilisation cache ou fallback');
+      console.warn('[TIMEOUT TRIGGERED] Profile load timeout (4s) - usage cache/fallback');
       const cachedProfile = localStorage.getItem(profileCacheKey);
       if (cachedProfile && !profileRef.current) {
         try {
@@ -371,20 +378,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // ✨ NOUVEAU: Ignorer erreurs réseau et utiliser cache
         if (profileError.message?.includes('network') || profileError.message?.includes('fetch')) {
           console.warn('⚠️ Erreur réseau - utilisation profil en cache');
+          logFirstSupabaseError('refreshProfile.profile_query.network', profileError);
           const cachedProfile = localStorage.getItem(profileCacheKey);
           if (cachedProfile) {
             try {
-              setProfile(JSON.parse(cachedProfile) as Profile);
+              const parsedProfile = JSON.parse(cachedProfile) as Profile;
+              setProfile(parsedProfile);
+              console.log('[PROFILE LOADED]', { source: 'cache_after_network_error', role: parsedProfile.role });
             } catch (e) {}
           }
           setProfileLoading(false);
           return;
         }
-        
+
         console.error('❌ Erreur chargement profil:', profileError);
+        logFirstSupabaseError('refreshProfile.profile_query.error', profileError);
         localStorage.removeItem('oauth_intent_role');
         localStorage.removeItem('oauth_is_new_signup');
         applyMinimalProfileFallback('profile_query_error');
+        console.log('[PROFILE LOADED]', { source: 'minimal_fallback', role: 'client' });
         return;
       }
 
@@ -475,7 +487,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // NE JAMAIS modifier le rôle d'un profil existant (sauf cas OAuth ci-dessus)
         setProfile(current);
-        
+        console.log('[PROFILE LOADED]', { source: 'existing_profile', role: current.role, userId: current.id });
+
         // ✨ NOUVEAU: Mettre en cache le profil pour mode offline
         localStorage.setItem(profileCacheKey, JSON.stringify(current));
 
@@ -559,14 +572,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (createdProfile) {
         console.log('✅ Nouveau profil créé avec succès:', createdProfile.role);
-        
+
         // ✅ Créer le vendor pour les vendeurs OU le service pour les prestataires
         if (createdProfile.role === 'vendeur') {
           void createVendorForOAuth(user);
         } else if ((createdProfile.role as string) === 'prestataire') {
           void createServiceForOAuthPrestataire(user);
         }
-        
+
         const roleLabels: Record<string, string> = {
           client: 'Client',
           vendeur: 'Marchand',
@@ -575,7 +588,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           taxi: 'Taxi Moto',
           transitaire: 'Transitaire',
         };
-        
+
         toast.success(
           `Compte créé avec succès !`,
           {
@@ -583,15 +596,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             description: `Vous êtes inscrit en tant que ${roleLabels[createdProfile.role] || createdProfile.role}. Complétez votre profil pour continuer.`,
           }
         );
-        
+
         // Marquer que le profil doit être complété
         localStorage.setItem('needs_profile_completion', 'true');
-        
+
         setProfile(createdProfile as Profile);
+        console.log('[PROFILE LOADED]', { source: 'created_profile', role: createdProfile.role, userId: createdProfile.id });
         // ✨ NOUVEAU: Mettre en cache le profil pour mode offline
         localStorage.setItem(profileCacheKey, JSON.stringify(createdProfile));
       } else {
         setProfile(profileToCreate as any);
+        console.log('[PROFILE LOADED]', { source: 'profile_fallback_object', role: profileToCreate.role, userId: profileToCreate.id });
         // ✨ NOUVEAU: Mettre en cache le profil pour mode offline
         localStorage.setItem(profileCacheKey, JSON.stringify(profileToCreate));
       }
@@ -653,12 +668,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Timeout de sécurité - court pour ne pas bloquer l'UI
       const timeoutMs = isOffline() ? 1000 : 3000;
       const timeoutId = setTimeout(() => {
-        console.log('⚠️ Timeout session - continuer sans auth');
-        // En mode offline, essayer la session locale avant d'abandonner
+        console.warn('[TIMEOUT TRIGGERED] Auth init timeout - fallback local session');
         if (isOffline()) {
           const localSession = getLocalSession();
           if (localSession?.access_token) {
-            console.log('✅ Session locale restaurée via timeout (mode offline)');
+            console.log('[AUTH LOADED]', { source: 'local_session_timeout', userId: localSession.user?.id });
             setSession(localSession as unknown as Session);
             setUser(localSession.user);
           }
@@ -667,15 +681,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }, timeoutMs);
 
       try {
-        // ✨ NOUVEAU: En mode offline, utiliser la session locale stockée
         if (isOffline()) {
           console.log('📡 Mode hors ligne détecté - utilisation session locale');
           const localSession = getLocalSession();
           clearTimeout(timeoutId);
-          
+
           if (localSession?.access_token) {
-            console.log('✅ Session locale restaurée (mode offline)');
-            // Reconstruire un objet session minimal
             const offlineSession = {
               access_token: localSession.access_token,
               refresh_token: localSession.refresh_token,
@@ -684,12 +695,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               token_type: 'bearer',
               user: localSession.user
             } as Session;
-            
+
             setSession(offlineSession);
             setUser(localSession.user);
-            // Ne pas démarrer le monitor en offline
+            console.log('[AUTH LOADED]', { source: 'offline_local_session', userId: localSession.user?.id });
           } else {
-            console.log('ℹ️ Pas de session locale stockée');
             setSession(null);
             setUser(null);
             setProfile(null);
@@ -697,25 +707,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setLoading(false);
           return;
         }
-        
-        // Mode online: procéder normalement
+
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         clearTimeout(timeoutId);
 
         if (error) {
-          // ✨ NOUVEAU: Ignorer les erreurs réseau et utiliser session locale
+          logFirstSupabaseError('auth.getSession.error', error);
           if (error.message?.includes('network') || error.message?.includes('fetch')) {
             console.warn('⚠️ Erreur réseau - utilisation session locale');
             const localSession = getLocalSession();
             if (localSession?.access_token) {
               setSession(localSession as unknown as Session);
               setUser(localSession.user);
+              console.log('[AUTH LOADED]', { source: 'local_session_after_network_error', userId: localSession.user?.id });
               setLoading(false);
               return;
             }
           }
-          
-          console.error('❌ Erreur session:', error);
+
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -724,32 +733,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (initialSession) {
-          console.log('✅ Session restaurée:', initialSession.user.email);
           setSession(initialSession);
           setUser(initialSession.user);
           startSessionMonitor();
+          console.log('[AUTH LOADED]', { source: 'supabase_session', userId: initialSession.user.id });
         } else {
-          console.log('ℹ️ Pas de session active');
           setSession(null);
           setUser(null);
           setProfile(null);
+          console.log('[AUTH LOADED]', { source: 'no_session' });
         }
       } catch (error: any) {
         clearTimeout(timeoutId);
-        
-        // ✨ NOUVEAU: Ignorer erreurs réseau et utiliser session locale
+
         if (error?.message?.includes('network') || error?.message?.includes('fetch') || error?.message?.includes('Failed to fetch')) {
-          console.warn('⚠️ Exception réseau - utilisation session locale');
+          logFirstSupabaseError('auth.getSession.catch.network', error);
           const localSession = getLocalSession();
           if (localSession?.access_token) {
             setSession(localSession as unknown as Session);
             setUser(localSession.user);
+            console.log('[AUTH LOADED]', { source: 'local_session_after_exception', userId: localSession.user?.id });
             setLoading(false);
             return;
           }
         }
-        
-        console.error('❌ Erreur inattendue:', error);
+
+        logFirstSupabaseError('auth.getSession.catch.unexpected', error);
         setSession(null);
         setUser(null);
         setProfile(null);

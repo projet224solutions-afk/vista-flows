@@ -1,16 +1,11 @@
 /**
  * HOOK USE OFFLINE STATUS - 224SOLUTIONS
- * Gestion du statut réseau avec détection fine et synchronisation automatique
- *
- * Fonctionnalités:
- * - Détection du statut online/offline
- * - Ping de vérification de connexion réelle (pas juste navigator.onLine)
- * - Déclenchement automatique de la synchronisation au retour en ligne
- * - Événements pour les composants qui doivent réagir aux changements
+ * Détection réseau unifiée via /healthz.json
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import { checkNetworkHealth } from '@/lib/networkHealth';
 
 export type NetworkStatus = 'online' | 'offline' | 'checking';
 
@@ -20,31 +15,29 @@ export interface OfflineStatusState {
   isOffline: boolean;
   lastOnlineAt: Date | null;
   lastOfflineAt: Date | null;
-  offlineDuration: number; // en secondes
+  offlineDuration: number;
   connectionType: string | null;
-  effectiveType: string | null; // 'slow-2g', '2g', '3g', '4g'
+  effectiveType: string | null;
 }
 
 interface UseOfflineStatusOptions {
   pingUrl?: string;
-  pingInterval?: number; // en ms
+  pingInterval?: number;
   onOnline?: () => void;
   onOffline?: () => void;
   enablePing?: boolean;
   showToasts?: boolean;
 }
 
-const DEFAULT_PING_URL = 'https://www.google.com/generate_204';
-const DEFAULT_PING_INTERVAL = 30000; // 30 secondes
+const DEFAULT_PING_INTERVAL = 30000;
 
 export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
   const {
-    pingUrl = DEFAULT_PING_URL,
     pingInterval = DEFAULT_PING_INTERVAL,
     onOnline,
     onOffline,
-    enablePing = false,
-    showToasts = true
+    enablePing = true,
+    showToasts = true,
   } = options;
 
   const [state, setState] = useState<OfflineStatusState>(() => ({
@@ -55,14 +48,13 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
     lastOfflineAt: null,
     offlineDuration: 0,
     connectionType: null,
-    effectiveType: null
+    effectiveType: null,
   }));
 
   const lastStatusRef = useRef(state.status);
   const offlineStartRef = useRef<Date | null>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Stabilize callbacks via refs to avoid infinite re-render loops
   const onOnlineRef = useRef(onOnline);
   const onOfflineRef = useRef(onOffline);
   const showToastsRef = useRef(showToasts);
@@ -70,11 +62,9 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
   onOfflineRef.current = onOffline;
   showToastsRef.current = showToasts;
 
-  // Obtenir les infos de connexion si disponibles
   const getConnectionInfo = useCallback(() => {
     if (typeof navigator === 'undefined') return { connectionType: null, effectiveType: null };
 
-    // NetworkInformation API (non-standard, mais supporté par Chrome/Edge)
     const nav = navigator as unknown as Record<string, unknown>;
     const connection = (nav.connection || nav.mozConnection || nav.webkitConnection) as {
       type?: string;
@@ -84,42 +74,39 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
     if (connection) {
       return {
         connectionType: connection.type || null,
-        effectiveType: connection.effectiveType || null
+        effectiveType: connection.effectiveType || null,
       };
     }
 
     return { connectionType: null, effectiveType: null };
   }, []);
 
-  // Vérifier la connexion avec un ping réel
   const checkConnection = useCallback(async (): Promise<boolean> => {
     if (!enablePing) {
       return navigator.onLine;
     }
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const result = await checkNetworkHealth({ timeoutMs: 3000, retries: 1, force: true });
 
-      await fetch(pingUrl, {
-        method: 'HEAD',
-        mode: 'no-cors',
-        cache: 'no-store',
-        signal: controller.signal
+    if (result.ok) {
+      console.log('[HEALTH CHECK OK]', {
+        latencyMs: result.latencyMs,
+        source: 'useOfflineStatus',
       });
-
-      clearTimeout(timeoutId);
       return true;
-    } catch {
-      return false;
     }
-  }, [enablePing, pingUrl]);
 
-  // Mettre à jour le statut
+    console.warn('[HEALTH CHECK FAIL]', {
+      reason: result.reason,
+      latencyMs: result.latencyMs,
+      source: 'useOfflineStatus',
+    });
+    return false;
+  }, [enablePing]);
+
   const updateStatus = useCallback(async (navigatorOnline: boolean) => {
     setState(prev => ({ ...prev, status: 'checking' }));
 
-    // Si navigator dit offline, c'est définitif
     if (!navigatorOnline) {
       const now = new Date();
       if (lastStatusRef.current !== 'offline') {
@@ -128,7 +115,7 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
         if (showToastsRef.current) {
           toast.warning('Mode hors ligne', {
             description: 'Vos données seront synchronisées au retour de la connexion',
-            duration: 5000
+            duration: 5000,
           });
         }
 
@@ -136,7 +123,6 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
       }
 
       lastStatusRef.current = 'offline';
-
       const { connectionType, effectiveType } = getConnectionInfo();
 
       setState(prev => ({
@@ -149,13 +135,12 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
           ? Math.floor((now.getTime() - offlineStartRef.current.getTime()) / 1000)
           : 0,
         connectionType,
-        effectiveType
+        effectiveType,
       }));
 
       return;
     }
 
-    // Navigator dit online, vérifier avec un ping si activé
     const isReallyOnline = await checkConnection();
     const { connectionType, effectiveType } = getConnectionInfo();
     const now = new Date();
@@ -171,7 +156,7 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
             description: offlineDuration > 60
               ? `Hors ligne pendant ${Math.floor(offlineDuration / 60)} min. Synchronisation en cours...`
               : 'Synchronisation en cours...',
-            duration: 4000
+            duration: 4000,
           });
         }
 
@@ -189,30 +174,29 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
         lastOnlineAt: now,
         offlineDuration: 0,
         connectionType,
-        effectiveType
+        effectiveType,
       }));
-    } else {
-      // Navigator dit online mais le ping échoue
-      if (lastStatusRef.current !== 'offline') {
-        offlineStartRef.current = now;
-        onOfflineRef.current?.();
-      }
-
-      lastStatusRef.current = 'offline';
-
-      setState(prev => ({
-        ...prev,
-        status: 'offline',
-        isOnline: false,
-        isOffline: true,
-        lastOfflineAt: prev.lastOfflineAt || now,
-        connectionType,
-        effectiveType
-      }));
+      return;
     }
+
+    if (lastStatusRef.current !== 'offline') {
+      offlineStartRef.current = now;
+      onOfflineRef.current?.();
+    }
+
+    lastStatusRef.current = 'offline';
+
+    setState(prev => ({
+      ...prev,
+      status: 'offline',
+      isOnline: false,
+      isOffline: true,
+      lastOfflineAt: prev.lastOfflineAt || now,
+      connectionType,
+      effectiveType,
+    }));
   }, [checkConnection, getConnectionInfo]);
 
-  // Forcer une vérification manuelle
   const checkNow = useCallback(async () => {
     await updateStatus(navigator.onLine);
   }, [updateStatus]);
@@ -220,31 +204,33 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Handlers pour les événements online/offline
-    const handleOnline = () => updateStatus(true);
-    const handleOffline = () => updateStatus(false);
+    const handleOnline = () => {
+      void updateStatus(true);
+    };
+    const handleOffline = () => {
+      void updateStatus(false);
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Vérification initiale
-    updateStatus(navigator.onLine);
+    void updateStatus(navigator.onLine);
 
-    // Ping périodique si activé
     if (enablePing) {
       pingIntervalRef.current = setInterval(() => {
-        updateStatus(navigator.onLine);
+        void updateStatus(navigator.onLine);
       }, pingInterval);
     }
 
-    // Écouter les changements de connexion
     const nav = navigator as unknown as Record<string, unknown>;
     const connection = (nav.connection || nav.mozConnection || nav.webkitConnection) as {
       addEventListener?: (event: string, handler: () => void) => void;
       removeEventListener?: (event: string, handler: () => void) => void;
     } | undefined;
 
-    const handleConnectionChange = () => updateStatus(navigator.onLine);
+    const handleConnectionChange = () => {
+      void updateStatus(navigator.onLine);
+    };
 
     if (connection?.addEventListener) {
       connection.addEventListener('change', handleConnectionChange);
@@ -267,9 +253,8 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
   return {
     ...state,
     checkNow,
-    // Helpers pratiques
     canSync: state.isOnline,
-    isSlowConnection: state.effectiveType === 'slow-2g' || state.effectiveType === '2g'
+    isSlowConnection: state.effectiveType === 'slow-2g' || state.effectiveType === '2g',
   };
 }
 

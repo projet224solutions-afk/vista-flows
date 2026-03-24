@@ -30,7 +30,7 @@ interface OfflineInitStatus {
  */
 export function useOfflineInitialization() {
   const { user, profile } = useAuth();
-  const { isOnline } = useOnlineStatus();
+  const { isOnline, checkConnection } = useOnlineStatus();
 
   const [status, setStatus] = useState<OfflineInitStatus>({
     isInitialized: false,
@@ -61,7 +61,7 @@ export function useOfflineInitialization() {
         .eq('user_id', userId)
         .maybeSingle();
 
-      const vendorId = vendor?.id || userId; // Fallback sur userId si pas de vendor
+      const vendorId = vendor?.id || userId;
 
       // 2. Vérifier si déjà initialisé (cache existe)
       const cacheStats = await getCacheStats(vendorId);
@@ -80,7 +80,6 @@ export function useOfflineInitialization() {
           syncStarted: true
         });
 
-        // Juste démarrer le sync scheduler
         startScheduledSync({
           enabled: true,
           syncOnReconnect: true,
@@ -91,8 +90,14 @@ export function useOfflineInitialization() {
         return;
       }
 
-      // 3. Première initialisation - nécessite une connexion
-      if (!isOnline) {
+      // 3. Première initialisation - vérifier la connectivité réelle
+      const healthOk = isOnline || await checkConnection();
+      console.log(healthOk ? '[HEALTH CHECK OK]' : '[HEALTH CHECK FAIL]', {
+        scope: 'useOfflineInitialization',
+        isOnline,
+      });
+
+      if (!healthOk) {
         const error = 'Connexion internet requise pour la première initialisation';
         console.warn('[OfflineInit]', error);
         setStatus(prev => ({ ...prev, isInitializing: false, error }));
@@ -102,19 +107,19 @@ export function useOfflineInitialization() {
         return;
       }
 
-      // 4. Charger les données (en ligne uniquement lors de la première fois)
+      // 4. Charger les données
       console.log('[OfflineInit] Chargement des données...');
       const products = await fetchVendorProducts(vendorId);
       const categories = await fetchCategories();
 
       // 5. Mettre en cache
       console.log('[OfflineInit] Mise en cache du catalogue...');
-      await cacheVendorProducts(vendorId, products, true); // true = cache images
+      await cacheVendorProducts(vendorId, products, true);
       await cacheCategories(categories);
 
       setStatus(prev => ({ ...prev, catalogCached: true }));
 
-      // 7. Charger le stock initial
+      // 6. Charger le stock initial
       console.log('[OfflineInit] Chargement du stock initial...');
       await loadInitialStock(vendorId, products);
 
@@ -131,7 +136,6 @@ export function useOfflineInitialization() {
 
       setStatus(prev => ({ ...prev, syncStarted: true }));
 
-      // 8. Terminé
       setStatus({
         isInitialized: true,
         isInitializing: false,
@@ -162,7 +166,7 @@ export function useOfflineInitialization() {
         description: error.message
       });
     }
-  }, [isOnline]);
+  }, [checkConnection, isOnline]);
 
   /**
    * Nettoyer au démontage
