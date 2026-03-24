@@ -8,7 +8,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useRoleRedirect } from '@/hooks/useRoleRedirect';
 import { useCart } from '@/contexts/CartContext';
 import { useUniversalProducts } from '@/hooks/useUniversalProducts';
 import { useNearbyServiceStats } from '@/hooks/useNearbyServiceStats';
@@ -35,10 +34,6 @@ export default function Home() {
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
   
-  // Redirection automatique vers le dashboard depuis / et /auth uniquement
-  // /home reste accessible à tous les utilisateurs connectés ou non
-  useRoleRedirect();
-
   // Stats des services à proximité (filtrés par distance 20km)
   const { stats: serviceStats } = useNearbyServiceStats();
 

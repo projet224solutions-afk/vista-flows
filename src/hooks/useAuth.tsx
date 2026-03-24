@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Refs anti-boucles / anti-requêtes répétées
   const profileRef = useRef<Profile | null>(null);
   const ensuredSetupForUserRef = useRef<string | null>(null);
+  const isRefreshingProfileRef = useRef(false);
 
   useEffect(() => {
     profileRef.current = profile;
@@ -50,6 +51,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Fonction pour s'assurer que l'utilisateur a son setup complet
   const ensureUserSetup = useCallback(async () => {
     if (!user) return;
+
+    const setupStartedAt = performance.now();
+    console.log('⚙️ [useAuth] ensureUserSetup:start', { userId: user.id });
 
     try {
       const p = profileRef.current;
@@ -167,8 +171,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       console.log('✅ Configuration utilisateur complétée !');
     } catch (error) {
-      console.error('❌ Erreur setup utilisateur:', error);
-      toast.error('Erreur lors de la configuration utilisateur');
+      console.warn('⚠️ [useAuth] ensureUserSetup:error (non bloquant)', error);
+    } finally {
+      const durationMs = Math.round(performance.now() - setupStartedAt);
+      console.log('⚙️ [useAuth] ensureUserSetup:end', { userId: user.id, durationMs });
     }
   }, [user]);
 
@@ -178,6 +184,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setProfileLoading(false);
       return;
     }
+
+    if (isRefreshingProfileRef.current) {
+      console.log('⏭️ [useAuth] refreshProfile ignoré (déjà en cours)');
+      return;
+    }
+
+    isRefreshingProfileRef.current = true;
+    const refreshStartedAt = performance.now();
+    console.log('🧭 [useAuth] refreshProfile:start', { userId: user.id, email: user.email });
 
     const mapAccountTypeToRole = (value: string): string | null => {
       const v = value.toLowerCase().trim();
@@ -197,6 +212,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // Clé de cache pour le profil
     const profileCacheKey = `profile_cache_${user.id}`;
+
+    const applyMinimalProfileFallback = (reason: string) => {
+      const fallbackProfile: Profile = {
+        id: user.id,
+        email: user.email || '',
+        role: 'client',
+        is_active: true,
+      };
+      console.warn('⚠️ [useAuth] fallback profil minimal', { reason, userId: user.id });
+      setProfile((prev) => prev ?? fallbackProfile);
+      localStorage.setItem(profileCacheKey, JSON.stringify(fallbackProfile));
+    };
 
     // ✅ Fonction réutilisable pour créer vendor lors de l'OAuth (vendeurs uniquement)
     const createVendorForOAuth = async (authUser: User) => {
@@ -357,6 +384,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('❌ Erreur chargement profil:', profileError);
         localStorage.removeItem('oauth_intent_role');
         localStorage.removeItem('oauth_is_new_signup');
+        applyMinimalProfileFallback('profile_query_error');
         return;
       }
 
@@ -383,9 +411,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             
             // ✅ Créer le vendor pour les vendeurs OU le service pour les prestataires
             if (intendedRole === 'vendeur') {
-              await createVendorForOAuth(user);
+              void createVendorForOAuth(user);
             } else if (intendedRole === 'prestataire') {
-              await createServiceForOAuthPrestataire(user);
+              void createServiceForOAuthPrestataire(user);
             }
             
             const roleLabels: Record<string, string> = {
@@ -534,9 +562,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // ✅ Créer le vendor pour les vendeurs OU le service pour les prestataires
         if (createdProfile.role === 'vendeur') {
-          await createVendorForOAuth(user);
+          void createVendorForOAuth(user);
         } else if ((createdProfile.role as string) === 'prestataire') {
-          await createServiceForOAuthPrestataire(user);
+          void createServiceForOAuthPrestataire(user);
         }
         
         const roleLabels: Record<string, string> = {
@@ -575,9 +603,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('❌ Erreur dans refreshProfile:', error);
       localStorage.removeItem('oauth_intent_role');
       localStorage.removeItem('oauth_is_new_signup');
+      applyMinimalProfileFallback('refresh_profile_exception');
     } finally {
       clearTimeout(profileTimeout);
       setProfileLoading(false);
+      isRefreshingProfileRef.current = false;
+      const durationMs = Math.round(performance.now() - refreshStartedAt);
+      console.log('🧭 [useAuth] refreshProfile:end', { userId: user.id, durationMs });
     }
   }, [user]);
 
@@ -585,6 +617,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // IMPORTANT: on écoute d'abord les changements auth, puis on lit la session.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       console.log('🔔 Auth state change:', event, nextSession?.user?.email || 'no user');
+      console.log('AUTH STATE:', {
+        event,
+        hasSession: !!nextSession,
+        hasUser: !!nextSession?.user,
+      });
 
       // ✨ Ignorer les événements TOKEN_REFRESHED pour éviter les re-renders inutiles
       // Ces événements ne changent pas l'utilisateur, juste le token
@@ -609,6 +646,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     const init = async () => {
+      const initStartedAt = performance.now();
+      console.log('🧭 [useAuth] init:start');
       console.log('🔍 Vérification session...');
 
       // Timeout de sécurité - court pour ne pas bloquer l'UI
@@ -716,6 +755,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile(null);
       } finally {
         setLoading(false);
+        const durationMs = Math.round(performance.now() - initStartedAt);
+        console.log('🧭 [useAuth] init:end', { durationMs });
       }
     };
 
