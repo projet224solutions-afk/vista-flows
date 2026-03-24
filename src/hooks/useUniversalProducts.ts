@@ -107,9 +107,11 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
     let lastError: any = null;
 
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       setLoading(true);
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
       const currentPage = reset ? 1 : page;
       const pageLimit = limit || 12;
       const from = (currentPage - 1) * pageLimit;
@@ -326,12 +328,14 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
           toast.error('Erreur de chargement. Réessayez.');
         }
       }
+    }
+    } // end retry loop
+
     } finally {
       if (requestId === requestIdRef.current) {
         setLoading(false);
       }
     }
-    } // end retry loop
   }, [
     page,
     limit,
