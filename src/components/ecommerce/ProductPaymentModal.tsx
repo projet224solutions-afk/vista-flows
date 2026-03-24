@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
