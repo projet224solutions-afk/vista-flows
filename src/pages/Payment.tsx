@@ -1132,13 +1132,6 @@ export default function Payment() {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button 
-                  className="gap-2 bg-blue-500 hover:bg-blue-600 text-white"
-                  onClick={() => setPaymentOpen(true)}
-                >
-                  <Smartphone className="h-4 w-4" />
-                  Recharger Wallet (Djomy)
-                </Button>
                 <ProfessionalVirtualCard />
                 <Dialog 
                   open={paymentOpen} 
