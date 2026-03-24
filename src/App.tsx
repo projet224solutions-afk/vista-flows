@@ -293,12 +293,11 @@ function App() {
                 <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
               <Routes>
-              {/* Page d'accueil publique - toujours accessible */}
-              <Route path="/" element={<Index />} />
+              {/* Route racine: redirige vers dashboard si connecté, sinon landing */}
+              <Route path="/" element={<RootRedirect />} />
               <Route path="/dashboard" element={<Dashboard />} />
               {/* Accueil application (avec footer + services) */}
               <Route path="/home" element={<Home />} />
-              <Route path="/auth" element={<Auth />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Navigate to="/auth" replace />} />
 <Route path="/universal-login" element={<UniversalLoginPage />} />
