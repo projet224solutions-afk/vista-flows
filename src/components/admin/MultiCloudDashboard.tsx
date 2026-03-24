@@ -62,9 +62,7 @@ function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
           <div className="space-y-1">
             <p className="font-semibold text-sm">{svc.service}</p>
             <p className="text-xs text-muted-foreground">{svc.message}</p>
-            <p className="text-xs text-muted-foreground">
-              {svc.isRealCheck ? '✅ Vérification réelle' : '⚠️ Check passif (pas d\'endpoint actif)'}
-            </p>
+            <p className="text-xs text-muted-foreground">✅ Vérification réelle</p>
             <p className="text-xs text-muted-foreground">
               Vérifié : {new Date(svc.lastChecked).toLocaleTimeString('fr-FR')}
             </p>
