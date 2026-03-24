@@ -46,9 +46,9 @@ export function LatestProductsSection({
   return (
     <section className={cn('px-4 py-6 md:px-6', className)}>
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5">
         <div className="space-y-1">
-          <h2 className="text-lg md:text-xl font-bold text-foreground">
+          <h2 className="text-lg md:text-xl font-bold text-foreground tracking-tight">
             {t('home.latestProducts')}
           </h2>
           <p className="text-xs text-muted-foreground hidden md:block">
@@ -59,10 +59,10 @@ export function LatestProductsSection({
           variant="ghost"
           size="sm"
           onClick={() => navigate('/marketplace')}
-          className="gap-1 text-primary hover:text-primary hover:bg-primary/10 group"
+          className="gap-1 text-accent hover:text-accent hover:bg-accent/10 group no-hover-effect font-semibold"
         >
           {t('home.seeAll')}
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Button>
       </div>
 

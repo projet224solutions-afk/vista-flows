@@ -53,9 +53,9 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
       <div
         className={cn(
           'relative',
-          'bg-card/95 backdrop-blur-2xl',
-          'border-t border-border/30',
-          'shadow-[0_-2px_20px_hsl(0_0%_0%_/_0.05)]'
+          'bg-card backdrop-blur-2xl',
+          'border-t border-border/40',
+          'shadow-[0_-1px_12px_hsl(0_0%_0%_/_0.04)]'
         )}
       >
         <div className="grid grid-cols-5 max-w-lg mx-auto">
@@ -69,7 +69,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
                 key={item.id}
                 onClick={() => navigate(itemPath)}
                 className={cn(
-                  'relative flex flex-col items-center justify-center gap-0.5 py-2 px-1',
+                  'relative flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 no-hover-effect',
                   'transition-all duration-200',
                   active
                     ? 'text-primary'
@@ -80,8 +80,8 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
                 <div className="relative">
                   <Icon 
                     className={cn(
-                      'w-6 h-6 transition-transform duration-200',
-                      active && 'scale-105'
+                      'w-5 h-5 transition-transform duration-200',
+                      active && 'scale-110'
                     )} 
                     strokeWidth={active ? 2.5 : 2}
                   />
