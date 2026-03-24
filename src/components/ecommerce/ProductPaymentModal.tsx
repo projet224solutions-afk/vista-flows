@@ -522,11 +522,12 @@ export default function ProductPaymentModal({
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-green-600" />
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10 text-primary" />
             </div>
-            <h3 className="text-xl font-bold text-green-700">Paiement réussi !</h3>
+            <h3 className="text-xl font-bold text-primary">Paiement réussi !</h3>
             <p className="text-muted-foreground text-center">{fc(grandTotal, cur)} — Votre commande a été créée</p>
+            <p className="text-sm text-muted-foreground animate-pulse">Redirection vers vos achats...</p>
           </div>
         </DialogContent>
       </Dialog>
