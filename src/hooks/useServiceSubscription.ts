@@ -21,8 +21,8 @@ export function useServiceSubscription({ serviceId, serviceTypeId }: UseServiceS
     try {
       setLoading(true);
       
-      // Charger les plans
-      const plansData = await ServiceSubscriptionService.getPlans();
+      // Charger les plans filtrés par type de service
+      const plansData = await ServiceSubscriptionService.getPlans(serviceTypeId);
       setPlans(plansData);
 
       // Charger l'abonnement si un serviceId est fourni
