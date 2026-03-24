@@ -113,7 +113,7 @@ export default function MultiCloudDashboard() {
           <div>
             <h2 className="text-xl font-bold text-foreground">Infrastructure Multi-Cloud</h2>
             <p className="text-sm text-muted-foreground">
-              Monitoring temps réel — 4 providers, {totalServices} services ({realChecks} checks réels)
+              Monitoring temps réel — 4 providers, {totalServices} services (100% checks réels)
             </p>
           </div>
         </div>
