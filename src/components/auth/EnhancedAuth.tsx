@@ -598,10 +598,8 @@ export default function EnhancedAuth() {
           >
             <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
-          <div className="flex items-center gap-1">
-            <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">M</span>
-            </div>
+          <div className="flex items-center gap-1.5">
+            <img src="/logo-224solutions.png" alt="224Solutions" className="w-7 h-7 rounded-md object-contain" />
             <span className="font-semibold text-sm text-foreground">224Solutions</span>
           </div>
         </div>

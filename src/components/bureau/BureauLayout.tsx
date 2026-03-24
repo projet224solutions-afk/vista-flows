@@ -207,9 +207,7 @@ export function BureauLayout({
           )}>
             {!sidebarCollapsed && (
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl shadow-lg">
-                  <Building2 className="w-6 h-6 text-white" />
-                </div>
+                <img src="/logo-224solutions.png" alt="224Solutions" className="w-10 h-10 rounded-xl object-contain" />
                 <div>
                   <h1 className="font-bold text-slate-800">224Solutions</h1>
                   <p className="text-xs text-slate-500">Bureau Syndicat</p>

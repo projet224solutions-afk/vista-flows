@@ -81,7 +81,7 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
 
           {/* Logo & Title */}
           <div className="flex items-center gap-2 flex-1">
-            <Bike className="h-6 w-6 text-primary" />
+            <img src="/logo-224solutions.png" alt="224Solutions" className="h-8 w-8 rounded-lg object-contain" />
             <div className="hidden sm:block">
               <h1 className="text-lg font-bold">224Solutions Livreur</h1>
               <p className="text-xs text-muted-foreground">Interface de livraison</p>
