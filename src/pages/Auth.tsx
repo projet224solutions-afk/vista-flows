@@ -662,6 +662,7 @@ export default function Auth() {
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [phoneCode, setPhoneCode] = useState('+224');
   const [phoneCodeOpen, setPhoneCodeOpen] = useState(false);
+  const [countrySelectOpen, setCountrySelectOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -2097,15 +2098,53 @@ export default function Auth() {
 
                   <div>
                     <Label htmlFor="country">Pays</Label>
-                    <Input
-                      id="country"
-                      type="text"
-                      value={formData.country}
-                      onChange={(e) => handleInputChange('country', e.target.value)}
-                      placeholder="Votre pays (ex: Guinée)"
-                      required
-                      className="mt-1"
-                    />
+                    <Popover open={countrySelectOpen} onOpenChange={setCountrySelectOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={countrySelectOpen}
+                          className="w-full justify-between mt-1 font-normal"
+                        >
+                          <span className="truncate">
+                            {formData.country
+                              ? (() => {
+                                  const found = WORLD_PHONE_CODES.find(c => c.country === formData.country);
+                                  return found ? `${found.flag} ${found.country}` : formData.country;
+                                })()
+                              : "Sélectionner un pays..."}
+                          </span>
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72 p-0 bg-background border shadow-lg z-[100]" align="start">
+                        <Command>
+                          <CommandInput placeholder="Rechercher un pays..." className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                            <CommandGroup className="max-h-60 overflow-auto">
+                              {WORLD_PHONE_CODES.map((item) => (
+                                <CommandItem
+                                  key={`country-${item.code}-${item.country}`}
+                                  value={`${item.country}`}
+                                  onSelect={() => {
+                                    handleInputChange('country', item.country);
+                                    setCountrySelectOpen(false);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <span className="mr-2">{item.flag}</span>
+                                  <span className="flex-1 truncate text-sm">{item.country}</span>
+                                  {formData.country === item.country && (
+                                    <Check className="ml-2 h-4 w-4 text-primary" />
+                                  )}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div>
