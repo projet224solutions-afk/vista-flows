@@ -240,7 +240,14 @@ class MonitoringEventBus {
     this.eventBuffer = [];
 
     try {
-      await supabase.from('monitoring_events' as any).insert(
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      // Éviter le spam 401/RLS pour les visiteurs non connectés
+      if (sessionError || !session) {
+        return;
+      }
+
+      const { error } = await supabase.from('monitoring_events' as any).insert(
         events.map(e => ({
           event_type: e.event_type,
           source: e.source,
@@ -253,6 +260,15 @@ class MonitoringEventBus {
           service_name: e.service_name,
         }))
       );
+
+      if (error) {
+        const isRlsError = error.message?.toLowerCase().includes('row-level security') || error.code === '42501';
+        if (isRlsError) {
+          console.warn('[Monitor] monitoring_events insert bloqué par RLS — events ignorés pour cette session.');
+          return;
+        }
+        throw error;
+      }
     } catch (e) {
       console.error('[Monitor] Failed to flush events:', e);
     }

@@ -79,6 +79,13 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
   // Permet d'ignorer les réponses "anciennes" quand l'utilisateur change rapidement les filtres/tri
   const requestIdRef = useRef(0);
+  const lastLoadedAtRef = useRef(0);
+  const refreshRef = useRef<() => void>(() => {});
+  const realtimeRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const STALE_REFRESH_MS = 45_000;
+  const SAFETY_REFRESH_INTERVAL_MS = 60_000;
+  const REALTIME_DEBOUNCE_MS = 1_200;
 
   const normalizeLocation = (value: string) => value.trim().replace(/\s+/g, ' ');
 
@@ -210,14 +217,20 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
         queryTimeout = setTimeout(() => reject(new Error('products_query_timeout')), PRODUCT_QUERY_TIMEOUT_MS);
       });
 
-      const result = await Promise.race([query, timeoutPromise]) as {
+      let result: {
         data: any[] | null;
         error: any;
         count: number | null;
       };
 
-      if (queryTimeout) {
-        clearTimeout(queryTimeout);
+      try {
+        result = await Promise.race([query, timeoutPromise]) as {
+          data: any[] | null;
+          error: any;
+          count: number | null;
+        };
+      } finally {
+        if (queryTimeout) clearTimeout(queryTimeout);
       }
 
       const { data, error, count } = result;
@@ -277,6 +290,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
 
       setTotal(count || 0);
       setHasMore(formattedProducts.length === pageLimit);
+      lastLoadedAtRef.current = Date.now();
 
     } catch (error) {
       // Ne pas afficher d'erreur si cette requête n'est plus la dernière
@@ -325,6 +339,10 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     loadProducts(true);
   }, [loadProducts]);
 
+  useEffect(() => {
+    refreshRef.current = () => loadProducts(true);
+  }, [loadProducts]);
+
   // Charger automatiquement au montage et quand les options changent
   useEffect(() => {
     if (!autoLoad) return;
@@ -353,6 +371,59 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  // Rechargement temps réel avec debounce
+  useEffect(() => {
+    if (!autoLoad) return;
+
+    const scheduleRefresh = () => {
+      if (realtimeRefreshTimerRef.current) {
+        clearTimeout(realtimeRefreshTimerRef.current);
+      }
+
+      realtimeRefreshTimerRef.current = setTimeout(() => {
+        refreshRef.current();
+      }, REALTIME_DEBOUNCE_MS);
+    };
+
+    const channel = supabase
+      .channel('home-products-realtime-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, scheduleRefresh)
+      .subscribe();
+
+    return () => {
+      if (realtimeRefreshTimerRef.current) {
+        clearTimeout(realtimeRefreshTimerRef.current);
+      }
+      supabase.removeChannel(channel);
+    };
+  }, [autoLoad]);
+
+  // Fallback robuste si Realtime décroche (mobile/PWA)
+  useEffect(() => {
+    if (!autoLoad) return;
+
+    const refreshIfStale = () => {
+      const isVisible = document.visibilityState === 'visible';
+      const staleForMs = Date.now() - lastLoadedAtRef.current;
+
+      if (isVisible && staleForMs > STALE_REFRESH_MS) {
+        refreshRef.current();
+      }
+    };
+
+    const safetyInterval = setInterval(refreshIfStale, SAFETY_REFRESH_INTERVAL_MS);
+    window.addEventListener('focus', refreshIfStale);
+    window.addEventListener('online', refreshIfStale);
+    document.addEventListener('visibilitychange', refreshIfStale);
+
+    return () => {
+      clearInterval(safetyInterval);
+      window.removeEventListener('focus', refreshIfStale);
+      window.removeEventListener('online', refreshIfStale);
+      document.removeEventListener('visibilitychange', refreshIfStale);
+    };
+  }, [autoLoad]);
 
   return {
     products,
