@@ -29,11 +29,12 @@ export function usePrefetchCriticalData() {
           queryClient.prefetchQuery({
             queryKey: ['vendors-active-cached'],
             queryFn: async () => {
-              const { data } = await supabase
+              const { data, error } = await supabase
                 .from('vendors')
-                .select('id, shop_name, logo_url, latitude, longitude, business_type, rating_average, city')
+                .select('id, business_name, logo_url, latitude, longitude, business_type, rating, city')
                 .eq('is_active', true)
                 .limit(100);
+              if (error) throw error;
               if (data) smartCache.set('vendors:active', data, CACHE_TTL.STANDARD, [CACHE_TAGS.VENDORS]);
               return data;
             },
@@ -44,12 +45,13 @@ export function usePrefetchCriticalData() {
           queryClient.prefetchQuery({
             queryKey: ['products-recent-cached'],
             queryFn: async () => {
-              const { data } = await supabase
+              const { data, error } = await supabase
                 .from('products')
-                .select('id, name, price, images, vendor_id, category, rating_average')
+                .select('id, name, price, images, vendor_id, category_id, rating')
                 .eq('is_active', true)
                 .order('created_at', { ascending: false })
                 .limit(20);
+              if (error) throw error;
               if (data) smartCache.set('products:recent', data, CACHE_TTL.STANDARD, [CACHE_TAGS.PRODUCTS]);
               return data;
             },

@@ -94,6 +94,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   const [hasMore, setHasMore] = useState(true);
 
   const requestIdRef = useRef(0);
+  const lastLoadedAtRef = useRef(0);
+  const refreshRef = useRef<() => void>(() => {});
+  const realtimeRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Charge les produits e-commerce classiques
@@ -611,6 +614,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
 
       setTotal(allItems.length);
       setHasMore(endIndex < allItems.length);
+      lastLoadedAtRef.current = Date.now();
 
     } catch (error) {
       if (requestId === requestIdRef.current) {
@@ -647,6 +651,10 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     loadAllItems(true);
   }, [loadAllItems]);
 
+  useEffect(() => {
+    refreshRef.current = () => loadAllItems(true);
+  }, [loadAllItems]);
+
   // Charger automatiquement au montage et quand les options changent
   useEffect(() => {
     if (!autoLoad) return;
@@ -676,6 +684,59 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  // Rechargement en temps réel: produits/services numériques/services pro
+  useEffect(() => {
+    if (!autoLoad) return;
+
+    const scheduleRefresh = () => {
+      if (realtimeRefreshTimerRef.current) {
+        clearTimeout(realtimeRefreshTimerRef.current);
+      }
+
+      realtimeRefreshTimerRef.current = setTimeout(() => {
+        console.log('[MarketplaceRealtime] Changement détecté → refresh');
+        refreshRef.current();
+      }, 1000);
+    };
+
+    const channel = supabase
+      .channel('marketplace-realtime-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'digital_products' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'professional_services' }, scheduleRefresh)
+      .subscribe();
+
+    return () => {
+      if (realtimeRefreshTimerRef.current) {
+        clearTimeout(realtimeRefreshTimerRef.current);
+      }
+      supabase.removeChannel(channel);
+    };
+  }, [autoLoad]);
+
+  // Rechargement au retour en foreground (mobile + desktop)
+  useEffect(() => {
+    if (!autoLoad) return;
+
+    const refreshIfStale = () => {
+      const isVisible = document.visibilityState === 'visible';
+      const staleForMs = Date.now() - lastLoadedAtRef.current;
+
+      if (isVisible && staleForMs > 45_000) {
+        console.log('[MarketplaceRealtime] Foreground refresh', { staleForMs });
+        refreshRef.current();
+      }
+    };
+
+    window.addEventListener('focus', refreshIfStale);
+    document.addEventListener('visibilitychange', refreshIfStale);
+
+    return () => {
+      window.removeEventListener('focus', refreshIfStale);
+      document.removeEventListener('visibilitychange', refreshIfStale);
+    };
+  }, [autoLoad]);
 
   return {
     items,
