@@ -10,11 +10,22 @@ import type { ServiceType } from '@/hooks/useProfessionalServices';
 
 export default function ServiceSelection() {
   const navigate = useNavigate();
-  const { serviceTypes, loading, createProfessionalService } = useProfessionalServices();
+  const { serviceTypes, userServices, loading, createProfessionalService } = useProfessionalServices();
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
   const [showSetupDialog, setShowSetupDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [redirectChecked, setRedirectChecked] = useState(false);
+
+  // Si l'utilisateur a déjà un service, rediriger vers son dashboard
+  useEffect(() => {
+    if (!loading && userServices.length > 0 && !redirectChecked) {
+      setRedirectChecked(true);
+      navigate(`/dashboard/service/${userServices[0].id}`, { replace: true });
+    } else if (!loading) {
+      setRedirectChecked(true);
+    }
+  }, [loading, userServices, navigate, redirectChecked]);
 
   // Grouper les services par catégorie
   const categories = [
