@@ -668,12 +668,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Timeout de sécurité - court pour ne pas bloquer l'UI
       const timeoutMs = isOffline() ? 1000 : 3000;
       const timeoutId = setTimeout(() => {
-        console.log('⚠️ Timeout session - continuer sans auth');
-        // En mode offline, essayer la session locale avant d'abandonner
+        console.warn('[TIMEOUT TRIGGERED] Auth init timeout - fallback local session');
         if (isOffline()) {
           const localSession = getLocalSession();
           if (localSession?.access_token) {
-            console.log('✅ Session locale restaurée via timeout (mode offline)');
+            console.log('[AUTH LOADED]', { source: 'local_session_timeout', userId: localSession.user?.id });
             setSession(localSession as unknown as Session);
             setUser(localSession.user);
           }
@@ -682,15 +681,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }, timeoutMs);
 
       try {
-        // ✨ NOUVEAU: En mode offline, utiliser la session locale stockée
         if (isOffline()) {
           console.log('📡 Mode hors ligne détecté - utilisation session locale');
           const localSession = getLocalSession();
           clearTimeout(timeoutId);
-          
+
           if (localSession?.access_token) {
-            console.log('✅ Session locale restaurée (mode offline)');
-            // Reconstruire un objet session minimal
             const offlineSession = {
               access_token: localSession.access_token,
               refresh_token: localSession.refresh_token,
@@ -699,12 +695,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               token_type: 'bearer',
               user: localSession.user
             } as Session;
-            
+
             setSession(offlineSession);
             setUser(localSession.user);
-            // Ne pas démarrer le monitor en offline
+            console.log('[AUTH LOADED]', { source: 'offline_local_session', userId: localSession.user?.id });
           } else {
-            console.log('ℹ️ Pas de session locale stockée');
             setSession(null);
             setUser(null);
             setProfile(null);
@@ -712,25 +707,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setLoading(false);
           return;
         }
-        
-        // Mode online: procéder normalement
+
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         clearTimeout(timeoutId);
 
         if (error) {
-          // ✨ NOUVEAU: Ignorer les erreurs réseau et utiliser session locale
+          logFirstSupabaseError('auth.getSession.error', error);
           if (error.message?.includes('network') || error.message?.includes('fetch')) {
             console.warn('⚠️ Erreur réseau - utilisation session locale');
             const localSession = getLocalSession();
             if (localSession?.access_token) {
               setSession(localSession as unknown as Session);
               setUser(localSession.user);
+              console.log('[AUTH LOADED]', { source: 'local_session_after_network_error', userId: localSession.user?.id });
               setLoading(false);
               return;
             }
           }
-          
-          console.error('❌ Erreur session:', error);
+
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -739,32 +733,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         if (initialSession) {
-          console.log('✅ Session restaurée:', initialSession.user.email);
           setSession(initialSession);
           setUser(initialSession.user);
           startSessionMonitor();
+          console.log('[AUTH LOADED]', { source: 'supabase_session', userId: initialSession.user.id });
         } else {
-          console.log('ℹ️ Pas de session active');
           setSession(null);
           setUser(null);
           setProfile(null);
+          console.log('[AUTH LOADED]', { source: 'no_session' });
         }
       } catch (error: any) {
         clearTimeout(timeoutId);
-        
-        // ✨ NOUVEAU: Ignorer erreurs réseau et utiliser session locale
+
         if (error?.message?.includes('network') || error?.message?.includes('fetch') || error?.message?.includes('Failed to fetch')) {
-          console.warn('⚠️ Exception réseau - utilisation session locale');
+          logFirstSupabaseError('auth.getSession.catch.network', error);
           const localSession = getLocalSession();
           if (localSession?.access_token) {
             setSession(localSession as unknown as Session);
             setUser(localSession.user);
+            console.log('[AUTH LOADED]', { source: 'local_session_after_exception', userId: localSession.user?.id });
             setLoading(false);
             return;
           }
         }
-        
-        console.error('❌ Erreur inattendue:', error);
+
+        logFirstSupabaseError('auth.getSession.catch.unexpected', error);
         setSession(null);
         setUser(null);
         setProfile(null);
