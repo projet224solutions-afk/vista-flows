@@ -559,6 +559,7 @@ function App() {
               />
               <Route path="/pdg224solutionssoulbah" element={<ProtectedRoute allowedRoles={['admin', 'pdg', 'ceo']}><PDG224Solutions /></ProtectedRoute>} />
               <Route path="/pdg/copilot" element={<ProtectedRoute allowedRoles={['pdg', 'ceo', 'admin']}><PDGCopilotDashboard /></ProtectedRoute>} />
+              <Route path="/pdg/monitoring" element={<ProtectedRoute allowedRoles={['pdg', 'ceo', 'admin']}><MonitoringDashboard /></ProtectedRoute>} />
               
               {/* Agent & Bureau Login with MFA */}
               <Route path="/agent/login" element={<AgentLogin />} />
