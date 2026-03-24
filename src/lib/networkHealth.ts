@@ -1,3 +1,5 @@
+import { supabase } from '@/integrations/supabase/client';
+
 export interface NetworkHealthResult {
   ok: boolean;
   reason: string;
@@ -12,8 +14,10 @@ interface NetworkHealthOptions {
 }
 
 const HEALTH_CHECK_PATH = '/healthz.json';
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+const FALLBACK_SUPABASE_URL = (supabase as any)?.supabaseUrl as string | undefined;
+const FALLBACK_SUPABASE_KEY = (supabase as any)?.supabaseKey as string | undefined;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_KEY;
 const DEFAULT_TIMEOUT_MS = 8000;
 const DEFAULT_RETRIES = 1;
 /** Cache results for 15s to prevent flooding on mobile */
