@@ -43,7 +43,7 @@ interface StripeCardPaymentModalProps {
 }
 
 // Clé publique Stripe (variable d'environnement obligatoire)
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 // Charger Stripe une seule fois
 let stripePromise: Promise<Stripe | null> | null = null;

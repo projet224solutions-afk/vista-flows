@@ -40,12 +40,10 @@ const isOffline = (): boolean => {
 };
 
 const getStripePublishableKey = async (): Promise<string> => {
-  // Vérifier mode offline d'abord
   if (isOffline()) {
     throw new Error('OFFLINE_MODE');
   }
   
-  // Essayer d'abord les variables d'environnement
   const envKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
   if (envKey) {
     return envKey;
@@ -66,7 +64,7 @@ const getStripePublishableKey = async (): Promise<string> => {
     console.warn('⚠️ Could not fetch Stripe key from DB:', dbError);
   }
 
-  throw new Error('Stripe publishable key not configured. Set VITE_STRIPE_PUBLISHABLE_KEY or configure stripe_config.');
+  throw new Error('Clé Stripe non configurée. Définissez VITE_STRIPE_PUBLISHABLE_KEY dans Vercel.');
 };
 
 const getStripe = async (): Promise<Stripe | null> => {
