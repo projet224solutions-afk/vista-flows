@@ -17,7 +17,7 @@ import ProductDetailModal from "@/components/marketplace/ProductDetailModal";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { BrowseModal } from "@/components/marketplace/BrowseModal";
 import { supabase } from "@/integrations/supabase/client";
-import { useUniversalProducts } from "@/hooks/useUniversalProducts";
+
 import { useMarketplaceUniversal } from "@/hooks/useMarketplaceUniversal";
 import { toast } from "sonner";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -44,7 +44,7 @@ function MarketplaceLoadingState({ onRetry }: { onRetry: () => void }) {
   const [timedOut, setTimedOut] = useState(false);
   
   useEffect(() => {
-    const timer = setTimeout(() => setTimedOut(true), 10000);
+    const timer = setTimeout(() => setTimedOut(true), 20000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -172,7 +172,8 @@ export default function Marketplace() {
     loading: marketplaceLoading,
     total: marketplaceTotal,
     hasMore: marketplaceHasMore,
-    loadMore: marketplaceLoadMore
+    loadMore: marketplaceLoadMore,
+    refresh: marketplaceRefresh
   } = useMarketplaceUniversal({
     limit: 24,
     category: effectiveCategory,
@@ -743,7 +744,7 @@ export default function Marketplace() {
 
 
             {marketplaceLoading ? (
-              <MarketplaceLoadingState onRetry={() => window.location.reload()} />
+              <MarketplaceLoadingState onRetry={marketplaceRefresh} />
             ) : marketplaceItems.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-2">
