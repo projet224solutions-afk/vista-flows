@@ -105,27 +105,31 @@ async function probeSupabaseReachability(timeoutMs: number): Promise<HealthProbe
   }
 
   try {
-    const response = await withTimeout(
-      fetch(`${SUPABASE_URL}/rest/v1/`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          Accept: 'application/json',
-        },
-      }),
-      timeoutMs,
-    );
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (response.ok) {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+      method: 'HEAD', // 🚀 HEAD instead of GET — no body to parse
+      cache: 'no-store',
+      signal: controller.signal,
+      keepalive: true,
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+    });
+
+    clearTimeout(timer);
+
+    if (response.ok || response.status === 200) {
       return { ok: true, reason: 'ok:supabase_reachable', statusCode: response.status, source: 'supabase' };
     }
 
     return { ok: false, reason: `supabase_http_${response.status}`, statusCode: response.status, source: 'supabase' };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown_error';
-    return { ok: false, reason: message === 'timeout' ? 'supabase_timeout' : `supabase_${message}`, source: 'supabase' };
+    const isAbort = error instanceof DOMException && error.name === 'AbortError';
+    return { ok: false, reason: isAbort ? 'supabase_timeout' : `supabase_${message}`, source: 'supabase' };
   }
 }
 
