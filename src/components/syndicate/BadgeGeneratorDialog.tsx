@@ -64,6 +64,7 @@ export default function BadgeGeneratorDialog({
     try {
       toast.info('Génération du badge en cours...');
       
+      const [html2canvas] = await loadPdfLibs();
       const canvas = await html2canvas(badgeRef.current, {
         scale: 3,
         backgroundColor: '#ffffff',
