@@ -1,6 +1,7 @@
 /**
  * Page de Conversation Directe - Interface Mobile-First
  * Avec présence en ligne, indicateur de frappe, horodatage complet
+ * Boutons d'appel audio réellement branchés via WebRTC
  */
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
@@ -9,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Send, Phone, Video, MoreVertical, Paperclip, CheckCheck } from "lucide-react";
+import { ArrowLeft, Send, Phone, MoreVertical, Paperclip, CheckCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useWebRTCCallContext } from "@/components/communication/WebRTCCallProvider";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
@@ -65,6 +67,7 @@ export default function DirectConversation() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { callState, startCall } = useWebRTCCallContext();
 
   const [recipient, setRecipient] = useState<Profile | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -81,6 +84,8 @@ export default function DirectConversation() {
   const lastTypingSentRef = useRef<number>(0);
   const presenceDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const lastPresenceRef = useRef<{ online: boolean; lastSeen: string | null }>({ online: false, lastSeen: null });
+  // Set pour anti-doublon realtime
+  const messageIdsRef = useRef<Set<string>>(new Set());
 
   // ─── Load recipient profile ───
   useEffect(() => {
@@ -121,13 +126,11 @@ export default function DirectConversation() {
   const applyPresence = useCallback((d: any) => {
     if (!d) return;
     const lastActive = d.last_active || d.last_seen || d.updated_at;
-    // Consider online if status says so AND last_active within 90s
     const statusOnline = d.status === 'online' || d.status === 'busy' || d.status === 'in_call';
     const recentlyActive = lastActive && (Date.now() - new Date(lastActive).getTime()) < 90000;
     const isOnline = statusOnline && recentlyActive;
     const lastSeen = d.last_seen || d.last_active || null;
 
-    // Only update if value actually changed (prevents flickering)
     if (lastPresenceRef.current.online !== isOnline || lastPresenceRef.current.lastSeen !== lastSeen) {
       lastPresenceRef.current = { online: isOnline, lastSeen };
       setIsRecipientOnline(isOnline);
@@ -149,14 +152,12 @@ export default function DirectConversation() {
 
     fetchPresence();
 
-    // Subscribe with debounce to prevent flickering from rapid heartbeats
     const channel = supabase
       .channel(`presence-watch-${userId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'user_presence', filter: `user_id=eq.${userId}` },
         (payload) => {
-          // Debounce: wait 1.5s before applying to absorb rapid updates
           if (presenceDebounceRef.current) clearTimeout(presenceDebounceRef.current);
           presenceDebounceRef.current = setTimeout(() => {
             applyPresence(payload.new);
@@ -182,7 +183,6 @@ export default function DirectConversation() {
       .on('broadcast', { event: 'typing' }, (payload) => {
         if (payload.payload?.user_id === userId) {
           setIsRecipientTyping(true);
-          // Auto-clear after 3s
           if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
           typingTimeoutRef.current = setTimeout(() => setIsRecipientTyping(false), 3000);
         }
@@ -200,11 +200,10 @@ export default function DirectConversation() {
     };
   }, [userId, user?.id]);
 
-  // Send typing broadcast (throttled)
   const sendTypingIndicator = useCallback(() => {
     if (!userId || !user?.id) return;
     const now = Date.now();
-    if (now - lastTypingSentRef.current < 2000) return; // throttle 2s
+    if (now - lastTypingSentRef.current < 2000) return;
     lastTypingSentRef.current = now;
 
     const channelName = [user.id, userId].sort().join('-');
@@ -225,7 +224,7 @@ export default function DirectConversation() {
     });
   }, [userId, user?.id]);
 
-  // ─── Load messages + realtime ───
+  // ─── Load messages + realtime avec ANTI-DOUBLON ───
   useEffect(() => {
     if (!userId || !user?.id) return;
 
@@ -238,7 +237,10 @@ export default function DirectConversation() {
           .order('created_at', { ascending: true });
 
         if (error) throw error;
-        setMessages(data || []);
+        const msgs = data || [];
+        // Initialiser le set anti-doublon
+        messageIdsRef.current = new Set(msgs.map(m => m.id));
+        setMessages(msgs);
       } catch (error) {
         console.error('Erreur chargement messages:', error);
       }
@@ -246,16 +248,26 @@ export default function DirectConversation() {
 
     loadMessages();
 
+    // Filtre strict : seulement les messages de cette conversation
     const channel = supabase
-      .channel(`direct_${userId}`)
+      .channel(`direct-msg-${[user.id, userId].sort().join('-')}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
           const msg = payload.new as Message;
-          if (msg.sender_id === user.id || msg.sender_id === userId) {
-            setMessages(prev => [...prev, msg]);
-          }
+          // Vérifier que c'est bien cette conversation
+          const isRelevant = (
+            (msg.sender_id === user.id && (payload.new as any).recipient_id === userId) ||
+            (msg.sender_id === userId && (payload.new as any).recipient_id === user.id)
+          );
+          if (!isRelevant) return;
+          
+          // Anti-doublon
+          if (messageIdsRef.current.has(msg.id)) return;
+          messageIdsRef.current.add(msg.id);
+          
+          setMessages(prev => [...prev, msg]);
         }
       )
       .subscribe();
@@ -263,7 +275,7 @@ export default function DirectConversation() {
     return () => { supabase.removeChannel(channel); };
   }, [userId, user?.id]);
 
-  // Auto-scroll + auto-focus
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -274,7 +286,7 @@ export default function DirectConversation() {
     }
   }, [loading, recipient]);
 
-  // ─── Handle input change (with typing indicator) ───
+  // ─── Handle input change ───
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
     if (e.target.value.trim()) {
@@ -309,6 +321,17 @@ export default function DirectConversation() {
       setSending(false);
     }
   };
+
+  // ─── Appel audio ───
+  const handleAudioCall = useCallback(async () => {
+    if (!recipient || !userId) return;
+    await startCall(userId, {
+      name: `${recipient.first_name} ${recipient.last_name}`.trim(),
+      avatar: recipient.avatar_url,
+    });
+  }, [recipient, userId, startCall]);
+
+  const isInCall = callState.isInCall || callState.isCalling || callState.isReceivingCall;
 
   // ─── Format last seen ───
   const formatLastSeen = (dateStr: string | null): string => {
@@ -356,7 +379,6 @@ export default function DirectConversation() {
               {recipient.first_name?.[0]?.toUpperCase()}{recipient.last_name?.[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          {/* Online dot on avatar */}
           {isRecipientOnline && (
             <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-card" />
           )}
@@ -385,12 +407,21 @@ export default function DirectConversation() {
         </div>
 
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-primary/10 hover:text-primary">
+          {/* Bouton d'appel RÉELLEMENT branché */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={cn(
+              "h-10 w-10 rounded-full hover:bg-primary/10 hover:text-primary",
+              isInCall && "opacity-50 cursor-not-allowed"
+            )}
+            onClick={handleAudioCall}
+            disabled={isInCall}
+            title={isInCall ? "Appel en cours" : "Appel audio"}
+          >
             <Phone className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-primary/10 hover:text-primary">
-            <Video className="w-5 h-5" />
-          </Button>
+          {/* Vidéo masquée - non implémentée en WebRTC natif */}
           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-muted">
             <MoreVertical className="w-5 h-5" />
           </Button>
@@ -411,15 +442,11 @@ export default function DirectConversation() {
               {recipient.first_name} {recipient.last_name}
             </p>
             <p className="text-sm text-muted-foreground">Commencez la conversation</p>
-            <p className="text-xs text-muted-foreground/70 mt-2">
-              Les messages sont chiffrés de bout en bout
-            </p>
           </div>
         ) : (
           <>
             {messageGroups.map((group, gi) => (
               <div key={gi}>
-                {/* Date separator */}
                 <div className="flex items-center justify-center my-4">
                   <span className="px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium shadow-sm">
                     {formatDateSeparator(group.date)}
@@ -458,7 +485,6 @@ export default function DirectConversation() {
               </div>
             ))}
 
-            {/* Typing indicator bubble */}
             {isRecipientTyping && (
               <div className="flex justify-start mb-3">
                 <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
