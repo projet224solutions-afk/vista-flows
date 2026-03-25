@@ -46,11 +46,16 @@ export default defineConfig(({ mode }) => {
               if (id.includes('framer-motion')) return 'vendor-motion';
               if (id.includes('@supabase')) return 'vendor-supabase';
               if (id.includes('@tanstack')) return 'vendor-tanstack';
-              if (id.includes('@stripe')) return 'vendor-stripe';
+              if (id.includes('@stripe') || id.includes('stripe')) return 'vendor-stripe';
               if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
               if (id.includes('firebase')) return 'vendor-firebase';
               if (id.includes('mapbox')) return 'vendor-maps';
               if (id.includes('agora')) return 'vendor-agora';
+              if (id.includes('jspdf')) return 'vendor-pdf';
+              if (id.includes('html2canvas')) return 'vendor-pdf';
+              if (id.includes('qrcode')) return 'vendor-qrcode';
+              if (id.includes('date-fns')) return 'vendor-datefns';
+              if (id.includes('zod')) return 'vendor-zod';
             }
           }
         },
