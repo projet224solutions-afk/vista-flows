@@ -123,7 +123,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           commune: formData.commune,
           full_location: formData.full_location
         };
-      } else if (formData.role === 'vendeur') {
+      } else if (formData.role === 'vendeur' || formData.role === 'prestataire') {
         userData.vendeurData = {
           business_name: formData.business_name,
           business_description: formData.business_description,
