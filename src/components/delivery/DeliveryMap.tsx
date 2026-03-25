@@ -45,7 +45,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
         if (!mapContainer.current) return;
 
         // Configuration Mapbox
-        mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+        mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
         if (!mapboxgl.accessToken) {
             console.error('Token Mapbox manquant');

@@ -170,7 +170,7 @@ export class EscrowService {
     ): Promise<EscrowInvoice> {
         try {
             const invoiceId = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            const paymentLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://224solutions.app'}/pay/${invoiceId}`;
+            const paymentLink = `${import.meta.env.VITE_APP_URL || 'https://224solutions.app'}/pay/${invoiceId}`;
 
             const invoice: EscrowInvoice = {
                 id: invoiceId,
