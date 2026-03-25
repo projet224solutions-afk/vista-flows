@@ -215,12 +215,25 @@ async function executeHealthCheck(timeoutMs: number, retries: number): Promise<N
       .filter((probe) => probe.ok)
       .map((probe) => probe.source);
 
+    // All three passed = fully online
     if (healthzProbe.ok && supabaseProbe.ok && businessProbe.ok) {
       return {
         ok: true,
         connectivity: 'online',
         reason: 'ok:all_checks',
         statusCode: pickStatusCode(businessProbe, supabaseProbe, healthzProbe),
+        latencyMs,
+        sources,
+      };
+    }
+
+    // Supabase + business OK = online even if healthz fails (Lovable preview / some hosts)
+    if (supabaseProbe.ok && businessProbe.ok) {
+      return {
+        ok: true,
+        connectivity: 'online',
+        reason: 'ok:supabase_business',
+        statusCode: pickStatusCode(businessProbe, supabaseProbe),
         latencyMs,
         sources,
       };
