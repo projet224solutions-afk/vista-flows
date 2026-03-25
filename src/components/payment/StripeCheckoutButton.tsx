@@ -207,12 +207,18 @@ export default function StripeCheckoutButton({
         setLoading(true);
         setError(null);
 
+        if (!STRIPE_PUBLISHABLE_KEY) {
+          throw new Error('La clé Stripe n\'est pas configurée. Contactez l\'administrateur.');
+        }
+
+        console.log('🔄 [CHECKOUT START] amount:', amount, currency);
         const stripeInstance = await getStripe();
         if (!mountedRef.current) return;
         setStripe(stripeInstance);
 
         if (!stripeInstance) {
-          throw new Error('Impossible de charger Stripe');
+          console.error('❌ [CHECKOUT FAIL] Stripe instance is null');
+          throw new Error('Impossible de charger Stripe. Vérifiez votre connexion.');
         }
 
         // Determine which edge function to use
