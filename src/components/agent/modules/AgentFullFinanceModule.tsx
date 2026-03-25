@@ -187,7 +187,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
     }
   };
 
-  if (loading || platformLoading) {
+  if (loading) {
     return <LoadingSpinner />;
   }
 
@@ -208,11 +208,11 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
                 <DollarSign className="w-6 h-6 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl">Finance & Revenus</CardTitle>
-                <CardDescription>Tableau de bord financier complet</CardDescription>
+                <CardTitle className="text-xl">Mes Finances</CardTitle>
+                <CardDescription>Commissions & transactions personnelles</CardDescription>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => { loadAgentFinancialData(); refetch(); }}>
+            <Button variant="outline" size="sm" onClick={loadAgentFinancialData}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Actualiser
             </Button>
@@ -229,7 +229,6 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
               <p className="text-2xl font-bold">{formatAmount(agentStats.walletBalance)}</p>
               <p className="text-xs opacity-75">GNF</p>
             </div>
-
             <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-5 h-5" />
@@ -238,7 +237,6 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
               <p className="text-2xl font-bold">{formatAmount(agentStats.totalCommissions)}</p>
               <p className="text-xs opacity-75">GNF</p>
             </div>
-
             <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <PiggyBank className="w-5 h-5" />
@@ -247,7 +245,6 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
               <p className="text-2xl font-bold">{formatAmount(agentStats.pendingCommissions)}</p>
               <p className="text-xs opacity-75">GNF</p>
             </div>
-
             <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="w-5 h-5" />
@@ -270,8 +267,8 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
               </div>
             </div>
             <div className="bg-muted/30 rounded-lg p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{agentStats.transactionsThisMonth}</p>
@@ -282,46 +279,81 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
         </CardContent>
       </Card>
 
-      {/* Main Tabs - Miroir de PDGFinance */}
+      {/* Tabs agent uniquement */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
-          <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-7 gap-1 bg-muted/50 p-1 rounded-xl">
-            <TabsTrigger value="overview" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Revenus</span>
-            </TabsTrigger>
-            <TabsTrigger value="my-commissions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Commissions</span>
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-              <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Transactions</span>
-            </TabsTrigger>
-            <TabsTrigger value="subscriptions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Abonnements</span>
-            </TabsTrigger>
-            <TabsTrigger value="service-subs" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-              <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Services</span>
-            </TabsTrigger>
-            <TabsTrigger value="escrow" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-              <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Escrow</span>
-            </TabsTrigger>
-            <TabsTrigger value="driver-subs" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
-              <Bike className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Drivers</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1 rounded-xl">
+          <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Aperçu</span>
+          </TabsTrigger>
+          <TabsTrigger value="my-commissions" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Commissions</span>
+          </TabsTrigger>
+          <TabsTrigger value="transactions" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Historique</span>
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Revenus Plateforme */}
+        {/* Aperçu graphique */}
         <TabsContent value="overview" className="space-y-6">
-          <Suspense fallback={<LoadingSpinner />}>
-            <PlatformRevenueOverview />
-          </Suspense>
+          {chartData.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-primary" />
+                    Évolution des Commissions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="h-[250px]">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
+                      <XAxis dataKey="date" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="commission" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={3}
+                        dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-primary" />
+                    Volume des Transactions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="h-[250px]">
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
+                      <XAxis dataKey="date" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card className="border-border/40">
+              <CardContent className="text-center py-12 text-muted-foreground">
+                <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Aucune donnée graphique disponible</p>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Mes Commissions */}
@@ -379,194 +411,55 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
           </Card>
         </TabsContent>
 
-        {/* Transactions Plateforme */}
+        {/* Historique transactions agent */}
         <TabsContent value="transactions" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent" />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 text-green-500" />
-                  </div>
-                  Revenus Totaux Plateforme
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{formatAmount(platformStats.total_revenue || 0)} GNF</p>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <TrendingUp className="w-4 h-4 text-blue-500" />
-                  </div>
-                  Commissions Plateforme
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{formatAmount(platformStats.total_commission || 0)} GNF</p>
-                <p className="text-xs text-muted-foreground">Sur {transactions?.length || 0} transactions</p>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                    <Clock className="w-4 h-4 text-orange-500" />
-                  </div>
-                  Paiements en Attente
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{formatAmount(platformStats.pending_payments || 0)} GNF</p>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                    <Wallet className="w-4 h-4 text-purple-500" />
-                  </div>
-                  Wallets Actifs
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{platformStats.active_wallets || 0}</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Charts */}
-          {chartData.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-primary" />
-                    Évolution des Commissions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[250px]">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
-                      <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="commission" 
-                        stroke="hsl(var(--primary))" 
-                        strokeWidth={3}
-                        dot={{ fill: 'hsl(var(--primary))', r: 4 }}
-                      />
-                    </LineChart>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-primary" />
-                    Volume des Transactions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[250px]">
-                    <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border/20" />
-                      <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-                    </BarChart>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Recent Transactions */}
           <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>Transactions Récentes Plateforme</CardTitle>
-              <CardDescription>Les 10 dernières opérations financières</CardDescription>
+              <CardTitle>Historique des Transactions</CardTitle>
+              <CardDescription>Toutes mes opérations financières</CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[300px]">
+              <ScrollArea className="h-[400px]">
                 <div className="space-y-3">
-                  {(transactions || []).slice(0, 10).map((trans, index) => (
-                    <div
-                      key={trans.id}
-                      className="group p-4 rounded-xl border border-border/40 bg-muted/30 hover:bg-muted/50 transition-all duration-200"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            trans.status === 'completed' ? 'bg-green-100' : 
-                            trans.status === 'pending' ? 'bg-orange-100' : 'bg-red-100'
-                          }`}>
-                            <DollarSign className={`w-5 h-5 ${
-                              trans.status === 'completed' ? 'text-green-600' : 
-                              trans.status === 'pending' ? 'text-orange-600' : 'text-red-600'
-                            }`} />
+                  {agentTransactions.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Aucune transaction</p>
+                    </div>
+                  ) : (
+                    agentTransactions.map((trans) => (
+                      <div
+                        key={trans.id}
+                        className="group p-4 rounded-xl border border-border/40 bg-muted/30 hover:bg-muted/50 transition-all duration-200"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <DollarSign className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">
+                                {trans.type?.toUpperCase() || 'COMMISSION'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(trans.created_at).toLocaleDateString('fr-FR')}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold">
-                              {trans.transaction_type?.toUpperCase() || 'TRANSACTION'}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(trans.created_at).toLocaleDateString('fr-FR')}
-                            </p>
+                          <div className="text-right">
+                            <p className="font-bold text-foreground">{formatAmount(trans.amount || 0)} GNF</p>
+                            <Badge variant={trans.status === 'validated' || trans.status === 'paid' ? 'default' : 'secondary'}>
+                              {trans.status}
+                            </Badge>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold">{formatAmount(trans.amount || 0)} GNF</p>
-                          <Badge variant={trans.status === 'completed' ? 'default' : 'secondary'}>
-                            {trans.status}
-                          </Badge>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </ScrollArea>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Abonnements */}
-        <TabsContent value="subscriptions" className="space-y-6">
-          <Suspense fallback={<LoadingSpinner />}>
-            <SubscriptionManagement />
-          </Suspense>
-        </TabsContent>
-
-        {/* Service Subscriptions */}
-        <TabsContent value="service-subs" className="space-y-6">
-          <Suspense fallback={<LoadingSpinner />}>
-            <PDGServiceSubscriptions />
-          </Suspense>
-        </TabsContent>
-
-        {/* Escrow */}
-        <TabsContent value="escrow" className="space-y-6">
-          <Suspense fallback={<LoadingSpinner />}>
-            <PDGEscrowManagement />
-          </Suspense>
-        </TabsContent>
-
-        {/* Driver Subscriptions */}
-        <TabsContent value="driver-subs" className="space-y-6">
-          <Suspense fallback={<LoadingSpinner />}>
-            <DriverSubscriptionManagement />
-          </Suspense>
         </TabsContent>
       </Tabs>
     </div>
