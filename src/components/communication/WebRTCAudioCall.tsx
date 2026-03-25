@@ -1,15 +1,15 @@
 /**
- * 🎤 COMPOSANT APPEL AUDIO WEBRTC - 224SOLUTIONS
- * Interface pour les appels vocaux WebRTC natifs (sans Agora)
- * Compatible réseaux mobiles africains
+ * 🎤 OVERLAY D'APPEL AUDIO WEBRTC - 224SOLUTIONS
+ * Utilise le CONTEXTE global (pas son propre hook).
+ * Affiché automatiquement par WebRTCCallProvider quand un appel est actif.
  */
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useWebRTCAudioCall } from '@/hooks/useWebRTCAudioCall';
+import { useWebRTCCallContext } from './WebRTCCallProvider';
 import { 
   Phone, 
   Mic, 
@@ -17,34 +17,26 @@ import {
   PhoneOff, 
   Wifi,
   Clock,
-  Volume2,
   Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface WebRTCAudioCallProps {
-  className?: string;
-}
-
-export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
+export default function WebRTCAudioCall() {
+  // UTILISE LE CONTEXTE — pas useWebRTCAudioCall() directement
   const { 
     callState, 
     acceptCall, 
     rejectCall, 
     endCall, 
     toggleMute 
-  } = useWebRTCAudioCall();
+  } = useWebRTCCallContext();
 
-  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
-
-  // Formater la durée d'appel
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Obtenir la couleur selon l'état de connexion
   const getConnectionColor = () => {
     switch (callState.iceConnectionState) {
       case 'connected':
@@ -61,18 +53,17 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
     }
   };
 
-  // Obtenir le texte de l'état de connexion
   const getConnectionText = () => {
     switch (callState.iceConnectionState) {
       case 'connected':
       case 'completed':
-        return 'Excellente';
+        return 'Connecté';
       case 'checking':
         return 'Connexion...';
       case 'new':
         return 'Initialisation';
       case 'disconnected':
-        return 'Déconnecté';
+        return 'Reconnexion...';
       case 'failed':
         return 'Échec';
       default:
@@ -85,13 +76,10 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
     return null;
   }
 
-  // Écran d'appel entrant
+  // ─── Écran d'appel entrant ───
   if (callState.isReceivingCall && !callState.isConnected) {
     return (
-      <div className={cn(
-        "fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4",
-        className
-      )}>
+      <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <Card className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-4 relative">
@@ -135,13 +123,10 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
     );
   }
 
-  // Écran d'appel sortant (en attente de réponse)
+  // ─── Écran d'appel sortant ───
   if (callState.isCalling && !callState.isConnected) {
     return (
-      <div className={cn(
-        "fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4",
-        className
-      )}>
+      <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <Card className="w-full max-w-md mx-auto">
           <CardHeader className="text-center pb-2">
             <CardTitle className="flex items-center justify-center gap-2">
@@ -177,12 +162,9 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
     );
   }
 
-  // Écran d'appel en cours
+  // ─── Écran d'appel connecté ───
   return (
-    <div className={cn(
-      "fixed inset-0 z-50 bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center p-4",
-      className
-    )}>
+    <div className="fixed inset-0 z-[9999] bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center p-4">
       <Card className="w-full max-w-md mx-auto bg-slate-800/50 border-slate-700">
         <CardHeader className="text-center pb-2">
           <CardTitle className="flex items-center justify-center gap-2 text-white">
@@ -191,7 +173,6 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Informations de l'appelant */}
           <div className="text-center">
             <div className="relative inline-block">
               <Avatar className="w-28 h-28 mx-auto mb-4 ring-4 ring-green-500/30">
@@ -200,7 +181,6 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
                   {callState.remoteUserInfo?.name?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
-              {/* Indicateur de connexion */}
               <div className={cn(
                 "absolute bottom-4 right-0 w-5 h-5 rounded-full border-2 border-slate-800",
                 callState.isConnected ? "bg-green-500" : "bg-yellow-500 animate-pulse"
@@ -210,7 +190,6 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
             <p className="text-slate-400">Appel vocal</p>
           </div>
 
-          {/* Durée et qualité */}
           <div className="flex justify-center items-center gap-6 text-sm">
             <div className="flex items-center gap-2 text-white">
               <Clock className="w-4 h-4 text-slate-400" />
@@ -222,7 +201,6 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
             </div>
           </div>
 
-          {/* Statut de connexion */}
           <div className="text-center">
             <Badge 
               variant={callState.isConnected ? "default" : "secondary"}
@@ -231,13 +209,11 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
                 callState.isConnected ? "bg-green-600" : "bg-yellow-600"
               )}
             >
-              {callState.isConnected ? 'Connecté' : 'Connexion en cours...'}
+              {callState.isConnected ? 'Connecté' : 'Connexion...'}
             </Badge>
           </div>
 
-          {/* Contrôles d'appel */}
           <div className="flex justify-center gap-6 pt-4">
-            {/* Microphone */}
             <div className="text-center">
               <Button
                 onClick={toggleMute}
@@ -252,22 +228,6 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
               </p>
             </div>
 
-            {/* Haut-parleur */}
-            <div className="text-center">
-              <Button
-                onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                variant={isSpeakerOn ? "default" : "secondary"}
-                size="lg"
-                className="rounded-full w-16 h-16 mb-2"
-              >
-                <Volume2 className="w-6 h-6" />
-              </Button>
-              <p className="text-xs text-slate-400">
-                {isSpeakerOn ? 'HP' : 'Écouteur'}
-              </p>
-            </div>
-
-            {/* Terminer l'appel */}
             <div className="text-center">
               <Button
                 onClick={endCall}
@@ -281,15 +241,10 @@ export default function WebRTCAudioCall({ className }: WebRTCAudioCallProps) {
             </div>
           </div>
 
-          {/* Indicateurs visuels */}
           <div className="flex justify-center gap-2 pt-2">
             <div className={cn(
               "w-2 h-2 rounded-full",
               callState.isMuted ? 'bg-red-500' : 'bg-green-500'
-            )} />
-            <div className={cn(
-              "w-2 h-2 rounded-full",
-              isSpeakerOn ? 'bg-green-500' : 'bg-gray-500'
             )} />
             <div className={cn(
               "w-2 h-2 rounded-full",

@@ -1,6 +1,7 @@
 /**
  * 🔌 PROVIDER WEBRTC - 224SOLUTIONS
- * Wrapper pour gérer les appels WebRTC globalement
+ * Source UNIQUE de vérité pour l'état d'appel WebRTC.
+ * Instancie le hook UNE SEULE FOIS et expose le contexte + overlay global.
  */
 
 import React, { createContext, useContext, ReactNode } from 'react';
@@ -18,10 +19,33 @@ interface WebRTCCallContextType {
 
 const WebRTCCallContext = createContext<WebRTCCallContextType | null>(null);
 
+/**
+ * Hook à utiliser dans TOUS les composants qui ont besoin de l'état d'appel.
+ * NE PAS utiliser useWebRTCAudioCall() directement dans les composants.
+ */
 export function useWebRTCCallContext() {
   const context = useContext(WebRTCCallContext);
   if (!context) {
-    throw new Error('useWebRTCCallContext must be used within WebRTCCallProvider');
+    // Retourner un état inactif au lieu de throw (pour les composants hors provider)
+    return {
+      callState: {
+        isInCall: false,
+        isCalling: false,
+        isReceivingCall: false,
+        isConnected: false,
+        isMuted: false,
+        callDuration: 0,
+        remoteUserId: null,
+        remoteUserInfo: null,
+        connectionState: null,
+        iceConnectionState: null,
+      },
+      startCall: async () => { console.warn('WebRTCCallProvider not mounted'); },
+      acceptCall: async () => {},
+      rejectCall: () => {},
+      endCall: () => {},
+      toggleMute: () => {},
+    } as WebRTCCallContextType;
   }
   return context;
 }
@@ -31,12 +55,13 @@ interface WebRTCCallProviderProps {
 }
 
 export default function WebRTCCallProvider({ children }: WebRTCCallProviderProps) {
+  // SEULE instance du hook dans toute l'app
   const webrtcCall = useWebRTCAudioCall();
 
   return (
     <WebRTCCallContext.Provider value={webrtcCall}>
       {children}
-      {/* Overlay d'appel global */}
+      {/* Overlay d'appel global - utilise le contexte, pas un nouveau hook */}
       <WebRTCAudioCall />
     </WebRTCCallContext.Provider>
   );
