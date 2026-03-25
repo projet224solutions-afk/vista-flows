@@ -1,8 +1,14 @@
+/**
+ * NOTIFICATION BELL BUTTON - Unified
+ * Uses the `notifications` table (same source as Notifications page)
+ * to ensure badge count matches page content exactly.
+ */
+
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -16,32 +22,38 @@ export function NotificationBellButton({ className = '', iconSize = 'w-5 h-5' }:
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const fetchUnread = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const { count } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      setUnreadCount(count || 0);
+    } catch (err) {
+      console.error('[Bell] Error fetching unread count:', err);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     if (!user?.id) return;
 
-    const fetchUnread = async () => {
-      const { count } = await supabase
-        .from('communication_notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
-      setUnreadCount(count || 0);
-    };
-
     fetchUnread();
 
+    // Listen to INSERT / UPDATE / DELETE on notifications for this user
     const channel = supabase
-      .channel('notif-bell-' + user.id)
+      .channel(`notif-bell-unified-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'communication_notifications',
+        table: 'notifications',
         filter: `user_id=eq.${user.id}`,
       }, () => fetchUnread())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user?.id]);
+  }, [user?.id, fetchUnread]);
 
   return (
     <Button
