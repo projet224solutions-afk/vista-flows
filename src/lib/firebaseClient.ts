@@ -83,10 +83,9 @@ async function initializeFirebase(): Promise<boolean> {
   }
 }
 
-// Initialiser Firebase au chargement (avec singleton pattern)
-if (typeof window !== 'undefined') {
-  initializationPromise = initializeFirebase();
-}
+// Ne PAS initialiser Firebase au chargement du module.
+// L'initialisation est déclenchée à la demande via waitForFirebase().
+// Cela évite de charger ~426KB de Firebase sur toutes les pages.
 
 // Fonctions d'accès aux instances
 export function getFirestoreInstance(): Firestore | null {
