@@ -38,7 +38,6 @@ function showSystemNotification(title: string, body: string, tag?: string): void
       icon: '/icon-192.png',
       badge: '/favicon.png',
       tag: tag || `notif-${Date.now()}`,
-      vibrate: [200, 100, 200],
       requireInteraction: false,
     });
 
