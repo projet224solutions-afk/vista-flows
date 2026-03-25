@@ -1,3 +1,10 @@
+/**
+ * HOOK: useUserNotifications
+ * Source of truth: `notifications` table
+ * Handles: load, realtime INSERT/UPDATE/DELETE, mark read, delete
+ * Used by: Notifications page + any component needing notification data
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -26,13 +33,12 @@ export const useUserNotifications = () => {
     }
 
     try {
-      // 🚀 Select only needed columns instead of *
       const { data, error } = await supabase
         .from('notifications')
         .select('id, type, title, message, read, created_at, metadata')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50); // 🚀 50 instead of 100
+        .limit(50);
 
       if (error) throw error;
 
@@ -102,7 +108,13 @@ export const useUserNotifications = () => {
 
       if (error) throw error;
 
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setNotifications(prev => {
+        const target = prev.find(n => n.id === notificationId);
+        if (target && !target.read) {
+          setUnreadCount(c => Math.max(0, c - 1));
+        }
+        return prev.filter(n => n.id !== notificationId);
+      });
       toast.success('Notification supprimée');
     } catch (error) {
       console.error('Erreur suppression notification:', error);
@@ -115,8 +127,9 @@ export const useUserNotifications = () => {
 
     loadNotifications();
 
+    // Listen to ALL events (INSERT, UPDATE, DELETE) for full sync
     const channel = supabase
-      .channel(`user-notifications:${user.id}`)
+      .channel(`user-notifications-page:${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -136,8 +149,53 @@ export const useUserNotifications = () => {
             created_at: n.created_at,
             metadata: n.metadata,
           };
-          setNotifications(prev => [mapped, ...prev]);
-          setUnreadCount(prev => prev + 1);
+          setNotifications(prev => {
+            // Deduplicate: don't add if already present
+            if (prev.some(existing => existing.id === mapped.id)) return prev;
+            return [mapped, ...prev];
+          });
+          if (!mapped.read) {
+            setUnreadCount(prev => prev + 1);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          setNotifications(prev => {
+            const newList = prev.map(n =>
+              n.id === updated.id
+                ? { ...n, read: updated.read ?? n.read, title: updated.title || n.title, message: updated.message || n.message }
+                : n
+            );
+            setUnreadCount(newList.filter(n => !n.read).length);
+            return newList;
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          const deletedId = (payload.old as any)?.id;
+          if (!deletedId) return;
+          setNotifications(prev => {
+            const newList = prev.filter(n => n.id !== deletedId);
+            setUnreadCount(newList.filter(n => !n.read).length);
+            return newList;
+          });
         }
       )
       .subscribe();
