@@ -13,8 +13,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Clé secrète pour signer les JWT (en production, utiliser une vraie clé stockée en secret)
-const JWT_SECRET = Deno.env.get('JWT_SECRET') || '224solutions-secret-key-change-in-production';
+const JWT_SECRET = Deno.env.get('JWT_SECRET');
+if (!JWT_SECRET) throw new Error("CRITICAL: JWT_SECRET not configured");
 
 serve(async (req) => {
   // Handle CORS
