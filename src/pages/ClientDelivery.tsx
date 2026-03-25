@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ClientDeliveryRequest } from '@/components/delivery/ClientDeliveryRequest';
 import { DeliveryStatusTracker } from '@/components/delivery/DeliveryStatusTracker';
-import { ClientDeliveryTracking } from '@/components/delivery/ClientDeliveryTracking';
+const ClientDeliveryTracking = React.lazy(() => import('@/components/delivery/ClientDeliveryTracking').then(m => ({ default: m.ClientDeliveryTracking })));
 import { useAuth } from '@/hooks/useAuth';
 
 export default function ClientDelivery() {
