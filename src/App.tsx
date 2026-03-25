@@ -1,4 +1,4 @@
-import { Suspense, memo, useEffect } from "react";
+import { Suspense, memo, useEffect, useState } from "react";
 import { resolvePostAuthRouteSync } from "@/utils/postAuthRoute";
 import { usePrefetchCriticalData } from "@/hooks/usePrefetchCriticalData";
 import { useAutoFillGps as useAutoFillGpsHook } from "@/hooks/useAutoFillGps";
@@ -134,36 +134,60 @@ const DigitalProductDetail = lazyWithRetry(() => import("./pages/DigitalProductD
 const ShortLinkRedirect = lazyWithRetry(() => import("./pages/ShortLinkRedirect"));
 const UserPublicProfile = lazyWithRetry(() => import("./pages/UserPublicProfile"));
 const RestaurantPublicMenu = lazyWithRetry(() => import("./pages/RestaurantPublicMenu"));
-// Ultra-simple loading component - Pure CSS inline (no Tailwind dependency)
-const PageLoader = memo(() => (
-  <div style={{ 
-    minHeight: '100vh', 
-    display: 'flex', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    background: '#fff'
-  }}>
-    <div style={{ textAlign: 'center' }}>
+// Ultra-simple loading component with built-in timeout to prevent infinite loading
+const PageLoader = memo(() => {
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setTimedOut(true), 10000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (timedOut) {
+    return (
       <div style={{ 
-        fontSize: '24px', 
-        fontWeight: '700', 
-        color: '#023288', 
-        marginBottom: '16px',
-        fontFamily: 'system-ui, sans-serif'
-      }}>224Solutions</div>
-      <div style={{
-        width: '32px',
-        height: '32px',
-        border: '3px solid #f3f4f6',
-        borderTop: '3px solid #023288',
-        borderRadius: '50%',
-        margin: '0 auto',
-        animation: 'spin 0.8s linear infinite'
-      }} />
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: '#fff', fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center', maxWidth: '400px', padding: '24px' }}>
+          <div style={{ fontSize: '24px', fontWeight: '700', color: '#023288', marginBottom: '16px' }}>224Solutions</div>
+          <p style={{ color: '#6b7280', marginBottom: '16px' }}>Le chargement prend trop de temps.</p>
+          <button onClick={() => window.location.reload()} style={{
+            padding: '10px 24px', background: '#023288', color: '#fff', border: 'none',
+            borderRadius: '8px', cursor: 'pointer', fontSize: '14px', marginBottom: '8px', width: '100%'
+          }}>Recharger l'application</button>
+          <button onClick={() => {
+            if ('caches' in window) caches.keys().then(k => k.forEach(n => caches.delete(n)));
+            if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistrations().then(r => r.forEach(reg => reg.unregister()));
+            setTimeout(() => window.location.replace('/?resetSw=1'), 500);
+          }} style={{
+            padding: '10px 24px', background: 'transparent', color: '#6b7280', border: '1px solid #e5e7eb',
+            borderRadius: '8px', cursor: 'pointer', fontSize: '13px', width: '100%'
+          }}>Réinitialiser le cache PWA</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ 
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: '#fff'
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ 
+          fontSize: '24px', fontWeight: '700', color: '#023288', marginBottom: '16px',
+          fontFamily: 'system-ui, sans-serif'
+        }}>224Solutions</div>
+        <div style={{
+          width: '32px', height: '32px', border: '3px solid #f3f4f6',
+          borderTop: '3px solid #023288', borderRadius: '50%',
+          margin: '0 auto', animation: 'spin 0.8s linear infinite'
+        }} />
+      </div>
+      <style dangerouslySetInnerHTML={{__html: '@keyframes spin { to { transform: rotate(360deg); } }'}} />
     </div>
-    <style dangerouslySetInnerHTML={{__html: '@keyframes spin { to { transform: rotate(360deg); } }'}} />
-  </div>
-));
+  );
+});
 PageLoader.displayName = 'PageLoader';
 
 /**

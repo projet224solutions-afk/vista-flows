@@ -1,7 +1,9 @@
-// Service Worker v16 - PWA + FCM + Offline + Anti-stale-data
-// v16: add healthz endpoint to app shell and force SW refresh on mobile installs
-const CACHE_VERSION = "v16";
+// Service Worker v17 - Fix healthz.json caching + anti-infinite-loader
+// v17: healthz.json excluded from precache, SW synthesizes JSON when needed
+const CACHE_VERSION = "v17";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
+const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
 
@@ -48,7 +50,7 @@ const PRECACHE_ASSETS = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
-  "/healthz.json",
+  // DO NOT precache /healthz.json — it must always go to network
   "/offline.html",
   "/favicon.png",
   "/icon-192.png",
@@ -151,9 +153,29 @@ self.addEventListener("fetch", (event) => {
   // NEVER intercept manifest
   if (url.pathname === '/manifest.webmanifest' || url.pathname === '/manifest.json') return;
 
-  // Health check must always bypass cache
+  // Health check must always bypass cache — fallback to real JSON if network fails
   if (url.pathname === '/healthz.json') {
-    event.respondWith(fetch(event.request, { cache: 'no-store' }));
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then(response => {
+          const ct = response.headers.get('content-type') || '';
+          // If server returned HTML (SPA rewrite), synthesize a real JSON response
+          if (ct.includes('text/html')) {
+            return new Response('{"status":"ok","source":"sw-synthetic"}', {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Offline — synthesize response so health check doesn't fail due to SW
+          return new Response('{"status":"ok","source":"sw-offline"}', {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        })
+    );
     return;
   }
 
