@@ -283,12 +283,30 @@ export default function StripeCheckoutButton({
   }
 
   if (error || !clientSecret || !stripe) {
+    const isMissingKey = error?.includes('clé Stripe') || error?.includes('not configured');
     return (
-      <Alert variant="destructive" className="my-2">
-        <AlertDescription>
-          {error || 'Impossible de charger le système de paiement. Veuillez réessayer.'}
-        </AlertDescription>
-      </Alert>
+      <div className="space-y-3 my-2">
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error || 'Impossible de charger le système de paiement.'}
+          </AlertDescription>
+        </Alert>
+        {!isMissingKey && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => {
+              initCalledRef.current = false;
+              stripePromise = null;
+              setError(null);
+              setLoading(true);
+            }}
+          >
+            Réessayer le paiement
+          </Button>
+        )}
+      </div>
     );
   }
 
