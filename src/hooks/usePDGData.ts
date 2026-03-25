@@ -333,23 +333,25 @@ export function usePDGData() {
     const result = await executeRobust<PDGStats>(
       'pdg_stats',
       async () => {
+        // 🚀 Optimized: use 'id' instead of '*' for count queries, limit revenue query
         const [
           { count: totalUsers },
           { count: activeVendors },
           { count: pendingOrders },
           { data: revenueData }
         ] = await Promise.all([
-          supabase.from('profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('profiles').select('id', { count: 'exact', head: true }),
           supabase.from('profiles')
-            .select('*', { count: 'exact', head: true })
+            .select('id', { count: 'exact', head: true })
             .eq('role', 'vendeur')
             .eq('status', 'active'),
           supabase.from('orders')
-            .select('*', { count: 'exact', head: true })
+            .select('id', { count: 'exact', head: true })
             .eq('status', 'pending'),
           supabase.from('wallet_transactions')
             .select('amount')
             .eq('status', 'completed')
+            .limit(1000)
         ]);
 
         const totalRevenue = revenueData?.reduce((sum, tx) => sum + (tx.amount || 0), 0) || 0;
