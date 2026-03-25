@@ -377,14 +377,45 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
     permissions: string[]
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { error } = await supabase
+      // 1. Mettre à jour le JSON legacy dans agents_management
+      const { error: legacyError } = await supabase
         .from('agents_management')
         .update({ permissions })
         .eq('id', agentId);
 
-      if (error) {
-        console.error('[useAgentActions] Assign permissions error:', error);
-        return { success: false, error: error.message };
+      if (legacyError) {
+        console.error('[useAgentActions] Legacy permissions update error:', legacyError);
+        return { success: false, error: legacyError.message };
+      }
+
+      // 2. Synchroniser avec agent_permissions table (source de vérité)
+      // D'abord supprimer les anciennes permissions
+      const { error: deleteError } = await supabase
+        .from('agent_permissions')
+        .delete()
+        .eq('agent_id', agentId);
+
+      if (deleteError) {
+        console.warn('[useAgentActions] Delete old permissions warning:', deleteError);
+      }
+
+      // Puis insérer les nouvelles
+      if (permissions.length > 0) {
+        const permRows = permissions.map(perm => ({
+          agent_id: agentId,
+          permission_key: perm,
+          permission_value: true
+        }));
+
+        const { error: insertError } = await supabase
+          .from('agent_permissions')
+          .insert(permRows);
+
+        if (insertError) {
+          console.error('[useAgentActions] Insert permissions error:', insertError);
+          // Non bloquant - le JSON legacy est déjà mis à jour
+          console.warn('⚠️ agent_permissions table non synchronisée, JSON legacy OK');
+        }
       }
 
       toast.success('Permissions mises à jour avec succès!');
