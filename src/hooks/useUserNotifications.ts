@@ -26,12 +26,13 @@ export const useUserNotifications = () => {
     }
 
     try {
+      // 🚀 Select only needed columns instead of *
       const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select('id, type, title, message, read, created_at, metadata')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(50); // 🚀 50 instead of 100
 
       if (error) throw error;
 
@@ -109,7 +110,6 @@ export const useUserNotifications = () => {
     }
   };
 
-  // Écouter les nouvelles notifications en temps réel
   useEffect(() => {
     if (!user) return;
 
@@ -126,15 +126,15 @@ export const useUserNotifications = () => {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          const newNotification = payload.new as any;
+          const n = payload.new as any;
           const mapped: UserNotification = {
-            id: newNotification.id,
-            type: newNotification.type || 'system',
-            title: newNotification.title || 'Notification',
-            message: newNotification.message || '',
-            read: newNotification.read ?? false,
-            created_at: newNotification.created_at,
-            metadata: newNotification.metadata,
+            id: n.id,
+            type: n.type || 'system',
+            title: n.title || 'Notification',
+            message: n.message || '',
+            read: n.read ?? false,
+            created_at: n.created_at,
+            metadata: n.metadata,
           };
           setNotifications(prev => [mapped, ...prev]);
           setUnreadCount(prev => prev + 1);
