@@ -64,14 +64,18 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 
 async function probeHealthz(timeoutMs: number, attempt: number): Promise<HealthProbeResult> {
   try {
-    const response = await withTimeout(
-      fetch(`${HEALTH_CHECK_PATH}?t=${Date.now()}&a=${attempt}`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache' },
-      }),
-      timeoutMs,
-    );
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(`${HEALTH_CHECK_PATH}?t=${Date.now()}&a=${attempt}`, {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+      keepalive: true,
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache' },
+    });
+
+    clearTimeout(timer);
 
     if (!response.ok) {
       return { ok: false, reason: `app_http_${response.status}`, statusCode: response.status, source: 'healthz' };
@@ -90,7 +94,8 @@ async function probeHealthz(timeoutMs: number, attempt: number): Promise<HealthP
     return { ok: false, reason: 'healthz_invalid_payload', statusCode: response.status, source: 'healthz' };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown_error';
-    return { ok: false, reason: message === 'timeout' ? 'healthz_timeout' : `healthz_${message}`, source: 'healthz' };
+    const isAbort = error instanceof DOMException && error.name === 'AbortError';
+    return { ok: false, reason: isAbort ? 'healthz_timeout' : `healthz_${message}`, source: 'healthz' };
   }
 }
 
