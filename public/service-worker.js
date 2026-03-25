@@ -146,35 +146,7 @@ self.addEventListener('fetch', (event) => {
 
   if (url.pathname === '/manifest.webmanifest' || url.pathname === '/manifest.json') return;
 
-  if (url.pathname === '/healthz.json') {
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .then((response) => {
-          const ct = response.headers.get('content-type') || '';
-          if (!response.ok || !ct.includes('application/json')) {
-            throw new Error(`invalid_healthz_response:${response.status}:${ct}`);
-          }
-          return response;
-        })
-        .catch((error) => {
-          return new Response(
-            JSON.stringify({
-              status: 'error',
-              reason: 'healthz_unreachable',
-              detail: error instanceof Error ? error.message : 'unknown_error',
-            }),
-            {
-              status: 503,
-              headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-store',
-              },
-            },
-          );
-        }),
-    );
-    return;
-  }
+  if (url.pathname === '/healthz.json') return;
 
   if (url.pathname.startsWith('/~oauth')) return;
 
