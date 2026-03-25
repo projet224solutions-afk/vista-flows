@@ -1,12 +1,12 @@
 /**
  * 📞 BOUTON D'APPEL WEBRTC - 224SOLUTIONS
- * Bouton pour initier un appel audio WebRTC
+ * Utilise le CONTEXTE global (pas son propre hook).
  */
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Phone, Loader2 } from 'lucide-react';
-import { useWebRTCAudioCall } from '@/hooks/useWebRTCAudioCall';
+import { useWebRTCCallContext } from './WebRTCCallProvider';
 import { cn } from '@/lib/utils';
 
 interface WebRTCCallButtonProps {
@@ -28,7 +28,8 @@ export default function WebRTCCallButton({
   className,
   disabled = false,
 }: WebRTCCallButtonProps) {
-  const { callState, startCall } = useWebRTCAudioCall();
+  // UTILISE LE CONTEXTE — pas useWebRTCAudioCall() directement
+  const { callState, startCall } = useWebRTCCallContext();
 
   const isInCall = callState.isInCall || callState.isCalling || callState.isReceivingCall;
 

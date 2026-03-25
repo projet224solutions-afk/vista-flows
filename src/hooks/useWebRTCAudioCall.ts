@@ -2,6 +2,9 @@
  * 🎤 HOOK WEBRTC AUDIO CALL - 224SOLUTIONS
  * Appels audio 1-to-1 WebRTC natif sans Agora
  * Compatible réseaux mobiles africains
+ * 
+ * ARCHITECTURE: Ce hook est instancié UNE SEULE FOIS dans WebRTCCallProvider.
+ * Tous les composants doivent utiliser useWebRTCCallContext() pour accéder à l'état.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -9,18 +12,30 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-// Configuration ICE - STUN gratuit Google + TURN optionnel
+// Configuration ICE - STUN + TURN pour réseaux africains
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
-  // TURN optionnel (coturn) - décommenter et configurer si nécessaire
-  // {
-  //   urls: 'turn:your-turn-server.com:3478',
-  //   username: 'username',
-  //   credential: 'password'
-  // }
+  // TURN gratuit via Metered (fallback pour NAT symétrique)
+  {
+    urls: 'turn:a.relay.metered.ca:80',
+    username: 'e8dd65c692e5e4056b location',
+    credential: 'open',
+  },
+  {
+    urls: 'turn:a.relay.metered.ca:443',
+    username: 'e8dd65c692e5e4056b location',
+    credential: 'open',
+  },
+  {
+    urls: 'turn:a.relay.metered.ca:443?transport=tcp',
+    username: 'e8dd65c692e5e4056b location',
+    credential: 'open',
+  },
 ];
+
+// Timeout si l'appelé ne répond pas (30s)
+const CALL_TIMEOUT_MS = 30000;
 
 export interface WebRTCCallState {
   isInCall: boolean;
@@ -57,27 +72,28 @@ interface SignalingMessage {
   timestamp: number;
 }
 
-// Sonnerie d'appel (données audio inline pour éviter les dépendances)
-const RINGTONE_FREQUENCY = 440; // Hz
-const RING_DURATION = 1000; // ms
-const RING_PAUSE = 2000; // ms
+const RINGTONE_FREQUENCY = 440;
+const RING_DURATION = 1000;
+const RING_PAUSE = 2000;
+
+const INITIAL_CALL_STATE: WebRTCCallState = {
+  isInCall: false,
+  isCalling: false,
+  isReceivingCall: false,
+  isConnected: false,
+  isMuted: false,
+  callDuration: 0,
+  remoteUserId: null,
+  remoteUserInfo: null,
+  connectionState: null,
+  iceConnectionState: null,
+};
 
 export function useWebRTCAudioCall() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [callState, setCallState] = useState<WebRTCCallState>({
-    isInCall: false,
-    isCalling: false,
-    isReceivingCall: false,
-    isConnected: false,
-    isMuted: false,
-    callDuration: 0,
-    remoteUserId: null,
-    remoteUserInfo: null,
-    connectionState: null,
-    iceConnectionState: null,
-  });
+  const [callState, setCallState] = useState<WebRTCCallState>(INITIAL_CALL_STATE);
 
   // Refs pour les objets WebRTC
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
@@ -88,7 +104,15 @@ export function useWebRTCAudioCall() {
   const pendingIceCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const callDurationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const ringtoneIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const callTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  // Ref miroir de remoteUserId pour les closures (évite stale state)
+  const remoteUserIdRef = useRef<string | null>(null);
+
+  // Synchroniser la ref avec le state
+  useEffect(() => {
+    remoteUserIdRef.current = callState.remoteUserId;
+  }, [callState.remoteUserId]);
 
   // Générer un nom de canal unique pour la signalisation
   const getSignalingChannel = useCallback((userId1: string, userId2: string): string => {
@@ -96,7 +120,7 @@ export function useWebRTCAudioCall() {
     return `webrtc-call-${sorted[0]}-${sorted[1]}`;
   }, []);
 
-  // Jouer la sonnerie d'appel
+  // ─── Sonnerie ───
   const playRingtone = useCallback(() => {
     try {
       if (!audioContextRef.current) {
@@ -105,20 +129,18 @@ export function useWebRTCAudioCall() {
       const ctx = audioContextRef.current;
       
       const playBeep = () => {
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-        
-        oscillator.frequency.value = RINGTONE_FREQUENCY;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + RING_DURATION / 1000);
-        
-        oscillator.start(ctx.currentTime);
-        oscillator.stop(ctx.currentTime + RING_DURATION / 1000);
+        try {
+          const oscillator = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          oscillator.connect(gainNode);
+          gainNode.connect(ctx.destination);
+          oscillator.frequency.value = RINGTONE_FREQUENCY;
+          oscillator.type = 'sine';
+          gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + RING_DURATION / 1000);
+          oscillator.start(ctx.currentTime);
+          oscillator.stop(ctx.currentTime + RING_DURATION / 1000);
+        } catch { /* AudioContext may be suspended */ }
       };
 
       playBeep();
@@ -128,7 +150,6 @@ export function useWebRTCAudioCall() {
     }
   }, []);
 
-  // Arrêter la sonnerie
   const stopRingtone = useCallback(() => {
     if (ringtoneIntervalRef.current) {
       clearInterval(ringtoneIntervalRef.current);
@@ -136,7 +157,7 @@ export function useWebRTCAudioCall() {
     }
   }, []);
 
-  // Démarrer le compteur de durée d'appel
+  // ─── Durée d'appel ───
   const startCallDuration = useCallback(() => {
     setCallState(prev => ({ ...prev, callDuration: 0 }));
     callDurationIntervalRef.current = setInterval(() => {
@@ -144,7 +165,6 @@ export function useWebRTCAudioCall() {
     }, 1000);
   }, []);
 
-  // Arrêter le compteur
   const stopCallDuration = useCallback(() => {
     if (callDurationIntervalRef.current) {
       clearInterval(callDurationIntervalRef.current);
@@ -152,95 +172,20 @@ export function useWebRTCAudioCall() {
     }
   }, []);
 
-  // Créer la connexion peer
-  const createPeerConnection = useCallback(async (): Promise<RTCPeerConnection> => {
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate && callState.remoteUserId && user?.id) {
-        sendSignalingMessage({
-          type: 'ice-candidate',
-          from: user.id,
-          to: callState.remoteUserId,
-          payload: event.candidate.toJSON(),
-          timestamp: Date.now(),
-        });
-      }
-    };
-
-    pc.oniceconnectionstatechange = () => {
-      console.log('🔗 ICE Connection State:', pc.iceConnectionState);
-      setCallState(prev => ({ ...prev, iceConnectionState: pc.iceConnectionState }));
-      
-      if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
-        setCallState(prev => ({ ...prev, isConnected: true }));
-        startCallDuration();
-        stopRingtone();
-      } else if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
-        toast({
-          title: "⚠️ Connexion instable",
-          description: "La qualité de l'appel peut être affectée",
-          variant: "destructive",
-        });
-      }
-    };
-
-    pc.onconnectionstatechange = () => {
-      console.log('🔗 Connection State:', pc.connectionState);
-      setCallState(prev => ({ ...prev, connectionState: pc.connectionState }));
-      
-      if (pc.connectionState === 'failed') {
-        toast({
-          title: "❌ Connexion échouée",
-          description: "Impossible d'établir la connexion",
-          variant: "destructive",
-        });
-        endCall();
-      }
-    };
-
-    pc.ontrack = (event) => {
-      console.log('🎵 Remote track received');
-      remoteStreamRef.current = event.streams[0];
-      
-      // Créer l'élément audio pour le son distant
-      if (!remoteAudioRef.current) {
-        remoteAudioRef.current = new Audio();
-        remoteAudioRef.current.autoplay = true;
-      }
-      remoteAudioRef.current.srcObject = event.streams[0];
-    };
-
-    return pc;
-  }, [callState.remoteUserId, user?.id, startCallDuration, stopRingtone, toast]);
-
-  // Obtenir l'accès au microphone
-  const getLocalAudioStream = useCallback(async (): Promise<MediaStream> => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-        video: false, // Audio uniquement
-      });
-      localStreamRef.current = stream;
-      return stream;
-    } catch (err) {
-      console.error('❌ Erreur accès microphone:', err);
-      toast({
-        title: "❌ Accès microphone refusé",
-        description: "Veuillez autoriser l'accès au microphone pour les appels",
-        variant: "destructive",
-      });
-      throw err;
+  // ─── Timeout appel ───
+  const clearCallTimeout = useCallback(() => {
+    if (callTimeoutRef.current) {
+      clearTimeout(callTimeoutRef.current);
+      callTimeoutRef.current = null;
     }
-  }, [toast]);
+  }, []);
 
-  // Envoyer un message de signalisation via Supabase Realtime
+  // ─── Envoyer un message de signalisation ───
   const sendSignalingMessage = useCallback(async (message: SignalingMessage) => {
-    if (!signalingChannelRef.current) return;
+    if (!signalingChannelRef.current) {
+      console.warn('⚠️ Canal de signalisation non configuré');
+      return;
+    }
     
     try {
       await signalingChannelRef.current.send({
@@ -253,27 +198,166 @@ export function useWebRTCAudioCall() {
     }
   }, []);
 
-  // Configurer le canal de signalisation
+  // ─── Nettoyage complet ───
+  const cleanup = useCallback(() => {
+    stopRingtone();
+    stopCallDuration();
+    clearCallTimeout();
+
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+    }
+
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
+    }
+
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+
+    // Nettoyer le canal de signalisation (mais pas le listener global)
+    if (signalingChannelRef.current) {
+      signalingChannelRef.current.unsubscribe();
+      signalingChannelRef.current = null;
+    }
+
+    pendingIceCandidatesRef.current = [];
+    remoteUserIdRef.current = null;
+
+    setCallState(INITIAL_CALL_STATE);
+  }, [stopRingtone, stopCallDuration, clearCallTimeout]);
+
+  // ─── Créer la connexion peer ───
+  const createPeerConnection = useCallback((): RTCPeerConnection => {
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate && remoteUserIdRef.current && user?.id) {
+        sendSignalingMessage({
+          type: 'ice-candidate',
+          from: user.id,
+          to: remoteUserIdRef.current,
+          payload: event.candidate.toJSON(),
+          timestamp: Date.now(),
+        });
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('🔗 ICE Connection State:', pc.iceConnectionState);
+      setCallState(prev => ({ ...prev, iceConnectionState: pc.iceConnectionState }));
+      
+      if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        setCallState(prev => ({ ...prev, isConnected: true, isCalling: false }));
+        startCallDuration();
+        stopRingtone();
+        clearCallTimeout();
+      } else if (pc.iceConnectionState === 'failed') {
+        toast({
+          title: "❌ Connexion échouée",
+          description: "Impossible d'établir la connexion audio. Vérifiez votre réseau.",
+          variant: "destructive",
+        });
+        cleanup();
+      } else if (pc.iceConnectionState === 'disconnected') {
+        toast({
+          title: "⚠️ Connexion instable",
+          description: "Tentative de reconnexion...",
+        });
+        // Give ICE 10s to recover before giving up
+        setTimeout(() => {
+          if (peerConnectionRef.current?.iceConnectionState === 'disconnected') {
+            toast({
+              title: "❌ Appel perdu",
+              description: "La connexion a été perdue",
+              variant: "destructive",
+            });
+            cleanup();
+          }
+        }, 10000);
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log('🔗 Connection State:', pc.connectionState);
+      setCallState(prev => ({ ...prev, connectionState: pc.connectionState }));
+      
+      if (pc.connectionState === 'failed') {
+        cleanup();
+      }
+    };
+
+    pc.ontrack = (event) => {
+      console.log('🎵 Remote track received');
+      remoteStreamRef.current = event.streams[0];
+      
+      if (!remoteAudioRef.current) {
+        remoteAudioRef.current = new Audio();
+        remoteAudioRef.current.autoplay = true;
+      }
+      remoteAudioRef.current.srcObject = event.streams[0];
+      // Force play for mobile browsers
+      remoteAudioRef.current.play().catch(() => {
+        console.warn('Auto-play bloqué, interaction utilisateur requise');
+      });
+    };
+
+    return pc;
+  }, [user?.id, sendSignalingMessage, startCallDuration, stopRingtone, clearCallTimeout, cleanup, toast]);
+
+  // ─── Obtenir le micro ───
+  const getLocalAudioStream = useCallback(async (): Promise<MediaStream> => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          // Optimisation pour réseaux africains faibles
+          sampleRate: 16000,
+          channelCount: 1,
+        },
+        video: false,
+      });
+      localStreamRef.current = stream;
+      return stream;
+    } catch (err: any) {
+      console.error('❌ Erreur accès microphone:', err);
+      const message = err.name === 'NotAllowedError' 
+        ? "Veuillez autoriser l'accès au microphone dans les paramètres de votre navigateur"
+        : err.name === 'NotFoundError'
+        ? "Aucun microphone détecté sur cet appareil"
+        : "Impossible d'accéder au microphone";
+      
+      toast({
+        title: "❌ Microphone indisponible",
+        description: message,
+        variant: "destructive",
+      });
+      throw err;
+    }
+  }, [toast]);
+
+  // ─── Configurer le canal de signalisation ───
   const setupSignalingChannel = useCallback((channelName: string) => {
+    // Ne pas recréer si déjà le bon canal
     if (signalingChannelRef.current) {
       signalingChannelRef.current.unsubscribe();
     }
 
     const channel = supabase.channel(channelName, {
-      config: {
-        broadcast: { self: false },
-      },
+      config: { broadcast: { self: false } },
     });
 
     channel.on('broadcast', { event: 'signaling' }, async ({ payload }: { payload: SignalingMessage }) => {
       if (!user?.id || payload.to !== user.id) return;
 
-      console.log('📨 Message signalisation reçu:', payload.type);
+      console.log('📨 Signalisation reçue:', payload.type);
 
       switch (payload.type) {
-        case 'call-offer':
-          await handleIncomingCall(payload);
-          break;
         case 'call-answer':
           await handleCallAnswer(payload);
           break;
@@ -286,6 +370,7 @@ export function useWebRTCAudioCall() {
         case 'call-ended':
           handleCallEnded();
           break;
+        // call-offer est géré par le listener global, pas ici
       }
     });
 
@@ -293,39 +378,16 @@ export function useWebRTCAudioCall() {
     signalingChannelRef.current = channel;
   }, [user?.id]);
 
-  // Gérer un appel entrant
-  const handleIncomingCall = useCallback(async (message: SignalingMessage) => {
-    console.log('📞 Appel entrant de:', message.from);
-    
-    setCallState(prev => ({
-      ...prev,
-      isReceivingCall: true,
-      remoteUserId: message.from,
-      remoteUserInfo: message.userInfo || { name: 'Utilisateur' },
-    }));
-
-    // Stocker l'offre pour plus tard
-    pendingIceCandidatesRef.current = [];
-    
-    // Créer la connexion peer et définir l'offre distante
-    const pc = await createPeerConnection();
-    peerConnectionRef.current = pc;
-    
-    await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
-    
-    playRingtone();
-  }, [createPeerConnection, playRingtone]);
-
-  // Gérer la réponse à l'appel
+  // ─── Handlers de signalisation ───
   const handleCallAnswer = useCallback(async (message: SignalingMessage) => {
     console.log('✅ Réponse appel reçue');
+    clearCallTimeout();
     
     if (peerConnectionRef.current) {
       await peerConnectionRef.current.setRemoteDescription(
         new RTCSessionDescription(message.payload)
       );
       
-      // Traiter les candidats ICE en attente
       for (const candidate of pendingIceCandidatesRef.current) {
         await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
       }
@@ -333,79 +395,78 @@ export function useWebRTCAudioCall() {
     }
     
     stopRingtone();
-  }, [stopRingtone]);
+  }, [stopRingtone, clearCallTimeout]);
 
-  // Gérer les candidats ICE
   const handleIceCandidate = useCallback(async (message: SignalingMessage) => {
     if (peerConnectionRef.current?.remoteDescription) {
       await peerConnectionRef.current.addIceCandidate(
         new RTCIceCandidate(message.payload)
       );
     } else {
-      // Stocker pour plus tard si pas encore de description distante
       pendingIceCandidatesRef.current.push(message.payload);
     }
   }, []);
 
-  // Gérer le rejet d'appel
   const handleCallRejected = useCallback(() => {
     toast({
       title: "📵 Appel refusé",
       description: "L'utilisateur a refusé votre appel",
     });
     cleanup();
-  }, [toast]);
+  }, [toast, cleanup]);
 
-  // Gérer la fin d'appel
   const handleCallEnded = useCallback(() => {
     toast({
       title: "📞 Appel terminé",
       description: "L'appel a pris fin",
     });
     cleanup();
-  }, [toast]);
+  }, [toast, cleanup]);
 
-  // Nettoyage complet
-  const cleanup = useCallback(() => {
-    stopRingtone();
-    stopCallDuration();
-
-    // Arrêter les pistes locales
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => track.stop());
-      localStreamRef.current = null;
-    }
-
-    // Arrêter l'audio distant
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = null;
-    }
-
-    // Fermer la connexion peer
+  // ─── Gérer un appel entrant ───
+  const handleIncomingCall = useCallback(async (message: SignalingMessage) => {
+    console.log('📞 Appel entrant de:', message.from);
+    
+    // Si déjà en appel, rejeter automatiquement
     if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-      peerConnectionRef.current = null;
+      console.log('📞 Déjà en appel, rejet automatique');
+      // On ne peut pas envoyer via le canal car il n'est pas encore configuré
+      return;
     }
+    
+    setCallState(prev => ({
+      ...prev,
+      isReceivingCall: true,
+      isInCall: true,
+      remoteUserId: message.from,
+      remoteUserInfo: message.userInfo || { name: 'Utilisateur' },
+    }));
+    remoteUserIdRef.current = message.from;
 
     pendingIceCandidatesRef.current = [];
+    
+    // Créer la connexion peer et définir l'offre distante
+    const pc = createPeerConnection();
+    peerConnectionRef.current = pc;
+    
+    await pc.setRemoteDescription(new RTCSessionDescription(message.payload));
+    
+    playRingtone();
+    
+    // Auto-timeout après 30s si pas de réponse
+    callTimeoutRef.current = setTimeout(() => {
+      if (callState.isReceivingCall) {
+        toast({
+          title: "📞 Appel manqué",
+          description: `Appel de ${message.userInfo?.name || 'Utilisateur'}`,
+        });
+        cleanup();
+      }
+    }, CALL_TIMEOUT_MS);
+  }, [createPeerConnection, playRingtone, cleanup, toast]);
 
-    setCallState({
-      isInCall: false,
-      isCalling: false,
-      isReceivingCall: false,
-      isConnected: false,
-      isMuted: false,
-      callDuration: 0,
-      remoteUserId: null,
-      remoteUserInfo: null,
-      connectionState: null,
-      iceConnectionState: null,
-    });
-  }, [stopRingtone, stopCallDuration]);
+  // ═══════════ ACTIONS PUBLIQUES ═══════════
 
-  // ========== ACTIONS PUBLIQUES ==========
-
-  // Démarrer un appel
   const startCall = useCallback(async (
     userId: string,
     userInfo?: { name: string; avatar?: string }
@@ -415,6 +476,14 @@ export function useWebRTCAudioCall() {
         title: "❌ Non connecté",
         description: "Veuillez vous connecter pour passer un appel",
         variant: "destructive",
+      });
+      return;
+    }
+
+    if (peerConnectionRef.current) {
+      toast({
+        title: "⚠️ Appel en cours",
+        description: "Terminez l'appel en cours avant d'en passer un autre",
       });
       return;
     }
@@ -429,16 +498,20 @@ export function useWebRTCAudioCall() {
         remoteUserId: userId,
         remoteUserInfo: userInfo || { name: 'Utilisateur' },
       }));
+      remoteUserIdRef.current = userId;
 
       // Configurer le canal de signalisation
       const channelName = getSignalingChannel(user.id, userId);
       setupSignalingChannel(channelName);
 
+      // Attendre que le canal soit prêt
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Obtenir l'accès micro
       const stream = await getLocalAudioStream();
 
       // Créer la connexion peer
-      const pc = await createPeerConnection();
+      const pc = createPeerConnection();
       peerConnectionRef.current = pc;
 
       // Ajouter les pistes audio
@@ -462,7 +535,7 @@ export function useWebRTCAudioCall() {
         avatar: profile?.avatar_url,
       };
 
-      // Envoyer l'offre
+      // Envoyer l'offre via le canal de signalisation
       await sendSignalingMessage({
         type: 'call-offer',
         from: user.id,
@@ -472,6 +545,24 @@ export function useWebRTCAudioCall() {
         timestamp: Date.now(),
       });
 
+      // AUSSI envoyer via le canal d'écoute du destinataire
+      const listenChannel = supabase.channel(`webrtc-listen-${userId}`);
+      await listenChannel.subscribe();
+      await listenChannel.send({
+        type: 'broadcast',
+        event: 'signaling',
+        payload: {
+          type: 'call-offer',
+          from: user.id,
+          to: userId,
+          payload: offer,
+          userInfo: callerInfo,
+          timestamp: Date.now(),
+        } as SignalingMessage,
+      });
+      // Cleanup listen channel after sending
+      setTimeout(() => listenChannel.unsubscribe(), 2000);
+
       playRingtone();
 
       toast({
@@ -479,42 +570,57 @@ export function useWebRTCAudioCall() {
         description: `Appel vers ${userInfo?.name || 'Utilisateur'}`,
       });
 
+      // Timeout: si pas de réponse après 30s
+      callTimeoutRef.current = setTimeout(() => {
+        if (!peerConnectionRef.current || peerConnectionRef.current.connectionState !== 'connected') {
+          toast({
+            title: "📵 Pas de réponse",
+            description: `${userInfo?.name || 'L\'utilisateur'} ne répond pas`,
+          });
+          // Envoyer call-ended pour nettoyer côté distant
+          sendSignalingMessage({
+            type: 'call-ended',
+            from: user.id,
+            to: userId,
+            payload: null,
+            timestamp: Date.now(),
+          });
+          cleanup();
+        }
+      }, CALL_TIMEOUT_MS);
+
     } catch (err) {
       console.error('❌ Erreur démarrage appel:', err);
       toast({
         title: "❌ Erreur",
-        description: "Impossible de démarrer l'appel",
+        description: "Impossible de démarrer l'appel. Vérifiez votre microphone.",
         variant: "destructive",
       });
       cleanup();
     }
   }, [user?.id, toast, getSignalingChannel, setupSignalingChannel, getLocalAudioStream, createPeerConnection, sendSignalingMessage, playRingtone, cleanup]);
 
-  // Accepter un appel entrant
   const acceptCall = useCallback(async () => {
-    if (!peerConnectionRef.current || !user?.id || !callState.remoteUserId) return;
+    if (!peerConnectionRef.current || !user?.id || !remoteUserIdRef.current) return;
 
     try {
       console.log('✅ Acceptation de l\'appel');
       stopRingtone();
+      clearCallTimeout();
 
-      // Obtenir l'accès micro
       const stream = await getLocalAudioStream();
 
-      // Ajouter les pistes audio
       stream.getTracks().forEach(track => {
         peerConnectionRef.current?.addTrack(track, stream);
       });
 
-      // Créer la réponse
       const answer = await peerConnectionRef.current.createAnswer();
       await peerConnectionRef.current.setLocalDescription(answer);
 
-      // Envoyer la réponse
       await sendSignalingMessage({
         type: 'call-answer',
         from: user.id,
-        to: callState.remoteUserId,
+        to: remoteUserIdRef.current,
         payload: answer,
         timestamp: Date.now(),
       });
@@ -539,47 +645,38 @@ export function useWebRTCAudioCall() {
       });
       cleanup();
     }
-  }, [user?.id, callState.remoteUserId, stopRingtone, getLocalAudioStream, sendSignalingMessage, toast, cleanup]);
+  }, [user?.id, stopRingtone, clearCallTimeout, getLocalAudioStream, sendSignalingMessage, toast, cleanup]);
 
-  // Refuser un appel
   const rejectCall = useCallback(() => {
-    if (!user?.id || !callState.remoteUserId) return;
+    if (!user?.id || !remoteUserIdRef.current) return;
 
     sendSignalingMessage({
       type: 'call-rejected',
       from: user.id,
-      to: callState.remoteUserId,
+      to: remoteUserIdRef.current,
       payload: null,
       timestamp: Date.now(),
     });
 
-    toast({
-      title: "📵 Appel refusé",
-    });
-
+    toast({ title: "📵 Appel refusé" });
     cleanup();
-  }, [user?.id, callState.remoteUserId, sendSignalingMessage, toast, cleanup]);
+  }, [user?.id, sendSignalingMessage, toast, cleanup]);
 
-  // Terminer l'appel
   const endCall = useCallback(() => {
-    if (user?.id && callState.remoteUserId) {
+    if (user?.id && remoteUserIdRef.current) {
       sendSignalingMessage({
         type: 'call-ended',
         from: user.id,
-        to: callState.remoteUserId,
+        to: remoteUserIdRef.current,
         payload: null,
         timestamp: Date.now(),
       });
     }
 
-    toast({
-      title: "📞 Appel terminé",
-    });
-
+    toast({ title: "📞 Appel terminé" });
     cleanup();
-  }, [user?.id, callState.remoteUserId, sendSignalingMessage, toast, cleanup]);
+  }, [user?.id, sendSignalingMessage, toast, cleanup]);
 
-  // Toggle mute
   const toggleMute = useCallback(() => {
     if (localStreamRef.current) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
@@ -590,18 +687,17 @@ export function useWebRTCAudioCall() {
     }
   }, []);
 
-  // Écouter les appels entrants globalement
+  // ─── Listener global pour les appels entrants ───
   useEffect(() => {
     if (!user?.id) return;
 
-    // Créer un canal d'écoute pour les appels entrants
     const listenChannel = supabase.channel(`webrtc-listen-${user.id}`, {
       config: { broadcast: { self: false } },
     });
 
     listenChannel.on('broadcast', { event: 'signaling' }, async ({ payload }: { payload: SignalingMessage }) => {
       if (payload.to === user.id && payload.type === 'call-offer') {
-        // Configurer le bon canal de signalisation
+        // Configurer le canal de signalisation bidirectionnel
         const channelName = getSignalingChannel(user.id, payload.from);
         setupSignalingChannel(channelName);
         await handleIncomingCall(payload);
@@ -612,17 +708,13 @@ export function useWebRTCAudioCall() {
 
     return () => {
       listenChannel.unsubscribe();
-      cleanup();
     };
-  }, [user?.id, getSignalingChannel, setupSignalingChannel, handleIncomingCall, cleanup]);
+  }, [user?.id, getSignalingChannel, setupSignalingChannel, handleIncomingCall]);
 
   // Cleanup au démontage
   useEffect(() => {
     return () => {
       cleanup();
-      if (signalingChannelRef.current) {
-        signalingChannelRef.current.unsubscribe();
-      }
     };
   }, [cleanup]);
 
