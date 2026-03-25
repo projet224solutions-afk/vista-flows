@@ -58,7 +58,7 @@ async function loadAgoraRTM() {
   if (!_AgoraRTM) {
     _AgoraRTM = await import('agora-rtm');
   }
-  return _AgoraRTM;
+  return _AgoraRTM.default;
 }
 
 class AgoraService {
@@ -113,10 +113,10 @@ class AgoraService {
         throw new Error('Agora non initialisé. Appelez initialize() d\'abord.');
       }
 
-      const AgoraRTM = await loadAgoraRTM();
+      const AgoraRTMDefault = await loadAgoraRTM();
       
       // Créer instance RTM v2
-      this.rtmClient = new AgoraRTM.RTM(this.appId, userId);
+      this.rtmClient = new AgoraRTMDefault.RTM(this.appId, userId);
       
       // Configurer les événements RTM v2
       this.setupRTMEvents();
