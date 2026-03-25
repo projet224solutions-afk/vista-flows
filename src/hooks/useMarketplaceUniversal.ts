@@ -88,7 +88,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   } = options;
 
   const [items, setItems] = useState<MarketplaceItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(autoLoad);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
