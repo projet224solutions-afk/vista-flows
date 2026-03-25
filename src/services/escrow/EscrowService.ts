@@ -120,7 +120,7 @@ export class EscrowService {
     private async connectWebSocket(): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
-                const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:3001';
+                const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3001';
                 this.websocket = new WebSocket(wsUrl);
 
                 this.websocket.onopen = () => {
@@ -170,7 +170,7 @@ export class EscrowService {
     ): Promise<EscrowInvoice> {
         try {
             const invoiceId = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            const paymentLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://224solutions.app'}/pay/${invoiceId}`;
+            const paymentLink = `${import.meta.env.VITE_APP_URL || 'https://224solutions.app'}/pay/${invoiceId}`;
 
             const invoice: EscrowInvoice = {
                 id: invoiceId,

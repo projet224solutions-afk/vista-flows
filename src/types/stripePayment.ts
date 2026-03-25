@@ -188,8 +188,8 @@ export interface StripeConfig {
   id: string;
   platform_commission_rate: number;
   stripe_publishable_key: string | null;
-  stripe_secret_key: string | null;
-  stripe_webhook_secret: string | null;
+  // stripe_secret_key: NEVER exposed to frontend - server-side only
+  // stripe_webhook_secret: NEVER exposed to frontend - server-side only
   default_currency: string;
   supported_currencies: string[];
   require_3d_secure: boolean;
