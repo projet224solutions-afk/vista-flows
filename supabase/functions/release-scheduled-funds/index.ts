@@ -11,7 +11,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const cronSecret = Deno.env.get('CRON_SECRET') || 'default-secret';
+const cronSecret = Deno.env.get('CRON_SECRET');
+if (!cronSecret) throw new Error("CRITICAL: CRON_SECRET not configured");
 
 serve(async (req) => {
   try {
