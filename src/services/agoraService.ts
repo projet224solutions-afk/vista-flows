@@ -1,19 +1,20 @@
 /**
  * 🎥 SERVICE AGORA RTC - 224SOLUTIONS
  * Service opérationnel pour communications audio/vidéo avec Agora
- * Utilise agora-rtm v2 pour compatibilité Vite build
+ * Les SDK agora-rtc-sdk-ng et agora-rtm sont chargés dynamiquement (lazy)
+ * pour éviter un chunk de 2.6MB dans le bundle initial.
  */
 
-import AgoraRTC, { 
-  IAgoraRTCClient, 
-  ICameraVideoTrack, 
+// Types only — no runtime import
+import type {
+  IAgoraRTCClient,
+  ICameraVideoTrack,
   IMicrophoneAudioTrack,
   IRemoteVideoTrack,
   IRemoteAudioTrack,
   NetworkQuality,
   IAgoraRTCRemoteUser
 } from 'agora-rtc-sdk-ng';
-import AgoraRTM, { RTMClient } from 'agora-rtm';
 
 export interface AgoraConfig {
   appId: string;
@@ -41,9 +42,28 @@ export interface RemoteUser {
   audioTrack?: IRemoteAudioTrack;
 }
 
+// Lazy-loaded SDK references
+let _AgoraRTC: typeof import('agora-rtc-sdk-ng').default | null = null;
+let _AgoraRTM: typeof import('agora-rtm') | null = null;
+
+async function loadAgoraRTC() {
+  if (!_AgoraRTC) {
+    const mod = await import('agora-rtc-sdk-ng');
+    _AgoraRTC = mod.default;
+  }
+  return _AgoraRTC;
+}
+
+async function loadAgoraRTM() {
+  if (!_AgoraRTM) {
+    _AgoraRTM = await import('agora-rtm');
+  }
+  return _AgoraRTM.default;
+}
+
 class AgoraService {
   private client: IAgoraRTCClient | null = null;
-  private rtmClient: RTMClient | null = null;
+  private rtmClient: any | null = null;
   private localAudioTrack: IMicrophoneAudioTrack | null = null;
   private localVideoTrack: ICameraVideoTrack | null = null;
   private remoteUsers: Map<string, RemoteUser> = new Map();
@@ -60,11 +80,13 @@ class AgoraService {
   private onLocalVideoReady?: (track: ICameraVideoTrack) => void;
 
   /**
-   * Initialiser le client Agora
+   * Initialiser le client Agora (lazy-load du SDK)
    */
   async initialize(config: AgoraConfig): Promise<void> {
     try {
       this.appId = config.appId;
+      
+      const AgoraRTC = await loadAgoraRTC();
       
       // Initialiser RTC Client
       this.client = AgoraRTC.createClient({ 
@@ -83,7 +105,7 @@ class AgoraService {
   }
 
   /**
-   * Initialiser RTM pour un utilisateur spécifique
+   * Initialiser RTM pour un utilisateur spécifique (lazy-load du SDK RTM)
    */
   async initializeRTM(userId: string, token?: string): Promise<void> {
     try {
@@ -91,8 +113,10 @@ class AgoraService {
         throw new Error('Agora non initialisé. Appelez initialize() d\'abord.');
       }
 
+      const AgoraRTMDefault = await loadAgoraRTM();
+      
       // Créer instance RTM v2
-      this.rtmClient = new AgoraRTM.RTM(this.appId, userId);
+      this.rtmClient = new AgoraRTMDefault.RTM(this.appId, userId);
       
       // Configurer les événements RTM v2
       this.setupRTMEvents();
@@ -113,22 +137,18 @@ class AgoraService {
   private setupRTCEvents(): void {
     if (!this.client) return;
 
-    // Quand un utilisateur publie un flux
     this.client.on('user-published', async (user, mediaType) => {
       console.log('👤 Utilisateur publié:', user.uid, mediaType);
       
       try {
-        // S'abonner au flux
         await this.client!.subscribe(user, mediaType);
         
-        // Mettre à jour les utilisateurs distants
         const remoteUser: RemoteUser = this.remoteUsers.get(String(user.uid)) || { uid: user.uid };
         
         if (mediaType === 'video') {
           remoteUser.videoTrack = user.videoTrack;
         } else if (mediaType === 'audio') {
           remoteUser.audioTrack = user.audioTrack;
-          // Jouer l'audio automatiquement
           user.audioTrack?.play();
         }
         
@@ -170,7 +190,6 @@ class AgoraService {
     });
 
     this.client.on('network-quality', (stats) => {
-      // Log uniquement si qualité change significativement
       if (stats.uplinkNetworkQuality > 0 || stats.downlinkNetworkQuality > 0) {
         console.log('📊 Qualité réseau - Up:', stats.uplinkNetworkQuality, 'Down:', stats.downlinkNetworkQuality);
       }
@@ -183,7 +202,6 @@ class AgoraService {
   private setupRTMEvents(): void {
     if (!this.rtmClient) return;
 
-    // RTM v2 events
     this.rtmClient.addEventListener('message', (event: any) => {
       console.log('💬 Message reçu:', event.channelName, event.message);
     });
@@ -203,7 +221,6 @@ class AgoraService {
     }
 
     try {
-      // RTM v2 - subscribe to channel
       await this.rtmClient.subscribe(channelName, {
         withMessage: true,
         withPresence: true
@@ -227,7 +244,6 @@ class AgoraService {
     }
 
     try {
-      // RTM v2 - publish message to channel
       await this.rtmClient.publish(channelName, message);
       console.log('✅ Message envoyé sur:', channelName);
     } catch (error) {
@@ -244,7 +260,6 @@ class AgoraService {
       throw new Error('Client Agora non initialisé. Appelez initialize() d\'abord.');
     }
 
-    // Empêcher les doubles joins (ex: React StrictMode / double click)
     if (this.isJoining) {
       console.warn('[Agora] ⚠️ joinChannel ignoré: join déjà en cours');
       return;
@@ -252,7 +267,6 @@ class AgoraService {
 
     const connectionState = (this.client as any)?.connectionState as string | undefined;
 
-    // Si on est déjà connecté/connecting, éviter INVALID_OPERATION
     if (connectionState && connectionState !== 'DISCONNECTED') {
       if (this.currentChannel && this.currentChannel === config.channel) {
         console.log('[Agora] ✅ Déjà dans le canal:', config.channel, 'state:', connectionState);
@@ -266,7 +280,6 @@ class AgoraService {
         console.warn('[Agora] ⚠️ leave() a échoué (non bloquant):', (e as any)?.message || e);
       }
 
-      // Reset état local
       this.isConnected = false;
       this.currentChannel = '';
       this.currentUid = '';
@@ -281,7 +294,6 @@ class AgoraService {
         try {
           console.log(`[Agora] 🔗 Tentative ${retryCount + 1}/${maxRetries} - Rejoindre canal:`, config.channel);
 
-          // Timeout pour éviter blocage infini
           const joinPromise = this.client.join(
             this.appId,
             config.channel,
@@ -301,12 +313,11 @@ class AgoraService {
 
           console.log('[Agora] ✅ Canal rejoint avec succès:', config.channel);
 
-          // Publier audio et vidéo si rôle publisher
           if (config.role === 'publisher') {
             await this.publishLocalTracks();
           }
 
-          return; // Succès, sortir de la boucle
+          return;
 
         } catch (error: any) {
           retryCount++;
@@ -318,7 +329,6 @@ class AgoraService {
             uid: config.uid
           });
 
-          // Erreurs non-retriables
           if (errorMessage.includes('INVALID_') || errorMessage.includes('banned')) {
             throw new Error(`Erreur Agora non-retriable: ${errorMessage}`);
           }
@@ -327,12 +337,10 @@ class AgoraService {
             throw new Error(`Échec rejoindre canal après ${maxRetries} tentatives: ${errorMessage}`);
           }
 
-          // Exponential backoff avant retry
           const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
           console.log(`[Agora] ⏳ Retry dans ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
 
-          // Cleanup avant retry
           try {
             await this.client.leave();
           } catch (cleanupErr) {
@@ -359,20 +367,18 @@ class AgoraService {
       throw new Error('Client Agora non disponible');
     }
 
+    const AgoraRTC = await loadAgoraRTC();
     const tracksToPublish: (IMicrophoneAudioTrack | ICameraVideoTrack)[] = [];
     const errors: string[] = [];
 
     try {
-      // Créer track audio avec timeout
       try {
         const audioPromise = AgoraRTC.createMicrophoneAudioTrack({
           encoderConfig: 'music_standard'
         });
-
         const audioTimeout = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Timeout audio track (10s)')), 10000)
         );
-
         this.localAudioTrack = await Promise.race([audioPromise, audioTimeout]);
         tracksToPublish.push(this.localAudioTrack);
         console.log('[Agora] ✅ Track audio créé');
@@ -380,46 +386,33 @@ class AgoraService {
         const errorMsg = `Microphone inaccessible: ${audioError?.message || 'Erreur inconnue'}`;
         errors.push(errorMsg);
         console.warn('[Agora] ⚠️', errorMsg);
-        // Continuer sans audio
       }
 
-      // Créer track vidéo avec timeout
       try {
         const videoPromise = AgoraRTC.createCameraVideoTrack({
           encoderConfig: '720p_2'
         });
-
         const videoTimeout = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Timeout video track (10s)')), 10000)
         );
-
         this.localVideoTrack = await Promise.race([videoPromise, videoTimeout]);
         tracksToPublish.push(this.localVideoTrack);
         console.log('[Agora] ✅ Track vidéo créé');
-        
-        // Notifier que la vidéo locale est prête
         this.onLocalVideoReady?.(this.localVideoTrack);
       } catch (videoError: any) {
         const errorMsg = `Caméra inaccessible: ${videoError?.message || 'Erreur inconnue'}`;
         errors.push(errorMsg);
         console.warn('[Agora] ⚠️', errorMsg);
-        // Continuer sans vidéo
       }
 
-      // Publier les tracks disponibles
       if (tracksToPublish.length > 0) {
         try {
           await this.client.publish(tracksToPublish);
           console.log('[Agora] ✅ Tracks locaux publiés:', tracksToPublish.length);
         } catch (publishError: any) {
           console.error('[Agora] ❌ Erreur publication tracks:', publishError);
-          // Cleanup les tracks créés mais non publiés
           tracksToPublish.forEach(track => {
-            try {
-              track.close();
-            } catch (err) {
-              console.warn('[Agora] ⚠️ Erreur cleanup track:', err);
-            }
+            try { track.close(); } catch (err) { console.warn('[Agora] ⚠️ Erreur cleanup track:', err); }
           });
           throw new Error(`Échec publication: ${publishError.message}`);
         }
@@ -429,7 +422,6 @@ class AgoraService {
         throw new Error(errorMessage);
       }
 
-      // Logger les warnings si partiellement réussi
       if (errors.length > 0) {
         console.warn('[Agora] ⚠️ Publication partielle:', errors.join(', '));
       }
@@ -444,7 +436,6 @@ class AgoraService {
    */
   async leaveChannel(): Promise<void> {
     try {
-      // Arrêter et nettoyer les tracks locaux
       if (this.localAudioTrack) {
         this.localAudioTrack.close();
         this.localAudioTrack = null;
@@ -455,7 +446,6 @@ class AgoraService {
         this.localVideoTrack = null;
       }
 
-      // Quitter le canal RTC
       if (this.client) {
         await this.client.leave();
       }
@@ -478,18 +468,18 @@ class AgoraService {
   async toggleMicrophone(): Promise<boolean> {
     if (!this.localAudioTrack) {
       console.warn('⚠️ Pas de track audio local');
-      return true; // Considéré comme muté
+      return true;
     }
 
     try {
       const newEnabled = !this.localAudioTrack.enabled;
       await this.localAudioTrack.setEnabled(newEnabled);
-      const isMuted = !newEnabled; // Inversé: enabled=true signifie isMuted=false
+      const isMuted = !newEnabled;
       console.log('🎤 Microphone:', newEnabled ? 'activé' : 'désactivé (mute)');
       return isMuted;
     } catch (error) {
       console.error('❌ Erreur toggle microphone:', error);
-      return true; // Considéré comme muté en cas d'erreur
+      return true;
     }
   }
 
@@ -500,7 +490,7 @@ class AgoraService {
   async toggleCamera(): Promise<boolean> {
     if (!this.localVideoTrack) {
       console.warn('⚠️ Pas de track vidéo local');
-      return false; // Vidéo désactivée
+      return false;
     }
 
     try {
@@ -514,69 +504,19 @@ class AgoraService {
     }
   }
 
-  /**
-   * Obtenir les statistiques de qualité
-   */
   async getNetworkQuality(): Promise<NetworkQuality | null> {
     if (!this.client) return null;
-    return {
-      uplinkNetworkQuality: 0,
-      downlinkNetworkQuality: 0
-    };
+    return { uplinkNetworkQuality: 0, downlinkNetworkQuality: 0 };
   }
 
-  /**
-   * Vérifier si connecté
-   */
-  isChannelConnected(): boolean {
-    return this.isConnected;
-  }
+  isChannelConnected(): boolean { return this.isConnected; }
+  getConnectionState(): string { return ((this.client as any)?.connectionState as string) || 'DISCONNECTED'; }
+  getCurrentUid(): string { return this.currentUid; }
+  getCurrentChannel(): string { return this.currentChannel; }
+  getLocalVideoTrack(): ICameraVideoTrack | null { return this.localVideoTrack; }
+  getLocalAudioTrack(): IMicrophoneAudioTrack | null { return this.localAudioTrack; }
+  getRemoteUsers(): RemoteUser[] { return Array.from(this.remoteUsers.values()); }
 
-  /**
-   * État de connexion RTC (DISCONNECTED / CONNECTING / CONNECTED / ...)
-   */
-  getConnectionState(): string {
-    return ((this.client as any)?.connectionState as string) || 'DISCONNECTED';
-  }
-
-  /**
-   * Obtenir l'UID actuel
-   */
-  getCurrentUid(): string {
-    return this.currentUid;
-  }
-
-  /**
-   * Obtenir le canal actuel
-   */
-  getCurrentChannel(): string {
-    return this.currentChannel;
-  }
-
-  /**
-   * Obtenir le track vidéo local
-   */
-  getLocalVideoTrack(): ICameraVideoTrack | null {
-    return this.localVideoTrack;
-  }
-
-  /**
-   * Obtenir le track audio local
-   */
-  getLocalAudioTrack(): IMicrophoneAudioTrack | null {
-    return this.localAudioTrack;
-  }
-
-  /**
-   * Obtenir les utilisateurs distants
-   */
-  getRemoteUsers(): RemoteUser[] {
-    return Array.from(this.remoteUsers.values());
-  }
-
-  /**
-   * Jouer la vidéo locale dans un élément
-   */
   playLocalVideo(element: HTMLElement | string): void {
     if (this.localVideoTrack) {
       this.localVideoTrack.play(element);
@@ -584,9 +524,6 @@ class AgoraService {
     }
   }
 
-  /**
-   * Jouer la vidéo distante dans un élément
-   */
   playRemoteVideo(uid: string, element: HTMLElement | string): void {
     const remoteUser = this.remoteUsers.get(uid);
     if (remoteUser?.videoTrack) {
@@ -595,9 +532,6 @@ class AgoraService {
     }
   }
 
-  /**
-   * Configurer les callbacks d'événements
-   */
   setEventCallbacks(callbacks: {
     onUserJoined?: (user: RemoteUser) => void;
     onUserLeft?: (uid: string) => void;
@@ -608,15 +542,11 @@ class AgoraService {
     this.onLocalVideoReady = callbacks.onLocalVideoReady;
   }
 
-  /**
-   * Nettoyer les ressources
-   */
   async cleanup(): Promise<void> {
     console.log('[Agora] 🧹 Début cleanup...');
     const errors: string[] = [];
 
     try {
-      // 1. Cleanup RTC tracks et channel
       try {
         await this.leaveChannel();
       } catch (leaveError: any) {
@@ -625,10 +555,8 @@ class AgoraService {
         console.warn('[Agora] ⚠️', msg);
       }
       
-      // 2. Cleanup RTM canaux
       if (this.rtmClient) {
         try {
-          // Unsubscribe de tous les canaux
           for (const channel of this.subscribedChannels) {
             try {
               await Promise.race([
@@ -644,7 +572,6 @@ class AgoraService {
           }
           this.subscribedChannels.clear();
           
-          // Logout RTM
           try {
             await Promise.race([
               this.rtmClient.logout(),
@@ -665,7 +592,6 @@ class AgoraService {
         }
       }
 
-      // 3. Cleanup mémoire
       this.remoteUsers.clear();
       this.client = null;
       this.isConnected = false;

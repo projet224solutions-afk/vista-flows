@@ -276,7 +276,7 @@ function App() {
       if (cleaned > 0) {
         console.log(`🧹 Nettoyage: ${cleaned} entrée(s) de persistence expirée(s) supprimée(s)`);
       }
-    });
+    }).catch(() => {});
 
     // Enregistrement du Service Worker pour PWA (centralisé dans src/main.tsx)
 

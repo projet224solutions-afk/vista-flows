@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
-import { registerServiceWorker, unregisterServiceWorker } from "./lib/serviceWorkerRegistration";
+import { registerServiceWorker, unregisterServiceWorker, resetPWA } from "./lib/serviceWorkerRegistration";
 import { initPWAInstallPromptListener } from "./lib/pwaInstallPrompt";
 import { initMonitoring } from "./lib/monitoring";
 import { initializeSecurity } from "./lib/security";
@@ -210,7 +210,7 @@ initApp();
 // Universal SW reset: works on ALL domains (224solution.net, lovable, etc.)
 const resetParams = new URLSearchParams(window.location.search);
 if (resetParams.has('resetSw')) {
-  import('./lib/serviceWorkerRegistration').then(({ resetPWA }) => resetPWA());
+  resetPWA();
 } else {
   // Service Worker registration
   const enablePwaPreview =

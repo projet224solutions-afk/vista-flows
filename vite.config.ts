@@ -36,33 +36,64 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
+          /**
+           * Manual chunks strategy — 224SOLUTIONS
+           * 
+           * Heavy libs (agora-rtc ~2MB, agora-rtm ~600KB, mapbox ~1.6MB) are
+           * dynamically imported in the source code, so they naturally split
+           * into their own async chunks. The manualChunks below only handle
+           * libraries that ARE statically imported somewhere and need grouping.
+           */
           manualChunks(id: string) {
-            if (id.includes('node_modules')) {
-              if (id.includes('react-dom')) return 'vendor-react-dom';
-              if (id.includes('react-router')) return 'vendor-router';
-              if (id.includes('/react/') || id.includes('\\react\\')) return 'vendor-react';
-              if (id.includes('@radix-ui')) return 'vendor-radix';
-              if (id.includes('lucide-react')) return 'vendor-icons';
-              if (id.includes('framer-motion')) return 'vendor-motion';
-              if (id.includes('@supabase')) return 'vendor-supabase';
-              if (id.includes('@tanstack')) return 'vendor-tanstack';
-              if (id.includes('@stripe') || id.includes('stripe')) return 'vendor-stripe';
-              if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
-              if (id.includes('firebase')) return 'vendor-firebase';
-              if (id.includes('mapbox')) return 'vendor-maps';
-              if (id.includes('agora')) return 'vendor-agora';
-              if (id.includes('jspdf')) return 'vendor-pdf';
-              if (id.includes('html2canvas')) return 'vendor-pdf';
-              if (id.includes('qrcode')) return 'vendor-qrcode';
-              if (id.includes('date-fns')) return 'vendor-datefns';
-              if (id.includes('zod')) return 'vendor-zod';
-            }
+            if (!id.includes('node_modules')) return;
+
+            // Agora — split RTC and RTM into separate lazy chunks
+            if (id.includes('agora-rtc-sdk-ng')) return 'vendor-agora-rtc';
+            if (id.includes('agora-rtm'))        return 'vendor-agora-rtm';
+
+            // Maps — loaded only by map components (already lazy)
+            if (id.includes('mapbox'))           return 'vendor-maps';
+
+            // Core React ecosystem
+            if (id.includes('react-dom'))        return 'vendor-react-dom';
+            if (id.includes('react-router'))     return 'vendor-router';
+            if (id.includes('/react/') || id.includes('\\react\\')) return 'vendor-react';
+
+            // UI
+            if (id.includes('@radix-ui'))        return 'vendor-radix';
+            if (id.includes('lucide-react'))     return 'vendor-icons';
+            if (id.includes('framer-motion'))    return 'vendor-motion';
+
+            // Backend / data
+            if (id.includes('@supabase'))        return 'vendor-supabase';
+            if (id.includes('@tanstack'))        return 'vendor-tanstack';
+
+            // Payment
+            if (id.includes('@stripe') || id.includes('stripe')) return 'vendor-stripe';
+
+            // Charts
+            if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
+
+            // Firebase
+            if (id.includes('firebase'))         return 'vendor-firebase';
+
+            // PDF generation
+            if (id.includes('jspdf') || id.includes('html2canvas')) return 'vendor-pdf';
+
+            // Misc
+            if (id.includes('qrcode'))           return 'vendor-qrcode';
+            if (id.includes('date-fns'))         return 'vendor-datefns';
+            if (id.includes('zod'))              return 'vendor-zod';
           }
+        },
+        // Suppress eval warning from agora-rtm (unavoidable in their bundled code)
+        onwarn(warning, warn) {
+          if (warning.code === 'EVAL' && warning.id?.includes('agora-rtm')) return;
+          warn(warning);
         },
       },
       chunkSizeWarningLimit: 2000,
       sourcemap: false,
-      // Use esbuild minification (faster, more reliable than terser)
       minify: 'esbuild',
     }
   };
