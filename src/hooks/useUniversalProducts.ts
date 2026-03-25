@@ -73,7 +73,7 @@ export const useUniversalProducts = (options: UseUniversalProductsOptions = {}) 
   } = options;
 
   const [products, setProducts] = useState<UniversalProduct[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(autoLoad);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
