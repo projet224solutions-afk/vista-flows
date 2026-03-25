@@ -491,6 +491,64 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
             </div>
           )}
 
+          {/* Champs spécifiques au rôle Prestataire */}
+          {formData.role === 'prestataire' && (
+            <div className="space-y-3 p-4 bg-teal-50 dark:bg-teal-950/20 rounded-lg border-2 border-teal-200 dark:border-teal-800">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-teal-600" />
+                <h3 className="font-semibold text-teal-900 dark:text-teal-100">Informations du Service</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="service_type_prest" className="text-sm">Type de service *</Label>
+                  <select
+                    id="service_type_prest"
+                    className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
+                    value={formData.service_type}
+                    onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
+                    required
+                  >
+                    <option value="">Sélectionnez…</option>
+                    {VENDOR_SERVICE_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="business_name_prest" className="text-sm">Nom du service *</Label>
+                  <Input
+                    id="business_name_prest"
+                    required
+                    value={formData.business_name}
+                    onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
+                    placeholder="Ex: Salon de coiffure Aminata"
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1.5 md:col-span-2">
+                  <Label htmlFor="business_description_prest" className="text-sm">Description</Label>
+                  <Input
+                    id="business_description_prest"
+                    value={formData.business_description}
+                    onChange={(e) => setFormData({ ...formData, business_description: e.target.value })}
+                    placeholder="Décrivez votre service..."
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1.5 md:col-span-2">
+                  <Label htmlFor="business_address_prest" className="text-sm">Adresse</Label>
+                  <Input
+                    id="business_address_prest"
+                    value={formData.business_address}
+                    onChange={(e) => setFormData({ ...formData, business_address: e.target.value })}
+                    placeholder="Ex: Quartier Madina, Conakry"
+                    className="h-9"
+                  />
+                </div>
+              </div>
+            </div>
+
           {/* Champs spécifiques aux rôles Taxi et Livreur */}
           {(formData.role === 'taxi' || formData.role === 'livreur') && (
             <div className="space-y-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
