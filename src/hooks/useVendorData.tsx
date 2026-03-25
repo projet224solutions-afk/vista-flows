@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
+const STATS_TIMEOUT_MS = 10000;
+
 export interface VendorStats {
   vendorId: string;
   revenue: number;
@@ -113,63 +115,97 @@ export function useVendorStats() {
     }
 
     const fetchStats = async () => {
+      const startedAt = performance.now();
+      console.info('[VENDOR STATS LOAD START]', { userId: user.id });
+
+      const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, label: string) =>
+        Promise.race<T>([
+          promise,
+          new Promise<T>((_, reject) => setTimeout(() => reject(new Error(label)), timeoutMs)),
+        ]);
+
       try {
         // Get vendor ID first
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        const { data: vendor } = await withTimeout(
+          supabase
+            .from('vendors')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle(),
+          STATS_TIMEOUT_MS,
+          'vendor_lookup_timeout',
+        );
 
         if (!vendor) {
           setError('Vendor profile not found');
+          console.error('[VENDOR STATS LOAD FAIL]', { reason: 'vendor_profile_not_found', userId: user.id });
           setLoading(false);
           return;
         }
 
         // Fetch revenue and orders stats
-        const { data: orders } = await supabase
-          .from('orders')
-          .select('total_amount, status')
-          .eq('vendor_id', vendor.id);
+        const { data: orders } = await withTimeout(
+          supabase
+            .from('orders')
+            .select('total_amount, status')
+            .eq('vendor_id', vendor.id),
+          STATS_TIMEOUT_MS,
+          'orders_stats_timeout',
+        );
 
         const revenue = orders?.reduce((acc, order) => acc + (order.total_amount || 0), 0) || 0;
         const orders_count = orders?.length || 0;
         const orders_pending = orders?.filter(o => o.status === 'pending').length || 0;
 
         // Fetch products count
-        const { count: products_count } = await supabase
-          .from('products')
-          .select('*', { count: 'exact', head: true })
-          .eq('vendor_id', vendor.id)
-          .eq('is_active', true);
+        const { count: products_count } = await withTimeout(
+          supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+            .eq('vendor_id', vendor.id)
+            .eq('is_active', true),
+          STATS_TIMEOUT_MS,
+          'products_count_timeout',
+        );
 
         // Fetch low stock count
-        const { count: low_stock_count } = await supabase
-          .from('inventory')
-          .select('*, products!inner(*)', { count: 'exact', head: true })
-          .eq('products.vendor_id', vendor.id)
-          .lt('quantity', 10);
+        const { count: low_stock_count } = await withTimeout(
+          supabase
+            .from('inventory')
+            .select('*, products!inner(*)', { count: 'exact', head: true })
+            .eq('products.vendor_id', vendor.id)
+            .lt('quantity', 10),
+          STATS_TIMEOUT_MS,
+          'low_stock_timeout',
+        );
 
         // Fetch overdue payments - Qualify status column to avoid ambiguity
         let overdue_payments = 0;
         try {
-          const { count } = await supabase
-            .from('payment_schedules')
-            .select('id, orders!inner(vendor_id)', { count: 'exact', head: true })
-            .eq('orders.vendor_id', vendor.id)
-            .eq('status', 'overdue');
+          const { count } = await withTimeout(
+            supabase
+              .from('payment_schedules')
+              .select('id, orders!inner(vendor_id)', { count: 'exact', head: true })
+              .eq('orders.vendor_id', vendor.id)
+              .eq('status', 'overdue'),
+            STATS_TIMEOUT_MS,
+            'overdue_payments_timeout',
+          );
           overdue_payments = count || 0;
         } catch {
           // payment_schedules may not exist or query may fail - default to 0
         }
 
         // Fetch unique customers count via distinct customer_ids from orders
-        const { data: customerOrders } = await supabase
-          .from('orders')
-          .select('customer_id')
-          .eq('vendor_id', vendor.id)
-          .not('customer_id', 'is', null);
+        const { data: customerOrders } = await withTimeout(
+          supabase
+            .from('orders')
+            .select('customer_id')
+            .eq('vendor_id', vendor.id)
+            .not('customer_id', 'is', null),
+          STATS_TIMEOUT_MS,
+          'customers_count_timeout',
+        );
 
         const uniqueCustomerIds = new Set(
           (customerOrders || []).map(o => o.customer_id).filter(Boolean)
@@ -191,8 +227,20 @@ export function useVendorStats() {
           low_stock_count: low_stock_count || 0,
           overdue_payments
         });
+        console.info('[VENDOR STATS LOAD SUCCESS]', {
+          vendorId: vendor.id,
+          durationMs: Math.round(performance.now() - startedAt),
+          orders_count,
+          products_count: products_count || 0,
+        });
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Erreur inconnue');
+        const message = err instanceof Error ? err.message : 'Erreur inconnue';
+        if (message.includes('timeout')) {
+          console.error('[VENDOR STATS LOAD TIMEOUT REACHED]', { userId: user.id, message });
+        } else {
+          console.error('[VENDOR STATS LOAD FAIL]', { userId: user.id, message });
+        }
+        setError(message);
       } finally {
         setLoading(false);
       }

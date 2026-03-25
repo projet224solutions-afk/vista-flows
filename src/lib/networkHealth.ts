@@ -1,10 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
 
+export type ConnectivityStatus = 'online' | 'degraded' | 'offline';
+
 export interface NetworkHealthResult {
   ok: boolean;
+  connectivity: ConnectivityStatus;
   reason: string;
   statusCode?: number;
   latencyMs: number;
+  sources: string[];
 }
 
 interface NetworkHealthOptions {
@@ -13,20 +17,27 @@ interface NetworkHealthOptions {
   force?: boolean;
 }
 
+interface HealthProbeResult {
+  ok: boolean;
+  reason: string;
+  statusCode?: number;
+  source: 'healthz' | 'supabase' | 'business';
+}
+
 const HEALTH_CHECK_PATH = '/healthz.json';
 const FALLBACK_SUPABASE_URL = (supabase as any)?.supabaseUrl as string | undefined;
 const FALLBACK_SUPABASE_KEY = (supabase as any)?.supabaseKey as string | undefined;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_KEY;
+
 const DEFAULT_TIMEOUT_MS = 8000;
 const DEFAULT_RETRIES = 1;
-/** Cache results for 15s to prevent flooding on mobile */
 const RESULT_CACHE_WINDOW_MS = 15_000;
 
 let inFlightHealthCheck: Promise<NetworkHealthResult> | null = null;
 let lastHealthCheckAt = 0;
 let lastHealthResult: NetworkHealthResult | null = null;
-let lastReportedState: boolean | null = null;
+let lastReportedState: ConnectivityStatus | null = null;
 let lastReportedReason = '';
 
 const nowPerf = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -35,124 +46,234 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('timeout')), timeoutMs);
     promise
-      .then((result) => { clearTimeout(timer); resolve(result); })
-      .catch((error) => { clearTimeout(timer); reject(error); });
+      .then((result) => {
+        clearTimeout(timer);
+        resolve(result);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
   });
+}
+
+async function probeHealthz(timeoutMs: number, attempt: number): Promise<HealthProbeResult> {
+  try {
+    const response = await withTimeout(
+      fetch(`${HEALTH_CHECK_PATH}?t=${Date.now()}&a=${attempt}`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache' },
+      }),
+      timeoutMs,
+    );
+
+    if (!response.ok) {
+      return { ok: false, reason: `app_http_${response.status}`, statusCode: response.status, source: 'healthz' };
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return { ok: false, reason: 'healthz_not_json', statusCode: response.status, source: 'healthz' };
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (payload?.status === 'ok') {
+      return { ok: true, reason: 'ok:app_health', statusCode: response.status, source: 'healthz' };
+    }
+
+    return { ok: false, reason: 'healthz_invalid_payload', statusCode: response.status, source: 'healthz' };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'unknown_error';
+    return { ok: false, reason: message === 'timeout' ? 'healthz_timeout' : `healthz_${message}`, source: 'healthz' };
+  }
+}
+
+async function probeSupabaseReachability(timeoutMs: number): Promise<HealthProbeResult> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    return { ok: false, reason: 'supabase_config_missing', source: 'supabase' };
+  }
+
+  try {
+    const response = await withTimeout(
+      fetch(`${SUPABASE_URL}/rest/v1/`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Accept: 'application/json',
+        },
+      }),
+      timeoutMs,
+    );
+
+    if (response.ok) {
+      return { ok: true, reason: 'ok:supabase_reachable', statusCode: response.status, source: 'supabase' };
+    }
+
+    return { ok: false, reason: `supabase_http_${response.status}`, statusCode: response.status, source: 'supabase' };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'unknown_error';
+    return { ok: false, reason: message === 'timeout' ? 'supabase_timeout' : `supabase_${message}`, source: 'supabase' };
+  }
+}
+
+async function probeBusinessData(timeoutMs: number): Promise<HealthProbeResult> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    return { ok: false, reason: 'business_test_config_missing', source: 'business' };
+  }
+
+  try {
+    const response = await withTimeout(
+      fetch(`${SUPABASE_URL}/rest/v1/service_types?select=id&is_active=eq.true&limit=1`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Accept: 'application/json',
+        },
+      }),
+      timeoutMs,
+    );
+
+    if (!response.ok) {
+      return { ok: false, reason: `business_http_${response.status}`, statusCode: response.status, source: 'business' };
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (Array.isArray(payload)) {
+      return { ok: true, reason: 'ok:business_data', statusCode: response.status, source: 'business' };
+    }
+
+    return { ok: false, reason: 'business_invalid_payload', statusCode: response.status, source: 'business' };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'unknown_error';
+    return { ok: false, reason: message === 'timeout' ? 'business_timeout' : `business_${message}`, source: 'business' };
+  }
+}
+
+function pickStatusCode(...probes: HealthProbeResult[]): number | undefined {
+  return probes.find((probe) => typeof probe.statusCode === 'number')?.statusCode;
 }
 
 async function executeHealthCheck(timeoutMs: number, retries: number): Promise<NetworkHealthResult> {
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
-    return { ok: false, reason: 'navigator_offline', latencyMs: 0 };
+    return {
+      ok: false,
+      connectivity: 'offline',
+      reason: 'navigator_offline',
+      latencyMs: 0,
+      sources: [],
+    };
   }
 
-  let lastErrorReason = 'health_check_failed';
   const maxAttempts = Math.max(1, retries + 1);
+  let lastResult: NetworkHealthResult = {
+    ok: false,
+    connectivity: 'offline',
+    reason: 'health_check_failed',
+    latencyMs: 0,
+    sources: [],
+  };
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const startedAt = nowPerf();
-    try {
-      // Try local healthz first
-      let appOk = false;
-      try {
-        const appHealthResponse = await withTimeout(
-          fetch(`${HEALTH_CHECK_PATH}?t=${Date.now()}&a=${attempt}`, {
-            method: 'GET',
-            cache: 'no-store',
-            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache' },
-          }),
-          timeoutMs,
-        );
 
-        const latencyMs = Math.round(nowPerf() - startedAt);
+    const [healthzProbe, supabaseProbe] = await Promise.all([
+      probeHealthz(timeoutMs, attempt),
+      probeSupabaseReachability(timeoutMs),
+    ]);
 
-        if (appHealthResponse.ok) {
-          const contentType = appHealthResponse.headers.get('content-type') || '';
-          if (contentType.includes('application/json')) {
-            try {
-              const payload = await appHealthResponse.json();
-              if (payload?.status === 'ok') {
-                return { ok: true, reason: 'ok:app_health', statusCode: appHealthResponse.status, latencyMs };
-              }
-            } catch { /* invalid json, fall through to supabase */ }
-          } else if (contentType.includes('text/html')) {
-            // SPA rewrite returned HTML instead of JSON — not a real healthz response
-            lastErrorReason = 'healthz_spa_rewrite';
-          } else {
-            return { ok: true, reason: 'ok:app_health_non_json', statusCode: appHealthResponse.status, latencyMs };
-          }
-        } else {
-          lastErrorReason = `app_http_${appHealthResponse.status}`;
-        }
-      } catch {
-        // healthz fetch failed, try supabase fallback
-      }
+    const businessProbe = supabaseProbe.ok
+      ? await probeBusinessData(timeoutMs)
+      : ({ ok: false, reason: 'business_skipped_supabase_down', source: 'business' } as HealthProbeResult);
 
-      // Fallback réel: tester la reachability Supabase si /healthz.json échoue (preview/PWA custom host)
-      if (SUPABASE_URL && SUPABASE_KEY) {
-        const supabaseStartedAt = nowPerf();
-        const supabaseResponse = await withTimeout(
-          fetch(`${SUPABASE_URL}/rest/v1/`, {
-            method: 'GET',
-            cache: 'no-store',
-            headers: {
-              apikey: SUPABASE_KEY,
-              Authorization: `Bearer ${SUPABASE_KEY}`,
-              Accept: 'application/json',
-            },
-          }),
-          timeoutMs,
-        );
+    const latencyMs = Math.round(nowPerf() - startedAt);
 
-        const supabaseLatencyMs = Math.round(nowPerf() - supabaseStartedAt);
-        if (supabaseResponse.ok) {
-          return {
-            ok: true,
-            reason: 'ok:supabase_reachable',
-            statusCode: supabaseResponse.status,
-            latencyMs: supabaseLatencyMs,
-          };
-        }
-        lastErrorReason = `supabase_http_${supabaseResponse.status}`;
-      }
+    const sources = [healthzProbe, supabaseProbe, businessProbe]
+      .filter((probe) => probe.ok)
+      .map((probe) => probe.source);
 
-      if (attempt < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
-      }
-    } catch (error) {
-      const latencyMs = Math.round(nowPerf() - startedAt);
-      const message = error instanceof Error ? error.message : 'unknown_error';
-      lastErrorReason = message === 'timeout' ? 'timeout' : message;
-
-      if (attempt === maxAttempts) {
-        return { ok: false, reason: lastErrorReason, latencyMs };
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
+    if (healthzProbe.ok && supabaseProbe.ok && businessProbe.ok) {
+      return {
+        ok: true,
+        connectivity: 'online',
+        reason: 'ok:all_checks',
+        statusCode: pickStatusCode(businessProbe, supabaseProbe, healthzProbe),
+        latencyMs,
+        sources,
+      };
     }
+
+    if (healthzProbe.ok || supabaseProbe.ok) {
+      lastResult = {
+        ok: true,
+        connectivity: 'degraded',
+        reason: [healthzProbe.reason, supabaseProbe.reason, businessProbe.reason].find((reason) => !reason.startsWith('ok:')) || 'degraded',
+        statusCode: pickStatusCode(healthzProbe, supabaseProbe, businessProbe),
+        latencyMs,
+        sources,
+      };
+    } else {
+      lastResult = {
+        ok: false,
+        connectivity: 'offline',
+        reason: [healthzProbe.reason, supabaseProbe.reason, businessProbe.reason].find(Boolean) || 'offline',
+        statusCode: pickStatusCode(healthzProbe, supabaseProbe),
+        latencyMs,
+        sources,
+      };
+    }
+
+    if (lastResult.connectivity !== 'offline' || attempt === maxAttempts) {
+      return lastResult;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
   }
 
-  return { ok: false, reason: lastErrorReason, latencyMs: 0 };
+  return lastResult;
 }
 
 function logHealthTransition(result: NetworkHealthResult) {
-  if (lastReportedState === result.ok && lastReportedReason === result.reason) return;
-  lastReportedState = result.ok;
+  if (lastReportedState === result.connectivity && lastReportedReason === result.reason) return;
+
+  lastReportedState = result.connectivity;
   lastReportedReason = result.reason;
 
-  if (result.ok) {
+  if (result.connectivity === 'online') {
     console.info('[HEALTH CHECK OK]', {
+      connectivity: result.connectivity,
       reason: result.reason,
+      sources: result.sources,
       latencyMs: result.latencyMs,
       statusCode: result.statusCode,
     });
-  } else {
-    console.warn('[HEALTH CHECK FAIL]', {
+    return;
+  }
+
+  if (result.connectivity === 'degraded') {
+    console.warn('[HEALTH CHECK DEGRADED]', {
+      connectivity: result.connectivity,
       reason: result.reason,
+      sources: result.sources,
       latencyMs: result.latencyMs,
       statusCode: result.statusCode,
       navigatorOnline: typeof navigator !== 'undefined' ? navigator.onLine : undefined,
     });
+    return;
   }
+
+  console.warn('[HEALTH CHECK FAIL]', {
+    connectivity: result.connectivity,
+    reason: result.reason,
+    sources: result.sources,
+    latencyMs: result.latencyMs,
+    statusCode: result.statusCode,
+    navigatorOnline: typeof navigator !== 'undefined' ? navigator.onLine : undefined,
+  });
 }
 
 export async function checkNetworkHealth(options: NetworkHealthOptions = {}): Promise<NetworkHealthResult> {
@@ -160,12 +281,10 @@ export async function checkNetworkHealth(options: NetworkHealthOptions = {}): Pr
 
   const now = Date.now();
 
-  // ALWAYS use cache if within window — force only bypasses if cache is older than 5s
   if (lastHealthResult && now - lastHealthCheckAt < (force ? 5000 : RESULT_CACHE_WINDOW_MS)) {
     return lastHealthResult;
   }
 
-  // Deduplicate in-flight requests
   if (inFlightHealthCheck) {
     return inFlightHealthCheck;
   }
