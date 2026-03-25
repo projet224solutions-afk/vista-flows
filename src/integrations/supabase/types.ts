@@ -516,31 +516,43 @@ export type Database = {
         Row: {
           agent_id: string
           amount: number
+          commission_rate: number | null
           created_at: string | null
+          currency: string | null
           description: string | null
           id: string
           related_user_id: string | null
           source_type: string
+          status: string | null
+          transaction_amount: number | null
           transaction_id: string | null
         }
         Insert: {
           agent_id: string
           amount: number
+          commission_rate?: number | null
           created_at?: string | null
+          currency?: string | null
           description?: string | null
           id?: string
           related_user_id?: string | null
           source_type: string
+          status?: string | null
+          transaction_amount?: number | null
           transaction_id?: string | null
         }
         Update: {
           agent_id?: string
           amount?: number
+          commission_rate?: number | null
           created_at?: string | null
+          currency?: string | null
           description?: string | null
           id?: string
           related_user_id?: string | null
           source_type?: string
+          status?: string | null
+          transaction_amount?: number | null
           transaction_id?: string | null
         }
         Relationships: [

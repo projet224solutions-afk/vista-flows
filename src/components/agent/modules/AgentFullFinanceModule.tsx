@@ -137,13 +137,13 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
       });
 
       setCommissions(commissionsList);
-      setAgentTransactions((logsData || []).map((log: any) => ({
-        id: log.id,
-        amount: log.amount,
-        type: log.source_type,
-        status: 'completed',
-        description: log.description || 'Commission',
-        created_at: log.created_at
+      setAgentTransactions(commissionsList.map((c: any) => ({
+        id: c.id,
+        amount: c.amount,
+        type: c.source_type,
+        status: c.status || 'validated',
+        description: c.description || 'Commission',
+        created_at: c.created_at
       })));
 
     } catch (error) {

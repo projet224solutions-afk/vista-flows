@@ -59,10 +59,10 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
     try {
       setLoading(true);
 
-      // Charger les commissions de l'agent
+      // Source unique: agent_commissions_log
       const { data: commissionsData, error: commError } = await supabase
-        .from('agent_affiliate_commissions')
-        .select('*')
+        .from('agent_commissions_log')
+        .select('id, amount, source_type, related_user_id, transaction_id, description, created_at, status, commission_rate, transaction_amount, currency')
         .eq('agent_id', agentId)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -80,29 +80,25 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
         console.error('Erreur wallet:', walletError);
       }
 
-      // Charger les logs de commissions
-      const { data: commLogsData, error: logsError } = await supabase
-        .from('agent_commissions_log')
-        .select('*')
-        .eq('agent_id', agentId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (logsError) console.error('Erreur logs:', logsError);
-
-      // Calculer les stats
-      const commissionsList = commissionsData || [];
-      const totalCommissions = commissionsList.reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+      // Mapper vers format unifié
+      const commissionsList = (commissionsData || []).map((c: any) => ({
+        ...c,
+        commission_amount: c.amount,
+        transaction_type: c.source_type,
+        commission_rate: c.commission_rate || 0,
+        transaction_amount: c.transaction_amount || 0,
+      }));
+      const totalCommissions = commissionsList.reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0);
       const pendingCommissions = commissionsList
-        .filter(c => c.status === 'pending')
-        .reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+        .filter((c: any) => c.status === 'pending')
+        .reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0);
       const paidCommissions = commissionsList
-        .filter(c => c.status === 'paid')
-        .reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+        .filter((c: any) => c.status === 'validated' || c.status === 'paid')
+        .reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0);
 
       const startOfCurrentMonth = startOfMonth(new Date());
       const commissionsThisMonth = commissionsList.filter(
-        c => new Date(c.created_at) >= startOfCurrentMonth
+        (c: any) => new Date(c.created_at) >= startOfCurrentMonth
       ).length;
 
       setStats({
@@ -116,14 +112,14 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
 
       setCommissions(commissionsList);
 
-      // Transformer les logs en transactions
-      const transactions = (commLogsData || []).map((log: any) => ({
-        id: log.id,
-        amount: log.amount,
-        type: log.source_type,
-        status: 'completed',
-        description: log.description || 'Commission',
-        created_at: log.created_at
+      // Utiliser les mêmes données comme transactions
+      const transactions = commissionsList.map((c: any) => ({
+        id: c.id,
+        amount: c.amount,
+        type: c.source_type,
+        status: c.status || 'validated',
+        description: c.description || 'Commission',
+        created_at: c.created_at
       }));
 
       setRecentTransactions(transactions);
