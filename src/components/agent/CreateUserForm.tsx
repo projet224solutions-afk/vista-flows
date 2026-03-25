@@ -548,7 +548,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                 </div>
               </div>
             </div>
-
+          )}
           {/* Champs spécifiques aux rôles Taxi et Livreur */}
           {(formData.role === 'taxi' || formData.role === 'livreur') && (
             <div className="space-y-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
