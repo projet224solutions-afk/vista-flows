@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
-import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck, AlertTriangle, Laptop, ExternalLink, CheckCircle2 } from "lucide-react";
+import { useEffect, useState, useRef, useCallback, lazy, Suspense } from "react";
+import { ArrowLeft, MapPin, Star, Phone, Mail, MessageCircle, Package, Clock, Store, Truck, AlertTriangle, Laptop, ExternalLink, CheckCircle2, RefreshCw, WifiOff, SearchX, ShieldOff } from "lucide-react";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +64,10 @@ interface Product {
   };
 }
 
+type ShopErrorType = 'none' | 'vendor_not_found' | 'shop_inactive' | 'network_error' | 'timeout' | 'products_error';
+
+const isMobile = () => /Mobi|Android/i.test(navigator.userAgent);
+
 export default function VendorShop() {
   const params = useParams<{ vendorId?: string; slug?: string }>();
   const navigate = useNavigate();
@@ -74,66 +78,89 @@ export default function VendorShop() {
   const [isOwner, setIsOwner] = useState(false);
   const [activeTab, setActiveTab] = useState("physical");
   const hasTrackedVisit = useRef(false);
+  const [errorType, setErrorType] = useState<ShopErrorType>('none');
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   // Récupérer les produits numériques du vendeur
   const { products: digitalProducts, loading: digitalProductsLoading } = useVendorDigitalProducts(vendor?.id);
-  // Le paramètre peut être 'slug' ou 'vendorId' selon la route utilisée
   const identifier = params.slug || params.vendorId;
 
-  // Debug: Log quand le composant se charge
+  // ── Structured log helper ──
+  const log = useCallback((tag: string, data?: Record<string, unknown>) => {
+    console.log(`🏪 [VendorShop] ${tag}`, data ?? '');
+  }, []);
+
+  // ── Mount log ──
   useEffect(() => {
-    console.log('🏪 [VendorShop] Component mounted with:', {
+    log('SHOP PAGE START', {
       vendorId: params.vendorId,
       slug: params.slug,
       identifier,
       pathname: window.location.pathname,
-      fullUrl: window.location.href
+      mobile: isMobile(),
     });
   }, []);
 
-  useEffect(() => {
-    if (identifier) {
-      console.log('🏪 [VendorShop] Loading vendor data for identifier:', identifier);
-      loadVendorData();
-    } else {
-      console.error('🏪 [VendorShop] No identifier found! This should not happen.');
-    }
-  }, [identifier, user?.id]);
+  // ── Timeout management ──
+  const startTimeout = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    const ms = isMobile() ? 15000 : 10000;
+    timeoutRef.current = setTimeout(() => {
+      log('SHOP TIMEOUT TRIGGERED', { ms, mobile: isMobile() });
+      setLoadingTimedOut(true);
+    }, ms);
+  }, [log]);
 
-  // Tracker la visite de la boutique une seule fois
-  useEffect(() => {
-    if (vendor && vendor.id && !hasTrackedVisit.current && !isOwner) {
-      hasTrackedVisit.current = true;
-      trackShopVisit(vendor.id);
+  const clearShopTimeout = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
-  }, [vendor, isOwner]);
+  }, []);
 
-  const loadVendorData = async () => {
+  // Cleanup on unmount
+  useEffect(() => () => {
+    clearShopTimeout();
+    abortRef.current?.abort();
+  }, [clearShopTimeout]);
+
+  // ── Load vendor data ──
+  const loadVendorData = useCallback(async () => {
+    const id = identifier;
+    if (!id) {
+      log('SHOP IDENTIFIER MISSING');
+      toast.error('Identifiant boutique manquant');
+      navigate('/marketplace');
+      return;
+    }
+
+    // Abort previous in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setLoading(true);
+    setLoadingTimedOut(false);
+    setErrorType('none');
+    startTimeout();
+
+    log('SHOP IDENTIFIER DETECTED', { id, mobile: isMobile() });
+
     try {
-      setLoading(true);
-      console.log('🏪 SHOP VENDOR FETCH START', { identifier });
-      
-      let vendorData: Vendor | null = null;
-      
-      // Le paramètre peut être un slug ou un ID
-      const id = identifier;
-      
-      if (!id) {
-        toast.error('Identifiant boutique manquant');
-        navigate('/marketplace');
-        return;
-      }
-      
-      // Vérifier si c'est un UUID valide
+      // ── Fetch vendor ──
+      log('SHOP VENDOR FETCH START', { id });
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-      
+
+      let vendorData: Vendor | null = null;
+
       if (isUUID) {
         const { data, error } = await supabase
           .from('vendors')
           .select('*')
           .eq('id', id)
           .maybeSingle();
-        
         if (error) throw error;
         vendorData = data;
       } else {
@@ -142,31 +169,34 @@ export default function VendorShop() {
           .select('*')
           .eq('shop_slug', id)
           .maybeSingle();
-        
         if (error) throw error;
         vendorData = data;
       }
 
-      console.log(vendorData ? '🏪 SHOP VENDOR FETCH SUCCESS' : '🏪 SHOP VENDOR FETCH FAIL (not found)');
-      
-      // Vérifier si l'utilisateur connecté est le propriétaire
-      const vendorIsOwned = vendorData && user?.id && vendorData.user_id === user.id;
-      setIsOwner(!!vendorIsOwned);
-      
-      // Si la boutique n'existe pas, afficher le message d'erreur
+      // Check abort
+      if (controller.signal.aborted) return;
+
       if (!vendorData) {
+        log('SHOP VENDOR FETCH FAIL', { reason: 'not_found', id });
         setVendor(null);
         setProducts([]);
+        setErrorType('vendor_not_found');
         return;
       }
 
-      // Rediriger vers l'URL avec slug si on est venu via ID et qu'un slug existe
+      log('SHOP VENDOR FETCH SUCCESS', { vendorId: vendorData.id, name: vendorData.business_name });
+
+      const vendorIsOwned = user?.id && vendorData.user_id === user.id;
+      setIsOwner(!!vendorIsOwned);
+
+      // Redirect to slug URL if needed
       if (isUUID && vendorData.shop_slug && params.vendorId) {
+        log('SHOP REDIRECT TO SLUG', { slug: vendorData.shop_slug });
         navigate(`/boutique/${vendorData.shop_slug}`, { replace: true });
         return;
       }
 
-      // Récupérer le public_id depuis profiles
+      // Fetch public_id from profile
       let vendorPublicId: string | undefined;
       if (vendorData.user_id) {
         const { data: profileData } = await supabase
@@ -177,16 +207,20 @@ export default function VendorShop() {
         vendorPublicId = profileData?.public_id || undefined;
       }
 
+      if (controller.signal.aborted) return;
+
       setVendor({ ...vendorData, public_id: vendorPublicId });
 
-      // Boutique inactive: on affiche la page mais on ne charge pas les produits pour les clients
+      // Inactive shop – show page but no products for clients
       if (!vendorData.is_active && !vendorIsOwned) {
+        log('SHOP INACTIVE', { vendorId: vendorData.id });
         setProducts([]);
+        setErrorType('none'); // Not an error, just inactive – handled in UI
         return;
       }
 
-      // Charger les produits du vendeur
-      console.log('🏪 SHOP PRODUCTS FETCH START');
+      // ── Fetch products ──
+      log('SHOP PRODUCTS FETCH START', { vendorId: vendorData.id });
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select(`
@@ -203,60 +237,75 @@ export default function VendorShop() {
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (productsError) throw productsError;
-      setProducts(productsData || []);
-      console.log('🏪 SHOP PRODUCTS FETCH SUCCESS', { count: productsData?.length || 0 });
+      if (controller.signal.aborted) return;
 
-    } catch (error) {
-      console.error('🏪 SHOP VENDOR FETCH FAIL', error);
-      toast.error('Impossible de charger la boutique');
+      if (productsError) {
+        log('SHOP PRODUCTS FETCH FAIL', { error: productsError.message });
+        setProducts([]);
+        setErrorType('products_error');
+        return;
+      }
+
+      setProducts(productsData || []);
+      log('SHOP PRODUCTS FETCH SUCCESS', { count: productsData?.length || 0 });
+      setErrorType('none');
+
+    } catch (error: any) {
+      if (controller.signal.aborted) return;
+
+      const isNetwork =
+        error?.message?.includes('Failed to fetch') ||
+        error?.message?.includes('NetworkError') ||
+        error?.message?.includes('fetch') ||
+        !navigator.onLine;
+
+      log('SHOP VENDOR FETCH FAIL', {
+        message: error?.message,
+        code: error?.code,
+        isNetwork,
+        online: navigator.onLine,
+      });
+
+      setErrorType(isNetwork ? 'network_error' : 'vendor_not_found');
     } finally {
+      clearShopTimeout();
       setLoading(false);
     }
-  };
+  }, [identifier, user?.id, navigate, log, startTimeout, clearShopTimeout, params.vendorId]);
 
-  const handleContactVendor = async () => {
-    if (!vendor) return;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error('Veuillez vous connecter pour contacter le vendeur');
-      navigate('/auth');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: user.id,
-          recipient_id: vendor.user_id,
-          content: `Bonjour, je visite votre boutique "${vendor.business_name}" et j'aimerais en savoir plus sur vos produits.`,
-          type: 'text'
-        });
-
-      if (error) throw error;
-      toast.success('Message envoyé au vendeur');
-      navigate(`/messages?recipientId=${vendor.user_id}`);
-    } catch (error) {
-      console.error('Erreur envoi message:', error);
-      toast.error('Erreur lors de l\'envoi du message');
-    }
-  };
-
-  const handleProductClick = (productId: string) => {
-    navigate(`/product/${productId}`);
-  };
-
-  // Timeout pour le chargement (15s sur mobile, 10s sur desktop)
-  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  // ── Trigger load ──
   useEffect(() => {
-    if (!loading) { setLoadingTimedOut(false); return; }
-    const timeoutMs = /Mobi|Android/i.test(navigator.userAgent) ? 15000 : 10000;
-    const timer = setTimeout(() => setLoadingTimedOut(true), timeoutMs);
-    return () => clearTimeout(timer);
+    if (identifier) {
+      loadVendorData();
+    }
+  }, [identifier, user?.id]);
+
+  // ── Track visit ──
+  useEffect(() => {
+    if (vendor && vendor.id && !hasTrackedVisit.current && !isOwner) {
+      hasTrackedVisit.current = true;
+      trackShopVisit(vendor.id);
+    }
+  }, [vendor, isOwner]);
+
+  // ── Timeout effect (separate from loadVendorData for the case where loading stays true) ──
+  useEffect(() => {
+    if (!loading) {
+      setLoadingTimedOut(false);
+    }
   }, [loading]);
 
+  // ── Retry handler ──
+  const handleRetry = useCallback(() => {
+    log('SHOP RETRY TRIGGERED');
+    setLoadingTimedOut(false);
+    setErrorType('none');
+    loadVendorData();
+  }, [loadVendorData, log]);
+
+  // ═══════════════════════════════════════════
+  //  RENDER: Loading state
+  // ═══════════════════════════════════════════
   if (loading && !loadingTimedOut) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -268,21 +317,79 @@ export default function VendorShop() {
     );
   }
 
+  // ═══════════════════════════════════════════
+  //  RENDER: Timeout state
+  // ═══════════════════════════════════════════
   if (loading && loadingTimedOut) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="p-8 text-center max-w-md">
-          <AlertTriangle className="w-10 h-10 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Chargement lent</h2>
+        <Card className="p-8 text-center max-w-md w-full">
+          <WifiOff className="w-10 h-10 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2 text-foreground">Connexion lente</h2>
           <p className="text-muted-foreground mb-6">
-            La boutique met du temps à charger. Vérifiez votre connexion internet.
+            La boutique met trop de temps à charger. Votre connexion est peut-être instable.
           </p>
-          <div className="flex gap-2 justify-center">
-            <Button onClick={() => { setLoadingTimedOut(false); loadVendorData(); }}>
+          <div className="flex flex-col gap-2">
+            <Button onClick={handleRetry} className="w-full">
+              <RefreshCw className="w-4 h-4 mr-2" />
               Réessayer
             </Button>
-            <Button variant="outline" onClick={() => navigate('/marketplace')}>
-              Retour
+            <Button variant="outline" onClick={() => navigate('/marketplace')} className="w-full">
+              Retour au marketplace
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════
+  //  RENDER: Error states (differentiated)
+  // ═══════════════════════════════════════════
+  if (errorType === 'network_error') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-8 text-center max-w-md w-full">
+          <WifiOff className="w-10 h-10 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2 text-foreground">Erreur de connexion</h2>
+          <p className="text-muted-foreground mb-6">
+            Impossible de contacter le serveur. Vérifiez votre connexion Internet.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Button onClick={handleRetry} className="w-full">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Réessayer
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/marketplace')} className="w-full">
+              Retour au marketplace
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (errorType === 'products_error' && vendor) {
+    // Vendor loaded but products failed – show vendor info + error for products section
+    // Fall through to normal render below, products section will show inline error
+  }
+
+  if (errorType === 'vendor_not_found' || (!vendor && !loading)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-8 text-center max-w-md w-full">
+          <SearchX className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2 text-foreground">Boutique introuvable</h2>
+          <p className="text-muted-foreground mb-6">
+            Cette boutique n'existe pas ou a été supprimée.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Button onClick={handleRetry} className="w-full" variant="outline">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Réessayer
+            </Button>
+            <Button onClick={() => navigate('/marketplace')} className="w-full">
+              Retour au marketplace
             </Button>
           </div>
         </Card>
@@ -291,34 +398,63 @@ export default function VendorShop() {
   }
 
   if (!vendor) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="p-8 text-center max-w-md">
-          <h2 className="text-xl font-bold mb-4">Boutique introuvable</h2>
-          <p className="text-muted-foreground mb-6">Cette boutique n'existe pas ou n'est plus active.</p>
-          <Button onClick={() => navigate('/marketplace')}>Retour au marketplace</Button>
-        </Card>
-      </div>
-    );
+    return null; // Should not happen, safety guard
   }
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-0.5">
-        {[...Array(5)].map((_, i) => (
-          <Star 
-            key={i} 
-            className={`w-4 h-4 ${
-              i < Math.floor(rating) 
-                ? 'fill-yellow-400 text-yellow-400' 
-                : 'text-muted-foreground/30'
-            }`} 
-          />
-        ))}
-      </div>
-    );
+  // ═══════════════════════════════════════════
+  //  HELPERS
+  // ═══════════════════════════════════════════
+  const handleContactVendor = async () => {
+    if (!vendor) return;
+
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) {
+      toast.error('Veuillez vous connecter pour contacter le vendeur');
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: currentUser.id,
+          recipient_id: vendor.user_id,
+          content: `Bonjour, je visite votre boutique "${vendor.business_name}" et j'aimerais en savoir plus sur vos produits.`,
+          type: 'text'
+        });
+
+      if (error) throw error;
+      toast.success('Message envoyé au vendeur');
+      navigate(`/messages?recipientId=${vendor.user_id}`);
+    } catch (error) {
+      console.error('Erreur envoi message:', error);
+      toast.error("Erreur lors de l'envoi du message");
+    }
   };
 
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
+  };
+
+  const renderStars = (rating: number) => (
+    <div className="flex items-center gap-0.5">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`w-4 h-4 ${
+            i < Math.floor(rating)
+              ? 'fill-yellow-400 text-yellow-400'
+              : 'text-muted-foreground/30'
+          }`}
+        />
+      ))}
+    </div>
+  );
+
+  // ═══════════════════════════════════════════
+  //  RENDER: Main shop page
+  // ═══════════════════════════════════════════
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* SEO Meta Tags */}
@@ -328,7 +464,7 @@ export default function VendorShop() {
         image={vendor.cover_image_url || vendor.logo_url}
         type="website"
       />
-      
+
       {/* Alertes boutique inactive */}
       {!vendor.is_active && (
         <Alert className="m-4 border-destructive/50 bg-destructive/10">
@@ -395,21 +531,23 @@ export default function VendorShop() {
       {/* Cover Image / Header */}
       <div className="relative h-48 bg-gradient-to-r from-primary/20 to-primary/5">
         {vendor.cover_image_url && (
-          <img 
-            src={vendor.cover_image_url} 
+          <img
+            src={vendor.cover_image_url}
             alt={`Bannière ${vendor.business_name}`}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         )}
-        
+
         {/* Logo vendeur */}
         <div className="absolute -bottom-12 left-4">
           <div className="w-24 h-24 rounded-xl bg-card border-4 border-background shadow-lg overflow-hidden">
             {vendor.logo_url ? (
-              <img 
-                src={vendor.logo_url} 
+              <img
+                src={vendor.logo_url}
                 alt={vendor.business_name}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             ) : (
               <div className="w-full h-full bg-primary/10 flex items-center justify-center">
@@ -430,13 +568,13 @@ export default function VendorShop() {
               <h2 className="text-2xl font-bold text-foreground">{vendor.business_name}</h2>
               <VendorCertBadgeInline vendorId={vendor.user_id} />
             </div>
-            
+
             <div className="flex flex-wrap gap-2 mb-3">
               {vendor.business_type && (
                 <Badge variant="secondary">
                   <Store className="w-3 h-3 mr-1" />
-                  {vendor.business_type === 'physical' ? 'Boutique physique' : 
-                   vendor.business_type === 'digital' ? 'En ligne' : 
+                  {vendor.business_type === 'physical' ? 'Boutique physique' :
+                   vendor.business_type === 'digital' ? 'En ligne' :
                    vendor.business_type === 'hybrid' ? 'Physique + En ligne' : vendor.business_type}
                 </Badge>
               )}
@@ -477,7 +615,7 @@ export default function VendorShop() {
                   </div>
                 </div>
               )}
-              
+
               {vendor.phone && (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Phone className="w-4 h-4 flex-shrink-0" />
@@ -515,7 +653,7 @@ export default function VendorShop() {
               </Button>
             )}
 
-            {/* Favori vendeur (petit mais visible) */}
+            {/* Favori vendeur */}
             <FavoriteButton vendorId={vendor.id} size="md" className="shrink-0" />
 
             <Button onClick={handleContactVendor}>
@@ -539,169 +677,187 @@ export default function VendorShop() {
         </div>
       </div>
 
-      {/* Products */}
+      {/* Products section – with inline error if products failed */}
       <div className="px-4">
-        {/* Tabs pour produits physiques et numériques */}
-        {digitalProducts.length > 0 ? (
-          <Tabs value={vendor?.business_type === 'digital' ? 'digital' : activeTab} onValueChange={setActiveTab} className="w-full">
-            {/* Masquer les onglets pour les boutiques 100% digitales */}
-            {vendor?.business_type !== 'digital' && (
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="physical" className="gap-2">
-                  <Package className="w-4 h-4" />
-                  Produits ({products.length})
-                </TabsTrigger>
-                <TabsTrigger value="digital" className="gap-2">
-                  <Laptop className="w-4 h-4" />
-                  Numériques ({digitalProducts.length})
-                </TabsTrigger>
-              </TabsList>
-            )}
-            {vendor?.business_type === 'digital' && (
-              <div className="flex items-center gap-2 mb-4">
-                <Laptop className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-foreground">Produits numériques ({digitalProducts.length})</h3>
-              </div>
-            )}
+        {errorType === 'products_error' && (
+          <Card className="p-6 text-center mb-4 border-destructive/30">
+            <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />
+            <p className="text-foreground font-medium mb-1">Impossible de charger les produits</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Le vendeur existe mais ses produits n'ont pas pu être récupérés.
+            </p>
+            <Button onClick={handleRetry} size="sm">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Réessayer
+            </Button>
+          </Card>
+        )}
 
-            {/* Produits physiques */}
-            <TabsContent value="physical">
-              {products.length === 0 ? (
-                <Card className="p-8 text-center">
-                  <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Ce vendeur n'a pas encore de produits physiques disponibles.</p>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mobile-landscape-grid mobile-portrait-grid">
-                  {products.map((product) => (
-                    <TranslatedProductCard
-                      key={product.id}
-                      id={product.id}
-                      image={product.images || []}
-                      title={product.name}
-                      price={product.price}
-                      currency={vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF'}
-                      vendor={vendor.business_name}
-                      vendorId={vendor.id}
-                      vendorPublicId={vendor.public_id}
-                      rating={vendor.rating || 0}
-                      reviewCount={vendor.total_orders || 0}
-                      stock={product.stock_quantity}
-                      category={product.categories?.name}
-                      onBuy={() => handleProductClick(product.id)}
-                      onAddToCart={() => {
-                        toast.success('Produit ajouté au panier');
-                      }}
-                      onContact={handleContactVendor}
-                    />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-
-            {/* Produits numériques */}
-            <TabsContent value="digital">
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mobile-landscape-grid">
-                {digitalProducts.map((product: any) => (
-                  <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/digital-product/${product.id}`)}>
-                    <div className="relative h-40 bg-muted">
-                      <img
-                        src={product.images?.[0] || '/placeholder.svg'}
-                        alt={product.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/placeholder.svg';
-                        }}
-                      />
-                      <div className="absolute top-2 left-2">
-                        <Badge className="bg-accent text-accent-foreground">
-                          <Laptop className="w-3 h-3 mr-1" />
-                          {product.category}
-                        </Badge>
-                      </div>
-                      {product.product_mode === 'affiliate' && (
-                        <div className="absolute top-2 right-2">
-                          <Badge variant="outline" className="bg-white/90">
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Affiliation
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-foreground line-clamp-1 mb-1">
-                        {product.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                        {product.short_description || product.description || 'Aucune description'}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        {product.price > 0 ? (
-                          <span className="font-bold text-lg text-primary">
-                            {(() => {
-                              const currency = product.currency || 'GNF';
-                              const noDecimalCurrencies = ['GNF', 'XOF', 'XAF', 'JPY'];
-                              const decimals = noDecimalCurrencies.includes(currency) ? 0 : 2;
-                              const formattedAmount = Number(product.price).toLocaleString('fr-FR', {
-                                minimumFractionDigits: decimals,
-                                maximumFractionDigits: decimals,
-                              });
-                              return `${formattedAmount} ${currency}`;
-                            })()}
-                          </span>
-                        ) : (
-                          <span className="font-bold text-lg text-green-600">Gratuit</span>
-                        )}
-                        <Button size="sm" variant="outline">
-                          Voir détails
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          // Affichage simple si pas de produits numériques
+        {errorType !== 'products_error' && (
           <>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">
-                <Package className="w-5 h-5 inline mr-2" />
-                Produits ({products.length})
-              </h3>
-            </div>
+            {/* Tabs pour produits physiques et numériques */}
+            {digitalProducts.length > 0 ? (
+              <Tabs value={vendor?.business_type === 'digital' ? 'digital' : activeTab} onValueChange={setActiveTab} className="w-full">
+                {vendor?.business_type !== 'digital' && (
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="physical" className="gap-2">
+                      <Package className="w-4 h-4" />
+                      Produits ({products.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="digital" className="gap-2">
+                      <Laptop className="w-4 h-4" />
+                      Numériques ({digitalProducts.length})
+                    </TabsTrigger>
+                  </TabsList>
+                )}
+                {vendor?.business_type === 'digital' && (
+                  <div className="flex items-center gap-2 mb-4">
+                    <Laptop className="w-5 h-5 text-primary" />
+                    <h3 className="font-semibold text-foreground">Produits numériques ({digitalProducts.length})</h3>
+                  </div>
+                )}
 
-            {products.length === 0 ? (
-              <Card className="p-8 text-center">
-                <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Ce vendeur n'a pas encore de produits disponibles.</p>
-              </Card>
+                {/* Produits physiques */}
+                <TabsContent value="physical">
+                  {products.length === 0 ? (
+                    <Card className="p-8 text-center">
+                      <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-muted-foreground">Ce vendeur n'a pas encore de produits physiques disponibles.</p>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mobile-landscape-grid mobile-portrait-grid">
+                      {products.map((product) => (
+                        <TranslatedProductCard
+                          key={product.id}
+                          id={product.id}
+                          image={product.images || []}
+                          title={product.name}
+                          price={product.price}
+                          currency={vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF'}
+                          vendor={vendor.business_name}
+                          vendorId={vendor.id}
+                          vendorPublicId={vendor.public_id}
+                          rating={vendor.rating || 0}
+                          reviewCount={vendor.total_orders || 0}
+                          stock={product.stock_quantity}
+                          category={product.categories?.name}
+                          onBuy={() => handleProductClick(product.id)}
+                          onAddToCart={() => {
+                            toast.success('Produit ajouté au panier');
+                          }}
+                          onContact={handleContactVendor}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Produits numériques */}
+                <TabsContent value="digital">
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mobile-landscape-grid">
+                    {digitalProducts.map((product: any) => (
+                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/digital-product/${product.id}`)}>
+                        <div className="relative h-40 bg-muted">
+                          <img
+                            src={product.images?.[0] || '/placeholder.svg'}
+                            alt={product.title}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/placeholder.svg';
+                            }}
+                          />
+                          <div className="absolute top-2 left-2">
+                            <Badge className="bg-accent text-accent-foreground">
+                              <Laptop className="w-3 h-3 mr-1" />
+                              {product.category}
+                            </Badge>
+                          </div>
+                          {product.product_mode === 'affiliate' && (
+                            <div className="absolute top-2 right-2">
+                              <Badge variant="outline" className="bg-white/90">
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Affiliation
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold text-foreground line-clamp-1 mb-1">
+                            {product.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {product.short_description || product.description || 'Aucune description'}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            {product.price > 0 ? (
+                              <span className="font-bold text-lg text-primary">
+                                {(() => {
+                                  const currency = product.currency || 'GNF';
+                                  const noDecimalCurrencies = ['GNF', 'XOF', 'XAF', 'JPY'];
+                                  const decimals = noDecimalCurrencies.includes(currency) ? 0 : 2;
+                                  const formattedAmount = Number(product.price).toLocaleString('fr-FR', {
+                                    minimumFractionDigits: decimals,
+                                    maximumFractionDigits: decimals,
+                                  });
+                                  return `${formattedAmount} ${currency}`;
+                                })()}
+                              </span>
+                            ) : (
+                              <span className="font-bold text-lg text-green-600">Gratuit</span>
+                            )}
+                            <Button size="sm" variant="outline">
+                              Voir détails
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mobile-landscape-grid mobile-portrait-grid">
-                {products.map((product) => (
-                  <TranslatedProductCard
-                    key={product.id}
-                    id={product.id}
-                    image={product.images || []}
-                    title={product.name}
-                    price={product.price}
-                    currency={vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF'}
-                    vendor={vendor.business_name}
-                    vendorId={vendor.id}
-                    vendorPublicId={vendor.public_id}
-                    rating={vendor.rating || 0}
-                    reviewCount={vendor.total_orders || 0}
-                    stock={product.stock_quantity}
-                    category={product.categories?.name}
-                    onBuy={() => handleProductClick(product.id)}
-                    onAddToCart={() => {
-                      toast.success('Produit ajouté au panier');
-                    }}
-                    onContact={handleContactVendor}
-                  />
-                ))}
-              </div>
+              // Affichage simple si pas de produits numériques
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">
+                    <Package className="w-5 h-5 inline mr-2" />
+                    Produits ({products.length})
+                  </h3>
+                </div>
+
+                {products.length === 0 ? (
+                  <Card className="p-8 text-center">
+                    <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">Ce vendeur n'a pas encore de produits disponibles.</p>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mobile-landscape-grid mobile-portrait-grid">
+                    {products.map((product) => (
+                      <TranslatedProductCard
+                        key={product.id}
+                        id={product.id}
+                        image={product.images || []}
+                        title={product.name}
+                        price={product.price}
+                        currency={vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF'}
+                        vendor={vendor.business_name}
+                        vendorId={vendor.id}
+                        vendorPublicId={vendor.public_id}
+                        rating={vendor.rating || 0}
+                        reviewCount={vendor.total_orders || 0}
+                        stock={product.stock_quantity}
+                        category={product.categories?.name}
+                        onBuy={() => handleProductClick(product.id)}
+                        onAddToCart={() => {
+                          toast.success('Produit ajouté au panier');
+                        }}
+                        onContact={handleContactVendor}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
