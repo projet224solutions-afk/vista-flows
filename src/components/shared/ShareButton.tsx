@@ -19,7 +19,7 @@ function sanitizeShareUrl(rawUrl: string): string {
 }
 
 function toCleanShortUrl(shortCode: string): string {
-  // URL propre qui sera proxied par Netlify vers l'Edge Function
+  // URL propre qui sera proxifiée par Vercel vers l'Edge Function
   return `${PUBLIC_DOMAIN}/s/${shortCode}`;
 }
 
@@ -99,7 +99,7 @@ export function ShareButton({
 
       if (shortUrl) {
         // Extraire le short code et utiliser l'URL propre
-        // Cette URL est proxied par Netlify vers l'Edge Function short-link
+        // Cette URL est proxifiée par Vercel vers l'Edge Function short-link
         const shortCode = extractShortCodeFromUrl(shortUrl);
         if (shortCode) {
           return toCleanShortUrl(shortCode);
