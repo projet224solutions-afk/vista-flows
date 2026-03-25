@@ -34,8 +34,8 @@ import {
   type Message,
   type CommunicationNotification
 } from '@/services/UniversalCommunicationService';
-import AgoraVideoCall from './AgoraVideoCall';
-import AgoraAudioCall from './AgoraAudioCall';
+const AgoraVideoCall = React.lazy(() => import('./AgoraVideoCall'));
+const AgoraAudioCall = React.lazy(() => import('./AgoraAudioCall'));
 import ImprovedMessageInput from './ImprovedMessageInput';
 import ContactUserById from './ContactUserById';
 import { useSearchUserId } from '@/hooks/useSearchUserId';
