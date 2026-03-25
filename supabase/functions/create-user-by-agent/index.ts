@@ -42,8 +42,8 @@ const CreateUserSchema = z.object({
   phone: z.string()
     .regex(/^\+?[0-9]{8,15}$/, { message: 'Format téléphone invalide (8-15 chiffres)' })
     .trim(),
-  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'agent', 'sub_agent', 'syndicat'], {
-    errorMap: () => ({ message: 'Rôle invalide' })
+  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'prestataire'], {
+    errorMap: () => ({ message: 'Rôle invalide. Rôles autorisés: client, vendeur, livreur, taxi, syndicat, transitaire, prestataire' })
   }),
   country: z.string()
     .max(100, { message: 'Nom pays trop long' })
