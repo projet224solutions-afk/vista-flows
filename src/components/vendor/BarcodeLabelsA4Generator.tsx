@@ -153,9 +153,8 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
     return labels;
   };
 
-  // Dessiner un code-barres directement dans le PDF
   const drawBarcodeInPDF = (
-    pdf: jsPDF, 
+    pdf: InstanceType<Awaited<ReturnType<typeof loadJsPDF>>>, 
     barcodeValue: string, 
     x: number, 
     y: number, 
