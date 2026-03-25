@@ -360,21 +360,7 @@ export class PaymentAuditService {
    */
   static async scheduleAutomaticAudit(): Promise<void> {
     try {
-      // Créer un job d'audit quotidien
-      await supabase
-        .from('scheduled_jobs')
-        .insert({
-          job_type: 'payment_audit',
-          schedule: '0 2 * * *', // Tous les jours à 2h du matin
-          is_active: true,
-          last_run: null,
-          metadata: {
-            description: 'Audit automatique du système de paiement',
-            auto_fix: false
-          }
-        });
-
-      console.log('📅 Audit automatique programmé');
+      console.log('📅 Audit automatique programmé (scheduled_jobs table not in schema - use cron or edge function)');
     } catch (error) {
       console.error('Erreur programmation audit:', error);
     }
