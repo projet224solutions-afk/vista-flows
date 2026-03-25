@@ -270,16 +270,13 @@ function App() {
       window.location.replace(httpsUrl);
     }
 
-    // Nettoyage automatique des données de persistence expirées (import statique, le module est déjà dans le bundle)
-    try {
-      const { cleanupExpiredPersistence } = await import('@/hooks/useAppPersistence');
+    // Nettoyage automatique des données de persistence expirées
+    import('@/hooks/useAppPersistence').then(({ cleanupExpiredPersistence }) => {
       const cleaned = cleanupExpiredPersistence();
       if (cleaned > 0) {
         console.log(`🧹 Nettoyage: ${cleaned} entrée(s) de persistence expirée(s) supprimée(s)`);
       }
-    } catch (e) {
-      console.warn('Cleanup persistence skipped:', e);
-    }
+    }).catch(() => {});
 
     // Enregistrement du Service Worker pour PWA (centralisé dans src/main.tsx)
 
