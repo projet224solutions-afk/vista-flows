@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, TrendingUp, Users, Package, DollarSign } from 'lucide-react';
+import type { AgentStats } from '@/hooks/useAgentStats';
 
 interface ViewReportsSectionProps {
   agentId: string;
@@ -9,15 +9,17 @@ interface ViewReportsSectionProps {
     total_commissions_earned?: number;
     commission_rate: number;
   };
+  agentStats?: AgentStats;
 }
 
-export function ViewReportsSection({ agentId, agentData }: ViewReportsSectionProps) {
-  const [stats] = useState({
-    usersThisMonth: 0,
-    productsAdded: 0,
-    commissionsThisMonth: 0,
-    totalRevenue: 0,
-  });
+export function ViewReportsSection({ agentId, agentData, agentStats }: ViewReportsSectionProps) {
+  const usersThisMonth = agentStats?.usersThisMonth ?? 0;
+  const commissionsThisMonth = agentStats?.commissionsThisMonth ?? 0;
+  const totalCommissions = agentData.total_commissions_earned ?? agentStats?.totalCommissions ?? 0;
+  const totalUsersCreated = agentData.total_users_created ?? agentStats?.totalUsersCreated ?? 0;
+  const performance = agentStats?.performance ?? 0;
+
+  const monthlyTarget = 10;
 
   return (
     <div className="space-y-4">
@@ -37,7 +39,7 @@ export function ViewReportsSection({ agentId, agentData }: ViewReportsSectionPro
                     <span className="text-sm text-muted-foreground">Utilisateurs Créés</span>
                     <Users className="w-4 h-4 text-blue-500" />
                   </div>
-                  <div className="text-2xl font-bold">{agentData.total_users_created || 0}</div>
+                  <div className="text-2xl font-bold">{totalUsersCreated}</div>
                   <p className="text-xs text-muted-foreground">Total depuis le début</p>
                 </div>
               </CardContent>
@@ -64,7 +66,7 @@ export function ViewReportsSection({ agentId, agentData }: ViewReportsSectionPro
                     <DollarSign className="w-4 h-4 text-purple-500" />
                   </div>
                   <div className="text-2xl font-bold">
-                    {(agentData.total_commissions_earned || 0).toLocaleString()}
+                    {totalCommissions.toLocaleString()}
                   </div>
                   <p className="text-xs text-muted-foreground">GNF gagnés</p>
                 </div>
@@ -75,11 +77,11 @@ export function ViewReportsSection({ agentId, agentData }: ViewReportsSectionPro
               <CardContent className="pt-6">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Produits</span>
+                    <span className="text-sm text-muted-foreground">Performance</span>
                     <Package className="w-4 h-4 text-orange-500" />
                   </div>
-                  <div className="text-2xl font-bold">{stats.productsAdded}</div>
-                  <p className="text-xs text-muted-foreground">Produits ajoutés</p>
+                  <div className="text-2xl font-bold">{performance}%</div>
+                  <p className="text-xs text-muted-foreground">Objectif mensuel</p>
                 </div>
               </CardContent>
             </Card>
@@ -95,12 +97,12 @@ export function ViewReportsSection({ agentId, agentData }: ViewReportsSectionPro
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span>Utilisateurs créés ce mois</span>
-                    <span className="font-semibold">{stats.usersThisMonth}</span>
+                    <span className="font-semibold">{usersThisMonth}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
-                      className="bg-blue-600 h-2 rounded-full" 
-                      style={{ width: '0%' }}
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-500" 
+                      style={{ width: `${Math.min((usersThisMonth / monthlyTarget) * 100, 100)}%` }}
                     ></div>
                   </div>
                 </div>
@@ -108,12 +110,12 @@ export function ViewReportsSection({ agentId, agentData }: ViewReportsSectionPro
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span>Commissions ce mois</span>
-                    <span className="font-semibold">{stats.commissionsThisMonth.toLocaleString()} GNF</span>
+                    <span className="font-semibold">{commissionsThisMonth.toLocaleString()} GNF</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
-                      className="bg-green-600 h-2 rounded-full" 
-                      style={{ width: '0%' }}
+                      className="bg-green-600 h-2 rounded-full transition-all duration-500" 
+                      style={{ width: `${Math.min(commissionsThisMonth > 0 ? 50 : 0, 100)}%` }}
                     ></div>
                   </div>
                 </div>
