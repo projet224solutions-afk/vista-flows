@@ -8,6 +8,7 @@ import { checkNetworkHealth } from '@/lib/networkHealth';
 
 interface OnlineStatus {
   isOnline: boolean;
+  connectivity: 'online' | 'degraded' | 'offline';
   lastOnline: Date | null;
   wasOffline: boolean;
   lastError: string | null;
@@ -23,6 +24,9 @@ export function useOnlineStatus(): OnlineStatus {
   const [isOnline, setIsOnline] = useState<boolean>(
     typeof navigator !== 'undefined' ? navigator.onLine : true
   );
+  const [connectivity, setConnectivity] = useState<'online' | 'degraded' | 'offline'>(
+    typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'online'
+  );
   const [lastOnline, setLastOnline] = useState<Date | null>(isOnline ? new Date() : null);
   const [wasOffline, setWasOffline] = useState<boolean>(false);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -34,10 +38,11 @@ export function useOnlineStatus(): OnlineStatus {
   const markOffline = useCallback((reason: string) => {
     if (!offlineStartRef.current) offlineStartRef.current = new Date();
     setIsOnline(false);
+    setConnectivity('offline');
     setLastError(reason);
   }, []);
 
-  const markOnline = useCallback(() => {
+  const markOnline = useCallback((nextConnectivity: 'online' | 'degraded', reason?: string) => {
     const now = new Date();
     if (offlineStartRef.current) {
       setOfflineDuration(Math.floor((now.getTime() - offlineStartRef.current.getTime()) / 1000));
@@ -45,8 +50,9 @@ export function useOnlineStatus(): OnlineStatus {
       offlineStartRef.current = null;
     }
     setIsOnline(true);
+    setConnectivity(nextConnectivity);
     setLastOnline(now);
-    setLastError(null);
+    setLastError(nextConnectivity === 'degraded' ? reason || 'degraded' : null);
     consecutiveFailuresRef.current = 0;
   }, []);
 
@@ -59,8 +65,8 @@ export function useOnlineStatus(): OnlineStatus {
 
     // Don't force by default: shared cache deduplicates all calls
     const result = await checkNetworkHealth({ timeoutMs: HEALTH_TIMEOUT_MS, retries: 1, force: !isOnline });
-    if (result.ok) {
-      markOnline();
+    if (result.connectivity !== 'offline') {
+      markOnline(result.connectivity, result.reason);
       return true;
     }
 
@@ -113,7 +119,7 @@ export function useOnlineStatus(): OnlineStatus {
     }
   }, [wasOffline]);
 
-  return { isOnline, lastOnline, wasOffline, lastError, offlineDuration, checkConnection };
+  return { isOnline, connectivity, lastOnline, wasOffline, lastError, offlineDuration, checkConnection };
 }
 
 export default useOnlineStatus;

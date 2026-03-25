@@ -6,9 +6,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
-import { checkNetworkHealth } from '@/lib/networkHealth';
+import { checkNetworkHealth, type NetworkHealthResult } from '@/lib/networkHealth';
 
-export type NetworkStatus = 'online' | 'offline' | 'checking';
+export type NetworkStatus = 'online' | 'degraded' | 'offline' | 'checking';
 
 export interface OfflineStatusState {
   status: NetworkStatus;
@@ -76,11 +76,19 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
       : { connectionType: null, effectiveType: null };
   }, []);
 
-  const checkConnection = useCallback(async (): Promise<boolean> => {
-    if (!enablePing) return navigator.onLine;
+  const checkConnection = useCallback(async (): Promise<NetworkHealthResult> => {
+    if (!enablePing) {
+      return {
+        ok: navigator.onLine,
+        connectivity: navigator.onLine ? 'online' : 'offline',
+        reason: navigator.onLine ? 'navigator_online_no_ping' : 'navigator_offline_no_ping',
+        latencyMs: 0,
+        sources: [],
+      };
+    }
+
     // Don't force — shared cache will deduplicate
-    const result = await checkNetworkHealth({ timeoutMs: 3000, retries: 1 });
-    return result.ok;
+    return checkNetworkHealth({ timeoutMs: 3000, retries: 1 });
   }, [enablePing]);
 
   const updateStatus = useCallback(async (navigatorOnline: boolean) => {
@@ -107,11 +115,11 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
       return;
     }
 
-    const isReallyOnline = await checkConnection();
+    const healthResult = await checkConnection();
     const { connectionType, effectiveType } = getConnectionInfo();
     const now = new Date();
 
-    if (isReallyOnline) {
+    if (healthResult.connectivity === 'online') {
       if (lastStatusRef.current === 'offline') {
         const dur = offlineStartRef.current ? Math.floor((now.getTime() - offlineStartRef.current.getTime()) / 1000) : 0;
         if (showToastsRef.current) {
@@ -128,7 +136,31 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
         ...prev, status: 'online', isOnline: true, isOffline: false,
         lastOnlineAt: now, offlineDuration: 0, connectionType, effectiveType,
       }));
-    } else {
+      return;
+    }
+
+    if (healthResult.connectivity === 'degraded') {
+      if (lastStatusRef.current !== 'degraded' && showToastsRef.current) {
+        toast.warning('Connexion instable', {
+          description: 'Le réseau répond, mais certaines données peuvent échouer temporairement.',
+          duration: 5000,
+        });
+      }
+      lastStatusRef.current = 'degraded';
+      setState(prev => ({
+        ...prev,
+        status: 'degraded',
+        isOnline: true,
+        isOffline: false,
+        lastOnlineAt: now,
+        offlineDuration: 0,
+        connectionType,
+        effectiveType,
+      }));
+      return;
+    }
+
+    {
       if (lastStatusRef.current !== 'offline') {
         offlineStartRef.current = now;
         onOfflineRef.current?.();
@@ -178,7 +210,8 @@ export function useOfflineStatus(options: UseOfflineStatusOptions = {}) {
   return {
     ...state,
     checkNow,
-    canSync: state.isOnline,
+    canSync: state.status !== 'offline',
+    isDegraded: state.status === 'degraded',
     isSlowConnection: state.effectiveType === 'slow-2g' || state.effectiveType === '2g',
   };
 }

@@ -8,7 +8,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import type { Profile } from './useAuth';
-import { useOnlineStatus } from './useOnlineStatus';
+import { checkNetworkHealth } from '@/lib/networkHealth';
 import { cacheVendorProducts, cacheCategories, getCacheStats } from '@/lib/offline/catalogCache';
 import { loadInitialStock, getStockStats } from '@/lib/offline/localStockManager';
 import { startScheduledSync, stopScheduledSync } from '@/lib/offline/sync/syncScheduler';
@@ -30,7 +30,6 @@ interface OfflineInitStatus {
  */
 export function useOfflineInitialization() {
   const { user, profile } = useAuth();
-  const { isOnline, checkConnection } = useOnlineStatus();
 
   const [status, setStatus] = useState<OfflineInitStatus>({
     isInitialized: false,
@@ -91,10 +90,13 @@ export function useOfflineInitialization() {
       }
 
       // 3. Première initialisation - vérifier la connectivité réelle
-      const healthOk = isOnline || await checkConnection();
+      const health = await checkNetworkHealth({ timeoutMs: 5000, retries: 2, force: true });
+      const healthOk = health.connectivity !== 'offline';
       console.log(healthOk ? '[HEALTH CHECK OK]' : '[HEALTH CHECK FAIL]', {
         scope: 'useOfflineInitialization',
-        isOnline,
+        connectivity: health.connectivity,
+        reason: health.reason,
+        sources: health.sources,
       });
 
       if (!healthOk) {
@@ -107,10 +109,16 @@ export function useOfflineInitialization() {
         return;
       }
 
+      if (health.connectivity === 'degraded') {
+        toast.warning('Connexion dégradée détectée', {
+          description: 'Initialisation en cours avec un réseau instable.',
+        });
+      }
+
       // 4. Charger les données
       console.log('[OfflineInit] Chargement des données...');
-      const products = await fetchVendorProducts(vendorId);
-      const categories = await fetchCategories();
+      const products = await withTimeout(fetchVendorProducts(vendorId), 15000, 'vendor_products_load_timeout');
+      const categories = await withTimeout(fetchCategories(), 10000, 'categories_load_timeout');
 
       // 5. Mettre en cache
       console.log('[OfflineInit] Mise en cache du catalogue...');
@@ -121,7 +129,7 @@ export function useOfflineInitialization() {
 
       // 6. Charger le stock initial
       console.log('[OfflineInit] Chargement du stock initial...');
-      await loadInitialStock(vendorId, products);
+      await withTimeout(loadInitialStock(vendorId, products), 12000, 'stock_initialization_timeout');
 
       setStatus(prev => ({ ...prev, stockLoaded: true }));
 
@@ -166,7 +174,7 @@ export function useOfflineInitialization() {
         description: error.message
       });
     }
-  }, [checkConnection, isOnline]);
+  }, []);
 
   /**
    * Nettoyer au démontage
@@ -268,3 +276,12 @@ async function fetchCategories(): Promise<any[]> {
 }
 
 export default useOfflineInitialization;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutError: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error(timeoutError)), timeoutMs);
+    }),
+  ]);
+}
