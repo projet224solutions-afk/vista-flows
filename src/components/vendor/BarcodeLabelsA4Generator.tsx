@@ -191,6 +191,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       const labelsPerPage = layout.cols * layout.rows;
       const totalPages = Math.ceil(labels.length / labelsPerPage);
 
+      const jsPDF = await loadJsPDF();
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',

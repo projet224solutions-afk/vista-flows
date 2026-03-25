@@ -60,6 +60,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
     if (!receiptRef.current) return;
 
     try {
+      const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(receiptRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
