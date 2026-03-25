@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-const useAgoraModule = () => import('@/hooks/useAgora');
+import { useAgora } from '@/hooks/useAgora';
 import { useAutoTranslation } from '@/hooks/useAutoTranslation';
 import { useStorageUpload, StorageFolder } from '@/hooks/useStorageUpload';
 import { toast } from 'sonner';
