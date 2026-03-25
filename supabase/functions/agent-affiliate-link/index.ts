@@ -390,23 +390,23 @@ async function getStats(supabase: any, agent: any) {
     .select('*', { count: 'exact', head: true })
     .eq('agent_id', agent.id);
 
-  // Commissions
+  // Commissions — source unique: agent_commissions_log
   const { data: commissions } = await supabase
-    .from('agent_affiliate_commissions')
-    .select('commission_amount, status')
+    .from('agent_commissions_log')
+    .select('amount, status')
     .eq('agent_id', agent.id);
 
   const totalPending = commissions
     ?.filter((c: any) => c.status === 'pending')
-    .reduce((sum: number, c: any) => sum + Number(c.commission_amount), 0) || 0;
+    .reduce((sum: number, c: any) => sum + Number(c.amount), 0) || 0;
 
   const totalValidated = commissions
     ?.filter((c: any) => c.status === 'validated')
-    .reduce((sum: number, c: any) => sum + Number(c.commission_amount), 0) || 0;
+    .reduce((sum: number, c: any) => sum + Number(c.amount), 0) || 0;
 
   const totalPaid = commissions
     ?.filter((c: any) => c.status === 'paid')
-    .reduce((sum: number, c: any) => sum + Number(c.commission_amount), 0) || 0;
+    .reduce((sum: number, c: any) => sum + Number(c.amount), 0) || 0;
 
   return new Response(
     JSON.stringify({
