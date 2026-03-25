@@ -1,7 +1,9 @@
-// Service Worker v16 - PWA + FCM + Offline + Anti-stale-data
-// v16: add healthz endpoint to app shell and force SW refresh on mobile installs
-const CACHE_VERSION = "v16";
+// Service Worker v17 - Fix healthz.json caching + anti-infinite-loader
+// v17: healthz.json excluded from precache, SW synthesizes JSON when needed
+const CACHE_VERSION = "v17";
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
+const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
 
