@@ -51,6 +51,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
       const element = printRef.current;
       
       // Configuration haute résolution
+      const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,

@@ -94,6 +94,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
       setIsSaving(true);
       toast.info('Génération du badge en cours...');
 
+      const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(badgeRef.current, {
         scale: 3,
         backgroundColor: '#ffffff',
