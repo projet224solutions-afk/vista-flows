@@ -119,6 +119,8 @@ export function POSSystem() {
   }, [authUser, agent, vendorUserId]);
   
   useEffect(() => {
+    const VENDOR_ID_CACHE_KEY = 'pos_vendor_id';
+
     // Si on a déjà un vendorId depuis le contexte agent, on l'utilise
     if (agentVendorId) {
       setVendorId(agentVendorId);
@@ -139,6 +141,18 @@ export function POSSystem() {
     
     // Sinon, on cherche le vendor_id via l'utilisateur connecté
     if (authUser?.id) {
+      // ✨ MODE OFFLINE: Utiliser le cache si hors ligne
+      if (!navigator.onLine) {
+        const cachedVendorId = localStorage.getItem(`${VENDOR_ID_CACHE_KEY}_${authUser.id}`);
+        if (cachedVendorId) {
+          console.log('📦 [POS Offline] vendorId restauré depuis cache:', cachedVendorId);
+          setVendorId(cachedVendorId);
+          return;
+        }
+        console.warn('⚠️ [POS Offline] Pas de vendorId en cache - réseau requis');
+        return;
+      }
+
       supabase
         .from('vendors')
         .select('id')
@@ -147,6 +161,8 @@ export function POSSystem() {
         .then(({ data, error }) => {
           if (data) {
             setVendorId(data.id);
+            // ✨ Persister vendorId pour offline
+            localStorage.setItem(`${VENDOR_ID_CACHE_KEY}_${authUser.id}`, data.id);
           } else {
             console.log('Pas de vendor trouvé, chargement de tous les produits du marketplace');
           }
