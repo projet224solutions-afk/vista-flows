@@ -92,10 +92,10 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
     try {
       setLoading(true);
 
-      // Charger les commissions de l'agent
+      // Source unique: agent_commissions_log
       const { data: commissionsData } = await supabase
-        .from('agent_affiliate_commissions')
-        .select('*')
+        .from('agent_commissions_log')
+        .select('id, amount, source_type, related_user_id, transaction_id, description, created_at, status, commission_rate, transaction_amount, currency')
         .eq('agent_id', agentId)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -107,22 +107,20 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
         .eq('agent_id', agentId)
         .single();
 
-      // Charger les logs de commissions
-      const { data: logsData } = await supabase
-        .from('agent_commissions_log')
-        .select('*')
-        .eq('agent_id', agentId)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      const commissionsList = commissionsData || [];
-      const totalCommissions = commissionsList.reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+      const commissionsList = (commissionsData || []).map((c: any) => ({
+        ...c,
+        commission_amount: c.amount,
+        transaction_type: c.source_type,
+        commission_rate: c.commission_rate || 0,
+        transaction_amount: c.transaction_amount || 0,
+      }));
+      const totalCommissions = commissionsList.reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0);
       const pendingCommissions = commissionsList
-        .filter(c => c.status === 'pending')
-        .reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+        .filter((c: any) => c.status === 'pending')
+        .reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0);
       const paidCommissions = commissionsList
-        .filter(c => c.status === 'paid')
-        .reduce((sum, c) => sum + (c.commission_amount || 0), 0);
+        .filter((c: any) => c.status === 'validated' || c.status === 'paid')
+        .reduce((sum: number, c: any) => sum + (c.commission_amount || 0), 0);
 
       const startOfCurrentMonth = startOfMonth(new Date());
       const transactionsThisMonth = commissionsList.filter(
