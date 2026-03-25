@@ -15,7 +15,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Printer, Download, Barcode as BarcodeIcon, Package, RefreshCw, FileDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import jsPDF from 'jspdf';
+// Lazy-loaded
+const loadJsPDF = () => import('jspdf').then(m => m.default);
 
 interface Product {
   id: string;
@@ -152,9 +153,8 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
     return labels;
   };
 
-  // Dessiner un code-barres directement dans le PDF
   const drawBarcodeInPDF = (
-    pdf: jsPDF, 
+    pdf: InstanceType<Awaited<ReturnType<typeof loadJsPDF>>>, 
     barcodeValue: string, 
     x: number, 
     y: number, 
@@ -191,6 +191,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       const labelsPerPage = layout.cols * layout.rows;
       const totalPages = Math.ceil(labels.length / labelsPerPage);
 
+      const jsPDF = await loadJsPDF();
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',

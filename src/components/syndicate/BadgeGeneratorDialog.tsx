@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Download, Printer, X } from 'lucide-react';
 import TaxiMotoBadge from './TaxiMotoBadge';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+const loadPdfLibs = () => Promise.all([
+  import('html2canvas').then(m => m.default),
+  import('jspdf').then(m => m.default),
+]);
 import { toast } from 'sonner';
 
 interface BadgeGeneratorDialogProps {
@@ -62,6 +64,7 @@ export default function BadgeGeneratorDialog({
     try {
       toast.info('Génération du badge en cours...');
       
+      const [html2canvas] = await loadPdfLibs();
       const canvas = await html2canvas(badgeRef.current, {
         scale: 3,
         backgroundColor: '#ffffff',
@@ -101,6 +104,7 @@ export default function BadgeGeneratorDialog({
     try {
       toast.info('Génération du PDF en cours...');
       
+      const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(badgeRef.current, {
         scale: 3,
         backgroundColor: '#ffffff',

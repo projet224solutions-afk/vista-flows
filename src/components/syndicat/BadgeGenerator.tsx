@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { QRCodeSVG } from 'qrcode.react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+const loadPdfLibs = () => Promise.all([
+  import('html2canvas').then(m => m.default),
+  import('jspdf').then(m => m.default),
+]);
 import { Download, Edit2, Save, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -92,6 +94,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
       setIsSaving(true);
       toast.info('Génération du badge en cours...');
 
+      const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(badgeRef.current, {
         scale: 3,
         backgroundColor: '#ffffff',

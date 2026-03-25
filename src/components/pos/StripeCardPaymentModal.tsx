@@ -43,7 +43,7 @@ interface StripeCardPaymentModalProps {
 }
 
 // Clé publique Stripe (variable d'environnement obligatoire)
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 // Charger Stripe une seule fois
 let stripePromise: Promise<Stripe | null> | null = null;
@@ -61,13 +61,18 @@ const getStripe = async (): Promise<Stripe | null> => {
     console.warn('⚠️ Mode hors ligne détecté, Stripe non disponible');
     return null;
   }
+
+  if (!STRIPE_PUBLISHABLE_KEY) {
+    console.error('❌ [STRIPE LOAD FAIL] VITE_STRIPE_PUBLISHABLE_KEY is not set');
+    return null;
+  }
   
   if (!stripePromise) {
-    console.log('✅ Chargement Stripe avec clé publique');
+    console.log('🔄 [STRIPE LOAD START]');
     try {
       stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
     } catch (error) {
-      console.error('❌ Erreur chargement Stripe:', error);
+      console.error('❌ [STRIPE LOAD FAIL]', error);
       stripePromise = null;
       return null;
     }

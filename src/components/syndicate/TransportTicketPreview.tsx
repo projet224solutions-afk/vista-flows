@@ -8,8 +8,10 @@ import { useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Printer, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+const loadPdfLibs = () => Promise.all([
+  import('html2canvas').then(m => m.default),
+  import('jspdf').then(m => m.default),
+]);
 import SingleTransportTicket from './SingleTransportTicket';
 
 interface TicketConfig {
@@ -49,6 +51,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
       const element = printRef.current;
       
       // Configuration haute résolution
+      const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,

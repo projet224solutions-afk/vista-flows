@@ -15,12 +15,25 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Clé publique Stripe (variable d'environnement obligatoire)
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 let stripePromise: Promise<Stripe | null> | null = null;
-const getStripe = () => {
+const getStripe = (): Promise<Stripe | null> => {
+  if (!STRIPE_PUBLISHABLE_KEY) {
+    console.error('❌ [STRIPE LOAD FAIL] VITE_STRIPE_PUBLISHABLE_KEY is not set');
+    return Promise.resolve(null);
+  }
   if (!stripePromise) {
-    stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
+    console.log('🔄 [STRIPE LOAD START]');
+    stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY).then((s) => {
+      if (s) console.log('✅ [STRIPE LOAD SUCCESS]');
+      else console.error('❌ [STRIPE LOAD FAIL] loadStripe returned null');
+      return s;
+    }).catch((err) => {
+      console.error('❌ [STRIPE LOAD FAIL]', err);
+      stripePromise = null;
+      return null;
+    });
   }
   return stripePromise;
 };
@@ -194,12 +207,18 @@ export default function StripeCheckoutButton({
         setLoading(true);
         setError(null);
 
+        if (!STRIPE_PUBLISHABLE_KEY) {
+          throw new Error('La clé Stripe n\'est pas configurée. Contactez l\'administrateur.');
+        }
+
+        console.log('🔄 [CHECKOUT START] amount:', amount, currency);
         const stripeInstance = await getStripe();
         if (!mountedRef.current) return;
         setStripe(stripeInstance);
 
         if (!stripeInstance) {
-          throw new Error('Impossible de charger Stripe');
+          console.error('❌ [CHECKOUT FAIL] Stripe instance is null');
+          throw new Error('Impossible de charger Stripe. Vérifiez votre connexion.');
         }
 
         // Determine which edge function to use
@@ -264,12 +283,30 @@ export default function StripeCheckoutButton({
   }
 
   if (error || !clientSecret || !stripe) {
+    const isMissingKey = error?.includes('clé Stripe') || error?.includes('not configured');
     return (
-      <Alert variant="destructive" className="my-2">
-        <AlertDescription>
-          {error || 'Impossible de charger le système de paiement. Veuillez réessayer.'}
-        </AlertDescription>
-      </Alert>
+      <div className="space-y-3 my-2">
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error || 'Impossible de charger le système de paiement.'}
+          </AlertDescription>
+        </Alert>
+        {!isMissingKey && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => {
+              initCalledRef.current = false;
+              stripePromise = null;
+              setError(null);
+              setLoading(true);
+            }}
+          >
+            Réessayer le paiement
+          </Button>
+        )}
+      </div>
     );
   }
 
