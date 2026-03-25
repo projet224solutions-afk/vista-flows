@@ -22,6 +22,18 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
     headers: {
       'X-Client-Info': '224solutions-web',
     },
+    fetch: (url, options = {}) => {
+      // Enable keepalive for all requests to reuse TCP connections
+      return fetch(url, { ...options, keepalive: true });
+    },
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
   },
 });
 
