@@ -12,7 +12,7 @@ export interface CreateUserData {
   email: string;
   phone: string;
   password?: string; // Mot de passe optionnel, généré automatiquement si non fourni
-  role: 'client' | 'vendeur' | 'livreur' | 'taxi' | 'transitaire' | 'syndicat';
+  role: 'client' | 'vendeur' | 'livreur' | 'taxi' | 'transitaire' | 'syndicat' | 'prestataire';
   country: string;
   city: string;
   // Données spécifiques selon le rôle

@@ -28,6 +28,7 @@ const USER_ROLES = [
   { value: 'taxi', label: 'Taxi', icon: Car, description: 'Transport de personnes', color: 'text-purple-600' },
   { value: 'transitaire', label: 'Transitaire', icon: Ship, description: 'Logistique internationale', color: 'text-orange-600' },
   { value: 'syndicat', label: 'Syndicat', icon: Building2, description: 'Organisation syndicale', color: 'text-pink-600' },
+  { value: 'prestataire', label: 'Prestataire', icon: Building2, description: 'Service de proximité', color: 'text-teal-600' },
 ];
 
 // Codes synchronisés avec service_types en BDD
