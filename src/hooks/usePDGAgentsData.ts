@@ -139,33 +139,50 @@ export const usePDGAgentsData = () => {
       if (agentsError) throw agentsError;
 
       // Récupérer les statistiques pour chaque agent
-      const agentsWithStats: Agent[] = await Promise.all(
-        (agentsData || []).map(async (agent) => {
-          // Compter les utilisateurs créés par cet agent
-          const { count: usersCount } = await supabase
-            .from('agent_created_users')
-            .select('*', { count: 'exact', head: true })
-            .eq('agent_id', agent.id);
+      // 🚀 Batch: load all agent IDs' stats in parallel instead of N+1
+      const agentIds = (agentsData || []).map(a => a.id);
+      
+      const [usersCountResult, commissionsResult] = await Promise.all([
+        // Batch count users per agent
+        supabase
+          .from('agent_created_users')
+          .select('agent_id')
+          .in('agent_id', agentIds),
+        // Batch sum commissions per agent from the REAL source of truth
+        supabase
+          .from('agent_commissions_log')
+          .select('agent_id, amount')
+          .in('agent_id', agentIds),
+      ]);
 
-          return {
-            id: agent.id,
-            pdg_id: agent.pdg_id,
-            agent_code: agent.agent_code,
-            name: agent.name,
-            email: agent.email,
-            phone: agent.phone,
-            is_active: agent.is_active,
-            permissions: Array.isArray(agent.permissions) ? (agent.permissions as string[]) : [],
-            commission_rate: Number(agent.commission_rate) || 0,
-            can_create_sub_agent: Boolean(agent.can_create_sub_agent),
-            access_token: agent.access_token,
-            created_at: agent.created_at,
-            updated_at: agent.updated_at || undefined,
-            total_commissions_earned: 0,
-            total_users_created: usersCount || 0,
-          };
-        })
-      );
+      // Build lookup maps
+      const usersCountMap = new Map<string, number>();
+      (usersCountResult.data || []).forEach(row => {
+        usersCountMap.set(row.agent_id, (usersCountMap.get(row.agent_id) || 0) + 1);
+      });
+
+      const commissionsMap = new Map<string, number>();
+      (commissionsResult.data || []).forEach(row => {
+        commissionsMap.set(row.agent_id, (commissionsMap.get(row.agent_id) || 0) + (row.amount || 0));
+      });
+
+      const agentsWithStats: Agent[] = (agentsData || []).map((agent) => ({
+        id: agent.id,
+        pdg_id: agent.pdg_id,
+        agent_code: agent.agent_code,
+        name: agent.name,
+        email: agent.email,
+        phone: agent.phone,
+        is_active: agent.is_active,
+        permissions: Array.isArray(agent.permissions) ? (agent.permissions as string[]) : [],
+        commission_rate: Number(agent.commission_rate) || 0,
+        can_create_sub_agent: Boolean(agent.can_create_sub_agent),
+        access_token: agent.access_token,
+        created_at: agent.created_at,
+        updated_at: agent.updated_at || undefined,
+        total_commissions_earned: commissionsMap.get(agent.id) || 0,
+        total_users_created: usersCountMap.get(agent.id) || 0,
+      }));
 
       setAgents(agentsWithStats);
 

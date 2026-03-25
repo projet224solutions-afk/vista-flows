@@ -377,9 +377,10 @@ export default function AgentDashboard() {
             agentId={agent.id}
             agentData={{
               total_users_created: stats.totalUsersCreated,
-              total_commissions_earned: 0,
+              total_commissions_earned: stats.totalCommissions,
               commission_rate: agent.commission_rate
             }}
+            agentStats={stats}
           />
         );
       

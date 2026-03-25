@@ -78,18 +78,28 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
         setWalletId(wallet.id);
       }
 
-      // Charger les transactions récentes
-      const { data: txData, error: txError } = await supabase
-        .from('wallet_transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
+      // 🔒 SÉCURITÉ: Charger UNIQUEMENT les transactions liées au wallet de cet agent
+      if (wallet?.id) {
+        const { data: txData, error: txError } = await supabase
+          .from('wallet_transactions')
+          .select('id, transaction_id, amount, fee, net_amount, currency, transaction_type, status, description, created_at, sender_wallet_id, receiver_wallet_id')
+          .or(`sender_wallet_id.eq.${wallet.id},receiver_wallet_id.eq.${wallet.id}`)
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-      if (txError) {
-        console.error('Erreur transactions:', txError);
+        if (txError) {
+          console.error('Erreur transactions:', txError);
+        }
+
+        // Map wallet IDs to user IDs for display
+        setTransactions((txData || []).map(tx => ({
+          ...tx,
+          sender_user_id: tx.sender_wallet_id || '',
+          receiver_user_id: tx.receiver_wallet_id || '',
+        })) as any);
+      } else {
+        setTransactions([]);
       }
-
-      setTransactions(txData || []);
 
     } catch (error: any) {
       console.error('Erreur chargement wallet:', error);
