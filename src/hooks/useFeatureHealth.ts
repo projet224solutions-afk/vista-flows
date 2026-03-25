@@ -147,17 +147,13 @@ const createDomainConfigs = (): DomainConfig[] => [
     domain: 'COMMISSION',
     metricLabel: 'Commissions totales',
     route: '/pdg',
-    dataSource: 'agent_affiliate_commissions + agent_commissions_log',
+    dataSource: 'agent_commissions_log',
     fetchMetric: async () => {
-      const { count: affCount } = await supabase
-        .from('agent_affiliate_commissions')
-        .select('*', { count: 'exact', head: true });
-      
       const { count: logCount } = await supabase
         .from('agent_commissions_log')
         .select('*', { count: 'exact', head: true });
       
-      return (affCount || 0) + (logCount || 0);
+      return logCount || 0;
     },
   },
   {

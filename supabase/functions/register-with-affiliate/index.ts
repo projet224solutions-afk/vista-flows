@@ -206,7 +206,7 @@ serve(async (req) => {
           user_role: role
         });
 
-        // Si bonus d'inscription configuré, créer la commission
+        // Si bonus d'inscription configuré, utiliser credit_agent_commission
         const { data: rule } = await supabaseAdmin
           .from('agent_commission_rules')
           .select('*')
@@ -215,15 +215,13 @@ serve(async (req) => {
           .single();
 
         if (rule) {
-          await supabaseAdmin.from('agent_affiliate_commissions').insert({
-            agent_id: agentId,
-            user_id: userId,
-            transaction_type: 'registration_bonus',
-            transaction_amount: 0,
-            commission_rate: rule.default_rate,
-            commission_amount: rule.default_rate * 100, // Bonus fixe
-            status: 'pending',
-            validation_date: new Date(Date.now() + (rule.validation_delay_hours || 72) * 60 * 60 * 1000).toISOString()
+          const bonusAmount = rule.default_rate * 100; // Bonus fixe
+          await supabaseAdmin.rpc('credit_agent_commission', {
+            p_user_id: userId,
+            p_amount: bonusAmount,
+            p_source_type: 'registration_bonus',
+            p_transaction_id: null,
+            p_metadata: { currency: 'GNF', source: 'register-with-affiliate' }
           });
         }
       }
