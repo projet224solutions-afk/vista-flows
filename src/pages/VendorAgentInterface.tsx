@@ -31,7 +31,7 @@ import { VendorDeliveriesPanel } from '@/components/vendor/VendorDeliveriesPanel
 import PaymentManagement from '@/components/vendor/PaymentManagement';
 import PaymentLinksManager from '@/components/vendor/PaymentLinksManager';
 import SupportTickets from '@/components/vendor/SupportTickets';
-import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
+const UniversalCommunicationHub = React.lazy(() => import('@/components/communication/UniversalCommunicationHub'));
 import SupplierManagement from '@/components/vendor/SupplierManagement';
 import ProspectManagement from '@/components/vendor/ProspectManagement';
 import MarketingManagement from '@/components/vendor/MarketingManagement';
