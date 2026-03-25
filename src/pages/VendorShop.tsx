@@ -111,6 +111,7 @@ export default function VendorShop() {
   const loadVendorData = async () => {
     try {
       setLoading(true);
+      console.log('🏪 SHOP VENDOR FETCH START', { identifier });
       
       let vendorData: Vendor | null = null;
       
@@ -127,7 +128,6 @@ export default function VendorShop() {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       
       if (isUUID) {
-        // Recherche par ID
         const { data, error } = await supabase
           .from('vendors')
           .select('*')
@@ -137,7 +137,6 @@ export default function VendorShop() {
         if (error) throw error;
         vendorData = data;
       } else {
-        // Recherche par slug
         const { data, error } = await supabase
           .from('vendors')
           .select('*')
@@ -147,6 +146,8 @@ export default function VendorShop() {
         if (error) throw error;
         vendorData = data;
       }
+
+      console.log(vendorData ? '🏪 SHOP VENDOR FETCH SUCCESS' : '🏪 SHOP VENDOR FETCH FAIL (not found)');
       
       // Vérifier si l'utilisateur connecté est le propriétaire
       const vendorIsOwned = vendorData && user?.id && vendorData.user_id === user.id;
@@ -185,6 +186,7 @@ export default function VendorShop() {
       }
 
       // Charger les produits du vendeur
+      console.log('🏪 SHOP PRODUCTS FETCH START');
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select(`
@@ -203,9 +205,10 @@ export default function VendorShop() {
 
       if (productsError) throw productsError;
       setProducts(productsData || []);
+      console.log('🏪 SHOP PRODUCTS FETCH SUCCESS', { count: productsData?.length || 0 });
 
     } catch (error) {
-      console.error('Erreur chargement boutique:', error);
+      console.error('🏪 SHOP VENDOR FETCH FAIL', error);
       toast.error('Impossible de charger la boutique');
     } finally {
       setLoading(false);
@@ -245,13 +248,44 @@ export default function VendorShop() {
     navigate(`/product/${productId}`);
   };
 
-  if (loading) {
+  // Timeout pour le chargement (15s sur mobile, 10s sur desktop)
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  useEffect(() => {
+    if (!loading) { setLoadingTimedOut(false); return; }
+    const timeoutMs = /Mobi|Android/i.test(navigator.userAgent) ? 15000 : 10000;
+    const timer = setTimeout(() => setLoadingTimedOut(true), timeoutMs);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  if (loading && !loadingTimedOut) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Chargement de la boutique...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (loading && loadingTimedOut) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-8 text-center max-w-md">
+          <AlertTriangle className="w-10 h-10 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">Chargement lent</h2>
+          <p className="text-muted-foreground mb-6">
+            La boutique met du temps à charger. Vérifiez votre connexion internet.
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => { setLoadingTimedOut(false); loadVendorData(); }}>
+              Réessayer
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/marketplace')}>
+              Retour
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }
