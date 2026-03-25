@@ -144,82 +144,44 @@ export function useVendorStats() {
           return;
         }
 
-        // Fetch revenue and orders stats
-        const { data: orders } = await withTimeout(
-          () =>
-            supabase
-              .from('orders')
-              .select('total_amount, status')
-              .eq('vendor_id', vendor.id),
-          STATS_TIMEOUT_MS,
-          'orders_stats_timeout',
-        );
+        // 🚀 PARALLEL: Fire all stats queries at once instead of sequential
+        const [ordersResult, productsResult, lowStockResult, overdueResult, customerResult] = await Promise.allSettled([
+          withTimeout(
+            () => supabase.from('orders').select('total_amount, status, customer_id').eq('vendor_id', vendor.id),
+            STATS_TIMEOUT_MS, 'orders_stats_timeout',
+          ),
+          withTimeout(
+            () => supabase.from('products').select('id', { count: 'exact', head: true }).eq('vendor_id', vendor.id).eq('is_active', true),
+            STATS_TIMEOUT_MS, 'products_count_timeout',
+          ),
+          withTimeout(
+            () => supabase.from('inventory').select('id, products!inner(id)', { count: 'exact', head: true }).eq('products.vendor_id', vendor.id).lt('quantity', 10),
+            STATS_TIMEOUT_MS, 'low_stock_timeout',
+          ),
+          withTimeout(
+            () => supabase.from('payment_schedules').select('id, orders!inner(vendor_id)', { count: 'exact', head: true }).eq('orders.vendor_id', vendor.id).eq('status', 'overdue'),
+            STATS_TIMEOUT_MS, 'overdue_payments_timeout',
+          ),
+          // Customer count is derived from orders — no separate query needed (see below)
+          Promise.resolve(null),
+        ]);
 
-        const revenue = orders?.reduce((acc, order) => acc + (order.total_amount || 0), 0) || 0;
+        // Extract results safely
+        const orders = ordersResult.status === 'fulfilled' ? ordersResult.value?.data : null;
+        const revenue = orders?.reduce((acc: number, order: any) => acc + (order.total_amount || 0), 0) || 0;
         const orders_count = orders?.length || 0;
-        const orders_pending = orders?.filter(o => o.status === 'pending').length || 0;
+        const orders_pending = orders?.filter((o: any) => o.status === 'pending').length || 0;
 
-        // Fetch products count
-        const { count: products_count } = await withTimeout(
-          () =>
-            supabase
-              .from('products')
-              .select('*', { count: 'exact', head: true })
-              .eq('vendor_id', vendor.id)
-              .eq('is_active', true),
-          STATS_TIMEOUT_MS,
-          'products_count_timeout',
-        );
-
-        // Fetch low stock count
-        const { count: low_stock_count } = await withTimeout(
-          () =>
-            supabase
-              .from('inventory')
-              .select('*, products!inner(*)', { count: 'exact', head: true })
-              .eq('products.vendor_id', vendor.id)
-              .lt('quantity', 10),
-          STATS_TIMEOUT_MS,
-          'low_stock_timeout',
-        );
-
-        // Fetch overdue payments - Qualify status column to avoid ambiguity
-        let overdue_payments = 0;
-        try {
-          const { count } = await withTimeout(
-            () =>
-              supabase
-                .from('payment_schedules')
-                .select('id, orders!inner(vendor_id)', { count: 'exact', head: true })
-                .eq('orders.vendor_id', vendor.id)
-                .eq('status', 'overdue'),
-            STATS_TIMEOUT_MS,
-            'overdue_payments_timeout',
-          );
-          overdue_payments = count || 0;
-        } catch {
-          // payment_schedules may not exist or query may fail - default to 0
-        }
-
-        // Fetch unique customers count via distinct customer_ids from orders
-        const { data: customerOrders } = await withTimeout(
-          () =>
-            supabase
-              .from('orders')
-              .select('customer_id')
-              .eq('vendor_id', vendor.id)
-              .not('customer_id', 'is', null),
-          STATS_TIMEOUT_MS,
-          'customers_count_timeout',
-        );
-
+        // Customer count from orders data (no extra query)
         const uniqueCustomerIds = new Set(
-          (customerOrders || []).map(o => o.customer_id).filter(Boolean)
+          (orders || []).map((o: any) => o.customer_id).filter(Boolean)
         );
         const customers_count = uniqueCustomerIds.size;
 
-        // Marge estimée à 20% du CA - à remplacer par un calcul réel
-        // basé sur les coûts produits (cost_price) quand disponible
+        const products_count = productsResult.status === 'fulfilled' ? productsResult.value?.count || 0 : 0;
+        const low_stock_count = lowStockResult.status === 'fulfilled' ? lowStockResult.value?.count || 0 : 0;
+        const overdue_payments = overdueResult.status === 'fulfilled' ? overdueResult.value?.count || 0 : 0;
+
         const ESTIMATED_MARGIN_RATE = 0.2;
 
         setStats({
@@ -229,15 +191,15 @@ export function useVendorStats() {
           orders_count,
           orders_pending,
           customers_count,
-          products_count: products_count || 0,
-          low_stock_count: low_stock_count || 0,
+          products_count,
+          low_stock_count,
           overdue_payments
         });
         console.info('[VENDOR STATS LOAD SUCCESS]', {
           vendorId: vendor.id,
           durationMs: Math.round(performance.now() - startedAt),
           orders_count,
-          products_count: products_count || 0,
+          products_count,
         });
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Erreur inconnue';

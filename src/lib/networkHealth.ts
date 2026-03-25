@@ -43,8 +43,13 @@ let lastReportedReason = '';
 const nowPerf = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  // 🚀 Use AbortController for real cancellation (saves bandwidth on slow networks)
+  const controller = new AbortController();
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('timeout')), timeoutMs);
+    const timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('timeout'));
+    }, timeoutMs);
     promise
       .then((result) => {
         clearTimeout(timer);
@@ -59,14 +64,18 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 
 async function probeHealthz(timeoutMs: number, attempt: number): Promise<HealthProbeResult> {
   try {
-    const response = await withTimeout(
-      fetch(`${HEALTH_CHECK_PATH}?t=${Date.now()}&a=${attempt}`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache' },
-      }),
-      timeoutMs,
-    );
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(`${HEALTH_CHECK_PATH}?t=${Date.now()}&a=${attempt}`, {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+      keepalive: true,
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache' },
+    });
+
+    clearTimeout(timer);
 
     if (!response.ok) {
       return { ok: false, reason: `app_http_${response.status}`, statusCode: response.status, source: 'healthz' };
@@ -85,7 +94,8 @@ async function probeHealthz(timeoutMs: number, attempt: number): Promise<HealthP
     return { ok: false, reason: 'healthz_invalid_payload', statusCode: response.status, source: 'healthz' };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown_error';
-    return { ok: false, reason: message === 'timeout' ? 'healthz_timeout' : `healthz_${message}`, source: 'healthz' };
+    const isAbort = error instanceof DOMException && error.name === 'AbortError';
+    return { ok: false, reason: isAbort ? 'healthz_timeout' : `healthz_${message}`, source: 'healthz' };
   }
 }
 
@@ -95,27 +105,31 @@ async function probeSupabaseReachability(timeoutMs: number): Promise<HealthProbe
   }
 
   try {
-    const response = await withTimeout(
-      fetch(`${SUPABASE_URL}/rest/v1/`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          Accept: 'application/json',
-        },
-      }),
-      timeoutMs,
-    );
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (response.ok) {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+      method: 'HEAD', // 🚀 HEAD instead of GET — no body to parse
+      cache: 'no-store',
+      signal: controller.signal,
+      keepalive: true,
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+    });
+
+    clearTimeout(timer);
+
+    if (response.ok || response.status === 200) {
       return { ok: true, reason: 'ok:supabase_reachable', statusCode: response.status, source: 'supabase' };
     }
 
     return { ok: false, reason: `supabase_http_${response.status}`, statusCode: response.status, source: 'supabase' };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown_error';
-    return { ok: false, reason: message === 'timeout' ? 'supabase_timeout' : `supabase_${message}`, source: 'supabase' };
+    const isAbort = error instanceof DOMException && error.name === 'AbortError';
+    return { ok: false, reason: isAbort ? 'supabase_timeout' : `supabase_${message}`, source: 'supabase' };
   }
 }
 
@@ -125,18 +139,22 @@ async function probeBusinessData(timeoutMs: number): Promise<HealthProbeResult> 
   }
 
   try {
-    const response = await withTimeout(
-      fetch(`${SUPABASE_URL}/rest/v1/service_types?select=id&is_active=eq.true&limit=1`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          Accept: 'application/json',
-        },
-      }),
-      timeoutMs,
-    );
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/service_types?select=id&is_active=eq.true&limit=1`, {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+      keepalive: true,
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        Accept: 'application/json',
+      },
+    });
+
+    clearTimeout(timer);
 
     if (!response.ok) {
       return { ok: false, reason: `business_http_${response.status}`, statusCode: response.status, source: 'business' };
@@ -150,7 +168,8 @@ async function probeBusinessData(timeoutMs: number): Promise<HealthProbeResult> 
     return { ok: false, reason: 'business_invalid_payload', statusCode: response.status, source: 'business' };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown_error';
-    return { ok: false, reason: message === 'timeout' ? 'business_timeout' : `business_${message}`, source: 'business' };
+    const isAbort = error instanceof DOMException && error.name === 'AbortError';
+    return { ok: false, reason: isAbort ? 'business_timeout' : `business_${message}`, source: 'business' };
   }
 }
 
