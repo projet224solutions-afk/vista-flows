@@ -663,7 +663,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     if (!autoLoad) return;
 
     setPage(1);
-    setItems([]);
+    setLoading(true);
     loadAllItems(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
