@@ -141,7 +141,7 @@ export function useGeoDetection(): UseGeoDetectionResult {
         const cached = cachedRaw?.data;
 
         if (cached) {
-          console.log(`🌍 Geo depuis cache: pays=${cached.country}, devise=${cached.currency}, langue=${cached.language}`);
+          // Geo cache hit (log suppressed to avoid spam)
           setGeoInfo(cached);
 
           const shouldRevalidate = cached.detectionMethod === 'fallback';
