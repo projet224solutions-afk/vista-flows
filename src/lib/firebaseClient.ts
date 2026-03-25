@@ -101,10 +101,11 @@ export function getFirebaseAppInstance(): FirebaseApp | null {
 }
 
 export async function waitForFirebase(): Promise<boolean> {
-  if (initializationPromise) {
-    return await initializationPromise;
+  if (isInitialized) return true;
+  if (!initializationPromise) {
+    initializationPromise = initializeFirebase();
   }
-  return isInitialized;
+  return await initializationPromise;
 }
 
 export function isFirebaseReady(): boolean {

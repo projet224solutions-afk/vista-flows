@@ -3,11 +3,11 @@
  * Le client suit sa livraison en temps réel
  */
 
+import React, { Suspense } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 const ClientDeliveryTracking = React.lazy(() => import('@/components/delivery/ClientDeliveryTracking').then(m => ({ default: m.ClientDeliveryTracking })));
-import React, { Suspense } from 'react';
 
 export default function ClientTrackingPage() {
   const [searchParams] = useSearchParams();
