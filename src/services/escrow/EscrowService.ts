@@ -120,7 +120,7 @@ export class EscrowService {
     private async connectWebSocket(): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
-                const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:3001';
+                const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3001';
                 this.websocket = new WebSocket(wsUrl);
 
                 this.websocket.onopen = () => {
