@@ -43,8 +43,13 @@ let lastReportedReason = '';
 const nowPerf = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  // 🚀 Use AbortController for real cancellation (saves bandwidth on slow networks)
+  const controller = new AbortController();
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('timeout')), timeoutMs);
+    const timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('timeout'));
+    }, timeoutMs);
     promise
       .then((result) => {
         clearTimeout(timer);

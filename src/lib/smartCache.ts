@@ -379,9 +379,12 @@ class SmartCacheService {
 
   private estimateSize(data: any): number {
     try {
-      return new Blob([JSON.stringify(data)]).size;
+      // 🚀 Fast size estimation without Blob constructor (which is slow)
+      const json = JSON.stringify(data);
+      // UTF-8 byte length ≈ string length * 2 (rough but fast)
+      return json.length * 2;
     } catch {
-      return 1024; // Estimation par défaut 1KB
+      return 1024;
     }
   }
 
