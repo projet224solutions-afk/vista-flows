@@ -491,6 +491,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     const requestId = ++requestIdRef.current;
 
     try {
+      loadingRef.current = true;
       setLoading(true);
 
       // Récupérer le nom de la catégorie si c'est un UUID
@@ -624,6 +625,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       }
     } finally {
       if (requestId === requestIdRef.current) {
+        loadingRef.current = false;
         setLoading(false);
       }
     }
