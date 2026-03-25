@@ -15,7 +15,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Printer, Download, Barcode as BarcodeIcon, Package, RefreshCw, FileDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import jsPDF from 'jspdf';
+// Lazy-loaded
+const loadJsPDF = () => import('jspdf').then(m => m.default);
 
 interface Product {
   id: string;
