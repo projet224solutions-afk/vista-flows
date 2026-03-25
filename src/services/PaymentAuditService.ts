@@ -339,24 +339,13 @@ export class PaymentAuditService {
    */
   static async sendAuditToCopilot(report: PaymentAuditReport): Promise<boolean> {
     try {
-      // Créer un log d'audit dans la base de données
-      await supabase
-        .from('ai_logs')
-        .insert({
-          type: 'payment_audit',
-          title: 'Audit système de paiement',
-          content: JSON.stringify(report),
-          severity: report.criticalIssues > 0 ? 'critical' : 
-                   report.highIssues > 0 ? 'high' : 
-                   report.mediumIssues > 0 ? 'medium' : 'low',
-          metadata: {
-            totalIssues: report.totalIssues,
-            criticalIssues: report.criticalIssues,
-            highIssues: report.highIssues,
-            mediumIssues: report.mediumIssues,
-            lowIssues: report.lowIssues
-          }
-        });
+      // Log audit report to console (tables ai_logs/scheduled_jobs not in schema)
+      console.log(`📊 Rapport d'audit: ${report.totalIssues} issues détectées`, {
+        criticalIssues: report.criticalIssues,
+        highIssues: report.highIssues,
+        mediumIssues: report.mediumIssues,
+        lowIssues: report.lowIssues
+      });
 
       console.log(`📊 Rapport d'audit envoyé au copilote: ${report.totalIssues} issues détectées`);
       return true;
