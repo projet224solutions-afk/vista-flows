@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -57,27 +57,36 @@ export function useFinanceData(enabled: boolean = true) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [wallets, setWallets] = useState<WalletDetail[]>([]);
   const [loading, setLoading] = useState(true);
+  const fetchInProgressRef = useRef(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (fetchInProgressRef.current) return;
+    fetchInProgressRef.current = true;
+
     try {
       setLoading(true);
 
-      // Récupérer les transactions depuis wallet_transactions
-      const { data: transData, error: transError } = await supabase
-        .from('wallet_transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
+      // 🚀 PARALLEL fetch: transactions + wallets + profiles + user_ids in 2 batches
+      const [transResult, walletsResult] = await Promise.all([
+        supabase
+          .from('wallet_transactions')
+          .select('id, sender_wallet_id, receiver_wallet_id, amount, currency, status, transaction_type, fee, description, created_at, updated_at, metadata')
+          .order('created_at', { ascending: false })
+          .limit(100),
+        supabase
+          .from('wallets')
+          .select('id, user_id, balance, currency, wallet_status, created_at, updated_at')
+          .order('created_at', { ascending: false })
+          .limit(200),
+      ]);
 
-      if (transError) {
-        console.error('❌ Erreur récupération transactions:', transError);
-        throw transError;
+      if (transResult.error) {
+        console.error('❌ Erreur récupération transactions:', transResult.error);
+        throw transResult.error;
       }
 
-      console.log('✅ Transactions récupérées depuis wallet_transactions:', transData?.length);
-
-      // Mapper les transactions avec les bons noms de colonnes
-      const mappedTransactions = (transData || []).map((t: any) => ({
+      const mappedTransactions = (transResult.data || []).map((t: any) => ({
         id: t.id,
         sender_id: t.sender_wallet_id,
         receiver_id: t.receiver_wallet_id,
@@ -95,47 +104,46 @@ export function useFinanceData(enabled: boolean = true) {
         public_id: t.id
       }));
 
-      console.log('📊 Transactions mappées:', mappedTransactions.length);
-
-      // Récupérer les wallets avec les profils utilisateurs
-      const { data: walletsData, error: walletsError } = await supabase
-        .from('wallets')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      // Récupérer les profils et custom_id pour chaque wallet
+      // 🚀 FIX: Batch-load profiles + user_ids instead of N+1 queries
       let enrichedWallets: any[] = [];
-      if (walletsData) {
-        const profilePromises = walletsData.map(async (wallet) => {
-          const { data: profile } = await supabase
+      if (walletsResult.data && walletsResult.data.length > 0) {
+        const userIds = walletsResult.data.map(w => w.user_id);
+        
+        // Two parallel batch queries instead of N individual queries
+        const [profilesResult, userIdsResult] = await Promise.all([
+          supabase
             .from('profiles')
             .select('id, first_name, last_name, email, phone, role, status')
-            .eq('id', wallet.user_id)
-            .single();
-          
-          // Récupérer le custom_id
-          const { data: userIdData } = await supabase
+            .in('id', userIds),
+          supabase
             .from('user_ids')
-            .select('custom_id')
-            .eq('user_id', wallet.user_id)
-            .single();
-          
-          return { ...wallet, profiles: profile, custom_id: userIdData?.custom_id };
-        });
-        enrichedWallets = await Promise.all(profilePromises);
-      }
-      
-      if (walletsError) {
-        console.error('Erreur lors de la récupération des wallets:', walletsError);
-        throw walletsError;
+            .select('user_id, custom_id')
+            .in('user_id', userIds),
+        ]);
+
+        const profilesMap = new Map(
+          (profilesResult.data || []).map(p => [p.id, p])
+        );
+        const userIdsMap = new Map(
+          (userIdsResult.data || []).map(u => [u.user_id, u.custom_id])
+        );
+
+        enrichedWallets = walletsResult.data.map(wallet => ({
+          ...wallet,
+          profiles: profilesMap.get(wallet.user_id) || null,
+          custom_id: userIdsMap.get(wallet.user_id) || null,
+        }));
       }
 
-      console.log('✅ Wallets récupérés:', enrichedWallets);
+      if (walletsResult.error) {
+        console.error('Erreur lors de la récupération des wallets:', walletsResult.error);
+        throw walletsResult.error;
+      }
 
       setTransactions(mappedTransactions);
       setWallets(enrichedWallets);
 
-      // Calculer les statistiques
+      // Calculate stats from already-loaded data (no extra queries)
       const totalRevenue = mappedTransactions
         .filter(t => t.status === 'completed')
         .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -148,7 +156,7 @@ export function useFinanceData(enabled: boolean = true) {
         .filter(t => t.status === 'pending')
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
-      const activeWallets = (enrichedWallets || [])
+      const activeWallets = enrichedWallets
         .filter((w: any) => w.wallet_status === 'active')
         .length;
 
@@ -163,54 +171,38 @@ export function useFinanceData(enabled: boolean = true) {
       toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
+      fetchInProgressRef.current = false;
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
 
     fetchData();
 
-    // Subscription temps réel pour les wallets
+    // 🚀 FIX: Debounce realtime updates instead of refetching on every change
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => fetchData(), 2000);
+    };
+
     const walletsChannel = supabase
       .channel('wallets-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'wallets',
-        },
-        (payload) => {
-          console.log('💰 Wallet modifié:', payload);
-          fetchData(); // Recharger toutes les données
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets' }, debouncedFetch)
       .subscribe();
 
-    // Subscription temps réel pour les transactions (wallet_transactions)
     const transactionsChannel = supabase
       .channel('wallet-transactions-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'wallet_transactions',
-        },
-        (payload) => {
-          console.log('💸 Transaction modifiée:', payload);
-          fetchData(); // Recharger toutes les données
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wallet_transactions' }, debouncedFetch)
       .subscribe();
 
-    // Cleanup
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       walletsChannel.unsubscribe();
       transactionsChannel.unsubscribe();
     };
-  }, [enabled]);
+  }, [enabled, fetchData]);
 
   return {
     stats,

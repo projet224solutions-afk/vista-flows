@@ -1,6 +1,7 @@
 /**
  * AGENT STATS HOOK - 224SOLUTIONS
  * Hook pour charger les statistiques de l'agent
+ * 🚀 Optimisé: requêtes parallèles + agrégation SQL
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -13,7 +14,7 @@ export interface AgentStats {
   commissionsThisMonth: number;
   subAgentsCount: number;
   activeSubAgentsCount: number;
-  performance: number; // Pourcentage objectif
+  performance: number;
 }
 
 export const useAgentStats = (agentId: string | undefined) => {
@@ -39,77 +40,75 @@ export const useAgentStats = (agentId: string | undefined) => {
       setLoading(true);
       setError(null);
 
-      // Récupérer les sous-agents de cet agent
-      const { data: subAgents, error: subAgentsError } = await supabase
-        .from('agents_management')
-        .select('id, is_active')
-        .eq('parent_agent_id', agentId);
-
-      if (subAgentsError) throw subAgentsError;
-
-      // Créer une liste des IDs d'agents (agent + sous-agents)
-      const agentIds = [agentId];
-      if (subAgents && subAgents.length > 0) {
-        agentIds.push(...subAgents.map(sa => sa.id));
-      }
-
-      // Compter le total d'utilisateurs créés
-      const { count: totalCount, error: totalError } = await supabase
-        .from('agent_created_users')
-        .select('*', { count: 'exact', head: true })
-        .in('agent_id', agentIds);
-
-      if (totalError) throw totalError;
-
-      // Compter les utilisateurs créés ce mois
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
+      const monthStart = startOfMonth.toISOString();
 
-      const { count: monthCount, error: monthError } = await supabase
-        .from('agent_created_users')
-        .select('*', { count: 'exact', head: true })
-        .in('agent_id', agentIds)
-        .gte('created_at', startOfMonth.toISOString());
+      // 🚀 ALL queries in parallel instead of sequential
+      const [subAgentsRes, totalUsersRes, monthUsersRes, totalCommRes, monthCommRes] = await Promise.all([
+        // Sub-agents
+        supabase
+          .from('agents_management')
+          .select('id, is_active')
+          .eq('parent_agent_id', agentId),
+        // Total users created (just count, no data)
+        supabase
+          .from('agent_created_users')
+          .select('id', { count: 'exact', head: true })
+          .eq('agent_id', agentId),
+        // Users this month
+        supabase
+          .from('agent_created_users')
+          .select('id', { count: 'exact', head: true })
+          .eq('agent_id', agentId)
+          .gte('created_at', monthStart),
+        // Total commissions (only amount column)
+        supabase
+          .from('agent_commissions_log')
+          .select('amount')
+          .eq('agent_id', agentId),
+        // This month commissions
+        supabase
+          .from('agent_commissions_log')
+          .select('amount')
+          .eq('agent_id', agentId)
+          .gte('created_at', monthStart),
+      ]);
 
-      if (monthError) throw monthError;
+      if (subAgentsRes.error) throw subAgentsRes.error;
 
-      // Calculer les commissions totales depuis agent_commissions_log
-      const { data: commissionsData, error: commissionsError } = await supabase
-        .from('agent_commissions_log')
-        .select('amount')
-        .eq('agent_id', agentId);
+      // Also count sub-agents' created users if any
+      const subAgents = subAgentsRes.data || [];
+      let subAgentUsersTotal = 0;
+      let subAgentUsersMonth = 0;
 
-      if (commissionsError) {
-        console.warn('[useAgentStats] Erreur chargement commissions:', commissionsError);
+      if (subAgents.length > 0) {
+        const subIds = subAgents.map(sa => sa.id);
+        const [subTotalRes, subMonthRes] = await Promise.all([
+          supabase.from('agent_created_users').select('id', { count: 'exact', head: true }).in('agent_id', subIds),
+          supabase.from('agent_created_users').select('id', { count: 'exact', head: true }).in('agent_id', subIds).gte('created_at', monthStart),
+        ]);
+        subAgentUsersTotal = subTotalRes.count || 0;
+        subAgentUsersMonth = subMonthRes.count || 0;
       }
 
-      const totalCommissions = commissionsData?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+      const totalCommissions = totalCommRes.data?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+      const commissionsThisMonth = monthCommRes.data?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+      
+      const totalUsersCreated = (totalUsersRes.count || 0) + subAgentUsersTotal;
+      const usersThisMonth = (monthUsersRes.count || 0) + subAgentUsersMonth;
 
-      // Calculer les commissions de ce mois
-      const { data: monthCommissionsData, error: monthCommissionsError } = await supabase
-        .from('agent_commissions_log')
-        .select('amount')
-        .eq('agent_id', agentId)
-        .gte('created_at', startOfMonth.toISOString());
-
-      if (monthCommissionsError) {
-        console.warn('[useAgentStats] Erreur chargement commissions mois:', monthCommissionsError);
-      }
-
-      const commissionsThisMonth = monthCommissionsData?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
-
-      // Calculer la performance (basée sur objectif mensuel de 10 utilisateurs)
       const monthlyTarget = 10;
-      const performance = Math.min(Math.round(((monthCount || 0) / monthlyTarget) * 100), 100);
+      const performance = Math.min(Math.round((usersThisMonth / monthlyTarget) * 100), 100);
 
       setStats({
-        totalUsersCreated: totalCount || 0,
-        usersThisMonth: monthCount || 0,
+        totalUsersCreated,
+        usersThisMonth,
         totalCommissions,
         commissionsThisMonth,
-        subAgentsCount: subAgents?.length || 0,
-        activeSubAgentsCount: subAgents?.filter(sa => sa.is_active).length || 0,
+        subAgentsCount: subAgents.length,
+        activeSubAgentsCount: subAgents.filter(sa => sa.is_active).length,
         performance
       });
     } catch (err: any) {

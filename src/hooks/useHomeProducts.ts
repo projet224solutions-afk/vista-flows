@@ -20,33 +20,37 @@ export const useHomeProducts = (limit: number = 4) => {
       try {
         setLoading(true);
 
-        // Requête simple sans filtre complexe
+        // 🚀 Filter server-side with IN instead of fetching 2x + client filter
         const { data, error } = await supabase
           .from('products')
-          .select(`
-            id, name, price, images, category_id, rating, reviews_count,
-            vendors(business_type, business_name)
-          `)
+          .select('id, name, price, images, category_id, rating, reviews_count, vendors!inner(business_type)')
           .eq('is_active', true)
+          .in('vendors.business_type', ['hybrid', 'online'])
           .order('created_at', { ascending: false })
-          .limit(limit * 2);
+          .limit(limit);
 
         if (error) {
-          console.warn('Erreur produits:', error.message);
-          setProducts([]);
+          // Fallback: if the IN filter on joined table fails, use the old approach
+          console.warn('Optimized query failed, using fallback:', error.message);
+          const { data: fallbackData } = await supabase
+            .from('products')
+            .select('id, name, price, images, category_id, rating, reviews_count, vendors(business_type, business_name)')
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(limit * 2);
+
+          const filtered = (fallbackData || [])
+            .filter(product => {
+              const vendor = product.vendors as any;
+              return vendor && ['hybrid', 'online'].includes(vendor.business_type);
+            })
+            .slice(0, limit);
+
+          setProducts(filtered);
           return;
         }
 
-        // Filtrer côté client pour exclure les vendeurs "physical"
-        const filteredProducts = (data || [])
-          .filter(product => {
-            const vendor = product.vendors as any;
-            const allowedTypes = ['hybrid', 'online'];
-            return vendor && vendor.business_type && allowedTypes.includes(vendor.business_type);
-          })
-          .slice(0, limit);
-
-        setProducts(filteredProducts);
+        setProducts(data || []);
       } catch (error) {
         console.error('Erreur lors du chargement des produits:', error);
         setProducts([]);
