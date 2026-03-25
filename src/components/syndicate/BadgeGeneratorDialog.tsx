@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Download, Printer, X } from 'lucide-react';
 import TaxiMotoBadge from './TaxiMotoBadge';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+const loadPdfLibs = () => Promise.all([
+  import('html2canvas').then(m => m.default),
+  import('jspdf').then(m => m.default),
+]);
 import { toast } from 'sonner';
 
 interface BadgeGeneratorDialogProps {
