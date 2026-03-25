@@ -18,8 +18,8 @@ import { useAutoTranslation } from '@/hooks/useAutoTranslation';
 import { useStorageUpload, StorageFolder } from '@/hooks/useStorageUpload';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import AgoraVideoCall from '@/components/communication/AgoraVideoCall';
-import AgoraAudioCall from '@/components/communication/AgoraAudioCall';
+const AgoraVideoCall = React.lazy(() => import('@/components/communication/AgoraVideoCall'));
+const AgoraAudioCall = React.lazy(() => import('@/components/communication/AgoraAudioCall'));
 import { AutoTranslatedMessageBubble } from '@/components/messaging/AutoTranslatedMessageBubble';
 import { Message as CommunicationMessage } from '@/types/communication.types';
 import {

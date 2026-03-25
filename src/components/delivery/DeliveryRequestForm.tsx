@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Package, Clock, DollarSign, Navigation } from 'lucide-react';
 import useGeolocation from '../../hooks/useGeolocation';
-import DeliveryMap from './DeliveryMap';
+const DeliveryMap = React.lazy(() => import('./DeliveryMap'));
 import { Position } from '../../services/geolocation/GeolocationService';
 import GeolocationService from '../../services/geolocation/GeolocationService';
 import { DeliveryService } from '../../services/delivery/DeliveryService';

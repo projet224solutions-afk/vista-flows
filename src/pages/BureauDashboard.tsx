@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import MotoSecurityNotifications from '@/components/syndicat/MotoSecurityNotific
 import SyndicateVehicleManagement from '@/components/syndicate/SyndicateVehicleManagement';
 import StolenVehicleManagement from '@/components/syndicate/StolenVehicleManagement';
 import BureauOfflineSyncPanel from '@/components/syndicat/BureauOfflineSyncPanel';
-import UniversalCommunicationHub from '@/components/communication/UniversalCommunicationHub';
+const UniversalCommunicationHub = React.lazy(() => import('@/components/communication/UniversalCommunicationHub'));
 import BureauWalletManagement from '@/components/wallet/BureauWalletManagement';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { useBureauAuth } from '@/hooks/useBureauAuth';

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Send, User, Search, MessageCircle, Phone, Video, MoreVertical, Shield, Check, CheckCheck, Clock, XCircle, UserPlus, Loader2, Reply, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import QuickFooter from "@/components/QuickFooter";
 import { universalCommunicationService } from "@/services/UniversalCommunicationService";
-import AgoraVideoCall from "@/components/communication/AgoraVideoCall";
-import AgoraAudioCall from "@/components/communication/AgoraAudioCall";
+const AgoraVideoCall = React.lazy(() => import("@/components/communication/AgoraVideoCall"));
+const AgoraAudioCall = React.lazy(() => import("@/components/communication/AgoraAudioCall"));
 import MessageInput from "@/components/communication/MessageInput";
 import MessageItem from "@/components/communication/MessageItem";
 import { PresenceIndicator, PresenceBadge, TypingIndicator, MessageStatusBadge } from "@/components/communication/PresenceIndicator";
