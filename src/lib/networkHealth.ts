@@ -139,18 +139,22 @@ async function probeBusinessData(timeoutMs: number): Promise<HealthProbeResult> 
   }
 
   try {
-    const response = await withTimeout(
-      fetch(`${SUPABASE_URL}/rest/v1/service_types?select=id&is_active=eq.true&limit=1`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          Accept: 'application/json',
-        },
-      }),
-      timeoutMs,
-    );
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/service_types?select=id&is_active=eq.true&limit=1`, {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal,
+      keepalive: true,
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        Accept: 'application/json',
+      },
+    });
+
+    clearTimeout(timer);
 
     if (!response.ok) {
       return { ok: false, reason: `business_http_${response.status}`, statusCode: response.status, source: 'business' };
@@ -164,7 +168,8 @@ async function probeBusinessData(timeoutMs: number): Promise<HealthProbeResult> 
     return { ok: false, reason: 'business_invalid_payload', statusCode: response.status, source: 'business' };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown_error';
-    return { ok: false, reason: message === 'timeout' ? 'business_timeout' : `business_${message}`, source: 'business' };
+    const isAbort = error instanceof DOMException && error.name === 'AbortError';
+    return { ok: false, reason: isAbort ? 'business_timeout' : `business_${message}`, source: 'business' };
   }
 }
 

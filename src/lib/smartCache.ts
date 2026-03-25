@@ -301,11 +301,22 @@ class SmartCacheService {
 
   // ==================== L2 - INDEXEDDB ====================
 
+  // 🚀 Connection pool: reuse single IDB connection instead of opening per-operation
+  private dbInstance: IDBDatabase | null = null;
+  private dbPromise: Promise<IDBDatabase> | null = null;
+
   private getDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
+    if (this.dbInstance) return Promise.resolve(this.dbInstance);
+    if (this.dbPromise) return this.dbPromise;
+
+    this.dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open('224sol-cache', 1);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => { this.dbPromise = null; reject(request.error); };
+      request.onsuccess = () => {
+        this.dbInstance = request.result;
+        this.dbInstance.onclose = () => { this.dbInstance = null; this.dbPromise = null; };
+        resolve(this.dbInstance);
+      };
       request.onupgradeneeded = () => {
         const db = request.result;
         if (!db.objectStoreNames.contains('cache')) {
@@ -313,6 +324,8 @@ class SmartCacheService {
         }
       };
     });
+
+    return this.dbPromise;
   }
 
   private async getFromIndexedDB(key: string): Promise<any | undefined> {
