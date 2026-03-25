@@ -247,31 +247,42 @@ serve(async (req) => {
 
     console.log('🔒 Authentification réussie via:', authenticatedVia, '| PDG:', isPdg, '| Permissions:', effectivePermissions);
 
-    // Vérifier que l'utilisateur a la permission de créer des utilisateurs
-    const hasCreateUsersPermission = 
-      effectivePermissions.includes('create_users') || 
-      effectivePermissions.includes('all') ||
-      effectivePermissions.includes('all_modules');
+    // ==========================================
+    // ✅ PERMISSIONS: Vérification unifiée via agent_permissions table
+    // ==========================================
+    let hasCreateUsersPermission = false;
+
+    if (isPdg) {
+      // PDG a toujours accès
+      hasCreateUsersPermission = true;
+    } else if (agent) {
+      // Vérifier dans la table agent_permissions (source de vérité)
+      const { data: permRows, error: permError } = await supabaseClient
+        .from('agent_permissions')
+        .select('permission_key, permission_value')
+        .eq('agent_id', agent.id)
+        .in('permission_key', ['create_users', 'manage_users']);
+
+      if (!permError && permRows && permRows.length > 0) {
+        hasCreateUsersPermission = permRows.some(p => p.permission_value === true);
+        console.log('📋 Permissions depuis agent_permissions table:', permRows);
+      } else {
+        // Fallback: vérifier dans le JSON legacy
+        hasCreateUsersPermission = 
+          effectivePermissions.includes('create_users') || 
+          effectivePermissions.includes('manage_users') ||
+          effectivePermissions.includes('all') ||
+          effectivePermissions.includes('all_modules');
+        console.log('📋 Permissions depuis JSON legacy:', effectivePermissions);
+      }
+    }
 
     if (!hasCreateUsersPermission) {
-      console.error('❌ Permission manquante: create_users', effectivePermissions);
+      console.error('❌ Permission manquante: create_users');
       return new Response(
         JSON.stringify({ 
           error: 'Permission insuffisante pour créer des utilisateurs',
-          code: 'INSUFFICIENT_PERMISSIONS',
-          permissions: effectivePermissions
-        }),
-        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 403 }
-      );
-    }
-
-    // Si on crée un agent/sous-agent, vérifier la permission spécifique
-    if ((body.role === 'agent' || body.role === 'sub_agent') && !canCreateSubAgent) {
-      console.error('❌ Permission manquante: créer des sous-agents');
-      return new Response(
-        JSON.stringify({ 
-          error: 'Permission insuffisante pour créer des agents',
-          code: 'CANNOT_CREATE_AGENTS'
+          code: 'INSUFFICIENT_PERMISSIONS'
         }),
         { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
