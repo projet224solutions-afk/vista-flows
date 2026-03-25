@@ -105,10 +105,54 @@ const showError = (rootElement: HTMLElement, error: unknown) => {
   `;
 };
 
+// PWA Diagnostic Logger — helps debug production vs preview differences
+function logPwaDiagnostics() {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || (navigator as any).standalone === true;
+  const swSupported = 'serviceWorker' in navigator;
+  
+  console.info('📱 [PWA Diagnostics]', {
+    mode: isStandalone ? 'standalone (installed)' : 'browser',
+    hostname: location.hostname,
+    protocol: location.protocol,
+    swSupported,
+    navigatorOnline: navigator.onLine,
+    timestamp: new Date().toISOString(),
+  });
+
+  // Check SW registration
+  if (swSupported) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      console.info('📱 [PWA SW]', {
+        registrations: regs.length,
+        active: regs.map(r => r.active?.scriptURL || 'none'),
+      });
+    });
+  }
+
+  // Test healthz.json accessibility
+  fetch('/healthz.json?diag=1', { cache: 'no-store' })
+    .then(async r => {
+      const ct = r.headers.get('content-type') || '';
+      const isJson = ct.includes('application/json');
+      let body: any = null;
+      try { body = await r.json(); } catch {}
+      console.info('📱 [PWA healthz]', {
+        status: r.status,
+        contentType: ct,
+        isRealJson: isJson && body?.status === 'ok',
+        source: body?.source || 'server',
+      });
+    })
+    .catch(err => {
+      console.warn('📱 [PWA healthz] FAILED', err.message);
+    });
+}
+
 // Initialize app
 const initApp = () => {
   console.log("🚀 224Solutions - Starting...");
-  
+  logPwaDiagnostics();
   const rootElement = document.getElementById("root");
 
   if (!rootElement) {
