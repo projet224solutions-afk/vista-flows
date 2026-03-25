@@ -1,3 +1,15 @@
+/**
+ * UNIFIED NOTIFICATIONS REALTIME LISTENER
+ * 
+ * Listens to `notifications` table (source of truth) + `messages` table.
+ * 
+ * Behavior:
+ * - Tab VISIBLE: toast + in-app sound + vibration
+ * - Tab HIDDEN: system Notification API push (with sound/vibration via OS)
+ * - Deduplication via seenIds to prevent double toast/sound
+ * - Cleanup of seen IDs to prevent memory leak
+ */
+
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,47 +26,110 @@ type AppNotification = {
   read: boolean;
 };
 
-function showNotificationToast(n: AppNotification) {
-  const title = n.title || "Nouvelle notification";
-  const description = n.message;
+/**
+ * Show a system-level notification (works even when tab is hidden)
+ */
+function showSystemNotification(title: string, body: string, tag?: string): void {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
-  playNotificationSound();
+  try {
+    const notification = new Notification(title, {
+      body,
+      icon: '/icon-192.png',
+      badge: '/favicon.png',
+      tag: tag || `notif-${Date.now()}`,
+      requireInteraction: false,
+    });
 
-  switch ((n.type || "").toLowerCase()) {
-    case "security":
-      toast.error(title, { description });
-      break;
-    case "promotion":
-    case "recommendation":
-      toast.info(title, { description });
-      break;
-    case "order":
-      toast.success(title, { description });
-      break;
-    case "system":
-    default:
-      toast(title, { description });
-      break;
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+      // Navigate to notifications page
+      if (window.location.pathname !== '/notifications') {
+        window.location.href = '/notifications';
+      }
+    };
+  } catch (e) {
+    // Service worker context or unsupported
+    console.debug('[Notifications] System notification fallback failed:', e);
   }
 }
 
 /**
- * Abonnement Realtime global sur `notifications` + `messages`.
- * Joue un son et affiche un toast pour chaque nouveau message reçu,
- * même si l'utilisateur n'est pas sur la page de messagerie.
+ * Handle a new notification based on visibility state
+ */
+function handleNewNotification(n: AppNotification): void {
+  const title = n.title || "Nouvelle notification";
+  const description = n.message || "";
+
+  if (document.visibilityState === 'visible') {
+    // ── Tab is ACTIVE: toast + sound + vibration ──
+    playNotificationSound();
+
+    switch ((n.type || "").toLowerCase()) {
+      case "security":
+        toast.error(title, { description, duration: 10000 });
+        break;
+      case "promotion":
+      case "recommendation":
+        toast.info(title, { description });
+        break;
+      case "order":
+      case "payment":
+        toast.success(title, { description });
+        break;
+      case "message":
+        toast("💬 " + title, { description, duration: 5000 });
+        break;
+      default:
+        toast(title, { description });
+        break;
+    }
+  } else {
+    // ── Tab is HIDDEN: system push notification (makes phone ring/vibrate) ──
+    showSystemNotification(title, description, `notif-${n.id}`);
+  }
+}
+
+/**
+ * Handle a new message (from messages table)
+ */
+function handleNewMessage(msg: any): void {
+  const senderName = msg.sender_name || "Nouveau message";
+  const content = msg.content?.substring(0, 80) || "Vous avez reçu un message";
+
+  if (document.visibilityState === 'visible') {
+    playNotificationSound();
+    toast("💬 " + senderName, {
+      description: content,
+      duration: 5000,
+    });
+  } else {
+    showSystemNotification(`💬 ${senderName}`, content, `msg-${msg.id}`);
+  }
+}
+
+/**
+ * Global realtime subscription on `notifications` + `messages`.
+ * Plays sound and shows toast for active tabs,
+ * sends system push notification for hidden tabs.
  */
 export function useNotificationsRealtime() {
   const { user } = useAuth();
-
   const seenIdsRef = useRef<Set<string>>(new Set());
   const cleanupTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
 
+    // Request notification permission proactively (one-time, non-blocking)
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+
     // ─── 1. Notifications table listener ───
     const notifChannel = supabase
-      .channel(`app-notifications:${user.id}`)
+      .channel(`unified-notif:${user.id}`)
       .on(
         "postgres_changes",
         {
@@ -67,8 +142,9 @@ export function useNotificationsRealtime() {
           const n = payload.new as AppNotification;
           if (!n?.id || seenIdsRef.current.has(n.id)) return;
           seenIdsRef.current.add(n.id);
-          showNotificationToast(n);
+          handleNewNotification(n);
 
+          // Cleanup seen IDs periodically
           if (cleanupTimerRef.current) window.clearTimeout(cleanupTimerRef.current);
           cleanupTimerRef.current = window.setTimeout(() => {
             const ids = Array.from(seenIdsRef.current);
@@ -80,9 +156,9 @@ export function useNotificationsRealtime() {
       )
       .subscribe();
 
-    // ─── 2. Messages table listener (son + toast pour nouveaux messages) ───
+    // ─── 2. Messages table listener ───
     const msgChannel = supabase
-      .channel(`msg-sound:${user.id}`)
+      .channel(`unified-msg:${user.id}`)
       .on(
         "postgres_changes",
         {
@@ -95,17 +171,7 @@ export function useNotificationsRealtime() {
           const msg = payload.new as any;
           if (!msg?.id || seenIdsRef.current.has(msg.id)) return;
           seenIdsRef.current.add(msg.id);
-
-          // Jouer le son de notification
-          playNotificationSound();
-
-          // Afficher un toast avec le contenu du message
-          const senderName = msg.sender_name || "Nouveau message";
-          const content = msg.content?.substring(0, 80) || "Vous avez reçu un message";
-          toast("💬 " + senderName, {
-            description: content,
-            duration: 5000,
-          });
+          handleNewMessage(msg);
         }
       )
       .subscribe();
