@@ -1298,7 +1298,7 @@ export default function Auth() {
         <div className="flex justify-end mb-4 px-4">
           <LanguageSelector variant="compact" />
         </div>
-        <img src="/logo-224solutions.png" alt="224Solutions" className="w-24 h-24 mx-auto mb-4 object-contain" />
+        <img src="/logo-224solutions.png" alt="224Solutions" className="w-24 h-24 mx-auto mb-4 object-contain rounded-2xl bg-primary/5 p-2 shadow-sm" />
         <h1 className="text-4xl font-bold text-primary mb-6">224Solutions</h1>
 
         {/* Boutons du header */}
