@@ -118,20 +118,21 @@ export function useVendorStats() {
       const startedAt = performance.now();
       console.info('[VENDOR STATS LOAD START]', { userId: user.id });
 
-      const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, label: string) =>
+      const withTimeout = <T,>(promiseFactory: () => PromiseLike<T>, timeoutMs: number, label: string) =>
         Promise.race<T>([
-          promise,
+          Promise.resolve().then(promiseFactory),
           new Promise<T>((_, reject) => setTimeout(() => reject(new Error(label)), timeoutMs)),
         ]);
 
       try {
         // Get vendor ID first
         const { data: vendor } = await withTimeout(
-          supabase
-            .from('vendors')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle(),
+          () =>
+            supabase
+              .from('vendors')
+              .select('id')
+              .eq('user_id', user.id)
+              .maybeSingle(),
           STATS_TIMEOUT_MS,
           'vendor_lookup_timeout',
         );
@@ -145,10 +146,11 @@ export function useVendorStats() {
 
         // Fetch revenue and orders stats
         const { data: orders } = await withTimeout(
-          supabase
-            .from('orders')
-            .select('total_amount, status')
-            .eq('vendor_id', vendor.id),
+          () =>
+            supabase
+              .from('orders')
+              .select('total_amount, status')
+              .eq('vendor_id', vendor.id),
           STATS_TIMEOUT_MS,
           'orders_stats_timeout',
         );
@@ -159,22 +161,24 @@ export function useVendorStats() {
 
         // Fetch products count
         const { count: products_count } = await withTimeout(
-          supabase
-            .from('products')
-            .select('*', { count: 'exact', head: true })
-            .eq('vendor_id', vendor.id)
-            .eq('is_active', true),
+          () =>
+            supabase
+              .from('products')
+              .select('*', { count: 'exact', head: true })
+              .eq('vendor_id', vendor.id)
+              .eq('is_active', true),
           STATS_TIMEOUT_MS,
           'products_count_timeout',
         );
 
         // Fetch low stock count
         const { count: low_stock_count } = await withTimeout(
-          supabase
-            .from('inventory')
-            .select('*, products!inner(*)', { count: 'exact', head: true })
-            .eq('products.vendor_id', vendor.id)
-            .lt('quantity', 10),
+          () =>
+            supabase
+              .from('inventory')
+              .select('*, products!inner(*)', { count: 'exact', head: true })
+              .eq('products.vendor_id', vendor.id)
+              .lt('quantity', 10),
           STATS_TIMEOUT_MS,
           'low_stock_timeout',
         );
@@ -183,11 +187,12 @@ export function useVendorStats() {
         let overdue_payments = 0;
         try {
           const { count } = await withTimeout(
-            supabase
-              .from('payment_schedules')
-              .select('id, orders!inner(vendor_id)', { count: 'exact', head: true })
-              .eq('orders.vendor_id', vendor.id)
-              .eq('status', 'overdue'),
+            () =>
+              supabase
+                .from('payment_schedules')
+                .select('id, orders!inner(vendor_id)', { count: 'exact', head: true })
+                .eq('orders.vendor_id', vendor.id)
+                .eq('status', 'overdue'),
             STATS_TIMEOUT_MS,
             'overdue_payments_timeout',
           );
@@ -198,11 +203,12 @@ export function useVendorStats() {
 
         // Fetch unique customers count via distinct customer_ids from orders
         const { data: customerOrders } = await withTimeout(
-          supabase
-            .from('orders')
-            .select('customer_id')
-            .eq('vendor_id', vendor.id)
-            .not('customer_id', 'is', null),
+          () =>
+            supabase
+              .from('orders')
+              .select('customer_id')
+              .eq('vendor_id', vendor.id)
+              .not('customer_id', 'is', null),
           STATS_TIMEOUT_MS,
           'customers_count_timeout',
         );
