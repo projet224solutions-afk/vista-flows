@@ -15,12 +15,25 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Clé publique Stripe (variable d'environnement obligatoire)
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 let stripePromise: Promise<Stripe | null> | null = null;
-const getStripe = () => {
+const getStripe = (): Promise<Stripe | null> => {
+  if (!STRIPE_PUBLISHABLE_KEY) {
+    console.error('❌ [STRIPE LOAD FAIL] VITE_STRIPE_PUBLISHABLE_KEY is not set');
+    return Promise.resolve(null);
+  }
   if (!stripePromise) {
-    stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
+    console.log('🔄 [STRIPE LOAD START]');
+    stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY).then((s) => {
+      if (s) console.log('✅ [STRIPE LOAD SUCCESS]');
+      else console.error('❌ [STRIPE LOAD FAIL] loadStripe returned null');
+      return s;
+    }).catch((err) => {
+      console.error('❌ [STRIPE LOAD FAIL]', err);
+      stripePromise = null;
+      return null;
+    });
   }
   return stripePromise;
 };
