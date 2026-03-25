@@ -95,6 +95,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
 
   const requestIdRef = useRef(0);
   const lastLoadedAtRef = useRef(0);
+  const loadingRef = useRef(false);
   const refreshRef = useRef<() => void>(() => {});
   const realtimeRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
