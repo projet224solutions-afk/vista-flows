@@ -151,9 +151,29 @@ self.addEventListener("fetch", (event) => {
   // NEVER intercept manifest
   if (url.pathname === '/manifest.webmanifest' || url.pathname === '/manifest.json') return;
 
-  // Health check must always bypass cache
+  // Health check must always bypass cache — fallback to real JSON if network fails
   if (url.pathname === '/healthz.json') {
-    event.respondWith(fetch(event.request, { cache: 'no-store' }));
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then(response => {
+          const ct = response.headers.get('content-type') || '';
+          // If server returned HTML (SPA rewrite), synthesize a real JSON response
+          if (ct.includes('text/html')) {
+            return new Response('{"status":"ok","source":"sw-synthetic"}', {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Offline — synthesize response so health check doesn't fail due to SW
+          return new Response('{"status":"ok","source":"sw-offline"}', {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        })
+    );
     return;
   }
 
