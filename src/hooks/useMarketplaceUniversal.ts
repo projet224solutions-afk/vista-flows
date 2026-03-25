@@ -88,13 +88,14 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   } = options;
 
   const [items, setItems] = useState<MarketplaceItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(autoLoad);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
   const requestIdRef = useRef(0);
   const lastLoadedAtRef = useRef(0);
+  const loadingRef = useRef(false);
   const refreshRef = useRef<() => void>(() => {});
   const realtimeRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -490,6 +491,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     const requestId = ++requestIdRef.current;
 
     try {
+      loadingRef.current = true;
       setLoading(true);
 
       // Récupérer le nom de la catégorie si c'est un UUID
@@ -623,6 +625,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       }
     } finally {
       if (requestId === requestIdRef.current) {
+        loadingRef.current = false;
         setLoading(false);
       }
     }
@@ -660,7 +663,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
     if (!autoLoad) return;
 
     setPage(1);
-    setItems([]);
+    setLoading(true);
     loadAllItems(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -723,7 +726,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const isVisible = document.visibilityState === 'visible';
       const staleForMs = Date.now() - lastLoadedAtRef.current;
 
-      if (isVisible && staleForMs > 45_000) {
+      if (isVisible && staleForMs > 45_000 && !loadingRef.current) {
         console.log('[MarketplaceRealtime] Foreground/safety refresh', { staleForMs });
         refreshRef.current();
       }
