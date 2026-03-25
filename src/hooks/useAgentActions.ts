@@ -12,7 +12,7 @@ export interface CreateUserData {
   email: string;
   phone: string;
   password?: string; // Mot de passe optionnel, généré automatiquement si non fourni
-  role: 'client' | 'vendeur' | 'livreur' | 'taxi' | 'transitaire' | 'syndicat';
+  role: 'client' | 'vendeur' | 'livreur' | 'taxi' | 'transitaire' | 'syndicat' | 'prestataire';
   country: string;
   city: string;
   // Données spécifiques selon le rôle
@@ -318,21 +318,36 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
     updates: Partial<CreateSubAgentData>
   ): Promise<{ success: boolean; error?: string }> => {
     try {
+      const updateData: any = {};
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.email !== undefined) updateData.email = updates.email;
+      if (updates.phone !== undefined) updateData.phone = updates.phone;
+      if (updates.commission_rate !== undefined) updateData.commission_rate = updates.commission_rate;
+      if (updates.can_create_sub_agent !== undefined) updateData.can_create_sub_agent = updates.can_create_sub_agent;
+      if (updates.permissions !== undefined) updateData.permissions = updates.permissions;
+
       const { error } = await supabase
         .from('agents_management')
-        .update({
-          name: updates.name,
-          email: updates.email,
-          phone: updates.phone,
-          commission_rate: updates.commission_rate,
-          can_create_sub_agent: updates.can_create_sub_agent,
-          permissions: updates.permissions
-        })
+        .update(updateData)
         .eq('id', subAgentId);
 
       if (error) {
         console.error('[useAgentActions] Update sub-agent error:', error);
         return { success: false, error: error.message };
+      }
+
+      // Synchroniser les permissions dans agent_permissions table si modifiées
+      if (updates.permissions) {
+        await supabase.from('agent_permissions').delete().eq('agent_id', subAgentId);
+        if (updates.permissions.length > 0) {
+          await supabase.from('agent_permissions').insert(
+            updates.permissions.map(perm => ({
+              agent_id: subAgentId,
+              permission_key: perm,
+              permission_value: true
+            }))
+          );
+        }
       }
 
       toast.success('Sous-agent mis à jour avec succès!');
@@ -377,14 +392,45 @@ export const useAgentActions = (options: UseAgentActionsOptions = {}) => {
     permissions: string[]
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { error } = await supabase
+      // 1. Mettre à jour le JSON legacy dans agents_management
+      const { error: legacyError } = await supabase
         .from('agents_management')
         .update({ permissions })
         .eq('id', agentId);
 
-      if (error) {
-        console.error('[useAgentActions] Assign permissions error:', error);
-        return { success: false, error: error.message };
+      if (legacyError) {
+        console.error('[useAgentActions] Legacy permissions update error:', legacyError);
+        return { success: false, error: legacyError.message };
+      }
+
+      // 2. Synchroniser avec agent_permissions table (source de vérité)
+      // D'abord supprimer les anciennes permissions
+      const { error: deleteError } = await supabase
+        .from('agent_permissions')
+        .delete()
+        .eq('agent_id', agentId);
+
+      if (deleteError) {
+        console.warn('[useAgentActions] Delete old permissions warning:', deleteError);
+      }
+
+      // Puis insérer les nouvelles
+      if (permissions.length > 0) {
+        const permRows = permissions.map(perm => ({
+          agent_id: agentId,
+          permission_key: perm,
+          permission_value: true
+        }));
+
+        const { error: insertError } = await supabase
+          .from('agent_permissions')
+          .insert(permRows);
+
+        if (insertError) {
+          console.error('[useAgentActions] Insert permissions error:', insertError);
+          // Non bloquant - le JSON legacy est déjà mis à jour
+          console.warn('⚠️ agent_permissions table non synchronisée, JSON legacy OK');
+        }
       }
 
       toast.success('Permissions mises à jour avec succès!');

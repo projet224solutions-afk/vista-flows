@@ -42,8 +42,8 @@ const CreateUserSchema = z.object({
   phone: z.string()
     .regex(/^\+?[0-9]{8,15}$/, { message: 'Format téléphone invalide (8-15 chiffres)' })
     .trim(),
-  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'agent', 'sub_agent', 'syndicat'], {
-    errorMap: () => ({ message: 'Rôle invalide' })
+  role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'prestataire'], {
+    errorMap: () => ({ message: 'Rôle invalide. Rôles autorisés: client, vendeur, livreur, taxi, syndicat, transitaire, prestataire' })
   }),
   country: z.string()
     .max(100, { message: 'Nom pays trop long' })
@@ -247,31 +247,42 @@ serve(async (req) => {
 
     console.log('🔒 Authentification réussie via:', authenticatedVia, '| PDG:', isPdg, '| Permissions:', effectivePermissions);
 
-    // Vérifier que l'utilisateur a la permission de créer des utilisateurs
-    const hasCreateUsersPermission = 
-      effectivePermissions.includes('create_users') || 
-      effectivePermissions.includes('all') ||
-      effectivePermissions.includes('all_modules');
+    // ==========================================
+    // ✅ PERMISSIONS: Vérification unifiée via agent_permissions table
+    // ==========================================
+    let hasCreateUsersPermission = false;
+
+    if (isPdg) {
+      // PDG a toujours accès
+      hasCreateUsersPermission = true;
+    } else if (agent) {
+      // Vérifier dans la table agent_permissions (source de vérité)
+      const { data: permRows, error: permError } = await supabaseClient
+        .from('agent_permissions')
+        .select('permission_key, permission_value')
+        .eq('agent_id', agent.id)
+        .in('permission_key', ['create_users', 'manage_users']);
+
+      if (!permError && permRows && permRows.length > 0) {
+        hasCreateUsersPermission = permRows.some(p => p.permission_value === true);
+        console.log('📋 Permissions depuis agent_permissions table:', permRows);
+      } else {
+        // Fallback: vérifier dans le JSON legacy
+        hasCreateUsersPermission = 
+          effectivePermissions.includes('create_users') || 
+          effectivePermissions.includes('manage_users') ||
+          effectivePermissions.includes('all') ||
+          effectivePermissions.includes('all_modules');
+        console.log('📋 Permissions depuis JSON legacy:', effectivePermissions);
+      }
+    }
 
     if (!hasCreateUsersPermission) {
-      console.error('❌ Permission manquante: create_users', effectivePermissions);
+      console.error('❌ Permission manquante: create_users');
       return new Response(
         JSON.stringify({ 
           error: 'Permission insuffisante pour créer des utilisateurs',
-          code: 'INSUFFICIENT_PERMISSIONS',
-          permissions: effectivePermissions
-        }),
-        { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 403 }
-      );
-    }
-
-    // Si on crée un agent/sous-agent, vérifier la permission spécifique
-    if ((body.role === 'agent' || body.role === 'sub_agent') && !canCreateSubAgent) {
-      console.error('❌ Permission manquante: créer des sous-agents');
-      return new Response(
-        JSON.stringify({ 
-          error: 'Permission insuffisante pour créer des agents',
-          code: 'CANNOT_CREATE_AGENTS'
+          code: 'INSUFFICIENT_PERMISSIONS'
         }),
         { headers: { ...securityHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
@@ -506,30 +517,38 @@ serve(async (req) => {
       }
     }
 
-    // Créer un profil agent/sous-agent si nécessaire
-    if (body.role === 'agent' || body.role === 'sub_agent') {
-      // Générer un code agent unique
-      const agentCode = `AG-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
-      
-      const { error: agentManagementError } = await supabaseClient
-        .from('agents_management')
+    // Créer un profil prestataire si nécessaire
+    if (body.role === 'prestataire') {
+      console.log('🔧 Création profil prestataire pour:', authUser.user.id);
+      // Le prestataire utilise professional_services, pas vendors
+      const { error: prestataireError } = await supabaseClient
+        .from('professional_services')
         .insert({
-          pdg_id: effectivePdgId,
           user_id: authUser.user.id,
-          agent_code: agentCode,
-          name: `${body.firstName} ${body.lastName || ''}`.trim(),
-          email: body.email,
+          business_name: body.vendeurData?.business_name || `${body.firstName} ${body.lastName || ''}`.trim(),
+          description: body.vendeurData?.business_description || null,
+          address: body.vendeurData?.business_address || null,
+          service_type: body.vendeurData?.service_type || 'general',
           phone: body.phone,
+          email: body.email,
+          city: body.city || null,
           is_active: true,
-          can_create_sub_agent: false, // Par défaut, les sous-agents ne peuvent pas créer d'autres sous-agents
-          permissions: ['create_users'], // Permission de base
-          commission_rate: 0
+          is_verified: true // Vérifié car créé par agent
         });
 
-      if (agentManagementError) {
-        console.error('Agent management error:', agentManagementError);
-        throw new Error('Erreur lors de la création du profil agent: ' + agentManagementError.message);
+      if (prestataireError) {
+        console.error('❌ Prestataire error:', prestataireError);
+        // Non bloquant - log et continue
+        console.warn('⚠️ Profil prestataire non créé, mais utilisateur créé');
+      } else {
+        console.log('✅ Profil prestataire créé');
       }
+
+      // Wallet pour prestataire
+      const { error: prestWalletError } = await supabaseClient
+        .from('wallets')
+        .insert({ user_id: authUser.user.id, balance: 0 });
+      if (prestWalletError) console.warn('⚠️ Wallet prestataire error:', prestWalletError);
     }
 
     // Créer un bureau syndicat si nécessaire

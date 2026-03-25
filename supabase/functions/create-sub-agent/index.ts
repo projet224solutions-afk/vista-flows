@@ -317,6 +317,50 @@ serve(async (req) => {
       console.log('✅ Wallet général créé');
     }
 
+    // Créer agent_wallet pour les commissions
+    const { error: agentWalletError } = await supabaseServiceClient.rpc('create_agent_wallet', {
+      p_agent_id: newAgent.id
+    });
+
+    if (agentWalletError) {
+      console.warn('⚠️ Erreur création agent_wallet via RPC, tentative directe:', agentWalletError);
+      // Fallback: insertion directe
+      const { error: directWalletError } = await supabaseServiceClient
+        .from('agent_wallets')
+        .insert({
+          agent_id: newAgent.id,
+          balance: 0,
+          currency: 'GNF',
+          wallet_status: 'active'
+        });
+      if (directWalletError) {
+        console.warn('⚠️ Erreur création agent_wallet directe:', directWalletError);
+      } else {
+        console.log('✅ Agent wallet créé (directe)');
+      }
+    } else {
+      console.log('✅ Agent wallet créé via RPC');
+    }
+
+    // Synchroniser permissions dans agent_permissions table
+    if (permissions && Array.isArray(permissions) && permissions.length > 0) {
+      const permRows = permissions.map((perm: string) => ({
+        agent_id: newAgent.id,
+        permission_key: perm,
+        permission_value: true
+      }));
+      
+      const { error: permInsertError } = await supabaseServiceClient
+        .from('agent_permissions')
+        .insert(permRows);
+      
+      if (permInsertError) {
+        console.warn('⚠️ Erreur sync agent_permissions:', permInsertError);
+      } else {
+        console.log('✅ Permissions synchronisées dans agent_permissions table');
+      }
+    }
+
     // Créer le profil utilisateur
     const { error: profileError } = await supabaseServiceClient
       .from('profiles')
