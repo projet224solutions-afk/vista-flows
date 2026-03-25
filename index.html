@@ -4,15 +4,18 @@
 <head>
   <meta charset="UTF-8" />
   
-  <!-- OPTIMISATION PERFORMANCE: Preconnect domaines critiques -->
+  <!-- 🚀 OPTIMISATION PERFORMANCE: Preconnect ALL Supabase subdomains -->
   <link rel="preconnect" href="https://uakkxaibujzxdiqzpnpr.supabase.co" crossorigin>
   <link rel="dns-prefetch" href="https://uakkxaibujzxdiqzpnpr.supabase.co">
   <link rel="preconnect" href="https://uakkxaibujzxdiqzpnpr.functions.supabase.co" crossorigin>
   <link rel="dns-prefetch" href="https://uakkxaibujzxdiqzpnpr.functions.supabase.co">
+  <!-- Storage uses same domain but preconnect helps with parallel connections -->
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://api.stripe.com">
   <link rel="dns-prefetch" href="https://js.stripe.com">
+  <!-- Early hints for faster TTFB -->
+  <meta http-equiv="x-dns-prefetch-control" content="on">
   
   <link rel="icon" type="image/png" href="/favicon.png?v=2" sizes="32x32" />
   <link rel="icon" type="image/png" href="/logo-224solutions.png?v=2" sizes="192x192" />

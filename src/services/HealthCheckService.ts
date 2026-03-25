@@ -35,7 +35,7 @@ export interface SystemHealthReport {
 class HealthCheckService {
   private static instance: HealthCheckService;
   private checkInterval: NodeJS.Timeout | null = null;
-  private readonly CHECK_INTERVAL = 60000; // 60 secondes
+  private readonly CHECK_INTERVAL = 120000; // 🚀 120s instead of 60s — less overhead
   private lastReport: SystemHealthReport | null = null;
   private startTime: number = Date.now();
 

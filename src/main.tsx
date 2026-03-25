@@ -149,27 +149,21 @@ function logPwaDiagnostics() {
     });
 }
 
-// Warm up Supabase Edge Functions domain (reduce cold start from ~584ms to ~100ms)
+// 🚀 Warm up ALL Supabase domains at startup (TCP+TLS handshake)
 function warmUpConnections() {
   const supabaseRef = 'uakkxaibujzxdiqzpnpr';
+  const base = `https://${supabaseRef}.supabase.co`;
   const edgeDomain = `https://${supabaseRef}.functions.supabase.co`;
-  const restDomain = `https://${supabaseRef}.supabase.co`;
   
-  // Pre-warm TCP + TLS to Edge Functions domain (fire-and-forget)
-  fetch(`${edgeDomain}/health-check`, {
-    method: 'HEAD',
-    mode: 'no-cors',
-    keepalive: true,
-    cache: 'no-store',
-  }).catch(() => {}); // Ignore errors, just want the TCP/TLS handshake
-
-  // Pre-warm REST API connection
-  fetch(`${restDomain}/rest/v1/`, {
-    method: 'HEAD',
-    mode: 'no-cors',
-    keepalive: true,
-    cache: 'no-store',
-  }).catch(() => {});
+  // Fire-and-forget warm-up requests in parallel
+  const warmOpts: RequestInit = { method: 'HEAD', mode: 'no-cors', keepalive: true, cache: 'no-store' };
+  
+  Promise.allSettled([
+    fetch(`${edgeDomain}/health-check`, warmOpts),   // Edge Functions (~584ms → ~100ms on 2nd call)
+    fetch(`${base}/rest/v1/`, warmOpts),               // DB / REST API
+    fetch(`${base}/auth/v1/settings`, warmOpts),       // Auth service
+    fetch(`${base}/storage/v1/`, warmOpts),             // Storage service
+  ]).catch(() => {});
 }
 
 // Initialize app
