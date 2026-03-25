@@ -1,21 +1,19 @@
 /**
  * AGENT FULL FINANCE MODULE
- * Module Finance complet pour l'agent - miroir de PDGFinance
- * Intègre: Revenus, Transactions, Analytics, Abonnements, Escrow, Driver Subscriptions
+ * Module Finance dédié à l'agent — affiche UNIQUEMENT les données propres à l'agent
+ * Source de vérité: agent_commissions_log + agent_wallets
  */
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  DollarSign, TrendingUp, Wallet, Download, Clock, 
-  BarChart3, RefreshCw, Sparkles, Shield, Bike, Building2,
-  ArrowUpRight, ArrowDownLeft, Activity, PiggyBank,
+  DollarSign, TrendingUp, Wallet, Download,
+  BarChart3, RefreshCw, Activity, PiggyBank,
   CreditCard, Calendar
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -27,21 +25,11 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  ResponsiveContainer
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { useFinanceData } from '@/hooks/useFinanceData';
 import { format, startOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
-
-// Lazy load des composants lourds
-const PlatformRevenueOverview = lazy(() => import('@/components/pdg/PlatformRevenueOverview'));
-const PDGRevenueAnalytics = lazy(() => import('@/components/pdg/PDGRevenueAnalytics'));
-const SubscriptionManagement = lazy(() => import('@/components/pdg/SubscriptionManagement'));
-const PDGEscrowManagement = lazy(() => import('@/components/pdg/PDGEscrowManagement'));
-const DriverSubscriptionManagement = lazy(() => import('@/components/pdg/DriverSubscriptionManagement'));
-const PDGServiceSubscriptions = lazy(() => import('@/components/pdg/PDGServiceSubscriptions'));
 
 interface AgentFullFinanceModuleProps {
   agentId: string;
@@ -64,7 +52,6 @@ const LoadingSpinner = () => (
 );
 
 export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFullFinanceModuleProps) {
-  const { stats: platformStats, transactions, loading: platformLoading, refetch } = useFinanceData(true);
   const [agentStats, setAgentStats] = useState<AgentFinancialStats>({
     totalCommissions: 0,
     pendingCommissions: 0,
