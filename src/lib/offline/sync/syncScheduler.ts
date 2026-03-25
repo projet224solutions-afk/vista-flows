@@ -233,14 +233,30 @@ export class SyncScheduler {
    * Synchroniser une entité spécifique
    */
   private async syncEntity(entity: SyncableEntity): Promise<void> {
-    console.log(`[SyncScheduler] Sync ${entity}...`);
-
     // Marquer comme synchronisé
     this.lastSync.set(entity, new Date());
 
-    // TODO: Appeler la logique de sync réelle via offlineSyncService
-    // Pour l'instant, juste logger
-    console.log(`[SyncScheduler] ${entity} synchronisé`);
+    // Pour les ventes POS, appeler le vrai moteur de sync
+    if (entity === 'pos_sales') {
+      try {
+        const { syncOfflinePosSales } = await import('@/lib/offlinePosSync');
+        const result = await syncOfflinePosSales();
+        if (result.total > 0) {
+          console.log(`[SyncScheduler] ✅ pos_sales sync: ${result.synced}/${result.total} synchronisées`);
+        }
+      } catch (err) {
+        console.warn(`[SyncScheduler] ⚠️ Erreur sync pos_sales:`, err);
+      }
+      return;
+    }
+
+    // Pour les autres entités, déqueuer si disponible
+    if (globalSyncQueue.length > 0) {
+      const item = globalSyncQueue.dequeue();
+      if (item && item.entity === entity) {
+        console.log(`[SyncScheduler] Processing queued ${entity}`);
+      }
+    }
   }
 
   /**
