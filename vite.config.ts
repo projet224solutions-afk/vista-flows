@@ -92,7 +92,7 @@ export default defineConfig(({ mode }) => {
           warn(warning);
         },
       },
-      chunkSizeWarningLimit: 2000,
+      chunkSizeWarningLimit: 3000,
       sourcemap: false,
       minify: 'esbuild',
     }
