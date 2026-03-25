@@ -14,6 +14,22 @@
   status = 200
   force = true
 
+# Exclude static files from SPA rewrite
+[[redirects]]
+  from = "/healthz.json"
+  to = "/healthz.json"
+  status = 200
+
+[[redirects]]
+  from = "/service-worker.js"
+  to = "/service-worker.js"
+  status = 200
+
+[[redirects]]
+  from = "/manifest.json"
+  to = "/manifest.json"
+  status = 200
+
 # SPA routing - redirect all routes to index.html
 [[redirects]]
   from = "/*"
