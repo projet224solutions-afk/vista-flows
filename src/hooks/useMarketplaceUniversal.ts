@@ -726,7 +726,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const isVisible = document.visibilityState === 'visible';
       const staleForMs = Date.now() - lastLoadedAtRef.current;
 
-      if (isVisible && staleForMs > 45_000) {
+      if (isVisible && staleForMs > 45_000 && !loadingRef.current) {
         console.log('[MarketplaceRealtime] Foreground/safety refresh', { staleForMs });
         refreshRef.current();
       }
