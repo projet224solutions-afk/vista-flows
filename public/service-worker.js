@@ -48,7 +48,7 @@ const PRECACHE_ASSETS = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
-  "/healthz.json",
+  // DO NOT precache /healthz.json — it must always go to network
   "/offline.html",
   "/favicon.png",
   "/icon-192.png",
