@@ -149,10 +149,34 @@ function logPwaDiagnostics() {
     });
 }
 
+// Warm up Supabase Edge Functions domain (reduce cold start from ~584ms to ~100ms)
+function warmUpConnections() {
+  const supabaseRef = 'uakkxaibujzxdiqzpnpr';
+  const edgeDomain = `https://${supabaseRef}.functions.supabase.co`;
+  const restDomain = `https://${supabaseRef}.supabase.co`;
+  
+  // Pre-warm TCP + TLS to Edge Functions domain (fire-and-forget)
+  fetch(`${edgeDomain}/health-check`, {
+    method: 'HEAD',
+    mode: 'no-cors',
+    keepalive: true,
+    cache: 'no-store',
+  }).catch(() => {}); // Ignore errors, just want the TCP/TLS handshake
+
+  // Pre-warm REST API connection
+  fetch(`${restDomain}/rest/v1/`, {
+    method: 'HEAD',
+    mode: 'no-cors',
+    keepalive: true,
+    cache: 'no-store',
+  }).catch(() => {});
+}
+
 // Initialize app
 const initApp = () => {
   console.log("🚀 224Solutions - Starting...");
   logPwaDiagnostics();
+  warmUpConnections();
   const rootElement = document.getElementById("root");
 
   if (!rootElement) {

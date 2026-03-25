@@ -219,7 +219,11 @@ class HealthCheckService {
     const startTime = Date.now();
 
     try {
-      const { data: buckets, error } = await supabase.storage.listBuckets();
+      // Use a lightweight probe instead of listBuckets (which is slow ~227ms)
+      // Just check if storage endpoint responds by listing files in a known bucket
+      const { error } = await supabase.storage
+        .from('documents')
+        .list('', { limit: 1 });
       const responseTime = Date.now() - startTime;
 
       if (error) {
@@ -235,10 +239,9 @@ class HealthCheckService {
       return {
         name: 'Storage',
         status: 'healthy',
-        message: `${buckets?.length || 0} buckets accessibles`,
+        message: 'Storage accessible',
         responseTime,
         timestamp: new Date().toISOString(),
-        details: { bucketCount: buckets?.length || 0 }
       };
     } catch (error) {
       return {
