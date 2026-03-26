@@ -25,6 +25,9 @@ import paymentRoutes from './routes/payments.routes.js';
 import walletRoutesV2 from './routes/wallet.v2.routes.js';
 import vendorRoutes from './routes/vendors.routes.js';
 import productRoutes from './routes/products.routes.js';
+import orderRoutes from './routes/orders.routes.js';
+import posRoutes from './routes/pos.routes.js';
+import inventoryRoutes from './routes/inventory.routes.js';
 
 // Routes legacy JS (conservées, pas de suppression)
 // @ts-ignore - legacy JS modules
@@ -133,9 +136,16 @@ app.use('/api/vendors', vendorRoutes);
 // Products — CRUD avec enforcement max_products + max_images_per_product
 app.use('/api/products', productRoutes);
 
-// ==================== PHASE 4 ROUTES (à ajouter) ====================
-// app.use('/api/orders', orderRoutes);
-// app.use('/api/pos', posRoutes);
+// ==================== PHASE 4 ROUTES (Orders, POS, Inventory) ====================
+
+// Orders — CRUD + escrow systématique + idempotence
+app.use('/api/orders', orderRoutes);
+
+// POS — synchronisation ventes offline
+app.use('/api/pos', posRoutes);
+
+// Inventory — stock backend, ajustements, historique
+app.use('/api/inventory', inventoryRoutes);
 
 // ==================== ERROR HANDLING ====================
 
