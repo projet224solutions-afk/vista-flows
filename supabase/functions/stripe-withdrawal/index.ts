@@ -61,7 +61,7 @@ serve(async (req) => {
     const WITHDRAWAL_FEE_RATE = await getPdgFeeRate(supabaseAdmin, FEE_KEYS.WITHDRAWAL);
 
     // Récupérer les données
-    const { amount, currency = 'gnf', bankAccountId } = await req.json();
+    const { amount, currency = 'gnf', bankAccountId, bankDetails } = await req.json();
 
     if (!amount || amount < MIN_WITHDRAWAL) {
       throw new Error(`Montant minimum de retrait: ${MIN_WITHDRAWAL} ${currency.toUpperCase()}`);
