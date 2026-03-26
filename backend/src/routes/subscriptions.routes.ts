@@ -472,7 +472,8 @@ router.get('/limits', verifyJWT, async (req: AuthenticatedRequest, res: Response
     if (error) throw error;
 
     if (!sub || !sub.plans) {
-      // Fallback : limites du plan gratuit (alignées avec plans.name='free' en DB)
+      // Charger les limites du plan gratuit depuis la DB
+      await loadFreePlanFallback();
       res.json({
         success: true,
         data: FREE_PLAN_FALLBACK,
