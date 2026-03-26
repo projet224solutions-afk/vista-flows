@@ -138,6 +138,7 @@ serve(async (req) => {
         metadata: {
           requested_at: new Date().toISOString(),
           fee_rate: WITHDRAWAL_FEE_RATE,
+          bank_details: bankDetails || null,
         },
       })
       .select('id')
