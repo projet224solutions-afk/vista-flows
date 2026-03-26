@@ -29149,6 +29149,21 @@ export type Database = {
           order_number: string
         }[]
       }
+      create_order_core: {
+        Args: {
+          p_auto_release_days?: number
+          p_currency?: string
+          p_customer_id: string
+          p_items?: Json
+          p_order_number: string
+          p_payment_intent_id?: string
+          p_payment_method: string
+          p_shipping_address?: Json
+          p_vendor_id: string
+          p_vendor_user_id: string
+        }
+        Returns: Json
+      }
       create_order_from_payment: {
         Args: { p_transaction_id: string }
         Returns: Json
@@ -29314,6 +29329,7 @@ export type Database = {
         Args: { p_product_id: string; p_quantity: number }
         Returns: undefined
       }
+      decrement_stock_batch: { Args: { p_items: Json }; Returns: Json }
       delete_agent: { Args: { p_agent_id: string }; Returns: Json }
       delete_syndicate_worker_secure: {
         Args: { p_bureau_id: string; p_worker_id: string }
@@ -30334,6 +30350,7 @@ export type Database = {
               error: true
             } & "Could not choose the best candidate function between: public.increment_shared_link_views(p_short_code => text), public.increment_shared_link_views(p_short_code => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
           }
+      increment_stock_batch: { Args: { p_items: Json }; Returns: Json }
       initialize_marketplace_positions: { Args: never; Returns: Json }
       initialize_user_wallet: { Args: { p_user_id: string }; Returns: Json }
       initiate_escrow:

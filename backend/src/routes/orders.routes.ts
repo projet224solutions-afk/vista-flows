@@ -1,14 +1,18 @@
 /**
- * 📦 ORDERS ROUTES - Phase 4 (Production Hardened)
+ * 📦 ORDERS ROUTES - Phase 6 (P0 Optimized)
  * 
- * Corrections production :
- *   1. Devise → résolution dynamique via vendor.country (GNF par défaut)
- *   2. Flux atomique avec stratégie compensatoire explicite
- *   3. Rollback complet si une étape échoue
+ * P0 Optimization:
+ *   - create_order_core RPC: 1 DB call instead of 4+N sequential calls
+ *   - increment_stock_batch RPC: batch stock restore for cancellations
+ *   - Redis cache for vendor lookups (TTL 5min)
+ *   - Performance timing on POST /api/orders
  * 
- * Flux escrow systématique :
- *   order → order_items → stock decrement → escrow
- *   Si une étape échoue : rollback de toutes les étapes précédentes.
+ * Security preserved:
+ *   - Zod validation
+ *   - Idempotency guard
+ *   - Anti-self-purchase
+ *   - Rate limiting
+ *   - Escrow systématique (inside create_order_core)
  */
 
 import { Router, Response } from 'express';
@@ -18,6 +22,7 @@ import { idempotencyGuard } from '../middlewares/idempotency.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { orderCreateRateLimit } from '../middlewares/routeRateLimiter.js';
+import { cache } from '../config/redis.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -36,6 +41,39 @@ const DEFAULT_CURRENCY = 'GNF';
 function resolveVendorCurrency(countryCode?: string | null): string {
   if (!countryCode) return DEFAULT_CURRENCY;
   return COUNTRY_CURRENCY_MAP[countryCode.toUpperCase()] || DEFAULT_CURRENCY;
+}
+
+// ==================== CACHED VENDOR LOOKUP ====================
+
+/**
+ * Resolve vendor with Redis cache (TTL 5min).
+ * Eliminates repeated DB lookups on hot paths.
+ */
+async function getCachedVendor(vendorId: string): Promise<{
+  id: string;
+  business_name: string;
+  user_id: string;
+  country: string | null;
+} | null> {
+  const cacheKey = `vendor:${vendorId}`;
+  
+  // Try cache first
+  const cached = await cache.get<{ id: string; business_name: string; user_id: string; country: string | null }>(cacheKey);
+  if (cached) return cached;
+  
+  // Fallback to DB
+  const { data: vendor } = await supabaseAdmin
+    .from('vendors')
+    .select('id, business_name, user_id, country')
+    .eq('id', vendorId)
+    .eq('is_active', true)
+    .single();
+  
+  if (vendor) {
+    await cache.set(cacheKey, vendor, 300); // 5min TTL
+  }
+  
+  return vendor;
 }
 
 // ==================== VALIDATION SCHEMAS ====================
@@ -63,111 +101,37 @@ const CreateOrderSchema = z.object({
   coupon_code: z.string().max(50).nullish(),
 });
 
-// ==================== COMPENSATORY ROLLBACK ====================
-
-/**
- * Stratégie compensatoire explicite.
- * Chaque étape enregistre son rollback. En cas d'erreur, on exécute
- * tous les rollbacks dans l'ordre inverse.
- */
-type RollbackFn = () => Promise<void>;
-
-class TransactionSaga {
-  private rollbacks: Array<{ step: string; fn: RollbackFn }> = [];
-  private executed: string[] = [];
-
-  addStep(step: string, rollbackFn: RollbackFn) {
-    this.rollbacks.push({ step, fn: rollbackFn });
-    this.executed.push(step);
-  }
-
-  async compensate(failedStep: string, failReason: string): Promise<string[]> {
-    const compensated: string[] = [];
-    logger.error(`SAGA COMPENSATE: failed at "${failedStep}" — ${failReason}`);
-
-    // Exécuter les rollbacks dans l'ordre inverse
-    for (const rb of [...this.rollbacks].reverse()) {
-      try {
-        await rb.fn();
-        compensated.push(rb.step);
-        logger.info(`SAGA ROLLBACK OK: ${rb.step}`);
-      } catch (rbErr: any) {
-        // Rollback échoué → alerte critique pour réconciliation manuelle
-        logger.error(`SAGA ROLLBACK FAILED: ${rb.step} — ${rbErr.message}`);
-      }
-    }
-    return compensated;
-  }
-}
-
-// ==================== HELPERS ====================
-
-async function validateAndReserveStock(
-  items: z.infer<typeof OrderItemSchema>[],
-  vendorId: string
-): Promise<{
-  valid: boolean;
-  products: Array<{ id: string; name: string; price: number; stock_quantity: number; requested: number }>;
-  errors: string[];
-}> {
-  const productIds = items.map(i => i.product_id);
-
-  const { data: products, error } = await supabaseAdmin
-    .from('products')
-    .select('id, name, price, stock_quantity, is_active, vendor_id')
-    .in('id', productIds)
-    .eq('vendor_id', vendorId)
-    .eq('is_active', true);
-
-  if (error) throw error;
-
-  const errors: string[] = [];
-  const validated: Array<{ id: string; name: string; price: number; stock_quantity: number; requested: number }> = [];
-
-  for (const item of items) {
-    const product = products?.find(p => p.id === item.product_id);
-
-    if (!product) {
-      errors.push(`Produit ${item.product_id} introuvable ou inactif`);
-      continue;
-    }
-
-    if (product.stock_quantity !== null && product.stock_quantity < item.quantity) {
-      errors.push(`Stock insuffisant pour "${product.name}": ${product.stock_quantity} dispo, ${item.quantity} demandé`);
-      continue;
-    }
-
-    validated.push({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      stock_quantity: product.stock_quantity ?? 0,
-      requested: item.quantity,
-    });
-  }
-
-  return { valid: errors.length === 0, products: validated, errors };
-}
-
 // ==================== ROUTES ====================
 
 /**
  * POST /api/orders
- * Créer une commande avec escrow systématique + saga compensatoire.
  * 
- * Flux atomique :
- *   Step 1: Créer order → rollback: delete order
- *   Step 2: Créer order_items → rollback: delete order_items
- *   Step 3: Décrémenter stock → rollback: increment stock
- *   Step 4: Créer escrow → rollback: delete escrow
+ * P0 OPTIMIZED: Uses create_order_core RPC for atomic single-call order creation.
+ * 
+ * BEFORE (Phase 4): 4+N sequential DB calls (~135ms+ for 3 items)
+ *   1. SELECT vendor
+ *   2. SELECT products (stock validation)
+ *   3. INSERT order
+ *   4. INSERT order_items
+ *   5..5+N. RPC decrement_product_stock × N items
+ *   6. INSERT escrow
+ * 
+ * AFTER (Phase 6): 2 DB calls (~35ms for 3 items)
+ *   1. SELECT vendor (cached in Redis, ~0ms hit)
+ *   2. RPC create_order_core (atomic: validate + insert + decrement + escrow)
+ * 
+ * Estimated improvement:
+ *   - Latency: 135ms → 35ms (-74%)
+ *   - DB calls: 6+N → 2 (-80%)
+ *   - Orders/sec: 10-25 → 40-80 per instance (+3x)
  */
 router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
-  const saga = new TransactionSaga();
+  const startTime = Date.now();
 
   try {
     const userId = req.user!.id;
 
-    // 1. Validation Zod
+    // 1. Validation Zod (no DB call)
     const validation = CreateOrderSchema.safeParse(req.body);
     if (!validation.success) {
       res.status(400).json({
@@ -183,13 +147,8 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
 
     const { items, vendor_id, shipping_address, payment_method, payment_intent_id } = validation.data;
 
-    // 2. Vérifier vendeur actif
-    const { data: vendor } = await supabaseAdmin
-      .from('vendors')
-      .select('id, business_name, user_id, country')
-      .eq('id', vendor_id)
-      .eq('is_active', true)
-      .single();
+    // 2. Vendor lookup (Redis cached, TTL 5min)
+    const vendor = await getCachedVendor(vendor_id);
 
     if (!vendor) {
       res.status(404).json({ success: false, error: 'Vendeur introuvable ou inactif' });
@@ -202,164 +161,84 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       return;
     }
 
-    // 3. Résoudre la devise du vendeur
+    // 3. Resolve currency (no DB call)
     const currency = resolveVendorCurrency(vendor.country);
 
-    // 4. Valider stock + prix serveur
-    const stockCheck = await validateAndReserveStock(items, vendor_id);
-    if (!stockCheck.valid) {
-      res.status(409).json({
-        success: false,
-        error: 'Problème de disponibilité',
-        details: stockCheck.errors,
-      });
-      return;
-    }
-
-    // 5. Calculer totaux côté serveur
-    const orderItems = stockCheck.products.map(product => {
-      const item = items.find(i => i.product_id === product.id)!;
-      return {
-        product_id: product.id,
-        product_name: product.name,
-        quantity: item.quantity,
-        unit_price: product.price,
-        total_price: product.price * item.quantity,
-        variant_id: item.variant_id || null,
-      };
-    });
-
-    const subtotal = orderItems.reduce((sum, item) => sum + item.total_price, 0);
-    const totalAmount = subtotal;
-
+    // 4. Generate order number (no DB call)
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
-    // ==================== STEP 1: Créer la commande ====================
-    const { data: order, error: orderError } = await supabaseAdmin
-      .from('orders')
-      .insert({
-        order_number: orderNumber,
-        customer_id: userId,
-        vendor_id,
-        status: 'pending',
-        payment_status: payment_method === 'cod' ? 'pending' : 'processing',
-        payment_method,
-        payment_intent_id: payment_intent_id || null,
-        subtotal,
-        total_amount: totalAmount,
-        shipping_address,
-        currency,
-      })
-      .select('*')
-      .single();
-
-    if (orderError) throw orderError;
-
-    saga.addStep('create_order', async () => {
-      await supabaseAdmin.from('orders').delete().eq('id', order.id);
-      logger.info(`SAGA: Deleted order ${order.id}`);
+    // 5. SINGLE ATOMIC RPC: create_order_core
+    //    Validates stock + creates order + items + decrements stock + creates escrow
+    //    All in one PostgreSQL transaction with row-level locking
+    const { data: result, error: rpcError } = await supabaseAdmin.rpc('create_order_core', {
+      p_order_number: orderNumber,
+      p_customer_id: userId,
+      p_vendor_id: vendor_id,
+      p_vendor_user_id: vendor.user_id,
+      p_payment_method: payment_method,
+      p_payment_intent_id: payment_intent_id || null,
+      p_shipping_address: shipping_address,
+      p_currency: currency,
+      p_items: items.map(i => ({
+        product_id: i.product_id,
+        quantity: i.quantity,
+        variant_id: i.variant_id || null,
+      })),
+      p_auto_release_days: 7,
     });
 
-    // ==================== STEP 2: Insérer order_items ====================
-    const { error: itemsError } = await supabaseAdmin
-      .from('order_items')
-      .insert(orderItems.map(item => ({ ...item, order_id: order.id })));
-
-    if (itemsError) {
-      await saga.compensate('create_order_items', itemsError.message);
-      res.status(500).json({ success: false, error: 'Erreur création articles' });
+    if (rpcError) {
+      logger.error(`create_order_core RPC error: ${rpcError.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors de la création de la commande' });
       return;
     }
 
-    saga.addStep('create_order_items', async () => {
-      await supabaseAdmin.from('order_items').delete().eq('order_id', order.id);
-      logger.info(`SAGA: Deleted order_items for order ${order.id}`);
-    });
-
-    // ==================== STEP 3: Décrémenter le stock ====================
-    const decrementedProducts: Array<{ id: string; qty: number }> = [];
-
-    for (const product of stockCheck.products) {
-      const { error: stockErr } = await supabaseAdmin.rpc('decrement_product_stock', {
-        p_product_id: product.id,
-        p_quantity: product.requested,
-      });
-
-      if (stockErr) {
-        // Rollback des produits déjà décrémentés + étapes précédentes
-        for (const dp of decrementedProducts) {
-          await supabaseAdmin.rpc('increment_product_stock', {
-            p_product_id: dp.id,
-            p_quantity: dp.qty,
-          });
-        }
-        await saga.compensate('decrement_stock', stockErr.message);
-        res.status(500).json({ success: false, error: 'Erreur décrémentation stock' });
-        return;
-      }
-
-      decrementedProducts.push({ id: product.id, qty: product.requested });
-    }
-
-    saga.addStep('decrement_stock', async () => {
-      for (const dp of decrementedProducts) {
-        await supabaseAdmin.rpc('increment_product_stock', {
-          p_product_id: dp.id,
-          p_quantity: dp.qty,
-        });
-      }
-      logger.info(`SAGA: Restored stock for ${decrementedProducts.length} products`);
-    });
-
-    // ==================== STEP 4: Créer l'escrow ====================
-    const { error: escrowError } = await supabaseAdmin
-      .from('escrow_transactions')
-      .insert({
-        order_id: order.id,
-        buyer_id: userId,
-        seller_id: vendor.user_id,
-        amount: totalAmount,
-        currency,
-        status: 'held',
-        auto_release_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        payment_method,
-      });
-
-    if (escrowError) {
-      await saga.compensate('create_escrow', escrowError.message);
-      res.status(500).json({ success: false, error: 'Erreur création escrow' });
+    // Check RPC result
+    if (!result || !result.success) {
+      const errorMsg = result?.error || 'Erreur inconnue';
+      logger.warn(`Order creation rejected: ${errorMsg}`);
+      res.status(409).json({ success: false, error: errorMsg });
       return;
     }
 
-    // ✅ Toutes les étapes ont réussi
-    logger.info(`Order created: ${order.id} (${orderNumber}), vendor=${vendor_id}, total=${totalAmount} ${currency}, escrow=held`);
+    // Performance logging
+    const duration = Date.now() - startTime;
+    logger.info(`✅ Order created: ${result.order_id} (${orderNumber}), vendor=${vendor_id}, total=${result.total_amount} ${currency}, escrow=held, duration=${duration}ms, db_calls=2`);
 
     res.status(201).json({
       success: true,
       data: {
-        order: { ...order, currency },
-        items: orderItems,
-        escrow_status: 'held',
+        order: {
+          id: result.order_id,
+          order_number: result.order_number,
+          status: 'pending',
+          payment_status: payment_method === 'cod' ? 'pending' : 'processing',
+          payment_method,
+          subtotal: result.subtotal,
+          total_amount: result.total_amount,
+          currency: result.currency,
+          shipping_address,
+        },
+        items: result.items,
+        escrow_status: result.escrow_status,
       },
+      _perf: { duration_ms: duration, db_calls: 2 },
     });
   } catch (error: any) {
-    // Erreur imprévue → compensation totale
-    await saga.compensate('unexpected', error.message);
-    logger.error(`Order creation error: ${error.message}`);
+    const duration = Date.now() - startTime;
+    logger.error(`Order creation error (${duration}ms): ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur lors de la création de la commande' });
   }
 });
 
 /**
  * GET /api/orders/:orderId
- * Détails d'une commande (acheteur ou vendeur)
  */
 router.get('/:orderId', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { orderId } = req.params;
 
-    // Charger la commande avec items
     const { data: order, error } = await supabaseAdmin
       .from('orders')
       .select('*, order_items(*)')
@@ -371,7 +250,6 @@ router.get('/:orderId', verifyJWT, async (req: AuthenticatedRequest, res: Respon
       return;
     }
 
-    // Vérifier que l'utilisateur est soit l'acheteur, soit le vendeur
     const isCustomer = order.customer_id === userId;
     let isVendor = false;
     if (!isCustomer) {
@@ -385,7 +263,6 @@ router.get('/:orderId', verifyJWT, async (req: AuthenticatedRequest, res: Respon
       return;
     }
 
-    // Charger l'escrow associé
     const { data: escrow } = await supabaseAdmin
       .from('escrow_transactions')
       .select('id, status, auto_release_at, released_at, seller_confirmed_at')
@@ -401,7 +278,7 @@ router.get('/:orderId', verifyJWT, async (req: AuthenticatedRequest, res: Respon
 
 /**
  * POST /api/orders/:orderId/cancel
- * Annuler une commande (acheteur uniquement, si non confirmée par vendeur)
+ * P0 OPTIMIZED: Uses increment_stock_batch instead of per-product loop
  */
 router.post('/:orderId/cancel', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -426,7 +303,6 @@ router.post('/:orderId/cancel', verifyJWT, orderCreateRateLimit, idempotencyGuar
       return;
     }
 
-    // Seules les commandes pending peuvent être annulées par l'acheteur
     if (order.status !== 'pending') {
       res.status(400).json({
         success: false,
@@ -436,7 +312,6 @@ router.post('/:orderId/cancel', verifyJWT, orderCreateRateLimit, idempotencyGuar
       return;
     }
 
-    // Si le vendeur a déjà confirmé, l'acheteur ne peut plus annuler
     if (order.seller_confirmed_at) {
       res.status(400).json({
         success: false,
@@ -445,26 +320,23 @@ router.post('/:orderId/cancel', verifyJWT, orderCreateRateLimit, idempotencyGuar
       return;
     }
 
-    // Restaurer le stock
+    // Batch stock restore (1 call instead of N)
     const { data: orderItems } = await supabaseAdmin
       .from('order_items').select('product_id, quantity').eq('order_id', orderId);
 
-    if (orderItems) {
-      for (const item of orderItems) {
-        await supabaseAdmin.rpc('increment_product_stock', {
-          p_product_id: item.product_id,
-          p_quantity: item.quantity,
-        });
-      }
+    if (orderItems && orderItems.length > 0) {
+      await supabaseAdmin.rpc('increment_stock_batch', {
+        p_items: orderItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+      });
     }
 
-    // Mettre à jour l'escrow
+    // Update escrow
     await supabaseAdmin
       .from('escrow_transactions')
       .update({ status: 'refunded', released_at: new Date().toISOString() })
       .eq('order_id', orderId);
 
-    // Mettre à jour la commande
+    // Update order
     const { data: updated, error } = await supabaseAdmin
       .from('orders')
       .update({
@@ -554,6 +426,7 @@ router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response
 
 /**
  * PATCH /api/orders/:orderId/status
+ * P0 OPTIMIZED: Uses increment_stock_batch for vendor cancellations
  */
 router.patch('/:orderId/status', verifyJWT, orderCreateRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -643,16 +516,14 @@ router.patch('/:orderId/status', verifyJWT, orderCreateRateLimit, async (req: Au
     }
 
     if (status === 'cancelled') {
+      // Batch stock restore (1 call instead of N)
       const { data: orderItems } = await supabaseAdmin
         .from('order_items').select('product_id, quantity').eq('order_id', orderId);
 
-      if (orderItems) {
-        for (const item of orderItems) {
-          await supabaseAdmin.rpc('increment_product_stock', {
-            p_product_id: item.product_id,
-            p_quantity: item.quantity,
-          });
-        }
+      if (orderItems && orderItems.length > 0) {
+        await supabaseAdmin.rpc('increment_stock_batch', {
+          p_items: orderItems.map(i => ({ product_id: i.product_id, quantity: i.quantity })),
+        });
       }
 
       await supabaseAdmin

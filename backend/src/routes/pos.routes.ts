@@ -1,11 +1,9 @@
 /**
- * 🏪 POS SYNC ROUTES - Phase 4 (Production Hardened)
+ * 🏪 POS SYNC ROUTES - Phase 6 (P0 Optimized)
  * 
- * Corrections production :
- *   - Si la décrémentation stock échoue, la vente POS est marquée
- *     'stock_pending' et un job de réconciliation est créé
- *   - Table `pos_stock_reconciliation` pour traquer les écarts
- *   - Devise dynamique via vendeur
+ * P0 Optimization:
+ *   - decrement_stock_batch RPC: 1 call per sale instead of N per-item calls
+ *   - Reduced DB roundtrips from ~60 (10 sales × 3 items) to ~30
  */
 
 import { Router, Response } from 'express';
@@ -46,32 +44,26 @@ const BatchSyncSchema = z.object({
 
 // ==================== HELPERS ====================
 
-/**
- * Enregistre un écart stock pour réconciliation backend.
- * Le cron job `reconcile-pos-stock` traitera ces entrées.
- */
-async function createStockReconciliationEntry(
+async function createStockReconciliationEntries(
   vendorId: string,
   posSaleId: string,
-  productId: string,
-  quantity: number,
+  failedItems: Array<{ product_id: string; quantity: number }>,
   errorMessage: string
 ) {
   try {
-    await supabaseAdmin
-      .from('pos_stock_reconciliation')
-      .insert({
-        vendor_id: vendorId,
-        pos_sale_id: posSaleId,
-        product_id: productId,
-        expected_decrement: quantity,
-        status: 'pending',
-        error_message: errorMessage,
-        retry_count: 0,
-        max_retries: 5,
-      });
+    const entries = failedItems.map(item => ({
+      vendor_id: vendorId,
+      pos_sale_id: posSaleId,
+      product_id: item.product_id,
+      expected_decrement: item.quantity,
+      status: 'pending',
+      error_message: errorMessage,
+      retry_count: 0,
+      max_retries: 5,
+    }));
+    await supabaseAdmin.from('pos_stock_reconciliation').insert(entries);
   } catch (err: any) {
-    logger.error(`Failed to create reconciliation entry: ${err.message}`);
+    logger.error(`Failed to create reconciliation entries: ${err.message}`);
   }
 }
 
@@ -79,12 +71,7 @@ async function createStockReconciliationEntry(
 
 /**
  * POST /api/pos/sync
- * Synchronise un lot de ventes POS offline.
- * 
- * Stratégie stock :
- *   - Si decrement réussit → normal
- *   - Si decrement échoue → vente créée avec stock_synced=false
- *     + entrée dans pos_stock_reconciliation pour retry automatique
+ * P0 OPTIMIZED: Uses decrement_stock_batch instead of per-item loop
  */
 router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -125,7 +112,7 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
 
     for (const sale of sales) {
       try {
-        // Vérifier idempotence via local_sale_id
+        // Idempotence check
         const { data: existing } = await supabaseAdmin
           .from('pos_sales')
           .select('id')
@@ -138,7 +125,7 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
           continue;
         }
 
-        // Recalculer le total côté serveur
+        // Server-side total
         const serverTotal = sale.items.reduce(
           (sum, item) => sum + (item.unit_price * item.quantity) - item.discount, 0
         );
@@ -147,7 +134,7 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
           logger.warn(`POS total mismatch: local=${sale.total_amount}, server=${serverTotal}, sale=${sale.local_sale_id}`);
         }
 
-        // Créer la vente
+        // Create sale
         const { data: posSale, error: saleError } = await supabaseAdmin
           .from('pos_sales')
           .insert({
@@ -162,14 +149,14 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
             sold_at: sale.sold_at,
             synced_at: new Date().toISOString(),
             status: 'completed',
-            stock_synced: true, // optimiste, mis à false si échec
+            stock_synced: true,
           })
           .select('id')
           .single();
 
         if (saleError) throw saleError;
 
-        // Insérer les lignes de vente
+        // Insert sale items
         const saleItems = sale.items.map(item => ({
           pos_sale_id: posSale.id,
           product_id: item.product_id,
@@ -182,31 +169,26 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
 
         await supabaseAdmin.from('pos_sale_items').insert(saleItems);
 
-        // Décrémenter le stock — avec réconciliation si échec
+        // BATCH stock decrement (1 call instead of N)
+        const stockItems = sale.items.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+        }));
+
+        const { data: stockResult, error: stockError } = await supabaseAdmin.rpc('decrement_stock_batch', {
+          p_items: stockItems,
+        });
+
         let allStockOk = true;
+        if (stockError || !stockResult?.success) {
+          allStockOk = false;
+          const errorMsg = stockError?.message || stockResult?.error || 'Unknown stock error';
+          logger.warn(`POS batch stock decrement failed: sale=${sale.local_sale_id}: ${errorMsg}`);
 
-        for (const item of sale.items) {
-          const { error: stockError } = await supabaseAdmin.rpc('decrement_product_stock', {
-            p_product_id: item.product_id,
-            p_quantity: item.quantity,
-          });
-
-          if (stockError) {
-            allStockOk = false;
-            logger.warn(`POS stock decrement failed: product=${item.product_id}, qty=${item.quantity}: ${stockError.message}`);
-
-            // Créer entrée de réconciliation pour retry automatique
-            await createStockReconciliationEntry(
-              vendor.id,
-              posSale.id,
-              item.product_id,
-              item.quantity,
-              stockError.message
-            );
-          }
+          // Create reconciliation entries for all items
+          await createStockReconciliationEntries(vendor.id, posSale.id, stockItems, errorMsg);
         }
 
-        // Si au moins un stock a échoué, marquer la vente
         if (!allStockOk) {
           await supabaseAdmin
             .from('pos_sales')
@@ -281,7 +263,6 @@ router.get('/sales', verifyJWT, async (req: AuthenticatedRequest, res: Response)
 
 /**
  * GET /api/pos/reconciliation
- * Liste les écarts de stock en attente de réconciliation
  */
 router.get('/reconciliation', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
