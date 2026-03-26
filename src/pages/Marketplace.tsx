@@ -723,6 +723,39 @@ export default function Marketplace() {
             showReason={true}
             maxItems={8}
           />
+
+          {/* Smart Recommendations — basé sur scoring produit + préférences utilisateur */}
+          <AIRecommendationSection
+            title="Recommandé pour vous"
+            subtitle="Basé sur vos achats et consultations"
+            products={smartRecs}
+            isLoading={loadingSmartRecs}
+            icon="sparkles"
+            showReason={true}
+            maxItems={8}
+          />
+
+          {/* Populaire en ce moment — basé sur product_scores trending */}
+          <AIRecommendationSection
+            title="Populaire en ce moment"
+            subtitle="Les produits les plus consultés"
+            products={trendingProducts}
+            isLoading={loadingTrendingProducts}
+            icon="trending"
+            showReason={false}
+            maxItems={8}
+          />
+
+          {/* Récemment consultés */}
+          <AIRecommendationSection
+            title="Récemment consultés"
+            subtitle="Vos dernières visites"
+            products={recentlyViewed}
+            isLoading={loadingRecentlyViewed}
+            icon="clock"
+            showReason={false}
+            maxItems={8}
+          />
         </section>
       )}
 
