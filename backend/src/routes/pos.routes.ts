@@ -52,24 +52,21 @@ async function processWithConcurrency<T, R>(
   fn: (item: T) => Promise<R>,
   limit: number
 ): Promise<R[]> {
-  const results: R[] = [];
-  const executing: Promise<void>[] = [];
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
 
-  for (const item of items) {
-    const p = fn(item).then(r => { results.push(r); });
-    executing.push(p);
-
-    if (executing.length >= limit) {
-      await Promise.race(executing);
-      // Remove settled promises
-      for (let i = executing.length - 1; i >= 0; i--) {
-        const settled = await Promise.race([executing[i].then(() => true), Promise.resolve(false)]);
-        if (settled) executing.splice(i, 1);
-      }
+  async function worker() {
+    while (nextIndex < items.length) {
+      const idx = nextIndex++;
+      results[idx] = await fn(items[idx]);
     }
   }
 
-  await Promise.all(executing);
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    () => worker()
+  );
+  await Promise.all(workers);
   return results;
 }
 
