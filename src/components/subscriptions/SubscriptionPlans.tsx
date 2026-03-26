@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Crown, Zap, TrendingUp, Rocket } from 'lucide-react';
+import { Check, Crown, Zap, TrendingUp, Rocket, Package, ImageIcon, Infinity } from 'lucide-react';
 import { SubscriptionService, Plan, ActiveSubscription } from '@/services/subscriptionService';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
@@ -15,13 +15,34 @@ const planIcons = {
   premium: Rocket,
 };
 
-const planDescriptions: Record<string, string> = {
-  free: "Plan basique pour démarrer : gestion des produits, commandes simples, tableau de bord et profil public.",
-  basic: "Plan intermédiaire pour une gestion structurée : produits avancés, suivi des commandes/livraisons, CRM et analytics de base, facturation automatique.",
-  pro: "Plan avancé pour développer l’activité : inventaire, marketing/affiliation, agents de vente, liens de paiement et support prioritaire.",
-  business: "Plan complet pour une gestion étendue : POS, fournisseurs et dettes, multi‑entrepôts, exports et accès API.",
-  premium: "Plan premium avec outils et accompagnement avancés : assistant IA Gemini, hub de communication, analytics temps réel, account manager dédié et formation.",
-};
+/**
+ * Génère la description marketing à partir des vraies données du plan.
+ * Aucune promesse inventée — tout est basé sur les champs réels.
+ */
+function buildPlanDescription(plan: Plan): string {
+  const parts: string[] = [];
+
+  // Limites produits
+  if (plan.max_products === null) {
+    parts.push('Produits illimités');
+  } else {
+    parts.push(`Jusqu'à ${plan.max_products} produits`);
+  }
+
+  // Images par produit
+  if (plan.max_images_per_product) {
+    parts.push(`${plan.max_images_per_product} images/produit`);
+  }
+
+  // Capacités booléennes
+  if (plan.analytics_access) parts.push('Analytics');
+  if (plan.priority_support) parts.push('Support prioritaire');
+  if (plan.featured_products) parts.push('Produits en vedette');
+  if (plan.api_access) parts.push('Accès API');
+  if (plan.custom_branding) parts.push('Branding personnalisé');
+
+  return parts.join(' · ');
+}
 
 interface SubscriptionPlansProps {
   onSelectPlan: (plan: Plan) => void;
@@ -88,6 +109,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
           const Icon = planIcons[plan.name as keyof typeof planIcons] || Check;
           const isCurrent = isCurrentPlan(plan.name);
           const isPremium = plan.name === 'premium';
+          const isUnlimited = plan.max_products === null;
 
           return (
             <Card
@@ -116,9 +138,30 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
                 <CardTitle className="text-2xl">{plan.display_name}</CardTitle>
-                <CardDescription className="mt-2 min-h-[2.5rem]">
-                  {planDescriptions[plan.name] || ''}
+
+                {/* Limites produits & images — données réelles */}
+                <div className="mt-3 space-y-1.5">
+                  <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-foreground">
+                    <Package className="w-4 h-4 text-primary" />
+                    {isUnlimited ? (
+                      <span className="flex items-center gap-1">
+                        <Infinity className="w-4 h-4" /> Produits illimités
+                      </span>
+                    ) : (
+                      <span>{plan.max_products} produits max</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>{plan.max_images_per_product} images par produit</span>
+                  </div>
+                </div>
+
+                {/* Description générée depuis les données réelles */}
+                <CardDescription className="mt-2 min-h-[2.5rem] text-xs">
+                  {buildPlanDescription(plan)}
                 </CardDescription>
+
                 <CardDescription>
                   <div className="mt-4">
                     <span className="text-3xl font-bold text-foreground">
