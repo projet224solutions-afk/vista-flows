@@ -201,8 +201,11 @@ registerHandler('orders.stuck-alert', async () => {
 });
 
 registerHandler('pos.reconcile', async () => {
-  // Aligned with pos.routes.ts: table pos_stock_reconciliation
-  // Real fields: expected_decrement, status ('pending'/'resolved'/'failed'), retry_count, max_retries
+  // Aligned with pos.routes.ts → createStockReconciliationEntry()
+  // Real table: pos_stock_reconciliation
+  // Real columns: id, vendor_id, pos_sale_id, product_id, expected_decrement,
+  //   status ('pending'|'resolved'|'failed'), retry_count, max_retries,
+  //   error_message, resolved_at, last_retry_at, created_at
   const { data: pending } = await supabaseAdmin
     .from('pos_stock_reconciliation')
     .select('id, product_id, expected_decrement, retry_count, max_retries')
@@ -211,30 +214,31 @@ registerHandler('pos.reconcile', async () => {
 
   if (!pending?.length) return;
 
+  const now = new Date().toISOString();
   let fixed = 0;
+
   for (const rec of pending) {
     try {
-      // Retry the stock decrement that originally failed
       await supabaseAdmin.rpc('decrement_product_stock', {
         p_product_id: rec.product_id,
         p_quantity: rec.expected_decrement,
       });
 
-      // Mark as resolved
       await supabaseAdmin
         .from('pos_stock_reconciliation')
-        .update({ status: 'resolved', resolved_at: new Date().toISOString() })
+        .update({ status: 'resolved', resolved_at: now, last_retry_at: now })
         .eq('id', rec.id);
 
       fixed++;
     } catch (err: any) {
-      // Increment retry_count, mark as failed if exceeded max
       const newRetry = (rec.retry_count || 0) + 1;
       const maxRetries = rec.max_retries || 5;
+
       await supabaseAdmin
         .from('pos_stock_reconciliation')
         .update({
           retry_count: newRetry,
+          last_retry_at: now,
           status: newRetry >= maxRetries ? 'failed' : 'pending',
           error_message: err.message,
         })
@@ -247,9 +251,13 @@ registerHandler('pos.reconcile', async () => {
 });
 
 registerHandler('recommendations.recalculate', async () => {
-  // Aligned with real recommendation engine: user_activity + product_scores tables
-  // Scoring weights: purchase=5, add_to_cart=3, click=2, view=1
-  const WEIGHTS: Record<string, number> = {
+  // Aligned with real schema:
+  //   user_activity.action_type (NOT activity_type)
+  //   product_scores columns: views_count, clicks_count, cart_count,
+  //     purchases_count, total_score, trending_score, conversion_rate,
+  //     is_featured, last_computed
+  // Weights match useSmartRecommendations.ts engine
+  const ACTION_WEIGHTS: Record<string, number> = {
     purchase: 5,
     add_to_cart: 3,
     click: 2,
@@ -258,10 +266,10 @@ registerHandler('recommendations.recalculate', async () => {
 
   const cutoff = new Date(Date.now() - 7 * 86400000).toISOString();
 
-  // Fetch recent activity aggregated by product
+  // Fetch recent activity — real column is action_type
   const { data: activities } = await supabaseAdmin
     .from('user_activity')
-    .select('product_id, activity_type')
+    .select('product_id, action_type')
     .gte('created_at', cutoff)
     .not('product_id', 'is', null)
     .limit(10000);
@@ -271,24 +279,50 @@ registerHandler('recommendations.recalculate', async () => {
     return;
   }
 
-  // Aggregate scores per product
-  const scores = new Map<string, number>();
+  // Aggregate counts per product per action_type
+  const productStats = new Map<string, { views: number; clicks: number; carts: number; purchases: number }>();
+
   for (const act of activities) {
     if (!act.product_id) continue;
-    const weight = WEIGHTS[act.activity_type] || 1;
-    scores.set(act.product_id, (scores.get(act.product_id) || 0) + weight);
+    const stats = productStats.get(act.product_id) || { views: 0, clicks: 0, carts: 0, purchases: 0 };
+
+    switch (act.action_type) {
+      case 'view': stats.views++; break;
+      case 'click': stats.clicks++; break;
+      case 'add_to_cart': stats.carts++; break;
+      case 'purchase': stats.purchases++; break;
+      default: stats.views++; // fallback
+    }
+
+    productStats.set(act.product_id, stats);
   }
 
-  // Upsert into product_scores (the real table used by smart-recommendations)
+  // Upsert into product_scores with real columns
+  const now = new Date().toISOString();
   let updated = 0;
-  for (const [productId, score] of scores) {
+
+  for (const [productId, stats] of productStats) {
+    const totalScore =
+      stats.views * ACTION_WEIGHTS.view +
+      stats.clicks * ACTION_WEIGHTS.click +
+      stats.carts * ACTION_WEIGHTS.add_to_cart +
+      stats.purchases * ACTION_WEIGHTS.purchase;
+
+    const conversionRate = stats.views > 0 ? stats.purchases / stats.views : 0;
+
     try {
       await supabaseAdmin
         .from('product_scores')
         .upsert({
           product_id: productId,
-          popularity_score: score,
-          updated_at: new Date().toISOString(),
+          views_count: stats.views,
+          clicks_count: stats.clicks,
+          cart_count: stats.carts,
+          purchases_count: stats.purchases,
+          total_score: totalScore,
+          trending_score: totalScore, // same as total for 7-day window
+          conversion_rate: Math.round(conversionRate * 10000) / 10000,
+          last_computed: now,
         }, { onConflict: 'product_id' });
       updated++;
     } catch { /* continue */ }
