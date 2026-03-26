@@ -103,12 +103,39 @@ function CheckoutForm({
         onError?.(msg);
         toast.error(msg);
       } else if (paymentIntent?.status === 'succeeded' || paymentIntent?.status === 'requires_capture') {
-        // requires_capture = escrow (capture manuelle), succeeded = capture immédiate
         const isEscrow = paymentIntent.status === 'requires_capture';
-        toast.success(isEscrow ? 'Fonds sécurisés en escrow !' : 'Paiement réussi !');
-        if (creditWallet) {
+
+        // Pour les dépôts wallet, confirmer et créditer côté serveur
+        if (creditWallet && paymentIntent.status === 'succeeded') {
+          try {
+            const { data: confirmData, error: confirmError } = await supabase.functions.invoke(
+              'confirm-stripe-deposit',
+              { body: { paymentIntentId: paymentIntent.id } }
+            );
+            if (confirmError) {
+              console.error('❌ [DEPOSIT CONFIRM] Error:', confirmError);
+              toast.error('Paiement reçu mais erreur de crédit. Contactez le support.');
+              onError?.('Erreur de confirmation du dépôt');
+              return;
+            }
+            if (!confirmData?.success) {
+              console.error('❌ [DEPOSIT CONFIRM] Failed:', confirmData?.error);
+              toast.error(confirmData?.error || 'Erreur de confirmation');
+              onError?.(confirmData?.error || 'Erreur de confirmation');
+              return;
+            }
+            toast.success('Wallet crédité avec succès !');
+          } catch (confirmErr) {
+            console.error('❌ [DEPOSIT CONFIRM] Exception:', confirmErr);
+            toast.error('Paiement reçu mais erreur de crédit. Contactez le support.');
+            onError?.('Erreur de confirmation du dépôt');
+            return;
+          }
           window.dispatchEvent(new Event('wallet-updated'));
+        } else {
+          toast.success(isEscrow ? 'Fonds sécurisés en escrow !' : 'Paiement réussi !');
         }
+
         onSuccess({
           paymentIntentId: paymentIntent.id,
           amount,
