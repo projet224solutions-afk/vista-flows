@@ -136,9 +136,16 @@ app.use('/api/vendors', vendorRoutes);
 // Products — CRUD avec enforcement max_products + max_images_per_product
 app.use('/api/products', productRoutes);
 
-// ==================== PHASE 4 ROUTES (à ajouter) ====================
-// app.use('/api/orders', orderRoutes);
-// app.use('/api/pos', posRoutes);
+// ==================== PHASE 4 ROUTES (Orders, POS, Inventory) ====================
+
+// Orders — CRUD + escrow systématique + idempotence
+app.use('/api/orders', orderRoutes);
+
+// POS — synchronisation ventes offline
+app.use('/api/pos', posRoutes);
+
+// Inventory — stock backend, ajustements, historique
+app.use('/api/inventory', inventoryRoutes);
 
 // ==================== ERROR HANDLING ====================
 
