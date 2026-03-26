@@ -44,6 +44,34 @@ let FREE_PLAN_FALLBACK = {
   custom_branding: false,
 };
 
+// Charger les limites du plan gratuit depuis la DB au premier appel
+let freePlanFallbackLoaded = false;
+async function loadFreePlanFallback() {
+  if (freePlanFallbackLoaded) return;
+  try {
+    const { data } = await supabaseAdmin
+      .from('plans')
+      .select('max_products, max_images_per_product, analytics_access, priority_support, featured_products, api_access, custom_branding')
+      .eq('name', 'free')
+      .eq('is_active', true)
+      .maybeSingle();
+    if (data) {
+      FREE_PLAN_FALLBACK = {
+        max_products: data.max_products,
+        max_images_per_product: data.max_images_per_product,
+        analytics_access: data.analytics_access ?? false,
+        priority_support: data.priority_support ?? false,
+        featured_products: data.featured_products ?? false,
+        api_access: data.api_access ?? false,
+        custom_branding: data.custom_branding ?? false,
+      };
+    }
+    freePlanFallbackLoaded = true;
+  } catch (e) {
+    console.error('Failed to load free plan fallback from DB:', e);
+  }
+}
+
 // Délai maximum pour confirmer un abonnement trialing (48h)
 const TRIALING_EXPIRY_HOURS = 48;
 
