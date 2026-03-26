@@ -758,16 +758,26 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         }
 
       } else if (withdrawMethod === 'bank') {
-        // Retrait bancaire via Stripe withdrawal edge function
+        // Validation côté client
+        if (!bankAccountHolder || bankAccountHolder.trim().length < 3) {
+          throw new Error('Nom du titulaire invalide (3 caractères minimum)');
+        }
+        if (!bankName || bankName.trim().length < 2) {
+          throw new Error('Nom de la banque invalide');
+        }
+        if (!bankIban || bankIban.replace(/\s/g, '').length < 10) {
+          throw new Error('IBAN/numéro de compte invalide (10 caractères minimum)');
+        }
+
+        // Retrait bancaire via Edge Function (flux manuel admin)
         const { data, error } = await supabase.functions.invoke('stripe-withdrawal', {
           body: {
             amount,
             currency: wallet?.currency || 'gnf',
-            bankAccountId: bankIban,
             bankDetails: {
-              bank_name: bankName,
-              iban: bankIban,
-              account_holder: bankAccountHolder,
+              bank_name: bankName.trim(),
+              iban: bankIban.replace(/\s/g, '').trim(),
+              account_holder: bankAccountHolder.trim(),
             }
           }
         });
@@ -775,10 +785,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Erreur lors du retrait bancaire');
 
-        console.log('✅ Retrait bancaire Stripe:', data);
+        console.log('✅ Demande de retrait bancaire enregistrée:', data);
 
-        toast.success(`Demande de retrait de ${formatPrice(data.netAmount || amount)} enregistrée !`, {
-          description: `Frais: ${formatPrice(data.withdrawalFee || 0)}. Virement vers ${bankName} sous 24-48h.`
+        toast.success('Demande de retrait enregistrée !', {
+          description: `${formatPrice(data.netAmount || amount)} net (frais: ${formatPrice(data.withdrawalFee || 0)}). Votre demande sera examinée par notre équipe.`
         });
       }
       
@@ -1645,7 +1655,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       <div>
                         <p className="text-sm font-medium">Retrait par virement bancaire</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Le montant sera transféré sur votre compte bancaire. Délai: 3-5 jours ouvrés. Frais: 3%.
+                          Votre demande sera examinée par notre équipe avant traitement. Les fonds sont réservés jusqu'à validation. Délai: 3-5 jours ouvrés.
                         </p>
                       </div>
                     </div>
@@ -1711,7 +1721,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       value={withdrawAmount}
                       onChange={(e) => setWithdrawAmount(e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground mt-1">Minimum: 50,000 GNF · Frais: 3%</p>
+                    <p className="text-xs text-muted-foreground mt-1">Minimum: 50,000 GNF · Frais dynamiques (configurable par l'administration)</p>
                   </div>
                   
                   <Button 
@@ -1724,7 +1734,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
                     <AlertCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <p className="text-xs text-muted-foreground">Le virement sera traité sous 3-5 jours ouvrés</p>
+                    <p className="text-xs text-muted-foreground">
+                      Les fonds sont réservés dès la demande. Si la demande est rejetée ou échoue, les fonds sont automatiquement restaurés sur votre wallet.
+                    </p>
                   </div>
                 </TabsContent>
 
