@@ -289,8 +289,12 @@ router.post('/stripe', async (req: Request, res: Response) => {
     return;
   }
 
-  // Get raw body
-  const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+  // Get raw body — express.raw() delivers a Buffer
+  const rawBody = Buffer.isBuffer(req.body)
+    ? req.body.toString('utf8')
+    : typeof req.body === 'string'
+      ? req.body
+      : JSON.stringify(req.body);
 
   // Verify signature
   if (!verifyStripeSignature(rawBody, signature, webhookSecret)) {
@@ -308,9 +312,10 @@ router.post('/stripe', async (req: Request, res: Response) => {
     return;
   }
 
+  // Parse JSON from the validated raw body (never trust pre-parsed req.body for webhooks)
   let event: any;
   try {
-    event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    event = JSON.parse(rawBody);
   } catch {
     res.status(400).json({ error: 'Invalid JSON' });
     return;
