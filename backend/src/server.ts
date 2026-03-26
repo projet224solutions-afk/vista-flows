@@ -1,12 +1,12 @@
 /**
- * 🚀 224SOLUTIONS - BACKEND NODE.JS CENTRALISÉ v2
+ * 🚀 224SOLUTIONS - BACKEND NODE.JS CENTRALISÉ v3 (Phase 6)
  * 
- * Architecture: Express/TypeScript avec migration progressive
+ * Architecture: Express/TypeScript
  * Auth: JWT Supabase
- * Database: PostgreSQL via Supabase  
- * 
- * Ce fichier coexiste avec server.js (legacy).
- * En production, pointer vers server.ts compilé.
+ * Database: PostgreSQL via Supabase
+ * Cache: Redis (optional, graceful fallback)
+ * Jobs: BullMQ (optional, graceful fallback)
+ * Webhooks: Stripe signature-validated
  */
 
 import crypto from 'crypto';
@@ -18,8 +18,11 @@ import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { requestLogger } from './middlewares/requestLogger.js';
+import { closeRedis } from './config/redis.js';
+import { jobQueue } from './jobs/jobQueue.js';
+import { metrics } from './services/metrics.service.js';
 
-// Routes TypeScript (Phase 1 + Phase 2 + Phase 3)
+// Routes TypeScript
 import healthRoutes from './routes/health.routes.js';
 import subscriptionRoutes from './routes/subscriptions.routes.js';
 import paymentRoutes from './routes/payments.routes.js';
@@ -29,9 +32,10 @@ import productRoutes from './routes/products.routes.js';
 import orderRoutes from './routes/orders.routes.js';
 import posRoutes from './routes/pos.routes.js';
 import inventoryRoutes from './routes/inventory.routes.js';
+import webhookRoutes from './routes/webhooks.routes.js';
 
-// Routes legacy JS (conservées, pas de suppression)
-// @ts-ignore - legacy JS modules
+// Routes legacy JS
+// @ts-ignore
 import authRoutes from './routes/auth.routes.js';
 // @ts-ignore
 import walletRoutes from './routes/wallet.routes.js';
@@ -71,7 +75,6 @@ app.use(helmet({
   hsts: { maxAge: 31536000, includeSubDomains: true, preload: true }
 }));
 
-// CORS
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
@@ -85,10 +88,17 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-API-Key', 'Idempotency-Key'],
-  exposedHeaders: ['X-Request-Id'],
+  exposedHeaders: ['X-Request-Id', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
 }));
 
 app.use(compression());
+
+// ==================== WEBHOOK RAW BODY (before JSON parser) ====================
+
+// Stripe webhooks need raw body for signature verification
+app.use('/webhooks/stripe', express.raw({ type: 'application/json' }));
+
+// Standard JSON parser for everything else
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -97,6 +107,15 @@ app.use((req, res, next) => {
   const requestId = req.headers['x-request-id'] as string || crypto.randomUUID();
   res.setHeader('X-Request-Id', requestId);
   (req as any).requestId = requestId;
+
+  // Request timing for metrics
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    metrics.increment('http.requests.total', 1, { method: req.method, status: String(res.statusCode) });
+    metrics.observe('http.request.duration_ms', duration);
+  });
+
   next();
 });
 
@@ -108,54 +127,34 @@ app.use(requestLogger);
 // Health (public)
 app.use('/health', healthRoutes);
 
+// Webhooks (public, signature-validated, BEFORE auth middleware)
+app.use('/webhooks', webhookRoutes);
+
 // Auth (public)
 app.use('/auth', authRoutes);
 
-// Analytics (public tracking + auth retrieval)
+// Analytics
 app.use('/api/analytics', analyticsRoutes);
 
-// ==================== LEGACY ROUTES (conservées) ====================
+// ==================== LEGACY ROUTES ====================
 
-// Wallet legacy (conservé pour backward compatibility)
 app.use('/api/wallet', walletRoutes);
-
-// Internal (API key protected)
 app.use('/internal', internalRoutes);
-
-// Jobs (JWT protected)
 app.use('/jobs', jobsRoutes);
-
-// Media (JWT protected)
 app.use('/media', mediaRoutes);
 
-// ==================== PHASE 2 ROUTES (TypeScript, alignées DB existante) ====================
+// ==================== V2 ROUTES ====================
 
-// Wallet v2 — nouveau endpoint séparé, pas de collision avec legacy
 app.use('/api/v2/wallet', walletRoutesV2);
-
-// Subscriptions — utilise table `plans` + `subscriptions` existantes
 app.use('/api/subscriptions', subscriptionRoutes);
-
-// Payments — utilise table `wallet_transactions` existante
 app.use('/api/payments', paymentRoutes);
 
-// ==================== PHASE 3 ROUTES (Vendors & Products avec limites plan) ====================
+// ==================== V3 ROUTES (with per-route rate limits) ====================
 
-// Vendors — profil vendeur, stats, mise à jour
 app.use('/api/vendors', vendorRoutes);
-
-// Products — CRUD avec enforcement max_products + max_images_per_product
 app.use('/api/products', productRoutes);
-
-// ==================== PHASE 4 ROUTES (Orders, POS, Inventory) ====================
-
-// Orders — CRUD + escrow systématique + idempotence
 app.use('/api/orders', orderRoutes);
-
-// POS — synchronisation ventes offline
 app.use('/api/pos', posRoutes);
-
-// Inventory — stock backend, ajustements, historique
 app.use('/api/inventory', inventoryRoutes);
 
 // ==================== ERROR HANDLING ====================
@@ -168,30 +167,46 @@ app.use(errorHandler);
 
 // ==================== SERVER ====================
 
-const server = app.listen(env.PORT, () => {
-  logger.info(`🚀 Backend v2 started on port ${env.PORT}`);
+const server = app.listen(env.PORT, async () => {
+  logger.info(`🚀 Backend v3 (Phase 6) started on port ${env.PORT}`);
   logger.info(`📍 Environment: ${env.NODE_ENV}`);
   logger.info(`🔐 CORS Origins: ${env.corsOrigins.join(', ')}`);
+
+  // Initialize job queues (non-blocking, graceful failure)
+  await jobQueue.init();
+  await jobQueue.scheduleRecurring();
+
   logger.info(`✅ Ready to handle requests`);
 });
 
 // Graceful shutdown
-const gracefulShutdown = (signal: string) => {
-  logger.info(`${signal} received: closing HTTP server`);
-  server.close(() => {
+const gracefulShutdown = async (signal: string) => {
+  logger.info(`${signal} received: shutting down gracefully`);
+
+  server.close(async () => {
     logger.info('HTTP server closed');
+    await jobQueue.shutdown();
+    await closeRedis();
+    await metrics.flushToDB();
+    logger.info('All services shut down');
     process.exit(0);
   });
-  setTimeout(() => process.exit(1), 10000);
+
+  setTimeout(() => {
+    logger.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 15000);
 };
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('unhandledRejection', (reason) => {
   logger.error('Unhandled Rejection:', reason);
+  metrics.increment('errors.unhandled_rejection');
 });
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception:', error);
+  metrics.increment('errors.uncaught_exception');
   process.exit(1);
 });
 
