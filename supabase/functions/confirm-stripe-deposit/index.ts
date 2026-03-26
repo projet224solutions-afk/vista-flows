@@ -81,7 +81,7 @@ serve(async (req) => {
     // Chercher la transaction stripe existante
     const { data: transaction, error: txError } = await supabaseAdmin
       .from('stripe_transactions')
-      .select('id, status')
+      .select('id, status, metadata')
       .eq('stripe_payment_intent_id', paymentIntentId)
       .single();
 
@@ -90,13 +90,19 @@ serve(async (req) => {
       throw new Error("Transaction non trouvée");
     }
 
-    // Éviter le double crédit
-    if (transaction.status === 'SUCCEEDED') {
+    const walletAlreadyCredited = Boolean(transaction.metadata && (transaction.metadata as Record<string, unknown>).wallet_credited === true);
+
+    // Éviter le double crédit réel (wallet déjà crédité)
+    if (transaction.status === 'SUCCEEDED' && walletAlreadyCredited) {
       logStep("Transaction already processed (idempotent)", { transactionId: transaction.id });
       return new Response(
         JSON.stringify({ success: true, already_processed: true, message: "Dépôt déjà crédité" }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    if (transaction.status === 'SUCCEEDED' && !walletAlreadyCredited) {
+      logStep("Transaction marked SUCCEEDED but wallet not credited yet, retrying RPC", { transactionId: transaction.id });
     }
 
     // Mettre à jour le statut de la transaction
@@ -117,17 +123,23 @@ serve(async (req) => {
       }
     }
 
-    await supabaseAdmin
-      .from('stripe_transactions')
-      .update({
-        status: 'SUCCEEDED',
-        stripe_charge_id: chargeId,
-        last4,
-        card_brand: cardBrand,
-        paid_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', transaction.id);
+    if (transaction.status !== 'SUCCEEDED') {
+      const { error: updateTxError } = await supabaseAdmin
+        .from('stripe_transactions')
+        .update({
+          status: 'SUCCEEDED',
+          stripe_charge_id: chargeId,
+          last4,
+          card_brand: cardBrand,
+          paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', transaction.id);
+
+      if (updateTxError) {
+        throw new Error("Erreur lors de la mise à jour de la transaction: " + updateTxError.message);
+      }
+    }
 
     // Créditer le wallet via le RPC existant
     const { data: depositResult, error: depositError } = await supabaseAdmin
