@@ -115,15 +115,16 @@ export async function optionalJWT(req: AuthenticatedRequest, res: Response, next
 /**
  * Vérifie les permissions par rôle
  */
-export function requireRole(...allowedRoles: string[]) {
+export function requireRole(allowedRoles: string | string[]) {
+  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ success: false, error: 'Authentification requise' });
       return;
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      logger.warn(`Access denied for ${req.user.id} - Required: ${allowedRoles.join(', ')}`);
+    if (!roles.includes(req.user.role)) {
+      logger.warn(`Access denied for ${req.user.id} - Required: ${roles.join(', ')}`);
       res.status(403).json({ success: false, error: 'Permissions insuffisantes' });
       return;
     }
