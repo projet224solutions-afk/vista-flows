@@ -8,7 +8,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '@/integrations/supabase/client';
-import { signedInvoke, generateIdempotencyKey } from '@/lib/security/hmacSigner';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -104,12 +103,39 @@ function CheckoutForm({
         onError?.(msg);
         toast.error(msg);
       } else if (paymentIntent?.status === 'succeeded' || paymentIntent?.status === 'requires_capture') {
-        // requires_capture = escrow (capture manuelle), succeeded = capture immédiate
         const isEscrow = paymentIntent.status === 'requires_capture';
-        toast.success(isEscrow ? 'Fonds sécurisés en escrow !' : 'Paiement réussi !');
-        if (creditWallet) {
+
+        // Pour les dépôts wallet, confirmer et créditer côté serveur
+        if (creditWallet && paymentIntent.status === 'succeeded') {
+          try {
+            const { data: confirmData, error: confirmError } = await supabase.functions.invoke(
+              'confirm-stripe-deposit',
+              { body: { paymentIntentId: paymentIntent.id } }
+            );
+            if (confirmError) {
+              console.error('❌ [DEPOSIT CONFIRM] Error:', confirmError);
+              toast.error('Paiement reçu mais erreur de crédit. Contactez le support.');
+              onError?.('Erreur de confirmation du dépôt');
+              return;
+            }
+            if (!confirmData?.success) {
+              console.error('❌ [DEPOSIT CONFIRM] Failed:', confirmData?.error);
+              toast.error(confirmData?.error || 'Erreur de confirmation');
+              onError?.(confirmData?.error || 'Erreur de confirmation');
+              return;
+            }
+            toast.success('Wallet crédité avec succès !');
+          } catch (confirmErr) {
+            console.error('❌ [DEPOSIT CONFIRM] Exception:', confirmErr);
+            toast.error('Paiement reçu mais erreur de crédit. Contactez le support.');
+            onError?.('Erreur de confirmation du dépôt');
+            return;
+          }
           window.dispatchEvent(new Event('wallet-updated'));
+        } else {
+          toast.success(isEscrow ? 'Fonds sécurisés en escrow !' : 'Paiement réussi !');
         }
+
         onSuccess({
           paymentIntentId: paymentIntent.id,
           amount,
