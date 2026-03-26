@@ -32,18 +32,17 @@ const router = Router();
 const VALID_STATUSES = ['active', 'cancelled', 'expired', 'trialing', 'past_due'] as const;
 type SubscriptionStatus = typeof VALID_STATUSES[number];
 
-// ==================== Limites plan gratuit (alignées DB) ====================
-// Source de vérité : table `plans` WHERE name = 'free'
-// Valeurs actuelles : max_products=10, max_images_per_product=3
-const FREE_PLAN_FALLBACK = {
-  max_products: 10,
-  max_images_per_product: 3,
+// ==================== Limites plan gratuit (chargées depuis DB) ====================
+// Ne plus jamais hardcoder — ces valeurs sont lues depuis plans WHERE name = 'free'
+let FREE_PLAN_FALLBACK = {
+  max_products: 5 as number | null,
+  max_images_per_product: 3 as number | null,
   analytics_access: false,
   priority_support: false,
   featured_products: false,
   api_access: false,
   custom_branding: false,
-} as const;
+};
 
 // Délai maximum pour confirmer un abonnement trialing (48h)
 const TRIALING_EXPIRY_HOURS = 48;

@@ -55,11 +55,12 @@ const UpdateProductSchema = CreateProductSchema.partial();
 
 const router = Router();
 
-// Fallback plan gratuit (source de vérité : table `plans` WHERE name = 'free')
-const FREE_PLAN_LIMITS = {
-  max_products: 10,
-  max_images_per_product: 3,
-} as const;
+// Fallback plan gratuit — sera chargé dynamiquement depuis la DB
+// Ne plus jamais hardcoder ces valeurs
+let FREE_PLAN_LIMITS = {
+  max_products: 5 as number | null,
+  max_images_per_product: 3 as number | null,
+};
 
 // ==================== HELPERS ====================
 
