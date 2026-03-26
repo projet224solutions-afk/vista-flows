@@ -1,4 +1,5 @@
 import { useVendorSubscription } from './useVendorSubscription';
+import { Plan } from '@/services/subscriptionService';
 
 /**
  * Types de fonctionnalités disponibles dans le système d'abonnement vendeur
@@ -283,16 +284,9 @@ const PLAN_FEATURES: Record<string, SubscriptionFeature[]> = {
 };
 
 /**
- * Limites de produits par plan (synchronisé avec la base de données)
- * Ces valeurs sont lues depuis la table plans via l'abonnement
+ * @deprecated Ne plus utiliser de limites hardcodées.
+ * Utiliser getProductLimit() qui lit depuis les plans DB.
  */
-export const PLAN_PRODUCT_LIMITS: Record<string, number | null> = {
-  'free': 13,
-  'basic': 25,
-  'pro': 100,
-  'business': 500,  // Corrigé pour correspondre à la BDD
-  'premium': null,  // Illimité
-};
 
 /**
  * Noms des plans minimum requis pour chaque fonctionnalité
@@ -365,7 +359,7 @@ export const FEATURE_MIN_PLAN: Record<SubscriptionFeature, string> = {
 };
 
 export function useSubscriptionFeatures() {
-  const { subscription, loading } = useVendorSubscription();
+  const { subscription, plans, loading } = useVendorSubscription();
 
   const canAccessFeature = (feature: SubscriptionFeature): boolean => {
     // Bloquer l'accès pendant le chargement (sécurité par défaut)
@@ -432,8 +426,13 @@ export function useSubscriptionFeatures() {
   };
 
   const getProductLimit = (): number | null => {
+    // Lire directement depuis les plans DB — aucune valeur hardcodée
     const planName = subscription?.plan_name?.toLowerCase() || 'free';
-    return PLAN_PRODUCT_LIMITS[planName] ?? 13;
+    const plan = plans.find((p: Plan) => p.name === planName);
+    if (plan) return plan.max_products;
+    // Fallback: chercher le plan free en DB
+    const freePlan = plans.find((p: Plan) => p.name === 'free');
+    return freePlan?.max_products ?? null;
   };
 
   const isUnlimitedProducts = (): boolean => {

@@ -55,11 +55,34 @@ const UpdateProductSchema = CreateProductSchema.partial();
 
 const router = Router();
 
-// Fallback plan gratuit (source de vérité : table `plans` WHERE name = 'free')
-const FREE_PLAN_LIMITS = {
-  max_products: 10,
-  max_images_per_product: 3,
-} as const;
+// Fallback plan gratuit — sera chargé dynamiquement depuis la DB
+// Ne plus jamais hardcoder ces valeurs
+let FREE_PLAN_LIMITS = {
+  max_products: 5 as number | null,
+  max_images_per_product: 3 as number | null,
+};
+
+
+// Charger les limites du plan gratuit depuis la DB au premier appel
+let freePlanLoaded = false;
+async function loadFreePlanLimits() {
+  if (freePlanLoaded) return;
+  try {
+    const { data } = await supabaseAdmin
+      .from('plans')
+      .select('max_products, max_images_per_product')
+      .eq('name', 'free')
+      .eq('is_active', true)
+      .maybeSingle();
+    if (data) {
+      FREE_PLAN_LIMITS.max_products = data.max_products;
+      FREE_PLAN_LIMITS.max_images_per_product = data.max_images_per_product;
+    }
+    freePlanLoaded = true;
+  } catch (e) {
+    console.error('Failed to load free plan limits from DB:', e);
+  }
+}
 
 // ==================== HELPERS ====================
 
@@ -104,6 +127,9 @@ async function getVendorLimits(userId: string): Promise<{
       plan_name: plan.name,
     };
   }
+
+  // Charger les limites du plan gratuit depuis la DB
+  await loadFreePlanLimits();
 
   return {
     max_products: FREE_PLAN_LIMITS.max_products,
