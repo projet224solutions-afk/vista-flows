@@ -1,16 +1,15 @@
 /**
- * STRIPE WITHDRAWAL - Retrait du wallet vers compte bancaire
- * Edge Function pour effectuer un payout Stripe Connect
+ * STRIPE WITHDRAWAL - Retrait bancaire (Flux Manuel Admin)
+ * Edge Function — Appelle le RPC atomique request_bank_withdrawal
  * 224SOLUTIONS
  */
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14.10.0?target=deno";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
@@ -20,8 +19,6 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 
 import { getPdgFeeRate, FEE_KEYS } from "../_shared/pdg-fees.ts";
 
-const MIN_WITHDRAWAL = 50000; // 50,000 GNF minimum
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -29,11 +26,6 @@ serve(async (req) => {
 
   try {
     logStep("Function started");
-
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeSecretKey) {
-      throw new Error("STRIPE_SECRET_KEY not configured");
-    }
 
     // Vérifier l'authentification
     const supabaseClient = createClient(
@@ -61,111 +53,79 @@ serve(async (req) => {
     const WITHDRAWAL_FEE_RATE = await getPdgFeeRate(supabaseAdmin, FEE_KEYS.WITHDRAWAL);
 
     // Récupérer les données
-    const { amount, currency = 'gnf', bankAccountId, bankDetails } = await req.json();
+    const { amount, currency = 'gnf', bankDetails } = await req.json();
 
-    if (!amount || amount < MIN_WITHDRAWAL) {
-      throw new Error(`Montant minimum de retrait: ${MIN_WITHDRAWAL} ${currency.toUpperCase()}`);
+    // Validation des données bancaires
+    if (!bankDetails?.account_holder || !bankDetails?.bank_name || !bankDetails?.iban) {
+      throw new Error("Informations bancaires incomplètes: titulaire, banque et IBAN requis");
     }
 
-    // Vérifier le solde du wallet
-    const { data: wallet, error: walletError } = await supabaseAdmin
-      .from('wallets')
-      .select('id, balance, currency')
-      .eq('user_id', user.id)
-      .eq('currency', currency.toUpperCase())
-      .single();
-
-    if (walletError || !wallet) {
-      throw new Error("Wallet non trouvé");
+    if (bankDetails.account_holder.trim().length < 3) {
+      throw new Error("Nom du titulaire trop court (3 caractères minimum)");
     }
 
-    if (wallet.balance < amount) {
-      throw new Error(`Solde insuffisant. Disponible: ${wallet.balance} ${currency.toUpperCase()}`);
+    if (bankDetails.bank_name.trim().length < 2) {
+      throw new Error("Nom de la banque trop court");
     }
 
-    // Calculer les frais
-    const withdrawalFee = Math.round(amount * (WITHDRAWAL_FEE_RATE / 100));
-    const netAmount = amount - withdrawalFee;
+    if (bankDetails.iban.replace(/\s/g, '').length < 10) {
+      throw new Error("IBAN/numéro de compte invalide (10 caractères minimum)");
+    }
 
-    logStep("Withdrawal details", { 
+    if (!amount || amount < 50000) {
+      throw new Error(`Montant minimum de retrait: 50 000 ${currency.toUpperCase()}`);
+    }
+
+    logStep("Calling atomic RPC", { 
       amount, 
-      withdrawalFee,
-      netAmount,
-      walletBalance: wallet.balance
+      feeRate: WITHDRAWAL_FEE_RATE,
+      bankHolder: bankDetails.account_holder,
+      bankName: bankDetails.bank_name,
     });
 
-    // Débiter le wallet immédiatement
-    const newBalance = wallet.balance - amount;
-    const { error: updateError } = await supabaseAdmin
-      .from('wallets')
-      .update({
-        balance: newBalance,
-        total_sent: wallet.balance,
-        last_transaction_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', wallet.id);
-
-    if (updateError) {
-      throw new Error("Erreur lors du débit du wallet");
-    }
-
-    // Enregistrer la transaction wallet
-    await supabaseAdmin
-      .from('wallet_transactions')
-      .insert({
-        wallet_id: wallet.id,
-        amount: -amount,
-        type: 'debit',
-        description: `Retrait vers compte bancaire - Frais: ${withdrawalFee} ${currency.toUpperCase()}`,
-        reference_type: 'withdrawal',
-        status: 'completed',
-        balance_after: newBalance,
-      });
-
-    // Enregistrer dans stripe_withdrawals
-    const { data: withdrawal, error: withdrawalInsertError } = await supabaseAdmin
-      .from('stripe_withdrawals')
-      .insert({
-        user_id: user.id,
-        wallet_id: wallet.id,
-        amount: amount,
-        fee_amount: withdrawalFee,
-        net_amount: netAmount,
-        currency: currency.toUpperCase(),
-        status: 'pending',
-        bank_account_id: bankAccountId || null,
-        metadata: {
+    // Appeler le RPC atomique
+    const { data: result, error: rpcError } = await supabaseAdmin
+      .rpc('request_bank_withdrawal', {
+        p_user_id: user.id,
+        p_amount: amount,
+        p_currency: currency.toUpperCase(),
+        p_fee_rate: WITHDRAWAL_FEE_RATE,
+        p_bank_account_name: bankDetails.account_holder.trim(),
+        p_bank_account_number: bankDetails.iban.replace(/\s/g, '').trim(),
+        p_bank_details: {
+          bank_name: bankDetails.bank_name.trim(),
+          iban: bankDetails.iban.replace(/\s/g, '').trim(),
+          account_holder: bankDetails.account_holder.trim(),
           requested_at: new Date().toISOString(),
           fee_rate: WITHDRAWAL_FEE_RATE,
-          bank_details: bankDetails || null,
         },
-      })
-      .select('id')
-      .single();
+      });
 
-    if (withdrawalInsertError) {
-      logStep("Error recording withdrawal", { error: withdrawalInsertError.message });
+    if (rpcError) {
+      logStep("RPC Error", { error: rpcError.message });
+      throw new Error(rpcError.message || "Erreur lors de la demande de retrait");
     }
 
-    logStep("Withdrawal processed", { 
-      withdrawalId: withdrawal?.id,
-      newBalance 
-    });
+    if (!result?.success) {
+      throw new Error(result?.error || "Erreur lors de la demande de retrait");
+    }
 
-    // Note: Le payout réel vers le compte bancaire sera fait manuellement par l'admin
-    // ou via un processus automatisé séparé avec Stripe Connect
+    logStep("Withdrawal request created", { 
+      withdrawalId: result.withdrawal_id,
+      newBalance: result.new_balance,
+      status: result.status,
+    });
 
     return new Response(
       JSON.stringify({
         success: true,
-        withdrawalId: withdrawal?.id,
-        amount: amount,
-        withdrawalFee: withdrawalFee,
-        netAmount: netAmount,
-        newBalance: newBalance,
-        status: 'pending',
-        message: 'Demande de retrait enregistrée. Le virement sera effectué sous 24-48h.',
+        withdrawalId: result.withdrawal_id,
+        amount: result.amount,
+        withdrawalFee: result.fee,
+        netAmount: result.net_amount,
+        newBalance: result.new_balance,
+        status: result.status,
+        message: 'Votre demande de retrait a été enregistrée et sera examinée par notre équipe. Les fonds sont réservés.',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
