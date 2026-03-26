@@ -1,10 +1,14 @@
 {
   "name": "backend-224solutions",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
-  "main": "src/server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node dist/server.js",
+    "start:legacy": "node src/server.js",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.4",
@@ -21,5 +25,14 @@
     "sharp": "^0.33.3",
     "winston": "^3.18.3",
     "xss-clean": "^0.1.4"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
   }
 }
