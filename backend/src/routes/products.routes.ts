@@ -343,14 +343,6 @@ router.patch('/:productId', verifyJWT, async (req: AuthenticatedRequest, res: Re
       return;
     }
 
-    // Champs modifiables
-    const allowedFields = [
-      'name', 'price', 'description', 'category_id', 'stock_quantity',
-      'is_active', 'compare_price', 'cost_price', 'sku', 'tags', 'weight',
-      'dimensions', 'free_shipping', 'low_stock_threshold', 'images',
-      'seo_title', 'seo_description', 'sell_by_carton', 'price_carton',
-      'units_per_carton', 'carton_sku',
-    ];
 
     // Valider le payload partiel avec Zod
     const validation = UpdateProductSchema.safeParse(req.body);
