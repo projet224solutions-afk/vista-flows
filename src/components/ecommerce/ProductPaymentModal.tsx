@@ -292,13 +292,16 @@ export default function ProductPaymentModal({
   const handleCardSuccess = async (data: { paymentIntentId: string; amount: number; currency: string }) => {
     setPaymentStep('processing');
     try {
+      console.log('[ProductPayment] handleCardSuccess called:', { paymentIntentId: data.paymentIntentId, cartItems: cartItems.length });
+
       // Créer les commandes avec payment_status = 'pending' (fonds en escrow)
       let effectiveCustomerId = customerId;
       if (!effectiveCustomerId) {
         const { data: existingCustomer } = await supabase.from('customers').select('id').eq('user_id', userId).maybeSingle();
         if (existingCustomer) { effectiveCustomerId = existingCustomer.id; }
         else {
-          const { data: newCustomer } = await supabase.from('customers').insert({ user_id: userId }).select('id').single();
+          const { data: newCustomer, error: custErr } = await supabase.from('customers').insert({ user_id: userId }).select('id').single();
+          if (custErr) console.error('[ProductPayment] Customer creation error:', custErr);
           if (newCustomer) effectiveCustomerId = newCustomer.id;
         }
       }
@@ -310,13 +313,24 @@ export default function ProductPaymentModal({
         return acc;
       }, {} as Record<string, CartItem[]>);
 
-      const vendorCount = Object.keys(itemsByVendor).filter(k => k !== 'unknown').length;
-      const commissionPerVendor = vendorCount > 0 ? Math.round(commissionFee / vendorCount) : 0;
+      const vendorEntries = Object.entries(itemsByVendor).filter(([k]) => k !== 'unknown');
+      
+      if (vendorEntries.length === 0) {
+        console.error('[ProductPayment] No vendor entries found! cartItems:', JSON.stringify(cartItems));
+        toast.error('Erreur: aucun vendeur identifié pour cette commande');
+        setPaymentStep('select_method');
+        return;
+      }
 
-      for (const [vendorId, items] of Object.entries(itemsByVendor)) {
-        if (vendorId === 'unknown') continue;
+      const commissionPerVendor = vendorEntries.length > 0 ? Math.round(commissionFee / vendorEntries.length) : 0;
+      const createdOrders: string[] = [];
+      const errors: string[] = [];
+
+      for (const [vendorId, items] of vendorEntries) {
         const vendorProductTotal = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
         const vendorTotalWithCommission = vendorProductTotal + commissionPerVendor;
+
+        console.log('[ProductPayment] Creating order for vendor:', { vendorId, itemCount: items.length, total: vendorTotalWithCommission });
 
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
           p_user_id: userId, p_vendor_id: vendorId,
@@ -326,11 +340,16 @@ export default function ProductPaymentModal({
         });
 
         if (orderError || !orderResult?.length) {
-          console.error('[ProductPayment] Order creation failed:', orderError);
+          const errMsg = orderError?.message || 'Résultat vide';
+          console.error('[ProductPayment] Order creation failed for vendor', vendorId, ':', errMsg);
+          errors.push(errMsg);
+          toast.error(`Erreur commande: ${errMsg}`);
           continue;
         }
 
         const orderId = orderResult[0].order_id;
+        createdOrders.push(orderId);
+        console.log('[ProductPayment] Order created:', { orderId, orderNumber: orderResult[0].order_number });
 
         // payment_status = 'pending' car fonds en escrow (pas encore capturés)
         await supabase.from('orders').update({
@@ -345,10 +364,32 @@ export default function ProductPaymentModal({
         }).eq('id', orderId);
 
         // Lier l'escrow à l'order_id
-        await supabase.from('escrow_transactions')
-          .update({ order_id: orderId })
-          .eq('stripe_payment_intent_id', data.paymentIntentId)
-          .eq('seller_id', (await supabase.from('vendors').select('user_id').eq('id', vendorId).single()).data?.user_id);
+        const { data: vendorData } = await supabase.from('vendors').select('user_id').eq('id', vendorId).single();
+        if (vendorData?.user_id) {
+          await supabase.from('escrow_transactions')
+            .update({ order_id: orderId })
+            .eq('stripe_payment_intent_id', data.paymentIntentId)
+            .eq('seller_id', vendorData.user_id);
+        }
+
+        // Enregistrer la commission PDG
+        if (commissionPerVendor > 0) {
+          await supabase.rpc('record_pdg_revenue', {
+            p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor,
+            p_percentage: commissionConfig?.commission_value || 10, p_transaction_id: data.paymentIntentId,
+            p_user_id: userId, p_metadata: { order_id: orderId, vendor_id: vendorId, product_total: vendorProductTotal }
+          });
+        }
+      }
+
+      if (createdOrders.length === 0) {
+        console.error('[ProductPayment] NO orders created! Errors:', errors);
+        toast.error('Le paiement a été effectué mais la commande n\'a pas pu être créée. Contactez le support.', {
+          description: errors[0] || 'Erreur inconnue',
+          duration: 10000,
+        });
+        setPaymentStep('select_method');
+        return;
       }
 
       setPaymentStep('success');
@@ -357,9 +398,12 @@ export default function ProductPaymentModal({
       });
       setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/my-purchases'); }, 2000);
     } catch (err) {
-      console.error('Order creation after escrow payment failed:', err);
-      toast.error('Paiement réussi mais erreur lors de la commande');
-      onClose();
+      console.error('[ProductPayment] Order creation after escrow payment failed:', err);
+      toast.error('Paiement réussi mais erreur lors de la commande. Contactez le support.', {
+        description: err instanceof Error ? err.message : 'Erreur inconnue',
+        duration: 10000,
+      });
+      setPaymentStep('select_method');
     }
   };
 
