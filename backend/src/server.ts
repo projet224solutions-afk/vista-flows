@@ -107,9 +107,16 @@ app.use('/jobs', jobsRoutes);
 // Media (JWT protected)
 app.use('/media', mediaRoutes);
 
-// ==================== PHASE 2 ROUTES (à ajouter) ====================
-// app.use('/api/subscriptions', subscriptionRoutes);
-// app.use('/api/payments', paymentRoutes);
+// ==================== PHASE 2 ROUTES ====================
+// Subscriptions & Payments (TypeScript)
+import subscriptionRoutes from './routes/subscriptions.routes.js';
+import paymentRoutes from './routes/payments.routes.js';
+import walletRoutesV2 from './routes/wallet.routes.js';
+
+// Use TS wallet routes (replaces legacy wallet)
+app.use('/api/v2/wallet', walletRoutesV2);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // ==================== PHASE 3 ROUTES (à ajouter) ====================
 // app.use('/api/vendors', vendorRoutes);
