@@ -128,6 +128,9 @@ async function getVendorLimits(userId: string): Promise<{
     };
   }
 
+  // Charger les limites du plan gratuit depuis la DB
+  await loadFreePlanLimits();
+
   return {
     max_products: FREE_PLAN_LIMITS.max_products,
     max_images_per_product: FREE_PLAN_LIMITS.max_images_per_product,
