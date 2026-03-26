@@ -1,4 +1,5 @@
 import { useVendorSubscription } from './useVendorSubscription';
+import { Plan } from '@/services/subscriptionService';
 
 /**
  * Types de fonctionnalités disponibles dans le système d'abonnement vendeur
