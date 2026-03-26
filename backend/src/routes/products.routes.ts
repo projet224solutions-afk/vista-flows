@@ -19,6 +19,39 @@ import { verifyJWT } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { z } from 'zod';
+
+// ==================== VALIDATION SCHEMAS ====================
+
+const CreateProductSchema = z.object({
+  name: z.string().trim()
+    .min(2, 'Nom requis (min 2 caractères)')
+    .max(200, 'Nom trop long (max 200 caractères)'),
+  price: z.number()
+    .min(0, 'Le prix doit être >= 0')
+    .max(1_000_000_000, 'Prix trop élevé'),
+  description: z.string().trim().max(5000, 'Description trop longue').nullish(),
+  category_id: z.string().uuid('category_id invalide').nullish(),
+  stock_quantity: z.number().int().min(0, 'Stock ne peut pas être négatif').default(0),
+  is_active: z.boolean().default(true),
+  images: z.array(z.string().url('URL image invalide')).max(20).default([]),
+  compare_price: z.number().min(0).nullish(),
+  cost_price: z.number().min(0).nullish(),
+  sku: z.string().trim().max(100).nullish(),
+  tags: z.array(z.string().max(50)).max(20).nullish(),
+  weight: z.number().min(0).nullish(),
+  dimensions: z.string().max(100).nullish(),
+  free_shipping: z.boolean().default(false),
+  low_stock_threshold: z.number().int().min(0).nullish(),
+  seo_title: z.string().max(200).nullish(),
+  seo_description: z.string().max(500).nullish(),
+  sell_by_carton: z.boolean().default(false),
+  price_carton: z.number().min(0).nullish(),
+  units_per_carton: z.number().int().min(1).nullish(),
+  carton_sku: z.string().max(100).nullish(),
+});
+
+const UpdateProductSchema = CreateProductSchema.partial();
 
 const router = Router();
 
@@ -51,11 +84,14 @@ async function getVendorLimits(userId: string): Promise<{
   max_images_per_product: number | null;
   plan_name: string;
 }> {
+  // Accepter 'active' ET 'trialing' — un vendeur en période d'essai
+  // doit pouvoir utiliser les limites de son plan, sinon il retombe
+  // sur le plan gratuit et l'essai n'a aucun intérêt.
   const { data: sub } = await supabaseAdmin
     .from('subscriptions')
     .select('plans(name, max_products, max_images_per_product)')
     .eq('user_id', userId)
-    .eq('status', 'active')
+    .in('status', ['active', 'trialing'])
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -217,41 +253,28 @@ router.post('/', verifyJWT, async (req: AuthenticatedRequest, res: Response) => 
       imagesTruncated = true;
     }
 
-    // 4. Construire l'objet produit (colonnes alignées avec la table `products`)
+    // 4. Valider le payload avec Zod
+    const validation = CreateProductSchema.safeParse(req.body);
+    if (!validation.success) {
+      res.status(400).json({
+        success: false,
+        error: 'Données invalides',
+        details: validation.error.errors.map(e => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })),
+      });
+      return;
+    }
+
+    const validated = validation.data;
+
+    // 5. Construire l'objet produit avec données validées
     const productData: Record<string, any> = {
       vendor_id: vendorId,
-      name: req.body.name,
-      price: req.body.price,
-      images,
-      description: req.body.description || null,
-      category_id: req.body.category_id || null,
-      stock_quantity: req.body.stock_quantity ?? 0,
-      is_active: req.body.is_active ?? true,
-      compare_price: req.body.compare_price || null,
-      cost_price: req.body.cost_price || null,
-      sku: req.body.sku || null,
-      tags: req.body.tags || null,
-      weight: req.body.weight || null,
-      dimensions: req.body.dimensions || null,
-      free_shipping: req.body.free_shipping ?? false,
-      low_stock_threshold: req.body.low_stock_threshold || null,
-      seo_title: req.body.seo_title || null,
-      seo_description: req.body.seo_description || null,
-      sell_by_carton: req.body.sell_by_carton ?? false,
-      price_carton: req.body.price_carton || null,
-      units_per_carton: req.body.units_per_carton || null,
-      carton_sku: req.body.carton_sku || null,
+      ...validated,
+      images, // version potentiellement tronquée
     };
-
-    // Validation minimale
-    if (!productData.name || typeof productData.name !== 'string' || productData.name.trim().length < 2) {
-      res.status(400).json({ success: false, error: 'Le nom du produit est requis (min 2 caractères)' });
-      return;
-    }
-    if (productData.price === undefined || productData.price === null || productData.price < 0) {
-      res.status(400).json({ success: false, error: 'Le prix est requis et doit être >= 0' });
-      return;
-    }
 
     // 5. Insérer le produit
     const { data: product, error } = await supabaseAdmin
@@ -320,21 +343,22 @@ router.patch('/:productId', verifyJWT, async (req: AuthenticatedRequest, res: Re
       return;
     }
 
-    // Champs modifiables
-    const allowedFields = [
-      'name', 'price', 'description', 'category_id', 'stock_quantity',
-      'is_active', 'compare_price', 'cost_price', 'sku', 'tags', 'weight',
-      'dimensions', 'free_shipping', 'low_stock_threshold', 'images',
-      'seo_title', 'seo_description', 'sell_by_carton', 'price_carton',
-      'units_per_carton', 'carton_sku',
-    ];
 
-    const updates: Record<string, any> = {};
-    for (const field of allowedFields) {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
-      }
+    // Valider le payload partiel avec Zod
+    const validation = UpdateProductSchema.safeParse(req.body);
+    if (!validation.success) {
+      res.status(400).json({
+        success: false,
+        error: 'Données invalides',
+        details: validation.error.errors.map(e => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })),
+      });
+      return;
     }
+
+    const updates: Record<string, any> = { ...validation.data };
 
     if (Object.keys(updates).length === 0) {
       res.status(400).json({ success: false, error: 'Aucun champ à mettre à jour' });
@@ -378,13 +402,15 @@ router.patch('/:productId', verifyJWT, async (req: AuthenticatedRequest, res: Re
 
 /**
  * DELETE /api/products/:productId
- * Soft-delete (is_active = false) ou hard-delete selon le paramètre
+ * Soft-delete uniquement (is_active = false).
+ * Le hard-delete n'est pas exposé aux vendeurs — il est réservé
+ * aux opérations admin internes pour éviter toute perte de données
+ * accidentelle (commandes liées, historique, analytics).
  */
 router.delete('/:productId', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { productId } = req.params;
-    const hardDelete = req.query.hard === 'true';
     const vendorId = await resolveVendorId(userId);
 
     if (!vendorId) {
@@ -404,23 +430,14 @@ router.delete('/:productId', verifyJWT, async (req: AuthenticatedRequest, res: R
       return;
     }
 
-    if (hardDelete) {
-      const { error } = await supabaseAdmin
-        .from('products')
-        .delete()
-        .eq('id', productId);
-      if (error) throw error;
-      logger.info(`Product hard-deleted: ${productId} by vendor=${vendorId}`);
-    } else {
-      const { error } = await supabaseAdmin
-        .from('products')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
-        .eq('id', productId);
-      if (error) throw error;
-      logger.info(`Product soft-deleted: ${productId} by vendor=${vendorId}`);
-    }
+    const { error } = await supabaseAdmin
+      .from('products')
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq('id', productId);
+    if (error) throw error;
 
-    res.json({ success: true, message: hardDelete ? 'Produit supprimé définitivement' : 'Produit désactivé' });
+    logger.info(`Product soft-deleted: ${productId} by vendor=${vendorId}`);
+    res.json({ success: true, message: 'Produit désactivé' });
   } catch (error: any) {
     logger.error(`Error deleting product: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur lors de la suppression' });
