@@ -158,16 +158,19 @@ export async function cacheVendorProducts(
   let imagesCached = 0;
 
   for (const product of products) {
+    // ✨ FIX: Supporter stock_quantity (Supabase) et stock (local)
+    const stockValue = product.stock_quantity ?? product.stock ?? 0;
+
     const cachedProduct: CachedProduct = {
       id: product.id,
       vendor_id: vendorId,
       name: product.name,
       description: product.description || '',
       price: product.price,
-      stock: product.stock || 0,
+      stock: stockValue,
       sku: product.sku,
       category_id: product.category_id,
-      category_name: product.category?.name,
+      category_name: product.categories?.name || product.category?.name,
       images: product.images || [],
       is_active: product.is_active !== false,
       created_at: product.created_at,

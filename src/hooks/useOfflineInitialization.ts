@@ -44,7 +44,7 @@ export function useOfflineInitialization() {
    * Initialiser le mode offline
    */
   const initialize = useCallback(async (userId: string) => {
-    console.log('[OfflineInit] Démarrage initialisation pour utilisateur:', userId);
+    console.log('[OfflineInit] OFFLINE INIT START pour utilisateur:', userId);
 
     setStatus(prev => ({ ...prev, isInitializing: true, error: null }));
 
@@ -69,7 +69,7 @@ export function useOfflineInitialization() {
       const alreadyInitialized = cacheStats.totalProducts > 0 && stockStats.totalProducts > 0;
 
       if (alreadyInitialized) {
-        console.log('[OfflineInit] Déjà initialisé (cache existant)');
+        console.log('[OfflineInit] OFFLINE INIT SUCCESS (cache existant)');
         setStatus({
           isInitialized: true,
           isInitializing: false,
@@ -116,9 +116,9 @@ export function useOfflineInitialization() {
       }
 
       // 4. Charger les données
-      console.log('[OfflineInit] Chargement des données...');
-      const products = await withTimeout(fetchVendorProducts(vendorId), 15000, 'vendor_products_load_timeout');
-      const categories = await withTimeout(fetchCategories(), 10000, 'categories_load_timeout');
+      console.log('[OfflineInit] OFFLINE INIT - Chargement des données...');
+      const products = await withTimeout(fetchVendorProducts(vendorId), 20000, 'vendor_products_load_timeout');
+      const categories = await withTimeout(fetchCategories(), 15000, 'categories_load_timeout');
 
       // 5. Mettre en cache
       console.log('[OfflineInit] Mise en cache du catalogue...');
@@ -127,9 +127,13 @@ export function useOfflineInitialization() {
 
       setStatus(prev => ({ ...prev, catalogCached: true }));
 
-      // 6. Charger le stock initial
+      // 6. Charger le stock initial - mapper stock_quantity correctement
       console.log('[OfflineInit] Chargement du stock initial...');
-      await withTimeout(loadInitialStock(vendorId, products), 12000, 'stock_initialization_timeout');
+      const productsWithStock = products.map((p: any) => ({
+        ...p,
+        stock: p.stock_quantity ?? p.stock ?? 0,
+      }));
+      await withTimeout(loadInitialStock(vendorId, productsWithStock), 15000, 'stock_initialization_timeout');
 
       setStatus(prev => ({ ...prev, stockLoaded: true }));
 
@@ -153,14 +157,14 @@ export function useOfflineInitialization() {
         syncStarted: true
       });
 
-      console.log('[OfflineInit] ✅ Initialisation terminée avec succès');
+      console.log('[OfflineInit] OFFLINE INIT SUCCESS ✅');
 
       toast.success('Mode offline activé!', {
         description: `${products.length} produits disponibles hors ligne`
       });
 
     } catch (error: any) {
-      console.error('[OfflineInit] Erreur initialisation:', error);
+      console.error('[OfflineInit] OFFLINE INIT FAIL:', error);
       setStatus({
         isInitialized: false,
         isInitializing: false,

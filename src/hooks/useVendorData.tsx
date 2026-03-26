@@ -114,15 +114,37 @@ export function useVendorStats() {
       return;
     }
 
+    const STATS_CACHE_KEY = `vendor_stats_cache_${user.id}`;
+
     const fetchStats = async () => {
       const startedAt = performance.now();
-      console.info('[VENDOR STATS LOAD START]', { userId: user.id });
+      console.info('[VENDOR STATS START]', { userId: user.id });
 
       const withTimeout = <T,>(promiseFactory: () => PromiseLike<T>, timeoutMs: number, label: string) =>
         Promise.race<T>([
           Promise.resolve().then(promiseFactory),
           new Promise<T>((_, reject) => setTimeout(() => reject(new Error(label)), timeoutMs)),
         ]);
+
+      // ✨ OFFLINE FALLBACK: si hors ligne, utiliser le cache
+      if (!navigator.onLine) {
+        console.info('[VENDOR STATS] Mode hors ligne - utilisation cache');
+        try {
+          const cached = localStorage.getItem(STATS_CACHE_KEY);
+          if (cached) {
+            const parsedStats = JSON.parse(cached) as VendorStats;
+            setStats(parsedStats);
+            console.info('[VENDOR STATS SUCCESS]', { source: 'offline_cache' });
+          } else {
+            setError('Données vendeur non disponibles hors ligne');
+            console.warn('[VENDOR STATS FAIL]', { reason: 'no_offline_cache' });
+          }
+        } catch (e) {
+          setError('Erreur lecture cache hors ligne');
+        }
+        setLoading(false);
+        return;
+      }
 
       try {
         // Get vendor ID first
@@ -139,7 +161,7 @@ export function useVendorStats() {
 
         if (!vendor) {
           setError('Vendor profile not found');
-          console.error('[VENDOR STATS LOAD FAIL]', { reason: 'vendor_profile_not_found', userId: user.id });
+          console.error('[VENDOR STATS FAIL]', { reason: 'vendor_profile_not_found', userId: user.id });
           setLoading(false);
           return;
         }
@@ -162,7 +184,6 @@ export function useVendorStats() {
             () => supabase.from('payment_schedules').select('id, orders!inner(vendor_id)', { count: 'exact', head: true }).eq('orders.vendor_id', vendor.id).eq('status', 'overdue'),
             STATS_TIMEOUT_MS, 'overdue_payments_timeout',
           ),
-          // Customer count is derived from orders — no separate query needed (see below)
           Promise.resolve(null),
         ]);
 
@@ -172,7 +193,6 @@ export function useVendorStats() {
         const orders_count = orders?.length || 0;
         const orders_pending = orders?.filter((o: any) => o.status === 'pending').length || 0;
 
-        // Customer count from orders data (no extra query)
         const uniqueCustomerIds = new Set(
           (orders || []).map((o: any) => o.customer_id).filter(Boolean)
         );
@@ -184,7 +204,7 @@ export function useVendorStats() {
 
         const ESTIMATED_MARGIN_RATE = 0.2;
 
-        setStats({
+        const newStats: VendorStats = {
           vendorId: vendor.id,
           revenue,
           profit: revenue * ESTIMATED_MARGIN_RATE,
@@ -194,8 +214,16 @@ export function useVendorStats() {
           products_count,
           low_stock_count,
           overdue_payments
-        });
-        console.info('[VENDOR STATS LOAD SUCCESS]', {
+        };
+
+        setStats(newStats);
+
+        // ✨ Persister pour le mode offline
+        try {
+          localStorage.setItem(STATS_CACHE_KEY, JSON.stringify(newStats));
+        } catch (e) {}
+
+        console.info('[VENDOR STATS SUCCESS]', {
           vendorId: vendor.id,
           durationMs: Math.round(performance.now() - startedAt),
           orders_count,
@@ -204,10 +232,23 @@ export function useVendorStats() {
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Erreur inconnue';
         if (message.includes('timeout')) {
-          console.error('[VENDOR STATS LOAD TIMEOUT REACHED]', { userId: user.id, message });
+          console.error('[VENDOR STATS FAIL]', { userId: user.id, message, type: 'timeout' });
         } else {
-          console.error('[VENDOR STATS LOAD FAIL]', { userId: user.id, message });
+          console.error('[VENDOR STATS FAIL]', { userId: user.id, message });
         }
+
+        // ✨ Fallback sur cache en cas d'erreur réseau
+        try {
+          const cached = localStorage.getItem(STATS_CACHE_KEY);
+          if (cached) {
+            const parsedStats = JSON.parse(cached) as VendorStats;
+            setStats(parsedStats);
+            console.info('[VENDOR STATS SUCCESS]', { source: 'cache_after_error' });
+            setLoading(false);
+            return;
+          }
+        } catch (e) {}
+
         setError(message);
       } finally {
         setLoading(false);

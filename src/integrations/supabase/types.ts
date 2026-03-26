@@ -15264,6 +15264,63 @@ export type Database = {
           },
         ]
       }
+      product_scores: {
+        Row: {
+          cart_count: number
+          clicks_count: number
+          conversion_rate: number | null
+          id: string
+          is_featured: boolean | null
+          last_computed: string
+          product_id: string
+          purchases_count: number
+          total_score: number
+          trending_score: number | null
+          views_count: number
+        }
+        Insert: {
+          cart_count?: number
+          clicks_count?: number
+          conversion_rate?: number | null
+          id?: string
+          is_featured?: boolean | null
+          last_computed?: string
+          product_id: string
+          purchases_count?: number
+          total_score?: number
+          trending_score?: number | null
+          views_count?: number
+        }
+        Update: {
+          cart_count?: number
+          clicks_count?: number
+          conversion_rate?: number | null
+          id?: string
+          is_featured?: boolean | null
+          last_computed?: string
+          product_id?: string
+          purchases_count?: number
+          total_score?: number
+          trending_score?: number | null
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_scores_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_scores_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           attributes: Json | null
@@ -23089,6 +23146,63 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity: {
+        Row: {
+          action_type: string
+          category_id: string | null
+          created_at: string
+          device_type: string | null
+          id: string
+          metadata: Json | null
+          product_id: string | null
+          query: string | null
+          session_id: string | null
+          user_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          action_type: string
+          category_id?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          query?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          category_id?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          query?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activity_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_activity_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_product_stock_summary"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
       user_addresses: {
         Row: {
           city: string
@@ -23305,6 +23419,33 @@ export type Database = {
             referencedColumns: ["product_id"]
           },
         ]
+      }
+      user_category_preferences: {
+        Row: {
+          category_id: string
+          id: string
+          last_updated: string
+          score: number
+          user_id: string
+          vendor_affinity: Json | null
+        }
+        Insert: {
+          category_id: string
+          id?: string
+          last_updated?: string
+          score?: number
+          user_id: string
+          vendor_affinity?: Json | null
+        }
+        Update: {
+          category_id?: string
+          id?: string
+          last_updated?: string
+          score?: number
+          user_id?: string
+          vendor_affinity?: Json | null
+        }
+        Relationships: []
       }
       user_contacts: {
         Row: {
@@ -28593,6 +28734,11 @@ export type Database = {
         Returns: undefined
       }
       compute_daily_analytics: { Args: { p_date?: string }; Returns: number }
+      compute_product_scores: { Args: never; Returns: undefined }
+      compute_user_preferences: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       confirm_delivery_and_release_escrow: {
         Args: { p_customer_id: string; p_escrow_id: string; p_notes?: string }
         Returns: Json
@@ -29550,6 +29696,21 @@ export type Database = {
       get_public_setting: { Args: { setting_key: string }; Returns: string }
       get_purchase_commission_percent: { Args: never; Returns: number }
       get_queue_stats: { Args: never; Returns: Json }
+      get_recently_viewed: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: {
+          currency: string
+          images: Json
+          name: string
+          price: number
+          product_id: string
+          rating: number
+          reason: string
+          score: number
+          vendor_id: string
+          vendor_name: string
+        }[]
+      }
       get_role_prefix: { Args: { user_role: string }; Returns: string }
       get_service_commission_percent: { Args: never; Returns: number }
       get_service_subscription: {
@@ -29593,6 +29754,36 @@ export type Database = {
           price: number
           rating: number
           similarity_score: number
+        }[]
+      }
+      get_smart_recommendations: {
+        Args: { p_limit?: number; p_type?: string; p_user_id?: string }
+        Returns: {
+          currency: string
+          images: Json
+          name: string
+          price: number
+          product_id: string
+          rating: number
+          reason: string
+          score: number
+          vendor_id: string
+          vendor_name: string
+        }[]
+      }
+      get_smart_similar_products: {
+        Args: { p_limit?: number; p_product_id: string }
+        Returns: {
+          currency: string
+          images: Json
+          name: string
+          price: number
+          product_id: string
+          rating: number
+          reason: string
+          score: number
+          vendor_id: string
+          vendor_name: string
         }[]
       }
       get_surveillance_dashboard_fast: {
@@ -29641,17 +29832,33 @@ export type Database = {
         }[]
       }
       get_transfer_fee_percent: { Args: never; Returns: number }
-      get_trending_products: {
-        Args: { p_days?: number; p_limit?: number }
-        Returns: {
-          avg_rating: number
-          product_id: string
-          review_count: number
-          trend_score: number
-          view_count: number
-          wishlist_count: number
-        }[]
-      }
+      get_trending_products:
+        | {
+            Args: { p_days?: number; p_limit?: number }
+            Returns: {
+              avg_rating: number
+              product_id: string
+              review_count: number
+              trend_score: number
+              view_count: number
+              wishlist_count: number
+            }[]
+          }
+        | {
+            Args: { p_limit?: number }
+            Returns: {
+              currency: string
+              images: Json
+              name: string
+              price: number
+              product_id: string
+              rating: number
+              reason: string
+              score: number
+              vendor_id: string
+              vendor_name: string
+            }[]
+          }
       get_user_agent: {
         Args: { p_user_id: string }
         Returns: {

@@ -266,7 +266,9 @@ export default function VendeurDashboard() {
   const [showAllOrders, setShowAllOrders] = useState(false);
 
   const isLoading = authLoading || profileLoading || statsLoading;
-  const { timedOut: loadingTimedOut, resetTimeout } = useLoadingTimeout(isLoading, 8000);
+  // Mobile: 15s timeout (slow networks), Desktop: 10s
+  const isMobileDevice = typeof navigator !== 'undefined' && /Mobi|Android/i.test(navigator.userAgent);
+  const { timedOut: loadingTimedOut, resetTimeout } = useLoadingTimeout(isLoading, isMobileDevice ? 15000 : 10000);
 
   useEffect(() => {
     if (loadingTimedOut) {
@@ -275,9 +277,10 @@ export default function VendeurDashboard() {
         authLoading,
         profileLoading,
         statsLoading,
+        isMobile: isMobileDevice,
       });
     }
-  }, [loadingTimedOut, authLoading, profileLoading, statsLoading]);
+  }, [loadingTimedOut, authLoading, profileLoading, statsLoading, isMobileDevice]);
 
   // Toggle pour afficher plus/moins de commandes
   const handleToggleShowAllOrders = useCallback(() => {

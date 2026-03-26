@@ -151,15 +151,18 @@ export async function loadInitialStock(vendorId: string, products: any[]): Promi
   const db = await initStockDB();
 
   for (const product of products) {
+    // ✨ FIX: Supporter à la fois stock_quantity (Supabase) et stock (cache local)
+    const stockQuantity = product.stock_quantity ?? product.stock ?? 0;
+
     const stockItem: LocalStockItem = {
       id: crypto.randomUUID(),
       product_id: product.id,
       product_name: product.name,
       product_sku: product.sku,
       vendor_id: vendorId,
-      quantity: product.stock || 0,
+      quantity: stockQuantity,
       reserved_quantity: 0,
-      available_quantity: product.stock || 0,
+      available_quantity: stockQuantity,
       min_stock_alert: product.min_stock || 5,
       unit: product.unit || 'pièce',
       last_updated: new Date().toISOString(),
@@ -173,7 +176,7 @@ export async function loadInitialStock(vendorId: string, products: any[]): Promi
     await checkAndCreateAlert(stockItem);
   }
 
-  console.log(`[LocalStock] ✅ ${products.length} produits chargés`);
+  console.log(`[LocalStock] ✅ ${products.length} produits chargés (stock initialisé)`);
 }
 
 /**
