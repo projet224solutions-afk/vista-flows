@@ -758,35 +758,27 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         }
 
       } else if (withdrawMethod === 'bank') {
-        // Retrait bancaire - enregistrer la demande (pas d'API pour l'instant)
-        const referenceNumber = `BK-WD-${Date.now()}`;
-        
-        const { error: txError } = await (supabase
-          .from('wallet_transactions')
-          .insert([{
-            transaction_id: referenceNumber,
-            transaction_type: 'withdrawal',
-            amount: -amount,
-            net_amount: amount * 0.97, // 3% frais
-            fee: amount * 0.03,
-            currency: wallet?.currency || 'GNF',
-            status: 'pending',
-            description: `Retrait bancaire vers ${bankName} - ${bankIban}`,
-            sender_wallet_id: Number(wallet?.id),
-            sender_user_id: effectiveUserId,
-            metadata: {
-              withdrawal_method: 'bank_transfer',
+        // Retrait bancaire via Stripe withdrawal edge function
+        const { data, error } = await supabase.functions.invoke('stripe-withdrawal', {
+          body: {
+            amount,
+            currency: wallet?.currency || 'gnf',
+            bankAccountId: bankIban,
+            bankDetails: {
               bank_name: bankName,
               iban: bankIban,
               account_holder: bankAccountHolder,
-              reference: referenceNumber,
             }
-          } as any] as any));
+          }
+        });
 
-        if (txError) console.warn('Transaction log failed:', txError);
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.error || 'Erreur lors du retrait bancaire');
 
-        toast.success(`Demande de retrait bancaire de ${formatPrice(amount)} enregistrée !`, {
-          description: `Virement vers ${bankName} sous 3-5 jours ouvrés.`
+        console.log('✅ Retrait bancaire Stripe:', data);
+
+        toast.success(`Demande de retrait de ${formatPrice(data.netAmount || amount)} enregistrée !`, {
+          description: `Frais: ${formatPrice(data.withdrawalFee || 0)}. Virement vers ${bankName} sous 24-48h.`
         });
       }
       
