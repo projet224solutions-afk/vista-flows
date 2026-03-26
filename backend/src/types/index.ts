@@ -1,5 +1,6 @@
 /**
  * 📦 TYPES CENTRALISÉS - Backend 224Solutions
+ * Alignés avec les tables Supabase existantes
  */
 
 import { Request } from 'express';
@@ -33,56 +34,105 @@ export interface ApiResponse<T = any> {
   };
 }
 
-// ==================== WALLET ====================
+// ==================== WALLET (aligné table `wallets`) ====================
 
 export interface Wallet {
-  id: string;
+  id: number; // bigint dans la DB
   user_id: string;
   balance: number;
-  currency: string;
-  wallet_status: string;
+  currency: string; // default 'GNF'
+  wallet_status: 'active' | 'frozen' | 'blocked';
+  is_blocked: boolean;
+  blocked_reason?: string | null;
+  blocked_at?: string | null;
+  pin_hash?: string | null;
+  biometric_enabled: boolean;
+  daily_limit: number;
+  monthly_limit: number;
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
 }
 
 export interface WalletTransaction {
-  id: string;
-  wallet_id: string;
-  type: 'credit' | 'debit' | 'transfer';
+  id: number; // bigint
+  transaction_id: string; // varchar unique
+  sender_wallet_id?: number | null;
+  receiver_wallet_id?: number | null;
+  sender_user_id?: string | null;
+  receiver_user_id?: string | null;
   amount: number;
+  fee: number;
+  net_amount: number;
   currency: string;
+  transaction_type: string; // USER-DEFINED enum
   status: 'pending' | 'completed' | 'failed' | 'reversed';
-  description?: string;
-  reference?: string;
+  description?: string | null;
+  reference_id?: string | null;
   metadata?: Record<string, any>;
+  signature?: string | null;
+  signature_verified: boolean;
+  ip_address?: string | null;
+  device_info?: Record<string, any> | null;
+  idempotency_key?: string | null;
   created_at: string;
+  updated_at: string;
+  completed_at?: string | null;
 }
 
-// ==================== SUBSCRIPTION ====================
+// ==================== PLANS (aligné table `plans`) ====================
+
+export interface Plan {
+  id: string;
+  name: string;
+  display_name: string;
+  monthly_price_gnf: number;
+  yearly_price_gnf?: number | null;
+  yearly_discount_percentage: number;
+  max_products?: number | null;
+  max_images_per_product?: number | null;
+  analytics_access: boolean;
+  priority_support: boolean;
+  featured_products: boolean;
+  api_access: boolean;
+  custom_branding: boolean;
+  features: any[];
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// ==================== SUBSCRIPTION (aligné table `subscriptions`) ====================
 
 export interface Subscription {
   id: string;
   user_id: string;
   plan_id: string;
-  status: 'active' | 'canceled' | 'expired' | 'trial' | 'past_due';
+  price_paid_gnf: number;
+  billing_cycle: 'monthly' | 'yearly';
+  status: 'active' | 'cancelled' | 'expired' | 'trialing' | 'past_due';
+  started_at: string;
   current_period_start: string;
   current_period_end: string;
-  stripe_subscription_id?: string;
-  stripe_customer_id?: string;
+  auto_renew: boolean;
+  payment_method?: string | null;
+  payment_transaction_id?: string | null;
+  metadata: Record<string, any>;
   created_at: string;
+  updated_at: string;
 }
 
-// ==================== PAYMENT ====================
+// ==================== VENDOR ====================
 
-export interface Payment {
+export interface Vendor {
   id: string;
   user_id: string;
-  amount: number;
-  currency: string;
-  provider: 'stripe' | 'paypal' | 'orange_money' | 'mtn_money' | 'wallet';
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
-  reference: string;
-  metadata?: Record<string, any>;
+  business_name: string;
+  shop_slug?: string;
+  business_type: 'online' | 'physical' | 'hybrid';
+  is_active: boolean;
+  country?: string | null;
+  city?: string | null;
   created_at: string;
 }
 
@@ -92,32 +142,9 @@ export interface Order {
   id: string;
   buyer_id: string;
   vendor_id: string;
-  items: OrderItem[];
   total_amount: number;
   currency: string;
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'canceled' | 'refunded';
   payment_id?: string;
-  shipping_address?: Record<string, any>;
-  created_at: string;
-}
-
-export interface OrderItem {
-  product_id: string;
-  variant_id?: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-}
-
-// ==================== VENDOR ====================
-
-export interface Vendor {
-  id: string;
-  user_id: string;
-  store_name: string;
-  slug: string;
-  status: 'active' | 'suspended' | 'pending';
-  subscription_tier?: string;
-  product_limit?: number;
   created_at: string;
 }

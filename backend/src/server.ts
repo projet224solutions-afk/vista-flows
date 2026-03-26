@@ -18,10 +18,13 @@ import { logger } from './config/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { requestLogger } from './middlewares/requestLogger.js';
 
-// Routes TypeScript
+// Routes TypeScript (Phase 1 + Phase 2)
 import healthRoutes from './routes/health.routes.js';
+import subscriptionRoutes from './routes/subscriptions.routes.js';
+import paymentRoutes from './routes/payments.routes.js';
+import walletRoutesV2 from './routes/wallet.v2.routes.js';
 
-// Routes legacy JS (importation progressive)
+// Routes legacy JS (conservées, pas de suppression)
 // @ts-ignore - legacy JS modules
 import authRoutes from './routes/auth.routes.js';
 // @ts-ignore
@@ -95,7 +98,9 @@ app.use('/auth', authRoutes);
 // Analytics (public tracking + auth retrieval)
 app.use('/api/analytics', analyticsRoutes);
 
-// Wallet (JWT protected)
+// ==================== LEGACY ROUTES (conservées) ====================
+
+// Wallet legacy (conservé pour backward compatibility)
 app.use('/api/wallet', walletRoutes);
 
 // Internal (API key protected)
@@ -107,15 +112,15 @@ app.use('/jobs', jobsRoutes);
 // Media (JWT protected)
 app.use('/media', mediaRoutes);
 
-// ==================== PHASE 2 ROUTES ====================
-// Subscriptions & Payments (TypeScript)
-import subscriptionRoutes from './routes/subscriptions.routes.js';
-import paymentRoutes from './routes/payments.routes.js';
-import walletRoutesV2 from './routes/wallet.routes.js';
+// ==================== PHASE 2 ROUTES (TypeScript, alignées DB existante) ====================
 
-// Use TS wallet routes (replaces legacy wallet)
+// Wallet v2 — nouveau endpoint séparé, pas de collision avec legacy
 app.use('/api/v2/wallet', walletRoutesV2);
+
+// Subscriptions — utilise table `plans` + `subscriptions` existantes
 app.use('/api/subscriptions', subscriptionRoutes);
+
+// Payments — utilise table `wallet_transactions` existante
 app.use('/api/payments', paymentRoutes);
 
 // ==================== PHASE 3 ROUTES (à ajouter) ====================
@@ -150,7 +155,6 @@ const gracefulShutdown = (signal: string) => {
     logger.info('HTTP server closed');
     process.exit(0);
   });
-  // Force close after 10s
   setTimeout(() => process.exit(1), 10000);
 };
 
