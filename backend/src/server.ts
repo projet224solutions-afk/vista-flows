@@ -9,6 +9,7 @@
  * En production, pointer vers server.ts compilé.
  */
 
+import crypto from 'crypto';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -83,12 +84,22 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-API-Key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-API-Key', 'Idempotency-Key'],
+  exposedHeaders: ['X-Request-Id'],
 }));
 
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Correlation / Request ID
+app.use((req, res, next) => {
+  const requestId = req.headers['x-request-id'] as string || crypto.randomUUID();
+  res.setHeader('X-Request-Id', requestId);
+  (req as any).requestId = requestId;
+  next();
+});
+
 app.use(rateLimiter);
 app.use(requestLogger);
 

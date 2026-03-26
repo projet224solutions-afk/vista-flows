@@ -1,36 +1,66 @@
 /**
- * 📦 INVENTORY BACKEND SERVICE
- * Gestion du stock 100% via backend Node.js
+ * 📦 INVENTORY BACKEND SERVICE — Phase 5
+ * Aligné 1:1 avec backend/src/routes/inventory.routes.ts
  */
 
 import { backendFetch } from './backendApi';
 
-// ==================== TYPES ====================
+// ==================== TYPES (alignés backend Zod schemas) ====================
+
+export type StockAdjustmentReason =
+  | 'restock'
+  | 'manual_correction'
+  | 'damaged'
+  | 'lost'
+  | 'returned'
+  | 'count_adjustment'
+  | 'other';
 
 export interface StockLevel {
-  product_id: string;
-  product_name: string;
-  stock_quantity: number;
-  low_stock_threshold?: number;
-  is_low_stock: boolean;
-  updated_at: string;
+  id: string;
+  name: string;
+  sku: string | null;
+  stock_quantity: number | null;
+  low_stock_threshold: number | null;
+  is_active: boolean;
+  images: string[] | null;
+}
+
+export interface StockSummary {
+  total_products: number;
+  out_of_stock: number;
+  low_stock: number;
+  healthy: number;
 }
 
 export interface StockAdjustment {
   product_id: string;
-  adjustment: number; // positif = ajout, négatif = retrait
-  reason: string;
+  adjustment: number;
+  reason: StockAdjustmentReason;
+  notes?: string | null;
+}
+
+export interface AdjustmentResult {
+  product_id: string;
+  status: 'success' | 'error';
+  old_stock?: number;
+  new_stock?: number;
+  error?: string;
 }
 
 export interface InventoryHistoryEntry {
   id: string;
   product_id: string;
-  adjustment: number;
+  vendor_id: string;
+  change_type: string;
+  quantity_change: number;
+  old_quantity: number;
+  new_quantity: number;
   reason: string;
-  previous_stock: number;
-  new_stock: number;
+  notes: string | null;
+  performed_by: string;
   created_at: string;
-  adjusted_by: string;
+  product?: { id: string; name: string; sku: string | null };
 }
 
 // ==================== API CALLS ====================
@@ -43,7 +73,7 @@ export async function getStockLevels(
   signal?: AbortSignal
 ) {
   const query = new URLSearchParams();
-  if (params.low_stock_only) query.set('low_stock_only', 'true');
+  if (params.low_stock_only) query.set('low_stock', 'true');
 
   const qs = query.toString();
   return backendFetch<StockLevel[]>(
@@ -53,20 +83,21 @@ export async function getStockLevels(
 }
 
 /**
- * Ajuster manuellement le stock (avec raison obligatoire)
+ * Ajuster le stock (backend attend un tableau `adjustments`)
  */
 export async function adjustStock(
-  payload: StockAdjustment,
+  adjustments: StockAdjustment | StockAdjustment[],
   signal?: AbortSignal
 ) {
-  return backendFetch<{ product_id: string; new_stock: number }>(
-    '/api/inventory/adjust',
-    {
-      method: 'POST',
-      body: payload,
-      signal,
-    }
-  );
+  const arr = Array.isArray(adjustments) ? adjustments : [adjustments];
+  return backendFetch<{
+    results: AdjustmentResult[];
+    summary: { total: number; successes: number; errors: number };
+  }>('/api/inventory/adjust', {
+    method: 'POST',
+    body: { adjustments: arr },
+    signal,
+  });
 }
 
 /**

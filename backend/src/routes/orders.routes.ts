@@ -350,6 +350,142 @@ router.post('/', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, 
 });
 
 /**
+ * GET /api/orders/:orderId
+ * Détails d'une commande (acheteur ou vendeur)
+ */
+router.get('/:orderId', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { orderId } = req.params;
+
+    // Charger la commande avec items
+    const { data: order, error } = await supabaseAdmin
+      .from('orders')
+      .select('*, order_items(*)')
+      .eq('id', orderId)
+      .single();
+
+    if (error || !order) {
+      res.status(404).json({ success: false, error: 'Commande non trouvée' });
+      return;
+    }
+
+    // Vérifier que l'utilisateur est soit l'acheteur, soit le vendeur
+    const isCustomer = order.customer_id === userId;
+    let isVendor = false;
+    if (!isCustomer) {
+      const { data: vendor } = await supabaseAdmin
+        .from('vendors').select('id').eq('user_id', userId).eq('id', order.vendor_id).maybeSingle();
+      isVendor = !!vendor;
+    }
+
+    if (!isCustomer && !isVendor) {
+      res.status(403).json({ success: false, error: 'Accès non autorisé à cette commande' });
+      return;
+    }
+
+    // Charger l'escrow associé
+    const { data: escrow } = await supabaseAdmin
+      .from('escrow_transactions')
+      .select('id, status, auto_release_at, released_at, seller_confirmed_at')
+      .eq('order_id', orderId)
+      .maybeSingle();
+
+    res.json({ success: true, data: { ...order, escrow: escrow || null } });
+  } catch (error: any) {
+    logger.error(`Error fetching order ${req.params.orderId}: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur' });
+  }
+});
+
+/**
+ * POST /api/orders/:orderId/cancel
+ * Annuler une commande (acheteur uniquement, si non confirmée par vendeur)
+ */
+router.post('/:orderId/cancel', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { orderId } = req.params;
+    const { reason } = req.body || {};
+
+    if (!reason || typeof reason !== 'string' || reason.trim().length < 3) {
+      res.status(400).json({ success: false, error: 'Raison d\'annulation requise (min 3 caractères)' });
+      return;
+    }
+
+    const { data: order } = await supabaseAdmin
+      .from('orders')
+      .select('id, status, customer_id, vendor_id, seller_confirmed_at')
+      .eq('id', orderId)
+      .eq('customer_id', userId)
+      .single();
+
+    if (!order) {
+      res.status(404).json({ success: false, error: 'Commande non trouvée' });
+      return;
+    }
+
+    // Seules les commandes pending peuvent être annulées par l'acheteur
+    if (order.status !== 'pending') {
+      res.status(400).json({
+        success: false,
+        error: `Impossible d'annuler une commande en statut "${order.status}"`,
+        details: { allowed_statuses: ['pending'] },
+      });
+      return;
+    }
+
+    // Si le vendeur a déjà confirmé, l'acheteur ne peut plus annuler
+    if (order.seller_confirmed_at) {
+      res.status(400).json({
+        success: false,
+        error: 'Le vendeur a confirmé cette commande, annulation impossible. Ouvrez un litige.',
+      });
+      return;
+    }
+
+    // Restaurer le stock
+    const { data: orderItems } = await supabaseAdmin
+      .from('order_items').select('product_id, quantity').eq('order_id', orderId);
+
+    if (orderItems) {
+      for (const item of orderItems) {
+        await supabaseAdmin.rpc('increment_product_stock', {
+          p_product_id: item.product_id,
+          p_quantity: item.quantity,
+        });
+      }
+    }
+
+    // Mettre à jour l'escrow
+    await supabaseAdmin
+      .from('escrow_transactions')
+      .update({ status: 'refunded', released_at: new Date().toISOString() })
+      .eq('order_id', orderId);
+
+    // Mettre à jour la commande
+    const { data: updated, error } = await supabaseAdmin
+      .from('orders')
+      .update({
+        status: 'cancelled',
+        cancellation_reason: reason.trim(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', orderId)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    logger.info(`Order ${orderId} cancelled by buyer ${userId}: ${reason}`);
+    res.json({ success: true, data: updated });
+  } catch (error: any) {
+    logger.error(`Order cancellation error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de l\'annulation' });
+  }
+});
+
+/**
  * GET /api/orders/mine
  */
 router.get('/mine', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {

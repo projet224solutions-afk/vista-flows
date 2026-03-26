@@ -1,11 +1,11 @@
 /**
- * 🏪 POS BACKEND SERVICE
- * Synchronisation des ventes POS offline → backend Node.js
+ * 🏪 POS BACKEND SERVICE — Phase 5
+ * Aligné 1:1 avec backend/src/routes/pos.routes.ts
  */
 
 import { backendFetch } from './backendApi';
 
-// ==================== TYPES ====================
+// ==================== TYPES (alignés backend Zod schemas) ====================
 
 export interface PosSaleItem {
   product_id: string;
@@ -21,16 +21,17 @@ export interface PosSalePayload {
   payment_method: 'cash' | 'mobile_money' | 'card' | 'credit';
   total_amount: number;
   discount_total: number;
-  customer_name?: string;
-  customer_phone?: string;
-  notes?: string;
-  sold_at: string;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  notes?: string | null;
+  sold_at: string; // ISO 8601
 }
 
 export interface SyncResult {
   local_sale_id: string;
   status: 'created' | 'duplicate' | 'error';
   sale_id?: string;
+  stock_synced?: boolean;
   error?: string;
 }
 
@@ -39,13 +40,27 @@ export interface SyncSummary {
   created: number;
   duplicates: number;
   errors: number;
+  stock_pending: number;
+}
+
+export interface PosReconciliationEntry {
+  id: string;
+  vendor_id: string;
+  pos_sale_id: string;
+  product_id: string;
+  expected_decrement: number;
+  status: string;
+  error_message: string;
+  retry_count: number;
+  max_retries: number;
+  created_at: string;
+  product?: { id: string; name: string; sku: string | null };
 }
 
 // ==================== API CALLS ====================
 
 /**
- * Synchroniser un lot de ventes POS offline
- * Max 50 ventes par appel
+ * Synchroniser un lot de ventes POS offline (max 50)
  */
 export async function syncPosSales(
   sales: PosSalePayload[],
@@ -74,6 +89,16 @@ export async function listPosSales(
 
   const qs = query.toString();
   return backendFetch(`/api/pos/sales${qs ? `?${qs}` : ''}`, {
+    method: 'GET',
+    signal,
+  });
+}
+
+/**
+ * Lister les écarts de stock en attente de réconciliation
+ */
+export async function getReconciliationPending(signal?: AbortSignal) {
+  return backendFetch<PosReconciliationEntry[]>('/api/pos/reconciliation', {
     method: 'GET',
     signal,
   });
