@@ -1,18 +1,11 @@
 /**
- * 🏪 POS SYNC ROUTES - Phase 4
+ * 🏪 POS SYNC ROUTES - Phase 4 (Production Hardened)
  * 
- * Synchronisation des ventes POS offline → backend.
- * 
- * Tables utilisées :
- *   - `pos_sales` : ventes POS
- *   - `pos_sale_items` : lignes de vente
- *   - `products` : décrémentation stock
- *   - `vendors` : résolution vendeur
- *   - `wallet_transactions` : crédit automatique du wallet vendeur
- * 
- * Gestion des conflits :
- *   - Idempotence via `local_sale_id` unique par vendeur
- *   - Les doublons sont silencieusement ignorés (réponse 200 avec flag)
+ * Corrections production :
+ *   - Si la décrémentation stock échoue, la vente POS est marquée
+ *     'stock_pending' et un job de réconciliation est créé
+ *   - Table `pos_stock_reconciliation` pour traquer les écarts
+ *   - Devise dynamique via vendeur
  */
 
 import { Router, Response } from 'express';
@@ -50,20 +43,52 @@ const BatchSyncSchema = z.object({
   sales: z.array(PosSaleSchema).min(1, 'Au moins une vente').max(50, 'Maximum 50 ventes par lot'),
 });
 
+// ==================== HELPERS ====================
+
+/**
+ * Enregistre un écart stock pour réconciliation backend.
+ * Le cron job `reconcile-pos-stock` traitera ces entrées.
+ */
+async function createStockReconciliationEntry(
+  vendorId: string,
+  posSaleId: string,
+  productId: string,
+  quantity: number,
+  errorMessage: string
+) {
+  try {
+    await supabaseAdmin
+      .from('pos_stock_reconciliation')
+      .insert({
+        vendor_id: vendorId,
+        pos_sale_id: posSaleId,
+        product_id: productId,
+        expected_decrement: quantity,
+        status: 'pending',
+        error_message: errorMessage,
+        retry_count: 0,
+        max_retries: 5,
+      });
+  } catch (err: any) {
+    logger.error(`Failed to create reconciliation entry: ${err.message}`);
+  }
+}
+
 // ==================== ROUTES ====================
 
 /**
  * POST /api/pos/sync
  * Synchronise un lot de ventes POS offline.
  * 
- * Chaque vente est identifiée par `local_sale_id` unique par vendeur.
- * Les doublons sont ignorés silencieusement.
+ * Stratégie stock :
+ *   - Si decrement réussit → normal
+ *   - Si decrement échoue → vente créée avec stock_synced=false
+ *     + entrée dans pos_stock_reconciliation pour retry automatique
  */
 router.post('/sync', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
 
-    // Résoudre le vendeur
     const { data: vendor } = await supabaseAdmin
       .from('vendors')
       .select('id')
@@ -93,12 +118,13 @@ router.post('/sync', verifyJWT, async (req: AuthenticatedRequest, res: Response)
       local_sale_id: string;
       status: 'created' | 'duplicate' | 'error';
       sale_id?: string;
+      stock_synced?: boolean;
       error?: string;
     }> = [];
 
     for (const sale of sales) {
       try {
-        // Vérifier si déjà synchronisé (idempotence via local_sale_id)
+        // Vérifier idempotence via local_sale_id
         const { data: existing } = await supabaseAdmin
           .from('pos_sales')
           .select('id')
@@ -107,21 +133,15 @@ router.post('/sync', verifyJWT, async (req: AuthenticatedRequest, res: Response)
           .maybeSingle();
 
         if (existing) {
-          results.push({
-            local_sale_id: sale.local_sale_id,
-            status: 'duplicate',
-            sale_id: existing.id,
-          });
+          results.push({ local_sale_id: sale.local_sale_id, status: 'duplicate', sale_id: existing.id });
           continue;
         }
 
         // Recalculer le total côté serveur
         const serverTotal = sale.items.reduce(
-          (sum, item) => sum + (item.unit_price * item.quantity) - item.discount,
-          0,
+          (sum, item) => sum + (item.unit_price * item.quantity) - item.discount, 0
         );
 
-        // Tolérance de 1% sur le total (différences d'arrondi)
         if (Math.abs(serverTotal - sale.total_amount) > sale.total_amount * 0.01) {
           logger.warn(`POS total mismatch: local=${sale.total_amount}, server=${serverTotal}, sale=${sale.local_sale_id}`);
         }
@@ -141,6 +161,7 @@ router.post('/sync', verifyJWT, async (req: AuthenticatedRequest, res: Response)
             sold_at: sale.sold_at,
             synced_at: new Date().toISOString(),
             status: 'completed',
+            stock_synced: true, // optimiste, mis à false si échec
           })
           .select('id')
           .single();
@@ -158,11 +179,11 @@ router.post('/sync', verifyJWT, async (req: AuthenticatedRequest, res: Response)
           total_price: (item.unit_price * item.quantity) - item.discount,
         }));
 
-        await supabaseAdmin
-          .from('pos_sale_items')
-          .insert(saleItems);
+        await supabaseAdmin.from('pos_sale_items').insert(saleItems);
 
-        // Décrémenter le stock pour chaque produit
+        // Décrémenter le stock — avec réconciliation si échec
+        let allStockOk = true;
+
         for (const item of sale.items) {
           const { error: stockError } = await supabaseAdmin.rpc('decrement_product_stock', {
             p_product_id: item.product_id,
@@ -170,36 +191,52 @@ router.post('/sync', verifyJWT, async (req: AuthenticatedRequest, res: Response)
           });
 
           if (stockError) {
+            allStockOk = false;
             logger.warn(`POS stock decrement failed: product=${item.product_id}, qty=${item.quantity}: ${stockError.message}`);
+
+            // Créer entrée de réconciliation pour retry automatique
+            await createStockReconciliationEntry(
+              vendor.id,
+              posSale.id,
+              item.product_id,
+              item.quantity,
+              stockError.message
+            );
           }
+        }
+
+        // Si au moins un stock a échoué, marquer la vente
+        if (!allStockOk) {
+          await supabaseAdmin
+            .from('pos_sales')
+            .update({ stock_synced: false })
+            .eq('id', posSale.id);
         }
 
         results.push({
           local_sale_id: sale.local_sale_id,
           status: 'created',
           sale_id: posSale.id,
+          stock_synced: allStockOk,
         });
       } catch (saleError: any) {
         logger.error(`POS sync error for ${sale.local_sale_id}: ${saleError.message}`);
-        results.push({
-          local_sale_id: sale.local_sale_id,
-          status: 'error',
-          error: saleError.message,
-        });
+        results.push({ local_sale_id: sale.local_sale_id, status: 'error', error: saleError.message });
       }
     }
 
     const created = results.filter(r => r.status === 'created').length;
     const duplicates = results.filter(r => r.status === 'duplicate').length;
     const errors = results.filter(r => r.status === 'error').length;
+    const stockPending = results.filter(r => r.stock_synced === false).length;
 
-    logger.info(`POS sync: vendor=${vendor.id}, created=${created}, duplicates=${duplicates}, errors=${errors}`);
+    logger.info(`POS sync: vendor=${vendor.id}, created=${created}, duplicates=${duplicates}, errors=${errors}, stock_pending=${stockPending}`);
 
     res.json({
       success: errors === 0,
       data: {
         results,
-        summary: { total: sales.length, created, duplicates, errors },
+        summary: { total: sales.length, created, duplicates, errors, stock_pending: stockPending },
       },
     });
   } catch (error: any) {
@@ -210,17 +247,12 @@ router.post('/sync', verifyJWT, async (req: AuthenticatedRequest, res: Response)
 
 /**
  * GET /api/pos/sales
- * Liste les ventes POS du vendeur (paginées)
  */
 router.get('/sales', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-
     const { data: vendor } = await supabaseAdmin
-      .from('vendors')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
 
     if (!vendor) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée' });
@@ -239,13 +271,40 @@ router.get('/sales', verifyJWT, async (req: AuthenticatedRequest, res: Response)
 
     if (error) throw error;
 
-    res.json({
-      success: true,
-      data: data || [],
-      meta: { limit, offset, total: count || 0 },
-    });
+    res.json({ success: true, data: data || [], meta: { limit, offset, total: count || 0 } });
   } catch (error: any) {
     logger.error(`POS sales list error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur' });
+  }
+});
+
+/**
+ * GET /api/pos/reconciliation
+ * Liste les écarts de stock en attente de réconciliation
+ */
+router.get('/reconciliation', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { data: vendor } = await supabaseAdmin
+      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
+
+    if (!vendor) {
+      res.status(404).json({ success: false, error: 'Boutique non trouvée' });
+      return;
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('pos_stock_reconciliation')
+      .select('*, product:products(id, name, sku)')
+      .eq('vendor_id', vendor.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json({ success: true, data: data || [] });
+  } catch (error: any) {
+    logger.error(`POS reconciliation error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
   }
 });
