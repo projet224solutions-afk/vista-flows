@@ -61,7 +61,7 @@ export async function trackActivity(
 
     // Fire & forget: update user preferences
     if (user?.id && options.productId) {
-      supabase.rpc('compute_user_preferences', { p_user_id: user.id } as any).then(() => {}).catch(() => {});
+      Promise.resolve(supabase.rpc('compute_user_preferences', { p_user_id: user.id } as any)).catch(() => {});
     }
   } catch {
     // Ne jamais bloquer l'UI
