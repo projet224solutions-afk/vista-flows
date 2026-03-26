@@ -1,16 +1,14 @@
 /**
- * 📦 ORDERS ROUTES - Phase 4
+ * 📦 ORDERS ROUTES - Phase 4 (Production Hardened)
  * 
- * Tables utilisées :
- *   - `orders` : commande principale
- *   - `order_items` : lignes de commande
- *   - `escrow_transactions` : séquestre systématique
- *   - `products` : vérification stock + prix
- *   - `vendors` : résolution vendeur
+ * Corrections production :
+ *   1. Devise → résolution dynamique via vendor.country (GNF par défaut)
+ *   2. Flux atomique avec stratégie compensatoire explicite
+ *   3. Rollback complet si une étape échoue
  * 
- * Flux : Escrow systématique pour toutes les commandes.
- * Stock : Géré côté backend (vérification + décrémentation atomique).
- * Idempotence : Header Idempotency-Key requis pour POST.
+ * Flux escrow systématique :
+ *   order → order_items → stock decrement → escrow
+ *   Si une étape échoue : rollback de toutes les étapes précédentes.
  */
 
 import { Router, Response } from 'express';
@@ -22,6 +20,22 @@ import { logger } from '../config/logger.js';
 import { z } from 'zod';
 
 const router = Router();
+
+// ==================== DEVISE DYNAMIQUE ====================
+
+const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  GN: 'GNF', CI: 'XOF', SN: 'XOF', ML: 'XOF', BF: 'XOF',
+  NE: 'XOF', TG: 'XOF', BJ: 'XOF', CM: 'XAF', GA: 'XAF',
+  CG: 'XAF', TD: 'XAF', CF: 'XAF', GQ: 'XAF', FR: 'EUR',
+  US: 'USD', GB: 'GBP', MA: 'MAD', DZ: 'DZD', TN: 'TND',
+  NG: 'NGN', GH: 'GHS', KE: 'KES', ZA: 'ZAR',
+};
+const DEFAULT_CURRENCY = 'GNF';
+
+function resolveVendorCurrency(countryCode?: string | null): string {
+  if (!countryCode) return DEFAULT_CURRENCY;
+  return COUNTRY_CURRENCY_MAP[countryCode.toUpperCase()] || DEFAULT_CURRENCY;
+}
 
 // ==================== VALIDATION SCHEMAS ====================
 
@@ -48,12 +62,45 @@ const CreateOrderSchema = z.object({
   coupon_code: z.string().max(50).nullish(),
 });
 
-// ==================== HELPERS ====================
+// ==================== COMPENSATORY ROLLBACK ====================
 
 /**
- * Vérifie la disponibilité de stock pour tous les items.
- * Retourne les produits avec leur prix vérifié côté serveur.
+ * Stratégie compensatoire explicite.
+ * Chaque étape enregistre son rollback. En cas d'erreur, on exécute
+ * tous les rollbacks dans l'ordre inverse.
  */
+type RollbackFn = () => Promise<void>;
+
+class TransactionSaga {
+  private rollbacks: Array<{ step: string; fn: RollbackFn }> = [];
+  private executed: string[] = [];
+
+  addStep(step: string, rollbackFn: RollbackFn) {
+    this.rollbacks.push({ step, fn: rollbackFn });
+    this.executed.push(step);
+  }
+
+  async compensate(failedStep: string, failReason: string): Promise<string[]> {
+    const compensated: string[] = [];
+    logger.error(`SAGA COMPENSATE: failed at "${failedStep}" — ${failReason}`);
+
+    // Exécuter les rollbacks dans l'ordre inverse
+    for (const rb of [...this.rollbacks].reverse()) {
+      try {
+        await rb.fn();
+        compensated.push(rb.step);
+        logger.info(`SAGA ROLLBACK OK: ${rb.step}`);
+      } catch (rbErr: any) {
+        // Rollback échoué → alerte critique pour réconciliation manuelle
+        logger.error(`SAGA ROLLBACK FAILED: ${rb.step} — ${rbErr.message}`);
+      }
+    }
+    return compensated;
+  }
+}
+
+// ==================== HELPERS ====================
+
 async function validateAndReserveStock(
   items: z.infer<typeof OrderItemSchema>[],
   vendorId: string
@@ -85,7 +132,7 @@ async function validateAndReserveStock(
     }
 
     if (product.stock_quantity !== null && product.stock_quantity < item.quantity) {
-      errors.push(`Stock insuffisant pour "${product.name}": ${product.stock_quantity} disponible(s), ${item.quantity} demandé(s)`);
+      errors.push(`Stock insuffisant pour "${product.name}": ${product.stock_quantity} dispo, ${item.quantity} demandé`);
       continue;
     }
 
@@ -101,40 +148,21 @@ async function validateAndReserveStock(
   return { valid: errors.length === 0, products: validated, errors };
 }
 
-/**
- * Décrémente le stock de tous les produits d'une commande.
- * Opération effectuée après validation complète.
- */
-async function decrementStock(items: Array<{ id: string; requested: number }>): Promise<void> {
-  for (const item of items) {
-    const { error } = await supabaseAdmin.rpc('decrement_product_stock', {
-      p_product_id: item.id,
-      p_quantity: item.requested,
-    });
-
-    if (error) {
-      logger.error(`Stock decrement failed for product=${item.id}: ${error.message}`);
-      throw new Error(`Erreur de décrémentation stock pour ${item.id}`);
-    }
-  }
-}
-
 // ==================== ROUTES ====================
 
 /**
  * POST /api/orders
- * Créer une commande avec escrow systématique.
- * Requiert Idempotency-Key.
+ * Créer une commande avec escrow systématique + saga compensatoire.
  * 
- * Flux :
- *   1. Valider le payload
- *   2. Vérifier le stock de chaque produit (serveur fait foi)
- *   3. Calculer le total côté serveur (prix DB, pas prix client)
- *   4. Créer la commande + order_items
- *   5. Décrémenter le stock
- *   6. Créer l'escrow
+ * Flux atomique :
+ *   Step 1: Créer order → rollback: delete order
+ *   Step 2: Créer order_items → rollback: delete order_items
+ *   Step 3: Décrémenter stock → rollback: increment stock
+ *   Step 4: Créer escrow → rollback: delete escrow
  */
 router.post('/', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+  const saga = new TransactionSaga();
+
   try {
     const userId = req.user!.id;
 
@@ -154,10 +182,10 @@ router.post('/', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, 
 
     const { items, vendor_id, shipping_address, payment_method, payment_intent_id } = validation.data;
 
-    // 2. Vérifier que le vendeur existe et est actif
+    // 2. Vérifier vendeur actif
     const { data: vendor } = await supabaseAdmin
       .from('vendors')
-      .select('id, business_name, user_id')
+      .select('id, business_name, user_id, country')
       .eq('id', vendor_id)
       .eq('is_active', true)
       .single();
@@ -167,13 +195,16 @@ router.post('/', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, 
       return;
     }
 
-    // Empêcher l'auto-achat
+    // Anti-auto-achat
     if (vendor.user_id === userId) {
       res.status(400).json({ success: false, error: 'Vous ne pouvez pas commander dans votre propre boutique' });
       return;
     }
 
-    // 3. Valider stock + récupérer prix serveur
+    // 3. Résoudre la devise du vendeur
+    const currency = resolveVendorCurrency(vendor.country);
+
+    // 4. Valider stock + prix serveur
     const stockCheck = await validateAndReserveStock(items, vendor_id);
     if (!stockCheck.valid) {
       res.status(409).json({
@@ -184,7 +215,7 @@ router.post('/', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, 
       return;
     }
 
-    // 4. Calculer totaux côté serveur
+    // 5. Calculer totaux côté serveur
     const orderItems = stockCheck.products.map(product => {
       const item = items.find(i => i.product_id === product.id)!;
       return {
@@ -198,12 +229,11 @@ router.post('/', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, 
     });
 
     const subtotal = orderItems.reduce((sum, item) => sum + item.total_price, 0);
-    const totalAmount = subtotal; // TODO: ajouter frais de livraison, coupons
+    const totalAmount = subtotal;
 
-    // 5. Générer le numéro de commande
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
-    // 6. Créer la commande
+    // ==================== STEP 1: Créer la commande ====================
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
@@ -217,31 +247,70 @@ router.post('/', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, 
         subtotal,
         total_amount: totalAmount,
         shipping_address,
-        currency: 'XAF',
+        currency,
       })
       .select('*')
       .single();
 
     if (orderError) throw orderError;
 
-    // 7. Insérer les order_items
+    saga.addStep('create_order', async () => {
+      await supabaseAdmin.from('orders').delete().eq('id', order.id);
+      logger.info(`SAGA: Deleted order ${order.id}`);
+    });
+
+    // ==================== STEP 2: Insérer order_items ====================
     const { error: itemsError } = await supabaseAdmin
       .from('order_items')
-      .insert(orderItems.map(item => ({
-        ...item,
-        order_id: order.id,
-      })));
+      .insert(orderItems.map(item => ({ ...item, order_id: order.id })));
 
     if (itemsError) {
-      // Rollback de la commande
-      await supabaseAdmin.from('orders').delete().eq('id', order.id);
-      throw itemsError;
+      await saga.compensate('create_order_items', itemsError.message);
+      res.status(500).json({ success: false, error: 'Erreur création articles' });
+      return;
     }
 
-    // 8. Décrémenter le stock
-    await decrementStock(stockCheck.products);
+    saga.addStep('create_order_items', async () => {
+      await supabaseAdmin.from('order_items').delete().eq('order_id', order.id);
+      logger.info(`SAGA: Deleted order_items for order ${order.id}`);
+    });
 
-    // 9. Créer l'escrow
+    // ==================== STEP 3: Décrémenter le stock ====================
+    const decrementedProducts: Array<{ id: string; qty: number }> = [];
+
+    for (const product of stockCheck.products) {
+      const { error: stockErr } = await supabaseAdmin.rpc('decrement_product_stock', {
+        p_product_id: product.id,
+        p_quantity: product.requested,
+      });
+
+      if (stockErr) {
+        // Rollback des produits déjà décrémentés + étapes précédentes
+        for (const dp of decrementedProducts) {
+          await supabaseAdmin.rpc('increment_product_stock', {
+            p_product_id: dp.id,
+            p_quantity: dp.qty,
+          });
+        }
+        await saga.compensate('decrement_stock', stockErr.message);
+        res.status(500).json({ success: false, error: 'Erreur décrémentation stock' });
+        return;
+      }
+
+      decrementedProducts.push({ id: product.id, qty: product.requested });
+    }
+
+    saga.addStep('decrement_stock', async () => {
+      for (const dp of decrementedProducts) {
+        await supabaseAdmin.rpc('increment_product_stock', {
+          p_product_id: dp.id,
+          p_quantity: dp.qty,
+        });
+      }
+      logger.info(`SAGA: Restored stock for ${decrementedProducts.length} products`);
+    });
+
+    // ==================== STEP 4: Créer l'escrow ====================
     const { error: escrowError } = await supabaseAdmin
       .from('escrow_transactions')
       .insert({
@@ -249,28 +318,32 @@ router.post('/', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, 
         buyer_id: userId,
         seller_id: vendor.user_id,
         amount: totalAmount,
-        currency: 'XAF',
+        currency,
         status: 'held',
         auto_release_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         payment_method,
       });
 
     if (escrowError) {
-      logger.error(`Escrow creation failed for order=${order.id}: ${escrowError.message}`);
-      // La commande existe mais l'escrow a échoué — alerte admin
+      await saga.compensate('create_escrow', escrowError.message);
+      res.status(500).json({ success: false, error: 'Erreur création escrow' });
+      return;
     }
 
-    logger.info(`Order created: ${order.id} (${orderNumber}), vendor=${vendor_id}, total=${totalAmount} XAF, escrow=held`);
+    // ✅ Toutes les étapes ont réussi
+    logger.info(`Order created: ${order.id} (${orderNumber}), vendor=${vendor_id}, total=${totalAmount} ${currency}, escrow=held`);
 
     res.status(201).json({
       success: true,
       data: {
-        order,
+        order: { ...order, currency },
         items: orderItems,
-        escrow_status: escrowError ? 'failed' : 'held',
+        escrow_status: 'held',
       },
     });
   } catch (error: any) {
+    // Erreur imprévue → compensation totale
+    await saga.compensate('unexpected', error.message);
     logger.error(`Order creation error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur lors de la création de la commande' });
   }
@@ -278,7 +351,6 @@ router.post('/', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, 
 
 /**
  * GET /api/orders/mine
- * Commandes du client connecté (paginées)
  */
 router.get('/mine', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -294,18 +366,12 @@ router.get('/mine', verifyJWT, async (req: AuthenticatedRequest, res: Response) 
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (status) {
-      query = query.eq('status', status);
-    }
+    if (status) query = query.eq('status', status);
 
     const { data, error, count } = await query;
     if (error) throw error;
 
-    res.json({
-      success: true,
-      data: data || [],
-      meta: { limit, offset, total: count || 0 },
-    });
+    res.json({ success: true, data: data || [], meta: { limit, offset, total: count || 0 } });
   } catch (error: any) {
     logger.error(`Error fetching client orders: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
@@ -314,17 +380,12 @@ router.get('/mine', verifyJWT, async (req: AuthenticatedRequest, res: Response) 
 
 /**
  * GET /api/orders/vendor
- * Commandes reçues par le vendeur connecté
  */
 router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-
     const { data: vendor } = await supabaseAdmin
-      .from('vendors')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
 
     if (!vendor) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée' });
@@ -342,18 +403,12 @@ router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (status) {
-      query = query.eq('status', status);
-    }
+    if (status) query = query.eq('status', status);
 
     const { data, error, count } = await query;
     if (error) throw error;
 
-    res.json({
-      success: true,
-      data: data || [],
-      meta: { limit, offset, total: count || 0 },
-    });
+    res.json({ success: true, data: data || [], meta: { limit, offset, total: count || 0 } });
   } catch (error: any) {
     logger.error(`Error fetching vendor orders: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
@@ -362,7 +417,6 @@ router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response
 
 /**
  * PATCH /api/orders/:orderId/status
- * Mise à jour du statut par le vendeur (confirmed, shipped, delivered)
  */
 router.patch('/:orderId/status', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -377,22 +431,14 @@ router.patch('/:orderId/status', verifyJWT, async (req: AuthenticatedRequest, re
 
     const validation = statusSchema.safeParse(req.body);
     if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        error: 'Données invalides',
-        details: validation.error.errors,
-      });
+      res.status(400).json({ success: false, error: 'Données invalides', details: validation.error.errors });
       return;
     }
 
     const { status, tracking_number, cancellation_reason } = validation.data;
 
-    // Vérifier que la commande appartient au vendeur
     const { data: vendor } = await supabaseAdmin
-      .from('vendors')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
 
     if (!vendor) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée' });
@@ -411,7 +457,6 @@ router.patch('/:orderId/status', verifyJWT, async (req: AuthenticatedRequest, re
       return;
     }
 
-    // Vérifier les transitions de statut autorisées
     const allowedTransitions: Record<string, string[]> = {
       pending: ['confirmed', 'cancelled'],
       confirmed: ['preparing', 'cancelled'],
@@ -431,24 +476,17 @@ router.patch('/:orderId/status', verifyJWT, async (req: AuthenticatedRequest, re
       return;
     }
 
-    // Si annulation, requérir une raison
     if (status === 'cancelled' && !cancellation_reason) {
       res.status(400).json({ success: false, error: 'Raison d\'annulation requise' });
       return;
     }
 
-    const updates: Record<string, any> = {
-      status,
-      updated_at: new Date().toISOString(),
-    };
-
+    const updates: Record<string, any> = { status, updated_at: new Date().toISOString() };
     if (tracking_number) updates.tracking_number = tracking_number;
     if (cancellation_reason) updates.cancellation_reason = cancellation_reason;
 
-    // Si le vendeur confirme, mettre à jour l'escrow
     if (status === 'confirmed') {
       updates.seller_confirmed_at = new Date().toISOString();
-
       await supabaseAdmin
         .from('escrow_transactions')
         .update({
@@ -459,26 +497,17 @@ router.patch('/:orderId/status', verifyJWT, async (req: AuthenticatedRequest, re
         .eq('order_id', orderId);
     }
 
-    // Si livré, libérer l'escrow
     if (status === 'delivered') {
       updates.delivered_at = new Date().toISOString();
-
       await supabaseAdmin
         .from('escrow_transactions')
-        .update({
-          status: 'released',
-          released_at: new Date().toISOString(),
-        })
+        .update({ status: 'released', released_at: new Date().toISOString() })
         .eq('order_id', orderId);
     }
 
-    // Si annulé, restaurer le stock et annuler l'escrow
     if (status === 'cancelled') {
-      // Restaurer le stock
       const { data: orderItems } = await supabaseAdmin
-        .from('order_items')
-        .select('product_id, quantity')
-        .eq('order_id', orderId);
+        .from('order_items').select('product_id, quantity').eq('order_id', orderId);
 
       if (orderItems) {
         for (const item of orderItems) {
@@ -489,22 +518,14 @@ router.patch('/:orderId/status', verifyJWT, async (req: AuthenticatedRequest, re
         }
       }
 
-      // Annuler l'escrow
       await supabaseAdmin
         .from('escrow_transactions')
-        .update({
-          status: 'refunded',
-          released_at: new Date().toISOString(),
-        })
+        .update({ status: 'refunded', released_at: new Date().toISOString() })
         .eq('order_id', orderId);
     }
 
     const { data: updated, error } = await supabaseAdmin
-      .from('orders')
-      .update(updates)
-      .eq('id', orderId)
-      .select('*')
-      .single();
+      .from('orders').update(updates).eq('id', orderId).select('*').single();
 
     if (error) throw error;
 
