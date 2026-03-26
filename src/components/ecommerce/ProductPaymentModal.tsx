@@ -363,13 +363,18 @@ export default function ProductPaymentModal({
           }
         }).eq('id', orderId);
 
-        // Lier l'escrow à l'order_id
-        const { data: vendorData } = await supabase.from('vendors').select('user_id').eq('id', vendorId).single();
-        if (vendorData?.user_id) {
-          await supabase.from('escrow_transactions')
-            .update({ order_id: orderId })
-            .eq('stripe_payment_intent_id', data.paymentIntentId)
-            .eq('seller_id', vendorData.user_id);
+        // Lier l'escrow à l'order_id côté serveur (bypass RLS)
+        const { data: linkData, error: linkError } = await supabase.functions.invoke('link-escrow-order', {
+          body: {
+            payment_intent_id: data.paymentIntentId,
+            vendor_id: vendorId,
+            order_id: orderId,
+          }
+        });
+
+        if (linkError || !linkData?.success) {
+          console.error('[ProductPayment] Escrow linking failed:', linkError || linkData?.error);
+          errors.push(linkError?.message || linkData?.error || 'Échec liaison escrow');
         }
 
         // Enregistrer la commission PDG
