@@ -14969,6 +14969,101 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_sale_items: {
+        Row: {
+          created_at: string | null
+          discount: number | null
+          id: string
+          pos_sale_id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          discount?: number | null
+          id?: string
+          pos_sale_id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string | null
+          discount?: number | null
+          id?: string
+          pos_sale_id?: string
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_sale_items_pos_sale_id_fkey"
+            columns: ["pos_sale_id"]
+            isOneToOne: false
+            referencedRelation: "pos_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_sales: {
+        Row: {
+          created_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          discount_total: number | null
+          id: string
+          local_sale_id: string
+          notes: string | null
+          payment_method: string
+          sold_at: string
+          status: string | null
+          stock_synced: boolean | null
+          synced_at: string | null
+          total_amount: number
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount_total?: number | null
+          id?: string
+          local_sale_id: string
+          notes?: string | null
+          payment_method: string
+          sold_at: string
+          status?: string | null
+          stock_synced?: boolean | null
+          synced_at?: string | null
+          total_amount?: number
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount_total?: number | null
+          id?: string
+          local_sale_id?: string
+          notes?: string | null
+          payment_method?: string
+          sold_at?: string
+          status?: string | null
+          stock_synced?: boolean | null
+          synced_at?: string | null
+          total_amount?: number
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       pos_settings: {
         Row: {
           auto_print_receipt: boolean | null
