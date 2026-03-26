@@ -158,12 +158,33 @@ export default function ClientOrdersList() {
       // Charger les statuts escrow pour chaque commande
       if (ordersData && ordersData.length > 0) {
         const escrowPromises = ordersData.map(async (order) => {
-          const { data: escrow } = await supabase
+          let escrow: EscrowStatus | null = null;
+
+          const { data: escrowByOrder } = await supabase
             .from('escrow_transactions')
             .select('id, status, amount')
             .eq('order_id', order.id)
-            .single();
-          
+            .maybeSingle();
+
+          escrow = escrowByOrder;
+
+          if (!escrow && order.payment_method === 'card') {
+            const paymentIntentId = typeof (order as any)?.metadata?.external_payment_id === 'string'
+              ? (order as any).metadata.external_payment_id
+              : null;
+            if (paymentIntentId) {
+              const { data: escrowByIntent } = await supabase
+                .from('escrow_transactions')
+                .select('id, status, amount')
+                .eq('stripe_payment_intent_id', paymentIntentId)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              escrow = escrowByIntent;
+            }
+          }
+
           return { orderId: order.id, escrow };
         });
 
@@ -197,6 +218,11 @@ export default function ClientOrdersList() {
 
     try {
       const escrow = escrows[selectedOrder.id];
+
+      const isCardOrder = selectedOrder.payment_method === 'card';
+      if (isCardOrder && !escrow) {
+        throw new Error("Commande carte non synchronisée avec l'escrow. Rechargez la page puis réessayez.");
+      }
 
       if (escrow) {
         const { data, error } = await supabase.functions.invoke('confirm-delivery', {
@@ -481,8 +507,10 @@ export default function ClientOrdersList() {
               <div className="space-y-4">
                 {filteredOrders.map((order) => {
                   const escrow = escrows[order.id];
-                  // Permettre la confirmation si la commande est en transit OU déjà livrée mais que l'escrow n'est pas encore libéré
-                  const canConfirmDelivery = (order.status === 'in_transit' || order.status === 'delivered') && (!escrow || escrow?.status === 'pending' || escrow?.status === 'held');
+                  const isCardOrder = order.payment_method === 'card';
+                  const escrowPending = escrow?.status === 'pending' || escrow?.status === 'held';
+                  const isDeliveryState = order.status === 'in_transit' || order.status === 'delivered';
+                  const canConfirmDelivery = isDeliveryState && (isCardOrder ? escrowPending : (!escrow || escrowPending));
 
                   return (
             <Card key={order.id} className="overflow-hidden">
