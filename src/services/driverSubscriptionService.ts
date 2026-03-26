@@ -395,28 +395,26 @@ export class DriverSubscriptionService {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-    const [
-      { count: total_active },
-      { count: total_expired },
-      { data: revenues },
-      { data: revenuesMonth },
-      { count: active_taxi },
-      { count: active_livreur }
-    ] = await Promise.all([
-      supabase.from('driver_subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabase.from('driver_subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'expired'),
-      supabase.from('driver_subscription_revenues').select('amount'),
-      supabase.from('driver_subscription_revenues').select('amount').gte('created_at', firstDayOfMonth),
-      supabase.from('driver_subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').eq('type', 'taxi'),
-      supabase.from('driver_subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').eq('type', 'livreur')
+    // 3 requêtes au lieu de 6 : récupérer toutes les données en une passe
+    const [{ data: allSubscriptions }, { data: allRevenues }] = await Promise.all([
+      supabase.from('driver_subscriptions').select('status, type'),
+      supabase.from('driver_subscription_revenues').select('amount, created_at')
     ]);
 
-    const total_revenue = revenues?.reduce((sum, r) => sum + (r.amount || 0), 0) || 0;
-    const revenue_this_month = revenuesMonth?.reduce((sum, r) => sum + (r.amount || 0), 0) || 0;
+    const subs = allSubscriptions || [];
+    const revs = allRevenues || [];
+    const total_active = subs.filter(s => s.status === 'active').length;
+    const total_expired = subs.filter(s => s.status === 'expired').length;
+    const active_taxi = subs.filter(s => s.status === 'active' && s.type === 'taxi').length;
+    const active_livreur = subs.filter(s => s.status === 'active' && s.type === 'livreur').length;
+    const total_revenue = revs.reduce((sum, r) => sum + (r.amount || 0), 0);
+    const revenue_this_month = revs
+      .filter(r => r.created_at >= firstDayOfMonth)
+      .reduce((sum, r) => sum + (r.amount || 0), 0);
 
     return {
-      total_active: total_active || 0,
-      total_expired: total_expired || 0,
+      total_active,
+      total_expired,
       total_revenue,
       revenue_this_month,
       active_taxi: active_taxi || 0,

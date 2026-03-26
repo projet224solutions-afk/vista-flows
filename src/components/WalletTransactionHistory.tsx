@@ -86,31 +86,31 @@ export const WalletTransactionHistory = ({
           setError(`Impossible de charger l'historique: ${transactionsError.message}`);
         } else if (transactionsData) {
           const txArray = (transactionsData || []) as Array<{ id: string | number; amount: number; sender_id: string; receiver_id: string; method: string; created_at: string; status: string }>;
-          // Enrichir les transactions avec les public_id ET les noms depuis profiles
-          const enrichedTransactions = await Promise.all(
-            txArray.map(async (tx) => {
-              // Récupérer le public_id et nom de l'expéditeur et destinataire depuis profiles
-              const [senderProfileResult, receiverProfileResult] = await Promise.all([
-                supabase.from('profiles').select('public_id, full_name').eq('id', tx.sender_id).maybeSingle(),
-                supabase.from('profiles').select('public_id, full_name').eq('id', tx.receiver_id).maybeSingle()
-              ]);
-
-              return {
-                id: tx.id,
-                amount: tx.amount,
-                sender_id: tx.sender_id,
-                receiver_id: tx.receiver_id,
-                method: tx.method,
-                created_at: tx.created_at,
-                status: tx.status,
-                sender_custom_id: senderProfileResult.data?.public_id || tx.sender_id?.slice(0, 8),
-                receiver_custom_id: receiverProfileResult.data?.public_id || tx.receiver_id?.slice(0, 8),
-                sender_name: senderProfileResult.data?.full_name || 'Utilisateur',
-                receiver_name: receiverProfileResult.data?.full_name || 'Utilisateur'
-              };
-            })
-          );
-          
+          // Collecter tous les IDs uniques d'un coup (1 requête au lieu de 2 par transaction)
+          const uniqueUserIds = [...new Set(txArray.flatMap(tx => [tx.sender_id, tx.receiver_id].filter(Boolean)))];
+          let profilesMap: Record<string, { public_id?: string; full_name?: string }> = {};
+          if (uniqueUserIds.length > 0) {
+            const { data: profilesData } = await supabase
+              .from('profiles')
+              .select('id, public_id, full_name')
+              .in('id', uniqueUserIds);
+            if (profilesData) {
+              profilesMap = Object.fromEntries(profilesData.map(p => [p.id, p]));
+            }
+          }
+          const enrichedTransactions = txArray.map((tx) => ({
+            id: tx.id,
+            amount: tx.amount,
+            sender_id: tx.sender_id,
+            receiver_id: tx.receiver_id,
+            method: tx.method,
+            created_at: tx.created_at,
+            status: tx.status,
+            sender_custom_id: profilesMap[tx.sender_id]?.public_id || tx.sender_id?.slice(0, 8),
+            receiver_custom_id: profilesMap[tx.receiver_id]?.public_id || tx.receiver_id?.slice(0, 8),
+            sender_name: profilesMap[tx.sender_id]?.full_name || 'Utilisateur',
+            receiver_name: profilesMap[tx.receiver_id]?.full_name || 'Utilisateur'
+          }));
           setTransactions(enrichedTransactions);
         }
       }
