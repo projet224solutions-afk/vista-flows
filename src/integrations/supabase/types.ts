@@ -29168,6 +29168,21 @@ export type Database = {
         Args: { p_transaction_id: string }
         Returns: Json
       }
+      create_pos_sale_complete: {
+        Args: {
+          p_customer_name?: string
+          p_customer_phone?: string
+          p_discount_total?: number
+          p_items: Json
+          p_local_sale_id: string
+          p_notes?: string
+          p_payment_method: string
+          p_sold_at?: string
+          p_total_amount: number
+          p_vendor_id: string
+        }
+        Returns: Json
+      }
       create_secure_transaction: {
         Args: {
           p_device_fingerprint?: string

@@ -1,9 +1,10 @@
 /**
- * 🏪 POS SYNC ROUTES - Phase 6 (P0 Optimized)
+ * 🏪 POS SYNC ROUTES - Phase 6 (P1 Optimized)
  * 
- * P0 Optimization:
- *   - decrement_stock_batch RPC: 1 call per sale instead of N per-item calls
- *   - Reduced DB roundtrips from ~60 (10 sales × 3 items) to ~30
+ * P1 Optimization:
+ *   - Atomic RPC create_pos_sale_complete: 1 DB call per sale
+ *   - Combines idempotence + insert sale + items + stock decrement
+ *   - Reduces from 4 sequential calls to 1 per sale
  */
 
 import { Router, Response } from 'express';
@@ -42,41 +43,48 @@ const BatchSyncSchema = z.object({
   sales: z.array(PosSaleSchema).min(1, 'Au moins une vente').max(50, 'Maximum 50 ventes par lot'),
 });
 
-// ==================== HELPERS ====================
+// ==================== CONCURRENCY CONTROL ====================
 
-async function createStockReconciliationEntries(
-  vendorId: string,
-  posSaleId: string,
-  failedItems: Array<{ product_id: string; quantity: number }>,
-  errorMessage: string
-) {
-  try {
-    const entries = failedItems.map(item => ({
-      vendor_id: vendorId,
-      pos_sale_id: posSaleId,
-      product_id: item.product_id,
-      expected_decrement: item.quantity,
-      status: 'pending',
-      error_message: errorMessage,
-      retry_count: 0,
-      max_retries: 5,
-    }));
-    await supabaseAdmin.from('pos_stock_reconciliation').insert(entries);
-  } catch (err: any) {
-    logger.error(`Failed to create reconciliation entries: ${err.message}`);
+const CONCURRENCY_LIMIT = 5;
+
+async function processWithConcurrency<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+  limit: number
+): Promise<R[]> {
+  const results: R[] = [];
+  const executing: Promise<void>[] = [];
+
+  for (const item of items) {
+    const p = fn(item).then(r => { results.push(r); });
+    executing.push(p);
+
+    if (executing.length >= limit) {
+      await Promise.race(executing);
+      // Remove settled promises
+      for (let i = executing.length - 1; i >= 0; i--) {
+        const settled = await Promise.race([executing[i].then(() => true), Promise.resolve(false)]);
+        if (settled) executing.splice(i, 1);
+      }
+    }
   }
+
+  await Promise.all(executing);
+  return results;
 }
 
 // ==================== ROUTES ====================
 
 /**
  * POST /api/pos/sync
- * P0 OPTIMIZED: Uses decrement_stock_batch instead of per-item loop
+ * P1 OPTIMIZED: Uses atomic RPC create_pos_sale_complete (1 DB call per sale)
+ * + controlled concurrency (max 5 parallel)
  */
 router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
 
+    // TODO P2: Cache this lookup in Redis
     const { data: vendor } = await supabaseAdmin
       .from('vendors')
       .select('id')
@@ -102,116 +110,89 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
     }
 
     const { sales } = validation.data;
-    const results: Array<{
-      local_sale_id: string;
-      status: 'created' | 'duplicate' | 'error';
-      sale_id?: string;
-      stock_synced?: boolean;
-      error?: string;
-    }> = [];
 
-    for (const sale of sales) {
+    // Process sales with controlled concurrency
+    const processSale = async (sale: typeof sales[number]) => {
       try {
-        // Idempotence check
-        const { data: existing } = await supabaseAdmin
-          .from('pos_sales')
-          .select('id')
-          .eq('vendor_id', vendor.id)
-          .eq('local_sale_id', sale.local_sale_id)
-          .maybeSingle();
+        const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('create_pos_sale_complete', {
+          p_vendor_id: vendor.id,
+          p_local_sale_id: sale.local_sale_id,
+          p_items: sale.items,
+          p_payment_method: sale.payment_method,
+          p_total_amount: sale.total_amount,
+          p_discount_total: sale.discount_total,
+          p_customer_name: sale.customer_name || null,
+          p_customer_phone: sale.customer_phone || null,
+          p_notes: sale.notes || null,
+          p_sold_at: sale.sold_at,
+        });
 
-        if (existing) {
-          results.push({ local_sale_id: sale.local_sale_id, status: 'duplicate', sale_id: existing.id });
-          continue;
-        }
-
-        // Server-side total
-        const serverTotal = sale.items.reduce(
-          (sum, item) => sum + (item.unit_price * item.quantity) - item.discount, 0
-        );
-
-        if (Math.abs(serverTotal - sale.total_amount) > sale.total_amount * 0.01) {
-          logger.warn(`POS total mismatch: local=${sale.total_amount}, server=${serverTotal}, sale=${sale.local_sale_id}`);
-        }
-
-        // Create sale
-        const { data: posSale, error: saleError } = await supabaseAdmin
-          .from('pos_sales')
-          .insert({
-            vendor_id: vendor.id,
+        if (rpcError) {
+          logger.error(`POS RPC error for ${sale.local_sale_id}: ${rpcError.message}`);
+          return {
             local_sale_id: sale.local_sale_id,
-            total_amount: serverTotal,
-            discount_total: sale.discount_total,
-            payment_method: sale.payment_method,
-            customer_name: sale.customer_name,
-            customer_phone: sale.customer_phone,
-            notes: sale.notes,
-            sold_at: sale.sold_at,
-            synced_at: new Date().toISOString(),
-            status: 'completed',
-            stock_synced: true,
-          })
-          .select('id')
-          .single();
-
-        if (saleError) throw saleError;
-
-        // Insert sale items
-        const saleItems = sale.items.map(item => ({
-          pos_sale_id: posSale.id,
-          product_id: item.product_id,
-          product_name: item.product_name,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          discount: item.discount,
-          total_price: (item.unit_price * item.quantity) - item.discount,
-        }));
-
-        await supabaseAdmin.from('pos_sale_items').insert(saleItems);
-
-        // BATCH stock decrement (1 call instead of N)
-        const stockItems = sale.items.map(item => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-        }));
-
-        const { data: stockResult, error: stockError } = await supabaseAdmin.rpc('decrement_stock_batch', {
-          p_items: stockItems,
-        });
-
-        let allStockOk = true;
-        if (stockError || !stockResult?.success) {
-          allStockOk = false;
-          const errorMsg = stockError?.message || stockResult?.error || 'Unknown stock error';
-          logger.warn(`POS batch stock decrement failed: sale=${sale.local_sale_id}: ${errorMsg}`);
-
-          // Create reconciliation entries for all items
-          await createStockReconciliationEntries(vendor.id, posSale.id, stockItems, errorMsg);
+            status: 'error' as const,
+            error: rpcError.message,
+          };
         }
 
-        if (!allStockOk) {
-          await supabaseAdmin
-            .from('pos_sales')
-            .update({ stock_synced: false })
-            .eq('id', posSale.id);
+        const result = rpcResult as {
+          status: 'created' | 'duplicate' | 'error';
+          sale_id?: string;
+          server_total?: number;
+          stock_synced?: boolean;
+          stock_error?: string;
+          error?: string;
+        };
+
+        if (result.status === 'error') {
+          logger.error(`POS sale error for ${sale.local_sale_id}: ${result.error}`);
+          return {
+            local_sale_id: sale.local_sale_id,
+            status: 'error' as const,
+            error: result.error,
+          };
         }
 
-        results.push({
+        if (result.status === 'duplicate') {
+          return {
+            local_sale_id: sale.local_sale_id,
+            status: 'duplicate' as const,
+            sale_id: result.sale_id,
+          };
+        }
+
+        // Log total mismatch warning (non-blocking)
+        if (result.server_total && Math.abs(result.server_total - sale.total_amount) > sale.total_amount * 0.01) {
+          logger.warn(`POS total mismatch: local=${sale.total_amount}, server=${result.server_total}, sale=${sale.local_sale_id}`);
+        }
+
+        if (!result.stock_synced) {
+          logger.warn(`POS stock sync failed: sale=${sale.local_sale_id}: ${result.stock_error}`);
+        }
+
+        return {
           local_sale_id: sale.local_sale_id,
-          status: 'created',
-          sale_id: posSale.id,
-          stock_synced: allStockOk,
-        });
+          status: 'created' as const,
+          sale_id: result.sale_id,
+          stock_synced: result.stock_synced ?? true,
+        };
       } catch (saleError: any) {
         logger.error(`POS sync error for ${sale.local_sale_id}: ${saleError.message}`);
-        results.push({ local_sale_id: sale.local_sale_id, status: 'error', error: saleError.message });
+        return {
+          local_sale_id: sale.local_sale_id,
+          status: 'error' as const,
+          error: saleError.message,
+        };
       }
-    }
+    };
+
+    const results = await processWithConcurrency(sales, processSale, CONCURRENCY_LIMIT);
 
     const created = results.filter(r => r.status === 'created').length;
     const duplicates = results.filter(r => r.status === 'duplicate').length;
     const errors = results.filter(r => r.status === 'error').length;
-    const stockPending = results.filter(r => r.stock_synced === false).length;
+    const stockPending = results.filter(r => (r as any).stock_synced === false).length;
 
     logger.info(`POS sync: vendor=${vendor.id}, created=${created}, duplicates=${duplicates}, errors=${errors}, stock_pending=${stockPending}`);
 
@@ -227,7 +208,6 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
     res.status(500).json({ success: false, error: 'Erreur de synchronisation POS' });
   }
 });
-
 /**
  * GET /api/pos/sales
  */
