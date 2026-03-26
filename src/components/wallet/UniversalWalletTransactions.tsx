@@ -794,6 +794,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       
       setWithdrawAmount('');
       setWithdrawPhone('');
+      setBankName('');
+      setBankIban('');
+      setBankAccountHolder('');
       setWithdrawOpen(false);
       await Promise.all([loadWalletData(), loadTransactions()]);
     } catch (error: any) {
