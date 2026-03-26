@@ -10575,6 +10575,8 @@ export type Database = {
           id: string
           key: string
           operation: string
+          payload_hash: string | null
+          status: string | null
           user_id: string | null
         }
         Insert: {
@@ -10583,6 +10585,8 @@ export type Database = {
           id?: string
           key: string
           operation: string
+          payload_hash?: string | null
+          status?: string | null
           user_id?: string | null
         }
         Update: {
@@ -10591,6 +10595,8 @@ export type Database = {
           id?: string
           key?: string
           operation?: string
+          payload_hash?: string | null
+          status?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -15102,6 +15108,51 @@ export type Database = {
           tax_enabled?: boolean
           tax_rate?: number
           updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
+      pos_stock_reconciliation: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          expected_decrement: number
+          id: string
+          last_retry_at: string | null
+          max_retries: number | null
+          pos_sale_id: string
+          product_id: string
+          resolved_at: string | null
+          retry_count: number | null
+          status: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          expected_decrement: number
+          id?: string
+          last_retry_at?: string | null
+          max_retries?: number | null
+          pos_sale_id: string
+          product_id: string
+          resolved_at?: string | null
+          retry_count?: number | null
+          status?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          expected_decrement?: number
+          id?: string
+          last_retry_at?: string | null
+          max_retries?: number | null
+          pos_sale_id?: string
+          product_id?: string
+          resolved_at?: string | null
+          retry_count?: number | null
+          status?: string | null
           vendor_id?: string
         }
         Relationships: []
