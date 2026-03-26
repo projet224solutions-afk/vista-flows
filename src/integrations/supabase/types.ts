@@ -29011,6 +29011,10 @@ export type Database = {
             }
             Returns: Json
           }
+      decrement_product_stock: {
+        Args: { p_product_id: string; p_quantity: number }
+        Returns: undefined
+      }
       delete_agent: { Args: { p_agent_id: string }; Returns: Json }
       delete_syndicate_worker_secure: {
         Args: { p_bureau_id: string; p_worker_id: string }
