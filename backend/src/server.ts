@@ -18,11 +18,13 @@ import { logger } from './config/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { requestLogger } from './middlewares/requestLogger.js';
 
-// Routes TypeScript (Phase 1 + Phase 2)
+// Routes TypeScript (Phase 1 + Phase 2 + Phase 3)
 import healthRoutes from './routes/health.routes.js';
 import subscriptionRoutes from './routes/subscriptions.routes.js';
 import paymentRoutes from './routes/payments.routes.js';
 import walletRoutesV2 from './routes/wallet.v2.routes.js';
+import vendorRoutes from './routes/vendors.routes.js';
+import productRoutes from './routes/products.routes.js';
 
 // Routes legacy JS (conservées, pas de suppression)
 // @ts-ignore - legacy JS modules
@@ -123,9 +125,13 @@ app.use('/api/subscriptions', subscriptionRoutes);
 // Payments — utilise table `wallet_transactions` existante
 app.use('/api/payments', paymentRoutes);
 
-// ==================== PHASE 3 ROUTES (à ajouter) ====================
-// app.use('/api/vendors', vendorRoutes);
-// app.use('/api/products', productRoutes);
+// ==================== PHASE 3 ROUTES (Vendors & Products avec limites plan) ====================
+
+// Vendors — profil vendeur, stats, mise à jour
+app.use('/api/vendors', vendorRoutes);
+
+// Products — CRUD avec enforcement max_products + max_images_per_product
+app.use('/api/products', productRoutes);
 
 // ==================== PHASE 4 ROUTES (à ajouter) ====================
 // app.use('/api/orders', orderRoutes);
