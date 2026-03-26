@@ -201,11 +201,7 @@ registerHandler('orders.stuck-alert', async () => {
 });
 
 registerHandler('pos.reconcile', async () => {
-  // Aligned with pos.routes.ts → createStockReconciliationEntry()
-  // Real table: pos_stock_reconciliation
-  // Real columns: id, vendor_id, pos_sale_id, product_id, expected_decrement,
-  //   status ('pending'|'resolved'|'failed'), retry_count, max_retries,
-  //   error_message, resolved_at, last_retry_at, created_at
+  // P0 OPTIMIZED: Uses decrement_stock_batch for batch processing
   const { data: pending } = await supabaseAdmin
     .from('pos_stock_reconciliation')
     .select('id, product_id, expected_decrement, retry_count, max_retries')
@@ -215,39 +211,63 @@ registerHandler('pos.reconcile', async () => {
   if (!pending?.length) return;
 
   const now = new Date().toISOString();
-  let fixed = 0;
 
-  for (const rec of pending) {
-    try {
-      await supabaseAdmin.rpc('decrement_product_stock', {
-        p_product_id: rec.product_id,
-        p_quantity: rec.expected_decrement,
-      });
+  // Group by similar items for batch processing
+  const batchItems = pending.map(rec => ({
+    product_id: rec.product_id,
+    quantity: rec.expected_decrement,
+  }));
 
-      await supabaseAdmin
-        .from('pos_stock_reconciliation')
-        .update({ status: 'resolved', resolved_at: now, last_retry_at: now })
-        .eq('id', rec.id);
+  const { data: batchResult, error: batchError } = await supabaseAdmin.rpc('decrement_stock_batch', {
+    p_items: batchItems,
+  });
 
-      fixed++;
-    } catch (err: any) {
-      const newRetry = (rec.retry_count || 0) + 1;
-      const maxRetries = rec.max_retries || 5;
+  if (!batchError && batchResult?.success) {
+    // All succeeded — mark all as resolved
+    const ids = pending.map(r => r.id);
+    await supabaseAdmin
+      .from('pos_stock_reconciliation')
+      .update({ status: 'resolved', resolved_at: now, last_retry_at: now })
+      .in('id', ids);
 
-      await supabaseAdmin
-        .from('pos_stock_reconciliation')
-        .update({
-          retry_count: newRetry,
-          last_retry_at: now,
-          status: newRetry >= maxRetries ? 'failed' : 'pending',
-          error_message: err.message,
-        })
-        .eq('id', rec.id);
+    logger.info(`POS reconciliation: ${pending.length}/${pending.length} resolved (batch)`);
+  } else {
+    // Batch failed — fall back to individual retries
+    const errorMsg = batchError?.message || batchResult?.error || 'Batch failed';
+    let fixed = 0;
 
-      logger.warn(`POS reconcile retry failed: ${rec.id} (attempt ${newRetry}/${maxRetries}) — ${err.message}`);
+    for (const rec of pending) {
+      try {
+        await supabaseAdmin.rpc('decrement_product_stock', {
+          p_product_id: rec.product_id,
+          p_quantity: rec.expected_decrement,
+        });
+
+        await supabaseAdmin
+          .from('pos_stock_reconciliation')
+          .update({ status: 'resolved', resolved_at: now, last_retry_at: now })
+          .eq('id', rec.id);
+
+        fixed++;
+      } catch (err: any) {
+        const newRetry = (rec.retry_count || 0) + 1;
+        const maxRetries = rec.max_retries || 5;
+
+        await supabaseAdmin
+          .from('pos_stock_reconciliation')
+          .update({
+            retry_count: newRetry,
+            last_retry_at: now,
+            status: newRetry >= maxRetries ? 'failed' : 'pending',
+            error_message: err.message,
+          })
+          .eq('id', rec.id);
+
+        logger.warn(`POS reconcile retry failed: ${rec.id} (attempt ${newRetry}/${maxRetries}) — ${err.message}`);
+      }
     }
+    logger.info(`POS reconciliation: ${fixed}/${pending.length} resolved (fallback)`);
   }
-  logger.info(`POS reconciliation: ${fixed}/${pending.length} resolved`);
 });
 
 registerHandler('recommendations.recalculate', async () => {
