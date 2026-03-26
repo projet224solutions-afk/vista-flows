@@ -380,7 +380,7 @@ export default function VendorSubscriptionPage() {
                     onClick={() => !isCurrentPlan && plan.name !== 'free' && handleSelectPlan(plan)}
                   >
                     {/* Header row */}
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-bold text-base">{plan.display_name}</h3>
@@ -401,32 +401,54 @@ export default function VendorSubscriptionPage() {
                         <p className="text-sm text-muted-foreground mt-1 leading-snug">
                           {buildPlanDescription(plan)}
                         </p>
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {plan.name === 'free'
-                            ? 'Gratuit — aucun paiement requis'
-                            : `${SubscriptionService.formatAmount(plan.monthly_price_gnf)} GNF/mois`}
-                        </p>
-                        {savingsPercent > 0 && (
-                          <p className="text-xs text-green-600 font-medium mt-0.5">
-                            Économisez {savingsPercent}% en annuel
-                          </p>
-                        )}
                       </div>
                       {!isCurrentPlan && plan.name !== 'free' && (
                         <Button size="sm">Choisir</Button>
                       )}
                     </div>
 
-                    {/* Plan capabilities */}
+                    {/* KEY LIMITS — highly visible */}
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="flex items-center gap-2.5 rounded-lg bg-primary/5 border border-primary/15 px-3 py-2">
+                        <Package className="h-5 w-5 text-primary shrink-0" />
+                        <div>
+                          <p className="text-sm font-bold leading-tight">
+                            {plan.max_products === null ? 'Illimité' : plan.max_products}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground leading-tight">
+                            {plan.max_products === null ? 'produits' : plan.max_products === 1 ? 'produit max' : 'produits max'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2.5 rounded-lg bg-primary/5 border border-primary/15 px-3 py-2">
+                        <ImageIcon className="h-5 w-5 text-primary shrink-0" />
+                        <div>
+                          <p className="text-sm font-bold leading-tight">
+                            {plan.max_images_per_product === null ? 'Illimité' : plan.max_images_per_product}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground leading-tight">
+                            {plan.max_images_per_product === null ? 'images / produit' : plan.max_images_per_product === 1 ? 'image / produit' : 'images / produit'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className="mb-3">
+                      <p className="text-sm font-semibold">
+                        {plan.name === 'free'
+                          ? 'Gratuit — aucun paiement requis'
+                          : `${SubscriptionService.formatAmount(plan.monthly_price_gnf)} GNF/mois`}
+                      </p>
+                      {savingsPercent > 0 && (
+                        <p className="text-xs text-green-600 font-medium">
+                          Économisez {savingsPercent}% en annuel
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Features grid */}
                     <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span>{plan.max_products === null ? 'Produits illimités' : `Max ${plan.max_products} produits`}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span>{plan.max_images_per_product === null ? 'Images illimitées' : `Max ${plan.max_images_per_product} img/produit`}</span>
-                      </div>
                       <div className="flex items-center gap-1.5">
                         {plan.analytics_access ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
                         <span className={!plan.analytics_access ? 'text-muted-foreground/60' : ''}>Analytics</span>
