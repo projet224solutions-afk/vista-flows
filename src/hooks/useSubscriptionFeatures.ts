@@ -426,8 +426,13 @@ export function useSubscriptionFeatures() {
   };
 
   const getProductLimit = (): number | null => {
+    // Lire directement depuis les plans DB — aucune valeur hardcodée
     const planName = subscription?.plan_name?.toLowerCase() || 'free';
-    return PLAN_PRODUCT_LIMITS[planName] ?? 13;
+    const plan = plans.find((p: Plan) => p.name === planName);
+    if (plan) return plan.max_products;
+    // Fallback: chercher le plan free en DB
+    const freePlan = plans.find((p: Plan) => p.name === 'free');
+    return freePlan?.max_products ?? null;
   };
 
   const isUnlimitedProducts = (): boolean => {
