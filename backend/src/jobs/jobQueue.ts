@@ -201,63 +201,100 @@ registerHandler('orders.stuck-alert', async () => {
 });
 
 registerHandler('pos.reconcile', async () => {
-  const { data: failed } = await supabaseAdmin
+  // Aligned with pos.routes.ts: table pos_stock_reconciliation
+  // Real fields: expected_decrement, status ('pending'/'resolved'/'failed'), retry_count, max_retries
+  const { data: pending } = await supabaseAdmin
     .from('pos_stock_reconciliation')
-    .select('id, product_id, quantity_sold, sync_status')
-    .eq('sync_status', 'failed')
+    .select('id, product_id, expected_decrement, retry_count, max_retries')
+    .eq('status', 'pending')
     .limit(100);
 
-  if (!failed?.length) return;
+  if (!pending?.length) return;
 
   let fixed = 0;
-  for (const rec of failed) {
+  for (const rec of pending) {
     try {
+      // Retry the stock decrement that originally failed
       await supabaseAdmin.rpc('decrement_product_stock', {
         p_product_id: rec.product_id,
-        p_quantity: rec.quantity_sold,
+        p_quantity: rec.expected_decrement,
       });
+
+      // Mark as resolved
       await supabaseAdmin
         .from('pos_stock_reconciliation')
-        .update({ sync_status: 'synced', synced_at: new Date().toISOString() })
+        .update({ status: 'resolved', resolved_at: new Date().toISOString() })
         .eq('id', rec.id);
+
       fixed++;
     } catch (err: any) {
-      logger.warn(`POS reconcile failed: ${rec.id} — ${err.message}`);
+      // Increment retry_count, mark as failed if exceeded max
+      const newRetry = (rec.retry_count || 0) + 1;
+      const maxRetries = rec.max_retries || 5;
+      await supabaseAdmin
+        .from('pos_stock_reconciliation')
+        .update({
+          retry_count: newRetry,
+          status: newRetry >= maxRetries ? 'failed' : 'pending',
+          error_message: err.message,
+        })
+        .eq('id', rec.id);
+
+      logger.warn(`POS reconcile retry failed: ${rec.id} (attempt ${newRetry}/${maxRetries}) — ${err.message}`);
     }
   }
-  logger.info(`POS reconciliation: ${fixed}/${failed.length} fixed`);
+  logger.info(`POS reconciliation: ${fixed}/${pending.length} resolved`);
 });
 
 registerHandler('recommendations.recalculate', async () => {
-  // Recalculate popularity scores
-  const { data: products } = await supabaseAdmin
-    .from('products')
-    .select('id')
-    .eq('is_active', true)
-    .limit(500);
+  // Aligned with real recommendation engine: user_activity + product_scores tables
+  // Scoring weights: purchase=5, add_to_cart=3, click=2, view=1
+  const WEIGHTS: Record<string, number> = {
+    purchase: 5,
+    add_to_cart: 3,
+    click: 2,
+    view: 1,
+  };
 
-  if (!products?.length) return;
+  const cutoff = new Date(Date.now() - 7 * 86400000).toISOString();
 
-  for (const product of products) {
+  // Fetch recent activity aggregated by product
+  const { data: activities } = await supabaseAdmin
+    .from('user_activity')
+    .select('product_id, activity_type')
+    .gte('created_at', cutoff)
+    .not('product_id', 'is', null)
+    .limit(10000);
+
+  if (!activities?.length) {
+    logger.info('Recommendations recalculate: no recent activity');
+    return;
+  }
+
+  // Aggregate scores per product
+  const scores = new Map<string, number>();
+  for (const act of activities) {
+    if (!act.product_id) continue;
+    const weight = WEIGHTS[act.activity_type] || 1;
+    scores.set(act.product_id, (scores.get(act.product_id) || 0) + weight);
+  }
+
+  // Upsert into product_scores (the real table used by smart-recommendations)
+  let updated = 0;
+  for (const [productId, score] of scores) {
     try {
-      // Count recent views
-      const { count: viewCount } = await supabaseAdmin
-        .from('product_views_raw')
-        .select('id', { count: 'exact', head: true })
-        .eq('product_id', product.id)
-        .gte('viewed_at', new Date(Date.now() - 7 * 86400000).toISOString());
-
-      // Upsert popularity score
       await supabaseAdmin
-        .from('product_popularity_scores')
+        .from('product_scores')
         .upsert({
-          product_id: product.id,
-          score: viewCount || 0,
+          product_id: productId,
+          popularity_score: score,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'product_id' });
+      updated++;
     } catch { /* continue */ }
   }
-  logger.info(`Recommendations recalculated for ${products.length} products`);
+
+  logger.info(`Recommendations recalculated: ${updated} products scored from ${activities.length} activities`);
 });
 
 // ==================== PUBLIC API ====================

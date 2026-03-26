@@ -25,6 +25,7 @@ import { verifyJWT, requireRole } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { subscriptionRateLimit } from '../middlewares/routeRateLimiter.js';
 
 const router = Router();
 
@@ -168,7 +169,7 @@ router.get('/history', verifyJWT, async (req: AuthenticatedRequest, res: Respons
  *   - Les abonnements en 'trialing' ont un champ trial_ends_at = now() + 48h
  *   - Le cron/endpoint /expire-stale passe en 'expired' tous les trialing dépassés
  */
-router.post('/subscribe', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/subscribe', verifyJWT, subscriptionRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { plan_id, billing_cycle = 'monthly', payment_method } = req.body;
@@ -284,7 +285,7 @@ router.post('/subscribe', verifyJWT, async (req: AuthenticatedRequest, res: Resp
  * 
  * Vérifie que le trialing n'est pas expiré avant d'activer.
  */
-router.post('/confirm', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/confirm', verifyJWT, subscriptionRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { subscription_id, payment_transaction_id } = req.body;
@@ -407,7 +408,7 @@ router.post('/expire-stale', verifyJWT, requireRole(['admin']), async (_req: Aut
  * POST /api/subscriptions/cancel
  * Annuler un abonnement — statut → 'cancelled'
  */
-router.post('/cancel', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/cancel', verifyJWT, subscriptionRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
 

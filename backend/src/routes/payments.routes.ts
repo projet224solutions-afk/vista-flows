@@ -15,8 +15,12 @@ import { verifyJWT } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { paymentRateLimit } from '../middlewares/routeRateLimiter.js';
 
 const router = Router();
+
+// Apply payment rate limit to all payment routes
+router.use(paymentRateLimit);
 
 /**
  * GET /api/payments/

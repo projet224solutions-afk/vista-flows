@@ -20,6 +20,7 @@ import { verifyJWT } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { inventoryRateLimit } from '../middlewares/routeRateLimiter.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -133,7 +134,7 @@ router.get('/stock', verifyJWT, async (req: AuthenticatedRequest, res: Response)
  *   3. Met à jour le stock
  *   4. Enregistre le mouvement dans l'historique
  */
-router.post('/adjust', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/adjust', verifyJWT, inventoryRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const vendorId = await resolveVendorId(userId);

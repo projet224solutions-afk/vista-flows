@@ -13,6 +13,7 @@ import { Router, Request, Response } from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { auditTrail } from '../services/auditTrail.service.js';
+import { webhookRateLimit } from '../middlewares/routeRateLimiter.js';
 import crypto from 'crypto';
 
 const router = Router();
@@ -274,7 +275,7 @@ async function handleCheckoutSessionExpired(event: any): Promise<void> {
  * IMPORTANT: This route must receive RAW body (not parsed JSON).
  * Configure express.raw() for this route in server.ts.
  */
-router.post('/stripe', async (req: Request, res: Response) => {
+router.post('/stripe', webhookRateLimit, async (req: Request, res: Response) => {
   const signature = req.headers['stripe-signature'] as string;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -289,8 +290,12 @@ router.post('/stripe', async (req: Request, res: Response) => {
     return;
   }
 
-  // Get raw body
-  const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+  // Get raw body — express.raw() delivers a Buffer
+  const rawBody = Buffer.isBuffer(req.body)
+    ? req.body.toString('utf8')
+    : typeof req.body === 'string'
+      ? req.body
+      : JSON.stringify(req.body);
 
   // Verify signature
   if (!verifyStripeSignature(rawBody, signature, webhookSecret)) {
@@ -308,9 +313,10 @@ router.post('/stripe', async (req: Request, res: Response) => {
     return;
   }
 
+  // Parse JSON from the validated raw body (never trust pre-parsed req.body for webhooks)
   let event: any;
   try {
-    event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    event = JSON.parse(rawBody);
   } catch {
     res.status(400).json({ error: 'Invalid JSON' });
     return;
