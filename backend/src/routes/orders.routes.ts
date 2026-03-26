@@ -17,6 +17,7 @@ import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { idempotencyGuard } from '../middlewares/idempotency.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { orderCreateRateLimit } from '../middlewares/routeRateLimiter.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -160,7 +161,7 @@ async function validateAndReserveStock(
  *   Step 3: Décrémenter stock → rollback: increment stock
  *   Step 4: Créer escrow → rollback: delete escrow
  */
-router.post('/', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
   const saga = new TransactionSaga();
 
   try {
@@ -402,7 +403,7 @@ router.get('/:orderId', verifyJWT, async (req: AuthenticatedRequest, res: Respon
  * POST /api/orders/:orderId/cancel
  * Annuler une commande (acheteur uniquement, si non confirmée par vendeur)
  */
-router.post('/:orderId/cancel', verifyJWT, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:orderId/cancel', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { orderId } = req.params;
@@ -554,7 +555,7 @@ router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response
 /**
  * PATCH /api/orders/:orderId/status
  */
-router.patch('/:orderId/status', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/:orderId/status', verifyJWT, orderCreateRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { orderId } = req.params;

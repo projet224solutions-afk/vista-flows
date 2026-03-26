@@ -13,6 +13,7 @@ import { Router, Request, Response } from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { auditTrail } from '../services/auditTrail.service.js';
+import { webhookRateLimit } from '../middlewares/routeRateLimiter.js';
 import crypto from 'crypto';
 
 const router = Router();
@@ -274,7 +275,7 @@ async function handleCheckoutSessionExpired(event: any): Promise<void> {
  * IMPORTANT: This route must receive RAW body (not parsed JSON).
  * Configure express.raw() for this route in server.ts.
  */
-router.post('/stripe', async (req: Request, res: Response) => {
+router.post('/stripe', webhookRateLimit, async (req: Request, res: Response) => {
   const signature = req.headers['stripe-signature'] as string;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 

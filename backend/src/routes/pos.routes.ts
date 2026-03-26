@@ -13,6 +13,7 @@ import { verifyJWT } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { posSyncRateLimit } from '../middlewares/routeRateLimiter.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -85,7 +86,7 @@ async function createStockReconciliationEntry(
  *   - Si decrement échoue → vente créée avec stock_synced=false
  *     + entrée dans pos_stock_reconciliation pour retry automatique
  */
-router.post('/sync', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
 
