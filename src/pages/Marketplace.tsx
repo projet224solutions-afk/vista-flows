@@ -31,6 +31,7 @@ import { useDiscoveryProducts } from "@/hooks/useDiscoveryProducts";
 import { AIRecommendationSection } from "@/components/marketplace/AIRecommendationSection";
 import { useBehaviorTracking } from "@/hooks/useBehaviorTracking";
 import { useRecommendationRealtimeInvalidation } from "@/hooks/useRecommendationRealtimeInvalidation";
+import { useSmartRecommendations, useTrendingProducts, useRecentlyViewed } from "@/hooks/useSmartRecommendations";
 import { cn } from "@/lib/utils";
 import { ScrollToTopButton } from "@/components/marketplace/ScrollToTopButton";
 import { InfiniteScrollTrigger } from "@/components/marketplace/InfiniteScrollTrigger";
@@ -132,6 +133,10 @@ export default function Marketplace() {
   const { data: aiPersonalized, isLoading: loadingAIPersonalized } = useAIPersonalized(6);
   const { data: aiTrending, isLoading: loadingAITrending } = useAITrending(6);
   const { data: discoveryProducts, isLoading: loadingDiscovery } = useDiscoveryProducts(8);
+  // Smart recommendations (new scoring system)
+  const { data: smartRecs, isLoading: loadingSmartRecs } = useSmartRecommendations(8);
+  const { data: trendingProducts, isLoading: loadingTrendingProducts } = useTrendingProducts(8);
+  const { data: recentlyViewed, isLoading: loadingRecentlyViewed } = useRecentlyViewed(8);
   // Behavior tracking
   useBehaviorTracking({ sessionType: 'browse' });
   useRecommendationRealtimeInvalidation();
