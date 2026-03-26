@@ -11385,6 +11385,48 @@ export type Database = {
           },
         ]
       }
+      job_execution_log: {
+        Row: {
+          attempt: number
+          completed_at: string | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          job_name: string
+          metadata: Json | null
+          queue_name: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          attempt?: number
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          job_name: string
+          metadata?: Json | null
+          queue_name?: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          attempt?: number
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          job_name?: string
+          metadata?: Json | null
+          queue_name?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       load_test_logs: {
         Row: {
           created_at: string | null
@@ -18467,6 +18509,48 @@ export type Database = {
           },
         ]
       }
+      security_audit_trail: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string
+          risk_level: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          risk_level?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          risk_level?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       security_certifications: {
         Row: {
           certificate_url: string | null
@@ -21622,6 +21706,30 @@ export type Database = {
           security_status?: string | null
           timestamp?: string | null
           uptime?: number | null
+        }
+        Relationships: []
+      }
+      system_metrics: {
+        Row: {
+          id: string
+          labels: Json | null
+          metric_name: string
+          metric_value: number
+          recorded_at: string
+        }
+        Insert: {
+          id?: string
+          labels?: Json | null
+          metric_name: string
+          metric_value: number
+          recorded_at?: string
+        }
+        Update: {
+          id?: string
+          labels?: Json | null
+          metric_name?: string
+          metric_value?: number
+          recorded_at?: string
         }
         Relationships: []
       }
@@ -27238,6 +27346,51 @@ export type Database = {
           id?: string
           payment_id?: string | null
           status?: string
+        }
+        Relationships: []
+      }
+      webhook_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          idempotency_hash: string | null
+          payload: Json
+          processed_at: string | null
+          processing_status: string
+          provider: string
+          retry_count: number
+          updated_at: string
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          idempotency_hash?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_status?: string
+          provider?: string
+          retry_count?: number
+          updated_at?: string
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          idempotency_hash?: string | null
+          payload?: Json
+          processed_at?: string | null
+          processing_status?: string
+          provider?: string
+          retry_count?: number
+          updated_at?: string
+          webhook_id?: string
         }
         Relationships: []
       }
