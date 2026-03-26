@@ -51,6 +51,50 @@ function FeatureRow({ label, icon: Icon, enabled }: { label: string; icon: any; 
   );
 }
 
+/**
+ * Génère une description marketing dynamique à partir des données réelles du plan.
+ * Aucune valeur hardcodée — tout vient de l'objet plan.
+ */
+function buildPlanDescription(plan: Plan): string {
+  const parts: string[] = [];
+
+  // Produits
+  if (plan.max_products === null) {
+    parts.push('produits illimités');
+  } else {
+    parts.push(`${plan.max_products} produits`);
+  }
+
+  // Images
+  if (plan.max_images_per_product !== null) {
+    parts.push(`${plan.max_images_per_product} images/produit`);
+  }
+
+  // Features clés
+  const extras: string[] = [];
+  if (plan.analytics_access) extras.push('analytics');
+  if (plan.priority_support) extras.push('support prioritaire');
+  if (plan.featured_products) extras.push('mise en avant');
+  if (plan.api_access) extras.push('accès API');
+  if (plan.custom_branding) extras.push('branding personnalisé');
+
+  if (extras.length > 0) {
+    parts.push(extras.join(', '));
+  }
+
+  // Construct sentence
+  const toneMap: Record<string, string> = {
+    free: 'Idéal pour démarrer',
+    basic: 'Pour structurer votre boutique',
+    pro: 'Pour accélérer votre croissance',
+    business: 'Pour une activité à grande échelle',
+    premium: 'Pour une gestion avancée et complète',
+  };
+  const tone = toneMap[plan.name] || 'Un plan adapté à vos besoins';
+
+  return `${tone} avec ${parts.join(', ')}.`;
+}
+
 export default function VendorSubscriptionPage() {
   const navigate = useNavigate();
   const {
@@ -354,6 +398,9 @@ export default function VendorSubscriptionPage() {
                             </Badge>
                           )}
                         </div>
+                        <p className="text-sm text-muted-foreground mt-1 leading-snug">
+                          {buildPlanDescription(plan)}
+                        </p>
                         <p className="text-sm text-muted-foreground mt-0.5">
                           {plan.name === 'free'
                             ? 'Gratuit — aucun paiement requis'
