@@ -122,18 +122,64 @@ export interface Subscription {
   updated_at: string;
 }
 
-// ==================== VENDOR ====================
+// ==================== VENDOR (aligné table `vendors`) ====================
 
 export interface Vendor {
   id: string;
   user_id: string;
   business_name: string;
-  shop_slug?: string;
-  business_type: 'online' | 'physical' | 'hybrid';
-  is_active: boolean;
-  country?: string | null;
-  city?: string | null;
-  created_at: string;
+  business_type: string | null; // 'physical' | 'digital' | 'hybrid' | 'service'
+  service_type: string | null;
+  shop_slug: string | null;
+  description: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  country: string | null;
+  neighborhood: string | null;
+  logo_url: string | null;
+  cover_image_url: string | null;
+  is_active: boolean | null;
+  is_verified: boolean | null;
+  kyc_status: string | null;
+  rating: number | null;
+  total_reviews: number | null;
+  vendor_code: string | null;
+  public_id: string | null;
+  delivery_enabled: boolean | null;
+  delivery_base_price: number | null;
+  delivery_price_per_km: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+// ==================== PRODUCT (aligné table `products`) ====================
+
+export interface Product {
+  id: string;
+  vendor_id: string;
+  name: string;
+  price: number;
+  description: string | null;
+  images: string[] | null;
+  category_id: string | null;
+  stock_quantity: number | null;
+  is_active: boolean | null;
+  compare_price: number | null;
+  cost_price: number | null;
+  sku: string | null;
+  tags: string[] | null;
+  weight: number | null;
+  dimensions: any | null;
+  free_shipping: boolean | null;
+  rating: number | null;
+  reviews_count: number | null;
+  is_featured: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 // ==================== ORDER ====================
