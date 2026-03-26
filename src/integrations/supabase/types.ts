@@ -20916,46 +20916,70 @@ export type Database = {
       }
       stripe_withdrawals: {
         Row: {
+          admin_notes: string | null
           amount: number
           bank_account_name: string | null
           bank_account_number: string | null
+          bank_details: Json | null
           created_at: string | null
           currency: string | null
           fee: number | null
+          fee_rate: number | null
           id: string
           net_amount: number
+          processed_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
           stripe_payout_id: string | null
-          stripe_wallet_id: string
+          stripe_wallet_id: string | null
           updated_at: string | null
           user_id: string
+          wallet_id: number | null
         }
         Insert: {
+          admin_notes?: string | null
           amount: number
           bank_account_name?: string | null
           bank_account_number?: string | null
+          bank_details?: Json | null
           created_at?: string | null
           currency?: string | null
           fee?: number | null
+          fee_rate?: number | null
           id?: string
           net_amount: number
+          processed_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           stripe_payout_id?: string | null
-          stripe_wallet_id: string
+          stripe_wallet_id?: string | null
           updated_at?: string | null
           user_id: string
+          wallet_id?: number | null
         }
         Update: {
+          admin_notes?: string | null
           amount?: number
           bank_account_name?: string | null
           bank_account_number?: string | null
+          bank_details?: Json | null
           created_at?: string | null
           currency?: string | null
           fee?: number | null
+          fee_rate?: number | null
           id?: string
           net_amount?: number
+          processed_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           stripe_payout_id?: string | null
-          stripe_wallet_id?: string
+          stripe_wallet_id?: string | null
           updated_at?: string | null
           user_id?: string
+          wallet_id?: number | null
         }
         Relationships: [
           {
@@ -20984,6 +21008,20 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_search_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stripe_withdrawals_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_summary"
+            referencedColumns: ["wallet_id"]
+          },
+          {
+            foreignKeyName: "stripe_withdrawals_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
             referencedColumns: ["id"]
           },
         ]
@@ -28696,6 +28734,15 @@ export type Database = {
         Args: { p_admin_id: string; p_notes?: string; p_release_id: string }
         Returns: boolean
       }
+      admin_process_withdrawal: {
+        Args: {
+          p_action: string
+          p_admin_id: string
+          p_notes?: string
+          p_withdrawal_id: string
+        }
+        Returns: Json
+      }
       admin_reject_payment: {
         Args: { p_admin_id: string; p_reason: string; p_release_id: string }
         Returns: boolean
@@ -30891,6 +30938,18 @@ export type Database = {
           p_admin_id: string
           p_blocked_fund_id: string
           p_reason?: string
+        }
+        Returns: Json
+      }
+      request_bank_withdrawal: {
+        Args: {
+          p_amount: number
+          p_bank_account_name: string
+          p_bank_account_number: string
+          p_bank_details?: Json
+          p_currency: string
+          p_fee_rate: number
+          p_user_id: string
         }
         Returns: Json
       }
