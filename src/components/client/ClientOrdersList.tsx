@@ -169,7 +169,9 @@ export default function ClientOrdersList() {
           escrow = escrowByOrder;
 
           if (!escrow && order.payment_method === 'card') {
-            const paymentIntentId = order.metadata?.external_payment_id;
+            const paymentIntentId = typeof (order as any)?.metadata?.external_payment_id === 'string'
+              ? (order as any).metadata.external_payment_id
+              : null;
             if (paymentIntentId) {
               const { data: escrowByIntent } = await supabase
                 .from('escrow_transactions')
