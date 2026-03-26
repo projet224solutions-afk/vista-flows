@@ -148,13 +148,16 @@ serve(async (req) => {
       const { data: escrow, error: escrowError } = await supabaseAdmin
         .from('escrow_transactions')
         .insert({
+          payer_id: user.id,
+          receiver_id: sellerUserId,
           buyer_id: user.id,
           seller_id: sellerUserId,
           amount: (vendorAmount as number) + vendorCommission,
           currency: currency.toUpperCase(),
           status: 'pending',
           stripe_payment_intent_id: paymentIntent.id,
-          platform_fee: vendorCommission,
+          commission_amount: vendorCommission,
+          commission_percent: commissionRate,
           metadata: {
             source: 'marketplace_escrow',
             vendor_id: vendorId,
