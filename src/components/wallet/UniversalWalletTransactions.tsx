@@ -36,6 +36,7 @@ import {
 import { Building2 } from 'lucide-react';
 import StripeInlineDeposit from './StripeWalletDeposit';
 import StripeWalletTopup from './StripeWalletTopup';
+import PayPalInlineDeposit from './PayPalInlineDeposit';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
 
@@ -1500,11 +1501,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   </Button>
                 </TabsContent>
 
-                {/* Onglet Carte Bancaire (Stripe) */}
+                {/* Onglet PayPal */}
                 <TabsContent value="card_stripe" className="space-y-4 mt-4">
-                  <StripeInlineDeposit
-                    userId={effectiveUserId || ''}
-                    walletId={wallet?.id || ''}
+                  <PayPalInlineDeposit
                     onSuccess={async () => {
                       setDepositAmount('');
                       setDepositOpen(false);
