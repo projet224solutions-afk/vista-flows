@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v18';
+const CACHE_VERSION = 'v19';
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -43,10 +43,12 @@ function initFCM() {
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
-  '/manifest.webmanifest',
+  '/manifest.webmanifest?v=3',
   '/offline.html',
-  '/favicon.png',
-  '/icon-192.png',
+  '/favicon.png?v=3',
+  '/apple-touch-icon.png?v=3',
+  '/icon-192.png?v=3',
+  '/icon-512.png?v=3',
 ];
 
 const EXTERNAL_API_DOMAINS = [
