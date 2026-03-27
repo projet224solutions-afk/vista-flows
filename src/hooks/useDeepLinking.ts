@@ -25,11 +25,8 @@ const DEEP_LINK_PATTERNS: DeepLinkHandler[] = [
     pattern: /(?:myapp:\/\/|.*\/)(?:product|produit)\/([a-zA-Z0-9-]+)/,
     handler: (matches) => `/product/${matches[1]}`,
   },
-  // Short URL: /s/:shortCode
-  {
-    pattern: /(?:myapp:\/\/|.*\/)s\/([a-zA-Z0-9]+)/,
-    handler: (matches) => `/s/${matches[1]}`
-  },
+  // Short URL: /s/:shortCode — handled by ShortLinkRedirect component, NOT here
+  // Removed to prevent race condition with ShortLinkRedirect navigation
   // Marketplace avec catégorie
   {
     pattern: /(?:myapp:\/\/|.*\/)marketplace\?category=([a-zA-Z0-9-]+)/,
