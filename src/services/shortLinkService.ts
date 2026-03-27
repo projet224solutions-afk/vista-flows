@@ -93,7 +93,6 @@ export async function resolveShortLink(shortCode: string): Promise<ResolvedLink 
 
     const { data, error } = await supabase.functions.invoke('resolve-short-link', {
       body: { code: shortCode },
-      method: 'POST',
     });
 
     if (error) {

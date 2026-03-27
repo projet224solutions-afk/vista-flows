@@ -356,3 +356,9 @@ verify_jwt = false
 
 [functions.sync-to-cloudsql]
 verify_jwt = false
+
+[functions.create-short-link]
+verify_jwt = false
+
+[functions.resolve-short-link]
+verify_jwt = false
