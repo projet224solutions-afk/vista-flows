@@ -17,12 +17,16 @@ export function DeepLinkInitializer() {
     };
 
     // Gérer les deep links web (Universal Links / App Links)
-    // Vérifier si l'URL actuelle contient des paramètres de deep link
+    // Skip short links (/s/) — handled by ShortLinkRedirect component
     const currentUrl = window.location.href;
+    const isShortLink = /\/s\/[a-zA-Z0-9]+/.test(window.location.pathname);
     
-    // Log pour le debug
-    console.log('🔗 [DeepLinkInitializer] Current URL:', currentUrl);
-    safelyHandleDeepLink(currentUrl, 'initial-load');
+    if (!isShortLink) {
+      console.log('🔗 [DeepLinkInitializer] Current URL:', currentUrl);
+      safelyHandleDeepLink(currentUrl, 'initial-load');
+    } else {
+      console.log('🔗 [DeepLinkInitializer] Short link detected, skipping (handled by ShortLinkRedirect)');
+    }
 
     // Écouter les événements de navigation pour les deep links
     const handlePopState = () => {
