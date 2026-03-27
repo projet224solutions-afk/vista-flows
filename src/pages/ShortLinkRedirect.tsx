@@ -1,14 +1,14 @@
 /**
  * 🔗 PAGE DE REDIRECTION SHORT URL
- * Résout les liens courts et redirige vers la page originale
+ * Résout les liens courts via Edge Function serveur et redirige.
  */
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Link2Off, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { resolveShortLink, extractTargetPath } from '@/services/shortLinkService';
 
 type Status = 'loading' | 'redirecting' | 'error' | 'fallback';
 
@@ -29,99 +29,53 @@ export default function ShortLinkRedirect() {
   useEffect(() => {
     if (!shortCode || hasResolved.current) return;
     hasResolved.current = true;
-
-    resolveLink();
+    doResolve();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shortCode]);
 
-  const resolveLink = async () => {
+  const doResolve = async () => {
     if (!shortCode) {
       setStatus('error');
       setErrorMessage('Code de lien manquant');
       return;
     }
 
-    console.log('🔗 [ShortLink] Resolving:', shortCode);
+    console.log('🔗 [ShortLinkRedirect] Resolving via server:', shortCode);
 
     try {
-      const { data, error } = await supabase
-        .from('shared_links')
-        .select('original_url, title, link_type')
-        .eq('short_code', shortCode)
-        .eq('is_active', true)
-        .maybeSingle();
+      const result = await resolveShortLink(shortCode);
 
-      if (error) {
-        console.error('🔗 [ShortLink] DB error:', error);
-        setStatus('error');
-        setErrorMessage('Erreur de connexion');
-        return;
-      }
-
-      if (!data) {
-        console.warn('🔗 [ShortLink] Not found:', shortCode);
+      if (!result) {
+        console.warn('🔗 [ShortLinkRedirect] Not found:', shortCode);
         setStatus('error');
         setErrorMessage('Lien introuvable ou expiré');
         return;
       }
 
-      // Verify original_url exists
-      if (!data.original_url) {
-        console.error('🔗 [ShortLink] No original_url in data');
-        setStatus('error');
-        setErrorMessage('Lien corrompu');
-        return;
-      }
+      const targetPath = extractTargetPath(result.originalUrl);
+      console.log('🔗 [ShortLinkRedirect] Target path:', targetPath);
 
-      console.log('🔗 [ShortLink] Found:', data.original_url);
-
-      // Increment views (fire and forget)
-      (supabase.rpc as any)('increment_shared_link_views', { p_short_code: shortCode })
-        .then(() => {})
-        .catch(() => {});
-
-      // Extract relative path
-      let targetPath: string;
-      try {
-        const url = new URL(data.original_url);
-        // Clean up Lovable preview params
-        Array.from(url.searchParams.keys()).forEach(key => {
-          if (key.startsWith('__lovable')) url.searchParams.delete(key);
-        });
-        targetPath = url.pathname + url.search + url.hash;
-      } catch {
-        // Handle relative URLs safely
-        const originalUrl = data.original_url || '';
-        targetPath = originalUrl.startsWith('/') 
-          ? originalUrl 
-          : `/${originalUrl}`;
-      }
-
-      console.log('🔗 [ShortLink] Target path:', targetPath);
-
-      // Store link info for fallback
+      // Store link info for fallback UI
       setLinkInfo({
-        title: data.title,
-        type: data.link_type,
-        targetPath
+        title: result.title,
+        type: result.linkType,
+        targetPath,
       });
 
       setStatus('redirecting');
 
-      // Perform navigation
+      // Navigate via React Router
       navigate(targetPath, { replace: true });
 
-      // Check if navigation succeeded after a short delay
+      // Safety check — if still on /s/ after 500ms, show fallback
       setTimeout(() => {
-        // If we're still on /s/ path, show fallback button
         if (window.location.pathname.includes('/s/')) {
-          console.log('🔗 [ShortLink] Navigation seems stuck, showing fallback');
+          console.log('🔗 [ShortLinkRedirect] Navigation stuck, showing fallback');
           setStatus('fallback');
         }
       }, 500);
-
     } catch (err) {
-      console.error('🔗 [ShortLink] Error:', err);
+      console.error('🔗 [ShortLinkRedirect] Error:', err);
       setStatus('error');
       setErrorMessage('Erreur inattendue');
     }
@@ -133,7 +87,7 @@ export default function ShortLinkRedirect() {
     }
   };
 
-  // Loading state
+  // Loading / redirecting
   if (status === 'loading' || status === 'redirecting') {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center">
@@ -147,7 +101,7 @@ export default function ShortLinkRedirect() {
     );
   }
 
-  // Error state
+  // Error
   if (status === 'error') {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-4">
@@ -172,7 +126,7 @@ export default function ShortLinkRedirect() {
     );
   }
 
-  // Fallback state (navigation failed)
+  // Fallback (navigation stuck)
   if (status === 'fallback' && linkInfo) {
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex items-center justify-center p-4">
