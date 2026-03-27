@@ -267,7 +267,7 @@ export function MarketplaceProductCard({
         <div className="marketplace-card-actions" onClick={(e) => e.stopPropagation()}>
           <Button 
             onClick={(e) => { e.stopPropagation(); onBuy?.(); }}
-            className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs font-semibold bg-primary hover:bg-primary/85 text-primary-foreground shadow-sm px-2 sm:px-3 focus-visible:ring-1 focus-visible:ring-offset-0"
+            className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs font-semibold bg-primary text-primary-foreground hover:bg-background hover:text-foreground border border-transparent hover:border-border shadow-sm px-2 sm:px-3 focus-visible:ring-1 focus-visible:ring-offset-0"
             size="sm"
           >
             {t('common.view') || 'Voir'}

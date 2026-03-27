@@ -254,7 +254,7 @@ export function MediaAutoCarousel({
               e.stopPropagation();
               toggleAutoPlay();
             }}
-            className="p-1.5 bg-black/60 backdrop-blur-sm rounded-full text-white hover:bg-black/80 transition-colors"
+            className="p-1.5 bg-black/60 backdrop-blur-sm rounded-full text-white hover:bg-background hover:text-foreground transition-colors"
             aria-label={isAutoPlaying ? 'Pause' : 'Play'}
           >
             {isAutoPlaying ? (
@@ -271,7 +271,7 @@ export function MediaAutoCarousel({
                 e.stopPropagation();
                 toggleMute();
               }}
-              className="p-1.5 bg-black/60 backdrop-blur-sm rounded-full text-white hover:bg-black/80 transition-colors"
+              className="p-1.5 bg-black/60 backdrop-blur-sm rounded-full text-white hover:bg-background hover:text-foreground transition-colors"
               aria-label={isMuted ? 'Unmute' : 'Mute'}
             >
               {isMuted ? (
