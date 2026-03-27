@@ -31,6 +31,10 @@ export function DeepLinkInitializer() {
     // Écouter les événements de navigation pour les deep links
     const handlePopState = () => {
       const nextUrl = window.location.href;
+      if (/\/s\/[a-zA-Z0-9]+/.test(window.location.pathname)) {
+        console.log('🔗 [DeepLinkInitializer] Short link detected in popstate, skipping');
+        return;
+      }
       console.log('🔗 [DeepLinkInitializer] Navigation detected:', nextUrl);
       safelyHandleDeepLink(nextUrl, 'popstate');
     };
