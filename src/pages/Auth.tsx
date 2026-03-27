@@ -453,7 +453,14 @@ export default function Auth() {
             });
             
             cleanupOAuthFlags();
-            navigate(targetRoute, { replace: true });
+            const pendingRedirectOAuth = sessionStorage.getItem('post_auth_redirect');
+            if (pendingRedirectOAuth) {
+              sessionStorage.removeItem('post_auth_redirect');
+              console.log('🔗 [Auth OAuth] Redirection vers lien partagé:', pendingRedirectOAuth);
+              navigate(pendingRedirectOAuth, { replace: true });
+            } else {
+              navigate(targetRoute, { replace: true });
+            }
           } else {
             console.log('⚠️ [Auth] Pas de rôle trouvé, reste sur /auth');
           }
@@ -507,7 +514,14 @@ export default function Auth() {
             role: profileData.role,
           });
           console.log('🚀 [Auth Mount] Redirection utilisateur existant vers:', targetRoute);
-          navigate(targetRoute, { replace: true });
+          const pendingRedirectMount = sessionStorage.getItem('post_auth_redirect');
+          if (pendingRedirectMount) {
+            sessionStorage.removeItem('post_auth_redirect');
+            console.log('🔗 [Auth Mount] Redirection vers lien partagé:', pendingRedirectMount);
+            navigate(pendingRedirectMount, { replace: true });
+          } else {
+            navigate(targetRoute, { replace: true });
+          }
         }
       }
     };
@@ -1018,8 +1032,15 @@ export default function Auth() {
           // Rediriger après 2.5 secondes
           setTimeout(() => {
             setShowSuccessModal(false);
-            console.log('🚀 [Auth Signup] Redirection vers:', targetRoute);
-            navigate(targetRoute, { replace: true });
+            const pendingRedirectSignup = sessionStorage.getItem('post_auth_redirect');
+            if (pendingRedirectSignup) {
+              sessionStorage.removeItem('post_auth_redirect');
+              console.log('🔗 [Auth Signup] Redirection vers lien partagé:', pendingRedirectSignup);
+              navigate(pendingRedirectSignup, { replace: true });
+            } else {
+              console.log('🚀 [Auth Signup] Redirection vers:', targetRoute);
+              navigate(targetRoute, { replace: true });
+            }
           }, 2500);
         } else {
           setSuccess("✅ Inscription réussie ! Vérifiez votre boîte mail pour confirmer votre compte, puis connectez-vous.");
@@ -1091,7 +1112,14 @@ export default function Auth() {
             });
             console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
             await new Promise(resolve => setTimeout(resolve, 300));
-            navigate(targetRoute, { replace: true });
+            const pendingRedirectLogin = sessionStorage.getItem('post_auth_redirect');
+            if (pendingRedirectLogin) {
+              sessionStorage.removeItem('post_auth_redirect');
+              console.log('🔗 [Auth Login] Redirection vers lien partagé:', pendingRedirectLogin);
+              navigate(pendingRedirectLogin, { replace: true });
+            } else {
+              navigate(targetRoute, { replace: true });
+            }
           } else {
             // Fallback: rediriger vers home, useRoleRedirect prendra le relais
             console.log('⚠️ [Auth Login] Pas de profil trouvé, redirection vers /home');

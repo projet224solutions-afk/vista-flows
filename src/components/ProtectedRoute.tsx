@@ -173,6 +173,12 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
         console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (offline)");
         return;
       }
+      // Mémoriser la destination pour redirection post-login
+      const currentPath = window.location.pathname + window.location.search + window.location.hash;
+      if (currentPath && currentPath !== '/' && currentPath !== '/auth') {
+        sessionStorage.setItem('post_auth_redirect', currentPath);
+        console.log("🔒 [ProtectedRoute] Destination sauvegardée:", currentPath);
+      }
       console.log("🔒 Utilisateur non authentifié, redirection vers /auth");
       navigate('/auth');
     }
