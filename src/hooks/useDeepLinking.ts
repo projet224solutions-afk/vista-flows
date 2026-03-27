@@ -15,18 +15,21 @@ interface DeepLinkHandler {
 
 // Patterns de deep linking supportés
 const DEEP_LINK_PATTERNS: DeepLinkHandler[] = [
-  // Boutique: /boutique/:slug, /shop/:vendorId, myapp://boutique/:slug
+  // Shop: /shop/:vendorId — preserve /shop/ prefix
   {
-    pattern: /(?:myapp:\/\/|.*\/)(?:shop|boutique)\/([a-zA-Z0-9-]+)/,
-    handler: (matches) => `/boutique/${matches[1]}`,
+    pattern: /(?:myapp:\/\/|.*\/)(shop)\/([a-zA-Z0-9-]+)/,
+    handler: (matches) => `/shop/${matches[2]}`,
   },
-  // Produit: /product/:productId, /produit/:productId
+  // Boutique: /boutique/:slug — preserve /boutique/ prefix
+  {
+    pattern: /(?:myapp:\/\/|.*\/)(boutique)\/([a-zA-Z0-9-]+)/,
+    handler: (matches) => `/boutique/${matches[2]}`,
+  },
+  // Produit: /product/:productId or /produit/:productId — normalize to /product/
   {
     pattern: /(?:myapp:\/\/|.*\/)(?:product|produit)\/([a-zA-Z0-9-]+)/,
     handler: (matches) => `/product/${matches[1]}`,
   },
-  // Short URL: /s/:shortCode — handled by ShortLinkRedirect component, NOT here
-  // Removed to prevent race condition with ShortLinkRedirect navigation
   // Marketplace avec catégorie
   {
     pattern: /(?:myapp:\/\/|.*\/)marketplace\?category=([a-zA-Z0-9-]+)/,
@@ -55,10 +58,23 @@ export function useDeepLinking() {
 
   // Gérer un deep link entrant
   const handleDeepLink = useCallback(async (url: string) => {
+    // Skip short links — handled exclusively by ShortLinkRedirect
+    if (/\/s\/[a-zA-Z0-9]+/.test(url)) {
+      console.log('🔗 [DeepLink] Skipping short link (handled by ShortLinkRedirect):', url);
+      return false;
+    }
+
     console.log('🔗 [DeepLink] Handling:', url);
     
     const route = parseDeepLink(url);
     if (route) {
+      // Don't navigate if already on the correct route
+      const currentPath = window.location.pathname;
+      if (currentPath === route) {
+        console.log('🔗 [DeepLink] Already on correct route, skipping:', route);
+        return true;
+      }
+
       console.log('🔗 [DeepLink] Navigating to:', route);
       
       // Tracker l'ouverture du lien
