@@ -257,7 +257,7 @@ export function UniversalMarketplaceCard({
             e.stopPropagation();
             handleMainAction();
           }}
-          className="w-full h-9 text-xs sm:text-sm font-medium gap-1.5"
+          className="w-full h-9 text-xs sm:text-sm font-medium gap-1.5 bg-primary text-primary-foreground hover:bg-background hover:text-foreground border border-transparent hover:border-border"
           size="sm"
         >
           {getMainActionIcon()}
