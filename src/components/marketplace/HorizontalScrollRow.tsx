@@ -106,7 +106,7 @@ export function HorizontalScrollRow({
             'bg-card/95 backdrop-blur-sm border border-border shadow-lg rounded-full',
             'flex items-center justify-center',
             'opacity-0 group-hover/scroll:opacity-100 transition-all duration-300',
-            'hover:bg-primary hover:text-primary-foreground hover:scale-110',
+            'hover:bg-white hover:text-foreground hover:scale-110',
             'active:scale-95',
             arrowSizes[arrowSize]
           )}
@@ -125,7 +125,7 @@ export function HorizontalScrollRow({
             'bg-card/95 backdrop-blur-sm border border-border shadow-lg rounded-full',
             'flex items-center justify-center',
             'opacity-0 group-hover/scroll:opacity-100 transition-all duration-300',
-            'hover:bg-primary hover:text-primary-foreground hover:scale-110',
+            'hover:bg-white hover:text-foreground hover:scale-110',
             'active:scale-95',
             arrowSizes[arrowSize]
           )}
