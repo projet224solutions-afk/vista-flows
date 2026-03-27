@@ -10,6 +10,18 @@ import { X, Download, Share, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import IOSInstallGuide from './IOSInstallGuide';
 
+function detectIOSLike(): boolean {
+  const ua = navigator.userAgent;
+  const isClassicIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isIPadOSDesktop = /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+  return isClassicIOS || isIPadOSDesktop;
+}
+
+function detectSafariBrowser(): boolean {
+  const ua = navigator.userAgent;
+  return /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome|GSA|FBAN|FBAV|Instagram/i.test(ua);
+}
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -29,9 +41,9 @@ export function InstallPromptBanner() {
   useEffect(() => {
     // Détection plateforme
     const ua = navigator.userAgent;
-    const ios = /iPhone|iPad|iPod/i.test(ua);
+    const ios = detectIOSLike();
     const mac = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua) && !ios;
-    const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
+    const safari = detectSafariBrowser();
     setIsIOS(ios);
     setIsMac(mac);
     setIsSafari(safari);
@@ -111,6 +123,9 @@ export function InstallPromptBanner() {
   // Message adapté selon la plateforme
   const getInstallMessage = () => {
     if (isIOS) {
+      if (!isSafari) {
+        return "Ouvrez d'abord ce lien dans Safari pour pouvoir installer l'app";
+      }
       return (
         <span className="flex items-center gap-1">
           <Share className="w-4 h-4 inline" /> Partager puis "Ajouter à l'écran d'accueil"
@@ -155,7 +170,9 @@ export function InstallPromptBanner() {
                 className="w-full bg-white text-blue-600 hover:bg-blue-50 font-semibold"
                 size="sm"
               >
-                {isIOS || (isMac && isSafari) ? "Voir les instructions" : "Installer maintenant"}
+                {isIOS && !isSafari
+                  ? "Ouvrir les étapes Safari"
+                  : (isIOS || (isMac && isSafari) ? "Voir les instructions" : "Installer maintenant")}
               </Button>
             </div>
           </div>

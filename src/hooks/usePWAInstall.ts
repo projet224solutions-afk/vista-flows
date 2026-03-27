@@ -13,13 +13,17 @@ import {
 function detectIOS(): boolean {
   if (typeof window === 'undefined') return false;
   const ua = navigator.userAgent;
-  return /iPhone|iPad|iPod/i.test(ua);
+  // iPadOS 13+ peut se présenter comme Macintosh
+  const isClassicIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isIPadOSDesktop = /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+  return isClassicIOS || isIPadOSDesktop;
 }
 
 function detectSafari(): boolean {
   if (typeof window === 'undefined') return false;
   const ua = navigator.userAgent;
-  return /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
+  // Exclure les navigateurs/app wrappers iOS (Chrome, Firefox, Edge, Google app...)
+  return /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome|GSA|FBAN|FBAV|Instagram/i.test(ua);
 }
 
 function detectStandalone(): boolean {

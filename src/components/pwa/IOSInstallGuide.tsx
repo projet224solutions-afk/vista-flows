@@ -18,9 +18,35 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
   const [isSafari, setIsSafari] = useState(true);
   const [isIPad, setIsIPad] = useState(false);
 
+  const openInSafari = async () => {
+    const current = window.location.href;
+    // Schéma iOS pour ouvrir Safari depuis un autre navigateur/app
+    const safariUrl = current.startsWith('https://')
+      ? current.replace('https://', 'x-safari-https://')
+      : current;
+
+    try {
+      window.location.href = safariUrl;
+      // Si le schéma n'est pas supporté, proposer la copie du lien
+      setTimeout(async () => {
+        try {
+          await navigator.clipboard.writeText(current);
+        } catch {
+          // Rien: le texte reste visible dans l'UI
+        }
+      }, 600);
+    } catch {
+      try {
+        await navigator.clipboard.writeText(current);
+      } catch {
+        // Ignore clipboard failures silently
+      }
+    }
+  };
+
   useEffect(() => {
     const ua = navigator.userAgent;
-    const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
+    const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome|GSA|FBAN|FBAV|Instagram/i.test(ua);
     const ipad = /iPad/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
     setIsSafari(safari);
     setIsIPad(ipad);
@@ -54,16 +80,28 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             </div>
             <h2 className="text-xl font-bold text-foreground">Ouvrez dans Safari</h2>
             <p className="text-muted-foreground text-sm">
-              L'installation n'est possible que depuis <strong>Safari</strong>. Copiez le lien et ouvrez-le dans Safari.
+              L'installation iOS ne fonctionne que depuis <strong>Safari</strong>. Depuis Google/Chrome iOS, ouvrez d'abord ce lien dans Safari.
             </p>
             <Button
-              onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
-                const btn = document.getElementById('copy-btn-text');
-                if (btn) btn.textContent = 'Copié ✓';
-                setTimeout(() => { if (btn) btn.textContent = 'Copier le lien'; }, 2000);
-              }}
+              onClick={openInSafari}
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+            >
+              Ouvrir dans Safari
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(window.location.href);
+                  const btn = document.getElementById('copy-btn-text');
+                  if (btn) btn.textContent = 'Copié ✓';
+                  setTimeout(() => { if (btn) btn.textContent = 'Copier le lien'; }, 2000);
+                } catch {
+                  const btn = document.getElementById('copy-btn-text');
+                  if (btn) btn.textContent = 'Copie impossible';
+                }
+              }}
+              variant="outline"
+              className="w-full h-12 font-semibold"
             >
               <span id="copy-btn-text">Copier le lien</span>
             </Button>
