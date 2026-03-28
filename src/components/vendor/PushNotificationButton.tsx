@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Bell, BellOff, BellRing, Loader2 } from 'lucide-react';
 import { useFirebaseMessaging } from '@/hooks/useFirebaseMessaging';
@@ -13,21 +14,24 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
+import { Badge as UiBadge } from '@/components/ui/badge';
 
 interface PushNotificationButtonProps {
   variant?: 'default' | 'ghost' | 'outline';
   size?: 'default' | 'sm' | 'icon';
   showText?: boolean;
   className?: string;
+  unreadCount?: number;
 }
 
 export function PushNotificationButton({
   variant = 'ghost',
   size = 'icon',
   showText = false,
-  className = ''
+  className = '',
+  unreadCount = 0
 }: PushNotificationButtonProps) {
+  const navigate = useNavigate();
   const {
     isSupported,
     isEnabled,
@@ -39,6 +43,15 @@ export function PushNotificationButton({
   } = useFirebaseMessaging();
 
   const [open, setOpen] = useState(false);
+
+  // Si des notifications non lues, clic = naviguer vers /notifications
+  const handleButtonClick = () => {
+    if (unreadCount > 0) {
+      navigate('/notifications');
+    } else {
+      setOpen(prev => !prev);
+    }
+  };
 
   const handleEnable = async () => {
     await enableNotifications();
@@ -89,6 +102,7 @@ export function PushNotificationButton({
           size={size}
           className={`${className} relative`}
           title={isEnabled ? 'Notifications activées' : 'Activer les notifications'}
+          onClick={unreadCount > 0 ? handleButtonClick : undefined}
         >
           {getIcon()}
           {showText && (
@@ -96,18 +110,23 @@ export function PushNotificationButton({
               {isEnabled ? 'Notifications' : 'Activer'}
             </span>
           )}
-          {isEnabled && (
+          {/* Badge compteur de notifications non lues */}
+          {unreadCount > 0 ? (
+            <span className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold border-2 border-background p-0">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          ) : isEnabled ? (
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          )}
+          ) : null}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72" align="end">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold">Notifications Push</h4>
-            <Badge variant={getBadgeVariant()}>
+            <UiBadge variant={getBadgeVariant()}>
               {isEnabled ? 'Activées' : permission === 'denied' ? 'Bloquées' : 'Désactivées'}
-            </Badge>
+            </UiBadge>
           </div>
 
           <p className="text-sm text-muted-foreground">
