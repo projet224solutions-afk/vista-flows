@@ -38,6 +38,18 @@ const BILLING_CYCLE_DURATION = {
 
 function buildPlanDescription(plan: Plan): string {
   const parts: string[] = [];
+  const featureSet = new Set<string>();
+
+  const normalizeFeature = (value: string): string => {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return '';
+    if (normalized.includes('analytic')) return 'analytics';
+    if (normalized.includes('support')) return 'support prioritaire';
+    if (normalized.includes('avant') || normalized.includes('featured')) return 'mise en avant';
+    if (normalized.includes('api')) return 'acces API';
+    if (normalized.includes('branding') || normalized.includes('marque')) return 'branding personnalise';
+    return normalized;
+  };
 
   if (plan.max_products === null) {
     parts.push('produits illimites');
@@ -49,11 +61,39 @@ function buildPlanDescription(plan: Plan): string {
     parts.push(`${plan.max_images_per_product} images/produit`);
   }
 
-  if (plan.analytics_access) parts.push('analytics');
-  if (plan.priority_support) parts.push('support prioritaire');
-  if (plan.featured_products) parts.push('mise en avant');
-  if (plan.api_access) parts.push('acces API');
-  if (plan.custom_branding) parts.push('branding personnalise');
+  if (plan.analytics_access) featureSet.add('analytics');
+  if (plan.priority_support) featureSet.add('support prioritaire');
+  if (plan.featured_products) featureSet.add('mise en avant');
+  if (plan.api_access) featureSet.add('acces API');
+  if (plan.custom_branding) featureSet.add('branding personnalise');
+
+  if (Array.isArray(plan.features)) {
+    for (const feature of plan.features) {
+      const normalized = normalizeFeature(feature);
+      if (!normalized) continue;
+      if (normalized.includes('produit') || normalized.includes('image')) continue;
+      featureSet.add(normalized);
+    }
+  }
+
+  const orderedMainFeatures = [
+    'analytics',
+    'support prioritaire',
+    'mise en avant',
+    'acces API',
+    'branding personnalise',
+  ];
+
+  for (const feature of orderedMainFeatures) {
+    if (featureSet.has(feature)) {
+      parts.push(feature);
+      featureSet.delete(feature);
+    }
+  }
+
+  for (const feature of featureSet) {
+    parts.push(feature);
+  }
 
   return parts.join(' · ');
 }
