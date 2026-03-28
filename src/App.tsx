@@ -184,7 +184,7 @@ const PageLoader = memo(() => {
           margin: '0 auto', animation: 'spin 0.8s linear infinite'
         }} />
       </div>
-      <style dangerouslySetInnerHTML={{__html: '@keyframes spin { to { transform: rotate(360deg); } }'}} />
+      <style>{'@keyframes spin { to { transform: rotate(360deg); } }'}</style>
     </div>
   );
 });

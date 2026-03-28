@@ -92,17 +92,39 @@ const hideLoader = () => {
 const showError = (rootElement: HTMLElement, error: unknown) => {
   hideLoader();
   const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-  rootElement.innerHTML = `
-    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: #f8f9fa; font-family: system-ui, -apple-system, sans-serif;">
-      <div style="max-width: 500px; text-align: center;">
-        <div style="font-size: 64px; margin-bottom: 16px;">⚠️</div>
-        <h1 style="color: #e74c3c; font-size: 24px; margin-bottom: 16px;">Erreur de chargement</h1>
-        <p style="color: #666; margin-bottom: 16px;">L'application n'a pas pu démarrer.</p>
-        <pre style="text-align: left; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #ddd; overflow-x: auto; font-size: 12px; color: #c0392b; margin-bottom: 24px; white-space: pre-wrap;">${errorMessage}</pre>
-        <button onclick="location.reload()" style="padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Recharger</button>
-      </div>
-    </div>
-  `;
+
+  rootElement.replaceChildren();
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: #f8f9fa; font-family: system-ui, -apple-system, sans-serif;';
+
+  const card = document.createElement('div');
+  card.style.cssText = 'max-width: 500px; text-align: center;';
+
+  const icon = document.createElement('div');
+  icon.textContent = '⚠️';
+  icon.style.cssText = 'font-size: 64px; margin-bottom: 16px;';
+
+  const title = document.createElement('h1');
+  title.textContent = 'Erreur de chargement';
+  title.style.cssText = 'color: #e74c3c; font-size: 24px; margin-bottom: 16px;';
+
+  const subtitle = document.createElement('p');
+  subtitle.textContent = "L'application n'a pas pu démarrer.";
+  subtitle.style.cssText = 'color: #666; margin-bottom: 16px;';
+
+  const pre = document.createElement('pre');
+  pre.textContent = errorMessage;
+  pre.style.cssText = 'text-align: left; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #ddd; overflow-x: auto; font-size: 12px; color: #c0392b; margin-bottom: 24px; white-space: pre-wrap;';
+
+  const button = document.createElement('button');
+  button.textContent = 'Recharger';
+  button.style.cssText = 'padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;';
+  button.addEventListener('click', () => window.location.reload());
+
+  card.append(icon, title, subtitle, pre, button);
+  wrapper.appendChild(card);
+  rootElement.appendChild(wrapper);
 };
 
 // PWA Diagnostic Logger — helps debug production vs preview differences

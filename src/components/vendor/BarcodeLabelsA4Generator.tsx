@@ -32,6 +32,15 @@ interface BarcodeLabelsA4GeneratorProps {
   businessName?: string;
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 type GridLayout = '3x8' | '4x10' | '3x10';
 
 const GRID_LAYOUTS: Record<GridLayout, { cols: number; rows: number; labelWidth: number; labelHeight: number }> = {
@@ -302,19 +311,26 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       return;
     }
 
-    const labelsHTML = labels.map((label, idx) => `
-      <div class="label">
-        <div class="name">${label.name.length > 25 ? label.name.substring(0, 22) + '...' : label.name}</div>
-        <svg id="bc-${idx}"></svg>
-        <div class="info">
-          ${[
-            showPrice ? `${label.price.toLocaleString('fr-FR')} GNF` : '',
-            showSku && label.sku ? label.sku : '',
-            showBusinessName && businessName ? businessName : ''
-          ].filter(Boolean).join(' • ')}
+    const labelsHTML = labels.map((label, idx) => {
+      const safeName = escapeHtml(label.name.length > 25 ? `${label.name.substring(0, 22)}...` : label.name);
+      const safePrice = escapeHtml(`${label.price.toLocaleString('fr-FR')} GNF`);
+      const safeSku = escapeHtml(label.sku || '');
+      const safeBusinessName = escapeHtml(businessName || '');
+
+      return `
+        <div class="label">
+          <div class="name">${safeName}</div>
+          <svg id="bc-${idx}"></svg>
+          <div class="info">
+            ${[
+              showPrice ? safePrice : '',
+              showSku && label.sku ? safeSku : '',
+              showBusinessName && businessName ? safeBusinessName : ''
+            ].filter(Boolean).join(' • ')}
+          </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     printWindow.document.write(`
       <!DOCTYPE html>

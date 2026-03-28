@@ -53,6 +53,15 @@ interface POSReceiptProps {
   };
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -89,10 +98,11 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
     
     const printWindow = window.open('', '_blank');
     if (printWindow) {
+      const safeOrderNumber = escapeHtml(orderData.orderNumber);
       printWindow.document.write(`
         <html>
           <head>
-            <title>Reçu - ${orderData.orderNumber}</title>
+            <title>Reçu - ${safeOrderNumber}</title>
             <style>
               body { font-family: 'Courier New', monospace; font-size: 14px; padding: 10px; max-width: 320px; margin: 0 auto; }
               .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }

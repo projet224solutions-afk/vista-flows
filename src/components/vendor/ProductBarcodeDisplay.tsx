@@ -21,6 +21,15 @@ interface ProductBarcodeDisplayProps {
   size?: 'small' | 'medium' | 'large';
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function ProductBarcodeDisplay({
   barcode,
   productName,
@@ -124,12 +133,13 @@ export function ProductBarcodeDisplay({
         toast.error('Popup bloquée - autorisez les popups');
         return;
       }
+      const safeBarcode = escapeHtml(barcode);
       
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Code-barres - ${barcode}</title>
+            <title>Code-barres - ${safeBarcode}</title>
             <style>
               body { 
                 margin: 0; 

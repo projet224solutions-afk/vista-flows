@@ -34,6 +34,15 @@ interface BadgeGeneratorDialogProps {
   bureauPhone?: string;
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export default function BadgeGeneratorDialog({
   open,
   onOpenChange,
@@ -155,12 +164,13 @@ export default function BadgeGeneratorDialog({
     }
 
     const badgeHtml = badgeRef.current.outerHTML;
+    const safeMemberName = escapeHtml(vehicleData.member_name);
     
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Badge ${vehicleData.member_name}</title>
+          <title>Badge ${safeMemberName}</title>
           <style>
             @media print {
               body {
