@@ -20,7 +20,27 @@ const planIcons = {
  * Aucune promesse inventée — tout est basé sur les champs réels.
  */
 function buildPlanDescription(plan: Plan): string {
+  const featureHighlights = getPlanFeatureHighlights(plan);
   const parts: string[] = [];
+
+  if (plan.max_products === null) {
+    parts.push('produits illimites');
+  } else {
+    parts.push(`${plan.max_products} produits max`);
+  }
+
+  if (plan.max_images_per_product) {
+    parts.push(`${plan.max_images_per_product} images/produit`);
+  }
+
+  for (const feature of featureHighlights) {
+    parts.push(feature);
+  }
+
+  return parts.join(' · ');
+}
+
+function getPlanFeatureHighlights(plan: Plan): string[] {
   const featureSet = new Set<string>();
 
   const normalizeFeature = (value: string): string => {
@@ -33,16 +53,6 @@ function buildPlanDescription(plan: Plan): string {
     if (normalized.includes('branding') || normalized.includes('marque')) return 'branding personnalise';
     return normalized;
   };
-
-  if (plan.max_products === null) {
-    parts.push('produits illimites');
-  } else {
-    parts.push(`${plan.max_products} produits max`);
-  }
-
-  if (plan.max_images_per_product) {
-    parts.push(`${plan.max_images_per_product} images/produit`);
-  }
 
   if (plan.analytics_access) featureSet.add('analytics');
   if (plan.priority_support) featureSet.add('support prioritaire');
@@ -67,18 +77,19 @@ function buildPlanDescription(plan: Plan): string {
     'branding personnalise',
   ];
 
+  const orderedFeatures: string[] = [];
   for (const feature of orderedMainFeatures) {
     if (featureSet.has(feature)) {
-      parts.push(feature);
+      orderedFeatures.push(feature);
       featureSet.delete(feature);
     }
   }
 
   for (const feature of featureSet) {
-    parts.push(feature);
+    orderedFeatures.push(feature);
   }
 
-  return parts.join(' · ');
+  return orderedFeatures;
 }
 
 function getPlanLabel(plan: Plan): string {
@@ -242,6 +253,42 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
           );
         })}
       </div>
+
+      <Card className="border-border/70 bg-card/70">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Verification des fonctionnalites par plan</CardTitle>
+          <CardDescription className="text-xs">
+            Controle rapide des limites et fonctionnalites reellement appliquees a chaque plan.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="hidden md:grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground pb-2 border-b">
+            <div className="col-span-2">Plan</div>
+            <div className="col-span-3">Limites</div>
+            <div className="col-span-7">Fonctionnalites incluses</div>
+          </div>
+          <div className="space-y-3 mt-3">
+            {plans.map((plan) => {
+              const limitLabel = plan.max_products === null
+                ? 'produits illimites'
+                : `${plan.max_products} produits max`;
+              const features = getPlanFeatureHighlights(plan);
+
+              return (
+                <div key={`check-${plan.id}`} className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-3 p-3 rounded-lg border bg-background/60">
+                  <div className="md:col-span-2 text-sm font-semibold">{getPlanLabel(plan)}</div>
+                  <div className="md:col-span-3 text-xs text-muted-foreground">
+                    {limitLabel} · {plan.max_images_per_product} images/produit
+                  </div>
+                  <div className="md:col-span-7 text-xs leading-relaxed text-muted-foreground">
+                    {features.length > 0 ? features.join(' · ') : 'aucune fonctionnalite additionnelle'}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {currentSubscription && currentSubscription.current_period_end && (
         <Card className="bg-muted/50">
