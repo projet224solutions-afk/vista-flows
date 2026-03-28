@@ -204,7 +204,7 @@ export function VendorSubscriptionPlanSelector({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <div className="grid gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {plans.map((plan) => {
                 const price = calculatePrice(plan);
                 const discount = calculateDiscount(plan);
