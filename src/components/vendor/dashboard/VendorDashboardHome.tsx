@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/useTranslation';
-import { GlobalLoader, SectionLoader } from '@/components/ui/GlobalLoader';
+import { SectionLoader } from '@/components/ui/GlobalLoader';
 import type { RecentOrder } from '@/types/vendor-dashboard';
 
 // Lazy loaded components
@@ -31,9 +31,6 @@ const VendorAnalyticsDashboard = lazy(() =>
 );
 const UniversalWalletTransactions = lazy(() =>
   import('@/components/wallet/UniversalWalletTransactions')
-);
-const VendorNotificationsPanel = lazy(() =>
-  import('@/components/vendor/VendorNotificationsPanel').then(m => ({ default: m.VendorNotificationsPanel }))
 );
 
 // ============================================================================
@@ -269,20 +266,13 @@ const VendorDashboardHome = memo(function VendorDashboardHome({
             </div>
           </Suspense>
 
-          {/* Commandes + Notifications en 2 colonnes en paysage */}
-          <div className="grid grid-cols-1 landscape:grid-cols-2 md:grid-cols-2 lg:grid-cols-1 gap-4 lg:contents">
+          {/* Commandes récentes */}
+          <div className="grid grid-cols-1 gap-4 lg:contents">
             <RecentOrdersSection
               orders={recentOrders}
               showAll={showAllOrders}
               onToggleShowAll={onToggleShowAllOrders}
             />
-
-            {/* Notifications intégrées */}
-            <Suspense fallback={<GlobalLoader size="sm" />}>
-              <div>
-                <VendorNotificationsPanel />
-              </div>
-            </Suspense>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
@@ -19,32 +19,47 @@ export const useVendorNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const loadNotifications = async () => {
-    if (!user) return;
+  const loadNotifications = useCallback(async () => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
-        .from('vendor_notifications' as any)
-        .select('*')
-        .eq('vendor_id', user.id)
+        .from('notifications')
+        .select('id, type, title, message, read, created_at, metadata')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
 
-      setNotifications((data as any) || []);
-      setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
+      const mapped: VendorNotification[] = (data || []).map((n: any) => ({
+        id: n.id,
+        type: (n.type || 'message') as VendorNotification['type'],
+        title: n.title || 'Notification',
+        message: n.message || '',
+        data: n.metadata,
+        read: n.read ?? false,
+        created_at: n.created_at,
+      }));
+
+      setNotifications(mapped);
+      setUnreadCount(mapped.filter((n) => !n.read).length);
     } catch (error) {
       console.error('Erreur chargement notifications:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await supabase
-        .from('vendor_notifications' as any)
+        .from('notifications')
         .update({ read: true })
         .eq('id', notificationId);
 
@@ -64,9 +79,9 @@ export const useVendorNotifications = () => {
 
     try {
       const { error } = await supabase
-        .from('vendor_notifications' as any)
+        .from('notifications')
         .update({ read: true })
-        .eq('vendor_id', user.id)
+        .eq('user_id', user.id)
         .eq('read', false);
 
       if (error) throw error;
@@ -79,31 +94,36 @@ export const useVendorNotifications = () => {
     }
   };
 
-  // Écouter les nouvelles notifications en temps réel
+  // Source unifiée: synchroniser en temps réel avec la table `notifications`
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
 
     loadNotifications();
 
     const channel = supabase
-      .channel('vendor-notifications')
+      .channel(`vendor-notifications-unified:${user.id}`)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
-          table: 'vendor_notifications',
-          filter: `vendor_id=eq.${user.id}`
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
         },
-        (payload) => {
-          const newNotification = payload.new as VendorNotification;
-          setNotifications(prev => [newNotification, ...prev]);
-          setUnreadCount(prev => prev + 1);
-
-          // Afficher un toast pour la nouvelle notification
-          toast.info(newNotification.title, {
-            description: newNotification.message
-          });
+        (payload: any) => {
+          if (payload.eventType === 'INSERT') {
+            const newNotification = payload.new as any;
+            toast.info(newNotification.title || 'Notification', {
+              description: newNotification.message || ''
+            });
+          }
+          // Toujours recharger pour garder un état cohérent (insert/update/delete)
+          void loadNotifications();
         }
       )
       .subscribe();
@@ -111,7 +131,7 @@ export const useVendorNotifications = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, loadNotifications]);
 
   return {
     notifications,
