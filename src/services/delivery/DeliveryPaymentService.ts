@@ -243,7 +243,7 @@ export class DeliveryPaymentService {
       }
 
       // TODO: Intégrer Stripe SDK
-      console.log('[Card] Processing card payment with token:', cardToken.substring(0, 10) + '...');
+      console.log('[Card] Processing card payment request');
 
       // Mettre à jour la méthode
       const { error: updateError } = await supabase

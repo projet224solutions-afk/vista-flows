@@ -357,7 +357,7 @@ export default function SystemConfiguration() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(service.documentation, '_blank')}
+                        onClick={() => window.open(service.documentation, '_blank', 'noopener,noreferrer')}
                       >
                         Documentation
                       </Button>

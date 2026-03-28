@@ -483,13 +483,13 @@ export default function PDGSyndicatManagement() {
                               <span className="text-primary">🔗</span> Lien d'accès à l'interface
                             </p>
                             <p className="text-xs font-mono text-muted-foreground truncate bg-background p-2 rounded border">
-                              {window.location.origin}/bureau/{bureau.access_token}
+                              {window.location.origin}/bureau/{encodeURIComponent(bureau.access_token)}
                             </p>
                           </div>
                           <Button
                             size="sm"
                             className="shrink-0"
-                            onClick={() => window.open(`/bureau/${bureau.access_token}`, '_blank')}
+                            onClick={() => window.open(`/bureau/${encodeURIComponent(bureau.access_token)}`, '_blank', 'noopener,noreferrer')}
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             Ouvrir l'interface

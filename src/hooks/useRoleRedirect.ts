@@ -150,14 +150,18 @@ export const useRoleRedirect = () => {
                 .eq('is_active', true)
                 .maybeSingle();
               
-              console.log('📋 [useRoleRedirect] Résultat vendor_agent:', { vendorAgent, vaError });
+              console.log('📋 [useRoleRedirect] Résultat vendor_agent:', {
+                hasVendorAgent: !!vendorAgent,
+                hasAccessToken: !!vendorAgent?.access_token,
+                vaError,
+              });
               
               if (vaError) {
                 console.error('❌ [useRoleRedirect] Erreur query vendor_agents:', vaError);
               }
               
               if (vendorAgent?.access_token) {
-                console.log('🚀 [useRoleRedirect] Redirection vendor_agent vers /vendor-agent/', vendorAgent.access_token);
+                console.log('🚀 [useRoleRedirect] Redirection vendor_agent vers interface dédiée');
                 navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
               } else {
                 console.warn('⚠️ [useRoleRedirect] Aucun access_token trouvé, tentative sans filtre is_active...');
@@ -168,7 +172,12 @@ export const useRoleRedirect = () => {
                   .eq('user_id', user.id)
                   .maybeSingle();
                 
-                console.log('📋 [useRoleRedirect] Résultat vendor_agent (sans filtre):', { vendorAgentAny, vaError2 });
+                console.log('📋 [useRoleRedirect] Résultat vendor_agent (sans filtre):', {
+                  hasVendorAgent: !!vendorAgentAny,
+                  hasAccessToken: !!vendorAgentAny?.access_token,
+                  isActive: vendorAgentAny?.is_active,
+                  vaError2,
+                });
                 
                 if (vendorAgentAny?.access_token) {
                   navigate(`/vendor-agent/${vendorAgentAny.access_token}`, { replace: true });

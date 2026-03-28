@@ -1150,14 +1150,14 @@ export default function PDGAgentsManagement() {
                                   <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
                                     <div className="flex items-center justify-between gap-2">
                                       <p className="text-xs font-mono text-blue-600 truncate flex-1">
-                                        {window.location.origin}/agent/{subAgent.access_token}
+                                        {window.location.origin}/agent/{encodeURIComponent(subAgent.access_token)}
                                       </p>
                                       <Button
                                         size="sm"
                                         variant="ghost"
                                         className="h-6 w-6 p-0"
                                         onClick={() => {
-                                          navigator.clipboard.writeText(`${window.location.origin}/agent/${subAgent.access_token}`);
+                                          navigator.clipboard.writeText(`${window.location.origin}/agent/${encodeURIComponent(subAgent.access_token)}`);
                                           toast.success('Lien copié!');
                                         }}
                                       >
@@ -1193,7 +1193,7 @@ export default function PDGAgentsManagement() {
                           <span className="text-blue-600">🔗</span> Lien d'accès à l'interface
                         </p>
                         <p className="text-xs font-mono text-blue-600 bg-white dark:bg-gray-900 p-2 rounded border truncate">
-                          {window.location.origin}/agent/{agent.access_token}
+                          {window.location.origin}/agent/{encodeURIComponent(agent.access_token)}
                         </p>
                       </div>
                       <div className="flex gap-2">
@@ -1201,7 +1201,7 @@ export default function PDGAgentsManagement() {
                           size="sm"
                           variant="outline"
                           onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}/agent/${agent.access_token}`);
+                            navigator.clipboard.writeText(`${window.location.origin}/agent/${encodeURIComponent(agent.access_token)}`);
                             toast.success('Lien copié!');
                           }}
                         >
@@ -1211,7 +1211,7 @@ export default function PDGAgentsManagement() {
                           size="sm"
                           variant="default"
                           className="bg-blue-600 hover:bg-blue-700"
-                          onClick={() => window.open(`/agent/${agent.access_token}`, '_blank')}
+                          onClick={() => window.open(`/agent/${encodeURIComponent(agent.access_token)}`, '_blank', 'noopener,noreferrer')}
                         >
                           <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
                           Ouvrir

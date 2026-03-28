@@ -30,6 +30,26 @@ import { supabase } from '@/integrations/supabase/client';
 import { useVendorCopilot } from '@/hooks/useVendorCopilot';
 import ReactMarkdown from 'react-markdown';
 
+const sanitizeMarkdownUrl = (url: string): string => {
+  const trimmed = url.trim();
+
+  if (trimmed.startsWith('/') || trimmed.startsWith('#')) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    const protocol = parsed.protocol.toLowerCase();
+    if (protocol === 'http:' || protocol === 'https:' || protocol === 'mailto:') {
+      return trimmed;
+    }
+  } catch {
+    return '#';
+  }
+
+  return '#';
+};
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -657,7 +677,21 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                         {/* NOUVEAU: Support Markdown pour mode Enterprise */}
                         {!isUser && useEnterpriseMode ? (
                           <div className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm [&_p]:mb-1.5 [&_ul]:my-1 [&_li]:my-0.5 [&_a]:break-all [&_*]:max-w-full overflow-hidden">
-                            <ReactMarkdown>{message.content}</ReactMarkdown>
+                            <ReactMarkdown
+                              skipHtml
+                              urlTransform={(url) => sanitizeMarkdownUrl(url)}
+                              components={{
+                                a: ({ node: _node, ...props }) => (
+                                  <a
+                                    {...props}
+                                    target="_blank"
+                                    rel="noopener noreferrer nofollow"
+                                  />
+                                ),
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
                           </div>
                         ) : (
                           <p className="text-xs sm:text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">{message.content}</p>
