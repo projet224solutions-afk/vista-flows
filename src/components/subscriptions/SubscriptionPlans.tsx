@@ -22,26 +22,28 @@ const planIcons = {
 function buildPlanDescription(plan: Plan): string {
   const parts: string[] = [];
 
-  // Limites produits
   if (plan.max_products === null) {
-    parts.push('Produits illimités');
+    parts.push('produits illimites');
   } else {
-    parts.push(`Jusqu'à ${plan.max_products} produits`);
+    parts.push(`${plan.max_products} produits max`);
   }
 
-  // Images par produit
   if (plan.max_images_per_product) {
     parts.push(`${plan.max_images_per_product} images/produit`);
   }
 
-  // Capacités booléennes
-  if (plan.analytics_access) parts.push('Analytics');
-  if (plan.priority_support) parts.push('Support prioritaire');
-  if (plan.featured_products) parts.push('Produits en vedette');
-  if (plan.api_access) parts.push('Accès API');
-  if (plan.custom_branding) parts.push('Branding personnalisé');
+  if (plan.analytics_access) parts.push('analytics');
+  if (plan.priority_support) parts.push('support prioritaire');
+  if (plan.featured_products) parts.push('mise en avant');
+  if (plan.api_access) parts.push('acces API');
+  if (plan.custom_branding) parts.push('branding personnalise');
 
   return parts.join(' · ');
+}
+
+function getPlanLabel(plan: Plan): string {
+  if (plan.name === 'free') return 'Gratuit';
+  return plan.display_name;
 }
 
 interface SubscriptionPlansProps {
@@ -114,8 +116,8 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
           return (
             <Card
               key={plan.id}
-              className={`relative transition-all hover:shadow-lg ${
-                isPremium ? 'border-primary shadow-primary/20' : ''
+              className={`relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+                isPremium ? 'border-primary/70 shadow-primary/20 bg-gradient-to-b from-primary/5 to-transparent' : 'border-border/70'
               } ${isCurrent ? 'ring-2 ring-primary' : ''}`}
             >
               {isPremium && (
@@ -129,50 +131,46 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
 
               {isCurrent && (
                 <div className="absolute -top-4 right-4">
-                  <Badge variant="secondary">Plan actuel</Badge>
+                  <Badge variant="secondary" className="shadow-sm">Plan actuel</Badge>
                 </div>
               )}
 
-              <CardHeader className="text-center pb-4">
-                <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <CardHeader className="text-center pb-4 relative z-10">
+                <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center mb-4">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">{plan.display_name}</CardTitle>
+                <CardTitle className="text-2xl tracking-tight">{getPlanLabel(plan)}</CardTitle>
 
-                {/* Limites produits & images — données réelles */}
-                <div className="mt-3 space-y-1.5">
-                  <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-foreground">
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center justify-center gap-1.5 text-sm font-semibold text-foreground">
                     <Package className="w-4 h-4 text-primary" />
                     {isUnlimited ? (
                       <span className="flex items-center gap-1">
-                        <Infinity className="w-4 h-4" /> Produits illimités
+                        <Infinity className="w-4 h-4" /> produits illimites
                       </span>
                     ) : (
                       <span>{plan.max_products} produits max</span>
                     )}
                   </div>
-                  <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
                     <ImageIcon className="w-3.5 h-3.5" />
-                    <span>{plan.max_images_per_product} images par produit</span>
+                    <span>{plan.max_images_per_product} images/produit</span>
                   </div>
                 </div>
 
-                {/* Description générée depuis les données réelles */}
-                <CardDescription className="mt-2 min-h-[2.5rem] text-xs">
+                <CardDescription className="mt-2 min-h-[2.5rem] text-xs leading-relaxed text-muted-foreground/90">
                   {buildPlanDescription(plan)}
                 </CardDescription>
 
-                <CardDescription>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold text-foreground">
-                      {SubscriptionService.formatAmount(plan.monthly_price_gnf)}
-                    </span>
-                    <span className="text-muted-foreground"> / mois</span>
+                <div className="mt-4 space-y-1">
+                  <div className="text-3xl font-extrabold tracking-tight text-foreground">
+                    {SubscriptionService.formatAmount(plan.monthly_price_gnf)}
                   </div>
-                </CardDescription>
+                  <div className="text-sm text-muted-foreground/90">pour 1 mois</div>
+                </div>
               </CardHeader>
 
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 relative z-10">
                 <div className="space-y-3">
                   <div className="text-sm font-semibold text-muted-foreground">
                     Fonctionnalités :

@@ -58,6 +58,11 @@ function buildPlanDescription(plan: Plan): string {
   return parts.join(' · ');
 }
 
+function getPlanLabel(plan: Plan): string {
+  if (plan.name === 'free') return 'Gratuit';
+  return plan.display_name;
+}
+
 export function VendorSubscriptionPlanSelector({ 
   open, 
   onOpenChange,
@@ -213,8 +218,8 @@ export function VendorSubscriptionPlanSelector({
                 return (
                   <Card
                     key={plan.id}
-                    className={`p-4 cursor-pointer transition-all hover:border-primary ${
-                      selectedPlan?.id === plan.id ? 'border-primary bg-primary/5' : ''
+                    className={`p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:border-primary hover:shadow-md ${
+                      selectedPlan?.id === plan.id ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border/70'
                     }`}
                     onClick={() => setSelectedPlan(plan)}
                   >
@@ -224,7 +229,7 @@ export function VendorSubscriptionPlanSelector({
                           {selectedPlan?.id === plan.id && (
                             <Check className="w-4 h-4 text-primary" />
                           )}
-                          <h3 className="font-bold text-lg">{plan.display_name}</h3>
+                          <h3 className="font-bold text-lg tracking-tight">{getPlanLabel(plan)}</h3>
                           {discount && (
                             <Badge variant="secondary" className="text-xs">
                               -{discount}%
@@ -232,32 +237,32 @@ export function VendorSubscriptionPlanSelector({
                           )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 mb-2">
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="space-y-1.5 mb-2">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                             <Package className="w-3.5 h-3.5" />
                             <span>
                               {isUnlimited ? (
-                                <span className="inline-flex items-center gap-1"><Infinity className="w-3.5 h-3.5" /> produits</span>
+                                <span className="inline-flex items-center gap-1"><Infinity className="w-3.5 h-3.5" /> produits illimites</span>
                               ) : `${plan.max_products} produits max`}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <ImageIcon className="w-3.5 h-3.5" />
                             <span>{plan.max_images_per_product} images/produit</span>
                           </div>
                         </div>
 
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-xs leading-relaxed text-muted-foreground/90 mb-3 min-h-[2.5rem]">
                           {buildPlanDescription(plan)}
                         </p>
 
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-bold text-primary">
+                        <div className="space-y-1">
+                          <span className="text-2xl font-extrabold tracking-tight text-primary">
                             {price.toLocaleString()} GNF
                           </span>
-                          <span className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground/90">
                             pour {BILLING_CYCLE_DURATION[billingCycle]} mois
-                          </span>
+                          </p>
                         </div>
                       </div>
                     </div>
