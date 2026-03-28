@@ -126,12 +126,9 @@ const HeaderActions = memo(function HeaderActions({
         </Suspense>
       </div>
 
-      {/* Push Notifications with vendor unread count */}
+      {/* Push Notifications with unread count */}
       <Suspense fallback={null}>
-        <PushNotificationButton
-          className="h-8 w-8 md:h-10 md:w-10"
-          unreadCount={vendorUnreadCount}
-        />
+        <PushNotificationButton className="h-8 w-8 md:h-10 md:w-10" unreadCount={vendorUnreadCount} />
       </Suspense>
 
       {/* Settings */}
