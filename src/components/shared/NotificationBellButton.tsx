@@ -23,6 +23,7 @@ export function NotificationBellButton({ className = '', iconSize = 'w-5 h-5', e
   const navigate = useNavigate();
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const displayCount = externalUnreadCount !== undefined ? externalUnreadCount : unreadCount;
 
   const fetchUnread = useCallback(async () => {
     if (!user?.id) return;
