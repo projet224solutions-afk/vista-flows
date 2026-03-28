@@ -388,7 +388,7 @@ function App() {
               {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
               {/* Abonnement conducteur: disponible pour taxi/driver et vendeur */}
               <Route path="/driver-subscription" element={<ProtectedRoute allowedRoles={['taxi', 'driver', 'livreur', 'admin']}><DriverSubscriptionPage /></ProtectedRoute>} />
-              <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><VendorSubscriptionPage /></ProtectedRoute>} />
+              <Route path="/vendeur/subscription" element={<ProtectedRoute allowedRoles={['vendeur', 'admin']}><SubscriptionsPage /></ProtectedRoute>} />
               <Route path="/tracking" element={<ClientTrackingPage />} />
               <Route path="/client-tracking" element={<ClientTrackingPage />} />
               <Route path="/profil" element={<Profil />} />
@@ -506,7 +506,7 @@ function App() {
                 path="/subscriptions"
                 element={
                   <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
-                    <Navigate to="/vendeur/subscription" replace />
+                    <SubscriptionsPage />
                   </ProtectedRoute>
                 }
               />
