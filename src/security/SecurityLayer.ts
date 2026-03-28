@@ -6,8 +6,22 @@
 
 import CryptoJS from 'crypto-js';
 
-// Clé de chiffrement (doit être en variable d'environnement en production)
-const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'default-key-change-in-production';
+// Clé de chiffrement: variable d'env si définie, sinon clé runtime par session.
+const ENV_ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY;
+
+function getRuntimeEncryptionKey(): string {
+  if (ENV_ENCRYPTION_KEY) return ENV_ENCRYPTION_KEY;
+
+  const storageKey = '__224_runtime_security_key';
+  const existing = sessionStorage.getItem(storageKey);
+  if (existing) return existing;
+
+  const random = new Uint8Array(32);
+  crypto.getRandomValues(random);
+  const generated = Array.from(random, (b) => b.toString(16).padStart(2, '0')).join('');
+  sessionStorage.setItem(storageKey, generated);
+  return generated;
+}
 
 /**
  * Classe principale de sécurité
@@ -20,7 +34,8 @@ export class SecurityLayer {
   static encrypt(data: string | object): string {
     try {
       const dataString = typeof data === 'object' ? JSON.stringify(data) : data;
-      return CryptoJS.AES.encrypt(dataString, ENCRYPTION_KEY).toString();
+      const encryptionKey = getRuntimeEncryptionKey();
+      return CryptoJS.AES.encrypt(dataString, encryptionKey).toString();
     } catch (error) {
       console.error('Erreur chiffrement:', error);
       throw new Error('Échec du chiffrement');
@@ -32,7 +47,8 @@ export class SecurityLayer {
    */
   static decrypt(encryptedData: string): string {
     try {
-      const bytes = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
+      const encryptionKey = getRuntimeEncryptionKey();
+      const bytes = CryptoJS.AES.decrypt(encryptedData, encryptionKey);
       return bytes.toString(CryptoJS.enc.Utf8);
     } catch (error) {
       console.error('Erreur déchiffrement:', error);
