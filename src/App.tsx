@@ -506,7 +506,7 @@ function App() {
                 path="/subscriptions"
                 element={
                   <ProtectedRoute allowedRoles={['vendeur', 'admin']}>
-                    <SubscriptionsPage />
+                    <Navigate to="/vendeur/subscription" replace />
                   </ProtectedRoute>
                 }
               />

@@ -350,7 +350,7 @@ export default function ProductManagement() {
         description: 'Passez à un abonnement Premium pour télécharger des vidéos publicitaires',
         action: {
           label: 'Voir les offres',
-          onClick: () => navigate('/subscriptions')
+          onClick: () => navigate('/vendeur/subscription')
         }
       });
       return;
@@ -856,7 +856,7 @@ export default function ProductManagement() {
                 </p>
                 <div className="flex gap-2 mt-3">
                   <Button
-                    onClick={() => navigate('/subscriptions')}
+                    onClick={() => navigate('/vendeur/subscription')}
                     size="sm"
                     variant="default"
                   >
@@ -890,7 +890,7 @@ export default function ProductManagement() {
                   Vous avez atteint la limite de {productLimit.max_products} produits pour votre plan actuel ({productLimit.current_count}/{productLimit.max_products}).
                 </p>
                 <Button
-                  onClick={() => navigate('/subscriptions')}
+                  onClick={() => navigate('/vendeur/subscription')}
                   size="sm"
                   className="mt-3"
                   variant="default"
@@ -915,7 +915,7 @@ export default function ProductManagement() {
                 </span>
               </div>
               <Button
-                onClick={() => navigate('/subscriptions')}
+                onClick={() => navigate('/vendeur/subscription')}
                 size="sm"
                 variant="ghost"
                 className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
@@ -1678,7 +1678,7 @@ export default function ProductManagement() {
                           description: 'Passez à un abonnement Premium/Pro/Business pour ajouter des vidéos',
                           action: {
                             label: 'Voir les offres',
-                            onClick: () => navigate('/subscriptions')
+                            onClick: () => navigate('/vendeur/subscription')
                           }
                         });
                         return;

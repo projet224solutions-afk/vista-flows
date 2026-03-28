@@ -88,7 +88,7 @@ export function FeatureGate({
                 <Button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate('/subscriptions');
+                    navigate('/vendeur/subscription');
                   }}
                   className="w-full"
                   size="lg"
