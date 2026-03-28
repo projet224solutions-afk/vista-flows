@@ -502,7 +502,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(docUrl, '_blank')}
+                            onClick={() => window.open(docUrl, '_blank', 'noopener,noreferrer')}
                           >
                             Voir
                           </Button>
@@ -591,7 +591,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                             type="button"
                             variant="secondary"
                             size="sm"
-                            onClick={() => window.open(photoUrl, '_blank')}
+                            onClick={() => window.open(photoUrl, '_blank', 'noopener,noreferrer')}
                           >
                             Voir
                           </Button>

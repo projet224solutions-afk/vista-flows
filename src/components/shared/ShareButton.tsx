@@ -127,19 +127,19 @@ export function ShareButton({
 
   const handleWhatsAppShare = async () => {
     const urlToShare = await getShareUrl();
-    window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText}\n${urlToShare}`)}`, "_blank");
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText}\n${urlToShare}`)}`, "_blank", "noopener,noreferrer");
     toast.success("Ouverture de WhatsApp...");
   };
 
   const handleFacebookShare = async () => {
     const urlToShare = await getShareUrl();
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`, "_blank", "width=600,height=400");
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`, "_blank", "width=600,height=400,noopener,noreferrer");
     toast.success("Ouverture de Facebook...");
   };
 
   const handleTwitterShare = async () => {
     const urlToShare = await getShareUrl();
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(urlToShare)}`, "_blank", "width=600,height=400");
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(urlToShare)}`, "_blank", "width=600,height=400,noopener,noreferrer");
     toast.success("Ouverture de Twitter/X...");
   };
 

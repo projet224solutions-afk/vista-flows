@@ -359,7 +359,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
     };
 
     const openGoogleMaps = (lat: number, lng: number) => {
-        window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+        window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank', 'noopener,noreferrer');
     };
 
     const generatePDFReport = async (vehicle: StolenVehicle) => {

@@ -807,7 +807,7 @@ export default function PaymentLinksManager() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(`/payment/${link.payment_id}`, '_blank')}
+                            onClick={() => window.open(`/payment/${link.payment_id}`, '_blank', 'noopener,noreferrer')}
                             className="h-8 w-8 p-0"
                             title="Ouvrir"
                           >

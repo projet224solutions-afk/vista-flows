@@ -137,7 +137,7 @@ export default function DigitalProductDetail() {
 
     // Pour les produits affiliés, rediriger vers le lien
     if (product.product_mode === 'affiliate' && product.affiliate_url) {
-      window.open(product.affiliate_url, '_blank');
+      window.open(product.affiliate_url, '_blank', 'noopener,noreferrer');
       return;
     }
 

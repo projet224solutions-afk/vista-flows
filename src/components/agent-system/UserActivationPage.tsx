@@ -144,7 +144,7 @@ export default function UserActivationPage() {
                 <Button 
                   size="lg"
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  onClick={() => window.open(activationResult.downloadUrl, '_blank')}
+                  onClick={() => window.open(activationResult.downloadUrl, '_blank', 'noopener,noreferrer')}
                 >
                   <Download className="w-5 h-5 mr-2" />
                   Télécharger Maintenant

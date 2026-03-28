@@ -94,7 +94,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
       if (affiliateCode) {
         url += `?ref=${affiliateCode}`;
       }
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
     toast.info('Redirection vers le site partenaire...');
   };
@@ -106,9 +106,9 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
       if (affiliateCode) {
         url += `&ref=${affiliateCode}`;
       }
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener,noreferrer');
     } else if (hotel?.website_url) {
-      window.open(hotel.website_url, '_blank');
+      window.open(hotel.website_url, '_blank', 'noopener,noreferrer');
     }
     toast.info('Redirection vers le site partenaire...');
   };

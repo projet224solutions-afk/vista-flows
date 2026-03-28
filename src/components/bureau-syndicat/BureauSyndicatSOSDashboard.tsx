@@ -77,7 +77,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
               label: '🧭 Localiser',
               onClick: () => {
                 if (payload.new.latitude && payload.new.longitude) {
-                  window.open(`https://www.google.com/maps?q=${payload.new.latitude},${payload.new.longitude}`, '_blank');
+                  window.open(`https://www.google.com/maps?q=${payload.new.latitude},${payload.new.longitude}`, '_blank', 'noopener,noreferrer');
                 }
                 loadSOSAlerts();
               }
@@ -147,7 +147,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
   };
 
   const handleOpenMap = (lat: number, lng: number) => {
-    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleNavigateToDriver = (lat: number, lng: number, driverName: string) => {
@@ -159,21 +159,21 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           const destination = `${lat},${lng}`;
           // Ouvrir Google Maps avec la navigation turn-by-turn
           const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving&dir_action=navigate`;
-          window.open(url, '_blank');
+          window.open(url, '_blank', 'noopener,noreferrer');
           toast.success(`Navigation vers ${driverName} démarrée!`);
         },
         (error) => {
           console.error('Erreur GPS:', error);
           // Fallback: navigation sans position d'origine
           const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving&dir_action=navigate`;
-          window.open(url, '_blank');
+          window.open(url, '_blank', 'noopener,noreferrer');
         },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     } else {
       // Fallback: navigation simple
       const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 

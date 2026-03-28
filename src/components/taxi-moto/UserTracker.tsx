@@ -171,7 +171,7 @@ export function UserTracker() {
     }
 
     const url = `https://www.google.com/maps/dir/?api=1&destination=${trackedUser.lastLat},${trackedUser.lastLng}`;
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   /**

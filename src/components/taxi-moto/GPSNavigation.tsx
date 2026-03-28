@@ -85,7 +85,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
     const destination = `${target.latitude},${target.longitude}`;
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
     
-    window.open(mapsUrl, '_blank');
+    window.open(mapsUrl, '_blank', 'noopener,noreferrer');
     toast.success("Navigation ouverte dans Google Maps");
   };
 

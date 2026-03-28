@@ -322,12 +322,12 @@ export function GoogleMapsNavigation({
       const destination = `${target.latitude},${target.longitude}`;
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
       
-      window.open(mapsUrl, '_blank');
+      window.open(mapsUrl, '_blank', 'noopener,noreferrer');
       toast.success("Navigation ouverte dans Google Maps");
     } else {
       // Sans course active, ouvrir Google Maps centré sur la position actuelle
       const mapsUrl = `https://www.google.com/maps/@${currentLocation.latitude},${currentLocation.longitude},15z`;
-      window.open(mapsUrl, '_blank');
+      window.open(mapsUrl, '_blank', 'noopener,noreferrer');
       toast.success("Google Maps ouvert sur votre position");
     }
   };

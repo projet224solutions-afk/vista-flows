@@ -127,7 +127,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
   // Ouvrir la navigation GPS
   const openNavigation = (lat: number, lng: number, label: string) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Capture photo depuis la caméra
