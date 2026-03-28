@@ -147,12 +147,12 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-foreground">
+        <h1 className="text-2xl md:text-4xl font-bold text-foreground leading-tight">
           Choisissez votre plan d'abonnement
         </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-sm md:text-lg text-muted-foreground max-w-2xl mx-auto">
           Développez votre activité avec les outils adaptés à vos besoins
         </p>
       </div>
@@ -168,7 +168,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
             <Card
               key={plan.id}
               className={`relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                isPremium ? 'border-primary/70 shadow-primary/20 bg-gradient-to-b from-primary/5 to-transparent' : 'border-border/70'
+                isPremium ? 'border-[#ff4000] shadow-primary/20 bg-gradient-to-b from-primary/5 to-transparent' : 'border-[#ff4000]'
               } ${isCurrent ? 'ring-2 ring-primary' : ''}`}
             >
               {isPremium && (
@@ -186,11 +186,11 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
                 </div>
               )}
 
-              <CardHeader className="text-center pb-4 relative z-10">
+              <CardHeader className="text-center pb-3 md:pb-4 relative z-10">
                 <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center mb-4">
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
-                <CardTitle className="text-2xl tracking-tight">{getPlanLabel(plan)}</CardTitle>
+                <CardTitle className="text-xl md:text-2xl tracking-tight">{getPlanLabel(plan)}</CardTitle>
 
                 <div className="mt-3 space-y-2">
                   <div className="flex items-center justify-center gap-1.5 text-sm font-semibold text-foreground">
@@ -214,7 +214,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
                 </CardDescription>
 
                 <div className="mt-4 space-y-1">
-                  <div className="text-3xl font-extrabold tracking-tight text-foreground">
+                  <div className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
                     {SubscriptionService.formatAmount(plan.monthly_price_gnf)}
                   </div>
                   <div className="text-sm text-muted-foreground/90">pour 1 mois</div>
@@ -239,7 +239,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
                 <Button
                   onClick={() => onSelectPlan(plan)}
                   disabled={isCurrent || plan.name === 'free'}
-                  className="w-full"
+                  className="w-full min-h-10"
                   variant={isPremium ? 'default' : 'outline'}
                 >
                   {isCurrent
@@ -277,9 +277,11 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
               return (
                 <div key={`check-${plan.id}`} className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-3 p-3 rounded-lg border bg-background/60">
                   <div className="md:col-span-2 text-sm font-semibold">{getPlanLabel(plan)}</div>
+                  <div className="md:hidden text-[11px] uppercase tracking-wide text-muted-foreground">Limites</div>
                   <div className="md:col-span-3 text-xs text-muted-foreground">
                     {limitLabel} · {plan.max_images_per_product} images/produit
                   </div>
+                  <div className="md:hidden text-[11px] uppercase tracking-wide text-muted-foreground">Fonctionnalites</div>
                   <div className="md:col-span-7 text-xs leading-relaxed text-muted-foreground">
                     {features.length > 0 ? features.join(' · ') : 'aucune fonctionnalite additionnelle'}
                   </div>

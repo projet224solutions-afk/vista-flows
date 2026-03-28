@@ -412,15 +412,15 @@ export default function VendorSubscriptionPage() {
                     key={plan.id}
                     className={`p-4 rounded-xl border-2 transition-all ${
                       isCurrentPlan
-                        ? 'border-primary bg-primary/5'
+                        ? 'border-[#ff4000] bg-primary/5'
                         : plan.name === 'free'
-                          ? 'border-border bg-muted/20'
-                          : 'border-border hover:border-primary/50 cursor-pointer'
+                          ? 'border-[#ff4000] bg-muted/20'
+                          : 'border-[#ff4000] hover:border-[#ff4000] cursor-pointer'
                     }`}
                     onClick={() => !isCurrentPlan && plan.name !== 'free' && handleSelectPlan(plan)}
                   >
                     {/* Header row */}
-                    <div className="flex items-start justify-between mb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-bold text-base">{plan.display_name}</h3>
@@ -443,12 +443,12 @@ export default function VendorSubscriptionPage() {
                         </p>
                       </div>
                       {!isCurrentPlan && plan.name !== 'free' && (
-                        <Button size="sm">Choisir</Button>
+                        <Button size="sm" className="w-full sm:w-auto">Choisir</Button>
                       )}
                     </div>
 
                     {/* KEY LIMITS — highly visible */}
-                    <div className="grid grid-cols-2 gap-2 mb-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                       <div className="flex items-center gap-2.5 rounded-lg bg-primary/5 border border-primary/15 px-3 py-2">
                         <Package className="h-5 w-5 text-primary shrink-0" />
                         <div>
@@ -488,7 +488,7 @@ export default function VendorSubscriptionPage() {
                     </div>
 
                     {/* Features grid */}
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
                       <div className="flex items-center gap-1.5">
                         {plan.analytics_access ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
                         <span className={!plan.analytics_access ? 'text-muted-foreground/60' : ''}>Analytics</span>

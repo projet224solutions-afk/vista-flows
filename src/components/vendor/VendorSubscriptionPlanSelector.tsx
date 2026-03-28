@@ -208,7 +208,7 @@ export function VendorSubscriptionPlanSelector({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Choisir un plan d'abonnement</DialogTitle>
           <DialogDescription>
@@ -218,11 +218,11 @@ export function VendorSubscriptionPlanSelector({
 
         <div className="space-y-3">
           <label className="text-sm font-medium">Duree de l'abonnement</label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
             {(Object.keys(BILLING_CYCLE_LABELS) as BillingCycle[]).map((cycle) => (
               <Card
                 key={cycle}
-                className={`p-4 cursor-pointer transition-all hover:border-primary ${
+                className={`p-3 sm:p-4 cursor-pointer transition-all hover:border-primary ${
                   billingCycle === cycle ? 'border-primary bg-primary/5' : ''
                 }`}
                 onClick={() => setBillingCycle(cycle)}
@@ -231,7 +231,7 @@ export function VendorSubscriptionPlanSelector({
                   {billingCycle === cycle && <Check className="w-4 h-4 text-primary" />}
                   <Calendar className="w-4 h-4" />
                 </div>
-                <p className="font-medium mt-2">{BILLING_CYCLE_LABELS[cycle]}</p>
+                <p className="font-medium mt-2 text-sm sm:text-base">{BILLING_CYCLE_LABELS[cycle]}</p>
                 {cycle === 'yearly' && (
                   <Badge variant="secondary" className="mt-2 text-xs">
                     Economisez jusqu'a 20%
@@ -258,8 +258,8 @@ export function VendorSubscriptionPlanSelector({
                 return (
                   <Card
                     key={plan.id}
-                    className={`p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:border-primary hover:shadow-md ${
-                      selectedPlan?.id === plan.id ? 'border-primary bg-primary/5 ring-1 ring-primary/30' : 'border-border/70'
+                    className={`p-3 sm:p-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:border-primary hover:shadow-md ${
+                      selectedPlan?.id === plan.id ? 'border-[#ff4000] bg-primary/5 ring-1 ring-primary/30' : 'border-[#ff4000]'
                     }`}
                     onClick={() => setSelectedPlan(plan)}
                   >
@@ -269,7 +269,7 @@ export function VendorSubscriptionPlanSelector({
                           {selectedPlan?.id === plan.id && (
                             <Check className="w-4 h-4 text-primary" />
                           )}
-                          <h3 className="font-bold text-lg tracking-tight">{getPlanLabel(plan)}</h3>
+                          <h3 className="font-bold text-base sm:text-lg tracking-tight">{getPlanLabel(plan)}</h3>
                           {discount && (
                             <Badge variant="secondary" className="text-xs">
                               -{discount}%
@@ -297,7 +297,7 @@ export function VendorSubscriptionPlanSelector({
                         </p>
 
                         <div className="space-y-1">
-                          <span className="text-2xl font-extrabold tracking-tight text-primary">
+                          <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-primary">
                             {price.toLocaleString()} GNF
                           </span>
                           <p className="text-sm text-muted-foreground/90">
@@ -321,11 +321,12 @@ export function VendorSubscriptionPlanSelector({
           <span className="font-bold">{walletBalance.toLocaleString()} GNF</span>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={subscribing}>
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => onOpenChange(false)} disabled={subscribing}>
             Annuler
           </Button>
           <Button
+            className="w-full sm:w-auto"
             onClick={handleSubscribe}
             disabled={!selectedPlan || subscribing}
           >
