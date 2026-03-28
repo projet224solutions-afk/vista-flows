@@ -222,8 +222,8 @@ export function VendorSubscriptionPlanSelector({
             {(Object.keys(BILLING_CYCLE_LABELS) as BillingCycle[]).map((cycle) => (
               <Card
                 key={cycle}
-                className={`p-3 sm:p-4 cursor-pointer transition-all hover:border-primary ${
-                  billingCycle === cycle ? 'border-primary bg-primary/5' : ''
+                className={`p-3 sm:p-4 cursor-pointer transition-all hover:border-[#ff4000] ${
+                  billingCycle === cycle ? 'border-[#ff4000] bg-primary/5' : 'border-[#ff4000]'
                 }`}
                 onClick={() => setBillingCycle(cycle)}
               >
