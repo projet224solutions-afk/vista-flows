@@ -44,10 +44,11 @@ All colors MUST be HSL.
     --ring: 220 96% 27%;
 
     /* Role-based — tous basés sur la charte */
-    --vendeur-primary: 220 97% 27%;
+    /* Vendeur digital: Bleu Profond #04439e + Orange #ff4000 */
+    --vendeur-primary: 220 96% 32%;
     --vendeur-secondary: 15 100% 50%;
-    --vendeur-accent: 220 97% 95%;
-    --vendeur-gradient: hsl(220 97% 27%);
+    --vendeur-accent: 220 96% 95%;
+    --vendeur-gradient: linear-gradient(135deg, hsl(220 96% 32%), hsl(15 100% 50%));
 
     --livreur-primary: 15 100% 50%;
     --livreur-secondary: 220 96% 32%;

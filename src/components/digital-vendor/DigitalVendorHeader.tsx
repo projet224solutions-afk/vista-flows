@@ -27,7 +27,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
   const navigate = useNavigate();
 
   return (
-    <header className="min-h-14 md:min-h-16 bg-white/95 dark:bg-background/95 backdrop-blur-lg border-b border-border/50 sticky top-0 z-40 shadow-sm px-2 sm:px-3 md:px-6 w-full">
+    <header className="min-h-14 md:min-h-16 bg-white/95 dark:bg-background/95 backdrop-blur-lg border-b border-vendeur-primary/20 sticky top-0 z-40 shadow-sm px-2 sm:px-3 md:px-6 w-full">
       <div className="flex flex-col sm:flex-row sm:items-center w-full min-w-0 gap-2 py-2 md:py-0">
         {/* Brand */}
         <div className="flex items-center gap-2 min-w-0">
@@ -36,7 +36,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
             aria-label="Ouvrir/Fermer le menu"
           />
           <img src="/logo-224solutions.png" alt="224Solutions" className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-contain" />
-          <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-700 bg-clip-text text-transparent whitespace-nowrap">
+          <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-vendeur-primary to-vendeur-secondary bg-clip-text text-transparent whitespace-nowrap">
             Digital Store
           </h1>
         </div>

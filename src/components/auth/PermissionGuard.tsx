@@ -2,6 +2,7 @@ import React from 'react';
 import { useAgentPermissions } from '@/hooks/usePDGAgentPermissions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface PermissionGuardProps {
   requiredPermission: string | string[];
@@ -20,10 +21,11 @@ export function PermissionGuard({
   children,
   fallback
 }: PermissionGuardProps) {
+  const { t } = useTranslation();
   const { hasPermission, hasAllPermissions, hasAnyPermission, loading } = useAgentPermissions();
 
   if (loading) {
-    return <div className="p-4 text-gray-500">Vérification des permissions...</div>;
+    return <div className="p-4 text-gray-500">{t('auth.permissions.checking')}</div>;
   }
 
   const permissions = Array.isArray(requiredPermission) ? requiredPermission : [requiredPermission];
@@ -34,13 +36,13 @@ export function PermissionGuard({
       fallback || (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertTitle>{t('auth.permissions.accessDenied')}</AlertTitle>
           <AlertDescription>
-            Vous n'avez pas la permission d'accéder à cette fonctionnalité.
+            {t('auth.permissions.denied')}
             {permissions.length === 1 && (
-              <div className="mt-2 text-sm">Permission requise: <code className="bg-red-50 px-2 py-1">{permissions[0]}</code></div>
+              <div className="mt-2 text-sm">{t('auth.permissions.required')}: <code className="bg-red-50 px-2 py-1">{permissions[0]}</code></div>
             )}
-            Veuillez contacter le PDG pour demander l'accès.
+            {t('auth.permissions.contactPdg')}
           </AlertDescription>
         </Alert>
       )
@@ -80,14 +82,15 @@ export function ProtectedAction({
   fallback,
   showWarning = false
 }: ProtectedActionProps) {
+  const { t } = useTranslation();
   const hasAccess = useHasPermission(permission);
 
   if (!hasAccess) {
     return fallback || (
-      <div title="Vous n'avez pas accès à cette action">
+      <div title={t('auth.permissions.noAccessToAction')}>
         {React.cloneElement(children, { disabled: true, opacity: 0.5 } as any)}
         {showWarning && (
-          <p className="text-xs text-red-500 mt-1">Permission requise</p>
+          <p className="text-xs text-red-500 mt-1">{t('auth.permissions.required')}</p>
         )}
       </div>
     );
