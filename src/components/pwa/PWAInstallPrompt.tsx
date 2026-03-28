@@ -74,8 +74,19 @@ function PWAInstallPromptInner() {
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             {/* Icône */}
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 shadow-lg">
-              <Download className="w-6 h-6 text-white animate-bounce" />
+            <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-lg">
+              <img
+                src="/icon-192.png?v=3"
+                alt="224Solutions"
+                className="w-12 h-12"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.style.display = 'none';
+                  if (img.parentElement) {
+                    img.parentElement.className = 'w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 shadow-lg';
+                  }
+                }}
+              />
             </div>
 
             {/* Contenu */}

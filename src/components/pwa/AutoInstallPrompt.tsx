@@ -353,15 +353,24 @@ export function AutoInstallPrompt({
               }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center overflow-hidden">
                       {displayContext === 'offline' ? (
                         <WifiOff className="w-8 h-8" />
                       ) : isVendor ? (
                         <Store className="w-8 h-8" />
-                      ) : isIOS ? (
-                        <Smartphone className="w-8 h-8" />
                       ) : (
-                        <Download className="w-8 h-8" />
+                        <img
+                          src="/icon-192.png?v=3"
+                          alt="224Solutions"
+                          className="w-14 h-14"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.display = 'none';
+                            if (img.parentElement) {
+                              img.parentElement.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>';
+                            }
+                          }}
+                        />
                       )}
                     </div>
                     <div>

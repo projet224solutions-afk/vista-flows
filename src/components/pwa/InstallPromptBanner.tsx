@@ -151,12 +151,18 @@ export function InstallPromptBanner() {
           </button>
           
           <div className="flex items-start gap-3">
-            <div className="bg-white/20 p-3 rounded-xl flex-shrink-0">
-              {isIOS ? (
-                <Smartphone className="w-6 h-6 text-white" />
-              ) : (
-                <Download className="w-6 h-6 text-white" />
-              )}
+            <div className="bg-white/10 p-1 rounded-xl flex-shrink-0">
+              <img
+                src="/icon-192.png?v=3"
+                alt="224Solutions"
+                className="w-10 h-10 rounded-lg"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.style.display = 'none';
+                  const parent = img.parentElement;
+                  if (parent) parent.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white m-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>';
+                }}
+              />
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-lg mb-1">

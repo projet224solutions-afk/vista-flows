@@ -134,7 +134,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl"
             >
               <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
-                <img src="/icon-192.png" alt="224Solutions" className="w-12 h-12 rounded-xl" onError={(e) => {
+                <img src="/icon-192.png?v=3" alt="224Solutions" className="w-12 h-12 rounded-xl" onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }} />
               </div>
@@ -271,7 +271,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               
               <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-700 rounded-xl">
                 <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow">
-                  <img src="/icon-192.png" alt="" className="w-10 h-10 rounded-lg" onError={(e) => {
+                  <img src="/icon-192.png?v=3" alt="" className="w-10 h-10 rounded-lg" onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }} />
                 </div>
