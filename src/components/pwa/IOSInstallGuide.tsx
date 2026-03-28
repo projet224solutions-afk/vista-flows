@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Share, Plus, X, Check, ArrowDown, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 interface IOSInstallGuideProps {
   open: boolean;
@@ -14,21 +15,22 @@ interface IOSInstallGuideProps {
 }
 
 export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
+  const { t } = useLanguage();
   const [step, setStep] = useState(0);
   const [isSafari, setIsSafari] = useState(true);
   const [isIPad, setIsIPad] = useState(false);
-  const [copyButtonText, setCopyButtonText] = useState('Copier le lien');
+  const [copyButtonText, setCopyButtonText] = useState('');
   const modalCardClass = 'bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl';
   const closeButtonClass = 'absolute top-12 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors';
 
   const copyCurrentLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      setCopyButtonText('Copie ✓');
-      setTimeout(() => setCopyButtonText('Copier le lien'), 2000);
+      setCopyButtonText(t('pwa.ios.nonSafari.copySuccess'));
+      setTimeout(() => setCopyButtonText(t('pwa.ios.nonSafari.copyLink')), 2000);
     } catch {
-      setCopyButtonText('Copie impossible');
-      setTimeout(() => setCopyButtonText('Copier le lien'), 2500);
+      setCopyButtonText(t('pwa.ios.nonSafari.copyError'));
+      setTimeout(() => setCopyButtonText(t('pwa.ios.nonSafari.copyLink')), 2500);
     }
   };
 
@@ -83,9 +85,9 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
   useEffect(() => {
     if (open) {
       setStep(0);
-      setCopyButtonText('Copier le lien');
+      setCopyButtonText(t('pwa.ios.nonSafari.copyLink'));
     }
-  }, [open]);
+  }, [open, t]);
 
   if (!open) return null;
 
@@ -106,20 +108,20 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             className={modalCardClass}
           >
             <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300">
-              Etape prealable
+              {t('pwa.ios.step.preTitle')}
             </div>
             <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mx-auto">
               <Smartphone className="w-10 h-10 text-blue-600" />
             </div>
-            <h2 className="text-xl font-bold text-foreground">Ouvrez dans Safari</h2>
+            <h2 className="text-xl font-bold text-foreground">{t('pwa.ios.nonSafari.title')}</h2>
             <p className="text-muted-foreground text-sm">
-              L'installation iOS ne fonctionne que depuis <strong>Safari</strong>. Depuis Google/Chrome iOS, ouvrez d'abord ce lien dans Safari.
+              {t('pwa.ios.nonSafari.description')}
             </p>
             <Button
               onClick={openInSafari}
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
-              Ouvrir dans Safari
+              {t('pwa.ios.nonSafari.openSafari')}
             </Button>
             <Button
               onClick={copyCurrentLink}
@@ -129,7 +131,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               <span>{copyButtonText}</span>
             </Button>
             <button onClick={() => onOpenChange(false)} className="text-sm text-muted-foreground hover:underline">
-              Fermer
+              {t('pwa.ios.actions.close')}
             </button>
           </motion.div>
         </motion.div>
@@ -156,16 +158,16 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl"
             >
               <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300">
-                Guide iOS - Etape 1/3
+                {t('pwa.ios.step1.badge')}
               </div>
               <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
                 <img src="/icon-192.png?v=3" alt="224Solutions" className="w-12 h-12 rounded-xl" onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }} />
               </div>
-              <h2 className="text-xl font-bold text-foreground">Installer 224Solutions</h2>
+              <h2 className="text-xl font-bold text-foreground">{t('pwa.ios.step1.title')}</h2>
               <p className="text-muted-foreground text-sm">
-                Appuyez sur le bouton <strong>Partager</strong> en bas de votre écran
+                {t('pwa.ios.step1.description')}
               </p>
               
               {/* Icône Share stylisée */}
@@ -181,13 +183,13 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                   onClick={() => onOpenChange(false)}
                   className="flex-1 h-11 font-medium"
                 >
-                  Fermer
+                  {t('pwa.ios.actions.close')}
                 </Button>
                 <Button
                   onClick={() => setStep(1)}
                   className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                 >
-                  Suivant
+                  {t('pwa.ios.actions.next')}
                 </Button>
               </div>
             </motion.div>
@@ -201,7 +203,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               className="flex flex-col items-center"
             >
               <ArrowDown className="w-10 h-10 text-white" />
-              <span className="text-white text-xs font-medium mt-1">Appuyez ici</span>
+              <span className="text-white text-xs font-medium mt-1">{t('pwa.ios.step1.hint')}</span>
             </motion.div>
           </div>
 
@@ -230,9 +232,9 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             onClick={(e) => e.stopPropagation()}
             className={modalCardClass}
           >
-            <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300">
-              Guide iOS - Etape 2/3
-            </div>
+              <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300">
+                {t('pwa.ios.step2.badge')}
+              </div>
             {/* Simulation du menu partager iOS */}
             <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-4 space-y-3">
               <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-700 rounded-xl border-2 border-blue-500 shadow-md">
@@ -264,14 +266,14 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             </div>
             
             <p className="text-muted-foreground text-sm">
-              Faites défiler et appuyez sur <strong>"Sur l'écran d'accueil"</strong>
+              {t('pwa.ios.step2.description')}
             </p>
 
             <Button
               onClick={() => setStep(2)}
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
-              Suivant
+              {t('pwa.ios.actions.next')}
             </Button>
 
             <div className="grid grid-cols-2 gap-2">
@@ -280,14 +282,14 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                 onClick={() => setStep(0)}
                 className="h-11"
               >
-                Retour
+                {t('pwa.ios.actions.back')}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 className="h-11"
               >
-                Fermer
+                {t('pwa.ios.actions.close')}
               </Button>
             </div>
           </motion.div>
@@ -315,9 +317,9 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             animate={{ scale: 1, y: 0 }}
             className={modalCardClass}
           >
-            <div className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:border-green-900/60 dark:bg-green-900/20 dark:text-green-300">
-              Guide iOS - Etape 3/3
-            </div>
+              <div className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:border-green-900/60 dark:bg-green-900/20 dark:text-green-300">
+                {t('pwa.ios.step3.badge')}
+              </div>
             {/* Simulation de la confirmation iOS */}
             <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between">
@@ -346,7 +348,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             </div>
 
             <p className="text-muted-foreground text-sm">
-              Appuyez sur <strong>"Ajouter"</strong> en haut à droite
+              {t('pwa.ios.step3.description')}
             </p>
 
             <Button
@@ -354,7 +356,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
             >
               <Check className="w-5 h-5 mr-2" />
-              Terminer
+              {t('pwa.ios.actions.finish')}
             </Button>
 
             <div className="grid grid-cols-2 gap-2">
@@ -363,14 +365,14 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                 onClick={() => setStep(1)}
                 className="h-11"
               >
-                Retour
+                {t('pwa.ios.actions.back')}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 className="h-11"
               >
-                Fermer
+                {t('pwa.ios.actions.close')}
               </Button>
             </div>
           </motion.div>

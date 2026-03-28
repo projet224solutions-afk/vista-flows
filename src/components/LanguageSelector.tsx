@@ -30,6 +30,9 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const currentLang = supportedLanguages.find(l => l.code === language);
+  const languageLabel = t('i18n.language.title') !== 'i18n.language.title'
+    ? t('i18n.language.title')
+    : t('language.title');
 
   const handleLanguageChange = (langCode: string) => {
     setLanguage(langCode);
@@ -47,7 +50,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         <DropdownMenuContent align="end" className="w-56 bg-background border border-border shadow-lg z-50">
           <DropdownMenuLabel className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
-            {t('language.title')}
+            {languageLabel}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <ScrollArea className="h-[300px]">
@@ -110,7 +113,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     <div className={`space-y-2 ${className}`}>
       <label className="flex items-center gap-2 text-sm font-medium text-foreground">
         <Globe className="h-4 w-4" />
-        {t('language.title')}
+        {languageLabel}
       </label>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>

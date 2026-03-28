@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface OrderProduct {
   id: string;
@@ -45,6 +46,7 @@ export default function ProductRatingDialog({
   vendorName,
   onRatingSubmitted
 }: ProductRatingDialogProps) {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<OrderProduct[]>([]);
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
   const [rating, setRating] = useState(0);
@@ -99,7 +101,7 @@ export default function ProductRatingDialog({
         return {
           id: item.id,
           product_id: item.product_id,
-          product_name: product?.name || 'Produit',
+          product_name: product?.name || t('rating.product.productFallback'),
           product_image: firstImage,
           quantity: item.quantity,
           rated: ratedProductIds.has(item.product_id)
@@ -118,7 +120,7 @@ export default function ProductRatingDialog({
       }
     } catch (error) {
       console.error('Erreur chargement produits:', error);
-      toast.error('Erreur lors du chargement des produits');
+      toast.error(t('rating.product.loadError'));
     } finally {
       setLoading(false);
     }
@@ -126,7 +128,7 @@ export default function ProductRatingDialog({
 
   const handleSubmitRating = async () => {
     if (rating === 0) {
-      toast.error('Veuillez sélectionner une note');
+      toast.error(t('rating.product.selectRating'));
       return;
     }
 
@@ -146,16 +148,16 @@ export default function ProductRatingDialog({
           order_id: orderId,
           user_id: user.id,
           rating: rating,
-          title: `Avis sur ${currentProduct.product_name}`.substring(0, 100),
-          content: comment.trim() || 'Aucun commentaire',
+          title: t('rating.product.reviewTitle', { productName: currentProduct.product_name }).substring(0, 100),
+          content: comment.trim() || t('rating.product.noComment'),
           verified_purchase: true,
           is_approved: true
         });
 
       if (error) throw error;
 
-      toast.success(`Avis soumis pour ${currentProduct.product_name}`, {
-        description: `${rating}/5 étoiles`
+      toast.success(t('rating.product.submittedFor', { productName: currentProduct.product_name }), {
+        description: t('rating.product.starsDescription', { rating })
       });
 
       // Marquer comme noté
@@ -184,7 +186,7 @@ export default function ProductRatingDialog({
       }
     } catch (error) {
       console.error('Erreur soumission avis:', error);
-      toast.error('Erreur lors de l\'envoi de la note');
+      toast.error(t('rating.product.submitError'));
     } finally {
       setSubmitting(false);
     }
@@ -223,19 +225,19 @@ export default function ProductRatingDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Check className="w-5 h-5 text-green-500" />
-              Merci pour vos avis !
+              {t('rating.product.thanksTitle')}
             </DialogTitle>
             <DialogDescription>
-              Vous avez noté tous les produits de cette commande.
+              {t('rating.product.allRatedDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 text-center">
             <p className="text-muted-foreground">
-              Vos avis aident les autres clients à faire leurs choix.
+              {t('rating.product.impactText')}
             </p>
           </div>
           <DialogFooter>
-            <Button onClick={handleClose}>Fermer</Button>
+            <Button onClick={handleClose}>{t('rating.product.close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -246,9 +248,9 @@ export default function ProductRatingDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Notez vos produits</DialogTitle>
+          <DialogTitle>{t('rating.product.title')}</DialogTitle>
           <DialogDescription>
-            Commande chez <strong>{vendorName}</strong> • {ratedCount}/{totalCount} produit(s) noté(s)
+            {t('rating.product.orderDescription', { vendorName, ratedCount, totalCount })}
           </DialogDescription>
         </DialogHeader>
 
@@ -311,7 +313,7 @@ export default function ProductRatingDialog({
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-sm line-clamp-2">{currentProduct.product_name}</h4>
                     <Badge variant="secondary" className="mt-1 text-xs">
-                      Qté: {currentProduct.quantity}
+                      {t('rating.product.quantityLabel', { quantity: currentProduct.quantity })}
                     </Badge>
                   </div>
                 </div>
@@ -321,7 +323,7 @@ export default function ProductRatingDialog({
 
           {/* Système de notation par étoiles */}
           <div className="flex flex-col items-center gap-2">
-            <p className="text-sm text-muted-foreground">Comment évaluez-vous ce produit ?</p>
+            <p className="text-sm text-muted-foreground">{t('rating.product.askRating')}</p>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -345,11 +347,11 @@ export default function ProductRatingDialog({
             
             {rating > 0 && (
               <p className="text-sm text-muted-foreground">
-                {rating === 1 && 'Très insatisfait'}
-                {rating === 2 && 'Insatisfait'}
-                {rating === 3 && 'Correct'}
-                {rating === 4 && 'Satisfait'}
-                {rating === 5 && 'Excellent !'}
+                {rating === 1 && t('rating.level.1')}
+                {rating === 2 && t('rating.level.2')}
+                {rating === 3 && t('rating.level.3')}
+                {rating === 4 && t('rating.level.4')}
+                {rating === 5 && t('rating.level.5Excellent')}
               </p>
             )}
           </div>
@@ -357,10 +359,10 @@ export default function ProductRatingDialog({
           {/* Commentaire */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Votre avis (optionnel)
+              {t('rating.product.commentLabel')}
             </label>
             <Textarea
-              placeholder="Partagez votre expérience..."
+              placeholder={t('rating.product.commentPlaceholder')}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={2}
@@ -378,7 +380,7 @@ export default function ProductRatingDialog({
             onClick={handleClose}
             disabled={submitting}
           >
-            {ratedCount > 0 ? 'Terminer' : 'Plus tard'}
+            {ratedCount > 0 ? t('rating.product.finish') : t('rating.product.later')}
           </Button>
           <Button
             onClick={handleSubmitRating}
@@ -388,11 +390,11 @@ export default function ProductRatingDialog({
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Envoi...
+                {t('rating.product.submitting')}
               </>
             ) : (
               <>
-                Soumettre
+                {t('rating.product.submit')}
                 {ratedCount < totalCount - 1 && <ChevronRight className="w-4 h-4" />}
               </>
             )}

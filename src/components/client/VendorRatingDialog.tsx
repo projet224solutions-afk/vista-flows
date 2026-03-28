@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Star, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface VendorRatingDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ export default function VendorRatingDialog({
   vendorName,
   onRatingSubmitted
 }: VendorRatingDialogProps) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -37,7 +39,7 @@ export default function VendorRatingDialog({
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      toast.error('Veuillez sélectionner une note');
+      toast.error(t('rating.vendor.selectRating'));
       return;
     }
 
@@ -59,8 +61,8 @@ export default function VendorRatingDialog({
 
       if (error) throw error;
 
-      toast.success('Merci pour votre avis !', {
-        description: `Vous avez noté ${vendorName} avec ${rating}/5 étoiles`
+      toast.success(t('rating.vendor.successTitle'), {
+        description: t('rating.vendor.successDescription', { vendorName, rating })
       });
 
       onRatingSubmitted?.();
@@ -71,7 +73,7 @@ export default function VendorRatingDialog({
       setComment('');
     } catch (error) {
       console.error('Error submitting rating:', error);
-      toast.error('Erreur lors de l\'envoi de la note');
+      toast.error(t('rating.vendor.submitError'));
     } finally {
       setSubmitting(false);
     }
@@ -81,9 +83,9 @@ export default function VendorRatingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Notez votre expérience</DialogTitle>
+          <DialogTitle>{t('rating.vendor.title')}</DialogTitle>
           <DialogDescription>
-            Comment évaluez-vous votre expérience avec <strong>{vendorName}</strong> ?
+            {t('rating.vendor.description', { vendorName })}
           </DialogDescription>
         </DialogHeader>
 
@@ -113,11 +115,11 @@ export default function VendorRatingDialog({
             
             {rating > 0 && (
               <p className="text-sm text-muted-foreground">
-                {rating === 1 && 'Très insatisfait'}
-                {rating === 2 && 'Insatisfait'}
-                {rating === 3 && 'Correct'}
-                {rating === 4 && 'Satisfait'}
-                {rating === 5 && 'Très satisfait'}
+                {rating === 1 && t('rating.level.1')}
+                {rating === 2 && t('rating.level.2')}
+                {rating === 3 && t('rating.level.3')}
+                {rating === 4 && t('rating.level.4')}
+                {rating === 5 && t('rating.level.5')}
               </p>
             )}
           </div>
@@ -125,10 +127,10 @@ export default function VendorRatingDialog({
           {/* Commentaire optionnel */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Commentaire (optionnel)
+              {t('rating.vendor.commentLabel')}
             </label>
             <Textarea
-              placeholder="Partagez votre expérience avec ce vendeur..."
+              placeholder={t('rating.vendor.commentPlaceholder')}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={4}
@@ -146,7 +148,7 @@ export default function VendorRatingDialog({
             onClick={() => onOpenChange(false)}
             disabled={submitting}
           >
-            Plus tard
+            {t('rating.vendor.later')}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -155,10 +157,10 @@ export default function VendorRatingDialog({
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Envoi...
+                {t('rating.vendor.submitting')}
               </>
             ) : (
-              'Envoyer la note'
+              t('rating.vendor.submit')
             )}
           </Button>
         </DialogFooter>

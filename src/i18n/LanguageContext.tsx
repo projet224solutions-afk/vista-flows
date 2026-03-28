@@ -4,14 +4,17 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { translations, supportedLanguages, defaultLanguage } from './translations';
+import { supportedLanguages, defaultLanguage } from './translations';
+import { resolveTranslation } from './catalog';
 import { getLanguageForCountry, isRTLLanguage } from '@/data/countryMappings';
+import { supabase } from '@/integrations/supabase/client';
+import type { TranslationParams } from '@/i18n/types';
 
 
 interface LanguageContextType {
   language: string;
   setLanguage: (lang: string) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: TranslationParams) => string;
   userCountry: string | null;
   isRTL: boolean;
   supportedLanguages: typeof supportedLanguages;
@@ -23,16 +26,30 @@ const STORAGE_KEY = 'app_language';
 const MANUAL_LANG_KEY = 'app_language_manual'; // Indique si l'utilisateur a VRAIMENT choisi manuellement
 const COUNTRY_KEY = 'user_country';
 const GEO_CACHE_KEY = 'geo_detection_cache';
-const GEO_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes - synchronisé avec useGeoDetection
+
+const supportedLanguageCodes = new Set(supportedLanguages.map((lang) => lang.code));
+
+const normalizeLanguage = (lang: string | null | undefined): string => {
+  if (!lang) return defaultLanguage;
+
+  const normalized = lang.toLowerCase().split('-')[0];
+  return supportedLanguageCodes.has(normalized) ? normalized : defaultLanguage;
+};
+
+const interpolate = (template: string, params?: TranslationParams): string => {
+  if (!params) return template;
+
+  return template.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, key: string) => {
+    const value = params[key];
+    return value === null || value === undefined ? '' : String(value);
+  });
+};
 
 // Détecte la langue du navigateur
 const detectBrowserLanguage = (): string => {
   try {
     const browserLang = navigator.language || (navigator as any).userLanguage || '';
-    const langCode = browserLang.split('-')[0].toLowerCase();
-
-    const isSupported = supportedLanguages.some(l => l.code === langCode);
-    return isSupported ? langCode : defaultLanguage;
+    return normalizeLanguage(browserLang);
   } catch {
     return defaultLanguage;
   }
@@ -49,8 +66,8 @@ const detectCountryFromCache = (): { country: string | null; language: string | 
         const country = geoCache.data.country;
         const langFromCache = String(geoCache.data.language || '').toLowerCase();
         const mappedLang = getLanguageForCountry(country);
-        const candidateLang = supportedLanguages.some(l => l.code === langFromCache) ? langFromCache : mappedLang;
-        const language = candidateLang && supportedLanguages.some(l => l.code === candidateLang) ? candidateLang : null;
+        const candidateLang = supportedLanguageCodes.has(langFromCache) ? langFromCache : mappedLang;
+        const language = candidateLang && supportedLanguageCodes.has(candidateLang) ? candidateLang : null;
         return { country, language };
       }
     }
@@ -59,8 +76,7 @@ const detectCountryFromCache = (): { country: string | null; language: string | 
     const cachedCountry = localStorage.getItem(COUNTRY_KEY);
     if (cachedCountry) {
       const language = getLanguageForCountry(cachedCountry);
-      const isSupported = supportedLanguages.some(l => l.code === language);
-      return { country: cachedCountry, language: isSupported ? language : null };
+      return { country: cachedCountry, language: supportedLanguageCodes.has(language) ? language : null };
     }
   } catch {}
 
@@ -73,135 +89,132 @@ interface LanguageProviderProps {
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
   const [language, setLanguageState] = useState<string>(() => {
-    // Priorité: localStorage (choix manuel) > navigateur > défaut
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && supportedLanguages.some(l => l.code === stored)) {
-      return stored;
+    if (stored) {
+      return normalizeLanguage(stored);
     }
+
     return detectBrowserLanguage();
   });
   
   const [userCountry, setUserCountry] = useState<string | null>(null);
-  const [hasAutoDetected, setHasAutoDetected] = useState(false);
 
-  // Détection du pays et langue au chargement - SYNCHRO avec useGeoDetection
+  const setAutomaticLanguage = useCallback((lang: string) => {
+    const hasManualChoice = localStorage.getItem(MANUAL_LANG_KEY) === 'true';
+    if (hasManualChoice) return;
+
+    const normalized = normalizeLanguage(lang);
+    setLanguageState(normalized);
+    localStorage.setItem(STORAGE_KEY, normalized);
+  }, []);
+
+  // Détection du pays au chargement (sans forcer la langue)
   useEffect(() => {
-    const detect = async () => {
-      // Vérifier si l'utilisateur a VRAIMENT choisi manuellement (pas juste une ancienne valeur)
-      const hasManualChoice = localStorage.getItem(MANUAL_LANG_KEY) === 'true';
-      if (hasManualChoice) {
-        console.log('🌍 Langue choisie manuellement, pas de sync auto');
-        return;
-      }
-
-      // Essayer de récupérer depuis le cache de géo-détection (ignorer les fallback)
+    const detect = () => {
       const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
       if (geoCacheRaw) {
         try {
           const geoCache = JSON.parse(geoCacheRaw);
-          if (geoCache?.data?.country && geoCache?.data?.language && geoCache?.data?.detectionMethod !== 'fallback') {
-            const country = geoCache.data.country;
-            const detectedLang = geoCache.data.language;
-            
-            // Vérifier si la langue est supportée
-            if (supportedLanguages.some(l => l.code === detectedLang)) {
-              console.log(`🌍 Auto-sync langue (geo-cache): pays=${country}, langue=${detectedLang}`);
-              setUserCountry(country);
-              if (detectedLang !== language) {
-                setLanguageState(detectedLang);
-                localStorage.setItem(STORAGE_KEY, detectedLang);
-              }
-              setHasAutoDetected(true);
-              return;
-            }
+          if (geoCache?.data?.country) {
+            setUserCountry(geoCache.data.country);
+            return;
           }
         } catch {}
       }
 
-      // Fallback: lire depuis le cache local (pas d'appel réseau)
-      const { country, language: detectedLang } = detectCountryFromCache();
+      const { country } = detectCountryFromCache();
       setUserCountry(country);
-      
-      // Si on a une langue détectée et pas encore auto-détecté
-      if (detectedLang && !hasAutoDetected) {
-        console.log(`🌍 Auto-détection cache: pays=${country}, langue=${detectedLang}`);
-        setLanguageState(detectedLang);
-        localStorage.setItem(STORAGE_KEY, detectedLang);
-        setHasAutoDetected(true);
-      }
     };
     
     detect();
-  }, [hasAutoDetected, language]);
+  }, []);
 
-  // Écouter les changements de cache géo pour synchroniser la langue
+  // Sync optionnelle avec préférence de profil utilisateur si elle existe déjà
+  useEffect(() => {
+    const syncFromProfile = async () => {
+      try {
+        const hasManualChoice = localStorage.getItem(MANUAL_LANG_KEY) === 'true';
+        if (hasManualChoice) {
+          return;
+        }
+
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth?.user?.id;
+
+        if (!userId) {
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('preferred_language')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (profile?.preferred_language) {
+          setAutomaticLanguage(profile.preferred_language);
+        }
+      } catch {
+        // Non bloquant: fallback localStorage + navigateur reste actif
+      }
+    };
+
+    void syncFromProfile();
+  }, [setAutomaticLanguage]);
+
+  // Écouter les changements de cache géo pour synchroniser le pays utilisateur
   useEffect(() => {
     const syncFromGeoCache = () => {
-      // Ne pas écraser si choix manuel explicite
-      const hasManualChoice = localStorage.getItem(MANUAL_LANG_KEY) === 'true';
-      if (hasManualChoice) return;
-
       try {
         const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
         if (geoCacheRaw) {
           const geoCache = JSON.parse(geoCacheRaw);
-          // Ignorer les fallback
-          if (geoCache?.data?.language && geoCache?.data?.detectionMethod !== 'fallback') {
-            const detectedLang = geoCache.data.language;
-            if (supportedLanguages.some(l => l.code === detectedLang) && detectedLang !== language) {
-              console.log(`🌍 Sync langue (geo-cache): ${detectedLang}`);
-              setLanguageState(detectedLang);
-              localStorage.setItem(STORAGE_KEY, detectedLang);
-              setUserCountry(geoCache.data.country);
-            }
+          if (geoCache?.data?.country) {
+            setUserCountry(geoCache.data.country || null);
           }
         }
       } catch {}
     };
-
-    // Synchroniser immédiatement au montage
-    syncFromGeoCache();
-
-    // Vérifier périodiquement si le cache géo a changé
-    const checkInterval = setInterval(syncFromGeoCache, 2000);
     
-    // Écouter les changements de storage
     const handleStorage = (e: StorageEvent) => {
       if (e.key === GEO_CACHE_KEY) {
         syncFromGeoCache();
       }
+      if (e.key === STORAGE_KEY && e.newValue) {
+        setLanguageState(normalizeLanguage(e.newValue));
+      }
     };
+
     window.addEventListener('storage', handleStorage);
 
     return () => {
-      clearInterval(checkInterval);
       window.removeEventListener('storage', handleStorage);
     };
-  }, [language]);
+  }, []);
 
   // Mise à jour de la direction du document
   useEffect(() => {
     const langInfo = supportedLanguages.find(l => l.code === language);
     document.documentElement.lang = language;
     document.documentElement.dir = langInfo?.dir || 'ltr';
+    document.body.setAttribute('dir', langInfo?.dir || 'ltr');
+    document.body.classList.toggle('rtl', (langInfo?.dir || 'ltr') === 'rtl');
   }, [language]);
 
   const setLanguage = useCallback((lang: string) => {
-    if (!supportedLanguages.some(l => l.code === lang)) {
-      console.warn(`Langue non supportée: ${lang}`);
-      return;
-    }
+    const normalized = normalizeLanguage(lang);
 
-    setLanguageState(lang);
-    localStorage.setItem(STORAGE_KEY, lang);
+    setLanguageState(normalized);
+    localStorage.setItem(STORAGE_KEY, normalized);
     localStorage.setItem(MANUAL_LANG_KEY, 'true'); // Marquer comme choix manuel explicite
-    console.log(`🌍 Langue définie manuellement: ${lang}`);
   }, []);
 
   // Fonction de traduction
-  const t = useCallback((key: string): string => {
-    const langTranslations = translations[language] || translations[defaultLanguage];
-    return langTranslations[key] || translations[defaultLanguage]?.[key] || key;
+  const t = useCallback((key: string, params?: TranslationParams): string => {
+    const raw = resolveTranslation(language, key);
+    if (!raw) return key;
+
+    return interpolate(raw, params);
   }, [language]);
 
   // Vérifier si RTL - utiliser notre helper centralisé
@@ -228,7 +241,11 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
 const defaultContextValue: LanguageContextType = {
   language: defaultLanguage,
   setLanguage: () => console.warn('LanguageProvider not mounted'),
-  t: (key: string) => translations[defaultLanguage]?.[key] || key,
+  t: (key: string, params?: TranslationParams) => {
+    const raw = resolveTranslation(defaultLanguage, key);
+    if (!raw) return key;
+    return interpolate(raw, params);
+  },
   userCountry: null,
   isRTL: false,
   supportedLanguages
