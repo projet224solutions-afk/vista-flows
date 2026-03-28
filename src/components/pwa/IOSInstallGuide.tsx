@@ -17,43 +17,74 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
   const [step, setStep] = useState(0);
   const [isSafari, setIsSafari] = useState(true);
   const [isIPad, setIsIPad] = useState(false);
+  const [copyButtonText, setCopyButtonText] = useState('Copier le lien');
+  const modalCardClass = 'bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl';
+  const closeButtonClass = 'absolute top-12 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors';
 
-  const openInSafari = async () => {
-    const current = window.location.href;
-    // Schéma iOS pour ouvrir Safari depuis un autre navigateur/app
-    const safariUrl = current.startsWith('https://')
-      ? current.replace('https://', 'x-safari-https://')
-      : current;
-
+  const copyCurrentLink = async () => {
     try {
-      window.location.href = safariUrl;
-      // Si le schéma n'est pas supporté, proposer la copie du lien
-      setTimeout(async () => {
-        try {
-          await navigator.clipboard.writeText(current);
-        } catch {
-          // Rien: le texte reste visible dans l'UI
-        }
-      }, 600);
+      await navigator.clipboard.writeText(window.location.href);
+      setCopyButtonText('Copie ✓');
+      setTimeout(() => setCopyButtonText('Copier le lien'), 2000);
     } catch {
-      try {
-        await navigator.clipboard.writeText(current);
-      } catch {
-        // Ignore clipboard failures silently
-      }
+      setCopyButtonText('Copie impossible');
+      setTimeout(() => setCopyButtonText('Copier le lien'), 2500);
     }
   };
 
-  useEffect(() => {
+  const openInSafari = async () => {
+    const current = window.location.href;
+    const safariUrl = current.startsWith('https://')
+      ? current.replace('https://', 'x-safari-https://')
+      : current.startsWith('http://')
+        ? current.replace('http://', 'x-safari-http://')
+        : current;
+
+    try {
+      window.location.assign(safariUrl);
+      // Si le schéma n'est pas supporté, proposer la copie du lien après un court delai
+      setTimeout(async () => {
+        if (document.visibilityState === 'visible') {
+          await copyCurrentLink();
+        }
+      }, 800);
+    } catch {
+      await copyCurrentLink();
+    }
+  };
+
+  const detectIOSAndSafari = () => {
     const ua = navigator.userAgent;
-    const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome|GSA|FBAN|FBAV|Instagram/i.test(ua);
-    const ipad = /iPad/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
-    setIsSafari(safari);
-    setIsIPad(ipad);
+    const platform = navigator.platform || '';
+
+    const iosByUA = /iPhone|iPad|iPod/i.test(ua);
+    const ipadOSDesktopMode = platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    const iosDevice = iosByUA || ipadOSDesktopMode;
+
+    const safariToken = /Safari/i.test(ua);
+    const versionToken = /Version\//i.test(ua);
+    const excludedBrowsers = /CriOS|FxiOS|EdgiOS|OPiOS|Chrome|GSA|DuckDuckGo|YaBrowser|UCBrowser|SamsungBrowser|Vivaldi|Brave|Firefox|Focus/i.test(ua);
+    const inAppBrowser = /FBAN|FBAV|Instagram|Line|MicroMessenger|Twitter|WhatsApp|Snapchat|TikTok|wv/i.test(ua);
+
+    const safariIOS = iosDevice && safariToken && versionToken && !excludedBrowsers && !inAppBrowser;
+
+    return {
+      isIPadDevice: /iPad/i.test(ua) || ipadOSDesktopMode,
+      isSafariIOS: safariIOS,
+    };
+  };
+
+  useEffect(() => {
+    const detection = detectIOSAndSafari();
+    setIsSafari(detection.isSafariIOS);
+    setIsIPad(detection.isIPadDevice);
   }, []);
 
   useEffect(() => {
-    if (open) setStep(0);
+    if (open) {
+      setStep(0);
+      setCopyButtonText('Copier le lien');
+    }
   }, [open]);
 
   if (!open) return null;
@@ -67,14 +98,16 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-6"
-          onClick={() => onOpenChange(false)}
         >
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl"
+            className={modalCardClass}
           >
+            <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300">
+              Etape prealable
+            </div>
             <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mx-auto">
               <Smartphone className="w-10 h-10 text-blue-600" />
             </div>
@@ -89,21 +122,11 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               Ouvrir dans Safari
             </Button>
             <Button
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(window.location.href);
-                  const btn = document.getElementById('copy-btn-text');
-                  if (btn) btn.textContent = 'Copié ✓';
-                  setTimeout(() => { if (btn) btn.textContent = 'Copier le lien'; }, 2000);
-                } catch {
-                  const btn = document.getElementById('copy-btn-text');
-                  if (btn) btn.textContent = 'Copie impossible';
-                }
-              }}
+              onClick={copyCurrentLink}
               variant="outline"
               className="w-full h-12 font-semibold"
             >
-              <span id="copy-btn-text">Copier le lien</span>
+              <span>{copyButtonText}</span>
             </Button>
             <button onClick={() => onOpenChange(false)} className="text-sm text-muted-foreground hover:underline">
               Fermer
@@ -123,7 +146,6 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[9999] flex flex-col"
-          onClick={() => setStep(1)}
         >
           {/* Overlay semi-transparent en haut */}
           <div className="flex-1 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center px-6">
@@ -133,6 +155,9 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               transition={{ delay: 0.2 }}
               className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl"
             >
+              <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300">
+                Guide iOS - Etape 1/3
+              </div>
               <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
                 <img src="/icon-192.png?v=3" alt="224Solutions" className="w-12 h-12 rounded-xl" onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
@@ -148,6 +173,22 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
                   <Share className="w-6 h-6 text-blue-600" />
                 </div>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="flex-1 h-11 font-medium"
+                >
+                  Fermer
+                </Button>
+                <Button
+                  onClick={() => setStep(1)}
+                  className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                >
+                  Suivant
+                </Button>
               </div>
             </motion.div>
           </div>
@@ -167,7 +208,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
           {/* Bouton fermer discret */}
           <button
             onClick={(e) => { e.stopPropagation(); onOpenChange(false); }}
-            className="absolute top-12 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+            className={closeButtonClass}
           >
             <X className="w-5 h-5 text-white" />
           </button>
@@ -182,14 +223,16 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-6"
-          onClick={() => setStep(2)}
         >
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl"
+            className={modalCardClass}
           >
+            <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300">
+              Guide iOS - Etape 2/3
+            </div>
             {/* Simulation du menu partager iOS */}
             <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-4 space-y-3">
               <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-700 rounded-xl border-2 border-blue-500 shadow-md">
@@ -230,11 +273,28 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             >
               Suivant
             </Button>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setStep(0)}
+                className="h-11"
+              >
+                Retour
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="h-11"
+              >
+                Fermer
+              </Button>
+            </div>
           </motion.div>
 
           <button
             onClick={(e) => { e.stopPropagation(); onOpenChange(false); }}
-            className="absolute top-12 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30"
+            className={closeButtonClass}
           >
             <X className="w-5 h-5 text-white" />
           </button>
@@ -253,8 +313,11 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-5 shadow-2xl"
+            className={modalCardClass}
           >
+            <div className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:border-green-900/60 dark:bg-green-900/20 dark:text-green-300">
+              Guide iOS - Etape 3/3
+            </div>
             {/* Simulation de la confirmation iOS */}
             <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between">
@@ -291,13 +354,30 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
             >
               <Check className="w-5 h-5 mr-2" />
-              Compris !
+              Terminer
             </Button>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setStep(1)}
+                className="h-11"
+              >
+                Retour
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="h-11"
+              >
+                Fermer
+              </Button>
+            </div>
           </motion.div>
 
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute top-12 right-4 p-2 bg-white/20 rounded-full hover:bg-white/30"
+            className={closeButtonClass}
           >
             <X className="w-5 h-5 text-white" />
           </button>
