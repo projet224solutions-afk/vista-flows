@@ -57,11 +57,16 @@ export function InstallPromptBanner() {
       return;
     }
 
-    // Vérifier si l'utilisateur a déjà dismissé la bannière
-    const wasDismissed = localStorage.getItem('pwa-install-dismissed');
-    if (wasDismissed) {
-      setDismissed(true);
-      return;
+    // Vérifier si l'utilisateur a déjà dismissé la bannière (valide 30 jours)
+    const dismissedAt = localStorage.getItem('pwa-install-dismissed');
+    if (dismissedAt) {
+      const daysSince = (Date.now() - Number(dismissedAt)) / (1000 * 60 * 60 * 24);
+      if (daysSince < 30) {
+        setDismissed(true);
+        return;
+      }
+      // Expirée → effacer le flag
+      localStorage.removeItem('pwa-install-dismissed');
     }
 
     // Écouter l'événement beforeinstallprompt (Android/Desktop Chrome)
@@ -75,7 +80,7 @@ export function InstallPromptBanner() {
 
     // Sur iOS/Mac Safari ou mobile sans prompt, afficher après délai
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-    if ((isMobile || ios || (mac && safari)) && !wasDismissed) {
+    if ((isMobile || ios || (mac && safari)) && !dismissedAt) {
       setTimeout(() => {
         setShowBanner(true);
       }, 3000);
@@ -112,7 +117,7 @@ export function InstallPromptBanner() {
   const handleDismiss = () => {
     setShowBanner(false);
     setDismissed(true);
-    localStorage.setItem('pwa-install-dismissed', 'true');
+    localStorage.setItem('pwa-install-dismissed', String(Date.now()));
   };
 
   // Ne pas afficher si déjà installé ou dismissé

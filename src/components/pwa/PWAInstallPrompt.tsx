@@ -22,10 +22,14 @@ function PWAInstallPromptInner() {
     if (!mounted) return;
 
     // Vérifier si l'utilisateur a déjà refusé
-    const dismissed = localStorage.getItem('pwa-install-dismissed');
-    if (dismissed) {
-      setIsDismissed(true);
-      return;
+    const dismissedAt = localStorage.getItem('pwa-install-dismissed');
+    if (dismissedAt) {
+      const daysSince = (Date.now() - Number(dismissedAt)) / (1000 * 60 * 60 * 24);
+      if (daysSince < 30) {
+        setIsDismissed(true);
+        return;
+      }
+      localStorage.removeItem('pwa-install-dismissed');
     }
 
     // Afficher après 5 secondes si installable et pas déjà installé
@@ -56,7 +60,7 @@ function PWAInstallPromptInner() {
   const handleDismiss = () => {
     setIsVisible(false);
     setIsDismissed(true);
-    localStorage.setItem('pwa-install-dismissed', 'true');
+    localStorage.setItem('pwa-install-dismissed', String(Date.now()));
     
     toast.info('Invitation masquée', {
       description: 'Vous pourrez installer l\'application depuis les paramètres de votre navigateur'
