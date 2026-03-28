@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Activity, LogOut, Settings } from 'lucide-react';
 import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { useVendorNotifications } from '@/hooks/useVendorNotifications';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 // Lazy loaded header components (UI non-critique)
 const NetworkStatusIndicator = lazy(() => import('@/components/vendor/NetworkStatusIndicator'));
@@ -100,9 +102,11 @@ const UserStatus = memo(function UserStatus({ displayName }: { displayName: stri
 const HeaderActions = memo(function HeaderActions({
   onSignOut,
   onNavigateToSettings,
+  vendorUnreadCount,
 }: {
   onSignOut: () => Promise<void>;
   onNavigateToSettings: () => void;
+  vendorUnreadCount: number;
 }) {
   return (
     <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
@@ -128,8 +132,13 @@ const HeaderActions = memo(function HeaderActions({
         <PushNotificationButton className="h-8 w-8 md:h-10 md:w-10" />
       </Suspense>
 
-      {/* Notification Bell */}
-      <NotificationBellButton className="h-8 w-8 md:h-10 md:w-10" iconSize="w-4 h-4 md:w-5 md:h-5" />
+      {/* Notification Bell - Green with vendor notifications count */}
+      <NotificationBellButton
+        className="h-8 w-8 md:h-10 md:w-10"
+        iconSize="w-4 h-4 md:w-5 md:h-5"
+        externalUnreadCount={vendorUnreadCount}
+        badgeClassName="bg-green-500 text-white"
+      />
 
       {/* Settings */}
       <Button
@@ -167,6 +176,7 @@ const VendorHeader = memo(function VendorHeader({
   onSignOut,
 }: VendorHeaderProps) {
   const navigate = useNavigate();
+  const { unreadCount: vendorUnreadCount } = useVendorNotifications();
 
   const handleNavigateToSettings = () => {
     navigate('/vendeur/settings');
@@ -184,6 +194,7 @@ const VendorHeader = memo(function VendorHeader({
           <HeaderActions
             onSignOut={onSignOut}
             onNavigateToSettings={handleNavigateToSettings}
+            vendorUnreadCount={vendorUnreadCount}
           />
         </div>
       </div>
