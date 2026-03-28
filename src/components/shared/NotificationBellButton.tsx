@@ -15,12 +15,15 @@ import { useAuth } from '@/hooks/useAuth';
 interface NotificationBellButtonProps {
   className?: string;
   iconSize?: string;
+  externalUnreadCount?: number;
+  badgeClassName?: string;
 }
 
-export function NotificationBellButton({ className = '', iconSize = 'w-5 h-5' }: NotificationBellButtonProps) {
+export function NotificationBellButton({ className = '', iconSize = 'w-5 h-5', externalUnreadCount, badgeClassName }: NotificationBellButtonProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const displayCount = externalUnreadCount !== undefined ? externalUnreadCount : unreadCount;
 
   const fetchUnread = useCallback(async () => {
     if (!user?.id) return;
@@ -64,9 +67,9 @@ export function NotificationBellButton({ className = '', iconSize = 'w-5 h-5' }:
       aria-label="Notifications"
     >
       <Bell className={iconSize} />
-      {unreadCount > 0 && (
-        <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-2 border-card">
-          {unreadCount > 99 ? '99+' : unreadCount}
+      {displayCount > 0 && (
+        <Badge className={`absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs border-2 border-card ${badgeClassName || 'bg-destructive text-destructive-foreground'}`}>
+          {displayCount > 99 ? '99+' : displayCount}
         </Badge>
       )}
     </Button>
