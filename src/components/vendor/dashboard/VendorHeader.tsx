@@ -11,7 +11,6 @@ import { Activity, LogOut, Settings } from 'lucide-react';
 import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useVendorNotifications } from '@/hooks/useVendorNotifications';
-import { SidebarTrigger } from '@/components/ui/sidebar';
 
 // Lazy loaded header components (UI non-critique)
 const NetworkStatusIndicator = lazy(() => import('@/components/vendor/NetworkStatusIndicator'));
