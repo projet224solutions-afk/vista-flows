@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Bell, BellOff, BellRing, Loader2 } from 'lucide-react';
 import { useFirebaseMessaging } from '@/hooks/useFirebaseMessaging';
@@ -20,14 +21,17 @@ interface PushNotificationButtonProps {
   size?: 'default' | 'sm' | 'icon';
   showText?: boolean;
   className?: string;
+  unreadCount?: number;
 }
 
 export function PushNotificationButton({
   variant = 'ghost',
   size = 'icon',
   showText = false,
-  className = ''
+  className = '',
+  unreadCount = 0
 }: PushNotificationButtonProps) {
+  const navigate = useNavigate();
   const {
     isSupported,
     isEnabled,
@@ -89,6 +93,13 @@ export function PushNotificationButton({
           size={size}
           className={`${className} relative`}
           title={isEnabled ? 'Notifications activées' : 'Activer les notifications'}
+          onClick={(e) => {
+            if (unreadCount > 0) {
+              e.preventDefault();
+              setOpen(false);
+              navigate('/notifications');
+            }
+          }}
         >
           {getIcon()}
           {showText && (
@@ -96,9 +107,13 @@ export function PushNotificationButton({
               {isEnabled ? 'Notifications' : 'Activer'}
             </span>
           )}
-          {isEnabled && (
+          {unreadCount > 0 ? (
+            <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-green-500 text-white border-2 border-card">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Badge>
+          ) : isEnabled ? (
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          )}
+          ) : null}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72" align="end">
