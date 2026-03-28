@@ -438,7 +438,7 @@ export default function VendorSubscriptionPage() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1 leading-snug">
+                        <p className="text-sm text-[#000000] mt-1 leading-snug">
                           {buildPlanDescription(plan)}
                         </p>
                       </div>

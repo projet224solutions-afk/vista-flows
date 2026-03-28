@@ -209,7 +209,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
                   </div>
                 </div>
 
-                <CardDescription className="mt-2 min-h-[2.5rem] text-xs leading-relaxed text-muted-foreground/90">
+                <CardDescription className="mt-2 min-h-[2.5rem] text-xs leading-relaxed text-[#000000]">
                   {buildPlanDescription(plan)}
                 </CardDescription>
 

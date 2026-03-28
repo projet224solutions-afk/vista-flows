@@ -292,7 +292,7 @@ export function VendorSubscriptionPlanSelector({
                           </div>
                         </div>
 
-                        <p className="text-xs leading-relaxed text-muted-foreground/90 mb-3 min-h-[2.5rem]">
+                        <p className="text-xs leading-relaxed text-[#000000] mb-3 min-h-[2.5rem]">
                           {buildPlanDescription(plan)}
                         </p>
 
