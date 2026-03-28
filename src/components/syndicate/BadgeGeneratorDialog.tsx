@@ -157,16 +157,10 @@ export default function BadgeGeneratorDialog({
   const handlePrint = () => {
     if (!badgeRef.current) return;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error('Impossible d\'ouvrir la fenêtre d\'impression');
-      return;
-    }
-
     const badgeHtml = badgeRef.current.outerHTML;
     const safeMemberName = escapeHtml(vehicleData.member_name);
-    
-    printWindow.document.write(`
+
+    const printHtml = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -191,16 +185,28 @@ export default function BadgeGeneratorDialog({
         </head>
         <body>
           ${badgeHtml}
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 300);
+            };
+          <\/script>
         </body>
       </html>
-    `);
+    `;
 
-    printWindow.document.close();
-    
-    setTimeout(() => {
-      printWindow.print();
-      toast.success('Badge envoyé à l\'imprimante');
-    }, 500);
+    const blob = new Blob([printHtml], { type: 'text/html' });
+    const printUrl = URL.createObjectURL(blob);
+    const opened = window.open(printUrl, '_blank', 'noopener,noreferrer');
+    if (!opened) {
+      URL.revokeObjectURL(printUrl);
+      toast.error('Impossible d\'ouvrir la fenêtre d\'impression');
+      return;
+    }
+
+    setTimeout(() => URL.revokeObjectURL(printUrl), 10000);
+    toast.success('Badge envoyé à l\'imprimante');
   };
 
   return (

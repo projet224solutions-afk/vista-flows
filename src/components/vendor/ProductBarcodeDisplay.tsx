@@ -127,15 +127,10 @@ export function ProductBarcodeDisplay({
         backgroundColor: '#ffffff',
         scale: 4
       });
-      
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        toast.error('Popup bloquée - autorisez les popups');
-        return;
-      }
+
       const safeBarcode = escapeHtml(barcode);
-      
-      printWindow.document.write(`
+
+      const printHtml = `
         <!DOCTYPE html>
         <html>
           <head>
@@ -166,8 +161,17 @@ export function ProductBarcodeDisplay({
             </script>
           </body>
         </html>
-      `);
-      printWindow.document.close();
+      `;
+
+      const blob = new Blob([printHtml], { type: 'text/html' });
+      const printUrl = URL.createObjectURL(blob);
+      const opened = window.open(printUrl, '_blank', 'noopener,noreferrer');
+      if (!opened) {
+        URL.revokeObjectURL(printUrl);
+        toast.error('Popup bloquée - autorisez les popups');
+        return;
+      }
+      setTimeout(() => URL.revokeObjectURL(printUrl), 10000);
       
     } catch (error) {
       toast.error('Erreur lors de l\'impression');

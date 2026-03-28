@@ -95,11 +95,9 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
 
   const printReceipt = () => {
     if (!receiptRef.current) return;
-    
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      const safeOrderNumber = escapeHtml(orderData.orderNumber);
-      printWindow.document.write(`
+
+    const safeOrderNumber = escapeHtml(orderData.orderNumber);
+    const printHtml = `
         <html>
           <head>
             <title>Reçu - ${safeOrderNumber}</title>
@@ -113,12 +111,25 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
           </head>
           <body>
             ${receiptRef.current.innerHTML}
+            <script>
+              window.onload = function() {
+                window.print();
+              }
+            </script>
           </body>
         </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
+      `;
+
+    const blob = new Blob([printHtml], { type: 'text/html' });
+    const printUrl = URL.createObjectURL(blob);
+    const opened = window.open(printUrl, '_blank', 'noopener,noreferrer');
+    if (!opened) {
+      URL.revokeObjectURL(printUrl);
+      toast.error('Popup bloquée - autorisez les popups');
+      return;
     }
+
+    setTimeout(() => URL.revokeObjectURL(printUrl), 10000);
   };
 
   const getPaymentIcon = () => {

@@ -305,12 +305,6 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
 
     const layout = GRID_LAYOUTS[gridLayout];
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error('Popup bloquée - autorisez les popups');
-      return;
-    }
-
     const labelsHTML = labels.map((label, idx) => {
       const safeName = escapeHtml(label.name.length > 25 ? `${label.name.substring(0, 22)}...` : label.name);
       const safePrice = escapeHtml(`${label.price.toLocaleString('fr-FR')} GNF`);
@@ -332,7 +326,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       `;
     }).join('');
 
-    printWindow.document.write(`
+    const printHtml = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -401,8 +395,18 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
           <\/script>
         </body>
       </html>
-    `);
-    printWindow.document.close();
+    `;
+
+    const blob = new Blob([printHtml], { type: 'text/html' });
+    const printUrl = URL.createObjectURL(blob);
+    const opened = window.open(printUrl, '_blank', 'noopener,noreferrer');
+    if (!opened) {
+      URL.revokeObjectURL(printUrl);
+      toast.error('Popup bloquée - autorisez les popups');
+      return;
+    }
+
+    setTimeout(() => URL.revokeObjectURL(printUrl), 10000);
   };
 
   return (

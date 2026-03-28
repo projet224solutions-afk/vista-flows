@@ -1705,16 +1705,19 @@ export default function OrderManagement() {
     <div class="date">Imprimé le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
   </div>
 </div>
+<script>
+  window.onload = function() {
+    setTimeout(function() { window.print(); }, 300);
+  };
+</script>
 </body>
 </html>`;
 
                     const blob = new Blob([labelHTML], { type: 'text/html' });
                     const url = URL.createObjectURL(blob);
-                    const printWindow = window.open(url, '_blank');
-                    if (printWindow) {
-                      printWindow.onload = () => {
-                        printWindow.print();
-                      };
+                    const opened = window.open(url, '_blank', 'noopener,noreferrer');
+                    if (!opened) {
+                      toast.error('Popup bloquée - autorisez les popups');
                     }
                     setTimeout(() => URL.revokeObjectURL(url), 10000);
                   }}
