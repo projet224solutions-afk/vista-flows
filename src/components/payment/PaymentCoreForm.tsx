@@ -125,7 +125,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
     return (
       <Card className="w-full max-w-md mx-auto border-green-200 bg-green-50">
         <CardContent className="pt-6 text-center">
-          <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+          <CheckCircle2 className="h-12 w-12 sm:h-16 sm:w-16 text-green-500 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-green-700 mb-2">Paiement Initié</h3>
           <p className="text-green-600 mb-4">{resultMessage}</p>
           <p className="text-sm text-muted-foreground mb-4">
@@ -140,14 +140,14 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full">
       <CardHeader className="text-center pb-4">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Shield className="h-5 w-5 text-primary" />
           <span className="text-sm font-medium text-primary">Paiement Sécurisé</span>
         </div>
-        <CardTitle className="text-xl">{typeLabels[type]}</CardTitle>
-        <CardDescription>{description || `Référence: ${referenceId}`}</CardDescription>
+  <CardTitle className="text-lg sm:text-xl">{typeLabels[type]}</CardTitle>
+  <CardDescription>{description || `Référence: ${referenceId}`}</CardDescription>
         
         <div className="mt-4 p-4 bg-muted rounded-lg">
           <p className="text-sm text-muted-foreground">Montant à payer</p>
@@ -165,7 +165,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
             <RadioGroup
               value={selectedMethod}
               onValueChange={(value) => setSelectedMethod(value as PaymentMethod)}
-              className="grid grid-cols-2 gap-3"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
             >
               {paymentMethods.map((method) => (
                 <div key={method.id}>

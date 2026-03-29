@@ -354,7 +354,7 @@ export default function MesCommandes() {
       {/* Tabs */}
       <div className="container max-w-2xl mx-auto px-4 py-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-3">
+            <TabsList className="w-full grid grid-cols-1 sm:grid-cols-3">
             <TabsTrigger value="all" className="text-xs sm:text-sm">
               Tout ({restaurantOrders.length + taxiTrips.length})
             </TabsTrigger>

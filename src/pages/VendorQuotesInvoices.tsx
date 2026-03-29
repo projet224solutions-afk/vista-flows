@@ -26,7 +26,7 @@ export default function VendorQuotesInvoices() {
       </div>
 
       <Tabs defaultValue="create" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
           <TabsTrigger value="create" className="gap-2">
             <FileText className="w-4 h-4" />
             Créer un Devis

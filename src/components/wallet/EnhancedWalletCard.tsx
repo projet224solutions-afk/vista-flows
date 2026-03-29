@@ -93,7 +93,7 @@ export function EnhancedWalletCard({
   }
 
   return (
-    <Card className={`bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white border-0 shadow-xl ${className}`}>
+    <Card className={`bg-primary-blue-600 text-white border-0 shadow-xl ${className}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -126,10 +126,10 @@ export function EnhancedWalletCard({
 
       <CardContent className="space-y-4">
         {/* Solde principal */}
-        <div className="bg-white/10 backdrop-blur rounded-lg p-4">
+        <div className="bg-white/10 backdrop-blur rounded-lg p-3 sm:p-4">
           <p className="text-sm opacity-90 mb-1">{t('wallet.availableBalance')}</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-4xl font-bold">{formatBalance()}</p>
+            <p className="text-3xl sm:text-4xl font-bold">{formatBalance()}</p>
           </div>
         </div>
 

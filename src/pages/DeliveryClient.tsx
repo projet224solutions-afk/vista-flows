@@ -295,7 +295,7 @@ export default function DeliveryClient() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 pb-24">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
             <TabsTrigger value="booking" className="gap-2">
               <Package className="w-4 h-4" />
               {!isMobile && 'Commander'}

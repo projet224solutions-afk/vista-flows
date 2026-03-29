@@ -344,16 +344,16 @@ export default function UniversalWalletDashboard({
   return (
     <div className="space-y-6">
       {/* Carte solde */}
-      <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white border-0">
-        <CardContent className="p-6">
+      <Card className="bg-primary-blue-600 text-white border-0">
+        <CardContent className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                <WalletIcon className="w-6 h-6" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <WalletIcon className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <p className="text-sm opacity-90">{t('wallet.availableBalance')}</p>
-                <p className="text-3xl font-bold">{balanceDisplay}</p>
+                <p className="text-xs sm:text-sm opacity-90">{t('wallet.availableBalance')}</p>
+                <p className="text-2xl sm:text-3xl font-bold">{balanceDisplay}</p>
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -391,16 +391,16 @@ export default function UniversalWalletDashboard({
       {/* Actions - 3 onglets principaux */}
       <Tabs defaultValue="deposit" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="deposit" className="flex items-center gap-1">
-            <ArrowDownCircle className="w-3 h-3" />
+          <TabsTrigger value="deposit" className="flex items-center gap-1 text-xs sm:text-sm">
+            <ArrowDownCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             {t('wallet.deposit')}
           </TabsTrigger>
-          <TabsTrigger value="withdraw" className="flex items-center gap-1">
-            <ArrowUpCircle className="w-3 h-3" />
+          <TabsTrigger value="withdraw" className="flex items-center gap-1 text-xs sm:text-sm">
+            <ArrowUpCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             {t('wallet.withdraw')}
           </TabsTrigger>
-          <TabsTrigger value="transfer" className="flex items-center gap-1">
-            <WalletIcon className="w-3 h-3" />
+          <TabsTrigger value="transfer" className="flex items-center gap-1 text-xs sm:text-sm">
+            <WalletIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             {t('wallet.transfer')}
           </TabsTrigger>
         </TabsList>
@@ -418,7 +418,7 @@ export default function UniversalWalletDashboard({
               {/* Sélection de la méthode */}
               <div className="space-y-2">
                 <Label>{t('wallet.paymentMethod')}</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <Button
                     type="button"
                     variant={depositMethod === 'card' ? 'default' : 'outline'}
@@ -441,7 +441,7 @@ export default function UniversalWalletDashboard({
                     type="button"
                     variant={depositMethod === 'momo' ? 'default' : 'outline'}
                     onClick={() => setDepositMethod('momo')}
-                    className="flex flex-col items-center gap-1 h-auto py-3"
+                    className="flex flex-col items-center gap-1 h-auto py-3 col-span-2 sm:col-span-1"
                   >
                     <Smartphone className="w-5 h-5 text-yellow-500" />
                     <span className="text-xs">MTN MoMo</span>
@@ -475,7 +475,7 @@ export default function UniversalWalletDashboard({
                   
                   <div className="space-y-2">
                     <Label>{t('wallet.quickAmounts')}</Label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {[10000, 25000, 50000, 100000, 250000, 500000].map((amt) => (
                         <Button
                           key={amt}

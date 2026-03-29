@@ -331,7 +331,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                     </div>
 
                     {/* Statistiques rapides */}
-                    <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t">
                         <div className="text-center">
                             <div className="text-lg font-bold text-blue-600">
                                 {filteredRides.filter(r => r.status === 'completed').length}

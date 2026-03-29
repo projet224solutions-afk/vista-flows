@@ -132,16 +132,16 @@ export function WalletOperationsPanel() {
       <CardContent>
         <Tabs defaultValue="deposit" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="deposit" className="gap-2">
-              <ArrowDownToLine className="w-4 h-4" />
+            <TabsTrigger value="deposit" className="gap-1 text-xs sm:text-sm sm:gap-2">
+              <ArrowDownToLine className="w-3 h-3 sm:w-4 sm:h-4" />
               Dépôt
             </TabsTrigger>
-            <TabsTrigger value="withdraw" className="gap-2">
-              <ArrowUpFromLine className="w-4 h-4" />
+            <TabsTrigger value="withdraw" className="gap-1 text-xs sm:text-sm sm:gap-2">
+              <ArrowUpFromLine className="w-3 h-3 sm:w-4 sm:h-4" />
               Retrait
             </TabsTrigger>
-            <TabsTrigger value="transfer" className="gap-2">
-              <Send className="w-4 h-4" />
+            <TabsTrigger value="transfer" className="gap-1 text-xs sm:text-sm sm:gap-2">
+              <Send className="w-3 h-3 sm:w-4 sm:h-4" />
               Transfert
             </TabsTrigger>
           </TabsList>

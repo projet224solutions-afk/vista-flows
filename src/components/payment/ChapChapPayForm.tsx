@@ -146,10 +146,10 @@ export function ChapChapPayForm({
 
   if (status.status === 'success') {
     return (
-      <Card className={cn('max-w-md mx-auto', className)}>
+      <Card className={cn('w-full', className)}>
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
             <div>
@@ -181,10 +181,10 @@ export function ChapChapPayForm({
 
   if (status.status === 'error') {
     return (
-      <Card className={cn('max-w-md mx-auto', className)}>
+      <Card className={cn('w-full', className)}>
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto">
               <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
             </div>
             <div>
@@ -218,7 +218,7 @@ export function ChapChapPayForm({
   }
 
   return (
-    <Card className={cn('max-w-md mx-auto', className)}>
+    <Card className={cn('w-full', className)}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Smartphone className="w-5 h-5" />
@@ -245,7 +245,7 @@ export function ChapChapPayForm({
             <RadioGroup
               value={paymentMethod}
               onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
-              className="grid grid-cols-3 gap-2"
+              className="grid grid-cols-3 sm:grid-cols-3 gap-2"
             >
               {PAYMENT_METHODS.map((method) => (
                 <Label

@@ -84,8 +84,8 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
 
   return (
     <div className="space-y-4">
-      {/* Statistiques par période */}
-      <div className="grid grid-cols-3 gap-4">
+  {/* Statistiques par période */}
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600">

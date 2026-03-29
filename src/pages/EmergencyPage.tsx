@@ -101,7 +101,7 @@ export const EmergencyPage: React.FC = () => {
       {/* Contenu Principal */}
       <div className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4 w-full max-w-2xl mb-6">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full max-w-2xl mb-6">
             <TabsTrigger value="dashboard">
               <AlertTriangle className="h-4 w-4 mr-2" />
               Tableau de Bord

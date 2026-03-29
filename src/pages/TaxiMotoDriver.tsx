@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,6 +47,7 @@ import MyPurchasesOrdersList from "@/components/shared/MyPurchasesOrdersList";
 
 export default function TaxiMotoDriver() {
     const navigate = useNavigate();
+    const isMobile = useIsMobile();
     const { user, profile, signOut } = useAuth();
     const { error, capture, clear } = useTaxiErrorBoundary();
     const { t } = useTranslation();
@@ -367,7 +369,7 @@ export default function TaxiMotoDriver() {
     // ========== RENDU ==========
 
     return (
-        <div className="min-h-screen bg-gray-950">
+        <div className="min-h-screen bg-gray-950 overflow-x-hidden">
             {/* Header conducteur - Uber/Bolt Style */}
             <DriverHeader
                 firstName={profile?.first_name || ''}
@@ -485,9 +487,9 @@ export default function TaxiMotoDriver() {
             )}
 
             {activeTab === 'history' && (
-                <div className="min-h-screen bg-gray-950 pb-24 pt-4 px-4">
+                <div className="min-h-screen bg-gray-950 pb-24 pt-4 px-3 sm:px-4">
                     <div className="space-y-4">
-                        <h2 className="text-white font-bold text-lg">Historique des courses</h2>
+                        <h2 className="text-white font-bold text-base sm:text-lg">Historique des courses</h2>
                         {rideHistory.length === 0 ? (
                             <div className="text-center py-12">
                                 <Car className="w-12 h-12 text-gray-600 mx-auto mb-3" />
@@ -497,7 +499,7 @@ export default function TaxiMotoDriver() {
                             <div className="space-y-3">
                                 {rideHistory.map((ride: Record<string, unknown>) => (
                                     <div key={ride.id as string} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                                        <div className="flex justify-between items-start mb-2">
+                                        <div className="flex flex-wrap justify-between items-start mb-2 gap-1">
                                             <span className={`text-xs px-2 py-1 rounded-full ${
                                                 ride.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
                                                 ride.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
@@ -524,12 +526,12 @@ export default function TaxiMotoDriver() {
             )}
 
             {activeTab === 'rating' && (
-                <div className="min-h-screen bg-gray-950 pb-24 pt-4 px-4">
+                <div className="min-h-screen bg-gray-950 pb-24 pt-4 px-3 sm:px-4">
                     <div className="space-y-6">
-                        <h2 className="text-white font-bold text-lg">Votre note</h2>
+                        <h2 className="text-white font-bold text-base sm:text-lg">Votre note</h2>
                         
-                        <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-2xl p-6 border border-amber-500/30 text-center">
-                            <div className="text-5xl font-bold text-amber-400 mb-2">
+                        <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-2xl p-4 sm:p-6 border border-amber-500/30 text-center">
+                            <div className="text-4xl sm:text-5xl font-bold text-amber-400 mb-2">
                                 {driverStats.rating > 0 ? driverStats.rating.toFixed(1) : '—'}
                             </div>
                             <div className="flex justify-center gap-1 mb-3">
@@ -579,7 +581,7 @@ export default function TaxiMotoDriver() {
             )}
 
             {activeTab === 'my-purchases' && (
-                <div className="min-h-screen bg-gray-950 pb-24 p-4">
+                <div className="min-h-screen bg-gray-950 pb-24 p-3 sm:p-4">
                     <MyPurchasesOrdersList 
                         title="Mes Achats Personnels" 
                         emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 

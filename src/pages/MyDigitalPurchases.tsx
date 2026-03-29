@@ -187,7 +187,7 @@ export default function MyDigitalPurchases() {
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-3">
+            <TabsList className="w-full grid grid-cols-1 sm:grid-cols-3">
             <TabsTrigger value="all">Tout ({items.length})</TabsTrigger>
             <TabsTrigger value="purchases">Achats ({totalPurchases})</TabsTrigger>
             <TabsTrigger value="subscriptions">Abonnements ({items.filter(i => i.type === 'subscription').length})</TabsTrigger>

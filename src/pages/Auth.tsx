@@ -1380,7 +1380,7 @@ export default function Auth() {
                   Inscription Rapide
                   <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
                 </h4>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
                     { role: 'taxi' as UserRole, name: 'Taxi Moto', icon: '🏍️', desc: 'Conducteur taxi-moto' },
                     { role: 'livreur' as UserRole, name: 'Livreur', icon: '📦', desc: 'Coursier & livraison' },
