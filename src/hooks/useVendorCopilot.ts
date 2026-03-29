@@ -42,7 +42,7 @@ export function useVendorCopilot() {
   const loadVendorContext = useCallback(async (vendorId: string) => {
     try {
       // Charger les stats du vendeur
-      const [ordersRes, productsRes, walletRes] = await Promise.all([
+      const [ordersRes, productsRes, vendorRes] = await Promise.all([
         supabase
           .from('orders')
           .select('id, total_amount, status, created_at')
@@ -61,19 +61,38 @@ export function useVendorCopilot() {
           .single()
       ]);
 
+      const vendorUserId = vendorRes.data?.user_id;
+
+      const [walletData, digitalProductsRes, digitalPurchasesRes] = await Promise.all([
+        vendorUserId
+          ? supabase
+              .from('wallets')
+              .select('balance')
+              .eq('user_id', vendorUserId)
+              .single()
+          : Promise.resolve({ data: null } as any),
+        supabase
+          .from('digital_products')
+          .select('*')
+          .or(vendorUserId ? `merchant_id.eq.${vendorUserId},vendor_id.eq.${vendorId}` : `vendor_id.eq.${vendorId}`)
+          .limit(200),
+        vendorUserId
+          ? supabase
+              .from('digital_product_purchases')
+              .select('*')
+              .eq('merchant_id', vendorUserId)
+              .limit(300)
+          : Promise.resolve({ data: [] } as any)
+      ]);
+
       let walletBalance = 0;
-      if (walletRes.data?.user_id) {
-        const { data: wallet } = await supabase
-          .from('wallets')
-          .select('balance')
-          .eq('user_id', walletRes.data.user_id)
-          .single();
-        walletBalance = wallet?.balance || 0;
-      }
+      walletBalance = walletData?.data?.balance || 0;
 
       // Calculer les stats
       const orders = ordersRes.data || [];
       const products = productsRes.data || [];
+      const digitalProducts = digitalProductsRes.data || [];
+      const digitalPurchases = digitalPurchasesRes.data || [];
 
       const totalRevenue = orders
         .filter(o => o.status === 'completed' || o.status === 'delivered')
@@ -87,9 +106,35 @@ export function useVendorCopilot() {
         (p.stock_quantity || 0) < 10
       );
 
+      const publishedDigitalProducts = digitalProducts.filter((p: any) => String(p?.status || '').toLowerCase() === 'published').length;
+      const draftDigitalProducts = digitalProducts.filter((p: any) => String(p?.status || '').toLowerCase() === 'draft').length;
+      const paidDigitalPurchases = digitalPurchases.filter((p: any) => {
+        const paymentStatus = String(p?.payment_status || p?.status || '').toLowerCase();
+        return ['paid', 'completed', 'success', 'succeeded', 'confirmed'].includes(paymentStatus);
+      });
+      const digitalRevenue = paidDigitalPurchases.reduce((sum: number, p: any) => {
+        const amount = Number(p?.amount ?? p?.total_amount ?? p?.price_paid ?? 0);
+        return sum + (Number.isFinite(amount) ? amount : 0);
+      }, 0);
+
+      const topDigitalProducts = [...digitalProducts]
+        .sort((a: any, b: any) => {
+          const aScore = Number(a?.sales_count ?? a?.total_sales ?? a?.download_count ?? 0) * 10 + Number(a?.views_count ?? 0);
+          const bScore = Number(b?.sales_count ?? b?.total_sales ?? b?.download_count ?? 0) * 10 + Number(b?.views_count ?? 0);
+          return bScore - aScore;
+        })
+        .slice(0, 3)
+        .map((p: any) => ({
+          id: p.id,
+          name: p.title || p.name || 'Produit sans nom',
+          sales: Number(p?.sales_count ?? p?.total_sales ?? p?.download_count ?? 0) || 0,
+          views: Number(p?.views_count ?? 0) || 0,
+          status: p.status || 'unknown'
+        }));
+
       const context = {
         vendorId,
-        businessName: walletRes.data?.business_name || 'Boutique',
+        businessName: vendorRes.data?.business_name || 'Boutique',
         totalOrders: orders.length,
         pendingOrders,
         totalRevenue,
@@ -97,7 +142,13 @@ export function useVendorCopilot() {
         lowStockCount: lowStockProducts.length,
         lowStockProducts: lowStockProducts.slice(0, 5),
         walletBalance,
-        recentOrders: orders.slice(0, 5)
+        recentOrders: orders.slice(0, 5),
+        digitalTotalProducts: digitalProducts.length,
+        digitalPublishedProducts: publishedDigitalProducts,
+        digitalDraftProducts: draftDigitalProducts,
+        digitalSalesCount: paidDigitalPurchases.length,
+        digitalRevenue,
+        topDigitalProducts
       };
 
       setVendorContext(context);

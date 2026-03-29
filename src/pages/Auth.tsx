@@ -1875,9 +1875,9 @@ export default function Auth() {
                 )}
 
                 {success && (
-                  <Alert className="bg-green-50 border-green-200">
-                    <AlertCircle className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">
+                  <Alert className="bg-orange-50 border-orange-200">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800">
                       {success}
                     </AlertDescription>
                   </Alert>
@@ -1939,9 +1939,9 @@ export default function Auth() {
                 )}
 
                 {success && (
-                  <Alert className="bg-green-50 border-green-200">
-                    <AlertCircle className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">
+                  <Alert className="bg-orange-50 border-orange-200">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800">
                       {success}
                     </AlertDescription>
                   </Alert>
@@ -2020,9 +2020,9 @@ export default function Auth() {
               )}
 
               {success && (
-                <Alert className="border-green-200 bg-green-50">
-                  <AlertCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">{success}</AlertDescription>
+                <Alert className="border-orange-200 bg-orange-50">
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <AlertDescription className="text-orange-800">{success}</AlertDescription>
                 </Alert>
               )}
 
@@ -2845,11 +2845,11 @@ export default function Auth() {
           <div className="flex flex-col items-center text-center p-8">
             {/* Cercle animé avec checkmark */}
             <div className="relative mb-6">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-[scale-in_0.4s_ease-out]">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30 animate-[scale-in_0.4s_ease-out]">
                 <CheckCircle2 className="h-10 w-10 text-white" />
               </div>
               {/* Pulse ring */}
-              <div className="absolute inset-0 w-20 h-20 rounded-full bg-emerald-400/30 animate-ping" style={{ animationDuration: '1.5s' }} />
+              <div className="absolute inset-0 w-20 h-20 rounded-full bg-orange-400/30 animate-ping" style={{ animationDuration: '1.5s' }} />
             </div>
             
             <h3 className="text-xl font-bold text-foreground mb-2">
@@ -2862,7 +2862,7 @@ export default function Auth() {
             {/* Barre de progression */}
             <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full"
+                className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full"
                 style={{ 
                   animation: 'progress-fill 2.5s ease-in-out forwards'
                 }}

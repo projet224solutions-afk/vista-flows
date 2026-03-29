@@ -24,6 +24,8 @@ interface VendorContext {
   aiEnabled: boolean;
   executionsToday: number;
   maxDailyExecutions: number;
+  realitySnapshot: any;
+  dataReliability: "verified" | "partial" | "unavailable";
 }
 
 interface AIDecision {
@@ -33,6 +35,300 @@ interface AIDecision {
   contextData: any;
   priority: string;
   requiresApproval: boolean;
+}
+
+const PAID_STATUSES = new Set(["paid", "completed", "success", "succeeded", "confirmed"]);
+
+function toNumber(value: any): number {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function normalizeText(value: any): string {
+  return String(value || "").trim().toLowerCase();
+}
+
+function hasProductImage(product: any): boolean {
+  if (!product || typeof product !== "object") return false;
+  if (typeof product.image_url === "string" && product.image_url.trim().length > 0) return true;
+  if (typeof product.cover_image === "string" && product.cover_image.trim().length > 0) return true;
+  if (typeof product.thumbnail_url === "string" && product.thumbnail_url.trim().length > 0) return true;
+  if (Array.isArray(product.images) && product.images.length > 0) return true;
+  return false;
+}
+
+function extractLatestUserInput(messages: any[]): string {
+  if (!Array.isArray(messages)) return "";
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg?.role === "user" && typeof msg?.content === "string") {
+      return msg.content.trim();
+    }
+  }
+  return "";
+}
+
+function isGreetingMessage(text: string): boolean {
+  const value = normalizeText(text);
+  if (!value) return false;
+  return ["bonjour", "salut", "hello", "slt", "bonsoir", "yo", "cc", "coucou", "hey"].some((token) => value === token || value.startsWith(`${token} `));
+}
+
+async function buildVendorRealitySnapshot(supabase: any, vendorId: string, userId: string) {
+  const generatedAt = new Date().toISOString();
+  try {
+    const [digitalProductsRes, digitalPurchasesRes] = await Promise.all([
+      supabase
+        .from("digital_products")
+        .select("*")
+        .or(`merchant_id.eq.${userId},vendor_id.eq.${vendorId}`)
+        .limit(300),
+      supabase
+        .from("digital_product_purchases")
+        .select("*")
+        .eq("merchant_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(500),
+    ]);
+
+    const digitalProducts = Array.isArray(digitalProductsRes.data) ? digitalProductsRes.data : [];
+    const purchases = Array.isArray(digitalPurchasesRes.data) ? digitalPurchasesRes.data : [];
+
+    let publishedCount = 0;
+    let draftCount = 0;
+    let inactiveCount = 0;
+    let activeCount = 0;
+    let missingDescription = 0;
+    let missingImage = 0;
+    let totalViews = 0;
+    let inferredSalesFromProducts = 0;
+
+    for (const p of digitalProducts) {
+      const status = normalizeText(p.status);
+      const isActive = Boolean(p.is_active) || status === "published" || status === "active";
+
+      if (status === "published") publishedCount += 1;
+      if (status === "draft") draftCount += 1;
+      if (status === "inactive" || status === "archived") inactiveCount += 1;
+      if (isActive) activeCount += 1;
+
+      if (!normalizeText(p.description)) missingDescription += 1;
+      if (!hasProductImage(p)) missingImage += 1;
+
+      totalViews += toNumber(p.views_count ?? p.view_count ?? p.click_count);
+      inferredSalesFromProducts += toNumber(p.sales_count ?? p.total_sales ?? p.download_count ?? p.purchase_count);
+    }
+
+    const paidPurchases = purchases.filter((purchase: any) => {
+      const paymentStatus = normalizeText(purchase.payment_status || purchase.status);
+      return PAID_STATUSES.has(paymentStatus);
+    });
+
+    const paidRevenue = paidPurchases.reduce((sum: number, purchase: any) => {
+      return sum + toNumber(purchase.amount ?? purchase.total_amount ?? purchase.price_paid);
+    }, 0);
+
+    const recentSales7d = paidPurchases.filter((purchase: any) => {
+      const createdAt = purchase.created_at ? new Date(purchase.created_at).getTime() : 0;
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      return createdAt >= sevenDaysAgo;
+    }).length;
+
+    const topProducts = [...digitalProducts]
+      .sort((a: any, b: any) => {
+        const bScore = toNumber(b.sales_count ?? b.total_sales ?? b.download_count) * 10 + toNumber(b.views_count ?? b.view_count);
+        const aScore = toNumber(a.sales_count ?? a.total_sales ?? a.download_count) * 10 + toNumber(a.views_count ?? a.view_count);
+        return bScore - aScore;
+      })
+      .slice(0, 5)
+      .map((product: any) => ({
+        id: product.id,
+        name: product.title || product.name || "Produit sans nom",
+        status: product.status || "unknown",
+        price: toNumber(product.price),
+        views: toNumber(product.views_count ?? product.view_count),
+        sales: toNumber(product.sales_count ?? product.total_sales ?? product.download_count),
+      }));
+
+    const priorities: string[] = [];
+    if (digitalProducts.length === 0) priorities.push("Publier au moins 3 produits digitaux pour commencer a generer des ventes.");
+    if (publishedCount === 0 && digitalProducts.length > 0) priorities.push("Aucun produit n'est publie. Publier au moins 1 produit pour devenir visible.");
+    if (missingDescription > 0) priorities.push(`Completer la description de ${missingDescription} produit(s) pour ameliorer la conversion.`);
+    if (missingImage > 0) priorities.push(`Ajouter des visuels sur ${missingImage} produit(s) pour augmenter le taux de clic.`);
+    if (paidPurchases.length === 0 && digitalProducts.length > 0) priorities.push("Mettre en place une offre de lancement (promo/coupon) pour debloquer les premieres ventes.");
+
+    return {
+      generatedAt,
+      source: "digital_products + digital_product_purchases",
+      verification: "verified",
+      availability: {
+        digitalProducts: digitalProductsRes.error ? "unavailable" : "verified",
+        digitalPurchases: digitalPurchasesRes.error ? "partial" : "verified",
+      },
+      catalog: {
+        totalProducts: digitalProducts.length,
+        published: publishedCount,
+        draft: draftCount,
+        active: activeCount,
+        inactive: inactiveCount,
+      },
+      quality: {
+        missingDescription,
+        missingImage,
+      },
+      performance: {
+        totalViews,
+        inferredSalesFromProducts,
+        paidSalesCount: paidPurchases.length,
+        paidRevenue,
+        recentSales7d,
+      },
+      topProducts,
+      priorities,
+      notes: [
+        "Tous les chiffres ci-dessus sont extraits des donnees boutique au moment de la requete.",
+        "Si une source est indisponible, le statut availability l'indique explicitement.",
+      ],
+    };
+  } catch (error) {
+    console.error("[vendor-ai-assistant] buildVendorRealitySnapshot failed:", error);
+    return {
+      generatedAt,
+      source: "digital_products + digital_product_purchases",
+      verification: "unavailable",
+      availability: {
+        digitalProducts: "unavailable",
+        digitalPurchases: "unavailable",
+      },
+      catalog: {
+        totalProducts: 0,
+        published: 0,
+        draft: 0,
+        active: 0,
+        inactive: 0,
+      },
+      quality: {
+        missingDescription: 0,
+        missingImage: 0,
+      },
+      performance: {
+        totalViews: 0,
+        inferredSalesFromProducts: 0,
+        paidSalesCount: 0,
+        paidRevenue: 0,
+        recentSales7d: 0,
+      },
+      topProducts: [],
+      priorities: ["Donnees boutique indisponibles temporairement. Verifier la connectivite et reessayer."],
+      notes: ["Snapshot indisponible: aucune affirmation chiffrée ne doit etre inventee."],
+    };
+  }
+}
+
+async function researchMarketInsights(params: any) {
+  const topic = String(params?.topic || "").trim();
+  const region = String(params?.region || "Afrique de l'Ouest").trim();
+  const limit = Math.min(Math.max(toNumber(params?.limit || 5), 1), 8);
+
+  if (!topic || topic.length < 3) {
+    return {
+      success: false,
+      error: "Parametre topic requis (au moins 3 caracteres).",
+      data: {
+        externalDataStatus: "unavailable",
+      },
+    };
+  }
+
+  const query = encodeURIComponent(`${topic} ${region}`);
+
+  const [wikiRaw, ddgRaw] = await Promise.allSettled([
+    fetch(`https://fr.wikipedia.org/w/api.php?action=opensearch&search=${query}&limit=${limit}&namespace=0&format=json`),
+    fetch(`https://api.duckduckgo.com/?q=${query}&format=json&no_html=1&skip_disambig=1`),
+  ]);
+
+  const sources: Array<{ title: string; url: string; snippet: string; source: string }> = [];
+
+  if (wikiRaw.status === "fulfilled" && wikiRaw.value.ok) {
+    try {
+      const wiki = await wikiRaw.value.json();
+      const titles: string[] = Array.isArray(wiki?.[1]) ? wiki[1] : [];
+      const snippets: string[] = Array.isArray(wiki?.[2]) ? wiki[2] : [];
+      const urls: string[] = Array.isArray(wiki?.[3]) ? wiki[3] : [];
+      for (let i = 0; i < Math.min(titles.length, limit); i++) {
+        if (urls[i]) {
+          sources.push({
+            title: titles[i] || "Wikipedia",
+            url: urls[i],
+            snippet: snippets[i] || "",
+            source: "wikipedia",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("[vendor-ai-assistant] wikipedia parse error:", error);
+    }
+  }
+
+  if (ddgRaw.status === "fulfilled" && ddgRaw.value.ok) {
+    try {
+      const ddg = await ddgRaw.value.json();
+      if (ddg?.AbstractURL) {
+        sources.push({
+          title: ddg?.Heading || "DuckDuckGo",
+          url: ddg.AbstractURL,
+          snippet: ddg?.AbstractText || "",
+          source: "duckduckgo",
+        });
+      }
+
+      const related = Array.isArray(ddg?.RelatedTopics) ? ddg.RelatedTopics : [];
+      for (const item of related) {
+        const url = item?.FirstURL || item?.Icon?.URL;
+        const text = item?.Text;
+        if (typeof url === "string" && url && typeof text === "string" && text) {
+          sources.push({
+            title: text.split(" - ")[0],
+            url,
+            snippet: text,
+            source: "duckduckgo",
+          });
+        }
+        if (sources.length >= limit + 3) break;
+      }
+    } catch (error) {
+      console.error("[vendor-ai-assistant] duckduckgo parse error:", error);
+    }
+  }
+
+  const uniqueSources = sources.filter((entry, index, all) => {
+    return all.findIndex((candidate) => candidate.url === entry.url) === index;
+  }).slice(0, limit);
+
+  if (uniqueSources.length === 0) {
+    return {
+      success: true,
+      data: {
+        topic,
+        region,
+        externalDataStatus: "unavailable",
+        message: "Aucune source externe fiable n'a pu etre recuperee automatiquement.",
+        sources: [],
+      },
+    };
+  }
+
+  return {
+    success: true,
+    data: {
+      topic,
+      region,
+      externalDataStatus: "verified",
+      message: "Recherche externe recuperee. Utiliser ces sources avec citation explicite.",
+      sources: uniqueSources,
+      transparency: "Les resultats externes peuvent evoluer. Verifier les URL avant decision critique.",
+    },
+  };
 }
 
 // =====================================================
@@ -304,6 +600,22 @@ const enterpriseTools = [
           include_urgent_alerts: { type: "boolean" },
           include_performance_summary: { type: "boolean" }
         }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "research_market_insights",
+      description: "Recherche externe controlee pour tendances et opportunites business. Toujours citer les URL obtenues.",
+      parameters: {
+        type: "object",
+        properties: {
+          topic: { type: "string", description: "Sujet de recherche (ex: niches ebooks finance)" },
+          region: { type: "string", description: "Region cible (ex: Guinee, Afrique de l'Ouest)" },
+          limit: { type: "number", description: "Nombre max de sources (1-8)" }
+        },
+        required: ["topic"]
       }
     }
   }
@@ -2034,6 +2346,8 @@ async function executeTool(supabase: any, vendorId: string, userId: string, tool
       return toggleAIFeatures(supabase, vendorId, userId, args);
     case 'get_ai_dashboard':
       return getAIDashboard(supabase, vendorId, args);
+    case 'research_market_insights':
+      return researchMarketInsights(args);
     default:
       return { success: false, error: `Outil inconnu: ${toolName}` };
   }
@@ -2179,6 +2493,13 @@ serve(async (req) => {
               .single();
             aiControl = newControl;
           }
+
+          const realitySnapshot = await buildVendorRealitySnapshot(supabaseClient, vendor.id, userId);
+          const dataReliability = realitySnapshot?.verification === 'verified'
+            ? 'verified'
+            : realitySnapshot?.verification === 'unavailable'
+            ? 'unavailable'
+            : 'partial';
           
           vendorContext = {
             vendorId: vendor.id,
@@ -2192,7 +2513,9 @@ serve(async (req) => {
             recentOrders: orders || [],
             aiEnabled: aiControl?.ai_enabled ?? true,
             executionsToday: aiControl?.executions_today || 0,
-            maxDailyExecutions: aiControl?.max_daily_executions || 100
+            maxDailyExecutions: aiControl?.max_daily_executions || 100,
+            realitySnapshot,
+            dataReliability,
           };
         }
       }
@@ -2227,6 +2550,10 @@ serve(async (req) => {
       throw new Error("Message requis");
     }
 
+    const latestUserInput = extractLatestUserInput(conversationMessages);
+    const greetingLike = isGreetingMessage(latestUserInput);
+    const snapshotJson = JSON.stringify(vendorContext.realitySnapshot, null, 2);
+
     // Système prompt ENTERPRISE - COPILOTE OFFICIEL 224SOLUTIONS VENDEURS V3
     const enterpriseSystemPrompt = `
 ════════════════════════════════════════════════════════════════
@@ -2238,6 +2565,16 @@ dédié aux VENDEURS professionnels.
 Tu es un assistant IA autonome, proactif et expert,
 capable de gérer toutes les fonctionnalités accessibles au **Compte Vendeur**.
 Tu n'as aucun accès au compte PDG ni aux informations sensibles internes.
+
+PROTOCOLE ANTI-HALLUCINATION (OBLIGATOIRE):
+- N'affirme jamais un chiffre non present dans les donnees verifiees.
+- Si une donnee est absente/partielle: indique explicitement "donnee indisponible".
+- Structure chaque reponse en 3 blocs:
+  1) Faits verifies
+  2) Incertitudes / verifications a faire
+  3) Actions business prioritaires
+- Si demande de recherche externe: utilise research_market_insights puis cite les URL.
+- Si le message est une simple salutation, commence par un mini diagnostic boutique reel base sur le snapshot.
 
 🏢 NIVEAU: ENTERPRISE (Comparable à Amazon Seller Central, Shopify Plus, Odoo Enterprise)
 
@@ -2303,6 +2640,10 @@ En cas de demande interdite :
 - Produits: ${vendorContext.totalProducts} (${vendorContext.lowStockProducts} en stock faible)
 - IA: ${vendorContext.aiEnabled ? '🟢 Activée' : '🔴 Désactivée'}
 - Exécutions aujourd'hui: ${vendorContext.executionsToday}/${vendorContext.maxDailyExecutions}
+- Fiabilite donnees: ${vendorContext.dataReliability}
+
+SNAPSHOT BOUTIQUE DIGITAL (SOURCE DE VERITE)
+${snapshotJson}
 
 ════════════════════════════════════════════════════════════════
 🔍 RECHERCHE EXTERNE & AFFILIATION
@@ -2405,6 +2746,7 @@ En cas de demande interdite :
 - approve_ai_decision / reject_ai_decision: Validation
 - toggle_ai_features: Kill-switch
 - get_ai_dashboard: Tableau de bord IA
+- research_market_insights: Recherche externe controlee
 
 ════════════════════════════════════════════════════════════════
 🛡️ SÉCURITÉ ET GOUVERNANCE
@@ -2437,6 +2779,13 @@ Ce comportement est une exigence fonctionnelle, pas une option.
 - Si demande interdite : refuser poliment et proposer alternative autorisée
 - Toujours rediriger vers le support humain si nécessaire`;
 
+  const policyNudge = `
+Contexte de generation:
+- Dernier message utilisateur: ${latestUserInput || "(vide)"}
+- Est une salutation: ${greetingLike ? "oui" : "non"}
+- Regle de sortie: toujours separer faits verifies, incertitudes, actions.
+`;
+
     const wantsStream = body.stream !== false;
 
     if (wantsStream) {
@@ -2444,6 +2793,7 @@ Ce comportement est une exigence fonctionnelle, pas une option.
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: enterpriseSystemPrompt },
+          { role: "system", content: policyNudge },
           ...conversationMessages,
         ],
         tools: enterpriseTools,
@@ -2504,6 +2854,7 @@ Ce comportement est une exigence fonctionnelle, pas une option.
 
     const gatewayMessages: any[] = [
       { role: "system", content: enterpriseSystemPrompt },
+      { role: "system", content: policyNudge },
       ...conversationMessages,
     ];
 
