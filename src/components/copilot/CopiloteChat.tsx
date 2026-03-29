@@ -201,7 +201,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
 
   const sendMessage = async () => {
     console.log('📤 Copilote: Envoi message, isLoading =', isLoading);
-    if (!input.trim() || isLoading || vendorCopilot.loading) return;
+    if (!input.trim() || isLoading || (userRole === 'vendeur' && vendorCopilot.loading)) return;
 
     // NOUVEAU: Mode Enterprise pour vendeur avec analyse complète
     if (userRole === 'vendeur' && useEnterpriseMode && vendorId) {
@@ -226,8 +226,8 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
     // Mode standard (edge function)
     const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData.session?.access_token;
-    if (!accessToken) {
-      toast.error('Veuillez vous connecter pour utiliser le Copilote');
+    if (userRole === 'vendeur' && !accessToken) {
+      toast.error('Veuillez vous connecter pour utiliser le Copilote vendeur');
       return;
     }
 
@@ -279,7 +279,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
           headers: {
             'Content-Type': 'application/json',
             apikey: supabaseAnonKey,
-            'Authorization': `Bearer ${accessToken}`,
+            ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
           },
           body: JSON.stringify({
             message: userMessage.content,
