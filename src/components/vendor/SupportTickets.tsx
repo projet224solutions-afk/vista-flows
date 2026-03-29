@@ -39,7 +39,7 @@ const statusColors = {
   open: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
   in_progress: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
   waiting_response: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
-  resolved: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20',
+  resolved: 'bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20',
   closed: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
 };
 

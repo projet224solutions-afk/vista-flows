@@ -64,7 +64,7 @@ export function SOCDashboard() {
         {/* Statut SOC */}
         <div className={`p-4 rounded-lg border ${
           socStatus.operational 
-            ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 border-primary-orange-200 dark:border-primary-orange-800' 
+            ? 'bg-primary-blue-50 dark:bg-primary-orange-950 border-primary-orange-200 dark:border-primary-orange-800' 
             : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
         }`}>
           <div className="flex items-center gap-2 mb-2">

@@ -232,7 +232,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
           </CardContent>
         </Card>
         <Card className={cn(
-          isComplete && "border-primary-orange-300 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950/20"
+          isComplete && "border-primary-orange-300 bg-primary-blue-50 dark:bg-primary-blue-950/20"
         )}>
           <CardContent className="pt-4 text-center">
             <p className={cn(
@@ -390,7 +390,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
       )}
 
       {isComplete && (
-        <Alert className="border-primary-orange-300 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950/20">
+        <Alert className="border-primary-orange-300 bg-primary-blue-50 dark:bg-primary-blue-950/20">
           <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
           <AlertTitle className="text-primary-blue-900 dark:text-primary-orange-200">RÃ©ception complÃ¨te</AlertTitle>
           <AlertDescription className="text-primary-blue-800 dark:text-primary-orange-300">
@@ -409,7 +409,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
           disabled={isSubmitting}
           className={cn(
             isComplete 
-              ? "bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-orange-600 hover:to-primary-blue-600" 
+              ? "brand-split hover:opacity-90" 
               : "bg-amber-600 hover:bg-amber-700"
           )}
         >

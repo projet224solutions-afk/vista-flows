@@ -41,7 +41,7 @@ export function ChinaDashboard() {
       value: `${stats?.averageMargin || 0}%`,
       icon: TrendingUp,
       color: 'text-primary-orange-500',
-      bgColor: 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950'
+      bgColor: 'bg-primary-blue-50 dark:bg-primary-orange-950'
     },
     {
       title: 'DÃ©lai moyen',

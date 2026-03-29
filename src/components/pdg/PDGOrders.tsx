@@ -111,7 +111,7 @@ export default function PDGOrders() {
     const variants: Record<string, { label: string; className: string }> = {
       pending: { label: 'En attente', className: 'bg-yellow-500' },
       confirmed: { label: 'En cours', className: 'bg-blue-500' },
-      delivered: { label: 'LivrÃ©e', className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' },
+      delivered: { label: 'LivrÃ©e', className: 'bg-primary-blue-600' },
       cancelled: { label: 'AnnulÃ©e', className: 'bg-red-500' }
     };
 

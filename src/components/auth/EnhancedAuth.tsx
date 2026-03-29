@@ -69,7 +69,7 @@ const accountTypeConfigs: AccountTypeOption[] = [
     descKey: 'auth.accountType.merchantDesc',
     icon: Store,
     color: 'text-primary-orange-600',
-    bgColor: 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 hover:bg-primary-orange-100 border-primary-orange-200',
+    bgColor: 'bg-primary-blue-50 hover:bg-primary-orange-100 border-primary-orange-200',
   },
   {
     value: 'livreur',

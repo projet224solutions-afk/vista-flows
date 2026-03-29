@@ -672,7 +672,7 @@ export default function UniversalCommunicationHub({
                         {/* Indicateur de prÃ©sence */}
                         <span className={cn(
                           "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background",
-                          isOnline ? "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" : 
+                          isOnline ? "bg-primary-blue-600" : 
                           presenceStatus?.status === 'away' ? "bg-yellow-500" : "bg-gray-400"
                         )} />
                       </div>
@@ -735,7 +735,7 @@ export default function UniversalCommunicationHub({
                 </Avatar>
                 <span className={cn(
                   "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background",
-                  isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') ? "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" : "bg-gray-400"
+                  isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') ? "bg-primary-blue-600" : "bg-gray-400"
                 )} />
               </div>
               

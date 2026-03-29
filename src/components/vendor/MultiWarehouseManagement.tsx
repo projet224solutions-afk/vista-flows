@@ -103,7 +103,7 @@ function LocationCard({
   return (
     <Card className={cn(
       "relative overflow-hidden transition-all hover:shadow-lg",
-      isPos && "border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/30 dark:bg-primary-orange-950/20",
+      isPos && "border-primary-orange-500/50 bg-primary-blue-50/30 dark:bg-primary-orange-950/20",
       location.is_default && "ring-2 ring-primary"
     )}>
       {/* Badge type */}
@@ -669,7 +669,7 @@ export default function MultiWarehouseManagement() {
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
                   {posLocations.map((location) => (
-                    <Card key={location.id} className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50 dark:bg-primary-orange-950/20">
+                    <Card key={location.id} className="border-primary-orange-200 bg-primary-blue-50/50 dark:bg-primary-orange-950/20">
                       <CardContent className="pt-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">

@@ -1437,7 +1437,7 @@ export default function OrderManagement() {
                       order.escrow.status === 'pending' || order.escrow.status === 'held'
                         ? 'bg-blue-50 border-blue-200'
                         : order.escrow.status === 'released'
-                        ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200'
+                        ? 'bg-primary-blue-50 border-primary-orange-200'
                         : 'bg-gray-50 border-gray-200'
                     }`}>
                       <div className="flex items-start gap-2">

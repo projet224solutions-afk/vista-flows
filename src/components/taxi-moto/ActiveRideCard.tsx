@@ -117,7 +117,7 @@ export function ActiveRideCard({
               onClick={() => onContactCustomer(ride.customer.phone)}
               size="sm"
               variant="outline"
-              className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 hover:bg-primary-orange-100 border-primary-orange-300"
+              className="bg-primary-blue-50 hover:bg-primary-orange-100 border-primary-orange-300"
             >
               <Phone className="w-4 h-4 text-primary-orange-600" />
             </Button>
@@ -134,8 +134,8 @@ export function ActiveRideCard({
 
         {/* ItinÃ©raire */}
         <div className="space-y-3">
-          <div className="flex items-start gap-3 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border-l-4 border-primary-orange-500">
-            <div className="p-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full mt-1">
+          <div className="flex items-start gap-3 p-3 bg-primary-blue-50 rounded-lg border-l-4 border-primary-orange-500">
+            <div className="p-2 bg-primary-blue-600 rounded-full mt-1">
               <MapPin className="w-4 h-4 text-white" />
             </div>
             <div className="flex-1">
@@ -156,7 +156,7 @@ export function ActiveRideCard({
         </div>
 
         {/* Informations de gain */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+        <div className="flex items-center justify-between p-4 bg-primary-blue-50 rounded-lg border border-primary-orange-200">
           <div className="flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-primary-orange-600" />
             <span className="text-sm text-gray-600">Gain estimÃ©</span>

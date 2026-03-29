@@ -53,7 +53,7 @@ export function RideRequestCard({
       "animate-in slide-in-from-bottom-4 fade-in duration-300"
     )}>
       {/* Top accent gradient */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-blue-400 via-primary-blue-500 to-primary-orange-500" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-primary-blue-400" />
       
       {/* Glow effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500/5 to-transparent pointer-events-none" />
@@ -63,7 +63,7 @@ export function RideRequestCard({
         {/* Header: Customer & Time */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-blue-400 to-primary-orange-600 flex items-center justify-center shadow-lg shadow-primary-orange-500/20">
+            <div className="w-10 h-10 rounded-full bg-primary-blue-400 flex items-center justify-center shadow-lg shadow-primary-orange-500/20">
               <User className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -145,8 +145,8 @@ export function RideRequestCard({
             disabled={isAccepting}
             className={cn(
               "flex-1 h-12 rounded-xl font-semibold",
-              "bg-gradient-to-r from-primary-blue-500 to-primary-orange-600",
-              "hover:from-primary-blue-400 hover:to-primary-orange-500",
+              "bg-gradient-to-r bg-primary-blue-600",
+              "hover:bg-primary-blue-500",
               "text-white shadow-lg shadow-primary-orange-500/30",
               "transition-all",
               "disabled:opacity-70"

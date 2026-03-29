@@ -465,7 +465,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
 
       {/* Action suivante */}
       {nextAction && (
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/20 dark:to-primary-orange-950/20">
+        <Card className="bg-primary-blue-50 dark:bg-primary-blue-950/20">
           <CardContent className="pt-4">
             {/* VÃ©rification code au retrait */}
             {isAtVendor && delivery.metadata?.pickup_code ? (
@@ -507,7 +507,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
               <Dialog open={showProofDialog} onOpenChange={setShowProofDialog}>
                 <DialogTrigger asChild>
                   <Button
-                    className="w-full bg-gradient-to-r from-primary-blue-500 to-primary-orange-500"
+                    className="w-full brand-split"
                     size="lg"
                     disabled={updating}
                   >

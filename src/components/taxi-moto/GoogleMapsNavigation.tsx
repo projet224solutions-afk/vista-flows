@@ -406,7 +406,7 @@ export function GoogleMapsNavigation({
 
       {/* Informations de position actuelle + Bouton navigation */}
       {currentLocation && (
-        <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50">
+        <Card className="bg-primary-blue-50">
           <CardContent className="pt-4 space-y-3">
             <div className="flex items-center gap-3">
               <MapPin className="w-8 h-8 text-primary-orange-600" />
@@ -422,7 +422,7 @@ export function GoogleMapsNavigation({
             {!hasActiveRide && (
               <Button 
                 onClick={openGoogleMapsExternal}
-                className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-blue-700 hover:to-primary-orange-700 text-white"
+                className="w-full bg-primary-blue-600 hover:opacity-90 text-white"
               >
                 <Navigation className="w-4 h-4 mr-2" />
                 Ouvrir Google Maps
@@ -481,7 +481,7 @@ export function GoogleMapsNavigation({
 
           {/* ItinÃ©raire */}
           <div className="space-y-2">
-            <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-3 border border-primary-orange-200">
+            <div className="bg-primary-blue-50 rounded-lg p-3 border border-primary-orange-200">
               <div className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-primary-orange-600 mt-0.5" />
                 <div>

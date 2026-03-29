@@ -234,9 +234,9 @@ export default function AgoraAudioCall({
 
         {/* Indicateurs visuels */}
         <div className="flex justify-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${callState.isMuted ? 'bg-red-500' : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500'}`}></div>
-          <div className={`w-3 h-3 rounded-full ${isSpeakerOn ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-gray-400'}`}></div>
-          <div className={`w-3 h-3 rounded-full ${callState.isConnected ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-red-500'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${callState.isMuted ? 'bg-red-500' : 'bg-primary-blue-600'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${isSpeakerOn ? 'bg-primary-blue-600' : 'bg-gray-400'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${callState.isConnected ? 'bg-primary-blue-600' : 'bg-red-500'}`}></div>
         </div>
       </CardContent>
     </Card>

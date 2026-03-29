@@ -133,7 +133,7 @@ export default function PlatformRevenueOverview() {
       case 'subscription':
         return 'from-pink-500/20 to-pink-600/20 border-pink-500/30';
       case 'marketplace':
-        return 'from-primary-blue-500/20 to-primary-orange-600/20 border-primary-orange-500/30';
+        return 'bg-primary-blue-500/20 border-primary-orange-500/30';
       case 'taxi':
         return 'from-blue-500/20 to-blue-600/20 border-blue-500/30';
       case 'delivery':
@@ -178,10 +178,10 @@ export default function PlatformRevenueOverview() {
         {/* RÃ©sumÃ© Global - Mobile: Full width single column */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-primary-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary-blue-600/10 flex items-center justify-center flex-shrink-0">
                   <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-orange-500" />
                 </div>
                 <span className="truncate">Revenus Totaux Plateforme</span>

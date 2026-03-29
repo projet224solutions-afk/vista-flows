@@ -214,10 +214,10 @@ export default function PDGFinance() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-primary-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-primary-blue-600/10 flex items-center justify-center">
                 <DollarSign className="w-4 h-4 text-primary-orange-500" />
               </div>
               Revenus Totaux
@@ -406,7 +406,7 @@ export default function PDGFinance() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                      trans.status === 'completed' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10' : 
+                      trans.status === 'completed' ? 'bg-primary-blue-600/10' : 
                       trans.status === 'pending' ? 'bg-orange-500/10' : 
                       'bg-red-500/10'
                     }`}>
@@ -441,7 +441,7 @@ export default function PDGFinance() {
                       {Number(trans.amount).toLocaleString()} GNF
                     </p>
                     <Badge variant="outline" className={
-                      trans.status === 'completed' ? 'border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500' :
+                      trans.status === 'completed' ? 'border-primary-orange-500/50 bg-primary-blue-600/10 text-primary-orange-500' :
                       trans.status === 'pending' ? 'border-orange-500/50 bg-orange-500/10 text-orange-500' :
                       'border-red-500/50 bg-red-500/10 text-red-500'
                     }>
@@ -524,7 +524,7 @@ export default function PDGFinance() {
 
                       {/* Informations wallet */}
                       <div className="space-y-4">
-                        <div className="p-4 rounded-lg bg-gradient-to-br from-primary-blue-500/10 to-transparent border border-primary-orange-500/20">
+                        <div className="p-4 rounded-lg bg-primary-blue-500/10 border border-primary-orange-500/20">
                           <p className="text-sm text-muted-foreground mb-1">Solde</p>
                           <p className="text-3xl font-bold text-primary-orange-600">
                             {Number(wallet.balance).toLocaleString()} {wallet.currency}
@@ -536,7 +536,7 @@ export default function PDGFinance() {
                             <span className="text-muted-foreground">Statut:</span>
                             <Badge 
                               variant={wallet.wallet_status === 'active' ? 'default' : 'secondary'}
-                              className={wallet.wallet_status === 'active' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : ''}
+                              className={wallet.wallet_status === 'active' ? 'bg-primary-blue-600' : ''}
                             >
                               {wallet.wallet_status}
                             </Badge>

@@ -117,7 +117,7 @@ const escrowStatusLabels: Record<string, string> = {
 
 const paymentStatusColors: Record<string, string> = {
   pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  paid: 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200',
+  paid: 'bg-primary-blue-50 text-primary-orange-700 border-primary-orange-200',
   failed: 'bg-red-50 text-red-700 border-red-200',
   refunded: 'bg-gray-50 text-gray-700 border-gray-200'
 };
@@ -503,14 +503,14 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-primary-blue-50 to-primary-orange-100">
+        <Card className="border-0 shadow-md bg-primary-blue-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-primary-orange-600 font-medium">LivrÃ©es</p>
                 <p className="text-2xl font-bold text-primary-orange-900">{stats.completed}</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-xl">
+              <div className="p-3 bg-primary-blue-600 rounded-xl">
                 <CheckCircle className="w-5 h-5 text-white" />
               </div>
             </div>
@@ -533,7 +533,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
       </div>
 
       {/* Revenue Card */}
-      <Card className="border-0 shadow-lg bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 text-white">
+      <Card className="border-0 shadow-lg brand-split text-white">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -685,7 +685,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                           order.escrow.status === 'pending' || order.escrow.status === 'held'
                             ? "bg-blue-50 border-blue-200"
                             : order.escrow.status === 'released'
-                            ? "bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200"
+                            ? "bg-primary-blue-50 border-primary-orange-200"
                             : order.escrow.status === 'refunded'
                             ? "bg-red-50 border-red-200"
                             : "bg-gray-50 border-gray-200"

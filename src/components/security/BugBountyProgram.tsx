@@ -124,7 +124,7 @@ export function BugBountyProgram() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'resolved': return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">RÃ©solu</Badge>;
+      case 'resolved': return <Badge className="bg-primary-blue-600">RÃ©solu</Badge>;
       case 'in_review': return <Badge className="bg-blue-500">En revue</Badge>;
       case 'confirmed': return <Badge className="bg-purple-500">ConfirmÃ©</Badge>;
       case 'rejected': return <Badge variant="destructive">RejetÃ©</Badge>;

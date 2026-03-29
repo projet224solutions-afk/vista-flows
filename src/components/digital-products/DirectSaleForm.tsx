@@ -254,8 +254,8 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
 
           {/* RÃ©duction affichÃ©e */}
           {data.originalPrice && parseFloat(data.originalPrice) > parseFloat(data.price) && (
-            <div className="flex items-center gap-2 p-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 rounded-lg">
-              <Badge variant="secondary" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 text-primary-orange-600">
+            <div className="flex items-center gap-2 p-2 bg-primary-blue-600/10 rounded-lg">
+              <Badge variant="secondary" className="bg-primary-blue-600/20 text-primary-orange-600">
                 -{Math.round((1 - parseFloat(data.price) / parseFloat(data.originalPrice)) * 100)}%
               </Badge>
               <span className="text-xs text-muted-foreground">

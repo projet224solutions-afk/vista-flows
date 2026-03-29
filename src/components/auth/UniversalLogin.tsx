@@ -122,7 +122,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
       value: 'bureau' as UserType, 
       label: t('auth.universal.accountType.bureau'), 
       icon: Building2,
-      color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+      color: 'bg-primary-blue-600',
       description: t('auth.universal.accountType.bureauDesc')
     },
     { 

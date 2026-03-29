@@ -321,7 +321,7 @@ export function VendorDeliveriesPanel() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 dark:from-primary-blue-950/30 dark:to-primary-orange-900/20 border-primary-orange-200 dark:border-primary-orange-800">
+        <Card className="bg-primary-blue-50 dark:bg-primary-blue-950/30  border-primary-orange-200 dark:border-primary-orange-800">
           <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
@@ -348,7 +348,7 @@ export function VendorDeliveriesPanel() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-blue-100 dark:from-primary-blue-950/30 dark:to-primary-blue-900/20 border-primary-blue-200 dark:border-primary-blue-800">
+        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-blue-100 dark:bg-primary-blue-950/30 dark:to-primary-blue-900/20 border-primary-blue-200 dark:border-primary-blue-800">
           <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0">

@@ -243,7 +243,7 @@ export function ChinaProductImportDialog({
         )}
         {platform && (
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200">
+            <Badge variant="outline" className="bg-primary-blue-50 text-primary-orange-700 border-primary-orange-200">
               <CheckCircle className="w-3 h-3 mr-1" />
               {CHINA_PLATFORMS[platform].name} dÃ©tectÃ©
             </Badge>
@@ -589,7 +589,7 @@ export function ChinaProductImportDialog({
 
     return (
       <div className="space-y-6">
-        <Alert className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
+        <Alert className="bg-primary-blue-50 border-primary-orange-200">
           <CheckCircle className="h-4 w-4 text-primary-orange-600" />
           <AlertDescription className="text-primary-orange-800">
             Votre produit est prÃªt Ã  Ãªtre ajoutÃ© Ã  votre catalogue !
@@ -701,7 +701,7 @@ export function ChinaProductImportDialog({
                 currentStep === step 
                   ? 'bg-primary text-primary-foreground' 
                   : index < ['url', 'preview', 'pricing', 'confirm'].indexOf(currentStep)
-                    ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white'
+                    ? 'bg-primary-blue-600 text-white'
                     : 'bg-muted text-muted-foreground'
               }`}>
                 {index + 1}
@@ -709,7 +709,7 @@ export function ChinaProductImportDialog({
               {index < 3 && (
                 <div className={`w-8 h-0.5 mx-1 ${
                   index < ['url', 'preview', 'pricing', 'confirm'].indexOf(currentStep)
-                    ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500'
+                    ? 'bg-primary-blue-600'
                     : 'bg-muted'
                 }`} />
               )}

@@ -140,7 +140,7 @@ export function Custom224PaymentForm({
 
   if (succeeded) {
     return (
-      <Card className="w-full max-w-lg mx-auto bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+      <Card className="w-full max-w-lg mx-auto bg-primary-blue-50">
         <CardContent className="pt-8 pb-8">
           <div className="text-center space-y-4">
             <div className="flex justify-center">

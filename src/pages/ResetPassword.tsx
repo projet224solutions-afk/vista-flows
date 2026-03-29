@@ -204,7 +204,7 @@ export default function ResetPassword() {
     if (/[^A-Za-z0-9]/.test(newPassword)) s++;
     if (s <= 2) return { score: s, label: "Faible", color: "bg-destructive" };
     if (s <= 4) return { score: s, label: "Moyen", color: "bg-yellow-500" };
-    return { score: s, label: "Fort", color: "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" };
+    return { score: s, label: "Fort", color: "bg-primary-blue-600" };
   })();
 
   return (

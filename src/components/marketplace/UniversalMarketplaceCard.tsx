@@ -74,7 +74,7 @@ export function UniversalMarketplaceCard({
     }
     // Produit e-commerce
     return item.free_shipping ? (
-      <Badge className="absolute top-2 left-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white">
+      <Badge className="absolute top-2 left-2 bg-primary-blue-600 text-white">
         {t('marketplace.card.badge.freeShipping') || 'Livraison gratuite'}
       </Badge>
     ) : null;

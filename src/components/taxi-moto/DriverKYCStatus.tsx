@@ -8,7 +8,7 @@ interface DriverKYCStatusProps {
 
 export function DriverKYCStatus({ isKycValid, onOpenKyc }: DriverKYCStatusProps) {
   if (isKycValid) {
-    return <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white">KYC vÃ©rifiÃ©</Badge>;
+    return <Badge variant="default" className="bg-primary-blue-600 text-white">KYC vÃ©rifiÃ©</Badge>;
   }
   return (
     <div className="flex items-center gap-2">

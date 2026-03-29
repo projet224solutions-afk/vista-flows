@@ -81,7 +81,7 @@ export function ComplianceDashboard() {
   const getStatusBadge = (status: Certification['status']) => {
     switch (status) {
       case 'certified':
-        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500"><CheckCircle className="w-3 h-3 mr-1" />CertifiÃ©</Badge>;
+        return <Badge className="bg-primary-blue-600"><CheckCircle className="w-3 h-3 mr-1" />CertifiÃ©</Badge>;
       case 'in_progress':
         return <Badge className="bg-blue-500"><Clock className="w-3 h-3 mr-1" />En cours</Badge>;
       case 'planned':

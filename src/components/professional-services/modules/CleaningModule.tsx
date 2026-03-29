@@ -187,7 +187,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
     const variants = {
       pending: { color: 'bg-yellow-500', label: 'En attente' },
       confirmed: { color: 'bg-blue-500', label: 'ConfirmÃ©' },
-      in_progress: { color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500', label: 'En cours' },
+      in_progress: { color: 'bg-primary-blue-600', label: 'En cours' },
       completed: { color: 'bg-gray-500', label: 'TerminÃ©' },
       cancelled: { color: 'bg-red-500', label: 'AnnulÃ©' }
     };

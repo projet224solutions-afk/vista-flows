@@ -38,7 +38,7 @@ const mainCategories: Category[] = [
     id: 'formations',
     name: 'Formations',
     icon: <GraduationCap className="w-6 h-6" />,
-    gradient: 'from-primary-blue-500 to-primary-orange-500',
+    gradient: 'bg-primary-blue-600',
     description: 'Cours et formations en ligne',
     path: '/formations'
   },

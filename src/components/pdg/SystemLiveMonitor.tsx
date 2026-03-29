@@ -626,7 +626,7 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="inline-flex flex-col sm:flex-row items-center gap-3 sm:gap-8 p-3 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary-blue-500/10 via-primary-blue-500/20 to-primary-orange-500/10 border border-primary-orange-500/30 w-full sm:w-auto"
+                className="inline-flex flex-col sm:flex-row items-center gap-3 sm:gap-8 p-3 sm:p-6 rounded-xl sm:rounded-2xl bg-primary-blue-500/20 border border-primary-orange-500/30 w-full sm:w-auto"
               >
                 <div className="flex items-center gap-2 sm:gap-3">
                   <motion.div

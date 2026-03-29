@@ -1695,7 +1695,7 @@ export default function ProductManagement() {
                         <Video className="h-6 w-6" />
                         <Badge 
                           variant={isPremium ? "default" : "secondary"} 
-                          className={`absolute top-1 right-1 text-[10px] px-1 ${isPremium ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : ''}`}
+                          className={`absolute top-1 right-1 text-[10px] px-1 ${isPremium ? 'bg-primary-blue-600' : ''}`}
                         >
                           {isPremium ? 'âœ“ Premium' : 'ðŸ”’ Premium'}
                         </Badge>

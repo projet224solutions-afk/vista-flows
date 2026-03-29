@@ -52,7 +52,7 @@ export default function PDGSyncDashboard() {
   const getStatusColor = (status: 'ok' | 'warning' | 'error') => {
     switch (status) {
       case 'ok':
-        return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20';
+        return 'bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20';
       case 'warning':
         return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
       case 'error':
@@ -102,13 +102,13 @@ export default function PDGSyncDashboard() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-xl ${isHealthy ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10' : 'bg-yellow-500/10'}`}>
+              <div className={`p-3 rounded-xl ${isHealthy ? 'bg-primary-blue-600/10' : 'bg-yellow-500/10'}`}>
                 <Database className={`w-6 h-6 ${isHealthy ? 'text-primary-orange-500' : 'text-yellow-500'}`} />
               </div>
               <div>
                 <CardTitle className="flex items-center gap-2">
                   Synchronisation des DonnÃ©es
-                  <Badge variant="outline" className={isHealthy ? 'border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-600'}>
+                  <Badge variant="outline" className={isHealthy ? 'border-primary-orange-500/30 bg-primary-blue-600/10 text-primary-orange-600' : 'border-yellow-500/30 bg-yellow-500/10 text-yellow-600'}>
                     {isHealthy ? 'Sain' : 'Attention requise'}
                   </Badge>
                 </CardTitle>

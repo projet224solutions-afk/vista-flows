@@ -153,7 +153,7 @@ function DataStatusBadge({
   }
 
   const bgClass = status.exists 
-    ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-700' 
+    ? 'bg-primary-blue-600/10 text-primary-orange-700' 
     : 'bg-muted text-muted-foreground';
 
   return (
@@ -323,7 +323,7 @@ export default function DeletedUsersRestore() {
       case 'vendor':
         return 'bg-blue-500';
       case 'client':
-        return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
+        return 'bg-primary-blue-600';
       case 'driver':
       case 'taxi':
       case 'livreur':
@@ -561,7 +561,7 @@ export default function DeletedUsersRestore() {
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {profile.data_analysis.existing_data.map((item, idx) => (
-                              <span key={idx} className="text-xs bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-700 px-2 py-0.5 rounded">
+                              <span key={idx} className="text-xs bg-primary-blue-600/10 text-primary-orange-700 px-2 py-0.5 rounded">
                                 {item}
                               </span>
                             ))}
@@ -726,7 +726,7 @@ export default function DeletedUsersRestore() {
 
                       {/* Message si tout est OK */}
                       {!profile.data_analysis.has_issues && profile.data_analysis.existing_data && profile.data_analysis.existing_data.length > 0 && (
-                        <div className="mt-3 p-2 border border-primary-orange-500/30 rounded bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
+                        <div className="mt-3 p-2 border border-primary-orange-500/30 rounded bg-primary-blue-600/5">
                           <p className="text-xs text-primary-orange-700 flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" />
                             Toutes les donnÃ©es essentielles sont intactes. Aucune restauration nÃ©cessaire.
@@ -955,7 +955,7 @@ export default function DeletedUsersRestore() {
                     {/* Profil */}
                     <div className={`p-3 rounded-lg border ${
                       selectedProfile.data_analysis.analysis.profile.exists 
-                        ? 'border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5' 
+                        ? 'border-primary-orange-500/30 bg-primary-blue-600/5' 
                         : 'border-red-500/30 bg-red-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
@@ -976,7 +976,7 @@ export default function DeletedUsersRestore() {
                     {/* Wallet */}
                     <div className={`p-3 rounded-lg border ${
                       selectedProfile.data_analysis.analysis.wallet.exists 
-                        ? 'border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5' 
+                        ? 'border-primary-orange-500/30 bg-primary-blue-600/5' 
                         : 'border-orange-500/30 bg-orange-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
@@ -998,7 +998,7 @@ export default function DeletedUsersRestore() {
                     {/* User IDs */}
                     <div className={`p-3 rounded-lg border ${
                       selectedProfile.data_analysis.analysis.user_ids.exists 
-                        ? 'border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5' 
+                        ? 'border-primary-orange-500/30 bg-primary-blue-600/5' 
                         : 'border-orange-500/30 bg-orange-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
@@ -1120,7 +1120,7 @@ export default function DeletedUsersRestore() {
 
                   {/* Tout OK */}
                   {!selectedProfile.data_analysis.has_issues && (
-                    <div className="p-4 border border-primary-orange-500/30 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
+                    <div className="p-4 border border-primary-orange-500/30 rounded-lg bg-primary-blue-600/5">
                       <div className="flex items-center gap-2 text-primary-orange-600 font-medium">
                         <CheckCircle2 className="h-4 w-4" />
                         Toutes les donnÃ©es sont intactes
@@ -1147,7 +1147,7 @@ export default function DeletedUsersRestore() {
                       </p>
                     </div>
                   ) : (
-                    <div className="p-4 border border-primary-orange-500/30 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
+                    <div className="p-4 border border-primary-orange-500/30 rounded-lg bg-primary-blue-600/5">
                       <div className="flex items-center gap-2 text-primary-orange-600 font-medium">
                         <CheckCircle2 className="h-4 w-4" />
                         Aucune donnÃ©e supprimÃ©e
@@ -1288,7 +1288,7 @@ export default function DeletedUsersRestore() {
 
               {/* Statut de restauration */}
               {selectedUser.is_restored && (
-                <div className="p-4 border border-primary-orange-500/30 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
+                <div className="p-4 border border-primary-orange-500/30 rounded-lg bg-primary-blue-600/5">
                   <h4 className="font-medium text-primary-orange-600 mb-3 flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4" />
                     RestaurÃ© avec succÃ¨s

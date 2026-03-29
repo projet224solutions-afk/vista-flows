@@ -333,7 +333,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
                 {(stats?.commissions?.validated || 0).toLocaleString()} GNF
               </p>
             </div>
-            <div className="p-4 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border border-primary-orange-500/20">
+            <div className="p-4 rounded-lg bg-primary-blue-600/10 border border-primary-orange-500/20">
               <p className="text-sm text-primary-orange-600 font-medium">PayÃ©es</p>
               <p className="text-2xl font-bold text-primary-orange-700">
                 {(stats?.commissions?.paid || 0).toLocaleString()} GNF

@@ -317,7 +317,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             animate={{ scale: 1, y: 0 }}
             className={modalCardClass}
           >
-              <div className="inline-flex items-center rounded-full border border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 px-3 py-1 text-xs font-medium text-primary-orange-700 dark:border-primary-orange-900/60 dark:bg-primary-orange-900/20 dark:text-primary-orange-300">
+              <div className="inline-flex items-center rounded-full border border-primary-orange-200 bg-primary-blue-50 px-3 py-1 text-xs font-medium text-primary-orange-700 dark:border-primary-orange-900/60 dark:bg-primary-orange-900/20 dark:text-primary-orange-300">
                 {t('pwa.ios.step3.badge')}
               </div>
             {/* Simulation de la confirmation iOS */}

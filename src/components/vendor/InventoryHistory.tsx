@@ -30,7 +30,7 @@ export default function InventoryHistory({ history }: InventoryHistoryProps) {
   const getMovementColor = (type: string) => {
     switch (type) {
       case 'sale': return 'text-red-600 bg-red-50';
-      case 'purchase': return 'text-primary-orange-600 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50';
+      case 'purchase': return 'text-primary-orange-600 bg-primary-blue-50';
       case 'return': return 'text-blue-600 bg-blue-50';
       case 'transfer': return 'text-purple-600 bg-purple-50';
       case 'loss': return 'text-gray-600 bg-gray-50';

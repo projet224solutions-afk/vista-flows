@@ -266,7 +266,7 @@ export function VoiceRecorderWithTranslation({
             variant="default"
             size="icon"
             onClick={stopRecording}
-            className="rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600"
+            className="rounded-full bg-primary-blue-600 hover:bg-primary-orange-600"
           >
             <MicOff className="h-5 w-5" />
           </Button>

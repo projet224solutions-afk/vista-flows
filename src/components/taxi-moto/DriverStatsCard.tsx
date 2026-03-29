@@ -19,7 +19,7 @@ interface DriverStatsCardProps {
 export function DriverStatsCard({ stats }: DriverStatsCardProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
+      <Card className="bg-primary-blue-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary-orange-600 rounded-lg">

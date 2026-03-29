@@ -192,7 +192,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
         ) : (
           <div className="space-y-4">
             {/* Lien gÃ©nÃ©rÃ© */}
-            <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+            <div className="p-4 bg-primary-blue-50 rounded-lg border border-primary-orange-200">
               <div className="flex items-center gap-2 text-primary-orange-800 mb-2">
                 <Check className="w-5 h-5" />
                 <span className="font-medium">Lien gÃ©nÃ©rÃ© avec succÃ¨s !</span>

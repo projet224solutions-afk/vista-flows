@@ -22,7 +22,7 @@ export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProp
   // Agent vÃ©rifiÃ©
   if (kyc_status === 'verified') {
     return (
-      <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600 gap-1.5">
+      <Badge variant="default" className="bg-primary-blue-600 hover:bg-primary-orange-600 gap-1.5">
         <ShieldCheck className="h-3.5 w-3.5" />
         <span>Compte vÃ©rifiÃ©</span>
       </Badge>

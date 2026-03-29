@@ -83,7 +83,7 @@ export default function WebRTCAudioCall() {
         <Card className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-4 relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 rounded-full animate-ping" />
+              <div className="absolute inset-0 bg-primary-blue-600/20 rounded-full animate-ping" />
               <Phone className="w-12 h-12 text-primary-orange-500 mx-auto relative animate-bounce" />
             </div>
             <CardTitle className="text-xl">Appel entrant</CardTitle>
@@ -183,7 +183,7 @@ export default function WebRTCAudioCall() {
               </Avatar>
               <div className={cn(
                 "absolute bottom-4 right-0 w-5 h-5 rounded-full border-2 border-slate-800",
-                callState.isConnected ? "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" : "bg-yellow-500 animate-pulse"
+                callState.isConnected ? "bg-primary-blue-600" : "bg-yellow-500 animate-pulse"
               )} />
             </div>
             <h3 className="text-2xl font-semibold text-white">{callState.remoteUserInfo?.name}</h3>
@@ -244,11 +244,11 @@ export default function WebRTCAudioCall() {
           <div className="flex justify-center gap-2 pt-2">
             <div className={cn(
               "w-2 h-2 rounded-full",
-              callState.isMuted ? 'bg-red-500' : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500'
+              callState.isMuted ? 'bg-red-500' : 'bg-primary-blue-600'
             )} />
             <div className={cn(
               "w-2 h-2 rounded-full",
-              callState.isConnected ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-yellow-500 animate-pulse'
+              callState.isConnected ? 'bg-primary-blue-600' : 'bg-yellow-500 animate-pulse'
             )} />
           </div>
         </CardContent>

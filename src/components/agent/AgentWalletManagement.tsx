@@ -170,7 +170,7 @@ export default function AgentWalletManagement({
   return (
     <div className="space-y-4">
       {/* En-tÃªte Agent */}
-      <Card className="bg-gradient-to-r from-primary-blue-500/10 to-primary-orange-500/10 border-primary-orange-200">
+      <Card className="bg-primary-blue-500/10 border-primary-orange-200">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Shield className="w-5 h-5 text-primary-blue-600" />

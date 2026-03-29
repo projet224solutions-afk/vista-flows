@@ -116,7 +116,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
         <CardContent>
           <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
             <div className="flex items-center gap-4">
-              <div className={`w-3 h-3 rounded-full ${aiActive ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse' : 'bg-red-500'}`} />
+              <div className={`w-3 h-3 rounded-full ${aiActive ? 'bg-primary-blue-600 animate-pulse' : 'bg-red-500'}`} />
               <div>
                 <h3 className="font-medium">
                   {aiActive ? 'IA ActivÃ©e' : 'IA DÃ©sactivÃ©e'}
@@ -270,7 +270,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
               Surveillance en temps rÃ©el des transactions suspectes
             </p>
             <div className="mt-4">
-              <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
+              <Badge className="bg-primary-blue-600">Actif</Badge>
             </div>
           </CardContent>
         </Card>
@@ -284,7 +284,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
               PrÃ©vision des tendances et comportements utilisateurs
             </p>
             <div className="mt-4">
-              <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
+              <Badge className="bg-primary-blue-600">Actif</Badge>
             </div>
           </CardContent>
         </Card>
@@ -298,7 +298,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
               Recommandations d'amÃ©lioration des performances
             </p>
             <div className="mt-4">
-              <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
+              <Badge className="bg-primary-blue-600">Actif</Badge>
             </div>
           </CardContent>
         </Card>

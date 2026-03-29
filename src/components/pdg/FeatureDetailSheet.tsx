@@ -214,7 +214,7 @@ export default function FeatureDetailSheet({
               <Button
                 onClick={handleApplyCorrection}
                 disabled={localApplying || isApplying}
-                className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-blue-700 hover:to-primary-orange-700 text-white font-semibold"
+                className="w-full bg-primary-blue-600 hover:opacity-90 text-white font-semibold"
               >
                 {localApplying || isApplying ? (
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />

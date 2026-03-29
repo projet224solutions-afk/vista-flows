@@ -110,18 +110,18 @@ export default function UserActivationPage() {
 
   if (isActivated && activationResult) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-blue-50 via-white to-primary-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-primary-blue-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 brand-split rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10 text-white" />
             </div>
-            <CardTitle className="text-2xl bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 bg-clip-text text-transparent">
+            <CardTitle className="text-2xl text-primary-blue-700">
               {t('activation.success.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Alert className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+            <Alert className="border-primary-orange-200 bg-primary-blue-50">
               <Sparkles className="h-4 w-4 text-primary-orange-600" />
               <AlertDescription className="text-primary-blue-900">
                 {t('activation.success.description')}

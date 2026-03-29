@@ -173,7 +173,7 @@ export function AgentPermissionsDisplay({
                           className={cn(
                             "flex items-center gap-2 p-2 rounded-md text-sm transition-all",
                             isActive 
-                              ? "bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-800 border border-primary-orange-200" 
+                              ? "bg-primary-blue-50 text-primary-orange-800 border border-primary-orange-200" 
                               : "bg-slate-50 text-slate-400 border border-slate-100"
                           )}
                         >

@@ -24,7 +24,7 @@ export function PharmacyKPICards({ stats }: PharmacyKPICardsProps) {
       value: formatCurrency(stats.sales.totalRevenue),
       subtitle: `${formatCurrency(stats.sales.todayRevenue)} aujourd'hui`,
       icon: TrendingUp,
-      accent: 'from-primary-blue-500 to-primary-orange-600',
+      accent: 'bg-primary-blue-600',
       iconBg: 'bg-primary-blue-500/10',
       iconColor: 'text-primary-blue-600',
     },

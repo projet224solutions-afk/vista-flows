@@ -346,7 +346,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
             <p className="text-3xl font-bold mt-1">{todayAppointments}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
+        <Card className="bg-gradient-to-br bg-primary-blue-600 text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <TrendingUp className="h-4 w-4" />

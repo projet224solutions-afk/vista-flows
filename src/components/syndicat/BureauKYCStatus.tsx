@@ -24,7 +24,7 @@ export function BureauKYCStatus({ status, bureauId, className }: BureauKYCStatus
 
   if (status === 'verified') {
     return (
-      <Badge className={`bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600 text-white gap-1 ${className}`}>
+      <Badge className={`bg-primary-blue-600 hover:bg-primary-orange-600 text-white gap-1 ${className}`}>
         <ShieldCheck className="w-3 h-3" />
         Bureau vÃ©rifiÃ©
       </Badge>

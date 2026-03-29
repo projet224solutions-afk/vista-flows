@@ -28,7 +28,7 @@ export function VendorSecurityPanel() {
   const getKYCStatusBadge = (status?: string) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-600"><CheckCircle className="h-3 w-3 mr-1" />Vérifié</Badge>;
+        return <Badge className="bg-primary-blue-600"><CheckCircle className="h-3 w-3 mr-1" />Vérifié</Badge>;
       case 'under_review':
         return <Badge variant="secondary"><RefreshCw className="h-3 w-3 mr-1" />En cours</Badge>;
       case 'rejected':

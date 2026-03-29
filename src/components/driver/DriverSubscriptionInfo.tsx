@@ -56,7 +56,7 @@ export function DriverSubscriptionInfo() {
   return (
     <Card className={`border-2 ${
       isActive 
-        ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-300' 
+        ? 'bg-primary-blue-50 border-primary-orange-300' 
         : isExpired
         ? 'bg-gradient-to-br from-red-50 to-orange-50 border-red-300'
         : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300'

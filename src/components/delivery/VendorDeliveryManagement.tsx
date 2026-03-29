@@ -56,7 +56,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
   driver_arrived_vendor: { label: 'Livreur arrivÃ©', color: 'bg-purple-500' },
   picked_up: { label: 'Colis rÃ©cupÃ©rÃ©', color: 'bg-primary-blue-500' },
   in_transit: { label: 'En livraison', color: 'bg-orange-500' },
-  delivered: { label: 'LivrÃ©', color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' },
+  delivered: { label: 'LivrÃ©', color: 'bg-primary-blue-600' },
   cancelled: { label: 'AnnulÃ©', color: 'bg-red-500' }
 };
 
@@ -220,7 +220,7 @@ export function VendorDeliveryManagement() {
             <p className="text-xs text-muted-foreground">En cours</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20">
+        <Card className="bg-primary-blue-50 dark:bg-primary-orange-950/20">
           <CardContent className="pt-4 text-center">
             <p className="text-2xl font-bold text-primary-orange-600">{completedOrders.length}</p>
             <p className="text-xs text-muted-foreground">TerminÃ©es</p>

@@ -421,7 +421,7 @@ export default function InstallmentPlansManager() {
                           key={payment.id}
                           className={`flex items-center justify-between p-3 rounded-lg ${
                             payment.status === 'paid' 
-                              ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-900/20' 
+                              ? 'bg-primary-blue-50 dark:bg-primary-orange-900/20' 
                               : isOverdue 
                                 ? 'bg-destructive/10' 
                                 : 'bg-muted/50'

@@ -850,7 +850,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                 />
                                                 {uploadedFiles.registration_document && (
-                                                    <div className="mt-2 p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-md">
+                                                    <div className="mt-2 p-2 bg-primary-blue-50 rounded-md">
                                                         <p className="text-xs text-primary-orange-700 flex items-center gap-1 font-medium">
                                                             <CheckCircle className="w-4 h-4" />
                                                             {uploadedFiles.registration_document.name} ({(uploadedFiles.registration_document.size / 1024).toFixed(2)} KB)
@@ -884,7 +884,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                 />
                                                 {uploadedFiles.insurance_document && (
-                                                    <div className="mt-2 p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-md">
+                                                    <div className="mt-2 p-2 bg-primary-blue-50 rounded-md">
                                                         <p className="text-xs text-primary-orange-700 flex items-center gap-1 font-medium">
                                                             <CheckCircle className="w-4 h-4" />
                                                             {uploadedFiles.insurance_document.name} ({(uploadedFiles.insurance_document.size / 1024).toFixed(2)} KB)
@@ -918,7 +918,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                 />
                                                 {uploadedFiles.technical_control && (
-                                                    <div className="mt-2 p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-md">
+                                                    <div className="mt-2 p-2 bg-primary-blue-50 rounded-md">
                                                         <p className="text-xs text-primary-orange-700 flex items-center gap-1 font-medium">
                                                             <CheckCircle className="w-4 h-4" />
                                                             {uploadedFiles.technical_control.name} ({(uploadedFiles.technical_control.size / 1024).toFixed(2)} KB)
@@ -952,7 +952,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                                 />
                                                 {uploadedFiles.vehicle_photo && (
-                                                    <div className="mt-2 p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-md">
+                                                    <div className="mt-2 p-2 bg-primary-blue-50 rounded-md">
                                                         <p className="text-xs text-primary-orange-700 flex items-center gap-1 font-medium">
                                                             <CheckCircle className="w-4 h-4" />
                                                             {uploadedFiles.vehicle_photo.name} ({(uploadedFiles.vehicle_photo.size / 1024).toFixed(2)} KB)

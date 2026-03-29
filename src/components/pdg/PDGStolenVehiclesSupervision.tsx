@@ -330,7 +330,7 @@ export default function PDGStolenVehiclesSupervision() {
                     </CardContent>
                 </Card>
 
-                <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+                <Card className="border-primary-orange-200 bg-primary-blue-50">
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
                             <ShieldCheck className="w-8 h-8 text-primary-orange-600" />

@@ -717,7 +717,7 @@ export default function ProductPaymentModal({
 
               {paymentMethod === 'wallet' && (
                 <>
-                  <div className="flex items-center gap-2 p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-md border border-primary-orange-200 dark:border-primary-orange-800">
+                  <div className="flex items-center gap-2 p-2 bg-primary-blue-50 dark:bg-primary-orange-950 rounded-md border border-primary-orange-200 dark:border-primary-orange-800">
                     <Shield className="w-4 h-4 text-primary-orange-600" />
                     <span className="text-xs text-primary-orange-800 dark:text-primary-orange-200">
                       Vos fonds sont protÃ©gÃ©s par notre systÃ¨me Escrow jusqu'Ã  la livraison
@@ -800,7 +800,7 @@ export default function ProductPaymentModal({
         {/* Carte bancaire Stripe inline */}
         {showCardInline && paymentMethod === 'card' && (
           <div className="space-y-3 py-2 border-t">
-            <div className="flex items-center gap-2 p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-md border border-primary-orange-200 dark:border-primary-orange-800">
+            <div className="flex items-center gap-2 p-2 bg-primary-blue-50 dark:bg-primary-orange-950 rounded-md border border-primary-orange-200 dark:border-primary-orange-800">
               <Shield className="w-4 h-4 text-primary-orange-600" />
               <span className="text-xs text-primary-orange-800 dark:text-primary-orange-200">
                 Vos fonds sont protÃ©gÃ©s par notre systÃ¨me Escrow jusqu'Ã  la confirmation de rÃ©ception

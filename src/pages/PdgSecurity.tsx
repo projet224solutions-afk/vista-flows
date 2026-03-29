@@ -47,7 +47,7 @@ export default function PdgSecurity() {
         </div>
 
         {/* Security Status Alert */}
-        <Alert className="border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10">
+        <Alert className="border-primary-orange-500/50 bg-primary-blue-600/10">
           <Activity className="h-4 w-4 text-primary-orange-600" />
           <AlertDescription className="text-primary-orange-600">
             Tous les systÃ¨mes de sÃ©curitÃ© sont opÃ©rationnels
@@ -107,7 +107,7 @@ export default function PdgSecurity() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <span className="text-3xl font-bold">0</span>
-                    <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
+                    <Badge variant="outline" className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20">
                       SÃ©curisÃ©
                     </Badge>
                   </div>
@@ -173,7 +173,7 @@ export default function PdgSecurity() {
                       <p className="text-sm text-muted-foreground">Surveillance en temps rÃ©el</p>
                     </div>
                   </div>
-                  <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
+                  <Badge className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20">
                     Actif
                   </Badge>
                 </div>
@@ -186,7 +186,7 @@ export default function PdgSecurity() {
                       <p className="text-sm text-muted-foreground">Protection des donnÃ©es</p>
                     </div>
                   </div>
-                  <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
+                  <Badge className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20">
                     Actif
                   </Badge>
                 </div>
@@ -199,7 +199,7 @@ export default function PdgSecurity() {
                       <p className="text-sm text-muted-foreground">IPs malveillantes</p>
                     </div>
                   </div>
-                  <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
+                  <Badge className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20">
                     Actif
                   </Badge>
                 </div>
@@ -212,7 +212,7 @@ export default function PdgSecurity() {
                       <p className="text-sm text-muted-foreground">Investigation automatique</p>
                     </div>
                   </div>
-                  <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
+                  <Badge className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20">
                     Actif
                   </Badge>
                 </div>

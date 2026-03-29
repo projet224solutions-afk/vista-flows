@@ -390,7 +390,7 @@ export function MissingProductsVerificationDialog({
 
           {/* RÃ©sumÃ© avant confirmation */}
           {hasVerified === 'yes' && hasMissing === 'no' && (
-            <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 border-primary-orange-200 dark:border-primary-orange-800">
+            <Card className="bg-primary-blue-50 dark:bg-primary-orange-950/20 border-primary-orange-200 dark:border-primary-orange-800">
               <CardContent className="p-4">
                 <p className="text-sm text-primary-orange-800 dark:text-primary-orange-200 flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4" />

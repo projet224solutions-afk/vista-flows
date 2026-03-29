@@ -99,7 +99,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">ApprouvÃ©</Badge>;
+        return <Badge className="bg-primary-blue-600">ApprouvÃ©</Badge>;
       case 'pending':
         return <Badge variant="secondary">En attente</Badge>;
       case 'suspended':
@@ -158,7 +158,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-primary-blue-600/10 flex items-center justify-center">
                 <Wallet className="w-5 h-5 text-primary-orange-500" />
               </div>
               <div>

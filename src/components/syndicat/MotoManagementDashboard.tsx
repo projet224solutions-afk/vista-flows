@@ -179,7 +179,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
   const getStatutBadge = (statut: string) => {
     const statuts: Record<string, { label: string; variant: 'default' | 'destructive' | 'secondary' | 'outline'; className?: string }> = {
       'pending': { label: 'En attente', variant: 'secondary' },
-      'validated': { label: 'ValidÃ©', variant: 'default', className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white' },
+      'validated': { label: 'ValidÃ©', variant: 'default', className: 'bg-primary-blue-600 text-white' },
       'rejected': { label: 'RefusÃ©', variant: 'destructive' },
       'stolen': { label: 'VOLÃ‰E', variant: 'destructive' },
       'suspended': { label: 'Suspendu', variant: 'secondary' },

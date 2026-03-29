@@ -449,7 +449,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
         </Card>
 
         {/* Profit net */}
-        <Card className={netProfit >= 0 ? 'border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50' : 'border-red-200 bg-red-50/50'}>
+        <Card className={netProfit >= 0 ? 'border-primary-orange-200 bg-primary-blue-50/50' : 'border-red-200 bg-red-50/50'}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>

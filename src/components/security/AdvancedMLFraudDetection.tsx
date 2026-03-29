@@ -90,7 +90,7 @@ export function AdvancedMLFraudDetection() {
       case 'geographic': return 'bg-blue-500';
       case 'amount': return 'bg-yellow-500';
       case 'behavior': return 'bg-purple-500';
-      case 'temporal': return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
+      case 'temporal': return 'bg-primary-blue-600';
       default: return 'bg-gray-500';
     }
   };
@@ -222,7 +222,7 @@ export function AdvancedMLFraudDetection() {
                       </p>
                     </div>
                   </div>
-                  <Badge className={model.status === 'active' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-gray-500'}>
+                  <Badge className={model.status === 'active' ? 'bg-primary-blue-600' : 'bg-gray-500'}>
                     {model.status === 'active' ? 'Actif' : model.status}
                   </Badge>
                 </div>

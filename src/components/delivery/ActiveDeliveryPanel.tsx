@@ -166,7 +166,7 @@ export function ActiveDeliveryPanel({
             <Package className="h-5 w-5 text-primary-orange-600" />
             Livraison en cours
           </CardTitle>
-          <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
+          <Badge variant="default" className="bg-primary-blue-600">
             {STATUS_STEPS[currentStepIndex]?.label || delivery.status}
           </Badge>
         </div>
@@ -175,7 +175,7 @@ export function ActiveDeliveryPanel({
 
       <CardContent className="space-y-4">
         {/* Destination actuelle */}
-        <div className="p-4 bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/30 dark:to-primary-orange-950/30 rounded-lg border border-primary-orange-200">
+        <div className="p-4 bg-primary-blue-50 dark:bg-primary-blue-950/30 rounded-lg border border-primary-orange-200">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               {isAtVendorPhase ? (

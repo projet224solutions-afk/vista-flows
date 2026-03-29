@@ -116,7 +116,7 @@ export function OfflineSyncIndicator({
     if (isOffline) return 'bg-orange-500';
     if (hasIssues) return 'bg-red-500';
     if (hasPending) return 'bg-yellow-500';
-    return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
+    return 'bg-primary-blue-600';
   };
 
   // Texte du statut

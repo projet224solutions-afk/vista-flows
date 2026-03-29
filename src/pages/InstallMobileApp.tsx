@@ -73,10 +73,10 @@ export default function InstallMobileApp() {
 
         {/* Statut d'installation */}
         {isInstalled ? (
-          <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200 shadow-lg">
+          <Card className="bg-primary-blue-50 border-primary-orange-200 shadow-lg">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 p-3 rounded-full">
+                <div className="bg-primary-blue-600 p-3 rounded-full">
                   <Check className="w-6 h-6 text-white" />
                 </div>
                 <div>

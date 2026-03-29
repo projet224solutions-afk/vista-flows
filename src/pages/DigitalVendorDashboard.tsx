@@ -109,7 +109,7 @@ export default function DigitalVendorDashboard() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen w-full flex bg-gradient-to-br from-primary-blue-50/30 via-white to-primary-orange-50/30 dark:from-background dark:via-background dark:to-background overflow-x-hidden animate-fade-in">
+      <div className="min-h-screen w-full flex bg-primary-blue-50/30 dark:from-background dark:via-background dark:to-background overflow-x-hidden animate-fade-in">
         <DigitalVendorSidebar />
 
         <div className="flex-1 flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">

@@ -39,7 +39,7 @@ interface NavCategory {
 const categories: NavCategory[] = [
   {
     title: 'Finance',
-    color: 'from-primary-blue-500 to-primary-orange-600',
+    color: 'bg-primary-blue-600',
     bgColor: 'bg-primary-blue-500',
     items: [
       { value: 'finance', label: 'Finance & Revenus', icon: DollarSign, permission: 'view_finance' },
@@ -61,8 +61,8 @@ const categories: NavCategory[] = [
   },
   {
     title: 'OpÃ©rations',
-    color: 'from-primary-blue-500 to-primary-orange-600',
-    bgColor: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+    color: 'bg-primary-blue-600',
+    bgColor: 'bg-primary-blue-600',
     items: [
       { value: 'agents', label: 'Agents', icon: UserCheck, permission: 'view_agents' },
       { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2, permission: 'view_syndicat' },

@@ -189,7 +189,7 @@ export function WAFDashboard() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Statut WAF */}
-        <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
+        <div className="p-4 bg-primary-blue-50 dark:bg-primary-orange-950 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="w-5 h-5 text-primary-orange-600" />
             <span className="font-semibold">WAF actif et protÃ©gÃ©</span>
@@ -253,7 +253,7 @@ export function WAFDashboard() {
                     </div>
                   </div>
                   <Badge 
-                    className={`cursor-pointer ${rule.status === 'active' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600' : 'bg-gray-500 hover:bg-gray-600'}`}
+                    className={`cursor-pointer ${rule.status === 'active' ? 'bg-primary-blue-600 hover:bg-primary-orange-600' : 'bg-gray-500 hover:bg-gray-600'}`}
                     onClick={() => toggleRuleStatus(rule.id, rule.status)}
                   >
                     {rule.status}

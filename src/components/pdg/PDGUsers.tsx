@@ -199,7 +199,7 @@ export default function PDGUsers() {
     const colors = {
       admin: 'bg-red-500/10 text-red-500 border-red-500/20',
       vendeur: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-      client: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500 border-primary-orange-500/20',
+      client: 'bg-primary-blue-600/10 text-primary-orange-500 border-primary-orange-500/20',
       livreur: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
       taxi: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
       transitaire: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
@@ -317,7 +317,7 @@ export default function PDGUsers() {
                       <Shield className="w-7 h-7 text-primary-foreground" />
                     </div>
                     {user.is_active && (
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full border-2 border-card" />
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary-blue-600 rounded-full border-2 border-card" />
                     )}
                   </div>
                   <div className="flex-1">
@@ -348,7 +348,7 @@ export default function PDGUsers() {
                       <Badge variant="outline" className={getRoleBadge(user.role)}>
                         {user.role}
                       </Badge>
-                      <Badge variant="outline" className={user.is_active ? 'border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
+                      <Badge variant="outline" className={user.is_active ? 'border-primary-orange-500/50 bg-primary-blue-600/10 text-primary-orange-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
                         {user.is_active ? 'Actif' : 'Suspendu'}
                       </Badge>
                     </div>
@@ -379,7 +379,7 @@ export default function PDGUsers() {
                     variant="outline"
                     size="sm"
                     onClick={() => toggleUserStatus(user.id, user.is_active)}
-                    className={user.is_active ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-primary-orange-500/50 hover:bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 hover:text-primary-orange-500'}
+                    className={user.is_active ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-primary-orange-500/50 hover:bg-primary-blue-600/10 hover:text-primary-orange-500'}
                   >
                     {user.is_active ? (
                       <>
@@ -448,7 +448,7 @@ export default function PDGUsers() {
                                 variant="outline" 
                                 className={
                                   service.status === 'active' 
-                                    ? 'border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500 text-xs' 
+                                    ? 'border-primary-orange-500/50 bg-primary-blue-600/10 text-primary-orange-500 text-xs' 
                                     : service.status === 'pending'
                                     ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500 text-xs'
                                     : 'border-red-500/50 bg-red-500/10 text-red-500 text-xs'

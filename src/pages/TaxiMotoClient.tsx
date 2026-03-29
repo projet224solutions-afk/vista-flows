@@ -250,7 +250,7 @@ export default function TaxiMotoClient() {
 
             <div className="flex items-center gap-2 flex-shrink-0">
               {currentRide && (
-                <Badge variant="default" className={`bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 ${responsive.isMobile ? 'text-xs px-2' : ''}`}>
+                <Badge variant="default" className={`bg-primary-blue-600 ${responsive.isMobile ? 'text-xs px-2' : ''}`}>
                   {responsive.isMobile ? 'Actif' : 'Course active'}
                 </Badge>
               )}
@@ -308,7 +308,7 @@ export default function TaxiMotoClient() {
               {!responsive.isMobile && 'Suivi'}
               {responsive.isMobile && <span className="ml-1">Suivi</span>}
               {currentRide && (
-                <span className="ml-1 w-2 h-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse"></span>
+                <span className="ml-1 w-2 h-2 bg-primary-blue-600 rounded-full animate-pulse"></span>
               )}
             </TabsTrigger>
             <TabsTrigger value="history" className={responsive.isMobile ? 'text-xs' : ''}>

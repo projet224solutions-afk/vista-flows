@@ -629,7 +629,7 @@ export function UserActivitySearch() {
 
               {/* RÃ©sumÃ© financier */}
               <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-lg text-center">
+                <div className="p-3 bg-primary-blue-50 dark:bg-primary-orange-950 rounded-lg text-center">
                   <ArrowDownLeft className="h-5 w-5 mx-auto text-primary-orange-600 mb-1" />
                   <p className="text-lg font-bold text-primary-orange-600">{formatAmount(activityData.totalReceived)}</p>
                   <p className="text-xs text-muted-foreground">Total reÃ§u</p>
@@ -703,7 +703,7 @@ export function UserActivitySearch() {
                       ) : (
                         activityData.messages.map((msg) => (
                           <div key={msg.id} className={`flex items-start gap-3 p-3 rounded-lg ${
-                            msg.direction === 'sent' ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/30'
+                            msg.direction === 'sent' ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-primary-blue-50 dark:bg-primary-orange-950/30'
                           }`}>
                             <div className={`p-2 rounded-full ${
                               msg.direction === 'sent' ? 'bg-blue-100 text-blue-600' : 'bg-primary-orange-100 text-primary-orange-600'

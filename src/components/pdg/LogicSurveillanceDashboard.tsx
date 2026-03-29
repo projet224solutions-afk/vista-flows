@@ -106,7 +106,7 @@ const DOMAIN_ICONS: Record<string, React.ElementType> = {
 
 const DOMAIN_COLORS: Record<string, string> = {
   pos: 'bg-blue-500',
-  stock: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+  stock: 'bg-primary-blue-600',
   wallet: 'bg-purple-500',
   commission: 'bg-yellow-500',
   order: 'bg-orange-500',
@@ -266,7 +266,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending': return <Badge className="bg-orange-500">En attente</Badge>;
-      case 'corrected': return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">CorrigÃ©</Badge>;
+      case 'corrected': return <Badge className="bg-primary-blue-600">CorrigÃ©</Badge>;
       case 'ignored': return <Badge variant="secondary">IgnorÃ©</Badge>;
       case 'escalated': return <Badge variant="destructive">EscaladÃ©</Badge>;
       default: return <Badge>{status}</Badge>;

@@ -36,7 +36,7 @@ export function BureauStatsCards({
       value: workersCount,
       subtitle: 'Membres actifs',
       icon: <Building2 className="w-6 h-6 text-white" />,
-      gradient: 'from-primary-blue-500 to-primary-orange-600'
+      gradient: 'bg-primary-blue-600'
     },
     {
       title: 'AdhÃ©rents',
@@ -71,7 +71,7 @@ export function BureauStatsCards({
       value: '100%',
       subtitle: 'Objectif atteint',
       icon: <TrendingUp className="w-6 h-6 text-white" />,
-      gradient: 'from-primary-blue-500 to-primary-orange-500'
+      gradient: 'bg-primary-blue-600'
     }
   ];
 

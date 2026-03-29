@@ -1481,7 +1481,7 @@ export default function Payment() {
                       <span className="text-sm font-bold">ðŸ’³ Total Ã  dÃ©biter</span>
                       <span className="text-xl font-bold text-destructive">{paymentPreview?.total_debit?.toLocaleString()} GNF</span>
                     </div>
-                    <div className="flex justify-between items-center border-t pt-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 -mx-4 px-4 py-2 rounded">
+                    <div className="flex justify-between items-center border-t pt-2 bg-primary-blue-50 dark:bg-primary-orange-950 -mx-4 px-4 py-2 rounded">
                       <span className="text-sm font-medium">âœ… Le destinataire recevra</span>
                       <span className="text-lg font-bold text-success">{paymentPreview?.amount_received?.toLocaleString()} GNF</span>
                     </div>

@@ -68,7 +68,7 @@ export default function DualSyncDashboard() {
               <Database className="w-3 h-3 mr-1" />
               Firestore
             </Badge>
-            <Badge variant={status.isSupabaseConnected ? "default" : "destructive"} className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
+            <Badge variant={status.isSupabaseConnected ? "default" : "destructive"} className="bg-primary-blue-600">
               <Cloud className="w-3 h-3 mr-1" />
               Supabase
             </Badge>
@@ -91,7 +91,7 @@ export default function DualSyncDashboard() {
           <TabsContent value="status" className="space-y-4">
             {/* Ã‰tat de connexion */}
             <div className="grid grid-cols-2 gap-4">
-              <Card className={status.isFirestoreConnected ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200' : 'bg-red-50 border-red-200'}>
+              <Card className={status.isFirestoreConnected ? 'bg-primary-blue-50 border-primary-orange-200' : 'bg-red-50 border-red-200'}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -110,7 +110,7 @@ export default function DualSyncDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className={status.isSupabaseConnected ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200' : 'bg-red-50 border-red-200'}>
+              <Card className={status.isSupabaseConnected ? 'bg-primary-blue-50 border-primary-orange-200' : 'bg-red-50 border-red-200'}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -166,7 +166,7 @@ export default function DualSyncDashboard() {
 
             {/* DerniÃ¨re synchronisation */}
             {status.lastSync && (
-              <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+              <div className="p-3 bg-primary-blue-50 rounded-lg border border-primary-orange-200">
                 <div className="flex items-center gap-2 text-primary-orange-800">
                   <CheckCircle className="w-4 h-4" />
                   <span className="font-medium">DerniÃ¨re synchronisation</span>

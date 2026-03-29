@@ -43,7 +43,7 @@ const statusConfig = {
   },
   released: {
     label: 'LibÃ©rÃ©',
-    className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20',
+    className: 'bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20',
     icon: CheckCircle,
     color: 'text-primary-orange-600'
   },
@@ -207,7 +207,7 @@ export default function PDGEscrowManagement() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-primary-blue-500/10 to-primary-orange-600/10 border-primary-orange-500/20">
+          <Card className="bg-primary-blue-500/10 border-primary-orange-500/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-muted-foreground">LibÃ©rÃ©es</p>

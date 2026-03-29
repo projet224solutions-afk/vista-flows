@@ -76,7 +76,7 @@ const productModules: ProductModule[] = [
     icon: <GraduationCap className="w-7 h-7" />,
     titleKey: 'digital.modules.training',
     descriptionKey: 'digital.modules.trainingDesc',
-    gradient: 'from-primary-blue-500 to-primary-orange-500',
+    gradient: 'bg-primary-blue-600',
     category: 'formation'
   },
   {
@@ -384,7 +384,7 @@ export default function DigitalProducts() {
           )}
 
           {user && isMerchant && (
-            <div className="px-4 py-2.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-b border-primary-orange-500/20 text-center text-sm">
+            <div className="px-4 py-2.5 bg-primary-blue-600/10 text-primary-orange-600 border-b border-primary-orange-500/20 text-center text-sm">
               <span className="flex items-center justify-center gap-2">
                 <Store className="w-4 h-4" />
                 {t('digital.merchantActive')}

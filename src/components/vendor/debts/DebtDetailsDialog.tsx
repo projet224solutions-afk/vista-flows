@@ -161,7 +161,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant Total</p>
                 <p className="text-sm sm:text-lg font-bold break-all">{formatAmount(debt.total_amount)}</p>
               </div>
-              <div className="text-center p-2 sm:p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/30 rounded-lg">
+              <div className="text-center p-2 sm:p-3 bg-primary-blue-50 dark:bg-primary-orange-950/30 rounded-lg">
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant PayÃ©</p>
                 <p className="text-sm sm:text-lg font-bold text-primary-orange-600 dark:text-primary-orange-400 break-all">{formatAmount(debt.paid_amount)}</p>
               </div>
@@ -185,7 +185,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 transition-all duration-300"
+                  className="h-full bg-primary-blue-600 transition-all duration-300"
                   style={{ width: `${(debt.paid_amount / debt.total_amount) * 100}%` }}
                 />
               </div>

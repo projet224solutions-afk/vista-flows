@@ -32,7 +32,7 @@ export function ClientKYCStatus({
     verified: {
       label: 'Client VÃ©rifiÃ©',
       variant: 'default',
-      className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600 text-white',
+      className: 'bg-primary-blue-600 hover:bg-primary-orange-600 text-white',
       icon: <CheckCircle className="w-3 h-3 mr-1" />
     },
     pending: {

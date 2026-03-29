@@ -211,7 +211,7 @@ export function DriverMainDashboard({
                   "border border-gray-700/50"
                 )}>
                   {/* Subtle animated gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary-blue-500/5 via-transparent to-primary-orange-500/5 animate-pulse" />
+                  <div className="absolute inset-0 bg-primary-blue-500/5 animate-pulse" />
                   
                   <div className="relative flex items-center justify-between">
                     <div className="flex items-center gap-2.5">

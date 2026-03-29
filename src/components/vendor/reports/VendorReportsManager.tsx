@@ -325,7 +325,7 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
             </div>
           </CardContent>
         </Card>
-        <Card className={reportData.profit >= 0 ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950' : 'bg-red-50 dark:bg-red-950'}>
+        <Card className={reportData.profit >= 0 ? 'bg-primary-blue-50 dark:bg-primary-orange-950' : 'bg-red-50 dark:bg-red-950'}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <TrendingUp className={`w-5 h-5 ${reportData.profit >= 0 ? 'text-primary-orange-600' : 'text-red-600'}`} />

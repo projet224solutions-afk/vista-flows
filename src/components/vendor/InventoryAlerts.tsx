@@ -26,7 +26,7 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
 
   if (alerts.length === 0) {
     return (
-      <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+      <Card className="border-primary-orange-200 bg-primary-blue-50">
         <CardContent className="p-6 text-center">
           <CheckCircle className="w-12 h-12 text-primary-orange-600 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-primary-orange-800 mb-2">

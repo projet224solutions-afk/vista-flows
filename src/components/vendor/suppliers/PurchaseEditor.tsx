@@ -596,7 +596,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       </Card>
 
       {/* Analyse FinanciÃ¨re (Profits) - Section sÃ©parÃ©e */}
-      <Card className="border-primary-orange-200 dark:border-primary-orange-900 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50 dark:bg-primary-orange-950/20">
+      <Card className="border-primary-orange-200 dark:border-primary-orange-900 bg-primary-blue-50/50 dark:bg-primary-orange-950/20">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2 text-primary-orange-700 dark:text-primary-orange-400">
             <Calculator className="h-4 w-4" />
@@ -912,7 +912,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
 
             {/* Calculs en temps rÃ©el - AmÃ©liorÃ© */}
             {newItem.purchase_price > 0 && newItem.selling_price > 0 && (
-              <Card className={`${newItem.selling_price < newItem.purchase_price ? 'bg-destructive/10 border-destructive/30' : 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 border-primary-orange-200 dark:border-primary-orange-900'}`}>
+              <Card className={`${newItem.selling_price < newItem.purchase_price ? 'bg-destructive/10 border-destructive/30' : 'bg-primary-blue-50 dark:bg-primary-orange-950/20 border-primary-orange-200 dark:border-primary-orange-900'}`}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Calculator className="h-4 w-4" />

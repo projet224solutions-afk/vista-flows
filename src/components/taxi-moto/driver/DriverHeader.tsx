@@ -61,7 +61,7 @@ export function DriverHeader({
             <div className="relative shrink-0">
               <div className={cn(
                 "w-10 h-10 rounded-full flex items-center justify-center text-base font-bold",
-                "bg-gradient-to-br from-primary-blue-400 via-primary-blue-500 to-primary-orange-600",
+                "bg-primary-blue-400",
                 "shadow-lg shadow-primary-orange-500/30",
                 "ring-2 ring-offset-1 ring-offset-gray-900",
                 isOnline ? "ring-primary-blue-400" : "ring-gray-600"

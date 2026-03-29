@@ -25,7 +25,7 @@ import ApiAnalytics from '@/components/pdg/ApiAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 
 const STATUS_COLORS = {
-  active: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+  active: 'bg-primary-blue-600',
   suspended: 'bg-yellow-500',
   expired: 'bg-red-500',
   error: 'bg-orange-500'
@@ -343,7 +343,7 @@ export default function ApiSupervision() {
                               {api.api_provider}
                             </CardDescription>
                           </div>
-                          <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white">
+                          <Badge className="bg-primary-blue-600 text-white">
                             âœ“ Actif
                           </Badge>
                         </div>

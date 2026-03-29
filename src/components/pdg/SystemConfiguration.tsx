@@ -220,7 +220,7 @@ export default function SystemConfiguration() {
   const getStatusBadge = (status: ServiceStatus['status']) => {
     switch (status) {
       case 'configured':
-        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">ConfigurÃ©</Badge>;
+        return <Badge className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20">ConfigurÃ©</Badge>;
       case 'not_configured':
         return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20">Non configurÃ©</Badge>;
       case 'testing':

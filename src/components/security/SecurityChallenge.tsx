@@ -114,7 +114,7 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
 
   if (status === 'success') {
     return (
-      <Card className="w-full max-w-md mx-auto border-primary-orange-500 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+      <Card className="w-full max-w-md mx-auto border-primary-orange-500 bg-primary-blue-50">
         <CardContent className="flex flex-col items-center justify-center py-8">
           <CheckCircle className="w-16 h-16 text-primary-orange-500 mb-4" />
           <p className="text-primary-orange-700 font-semibold">VÃ©rification rÃ©ussie !</p>

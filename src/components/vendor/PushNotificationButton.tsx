@@ -112,11 +112,11 @@ export function PushNotificationButton({
           )}
           {/* Badge compteur de notifications non lues */}
           {unreadCount > 0 ? (
-            <span className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white text-xs font-bold border-2 border-background p-0">
+            <span className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center rounded-full bg-primary-blue-600 text-white text-xs font-bold border-2 border-background p-0">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           ) : isEnabled ? (
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary-blue-600 rounded-full animate-pulse" />
           ) : null}
         </Button>
       </PopoverTrigger>

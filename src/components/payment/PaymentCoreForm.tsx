@@ -123,7 +123,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
 
   if (status === 'success') {
     return (
-      <Card className="w-full max-w-md mx-auto border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+      <Card className="w-full max-w-md mx-auto border-primary-orange-200 bg-primary-blue-50">
         <CardContent className="pt-6 text-center">
           <CheckCircle2 className="h-16 w-16 text-primary-orange-500 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-primary-orange-700 mb-2">Paiement InitiÃ©</h3>

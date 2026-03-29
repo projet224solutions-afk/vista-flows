@@ -66,7 +66,7 @@ const CATEGORIES = [
   { id: 'lighting', name: 'Ã‰clairage', icon: Lamp, count: 32, color: 'from-yellow-400 to-amber-500' },
   { id: 'bedroom', name: 'Chambre', icon: Bed, count: 28, color: 'from-blue-500 to-indigo-500' },
   { id: 'decor', name: 'DÃ©coration', icon: Home, count: 52, color: 'from-pink-500 to-rose-500' },
-  { id: 'kitchen', name: 'Cuisine', icon: Package, count: 18, color: 'from-primary-blue-500 to-primary-orange-500' },
+  { id: 'kitchen', name: 'Cuisine', icon: Package, count: 18, color: 'bg-primary-blue-600' },
   { id: 'textiles', name: 'Textiles', icon: Palette, count: 24, color: 'from-purple-500 to-violet-500' },
 ];
 

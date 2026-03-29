@@ -551,7 +551,7 @@ export default function ProfessionalMessaging() {
                       </AvatarFallback>
                     </Avatar>
                     {conv.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full border-2 border-background" />
+                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-primary-blue-600 rounded-full border-2 border-background" />
                     )}
                   </div>
                   

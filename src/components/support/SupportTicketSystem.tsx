@@ -56,7 +56,7 @@ const statusConfig = {
   open: { label: 'Ouvert', color: 'bg-blue-500' },
   in_progress: { label: 'En cours', color: 'bg-yellow-500' },
   waiting_response: { label: 'En attente', color: 'bg-purple-500' },
-  resolved: { label: 'RÃ©solu', color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' },
+  resolved: { label: 'RÃ©solu', color: 'bg-primary-blue-600' },
   closed: { label: 'FermÃ©', color: 'bg-gray-500' }
 };
 

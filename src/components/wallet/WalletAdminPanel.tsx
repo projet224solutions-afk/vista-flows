@@ -359,7 +359,7 @@ export function WalletAdminPanel() {
                         Bloqué
                       </Badge>
                     ) : (
-                      <Badge variant="default" className="gap-1 w-full justify-center bg-gradient-to-r from-primary-blue-600 to-primary-orange-600">
+                      <Badge variant="default" className="gap-1 w-full justify-center bg-primary-blue-600">
                         Actif
                       </Badge>
                     )}

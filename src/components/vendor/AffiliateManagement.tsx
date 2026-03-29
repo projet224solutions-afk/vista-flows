@@ -106,7 +106,7 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
         </div>
 
         {link && (
-          <div className="p-4 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border border-primary-orange-500/20">
+          <div className="p-4 rounded-lg bg-primary-blue-600/10 border border-primary-orange-500/20">
             <p className="text-sm font-medium text-primary-orange-700 mb-2">
               âœ… Lien d'affiliation gÃ©nÃ©rÃ© avec succÃ¨s !
             </p>

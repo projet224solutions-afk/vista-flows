@@ -805,7 +805,7 @@ export default function IdNormalizationAudit() {
     const colors: Record<string, string> = {
       'vendor': 'bg-blue-500',
       'vendeur': 'bg-blue-500',
-      'client': 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+      'client': 'bg-primary-blue-600',
       'agent': 'bg-yellow-500',
       'driver': 'bg-purple-500',
       'chauffeur': 'bg-purple-500',
@@ -928,7 +928,7 @@ export default function IdNormalizationAudit() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 rounded-lg">
+              <div className="p-2 bg-primary-blue-600/10 rounded-lg">
                 <CheckCircle className="w-5 h-5 text-primary-orange-500" />
               </div>
               <div>
@@ -1132,7 +1132,7 @@ export default function IdNormalizationAudit() {
                                   size="sm"
                                   onClick={() => handleCorrectId(item)}
                                   disabled={correctingId === item.id || !item.profile?.role}
-                                  className="gap-1 text-xs border-primary-orange-500 text-primary-orange-600 hover:bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 hover:text-primary-orange-700"
+                                  className="gap-1 text-xs border-primary-orange-500 text-primary-orange-600 hover:bg-primary-blue-50 hover:text-primary-orange-700"
                                   title={!item.profile?.role ? 'RÃ´le non dÃ©fini - impossible de corriger' : 'Corriger cet ID'}
                                 >
                                   {correctingId === item.id ? (
@@ -1254,11 +1254,11 @@ export default function IdNormalizationAudit() {
               {searchResult && (
                 <div className="mt-6">
                   {searchResult.found ? (
-                    <Card className="border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
+                    <Card className="border-primary-orange-500/50 bg-primary-blue-600/5">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 rounded-full">
+                            <div className="p-2 bg-primary-blue-600/20 rounded-full">
                               <CheckCircle className="w-6 h-6 text-primary-orange-500" />
                             </div>
                             <div>

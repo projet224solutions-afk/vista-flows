@@ -242,7 +242,7 @@ export function PINPrompt({
 
           {/* Message de succÃ¨s (PIN complet) */}
           {pin.length === pinLength && !error && !isAuthenticating && (
-            <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-900/20 border border-primary-orange-200 dark:border-primary-orange-800 rounded-lg">
+            <div className="flex items-center gap-2 p-3 bg-primary-blue-50 dark:bg-primary-orange-900/20 border border-primary-orange-200 dark:border-primary-orange-800 rounded-lg">
               <CheckCircle className="w-4 h-4 text-primary-orange-500" />
               <p className="text-sm text-primary-orange-700 dark:text-primary-orange-400">VÃ©rification en cours...</p>
             </div>

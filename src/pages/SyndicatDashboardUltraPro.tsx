@@ -217,7 +217,7 @@ export default function SyndicatDashboardUltraPro() {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
+                    <Card className="border-0 shadow-lg bg-gradient-to-br bg-primary-blue-600 text-white">
                         <CardContent className="p-3 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -360,7 +360,7 @@ export default function SyndicatDashboardUltraPro() {
                                     ) : (
                                         <div className="space-y-4">
                                             {syndicateMembers.slice(0, 2).map((m) => (
-                                                <div key={m.id} className="flex items-center justify-between p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-xl border border-primary-orange-200">
+                                                <div key={m.id} className="flex items-center justify-between p-4 bg-primary-blue-50 rounded-xl border border-primary-orange-200">
                                                     <div className="flex items-center gap-3">
                                                         <UserPlus className="w-8 h-8 text-primary-orange-600" />
                                                         <div>
@@ -402,7 +402,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setActiveTab('taxi-motards')}
                                         variant="outline"
-                                        className="w-full rounded-xl border-primary-orange-200 text-primary-orange-600 hover:bg-gradient-to-br from-primary-blue-50 to-primary-orange-50"
+                                        className="w-full rounded-xl border-primary-orange-200 text-primary-orange-600 hover:bg-primary-blue-50"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
                                         GÃ©rer les Taxi-Motards
@@ -591,7 +591,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setShowDownloadDialog(true)}
                                         variant="outline"
-                                        className="w-full rounded-xl border-primary-orange-200 text-primary-orange-600 hover:bg-gradient-to-br from-primary-blue-50 to-primary-orange-50"
+                                        className="w-full rounded-xl border-primary-orange-200 text-primary-orange-600 hover:bg-primary-blue-50"
                                     >
                                         <Download className="w-4 h-4 mr-2" />
                                         TÃ©lÃ©charger Applications
@@ -667,7 +667,7 @@ export default function SyndicatDashboardUltraPro() {
                                                     : '0%'}
                                             </span>
                                         </div>
-                                        <div className="flex justify-between items-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-xl">
+                                        <div className="flex justify-between items-center p-3 bg-primary-blue-50 rounded-xl">
                                             <span className="font-medium text-gray-700">Revenus mensuels</span>
                                             <span className="font-bold text-primary-orange-600">{syndicateStats.monthly_revenue.toLocaleString()} FCFA</span>
                                         </div>

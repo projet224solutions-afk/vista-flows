@@ -116,7 +116,7 @@ export default function ContactUserById({
 
           {/* RÃ©sultat de recherche */}
           {foundUser && (
-            <div className="p-4 border rounded-lg bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 space-y-3">
+            <div className="p-4 border rounded-lg bg-primary-blue-50 space-y-3">
               <div className="flex items-start gap-3">
                 <Avatar className="w-12 h-12">
                   <AvatarImage src={foundUser.avatar_url} />

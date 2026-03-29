@@ -267,7 +267,7 @@ export function VendorKYCReview() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white">âœ“ VÃ©rifiÃ©</Badge>;
+        return <Badge className="bg-primary-blue-600 text-white">âœ“ VÃ©rifiÃ©</Badge>;
       case 'rejected':
         return <Badge variant="destructive">âœ— RejetÃ©</Badge>;
       case 'under_review':
@@ -331,7 +331,7 @@ export function VendorKYCReview() {
             <CardTitle className="text-2xl text-blue-600">{stats.under_review}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+        <Card className="border-primary-orange-200 bg-primary-blue-50">
           <CardHeader className="pb-2">
             <CardDescription>VÃ©rifiÃ©s</CardDescription>
             <CardTitle className="text-2xl text-primary-orange-600">{stats.verified}</CardTitle>
@@ -500,7 +500,7 @@ export function VendorKYCReview() {
             )}
 
             {dialogAction === 'APPROVE' && (
-              <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg">
+              <div className="p-4 bg-primary-blue-50 border border-primary-orange-200 rounded-lg">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-primary-orange-600 mt-0.5" />
                   <div>

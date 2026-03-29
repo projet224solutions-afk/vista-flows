@@ -289,7 +289,7 @@ export function DriverDashboard({
       {/* Statistiques du jour */}
       <div className="grid grid-cols-2 gap-4">
         <Card 
-          className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 border-primary-orange-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
+          className="bg-primary-blue-50 border-primary-orange-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (stats.todayEarnings > 0) {
               onNavigate('history');
@@ -403,7 +403,7 @@ export function DriverDashboard({
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-primary-blue-600 rounded-full"></div>
                 <span>{activeRide.pickup.address}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -480,7 +480,7 @@ export function DriverDashboard({
       <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse' : 'bg-gray-400'}`}></div>
+            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-primary-blue-600 animate-pulse' : 'bg-gray-400'}`}></div>
             Ã‰tat du systÃ¨me
           </CardTitle>
         </CardHeader>

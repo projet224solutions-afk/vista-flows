@@ -189,7 +189,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
     switch (status) {
       case 'pending': return 'bg-yellow-500';
       case 'accepted': return 'bg-blue-500';
-      case 'in_progress': return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
+      case 'in_progress': return 'bg-primary-blue-600';
       case 'completed': return 'bg-gray-500';
       case 'cancelled': return 'bg-red-500';
       default: return 'bg-gray-500';

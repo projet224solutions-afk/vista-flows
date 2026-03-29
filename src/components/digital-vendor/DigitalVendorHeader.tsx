@@ -45,7 +45,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
         <div className="flex items-center justify-between w-full min-w-0 gap-2">
           <div className="flex items-center gap-1 min-w-0 flex-1">
             <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1 min-w-0">
-              <span className="w-1.5 h-1.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse flex-shrink-0" />
+              <span className="w-1.5 h-1.5 bg-primary-blue-600 rounded-full animate-pulse flex-shrink-0" />
               <span className="truncate max-w-[120px] sm:max-w-[200px]">{displayName}</span>
             </p>
           </div>

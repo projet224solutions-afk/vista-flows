@@ -372,8 +372,8 @@ export default function PDG224Solutions() {
                     MFA
                   </Button>
                 )}
-                <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20 hover:bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 gap-1 text-xs flex-shrink-0">
-                  <div className="w-1.5 h-1.5 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse" />
+                <Badge className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20 hover:bg-primary-blue-600/20 gap-1 text-xs flex-shrink-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary-blue-600 animate-pulse" />
                   <span className="hidden sm:inline">SystÃ¨me</span> Actif
                 </Badge>
                 {aiActive && (

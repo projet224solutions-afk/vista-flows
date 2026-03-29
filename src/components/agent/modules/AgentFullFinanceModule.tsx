@@ -221,7 +221,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
         <CardContent className="p-6">
           {/* Stats Cards Agent */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 rounded-xl p-4 text-white shadow-lg">
+            <div className="bg-gradient-to-br bg-primary-blue-600 rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Wallet className="w-5 h-5" />
                 <span className="text-sm opacity-90">Mon Solde</span>
@@ -245,7 +245,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
               <p className="text-2xl font-bold">{formatAmount(agentStats.pendingCommissions)}</p>
               <p className="text-xs opacity-75">GNF</p>
             </div>
-            <div className="bg-gradient-to-br from-primary-orange-500 to-primary-blue-600 rounded-xl p-4 text-white shadow-lg">
+            <div className="bg-gradient-to-br bg-primary-orange-600 rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="w-5 h-5" />
                 <span className="text-sm opacity-90">Payées</span>

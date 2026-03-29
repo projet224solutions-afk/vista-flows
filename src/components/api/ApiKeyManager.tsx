@@ -319,7 +319,7 @@ export function ApiKeyManager() {
                     <CardTitle className="text-lg flex items-center gap-2">
                       {key.key_name}
                       {key.is_active ? (
-                        <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">{t('apiKeys.status.active')}</Badge>
+                        <Badge className="bg-primary-blue-600">{t('apiKeys.status.active')}</Badge>
                       ) : (
                         <Badge variant="secondary">{t('apiKeys.status.inactive')}</Badge>
                       )}

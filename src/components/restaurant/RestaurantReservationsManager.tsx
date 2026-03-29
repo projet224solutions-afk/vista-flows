@@ -102,7 +102,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
       case 'seated':
         return { label: 'Ã€ table', color: 'bg-purple-500', icon: Users };
       case 'completed':
-        return { label: 'TerminÃ©e', color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500', icon: CheckCircle };
+        return { label: 'TerminÃ©e', color: 'bg-primary-blue-600', icon: CheckCircle };
       case 'cancelled':
         return { label: 'AnnulÃ©e', color: 'bg-red-500', icon: XCircle };
       case 'no_show':
@@ -335,7 +335,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
             <div className="text-xs text-purple-600/80">Couverts</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-100/50 dark:from-primary-blue-900/20 dark:to-primary-orange-900/10">
+        <Card className="bg-primary-blue-50/50 dark:from-primary-blue-900/20 ">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-primary-orange-600">{stats.confirmed}</div>
             <div className="text-xs text-primary-orange-600/80">ConfirmÃ©es</div>
@@ -480,7 +480,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
 
               {/* Table assignÃ©e */}
               {selectedReservation.table_number && (
-                <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-900/20 rounded-lg text-center">
+                <div className="p-3 bg-primary-blue-50 dark:bg-primary-orange-900/20 rounded-lg text-center">
                   <span className="text-sm text-primary-orange-700">Table assignÃ©e: </span>
                   <span className="font-bold text-primary-orange-700">{selectedReservation.table_number}</span>
                 </div>

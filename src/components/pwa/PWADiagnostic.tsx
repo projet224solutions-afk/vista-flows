@@ -373,7 +373,7 @@ export default function PWADiagnostic() {
             Diagnostic PWA
           </span>
           <Badge className={`${
-            overallStatus === 'success' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 
+            overallStatus === 'success' ? 'bg-primary-blue-600' : 
             overallStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'
           } text-white`}>
             {successCount}/{diagnostics.length} OK

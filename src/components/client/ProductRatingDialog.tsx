@@ -266,7 +266,7 @@ export default function ProductRatingDialog({
                   index === currentProductIndex
                     ? 'border-primary bg-primary/5'
                     : product.rated
-                    ? 'border-primary-orange-500 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950 opacity-60'
+                    ? 'border-primary-orange-500 bg-primary-blue-50 dark:bg-primary-blue-950 opacity-60'
                     : 'border-border hover:border-primary/50'
                 }`}
               >
@@ -283,7 +283,7 @@ export default function ProductRatingDialog({
                     </div>
                   )}
                   {product.rated && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-full flex items-center justify-center">
+                    <div className="absolute -top-1 -right-1 w-4 h-4 brand-split rounded-full flex items-center justify-center">
                       <Check className="w-3 h-3 text-white" />
                     </div>
                   )}

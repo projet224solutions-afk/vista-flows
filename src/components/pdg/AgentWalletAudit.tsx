@@ -194,7 +194,7 @@ export function AgentWalletAudit() {
                       <td className="px-4 py-2">{r.main_balance !== null && r.agent_balance !== null ? r.divergence : 'â€”'}</td>
                       <td className="px-4 py-2">{r.currency}</td>
                       <td className="px-4 py-2">
-                        {status === 'OK' && <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">OK</Badge>}
+                        {status === 'OK' && <Badge className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20">OK</Badge>}
                         {status === 'Divergent' && <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20">Divergence</Badge>}
                         {status === 'Incomplet' && <Badge className="bg-red-500/10 text-red-600 border-red-500/20">Incomplet</Badge>}
                       </td>

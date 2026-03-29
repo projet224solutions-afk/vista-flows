@@ -146,7 +146,7 @@ export function TransportModule({ serviceId, businessName }: TransportModuleProp
             <p className="text-xs opacity-80">Destinations</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
+        <Card className="bg-gradient-to-br bg-primary-blue-600 text-white">
           <CardContent className="p-4">
             <Ticket className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{confirmedBookings}</p>
@@ -167,7 +167,7 @@ export function TransportModule({ serviceId, businessName }: TransportModuleProp
             <p className="text-xs opacity-80">Note moyenne</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-primary-orange-500 to-primary-blue-600 text-white">
+        <Card className="bg-gradient-to-br bg-primary-orange-600 text-white">
           <CardContent className="p-4">
             <DollarSign className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{(totalRevenue / 1e6).toFixed(1)}M</p>

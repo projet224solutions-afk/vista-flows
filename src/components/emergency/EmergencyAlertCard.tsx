@@ -30,7 +30,7 @@ export const EmergencyAlertCard: React.FC<EmergencyAlertCardProps> = ({
       case 'in_progress':
         return 'bg-orange-500';
       case 'resolved':
-        return 'bg-gradient-to-r from-primary-blue-500 to-primary-orange-500';
+        return 'brand-split';
       case 'false_alert':
         return 'bg-gray-500';
       default:

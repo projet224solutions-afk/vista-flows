@@ -158,7 +158,7 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
     if (createdInvoice) {
         return (
             <div className="max-w-2xl mx-auto p-6 space-y-6">
-                <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+                <Card className="border-primary-orange-200 bg-primary-blue-50">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-primary-blue-900">
                             <Shield className="w-5 h-5" />

@@ -494,7 +494,7 @@ export default function DeliveryDriver() {
                               <h4 className="font-medium text-white">{delivery.vendor_name || 'Magasin'}</h4>
                               <p className="text-sm text-gray-400">{delivery.delivery_address?.address || 'Adresse non disponible'}</p>
                             </div>
-                            <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 text-primary-orange-400">
+                            <Badge className="bg-primary-blue-600/20 text-primary-orange-400">
                               {delivery.delivery_fee} GNF
                             </Badge>
                           </div>
@@ -553,7 +553,7 @@ export default function DeliveryDriver() {
                   <Badge className={`
                     ${currentDelivery.status === 'assigned' ? 'bg-blue-500/20 text-blue-400' : ''}
                     ${currentDelivery.status === 'picked_up' ? 'bg-yellow-500/20 text-yellow-400' : ''}
-                    ${currentDelivery.status === 'in_transit' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 text-primary-orange-400' : ''}
+                    ${currentDelivery.status === 'in_transit' ? 'bg-primary-blue-600/20 text-primary-orange-400' : ''}
                   `}>
                     {currentDelivery.status}
                   </Badge>
@@ -635,7 +635,7 @@ export default function DeliveryDriver() {
                               {new Date(delivery.created_at).toLocaleDateString()}
                             </p>
                           </div>
-                          <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 text-primary-orange-400">
+                          <Badge className="bg-primary-blue-600/20 text-primary-orange-400">
                             {delivery.delivery_fee} GNF
                           </Badge>
                         </div>

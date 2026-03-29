@@ -194,7 +194,7 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
               <p className="text-xl font-bold text-blue-700">{stats.processing}</p>
               <p className="text-xs text-blue-500">En cours</p>
             </div>
-            <div className="bg-gradient-to-br from-primary-blue-100 to-primary-orange-200 rounded-xl p-4 text-center">
+            <div className="bg-gradient-to-br bg-primary-blue-100 rounded-xl p-4 text-center">
               <CheckCircle className="w-5 h-5 text-primary-orange-600 mx-auto mb-1" />
               <p className="text-xl font-bold text-primary-orange-700">{stats.completed}</p>
               <p className="text-xs text-primary-orange-500">Terminées</p>

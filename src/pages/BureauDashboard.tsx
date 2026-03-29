@@ -283,7 +283,7 @@ export default function BureauDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-primary-blue-50 to-primary-orange-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br bg-slate-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-orange-600 mx-auto mb-4"></div>
           <p className="text-slate-600">{t('bureau.loadingInterface')}</p>
@@ -294,7 +294,7 @@ export default function BureauDashboard() {
 
   if (!bureau) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-primary-blue-50 to-primary-orange-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br bg-slate-50">
         <Card className="max-w-md border-0 shadow-xl">
           <CardHeader>
             <CardTitle className="text-center">{t('bureau.notFound')}</CardTitle>
@@ -375,7 +375,7 @@ export default function BureauDashboard() {
       case 'workers':
         return (
           <Card className="border-0 shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 border-b">
+            <CardHeader className="flex flex-row items-center justify-between bg-primary-blue-50 border-b">
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary-blue-600" />
                 Gestion des Membres du Bureau
@@ -723,7 +723,7 @@ export default function BureauDashboard() {
               </Card>
 
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 border-b">
+                <CardHeader className="bg-primary-blue-50 border-b">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Lock className="w-5 h-5 text-primary-orange-600" />
                     Modifier le mot de passe
@@ -734,7 +734,7 @@ export default function BureauDashboard() {
                     Changez votre mot de passe pour sÃ©curiser votre compte
                   </p>
                   <Button 
-                    className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600"
+                    className="w-full bg-primary-blue-600"
                     onClick={() => setShowPasswordDialog(true)}
                   >
                     Changer le mot de passe

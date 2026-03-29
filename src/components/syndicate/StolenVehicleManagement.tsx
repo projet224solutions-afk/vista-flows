@@ -430,7 +430,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                     </CardContent>
                 </Card>
 
-                <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+                <Card className="border-primary-orange-200 bg-primary-blue-50">
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
                             <ShieldCheck className="w-8 h-8 text-primary-orange-600" />
@@ -952,7 +952,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
 
                     {selectedVehicle && (
                         <div className="space-y-4">
-                            <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg">
+                            <div className="p-4 bg-primary-blue-50 border border-primary-orange-200 rounded-lg">
                                 <h4 className="font-semibold text-primary-orange-900 mb-2">VÃ©hicule Ã  rÃ©activer</h4>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <div><strong>Plaque:</strong> {selectedVehicle.license_plate}</div>
@@ -1024,7 +1024,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                             </div>
 
                             {selectedVehicle.last_known_latitude && selectedVehicle.last_known_longitude && (
-                                <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg">
+                                <div className="p-4 bg-primary-blue-50 border border-primary-orange-200 rounded-lg">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="font-medium text-primary-orange-800">DerniÃ¨re position connue</p>

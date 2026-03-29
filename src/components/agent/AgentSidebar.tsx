@@ -79,7 +79,7 @@ export default function AgentSidebar({
       id: 'wallet', 
       label: 'Wallet', 
       icon: Wallet,
-      gradient: 'from-primary-blue-500 to-primary-orange-500'
+      gradient: 'bg-primary-blue-600'
     },
     { 
       id: 'create-user', 

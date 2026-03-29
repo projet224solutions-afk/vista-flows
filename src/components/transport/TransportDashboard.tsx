@@ -177,7 +177,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
             <p className="text-2xl font-bold text-yellow-600">{stats.activeRequests}</p>
           </div>
           
-          <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
+          <div className="p-4 bg-primary-blue-50 rounded-lg">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-primary-orange-600" />
               <span className="text-sm font-medium text-primary-orange-800">TerminÃ©es</span>
@@ -337,7 +337,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                         </p>
                       </div>
                       <div className={`w-3 h-3 rounded-full ${
-                        user.isOnline ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-gray-400'
+                        user.isOnline ? 'bg-primary-blue-600' : 'bg-gray-400'
                       }`}></div>
                     </div>
                     
@@ -394,7 +394,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                 </div>
               </div>
               
-              <div className="p-6 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
+              <div className="p-6 bg-primary-blue-50 rounded-lg">
                 <h3 className="text-lg font-semibold text-primary-orange-800 mb-4">Revenus</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">

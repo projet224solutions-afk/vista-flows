@@ -211,7 +211,7 @@ export function BrowseModal({
                 <button
                   key={v.id}
                   onClick={() => { onSelectVendor(v.id); onOpenChange(false); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50 dark:border-primary-orange-900/50 dark:bg-primary-orange-950/20 hover:border-primary-orange-400 hover:shadow-md transition-all text-left group"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-primary-orange-200 bg-primary-blue-50/50 dark:border-primary-orange-900/50 dark:bg-primary-orange-950/20 hover:border-primary-orange-400 hover:shadow-md transition-all text-left group"
                 >
                   {v.logo_url ? (
                     <img src={v.logo_url} alt={v.business_name} className="w-10 h-10 rounded-full object-cover border-2 border-primary-orange-300" />

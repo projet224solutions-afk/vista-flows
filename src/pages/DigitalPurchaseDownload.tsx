@@ -311,7 +311,7 @@ export default function DigitalPurchaseDownload() {
 
         {/* Success Banner - animated, auto-hides */}
         {showSuccess && (
-          <Card className="border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5 animate-in fade-in slide-in-from-top-2 duration-500">
+          <Card className="border-primary-orange-500/30 bg-primary-blue-600/5 animate-in fade-in slide-in-from-top-2 duration-500">
             <CardContent className="p-5 text-center">
               <CheckCircle className="w-12 h-12 text-primary-orange-500 mx-auto mb-3" />
               <h1 className="text-xl font-bold text-foreground mb-1">
@@ -332,7 +332,7 @@ export default function DigitalPurchaseDownload() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                isSubscription ? 'bg-primary/10' : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10'
+                isSubscription ? 'bg-primary/10' : 'bg-primary-blue-600/10'
               }`}>
                 {isSubscription ? <RefreshCw className="w-5 h-5 text-primary" /> : <Shield className="w-5 h-5 text-primary-orange-500" />}
               </div>
@@ -344,7 +344,7 @@ export default function DigitalPurchaseDownload() {
                   <Badge variant="outline" className={
                     isSubscription 
                       ? 'bg-primary/10 text-primary border-primary/20 text-xs' 
-                      : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20 text-xs'
+                      : 'bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20 text-xs'
                   }>
                     {isSubscription 
                       ? (access.billing_cycle === 'yearly' ? 'Annuel' : 'Mensuel')

@@ -206,7 +206,7 @@ export default function MigrateIds() {
                         {result.new_id}
                       </span>
                     </div>
-                    <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
+                    <Badge variant="default" className="bg-primary-blue-600">
                       {result.status}
                     </Badge>
                   </div>

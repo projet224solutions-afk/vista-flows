@@ -217,7 +217,7 @@ export default function SurveillanceLogiqueDashboard() {
         </div>
         <div className="flex items-center gap-3">
           {isConnected && (
-            <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 flex items-center gap-1">
+            <Badge className="bg-primary-blue-600 flex items-center gap-1">
               <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
               En ligne
             </Badge>
@@ -271,7 +271,7 @@ export default function SurveillanceLogiqueDashboard() {
                   {systemHealth.recent_anomalies_24h}
                 </p>
               </div>
-              <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+              <div className="p-4 bg-primary-blue-50 rounded-lg border border-primary-orange-200">
                 <p className="text-sm text-primary-orange-600 font-medium">Taux rÃ©solution</p>
                 <p className="text-2xl font-bold text-primary-orange-900">
                   {systemHealth.resolution_rate.toFixed(1)}%
@@ -383,7 +383,7 @@ export default function SurveillanceLogiqueDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
+            <Card className="bg-primary-blue-50 border-primary-orange-200">
               <CardContent className="pt-6">
                 <div className="text-center">
                   <CheckCircle2 className="w-8 h-8 text-primary-orange-600 mx-auto mb-2" />

@@ -81,7 +81,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
     switch (status) {
       case 'pending': return 'bg-yellow-500';
       case 'confirmed': return 'bg-blue-500';
-      case 'completed': return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
+      case 'completed': return 'bg-primary-blue-600';
       case 'cancelled': return 'bg-red-500';
       default: return 'bg-gray-500';
     }

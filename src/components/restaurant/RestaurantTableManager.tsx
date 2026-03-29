@@ -24,7 +24,7 @@ interface RestaurantTableManagerProps {
 }
 
 const STATUS_CONFIG = {
-  available: { label: 'Libre', color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500', icon: Check },
+  available: { label: 'Libre', color: 'bg-primary-blue-600', icon: Check },
   occupied: { label: 'OccupÃ©e', color: 'bg-red-500', icon: Users },
   reserved: { label: 'RÃ©servÃ©e', color: 'bg-blue-500', icon: Clock },
   cleaning: { label: 'Nettoyage', color: 'bg-yellow-500', icon: Sparkles },
@@ -153,7 +153,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
     <div className="space-y-6">
       {/* Statistiques */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 dark:from-primary-blue-900/20 dark:to-primary-orange-800/20 border-primary-orange-200">
+        <Card className="bg-primary-blue-50 dark:bg-primary-blue-900/20 border-primary-orange-200">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-primary-orange-600">{stats.available}</div>
             <div className="text-sm text-primary-orange-700">Tables libres</div>

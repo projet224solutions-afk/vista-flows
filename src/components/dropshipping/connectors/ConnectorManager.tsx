@@ -86,7 +86,7 @@ function ConnectorCard({
   
   const getStatusBadge = () => {
     if (isActive) {
-      return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>;
+      return <Badge className="bg-primary-blue-600">Actif</Badge>;
     }
     switch (connector.status) {
       case 'stable': return <Badge variant="outline">Disponible</Badge>;
@@ -253,7 +253,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
       
       {/* RÃ©sumÃ© des connecteurs actifs */}
       {activeConnectors.length > 0 && (
-        <Alert className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
+        <Alert className="bg-primary-blue-50 border-primary-orange-200">
           <Check className="w-4 h-4 text-primary-orange-600" />
           <AlertTitle className="text-primary-orange-800">Connecteurs actifs</AlertTitle>
           <AlertDescription className="text-primary-orange-700">

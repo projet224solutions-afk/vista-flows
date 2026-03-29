@@ -86,12 +86,12 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
 
         {/* Carte Achats cliquable */}
         <Card
-          className="bg-gradient-to-br from-primary-blue-500/10 to-primary-orange-600/5 border-primary-orange-500/20 cursor-pointer hover:border-primary-orange-500/40 hover:shadow-md transition-all active:scale-95"
+          className="bg-primary-blue-500/10 border-primary-orange-500/20 cursor-pointer hover:border-primary-orange-500/40 hover:shadow-md transition-all active:scale-95"
           onClick={() => setIsValidatedSheetOpen(true)}
         >
           <CardContent className="p-5 md:p-4">
             <div className="flex items-center gap-3">
-              <div className="p-3 md:p-2 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20">
+              <div className="p-3 md:p-2 rounded-lg bg-primary-blue-600/20">
                 <ShoppingCart className="h-6 w-6 md:h-5 md:w-5 text-primary-orange-500" />
               </div>
               <div>

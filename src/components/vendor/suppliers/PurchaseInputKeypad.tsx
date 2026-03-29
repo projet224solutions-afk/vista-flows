@@ -85,7 +85,7 @@ export function PurchaseInputKeypad({
           icon: DollarSign,
           title: 'Prix d\'achat',
           subtitle: `Saisir le prix en ${currency}`,
-          color: 'from-primary-blue-500 to-primary-orange-600',
+          color: 'bg-primary-blue-600',
           bgColor: 'bg-primary-blue-500/10',
           borderColor: 'border-primary-orange-500/30',
           buttonColor: 'bg-primary-blue-600 hover:bg-primary-blue-700',

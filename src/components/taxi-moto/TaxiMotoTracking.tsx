@@ -448,7 +448,7 @@ Suivi en temps rÃ©el: https://224solution.net/track/${currentRide.id}`;
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-start gap-3">
-                        <div className="w-3 h-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full mt-2"></div>
+                        <div className="w-3 h-3 bg-primary-blue-600 rounded-full mt-2"></div>
                         <div>
                             <p className="font-medium">DÃ©part</p>
                             <p className="text-sm text-muted-foreground">{currentRide.pickupAddress}</p>

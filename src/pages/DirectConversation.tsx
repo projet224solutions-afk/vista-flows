@@ -380,7 +380,7 @@ export default function DirectConversation() {
             </AvatarFallback>
           </Avatar>
           {isRecipientOnline && (
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 border-2 border-card" />
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-primary-blue-600 border-2 border-card" />
           )}
         </div>
 
@@ -395,7 +395,7 @@ export default function DirectConversation() {
               </span>
             ) : isRecipientOnline ? (
               <>
-                <span className="w-2 h-2 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" />
+                <span className="w-2 h-2 rounded-full bg-primary-blue-600" />
                 <span className="text-xs text-primary-orange-600 font-medium">En ligne</span>
               </>
             ) : (

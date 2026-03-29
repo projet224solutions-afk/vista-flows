@@ -271,7 +271,7 @@ function PurchaseCard({
                     variant="outline" 
                     className={
                       isActive 
-                        ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20 shrink-0' 
+                        ? 'bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20 shrink-0' 
                         : item.status === 'cancelled' 
                           ? 'bg-muted text-muted-foreground border-border shrink-0'
                           : 'bg-amber-500/10 text-amber-600 border-amber-500/20 shrink-0'

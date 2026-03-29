@@ -370,7 +370,7 @@ export default function StolenMotoDeclaration() {
         {verified && vehicle && (
           <>
             <Card className="border-2 border-primary-orange-200 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-primary-blue-100 to-primary-orange-50 border-b">
+              <CardHeader className="bg-primary-blue-100 border-b">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <CheckCircle className="w-5 h-5 text-primary-orange-600" />

@@ -269,7 +269,7 @@ export default function DetailedTransactionsList() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg bg-gradient-to-br from-primary-blue-500/10 to-transparent border border-primary-orange-500/20">
+            <div className="p-4 rounded-lg bg-primary-blue-500/10 border border-primary-orange-500/20">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <DollarSign className="w-4 h-4" />
                 Total Transactions
@@ -316,7 +316,7 @@ export default function DetailedTransactionsList() {
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                         transaction.amount > 0 
-                          ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10' 
+                          ? 'bg-primary-blue-600/10' 
                           : 'bg-red-500/10'
                       }`}>
                         {transaction.amount > 0 ? (
@@ -351,7 +351,7 @@ export default function DetailedTransactionsList() {
                         </div>
                       )}
                       {transaction.receiver_info && (
-                        <div className="flex items-start gap-2 p-3 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5 border border-primary-orange-500/10">
+                        <div className="flex items-start gap-2 p-3 rounded-lg bg-primary-blue-600/5 border border-primary-orange-500/10">
                           <User className="w-4 h-4 text-primary-orange-500 mt-0.5" />
                           <div className="flex-1 min-w-0">
                             <div className="text-xs text-muted-foreground">Destinataire</div>

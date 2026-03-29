@@ -178,7 +178,7 @@ export default function PDGApiSupervision() {
                     <p className="text-sm text-muted-foreground">Latence: {endpoint.latency}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className={endpoint.status === 'operational' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}>
+                <Badge variant="outline" className={endpoint.status === 'operational' ? 'bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}>
                   {endpoint.status === 'operational' ? 'OpÃ©rationnel' : 'Hors service'}
                 </Badge>
               </div>

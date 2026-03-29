@@ -272,7 +272,7 @@ export function AgentLayout({
               {!sidebarCollapsed && (
                 <div className="flex items-center justify-between px-2 py-1.5 bg-slate-50 rounded-lg">
                   <span className="text-xs text-slate-500">Commission</span>
-                  <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200">
+                  <Badge variant="outline" className="bg-primary-blue-50 text-primary-orange-700 border-primary-orange-200">
                     {agent.commission_rate}%
                   </Badge>
                 </div>

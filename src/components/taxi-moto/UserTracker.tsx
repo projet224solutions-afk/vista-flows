@@ -275,7 +275,7 @@ export function UserTracker() {
 
             {/* Position GPS */}
             {trackedUser.lastLat && trackedUser.lastLng ? (
-              <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg p-3 space-y-2">
+              <div className="bg-primary-blue-50 border border-primary-orange-200 rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-primary-orange-900">
                     ðŸ“ Position GPS

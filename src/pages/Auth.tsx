@@ -1770,7 +1770,7 @@ export default function Auth() {
                     onClick={() => handleRoleClick('vendeur')}
                     className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
                       selectedRole === 'prestataire'
-                        ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 border-primary-orange-500 text-white shadow-lg shadow-primary-orange-500/25 scale-[1.02]'
+                        ? 'bg-primary-blue-600 border-primary-orange-500 text-white shadow-lg shadow-primary-orange-500/25 scale-[1.02]'
                         : 'bg-background border-border/60 hover:border-primary-orange-300 hover:bg-primary-blue-50/50'
                     }`}
                   >
@@ -1875,7 +1875,7 @@ export default function Auth() {
                 )}
 
                 {success && (
-                  <Alert className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
+                  <Alert className="bg-primary-blue-50 border-primary-orange-200">
                     <AlertCircle className="h-4 w-4 text-primary-orange-600" />
                     <AlertDescription className="text-primary-orange-800">
                       {success}
@@ -1939,7 +1939,7 @@ export default function Auth() {
                 )}
 
                 {success && (
-                  <Alert className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
+                  <Alert className="bg-primary-blue-50 border-primary-orange-200">
                     <AlertCircle className="h-4 w-4 text-primary-orange-600" />
                     <AlertDescription className="text-primary-orange-800">
                       {success}
@@ -2020,7 +2020,7 @@ export default function Auth() {
               )}
 
               {success && (
-                <Alert className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+                <Alert className="border-primary-orange-200 bg-primary-blue-50">
                   <AlertCircle className="h-4 w-4 text-primary-orange-600" />
                   <AlertDescription className="text-primary-orange-800">{success}</AlertDescription>
                 </Alert>
@@ -2845,7 +2845,7 @@ export default function Auth() {
           <div className="flex flex-col items-center text-center p-8">
             {/* Cercle animÃ© avec checkmark */}
             <div className="relative mb-6">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-blue-400 to-primary-orange-600 flex items-center justify-center shadow-lg shadow-primary-orange-500/30 animate-[scale-in_0.4s_ease-out]">
+              <div className="w-20 h-20 rounded-full bg-primary-blue-400 flex items-center justify-center shadow-lg shadow-primary-orange-500/30 animate-[scale-in_0.4s_ease-out]">
                 <CheckCircle2 className="h-10 w-10 text-white" />
               </div>
               {/* Pulse ring */}
@@ -2862,7 +2862,7 @@ export default function Auth() {
             {/* Barre de progression */}
             <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-primary-blue-400 to-primary-orange-600 rounded-full"
+                className="h-full bg-primary-blue-400 rounded-full"
                 style={{ 
                   animation: 'progress-fill 2.5s ease-in-out forwards'
                 }}

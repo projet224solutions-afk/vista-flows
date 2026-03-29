@@ -157,7 +157,7 @@ export default function ServiceDashboard() {
   // Dashboard gÃ©nÃ©rique pour les autres types de services
   const statusColors: Record<string, string> = {
     pending: 'bg-yellow-500',
-    active: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+    active: 'bg-primary-blue-600',
     suspended: 'bg-red-500',
     rejected: 'bg-gray-500',
   };
@@ -165,7 +165,7 @@ export default function ServiceDashboard() {
   const verificationColors: Record<string, string> = {
     unverified: 'bg-gray-500',
     pending: 'bg-yellow-500',
-    verified: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+    verified: 'bg-primary-blue-600',
     rejected: 'bg-red-500',
   };
 

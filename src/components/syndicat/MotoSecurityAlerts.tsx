@@ -160,7 +160,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; className: string }> = {
       'active': { label: 'Active', className: 'bg-red-500 text-white' },
-      'resolved': { label: 'RÃ©solue', className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white' },
+      'resolved': { label: 'RÃ©solue', className: 'bg-primary-blue-600 text-white' },
       'investigating': { label: 'En cours', className: 'bg-yellow-500 text-white' }
     };
 

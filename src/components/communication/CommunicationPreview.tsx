@@ -275,7 +275,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse"></div>
+                <div className="w-3 h-3 bg-primary-blue-600 rounded-full animate-pulse"></div>
                 <span className="text-sm text-muted-foreground">SystÃ¨me actif</span>
               </div>
               

@@ -170,7 +170,7 @@ export default function SubscriptionsPage() {
                       : 'border-[#ff4000] hover:border-[#ff4000]'
                   }`}
                 >
-                  <div className="absolute -top-2 -right-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                  <div className="absolute -top-2 -right-2 bg-primary-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                     -15%
                   </div>
                   <div className="flex items-center gap-2 mb-1">

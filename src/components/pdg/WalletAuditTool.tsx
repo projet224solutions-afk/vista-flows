@@ -684,7 +684,7 @@ export function WalletAuditTool() {
                                 onClick={unblockWallet} 
                                 disabled={actionLoading === 'unblock'}
                                 variant="outline"
-                                className="border-primary-orange-500 text-primary-orange-600 hover:bg-gradient-to-br from-primary-blue-50 to-primary-orange-50"
+                                className="border-primary-orange-500 text-primary-orange-600 hover:bg-primary-blue-50"
                               >
                                 {actionLoading === 'unblock' ? (
                                   <RefreshCw className="h-4 w-4 animate-spin mr-2" />

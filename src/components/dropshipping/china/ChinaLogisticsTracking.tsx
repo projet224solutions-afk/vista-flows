@@ -164,7 +164,7 @@ const STATUS_COLORS: Record<string, string> = {
   ready_to_ship: 'bg-primary-blue-500',
   shipped_domestic_china: 'bg-primary-orange-500',
   at_consolidation_warehouse: 'bg-primary-blue-500',
-  shipped_international: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+  shipped_international: 'bg-primary-blue-600',
   customs_clearance: 'bg-orange-500',
   last_mile_delivery: 'bg-lime-500',
   delivered: 'bg-primary-orange-600',
@@ -320,7 +320,7 @@ export function ChinaLogisticsTracking({
                       ${isCompleted 
                         ? isCurrent 
                           ? 'bg-primary text-primary-foreground ring-4 ring-primary/20' 
-                          : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white'
+                          : 'bg-primary-blue-600 text-white'
                         : 'bg-muted text-muted-foreground'
                       }
                     `}>
@@ -332,7 +332,7 @@ export function ChinaLogisticsTracking({
                     </div>
                     {index < TRACKING_STEPS.length - 1 && (
                       <div className={`w-0.5 flex-1 mt-2 ${
-                        isCompleted ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-muted'
+                        isCompleted ? 'bg-primary-blue-600' : 'bg-muted'
                       }`} />
                     )}
                   </div>

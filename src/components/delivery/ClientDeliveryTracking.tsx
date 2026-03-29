@@ -234,7 +234,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
       case 'in_transit':
         return <Badge className="bg-purple-500">En livraison</Badge>;
       case 'delivered':
-        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">LivrÃ©</Badge>;
+        return <Badge className="bg-primary-blue-600">LivrÃ©</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }

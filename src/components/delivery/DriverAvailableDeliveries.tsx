@@ -259,7 +259,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
       {deliveries.map((delivery) => (
         <Card 
           key={delivery.id} 
-          className="border-2 border-orange-200 hover:border-orange-400 transition-colors bg-gradient-to-br from-orange-50/50 to-primary-orange-50/50 dark:from-orange-950/20 dark:to-primary-orange-950/20"
+          className="border-2 border-orange-200 hover:border-orange-400 transition-colors bg-gradient-to-br from-orange-50/50 to-primary-orange-50/50 dark:from-orange-950/20 "
         >
           <CardContent className="pt-4 space-y-4">
             {/* Vendeur */}
@@ -303,7 +303,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
             </div>
 
             {/* DÃ©tail tarification vendeur */}
-            <div className="p-3 bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/20 dark:to-primary-orange-950/20 rounded-lg border border-primary-orange-200/50">
+            <div className="p-3 bg-primary-blue-50 dark:bg-primary-blue-950/20 rounded-lg border border-primary-orange-200/50">
               <div className="flex items-center gap-2 mb-2">
                 <Calculator className="h-4 w-4 text-primary-orange-600" />
                 <span className="text-xs font-medium text-primary-orange-700 dark:text-primary-orange-400">Tarification vendeur</span>
@@ -327,7 +327,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
             </div>
 
             {/* Vos gains */}
-            <div className="flex items-center justify-between p-2 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-lg text-white">
+            <div className="flex items-center justify-between p-2 brand-split rounded-lg text-white">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
                 <div>
@@ -372,7 +372,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
               </Button>
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 hover:from-primary-blue-600 hover:to-primary-orange-600"
+                className="brand-split hover:opacity-90"
                 onClick={() => handleAccept(delivery)}
                 disabled={acceptingId === delivery.id}
               >

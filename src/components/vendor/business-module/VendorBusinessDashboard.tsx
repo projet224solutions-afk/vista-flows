@@ -267,7 +267,7 @@ export function VendorBusinessDashboard({
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <div className="flex items-center gap-1 mb-1">
-                      <div className="w-2 h-2 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" />
+                      <div className="w-2 h-2 rounded-full bg-primary-blue-600" />
                       <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Livraison</span>
                     </div>
                     <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatCurrency(stats?.revenueOnline || 0)}</div>
@@ -303,7 +303,7 @@ export function VendorBusinessDashboard({
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-center">
                     <div className="flex items-center justify-center gap-1 mb-1">
-                      <div className="w-2 h-2 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" />
+                      <div className="w-2 h-2 rounded-full bg-primary-blue-600" />
                       <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Livraison</span>
                     </div>
                     <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats?.ordersOnline || 0}</div>

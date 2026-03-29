@@ -158,7 +158,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
       pending: { color: 'bg-yellow-500', label: 'En attente' },
       quoted: { color: 'bg-blue-500', label: 'Devis envoyÃ©' },
       approved: { color: 'bg-purple-500', label: 'ApprouvÃ©' },
-      in_progress: { color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500', label: 'En cours' },
+      in_progress: { color: 'bg-primary-blue-600', label: 'En cours' },
       completed: { color: 'bg-gray-500', label: 'TerminÃ©' }
     };
     return variants[status];

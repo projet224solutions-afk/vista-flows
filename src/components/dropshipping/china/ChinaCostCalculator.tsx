@@ -196,7 +196,7 @@ export function ChinaCostCalculator() {
             </Card>
 
             {/* RÃ©sultat marge */}
-            <Card className={`${margin.marginPercent >= 20 ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 border-primary-orange-200' : 'bg-orange-50 dark:bg-orange-950 border-orange-200'}`}>
+            <Card className={`${margin.marginPercent >= 20 ? 'bg-primary-blue-50 dark:bg-primary-orange-950 border-primary-orange-200' : 'bg-orange-50 dark:bg-orange-950 border-orange-200'}`}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
@@ -228,7 +228,7 @@ export function ChinaCostCalculator() {
 
                 <div className="flex justify-center gap-2 pt-2">
                   {margin.marginPercent >= 30 && (
-                    <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Excellent</Badge>
+                    <Badge className="bg-primary-blue-600">Excellent</Badge>
                   )}
                   {margin.marginPercent >= 20 && margin.marginPercent < 30 && (
                     <Badge className="bg-primary-blue-500">Bon</Badge>

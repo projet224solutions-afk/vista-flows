@@ -68,7 +68,7 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
         if (!isOnline) return "bg-red-500";
         if (hasFailedEvents) return "bg-orange-500";
         if (hasPendingEvents) return "bg-yellow-500";
-        return "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500";
+        return "bg-primary-blue-600";
     };
 
     const getStatusText = () => {
@@ -153,7 +153,7 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
 
                         {/* DerniÃ¨re sync */}
                         {lastSyncTime && (
-                            <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+                            <div className="p-3 bg-primary-blue-50 rounded-lg border border-primary-orange-200">
                                 <div className="flex items-center gap-2 text-primary-orange-800">
                                     <CheckCircle className="w-4 h-4" />
                                     <span className="font-medium">DerniÃ¨re synchronisation</span>

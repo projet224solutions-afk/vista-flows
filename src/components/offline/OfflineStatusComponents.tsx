@@ -37,7 +37,7 @@ export function OfflineBanner() {
       <div className={cn(
         'px-4 py-3 flex items-center justify-between',
         isOnline 
-          ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white' 
+          ? 'bg-primary-blue-600 text-white' 
           : 'bg-amber-500 text-white'
       )}>
         <div className="flex items-center gap-3">
@@ -287,7 +287,7 @@ export function OfflineStatusBadge({
       <div className={cn(
         'rounded-full',
         sizeClasses[size],
-        isOnline ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-amber-500',
+        isOnline ? 'bg-primary-blue-600' : 'bg-amber-500',
         !isOnline && 'animate-pulse'
       )} />
       {showLabel && (

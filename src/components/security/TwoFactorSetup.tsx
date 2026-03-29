@@ -130,7 +130,7 @@ export const TwoFactorSetup: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+          <Alert className="border-primary-orange-200 bg-primary-blue-50">
             <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
             <AlertDescription className="text-primary-orange-800">
               Votre compte est sÃ©curisÃ© avec l'authentification Ã  deux facteurs.
@@ -356,7 +356,7 @@ export const TwoFactorSetup: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="backup" className="space-y-4 mt-4">
-            <Alert className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+            <Alert className="border-primary-orange-200 bg-primary-blue-50">
               <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
               <AlertDescription className="text-primary-orange-800">
                 2FA activÃ©e avec succÃ¨s ! Sauvegardez vos codes de rÃ©cupÃ©ration.

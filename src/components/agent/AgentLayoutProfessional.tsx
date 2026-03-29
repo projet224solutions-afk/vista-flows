@@ -221,7 +221,7 @@ export function AgentLayoutProfessional({
       id: 'wallet',
       label: 'Portefeuille',
       icon: <Wallet className="w-5 h-5" />,
-      gradient: 'from-primary-blue-500 to-primary-orange-500'
+      gradient: 'bg-primary-blue-600'
     },
     // --- Nouvelles fonctionnalitÃ©s opÃ©rationnelles ---
     {
@@ -249,7 +249,7 @@ export function AgentLayoutProfessional({
       id: 'wallet-transactions',
       label: 'Transactions Wallet',
       icon: <CreditCard className="w-5 h-5" />,
-      gradient: 'from-primary-orange-500 to-primary-blue-500',
+      gradient: 'bg-primary-orange-600',
       permission: 'manage_wallet_transactions'
     },
     {
@@ -263,7 +263,7 @@ export function AgentLayoutProfessional({
       id: 'vendors-management',
       label: 'Vendeurs',
       icon: <Wallet className="w-5 h-5" />,
-      gradient: 'from-primary-blue-500 to-primary-orange-500',
+      gradient: 'bg-primary-blue-600',
       permission: 'view_vendors'
     },
     {
@@ -430,7 +430,7 @@ export function AgentLayoutProfessional({
         </div>
 
         {/* Wallet Balance Card */}
-        <div className="mt-4 p-4 bg-gradient-to-br from-primary-blue-500/20 via-primary-orange-500/10 to-blue-500/10 rounded-xl border border-primary-orange-500/30 shadow-lg">
+        <div className="mt-4 p-4 bg-primary-blue-500/20 rounded-xl border border-primary-orange-500/30 shadow-lg">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-white/70 font-semibold uppercase tracking-wide">Solde disponible</span>
             <div className="p-1.5 bg-primary-blue-500/20 rounded-lg">

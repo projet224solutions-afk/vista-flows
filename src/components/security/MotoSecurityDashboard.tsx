@@ -196,7 +196,7 @@ export default function MotoSecurityDashboard({
                                             </p>
                                         </div>
                                     ) : (
-                                        <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg p-4">
+                                        <div className="bg-primary-blue-50 border border-primary-orange-200 rounded-lg p-4">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <CheckCircle className="w-5 h-5 text-primary-orange-600" />
                                                 <span className="font-medium text-primary-orange-800">

@@ -200,7 +200,7 @@ export function NearbyDeliveriesPanel() {
           </div>
         ) : (
           deliveries.map((d) => (
-            <div key={d.id} className="p-4 bg-gradient-to-r from-orange-50 to-primary-orange-50 dark:from-orange-950/20 dark:to-primary-orange-950/20 rounded-xl border border-orange-200/50 space-y-3">
+            <div key={d.id} className="p-4 bg-gradient-to-r from-orange-50 to-primary-orange-50 dark:from-orange-950/20  rounded-xl border border-orange-200/50 space-y-3">
               {/* Vendeur */}
               <div className="flex items-start gap-3">
                 <Store className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
@@ -232,7 +232,7 @@ export function NearbyDeliveriesPanel() {
               </div>
 
               {/* Prix et infos */}
-              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-lg text-white">
+              <div className="flex items-center justify-between p-3 brand-split rounded-lg text-white">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
                   <span className="font-bold text-lg">{formatCurrency(d.estimated_earnings || 0)}</span>

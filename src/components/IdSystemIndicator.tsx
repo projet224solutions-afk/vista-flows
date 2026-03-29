@@ -88,7 +88,7 @@ export function IdSystemIndicator() {
           <div className="flex items-center gap-1">
             {isStandardized ? (
               <>
-                <div className="w-2 h-2 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-primary-blue-600 animate-pulse" />
                 <span className="text-xs font-medium text-primary-orange-600">Actif</span>
               </>
             ) : (

@@ -152,7 +152,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0 mx-2">
         {/* Header avec actions */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 text-white p-3 rounded-t-lg">
+        <div className="sticky top-0 z-10 bg-primary-blue-600 text-white p-3 rounded-t-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">

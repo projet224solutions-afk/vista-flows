@@ -201,7 +201,7 @@ export function AddDropshipProductDialog({
           {formData.supplier_price && formData.selling_price && (
             <div className={`p-3 rounded-lg ${
               parseFloat(marginValue) > 20 
-                ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200 dark:bg-primary-orange-950' 
+                ? 'bg-primary-blue-50 border-primary-orange-200 dark:bg-primary-orange-950' 
                 : 'bg-orange-50 border-orange-200 dark:bg-orange-950'
             } border`}>
               <p className="text-sm">

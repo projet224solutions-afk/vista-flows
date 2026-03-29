@@ -149,7 +149,7 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
   return (
     <div className="space-y-4">
       {/* Statut actuel */}
-      <Card className="border-2 border-orange-500 bg-gradient-to-br from-orange-50 to-primary-orange-50 dark:from-orange-950/20 dark:to-primary-orange-950/20">
+      <Card className="border-2 border-orange-500 bg-gradient-to-br from-orange-50 to-primary-orange-50 dark:from-orange-950/20 ">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Suivi de livraison</CardTitle>
@@ -225,14 +225,14 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
                     <div className={`
                       w-8 h-8 rounded-full flex items-center justify-center
                       ${isCompleted 
-                        ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white' 
+                        ? 'bg-primary-blue-600 text-white' 
                         : 'bg-muted text-muted-foreground'}
                       ${isCurrent ? 'ring-2 ring-primary-orange-500 ring-offset-2' : ''}
                     `}>
                       <Icon className="h-4 w-4" />
                     </div>
                     {index < STATUS_STEPS.length - 1 && (
-                      <div className={`w-0.5 h-8 ${isCompleted ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-muted'}`} />
+                      <div className={`w-0.5 h-8 ${isCompleted ? 'bg-primary-blue-600' : 'bg-muted'}`} />
                     )}
                   </div>
 

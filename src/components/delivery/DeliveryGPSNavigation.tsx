@@ -188,7 +188,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
   return (
     <div className="space-y-4">
       {/* Carte de navigation active */}
-      <Card className="bg-gradient-to-r from-orange-50 to-primary-orange-50 dark:from-orange-950/30 dark:to-primary-orange-950/30 border-orange-200 dark:border-orange-800">
+      <Card className="bg-gradient-to-r from-orange-50 to-primary-orange-50 dark:from-orange-950/30  border-orange-200 dark:border-orange-800">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -234,7 +234,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
 
           {/* ItinÃ©raire */}
           <div className="space-y-3">
-            <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/30 rounded-lg p-3 border border-primary-orange-200 dark:border-primary-orange-800">
+            <div className="bg-primary-blue-50 dark:bg-primary-orange-950/30 rounded-lg p-3 border border-primary-orange-200 dark:border-primary-orange-800">
               <div className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-primary-orange-600 mt-0.5" />
                 <div className="flex-1">

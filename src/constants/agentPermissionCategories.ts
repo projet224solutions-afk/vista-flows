@@ -100,7 +100,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     label: 'OpÃ©rations',
     icon: 'Briefcase',
     colorClass: 'text-primary-orange-600',
-    bgClass: 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200',
+    bgClass: 'bg-primary-blue-50 border-primary-orange-200',
     permissions: [
       'view_agents',
       'manage_agents',
