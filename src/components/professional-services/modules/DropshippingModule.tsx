@@ -1,7 +1,7 @@
 /**
  * MODULE DROPSHIPPING PROFESSIONNEL
- * Inspiré de: Shopify, Oberlo, Spocket
- * E-commerce dropshipping avec intégration fournisseurs
+ * InspirÃ© de: Shopify, Oberlo, Spocket
+ * E-commerce dropshipping avec intÃ©gration fournisseurs
  * Extension Chine: Alibaba, AliExpress, 1688
  */
 
@@ -27,7 +27,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
   const [vendorId, setVendorId] = useState<string | undefined>();
   const [loadingVendor, setLoadingVendor] = useState(true);
 
-  // Récupérer le vendor_id depuis le service professionnel
+  // RÃ©cupÃ©rer le vendor_id depuis le service professionnel
   useEffect(() => {
     const fetchVendorId = async () => {
       try {
@@ -49,7 +49,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
           }
         }
       } catch (error) {
-        console.error('Erreur récupération vendor:', error);
+        console.error('Erreur rÃ©cupÃ©ration vendor:', error);
       } finally {
         setLoadingVendor(false);
       }
@@ -60,7 +60,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
     }
   }, [serviceId]);
 
-  // Hook dropshipping avec les vraies données
+  // Hook dropshipping avec les vraies donnÃ©es
   const { 
     stats, 
     suppliers, 
@@ -77,7 +77,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
     await Promise.all([loadStats(), loadProducts(), loadOrders(), loadSuppliers()]);
   };
 
-  // Formatage monétaire
+  // Formatage monÃ©taire
   const formatCurrency = useFormatCurrency();
 
   // Afficher un loader pendant le chargement
@@ -120,15 +120,15 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Dropshipping:</strong> Vendez des produits sans gérer de stock. 
-          Les commandes sont automatiquement envoyées aux fournisseurs qui livrent directement vos clients.
+          <strong>Dropshipping:</strong> Vendez des produits sans gÃ©rer de stock. 
+          Les commandes sont automatiquement envoyÃ©es aux fournisseurs qui livrent directement vos clients.
         </AlertDescription>
       </Alert>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Produits Importés</CardTitle>
+            <CardTitle className="text-sm font-medium">Produits ImportÃ©s</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -146,7 +146,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.pendingOrders || 0}</div>
-            <p className="text-xs text-muted-foreground">À traiter</p>
+            <p className="text-xs text-muted-foreground">Ã€ traiter</p>
           </CardContent>
         </Card>
 
@@ -158,7 +158,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats?.totalRevenue || 0)}</div>
             <p className="text-xs text-muted-foreground">
-              {stats?.completedOrders || 0} commandes complétées
+              {stats?.completedOrders || 0} commandes complÃ©tÃ©es
             </p>
           </CardContent>
         </Card>
@@ -166,10 +166,10 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Profit Net</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-4 w-4 text-primary-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(stats?.totalProfit || 0)}</div>
+            <div className="text-2xl font-bold text-primary-orange-600">{formatCurrency(stats?.totalProfit || 0)}</div>
             <p className="text-xs text-muted-foreground">
               Marge: {(stats?.averageMargin || 0).toFixed(1)}%
             </p>
@@ -187,19 +187,19 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
             Chine
           </TabsTrigger>
           <TabsTrigger value="china-import">Import Chine</TabsTrigger>
-          <TabsTrigger value="china-costs">Coûts</TabsTrigger>
+          <TabsTrigger value="china-costs">CoÃ»ts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Commandes Récentes</CardTitle>
+              <CardTitle>Commandes RÃ©centes</CardTitle>
             </CardHeader>
             <CardContent>
               {orders.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Aucune commande récente</p>
+                  <p className="text-muted-foreground">Aucune commande rÃ©cente</p>
                   <p className="text-sm text-muted-foreground mt-2">
                     Les commandes de vos clients seront automatiquement transmises aux fournisseurs
                   </p>
@@ -214,7 +214,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
                       <div>
                         <p className="font-medium">{order.order_reference}</p>
                         <p className="text-sm text-muted-foreground">
-                          {order.quantity} article(s) • {order.supplier?.name || 'Fournisseur'}
+                          {order.quantity} article(s) â€¢ {order.supplier?.name || 'Fournisseur'}
                         </p>
                       </div>
                       <div className="text-right">
@@ -240,7 +240,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
               {suppliers.length === 0 ? (
                 <div className="text-center py-8">
                   <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">Aucun fournisseur configuré</p>
+                  <p className="text-muted-foreground">Aucun fournisseur configurÃ©</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -250,18 +250,18 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="text-4xl">
-                              {supplier.country === 'CN' ? '🇨🇳' : 
-                               supplier.country === 'US' ? '🇺🇸' : 
-                               supplier.country === 'FR' ? '🇫🇷' : '📦'}
+                              {supplier.country === 'CN' ? 'ðŸ‡¨ðŸ‡³' : 
+                               supplier.country === 'US' ? 'ðŸ‡ºðŸ‡¸' : 
+                               supplier.country === 'FR' ? 'ðŸ‡«ðŸ‡·' : 'ðŸ“¦'}
                             </div>
                             <div>
                               <h3 className="font-bold text-lg">{supplier.name}</h3>
                               <p className="text-sm text-muted-foreground">
-                                {supplier.country} • {supplier.currency}
+                                {supplier.country} â€¢ {supplier.currency}
                               </p>
                               {supplier.reliability_score && (
                                 <p className="text-xs text-muted-foreground">
-                                  Fiabilité: {supplier.reliability_score}%
+                                  FiabilitÃ©: {supplier.reliability_score}%
                                 </p>
                               )}
                             </div>
@@ -269,11 +269,11 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
                           <Badge 
                             variant="outline" 
                             className={supplier.is_verified 
-                              ? "bg-green-50 text-green-700 border-green-200" 
+                              ? "bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200" 
                               : "bg-yellow-50 text-yellow-700 border-yellow-200"
                             }
                           >
-                            {supplier.is_verified ? 'Vérifié' : 'Non vérifié'}
+                            {supplier.is_verified ? 'VÃ©rifiÃ©' : 'Non vÃ©rifiÃ©'}
                           </Badge>
                         </div>
                       </CardContent>
@@ -293,7 +293,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
             <CardContent>
               <div className="text-center py-12">
                 <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-bold text-lg mb-2">Recherchez des produits à vendre</h3>
+                <h3 className="font-bold text-lg mb-2">Recherchez des produits Ã  vendre</h3>
                 <p className="text-muted-foreground mb-4">
                   Parcourez les catalogues de vos fournisseurs et importez les produits dans votre boutique
                 </p>
@@ -307,13 +307,13 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
 
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="pt-6">
-              <h3 className="font-bold mb-2">💡 Avantages du Dropshipping</h3>
+              <h3 className="font-bold mb-2">ðŸ’¡ Avantages du Dropshipping</h3>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>✅ Pas de gestion de stock</li>
-                <li>✅ Pas d'investissement initial en inventaire</li>
-                <li>✅ Expédition automatique par le fournisseur</li>
-                <li>✅ Large choix de produits disponibles</li>
-                <li>✅ Mise à jour automatique des prix et stocks</li>
+                <li>âœ… Pas de gestion de stock</li>
+                <li>âœ… Pas d'investissement initial en inventaire</li>
+                <li>âœ… ExpÃ©dition automatique par le fournisseur</li>
+                <li>âœ… Large choix de produits disponibles</li>
+                <li>âœ… Mise Ã  jour automatique des prix et stocks</li>
               </ul>
             </CardContent>
           </Card>

@@ -1,6 +1,6 @@
 /**
  * MODULE LIVRAISON EXPRESS
- * Gestion des courses, livreurs et suivi en temps réel
+ * Gestion des courses, livreurs et suivi en temps rÃ©el
  */
 
 import { useState } from 'react';
@@ -69,7 +69,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
   const [showNewDeliveryDialog, setShowNewDeliveryDialog] = useState(false);
   const [showNewCourierDialog, setShowNewCourierDialog] = useState(false);
 
-  // Données simulées
+  // DonnÃ©es simulÃ©es
   const [deliveries] = useState<Delivery[]>([
     {
       id: '1',
@@ -79,7 +79,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
       senderAddress: 'Kaloum, Conakry',
       receiverName: 'Mamadou Diallo',
       receiverPhone: '+224 621 00 00 00',
-      receiverAddress: 'Kipé, Conakry',
+      receiverAddress: 'KipÃ©, Conakry',
       packageType: 'colis_moyen',
       weight: 5,
       price: 50000,
@@ -126,7 +126,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
       phone: '+224 626 00 00 00',
       vehicle: 'moto',
       status: 'en_course',
-      currentLocation: 'Kipé',
+      currentLocation: 'KipÃ©',
       deliveriesCompleted: 156,
       rating: 4.8
     },
@@ -167,22 +167,22 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
       en_attente: 'bg-yellow-100 text-yellow-800',
       collecte: 'bg-blue-100 text-blue-800',
       en_transit: 'bg-purple-100 text-purple-800',
-      livree: 'bg-green-100 text-green-800',
+      livree: 'bg-primary-orange-100 text-primary-orange-800',
       echec: 'bg-red-100 text-red-800'
     };
     const labels = {
       en_attente: 'En attente',
       collecte: 'Collecte',
       en_transit: 'En transit',
-      livree: 'Livrée',
-      echec: 'Échec'
+      livree: 'LivrÃ©e',
+      echec: 'Ã‰chec'
     };
     return <Badge className={styles[status]}>{labels[status]}</Badge>;
   };
 
   const getCourierStatusBadge = (status: Courier['status']) => {
     const styles = {
-      disponible: 'bg-green-100 text-green-800',
+      disponible: 'bg-primary-orange-100 text-primary-orange-800',
       en_course: 'bg-blue-100 text-blue-800',
       hors_ligne: 'bg-gray-100 text-gray-800'
     };
@@ -196,19 +196,19 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
 
   const getVehicleIcon = (vehicle: Courier['vehicle']) => {
     switch (vehicle) {
-      case 'moto': return '🏍️';
-      case 'voiture': return '🚗';
-      case 'camionnette': return '🚐';
+      case 'moto': return 'ðŸï¸';
+      case 'voiture': return 'ðŸš—';
+      case 'camionnette': return 'ðŸš';
     }
   };
 
   const handleAddDelivery = () => {
-    toast.success('Livraison créée avec succès');
+    toast.success('Livraison crÃ©Ã©e avec succÃ¨s');
     setShowNewDeliveryDialog(false);
   };
 
   const handleAddCourier = () => {
-    toast.success('Livreur ajouté avec succès');
+    toast.success('Livreur ajoutÃ© avec succÃ¨s');
     setShowNewCourierDialog(false);
   };
 
@@ -221,7 +221,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
+      {/* En-tÃªte */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-primary/10 rounded-xl">
@@ -257,8 +257,8 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm text-muted-foreground">Livrées</span>
+              <CheckCircle className="h-4 w-4 text-primary-orange-500" />
+              <span className="text-sm text-muted-foreground">LivrÃ©es</span>
             </div>
             <p className="text-2xl font-bold mt-1">{completedToday}</p>
           </CardContent>
@@ -275,7 +275,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-green-500" />
+              <DollarSign className="h-4 w-4 text-primary-orange-500" />
               <span className="text-sm text-muted-foreground">Revenus</span>
             </div>
             <p className="text-xl font-bold mt-1">{formatPrice(totalRevenue)}</p>
@@ -303,18 +303,18 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Créer une livraison</DialogTitle>
+                  <DialogTitle>CrÃ©er une livraison</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-4">
-                      <h4 className="font-medium">Expéditeur</h4>
+                      <h4 className="font-medium">ExpÃ©diteur</h4>
                       <div className="space-y-2">
                         <Label>Nom</Label>
-                        <Input placeholder="Nom de l'expéditeur" />
+                        <Input placeholder="Nom de l'expÃ©diteur" />
                       </div>
                       <div className="space-y-2">
-                        <Label>Téléphone</Label>
+                        <Label>TÃ©lÃ©phone</Label>
                         <Input placeholder="+224 6XX XX XX XX" />
                       </div>
                       <div className="space-y-2">
@@ -329,7 +329,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
                         <Input placeholder="Nom du destinataire" />
                       </div>
                       <div className="space-y-2">
-                        <Label>Téléphone</Label>
+                        <Label>TÃ©lÃ©phone</Label>
                         <Input placeholder="+224 6XX XX XX XX" />
                       </div>
                       <div className="space-y-2">
@@ -343,7 +343,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
                       <Label>Type de colis</Label>
                       <Select>
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner" />
+                          <SelectValue placeholder="SÃ©lectionner" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="document">Document</SelectItem>
@@ -366,7 +366,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
                     <Label>Assigner un livreur</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un livreur" />
+                        <SelectValue placeholder="SÃ©lectionner un livreur" />
                       </SelectTrigger>
                       <SelectContent>
                         {couriers.filter(c => c.status === 'disponible').map((c) => (
@@ -383,7 +383,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
                     Annuler
                   </Button>
                   <Button onClick={handleAddDelivery}>
-                    Créer
+                    CrÃ©er
                   </Button>
                 </div>
               </DialogContent>
@@ -412,7 +412,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">À:</p>
+                          <p className="text-xs text-muted-foreground">Ã€:</p>
                           <p className="font-medium text-sm">{delivery.receiverName}</p>
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
@@ -446,7 +446,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
         {/* Onglet Livreurs */}
         <TabsContent value="livreurs" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Équipe de livreurs</h3>
+            <h3 className="font-semibold">Ã‰quipe de livreurs</h3>
             <Dialog open={showNewCourierDialog} onOpenChange={setShowNewCourierDialog}>
               <DialogTrigger asChild>
                 <Button>
@@ -461,22 +461,22 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
                     <Label>Nom complet</Label>
-                    <Input placeholder="Nom et prénom" />
+                    <Input placeholder="Nom et prÃ©nom" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Téléphone</Label>
+                    <Label>TÃ©lÃ©phone</Label>
                     <Input placeholder="+224 6XX XX XX XX" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Type de véhicule</Label>
+                    <Label>Type de vÃ©hicule</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner" />
+                        <SelectValue placeholder="SÃ©lectionner" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="moto">🏍️ Moto</SelectItem>
-                        <SelectItem value="voiture">🚗 Voiture</SelectItem>
-                        <SelectItem value="camionnette">🚐 Camionnette</SelectItem>
+                        <SelectItem value="moto">ðŸï¸ Moto</SelectItem>
+                        <SelectItem value="voiture">ðŸš— Voiture</SelectItem>
+                        <SelectItem value="camionnette">ðŸš Camionnette</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -521,7 +521,7 @@ export function DeliveryModule({ serviceId, businessName }: DeliveryModuleProps)
                     </div>
                     <div className="text-right">
                       <div className="flex items-center gap-1 text-yellow-500">
-                        <span>⭐</span>
+                        <span>â­</span>
                         <span className="font-medium">{courier.rating}</span>
                       </div>
                       <p className="text-sm text-muted-foreground">

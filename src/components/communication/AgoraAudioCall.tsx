@@ -1,5 +1,5 @@
 /**
- * 🎤 COMPOSANT APPEL AUDIO AGORA - 224SOLUTIONS
+ * ðŸŽ¤ COMPOSANT APPEL AUDIO AGORA - 224SOLUTIONS
  * Interface pour les appels vocaux avec Agora
  */
 
@@ -46,15 +46,15 @@ export default function AgoraAudioCall({
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
 
-  // Démarrer l'appel automatiquement
+  // DÃ©marrer l'appel automatiquement
   useEffect(() => {
     if (!isIncoming && channel) {
-      console.log('🔊 AgoraAudioCall: Démarrage automatique pour channel:', channel);
+      console.log('ðŸ”Š AgoraAudioCall: DÃ©marrage automatique pour channel:', channel);
       handleJoinCall();
     }
   }, [channel, isIncoming]);
 
-  // Gestion de la durée d'appel
+  // Gestion de la durÃ©e d'appel
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
@@ -70,13 +70,13 @@ export default function AgoraAudioCall({
   }, [callState.isInCall]);
 
   const handleJoinCall = async () => {
-    console.log('🔊 AgoraAudioCall: handleJoinCall appelé');
+    console.log('ðŸ”Š AgoraAudioCall: handleJoinCall appelÃ©');
     setIsConnecting(true);
     try {
       await joinCall(channel, false); // Audio seulement
-      console.log('🔊 AgoraAudioCall: Appel rejoint avec succès');
+      console.log('ðŸ”Š AgoraAudioCall: Appel rejoint avec succÃ¨s');
     } catch (error) {
-      console.error('🔊 AgoraAudioCall: Erreur rejoindre appel:', error);
+      console.error('ðŸ”Š AgoraAudioCall: Erreur rejoindre appel:', error);
     } finally {
       setIsConnecting(false);
     }
@@ -94,7 +94,7 @@ export default function AgoraAudioCall({
   };
 
   const getNetworkQualityColor = (quality: number) => {
-    if (quality >= 4) return 'text-green-500';
+    if (quality >= 4) return 'text-primary-orange-500';
     if (quality >= 2) return 'text-yellow-500';
     return 'text-red-500';
   };
@@ -104,7 +104,7 @@ export default function AgoraAudioCall({
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2">
-            <Phone className="w-6 h-6 text-green-600" />
+            <Phone className="w-6 h-6 text-primary-orange-600" />
             Appel entrant
           </CardTitle>
         </CardHeader>
@@ -123,7 +123,7 @@ export default function AgoraAudioCall({
           <div className="flex gap-2 justify-center">
             <Button
               onClick={handleJoinCall}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-primary-orange-600 hover:bg-primary-orange-700"
               disabled={isConnecting}
             >
               <Phone className="w-4 h-4 mr-2" />
@@ -147,7 +147,7 @@ export default function AgoraAudioCall({
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="p-8 text-center">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p>Connexion à l'appel...</p>
+          <p>Connexion Ã  l'appel...</p>
         </CardContent>
       </Card>
     );
@@ -157,7 +157,7 @@ export default function AgoraAudioCall({
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <CardTitle className="flex items-center justify-center gap-2">
-          <Phone className="w-6 h-6 text-green-600" />
+          <Phone className="w-6 h-6 text-primary-orange-600" />
           Appel en cours
         </CardTitle>
       </CardHeader>
@@ -174,7 +174,7 @@ export default function AgoraAudioCall({
           <p className="text-muted-foreground">Appel vocal</p>
         </div>
 
-        {/* Durée et qualité */}
+        {/* DurÃ©e et qualitÃ© */}
         <div className="flex justify-center items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
@@ -195,11 +195,11 @@ export default function AgoraAudioCall({
             variant={callState.isConnected ? "default" : "destructive"}
             className="text-sm"
           >
-            {callState.isConnected ? 'Connecté' : 'Déconnecté'}
+            {callState.isConnected ? 'ConnectÃ©' : 'DÃ©connectÃ©'}
           </Badge>
         </div>
 
-        {/* Contrôles d'appel */}
+        {/* ContrÃ´les d'appel */}
         <div className="flex justify-center gap-4">
           {/* Microphone */}
           <Button
@@ -234,9 +234,9 @@ export default function AgoraAudioCall({
 
         {/* Indicateurs visuels */}
         <div className="flex justify-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${callState.isMuted ? 'bg-red-500' : 'bg-green-500'}`}></div>
-          <div className={`w-3 h-3 rounded-full ${isSpeakerOn ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-          <div className={`w-3 h-3 rounded-full ${callState.isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${callState.isMuted ? 'bg-red-500' : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${isSpeakerOn ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-gray-400'}`}></div>
+          <div className={`w-3 h-3 rounded-full ${callState.isConnected ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-red-500'}`}></div>
         </div>
       </CardContent>
     </Card>

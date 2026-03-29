@@ -1,6 +1,6 @@
 /**
- * GÉNÉRATEUR DE LIEN D'INSTALLATION BUREAU
- * Composant pour générer des liens sécurisés d'installation PWA
+ * GÃ‰NÃ‰RATEUR DE LIEN D'INSTALLATION BUREAU
+ * Composant pour gÃ©nÃ©rer des liens sÃ©curisÃ©s d'installation PWA
  * 224SOLUTIONS - Administration
  */
 
@@ -54,7 +54,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
     setLoading(true);
 
     try {
-      // Appeler l'edge function pour générer le token
+      // Appeler l'edge function pour gÃ©nÃ©rer le token
       const { data, error } = await supabase.functions.invoke('generate-bureau-token', {
         body: {
           bureau_id: bureauId,
@@ -68,15 +68,15 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
       if (data.success) {
         setGeneratedLink(data.install_url);
         
-        toast.success('🔗 Lien généré !', {
-          description: email ? `Email envoyé à ${email}` : 'Copiez et partagez le lien'
+        toast.success('ðŸ”— Lien gÃ©nÃ©rÃ© !', {
+          description: email ? `Email envoyÃ© Ã  ${email}` : 'Copiez et partagez le lien'
         });
       } else {
         throw new Error(data.error || 'Erreur inconnue');
       }
     } catch (error: any) {
-      console.error('Erreur génération lien:', error);
-      toast.error(error.message || 'Erreur lors de la génération');
+      console.error('Erreur gÃ©nÃ©ration lien:', error);
+      toast.error(error.message || 'Erreur lors de la gÃ©nÃ©ration');
     } finally {
       setLoading(false);
     }
@@ -86,7 +86,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
     if (generatedLink) {
       navigator.clipboard.writeText(generatedLink);
       setCopied(true);
-      toast.success('Lien copié !');
+      toast.success('Lien copiÃ© !');
       
       setTimeout(() => setCopied(false), 2000);
     }
@@ -111,10 +111,10 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-blue-600" />
-            Générer un lien d'installation PWA
+            GÃ©nÃ©rer un lien d'installation PWA
           </DialogTitle>
           <DialogDescription>
-            Créez un lien sécurisé pour {bureauName}
+            CrÃ©ez un lien sÃ©curisÃ© pour {bureauName}
           </DialogDescription>
         </DialogHeader>
 
@@ -129,11 +129,11 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
               </Badge>
             </div>
 
-            {/* Email du président (optionnel) */}
+            {/* Email du prÃ©sident (optionnel) */}
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                Email du président (optionnel)
+                Email du prÃ©sident (optionnel)
               </Label>
               <Input
                 id="email"
@@ -143,15 +143,15 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
                 onChange={(e) => setEmail(e.target.value)}
               />
               <p className="text-xs text-gray-500">
-                Si fourni, le lien sera envoyé automatiquement par email
+                Si fourni, le lien sera envoyÃ© automatiquement par email
               </p>
             </div>
 
-            {/* Durée de validité */}
+            {/* DurÃ©e de validitÃ© */}
             <div className="space-y-2">
               <Label htmlFor="expires" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                Durée de validité
+                DurÃ©e de validitÃ©
               </Label>
               <Select value={expiresIn} onValueChange={setExpiresIn}>
                 <SelectTrigger id="expires">
@@ -161,7 +161,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
                   <SelectItem value="1">1 heure</SelectItem>
                   <SelectItem value="6">6 heures</SelectItem>
                   <SelectItem value="12">12 heures</SelectItem>
-                  <SelectItem value="24">24 heures (recommandé)</SelectItem>
+                  <SelectItem value="24">24 heures (recommandÃ©)</SelectItem>
                   <SelectItem value="48">48 heures</SelectItem>
                   <SelectItem value="72">72 heures</SelectItem>
                   <SelectItem value="168">7 jours</SelectItem>
@@ -169,7 +169,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
               </Select>
             </div>
 
-            {/* Bouton génération */}
+            {/* Bouton gÃ©nÃ©ration */}
             <Button
               onClick={handleGenerate}
               disabled={loading}
@@ -179,26 +179,26 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
               {loading ? (
                 <>
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Génération en cours...
+                  GÃ©nÃ©ration en cours...
                 </>
               ) : (
                 <>
                   <LinkIcon className="w-4 h-4 mr-2" />
-                  Générer le lien
+                  GÃ©nÃ©rer le lien
                 </>
               )}
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Lien généré */}
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="flex items-center gap-2 text-green-800 mb-2">
+            {/* Lien gÃ©nÃ©rÃ© */}
+            <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+              <div className="flex items-center gap-2 text-primary-orange-800 mb-2">
                 <Check className="w-5 h-5" />
-                <span className="font-medium">Lien généré avec succès !</span>
+                <span className="font-medium">Lien gÃ©nÃ©rÃ© avec succÃ¨s !</span>
               </div>
               
-              <div className="mt-3 p-3 bg-white rounded border border-green-300">
+              <div className="mt-3 p-3 bg-white rounded border border-primary-orange-300">
                 <p className="text-sm break-all font-mono text-gray-700">
                   {generatedLink}
                 </p>
@@ -211,8 +211,8 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
               >
                 {copied ? (
                   <>
-                    <Check className="w-4 h-4 mr-2 text-green-600" />
-                    Copié !
+                    <Check className="w-4 h-4 mr-2 text-primary-orange-600" />
+                    CopiÃ© !
                   </>
                 ) : (
                   <>
@@ -226,11 +226,11 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
             {/* Informations */}
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-900">
-                <strong>Validité:</strong> {expiresIn} heure(s)
+                <strong>ValiditÃ©:</strong> {expiresIn} heure(s)
               </p>
               {email && (
                 <p className="text-sm text-blue-900 mt-1">
-                  <strong>Email envoyé à:</strong> {email}
+                  <strong>Email envoyÃ© Ã :</strong> {email}
                 </p>
               )}
             </div>
@@ -238,20 +238,20 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
             {/* Instructions */}
             <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
               <p className="text-sm font-medium text-purple-900 mb-2">
-                📱 Instructions pour le président :
+                ðŸ“± Instructions pour le prÃ©sident :
               </p>
               <ol className="text-sm text-purple-700 space-y-1 list-decimal list-inside">
                 <li>Cliquer sur le lien</li>
                 <li>Accepter l'installation de l'application</li>
-                <li>L'application sera disponible sur l'écran d'accueil</li>
-                <li>Utilisable même sans Internet</li>
+                <li>L'application sera disponible sur l'Ã©cran d'accueil</li>
+                <li>Utilisable mÃªme sans Internet</li>
               </ol>
             </div>
 
             {/* Boutons */}
             <div className="flex gap-2">
               <Button onClick={handleReset} variant="outline" className="flex-1">
-                Générer un nouveau lien
+                GÃ©nÃ©rer un nouveau lien
               </Button>
               <Button onClick={() => setOpen(false)} className="flex-1">
                 Fermer

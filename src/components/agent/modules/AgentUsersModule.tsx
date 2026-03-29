@@ -121,7 +121,7 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
     const roleColors: Record<string, string> = {
       'admin': 'bg-red-100 text-red-700 border-red-200',
       'vendeur': 'bg-blue-100 text-blue-700 border-blue-200',
-      'client': 'bg-green-100 text-green-700 border-green-200',
+      'client': 'bg-primary-orange-100 text-primary-blue-900 border-primary-orange-200',
       'livreur': 'bg-orange-100 text-orange-700 border-orange-200',
       'agent': 'bg-purple-100 text-purple-700 border-purple-200',
     };
@@ -176,10 +176,10 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
               <p className="text-2xl font-bold text-slate-700">{stats.total}</p>
               <p className="text-xs text-slate-500">Total</p>
             </div>
-            <div className="bg-gradient-to-br from-green-100 to-emerald-200 rounded-xl p-4 text-center">
-              <UserCheck className="w-6 h-6 text-green-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-green-700">{stats.active}</p>
-              <p className="text-xs text-green-500">Actifs</p>
+            <div className="bg-gradient-to-br from-primary-blue-100 to-primary-orange-200 rounded-xl p-4 text-center">
+              <UserCheck className="w-6 h-6 text-primary-orange-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-primary-orange-700">{stats.active}</p>
+              <p className="text-xs text-primary-orange-500">Actifs</p>
             </div>
             <div className="bg-gradient-to-br from-blue-100 to-indigo-200 rounded-xl p-4 text-center">
               <Store className="w-6 h-6 text-blue-600 mx-auto mb-2" />
@@ -240,10 +240,10 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        user.is_active ? 'bg-green-100' : 'bg-red-100'
+                        user.is_active ? 'bg-primary-orange-100' : 'bg-red-100'
                       }`}>
                         {user.is_active ? (
-                          <UserCheck className="w-5 h-5 text-green-600" />
+                          <UserCheck className="w-5 h-5 text-primary-orange-600" />
                         ) : (
                           <UserX className="w-5 h-5 text-red-600" />
                         )}
@@ -277,7 +277,7 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
                           {user.is_active ? (
                             <UserX className="w-4 h-4 text-red-500" />
                           ) : (
-                            <UserCheck className="w-4 h-4 text-green-500" />
+                            <UserCheck className="w-4 h-4 text-primary-orange-500" />
                           )}
                         </Button>
                       )}

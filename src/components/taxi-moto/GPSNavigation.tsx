@@ -46,12 +46,12 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
       return;
     }
 
-    // Déterminer la destination selon le statut
+    // DÃ©terminer la destination selon le statut
     const target = activeRide.status === 'accepted' || activeRide.status === 'arriving'
       ? activeRide.pickup.coords
       : activeRide.destination.coords;
 
-    // Utiliser Mapbox pour obtenir la route réelle
+    // Utiliser Mapbox pour obtenir la route rÃ©elle
     TaxiMotoGeolocationService.getRoute(
       { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
       { latitude: target.latitude, longitude: target.longitude }
@@ -98,7 +98,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
             Aucune course active
           </h3>
           <p className="text-sm text-gray-500">
-            Acceptez une course pour démarrer la navigation
+            Acceptez une course pour dÃ©marrer la navigation
           </p>
         </CardContent>
       </Card>
@@ -107,7 +107,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
 
   const isGoingToPickup = activeRide.status === 'accepted' || activeRide.status === 'arriving';
   const targetLocation = isGoingToPickup ? activeRide.pickup : activeRide.destination;
-  const statusLabel = isGoingToPickup ? "Récupération du client" : "En direction de la destination";
+  const statusLabel = isGoingToPickup ? "RÃ©cupÃ©ration du client" : "En direction de la destination";
 
   return (
     <div className="space-y-4">
@@ -143,14 +143,14 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
             <p className="text-sm text-gray-600">{activeRide.customerPhone}</p>
           </div>
 
-          {/* Itinéraire */}
+          {/* ItinÃ©raire */}
           <div className="space-y-3">
             {isGoingToPickup && (
-              <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+              <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-3 border border-primary-orange-200">
                 <div className="flex items-start gap-2">
-                  <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
+                  <MapPin className="w-5 h-5 text-primary-orange-600 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-green-800 uppercase mb-1">Point de départ</p>
+                    <p className="text-xs font-semibold text-primary-orange-800 uppercase mb-1">Point de dÃ©part</p>
                     <p className="text-sm text-gray-900">{activeRide.pickup.address}</p>
                   </div>
                 </div>
@@ -172,7 +172,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
             </div>
           </div>
 
-          {/* Distance et temps estimé */}
+          {/* Distance et temps estimÃ© */}
           {distance !== null && duration !== null && (
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-lg p-3 border border-blue-200 text-center">
@@ -184,7 +184,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
               <div className="bg-white rounded-lg p-3 border border-blue-200 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Clock className="w-3 h-3 text-gray-600" />
-                  <p className="text-xs text-gray-600">Temps estimé</p>
+                  <p className="text-xs text-gray-600">Temps estimÃ©</p>
                 </div>
                 <p className="text-2xl font-bold text-blue-600">
                   {duration} <span className="text-sm">min</span>
@@ -198,7 +198,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
             <div className="bg-white rounded-lg p-3 border border-gray-200">
               <p className="text-xs text-gray-600 mb-1">Ma position actuelle</p>
               <p className="text-xs font-mono text-gray-900">
-                📍 {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
+                ðŸ“ {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
               </p>
             </div>
           )}
@@ -215,13 +215,13 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
         </CardContent>
       </Card>
 
-      {/* Informations supplémentaires */}
+      {/* Informations supplÃ©mentaires */}
       <Card className="bg-white/95 backdrop-blur-sm">
         <CardContent className="pt-4">
           <div className="grid grid-cols-2 gap-3 text-center">
             <div>
-              <p className="text-xs text-gray-600 mb-1">Prix estimé</p>
-              <p className="text-lg font-bold text-green-600">
+              <p className="text-xs text-gray-600 mb-1">Prix estimÃ©</p>
+              <p className="text-lg font-bold text-primary-orange-600">
                 {activeRide.estimatedPrice.toLocaleString()} GNF
               </p>
             </div>

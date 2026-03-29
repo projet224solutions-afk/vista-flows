@@ -1,6 +1,6 @@
 /**
- * Formulaire spécialisé pour la vente directe
- * Inspiré de Gumroad, Teachable, Podia
+ * Formulaire spÃ©cialisÃ© pour la vente directe
+ * InspirÃ© de Gumroad, Teachable, Podia
  */
 
 import { useState } from 'react';
@@ -56,13 +56,13 @@ const pricingTypes = [
     id: 'one_time', 
     label: 'Paiement unique', 
     icon: DollarSign,
-    description: 'Un seul paiement pour un accès complet'
+    description: 'Un seul paiement pour un accÃ¨s complet'
   },
   { 
     id: 'subscription', 
     label: 'Abonnement', 
     icon: RefreshCw,
-    description: 'Paiement récurrent mensuel ou annuel'
+    description: 'Paiement rÃ©current mensuel ou annuel'
   },
   { 
     id: 'pay_what_you_want', 
@@ -73,7 +73,7 @@ const pricingTypes = [
 ];
 
 const accessDurations = [
-  { id: 'lifetime', label: 'Accès à vie' },
+  { id: 'lifetime', label: 'AccÃ¨s Ã  vie' },
   { id: '1_year', label: '1 an' },
   { id: '6_months', label: '6 mois' },
   { id: '3_months', label: '3 mois' },
@@ -88,10 +88,10 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-primary" />
-            Modèle de Tarification
+            ModÃ¨le de Tarification
           </CardTitle>
           <CardDescription className="text-xs">
-            Choisissez comment vous souhaitez être payé
+            Choisissez comment vous souhaitez Ãªtre payÃ©
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -148,7 +148,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="price" className="text-xs">
-                    Prix {data.pricingType === 'subscription' && '(par période)'} <span className="text-destructive">*</span>
+                    Prix {data.pricingType === 'subscription' && '(par pÃ©riode)'} <span className="text-destructive">*</span>
                   </Label>
                   <div className="relative mt-1.5">
                     <Input
@@ -166,7 +166,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
                 </div>
                 <div>
                   <Label htmlFor="originalPrice" className="text-xs">
-                    Prix barré (optionnel)
+                    Prix barrÃ© (optionnel)
                   </Label>
                   <div className="relative mt-1.5">
                     <Input
@@ -186,7 +186,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
 
               {data.pricingType === 'subscription' && (
                 <div>
-                  <Label className="text-xs">Fréquence de facturation</Label>
+                  <Label className="text-xs">FrÃ©quence de facturation</Label>
                   <div className="grid grid-cols-3 gap-2 mt-1.5">
                     {(['monthly', 'yearly', 'lifetime'] as const).map((interval) => (
                       <div
@@ -201,7 +201,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
                       >
                         {interval === 'monthly' && 'Mensuel'}
                         {interval === 'yearly' && 'Annuel'}
-                        {interval === 'lifetime' && 'À vie'}
+                        {interval === 'lifetime' && 'Ã€ vie'}
                       </div>
                     ))}
                   </div>
@@ -233,7 +233,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
               </div>
               <div>
                 <Label htmlFor="suggestedPrice" className="text-xs">
-                  Prix suggéré
+                  Prix suggÃ©rÃ©
                 </Label>
                 <div className="relative mt-1.5">
                   <Input
@@ -252,14 +252,14 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
             </div>
           )}
 
-          {/* Réduction affichée */}
+          {/* RÃ©duction affichÃ©e */}
           {data.originalPrice && parseFloat(data.originalPrice) > parseFloat(data.price) && (
-            <div className="flex items-center gap-2 p-2 bg-green-500/10 rounded-lg">
-              <Badge variant="secondary" className="bg-green-500/20 text-green-600">
+            <div className="flex items-center gap-2 p-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 rounded-lg">
+              <Badge variant="secondary" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 text-primary-orange-600">
                 -{Math.round((1 - parseFloat(data.price) / parseFloat(data.originalPrice)) * 100)}%
               </Badge>
               <span className="text-xs text-muted-foreground">
-                Économie de {(parseFloat(data.originalPrice) - parseFloat(data.price)).toLocaleString()} GNF
+                Ã‰conomie de {(parseFloat(data.originalPrice) - parseFloat(data.price)).toLocaleString()} GNF
               </span>
             </div>
           )}
@@ -271,7 +271,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Zap className="w-4 h-4 text-primary" />
-            Livraison & Accès
+            Livraison & AccÃ¨s
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -279,8 +279,8 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
             <div className="flex items-center gap-2">
               <Download className="w-4 h-4 text-primary" />
               <div>
-                <p className="text-sm font-medium">Livraison instantanée</p>
-                <p className="text-xs text-muted-foreground">Accès immédiat après paiement</p>
+                <p className="text-sm font-medium">Livraison instantanÃ©e</p>
+                <p className="text-xs text-muted-foreground">AccÃ¨s immÃ©diat aprÃ¨s paiement</p>
               </div>
             </div>
             <Switch
@@ -290,13 +290,13 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
           </div>
 
           <div>
-            <Label className="text-xs">Durée d'accès au contenu</Label>
+            <Label className="text-xs">DurÃ©e d'accÃ¨s au contenu</Label>
             <Select
               value={data.accessDuration}
               onValueChange={(v) => onChange({ accessDuration: v as DirectSaleFormData['accessDuration'] })}
             >
               <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Choisir la durée" />
+                <SelectValue placeholder="Choisir la durÃ©e" />
               </SelectTrigger>
               <SelectContent>
                 {accessDurations.map((duration) => (
@@ -338,7 +338,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
               <RefreshCw className="w-4 h-4 text-primary" />
               <div>
                 <p className="text-sm font-medium">Autoriser les remboursements</p>
-                <p className="text-xs text-muted-foreground">Satisfait ou remboursé</p>
+                <p className="text-xs text-muted-foreground">Satisfait ou remboursÃ©</p>
               </div>
             </div>
             <Switch
@@ -349,13 +349,13 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
 
           {data.allowRefunds && (
             <div>
-              <Label className="text-xs">Période de garantie</Label>
+              <Label className="text-xs">PÃ©riode de garantie</Label>
               <Select
                 value={data.refundPeriod}
                 onValueChange={(v) => onChange({ refundPeriod: v })}
               >
                 <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Choisir la période" />
+                  <SelectValue placeholder="Choisir la pÃ©riode" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="7">7 jours</SelectItem>
@@ -369,12 +369,12 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
         </CardContent>
       </Card>
 
-      {/* Quantité limitée */}
+      {/* QuantitÃ© limitÃ©e */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Lock className="w-4 h-4 text-primary" />
-            Exclusivité (optionnel)
+            ExclusivitÃ© (optionnel)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -382,8 +382,8 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
               <div>
-                <p className="text-sm font-medium">Quantité limitée</p>
-                <p className="text-xs text-muted-foreground">Créer de l'urgence</p>
+                <p className="text-sm font-medium">QuantitÃ© limitÃ©e</p>
+                <p className="text-xs text-muted-foreground">CrÃ©er de l'urgence</p>
               </div>
             </div>
             <Switch
@@ -414,8 +414,8 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
       <Alert className="bg-primary/5 border-primary/20">
         <Shield className="w-4 h-4 text-primary" />
         <AlertDescription className="text-xs text-muted-foreground">
-          <strong className="text-foreground">Protection vendeur :</strong> Tous les paiements sont sécurisés. 
-          Vous recevez vos fonds après validation de la livraison.
+          <strong className="text-foreground">Protection vendeur :</strong> Tous les paiements sont sÃ©curisÃ©s. 
+          Vous recevez vos fonds aprÃ¨s validation de la livraison.
         </AlertDescription>
       </Alert>
     </div>

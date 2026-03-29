@@ -1,7 +1,7 @@
 /**
- * MODULE RÉPARATION PROFESSIONNEL
- * Inspiré de: TaskRabbit, Fixando, Mister Fix
- * Gestion complète des services de réparation avec devis et interventions
+ * MODULE RÃ‰PARATION PROFESSIONNEL
+ * InspirÃ© de: TaskRabbit, Fixando, Mister Fix
+ * Gestion complÃ¨te des services de rÃ©paration avec devis et interventions
  */
 
 import { useState, useEffect } from 'react';
@@ -47,33 +47,33 @@ interface RepairRequest {
 const REPAIR_CATEGORIES: RepairCategory[] = [
   {
     id: 'electronics',
-    name: 'Électronique',
+    name: 'Ã‰lectronique',
     icon: Smartphone,
-    services: ['Téléphone', 'Tablette', 'Ordinateur', 'TV', 'Console']
+    services: ['TÃ©lÃ©phone', 'Tablette', 'Ordinateur', 'TV', 'Console']
   },
   {
     id: 'appliances',
-    name: 'Électroménager',
+    name: 'Ã‰lectromÃ©nager',
     icon: Home,
-    services: ['Réfrigérateur', 'Machine à laver', 'Climatiseur', 'Micro-ondes', 'Four']
+    services: ['RÃ©frigÃ©rateur', 'Machine Ã  laver', 'Climatiseur', 'Micro-ondes', 'Four']
   },
   {
     id: 'vehicle',
-    name: 'Véhicules',
+    name: 'VÃ©hicules',
     icon: Car,
-    services: ['Mécanique', 'Carrosserie', 'Électricité auto', 'Pneumatique']
+    services: ['MÃ©canique', 'Carrosserie', 'Ã‰lectricitÃ© auto', 'Pneumatique']
   },
   {
     id: 'electrical',
-    name: 'Électricité',
+    name: 'Ã‰lectricitÃ©',
     icon: Zap,
-    services: ['Installation', 'Dépannage', 'Tableau électrique', 'Éclairage']
+    services: ['Installation', 'DÃ©pannage', 'Tableau Ã©lectrique', 'Ã‰clairage']
   },
   {
     id: 'plumbing',
     name: 'Plomberie',
     icon: Wrench,
-    services: ['Fuite', 'Installation', 'Débouchage', 'Chauffe-eau']
+    services: ['Fuite', 'Installation', 'DÃ©bouchage', 'Chauffe-eau']
   }
 ];
 
@@ -110,7 +110,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
         customerName: 'Amadou Bah',
         phone: '+224 621 00 00 00',
         category: 'electronics',
-        description: 'Écran iPhone cassé',
+        description: 'Ã‰cran iPhone cassÃ©',
         status: 'pending',
         createdAt: new Date().toISOString()
       },
@@ -119,7 +119,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
         customerName: 'Fatoumata Diallo',
         phone: '+224 622 00 00 00',
         category: 'appliances',
-        description: 'Réfrigérateur ne refroidit plus',
+        description: 'RÃ©frigÃ©rateur ne refroidit plus',
         status: 'quoted',
         estimatedCost: 350000,
         createdAt: new Date(Date.now() - 86400000).toISOString()
@@ -135,7 +135,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
 
     setLoading(true);
     try {
-      toast.success('Demande de réparation enregistrée !');
+      toast.success('Demande de rÃ©paration enregistrÃ©e !');
       setNewRequest({
         customerName: '',
         phone: '',
@@ -156,10 +156,10 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
   const getStatusBadge = (status: RepairRequest['status']) => {
     const variants = {
       pending: { color: 'bg-yellow-500', label: 'En attente' },
-      quoted: { color: 'bg-blue-500', label: 'Devis envoyé' },
-      approved: { color: 'bg-purple-500', label: 'Approuvé' },
-      in_progress: { color: 'bg-green-500', label: 'En cours' },
-      completed: { color: 'bg-gray-500', label: 'Terminé' }
+      quoted: { color: 'bg-blue-500', label: 'Devis envoyÃ©' },
+      approved: { color: 'bg-purple-500', label: 'ApprouvÃ©' },
+      in_progress: { color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500', label: 'En cours' },
+      completed: { color: 'bg-gray-500', label: 'TerminÃ©' }
     };
     return variants[status];
   };
@@ -171,7 +171,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
         <div>
           <h2 className="text-3xl font-bold flex items-center gap-2">
             <Wrench className="w-8 h-8 text-primary" />
-            {businessName || 'Service de Réparation'}
+            {businessName || 'Service de RÃ©paration'}
           </h2>
           <p className="text-muted-foreground">Gestion professionnelle de vos interventions</p>
         </div>
@@ -190,14 +190,14 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pendingRequests}</div>
-            <p className="text-xs text-muted-foreground">À traiter</p>
+            <p className="text-xs text-muted-foreground">Ã€ traiter</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Réparations du Jour</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CardTitle className="text-sm font-medium">RÃ©parations du Jour</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-primary-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.completedToday}</div>
@@ -219,7 +219,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Satisfaction Client</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-4 w-4 text-primary-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.avgRating}/5</div>
@@ -239,7 +239,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
         <TabsContent value="dashboard" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Nouvelle Demande de Réparation</CardTitle>
+              <CardTitle>Nouvelle Demande de RÃ©paration</CardTitle>
               <CardDescription>Enregistrez une nouvelle demande d'intervention</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -255,7 +255,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Téléphone *</Label>
+                  <Label htmlFor="phone">TÃ©lÃ©phone *</Label>
                   <Input
                     id="phone"
                     placeholder="+224 621 00 00 00"
@@ -265,10 +265,10 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category">Catégorie *</Label>
+                  <Label htmlFor="category">CatÃ©gorie *</Label>
                   <Select value={newRequest.category} onValueChange={(value) => setNewRequest({ ...newRequest, category: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choisir une catégorie" />
+                      <SelectValue placeholder="Choisir une catÃ©gorie" />
                     </SelectTrigger>
                     <SelectContent>
                       {REPAIR_CATEGORIES.map(cat => {
@@ -287,10 +287,10 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="service">Service spécifique</Label>
+                  <Label htmlFor="service">Service spÃ©cifique</Label>
                   <Select value={newRequest.service} onValueChange={(value) => setNewRequest({ ...newRequest, service: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Type de réparation" />
+                      <SelectValue placeholder="Type de rÃ©paration" />
                     </SelectTrigger>
                     <SelectContent>
                       {newRequest.category && REPAIR_CATEGORIES.find(c => c.id === newRequest.category)?.services.map(service => (
@@ -311,7 +311,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
                     <SelectContent>
                       <SelectItem value="normal">Normal</SelectItem>
                       <SelectItem value="urgent">Urgent (24h)</SelectItem>
-                      <SelectItem value="emergency">Urgence (Immédiat)</SelectItem>
+                      <SelectItem value="emergency">Urgence (ImmÃ©diat)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -328,10 +328,10 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description du problème *</Label>
+                <Label htmlFor="description">Description du problÃ¨me *</Label>
                 <Textarea
                   id="description"
-                  placeholder="Décrivez le problème en détail..."
+                  placeholder="DÃ©crivez le problÃ¨me en dÃ©tail..."
                   value={newRequest.description}
                   onChange={(e) => setNewRequest({ ...newRequest, description: e.target.value })}
                   rows={4}
@@ -344,10 +344,10 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
             </CardContent>
           </Card>
 
-          {/* Catégories de services */}
+          {/* CatÃ©gories de services */}
           <Card>
             <CardHeader>
-              <CardTitle>Nos Spécialités</CardTitle>
+              <CardTitle>Nos SpÃ©cialitÃ©s</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -386,7 +386,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
               {requests.length === 0 ? (
                 <div className="text-center py-12">
                   <Wrench className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Aucune demande enregistrée</p>
+                  <p className="text-muted-foreground">Aucune demande enregistrÃ©e</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -423,7 +423,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
                               </div>
                             </div>
                             <Button size="sm" variant="outline">
-                              Gérer
+                              GÃ©rer
                             </Button>
                           </div>
                         </CardContent>
@@ -441,7 +441,7 @@ export function RepairModule({ serviceId, businessName }: RepairModuleProps) {
           <Card>
             <CardHeader>
               <CardTitle>Gestion des Services</CardTitle>
-              <CardDescription>Configurez vos tarifs et disponibilités</CardDescription>
+              <CardDescription>Configurez vos tarifs et disponibilitÃ©s</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

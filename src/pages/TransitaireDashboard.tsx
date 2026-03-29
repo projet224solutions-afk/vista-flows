@@ -20,7 +20,7 @@ export default function TransitaireDashboard() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  useRoleRedirect(); // S'assurer que seuls les transitaires/admins accèdent à cette page
+  useRoleRedirect(); // S'assurer que seuls les transitaires/admins accÃ¨dent Ã  cette page
   const { error, captureError, clearError } = useTransitaireErrorBoundary();
   const { stats: transitaireStats, loading: statsLoading } = useTransitaireStats();
   const formatPrice = useFormatCurrency();
@@ -30,7 +30,7 @@ export default function TransitaireDashboard() {
     navigate('/');
   };
 
-  // Stats dynamiques basées sur les données réelles
+  // Stats dynamiques basÃ©es sur les donnÃ©es rÃ©elles
   const stats = [
     { 
       label: t('transit.activeShipments'), 
@@ -42,7 +42,7 @@ export default function TransitaireDashboard() {
       label: t('transit.inTransit'), 
       value: statsLoading ? "..." : transitaireStats.pendingShipments.toString(), 
       icon: Plane, 
-      color: "text-green-500" 
+      color: "text-primary-orange-500" 
     },
     { 
       label: t('transit.monthlyRevenue'), 
@@ -61,12 +61,12 @@ export default function TransitaireDashboard() {
   const activeShipments = [
     {
       id: 'INT-2024-089',
-      origin: 'Conakry, Guinée',
+      origin: 'Conakry, GuinÃ©e',
       destination: 'Paris, France',
       weight: '125 kg',
       status: 'En douane',
       eta: '3 jours',
-      type: 'Aérien'
+      type: 'AÃ©rien'
     },
     {
       id: 'INT-2024-090',
@@ -117,7 +117,7 @@ export default function TransitaireDashboard() {
         <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <p className="text-red-800">{error.message}</p>
-            <button onClick={clearError} className="text-red-600 hover:text-red-800">✕</button>
+            <button onClick={clearError} className="text-red-600 hover:text-red-800">âœ•</button>
           </div>
         </div>
       )}
@@ -158,7 +158,7 @@ export default function TransitaireDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Globe className="w-5 h-5" />
-              Expéditions actives
+              ExpÃ©ditions actives
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -173,11 +173,11 @@ export default function TransitaireDashboard() {
                           ? 'bg-blue-100 text-blue-800' 
                           : 'bg-orange-100 text-orange-800'
                       }`}>
-                        {shipment.type === 'Aérien' ? <Plane className="w-3 h-3" /> : <Ship className="w-3 h-3" />}
+                        {shipment.type === 'AÃ©rien' ? <Plane className="w-3 h-3" /> : <Ship className="w-3 h-3" />}
                         {shipment.status}
                       </span>
                     </div>
-                    <span className="text-sm font-medium text-green-600">ETA: {shipment.eta}</span>
+                    <span className="text-sm font-medium text-primary-orange-600">ETA: {shipment.eta}</span>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -217,12 +217,12 @@ export default function TransitaireDashboard() {
                   <div className="flex-1">
                     <h4 className="font-medium mb-1">{customs.country}</h4>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="text-green-600">{customs.processed} traités</span>
+                      <span className="text-primary-orange-600">{customs.processed} traitÃ©s</span>
                       <span className="text-orange-600">{customs.pending} en attente</span>
                     </div>
                   </div>
                   <Button variant="outline" size="sm">
-                    Détails
+                    DÃ©tails
                   </Button>
                 </div>
               ))}
@@ -239,16 +239,16 @@ export default function TransitaireDashboard() {
               <Globe className="w-12 h-12 mx-auto mb-4 text-blue-500" />
               <h3 className="text-xl font-bold mb-2">Plateforme de Transit International</h3>
               <p className="text-muted-foreground mb-4">
-                Gérez vos expéditions internationales avec notre système avancé
+                GÃ©rez vos expÃ©ditions internationales avec notre systÃ¨me avancÃ©
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Suivi en temps réel</span>
+                  <span>Suivi en temps rÃ©el</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Gestion douanière</span>
+                  <span>Gestion douaniÃ¨re</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -264,7 +264,7 @@ export default function TransitaireDashboard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Rapports détaillés</span>
+                  <span>Rapports dÃ©taillÃ©s</span>
                 </div>
               </div>
             </div>

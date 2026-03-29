@@ -56,7 +56,7 @@ interface ProductPaymentModalProps {
   onPaymentSuccess: () => void;
   userId: string;
   customerId: string | null;
-  /** Devise source du produit/vendeur (ex: 'XOF', 'GNF'). Défaut: 'GNF' */
+  /** Devise source du produit/vendeur (ex: 'XOF', 'GNF'). DÃ©faut: 'GNF' */
   currency?: string;
 }
 
@@ -227,11 +227,11 @@ export default function ProductPaymentModal({
   };
 
   const paymentMethods = [
-    { id: 'wallet' as ProductPaymentMethod, name: 'Wallet 224Solutions', description: 'Paiement instantané depuis votre wallet', icon: Wallet, color: 'text-primary' },
-    { id: 'card' as ProductPaymentMethod, name: 'Carte Bancaire', description: 'Paiement sécurisé VISA / Mastercard via Stripe', icon: CreditCard, color: 'text-primary' },
-    { id: 'orange_money' as ProductPaymentMethod, name: 'Orange Money', description: 'Débit instantané sur votre téléphone', icon: Smartphone, color: 'text-orange-500' },
-    { id: 'mtn_money' as ProductPaymentMethod, name: 'MTN Mobile Money', description: 'Débit instantané via MTN MoMo', icon: Smartphone, color: 'text-yellow-600' },
-    { id: 'cash' as ProductPaymentMethod, name: 'Paiement à la livraison', description: 'Payez en espèces à la réception', icon: Banknote, color: 'text-green-600' },
+    { id: 'wallet' as ProductPaymentMethod, name: 'Wallet 224Solutions', description: 'Paiement instantanÃ© depuis votre wallet', icon: Wallet, color: 'text-primary' },
+    { id: 'card' as ProductPaymentMethod, name: 'Carte Bancaire', description: 'Paiement sÃ©curisÃ© VISA / Mastercard via Stripe', icon: CreditCard, color: 'text-primary' },
+    { id: 'orange_money' as ProductPaymentMethod, name: 'Orange Money', description: 'DÃ©bit instantanÃ© sur votre tÃ©lÃ©phone', icon: Smartphone, color: 'text-orange-500' },
+    { id: 'mtn_money' as ProductPaymentMethod, name: 'MTN Mobile Money', description: 'DÃ©bit instantanÃ© via MTN MoMo', icon: Smartphone, color: 'text-yellow-600' },
+    { id: 'cash' as ProductPaymentMethod, name: 'Paiement Ã  la livraison', description: 'Payez en espÃ¨ces Ã  la rÃ©ception', icon: Banknote, color: 'text-primary-orange-600' },
   ];
 
   const createOrderAfterPayment = async (paymentId: string, method: string) => {
@@ -241,7 +241,7 @@ export default function ProductPaymentModal({
       if (existingCustomer) { effectiveCustomerId = existingCustomer.id; }
       else {
         const { data: newCustomer, error: createError } = await supabase.from('customers').insert({ user_id: userId }).select('id').single();
-        if (createError || !newCustomer) { toast.error('Impossible de créer le compte client'); return; }
+        if (createError || !newCustomer) { toast.error('Impossible de crÃ©er le compte client'); return; }
         effectiveCustomerId = newCustomer.id;
       }
     }
@@ -266,12 +266,12 @@ export default function ProductPaymentModal({
         p_user_id: userId, p_vendor_id: vendorId,
         p_items: items.map(item => ({ product_id: item.id, quantity: item.quantity || 1, price: item.price })),
         p_total_amount: vendorTotalWithCommission, p_payment_method: normalizedMethod,
-        p_shipping_address: { address: 'Adresse de livraison', city: 'Conakry', country: 'Guinée', commission_fee: commissionPerVendor, product_total: vendorProductTotal, external_payment_id: paymentId }
+        p_shipping_address: { address: 'Adresse de livraison', city: 'Conakry', country: 'GuinÃ©e', commission_fee: commissionPerVendor, product_total: vendorProductTotal, external_payment_id: paymentId }
       });
 
       if (orderError || !orderResult?.length) {
         console.error('[ProductPayment] Order creation failed:', orderError);
-        toast.error('Erreur lors de la création de la commande');
+        toast.error('Erreur lors de la crÃ©ation de la commande');
         continue;
       }
 
@@ -288,13 +288,13 @@ export default function ProductPaymentModal({
     }
   };
 
-  // Handle Stripe escrow success (capture manuelle — fonds bloqués)
+  // Handle Stripe escrow success (capture manuelle â€” fonds bloquÃ©s)
   const handleCardSuccess = async (data: { paymentIntentId: string; amount: number; currency: string }) => {
     setPaymentStep('processing');
     try {
       console.log('[ProductPayment] handleCardSuccess called:', { paymentIntentId: data.paymentIntentId, cartItems: cartItems.length });
 
-      // Créer les commandes avec payment_status = 'pending' (fonds en escrow)
+      // CrÃ©er les commandes avec payment_status = 'pending' (fonds en escrow)
       let effectiveCustomerId = customerId;
       if (!effectiveCustomerId) {
         const { data: existingCustomer } = await supabase.from('customers').select('id').eq('user_id', userId).maybeSingle();
@@ -317,7 +317,7 @@ export default function ProductPaymentModal({
       
       if (vendorEntries.length === 0) {
         console.error('[ProductPayment] No vendor entries found! cartItems:', JSON.stringify(cartItems));
-        toast.error('Erreur: aucun vendeur identifié pour cette commande');
+        toast.error('Erreur: aucun vendeur identifiÃ© pour cette commande');
         setPaymentStep('select_method');
         return;
       }
@@ -336,11 +336,11 @@ export default function ProductPaymentModal({
           p_user_id: userId, p_vendor_id: vendorId,
           p_items: items.map(item => ({ product_id: item.id, quantity: item.quantity || 1, price: item.price })),
           p_total_amount: vendorTotalWithCommission, p_payment_method: 'card',
-          p_shipping_address: { address: 'Adresse de livraison', city: 'Conakry', country: 'Guinée', commission_fee: commissionPerVendor, product_total: vendorProductTotal, external_payment_id: data.paymentIntentId }
+          p_shipping_address: { address: 'Adresse de livraison', city: 'Conakry', country: 'GuinÃ©e', commission_fee: commissionPerVendor, product_total: vendorProductTotal, external_payment_id: data.paymentIntentId }
         });
 
         if (orderError || !orderResult?.length) {
-          const errMsg = orderError?.message || 'Résultat vide';
+          const errMsg = orderError?.message || 'RÃ©sultat vide';
           console.error('[ProductPayment] Order creation failed for vendor', vendorId, ':', errMsg);
           errors.push(errMsg);
           toast.error(`Erreur commande: ${errMsg}`);
@@ -351,7 +351,7 @@ export default function ProductPaymentModal({
         createdOrders.push(orderId);
         console.log('[ProductPayment] Order created:', { orderId, orderNumber: orderResult[0].order_number });
 
-        // payment_status = 'pending' car fonds en escrow (pas encore capturés)
+        // payment_status = 'pending' car fonds en escrow (pas encore capturÃ©s)
         await supabase.from('orders').update({
           payment_status: 'pending',
           metadata: {
@@ -363,7 +363,7 @@ export default function ProductPaymentModal({
           }
         }).eq('id', orderId);
 
-        // Lier l'escrow à l'order_id côté serveur (bypass RLS)
+        // Lier l'escrow Ã  l'order_id cÃ´tÃ© serveur (bypass RLS)
         const { data: linkData, error: linkError } = await supabase.functions.invoke('link-escrow-order', {
           body: {
             payment_intent_id: data.paymentIntentId,
@@ -374,7 +374,7 @@ export default function ProductPaymentModal({
 
         if (linkError || !linkData?.success) {
           console.error('[ProductPayment] Escrow linking failed:', linkError || linkData?.error);
-          errors.push(linkError?.message || linkData?.error || 'Échec liaison escrow');
+          errors.push(linkError?.message || linkData?.error || 'Ã‰chec liaison escrow');
         }
 
         // Enregistrer la commission PDG
@@ -389,7 +389,7 @@ export default function ProductPaymentModal({
 
       if (createdOrders.length === 0) {
         console.error('[ProductPayment] NO orders created! Errors:', errors);
-        toast.error('Le paiement a été effectué mais la commande n\'a pas pu être créée. Contactez le support.', {
+        toast.error('Le paiement a Ã©tÃ© effectuÃ© mais la commande n\'a pas pu Ãªtre crÃ©Ã©e. Contactez le support.', {
           description: errors[0] || 'Erreur inconnue',
           duration: 10000,
         });
@@ -398,13 +398,13 @@ export default function ProductPaymentModal({
       }
 
       setPaymentStep('success');
-      toast.success('Paiement sécurisé par escrow !', {
-        description: `${fc(grandTotal, cur)} bloqués — libérés après confirmation de réception`
+      toast.success('Paiement sÃ©curisÃ© par escrow !', {
+        description: `${fc(grandTotal, cur)} bloquÃ©s â€” libÃ©rÃ©s aprÃ¨s confirmation de rÃ©ception`
       });
       setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/my-purchases'); }, 2000);
     } catch (err) {
       console.error('[ProductPayment] Order creation after escrow payment failed:', err);
-      toast.error('Paiement réussi mais erreur lors de la commande. Contactez le support.', {
+      toast.error('Paiement rÃ©ussi mais erreur lors de la commande. Contactez le support.', {
         description: err instanceof Error ? err.message : 'Erreur inconnue',
         duration: 10000,
       });
@@ -415,7 +415,7 @@ export default function ProductPaymentModal({
   // Handle Mobile Money PULL
   const handleMobileMoneyPay = async () => {
     if (!mobilePhone.trim() || mobilePhone.trim().length < 8) {
-      toast.error('Veuillez saisir un numéro de téléphone valide');
+      toast.error('Veuillez saisir un numÃ©ro de tÃ©lÃ©phone valide');
       return;
     }
     setMobileProcessing(true);
@@ -433,29 +433,29 @@ export default function ProductPaymentModal({
       });
 
       if (!result.success) {
-        toast.error(result.error || 'Échec du paiement mobile');
+        toast.error(result.error || 'Ã‰chec du paiement mobile');
         setPaymentStep('mobile_money_form');
         setMobileProcessing(false);
         return;
       }
 
       if (result.transactionId) {
-        toast.info('Confirmez le paiement sur votre téléphone...');
+        toast.info('Confirmez le paiement sur votre tÃ©lÃ©phone...');
         const finalStatus = await pollStatus(result.transactionId);
 
         if (finalStatus.status === 'completed') {
           await createOrderAfterPayment(result.transactionId, paymentMethod);
           setPaymentStep('success');
-          toast.success('Paiement mobile réussi !', { description: `${fc(grandTotal, cur)} débité de votre compte` });
+          toast.success('Paiement mobile rÃ©ussi !', { description: `${fc(grandTotal, cur)} dÃ©bitÃ© de votre compte` });
           setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/my-purchases'); }, 2000);
         } else {
-          toast.error('Paiement non confirmé', { description: 'Veuillez réessayer' });
+          toast.error('Paiement non confirmÃ©', { description: 'Veuillez rÃ©essayer' });
           setPaymentStep('mobile_money_form');
         }
       } else {
         await createOrderAfterPayment(`mobile-${Date.now()}`, paymentMethod);
         setPaymentStep('success');
-        toast.success('Paiement initié avec succès !');
+        toast.success('Paiement initiÃ© avec succÃ¨s !');
         setTimeout(() => { onPaymentSuccess(); onClose(); navigate('/my-purchases'); }, 2000);
       }
     } catch (err) {
@@ -475,7 +475,7 @@ export default function ProductPaymentModal({
     if (paymentMethod === 'orange_money' || paymentMethod === 'mtn_money') { setPaymentStep('mobile_money_form'); return; }
 
     const isCODMethod = paymentMethod === 'cash' || paymentMethod === 'cash_on_delivery';
-    if (isCODMethod && (!codPhone.trim() || !codCity.trim())) { toast.error('Veuillez remplir le numéro de téléphone et la ville'); throw new Error('COD info missing'); }
+    if (isCODMethod && (!codPhone.trim() || !codCity.trim())) { toast.error('Veuillez remplir le numÃ©ro de tÃ©lÃ©phone et la ville'); throw new Error('COD info missing'); }
 
     let effectiveCustomerId = customerId;
     if (!effectiveCustomerId) {
@@ -483,7 +483,7 @@ export default function ProductPaymentModal({
       if (existingCustomer) { effectiveCustomerId = existingCustomer.id; }
       else {
         const { data: newCustomer, error: createError } = await supabase.from('customers').insert({ user_id: userId }).select('id').single();
-        if (createError || !newCustomer) { toast.error('Impossible de créer le compte client'); throw new Error('Customer creation failed'); }
+        if (createError || !newCustomer) { toast.error('Impossible de crÃ©er le compte client'); throw new Error('Customer creation failed'); }
         effectiveCustomerId = newCustomer.id;
       }
     }
@@ -522,13 +522,13 @@ export default function ProductPaymentModal({
         p_total_amount: vendorTotalWithCommission, p_payment_method: normalizedPaymentMethod,
         p_shipping_address: {
           address: isCODMethod && codPhone ? codPhone : 'Adresse de livraison',
-          city: isCODMethod && codCity ? codCity : 'Conakry', country: 'Guinée',
+          city: isCODMethod && codCity ? codCity : 'Conakry', country: 'GuinÃ©e',
           commission_fee: commissionPerVendor, product_total: vendorProductTotal,
           ...(isCODMethod ? { is_cod: true, cod_phone: codPhone, cod_city: codCity } : {})
         }
       });
 
-      if (orderError || !orderResult?.length) { toast.error('Erreur création commande', { description: orderError?.message }); continue; }
+      if (orderError || !orderResult?.length) { toast.error('Erreur crÃ©ation commande', { description: orderError?.message }); continue; }
 
       const orderId = orderResult[0].order_id;
       const orderNumber = orderResult[0].order_number;
@@ -552,9 +552,9 @@ export default function ProductPaymentModal({
     }
 
     if (paymentMethod === 'wallet') {
-      toast.success('Paiement sécurisé effectué !', { description: `${fc(grandTotal, cur)} bloqués en escrow. Redirection vers vos achats...` });
+      toast.success('Paiement sÃ©curisÃ© effectuÃ© !', { description: `${fc(grandTotal, cur)} bloquÃ©s en escrow. Redirection vers vos achats...` });
     } else if (isCODMethod) {
-      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(grandTotal, cur)}. Redirection...` });
+      toast.success('Commande crÃ©Ã©e !', { description: `Total Ã  payer Ã  la livraison: ${fc(grandTotal, cur)}. Redirection...` });
     }
 
     onPaymentSuccess();
@@ -574,8 +574,8 @@ export default function ProductPaymentModal({
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
               <CheckCircle2 className="w-10 h-10 text-primary" />
             </div>
-            <h3 className="text-xl font-bold text-primary">Paiement réussi !</h3>
-            <p className="text-muted-foreground text-center">{fc(grandTotal, cur)} — Votre commande a été créée</p>
+            <h3 className="text-xl font-bold text-primary">Paiement rÃ©ussi !</h3>
+            <p className="text-muted-foreground text-center">{fc(grandTotal, cur)} â€” Votre commande a Ã©tÃ© crÃ©Ã©e</p>
             <p className="text-sm text-muted-foreground animate-pulse">Redirection vers vos achats...</p>
           </div>
         </DialogContent>
@@ -593,7 +593,7 @@ export default function ProductPaymentModal({
             <h3 className="text-lg font-semibold">Traitement en cours...</h3>
             <p className="text-sm text-muted-foreground text-center">
               {paymentMethod === 'orange_money' || paymentMethod === 'mtn_money'
-                ? 'Confirmez le paiement sur votre téléphone'
+                ? 'Confirmez le paiement sur votre tÃ©lÃ©phone'
                 : 'Veuillez patienter'}
             </p>
           </div>
@@ -623,7 +623,7 @@ export default function ProductPaymentModal({
               </DialogTitle>
             </div>
             <DialogDescription>
-              Un débit de {fc(grandTotal, cur)} sera envoyé sur votre téléphone
+              Un dÃ©bit de {fc(grandTotal, cur)} sera envoyÃ© sur votre tÃ©lÃ©phone
             </DialogDescription>
           </DialogHeader>
 
@@ -631,12 +631,12 @@ export default function ProductPaymentModal({
             <div className={`p-4 rounded-lg border ${providerBg}`}>
               <div className="text-center space-y-1">
                 <p className="text-2xl font-bold">{fc(grandTotal, cur)}</p>
-                <p className="text-sm text-muted-foreground">Montant à débiter</p>
+                <p className="text-sm text-muted-foreground">Montant Ã  dÃ©biter</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mobile-phone">Numéro de téléphone {providerName} <span className="text-red-500">*</span></Label>
+              <Label htmlFor="mobile-phone">NumÃ©ro de tÃ©lÃ©phone {providerName} <span className="text-red-500">*</span></Label>
               <Input
                 id="mobile-phone"
                 type="tel"
@@ -651,7 +651,7 @@ export default function ProductPaymentModal({
             <Alert className={`${providerBg}`}>
               <Phone className={`h-4 w-4 ${providerColor}`} />
               <AlertDescription className="text-sm">
-                Après avoir cliqué sur "Payer", vous recevrez une demande de confirmation sur votre téléphone. 
+                AprÃ¨s avoir cliquÃ© sur "Payer", vous recevrez une demande de confirmation sur votre tÃ©lÃ©phone. 
                 Composez votre code PIN pour valider le paiement.
               </AlertDescription>
             </Alert>
@@ -686,7 +686,7 @@ export default function ProductPaymentModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary" />
-            Paiement Sécurisé
+            Paiement SÃ©curisÃ©
           </DialogTitle>
           <DialogDescription asChild>
             <div className="space-y-3 mt-2">
@@ -710,21 +710,21 @@ export default function ProductPaymentModal({
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2 items-start">
-                  <span>Total à payer:</span>
+                  <span>Total Ã  payer:</span>
                   {renderPrice(grandTotal, 'text-primary')}
                 </div>
               </div>
 
               {paymentMethod === 'wallet' && (
                 <>
-                  <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
-                    <Shield className="w-4 h-4 text-green-600" />
-                    <span className="text-xs text-green-800 dark:text-green-200">
-                      Vos fonds sont protégés par notre système Escrow jusqu'à la livraison
+                  <div className="flex items-center gap-2 p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-md border border-primary-orange-200 dark:border-primary-orange-800">
+                    <Shield className="w-4 h-4 text-primary-orange-600" />
+                    <span className="text-xs text-primary-orange-800 dark:text-primary-orange-200">
+                      Vos fonds sont protÃ©gÃ©s par notre systÃ¨me Escrow jusqu'Ã  la livraison
                     </span>
                   </div>
                   <div className="text-sm">
-                    Solde disponible: <span className={`font-semibold ${insufficientBalance ? 'text-destructive' : 'text-green-600'}`}>
+                    Solde disponible: <span className={`font-semibold ${insufficientBalance ? 'text-destructive' : 'text-primary-orange-600'}`}>
                       {fc(walletBalance || 0, cur)}
                     </span>
                   </div>
@@ -732,7 +732,7 @@ export default function ProductPaymentModal({
                     <Alert variant="default" className="border-orange-200 bg-orange-50 dark:bg-orange-950">
                       <AlertCircle className="h-4 w-4 text-orange-600" />
                       <AlertDescription className="text-orange-900 dark:text-orange-200">
-                        Votre wallet est vide. Rechargez-le d'abord ou sélectionnez un autre moyen de paiement.
+                        Votre wallet est vide. Rechargez-le d'abord ou sÃ©lectionnez un autre moyen de paiement.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -774,23 +774,23 @@ export default function ProductPaymentModal({
           </RadioGroup>
 
           {paymentMethod === 'cash' && (
-            <div className="space-y-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg animate-in slide-in-from-top-2">
-              <h4 className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
+            <div className="space-y-3 p-4 bg-primary-blue-50 border border-primary-orange-200 rounded-lg animate-in slide-in-from-top-2">
+              <h4 className="font-semibold text-primary-blue-800 flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4" /> Informations de contact
               </h4>
               <div className="space-y-2">
-                <Label htmlFor="marketplace-cod-phone" className="text-sm">Numéro à contacter <span className="text-red-500">*</span></Label>
+                <Label htmlFor="marketplace-cod-phone" className="text-sm">NumÃ©ro Ã  contacter <span className="text-red-500">*</span></Label>
                 <Input id="marketplace-cod-phone" type="tel" inputMode="tel" placeholder="Ex: 620 00 00 00" value={codPhone} onChange={(e) => setCodPhone(e.target.value)} className="bg-white" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="marketplace-cod-city" className="text-sm">Ville <span className="text-red-500">*</span></Label>
                 <Input id="marketplace-cod-city" placeholder="Ex: Conakry, Kindia, Dakar..." value={codCity} onChange={(e) => setCodCity(e.target.value)} className="bg-white" required />
               </div>
-              <Alert className="bg-emerald-50 border-emerald-200 mt-2">
-                <Truck className="h-4 w-4 text-emerald-600" />
-                <AlertDescription className="text-emerald-700">
-                  <strong>Paiement à la livraison confirmé</strong><br/>
-                  Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(grandTotal, cur)} en espèces.
+              <Alert className="bg-primary-blue-50 border-primary-orange-200 mt-2">
+                <Truck className="h-4 w-4 text-primary-blue-600" />
+                <AlertDescription className="text-primary-blue-700">
+                  <strong>Paiement Ã  la livraison confirmÃ©</strong><br/>
+                  Vous serez contactÃ© par tÃ©lÃ©phone pour confirmer votre adresse exacte. PrÃ©parez {fc(grandTotal, cur)} en espÃ¨ces.
                 </AlertDescription>
               </Alert>
             </div>
@@ -800,15 +800,15 @@ export default function ProductPaymentModal({
         {/* Carte bancaire Stripe inline */}
         {showCardInline && paymentMethod === 'card' && (
           <div className="space-y-3 py-2 border-t">
-            <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
-              <Shield className="w-4 h-4 text-green-600" />
-              <span className="text-xs text-green-800 dark:text-green-200">
-                Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de réception
+            <div className="flex items-center gap-2 p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-md border border-primary-orange-200 dark:border-primary-orange-800">
+              <Shield className="w-4 h-4 text-primary-orange-600" />
+              <span className="text-xs text-primary-orange-800 dark:text-primary-orange-200">
+                Vos fonds sont protÃ©gÃ©s par notre systÃ¨me Escrow jusqu'Ã  la confirmation de rÃ©ception
               </span>
             </div>
             <div className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-sm">Paiement sécurisé par carte (Escrow)</span>
+              <span className="font-semibold text-sm">Paiement sÃ©curisÃ© par carte (Escrow)</span>
             </div>
             <Suspense fallback={
               <div className="flex items-center justify-center p-4 gap-2">
@@ -828,7 +828,7 @@ export default function ProductPaymentModal({
               />
             </Suspense>
             <Button variant="outline" onClick={() => setShowCardInline(false)} className="w-full" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" /> Changer de méthode
+              <ArrowLeft className="w-4 h-4 mr-2" /> Changer de mÃ©thode
             </Button>
           </div>
         )}

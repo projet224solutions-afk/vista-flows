@@ -1,8 +1,8 @@
 /**
  * CHINA DROPSHIP ADMIN DASHBOARD
  * 
- * Dashboard complet pour PDG/Admin pour gérer les opérations
- * de dropshipping Chine à l'échelle de la plateforme.
+ * Dashboard complet pour PDG/Admin pour gÃ©rer les opÃ©rations
+ * de dropshipping Chine Ã  l'Ã©chelle de la plateforme.
  * 
  * @module ChinaDropshipDashboard
  * @version 1.0.0
@@ -155,7 +155,7 @@ interface RiskProduct {
 
 const getStatusColor = (status: string): string => {
   switch (status) {
-    case 'delivered': return 'bg-green-500';
+    case 'delivered': return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
     case 'shipped_international':
     case 'last_mile_delivery': return 'bg-blue-500';
     case 'customs_clearance': return 'bg-yellow-500';
@@ -168,17 +168,17 @@ const getStatusColor = (status: string): string => {
 const getStatusLabel = (status: string): string => {
   const labels: Record<string, string> = {
     pending_supplier_confirm: 'En attente confirmation',
-    supplier_confirmed: 'Confirmé fournisseur',
+    supplier_confirmed: 'ConfirmÃ© fournisseur',
     in_production: 'En production',
-    quality_check: 'Contrôle qualité',
-    ready_to_ship: 'Prêt à expédier',
-    shipped_domestic_china: 'Expédié (Chine)',
-    at_consolidation_warehouse: 'Entrepôt consolidation',
-    shipped_international: 'Expédié international',
+    quality_check: 'ContrÃ´le qualitÃ©',
+    ready_to_ship: 'PrÃªt Ã  expÃ©dier',
+    shipped_domestic_china: 'ExpÃ©diÃ© (Chine)',
+    at_consolidation_warehouse: 'EntrepÃ´t consolidation',
+    shipped_international: 'ExpÃ©diÃ© international',
     customs_clearance: 'Douane',
     last_mile_delivery: 'Livraison finale',
-    delivered: 'Livré',
-    cancelled: 'Annulé',
+    delivered: 'LivrÃ©',
+    cancelled: 'AnnulÃ©',
     disputed: 'Litige',
   };
   return labels[status] || status;
@@ -377,7 +377,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
         supplier_name: supplier.platform_shop_id || supplier.id.slice(0, 8),
         risk_type: 'low_score',
         risk_level: supplier.internal_score < 25 ? 'critical' : 'high',
-        details: `Score fournisseur très bas: ${supplier.internal_score}/100`,
+        details: `Score fournisseur trÃ¨s bas: ${supplier.internal_score}/100`,
         detected_at: supplier.updated_at,
       });
     });
@@ -403,10 +403,10 @@ export const ChinaDropshipDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success(verify ? 'Fournisseur vérifié' : 'Vérification retirée');
+      toast.success(verify ? 'Fournisseur vÃ©rifiÃ©' : 'VÃ©rification retirÃ©e');
       await loadSuppliers();
     } catch (error) {
-      toast.error('Erreur lors de la vérification');
+      toast.error('Erreur lors de la vÃ©rification');
     } finally {
       setActionLoading(false);
       setVerifyDialogOpen(false);
@@ -421,13 +421,13 @@ export const ChinaDropshipDashboard: React.FC = () => {
         .update({
           score_level: 'BLACKLISTED',
           internal_score: 0,
-          notes: 'Blacklisté par admin',
+          notes: 'BlacklistÃ© par admin',
         })
         .eq('id', supplierId);
 
       if (error) throw error;
 
-      toast.success('Fournisseur blacklisté');
+      toast.success('Fournisseur blacklistÃ©');
       await loadSuppliers();
     } catch (error) {
       toast.error('Erreur lors du blacklist');
@@ -440,7 +440,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
     toast.info('Export en cours...');
     // Implementation for CSV/Excel export
     setTimeout(() => {
-      toast.success('Rapport exporté');
+      toast.success('Rapport exportÃ©');
     }, 1500);
   };
 
@@ -500,7 +500,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
             China Dropship Admin
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gestion centralisée des opérations Alibaba, AliExpress & 1688
+            Gestion centralisÃ©e des opÃ©rations Alibaba, AliExpress & 1688
           </p>
         </div>
         <div className="flex gap-2">
@@ -531,12 +531,12 @@ export const ChinaDropshipDashboard: React.FC = () => {
                 {stats?.goldSuppliers} Gold
               </Badge>
               <Badge variant="secondary">
-                {stats?.verifiedSuppliers} Vérifiés
+                {stats?.verifiedSuppliers} VÃ©rifiÃ©s
               </Badge>
             </div>
             {(stats?.blacklistedSuppliers || 0) > 0 && (
               <div className="text-xs text-red-500 mt-1">
-                {stats?.blacklistedSuppliers} blacklistés
+                {stats?.blacklistedSuppliers} blacklistÃ©s
               </div>
             )}
           </CardContent>
@@ -558,14 +558,14 @@ export const ChinaDropshipDashboard: React.FC = () => {
                 <Truck className="h-3 w-3 mr-1" />
                 {stats?.inTransitOrders} en transit
               </span>
-              <span className="flex items-center text-green-500">
+              <span className="flex items-center text-primary-orange-500">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
-                {stats?.deliveredOrders} livrés
+                {stats?.deliveredOrders} livrÃ©s
               </span>
             </div>
             {(stats?.disputedOrders || 0) > 0 && (
               <div className="text-xs text-red-500 mt-1">
-                ⚠️ {stats?.disputedOrders} litiges
+                âš ï¸ {stats?.disputedOrders} litiges
               </div>
             )}
           </CardContent>
@@ -579,12 +579,12 @@ export const ChinaDropshipDashboard: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-primary-orange-600">
               +{stats?.profitMarginMonth}%
             </div>
             <Progress value={stats?.profitMarginMonth} className="mt-2" />
             <div className="text-xs text-muted-foreground mt-2">
-              Coût: ${stats?.totalCostMonth?.toLocaleString()} USD
+              CoÃ»t: ${stats?.totalCostMonth?.toLocaleString()} USD
             </div>
           </CardContent>
         </Card>
@@ -601,12 +601,12 @@ export const ChinaDropshipDashboard: React.FC = () => {
               {stats?.avgDeliveryDays}j moy.
             </div>
             <div className="flex items-center gap-2 mt-2 text-sm">
-              <span className="text-green-500">
-                {stats?.onTimeRate}% à temps
+              <span className="text-primary-orange-500">
+                {stats?.onTimeRate}% Ã  temps
               </span>
             </div>
             <div className="text-xs text-yellow-600 mt-1">
-              {stats?.customsBlockedRate}% bloqués douane
+              {stats?.customsBlockedRate}% bloquÃ©s douane
             </div>
           </CardContent>
         </Card>
@@ -625,7 +625,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
           </TabsTrigger>
           <TabsTrigger value="shipments">
             <Truck className="h-4 w-4 mr-2" />
-            Expéditions
+            ExpÃ©ditions
           </TabsTrigger>
           <TabsTrigger value="risks">
             <AlertTriangle className="h-4 w-4 mr-2" />
@@ -646,7 +646,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-5 w-5" />
-                  Commandes récentes
+                  Commandes rÃ©centes
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -679,7 +679,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-green-500" />
+                  <ShieldCheck className="h-5 w-5 text-primary-orange-500" />
                   Top Fournisseurs
                 </CardTitle>
               </CardHeader>
@@ -721,17 +721,17 @@ export const ChinaDropshipDashboard: React.FC = () => {
           {/* Transport Methods Breakdown */}
           <Card>
             <CardHeader>
-              <CardTitle>Répartition méthodes de transport</CardTitle>
+              <CardTitle>RÃ©partition mÃ©thodes de transport</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-4">
                 <div className="text-center p-4 border rounded">
                   <Plane className="h-8 w-8 mx-auto text-blue-500 mb-2" />
                   <div className="text-xl font-bold">45%</div>
-                  <div className="text-sm text-muted-foreground">Aérien</div>
+                  <div className="text-sm text-muted-foreground">AÃ©rien</div>
                 </div>
                 <div className="text-center p-4 border rounded">
-                  <Ship className="h-8 w-8 mx-auto text-teal-500 mb-2" />
+                  <Ship className="h-8 w-8 mx-auto text-primary-orange-500 mb-2" />
                   <div className="text-xl font-bold">30%</div>
                   <div className="text-sm text-muted-foreground">Maritime</div>
                 </div>
@@ -776,7 +776,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                     <SelectItem value="ALIBABA">Alibaba</SelectItem>
                     <SelectItem value="ALIEXPRESS">AliExpress</SelectItem>
                     <SelectItem value="1688">1688</SelectItem>
-                    <SelectItem value="PRIVATE">Privé</SelectItem>
+                    <SelectItem value="PRIVATE">PrivÃ©</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -794,8 +794,8 @@ export const ChinaDropshipDashboard: React.FC = () => {
                     <TableHead>Score</TableHead>
                     <TableHead>Livraisons</TableHead>
                     <TableHead>MOQ</TableHead>
-                    <TableHead>Délai</TableHead>
-                    <TableHead>Vérifié</TableHead>
+                    <TableHead>DÃ©lai</TableHead>
+                    <TableHead>VÃ©rifiÃ©</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -830,16 +830,16 @@ export const ChinaDropshipDashboard: React.FC = () => {
                       <TableCell>
                         {supplier.successful_deliveries}/{supplier.total_deliveries}
                         <span className="text-xs text-muted-foreground ml-1">
-                          ({supplier.on_time_rate}% à temps)
+                          ({supplier.on_time_rate}% Ã  temps)
                         </span>
                       </TableCell>
-                      <TableCell>{supplier.moq} unités</TableCell>
+                      <TableCell>{supplier.moq} unitÃ©s</TableCell>
                       <TableCell>
                         {supplier.production_time_days}j prod + {supplier.international_shipping_days}j intl
                       </TableCell>
                       <TableCell>
                         {supplier.verified_by_admin ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          <CheckCircle2 className="h-5 w-5 text-primary-orange-500" />
                         ) : (
                           <XCircle className="h-5 w-5 text-gray-400" />
                         )}
@@ -863,12 +863,12 @@ export const ChinaDropshipDashboard: React.FC = () => {
                             <DialogContent>
                               <DialogHeader>
                                 <DialogTitle>
-                                  {supplier.verified_by_admin ? 'Retirer vérification' : 'Vérifier fournisseur'}
+                                  {supplier.verified_by_admin ? 'Retirer vÃ©rification' : 'VÃ©rifier fournisseur'}
                                 </DialogTitle>
                                 <DialogDescription>
                                   {supplier.verified_by_admin 
-                                    ? 'Le fournisseur perdra son statut vérifié.'
-                                    : 'Confirmer que ce fournisseur a été validé manuellement.'}
+                                    ? 'Le fournisseur perdra son statut vÃ©rifiÃ©.'
+                                    : 'Confirmer que ce fournisseur a Ã©tÃ© validÃ© manuellement.'}
                                 </DialogDescription>
                               </DialogHeader>
                               <DialogFooter>
@@ -897,8 +897,8 @@ export const ChinaDropshipDashboard: React.FC = () => {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Blacklister ce fournisseur?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Cette action empêchera tous les vendeurs d'utiliser ce fournisseur.
-                                    Le score sera mis à 0 et le statut BLACKLISTED.
+                                    Cette action empÃªchera tous les vendeurs d'utiliser ce fournisseur.
+                                    Le score sera mis Ã  0 et le statut BLACKLISTED.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -948,10 +948,10 @@ export const ChinaDropshipDashboard: React.FC = () => {
                     <SelectItem value="all">Tous</SelectItem>
                     <SelectItem value="pending_supplier_confirm">En attente</SelectItem>
                     <SelectItem value="in_production">En production</SelectItem>
-                    <SelectItem value="shipped_domestic_china">Expédié Chine</SelectItem>
-                    <SelectItem value="shipped_international">Expédié Intl</SelectItem>
+                    <SelectItem value="shipped_domestic_china">ExpÃ©diÃ© Chine</SelectItem>
+                    <SelectItem value="shipped_international">ExpÃ©diÃ© Intl</SelectItem>
                     <SelectItem value="customs_clearance">Douane</SelectItem>
-                    <SelectItem value="delivered">Livré</SelectItem>
+                    <SelectItem value="delivered">LivrÃ©</SelectItem>
                     <SelectItem value="disputed">Litige</SelectItem>
                   </SelectContent>
                 </Select>
@@ -1029,8 +1029,8 @@ export const ChinaDropshipDashboard: React.FC = () => {
           {riskProducts.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
-                <h3 className="text-lg font-semibold">Aucun risque détecté</h3>
+                <CheckCircle2 className="h-12 w-12 mx-auto text-primary-orange-500 mb-4" />
+                <h3 className="text-lg font-semibold">Aucun risque dÃ©tectÃ©</h3>
                 <p className="text-muted-foreground mt-2">
                   Tous les produits et fournisseurs fonctionnent normalement.
                 </p>
@@ -1041,10 +1041,10 @@ export const ChinaDropshipDashboard: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-red-500" />
-                  Produits à risque ({riskProducts.length})
+                  Produits Ã  risque ({riskProducts.length})
                 </CardTitle>
                 <CardDescription>
-                  Produits nécessitant une attention immédiate
+                  Produits nÃ©cessitant une attention immÃ©diate
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -1055,8 +1055,8 @@ export const ChinaDropshipDashboard: React.FC = () => {
                       <TableHead>Niveau</TableHead>
                       <TableHead>Produit</TableHead>
                       <TableHead>Fournisseur</TableHead>
-                      <TableHead>Détails</TableHead>
-                      <TableHead>Détecté</TableHead>
+                      <TableHead>DÃ©tails</TableHead>
+                      <TableHead>DÃ©tectÃ©</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>

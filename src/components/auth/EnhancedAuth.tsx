@@ -1,9 +1,9 @@
 /**
- * Système d'Authentification Amélioré
- * - Parcours en étapes fluide
+ * SystÃ¨me d'Authentification AmÃ©liorÃ©
+ * - Parcours en Ã©tapes fluide
  * - Connexion sociale (Google, Facebook)
- * - Détection intelligente du type de compte
- * - Vérification email existant AVANT OAuth
+ * - DÃ©tection intelligente du type de compte
+ * - VÃ©rification email existant AVANT OAuth
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -34,7 +34,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/hooks/useAuth';
 import { useCognitoAuth } from '@/contexts/CognitoAuthContext';
 
-// Lazy load framer-motion pour réduire TBT (914ms -> <200ms)
+// Lazy load framer-motion pour rÃ©duire TBT (914ms -> <200ms)
 const motion = {
   div: (props: any) => <div {...props} />,
   button: (props: any) => <button {...props} />
@@ -68,8 +68,8 @@ const accountTypeConfigs: AccountTypeOption[] = [
     labelKey: 'auth.accountType.merchant',
     descKey: 'auth.accountType.merchantDesc',
     icon: Store,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50 hover:bg-green-100 border-green-200',
+    color: 'text-primary-orange-600',
+    bgColor: 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 hover:bg-primary-orange-100 border-primary-orange-200',
   },
   {
     value: 'livreur',
@@ -137,7 +137,7 @@ export default function EnhancedAuth() {
   const [confirmationCode, setConfirmationCode] = useState('');
   const [confirmationEmail, setConfirmationEmail] = useState('');
 
-  // État pour le modal "Email déjà existant"
+  // Ã‰tat pour le modal "Email dÃ©jÃ  existant"
   const [existingEmailModal, setExistingEmailModal] = useState<{
     open: boolean;
     email: string;
@@ -145,14 +145,14 @@ export default function EnhancedAuth() {
     provider: 'google' | 'facebook' | null;
   }>({ open: false, email: '', role: '', provider: null });
 
-  // État pour afficher le modal si l'utilisateur OAuth existe déjà
+  // Ã‰tat pour afficher le modal si l'utilisateur OAuth existe dÃ©jÃ 
   const [oauthExistingAccountModal, setOauthExistingAccountModal] = useState<{
     open: boolean;
     email: string;
     role: string;
   }>({ open: false, email: '', role: '' });
 
-  // Cognito: rediriger si authentifié
+  // Cognito: rediriger si authentifiÃ©
   useEffect(() => {
     if (isCognitoEnabled && isCognitoAuthenticated && cognitoProfile) {
       const roleRoutes: Record<string, string> = {
@@ -161,12 +161,12 @@ export default function EnhancedAuth() {
         client: '/client', agent: '/agent',
       };
       const targetRoute = roleRoutes[cognitoProfile.role || 'client'] || '/client';
-      console.log(`🚀 [Cognito] Redirection vers ${targetRoute} (rôle: ${cognitoProfile.role})`);
+      console.log(`ðŸš€ [Cognito] Redirection vers ${targetRoute} (rÃ´le: ${cognitoProfile.role})`);
       navigate(targetRoute, { replace: true });
     }
   }, [isCognitoEnabled, isCognitoAuthenticated, cognitoProfile, navigate]);
 
-  // Handle OAuth callback (Supabase) - délègue la logique profil/rôle à useAuth
+  // Handle OAuth callback (Supabase) - dÃ©lÃ¨gue la logique profil/rÃ´le Ã  useAuth
   useEffect(() => {
     if (!authLoading && !profileLoading && user && profile?.role) {
       const isNewSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
@@ -210,11 +210,11 @@ export default function EnhancedAuth() {
     }
   }, [authLoading, profileLoading, user, profile, navigate, t]);
 
-  // Fonction pour continuer après le modal "compte existant"
+  // Fonction pour continuer aprÃ¨s le modal "compte existant"
   const handleContinueWithExistingAccount = () => {
     setOauthExistingAccountModal({ open: false, email: '', role: '' });
     
-    // Rediriger vers la page appropriée selon le rôle
+    // Rediriger vers la page appropriÃ©e selon le rÃ´le
     const roleRoutes: Record<string, string> = {
       admin: '/pdg',
       ceo: '/pdg',
@@ -231,7 +231,7 @@ export default function EnhancedAuth() {
     navigate(targetRoute, { replace: true });
   };
 
-  // Vérifier si un email existe déjà dans le système
+  // VÃ©rifier si un email existe dÃ©jÃ  dans le systÃ¨me
   const checkEmailExists = async (emailToCheck: string): Promise<{ exists: boolean; role?: string }> => {
     try {
       const { data, error } = await supabase
@@ -241,7 +241,7 @@ export default function EnhancedAuth() {
         .maybeSingle();
 
       if (error) {
-        console.error('Erreur vérification email:', error);
+        console.error('Erreur vÃ©rification email:', error);
         return { exists: false };
       }
 
@@ -252,7 +252,7 @@ export default function EnhancedAuth() {
     }
   };
 
-  // Procéder à la connexion OAuth (sans création de compte)
+  // ProcÃ©der Ã  la connexion OAuth (sans crÃ©ation de compte)
   const proceedWithOAuthLogin = async (provider: 'google' | 'facebook') => {
     // Mode connexion - nettoyer les flags
     localStorage.removeItem('oauth_intent_role');
@@ -296,10 +296,10 @@ export default function EnhancedAuth() {
         }
       };
 
-      // En mode INSCRIPTION, on doit vérifier si l'email existe déjà
+      // En mode INSCRIPTION, on doit vÃ©rifier si l'email existe dÃ©jÃ 
       if (mode === 'signup' && accountType) {
-        // Note: On ne peut pas vérifier l'email Google AVANT l'OAuth
-        // Donc on configure les flags et on laisse useAuth gérer la détection
+        // Note: On ne peut pas vÃ©rifier l'email Google AVANT l'OAuth
+        // Donc on configure les flags et on laisse useAuth gÃ©rer la dÃ©tection
         localStorage.setItem('oauth_intent_role', mapAccountTypeToRole(accountType));
         localStorage.setItem('oauth_is_new_signup', 'true');
       } else {
@@ -329,7 +329,7 @@ export default function EnhancedAuth() {
     }
   };
 
-  // Helper: mapper le type de compte vers le rôle
+  // Helper: mapper le type de compte vers le rÃ´le
   const mapAccountTypeToRole = (type: AccountType | null) => {
     switch (type) {
       case 'marchand': return 'vendeur';
@@ -340,7 +340,7 @@ export default function EnhancedAuth() {
     }
   };
 
-  // Cognito: gérer la confirmation du code d'inscription
+  // Cognito: gÃ©rer la confirmation du code d'inscription
   const handleCognitoConfirmation = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -352,7 +352,7 @@ export default function EnhancedAuth() {
         throw new Error(result.error || 'Erreur de confirmation');
       }
 
-      toast.success(t('auth.emailConfirmed') || 'Email confirmé ! Connectez-vous.');
+      toast.success(t('auth.emailConfirmed') || 'Email confirmÃ© ! Connectez-vous.');
       setNeedsConfirmation(false);
       setConfirmationCode('');
       setMode('login');
@@ -371,7 +371,7 @@ export default function EnhancedAuth() {
     setLoading(true);
 
     try {
-      // ===== COGNITO AUTH (prioritaire si configuré) =====
+      // ===== COGNITO AUTH (prioritaire si configurÃ©) =====
       if (isCognitoEnabled) {
         if (mode === 'signup') {
           const roleToUse = mapAccountTypeToRole(accountType);
@@ -384,7 +384,7 @@ export default function EnhancedAuth() {
             throw new Error(result.error || 'Erreur d\'inscription');
           }
 
-          // 🔄 Sync Supabase pour RLS
+          // ðŸ”„ Sync Supabase pour RLS
           try {
             const nameParts = fullName.trim().split(' ');
             await supabase.functions.invoke('cognito-sync-session', {
@@ -395,20 +395,20 @@ export default function EnhancedAuth() {
               },
             });
           } catch (syncErr) {
-            console.warn('⚠️ Sync Supabase échouée:', syncErr);
+            console.warn('âš ï¸ Sync Supabase Ã©chouÃ©e:', syncErr);
           }
 
           if (result.needsConfirmation) {
             setNeedsConfirmation(true);
             setConfirmationEmail(email);
-            toast.info(t('auth.checkEmail') || 'Vérifiez votre email pour le code de confirmation');
+            toast.info(t('auth.checkEmail') || 'VÃ©rifiez votre email pour le code de confirmation');
           } else {
-            // Aussi créer la session Supabase
+            // Aussi crÃ©er la session Supabase
             await supabase.auth.signUp({ email, password, options: {
               emailRedirectTo: `${window.location.origin}/`,
               data: { full_name: fullName, role: roleToUse, has_password: true }
             }});
-            toast.success(t('auth.signupSuccess') || 'Inscription réussie !');
+            toast.success(t('auth.signupSuccess') || 'Inscription rÃ©ussie !');
           }
         } else {
           // Connexion Cognito
@@ -422,7 +422,7 @@ export default function EnhancedAuth() {
             throw new Error(result.error || 'Erreur de connexion');
           }
 
-          // 🔄 Sync session Supabase pour RLS
+          // ðŸ”„ Sync session Supabase pour RLS
           try {
             const idToken = result.tokens?.idToken || result.session?.getIdToken()?.getJwtToken();
             await supabase.functions.invoke('cognito-sync-session', {
@@ -433,7 +433,7 @@ export default function EnhancedAuth() {
               },
             });
           } catch (syncErr) {
-            console.warn('⚠️ Sync Supabase login échouée:', syncErr);
+            console.warn('âš ï¸ Sync Supabase login Ã©chouÃ©e:', syncErr);
           }
 
           // Login Supabase pour session RLS
@@ -514,7 +514,7 @@ export default function EnhancedAuth() {
               client: '/client', agent: '/agent',
             };
             const targetRoute = roleRoutes[profileData.role] || '/home';
-            console.log(`🚀 [EnhancedAuth] Redirection login vers ${targetRoute} (rôle: ${profileData.role})`);
+            console.log(`ðŸš€ [EnhancedAuth] Redirection login vers ${targetRoute} (rÃ´le: ${profileData.role})`);
             navigate(targetRoute, { replace: true });
           } else {
             navigate('/home', { replace: true });
@@ -574,7 +574,7 @@ export default function EnhancedAuth() {
 
   const selectedType = accountTypes.find(t => t.value === accountType);
 
-  // État pour basculer entre connexion et inscription sur mobile
+  // Ã‰tat pour basculer entre connexion et inscription sur mobile
   const [showSignupPanel, setShowSignupPanel] = useState(false);
 
   // Auto-set client type when signup panel is shown
@@ -626,7 +626,7 @@ export default function EnhancedAuth() {
                 onClick={() => setShowSignupPanel(true)}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
                   showSignupPanel
-                    ? 'bg-emerald-500 text-white shadow-sm'
+                    ? 'bg-primary-blue-500 text-white shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -639,9 +639,9 @@ export default function EnhancedAuth() {
           {/* Carte principale ultra compacte */}
           <Card className="shadow-lg border border-border/40 overflow-hidden bg-card">
             {/* Header minimal */}
-            <CardHeader className={`py-2.5 px-3 ${!showSignupPanel ? 'bg-primary/5' : 'bg-emerald-50 dark:bg-emerald-900/10'}`}>
+            <CardHeader className={`py-2.5 px-3 ${!showSignupPanel ? 'bg-primary/5' : 'bg-primary-blue-50 dark:bg-primary-blue-900/10'}`}>
               <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${!showSignupPanel ? 'bg-primary' : 'bg-emerald-500'}`}>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${!showSignupPanel ? 'bg-primary' : 'bg-primary-blue-500'}`}>
                   {!showSignupPanel ? (
                     <LogIn className="h-4 w-4 text-white" />
                   ) : (
@@ -649,7 +649,7 @@ export default function EnhancedAuth() {
                   )}
                 </div>
                 <div>
-                  <CardTitle className={`text-sm font-semibold ${!showSignupPanel ? 'text-foreground' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                  <CardTitle className={`text-sm font-semibold ${!showSignupPanel ? 'text-foreground' : 'text-primary-blue-700 dark:text-primary-blue-400'}`}>
                     {!showSignupPanel ? t('auth.connectionTitle') : t('auth.signupTitle')}
                   </CardTitle>
                   <CardDescription className="text-[10px]">
@@ -666,7 +666,7 @@ export default function EnhancedAuth() {
                   <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
                     <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
                     <p className="text-[10px] text-muted-foreground">
-                      Un code de vérification a été envoyé à <strong>{confirmationEmail}</strong>
+                      Un code de vÃ©rification a Ã©tÃ© envoyÃ© Ã  <strong>{confirmationEmail}</strong>
                     </p>
                   </div>
 
@@ -674,7 +674,7 @@ export default function EnhancedAuth() {
                     <div className="space-y-0.5">
                       <Label htmlFor="confirmation-code" className="text-[11px] font-medium flex items-center gap-1">
                         <Lock className="h-3 w-3 text-muted-foreground" />
-                        Code de vérification
+                        Code de vÃ©rification
                       </Label>
                       <Input
                         id="confirmation-code"
@@ -703,7 +703,7 @@ export default function EnhancedAuth() {
                       disabled={loading || confirmationCode.length < 4}
                     >
                       {loading ? (
-                        <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Vérification...</>
+                        <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> VÃ©rification...</>
                       ) : (
                         <><UserCheck className="mr-1 h-3 w-3" /> Confirmer mon email</>
                       )}
@@ -760,7 +760,7 @@ export default function EnhancedAuth() {
                         <Input
                           id="login-password"
                           type={showPassword ? 'text' : 'password'}
-                          placeholder="••••••••"
+                          placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           disabled={loading}
@@ -805,7 +805,7 @@ export default function EnhancedAuth() {
                     </Button>
                   </form>
 
-                  {/* Séparateur compact */}
+                  {/* SÃ©parateur compact */}
                   <div className="relative py-1.5">
                     <Separator className="bg-border/30" />
                     <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1.5 text-[9px] text-muted-foreground uppercase">
@@ -865,10 +865,10 @@ export default function EnhancedAuth() {
               {showSignupPanel && !needsConfirmation && (
                 <div className="space-y-2">
                   {/* Info: compte client */}
-                  <div className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-md p-2 flex items-center gap-2">
-                    <User className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                    <p className="text-[10px] text-emerald-700 dark:text-emerald-400">
-                      {t('auth.createClientAccount') || 'Créez votre compte client pour acheter des produits et services'}
+                  <div className="bg-primary-blue-50/50 dark:bg-primary-blue-900/10 rounded-md p-2 flex items-center gap-2">
+                    <User className="h-3.5 w-3.5 text-primary-blue-600 shrink-0" />
+                    <p className="text-[10px] text-primary-blue-700 dark:text-primary-blue-400">
+                      {t('auth.createClientAccount') || 'CrÃ©ez votre compte client pour acheter des produits et services'}
                     </p>
                   </div>
 
@@ -951,7 +951,7 @@ export default function EnhancedAuth() {
 
                         <Button
                           type="submit"
-                          className="w-full h-8 text-xs font-medium rounded-md bg-emerald-500 hover:bg-emerald-600"
+                          className="w-full h-8 text-xs font-medium rounded-md bg-primary-blue-500 hover:bg-primary-blue-600"
                           disabled={loading}
                         >
                           {loading && mode === 'signup' ? (
@@ -962,13 +962,13 @@ export default function EnhancedAuth() {
                           ) : (
                             <>
                               <UserPlus className="mr-1 h-3 w-3" />
-                              {t('auth.createAccount') || 'Créer mon compte'}
+                              {t('auth.createAccount') || 'CrÃ©er mon compte'}
                             </>
                           )}
                         </Button>
                       </form>
 
-                      {/* Séparateur compact */}
+                      {/* SÃ©parateur compact */}
                       <div className="relative py-1.5">
                         <Separator className="bg-border/30" />
                         <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1.5 text-[9px] text-muted-foreground uppercase">
@@ -1015,7 +1015,7 @@ export default function EnhancedAuth() {
                     </motion.div>
                   )}
 
-                  {/* Message si pas de type sélectionné */}
+                  {/* Message si pas de type sÃ©lectionnÃ© */}
                   {!accountType && (
                     <div className="text-center py-3 text-muted-foreground">
                       <div className="w-8 h-8 mx-auto mb-1.5 rounded-md bg-muted/50 flex items-center justify-center">
@@ -1028,13 +1028,13 @@ export default function EnhancedAuth() {
               )}
             </CardContent>
 
-            {/* Footer sécurité - compact */}
+            {/* Footer sÃ©curitÃ© - compact */}
             <div className="px-3 sm:px-4 pb-3 sm:pb-4">
               <div className="bg-primary/5 rounded-lg p-2 text-center border border-primary/10">
                 <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1.5">
                   <Lock className="h-3 w-3 text-primary" />
                   <span>
-                    {t('auth.securityInfo')} • <span className="font-medium text-primary">224Solutions</span>
+                    {t('auth.securityInfo')} â€¢ <span className="font-medium text-primary">224Solutions</span>
                     {isCognitoEnabled && (
                       <span className="ml-1 text-[8px] bg-primary/10 text-primary px-1 py-0.5 rounded">AWS Cognito</span>
                     )}
@@ -1044,14 +1044,14 @@ export default function EnhancedAuth() {
             </div>
           </Card>
 
-          {/* Texte légal */}
+          {/* Texte lÃ©gal */}
           <p className="text-center text-[9px] text-muted-foreground mt-2 px-2">
             {t('auth.termsAccept')} <button className="underline hover:text-foreground">{t('auth.terms')}</button> {t('auth.and')} <button className="underline hover:text-foreground">{t('auth.privacy')}</button>
           </p>
         </div>
       </div>
 
-      {/* Modal: Email déjà existant (pour inscription classique) */}
+      {/* Modal: Email dÃ©jÃ  existant (pour inscription classique) */}
       <Dialog open={existingEmailModal.open} onOpenChange={(open) => setExistingEmailModal(prev => ({ ...prev, open }))}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -1105,7 +1105,7 @@ export default function EnhancedAuth() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal: Compte OAuth existant détecté lors d'une inscription */}
+      {/* Modal: Compte OAuth existant dÃ©tectÃ© lors d'une inscription */}
       <Dialog open={oauthExistingAccountModal.open} onOpenChange={(open) => !open && handleContinueWithExistingAccount()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

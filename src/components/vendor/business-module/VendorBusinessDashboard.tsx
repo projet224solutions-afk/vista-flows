@@ -1,7 +1,7 @@
 /**
  * VENDOR BUSINESS DASHBOARD
- * Interface principale du module métier avec vue complète de la boutique
- * Affiche les statistiques spécifiques au service professionnel sélectionné
+ * Interface principale du module mÃ©tier avec vue complÃ¨te de la boutique
+ * Affiche les statistiques spÃ©cifiques au service professionnel sÃ©lectionnÃ©
  */
 
 import { useState } from 'react';
@@ -31,7 +31,7 @@ export interface VendorBusinessDashboardProps {
   professionalService?: any;
 }
 
-// formatCurrency importé depuis @/lib/formatters
+// formatCurrency importÃ© depuis @/lib/formatters
 
 export function VendorBusinessDashboard({
   businessName,
@@ -45,10 +45,10 @@ export function VendorBusinessDashboard({
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddService, setShowAddService] = useState(false);
   
-  // Utiliser les stats spécifiques au service professionnel sélectionné
-  console.log('🔍 VendorBusinessDashboard - serviceId:', serviceId);
-  console.log('🔍 VendorBusinessDashboard - serviceTypeCode:', serviceTypeCode);
-  console.log('🔍 VendorBusinessDashboard - professionalService:', professionalService);
+  // Utiliser les stats spÃ©cifiques au service professionnel sÃ©lectionnÃ©
+  console.log('ðŸ” VendorBusinessDashboard - serviceId:', serviceId);
+  console.log('ðŸ” VendorBusinessDashboard - serviceTypeCode:', serviceTypeCode);
+  console.log('ðŸ” VendorBusinessDashboard - professionalService:', professionalService);
   
   const { stats, loading, refresh: refreshStats } = useProfessionalServiceStats({
     serviceId,
@@ -96,7 +96,7 @@ export function VendorBusinessDashboard({
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-foreground">{businessName}</h1>
             <p className="text-sm text-muted-foreground">
-              {serviceTypeName || 'Gérez votre activité'}
+              {serviceTypeName || 'GÃ©rez votre activitÃ©'}
             </p>
           </div>
         </div>
@@ -118,7 +118,7 @@ export function VendorBusinessDashboard({
           <Clock className="w-4 h-4 text-amber-600" />
           <AlertTitle className="text-amber-900 dark:text-amber-100">Service en cours de validation</AlertTitle>
           <AlertDescription className="text-amber-800 dark:text-amber-200">
-            Votre service est en attente de validation par notre équipe.
+            Votre service est en attente de validation par notre Ã©quipe.
           </AlertDescription>
         </Alert>
       )}
@@ -126,7 +126,7 @@ export function VendorBusinessDashboard({
       {professionalService?.verification_status === 'rejected' && (
         <Alert variant="destructive">
           <XCircle className="w-4 h-4" />
-          <AlertTitle>Service rejeté</AlertTitle>
+          <AlertTitle>Service rejetÃ©</AlertTitle>
           <AlertDescription>Contactez le support pour plus d'informations.</AlertDescription>
         </Alert>
       )}
@@ -142,7 +142,7 @@ export function VendorBusinessDashboard({
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-2">Bienvenue dans votre espace {serviceTypeName || 'professionnel'} !</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Ce service est nouveau. Commencez à ajouter du contenu pour voir vos statistiques.
+                  Ce service est nouveau. Commencez Ã  ajouter du contenu pour voir vos statistiques.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Button variant="outline" className="gap-2 justify-start" onClick={() => navigate('/vendeur/products/new')}>
@@ -193,7 +193,7 @@ export function VendorBusinessDashboard({
               <Package className="w-5 h-5 text-muted-foreground" />
             </div>
             <div className="text-2xl md:text-3xl font-bold text-foreground">{stats?.productsCount || 0}</div>
-            <span className="text-xs text-green-600">{stats?.productsCount || 0} actifs</span>
+            <span className="text-xs text-primary-orange-600">{stats?.productsCount || 0} actifs</span>
           </CardContent>
         </Card>
 
@@ -206,8 +206,8 @@ export function VendorBusinessDashboard({
             <div className="text-2xl md:text-3xl font-bold text-foreground">{stats?.customersCount || 0}</div>
             {(stats?.newCustomersThisMonth || 0) > 0 && (
               <div className="flex items-center gap-1 mt-1">
-                <ArrowUpRight className="w-3 h-3 text-green-500" />
-                <span className="text-xs text-green-600">+{stats?.newCustomersThisMonth} ce mois</span>
+                <ArrowUpRight className="w-3 h-3 text-primary-orange-500" />
+                <span className="text-xs text-primary-orange-600">+{stats?.newCustomersThisMonth} ce mois</span>
               </div>
             )}
           </CardContent>
@@ -234,11 +234,11 @@ export function VendorBusinessDashboard({
           </TabsTrigger>
           <TabsTrigger value="orders" className="text-xs md:text-sm py-2 gap-1 md:gap-2">
             <ShoppingBag className="w-4 h-4 hidden md:block" />
-            Activité
+            ActivitÃ©
           </TabsTrigger>
           <TabsTrigger value="products" className="text-xs md:text-sm py-2 gap-1 md:gap-2">
             <Package className="w-4 h-4 hidden md:block" />
-            Détails
+            DÃ©tails
           </TabsTrigger>
         </TabsList>
 
@@ -248,12 +248,12 @@ export function VendorBusinessDashboard({
               <CardHeader className="pb-3">
                 <CardTitle className="text-base md:text-lg flex items-center gap-2">
                   <DollarSign className="w-5 h-5" />
-                  Résumé des ventes
+                  RÃ©sumÃ© des ventes
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                  <span className="text-sm font-medium">Total général</span>
+                  <span className="text-sm font-medium">Total gÃ©nÃ©ral</span>
                   <span className="font-bold text-primary">{formatCurrency(stats?.revenue || 0)}</span>
                 </div>
                 
@@ -267,7 +267,7 @@ export function VendorBusinessDashboard({
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <div className="flex items-center gap-1 mb-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <div className="w-2 h-2 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" />
                       <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Livraison</span>
                     </div>
                     <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatCurrency(stats?.revenueOnline || 0)}</div>
@@ -289,7 +289,7 @@ export function VendorBusinessDashboard({
               <CardHeader className="pb-3">
                 <CardTitle className="text-base md:text-lg flex items-center gap-2">
                   <ShoppingCart className="w-5 h-5" />
-                  État des commandes
+                  Ã‰tat des commandes
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -303,7 +303,7 @@ export function VendorBusinessDashboard({
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-center">
                     <div className="flex items-center justify-center gap-1 mb-1">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <div className="w-2 h-2 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" />
                       <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Livraison</span>
                     </div>
                     <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats?.ordersOnline || 0}</div>
@@ -332,7 +332,7 @@ export function VendorBusinessDashboard({
             <CardContent className="p-6">
               <div className="text-center py-8 text-muted-foreground">
                 <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Les commandes récentes apparaîtront ici</p>
+                <p>Les commandes rÃ©centes apparaÃ®tront ici</p>
               </div>
             </CardContent>
           </Card>
@@ -343,7 +343,7 @@ export function VendorBusinessDashboard({
             <CardContent className="p-6">
               <div className="text-center py-8 text-muted-foreground">
                 <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Les détails de vos produits/services apparaîtront ici</p>
+                <p>Les dÃ©tails de vos produits/services apparaÃ®tront ici</p>
               </div>
             </CardContent>
           </Card>

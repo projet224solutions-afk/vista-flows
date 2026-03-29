@@ -21,19 +21,19 @@ import {
 } from 'lucide-react';
 
 const reportTypes = [
-  { value: 'sales', label: 'Ventes', icon: ShoppingBag, color: 'text-green-500' },
+  { value: 'sales', label: 'Ventes', icon: ShoppingBag, color: 'text-primary-orange-500' },
   { value: 'inventory', label: 'Inventaire', icon: FileSpreadsheet, color: 'text-blue-500' },
   { value: 'finance', label: 'Finance', icon: DollarSign, color: 'text-yellow-500' },
   { value: 'customers', label: 'Clients', icon: Users, color: 'text-purple-500' },
   { value: 'performance', label: 'Performance', icon: TrendingUp, color: 'text-orange-500' },
-  { value: 'custom', label: 'Personnalisé', icon: BarChart3, color: 'text-gray-500' }
+  { value: 'custom', label: 'PersonnalisÃ©', icon: BarChart3, color: 'text-gray-500' }
 ];
 
 const exportFormats = [
-  { value: 'pdf', label: 'PDF', icon: '📄' },
-  { value: 'excel', label: 'Excel', icon: '📊' },
-  { value: 'csv', label: 'CSV', icon: '📋' },
-  { value: 'json', label: 'JSON', icon: '🔗' }
+  { value: 'pdf', label: 'PDF', icon: 'ðŸ“„' },
+  { value: 'excel', label: 'Excel', icon: 'ðŸ“Š' },
+  { value: 'csv', label: 'CSV', icon: 'ðŸ“‹' },
+  { value: 'json', label: 'JSON', icon: 'ðŸ”—' }
 ];
 
 export function CustomReportBuilder() {
@@ -56,7 +56,7 @@ export function CustomReportBuilder() {
     try {
       setGenerating(true);
 
-      // Créer le template d'abord
+      // CrÃ©er le template d'abord
       const { data: templateData, error: templateError } = await supabase
         .from('custom_report_templates' as any)
         .insert({
@@ -68,13 +68,13 @@ export function CustomReportBuilder() {
 
       if (templateError) throw templateError;
 
-      // Générer le rapport
+      // GÃ©nÃ©rer le rapport
       const { error: reportError } = await supabase
         .from('generated_reports' as any)
         .insert({
           template_id: (templateData as any).id,
           user_id: user.id,
-          report_data: { message: 'Rapport généré avec succès' },
+          report_data: { message: 'Rapport gÃ©nÃ©rÃ© avec succÃ¨s' },
           format,
           generated_at: new Date().toISOString()
         });
@@ -82,14 +82,14 @@ export function CustomReportBuilder() {
       if (reportError) throw reportError;
 
       toast({
-        title: 'Rapport généré',
-        description: `Votre rapport ${format.toUpperCase()} est prêt`,
+        title: 'Rapport gÃ©nÃ©rÃ©',
+        description: `Votre rapport ${format.toUpperCase()} est prÃªt`,
       });
     } catch (error) {
-      console.error('Erreur génération rapport:', error);
+      console.error('Erreur gÃ©nÃ©ration rapport:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de générer le rapport',
+        description: 'Impossible de gÃ©nÃ©rer le rapport',
         variant: 'destructive'
       });
     } finally {
@@ -101,8 +101,8 @@ export function CustomReportBuilder() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Générateur de Rapports Personnalisés</h2>
-          <p className="text-muted-foreground">Créez des rapports sur mesure pour votre activité</p>
+          <h2 className="text-2xl font-bold">GÃ©nÃ©rateur de Rapports PersonnalisÃ©s</h2>
+          <p className="text-muted-foreground">CrÃ©ez des rapports sur mesure pour votre activitÃ©</p>
         </div>
         <Badge className="bg-gradient-to-r from-primary to-primary-glow">
           Premium Feature
@@ -129,7 +129,7 @@ export function CustomReportBuilder() {
               <Textarea
                 value={template.description}
                 onChange={(e) => setTemplate({ ...template, description: e.target.value })}
-                placeholder="Décrivez l'objectif de ce rapport"
+                placeholder="DÃ©crivez l'objectif de ce rapport"
                 rows={3}
               />
             </div>
@@ -207,22 +207,22 @@ export function CustomReportBuilder() {
 
             <div className="pt-4 border-t">
               <p className="text-xs text-muted-foreground">
-                💡 Les rapports générés seront disponibles pendant 30 jours
+                ðŸ’¡ Les rapports gÃ©nÃ©rÃ©s seront disponibles pendant 30 jours
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Preview des données */}
+      {/* Preview des donnÃ©es */}
       <Card>
         <CardHeader>
-          <CardTitle>Aperçu des Données</CardTitle>
+          <CardTitle>AperÃ§u des DonnÃ©es</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-12 text-muted-foreground">
             <BarChart3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p>Sélectionnez les sources de données pour voir un aperçu</p>
+            <p>SÃ©lectionnez les sources de donnÃ©es pour voir un aperÃ§u</p>
           </div>
         </CardContent>
       </Card>

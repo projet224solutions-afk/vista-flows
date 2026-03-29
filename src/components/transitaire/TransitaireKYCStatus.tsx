@@ -1,6 +1,6 @@
 /**
  * Badge de statut KYC pour les Transitaires Internationaux
- * Affiche le statut de vérification du transitaire
+ * Affiche le statut de vÃ©rification du transitaire
  */
 
 import { Badge } from '@/components/ui/badge';
@@ -20,21 +20,21 @@ export function TransitaireKYCStatus({
   const navigate = useNavigate();
 
   const handleVerifyClick = () => {
-    // Navigate vers la page de vérification KYC du transitaire
+    // Navigate vers la page de vÃ©rification KYC du transitaire
     navigate('/transitaire/settings?tab=kyc');
   };
 
-  // verified - Transitaire vérifié
+  // verified - Transitaire vÃ©rifiÃ©
   if (status === 'verified') {
     return (
-      <Badge className={`bg-green-500 hover:bg-green-600 text-white gap-1 ${className}`}>
+      <Badge className={`bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600 text-white gap-1 ${className}`}>
         <ShieldCheck className="w-3 h-3" />
-        Transitaire certifié
+        Transitaire certifiÃ©
       </Badge>
     );
   }
 
-  // pending - Vérification en cours
+  // pending - VÃ©rification en cours
   if (status === 'pending') {
     return (
       <Badge className={`bg-yellow-500 hover:bg-yellow-600 text-white gap-1 ${className}`}>
@@ -44,13 +44,13 @@ export function TransitaireKYCStatus({
     );
   }
 
-  // rejected - Vérification rejetée
+  // rejected - VÃ©rification rejetÃ©e
   if (status === 'rejected') {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <Badge className="bg-red-500 hover:bg-red-600 text-white gap-1">
           <ShieldAlert className="w-3 h-3" />
-          Certification rejetée
+          Certification rejetÃ©e
         </Badge>
         <Button
           size="sm"
@@ -58,18 +58,18 @@ export function TransitaireKYCStatus({
           onClick={handleVerifyClick}
           className="text-xs h-7"
         >
-          Réessayer
+          RÃ©essayer
         </Button>
       </div>
     );
   }
 
-  // unverified - Par défaut, non vérifié
+  // unverified - Par dÃ©faut, non vÃ©rifiÃ©
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Badge variant="destructive" className="gap-1">
         <ShieldAlert className="w-3 h-3" />
-        Transitaire non certifié
+        Transitaire non certifiÃ©
       </Badge>
       <Button
         size="sm"

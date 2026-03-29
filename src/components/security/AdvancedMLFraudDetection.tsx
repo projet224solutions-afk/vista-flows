@@ -1,7 +1,7 @@
 /**
- * DÉTECTION DE FRAUDE ML AVANCÉE
- * Intelligence artificielle et Machine Learning pour détecter les fraudes
- * Comparable aux systèmes d'Amazon et Alibaba
+ * DÃ‰TECTION DE FRAUDE ML AVANCÃ‰E
+ * Intelligence artificielle et Machine Learning pour dÃ©tecter les fraudes
+ * Comparable aux systÃ¨mes d'Amazon et Alibaba
  */
 
 import { useState, useEffect } from 'react';
@@ -60,7 +60,7 @@ export function AdvancedMLFraudDetection() {
       if (patternsRes.data) setPatterns(patternsRes.data);
     } catch (error) {
       console.error('Error loading ML data:', error);
-      toast.error('Erreur chargement données ML');
+      toast.error('Erreur chargement donnÃ©es ML');
     } finally {
       setLoading(false);
     }
@@ -72,14 +72,14 @@ export function AdvancedMLFraudDetection() {
 
   const handleRefresh = () => {
     loadMLData();
-    toast.success('Données ML actualisées');
+    toast.success('DonnÃ©es ML actualisÃ©es');
   };
 
   const getModelTypeIcon = (type: string) => {
     switch (type) {
       case 'neural_network': return <Brain className="w-5 h-5 text-purple-500" />;
       case 'anomaly_detection': return <Target className="w-5 h-5 text-blue-500" />;
-      case 'classification': return <BarChart3 className="w-5 h-5 text-green-500" />;
+      case 'classification': return <BarChart3 className="w-5 h-5 text-primary-orange-500" />;
       default: return <Activity className="w-5 h-5 text-gray-500" />;
     }
   };
@@ -90,7 +90,7 @@ export function AdvancedMLFraudDetection() {
       case 'geographic': return 'bg-blue-500';
       case 'amount': return 'bg-yellow-500';
       case 'behavior': return 'bg-purple-500';
-      case 'temporal': return 'bg-green-500';
+      case 'temporal': return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
       default: return 'bg-gray-500';
     }
   };
@@ -99,7 +99,7 @@ export function AdvancedMLFraudDetection() {
     if (score >= 80) return 'text-red-600';
     if (score >= 60) return 'text-orange-500';
     if (score >= 40) return 'text-yellow-500';
-    return 'text-green-500';
+    return 'text-primary-orange-500';
   };
 
   const totalPredictions = models.reduce((sum, m) => sum + Number(m.total_predictions), 0);
@@ -118,10 +118,10 @@ export function AdvancedMLFraudDetection() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Brain className="w-6 h-6 text-primary" />
-                Détection de Fraude ML Avancée
+                DÃ©tection de Fraude ML AvancÃ©e
               </CardTitle>
               <CardDescription>
-                Intelligence artificielle prédictive comparable à Amazon/Alibaba
+                Intelligence artificielle prÃ©dictive comparable Ã  Amazon/Alibaba
               </CardDescription>
             </div>
             <Button 
@@ -138,18 +138,18 @@ export function AdvancedMLFraudDetection() {
           <div className="p-4 rounded-lg border bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
             <div className="flex items-center gap-2 mb-2">
               <Zap className="w-5 h-5 text-purple-600" />
-              <span className="font-semibold">Système ML Actif - Analyse en temps réel</span>
+              <span className="font-semibold">SystÃ¨me ML Actif - Analyse en temps rÃ©el</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {models.filter(m => m.status === 'active').length} modèles actifs • 
-              {totalPredictions.toLocaleString()} prédictions • 
-              Précision moyenne: {avgAccuracy.toFixed(1)}%
+              {models.filter(m => m.status === 'active').length} modÃ¨les actifs â€¢ 
+              {totalPredictions.toLocaleString()} prÃ©dictions â€¢ 
+              PrÃ©cision moyenne: {avgAccuracy.toFixed(1)}%
             </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Métriques ML */}
+      {/* MÃ©triques ML */}
       <ResponsiveGrid mobileCols={2} tabletCols={4} desktopCols={4} gap="md">
         <Card>
           <CardContent className="pt-6">
@@ -157,7 +157,7 @@ export function AdvancedMLFraudDetection() {
               <Activity className="w-8 h-8 text-blue-500" />
               <div>
                 <div className="text-2xl font-bold">{totalPredictions.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground">Transactions analysées</div>
+                <div className="text-xs text-muted-foreground">Transactions analysÃ©es</div>
               </div>
             </div>
           </CardContent>
@@ -165,10 +165,10 @@ export function AdvancedMLFraudDetection() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Target className="w-8 h-8 text-green-500" />
+              <Target className="w-8 h-8 text-primary-orange-500" />
               <div>
                 <div className="text-2xl font-bold">{avgAccuracy.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground">Précision moyenne</div>
+                <div className="text-xs text-muted-foreground">PrÃ©cision moyenne</div>
               </div>
             </div>
           </CardContent>
@@ -179,7 +179,7 @@ export function AdvancedMLFraudDetection() {
               <AlertTriangle className="w-8 h-8 text-red-500" />
               <div>
                 <div className="text-2xl font-bold">{highRiskPatterns}</div>
-                <div className="text-xs text-muted-foreground">Patterns à haut risque</div>
+                <div className="text-xs text-muted-foreground">Patterns Ã  haut risque</div>
               </div>
             </div>
           </CardContent>
@@ -197,15 +197,15 @@ export function AdvancedMLFraudDetection() {
         </Card>
       </ResponsiveGrid>
 
-      {/* Modèles ML */}
+      {/* ModÃ¨les ML */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="w-5 h-5" />
-            Modèles de Machine Learning
+            ModÃ¨les de Machine Learning
           </CardTitle>
           <CardDescription>
-            Algorithmes avancés pour la détection de fraude en temps réel
+            Algorithmes avancÃ©s pour la dÃ©tection de fraude en temps rÃ©el
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -218,19 +218,19 @@ export function AdvancedMLFraudDetection() {
                     <div>
                       <h4 className="font-semibold">{model.model_name}</h4>
                       <p className="text-sm text-muted-foreground">
-                        Version {model.model_version} • {model.model_type.replace('_', ' ')}
+                        Version {model.model_version} â€¢ {model.model_type.replace('_', ' ')}
                       </p>
                     </div>
                   </div>
-                  <Badge className={model.status === 'active' ? 'bg-green-500' : 'bg-gray-500'}>
+                  <Badge className={model.status === 'active' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-gray-500'}>
                     {model.status === 'active' ? 'Actif' : model.status}
                   </Badge>
                 </div>
 
                 <div className="grid grid-cols-4 gap-4 text-center">
                   <div className="p-2 bg-muted rounded">
-                    <div className="text-lg font-bold text-green-600">{model.accuracy}%</div>
-                    <div className="text-xs text-muted-foreground">Précision</div>
+                    <div className="text-lg font-bold text-primary-orange-600">{model.accuracy}%</div>
+                    <div className="text-xs text-muted-foreground">PrÃ©cision</div>
                   </div>
                   <div className="p-2 bg-muted rounded">
                     <div className="text-lg font-bold text-blue-600">{model.precision_score}%</div>
@@ -247,7 +247,7 @@ export function AdvancedMLFraudDetection() {
                 </div>
 
                 <div>
-                  <div className="text-xs text-muted-foreground mb-2">Features utilisées:</div>
+                  <div className="text-xs text-muted-foreground mb-2">Features utilisÃ©es:</div>
                   <div className="flex flex-wrap gap-1">
                     {model.features_used?.slice(0, 5).map((feature, i) => (
                       <Badge key={i} variant="outline" className="text-xs">
@@ -263,7 +263,7 @@ export function AdvancedMLFraudDetection() {
                 </div>
 
                 <div className="text-sm text-muted-foreground">
-                  {Number(model.total_predictions).toLocaleString()} prédictions effectuées
+                  {Number(model.total_predictions).toLocaleString()} prÃ©dictions effectuÃ©es
                 </div>
               </div>
             ))}
@@ -271,15 +271,15 @@ export function AdvancedMLFraudDetection() {
         </CardContent>
       </Card>
 
-      {/* Patterns de fraude détectés */}
+      {/* Patterns de fraude dÃ©tectÃ©s */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
-            Patterns de Fraude Détectés
+            Patterns de Fraude DÃ©tectÃ©s
           </CardTitle>
           <CardDescription>
-            Comportements suspects identifiés par les modèles ML
+            Comportements suspects identifiÃ©s par les modÃ¨les ML
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -307,7 +307,7 @@ export function AdvancedMLFraudDetection() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Confiance du modèle</span>
+                      <span>Confiance du modÃ¨le</span>
                       <span className="font-medium">{pattern.confidence}%</span>
                     </div>
                     <Progress value={pattern.confidence} className="h-2" />

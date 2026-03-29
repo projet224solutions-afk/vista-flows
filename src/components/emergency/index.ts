@@ -143,7 +143,7 @@ export function getStatusColor(status: string): string {
     case 'in_progress':
       return 'bg-orange-500';
     case 'resolved':
-      return 'bg-green-500';
+      return 'bg-gradient-to-r from-primary-blue-500 to-primary-orange-500';
     case 'false_alert':
       return 'bg-gray-500';
     default:

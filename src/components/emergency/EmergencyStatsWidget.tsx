@@ -89,7 +89,7 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-full ${
-                hasActiveAlerts ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-green-100 text-green-600'
+                hasActiveAlerts ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-primary-orange-100 text-primary-orange-600'
               }`}>
                 <AlertTriangle className="h-5 w-5" />
               </div>
@@ -134,7 +134,7 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
               <Activity className="h-4 w-4" />
               <span className="text-sm">Alertes Actives</span>
             </div>
-            <p className={`text-3xl font-bold ${hasActiveAlerts ? 'text-red-600 animate-pulse' : 'text-green-600'}`}>
+            <p className={`text-3xl font-bold ${hasActiveAlerts ? 'text-red-600 animate-pulse' : 'text-primary-orange-600'}`}>
               {stats.active_alerts || 0}
             </p>
           </div>
@@ -144,7 +144,7 @@ export const EmergencyStatsWidget: React.FC<EmergencyStatsWidgetProps> = ({
               <CheckCircle className="h-4 w-4" />
               <span className="text-sm">Résolues Aujourd'hui</span>
             </div>
-            <p className="text-3xl font-bold text-green-600">
+            <p className="text-3xl font-bold text-primary-orange-600">
               {stats.resolved_alerts || 0}
             </p>
           </div>

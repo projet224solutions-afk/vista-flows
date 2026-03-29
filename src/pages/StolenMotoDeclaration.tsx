@@ -1,7 +1,7 @@
 /**
- * PAGE DÉCLARATION DE MOTO VOLÉE
- * Page dédiée pour la déclaration officielle de vol de moto
- * 224Solutions - Système de Sécurité
+ * PAGE DÃ‰CLARATION DE MOTO VOLÃ‰E
+ * Page dÃ©diÃ©e pour la dÃ©claration officielle de vol de moto
+ * 224Solutions - SystÃ¨me de SÃ©curitÃ©
  */
 
 import { useState, useEffect } from 'react';
@@ -73,19 +73,19 @@ export default function StolenMotoDeclaration() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  // États de recherche
+  // Ã‰tats de recherche
   const [searchId, setSearchId] = useState(searchParams.get('id') || '');
   const [searchPlate, setSearchPlate] = useState(searchParams.get('plate') || '');
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   
-  // Données trouvées
+  // DonnÃ©es trouvÃ©es
   const [vehicle, setVehicle] = useState<VehicleData | null>(null);
   const [member, setMember] = useState<MemberData | null>(null);
   const [bureau, setBureau] = useState<BureauData | null>(null);
   const [verified, setVerified] = useState(false);
   
-  // Formulaire de déclaration
+  // Formulaire de dÃ©claration
   const [confirmStolen, setConfirmStolen] = useState(false);
   const [stolenLocation, setStolenLocation] = useState('');
   const [stolenDate, setStolenDate] = useState('');
@@ -93,11 +93,11 @@ export default function StolenMotoDeclaration() {
   const [additionalNotes, setAdditionalNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   
-  // Bureau connecté
+  // Bureau connectÃ©
   const [currentBureauId, setCurrentBureauId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Récupérer le bureau connecté depuis localStorage/sessionStorage
+    // RÃ©cupÃ©rer le bureau connectÃ© depuis localStorage/sessionStorage
     const bureauSession = localStorage.getItem('bureauSession') || sessionStorage.getItem('bureauSession');
     if (bureauSession) {
       try {
@@ -108,7 +108,7 @@ export default function StolenMotoDeclaration() {
       }
     }
 
-    // Si des paramètres sont passés, lancer la recherche automatiquement
+    // Si des paramÃ¨tres sont passÃ©s, lancer la recherche automatiquement
     if (searchParams.get('id') && searchParams.get('plate')) {
       handleSearch();
     }
@@ -116,7 +116,7 @@ export default function StolenMotoDeclaration() {
 
   const handleSearch = async () => {
     if (!searchId.trim() && !searchPlate.trim()) {
-      toast.error('Veuillez entrer un ID ou un numéro de plaque');
+      toast.error('Veuillez entrer un ID ou un numÃ©ro de plaque');
       return;
     }
 
@@ -128,13 +128,13 @@ export default function StolenMotoDeclaration() {
     setVerified(false);
 
     try {
-      // Recherche du véhicule
+      // Recherche du vÃ©hicule
       let query = supabase
         .from('vehicles')
         .select('*');
 
       if (searchId.trim() && searchPlate.trim()) {
-        // Recherche avec les deux critères (plus précis)
+        // Recherche avec les deux critÃ¨res (plus prÃ©cis)
         query = query
           .or(`serial_number.ilike.%${searchId.trim()}%,id.eq.${searchId.trim().length === 36 ? searchId.trim() : '00000000-0000-0000-0000-000000000000'}`)
           .ilike('license_plate', `%${searchPlate.trim()}%`);
@@ -149,21 +149,21 @@ export default function StolenMotoDeclaration() {
       if (vehicleError) throw vehicleError;
 
       if (!vehicles || vehicles.length === 0) {
-        setSearchError('❌ Moto introuvable ou informations incorrectes');
+        setSearchError('âŒ Moto introuvable ou informations incorrectes');
         return;
       }
 
       const foundVehicle = vehicles[0] as VehicleData;
       
-      // Vérifier si déjà volée
+      // VÃ©rifier si dÃ©jÃ  volÃ©e
       if (foundVehicle.stolen_status === 'stolen') {
-        setSearchError('⚠️ Cette moto est déjà déclarée comme volée');
+        setSearchError('âš ï¸ Cette moto est dÃ©jÃ  dÃ©clarÃ©e comme volÃ©e');
         return;
       }
 
       setVehicle(foundVehicle);
 
-      // Charger les informations du propriétaire (maintenant depuis syndicate_workers)
+      // Charger les informations du propriÃ©taire (maintenant depuis syndicate_workers)
       if (foundVehicle.owner_member_id) {
         const { data: workerData } = await supabase
           .from('syndicate_workers')
@@ -196,7 +196,7 @@ export default function StolenMotoDeclaration() {
       }
 
       setVerified(true);
-      toast.success('Moto trouvée et vérifiée');
+      toast.success('Moto trouvÃ©e et vÃ©rifiÃ©e');
 
     } catch (error: any) {
       console.error('Erreur recherche:', error);
@@ -208,12 +208,12 @@ export default function StolenMotoDeclaration() {
 
   const handleSubmitDeclaration = async () => {
     if (!vehicle) {
-      toast.error('Aucune moto sélectionnée');
+      toast.error('Aucune moto sÃ©lectionnÃ©e');
       return;
     }
 
     if (!confirmStolen) {
-      toast.error('Vous devez confirmer que cette moto est réellement volée');
+      toast.error('Vous devez confirmer que cette moto est rÃ©ellement volÃ©e');
       return;
     }
 
@@ -226,9 +226,9 @@ export default function StolenMotoDeclaration() {
 
     try {
       // Construire la raison avec toutes les informations
-      const reason = `Déclaration officielle de vol. Lieu: ${stolenLocation}${stolenDate ? `. Date: ${stolenDate}` : ''}${stolenTime ? ` à ${stolenTime}` : ''}${additionalNotes ? `. Notes: ${additionalNotes}` : ''}`;
+      const reason = `DÃ©claration officielle de vol. Lieu: ${stolenLocation}${stolenDate ? `. Date: ${stolenDate}` : ''}${stolenTime ? ` Ã  ${stolenTime}` : ''}${additionalNotes ? `. Notes: ${additionalNotes}` : ''}`;
 
-      // Appeler la fonction RPC pour déclarer le vol
+      // Appeler la fonction RPC pour dÃ©clarer le vol
       const { data, error } = await supabase.rpc('declare_vehicle_stolen', {
         p_vehicle_id: vehicle.id,
         p_bureau_id: currentBureauId || vehicle.bureau_id,
@@ -244,22 +244,22 @@ export default function StolenMotoDeclaration() {
       const result = data as { success: boolean; error?: string; message?: string };
 
       if (result.success) {
-        toast.success('🚨 MOTO DÉCLARÉE VOLÉE', {
-          description: `Plaque: ${vehicle.license_plate} - Blocage global activé. Tous les bureaux sont alertés.`,
+        toast.success('ðŸš¨ MOTO DÃ‰CLARÃ‰E VOLÃ‰E', {
+          description: `Plaque: ${vehicle.license_plate} - Blocage global activÃ©. Tous les bureaux sont alertÃ©s.`,
           duration: 10000
         });
 
-        // Rediriger vers la page de sécurité
+        // Rediriger vers la page de sÃ©curitÃ©
         setTimeout(() => {
           navigate(-1);
         }, 2000);
       } else {
-        throw new Error(result.error || 'Erreur lors de la déclaration');
+        throw new Error(result.error || 'Erreur lors de la dÃ©claration');
       }
 
     } catch (error: any) {
-      console.error('Erreur déclaration vol:', error);
-      toast.error(error.message || 'Erreur lors de la déclaration du vol');
+      console.error('Erreur dÃ©claration vol:', error);
+      toast.error(error.message || 'Erreur lors de la dÃ©claration du vol');
     } finally {
       setSubmitting(false);
     }
@@ -281,10 +281,10 @@ export default function StolenMotoDeclaration() {
           <div className="flex-1">
             <h1 className="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2">
               <ShieldAlert className="w-8 h-8 text-red-600" />
-              Déclaration de Moto Volée
+              DÃ©claration de Moto VolÃ©e
             </h1>
             <p className="text-slate-600 text-sm mt-1">
-              224Solutions - Système de Sécurité Officiel
+              224Solutions - SystÃ¨me de SÃ©curitÃ© Officiel
             </p>
           </div>
         </div>
@@ -292,10 +292,10 @@ export default function StolenMotoDeclaration() {
         {/* Alerte d'avertissement */}
         <Alert className="border-red-300 bg-red-50">
           <AlertTriangle className="h-5 w-5 text-red-600" />
-          <AlertTitle className="text-red-800">Action Irréversible</AlertTitle>
+          <AlertTitle className="text-red-800">Action IrrÃ©versible</AlertTitle>
           <AlertDescription className="text-red-700">
-            La déclaration de vol entraîne le blocage immédiat et global de la moto. 
-            Cette action sera enregistrée et notifiée à tous les bureaux syndicats.
+            La dÃ©claration de vol entraÃ®ne le blocage immÃ©diat et global de la moto. 
+            Cette action sera enregistrÃ©e et notifiÃ©e Ã  tous les bureaux syndicats.
           </AlertDescription>
         </Alert>
 
@@ -304,17 +304,17 @@ export default function StolenMotoDeclaration() {
           <CardHeader className="bg-gradient-to-r from-slate-100 to-slate-50 border-b">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Search className="w-5 h-5 text-blue-600" />
-              SECTION 1 — Identification de la Moto
+              SECTION 1 â€” Identification de la Moto
             </CardTitle>
             <CardDescription>
-              Entrez l'ID et/ou le numéro de plaque pour vérifier la moto
+              Entrez l'ID et/ou le numÃ©ro de plaque pour vÃ©rifier la moto
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="searchId" className="font-medium">
-                  ID de la moto / N° Série
+                  ID de la moto / NÂ° SÃ©rie
                 </Label>
                 <Input
                   id="searchId"
@@ -326,7 +326,7 @@ export default function StolenMotoDeclaration() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="searchPlate" className="font-medium">
-                  Numéro de Plaque
+                  NumÃ©ro de Plaque
                 </Label>
                 <Input
                   id="searchPlate"
@@ -351,7 +351,7 @@ export default function StolenMotoDeclaration() {
               ) : (
                 <>
                   <Search className="w-5 h-5 mr-2" />
-                  Vérifier la Moto
+                  VÃ©rifier la Moto
                 </>
               )}
             </Button>
@@ -366,17 +366,17 @@ export default function StolenMotoDeclaration() {
           </CardContent>
         </Card>
 
-        {/* Section 2: Affichage des Informations (si vérifié) */}
+        {/* Section 2: Affichage des Informations (si vÃ©rifiÃ©) */}
         {verified && vehicle && (
           <>
-            <Card className="border-2 border-green-200 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-100 to-emerald-50 border-b">
+            <Card className="border-2 border-primary-orange-200 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-primary-blue-100 to-primary-orange-50 border-b">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    Moto Vérifiée
+                    <CheckCircle className="w-5 h-5 text-primary-orange-600" />
+                    Moto VÃ©rifiÃ©e
                   </CardTitle>
-                  <Badge className="bg-green-600 text-white">
+                  <Badge className="bg-primary-orange-600 text-white">
                     Correspondance exacte
                   </Badge>
                 </div>
@@ -386,7 +386,7 @@ export default function StolenMotoDeclaration() {
                 <div>
                   <h3 className="font-semibold text-slate-700 flex items-center gap-2 mb-4">
                     <Bike className="w-5 h-5 text-blue-600" />
-                    Informations du Véhicule
+                    Informations du VÃ©hicule
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg">
                     <div>
@@ -394,7 +394,7 @@ export default function StolenMotoDeclaration() {
                       <p className="font-medium text-slate-800">{vehicle.brand || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Modèle</p>
+                      <p className="text-xs text-slate-500">ModÃ¨le</p>
                       <p className="font-medium text-slate-800">{vehicle.model || 'N/A'}</p>
                     </div>
                     <div>
@@ -402,7 +402,7 @@ export default function StolenMotoDeclaration() {
                       <p className="font-medium text-slate-800">{vehicle.color || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">N° Série</p>
+                      <p className="text-xs text-slate-500">NÂ° SÃ©rie</p>
                       <p className="font-medium text-slate-800">{vehicle.serial_number}</p>
                     </div>
                     <div>
@@ -410,7 +410,7 @@ export default function StolenMotoDeclaration() {
                       <p className="font-semibold text-lg text-blue-700">{vehicle.license_plate}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">N° Châssis</p>
+                      <p className="text-xs text-slate-500">NÂ° ChÃ¢ssis</p>
                       <p className="font-medium text-slate-800">{vehicle.chassis_number || 'N/A'}</p>
                     </div>
                   </div>
@@ -418,7 +418,7 @@ export default function StolenMotoDeclaration() {
                     <div className="mt-4">
                       <img 
                         src={vehicle.photo_url} 
-                        alt="Photo du véhicule"
+                        alt="Photo du vÃ©hicule"
                         className="w-32 h-32 object-cover rounded-lg border-2 border-slate-200"
                       />
                     </div>
@@ -448,7 +448,7 @@ export default function StolenMotoDeclaration() {
                       )}
                       <div className="flex-1 grid grid-cols-2 gap-3">
                         <div>
-                          <p className="text-xs text-slate-500">Nom & Prénom</p>
+                          <p className="text-xs text-slate-500">Nom & PrÃ©nom</p>
                           <p className="font-medium text-slate-800">{member.name}</p>
                         </div>
                         <div>
@@ -457,7 +457,7 @@ export default function StolenMotoDeclaration() {
                         </div>
                         {member.phone && (
                           <div className="col-span-2">
-                            <p className="text-xs text-slate-500">Téléphone</p>
+                            <p className="text-xs text-slate-500">TÃ©lÃ©phone</p>
                             <p className="font-medium text-slate-800 flex items-center gap-1">
                               <Phone className="w-4 h-4" />
                               {member.phone}
@@ -475,13 +475,13 @@ export default function StolenMotoDeclaration() {
                 {bureau && (
                   <div>
                     <h3 className="font-semibold text-slate-700 flex items-center gap-2 mb-4">
-                      <Building2 className="w-5 h-5 text-emerald-600" />
+                      <Building2 className="w-5 h-5 text-primary-blue-600" />
                       Informations du Bureau Syndicat
                     </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-emerald-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 bg-primary-blue-50 p-4 rounded-lg">
                       <div>
                         <p className="text-xs text-slate-500">Code Bureau</p>
-                        <p className="font-semibold text-emerald-700">{bureau.bureau_code}</p>
+                        <p className="font-semibold text-primary-blue-700">{bureau.bureau_code}</p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-500">Zone</p>
@@ -507,10 +507,10 @@ export default function StolenMotoDeclaration() {
               <CardHeader className="bg-gradient-to-r from-red-100 to-orange-50 border-b">
                 <CardTitle className="flex items-center gap-2 text-lg text-red-800">
                   <ShieldAlert className="w-5 h-5 text-red-600" />
-                  SECTION FINALE — Confirmation du Vol
+                  SECTION FINALE â€” Confirmation du Vol
                 </CardTitle>
                 <CardDescription className="text-red-700">
-                  Remplissez les informations ci-dessous pour officialiser la déclaration
+                  Remplissez les informations ci-dessous pour officialiser la dÃ©claration
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
@@ -525,7 +525,7 @@ export default function StolenMotoDeclaration() {
                         id="stolenLocation"
                         value={stolenLocation}
                         onChange={(e) => setStolenLocation(e.target.value)}
-                        placeholder="Ex: Kipé, Conakry"
+                        placeholder="Ex: KipÃ©, Conakry"
                         className="pl-10 border-slate-300"
                         required
                       />
@@ -569,7 +569,7 @@ export default function StolenMotoDeclaration() {
                     id="additionalNotes"
                     value={additionalNotes}
                     onChange={(e) => setAdditionalNotes(e.target.value)}
-                    placeholder="Décrivez les circonstances du vol, témoins éventuels, etc."
+                    placeholder="DÃ©crivez les circonstances du vol, tÃ©moins Ã©ventuels, etc."
                     className="min-h-[100px] border-slate-300"
                   />
                 </div>
@@ -586,11 +586,11 @@ export default function StolenMotoDeclaration() {
                   />
                   <div>
                     <Label htmlFor="confirmStolen" className="font-semibold text-red-800 cursor-pointer">
-                      Je confirme que cette moto est réellement volée
+                      Je confirme que cette moto est rÃ©ellement volÃ©e
                     </Label>
                     <p className="text-sm text-red-600 mt-1">
                       En cochant cette case, je certifie que les informations fournies sont exactes 
-                      et que cette déclaration est faite de bonne foi.
+                      et que cette dÃ©claration est faite de bonne foi.
                     </p>
                   </div>
                 </div>
@@ -598,12 +598,12 @@ export default function StolenMotoDeclaration() {
                 {/* Avertissement final */}
                 <Alert className="border-orange-300 bg-orange-50">
                   <Lock className="h-5 w-5 text-orange-600" />
-                  <AlertTitle className="text-orange-800">Conséquences de la déclaration</AlertTitle>
+                  <AlertTitle className="text-orange-800">ConsÃ©quences de la dÃ©claration</AlertTitle>
                   <AlertDescription className="text-orange-700 space-y-1">
-                    <p>• La moto sera immédiatement bloquée globalement</p>
-                    <p>• Le compte du conducteur sera suspendu</p>
-                    <p>• Tous les bureaux syndicats seront alertés</p>
-                    <p>• Cette action est enregistrée avec votre identité et horodatage</p>
+                    <p>â€¢ La moto sera immÃ©diatement bloquÃ©e globalement</p>
+                    <p>â€¢ Le compte du conducteur sera suspendu</p>
+                    <p>â€¢ Tous les bureaux syndicats seront alertÃ©s</p>
+                    <p>â€¢ Cette action est enregistrÃ©e avec votre identitÃ© et horodatage</p>
                   </AlertDescription>
                 </Alert>
 
@@ -616,12 +616,12 @@ export default function StolenMotoDeclaration() {
                   {submitting ? (
                     <>
                       <Loader2 className="w-6 h-6 mr-2 animate-spin" />
-                      Déclaration en cours...
+                      DÃ©claration en cours...
                     </>
                   ) : (
                     <>
                       <ShieldAlert className="w-6 h-6 mr-2" />
-                      🚨 CONFIRMER LE VOL
+                      ðŸš¨ CONFIRMER LE VOL
                     </>
                   )}
                 </Button>

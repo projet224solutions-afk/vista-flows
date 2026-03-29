@@ -1,6 +1,6 @@
 /**
  * COMPOSANT DIAGNOSTIC - TAXI MOTO
- * Affiche l'état de la connexion Realtime et du profil conducteur
+ * Affiche l'Ã©tat de la connexion Realtime et du profil conducteur
  */
 
 import { useEffect, useState } from 'react';
@@ -24,9 +24,9 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
   useEffect(() => {
     if (!driverId || !isOnline) return;
 
-    console.log('🔬 [Diagnostic] Création channel de test');
+    console.log('ðŸ”¬ [Diagnostic] CrÃ©ation channel de test');
 
-    // Canal de test pour vérifier la connexion
+    // Canal de test pour vÃ©rifier la connexion
     const channel = supabase
       .channel(`diagnostic-${driverId}`)
       .on(
@@ -38,7 +38,7 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
           filter: `status=eq.requested`
         },
         (payload) => {
-          console.log('🔬 [Diagnostic] Événement reçu:', payload);
+          console.log('ðŸ”¬ [Diagnostic] Ã‰vÃ©nement reÃ§u:', payload);
           setLastNotification({
             timestamp: new Date().toLocaleTimeString(),
             data: payload.new
@@ -46,20 +46,20 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
         }
       )
       .subscribe((status) => {
-        console.log('🔬 [Diagnostic] Status:', status);
+        console.log('ðŸ”¬ [Diagnostic] Status:', status);
         setRealtimeStatus(status);
       });
 
     setTestChannel(channel);
 
     return () => {
-      console.log('🔬 [Diagnostic] Nettoyage');
+      console.log('ðŸ”¬ [Diagnostic] Nettoyage');
       supabase.removeChannel(channel);
     };
   }, [driverId, isOnline]);
 
   const statusColor = {
-    'SUBSCRIBED': 'bg-green-500',
+    'SUBSCRIBED': 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
     'CHANNEL_ERROR': 'bg-red-500',
     'TIMED_OUT': 'bg-orange-500',
     'CLOSED': 'bg-gray-500',
@@ -76,7 +76,7 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
     <Card className="border-dashed">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center gap-2">
-          🔬 Diagnostic Conducteur
+          ðŸ”¬ Diagnostic Conducteur
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-xs">
@@ -90,21 +90,21 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
         <div className="flex justify-between items-center">
           <span>Driver ID:</span>
           <Badge variant="outline" className="font-mono text-[10px]">
-            {driverId ? `${driverId.substring(0, 8)}...` : '❌ Non défini'}
+            {driverId ? `${driverId.substring(0, 8)}...` : 'âŒ Non dÃ©fini'}
           </Badge>
         </div>
 
         <div className="flex justify-between items-center">
           <span>En ligne:</span>
           <Badge variant={isOnline ? "default" : "secondary"}>
-            {isOnline ? '✅ OUI' : '❌ NON'}
+            {isOnline ? 'âœ… OUI' : 'âŒ NON'}
           </Badge>
         </div>
 
         <div className="flex justify-between items-center">
           <span>Abonnement:</span>
           <Badge variant={hasAccess ? "default" : "destructive"}>
-            {hasAccess ? '✅ Actif' : '❌ Inactif'}
+            {hasAccess ? 'âœ… Actif' : 'âŒ Inactif'}
           </Badge>
         </div>
 
@@ -117,14 +117,14 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
         </div>
 
         {lastNotification && (
-          <div className="mt-3 p-2 bg-green-50 dark:bg-green-950 rounded border border-green-200">
-            <div className="font-semibold text-green-700 dark:text-green-300">
-              ✅ Dernière notification:
+          <div className="mt-3 p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded border border-primary-orange-200">
+            <div className="font-semibold text-primary-orange-700 dark:text-primary-orange-300">
+              âœ… DerniÃ¨re notification:
             </div>
-            <div className="text-[10px] text-green-600 dark:text-green-400 mt-1">
+            <div className="text-[10px] text-primary-orange-600 dark:text-primary-orange-400 mt-1">
               {lastNotification.timestamp}
             </div>
-            <div className="text-[10px] text-green-600 dark:text-green-400">
+            <div className="text-[10px] text-primary-orange-600 dark:text-primary-orange-400">
               Course: {lastNotification.data?.ride_code || 'N/A'}
             </div>
           </div>
@@ -132,19 +132,19 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
 
         {realtimeStatus === 'SUBSCRIBED' && !lastNotification && (
           <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-950 rounded border border-blue-200 text-[10px] text-blue-700 dark:text-blue-300">
-            ✅ Connecté et en attente de courses
+            âœ… ConnectÃ© et en attente de courses
           </div>
         )}
 
         {realtimeStatus === 'CHANNEL_ERROR' && (
           <div className="mt-3 p-2 bg-red-50 dark:bg-red-950 rounded border border-red-200 text-[10px] text-red-700 dark:text-red-300">
-            ❌ Erreur de connexion Realtime. Rechargez la page.
+            âŒ Erreur de connexion Realtime. Rechargez la page.
           </div>
         )}
 
         {!driverId && (
           <div className="mt-3 p-2 bg-orange-50 dark:bg-orange-950 rounded border border-orange-200 text-[10px] text-orange-700 dark:text-orange-300">
-            ⚠️ Driver ID non défini. Vérifiez votre profil.
+            âš ï¸ Driver ID non dÃ©fini. VÃ©rifiez votre profil.
           </div>
         )}
       </CardContent>

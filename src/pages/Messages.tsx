@@ -101,16 +101,16 @@ export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // États pour les nouvelles fonctionnalités
+  // Ã‰tats pour les nouvelles fonctionnalitÃ©s
   const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [otherUserPresence, setOtherUserPresence] = useState<PresenceStatus>('offline');
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Hook de présence
+  // Hook de prÃ©sence
   const { setTyping, subscribeToTyping } = usePresence();
 
-  // 🟢 Hook de présence pour la liste des conversations
+  // ðŸŸ¢ Hook de prÃ©sence pour la liste des conversations
   const {
     isOnline: isContactOnline,
     getStatus: getContactStatus,
@@ -132,7 +132,7 @@ export default function Messages() {
     }
   }, [currentUser]);
 
-  // Charger les présences quand les conversations changent
+  // Charger les prÃ©sences quand les conversations changent
   useEffect(() => {
     if (conversations.length > 0) {
       const userIds = conversations.map(c => c.other_user_id);
@@ -172,12 +172,12 @@ export default function Messages() {
         },
         (payload) => {
           const newMsg = payload.new as any;
-          // Vérifier si le message concerne cette conversation
+          // VÃ©rifier si le message concerne cette conversation
           if (newMsg.sender_id === selectedConversation || newMsg.sender_id === currentUser.id) {
             // Recharger les messages pour cette conversation
             loadMessages(selectedConversation);
             
-            // Jouer le son si c'est un message reçu (pas notre propre message)
+            // Jouer le son si c'est un message reÃ§u (pas notre propre message)
             if (newMsg.sender_id !== currentUser.id) {
               playNotificationSound();
             }
@@ -191,7 +191,7 @@ export default function Messages() {
     };
   }, [selectedConversation, currentUser]);
 
-  // 🔔 Real-time subscription for unread count synchronization
+  // ðŸ”” Real-time subscription for unread count synchronization
   useEffect(() => {
     if (!currentUser) return;
 
@@ -206,7 +206,7 @@ export default function Messages() {
           filter: `recipient_id=eq.${currentUser.id}`
         },
         () => {
-          console.log('[Messages] 📩 Nouveau message reçu - rechargement conversations');
+          console.log('[Messages] ðŸ“© Nouveau message reÃ§u - rechargement conversations');
           loadConversations();
         }
       )
@@ -219,7 +219,7 @@ export default function Messages() {
           filter: `recipient_id=eq.${currentUser.id}`
         },
         () => {
-          console.log('[Messages] ✅ Message mis à jour - rechargement conversations');
+          console.log('[Messages] âœ… Message mis Ã  jour - rechargement conversations');
           loadConversations();
         }
       )
@@ -230,7 +230,7 @@ export default function Messages() {
     };
   }, [currentUser]);
 
-  // Synchroniser présence du contact sélectionné (source unique stable)
+  // Synchroniser prÃ©sence du contact sÃ©lectionnÃ© (source unique stable)
   useEffect(() => {
     if (!selectedConversation) {
       setOtherUserPresence('offline');
@@ -270,7 +270,7 @@ export default function Messages() {
     }
   }, [selectedConversation, setTyping]);
 
-  // Gérer l'indicateur de frappe lors de la saisie (throttle anti-spam)
+  // GÃ©rer l'indicateur de frappe lors de la saisie (throttle anti-spam)
   const handleTyping = useCallback(() => {
     if (!selectedConversation) return;
 
@@ -316,8 +316,8 @@ export default function Messages() {
     try {
       setLoading(true);
 
-      // ✅ Source de vérité: table messages
-      // On liste uniquement les contacts qui ont déjà échangé au moins 1 message avec l'utilisateur.
+      // âœ… Source de vÃ©ritÃ©: table messages
+      // On liste uniquement les contacts qui ont dÃ©jÃ  Ã©changÃ© au moins 1 message avec l'utilisateur.
       const { data: recentMessages, error: msgError } = await supabase
         .from('messages')
         .select('sender_id, recipient_id, content, created_at')
@@ -336,7 +336,7 @@ export default function Messages() {
         return;
       }
 
-      // Construire une liste unique de contacts (dernier message conservé)
+      // Construire une liste unique de contacts (dernier message conservÃ©)
       const conversationMap = new Map<string, { other_user_id: string; last_message: string; last_message_time: string }>();
 
       for (const msg of recentMessages as any[]) {
@@ -361,21 +361,21 @@ export default function Messages() {
             .eq('id', conv.other_user_id)
             .single();
 
-          // Vérifier si c'est un vendeur
+          // VÃ©rifier si c'est un vendeur
           const { data: vendor } = await supabase
             .from('vendors')
             .select('id, business_name, shop_slug, phone')
             .eq('user_id', conv.other_user_id)
             .maybeSingle();
 
-          // Vérifier certification
+          // VÃ©rifier certification
           const { data: cert } = await supabase
             .from('vendor_certifications')
             .select('status')
             .eq('vendor_id', conv.other_user_id)
             .maybeSingle();
 
-          // Récupérer le type de service pro (restaurant, coiffure, etc.)
+          // RÃ©cupÃ©rer le type de service pro (restaurant, coiffure, etc.)
           const { data: proService } = await supabase
             .from('professional_services')
             .select(`
@@ -393,7 +393,7 @@ export default function Messages() {
             ? (proService as any).service_type[0]
             : (proService as any)?.service_type;
 
-          // ✅ Calculer le nombre de messages non lus pour cette conversation
+          // âœ… Calculer le nombre de messages non lus pour cette conversation
           const { count: unreadCount } = await supabase
             .from('messages')
             .select('*', { count: 'exact', head: true })
@@ -430,18 +430,18 @@ export default function Messages() {
         })
       );
 
-      // ✅ Trier: messages non lus en premier (par nombre décroissant), puis par date
+      // âœ… Trier: messages non lus en premier (par nombre dÃ©croissant), puis par date
       const sortedConversations = enrichedConversations.sort((a, b) => {
         // D'abord, ceux avec des messages non lus
         if (a.unread_count > 0 && b.unread_count === 0) return -1;
         if (a.unread_count === 0 && b.unread_count > 0) return 1;
         
-        // Si les deux ont des messages non lus, trier par nombre décroissant
+        // Si les deux ont des messages non lus, trier par nombre dÃ©croissant
         if (a.unread_count > 0 && b.unread_count > 0) {
           return b.unread_count - a.unread_count;
         }
         
-        // Sinon, trier par date du dernier message (plus récent en premier)
+        // Sinon, trier par date du dernier message (plus rÃ©cent en premier)
         return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
       });
 
@@ -454,16 +454,16 @@ export default function Messages() {
     }
   };
 
-  // Charger les contacts disponibles (vendeurs) pour démarrer une nouvelle conversation
+  // Charger les contacts disponibles (vendeurs) pour dÃ©marrer une nouvelle conversation
   const loadAvailableContacts = async () => {
     if (!currentUser) return;
 
     try {
       setLoadingContacts(true);
 
-      // Les contacts disponibles sont maintenant gérés via les conversations existantes
-      // Cette fonction n'affiche plus tous les utilisateurs, seulement ceux avec qui on a déjà conversé
-      // Les nouveaux contacts sont ajoutés via la recherche d'utilisateurs
+      // Les contacts disponibles sont maintenant gÃ©rÃ©s via les conversations existantes
+      // Cette fonction n'affiche plus tous les utilisateurs, seulement ceux avec qui on a dÃ©jÃ  conversÃ©
+      // Les nouveaux contacts sont ajoutÃ©s via la recherche d'utilisateurs
       setAvailableContacts([]);
     } catch (error) {
       console.error('Erreur chargement contacts:', error);
@@ -483,15 +483,15 @@ export default function Messages() {
       setSearchingUsers(true);
       const searchTerm = query.trim();
 
-      // Échapper les caractères spéciaux pour éviter les erreurs de requête
+      // Ã‰chapper les caractÃ¨res spÃ©ciaux pour Ã©viter les erreurs de requÃªte
       const escapedTerm = searchTerm.replace(/[%_]/g, '\\$&');
       const searchPattern = `%${escapedTerm}%`;
 
-      console.log('[Messages] 🔍 Recherche utilisateurs:', { searchTerm, searchPattern });
+      console.log('[Messages] ðŸ” Recherche utilisateurs:', { searchTerm, searchPattern });
 
-      // Recherche dans profiles avec plusieurs stratégies
+      // Recherche dans profiles avec plusieurs stratÃ©gies
       // 1. Recherche par public_id exact (format VND0001, USR0001, etc.)
-      // 2. Recherche par nom/prénom/email (insensible à la casse)
+      // 2. Recherche par nom/prÃ©nom/email (insensible Ã  la casse)
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email, avatar_url, public_id, phone')
@@ -499,7 +499,7 @@ export default function Messages() {
         .or(`public_id.ilike.${searchPattern},first_name.ilike.${searchPattern},last_name.ilike.${searchPattern},email.ilike.${searchPattern},phone.ilike.${searchPattern}`)
         .limit(20);
 
-      console.log('[Messages] 📊 Résultats recherche:', { profiles: profiles?.length, error });
+      console.log('[Messages] ðŸ“Š RÃ©sultats recherche:', { profiles: profiles?.length, error });
 
       if (error) {
         console.error('Erreur recherche utilisateurs:', error);
@@ -548,7 +548,7 @@ export default function Messages() {
     }
   };
 
-  // Sélectionner un utilisateur depuis la recherche et ouvrir la conversation
+  // SÃ©lectionner un utilisateur depuis la recherche et ouvrir la conversation
   const handleSelectSearchResult = (user: any) => {
     setShowSearchDialog(false);
     setUserSearchQuery("");
@@ -561,7 +561,7 @@ export default function Messages() {
 
     try {
       // Charger les messages directement via sender_id et recipient_id
-      // Essayer d'inclure les messages de réponse (reply_to)
+      // Essayer d'inclure les messages de rÃ©ponse (reply_to)
       let query = supabase
         .from('messages')
         .select('*')
@@ -571,12 +571,12 @@ export default function Messages() {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Erreur requête messages:', error);
+        console.error('Erreur requÃªte messages:', error);
         setMessages([]);
         return;
       }
 
-      // Charger les messages de réponse séparément si reply_to_id existe
+      // Charger les messages de rÃ©ponse sÃ©parÃ©ment si reply_to_id existe
       const messagesWithReplies = await Promise.all((data || []).map(async (msg) => {
         let replyTo = null;
         if (msg.reply_to_id) {
@@ -598,13 +598,13 @@ export default function Messages() {
 
       setMessages(messagesWithReplies);
 
-      // Marquer les messages reçus comme lus immédiatement
+      // Marquer les messages reÃ§us comme lus immÃ©diatement
       const unreadMessages = messagesWithReplies.filter(
         msg => msg.sender_id === otherUserId && !msg.read_at
       );
 
       if (unreadMessages.length > 0) {
-        console.log('[Messages] 📖 Marquage de', unreadMessages.length, 'messages comme lus');
+        console.log('[Messages] ðŸ“– Marquage de', unreadMessages.length, 'messages comme lus');
 
         // Marquer tous les messages non lus de cette conversation
         const { error: readError } = await supabase
@@ -617,8 +617,8 @@ export default function Messages() {
         if (readError) {
           console.warn('[Messages] Erreur marquage lu:', readError);
         } else {
-          console.log('[Messages] ✅ Messages marqués comme lus');
-          // Recharger pour mettre à jour l'affichage
+          console.log('[Messages] âœ… Messages marquÃ©s comme lus');
+          // Recharger pour mettre Ã  jour l'affichage
           const { data: updatedData } = await supabase
             .from('messages')
             .select('*')
@@ -634,7 +634,7 @@ export default function Messages() {
             setMessages(updatedMessages);
           }
           
-          // ✅ Forcer le rechargement des conversations pour mettre à jour les badges
+          // âœ… Forcer le rechargement des conversations pour mettre Ã  jour les badges
           loadConversations();
         }
       }
@@ -649,7 +649,7 @@ export default function Messages() {
     if (!newMessage.trim() || !selectedConversation || !currentUser) return;
 
     try {
-      // Arrêter l'indicateur de frappe
+      // ArrÃªter l'indicateur de frappe
       setTyping(selectedConversation, false);
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -664,12 +664,12 @@ export default function Messages() {
         status: 'sent'
       };
 
-      // Ajouter la référence au message de réponse si présent
+      // Ajouter la rÃ©fÃ©rence au message de rÃ©ponse si prÃ©sent
       if (replyToMessage) {
         messageData.reply_to_id = replyToMessage.id;
       }
 
-      // Insérer le message directement avec sender_id et recipient_id
+      // InsÃ©rer le message directement avec sender_id et recipient_id
       const { error } = await supabase
         .from('messages')
         .insert(messageData);
@@ -677,7 +677,7 @@ export default function Messages() {
       if (error) throw error;
 
       setNewMessage("");
-      setReplyToMessage(null); // Réinitialiser la réponse
+      setReplyToMessage(null); // RÃ©initialiser la rÃ©ponse
       loadMessages(selectedConversation);
       loadConversations();
       scrollToBottom();
@@ -687,13 +687,13 @@ export default function Messages() {
     }
   };
 
-  // Gérer la réponse à un message
+  // GÃ©rer la rÃ©ponse Ã  un message
   const handleReplyToMessage = useCallback((message: Message) => {
     setReplyToMessage(message);
     inputRef.current?.focus();
   }, []);
 
-  // Annuler la réponse
+  // Annuler la rÃ©ponse
   const cancelReply = useCallback(() => {
     setReplyToMessage(null);
   }, []);
@@ -704,7 +704,7 @@ export default function Messages() {
 
     try {
       await universalCommunicationService.softDeleteMessage(messageId, currentUser.id, deleteForEveryone);
-      toast.success('Message supprimé');
+      toast.success('Message supprimÃ©');
       if (selectedConversation) {
         loadMessages(selectedConversation);
       }
@@ -724,7 +724,7 @@ export default function Messages() {
     }
 
     try {
-      // Déterminer le folder GCS basé sur le type MIME
+      // DÃ©terminer le folder GCS basÃ© sur le type MIME
       let folder: StorageFolder = 'documents';
       if (file.type.startsWith('image/')) folder = 'products';
       else if (file.type.startsWith('video/')) folder = 'videos';
@@ -739,12 +739,12 @@ export default function Messages() {
       });
 
       if (!uploadResult.success || !uploadResult.publicUrl) {
-        throw new Error(uploadResult.error || 'Upload échoué');
+        throw new Error(uploadResult.error || 'Upload Ã©chouÃ©');
       }
 
-      console.log(`[Messages] ✅ File uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
+      console.log(`[Messages] âœ… File uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
 
-      // Déterminer le type de fichier - types acceptés par la DB: text, image, file, audio, video
+      // DÃ©terminer le type de fichier - types acceptÃ©s par la DB: text, image, file, audio, video
       let fileType: 'image' | 'file' | 'audio' | 'video' = 'file';
       if (file.type.startsWith('image/')) {
         fileType = 'image';
@@ -756,7 +756,7 @@ export default function Messages() {
 
       const fileExt = (file.name.split('.').pop() || '').toLowerCase();
 
-      // Insérer message avec fichier directement
+      // InsÃ©rer message avec fichier directement
       console.log('[Messages] Inserting file message:', { 
         type: fileType, 
         fileName: file.name, 
@@ -771,7 +771,7 @@ export default function Messages() {
           {
             sender_id: currentUser.id,
             recipient_id: selectedConversation,
-            content: fileType === 'audio' ? '🎙️ Message vocal' : file.name,
+            content: fileType === 'audio' ? 'ðŸŽ™ï¸ Message vocal' : file.name,
             type: fileType,
             file_url: uploadResult.publicUrl,
             file_name: file.name,
@@ -789,7 +789,7 @@ export default function Messages() {
       loadMessages(selectedConversation);
       loadConversations();
       scrollToBottom();
-      toast.success(`Fichier envoyé via ${uploadResult.provider?.toUpperCase()}!`);
+      toast.success(`Fichier envoyÃ© via ${uploadResult.provider?.toUpperCase()}!`);
     } catch (error: any) {
       console.error('Erreur envoi fichier:', error);
       toast.error(error.message || 'Erreur lors de l\'envoi');
@@ -819,7 +819,7 @@ export default function Messages() {
 
   const selectedConvData = conversations.find(c => c.id === selectedConversation);
 
-  // Helper pour le label du rôle utilisateur
+  // Helper pour le label du rÃ´le utilisateur
   const getRoleLabel = (conv: { is_vendor?: boolean; user_role?: string | null; service_type_name?: string | null; service_type_code?: string | null }) => {
     if (conv.is_vendor) return 'Vendeur';
 
@@ -920,7 +920,7 @@ export default function Messages() {
                         className={cn(
                           "w-full p-4 flex items-center gap-3 hover:bg-accent/50 transition-all duration-200 text-left animate-in fade-in slide-in-from-left-3 border-l-4",
                           selectedConversation === contact.id && "bg-accent shadow-sm",
-                          contact.is_vendor ? "border-l-emerald-500" : "border-l-blue-500"
+                          contact.is_vendor ? "border-l-primary-blue-500" : "border-l-blue-500"
                         )}
                         style={{ animationDelay: `${index * 30}ms` }}
                       >
@@ -929,7 +929,7 @@ export default function Messages() {
                             <AvatarImage src={contact.other_user_avatar} />
                             <AvatarFallback className={cn(
                               "text-white",
-                              contact.is_vendor ? "bg-emerald-500" : "bg-blue-500"
+                              contact.is_vendor ? "bg-primary-blue-500" : "bg-blue-500"
                             )}>
                               {contact.other_user_name.substring(0, 2).toUpperCase()}
                             </AvatarFallback>
@@ -957,7 +957,7 @@ export default function Messages() {
                               className={cn(
                                 "text-xs",
                                 contact.is_vendor
-                                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                  ? "bg-primary-blue-500/10 text-primary-blue-600 border-primary-orange-500/20"
                                   : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                               )}
                             >
@@ -966,7 +966,7 @@ export default function Messages() {
                             {contact.is_certified && (
                               <Badge variant="outline" className="text-xs gap-1">
                                 <Shield className="w-3 h-3" />
-                                Certifié
+                                CertifiÃ©
                               </Badge>
                             )}
                           </div>
@@ -987,7 +987,7 @@ export default function Messages() {
                   </div>
                   <p className="text-lg font-medium text-foreground mb-2">Aucun contact</p>
                   <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                    Visitez le marketplace pour découvrir des vendeurs
+                    Visitez le marketplace pour dÃ©couvrir des vendeurs
                   </p>
                 </div>
               )}
@@ -1001,7 +1001,7 @@ export default function Messages() {
                   className={cn(
                     "w-full p-4 flex items-center gap-3 hover:bg-accent/50 transition-all duration-200 text-left animate-in fade-in slide-in-from-left-3 border-l-4",
                     selectedConversation === conv.id && "bg-accent shadow-sm",
-                    conv.is_vendor ? "border-l-emerald-500" : "border-l-blue-500"
+                    conv.is_vendor ? "border-l-primary-blue-500" : "border-l-blue-500"
                   )}
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
@@ -1010,12 +1010,12 @@ export default function Messages() {
                       <AvatarImage src={conv.other_user_avatar} />
                       <AvatarFallback className={cn(
                         "text-white",
-                        conv.is_vendor ? "bg-emerald-500" : "bg-blue-500"
+                        conv.is_vendor ? "bg-primary-blue-500" : "bg-blue-500"
                       )}>
                         {conv.other_user_name.substring(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    {/* Indicateur de présence en ligne */}
+                    {/* Indicateur de prÃ©sence en ligne */}
                     {isContactOnline(conv.other_user_id) && (
                       <PresenceBadge 
                         status={getContactStatus(conv.other_user_id)} 
@@ -1055,11 +1055,11 @@ export default function Messages() {
                         >
                           {formatTime(conv.last_message_time)}
                         </span>
-                        {/* Statut en ligne ou dernière connexion */}
+                        {/* Statut en ligne ou derniÃ¨re connexion */}
                         <span className={cn(
                           "text-[10px]",
                           isContactOnline(conv.other_user_id) 
-                            ? "text-emerald-600 dark:text-emerald-400 font-medium" 
+                            ? "text-primary-blue-600 dark:text-primary-blue-400 font-medium" 
                             : "text-muted-foreground"
                         )}>
                           {getLastSeenText(conv.other_user_id)}
@@ -1072,7 +1072,7 @@ export default function Messages() {
                         className={cn(
                           "text-xs",
                           conv.is_vendor
-                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                            ? "bg-primary-blue-500/10 text-primary-blue-600 border-primary-orange-500/20"
                             : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                         )}
                       >
@@ -1122,7 +1122,7 @@ export default function Messages() {
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {selectedConvData?.other_user_name?.substring(0, 2).toUpperCase() || 'U'}
                   </AvatarFallback>
-                  {/* Indicateur de présence */}
+                  {/* Indicateur de prÃ©sence */}
                   <div className="absolute -bottom-0.5 -right-0.5">
                     <PresenceIndicator status={otherUserPresence} size="sm" />
                   </div>
@@ -1140,13 +1140,13 @@ export default function Messages() {
                     {selectedConvData?.is_certified && (
                       <Badge variant="default" className="gap-1 flex-shrink-0">
                         <Shield className="w-3 h-3" />
-                        Certifié
+                        CertifiÃ©
                       </Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     {selectedConvData?.is_vendor ? (
-                      <Badge variant="secondary" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                      <Badge variant="secondary" className="text-xs bg-primary-blue-500/10 text-primary-blue-600 border-primary-orange-500/20">
                         {getRoleLabel(selectedConvData)}
                       </Badge>
                     ) : (
@@ -1154,11 +1154,11 @@ export default function Messages() {
                         {getRoleLabel(selectedConvData || {})}
                       </Badge>
                     )}
-                    {/* Indicateur de présence visuel */}
+                    {/* Indicateur de prÃ©sence visuel */}
                     <div className="flex items-center gap-1.5">
                       <span className={cn(
                         "w-2 h-2 rounded-full",
-                        otherUserPresence === 'online' && "bg-green-500 animate-pulse",
+                        otherUserPresence === 'online' && "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse",
                         otherUserPresence === 'away' && "bg-yellow-500",
                         otherUserPresence === 'busy' && "bg-red-500",
                         otherUserPresence === 'in_call' && "bg-purple-500 animate-pulse",
@@ -1167,7 +1167,7 @@ export default function Messages() {
                       <span className="text-xs text-muted-foreground">
                         {otherUserPresence === 'online' && 'En ligne'}
                         {otherUserPresence === 'away' && 'Absent'}
-                        {otherUserPresence === 'busy' && 'Occupé'}
+                        {otherUserPresence === 'busy' && 'OccupÃ©'}
                         {otherUserPresence === 'in_call' && 'En appel'}
                         {otherUserPresence === 'offline' && 'Hors ligne'}
                       </span>
@@ -1190,7 +1190,7 @@ export default function Messages() {
                   size="icon"
                   className="text-muted-foreground"
                   onClick={() => setShowVideoCall(true)}
-                  title="Appel vidéo"
+                  title="Appel vidÃ©o"
                 >
                   <Video className="w-5 h-5" />
                 </Button>
@@ -1206,15 +1206,15 @@ export default function Messages() {
                       <MessageCircle className="w-8 h-8 text-primary" />
                     </div>
                     <p className="text-base font-medium text-foreground mb-1">
-                      Démarrez la conversation
+                      DÃ©marrez la conversation
                     </p>
                     <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                      Envoyez votre premier message à {selectedConvData?.other_user_name}
+                      Envoyez votre premier message Ã  {selectedConvData?.other_user_name}
                     </p>
                   </div>
                 ) : (
                   messages
-                    // Filtrer les messages supprimés pour l'utilisateur courant
+                    // Filtrer les messages supprimÃ©s pour l'utilisateur courant
                     .filter(message => {
                       const deletedFor = message.deleted_for || [];
                       return !deletedFor.includes(currentUser?.id);
@@ -1239,7 +1239,7 @@ export default function Messages() {
                           ? 'text'
                           : (message.type as any) || 'text';
 
-                      // Vérifier si le message est supprimé pour tout le monde
+                      // VÃ©rifier si le message est supprimÃ© pour tout le monde
                       if (message.deleted_at) {
                         return (
                           <div key={message.id} className={cn(
@@ -1248,7 +1248,7 @@ export default function Messages() {
                           )}>
                             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 text-muted-foreground italic text-sm">
                               <X className="w-4 h-4" />
-                              <span>Ce message a été supprimé</span>
+                              <span>Ce message a Ã©tÃ© supprimÃ©</span>
                             </div>
                           </div>
                         );
@@ -1256,7 +1256,7 @@ export default function Messages() {
 
                       return (
                         <div key={message.id} className="mb-3">
-                          {/* Afficher le message de réponse s'il existe */}
+                          {/* Afficher le message de rÃ©ponse s'il existe */}
                           {message.reply_to_id && message.reply_to && (
                             <div className={cn(
                               "flex mb-1",
@@ -1290,7 +1290,7 @@ export default function Messages() {
                             onReply={() => handleReplyToMessage(message)}
                             onDelete={(msgId, deleteForEveryone) => handleDeleteMessage(msgId, deleteForEveryone)}
                           />
-                          {/* Indicateur de statut pour les messages envoyés */}
+                          {/* Indicateur de statut pour les messages envoyÃ©s */}
                           {isOwnMessage && (
                             <div className="flex justify-end mt-0.5 pr-2">
                               <MessageStatusBadge
@@ -1316,7 +1316,7 @@ export default function Messages() {
               </div>
             )}
 
-            {/* Barre de réponse */}
+            {/* Barre de rÃ©ponse */}
             {replyToMessage && (
               <ReplyBar
                 message={replyToMessage as any}
@@ -1330,10 +1330,10 @@ export default function Messages() {
               onSendText={async (text) => {
                 if (!currentUser || !selectedConversation) return;
 
-                // Arrêter l'indicateur de frappe
+                // ArrÃªter l'indicateur de frappe
                 setTyping(selectedConversation, false);
 
-                // Si c'est une réponse
+                // Si c'est une rÃ©ponse
                 if (replyToMessage) {
                   await universalCommunicationService.sendReplyMessage(
                     `direct_${selectedConversation}`,
@@ -1355,7 +1355,7 @@ export default function Messages() {
               }}
               onSendFile={handleSendFile}
               disabled={!selectedConversation}
-              placeholder={replyToMessage ? "Répondre..." : "Écrivez votre message..."}
+              placeholder={replyToMessage ? "RÃ©pondre..." : "Ã‰crivez votre message..."}
               className="sticky bottom-0 z-50"
               onInputChange={handleTyping}
             />
@@ -1364,16 +1364,16 @@ export default function Messages() {
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             <div className="text-center p-8">
               <MessageCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-              <p className="font-medium">Sélectionnez une conversation</p>
+              <p className="font-medium">SÃ©lectionnez une conversation</p>
               <p className="text-sm text-muted-foreground/70 mt-1">
-                Choisissez un contact pour commencer à discuter
+                Choisissez un contact pour commencer Ã  discuter
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer navigation - caché quand le chat est ouvert sur mobile */}
+      {/* Footer navigation - cachÃ© quand le chat est ouvert sur mobile */}
       <div className={cn(showChat ? "hidden" : "block")}>
         <QuickFooter />
       </div>
@@ -1402,7 +1402,7 @@ export default function Messages() {
         <Dialog open={showVideoCall} onOpenChange={setShowVideoCall}>
           <DialogContent className="max-w-4xl max-h-[90vh]">
             <DialogHeader>
-              <DialogTitle>Appel Vidéo</DialogTitle>
+              <DialogTitle>Appel VidÃ©o</DialogTitle>
             </DialogHeader>
             <AgoraVideoCall
               channel={`video_${selectedConversation}_${currentUser?.id}`}
@@ -1430,7 +1430,7 @@ export default function Messages() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Nom, email, ID (VND0001) ou téléphone..."
+                placeholder="Nom, email, ID (VND0001) ou tÃ©lÃ©phone..."
                 value={userSearchQuery}
                 onChange={(e) => {
                   setUserSearchQuery(e.target.value);
@@ -1454,7 +1454,7 @@ export default function Messages() {
                       onClick={() => handleSelectSearchResult(user)}
                       className={cn(
                         "w-full p-3 flex items-center gap-3 hover:bg-accent/50 transition-all text-left border-l-4",
-                        user.is_vendor ? "border-l-emerald-500" : "border-l-blue-500"
+                        user.is_vendor ? "border-l-primary-blue-500" : "border-l-blue-500"
                       )}
                     >
                       <div className="relative">
@@ -1462,7 +1462,7 @@ export default function Messages() {
                           <AvatarImage src={user.avatar_url} />
                           <AvatarFallback className={cn(
                             "text-white text-sm",
-                            user.is_vendor ? "bg-emerald-500" : "bg-blue-500"
+                            user.is_vendor ? "bg-primary-blue-500" : "bg-blue-500"
                           )}>
                             {user.name.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
@@ -1490,7 +1490,7 @@ export default function Messages() {
                             className={cn(
                               "text-xs",
                               user.is_vendor
-                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                ? "bg-primary-blue-500/10 text-primary-blue-600 border-primary-orange-500/20"
                                 : "bg-blue-500/10 text-blue-600 border-blue-500/20"
                             )}
                           >
@@ -1502,7 +1502,7 @@ export default function Messages() {
                         </div>
                         {user.phone && (
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            📞 {user.phone}
+                            ðŸ“ž {user.phone}
                           </p>
                         )}
                       </div>
@@ -1512,12 +1512,12 @@ export default function Messages() {
               ) : userSearchQuery.trim().length >= 2 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <User className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Aucun utilisateur trouvé</p>
+                  <p className="text-sm">Aucun utilisateur trouvÃ©</p>
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Search className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Tapez au moins 2 caractères</p>
+                  <p className="text-sm">Tapez au moins 2 caractÃ¨res</p>
                 </div>
               )}
             </ScrollArea>

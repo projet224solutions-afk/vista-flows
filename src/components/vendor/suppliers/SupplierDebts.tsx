@@ -83,7 +83,7 @@ export function SupplierDebts({ vendorId }: SupplierDebtsProps) {
 
       setDebts(data || []);
     } catch (error: any) {
-      // Ignorer silencieusement les erreurs RLS ou réseau
+      // Ignorer silencieusement les erreurs RLS ou rÃ©seau
       const errorMessage = error?.message?.toLowerCase() || '';
       const isRlsOrNetworkError = 
         error?.code === 'PGRST301' || 
@@ -105,9 +105,9 @@ export function SupplierDebts({ vendorId }: SupplierDebtsProps) {
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; variant: any }> = {
       in_progress: { label: 'En cours', variant: 'default' },
-      paid: { label: 'Payée', variant: 'secondary' },
+      paid: { label: 'PayÃ©e', variant: 'secondary' },
       overdue: { label: 'En retard', variant: 'destructive' },
-      cancelled: { label: 'Annulée', variant: 'outline' }
+      cancelled: { label: 'AnnulÃ©e', variant: 'outline' }
     };
 
     const config = variants[status] || variants.in_progress;
@@ -119,7 +119,7 @@ export function SupplierDebts({ vendorId }: SupplierDebtsProps) {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Non définie';
+    if (!dateString) return 'Non dÃ©finie';
     return new Date(dateString).toLocaleDateString('fr-FR');
   };
 
@@ -150,7 +150,7 @@ export function SupplierDebts({ vendorId }: SupplierDebtsProps) {
             <TableRow>
               <TableHead>Fournisseur</TableHead>
               <TableHead>Montant Total</TableHead>
-              <TableHead>Payé</TableHead>
+              <TableHead>PayÃ©</TableHead>
               <TableHead>Restant</TableHead>
               <TableHead>Tranche Min</TableHead>
               <TableHead>Statut</TableHead>
@@ -163,7 +163,7 @@ export function SupplierDebts({ vendorId }: SupplierDebtsProps) {
               <TableRow key={debt.id}>
                 <TableCell className="font-medium">{debt.supplier.business_name}</TableCell>
                 <TableCell>{formatAmount(debt.total_amount)}</TableCell>
-                <TableCell className="text-green-600">{formatAmount(debt.paid_amount)}</TableCell>
+                <TableCell className="text-primary-orange-600">{formatAmount(debt.paid_amount)}</TableCell>
                 <TableCell className="text-orange-600 font-medium">
                   {formatAmount(debt.remaining_amount)}
                 </TableCell>
@@ -173,7 +173,7 @@ export function SupplierDebts({ vendorId }: SupplierDebtsProps) {
                 <TableCell className="text-right space-x-2">
                   <Button variant="outline" size="sm">
                     <Eye className="w-4 h-4 mr-1" />
-                    Détails
+                    DÃ©tails
                   </Button>
                   {debt.status === 'in_progress' && (
                     <Button variant="default" size="sm">

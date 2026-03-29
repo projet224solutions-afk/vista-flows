@@ -1,6 +1,6 @@
 /**
- * GESTION DES LIVRAISONS CÔTÉ VENDEUR
- * Affiche les commandes, statuts, et permet de marquer prêt pour livraison
+ * GESTION DES LIVRAISONS CÃ”TÃ‰ VENDEUR
+ * Affiche les commandes, statuts, et permet de marquer prÃªt pour livraison
  */
 
 import { useState, useEffect } from 'react';
@@ -51,13 +51,13 @@ interface DeliveryOrder {
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   pending: { label: 'En attente', color: 'bg-yellow-500' },
-  assigned: { label: 'Livreur assigné', color: 'bg-blue-500' },
+  assigned: { label: 'Livreur assignÃ©', color: 'bg-blue-500' },
   driver_on_way_to_vendor: { label: 'Livreur en route', color: 'bg-indigo-500' },
-  driver_arrived_vendor: { label: 'Livreur arrivé', color: 'bg-purple-500' },
-  picked_up: { label: 'Colis récupéré', color: 'bg-cyan-500' },
+  driver_arrived_vendor: { label: 'Livreur arrivÃ©', color: 'bg-purple-500' },
+  picked_up: { label: 'Colis rÃ©cupÃ©rÃ©', color: 'bg-primary-blue-500' },
   in_transit: { label: 'En livraison', color: 'bg-orange-500' },
-  delivered: { label: 'Livré', color: 'bg-green-500' },
-  cancelled: { label: 'Annulé', color: 'bg-red-500' }
+  delivered: { label: 'LivrÃ©', color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' },
+  cancelled: { label: 'AnnulÃ©', color: 'bg-red-500' }
 };
 
 export function VendorDeliveryManagement() {
@@ -112,7 +112,7 @@ export function VendorDeliveryManagement() {
     if (vendorId) {
       loadOrders();
       
-      // Souscription temps réel
+      // Souscription temps rÃ©el
       const channel = supabase
         .channel('vendor-deliveries')
         .on(
@@ -127,7 +127,7 @@ export function VendorDeliveryManagement() {
             console.log('Delivery update:', payload);
             loadOrders();
             if (payload.eventType === 'INSERT') {
-              toast.info('📦 Nouvelle commande reçue !');
+              toast.info('ðŸ“¦ Nouvelle commande reÃ§ue !');
             }
           }
         )
@@ -139,11 +139,11 @@ export function VendorDeliveryManagement() {
     }
   }, [vendorId]);
 
-  // Marquer prêt pour livraison
+  // Marquer prÃªt pour livraison
   const markReadyForPickup = async (orderId: string) => {
     setGeneratingCode(orderId);
     try {
-      // Générer un code de retrait unique
+      // GÃ©nÃ©rer un code de retrait unique
       const pickupCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       
       const { error } = await supabase
@@ -157,11 +157,11 @@ export function VendorDeliveryManagement() {
 
       if (error) throw error;
 
-      toast.success('✅ Commande prête pour le retrait');
+      toast.success('âœ… Commande prÃªte pour le retrait');
       loadOrders();
     } catch (error) {
       console.error('Error updating order:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error('Erreur lors de la mise Ã  jour');
     } finally {
       setGeneratingCode(null);
     }
@@ -220,10 +220,10 @@ export function VendorDeliveryManagement() {
             <p className="text-xs text-muted-foreground">En cours</p>
           </CardContent>
         </Card>
-        <Card className="bg-green-50 dark:bg-green-950/20">
+        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20">
           <CardContent className="pt-4 text-center">
-            <p className="text-2xl font-bold text-green-600">{completedOrders.length}</p>
-            <p className="text-xs text-muted-foreground">Terminées</p>
+            <p className="text-2xl font-bold text-primary-orange-600">{completedOrders.length}</p>
+            <p className="text-xs text-muted-foreground">TerminÃ©es</p>
           </CardContent>
         </Card>
       </div>
@@ -268,9 +268,9 @@ export function VendorDeliveryManagement() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-green-600">{formatCurrency(order.delivery_fee)}</p>
+                      <p className="font-bold text-primary-orange-600">{formatCurrency(order.delivery_fee)}</p>
                       <Badge variant="outline" className="text-xs">
-                        {order.payment_method === 'cod' ? 'COD' : 'Prépayé'}
+                        {order.payment_method === 'cod' ? 'COD' : 'PrÃ©payÃ©'}
                       </Badge>
                     </div>
                   </div>
@@ -278,7 +278,7 @@ export function VendorDeliveryManagement() {
                   <div className="mt-4 flex gap-2">
                     {order.status === 'pending' && !order.ready_for_pickup && (
                       <Button
-                        className="flex-1 bg-gradient-to-r from-orange-500 to-green-500"
+                        className="flex-1 bg-gradient-to-r from-orange-500 to-primary-orange-500"
                         onClick={() => markReadyForPickup(order.id)}
                         disabled={generatingCode === order.id}
                       >
@@ -287,7 +287,7 @@ export function VendorDeliveryManagement() {
                         ) : (
                           <>
                             <CheckCircle2 className="h-4 w-4 mr-2" />
-                            Prête pour livraison
+                            PrÃªte pour livraison
                           </>
                         )}
                       </Button>
@@ -351,7 +351,7 @@ export function VendorDeliveryManagement() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-green-600">{formatCurrency(order.delivery_fee)}</p>
+                      <p className="font-bold text-primary-orange-600">{formatCurrency(order.delivery_fee)}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(order.created_at)}</p>
                     </div>
                   </div>
@@ -380,7 +380,7 @@ export function VendorDeliveryManagement() {
 
         <TabsContent value="completed" className="space-y-3 mt-4">
           {completedOrders.slice(0, 10).map((order) => (
-            <Card key={order.id} className={`border-l-4 ${order.status === 'delivered' ? 'border-l-green-500' : 'border-l-red-500'}`}>
+            <Card key={order.id} className={`border-l-4 ${order.status === 'delivered' ? 'border-l-primary-orange-500' : 'border-l-red-500'}`}>
               <CardContent className="pt-4">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
@@ -392,7 +392,7 @@ export function VendorDeliveryManagement() {
                     <p className="font-medium">{order.customer_name}</p>
                     <p className="text-xs text-muted-foreground">{formatDate(order.created_at)}</p>
                   </div>
-                  <p className="font-bold text-green-600">{formatCurrency(order.delivery_fee)}</p>
+                  <p className="font-bold text-primary-orange-600">{formatCurrency(order.delivery_fee)}</p>
                 </div>
               </CardContent>
             </Card>

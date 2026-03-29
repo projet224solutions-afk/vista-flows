@@ -143,7 +143,7 @@ export const ProfessionalVirtualCard = () => {
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-      active: { color: 'bg-emerald-500', icon: <CheckCircle2 className="w-3 h-3" />, label: 'Active' },
+      active: { color: 'bg-gradient-to-r from-primary-blue-500 to-primary-orange-500', icon: <CheckCircle2 className="w-3 h-3" />, label: 'Active' },
       frozen: { color: 'bg-blue-500', icon: <Snowflake className="w-3 h-3" />, label: 'Gelée' },
       blocked: { color: 'bg-red-500', icon: <AlertTriangle className="w-3 h-3" />, label: 'Bloquée' }
     };
@@ -171,7 +171,7 @@ export const ProfessionalVirtualCard = () => {
         >
           <CreditCard className="w-4 h-4" />
           {card ? 'Ma Carte' : 'Créer une Carte'}
-          {card && <CheckCircle2 className="w-3 h-3 text-emerald-300" />}
+          {card && <CheckCircle2 className="w-3 h-3 text-primary-orange-300" />}
         </Button>
       </DialogTrigger>
 
@@ -345,8 +345,8 @@ export const ProfessionalVirtualCard = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-500/20 rounded-lg">
-                          <Zap className="w-5 h-5 text-emerald-400" />
+                        <div className="p-2 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 bg-opacity-20 rounded-lg">
+                          <Zap className="w-5 h-5 text-primary-orange-400" />
                         </div>
                         <div>
                           <p className="text-white/60 text-xs">Solde disponible</p>
@@ -355,7 +355,7 @@ export const ProfessionalVirtualCard = () => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-emerald-400 border-emerald-400/30">
+                      <Badge variant="outline" className="text-primary-orange-400 border-primary-orange-400/30">
                         Lié
                       </Badge>
                     </div>
@@ -473,7 +473,7 @@ export const ProfessionalVirtualCard = () => {
                       <div className="flex justify-between text-sm">
                         <span className="text-white/60">Statut</span>
                         <Badge className={cn(
-                          card.status === 'active' ? 'bg-emerald-500' : 
+                          card.status === 'active' ? 'bg-gradient-to-r from-primary-blue-500 to-primary-orange-500' : 
                           card.status === 'frozen' ? 'bg-blue-500' : 'bg-red-500'
                         )}>
                           {card.status === 'active' ? 'Active' : 
@@ -513,19 +513,19 @@ export const ProfessionalVirtualCard = () => {
               {/* Features */}
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-white/80">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <CheckCircle2 className="w-5 h-5 text-primary-orange-400" />
                   <span className="text-sm">Paiements en ligne sécurisés</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <CheckCircle2 className="w-5 h-5 text-primary-orange-400" />
                   <span className="text-sm">Limite journalière : 1 000 000 GNF</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <CheckCircle2 className="w-5 h-5 text-primary-orange-400" />
                   <span className="text-sm">Activation instantanée</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                  <CheckCircle2 className="w-5 h-5 text-primary-orange-400" />
                   <span className="text-sm">Débit automatique du wallet</span>
                 </div>
               </div>

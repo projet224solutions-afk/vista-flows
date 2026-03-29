@@ -112,7 +112,7 @@ export default function PDGAgentsManagement() {
     }
 
     if (!editingAgent && (!formData.password || formData.password.length < 8)) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error('Le mot de passe doit contenir au moins 8 caractÃ¨res');
       return;
     }
 
@@ -123,19 +123,19 @@ export default function PDGAgentsManagement() {
         .filter(([_, value]) => value)
         .map(([key]) => key);
 
-      // Permissions avancées sélectionnées (stockées dans agent_permissions)
+      // Permissions avancÃ©es sÃ©lectionnÃ©es (stockÃ©es dans agent_permissions)
       const activeAdvancedPermissionKeys = Object.entries(advancedPermissions)
         .filter(([_, value]) => value === true)
         .map(([key]) => key);
 
-      // Compatibilité + interface agent publique (token): on synchronise aussi dans agents_management.permissions
+      // CompatibilitÃ© + interface agent publique (token): on synchronise aussi dans agents_management.permissions
       const combinedLegacyPermissions = Array.from(
         new Set([...basePermissions, ...activeAdvancedPermissionKeys])
       );
 
       if (editingAgent) {
-        // Mode édition
-        // Si l'email a changé, on doit aussi synchroniser Supabase Auth
+        // Mode Ã©dition
+        // Si l'email a changÃ©, on doit aussi synchroniser Supabase Auth
         const nextEmail = formData.email.trim().toLowerCase();
         const prevEmail = (editingAgent.email || '').trim().toLowerCase();
 
@@ -158,7 +158,7 @@ export default function PDGAgentsManagement() {
           }
         }
 
-        // Mettre à jour les autres champs (sans email pour éviter une désynchronisation)
+        // Mettre Ã  jour les autres champs (sans email pour Ã©viter une dÃ©synchronisation)
         await updateAgentAction(editingAgent.id, {
           name: formData.name,
           phone: formData.phone,
@@ -167,17 +167,17 @@ export default function PDGAgentsManagement() {
           can_create_sub_agent: formData.permissions.create_sub_agents,
         });
 
-        // Sauvegarder les permissions avancées (même si vide, pour permettre la révocation complète)
+        // Sauvegarder les permissions avancÃ©es (mÃªme si vide, pour permettre la rÃ©vocation complÃ¨te)
         const { error: permError } = await supabase.rpc('set_agent_permissions' as any, {
           p_agent_id: editingAgent.id,
           p_permissions: advancedPermissions,
         });
 
         if (permError) {
-          console.error('Erreur sauvegarde permissions avancées:', permError);
+          console.error('Erreur sauvegarde permissions avancÃ©es:', permError);
         }
       } else {
-        // Mode création
+        // Mode crÃ©ation
         const createRes = await createAgentAction({
           name: formData.name,
           email: formData.email,
@@ -189,7 +189,7 @@ export default function PDGAgentsManagement() {
           can_create_sub_agent: formData.permissions.create_sub_agents,
         }, pdgProfile.id);
 
-        // Après création, appliquer aussi les permissions avancées en base (agent_permissions)
+        // AprÃ¨s crÃ©ation, appliquer aussi les permissions avancÃ©es en base (agent_permissions)
         if (createRes?.success && createRes.agent?.id) {
           const { error: permError } = await supabase.rpc('set_agent_permissions' as any, {
             p_agent_id: createRes.agent.id,
@@ -197,12 +197,12 @@ export default function PDGAgentsManagement() {
           });
 
           if (permError) {
-            console.error('Erreur sauvegarde permissions avancées (création):', permError);
+            console.error('Erreur sauvegarde permissions avancÃ©es (crÃ©ation):', permError);
           }
         }
       }
 
-      // Réinitialiser le formulaire
+      // RÃ©initialiser le formulaire
       setFormData({
         name: '',
         email: '',
@@ -234,7 +234,7 @@ export default function PDGAgentsManagement() {
   const handleEditAgent = async (agent: Agent) => {
     setEditingAgent(agent);
 
-    // Robust: certaines anciennes données stockent "create_sub_agents" uniquement dans le tableau permissions
+    // Robust: certaines anciennes donnÃ©es stockent "create_sub_agents" uniquement dans le tableau permissions
     const canCreateSubAgents = Boolean(agent.can_create_sub_agent) || agent.permissions.includes('create_sub_agents');
 
     setFormData({
@@ -254,7 +254,7 @@ export default function PDGAgentsManagement() {
       }
     });
 
-    // Charger les permissions avancées
+    // Charger les permissions avancÃ©es
     setLoadingAdvancedPermissions(true);
     try {
       const { data, error } = await supabase
@@ -263,7 +263,7 @@ export default function PDGAgentsManagement() {
       if (error) throw error;
       setAdvancedPermissions((data as Record<string, boolean>) || {});
     } catch (error) {
-      console.error('Erreur chargement permissions avancées:', error);
+      console.error('Erreur chargement permissions avancÃ©es:', error);
       setAdvancedPermissions({});
     } finally {
       setLoadingAdvancedPermissions(false);
@@ -290,7 +290,7 @@ export default function PDGAgentsManagement() {
     if (!resetPasswordAgent || !newPassword) return;
     
     if (newPassword.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error('Le mot de passe doit contenir au moins 8 caractÃ¨res');
       return;
     }
 
@@ -307,7 +307,7 @@ export default function PDGAgentsManagement() {
       if (error) throw error;
       
       if (data?.success) {
-        toast.success(`Mot de passe de ${resetPasswordAgent.name} réinitialisé avec succès`);
+        toast.success(`Mot de passe de ${resetPasswordAgent.name} rÃ©initialisÃ© avec succÃ¨s`);
         setIsResetPasswordDialogOpen(false);
         setResetPasswordAgent(null);
         setNewPassword('');
@@ -315,8 +315,8 @@ export default function PDGAgentsManagement() {
         throw new Error(data?.error || 'Erreur inconnue');
       }
     } catch (error: any) {
-      console.error('Erreur réinitialisation mot de passe:', error);
-      toast.error(error.message || 'Erreur lors de la réinitialisation');
+      console.error('Erreur rÃ©initialisation mot de passe:', error);
+      toast.error(error.message || 'Erreur lors de la rÃ©initialisation');
     } finally {
       setIsResettingPassword(false);
     }
@@ -359,7 +359,7 @@ export default function PDGAgentsManagement() {
       if (error) throw error;
 
       if (data?.success) {
-        toast.success(`Email de ${changeEmailAgent.name} modifié et synchronisé`);
+        toast.success(`Email de ${changeEmailAgent.name} modifiÃ© et synchronisÃ©`);
         setIsChangeEmailDialogOpen(false);
         setChangeEmailAgent(null);
         setNewEmail('');
@@ -383,15 +383,15 @@ export default function PDGAgentsManagement() {
       
       switch (action) {
         case 'activate':
-          confirmMessage = 'Êtes-vous sûr de vouloir activer cet agent ?';
+          confirmMessage = 'ÃŠtes-vous sÃ»r de vouloir activer cet agent ?';
           actionName = 'Activation';
           break;
         case 'suspend':
-          confirmMessage = 'Êtes-vous sûr de vouloir suspendre cet agent ?';
+          confirmMessage = 'ÃŠtes-vous sÃ»r de vouloir suspendre cet agent ?';
           actionName = 'Suspension';
           break;
         case 'delete':
-          confirmMessage = 'Êtes-vous sûr de vouloir supprimer cet agent ? Cette action est irréversible.';
+          confirmMessage = 'ÃŠtes-vous sÃ»r de vouloir supprimer cet agent ? Cette action est irrÃ©versible.';
           actionName = 'Suppression';
           break;
       }
@@ -420,12 +420,12 @@ export default function PDGAgentsManagement() {
     const isExpanded = expandedAgents.has(agent.id);
     
     if (isExpanded) {
-      // Réduire
+      // RÃ©duire
       const newExpanded = new Set(expandedAgents);
       newExpanded.delete(agent.id);
       setExpandedAgents(newExpanded);
     } else {
-      // Étendre et charger les utilisateurs si pas déjà chargés
+      // Ã‰tendre et charger les utilisateurs si pas dÃ©jÃ  chargÃ©s
       const newExpanded = new Set(expandedAgents);
       newExpanded.add(agent.id);
       setExpandedAgents(newExpanded);
@@ -457,12 +457,12 @@ export default function PDGAgentsManagement() {
     const isExpanded = expandedSubAgents.has(agent.id);
     
     if (isExpanded) {
-      // Réduire
+      // RÃ©duire
       const newExpanded = new Set(expandedSubAgents);
       newExpanded.delete(agent.id);
       setExpandedSubAgents(newExpanded);
     } else {
-      // Étendre et charger les sous-agents si pas déjà chargés
+      // Ã‰tendre et charger les sous-agents si pas dÃ©jÃ  chargÃ©s
       const newExpanded = new Set(expandedSubAgents);
       newExpanded.add(agent.id);
       setExpandedSubAgents(newExpanded);
@@ -479,7 +479,7 @@ export default function PDGAgentsManagement() {
 
           if (error) throw error;
 
-          // Compter les utilisateurs créés par chaque sous-agent
+          // Compter les utilisateurs crÃ©Ã©s par chaque sous-agent
           const subAgentsWithCounts = await Promise.all(
             (data || []).map(async (subAgent) => {
               const { count } = await supabase
@@ -523,12 +523,12 @@ export default function PDGAgentsManagement() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
+      {/* En-tÃªte */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Gestion des Agents</h2>
           <p className="text-muted-foreground mt-1">
-            Gérez votre réseau d'agents - {pdgProfile?.name || 'PDG'}
+            GÃ©rez votre rÃ©seau d'agents - {pdgProfile?.name || 'PDG'}
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -559,7 +559,7 @@ export default function PDGAgentsManagement() {
           <DialogContent className="max-w-3xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>
-                {editingAgent ? 'Modifier l\'Agent & Permissions' : 'Créer un Nouvel Agent'}
+                {editingAgent ? 'Modifier l\'Agent & Permissions' : 'CrÃ©er un Nouvel Agent'}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateAgent}>
@@ -572,7 +572,7 @@ export default function PDGAgentsManagement() {
                     </TabsTrigger>
                     <TabsTrigger value="permissions">
                       <Shield className="w-4 h-4 mr-2" />
-                      Permissions Avancées
+                      Permissions AvancÃ©es
                     </TabsTrigger>
                   </TabsList>
                   
@@ -591,7 +591,7 @@ export default function PDGAgentsManagement() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="phone">Téléphone *</Label>
+                            <Label htmlFor="phone">TÃ©lÃ©phone *</Label>
                             <Input
                               id="phone"
                               required
@@ -651,7 +651,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
+                              <label htmlFor="create_users" className="text-sm">CrÃ©er des utilisateurs</label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
@@ -664,7 +664,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="create_sub_agents" className="text-sm">Créer des sous-agents</label>
+                              <label htmlFor="create_sub_agents" className="text-sm">CrÃ©er des sous-agents</label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
@@ -690,7 +690,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="manage_commissions" className="text-sm">Gérer les commissions</label>
+                              <label htmlFor="manage_commissions" className="text-sm">GÃ©rer les commissions</label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
@@ -703,7 +703,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="manage_users" className="text-sm">Gérer les utilisateurs</label>
+                              <label htmlFor="manage_users" className="text-sm">GÃ©rer les utilisateurs</label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox 
@@ -716,7 +716,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="manage_products" className="text-sm">Gérer les produits</label>
+                              <label htmlFor="manage_products" className="text-sm">GÃ©rer les produits</label>
                             </div>
                           </div>
                         </div>
@@ -747,7 +747,7 @@ export default function PDGAgentsManagement() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Téléphone *</Label>
+                        <Label htmlFor="phone">TÃ©lÃ©phone *</Label>
                         <Input
                           id="phone"
                           required
@@ -771,14 +771,14 @@ export default function PDGAgentsManagement() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
+                      <Label htmlFor="password">Mot de passe * (min. 8 caractÃ¨res)</Label>
                       <Input
                         id="password"
                         type="password"
                         required
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        placeholder="••••••••"
+                        placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                       />
                     </div>
 
@@ -819,7 +819,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="create_users_new" className="text-sm">Créer des utilisateurs</label>
+                          <label htmlFor="create_users_new" className="text-sm">CrÃ©er des utilisateurs</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -832,7 +832,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="create_sub_agents_new" className="text-sm">Créer des sous-agents</label>
+                          <label htmlFor="create_sub_agents_new" className="text-sm">CrÃ©er des sous-agents</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -858,7 +858,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="manage_commissions_new" className="text-sm">Gérer les commissions</label>
+                          <label htmlFor="manage_commissions_new" className="text-sm">GÃ©rer les commissions</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -871,7 +871,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="manage_users_new" className="text-sm">Gérer les utilisateurs</label>
+                          <label htmlFor="manage_users_new" className="text-sm">GÃ©rer les utilisateurs</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -884,7 +884,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="manage_products_new" className="text-sm">Gérer les produits</label>
+                          <label htmlFor="manage_products_new" className="text-sm">GÃ©rer les produits</label>
                         </div>
                       </div>
                     </div>
@@ -905,7 +905,7 @@ export default function PDGAgentsManagement() {
                   {isSubmitting ? (
                     <>
                       <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      {editingAgent ? 'Modification...' : 'Création...'}
+                      {editingAgent ? 'Modification...' : 'CrÃ©ation...'}
                     </>
                   ) : editingAgent ? (
                     <>
@@ -915,7 +915,7 @@ export default function PDGAgentsManagement() {
                   ) : (
                     <>
                       <Plus className="w-4 h-4 mr-2" />
-                      Créer l'Agent
+                      CrÃ©er l'Agent
                     </>
                   )}
                 </Button>
@@ -947,10 +947,10 @@ export default function PDGAgentsManagement() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Agents Actifs
             </CardTitle>
-            <UserCheck className="h-4 w-4 text-green-500" />
+            <UserCheck className="h-4 w-4 text-primary-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.activeAgents}</div>
+            <div className="text-2xl font-bold text-primary-orange-600">{stats.activeAgents}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {stats.inactiveAgents} inactifs
             </p>
@@ -982,7 +982,7 @@ export default function PDGAgentsManagement() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalCommissionsEarned.toLocaleString()} GNF</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Gagnées à ce jour
+              GagnÃ©es Ã  ce jour
             </p>
           </CardContent>
         </Card>
@@ -1038,7 +1038,7 @@ export default function PDGAgentsManagement() {
                     onClick={() => handleToggleAgentUsers(agent)}
                     className="w-full justify-between"
                   >
-                    <span className="text-sm font-medium">Utilisateurs créés: {agentUsersMap[agent.id]?.length ?? agent.total_users_created ?? 0}</span>
+                    <span className="text-sm font-medium">Utilisateurs crÃ©Ã©s: {agentUsersMap[agent.id]?.length ?? agent.total_users_created ?? 0}</span>
                     <Eye className={`w-4 h-4 transition-transform ${expandedAgents.has(agent.id) ? 'rotate-180' : ''}`} />
                   </Button>
 
@@ -1066,13 +1066,13 @@ export default function PDGAgentsManagement() {
                                 </Badge>
                               </div>
                               <div className="text-muted-foreground">
-                                <div>📧 {user.email}</div>
-                                {user.phone && <div>📱 {user.phone}</div>}
+                                <div>ðŸ“§ {user.email}</div>
+                                {user.phone && <div>ðŸ“± {user.phone}</div>}
                                 {(user.city || user.country) && (
-                                  <div>📍 {[user.city, user.country].filter(Boolean).join(', ')}</div>
+                                  <div>ðŸ“ {[user.city, user.country].filter(Boolean).join(', ')}</div>
                                 )}
                                 <div className="flex items-center justify-between mt-1">
-                                  <span>Rôle: {user.user_role || user.role}</span>
+                                  <span>RÃ´le: {user.user_role || user.role}</span>
                                   <span>{new Date(user.created_at).toLocaleDateString('fr-FR')}</span>
                                 </div>
                               </div>
@@ -1081,7 +1081,7 @@ export default function PDGAgentsManagement() {
                         </div>
                       ) : (
                         <div className="text-center py-4 text-sm text-muted-foreground">
-                          Aucun utilisateur créé
+                          Aucun utilisateur crÃ©Ã©
                         </div>
                       )}
                     </div>
@@ -1098,7 +1098,7 @@ export default function PDGAgentsManagement() {
                       className="w-full justify-between"
                     >
                       <span className="text-sm font-medium">
-                        Sous-agents créés: {agentSubAgentsMap[agent.id]?.length ?? 0}
+                        Sous-agents crÃ©Ã©s: {agentSubAgentsMap[agent.id]?.length ?? 0}
                       </span>
                       <Eye className={`w-4 h-4 transition-transform ${expandedSubAgents.has(agent.id) ? 'rotate-180' : ''}`} />
                     </Button>
@@ -1126,8 +1126,8 @@ export default function PDGAgentsManagement() {
                                   </Badge>
                                 </div>
                                 <div className="text-muted-foreground">
-                                  <div>📧 {subAgent.email}</div>
-                                  {subAgent.phone && <div>📱 {subAgent.phone}</div>}
+                                  <div>ðŸ“§ {subAgent.email}</div>
+                                  {subAgent.phone && <div>ðŸ“± {subAgent.phone}</div>}
                                   <div className="flex items-center justify-between mt-1">
                                     <span>Code: {subAgent.agent_code}</span>
                                     <span>Commission: {subAgent.commission_rate}%</span>
@@ -1158,7 +1158,7 @@ export default function PDGAgentsManagement() {
                                         className="h-6 w-6 p-0"
                                         onClick={() => {
                                           navigator.clipboard.writeText(`${window.location.origin}/agent/${encodeURIComponent(subAgent.access_token)}`);
-                                          toast.success('Lien copié!');
+                                          toast.success('Lien copiÃ©!');
                                         }}
                                       >
                                         <Copy className="w-3 h-3" />
@@ -1171,7 +1171,7 @@ export default function PDGAgentsManagement() {
                           </div>
                         ) : (
                           <div className="text-center py-4 text-sm text-muted-foreground">
-                            Aucun sous-agent créé
+                            Aucun sous-agent crÃ©Ã©
                           </div>
                         )}
                       </div>
@@ -1180,17 +1180,17 @@ export default function PDGAgentsManagement() {
                 )}
                 
                 <div className="flex items-center justify-between text-sm pb-3">
-                  <span className="text-muted-foreground">Commissions gagnées:</span>
+                  <span className="text-muted-foreground">Commissions gagnÃ©es:</span>
                   <span className="font-medium">{(agent.total_commissions_earned || 0).toLocaleString()} GNF</span>
                 </div>
                 
-                {/* Lien d'accès à l'interface Agent */}
+                {/* Lien d'accÃ¨s Ã  l'interface Agent */}
                 {agent.access_token && (
                   <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0 space-y-1">
                         <p className="text-xs font-semibold text-foreground flex items-center gap-2">
-                          <span className="text-blue-600">🔗</span> Lien d'accès à l'interface
+                          <span className="text-blue-600">ðŸ”—</span> Lien d'accÃ¨s Ã  l'interface
                         </p>
                         <p className="text-xs font-mono text-blue-600 bg-white dark:bg-gray-900 p-2 rounded border truncate">
                           {window.location.origin}/agent/{encodeURIComponent(agent.access_token)}
@@ -1202,7 +1202,7 @@ export default function PDGAgentsManagement() {
                           variant="outline"
                           onClick={() => {
                             navigator.clipboard.writeText(`${window.location.origin}/agent/${encodeURIComponent(agent.access_token)}`);
-                            toast.success('Lien copié!');
+                            toast.success('Lien copiÃ©!');
                           }}
                         >
                           <Copy className="w-3.5 h-3.5" />
@@ -1289,22 +1289,22 @@ export default function PDGAgentsManagement() {
           <CardContent className="py-12 text-center">
             <UserCheck className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              {searchTerm ? 'Aucun agent trouvé' : 'Aucun agent pour le moment'}
+              {searchTerm ? 'Aucun agent trouvÃ©' : 'Aucun agent pour le moment'}
             </p>
           </CardContent>
         </Card>
       )}
 
 
-      {/* Dialogue de réinitialisation du mot de passe */}
+      {/* Dialogue de rÃ©initialisation du mot de passe */}
       <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
+            <DialogTitle>RÃ©initialiser le mot de passe</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Définir un nouveau mot de passe pour <strong>{resetPasswordAgent?.name}</strong>
+              DÃ©finir un nouveau mot de passe pour <strong>{resetPasswordAgent?.name}</strong>
             </p>
             <div className="space-y-2">
               <Label htmlFor="new_password">Nouveau mot de passe</Label>
@@ -1316,7 +1316,7 @@ export default function PDGAgentsManagement() {
                 placeholder="Ex: Agent123!"
               />
               <p className="text-xs text-muted-foreground">
-                Min. 8 caractères avec: minuscules, MAJUSCULES, chiffres et caractères spéciaux (!@#$%...)
+                Min. 8 caractÃ¨res avec: minuscules, MAJUSCULES, chiffres et caractÃ¨res spÃ©ciaux (!@#$%...)
               </p>
             </div>
             <div className="flex justify-end gap-2">
@@ -1330,7 +1330,7 @@ export default function PDGAgentsManagement() {
                 onClick={handleConfirmResetPassword}
                 disabled={isResettingPassword || newPassword.length < 8}
               >
-                {isResettingPassword ? 'Réinitialisation...' : 'Réinitialiser'}
+                {isResettingPassword ? 'RÃ©initialisation...' : 'RÃ©initialiser'}
               </Button>
             </div>
           </div>
@@ -1374,7 +1374,7 @@ export default function PDGAgentsManagement() {
                 type="password"
                 value={emailPassword}
                 onChange={(e) => setEmailPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               />
             </div>
             <div className="flex justify-end gap-2">

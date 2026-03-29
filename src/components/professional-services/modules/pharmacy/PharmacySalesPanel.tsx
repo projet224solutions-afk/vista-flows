@@ -1,5 +1,5 @@
 /**
- * Panneau ventes pharmacie — inspiré Walgreens analytics
+ * Panneau ventes pharmacie â€” inspirÃ© Walgreens analytics
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,10 +22,10 @@ interface PharmacySalesPanelProps {
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   pending: { label: 'En attente', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' },
-  confirmed: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
-  completed: { label: 'Terminée', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  delivered: { label: 'Livrée', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  confirmed: { label: 'ConfirmÃ©e', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+  completed: { label: 'TerminÃ©e', color: 'bg-primary-blue-100 text-primary-blue-800 dark:bg-primary-blue-900/30 dark:text-primary-blue-400' },
+  delivered: { label: 'LivrÃ©e', color: 'bg-primary-blue-100 text-primary-blue-800 dark:bg-primary-blue-900/30 dark:text-primary-blue-400' },
+  cancelled: { label: 'AnnulÃ©e', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
   processing: { label: 'En cours', color: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400' },
 };
 
@@ -65,7 +65,7 @@ export function PharmacySalesPanel({ stats, recentSales }: PharmacySalesPanelPro
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <ShoppingCart className="w-5 h-5" />
-              Dernières ventes
+              DerniÃ¨res ventes
             </CardTitle>
             <Button variant="outline" size="sm" onClick={() => navigate('/vendeur/orders')}>
               Tout voir <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
@@ -76,8 +76,8 @@ export function PharmacySalesPanel({ stats, recentSales }: PharmacySalesPanelPro
           {recentSales.length === 0 ? (
             <div className="text-center py-10">
               <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
-              <p className="text-sm text-muted-foreground">Aucune vente enregistrée</p>
-              <p className="text-xs text-muted-foreground/70 mt-1">Les ventes apparaîtront ici automatiquement</p>
+              <p className="text-sm text-muted-foreground">Aucune vente enregistrÃ©e</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Les ventes apparaÃ®tront ici automatiquement</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -101,7 +101,7 @@ export function PharmacySalesPanel({ stats, recentSales }: PharmacySalesPanelPro
                         </Badge>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {format(new Date(sale.created_at), 'dd MMM yyyy · HH:mm', { locale: fr })}
+                        {format(new Date(sale.created_at), 'dd MMM yyyy Â· HH:mm', { locale: fr })}
                       </span>
                     </div>
                     <div className="text-right flex-shrink-0">

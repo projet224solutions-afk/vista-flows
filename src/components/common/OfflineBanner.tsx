@@ -1,5 +1,5 @@
 /**
- * Bannière affichée quand l'utilisateur est hors ligne
+ * BanniÃ¨re affichÃ©e quand l'utilisateur est hors ligne
  * 224SOLUTIONS
  */
 
@@ -10,9 +10,9 @@ import { cn } from '@/lib/utils';
 
 interface OfflineBannerProps {
   className?: string;
-  /** Position fixe ou intégrée */
+  /** Position fixe ou intÃ©grÃ©e */
   fixed?: boolean;
-  /** Afficher même online pour tester */
+  /** Afficher mÃªme online pour tester */
   forceShow?: boolean;
 }
 
@@ -31,12 +31,12 @@ export function OfflineBanner({ className, fixed = true, forceShow = false }: Of
     return null;
   }
 
-  // Afficher une notification de reconnexion brève
+  // Afficher une notification de reconnexion brÃ¨ve
   if (isOnline && wasOffline) {
     return (
       <div
         className={cn(
-          'bg-green-500 text-white py-2 px-4 text-center text-sm font-medium',
+          'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white py-2 px-4 text-center text-sm font-medium',
           'animate-in fade-in slide-in-from-top duration-300',
           fixed && 'fixed top-0 left-0 right-0 z-50',
           className
@@ -44,7 +44,7 @@ export function OfflineBanner({ className, fixed = true, forceShow = false }: Of
       >
         <div className="flex items-center justify-center gap-2">
           <Wifi className="w-4 h-4" />
-          <span>Connexion rétablie</span>
+          <span>Connexion rÃ©tablie</span>
         </div>
       </div>
     );
@@ -68,7 +68,7 @@ export function OfflineBanner({ className, fixed = true, forceShow = false }: Of
           <div className="flex flex-col">
             <span className="font-semibold text-sm">Mode hors ligne</span>
             <span className="text-xs opacity-90">
-              {lastError || 'Certaines fonctionnalités sont limitées'}
+              {lastError || 'Certaines fonctionnalitÃ©s sont limitÃ©es'}
             </span>
           </div>
         </div>
@@ -85,7 +85,7 @@ export function OfflineBanner({ className, fixed = true, forceShow = false }: Of
         >
           <RefreshCw className={cn('w-4 h-4', isChecking && 'animate-spin')} />
           <span className="hidden sm:inline">
-            {isChecking ? 'Vérification...' : 'Réessayer'}
+            {isChecking ? 'VÃ©rification...' : 'RÃ©essayer'}
           </span>
         </button>
       </div>

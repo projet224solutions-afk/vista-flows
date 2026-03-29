@@ -1,5 +1,5 @@
 /**
- * 📞 BOUTON D'APPEL WEBRTC - 224SOLUTIONS
+ * ðŸ“ž BOUTON D'APPEL WEBRTC - 224SOLUTIONS
  * Utilise le CONTEXTE global (pas son propre hook).
  */
 
@@ -28,7 +28,7 @@ export default function WebRTCCallButton({
   className,
   disabled = false,
 }: WebRTCCallButtonProps) {
-  // UTILISE LE CONTEXTE — pas useWebRTCAudioCall() directement
+  // UTILISE LE CONTEXTE â€” pas useWebRTCAudioCall() directement
   const { callState, startCall } = useWebRTCCallContext();
 
   const isInCall = callState.isInCall || callState.isCalling || callState.isReceivingCall;
@@ -59,7 +59,7 @@ export default function WebRTCCallButton({
         {isInCall ? (
           <Loader2 className="w-5 h-5 animate-spin" />
         ) : (
-          <Phone className="w-5 h-5 text-green-600" />
+          <Phone className="w-5 h-5 text-primary-orange-600" />
         )}
       </Button>
     );
@@ -72,7 +72,7 @@ export default function WebRTCCallButton({
       size={size}
       disabled={isInCall || disabled}
       className={cn(
-        variant === 'default' && "bg-green-600 hover:bg-green-700",
+        variant === 'default' && "bg-primary-orange-600 hover:bg-primary-orange-700",
         isInCall && "opacity-50 cursor-not-allowed",
         className
       )}

@@ -185,7 +185,7 @@ const BankingDashboard: React.FC = () => {
       
       const result = data as { success: boolean; message?: string; error?: string };
       if (result.success) {
-        toast.success('Mode Panic activé - Toutes les transactions sont gelées');
+        toast.success('Mode Panic activÃ© - Toutes les transactions sont gelÃ©es');
         setShowPanicDialog(false);
         setPanicReason('');
         loadDashboard();
@@ -209,7 +209,7 @@ const BankingDashboard: React.FC = () => {
       
       const result = data as { success: boolean; message?: string };
       if (result.success) {
-        toast.success('Mode Panic désactivé - Transactions autorisées');
+        toast.success('Mode Panic dÃ©sactivÃ© - Transactions autorisÃ©es');
         loadDashboard();
       }
     } catch (error: any) {
@@ -241,7 +241,7 @@ const BankingDashboard: React.FC = () => {
         })
         .eq('id', id);
       
-      toast.success(action === 'approved' ? 'Transaction approuvée' : 'Transaction rejetée');
+      toast.success(action === 'approved' ? 'Transaction approuvÃ©e' : 'Transaction rejetÃ©e');
       loadDashboard();
     } catch (error: any) {
       toast.error(error.message);
@@ -261,10 +261,10 @@ const BankingDashboard: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'confirmed': return <Badge className="bg-green-500">Confirmé</Badge>;
+      case 'confirmed': return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">ConfirmÃ©</Badge>;
       case 'pending': return <Badge className="bg-yellow-500">En attente</Badge>;
       case 'quarantined': return <Badge className="bg-orange-500">Quarantaine</Badge>;
-      case 'rejected': return <Badge variant="destructive">Rejeté</Badge>;
+      case 'rejected': return <Badge variant="destructive">RejetÃ©</Badge>;
       default: return <Badge>{status}</Badge>;
     }
   };
@@ -284,9 +284,9 @@ const BankingDashboard: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6" />
-            Système Bancaire Intelligent
+            SystÃ¨me Bancaire Intelligent
           </h1>
-          <p className="text-muted-foreground">Supervision financière en temps réel</p>
+          <p className="text-muted-foreground">Supervision financiÃ¨re en temps rÃ©el</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -305,16 +305,16 @@ const BankingDashboard: React.FC = () => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Désactiver le Mode Panic?</AlertDialogTitle>
+                  <AlertDialogTitle>DÃ©sactiver le Mode Panic?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Les transactions financières seront à nouveau autorisées.
+                    Les transactions financiÃ¨res seront Ã  nouveau autorisÃ©es.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Annuler</AlertDialogCancel>
                   <AlertDialogAction onClick={deactivatePanicMode}>
                     <Unlock className="h-4 w-4 mr-2" />
-                    Désactiver
+                    DÃ©sactiver
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -331,8 +331,8 @@ const BankingDashboard: React.FC = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle className="text-red-500">Activer le Mode Panic?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    ATTENTION: Toutes les transactions financières seront immédiatement gelées.
-                    Cette action est réservée aux situations d'urgence uniquement.
+                    ATTENTION: Toutes les transactions financiÃ¨res seront immÃ©diatement gelÃ©es.
+                    Cette action est rÃ©servÃ©e aux situations d'urgence uniquement.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <Textarea
@@ -364,8 +364,8 @@ const BankingDashboard: React.FC = () => {
             <div className="flex items-center gap-3">
               <AlertOctagon className="h-8 w-8 text-red-500" />
               <div>
-                <p className="font-bold text-red-500">SYSTÈME EN MODE PANIC</p>
-                <p className="text-sm text-red-600">Toutes les transactions financières sont actuellement gelées</p>
+                <p className="font-bold text-red-500">SYSTÃˆME EN MODE PANIC</p>
+                <p className="text-sm text-red-600">Toutes les transactions financiÃ¨res sont actuellement gelÃ©es</p>
               </div>
             </div>
           </CardContent>
@@ -396,7 +396,7 @@ const BankingDashboard: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4 text-green-500" />
+              <Activity className="h-4 w-4 text-primary-orange-500" />
               Transactions Aujourd'hui
             </CardTitle>
           </CardHeader>
@@ -406,12 +406,12 @@ const BankingDashboard: React.FC = () => {
             </div>
             <div className="text-xs text-muted-foreground mt-1">
               <div className="flex items-center gap-1">
-                <CheckCircle className="h-3 w-3 text-green-500" />
-                {dashboardData?.today_stats?.successful || 0} réussies
+                <CheckCircle className="h-3 w-3 text-primary-orange-500" />
+                {dashboardData?.today_stats?.successful || 0} rÃ©ussies
               </div>
               <div className="flex items-center gap-1">
                 <XCircle className="h-3 w-3 text-red-500" />
-                {dashboardData?.today_stats?.failed || 0} échouées
+                {dashboardData?.today_stats?.failed || 0} Ã©chouÃ©es
               </div>
             </div>
           </CardContent>
@@ -475,8 +475,8 @@ const BankingDashboard: React.FC = () => {
         <TabsContent value="alerts" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Alertes Financières</CardTitle>
-              <CardDescription>Notifications de sécurité et anomalies détectées</CardDescription>
+              <CardTitle>Alertes FinanciÃ¨res</CardTitle>
+              <CardDescription>Notifications de sÃ©curitÃ© et anomalies dÃ©tectÃ©es</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
@@ -558,7 +558,7 @@ const BankingDashboard: React.FC = () => {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              className="text-green-600 border-green-600"
+                              className="text-primary-orange-600 border-primary-orange-600"
                               onClick={() => handleQuarantineAction(tx.id, 'approved')}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
@@ -588,12 +588,12 @@ const BankingDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>Ledger Financier Immuable</CardTitle>
-              <CardDescription>Historique complet des transactions (source de vérité)</CardDescription>
+              <CardDescription>Historique complet des transactions (source de vÃ©ritÃ©)</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
                 {ledger.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Aucune entrée dans le ledger</p>
+                  <p className="text-center text-muted-foreground py-8">Aucune entrÃ©e dans le ledger</p>
                 ) : (
                   <div className="space-y-2">
                     {ledger.map((entry) => (
@@ -609,7 +609,7 @@ const BankingDashboard: React.FC = () => {
                                 {getStatusBadge(entry.validation_status)}
                               </div>
                               <p className="text-sm text-muted-foreground">
-                                {entry.transaction_type} • {entry.actor_type}
+                                {entry.transaction_type} â€¢ {entry.actor_type}
                               </p>
                             </div>
                           </div>
@@ -624,14 +624,14 @@ const BankingDashboard: React.FC = () => {
                           <div className="mt-2 pt-2 border-t grid grid-cols-2 gap-4 text-xs">
                             {entry.balance_before_debit !== null && (
                               <div>
-                                <span className="text-muted-foreground">Débit:</span>
-                                <span className="ml-1">{formatAmount(entry.balance_before_debit)} → {formatAmount(entry.balance_after_debit || 0)}</span>
+                                <span className="text-muted-foreground">DÃ©bit:</span>
+                                <span className="ml-1">{formatAmount(entry.balance_before_debit)} â†’ {formatAmount(entry.balance_after_debit || 0)}</span>
                               </div>
                             )}
                             {entry.balance_before_credit !== null && (
                               <div>
-                                <span className="text-muted-foreground">Crédit:</span>
-                                <span className="ml-1">{formatAmount(entry.balance_before_credit)} → {formatAmount(entry.balance_after_credit || 0)}</span>
+                                <span className="text-muted-foreground">CrÃ©dit:</span>
+                                <span className="ml-1">{formatAmount(entry.balance_before_credit)} â†’ {formatAmount(entry.balance_after_credit || 0)}</span>
                               </div>
                             )}
                           </div>

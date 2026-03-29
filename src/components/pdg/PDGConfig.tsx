@@ -100,8 +100,8 @@ export default function PDGConfig() {
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Configuration Système</h2>
-          <p className="text-muted-foreground">Gestion des commissions et paramètres globaux</p>
+          <h2 className="text-2xl font-bold">Configuration SystÃ¨me</h2>
+          <p className="text-muted-foreground">Gestion des commissions et paramÃ¨tres globaux</p>
         </div>
         <div className="flex gap-2">
           {configs.length === 0 && (
@@ -114,9 +114,9 @@ export default function PDGConfig() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Initialiser les configurations par défaut?</AlertDialogTitle>
+                  <AlertDialogTitle>Initialiser les configurations par dÃ©faut?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Cela créera des configurations de commission standard pour tous les services.
+                    Cela crÃ©era des configurations de commission standard pour tous les services.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -153,11 +153,11 @@ export default function PDGConfig() {
         </Card>
 
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="pt-6 relative">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <Settings className="w-6 h-6 text-green-500" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 flex items-center justify-center">
+                <Settings className="w-6 h-6 text-primary-orange-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.active_configs}</p>
@@ -208,7 +208,7 @@ export default function PDGConfig() {
             <Plus className="w-5 h-5 text-primary" />
             Nouvelle Configuration de Commission
           </CardTitle>
-          <CardDescription>Ajouter une règle de commission</CardDescription>
+          <CardDescription>Ajouter une rÃ¨gle de commission</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -276,7 +276,7 @@ export default function PDGConfig() {
               <Input
                 id="max"
                 type="number"
-                placeholder="Illimité si vide"
+                placeholder="IllimitÃ© si vide"
                 value={newConfig.max_amount || ''}
                 onChange={(e) => setNewConfig({ ...newConfig, max_amount: e.target.value ? Number(e.target.value) : null })}
                 className="bg-background"
@@ -294,7 +294,7 @@ export default function PDGConfig() {
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>Configurations Existantes</CardTitle>
-          <CardDescription>Gestion des règles de commission</CardDescription>
+          <CardDescription>Gestion des rÃ¨gles de commission</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -369,7 +369,7 @@ export default function PDGConfig() {
                         <Input
                           id={`edit-max-${config.id}`}
                           type="number"
-                          placeholder="Illimité si vide"
+                          placeholder="IllimitÃ© si vide"
                           value={editConfig.max_amount || ''}
                           onChange={(e) => setEditConfig({ ...editConfig, max_amount: e.target.value ? Number(e.target.value) : null })}
                           className="bg-background"
@@ -393,7 +393,7 @@ export default function PDGConfig() {
                         <h4 className="font-semibold">
                           {config.service_name} - {config.transaction_type}
                         </h4>
-                        <Badge variant="outline" className={config.is_active ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}>
+                        <Badge variant="outline" className={config.is_active ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500 border-primary-orange-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}>
                           {config.is_active ? 'Actif' : 'Inactif'}
                         </Badge>
                       </div>
@@ -406,7 +406,7 @@ export default function PDGConfig() {
                       {(config.min_amount || config.max_amount) && (
                         <p className="text-xs text-muted-foreground">
                           Montants: {config.min_amount ? `${config.min_amount} GNF` : '0'} 
-                          {config.max_amount ? ` - ${config.max_amount} GNF` : ' - Illimité'}
+                          {config.max_amount ? ` - ${config.max_amount} GNF` : ' - IllimitÃ©'}
                         </p>
                       )}
                     </div>
@@ -423,9 +423,9 @@ export default function PDGConfig() {
                         variant="outline"
                         size="sm"
                         onClick={() => toggleActive(config.id, config.is_active)}
-                        className={config.is_active ? 'border-orange-500/50 hover:bg-orange-500/10' : 'border-green-500/50 hover:bg-green-500/10'}
+                        className={config.is_active ? 'border-orange-500/50 hover:bg-orange-500/10' : 'border-primary-orange-500/50 hover:bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10'}
                       >
-                        {config.is_active ? 'Désactiver' : 'Activer'}
+                        {config.is_active ? 'DÃ©sactiver' : 'Activer'}
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -437,7 +437,7 @@ export default function PDGConfig() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Supprimer cette configuration?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Cette action est irréversible.
+                              Cette action est irrÃ©versible.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -455,7 +455,7 @@ export default function PDGConfig() {
             ))}
             {configs.length === 0 && (
               <p className="text-center text-muted-foreground py-8">
-                Aucune configuration trouvée
+                Aucune configuration trouvÃ©e
               </p>
             )}
           </div>

@@ -27,7 +27,7 @@ export const TrackingMap = () => {
     const colors = {
       waiting: 'bg-yellow-100 text-yellow-800',
       in_progress: 'bg-blue-100 text-blue-800',
-      delivered: 'bg-green-100 text-green-800',
+      delivered: 'bg-primary-orange-100 text-primary-orange-800',
       cancelled: 'bg-red-100 text-red-800'
     };
     return colors[status as keyof typeof colors] || colors.waiting;
@@ -47,8 +47,8 @@ export const TrackingMap = () => {
     const labels = {
       waiting: 'En attente',
       in_progress: 'En cours',
-      delivered: 'Livré',
-      cancelled: 'Annulé'
+      delivered: 'LivrÃ©',
+      cancelled: 'AnnulÃ©'
     };
     return labels[status as keyof typeof labels] || status;
   };
@@ -69,7 +69,7 @@ export const TrackingMap = () => {
       const position = await getCurrentPosition();
       if (position) {
         toast({
-          title: "Position partagée",
+          title: "Position partagÃ©e",
           description: `Lat: ${position.latitude.toFixed(6)}, Lng: ${position.longitude.toFixed(6)}`,
         });
       }
@@ -84,19 +84,19 @@ export const TrackingMap = () => {
 
   return (
     <div className="space-y-6">
-      {/* Contrôles de tracking */}
+      {/* ContrÃ´les de tracking */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Navigation className="h-5 w-5" />
-            Suivi GPS en temps réel
+            Suivi GPS en temps rÃ©el
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium">
-                {isTracking ? 'Suivi activé' : 'Suivi désactivé'}
+                {isTracking ? 'Suivi activÃ©' : 'Suivi dÃ©sactivÃ©'}
               </div>
               <div className="text-sm text-muted-foreground">
                 {currentLocation 
@@ -109,12 +109,12 @@ export const TrackingMap = () => {
               {!isTracking ? (
                 <Button onClick={startTracking}>
                   <Play className="h-4 w-4 mr-2" />
-                  Démarrer
+                  DÃ©marrer
                 </Button>
               ) : (
                 <Button onClick={stopTracking} variant="destructive">
                   <Square className="h-4 w-4 mr-2" />
-                  Arrêter
+                  ArrÃªter
                 </Button>
               )}
               <Button onClick={handleShareLocation} variant="outline">
@@ -130,9 +130,9 @@ export const TrackingMap = () => {
               <AlertDescription>
                 Position actuelle: {formatLocation(currentLocation.latitude, currentLocation.longitude)}
                 <br />
-                Précision: {currentLocation.accuracy ? `${currentLocation.accuracy.toFixed(0)}m` : 'N/A'}
+                PrÃ©cision: {currentLocation.accuracy ? `${currentLocation.accuracy.toFixed(0)}m` : 'N/A'}
                 <br />
-                Dernière mise à jour: {new Date(currentLocation.timestamp).toLocaleTimeString('fr-FR')}
+                DerniÃ¨re mise Ã  jour: {new Date(currentLocation.timestamp).toLocaleTimeString('fr-FR')}
               </AlertDescription>
             </Alert>
           )}
@@ -181,7 +181,7 @@ export const TrackingMap = () => {
                           Position: {formatLocation(tracking.latitude, tracking.longitude)}
                         </div>
                         <div>
-                          Mis à jour: {new Date(tracking.updated_at).toLocaleTimeString('fr-FR', {
+                          Mis Ã  jour: {new Date(tracking.updated_at).toLocaleTimeString('fr-FR', {
                             day: '2-digit',
                             month: '2-digit',
                             hour: '2-digit',
@@ -208,7 +208,7 @@ export const TrackingMap = () => {
                   {selectedTracking === tracking.id && (
                     <div className="mt-4 pt-4 border-t space-y-2">
                       <div className="text-sm">
-                        <strong>Détails du tracking:</strong>
+                        <strong>DÃ©tails du tracking:</strong>
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
@@ -220,7 +220,7 @@ export const TrackingMap = () => {
                           <div className="font-mono">{tracking.longitude || 'N/A'}</div>
                         </div>
                         <div>
-                          <div className="text-muted-foreground">Créé le</div>
+                          <div className="text-muted-foreground">CrÃ©Ã© le</div>
                           <div>{new Date(tracking.created_at).toLocaleDateString('fr-FR')}</div>
                         </div>
                         <div>
@@ -237,7 +237,7 @@ export const TrackingMap = () => {
             <div className="text-center py-8 text-muted-foreground">
               <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <h3 className="font-medium mb-1">Aucun tracking</h3>
-              <p className="text-sm">Les positions de tracking apparaîtront ici</p>
+              <p className="text-sm">Les positions de tracking apparaÃ®tront ici</p>
             </div>
           )}
         </CardContent>
@@ -249,13 +249,13 @@ export const TrackingMap = () => {
         <AlertDescription>
           <strong>Comment utiliser le tracking:</strong>
           <br />
-          1. Activez le suivi GPS pour partager votre position en temps réel
+          1. Activez le suivi GPS pour partager votre position en temps rÃ©el
           <br />
-          2. Votre position sera automatiquement mise à jour
+          2. Votre position sera automatiquement mise Ã  jour
           <br />
-          3. Les clients peuvent suivre vos déplacements pendant la livraison
+          3. Les clients peuvent suivre vos dÃ©placements pendant la livraison
           <br />
-          4. Désactivez le suivi une fois la livraison terminée
+          4. DÃ©sactivez le suivi une fois la livraison terminÃ©e
         </AlertDescription>
       </Alert>
     </div>

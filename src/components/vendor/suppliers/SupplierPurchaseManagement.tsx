@@ -43,13 +43,13 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
           .select('id', { count: 'exact', head: true })
           .eq('vendor_id', vendorId)
           .eq('is_active', true),
-        // Compter uniquement les achats validés
+        // Compter uniquement les achats validÃ©s
         supabase
           .from('stock_purchases')
           .select('id', { count: 'exact', head: true })
           .eq('vendor_id', vendorId)
           .eq('status', 'validated'),
-        // Compter tous les achats non validés (brouillons)
+        // Compter tous les achats non validÃ©s (brouillons)
         supabase
           .from('stock_purchases')
           .select('id', { count: 'exact', head: true })
@@ -86,13 +86,13 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
 
         {/* Carte Achats cliquable */}
         <Card
-          className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 cursor-pointer hover:border-green-500/40 hover:shadow-md transition-all active:scale-95"
+          className="bg-gradient-to-br from-primary-blue-500/10 to-primary-orange-600/5 border-primary-orange-500/20 cursor-pointer hover:border-primary-orange-500/40 hover:shadow-md transition-all active:scale-95"
           onClick={() => setIsValidatedSheetOpen(true)}
         >
           <CardContent className="p-5 md:p-4">
             <div className="flex items-center gap-3">
-              <div className="p-3 md:p-2 rounded-lg bg-green-500/20">
-                <ShoppingCart className="h-6 w-6 md:h-5 md:w-5 text-green-500" />
+              <div className="p-3 md:p-2 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20">
+                <ShoppingCart className="h-6 w-6 md:h-5 md:w-5 text-primary-orange-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.validatedPurchasesCount || 0}</p>

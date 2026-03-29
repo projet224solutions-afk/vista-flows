@@ -1,7 +1,7 @@
 /**
  * GOOGLE PLACES ADDRESS INPUT
- * Composant d'entrée d'adresse avec autocomplétion Google Places
- * 224Solutions - GPS Ultra-Précis
+ * Composant d'entrÃ©e d'adresse avec autocomplÃ©tion Google Places
+ * 224Solutions - GPS Ultra-PrÃ©cis
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -54,7 +54,7 @@ interface GooglePlacesAddressInputProps {
   variant?: 'default' | 'pickup' | 'destination';
 }
 
-// Icône selon le type de lieu
+// IcÃ´ne selon le type de lieu
 const getPlaceIcon = (types: string[]) => {
   if (types.includes('airport')) return <Plane className="w-4 h-4" />;
   if (types.includes('lodging') || types.includes('hotel')) return <Hotel className="w-4 h-4" />;
@@ -78,7 +78,7 @@ export function GooglePlacesAddressInput({
   inputClassName,
   variant = 'default',
 }: GooglePlacesAddressInputProps) {
-  // États
+  // Ã‰tats
   const [inputValue, setInputValue] = useState(initialValue);
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -98,8 +98,8 @@ export function GooglePlacesAddressInput({
       badge: 'bg-primary/10 text-primary',
     },
     pickup: {
-      icon: 'text-green-600',
-      badge: 'bg-green-100 text-green-800',
+      icon: 'text-primary-orange-600',
+      badge: 'bg-primary-orange-100 text-primary-orange-800',
     },
     destination: {
       icon: 'text-red-600',
@@ -144,7 +144,7 @@ export function GooglePlacesAddressInput({
     const value = e.target.value;
     setInputValue(value);
     
-    // Invalider l'adresse précédente
+    // Invalider l'adresse prÃ©cÃ©dente
     if (selectedAddress) {
       setSelectedAddress(null);
       setIsValid(false);
@@ -163,7 +163,7 @@ export function GooglePlacesAddressInput({
   }, [selectedAddress, searchAddresses, onChange, onValidChange]);
 
   /**
-   * Sélection d'une suggestion
+   * SÃ©lection d'une suggestion
    */
   const handleSelectSuggestion = useCallback(async (suggestion: AddressSuggestion) => {
     setIsLoading(true);
@@ -187,12 +187,12 @@ export function GooglePlacesAddressInput({
         onChange?.(validatedAddress);
         onValidChange?.(true);
 
-        toast.success('Adresse validée avec coordonnées GPS précises');
+        toast.success('Adresse validÃ©e avec coordonnÃ©es GPS prÃ©cises');
       } else {
-        toast.error('Impossible d\'obtenir les coordonnées de cette adresse');
+        toast.error('Impossible d\'obtenir les coordonnÃ©es de cette adresse');
       }
     } catch (error) {
-      console.error('[GooglePlacesInput] Erreur détails:', error);
+      console.error('[GooglePlacesInput] Erreur dÃ©tails:', error);
       toast.error('Erreur lors de la validation de l\'adresse');
     } finally {
       setIsLoading(false);
@@ -208,7 +208,7 @@ export function GooglePlacesAddressInput({
     try {
       const location = await precisionGeoService.getCurrentPosition(true);
       
-      // Géocodage inverse pour obtenir l'adresse
+      // GÃ©ocodage inverse pour obtenir l'adresse
       const details = await precisionGeoService.reverseGeocode(
         location.latitude,
         location.longitude
@@ -229,9 +229,9 @@ export function GooglePlacesAddressInput({
         onChange?.(validatedAddress);
         onValidChange?.(true);
 
-        toast.success(`Position actuelle (précision: ${location.accuracy.toFixed(0)}m)`);
+        toast.success(`Position actuelle (prÃ©cision: ${location.accuracy.toFixed(0)}m)`);
       } else {
-        // Fallback avec coordonnées brutes
+        // Fallback avec coordonnÃ©es brutes
         const validatedAddress: ValidatedAddress = {
           formattedAddress: `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`,
           latitude: location.latitude,
@@ -255,7 +255,7 @@ export function GooglePlacesAddressInput({
   }, [onChange, onValidChange]);
 
   /**
-   * Fermer les suggestions au clic extérieur
+   * Fermer les suggestions au clic extÃ©rieur
    */
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -305,12 +305,12 @@ export function GooglePlacesAddressInput({
             disabled={disabled}
             className={cn(
               'pl-10 pr-10',
-              isValid && 'border-green-500 focus-visible:ring-green-500',
+              isValid && 'border-primary-orange-500 focus-visible:ring-primary-orange-500',
               inputClassName
             )}
           />
           
-          {/* Icône gauche */}
+          {/* IcÃ´ne gauche */}
           <MapPin className={cn(
             'absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4',
             currentStyle.icon
@@ -321,7 +321,7 @@ export function GooglePlacesAddressInput({
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : isValid ? (
-              <CheckCircle className="w-4 h-4 text-green-500" />
+              <CheckCircle className="w-4 h-4 text-primary-orange-500" />
             ) : inputValue.length > 0 ? (
               <AlertCircle className="w-4 h-4 text-amber-500" />
             ) : null}
@@ -392,13 +392,13 @@ export function GooglePlacesAddressInput({
       {/* Message d'aide */}
       {!isValid && inputValue.length > 0 && inputValue.length < 3 && (
         <p className="text-xs text-muted-foreground mt-1">
-          Saisissez au moins 3 caractères pour rechercher
+          Saisissez au moins 3 caractÃ¨res pour rechercher
         </p>
       )}
 
       {!isValid && inputValue.length >= 3 && !isLoading && suggestions.length === 0 && (
         <p className="text-xs text-amber-600 mt-1">
-          Sélectionnez une adresse dans la liste pour valider
+          SÃ©lectionnez une adresse dans la liste pour valider
         </p>
       )}
     </div>

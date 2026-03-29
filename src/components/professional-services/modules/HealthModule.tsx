@@ -1,8 +1,8 @@
 /**
- * MODULE SANTÉ / PHARMACIE — Interface professionnelle
- * Inspiré CVS Health, Boots, Walgreens, McKesson
+ * MODULE SANTÃ‰ / PHARMACIE â€” Interface professionnelle
+ * InspirÃ© CVS Health, Boots, Walgreens, McKesson
  * 
- * Architecture: Composable panels sous-componentisés
+ * Architecture: Composable panels sous-componentisÃ©s
  */
 
 import { useState } from 'react';
@@ -68,21 +68,21 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
           <p className="text-destructive font-medium">{error}</p>
           <Button onClick={refresh} className="mt-4 gap-2">
             <RefreshCw className="w-4 h-4" />
-            Réessayer
+            RÃ©essayer
           </Button>
         </CardContent>
       </Card>
     );
   }
 
-  // Empty state — onboarding
+  // Empty state â€” onboarding
   if (!stats?.hasData) {
     return (
       <div className="space-y-6">
         <PharmacyHeader businessName={businessName} onRefresh={refresh} />
 
         <Card className="overflow-hidden">
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6 md:p-8">
+          <div className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-600 p-6 md:p-8">
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
                 <Pill className="w-7 h-7 text-white" />
@@ -90,8 +90,8 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
               <div className="text-white">
                 <h3 className="text-xl font-bold mb-1">Bienvenue dans votre Pharmacie</h3>
                 <p className="text-white/80 text-sm max-w-md">
-                  Gérez vos médicaments, suivez votre inventaire, traitez les ordonnances 
-                  et analysez vos performances — tout depuis un seul endroit.
+                  GÃ©rez vos mÃ©dicaments, suivez votre inventaire, traitez les ordonnances 
+                  et analysez vos performances â€” tout depuis un seul endroit.
                 </p>
               </div>
             </div>
@@ -102,12 +102,12 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
                 onClick={() => navigate('/vendeur/products')}
                 className="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed hover:border-primary/50 hover:bg-primary/5 transition-all group"
               >
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Plus className="w-5 h-5 text-emerald-600" />
+                <div className="w-10 h-10 rounded-xl bg-primary-blue-100 dark:bg-primary-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Plus className="w-5 h-5 text-primary-blue-600" />
                 </div>
                 <div className="text-left">
                   <p className="font-semibold text-sm">Ajouter des produits</p>
-                  <p className="text-xs text-muted-foreground">Médicaments, parapharmacie</p>
+                  <p className="text-xs text-muted-foreground">MÃ©dicaments, parapharmacie</p>
                 </div>
               </button>
 
@@ -119,7 +119,7 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
                   <ShoppingCart className="w-5 h-5 text-blue-600" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-sm">Gérer les commandes</p>
+                  <p className="font-semibold text-sm">GÃ©rer les commandes</p>
                   <p className="text-xs text-muted-foreground">Ventes et livraisons</p>
                 </div>
               </button>
@@ -197,11 +197,11 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
               <Users className="w-14 h-14 mx-auto mb-4 text-muted-foreground/30" />
               <h3 className="font-semibold text-lg mb-1">Fichier Patients</h3>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
-                Gérez vos patients, leur historique d'achats et leurs ordonnances depuis un dossier centralisé.
+                GÃ©rez vos patients, leur historique d'achats et leurs ordonnances depuis un dossier centralisÃ©.
               </p>
               <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
                 <Users className="w-4 h-4" />
-                <span>{stats.clients.total} patient(s) enregistré(s)</span>
+                <span>{stats.clients.total} patient(s) enregistrÃ©(s)</span>
               </div>
             </CardContent>
           </Card>
@@ -213,11 +213,11 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
               <ClipboardList className="w-14 h-14 mx-auto mb-4 text-muted-foreground/30" />
               <h3 className="font-semibold text-lg mb-1">Gestion des Ordonnances</h3>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
-                Recevez, validez et suivez les ordonnances de vos patients. Traçabilité complète et historique.
+                Recevez, validez et suivez les ordonnances de vos patients. TraÃ§abilitÃ© complÃ¨te et historique.
               </p>
               <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
                 <ClipboardList className="w-4 h-4" />
-                <span>{stats.prescriptions.total} ordonnance(s) • {stats.prescriptions.pending} en attente</span>
+                <span>{stats.prescriptions.total} ordonnance(s) â€¢ {stats.prescriptions.pending} en attente</span>
               </div>
             </CardContent>
           </Card>
@@ -227,17 +227,17 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
   );
 }
 
-/** Header réutilisable */
+/** Header rÃ©utilisable */
 function PharmacyHeader({ businessName, onRefresh }: { businessName?: string; onRefresh: () => void }) {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-          <Stethoscope className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        <div className="w-10 h-10 rounded-xl bg-primary-blue-100 dark:bg-primary-blue-900/30 flex items-center justify-center">
+          <Stethoscope className="w-5 h-5 text-primary-blue-600 dark:text-primary-blue-400" />
         </div>
         <div>
           <h2 className="text-xl md:text-2xl font-bold leading-tight">{businessName || 'Ma Pharmacie'}</h2>
-          <p className="text-xs md:text-sm text-muted-foreground">Gestion pharmaceutique intégrée</p>
+          <p className="text-xs md:text-sm text-muted-foreground">Gestion pharmaceutique intÃ©grÃ©e</p>
         </div>
       </div>
       <Button onClick={onRefresh} variant="outline" size="sm" className="gap-1.5">

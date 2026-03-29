@@ -1,6 +1,6 @@
 /**
  * Badge professionnel ULTRA pour taxi-motards
- * Design inspiré de badges officiels gouvernementaux et entreprises internationales
+ * Design inspirÃ© de badges officiels gouvernementaux et entreprises internationales
  */
 
 import { forwardRef } from 'react';
@@ -46,7 +46,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
   // Formater l'ID pour l'affichage (raccourcir si c'est un UUID)
   const formatMemberId = (id: string) => {
     if (!id) return 'N/A';
-    // Si c'est un UUID, prendre les 8 premiers caractères
+    // Si c'est un UUID, prendre les 8 premiers caractÃ¨res
     if (id.includes('-') && id.length > 20) {
       return `MBR-${id.substring(0, 8).toUpperCase()}`;
     }
@@ -63,7 +63,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
     }
   };
 
-  // Nom du bureau à afficher (jamais "VOTRE BUREAU")
+  // Nom du bureau Ã  afficher (jamais "VOTRE BUREAU")
   const displayBureauName = bureauName && bureauName !== 'VOTRE BUREAU' ? bureauName : '224SOLUTIONS';
 
   return (
@@ -75,15 +75,15 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
         background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%)'
       }}
     >
-      {/* En-tête principal */}
+      {/* En-tÃªte principal */}
       <div className="relative h-[120px] bg-gradient-to-r from-[#0f172a] via-[#1e3a8a] to-[#1d4ed8] overflow-hidden">
-        {/* Motif géométrique subtil */}
+        {/* Motif gÃ©omÃ©trique subtil */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-80 h-80 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-white/10 rounded-full translate-y-1/2" />
         </div>
 
-        {/* Contenu de l'en-tête */}
+        {/* Contenu de l'en-tÃªte */}
         <div className="relative h-full flex items-center justify-between px-6">
           {/* Logo et titre gauche */}
           <div className="flex items-center gap-5">
@@ -96,14 +96,14 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             </div>
             <div>
               <div className="text-white text-sm font-bold tracking-[0.2em] uppercase mb-0.5">
-                République de Guinée
+                RÃ©publique de GuinÃ©e
               </div>
               <div className="flex items-center justify-start gap-1 text-xs font-semibold mb-1 pl-4">
                 <span className="text-red-400">Travail</span>
                 <span className="text-white">-</span>
                 <span className="text-yellow-400">Justice</span>
                 <span className="text-white">-</span>
-                <span className="text-green-400">Solidarité</span>
+                <span className="text-primary-orange-400">SolidaritÃ©</span>
               </div>
               <h1 className="text-white text-xl font-bold tracking-wide">
                 {displayTitle}
@@ -114,25 +114,25 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             </div>
           </div>
 
-          {/* Badge de sécurité droite */}
+          {/* Badge de sÃ©curitÃ© droite */}
           <div className="text-right">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/20">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-primary-orange-400 rounded-full animate-pulse" />
               <span className="text-white text-xs font-semibold">CARTE OFFICIELLE</span>
             </div>
             <div className="text-white/50 text-xs mt-1.5 tracking-wider">
-              224SOLUTIONS • Système Certifié
+              224SOLUTIONS â€¢ SystÃ¨me CertifiÃ©
             </div>
           </div>
         </div>
 
-        {/* Bande de sécurité holographique */}
+        {/* Bande de sÃ©curitÃ© holographique */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400" />
       </div>
 
       {/* Corps principal */}
       <div className="flex h-[400px]">
-        {/* Section photo et identité - Gauche */}
+        {/* Section photo et identitÃ© - Gauche */}
         <div className="w-[240px] p-4 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200 flex flex-col">
           {/* Photo du conducteur */}
           <div className="relative">
@@ -156,7 +156,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
             </div>
           </div>
 
-          {/* Badge véhicule - Séparé et bien stylé */}
+          {/* Badge vÃ©hicule - SÃ©parÃ© et bien stylÃ© */}
           <div className="mt-3 flex justify-center">
             <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white text-[11px] font-bold px-4 py-2 rounded-full shadow-lg border border-blue-400/30">
               <div className="flex items-center gap-2">
@@ -194,7 +194,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
         <div className="flex-1 p-4 flex flex-col">
           {/* Grille d'informations */}
           <div className="grid grid-cols-2 gap-2.5 mb-2.5">
-            {/* Matricule véhicule */}
+            {/* Matricule vÃ©hicule */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-2.5 border border-blue-100">
               <div className="flex items-center gap-1.5 text-blue-600 mb-0.5">
                 <CreditCard className="w-3.5 h-3.5" />
@@ -205,11 +205,11 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               </div>
             </div>
 
-            {/* Numéro de série */}
+            {/* NumÃ©ro de sÃ©rie */}
             <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg p-2.5 border border-purple-100">
               <div className="flex items-center gap-1.5 text-purple-600 mb-0.5">
                 <Bike className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-semibold uppercase tracking-wider">N° Série</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider">NÂ° SÃ©rie</span>
               </div>
               <div className="text-base font-bold text-slate-900 font-mono">
                 {serialNumber || 'N/A'}
@@ -223,7 +223,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
                 <span className="text-[10px] font-semibold uppercase tracking-wider">Naissance</span>
               </div>
               <div className="text-sm font-bold text-slate-900">
-                {dateOfBirth || 'Non renseigné'}
+                {dateOfBirth || 'Non renseignÃ©'}
               </div>
             </div>
 
@@ -251,7 +251,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               </div>
               {bureauPhone && (
                 <div className="flex items-center gap-1 text-blue-600">
-                  <span className="text-xs font-semibold">📞 {bureauPhone}</span>
+                  <span className="text-xs font-semibold">ðŸ“ž {bureauPhone}</span>
                 </div>
               )}
             </div>
@@ -272,7 +272,7 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
               />
             </div>
 
-            {/* QR Code - Lien vers la page de vérification */}
+            {/* QR Code - Lien vers la page de vÃ©rification */}
             <div className="bg-white rounded-lg p-3 border-2 border-slate-200 shadow-sm flex-shrink-0">
               <QRCodeSVG 
                 value={`${window.location.origin}/badge/${badgeId}`}
@@ -289,13 +289,13 @@ const TaxiMotoBadge = forwardRef<HTMLDivElement, TaxiMotoBadgeProps>(({
           <div className="pt-2 border-t border-slate-200 mt-2">
             <div className="flex items-center justify-between text-[10px] text-slate-500">
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold">Émis par 224Solutions</span>
-                <span>•</span>
-                <span>République de Guinée</span>
+                <span className="font-semibold">Ã‰mis par 224Solutions</span>
+                <span>â€¢</span>
+                <span>RÃ©publique de GuinÃ©e</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Shield className="w-3 h-3" />
-                <span className="font-medium">Document sécurisé</span>
+                <span className="font-medium">Document sÃ©curisÃ©</span>
               </div>
             </div>
           </div>

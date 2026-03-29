@@ -1,6 +1,6 @@
 /**
- * Générateur de Tickets de Transport - Bureau Syndicat
- * Design fidèle au modèle officiel guinéen (orientation PAYSAGE)
+ * GÃ©nÃ©rateur de Tickets de Transport - Bureau Syndicat
+ * Design fidÃ¨le au modÃ¨le officiel guinÃ©en (orientation PAYSAGE)
  * 30 tickets par page A4 (5 colonnes x 6 lignes)
  */
 
@@ -64,7 +64,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     { value: 'hebdomadaire', label: 'Ticket hebdomadaire' },
     { value: 'mensuel', label: 'Ticket mensuel' },
     { value: 'cotisation', label: 'Ticket de cotisation' },
-    { value: 'special', label: 'Ticket spécial' },
+    { value: 'special', label: 'Ticket spÃ©cial' },
   ];
 
   const generateBatchNumber = () => {
@@ -81,15 +81,15 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Vérifier le type de fichier
+    // VÃ©rifier le type de fichier
     if (!file.type.startsWith('image/')) {
-      toast.error('Veuillez sélectionner une image');
+      toast.error('Veuillez sÃ©lectionner une image');
       return;
     }
 
-    // Vérifier la taille (max 2MB)
+    // VÃ©rifier la taille (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('L\'image ne doit pas dépasser 2MB');
+      toast.error('L\'image ne doit pas dÃ©passer 2MB');
       return;
     }
 
@@ -114,10 +114,10 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       }
 
       setStampUrl(result.url);
-      toast.success('Cachet téléchargé avec succès');
+      toast.success('Cachet tÃ©lÃ©chargÃ© avec succÃ¨s');
     } catch (error: any) {
       console.error('Erreur upload cachet:', error);
-      toast.error(`Erreur: ${error?.message || 'Téléchargement échoué'}`);
+      toast.error(`Erreur: ${error?.message || 'TÃ©lÃ©chargement Ã©chouÃ©'}`);
     } finally {
       setIsUploadingStamp(false);
     }
@@ -130,7 +130,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
     }
   };
 
-  // Calculer la période de validité selon le type de ticket
+  // Calculer la pÃ©riode de validitÃ© selon le type de ticket
   const getValidityPeriod = (ticketType: string): { days: number; name: string } => {
     switch (ticketType) {
       case 'journalier':
@@ -141,18 +141,18 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       case 'mensuel':
         return { days: 30, name: '30 jours' };
       default:
-        return { days: 1, name: '24h' }; // Par défaut 24h
+        return { days: 1, name: '24h' }; // Par dÃ©faut 24h
     }
   };
 
-  // Vérifier si un lot doit être réinitialisé (période expirée)
+  // VÃ©rifier si un lot doit Ãªtre rÃ©initialisÃ© (pÃ©riode expirÃ©e)
   const shouldResetNumbering = (lastBatchDate: string, ticketType: string): boolean => {
     const { days } = getValidityPeriod(ticketType);
     const lastDate = new Date(lastBatchDate);
     const now = new Date();
     const diffTime = now.getTime() - lastDate.getTime();
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    console.log(`Vérification reset: ${diffDays.toFixed(2)} jours écoulés, période: ${days} jours`);
+    console.log(`VÃ©rification reset: ${diffDays.toFixed(2)} jours Ã©coulÃ©s, pÃ©riode: ${days} jours`);
     return diffDays >= days;
   };
 
@@ -162,14 +162,14 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       return;
     }
     if (config.amount <= 0) {
-      toast.error('Le montant doit être supérieur à 0');
+      toast.error('Le montant doit Ãªtre supÃ©rieur Ã  0');
       return;
     }
 
     setIsGenerating(true);
     
     try {
-      // Récupérer le dernier lot DE CE TYPE pour ce bureau
+      // RÃ©cupÃ©rer le dernier lot DE CE TYPE pour ce bureau
       const { data: lastBatch, error: fetchError } = await (supabase as any)
         .from('transport_ticket_batches')
         .select('end_number, created_at, ticket_config')
@@ -179,37 +179,37 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
         .maybeSingle();
 
       if (fetchError) {
-        console.error('Erreur récupération dernier lot:', fetchError);
+        console.error('Erreur rÃ©cupÃ©ration dernier lot:', fetchError);
       }
 
-      let startNumber = 1; // Par défaut recommencer à 1
+      let startNumber = 1; // Par dÃ©faut recommencer Ã  1
       let resetReason = '';
 
-      // Si aucun lot existe (historique vide), recommencer à 1
+      // Si aucun lot existe (historique vide), recommencer Ã  1
       if (!lastBatch) {
         startNumber = 1;
         resetReason = 'Historique vide';
-        console.log('Aucun lot trouvé, numérotation à 1');
+        console.log('Aucun lot trouvÃ©, numÃ©rotation Ã  1');
       } else {
         const lastTicketType = lastBatch.ticket_config?.ticketType || 'journalier';
         
-        // Si le type de ticket est différent, recommencer à 1
+        // Si le type de ticket est diffÃ©rent, recommencer Ã  1
         if (lastTicketType !== config.ticketType) {
           startNumber = 1;
-          resetReason = `Type changé (${lastTicketType} → ${config.ticketType})`;
-          console.log(`Type de ticket changé, numérotation à 1`);
+          resetReason = `Type changÃ© (${lastTicketType} â†’ ${config.ticketType})`;
+          console.log(`Type de ticket changÃ©, numÃ©rotation Ã  1`);
         }
-        // Si la période est expirée, recommencer à 1
+        // Si la pÃ©riode est expirÃ©e, recommencer Ã  1
         else if (shouldResetNumbering(lastBatch.created_at, config.ticketType)) {
           startNumber = 1;
           const { name } = getValidityPeriod(config.ticketType);
-          resetReason = `Période ${name} expirée`;
-          console.log(`Période expirée, numérotation à 1`);
+          resetReason = `PÃ©riode ${name} expirÃ©e`;
+          console.log(`PÃ©riode expirÃ©e, numÃ©rotation Ã  1`);
         }
-        // Sinon continuer la séquence
+        // Sinon continuer la sÃ©quence
         else {
           startNumber = (lastBatch.end_number || 0) + 1;
-          console.log(`Continuation séquence depuis ${startNumber}`);
+          console.log(`Continuation sÃ©quence depuis ${startNumber}`);
         }
       }
 
@@ -222,7 +222,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
         bureauStampUrl: stampUrl || undefined,
       };
 
-      // Créer le lot dans la base de données
+      // CrÃ©er le lot dans la base de donnÃ©es
       const { data: newBatch, error: insertError } = await (supabase as any)
         .from('transport_ticket_batches')
         .insert({
@@ -237,10 +237,10 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
         .single();
 
       if (insertError) {
-        throw new Error('Erreur création du lot: ' + insertError.message);
+        throw new Error('Erreur crÃ©ation du lot: ' + insertError.message);
       }
 
-      // Générer les numéros de tickets
+      // GÃ©nÃ©rer les numÃ©ros de tickets
       const ticketNumbers = Array.from({ length: 30 }, (_, i) => startNumber + i);
       
       setGeneratedTickets(ticketNumbers);
@@ -250,12 +250,12 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       
       const { name } = getValidityPeriod(config.ticketType);
       const successMsg = resetReason 
-        ? `Lot ${batchNumber} généré (tickets 01-30) - ${resetReason}`
-        : `Lot ${batchNumber} généré (tickets ${startNumber}-${endNumber}) - Validité: ${name}`;
+        ? `Lot ${batchNumber} gÃ©nÃ©rÃ© (tickets 01-30) - ${resetReason}`
+        : `Lot ${batchNumber} gÃ©nÃ©rÃ© (tickets ${startNumber}-${endNumber}) - ValiditÃ©: ${name}`;
       toast.success(successMsg);
     } catch (error: any) {
-      console.error('Erreur génération tickets:', error);
-      toast.error(error.message || 'Erreur lors de la génération des tickets');
+      console.error('Erreur gÃ©nÃ©ration tickets:', error);
+      toast.error(error.message || 'Erreur lors de la gÃ©nÃ©ration des tickets');
     } finally {
       setIsGenerating(false);
     }
@@ -269,7 +269,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
               <FileText className="w-5 h-5 text-amber-600" />
-              Générateur de Tickets de Transport
+              GÃ©nÃ©rateur de Tickets de Transport
             </CardTitle>
             <Button
               variant="outline"
@@ -314,7 +314,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
                 onValueChange={(value) => setConfig({ ...config, ticketType: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le type" />
+                  <SelectValue placeholder="SÃ©lectionner le type" />
                 </SelectTrigger>
                 <SelectContent>
                   {ticketTypes.map((type) => (
@@ -379,7 +379,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm text-green-600 font-medium">✓ Cachet téléchargé</span>
+                  <span className="text-sm text-primary-orange-600 font-medium">âœ“ Cachet tÃ©lÃ©chargÃ©</span>
                   <Button
                     variant="outline"
                     size="sm"
@@ -412,7 +412,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
                   ) : (
                     <Upload className="w-4 h-4 mr-2" />
                   )}
-                  Télécharger le cachet
+                  TÃ©lÃ©charger le cachet
                 </Button>
                 <span className="text-xs text-gray-500">
                   Format: PNG, JPG (max 2MB)
@@ -421,7 +421,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
             )}
           </div>
 
-          {/* Bouton de génération */}
+          {/* Bouton de gÃ©nÃ©ration */}
           <div className="mt-8 flex justify-center">
             <Button
               onClick={handleGenerateTickets}
@@ -431,12 +431,12 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
               {isGenerating ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Génération en cours...
+                  GÃ©nÃ©ration en cours...
                 </>
               ) : (
                 <>
                   <FileText className="w-5 h-5 mr-2" />
-                  Générer 30 Tickets
+                  GÃ©nÃ©rer 30 Tickets
                 </>
               )}
             </Button>
@@ -444,13 +444,13 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
         </CardContent>
       </Card>
 
-      {/* Prévisualisation Dialog */}
+      {/* PrÃ©visualisation Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="w-5 h-5" />
-              Prévisualisation des Tickets - Lot #{batchId?.slice(-8)}
+              PrÃ©visualisation des Tickets - Lot #{batchId?.slice(-8)}
             </DialogTitle>
           </DialogHeader>
           <TransportTicketPreview

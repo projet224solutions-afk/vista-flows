@@ -1,6 +1,6 @@
 /**
- * BARRE DE NAVIGATION RAPIDE - Affichée en bas pendant une course
- * Accès rapide à Google Maps et aux actions de course
+ * BARRE DE NAVIGATION RAPIDE - AffichÃ©e en bas pendant une course
+ * AccÃ¨s rapide Ã  Google Maps et aux actions de course
  */
 
 import { Navigation, Phone, MapPin, ExternalLink, Route } from "lucide-react";
@@ -39,23 +39,23 @@ export function QuickNavigationBar({
         {/* Info de navigation */}
         <div className={cn(
           "px-4 py-2 flex items-center gap-3",
-          targetType === 'pickup' ? 'bg-emerald-600/20' : 'bg-red-600/20'
+          targetType === 'pickup' ? 'bg-primary-blue-600/20' : 'bg-red-600/20'
         )}>
           <div className={cn(
             "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-            targetType === 'pickup' ? 'bg-emerald-500' : 'bg-red-500'
+            targetType === 'pickup' ? 'bg-primary-blue-500' : 'bg-red-500'
           )}>
             <MapPin className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white text-sm font-medium truncate">{targetAddress}</p>
             <p className="text-gray-400 text-xs">
-              {distance.toFixed(1)} km • {duration} min
+              {distance.toFixed(1)} km â€¢ {duration} min
             </p>
           </div>
           <Navigation className={cn(
             "w-5 h-5 animate-pulse",
-            targetType === 'pickup' ? 'text-emerald-400' : 'text-red-400'
+            targetType === 'pickup' ? 'text-primary-blue-400' : 'text-red-400'
           )} />
         </div>
 
@@ -70,14 +70,14 @@ export function QuickNavigationBar({
           </Button>
           <Button
             onClick={onOpenWaze}
-            className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white text-xs h-10 gap-1.5"
+            className="flex-1 bg-primary-blue-600 hover:bg-primary-blue-700 text-white text-xs h-10 gap-1.5"
           >
             <Route className="w-4 h-4" />
             Waze
           </Button>
           <Button
             onClick={onCall}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white h-10 w-10 p-0"
+            className="bg-primary-blue-500 hover:bg-primary-blue-600 text-white h-10 w-10 p-0"
           >
             <Phone className="w-4 h-4" />
           </Button>

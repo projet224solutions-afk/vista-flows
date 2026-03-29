@@ -1,7 +1,7 @@
 /**
- * DÉTECTION DE FRAUDE ML - VERSION CONNECTÉE
- * Machine Learning pour détecter les fraudes en temps réel
- * Intégré avec l'edge function fraud-detection
+ * DÃ‰TECTION DE FRAUDE ML - VERSION CONNECTÃ‰E
+ * Machine Learning pour dÃ©tecter les fraudes en temps rÃ©el
+ * IntÃ©grÃ© avec l'edge function fraud-detection
  */
 
 import { useState, useEffect } from 'react';
@@ -43,7 +43,7 @@ export function MLFraudDetection() {
 
   useEffect(() => {
     if (fraudLogs) {
-      // Calculer les métriques depuis les logs réels
+      // Calculer les mÃ©triques depuis les logs rÃ©els
       const highRiskCount = fraudLogs.filter(log => log.risk_level === 'high' || log.risk_level === 'critical').length;
       const falsePos = fraudLogs.filter(log => log.reviewed && log.risk_level === 'low').length;
       
@@ -81,7 +81,7 @@ export function MLFraudDetection() {
 
   const handleRefresh = () => {
     refetch();
-    toast.success('Données de fraude actualisées');
+    toast.success('DonnÃ©es de fraude actualisÃ©es');
   };
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -98,10 +98,10 @@ export function MLFraudDetection() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-primary" />
-              Détection de Fraude ML
+              DÃ©tection de Fraude ML
             </CardTitle>
             <CardDescription>
-              Intelligence artificielle prédictive - Données en temps réel
+              Intelligence artificielle prÃ©dictive - DonnÃ©es en temps rÃ©el
             </CardDescription>
           </div>
           <Button 
@@ -115,44 +115,44 @@ export function MLFraudDetection() {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Métriques du modèle */}
+        {/* MÃ©triques du modÃ¨le */}
         <ResponsiveGrid mobileCols={2} tabletCols={4} desktopCols={4} gap="sm">
           <div className="p-4 bg-muted rounded-lg">
             <Activity className="w-8 h-8 text-blue-500 mb-2" />
             <div className="text-2xl font-bold">{metrics.transactionsAnalyzed.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">Transactions analysées</div>
+            <div className="text-xs text-muted-foreground">Transactions analysÃ©es</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <AlertTriangle className="w-8 h-8 text-red-500 mb-2" />
             <div className="text-2xl font-bold">{metrics.fraudDetected}</div>
-            <div className="text-xs text-muted-foreground">Fraudes détectées</div>
+            <div className="text-xs text-muted-foreground">Fraudes dÃ©tectÃ©es</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <TrendingDown className="w-8 h-8 text-green-500 mb-2" />
+            <TrendingDown className="w-8 h-8 text-primary-orange-500 mb-2" />
             <div className="text-2xl font-bold">{metrics.falsePositives}</div>
             <div className="text-xs text-muted-foreground">Faux positifs</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <Brain className="w-8 h-8 text-purple-500 mb-2" />
             <div className="text-2xl font-bold">{metrics.accuracy}%</div>
-            <div className="text-xs text-muted-foreground">Précision du modèle</div>
+            <div className="text-xs text-muted-foreground">PrÃ©cision du modÃ¨le</div>
           </div>
         </ResponsiveGrid>
 
-        {/* Info modèle */}
+        {/* Info modÃ¨le */}
         <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center justify-between mb-2">
-            <span className="font-semibold text-sm">Modèle ML actif</span>
-            <Badge className="bg-green-500">Prédictif activé</Badge>
+            <span className="font-semibold text-sm">ModÃ¨le ML actif</span>
+            <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">PrÃ©dictif activÃ©</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Version {metrics.modelVersion} • Analyse comportementale en temps réel • {metrics.transactionsAnalyzed.toLocaleString()} transactions analysées
+            Version {metrics.modelVersion} â€¢ Analyse comportementale en temps rÃ©el â€¢ {metrics.transactionsAnalyzed.toLocaleString()} transactions analysÃ©es
           </p>
         </div>
 
-        {/* Patterns détectés */}
+        {/* Patterns dÃ©tectÃ©s */}
         <div className="space-y-2">
-          <h4 className="font-semibold text-sm">Patterns de fraude détectés</h4>
+          <h4 className="font-semibold text-sm">Patterns de fraude dÃ©tectÃ©s</h4>
           {detectedPatterns.map((pattern) => (
             <div key={pattern.id} className="p-3 border rounded-lg space-y-2">
               <div className="flex items-start justify-between gap-2">
@@ -170,7 +170,7 @@ export function MLFraudDetection() {
               </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span>Confiance du modèle</span>
+                  <span>Confiance du modÃ¨le</span>
                   <span className="font-medium">{pattern.confidence}%</span>
                 </div>
                 <Progress value={pattern.confidence} className="h-1" />

@@ -1,6 +1,6 @@
 /**
- * 🏪 PDG VENDORS MANAGEMENT
- * Gestion centralisée des vendeurs
+ * ðŸª PDG VENDORS MANAGEMENT
+ * Gestion centralisÃ©e des vendeurs
  */
 
 import { useState, useEffect } from 'react';
@@ -26,7 +26,7 @@ interface Vendor {
     phone: string;
     custom_id: string;
   };
-  agent_info?: string; // Nom de l'agent créateur
+  agent_info?: string; // Nom de l'agent crÃ©ateur
   subscription?: {
     plan_name: string;
     status: string;
@@ -59,15 +59,15 @@ export default function PDGVendors() {
 
       // Enrichir avec les infos agents et abonnements
       const enrichedVendors = await Promise.all((data || []).map(async (vendor) => {
-        // Récupérer l'info de l'agent créateur
+        // RÃ©cupÃ©rer l'info de l'agent crÃ©ateur
         const { data: agentLink } = await supabase
           .from('agent_created_users')
           .select('agents_management(name)')
           .eq('user_id', vendor.user_id)
           .single();
 
-        // Récupérer le MEILLEUR abonnement actif (par display_order DESC)
-        // Note: On ne peut pas order par plans.display_order directement, donc on récupère tous les actifs
+        // RÃ©cupÃ©rer le MEILLEUR abonnement actif (par display_order DESC)
+        // Note: On ne peut pas order par plans.display_order directement, donc on rÃ©cupÃ¨re tous les actifs
         const { data: subscriptions } = await supabase
           .from('subscriptions')
           .select(`
@@ -80,7 +80,7 @@ export default function PDGVendors() {
           .eq('status', 'active')
           .gt('current_period_end', new Date().toISOString());
 
-        // Trier côté client pour prendre le meilleur plan (display_order le plus élevé)
+        // Trier cÃ´tÃ© client pour prendre le meilleur plan (display_order le plus Ã©levÃ©)
         const bestSubscription = subscriptions && subscriptions.length > 0
           ? subscriptions.sort((a, b) => 
               ((b.plans as any)?.display_order || 0) - ((a.plans as any)?.display_order || 0)
@@ -120,13 +120,13 @@ export default function PDGVendors() {
   useEffect(() => {
     loadVendors();
 
-    // Abonnement temps réel pour les nouveaux vendeurs
+    // Abonnement temps rÃ©el pour les nouveaux vendeurs
     const channel = supabase
       .channel('vendors-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'vendors' },
         () => {
-          console.log('🔄 Nouveau vendeur détecté, rechargement...');
+          console.log('ðŸ”„ Nouveau vendeur dÃ©tectÃ©, rechargement...');
           loadVendors();
         }
       )
@@ -171,7 +171,7 @@ export default function PDGVendors() {
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold">{stats.active}</span>
-              <CheckCircle className="w-5 h-5 text-green-500" />
+              <CheckCircle className="w-5 h-5 text-primary-orange-500" />
             </div>
           </CardContent>
         </Card>
@@ -195,7 +195,7 @@ export default function PDGVendors() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Liste des Vendeurs</CardTitle>
-              <CardDescription>{vendors.length} vendeurs enregistrés</CardDescription>
+              <CardDescription>{vendors.length} vendeurs enregistrÃ©s</CardDescription>
             </div>
             <Button onClick={loadVendors} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -208,7 +208,7 @@ export default function PDGVendors() {
             {vendors.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Store className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun vendeur enregistré</p>
+                <p>Aucun vendeur enregistrÃ©</p>
               </div>
             ) : (
               vendors.map((vendor) => (
@@ -222,32 +222,32 @@ export default function PDGVendors() {
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-bold text-lg">{vendor.business_name}</p>
                           <Badge variant={vendor.is_verified ? 'default' : 'secondary'} className="text-xs">
-                            {vendor.is_verified ? '✓ Vérifié' : '⏳ En attente'}
+                            {vendor.is_verified ? 'âœ“ VÃ©rifiÃ©' : 'â³ En attente'}
                           </Badge>
                           <Badge variant={vendor.is_active ? 'default' : 'destructive'} className="text-xs">
                             {vendor.is_active ? 'Actif' : 'Inactif'}
                           </Badge>
                         </div>
                         <div className="space-y-1 text-sm text-muted-foreground">
-                          <p>📧 {vendor.profiles?.email || 'Email non disponible'}</p>
-                          <p>👤 {vendor.profiles?.first_name} {vendor.profiles?.last_name}</p>
-                          {vendor.profiles?.phone && <p>📱 {vendor.profiles.phone}</p>}
-                          <p>🆔 Code Vendeur: <span className="font-mono font-semibold text-primary">{vendor.vendor_code}</span></p>
+                          <p>ðŸ“§ {vendor.profiles?.email || 'Email non disponible'}</p>
+                          <p>ðŸ‘¤ {vendor.profiles?.first_name} {vendor.profiles?.last_name}</p>
+                          {vendor.profiles?.phone && <p>ðŸ“± {vendor.profiles.phone}</p>}
+                          <p>ðŸ†” Code Vendeur: <span className="font-mono font-semibold text-primary">{vendor.vendor_code}</span></p>
                           {vendor.agent_info && (
-                            <p>👥 Créé par l'agent: <span className="font-medium">{vendor.agent_info}</span></p>
+                            <p>ðŸ‘¥ CrÃ©Ã© par l'agent: <span className="font-medium">{vendor.agent_info}</span></p>
                           )}
                           {vendor.subscription ? (
                             <div className="mt-2 p-2 bg-primary/5 rounded border border-primary/20">
-                              <p className="font-medium text-primary">📦 Abonnement: {vendor.subscription.plan_name}</p>
+                              <p className="font-medium text-primary">ðŸ“¦ Abonnement: {vendor.subscription.plan_name}</p>
                               <p className="text-xs">
                                 {vendor.subscription.billing_cycle === 'lifetime' ? (
-                                  <>🎁 Offert à vie - Expire le: {new Date(vendor.subscription.current_period_end).toLocaleDateString('fr-FR', {
+                                  <>ðŸŽ Offert Ã  vie - Expire le: {new Date(vendor.subscription.current_period_end).toLocaleDateString('fr-FR', {
                                     day: '2-digit',
                                     month: 'long',
                                     year: 'numeric'
                                   })}</>
                                 ) : (
-                                  <>⏰ Expire le: {new Date(vendor.subscription.current_period_end).toLocaleDateString('fr-FR', {
+                                  <>â° Expire le: {new Date(vendor.subscription.current_period_end).toLocaleDateString('fr-FR', {
                                     day: '2-digit',
                                     month: 'long',
                                     year: 'numeric'
@@ -256,9 +256,9 @@ export default function PDGVendors() {
                               </p>
                             </div>
                           ) : (
-                            <p className="mt-2 text-xs text-destructive">⚠️ Aucun abonnement actif</p>
+                            <p className="mt-2 text-xs text-destructive">âš ï¸ Aucun abonnement actif</p>
                           )}
-                          <p className="text-xs">📅 Créé le: {new Date(vendor.created_at).toLocaleDateString('fr-FR', {
+                          <p className="text-xs">ðŸ“… CrÃ©Ã© le: {new Date(vendor.created_at).toLocaleDateString('fr-FR', {
                             day: '2-digit',
                             month: 'long',
                             year: 'numeric',

@@ -1,5 +1,5 @@
 /**
- * Panneau d'inventaire pharmacie — inspiré McKesson/Boots PMS
+ * Panneau d'inventaire pharmacie â€” inspirÃ© McKesson/Boots PMS
  * Alertes expiration, stock bas, ruptures
  */
 
@@ -34,7 +34,7 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Pill className="w-5 h-5 text-primary" />
-              Santé de l'inventaire
+              SantÃ© de l'inventaire
             </CardTitle>
             <Button variant="outline" size="sm" onClick={() => navigate('/vendeur/products')}>
               <Eye className="w-4 h-4 mr-1.5" />
@@ -47,10 +47,10 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
           <div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium">
-                Score santé stock
+                Score santÃ© stock
               </span>
               <span className={`text-sm font-bold ${
-                stockHealthPercent >= 80 ? 'text-emerald-600' :
+                stockHealthPercent >= 80 ? 'text-primary-blue-600' :
                 stockHealthPercent >= 50 ? 'text-orange-600' : 'text-red-600'
               }`}>
                 {stockHealthPercent}%
@@ -64,12 +64,12 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
 
           {/* Category grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+            <div className="p-3 rounded-xl bg-primary-blue-50 dark:bg-primary-blue-950/30 border border-primary-orange-200 dark:border-primary-orange-800">
               <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">En stock</span>
+                <CheckCircle className="w-4 h-4 text-primary-blue-600" />
+                <span className="text-xs font-medium text-primary-blue-700 dark:text-primary-blue-400">En stock</span>
               </div>
-              <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{inStock}</div>
+              <div className="text-2xl font-bold text-primary-blue-700 dark:text-primary-blue-300">{inStock}</div>
             </div>
 
             <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
@@ -101,7 +101,7 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
           {(stock.lowStockCount > 0 || stock.outOfStockCount > 0) && (
             <div className="space-y-2 pt-2 border-t">
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                ⚠ Alertes actives
+                âš  Alertes actives
               </h4>
               {stock.outOfStockCount > 0 && (
                 <div className="flex items-center justify-between p-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -121,7 +121,7 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-orange-500" />
                     <span className="text-sm font-medium text-orange-700 dark:text-orange-400">
-                      {stock.lowStockCount} produit(s) à réapprovisionner (≤5 unités)
+                      {stock.lowStockCount} produit(s) Ã  rÃ©approvisionner (â‰¤5 unitÃ©s)
                     </span>
                   </div>
                   <Button variant="ghost" size="sm" className="h-7 text-xs text-orange-600" onClick={() => navigate('/vendeur/products')}>
@@ -141,8 +141,8 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
             <Plus className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <p className="font-semibold text-sm">Ajouter un médicament ou produit</p>
-            <p className="text-xs text-muted-foreground">Référencer dans votre inventaire</p>
+            <p className="font-semibold text-sm">Ajouter un mÃ©dicament ou produit</p>
+            <p className="text-xs text-muted-foreground">RÃ©fÃ©rencer dans votre inventaire</p>
           </div>
         </CardContent>
       </Card>

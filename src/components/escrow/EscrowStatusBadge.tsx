@@ -40,7 +40,7 @@ export function EscrowStatusBadge({
           label: 'Payé',
           icon: CheckCircle2,
           variant: 'default' as const,
-          color: 'text-green-600'
+          color: 'text-primary-orange-600'
         };
       case 'refunded':
         return {

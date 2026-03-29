@@ -11,7 +11,7 @@ import { fr } from "date-fns/locale";
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
-  success: 'bg-green-100 text-green-800',
+  success: 'bg-primary-orange-100 text-primary-orange-800',
   overdue: 'bg-red-100 text-red-800',
   expired: 'bg-gray-100 text-gray-800',
   cancelled: 'bg-gray-100 text-gray-800',
@@ -20,11 +20,11 @@ const statusColors = {
 
 const statusLabels = {
   pending: 'En attente',
-  success: 'Payé',
+  success: 'PayÃ©',
   overdue: 'En retard',
-  expired: 'Expiré',
-  cancelled: 'Annulé',
-  failed: 'Échoué'
+  expired: 'ExpirÃ©',
+  cancelled: 'AnnulÃ©',
+  failed: 'Ã‰chouÃ©'
 };
 
 export default function PaymentManagement() {
@@ -33,7 +33,7 @@ export default function PaymentManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [escrowDialogOpen, setEscrowDialogOpen] = useState(false);
 
-  // Calculer les statuts dynamiques basés sur le temps
+  // Calculer les statuts dynamiques basÃ©s sur le temps
   const linksWithStatus = useMemo(() => {
     return paymentLinks.map(link => {
       if (link.status === 'pending') {
@@ -41,7 +41,7 @@ export default function PaymentManagement() {
         const now = new Date();
         const hoursDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
         
-        // Si plus de 24h, considérer comme en retard
+        // Si plus de 24h, considÃ©rer comme en retard
         if (hoursDiff > 24) {
           return { ...link, displayStatus: 'overdue' as const };
         }
@@ -64,7 +64,7 @@ export default function PaymentManagement() {
   const successCount = linksWithStatus.filter(l => l.displayStatus === 'success').length;
   const totalRevenue = linksWithStatus
     .filter(l => l.displayStatus === 'success')
-    .reduce((sum, l) => sum + l.total, 0); // Utiliser total (montant après réduction)
+    .reduce((sum, l) => sum + l.total, 0); // Utiliser total (montant aprÃ¨s rÃ©duction)
 
   const overdueAmount = linksWithStatus
     .filter(l => l.displayStatus === 'overdue')
@@ -74,7 +74,7 @@ export default function PaymentManagement() {
     .reduce((sum, l) => sum + l.total, 0);
 
   if (loading) {
-    return <div className="p-4">Chargement des données de paiement...</div>;
+    return <div className="p-4">Chargement des donnÃ©es de paiement...</div>;
   }
 
   return (
@@ -122,11 +122,11 @@ export default function PaymentManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
+              <CheckCircle className="w-5 h-5 text-primary-orange-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Paiements réussis</p>
+                <p className="text-sm text-muted-foreground">Paiements rÃ©ussis</p>
                 <p className="text-2xl font-bold">{successCount}</p>
-                <p className="text-sm text-green-600">Total payé</p>
+                <p className="text-sm text-primary-orange-600">Total payÃ©</p>
               </div>
             </div>
           </CardContent>
@@ -163,9 +163,9 @@ export default function PaymentManagement() {
               <option value="all">Tous les statuts</option>
               <option value="pending">En attente</option>
               <option value="overdue">En retard</option>
-              <option value="success">Payés</option>
-              <option value="expired">Expirés</option>
-              <option value="cancelled">Annulés</option>
+              <option value="success">PayÃ©s</option>
+              <option value="expired">ExpirÃ©s</option>
+              <option value="cancelled">AnnulÃ©s</option>
             </select>
             <Filter className="w-4 h-4 text-muted-foreground" />
           </div>
@@ -200,7 +200,7 @@ export default function PaymentManagement() {
                           {statusLabels[link.displayStatus]}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          Créé {formatDistanceToNow(new Date(link.created_at), { 
+                          CrÃ©Ã© {formatDistanceToNow(new Date(link.created_at), { 
                             addSuffix: true,
                             locale: fr 
                           })}
@@ -229,7 +229,7 @@ export default function PaymentManagement() {
             {filteredLinks.length === 0 && (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
-                  Aucun paiement trouvé
+                  Aucun paiement trouvÃ©
                 </CardContent>
               </Card>
             )}

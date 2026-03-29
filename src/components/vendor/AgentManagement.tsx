@@ -27,7 +27,7 @@ export default function AgentManagement() {
   } = useVendorAgentsData();
   const { toast } = useToast();
 
-  // Définir les permissions par défaut selon le type d'agent
+  // DÃ©finir les permissions par dÃ©faut selon le type d'agent
   const getDefaultPermissionsByType = (agentType: string) => {
     switch (agentType) {
       case 'commercial':
@@ -218,7 +218,7 @@ export default function AgentManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<VendorAgent | null>(null);
 
-  // ⚡️ Perf: mot de passe isolé (pas de setState pendant la frappe)
+  // âš¡ï¸ Perf: mot de passe isolÃ© (pas de setState pendant la frappe)
   const agentPasswordRef = useRef("");
   const [passwordInputKey, setPasswordInputKey] = useState(0);
   const commitAgentPassword = useCallback((value: string) => {
@@ -288,7 +288,7 @@ export default function AgentManagement() {
     
     if (!formData.name || !formData.email || !formData.phone) {
       toast({
-        title: "❌ Champs manquants",
+        title: "âŒ Champs manquants",
         description: "Veuillez remplir tous les champs obligatoires",
         variant: "destructive"
       });
@@ -299,8 +299,8 @@ export default function AgentManagement() {
     const newAgentPassword = !editingAgent ? agentPasswordRef.current.trim() : '';
     if (!editingAgent && newAgentPassword.length > 0 && newAgentPassword.length < 8) {
       toast({
-        title: "❌ Mot de passe trop court",
-        description: "Le mot de passe doit contenir au moins 8 caractères",
+        title: "âŒ Mot de passe trop court",
+        description: "Le mot de passe doit contenir au moins 8 caractÃ¨res",
         variant: "destructive"
       });
       return;
@@ -339,7 +339,7 @@ export default function AgentManagement() {
       permissions: { ...DEFAULT_AGENT_PERMISSIONS },
     });
 
-    // Reset password input sans re-render à chaque frappe
+    // Reset password input sans re-render Ã  chaque frappe
     agentPasswordRef.current = "";
     setPasswordInputKey((k) => k + 1);
 
@@ -349,7 +349,7 @@ export default function AgentManagement() {
 
   const handleEditAgent = (agent: VendorAgent) => {
     setEditingAgent(agent);
-    // Reset password (pas utilisé en édition)
+    // Reset password (pas utilisÃ© en Ã©dition)
     agentPasswordRef.current = "";
     setPasswordInputKey((k) => k + 1);
 
@@ -392,8 +392,8 @@ export default function AgentManagement() {
     const agentLink = `${window.location.origin}/vendor-agent/${accessToken}`;
     navigator.clipboard.writeText(agentLink);
     toast({
-      title: "✅ Lien copié",
-      description: "Le lien d'accès de l'agent a été copié dans le presse-papiers"
+      title: "âœ… Lien copiÃ©",
+      description: "Le lien d'accÃ¨s de l'agent a Ã©tÃ© copiÃ© dans le presse-papiers"
     });
   };
 
@@ -431,7 +431,7 @@ export default function AgentManagement() {
                 <div>
                   <h1 className="text-3xl font-bold text-foreground">Gestion des Agents</h1>
                   <p className="text-muted-foreground text-lg">
-                    Gérez votre équipe et leurs permissions • {stats.activeAgents} agent(s) actif(s)
+                    GÃ©rez votre Ã©quipe et leurs permissions â€¢ {stats.activeAgents} agent(s) actif(s)
                   </p>
                 </div>
               </div>
@@ -458,10 +458,10 @@ export default function AgentManagement() {
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-500">
                 <DialogHeader className="sticky top-0 bg-background z-10 pb-4 border-b">
                   <DialogTitle>
-                    {editingAgent ? 'Modifier l\'Agent' : 'Créer un Nouvel Agent'}
+                    {editingAgent ? 'Modifier l\'Agent' : 'CrÃ©er un Nouvel Agent'}
                   </DialogTitle>
                   <DialogDescription>
-                    {editingAgent ? 'Modifiez les informations de l\'agent' : 'Ajoutez un membre à votre équipe avec des permissions spécifiques'}
+                    {editingAgent ? 'Modifiez les informations de l\'agent' : 'Ajoutez un membre Ã  votre Ã©quipe avec des permissions spÃ©cifiques'}
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleCreateAgent} className="space-y-6 py-4">
@@ -477,7 +477,7 @@ export default function AgentManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Téléphone *</Label>
+                      <Label htmlFor="phone">TÃ©lÃ©phone *</Label>
                       <Input
                         id="phone"
                         required
@@ -510,13 +510,13 @@ export default function AgentManagement() {
                         name="password"
                         value=""
                         onChange={commitAgentPassword}
-                        placeholder="Min. 8 caractères pour auth par email"
-                        // ⚡️ Pas de propagation fréquente (et aucune setState côté parent)
+                        placeholder="Min. 8 caractÃ¨res pour auth par email"
+                        // âš¡ï¸ Pas de propagation frÃ©quente (et aucune setState cÃ´tÃ© parent)
                         commitDelayMs={300}
                         className={undefined}
                       />
                       <p className="text-xs text-muted-foreground">
-                        💡 Si fourni, l'agent pourra se connecter avec email/mot de passe. Sinon, il utilisera le lien d'accès.
+                        ðŸ’¡ Si fourni, l'agent pourra se connecter avec email/mot de passe. Sinon, il utilisera le lien d'accÃ¨s.
                       </p>
                     </div>
                   )}
@@ -533,13 +533,13 @@ export default function AgentManagement() {
                           permissions: newPermissions
                         });
                         toast({
-                          title: "✅ Permissions mises à jour",
-                          description: `Les permissions par défaut pour un agent ${value} ont été appliquées. Vous pouvez les personnaliser.`
+                          title: "âœ… Permissions mises Ã  jour",
+                          description: `Les permissions par dÃ©faut pour un agent ${value} ont Ã©tÃ© appliquÃ©es. Vous pouvez les personnaliser.`
                         });
                       }}
                     >
                       <SelectTrigger id="agent_type">
-                        <SelectValue placeholder="Sélectionnez le type d'agent" />
+                        <SelectValue placeholder="SÃ©lectionnez le type d'agent" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="commercial">
@@ -551,7 +551,7 @@ export default function AgentManagement() {
                         <SelectItem value="logistique">
                           <div className="flex flex-col">
                             <span className="font-medium">Logistique</span>
-                            <span className="text-xs text-muted-foreground">Livraisons, Entrepôts, Inventaire</span>
+                            <span className="text-xs text-muted-foreground">Livraisons, EntrepÃ´ts, Inventaire</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="support">
@@ -563,25 +563,25 @@ export default function AgentManagement() {
                         <SelectItem value="administratif">
                           <div className="flex flex-col">
                             <span className="font-medium">Administratif</span>
-                            <span className="text-xs text-muted-foreground">Finances, Paiements, Dépenses</span>
+                            <span className="text-xs text-muted-foreground">Finances, Paiements, DÃ©penses</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="manager">
                           <div className="flex flex-col">
                             <span className="font-medium">Manager</span>
-                            <span className="text-xs text-muted-foreground">Accès complet à toutes les fonctionnalités</span>
+                            <span className="text-xs text-muted-foreground">AccÃ¨s complet Ã  toutes les fonctionnalitÃ©s</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="technique">
                           <div className="flex flex-col">
                             <span className="font-medium">Technique</span>
-                            <span className="text-xs text-muted-foreground">Produits, Inventaire, Entrepôts</span>
+                            <span className="text-xs text-muted-foreground">Produits, Inventaire, EntrepÃ´ts</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                      💡 Les permissions seront automatiquement définies selon le type. Vous pourrez les personnaliser ci-dessous.
+                      ðŸ’¡ Les permissions seront automatiquement dÃ©finies selon le type. Vous pourrez les personnaliser ci-dessous.
                     </p>
                   </div>
 
@@ -593,9 +593,9 @@ export default function AgentManagement() {
                       </Badge>
                     </div>
 
-                    {/* Aperçu des permissions actives */}
+                    {/* AperÃ§u des permissions actives */}
                     <div className="p-3 bg-vendeur-accent/10 rounded-lg border border-vendeur-accent/20 mb-4">
-                      <p className="text-sm font-medium mb-2">🎯 Permissions actives :</p>
+                      <p className="text-sm font-medium mb-2">ðŸŽ¯ Permissions actives :</p>
                       <div className="flex flex-wrap gap-1">
                         {Object.entries(formData.permissions)
                           .filter(([_, value]) => value)
@@ -700,7 +700,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, manage_warehouse: checked as boolean }
                             })}
                           />
-                          <label htmlFor="manage_warehouse" className="text-sm">Entrepôts</label>
+                          <label htmlFor="manage_warehouse" className="text-sm">EntrepÃ´ts</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -813,7 +813,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, manage_expenses: checked as boolean }
                             })}
                           />
-                          <label htmlFor="manage_expenses" className="text-sm">Dépenses</label>
+                          <label htmlFor="manage_expenses" className="text-sm">DÃ©penses</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -904,7 +904,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, access_settings: checked as boolean }
                             })}
                           />
-                          <label htmlFor="access_settings" className="text-sm">Paramètres</label>
+                          <label htmlFor="access_settings" className="text-sm">ParamÃ¨tres</label>
                         </div>
                       </div>
                     </div>
@@ -923,7 +923,7 @@ export default function AgentManagement() {
                       ) : (
                         <>
                           <UserPlus className="h-4 w-4 mr-2" />
-                          Créer l'Agent
+                          CrÃ©er l'Agent
                         </>
                       )}
                     </Button>
@@ -951,10 +951,10 @@ export default function AgentManagement() {
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Agents Actifs
                 </CardTitle>
-                <Activity className="h-4 w-4 text-green-500" />
+                <Activity className="h-4 w-4 text-primary-orange-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.activeAgents}</div>
+                <div className="text-2xl font-bold text-primary-orange-600">{stats.activeAgents}</div>
               </CardContent>
             </Card>
           </div>
@@ -965,14 +965,14 @@ export default function AgentManagement() {
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-vendeur-primary" />
-                  Équipe Active
+                  Ã‰quipe Active
                 </div>
                 <Badge variant="secondary" className="px-3 py-1">
                   {agents.length} membre(s)
                 </Badge>
               </CardTitle>
               <CardDescription className="text-base">
-                Gérez les membres de votre équipe et leurs permissions d'accès
+                GÃ©rez les membres de votre Ã©quipe et leurs permissions d'accÃ¨s
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -981,9 +981,9 @@ export default function AgentManagement() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-vendeur-accent/50 flex items-center justify-center">
                     <Users className="h-8 w-8 text-vendeur-primary opacity-50" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Aucun agent dans l'équipe</h3>
+                  <h3 className="text-lg font-semibold mb-2">Aucun agent dans l'Ã©quipe</h3>
                   <p className="text-muted-foreground mb-6">
-                    Commencez par ajouter votre premier agent pour déléguer des responsabilités
+                    Commencez par ajouter votre premier agent pour dÃ©lÃ©guer des responsabilitÃ©s
                   </p>
                   <Button 
                     onClick={() => setIsCreateDialogOpen(true)}
@@ -1002,7 +1002,7 @@ export default function AgentManagement() {
                         <TableHead className="font-semibold">Type</TableHead>
                         <TableHead className="font-semibold">Contact</TableHead>
                         <TableHead className="font-semibold">Statut</TableHead>
-                        <TableHead className="font-semibold">Lien d'accès</TableHead>
+                        <TableHead className="font-semibold">Lien d'accÃ¨s</TableHead>
                         <TableHead className="font-semibold text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1041,7 +1041,7 @@ export default function AgentManagement() {
                                 : ''
                               }
                             >
-                              {agent.is_active ? '🟢 Actif' : '🔴 Inactif'}
+                              {agent.is_active ? 'ðŸŸ¢ Actif' : 'ðŸ”´ Inactif'}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -1080,13 +1080,13 @@ export default function AgentManagement() {
                                 onClick={() => toggleAgentStatus(agent.id, !agent.is_active)}
                                 className="hover:shadow-glow transition-all duration-300"
                               >
-                                {agent.is_active ? 'Désactiver' : 'Activer'}
+                                {agent.is_active ? 'DÃ©sactiver' : 'Activer'}
                               </Button>
                               <Button
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => {
-                                  if (window.confirm('⚠️ Êtes-vous sûr de vouloir désactiver cet agent ?')) {
+                                  if (window.confirm('âš ï¸ ÃŠtes-vous sÃ»r de vouloir dÃ©sactiver cet agent ?')) {
                                     deleteAgent(agent.id);
                                   }
                                 }}
@@ -1114,7 +1114,7 @@ export default function AgentManagement() {
                 Interface de Communication
               </CardTitle>
               <CardDescription className="text-base">
-                Communiquez avec vos agents en temps réel
+                Communiquez avec vos agents en temps rÃ©el
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">

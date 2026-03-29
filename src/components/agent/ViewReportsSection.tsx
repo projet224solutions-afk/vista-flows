@@ -36,11 +36,11 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
               <CardContent className="pt-6">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Utilisateurs Créés</span>
+                    <span className="text-sm text-muted-foreground">Utilisateurs CrÃ©Ã©s</span>
                     <Users className="w-4 h-4 text-blue-500" />
                   </div>
                   <div className="text-2xl font-bold">{totalUsersCreated}</div>
-                  <p className="text-xs text-muted-foreground">Total depuis le début</p>
+                  <p className="text-xs text-muted-foreground">Total depuis le dÃ©but</p>
                 </div>
               </CardContent>
             </Card>
@@ -50,10 +50,10 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Taux Commission</span>
-                    <TrendingUp className="w-4 h-4 text-green-500" />
+                    <TrendingUp className="w-4 h-4 text-primary-orange-500" />
                   </div>
                   <div className="text-2xl font-bold">{agentData.commission_rate}%</div>
-                  <p className="text-xs text-muted-foreground">Taux appliqué</p>
+                  <p className="text-xs text-muted-foreground">Taux appliquÃ©</p>
                 </div>
               </CardContent>
             </Card>
@@ -68,7 +68,7 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
                   <div className="text-2xl font-bold">
                     {totalCommissions.toLocaleString()}
                   </div>
-                  <p className="text-xs text-muted-foreground">GNF gagnés</p>
+                  <p className="text-xs text-muted-foreground">GNF gagnÃ©s</p>
                 </div>
               </CardContent>
             </Card>
@@ -96,7 +96,7 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span>Utilisateurs créés ce mois</span>
+                    <span>Utilisateurs crÃ©Ã©s ce mois</span>
                     <span className="font-semibold">{usersThisMonth}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -114,7 +114,7 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
-                      className="bg-green-600 h-2 rounded-full transition-all duration-500" 
+                      className="bg-primary-orange-600 h-2 rounded-full transition-all duration-500" 
                       style={{ width: `${Math.min(commissionsThisMonth > 0 ? 50 : 0, 100)}%` }}
                     ></div>
                   </div>

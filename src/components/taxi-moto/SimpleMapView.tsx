@@ -1,6 +1,6 @@
 /**
  * CARTE SIMPLE POUR VISUALISATION
- * Affiche une carte simple sans dépendances Google Maps
+ * Affiche une carte simple sans dÃ©pendances Google Maps
  */
 
 import { Card } from '@/components/ui/card';
@@ -21,8 +21,8 @@ export function SimpleMapView({
 }: SimpleMapViewProps) {
   const locations = [
     driverLocation && { ...driverLocation, label: 'Vous', color: 'blue' },
-    pickupLocation && { ...pickupLocation, label: 'Départ', color: 'green' },
-    destinationLocation && { ...destinationLocation, label: 'Arrivée', color: 'red' }
+    pickupLocation && { ...pickupLocation, label: 'DÃ©part', color: 'green' },
+    destinationLocation && { ...destinationLocation, label: 'ArrivÃ©e', color: 'red' }
   ].filter(Boolean);
 
   return (
@@ -67,11 +67,11 @@ export function SimpleMapView({
 
               {pickupLocation && (
                 <div className="flex items-start gap-3 p-4 bg-white/80 backdrop-blur rounded-lg shadow">
-                  <div className="p-2 bg-green-600 rounded-full">
+                  <div className="p-2 bg-primary-orange-600 rounded-full">
                     <MapPin className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-green-900">Point de départ</p>
+                    <p className="font-semibold text-primary-orange-900">Point de dÃ©part</p>
                     <p className="text-sm text-gray-600">
                       {pickupLocation.latitude.toFixed(6)}, {pickupLocation.longitude.toFixed(6)}
                     </p>
@@ -95,7 +95,7 @@ export function SimpleMapView({
 
               {pickupLocation && destinationLocation && (
                 <div className="mt-4 p-4 bg-blue-600 text-white rounded-lg text-center">
-                  <p className="text-sm font-semibold">📍 Navigation activée</p>
+                  <p className="text-sm font-semibold">ðŸ“ Navigation activÃ©e</p>
                   <p className="text-xs mt-1">Suivez les instructions vocales</p>
                 </div>
               )}

@@ -1,5 +1,5 @@
 /**
- * 🔧 COMPOSANT: INPUT ID PUBLIC
+ * ðŸ”§ COMPOSANT: INPUT ID PUBLIC
  * Champ de saisie avec validation pour IDs publics
  */
 
@@ -68,7 +68,7 @@ export function PublicIdInput({
           className={cn(
             'font-mono uppercase tracking-wider pr-10',
             showError && 'border-destructive focus-visible:ring-destructive',
-            showSuccess && 'border-green-500 focus-visible:ring-green-500'
+            showSuccess && 'border-primary-orange-500 focus-visible:ring-primary-orange-500'
           )}
         />
         
@@ -78,7 +78,7 @@ export function PublicIdInput({
               <AlertCircle className="w-4 h-4 text-destructive" />
             )}
             {showSuccess && (
-              <Check className="w-4 h-4 text-green-600" />
+              <Check className="w-4 h-4 text-primary-orange-600" />
             )}
           </div>
         )}
@@ -91,8 +91,8 @@ export function PublicIdInput({
       )}
       
       {showValidation && showSuccess && (
-        <p className="text-xs text-green-600">
-          Format valide ✓
+        <p className="text-xs text-primary-orange-600">
+          Format valide âœ“
         </p>
       )}
     </div>

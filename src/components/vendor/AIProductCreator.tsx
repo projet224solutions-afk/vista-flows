@@ -1,7 +1,7 @@
 /**
- * 🤖 COMPOSANT: CRÉATEUR DE PRODUIT AVEC IA
+ * ðŸ¤– COMPOSANT: CRÃ‰ATEUR DE PRODUIT AVEC IA
  * 
- * Interface utilisateur pour créer des produits avec assistance IA complète
+ * Interface utilisateur pour crÃ©er des produits avec assistance IA complÃ¨te
  * Upload vers Google Cloud Storage
  */
 
@@ -42,7 +42,7 @@ export function AIProductCreator() {
   const { uploadFile: uploadToGCS } = useStorageUpload();
 
   /**
-   * 🤖 ANALYSER AVEC IA
+   * ðŸ¤– ANALYSER AVEC IA
    */
   const handleAnalyze = async () => {
     if (!productName.trim() || !user?.id) {
@@ -53,7 +53,7 @@ export function AIProductCreator() {
     try {
       setAnalyzing(true);
       
-      toast.info("🤖 Analyse IA en cours...", {
+      toast.info("ðŸ¤– Analyse IA en cours...", {
         description: "L'IA analyse votre produit"
       });
 
@@ -66,12 +66,12 @@ export function AIProductCreator() {
 
       setAnalysis(result);
 
-      toast.success("✅ Analyse terminée !", {
-        description: `Produit classé en ${result.category}`
+      toast.success("âœ… Analyse terminÃ©e !", {
+        description: `Produit classÃ© en ${result.category}`
       });
 
     } catch (error: any) {
-      console.error("❌ Erreur analyse IA:", error);
+      console.error("âŒ Erreur analyse IA:", error);
       toast.error("Erreur d'analyse", {
         description: error.message
       });
@@ -81,7 +81,7 @@ export function AIProductCreator() {
   };
 
   /**
-   * 💾 SAUVEGARDER LE PRODUIT
+   * ðŸ’¾ SAUVEGARDER LE PRODUIT
    */
   const handleSave = async () => {
     if (!analysis || !user?.id) return;
@@ -89,7 +89,7 @@ export function AIProductCreator() {
     try {
       setSaving(true);
 
-      // Récupérer vendor_id
+      // RÃ©cupÃ©rer vendor_id
       const { data: vendor } = await supabase
         .from('vendors')
         .select('id')
@@ -97,10 +97,10 @@ export function AIProductCreator() {
         .single();
 
       if (!vendor) {
-        throw new Error("Profil vendeur non trouvé");
+        throw new Error("Profil vendeur non trouvÃ©");
       }
 
-      // Créer le produit
+      // CrÃ©er le produit
       const { data: product, error } = await supabase
         .from('products')
         .insert({
@@ -116,9 +116,9 @@ export function AIProductCreator() {
 
       if (error) throw error;
 
-      // Upload image si générée
+      // Upload image si gÃ©nÃ©rÃ©e
       if (analysis.generatedImageUrl) {
-        // Télécharger l'image depuis URL
+        // TÃ©lÃ©charger l'image depuis URL
         const imageResponse = await fetch(analysis.generatedImageUrl);
         const imageBlob = await imageResponse.blob();
         
@@ -133,9 +133,9 @@ export function AIProductCreator() {
         });
 
         if (uploadResult.success && uploadResult.publicUrl) {
-          console.log(`[AIProductCreator] ✅ Image uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
+          console.log(`[AIProductCreator] âœ… Image uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
           
-          // Mettre à jour le produit avec l'image
+          // Mettre Ã  jour le produit avec l'image
           await supabase
             .from('products')
             .update({ images: [uploadResult.publicUrl] })
@@ -143,19 +143,19 @@ export function AIProductCreator() {
         }
       }
 
-      toast.success("✅ Produit créé avec succès !", {
+      toast.success("âœ… Produit crÃ©Ã© avec succÃ¨s !", {
         description: "Votre produit est maintenant en ligne"
       });
 
-      // Réinitialiser
+      // RÃ©initialiser
       setProductName("");
       setProductDescription("");
       setPrice("");
       setAnalysis(null);
 
     } catch (error: any) {
-      console.error("❌ Erreur sauvegarde:", error);
-      toast.error("Erreur lors de la création", {
+      console.error("âŒ Erreur sauvegarde:", error);
+      toast.error("Erreur lors de la crÃ©ation", {
         description: error.message
       });
     } finally {
@@ -170,10 +170,10 @@ export function AIProductCreator() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-yellow-500" />
-            Créer un produit avec l'IA
+            CrÃ©er un produit avec l'IA
           </CardTitle>
           <CardDescription>
-            Décrivez simplement votre produit, l'IA s'occupe du reste
+            DÃ©crivez simplement votre produit, l'IA s'occupe du reste
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -183,7 +183,7 @@ export function AIProductCreator() {
               Nom du produit *
             </label>
             <Input
-              placeholder="Ex: iPhone 12 Pro, Marmite électrique 5L, Samsung A34..."
+              placeholder="Ex: iPhone 12 Pro, Marmite Ã©lectrique 5L, Samsung A34..."
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
               disabled={analyzing}
@@ -193,7 +193,7 @@ export function AIProductCreator() {
           {/* Description */}
           <div>
             <label className="text-sm font-medium mb-2 block">
-              Description (même courte, l'IA enrichira)
+              Description (mÃªme courte, l'IA enrichira)
             </label>
             <Textarea
               placeholder="Ex: propre, batterie 85%, inox, 850W, noir..."
@@ -240,15 +240,15 @@ export function AIProductCreator() {
         </CardContent>
       </Card>
 
-      {/* RÉSULTATS IA */}
+      {/* RÃ‰SULTATS IA */}
       {analysis && (
         <div className="space-y-4">
-          {/* Catégorie détectée */}
+          {/* CatÃ©gorie dÃ©tectÃ©e */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Check className="w-5 h-5 text-green-500" />
-                Catégorie détectée
+                <Check className="w-5 h-5 text-primary-orange-500" />
+                CatÃ©gorie dÃ©tectÃ©e
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -266,13 +266,13 @@ export function AIProductCreator() {
             </CardContent>
           </Card>
 
-          {/* Caractéristiques */}
+          {/* CaractÃ©ristiques */}
           {Object.keys(analysis.characteristics).length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Package className="w-5 h-5" />
-                  Caractéristiques extraites
+                  CaractÃ©ristiques extraites
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -293,13 +293,13 @@ export function AIProductCreator() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                Description professionnelle générée
+                Description professionnelle gÃ©nÃ©rÃ©e
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Description commerciale */}
               <div>
-                <h4 className="font-semibold mb-2">📝 Description commerciale</h4>
+                <h4 className="font-semibold mb-2">ðŸ“ Description commerciale</h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {analysis.enrichedDescription.commercial}
                 </p>
@@ -309,11 +309,11 @@ export function AIProductCreator() {
 
               {/* Points forts */}
               <div>
-                <h4 className="font-semibold mb-2">⭐ Points forts</h4>
+                <h4 className="font-semibold mb-2">â­ Points forts</h4>
                 <ul className="space-y-1">
                   {analysis.enrichedDescription.keyPoints.map((point, idx) => (
                     <li key={idx} className="text-sm flex items-start gap-2">
-                      <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-primary-orange-500 mt-0.5 flex-shrink-0" />
                       {point}
                     </li>
                   ))}
@@ -322,9 +322,9 @@ export function AIProductCreator() {
 
               <Separator />
 
-              {/* Caractéristiques techniques */}
+              {/* CaractÃ©ristiques techniques */}
               <div>
-                <h4 className="font-semibold mb-2">⚙️ Caractéristiques techniques</h4>
+                <h4 className="font-semibold mb-2">âš™ï¸ CaractÃ©ristiques techniques</h4>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(analysis.enrichedDescription.technicalSpecs).map(([key, value]) => (
                     <div key={key} className="text-sm">
@@ -339,10 +339,10 @@ export function AIProductCreator() {
                 <>
                   <Separator />
                   <div>
-                    <h4 className="font-semibold mb-2">📦 Contenu du paquet</h4>
+                    <h4 className="font-semibold mb-2">ðŸ“¦ Contenu du paquet</h4>
                     <ul className="text-sm space-y-1">
                       {analysis.enrichedDescription.packageContent.map((item, idx) => (
-                        <li key={idx}>• {item}</li>
+                        <li key={idx}>â€¢ {item}</li>
                       ))}
                     </ul>
                   </div>
@@ -354,7 +354,7 @@ export function AIProductCreator() {
                 <>
                   <Separator />
                   <div>
-                    <h4 className="font-semibold mb-2">🛡️ Garantie</h4>
+                    <h4 className="font-semibold mb-2">ðŸ›¡ï¸ Garantie</h4>
                     <p className="text-sm">{analysis.enrichedDescription.warranty}</p>
                   </div>
                 </>
@@ -381,13 +381,13 @@ export function AIProductCreator() {
             </CardContent>
           </Card>
 
-          {/* Image générée */}
+          {/* Image gÃ©nÃ©rÃ©e */}
           {analysis.generatedImageUrl && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <ImageIcon className="w-5 h-5" />
-                  Image générée par l'IA
+                  Image gÃ©nÃ©rÃ©e par l'IA
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -410,12 +410,12 @@ export function AIProductCreator() {
             {saving ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Création en cours...
+                CrÃ©ation en cours...
               </>
             ) : (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                Créer le produit
+                CrÃ©er le produit
               </>
             )}
           </Button>

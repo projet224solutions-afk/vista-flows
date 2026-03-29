@@ -40,7 +40,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
     setAnalyzing(true);
     try {
       await refreshInsights();
-      toast.success('Analyse IA terminée');
+      toast.success('Analyse IA terminÃ©e');
     } catch (error) {
       toast.error('Erreur lors de l\'analyse IA');
     } finally {
@@ -61,7 +61,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
       case 'warning':
         return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-primary-orange-500" />;
       default:
         return <TrendingUp className="w-5 h-5 text-blue-500" />;
     }
@@ -70,17 +70,17 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
   const getInsightBadge = (priority: string) => {
     switch (priority) {
       case 'high':
-        return <Badge className="bg-red-500">Priorité Haute</Badge>;
+        return <Badge className="bg-red-500">PrioritÃ© Haute</Badge>;
       case 'medium':
-        return <Badge className="bg-yellow-500">Priorité Moyenne</Badge>;
+        return <Badge className="bg-yellow-500">PrioritÃ© Moyenne</Badge>;
       default:
-        return <Badge className="bg-blue-500">Priorité Basse</Badge>;
+        return <Badge className="bg-blue-500">PrioritÃ© Basse</Badge>;
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
+      {/* En-tÃªte */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
@@ -91,12 +91,12 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
           </div>
           <div>
             <h2 className="text-3xl font-bold">Assistant IA Intelligent</h2>
-            <p className="text-muted-foreground mt-1">Analyse prédictive et recommandations automatiques</p>
+            <p className="text-muted-foreground mt-1">Analyse prÃ©dictive et recommandations automatiques</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={toggleAI}>
-            {aiActive ? 'Désactiver IA' : 'Activer IA'}
+            {aiActive ? 'DÃ©sactiver IA' : 'Activer IA'}
           </Button>
           <Button onClick={handleAnalyze} disabled={analyzing || !aiActive}>
             <RefreshCw className={`w-4 h-4 mr-2 ${analyzing ? 'animate-spin' : ''}`} />
@@ -116,10 +116,10 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
         <CardContent>
           <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
             <div className="flex items-center gap-4">
-              <div className={`w-3 h-3 rounded-full ${aiActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+              <div className={`w-3 h-3 rounded-full ${aiActive ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse' : 'bg-red-500'}`} />
               <div>
                 <h3 className="font-medium">
-                  {aiActive ? 'IA Activée' : 'IA Désactivée'}
+                  {aiActive ? 'IA ActivÃ©e' : 'IA DÃ©sactivÃ©e'}
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {aiActive
@@ -161,7 +161,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
                       <div className="flex-1">
                         <p className="font-medium">{insight.message}</p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Détecté par l'analyse IA automatique
+                          DÃ©tectÃ© par l'analyse IA automatique
                         </p>
                       </div>
                     </div>
@@ -170,8 +170,8 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
                 ))}
                 {insights.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
-                    <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
-                    <p>Aucun problème détecté</p>
+                    <CheckCircle className="w-12 h-12 mx-auto mb-4 text-primary-orange-500" />
+                    <p>Aucun problÃ¨me dÃ©tectÃ©</p>
                     <p className="text-sm mt-2">La plateforme fonctionne normalement</p>
                   </div>
                 )}
@@ -202,7 +202,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
                 {messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                     <Brain className="w-12 h-12 mb-4 opacity-50" />
-                    <p className="font-medium">Démarrez une conversation</p>
+                    <p className="font-medium">DÃ©marrez une conversation</p>
                     <p className="text-sm mt-2">
                       Posez des questions sur la plateforme, demandez des analyses ou des recommandations
                     </p>
@@ -246,7 +246,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
                 <Input
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Posez une question à l'assistant IA..."
+                  placeholder="Posez une question Ã  l'assistant IA..."
                   disabled={isStreaming}
                   className="flex-1"
                 />
@@ -259,32 +259,32 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
         </Card>
       )}
 
-      {/* Capacités IA */}
+      {/* CapacitÃ©s IA */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Détection de Fraude</CardTitle>
+            <CardTitle className="text-sm">DÃ©tection de Fraude</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Surveillance en temps réel des transactions suspectes
+              Surveillance en temps rÃ©el des transactions suspectes
             </p>
             <div className="mt-4">
-              <Badge className="bg-green-500">Actif</Badge>
+              <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">Analyse Prédictive</CardTitle>
+            <CardTitle className="text-sm">Analyse PrÃ©dictive</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Prévision des tendances et comportements utilisateurs
+              PrÃ©vision des tendances et comportements utilisateurs
             </p>
             <div className="mt-4">
-              <Badge className="bg-green-500">Actif</Badge>
+              <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
             </div>
           </CardContent>
         </Card>
@@ -295,10 +295,10 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Recommandations d'amélioration des performances
+              Recommandations d'amÃ©lioration des performances
             </p>
             <div className="mt-4">
-              <Badge className="bg-green-500">Actif</Badge>
+              <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
             </div>
           </CardContent>
         </Card>
@@ -310,7 +310,7 @@ export default function PDGAIAssistant({ mfaVerified }: PDGAIAssistantProps) {
             <div className="flex items-center gap-3">
               <AlertTriangle className="w-5 h-5 text-orange-500" />
               <p className="text-sm text-orange-500">
-                MFA non vérifié - Certaines fonctionnalités IA avancées sont limitées
+                MFA non vÃ©rifiÃ© - Certaines fonctionnalitÃ©s IA avancÃ©es sont limitÃ©es
               </p>
             </div>
           </CardContent>

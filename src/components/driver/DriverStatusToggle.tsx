@@ -35,30 +35,30 @@ export function DriverStatusToggle({
     try {
       if (checked) {
         // Passer en ligne - on a besoin de la localisation
-        console.log('[DriverStatusToggle] 📍 Demande GPS automatique...');
+        console.log('[DriverStatusToggle] ðŸ“ Demande GPS automatique...');
         const currentPos = await getCurrentLocation();
-        console.log('[DriverStatusToggle] 📍 Position obtenue:', currentPos);
+        console.log('[DriverStatusToggle] ðŸ“ Position obtenue:', currentPos);
         
         if (currentPos) {
           await onGoOnline({ lat: currentPos.latitude, lng: currentPos.longitude });
           
-          // Démarrer le suivi GPS continu
+          // DÃ©marrer le suivi GPS continu
           const id = watchLocation();
           if (id) {
             setWatchId(id);
             setGpsActive(true);
-            console.log('[DriverStatusToggle] 📍 Suivi GPS activé');
+            console.log('[DriverStatusToggle] ðŸ“ Suivi GPS activÃ©');
           }
         } else {
-          console.error('[DriverStatusToggle] ❌ Impossible d\'obtenir la position GPS');
+          console.error('[DriverStatusToggle] âŒ Impossible d\'obtenir la position GPS');
         }
       } else {
-        // Passer hors ligne - arrêter le suivi GPS
+        // Passer hors ligne - arrÃªter le suivi GPS
         if (watchId) {
           stopWatching(watchId);
           setWatchId(null);
           setGpsActive(false);
-          console.log('[DriverStatusToggle] 📍 Suivi GPS désactivé');
+          console.log('[DriverStatusToggle] ðŸ“ Suivi GPS dÃ©sactivÃ©');
         }
         await onGoOffline();
       }
@@ -70,7 +70,7 @@ export function DriverStatusToggle({
   const getStatusColor = () => {
     switch (status) {
       case 'online':
-        return 'bg-green-500';
+        return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
       case 'on_delivery':
         return 'bg-blue-500';
       case 'paused':
@@ -101,8 +101,8 @@ export function DriverStatusToggle({
           <span className="text-sm font-medium">{getStatusLabel()}</span>
           {(location || gpsActive) && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Navigation className="h-3 w-3 text-green-500" />
-              <span className="text-green-500 font-medium">GPS actif</span>
+              <Navigation className="h-3 w-3 text-primary-orange-500" />
+              <span className="text-primary-orange-500 font-medium">GPS actif</span>
             </span>
           )}
         </div>
@@ -122,7 +122,7 @@ export function DriverStatusToggle({
         )}
 
         <div className="flex items-center gap-2">
-          <Power className={`h-4 w-4 ${isOnline ? 'text-green-500' : 'text-gray-500'}`} />
+          <Power className={`h-4 w-4 ${isOnline ? 'text-primary-orange-500' : 'text-gray-500'}`} />
           <Switch
             checked={isOnline}
             onCheckedChange={handleToggle}

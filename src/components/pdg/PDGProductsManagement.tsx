@@ -64,7 +64,7 @@ export default function PDGProductsManagement() {
       return (
         <span className="flex items-center gap-1 text-red-500">
           <AlertCircle className="w-3 h-3" />
-          {product.vendor_name} (Supprimée)
+          {product.vendor_name} (SupprimÃ©e)
         </span>
       );
     }
@@ -86,7 +86,7 @@ export default function PDGProductsManagement() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
+      {/* En-tÃªte */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">Gestion des Produits</h2>
@@ -103,17 +103,17 @@ export default function PDGProductsManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground mt-1">produits enregistrés</p>
+            <p className="text-xs text-muted-foreground mt-1">produits enregistrÃ©s</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Actifs</CardTitle>
-            <TrendingUp className="w-4 h-4 text-green-500" />
+            <TrendingUp className="w-4 h-4 text-primary-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">
+            <div className="text-2xl font-bold text-primary-orange-500">
               {stats.active}
             </div>
             <p className="text-xs text-muted-foreground mt-1">en vente</p>
@@ -142,7 +142,7 @@ export default function PDGProductsManagement() {
             <div className="text-2xl font-bold text-purple-500">
               {stats.totalStock.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">unités en stock</p>
+            <p className="text-xs text-muted-foreground mt-1">unitÃ©s en stock</p>
           </CardContent>
         </Card>
 
@@ -155,7 +155,7 @@ export default function PDGProductsManagement() {
             <div className="text-2xl font-bold text-orange-500">
               {stats.lowStock}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">produits concernés</p>
+            <p className="text-xs text-muted-foreground mt-1">produits concernÃ©s</p>
           </CardContent>
         </Card>
 
@@ -182,7 +182,7 @@ export default function PDGProductsManagement() {
               <div className="text-2xl font-bold text-red-500">
                 {stats.orphanProducts}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">boutiques supprimées</p>
+              <p className="text-xs text-muted-foreground mt-1">boutiques supprimÃ©es</p>
             </CardContent>
           </Card>
         )}
@@ -289,7 +289,7 @@ export default function PDGProductsManagement() {
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Box className="w-3 h-3" />
-                          Stock: <span className="font-medium text-foreground">{product.total_stock || 0}</span> unités
+                          Stock: <span className="font-medium text-foreground">{product.total_stock || 0}</span> unitÃ©s
                         </span>
                         {getVendorDisplay(product)}
                       </div>
@@ -298,11 +298,11 @@ export default function PDGProductsManagement() {
                   <div className="flex items-center gap-2">
                     {!product.vendor_is_active && (
                       <Badge variant="destructive" className="text-xs">
-                        Boutique supprimée
+                        Boutique supprimÃ©e
                       </Badge>
                     )}
                     {product.is_active ? (
-                      <Badge className="bg-green-500">Actif</Badge>
+                      <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                     ) : (
                       <Badge className="bg-red-500">Inactif</Badge>
                     )}
@@ -343,18 +343,18 @@ export default function PDGProductsManagement() {
             {filteredProducts.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun produit trouvé</p>
+                <p>Aucun produit trouvÃ©</p>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Dialog Détails Produit */}
+      {/* Dialog DÃ©tails Produit */}
       <Dialog open={!!viewProduct} onOpenChange={() => setViewProduct(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Détails du Produit</DialogTitle>
+            <DialogTitle>DÃ©tails du Produit</DialogTitle>
           </DialogHeader>
           {viewProduct && (
             <div className="space-y-4">
@@ -377,18 +377,18 @@ export default function PDGProductsManagement() {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Statut Boutique</Label>
-                  <Badge className={viewProduct.vendor_is_active ? "bg-green-500" : "bg-red-500"}>
-                    {viewProduct.vendor_is_active ? "Active" : "Supprimée"}
+                  <Badge className={viewProduct.vendor_is_active ? "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" : "bg-red-500"}>
+                    {viewProduct.vendor_is_active ? "Active" : "SupprimÃ©e"}
                   </Badge>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Statut</Label>
-                  <Badge className={viewProduct.is_active ? "bg-green-500" : "bg-red-500"}>
+                  <Badge className={viewProduct.is_active ? "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" : "bg-red-500"}>
                     {viewProduct.is_active ? "Actif" : "Inactif"}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Date de création</Label>
+                  <Label className="text-muted-foreground">Date de crÃ©ation</Label>
                   <p className="font-medium">
                     {new Date(viewProduct.created_at).toLocaleDateString('fr-FR')}
                   </p>
@@ -405,7 +405,7 @@ export default function PDGProductsManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Édition Produit */}
+      {/* Dialog Ã‰dition Produit */}
       <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -474,7 +474,7 @@ export default function PDGProductsManagement() {
           <DialogHeader>
             <DialogTitle>Confirmer la suppression</DialogTitle>
           </DialogHeader>
-          <p>Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.</p>
+          <p>ÃŠtes-vous sÃ»r de vouloir supprimer ce produit ? Cette action est irrÃ©versible.</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>
               Annuler

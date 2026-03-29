@@ -64,7 +64,7 @@ export default function VendorAgentInterface() {
 
   useEffect(() => {
     if (!token) {
-      toast.error('Token d\'accès manquant');
+      toast.error('Token d\'accÃ¨s manquant');
       setLoading(false);
       return;
     }
@@ -81,17 +81,17 @@ export default function VendorAgentInterface() {
         .maybeSingle();
 
       if (agentError) {
-        toast.error(`Erreur base de données: ${agentError.message}`);
+        toast.error(`Erreur base de donnÃ©es: ${agentError.message}`);
         return;
       }
       
       if (!agentData) {
-        toast.error('Agent non trouvé. Vérifiez le lien d\'accès.');
+        toast.error('Agent non trouvÃ©. VÃ©rifiez le lien d\'accÃ¨s.');
         return;
       }
 
       if (!agentData.is_active) {
-        toast.error('Ce compte agent est désactivé. Contactez votre vendeur.');
+        toast.error('Ce compte agent est dÃ©sactivÃ©. Contactez votre vendeur.');
         return;
       }
 
@@ -124,7 +124,7 @@ export default function VendorAgentInterface() {
       sessionStorage.removeItem('agent_session');
       sessionStorage.removeItem('agent_user');
       await supabase.auth.signOut();
-      toast.success('Déconnexion réussie');
+      toast.success('DÃ©connexion rÃ©ussie');
       navigate('/auth', { replace: true });
     } catch (error) {
       navigate('/auth', { replace: true });
@@ -153,7 +153,7 @@ export default function VendorAgentInterface() {
     items.push({ id: 'products', label: 'Produits', icon: Package });
     if (hasPermission('manage_orders')) items.push({ id: 'orders', label: 'Commandes', icon: ShoppingCart });
     if (hasPermission('manage_inventory')) items.push({ id: 'inventory', label: 'Inventaire', icon: Package });
-    if (hasPermission('manage_warehouse')) items.push({ id: 'warehouse', label: 'Entrepôt', icon: Warehouse });
+    if (hasPermission('manage_warehouse')) items.push({ id: 'warehouse', label: 'EntrepÃ´t', icon: Warehouse });
     if (hasPermission('manage_suppliers')) items.push({ id: 'suppliers', label: 'Fournisseurs', icon: Truck });
     if (hasPermission('manage_clients')) items.push({ id: 'clients', label: 'Clients', icon: Users });
     if (hasPermission('manage_prospects')) items.push({ id: 'prospects', label: 'Prospects', icon: UserPlus });
@@ -162,7 +162,7 @@ export default function VendorAgentInterface() {
     if (hasPermission('access_wallet')) items.push({ id: 'wallet', label: 'Wallet', icon: Wallet });
     if (hasPermission('manage_payments')) items.push({ id: 'payments', label: 'Paiements', icon: CreditCard });
     if (hasPermission('manage_payment_links')) items.push({ id: 'payment_links', label: 'Liens Paiement', icon: DollarSign });
-    if (hasPermission('manage_expenses')) items.push({ id: 'expenses', label: 'Dépenses', icon: FileText });
+    if (hasPermission('manage_expenses')) items.push({ id: 'expenses', label: 'DÃ©penses', icon: FileText });
     if (hasPermission('manage_debts')) items.push({ id: 'debts', label: 'Dettes', icon: FileText });
     if (hasPermission('access_affiliate')) items.push({ id: 'affiliate', label: 'Affiliation', icon: Users });
     if (hasPermission('access_support')) items.push({ id: 'support', label: 'Support', icon: MessageSquare });
@@ -170,7 +170,7 @@ export default function VendorAgentInterface() {
     if (hasPermission('view_reports')) items.push({ id: 'reports', label: 'Rapports', icon: FileText });
     items.push({ id: 'commissions', label: 'Commissions', icon: DollarSign });
     if (hasPermission('manage_agents')) items.push({ id: 'sub_agents', label: 'Sous-Agents', icon: UserPlus });
-    if (hasPermission('access_settings')) items.push({ id: 'settings', label: 'Paramètres', icon: Settings });
+    if (hasPermission('access_settings')) items.push({ id: 'settings', label: 'ParamÃ¨tres', icon: Settings });
 
     return items;
   };
@@ -191,22 +191,22 @@ export default function VendorAgentInterface() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-vendeur-primary/10 to-vendeur-secondary/10 p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Accès Agent Vendeur</CardTitle>
+            <CardTitle className="text-2xl">AccÃ¨s Agent Vendeur</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-center text-muted-foreground">
-              Aucun profil agent trouvé avec ce lien d'accès.
+              Aucun profil agent trouvÃ© avec ce lien d'accÃ¨s.
             </p>
             <div className="p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
-              <p className="font-medium">Vérifiez que :</p>
+              <p className="font-medium">VÃ©rifiez que :</p>
               <ul className="list-disc list-inside text-left space-y-1 text-muted-foreground">
-                <li>Le lien d'accès est complet et correct</li>
+                <li>Le lien d'accÃ¨s est complet et correct</li>
                 <li>Votre compte agent est actif</li>
-                <li>Le lien n'a pas expiré</li>
+                <li>Le lien n'a pas expirÃ©</li>
               </ul>
             </div>
             <Button onClick={handleSignOut} className="w-full" variant="outline">
-              Retour à l'accueil
+              Retour Ã  l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -230,8 +230,8 @@ export default function VendorAgentInterface() {
             <p className="text-xs text-muted-foreground truncate">{agent.agent_code}</p>
           </div>
         </div>
-        <Badge variant="outline" className="mt-2 bg-green-50 text-green-700 border-green-200 text-xs">
-          ● Agent Actif
+        <Badge variant="outline" className="mt-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200 text-xs">
+          â— Agent Actif
         </Badge>
       </div>
 
@@ -261,7 +261,7 @@ export default function VendorAgentInterface() {
               >
                 <Icon className={cn("w-4 h-4 flex-shrink-0", active && "text-vendeur-primary")} />
                 <span className="truncate">{item.label}</span>
-                {item.disabled && <span className="ml-auto text-xs">🔒</span>}
+                {item.disabled && <span className="ml-auto text-xs">ðŸ”’</span>}
                 {active && <ChevronRight className="w-3 h-3 ml-auto flex-shrink-0 text-vendeur-primary" />}
               </button>
             );
@@ -276,7 +276,7 @@ export default function VendorAgentInterface() {
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
         >
           <LogOut className="w-4 h-4" />
-          <span>Déconnexion</span>
+          <span>DÃ©connexion</span>
         </button>
       </div>
     </div>
@@ -297,7 +297,7 @@ export default function VendorAgentInterface() {
       case 'pos':
         return canAccessPOS ? <POSSystemWrapper /> : (
           <AgentModuleWrapper>
-            <Card><CardHeader><CardTitle>POS verrouillé</CardTitle><CardDescription>Le vendeur est configuré en "En ligne uniquement".</CardDescription></CardHeader></Card>
+            <Card><CardHeader><CardTitle>POS verrouillÃ©</CardTitle><CardDescription>Le vendeur est configurÃ© en "En ligne uniquement".</CardDescription></CardHeader></Card>
           </AgentModuleWrapper>
         );
       case 'inventory':
@@ -337,7 +337,7 @@ export default function VendorAgentInterface() {
       case 'sub_agents':
         return <AgentModuleWrapper><AgentManagement /></AgentModuleWrapper>;
       case 'settings':
-        return <AgentModuleWrapper><Card><CardHeader><CardTitle>Paramètres Agent</CardTitle><CardDescription>Configurez vos préférences</CardDescription></CardHeader><CardContent><p className="text-muted-foreground">Paramètres limités disponibles pour les agents</p></CardContent></Card></AgentModuleWrapper>;
+        return <AgentModuleWrapper><Card><CardHeader><CardTitle>ParamÃ¨tres Agent</CardTitle><CardDescription>Configurez vos prÃ©fÃ©rences</CardDescription></CardHeader><CardContent><p className="text-muted-foreground">ParamÃ¨tres limitÃ©s disponibles pour les agents</p></CardContent></Card></AgentModuleWrapper>;
       default:
         return null;
     }
@@ -433,16 +433,16 @@ export default function VendorAgentInterface() {
                   <div>
                     <h1 className="text-xl font-bold">{activeNavItem?.label || 'Espace Agent'}</h1>
                     <p className="text-sm text-muted-foreground">
-                      {agent.name} • {agent.agent_code}
+                      {agent.name} â€¢ {agent.agent_code}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      ● Actif
+                    <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200">
+                      â— Actif
                     </Badge>
                     <Button onClick={handleSignOut} variant="outline" size="sm">
                       <LogOut className="w-4 h-4 mr-2" />
-                      Déconnexion
+                      DÃ©connexion
                     </Button>
                   </div>
                 </div>
@@ -462,7 +462,7 @@ export default function VendorAgentInterface() {
   );
 }
 
-/* ─── Overview Content ─── */
+/* â”€â”€â”€ Overview Content â”€â”€â”€ */
 function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
   agent: VendorAgent;
   hasPermission: (p: string) => boolean;
@@ -473,11 +473,11 @@ function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
 
   const moduleButtons: { id: string; icon: React.ElementType; label: string; permission?: string; disabled?: boolean }[] = [
     hasPermission('view_dashboard') ? { id: 'dashboard', icon: BarChart3, label: 'Dashboard' } : null,
-    hasPermission('access_pos') ? { id: 'pos', icon: CreditCard, label: canAccessPOS ? 'POS' : 'POS 🔒', disabled: !canAccessPOS } : null,
+    hasPermission('access_pos') ? { id: 'pos', icon: CreditCard, label: canAccessPOS ? 'POS' : 'POS ðŸ”’', disabled: !canAccessPOS } : null,
     hasPermission('manage_products') ? { id: 'products', icon: Package, label: 'Produits' } : null,
     hasPermission('manage_orders') ? { id: 'orders', icon: ShoppingCart, label: 'Commandes' } : null,
     hasPermission('manage_inventory') ? { id: 'inventory', icon: Package, label: 'Inventaire' } : null,
-    hasPermission('manage_warehouse') ? { id: 'warehouse', icon: Warehouse, label: 'Entrepôt' } : null,
+    hasPermission('manage_warehouse') ? { id: 'warehouse', icon: Warehouse, label: 'EntrepÃ´t' } : null,
     hasPermission('manage_clients') ? { id: 'clients', icon: Users, label: 'Clients' } : null,
     hasPermission('manage_delivery') ? { id: 'delivery', icon: Truck, label: 'Livraisons' } : null,
     hasPermission('access_wallet') ? { id: 'wallet', icon: Wallet, label: 'Wallet' } : null,
@@ -485,7 +485,7 @@ function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
     hasPermission('access_communication') ? { id: 'communication', icon: MessageSquare, label: 'Messages' } : null,
     hasPermission('manage_agents') ? { id: 'sub_agents', icon: UserPlus, label: 'Sous-Agents' } : null,
     { id: 'commissions', icon: DollarSign, label: 'Commissions' },
-    hasPermission('access_settings') ? { id: 'settings', icon: Settings, label: 'Paramètres' } : null,
+    hasPermission('access_settings') ? { id: 'settings', icon: Settings, label: 'ParamÃ¨tres' } : null,
   ].filter(Boolean) as typeof moduleButtons;
 
   return (
@@ -499,7 +499,7 @@ function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
               <span className="text-xs text-muted-foreground">Permissions</span>
             </div>
             <p className="text-xl md:text-2xl font-bold">{Object.values(agent.permissions).filter(Boolean).length}</p>
-            <p className="text-[10px] text-muted-foreground">accès actifs</p>
+            <p className="text-[10px] text-muted-foreground">accÃ¨s actifs</p>
           </CardContent>
         </Card>
 
@@ -510,18 +510,18 @@ function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
               <span className="text-xs text-muted-foreground">Sous-Agents</span>
             </div>
             <p className="text-xl md:text-2xl font-bold">0</p>
-            <p className="text-[10px] text-muted-foreground">{agent.can_create_sub_agent ? 'Autorisé' : 'Non autorisé'}</p>
+            <p className="text-[10px] text-muted-foreground">{agent.can_create_sub_agent ? 'AutorisÃ©' : 'Non autorisÃ©'}</p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-sm">
           <CardContent className="p-3 md:p-4">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-green-600" />
+              <TrendingUp className="w-4 h-4 text-primary-orange-600" />
               <span className="text-xs text-muted-foreground">Statut</span>
             </div>
             <p className="text-xl md:text-2xl font-bold">Actif</p>
-            <p className="text-[10px] text-muted-foreground">Compte vérifié</p>
+            <p className="text-[10px] text-muted-foreground">Compte vÃ©rifiÃ©</p>
           </CardContent>
         </Card>
 
@@ -557,7 +557,7 @@ function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
               <p className="text-sm truncate">{agent.email}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-0.5">Téléphone</p>
+              <p className="text-xs text-muted-foreground mb-0.5">TÃ©lÃ©phone</p>
               <p className="text-sm">{agent.phone}</p>
             </div>
             <div className={cn(isMobile ? "" : "col-span-2")}>
@@ -597,7 +597,7 @@ function OverviewContent({ agent, hasPermission, canAccessPOS, onTabChange }: {
                 )}
                 onClick={() => {
                   if (mod.disabled) {
-                    toast.error("POS verrouillé : vendeur en ligne uniquement");
+                    toast.error("POS verrouillÃ© : vendeur en ligne uniquement");
                     return;
                   }
                   onTabChange(mod.id);

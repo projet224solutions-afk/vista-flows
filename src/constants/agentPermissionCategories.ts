@@ -1,6 +1,6 @@
 /**
- * Catégories de permissions pour les agents
- * Utilisé pour l'affichage organisé dans l'interface agent et PDG
+ * CatÃ©gories de permissions pour les agents
+ * UtilisÃ© pour l'affichage organisÃ© dans l'interface agent et PDG
  */
 
 import { AVAILABLE_PERMISSIONS, PermissionKey } from '@/hooks/useAgentPermissions';
@@ -60,8 +60,8 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     key: 'services_pro',
     label: 'Services Professionnels',
     icon: 'Store',
-    colorClass: 'text-teal-600',
-    bgClass: 'bg-teal-50 border-teal-200',
+    colorClass: 'text-primary-orange-600',
+    bgClass: 'bg-primary-orange-50 border-primary-orange-200',
     permissions: [
       'view_beauty_services',
       'manage_beauty_services',
@@ -97,10 +97,10 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     key: 'operations',
-    label: 'Opérations',
+    label: 'OpÃ©rations',
     icon: 'Briefcase',
-    colorClass: 'text-green-600',
-    bgClass: 'bg-green-50 border-green-200',
+    colorClass: 'text-primary-orange-600',
+    bgClass: 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200',
     permissions: [
       'view_agents',
       'manage_agents',
@@ -134,7 +134,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     key: 'systeme',
-    label: 'Système',
+    label: 'SystÃ¨me',
     icon: 'Settings',
     colorClass: 'text-purple-600',
     bgClass: 'bg-purple-50 border-purple-200',
@@ -173,7 +173,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     key: 'special',
-    label: 'Spécial',
+    label: 'SpÃ©cial',
     icon: 'Shield',
     colorClass: 'text-red-600',
     bgClass: 'bg-red-50 border-red-200',
@@ -192,7 +192,7 @@ export function getPermissionLabel(key: string): string {
 }
 
 /**
- * Filtre les permissions actives par catégorie
+ * Filtre les permissions actives par catÃ©gorie
  */
 export function getActivePermissionsByCategory(
   permissions: Record<string, boolean>

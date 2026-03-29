@@ -39,7 +39,7 @@ interface CheckTransactionParams {
 }
 
 /**
- * Hook pour la détection de fraude ML avec analyse comportementale prédictive
+ * Hook pour la dÃ©tection de fraude ML avec analyse comportementale prÃ©dictive
  */
 export const useMLFraudDetection = () => {
   const [loading, setLoading] = useState(false);
@@ -69,17 +69,17 @@ export const useMLFraudDetection = () => {
 
       // Alerter selon le niveau de risque
       if (result.riskLevel === 'critical') {
-        toast.error('🚨 Transaction BLOQUÉE - Risque critique détecté', {
+        toast.error('ðŸš¨ Transaction BLOQUÃ‰E - Risque critique dÃ©tectÃ©', {
           description: `Score: ${result.score}/100 - ${result.flags.slice(0, 2).join(', ')}`,
           duration: 10000
         });
       } else if (result.riskLevel === 'high') {
-        toast.warning('⚠️ Risque ÉLEVÉ détecté', {
-          description: `Score: ${result.score}/100 - Vérification MFA requise`,
+        toast.warning('âš ï¸ Risque Ã‰LEVÃ‰ dÃ©tectÃ©', {
+          description: `Score: ${result.score}/100 - VÃ©rification MFA requise`,
           duration: 7000
         });
       } else if (result.riskLevel === 'medium') {
-        toast.info('ℹ️ Transaction sous surveillance', {
+        toast.info('â„¹ï¸ Transaction sous surveillance', {
           description: `Score: ${result.score}/100`,
           duration: 5000
         });
@@ -89,7 +89,7 @@ export const useMLFraudDetection = () => {
     } catch (error: unknown) {
       console.error('Error in ML fraud detection:', error);
       const message = error instanceof Error ? error.message : 'Erreur inconnue';
-      toast.error('Erreur lors de l\'analyse ML de sécurité', {
+      toast.error('Erreur lors de l\'analyse ML de sÃ©curitÃ©', {
         description: message
       });
       return null;
@@ -103,23 +103,23 @@ export const useMLFraudDetection = () => {
       case 'critical': return 'text-red-600 bg-red-100';
       case 'high': return 'text-orange-600 bg-orange-100';
       case 'medium': return 'text-yellow-600 bg-yellow-100';
-      case 'low': return 'text-green-600 bg-green-100';
+      case 'low': return 'text-primary-orange-600 bg-primary-orange-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   }, []);
 
   const getRiskIcon = useCallback((riskLevel: string): string => {
     switch (riskLevel) {
-      case 'critical': return '🚨';
-      case 'high': return '⚠️';
-      case 'medium': return '⚡';
-      case 'low': return '✅';
-      default: return '❓';
+      case 'critical': return 'ðŸš¨';
+      case 'high': return 'âš ï¸';
+      case 'medium': return 'âš¡';
+      case 'low': return 'âœ…';
+      default: return 'â“';
     }
   }, []);
 
   const formatConfidence = useCallback((confidence: number): string => {
-    if (confidence >= 90) return 'Très haute';
+    if (confidence >= 90) return 'TrÃ¨s haute';
     if (confidence >= 75) return 'Haute';
     if (confidence >= 50) return 'Moyenne';
     return 'Basse';

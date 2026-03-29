@@ -1,6 +1,6 @@
 /**
  * MINI CARTE - ULTRA PROFESSIONNEL
- * Affichage élégant de la position GPS
+ * Affichage Ã©lÃ©gant de la position GPS
  */
 
 import { MapPin, Navigation2, Maximize2, Loader2 } from "lucide-react";
@@ -19,7 +19,7 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
 
   return (
     <div className="relative">
-      {/* Map Container - hauteur réduite pour mobile */}
+      {/* Map Container - hauteur rÃ©duite pour mobile */}
       <div className={cn(
         "relative h-36 sm:h-44 rounded-xl overflow-hidden",
         "bg-gradient-to-br from-gray-800 to-gray-900",
@@ -48,8 +48,8 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
             {/* Pulse rings */}
             {isOnline && (
               <>
-                <div className="absolute w-20 h-20 rounded-full bg-emerald-500/10 animate-ping" style={{ animationDuration: '2s' }} />
-                <div className="absolute w-14 h-14 rounded-full bg-emerald-500/20 animate-pulse" />
+                <div className="absolute w-20 h-20 rounded-full bg-primary-blue-500/10 animate-ping" style={{ animationDuration: '2s' }} />
+                <div className="absolute w-14 h-14 rounded-full bg-primary-blue-500/20 animate-pulse" />
               </>
             )}
             
@@ -58,7 +58,7 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
               "relative z-10 w-10 h-10 rounded-full flex items-center justify-center",
               "shadow-xl",
               isOnline 
-                ? "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-500/30" 
+                ? "bg-gradient-to-br from-primary-blue-400 to-primary-orange-600 shadow-primary-orange-500/30" 
                 : "bg-gradient-to-br from-gray-600 to-gray-700 shadow-black/30"
             )}>
               <Navigation2 className={cn(
@@ -82,7 +82,7 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
                 <div className="flex items-center gap-1.5">
                   <MapPin className={cn(
                     "w-3.5 h-3.5",
-                    isOnline ? "text-emerald-400" : "text-gray-400"
+                    isOnline ? "text-primary-blue-400" : "text-gray-400"
                   )} />
                   <span className="text-gray-300 text-[10px] font-mono">
                     {latitude?.toFixed(4)}, {longitude?.toFixed(4)}
@@ -90,7 +90,7 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
                 </div>
                 <div className={cn(
                   "w-1.5 h-1.5 rounded-full",
-                  isOnline ? "bg-emerald-400 animate-pulse" : "bg-gray-500"
+                  isOnline ? "bg-primary-blue-400 animate-pulse" : "bg-gray-500"
                 )} />
               </div>
             </div>

@@ -1,6 +1,6 @@
 /**
  * Liste et gestion des achats de stock
- * Workflow complet: Brouillon → Document généré → Validé
+ * Workflow complet: Brouillon â†’ Document gÃ©nÃ©rÃ© â†’ ValidÃ©
  */
 
 import { useState, useEffect } from 'react';
@@ -79,7 +79,7 @@ const STATUS_CONFIG_BASE = {
   validated: {
     icon: CheckCircle,
     variant: 'default' as const,
-    color: 'text-green-500',
+    color: 'text-primary-orange-500',
   },
 };
 
@@ -163,7 +163,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
           product_name: p.productName,
           quantity: p.quantity,
           purchase_price: p.unitCost,
-          selling_price: p.sellingPrice, // Prix de vente réel du produit
+          selling_price: p.sellingPrice, // Prix de vente rÃ©el du produit
         }));
 
         if (items.length > 0) {
@@ -199,7 +199,7 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
   // Delete purchase
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // 1. Supprimer les items d'abord (contrainte de clé étrangère)
+      // 1. Supprimer les items d'abord (contrainte de clÃ© Ã©trangÃ¨re)
       const { error: itemsError } = await supabase
         .from('stock_purchase_items')
         .delete()

@@ -50,7 +50,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
 
-  // Écouter les changements dans agent_created_users pour recharger en temps réel
+  // Ã‰couter les changements dans agent_created_users pour recharger en temps rÃ©el
   useEffect(() => {
     if (!agentId) return;
 
@@ -68,8 +68,8 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
           filter: `agent_id=eq.${agentId}`
         },
         (payload) => {
-          console.log('Changement détecté dans agent_created_users:', payload);
-          // Recharger les utilisateurs après un court délai pour laisser le profil se créer
+          console.log('Changement dÃ©tectÃ© dans agent_created_users:', payload);
+          // Recharger les utilisateurs aprÃ¨s un court dÃ©lai pour laisser le profil se crÃ©er
           setTimeout(() => {
             loadUsers();
           }, 500);
@@ -100,7 +100,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
         return;
       }
 
-      // Appeler la Edge Function pour récupérer les utilisateurs
+      // Appeler la Edge Function pour rÃ©cupÃ©rer les utilisateurs
       const { data, error } = await supabase.functions.invoke('get-agent-users', {
         body: { agentToken }
       });
@@ -108,7 +108,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
       if (error) throw error;
 
       setUsers(data.users || []);
-      toast.success(`${data.users?.length || 0} utilisateurs chargés`);
+      toast.success(`${data.users?.length || 0} utilisateurs chargÃ©s`);
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
       toast.error('Erreur lors du chargement des utilisateurs');
@@ -155,7 +155,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
 
       if (error) throw error;
 
-      toast.success(currentStatus ? 'Utilisateur suspendu' : 'Utilisateur activé');
+      toast.success(currentStatus ? 'Utilisateur suspendu' : 'Utilisateur activÃ©');
       loadUsers();
     } catch (error) {
       console.error('Erreur:', error);
@@ -177,7 +177,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
 
       if (error) throw error;
 
-      toast.success(`Utilisateur ${userEmail} supprimé avec succès`);
+      toast.success(`Utilisateur ${userEmail} supprimÃ© avec succÃ¨s`);
       loadUsers();
     } catch (error) {
       console.error('Erreur:', error);
@@ -189,7 +189,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
     const colors = {
       admin: 'bg-red-500/10 text-red-500 border-red-500/20',
       vendeur: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-      client: 'bg-green-500/10 text-green-500 border-green-500/20',
+      client: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500 border-primary-orange-500/20',
       livreur: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
       taxi: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
       transitaire: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
@@ -279,10 +279,10 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-48 bg-background">
-                <SelectValue placeholder="Filtrer par rôle" />
+                <SelectValue placeholder="Filtrer par rÃ´le" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les rôles</SelectItem>
+                <SelectItem value="all">Tous les rÃ´les</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="vendeur">Vendeur</SelectItem>
                 <SelectItem value="client">Client</SelectItem>
@@ -313,7 +313,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                         <Shield className="w-8 h-8 text-primary-foreground" />
                       </div>
                       {user.is_active !== false && (
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-card" />
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full border-2 border-card" />
                       )}
                     </div>
                     <div className="flex-1">
@@ -326,7 +326,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                         <Badge variant="outline" className={getRoleBadge(user.role)}>
                           {user.role || 'client'}
                         </Badge>
-                        <Badge variant="outline" className={user.is_active !== false ? 'border-green-500/50 bg-green-500/10 text-green-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
+                        <Badge variant="outline" className={user.is_active !== false ? 'border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
                           {user.is_active !== false ? 'Actif' : 'Suspendu'}
                         </Badge>
                       </div>
@@ -337,7 +337,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                       variant="outline"
                       size="sm"
                       onClick={() => toggleUserStatus(user.id, user.is_active !== false)}
-                      className={user.is_active !== false ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-green-500/50 hover:bg-green-500/10 hover:text-green-500'}
+                      className={user.is_active !== false ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-primary-orange-500/50 hover:bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 hover:text-primary-orange-500'}
                     >
                       {user.is_active !== false ? (
                         <>
@@ -367,8 +367,8 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{user.email}</strong> ?
-                            Cette action est irréversible et supprimera toutes les données associées.
+                            ÃŠtes-vous sÃ»r de vouloir supprimer l'utilisateur <strong>{user.email}</strong> ?
+                            Cette action est irrÃ©versible et supprimera toutes les donnÃ©es associÃ©es.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -377,7 +377,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                             onClick={() => deleteUser(user.id, user.email)}
                             className="bg-red-500 hover:bg-red-600"
                           >
-                            Supprimer définitivement
+                            Supprimer dÃ©finitivement
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -385,7 +385,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                   </div>
                 </div>
 
-                {/* Informations détaillées */}
+                {/* Informations dÃ©taillÃ©es */}
                 <div className="border-t pt-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="flex items-center gap-2 text-sm">
@@ -400,7 +400,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                       <div className="flex items-center gap-2 text-sm">
                         <Phone className="w-4 h-4 text-muted-foreground" />
                         <div>
-                          <p className="text-xs text-muted-foreground">Téléphone</p>
+                          <p className="text-xs text-muted-foreground">TÃ©lÃ©phone</p>
                           <p className="font-medium">{user.phone}</p>
                         </div>
                       </div>
@@ -409,7 +409,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Créé le</p>
+                        <p className="text-xs text-muted-foreground">CrÃ©Ã© le</p>
                         <p className="font-medium">
                           {new Date(user.created_at).toLocaleDateString('fr-FR', {
                             day: '2-digit',
@@ -423,7 +423,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
 
                   {user.country && (
                     <div className="mt-3 flex items-center gap-2 text-sm">
-                      <div className="w-4 h-4 text-muted-foreground">🌍</div>
+                      <div className="w-4 h-4 text-muted-foreground">ðŸŒ</div>
                       <div>
                         <p className="text-xs text-muted-foreground">Localisation</p>
                         <p className="font-medium">
@@ -452,7 +452,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
       {filteredUsers.length === 0 && (
         <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
           <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground">Aucun utilisateur trouvé</p>
+            <p className="text-muted-foreground">Aucun utilisateur trouvÃ©</p>
           </CardContent>
         </Card>
       )}

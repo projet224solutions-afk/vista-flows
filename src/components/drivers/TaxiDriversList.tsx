@@ -1,6 +1,6 @@
 /**
  * TAXI DRIVERS LIST COMPONENT
- * Composant mémoïsé pour l'affichage de la liste des taxi-motos
+ * Composant mÃ©moÃ¯sÃ© pour l'affichage de la liste des taxi-motos
  * 224Solutions - Production Ready
  */
 
@@ -43,7 +43,7 @@ interface TaxiDriversListProps {
 }
 
 // ============================================================================
-// TaxiDriverCard - Carte individuelle mémoïsée
+// TaxiDriverCard - Carte individuelle mÃ©moÃ¯sÃ©e
 // ============================================================================
 
 const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriverCardProps) {
@@ -54,12 +54,12 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
   const isAvailable = driver.status === 'available';
 
   return (
-    <Card className="border-border/50 hover:border-emerald-500/50 transition-colors">
+    <Card className="border-border/50 hover:border-primary-orange-500/50 transition-colors">
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
           {/* Avatar */}
           <div className="relative">
-            <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-full bg-primary-blue-100 flex items-center justify-center">
               {driver.profile?.avatar_url ? (
                 <img
                   src={driver.profile.avatar_url}
@@ -68,11 +68,11 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
                   loading="lazy"
                 />
               ) : (
-                <User className="w-6 h-6 text-emerald-600" />
+                <User className="w-6 h-6 text-primary-blue-600" />
               )}
             </div>
             <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-              isAvailable ? 'bg-green-500' : 'bg-yellow-500'
+              isAvailable ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-yellow-500'
             }`} />
           </div>
 
@@ -117,7 +117,7 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
             onClick={() => onBook(driver.id)}
             disabled={!isAvailable}
             title={!isAvailable ? 'Conducteur en course' : undefined}
-            className="bg-emerald-500 hover:bg-emerald-600"
+            className="bg-primary-blue-500 hover:bg-primary-blue-600"
           >
             <Phone className="w-4 h-4 mr-1" />
             Appeler
@@ -154,7 +154,7 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
 });
 
 // ============================================================================
-// État d'erreur
+// Ã‰tat d'erreur
 // ============================================================================
 
 interface ErrorStateProps {
@@ -171,7 +171,7 @@ const ErrorState = memo(function ErrorState({ error, onRetry }: ErrorStateProps)
         <p className="text-sm text-muted-foreground mb-4">{error}</p>
         <Button variant="outline" onClick={onRetry}>
           <RefreshCw className="w-4 h-4 mr-2" />
-          Réessayer
+          RÃ©essayer
         </Button>
       </CardContent>
     </Card>
@@ -179,7 +179,7 @@ const ErrorState = memo(function ErrorState({ error, onRetry }: ErrorStateProps)
 });
 
 // ============================================================================
-// État vide
+// Ã‰tat vide
 // ============================================================================
 
 interface EmptyStateProps {
@@ -193,7 +193,7 @@ const EmptyState = memo(function EmptyState({ onRetry }: EmptyStateProps) {
         <Bike className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="font-semibold text-foreground mb-2">Aucun conducteur en ligne</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Réessayez dans quelques instants
+          RÃ©essayez dans quelques instants
         </p>
         <Button variant="outline" onClick={onRetry}>
           <RefreshCw className="w-4 h-4 mr-2" />

@@ -46,7 +46,7 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
     });
   };
 
-  const monthlyGoal = 100; // Objectif mensuel d'adhérents
+  const monthlyGoal = 100; // Objectif mensuel d'adhÃ©rents
   const monthlyProgress = Math.min((stats.membersCount / monthlyGoal) * 100, 100);
 
   return (
@@ -63,9 +63,9 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bureau Profile Card */}
         <Card className="lg:col-span-2 border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b">
+          <CardHeader className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 border-b">
             <CardTitle className="flex items-center gap-2 text-slate-800">
-              <Building2 className="w-5 h-5 text-emerald-600" />
+              <Building2 className="w-5 h-5 text-primary-blue-600" />
               Informations Bureau
             </CardTitle>
           </CardHeader>
@@ -73,8 +73,8 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-emerald-50 rounded-lg">
-                    <MapPin className="w-4 h-4 text-emerald-600" />
+                  <div className="p-2 bg-primary-blue-50 rounded-lg">
+                    <MapPin className="w-4 h-4 text-primary-blue-600" />
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 uppercase tracking-wide">Localisation</p>
@@ -89,17 +89,17 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
                   </div>
                   <div>
                     <p className="text-xs text-slate-500 uppercase tracking-wide">Email</p>
-                    <p className="font-medium text-slate-800">{bureau.president_email || 'Non renseigné'}</p>
+                    <p className="font-medium text-slate-800">{bureau.president_email || 'Non renseignÃ©'}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-green-50 rounded-lg">
-                    <Phone className="w-4 h-4 text-green-600" />
+                  <div className="p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
+                    <Phone className="w-4 h-4 text-primary-orange-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide">Téléphone</p>
-                    <p className="font-medium text-slate-800">{bureau.president_phone || 'Non renseigné'}</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">TÃ©lÃ©phone</p>
+                    <p className="font-medium text-slate-800">{bureau.president_phone || 'Non renseignÃ©'}</p>
                   </div>
                 </div>
               </div>
@@ -115,15 +115,15 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
                     <Calendar className="w-4 h-4 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide">Date de création</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">Date de crÃ©ation</p>
                     <p className="font-medium text-slate-800">{formatDate(bureau.created_at)}</p>
                   </div>
                 </div>
 
                 {bureau.president_name && (
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Président</p>
-                    <Badge className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+                    <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">PrÃ©sident</p>
+                    <Badge className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 text-white">
                       {bureau.president_name}
                     </Badge>
                   </div>
@@ -145,7 +145,7 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
             {/* Monthly Progress */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-600">Objectif Adhérents</span>
+                <span className="text-sm font-medium text-slate-600">Objectif AdhÃ©rents</span>
                 <span className="text-sm font-bold text-amber-600">
                   {stats.membersCount}/{monthlyGoal}
                 </span>
@@ -162,7 +162,7 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-emerald-500" />
+                  <Users className="w-4 h-4 text-primary-blue-500" />
                   <span className="text-sm text-slate-600">Membres Bureau</span>
                 </div>
                 <span className="font-bold text-slate-800">{stats.workersCount}</span>
@@ -171,7 +171,7 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm text-slate-600">Total Adhérents</span>
+                  <span className="text-sm text-slate-600">Total AdhÃ©rents</span>
                 </div>
                 <span className="font-bold text-slate-800">{stats.membersCount}</span>
               </div>
@@ -179,7 +179,7 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Bike className="w-4 h-4 text-purple-500" />
-                  <span className="text-sm text-slate-600">Véhicules</span>
+                  <span className="text-sm text-slate-600">VÃ©hicules</span>
                 </div>
                 <span className="font-bold text-slate-800">{stats.motosCount}</span>
               </div>
@@ -192,11 +192,11 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
               <span className="text-sm text-slate-600">Statut</span>
               <Badge 
                 className={bureau.status === 'active' 
-                  ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" 
+                  ? "bg-primary-blue-100 text-primary-blue-700 hover:bg-primary-blue-100" 
                   : "bg-slate-100 text-slate-600"
                 }
               >
-                {bureau.status === 'active' ? '● Actif' : '○ Inactif'}
+                {bureau.status === 'active' ? 'â— Actif' : 'â—‹ Inactif'}
               </Badge>
             </div>
           </CardContent>

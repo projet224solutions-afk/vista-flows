@@ -1,7 +1,7 @@
 /**
- * COMPOSANT DÉCLARATION MOTO VOLÉE
- * Interface pour déclarer une moto volée
- * 224Solutions - Module de sécurité intelligent
+ * COMPOSANT DÃ‰CLARATION MOTO VOLÃ‰E
+ * Interface pour dÃ©clarer une moto volÃ©e
+ * 224Solutions - Module de sÃ©curitÃ© intelligent
  */
 
 import React, { useState } from 'react';
@@ -54,7 +54,7 @@ export default function ReportStolenMoto({
         e.preventDefault();
         
         if (!formData.numero_serie || !formData.ville) {
-            setError('Numéro de série et ville sont obligatoires');
+            setError('NumÃ©ro de sÃ©rie et ville sont obligatoires');
             return;
         }
 
@@ -62,7 +62,7 @@ export default function ReportStolenMoto({
         setError(null);
 
         try {
-            console.log('🚨 DÉCLARATION DE VOL - Envoi...');
+            console.log('ðŸš¨ DÃ‰CLARATION DE VOL - Envoi...');
             
             const response = await fetch('/api/moto-security/report-stolen', {
                 method: 'POST',
@@ -73,7 +73,7 @@ export default function ReportStolenMoto({
                     numero_serie: formData.numero_serie,
                     vin: formData.vin || null,
                     chauffeur_id: user?.id,
-                    bureau_id: null, // À récupérer depuis le profil utilisateur
+                    bureau_id: null, // Ã€ rÃ©cupÃ©rer depuis le profil utilisateur
                     ville: formData.ville,
                     description: formData.description,
                     user_ip: 'client-ip',
@@ -85,12 +85,12 @@ export default function ReportStolenMoto({
 
             if (result.success) {
                 setSuccess(true);
-                toast.success('✅ Moto signalée volée avec succès', {
-                    description: `Alerte créée: ${result.alert.id}`,
+                toast.success('âœ… Moto signalÃ©e volÃ©e avec succÃ¨s', {
+                    description: `Alerte crÃ©Ã©e: ${result.alert.id}`,
                     duration: 8000
                 });
                 
-                // Réinitialiser le formulaire
+                // RÃ©initialiser le formulaire
                 setFormData({
                     numero_serie: '',
                     vin: '',
@@ -103,16 +103,16 @@ export default function ReportStolenMoto({
                     onSuccess();
                 }
             } else {
-                setError(result.error || 'Erreur lors de la déclaration');
-                toast.error('❌ Erreur lors de la déclaration', {
+                setError(result.error || 'Erreur lors de la dÃ©claration');
+                toast.error('âŒ Erreur lors de la dÃ©claration', {
                     description: result.error
                 });
             }
 
         } catch (error) {
-            console.error('❌ Erreur déclaration vol:', error);
+            console.error('âŒ Erreur dÃ©claration vol:', error);
             setError('Erreur de connexion au serveur');
-            toast.error('❌ Erreur de connexion');
+            toast.error('âŒ Erreur de connexion');
         } finally {
             setLoading(false);
         }
@@ -125,21 +125,21 @@ export default function ReportStolenMoto({
 
     if (success) {
         return (
-            <Card className={`border-green-200 bg-green-50 ${className}`}>
+            <Card className={`border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 ${className}`}>
                 <CardContent className="p-6 text-center">
-                    <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-green-800 mb-2">
-                        Moto signalée volée avec succès
+                    <CheckCircle className="w-16 h-16 text-primary-orange-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-primary-orange-800 mb-2">
+                        Moto signalÃ©e volÃ©e avec succÃ¨s
                     </h3>
-                    <p className="text-green-700 mb-4">
-                        Votre déclaration a été enregistrée et les bureaux concernés ont été alertés.
+                    <p className="text-primary-orange-700 mb-4">
+                        Votre dÃ©claration a Ã©tÃ© enregistrÃ©e et les bureaux concernÃ©s ont Ã©tÃ© alertÃ©s.
                     </p>
                     <Button 
                         onClick={() => setSuccess(false)}
                         variant="outline"
-                        className="border-green-300 text-green-700 hover:bg-green-100"
+                        className="border-primary-orange-300 text-primary-orange-700 hover:bg-primary-orange-100"
                     >
-                        Déclarer une autre moto
+                        DÃ©clarer une autre moto
                     </Button>
                 </CardContent>
             </Card>
@@ -151,10 +151,10 @@ export default function ReportStolenMoto({
             <CardHeader className="bg-red-50 border-b border-red-200">
                 <CardTitle className="flex items-center gap-2 text-red-800">
                     <AlertTriangle className="w-6 h-6" />
-                    Déclarer une moto volée
+                    DÃ©clarer une moto volÃ©e
                 </CardTitle>
                 <p className="text-red-700 text-sm">
-                    Cette déclaration sera transmise à tous les bureaux syndicats et au PDG
+                    Cette dÃ©claration sera transmise Ã  tous les bureaux syndicats et au PDG
                 </p>
             </CardHeader>
             
@@ -172,7 +172,7 @@ export default function ReportStolenMoto({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="numero_serie" className="text-sm font-medium">
-                                Numéro de série *
+                                NumÃ©ro de sÃ©rie *
                             </Label>
                             <Input
                                 id="numero_serie"
@@ -235,7 +235,7 @@ export default function ReportStolenMoto({
                             id="description"
                             value={formData.description}
                             onChange={(e) => handleInputChange('description', e.target.value)}
-                            placeholder="Décrivez les circonstances du vol, lieu exact, heure approximative..."
+                            placeholder="DÃ©crivez les circonstances du vol, lieu exact, heure approximative..."
                             className="mt-1"
                             rows={3}
                         />
@@ -246,13 +246,13 @@ export default function ReportStolenMoto({
                             <Shield className="w-5 h-5 text-yellow-600 mt-0.5" />
                             <div>
                                 <h4 className="font-medium text-yellow-800 mb-1">
-                                    Important - Sécurité
+                                    Important - SÃ©curitÃ©
                                 </h4>
                                 <ul className="text-sm text-yellow-700 space-y-1">
-                                    <li>• Cette déclaration sera vérifiée par les bureaux syndicats</li>
-                                    <li>• Toute tentative d'enregistrement de cette moto sera bloquée</li>
-                                    <li>• Les autorités compétentes seront informées</li>
-                                    <li>• Votre déclaration sera tracée et auditable</li>
+                                    <li>â€¢ Cette dÃ©claration sera vÃ©rifiÃ©e par les bureaux syndicats</li>
+                                    <li>â€¢ Toute tentative d'enregistrement de cette moto sera bloquÃ©e</li>
+                                    <li>â€¢ Les autoritÃ©s compÃ©tentes seront informÃ©es</li>
+                                    <li>â€¢ Votre dÃ©claration sera tracÃ©e et auditable</li>
                                 </ul>
                             </div>
                         </div>
@@ -267,12 +267,12 @@ export default function ReportStolenMoto({
                             {loading ? (
                                 <>
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Déclaration en cours...
+                                    DÃ©claration en cours...
                                 </>
                             ) : (
                                 <>
                                     <Send className="w-4 h-4 mr-2" />
-                                    Signaler la moto volée
+                                    Signaler la moto volÃ©e
                                 </>
                             )}
                         </Button>

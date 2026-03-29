@@ -1,6 +1,6 @@
 /**
- * DASHBOARD CONDUCTEUR - Composant principal avec connexion temps réel
- * Affiche les statistiques en temps réel depuis la base de données
+ * DASHBOARD CONDUCTEUR - Composant principal avec connexion temps rÃ©el
+ * Affiche les statistiques en temps rÃ©el depuis la base de donnÃ©es
  */
 
 import { useEffect, useState } from 'react';
@@ -79,29 +79,29 @@ export function DriverDashboard({
   const [loading, setLoading] = useState(false);
   const [currentOnlineTime, setCurrentOnlineTime] = useState('0h 0m 0s');
 
-  // Gérer le début/fin de la session en ligne avec localStorage
+  // GÃ©rer le dÃ©but/fin de la session en ligne avec localStorage
   useEffect(() => {
     const storageKey = `driver_online_start_${driverId}`;
     
     if (isOnline) {
-      // Si le conducteur passe en ligne et n'a pas d'heure de début enregistrée
+      // Si le conducteur passe en ligne et n'a pas d'heure de dÃ©but enregistrÃ©e
       const existingStartTime = localStorage.getItem(storageKey);
       if (!existingStartTime) {
         const startTime = new Date().toISOString();
         localStorage.setItem(storageKey, startTime);
-        console.log('⏰ Session en ligne démarrée:', startTime);
+        console.log('â° Session en ligne dÃ©marrÃ©e:', startTime);
       } else {
-        console.log('⏰ Session en ligne existante récupérée:', existingStartTime);
+        console.log('â° Session en ligne existante rÃ©cupÃ©rÃ©e:', existingStartTime);
       }
     } else {
       // Si le conducteur passe hors ligne, nettoyer le localStorage
       localStorage.removeItem(storageKey);
       setCurrentOnlineTime('0h 0m 0s');
-      console.log('⏸️ Session en ligne terminée');
+      console.log('â¸ï¸ Session en ligne terminÃ©e');
     }
   }, [isOnline, driverId]);
 
-  // Mettre à jour le temps en ligne chaque seconde
+  // Mettre Ã  jour le temps en ligne chaque seconde
   useEffect(() => {
     if (!isOnline || !driverId) {
       setCurrentOnlineTime('0h 0m 0s');
@@ -129,7 +129,7 @@ export function DriverDashboard({
       setCurrentOnlineTime(`${hours}h ${minutes}m ${seconds}s`);
     };
 
-    // Mise à jour immédiate puis toutes les secondes
+    // Mise Ã  jour immÃ©diate puis toutes les secondes
     updateTime();
     const interval = setInterval(updateTime, 1000);
 
@@ -150,7 +150,7 @@ export function DriverDashboard({
 
       if (driverError) throw driverError;
 
-      // Extraire les infos du véhicule
+      // Extraire les infos du vÃ©hicule
       const vehicleData = driverData?.vehicle ? 
         (typeof driverData.vehicle === 'string' ? JSON.parse(driverData.vehicle) : driverData.vehicle) 
         : {};
@@ -194,13 +194,13 @@ export function DriverDashboard({
         serialNumber: vehicleData?.moto_serial_number || ''
       });
 
-      console.log('✅ Stats loaded:', {
+      console.log('âœ… Stats loaded:', {
         todayEarnings,
         todayRides: todayRides.length,
         totalRides: driverData?.total_rides
       });
     } catch (error) {
-      console.error('❌ Error loading stats:', error);
+      console.error('âŒ Error loading stats:', error);
       toast.error('Erreur de chargement des statistiques');
     } finally {
       setLoading(false);
@@ -212,7 +212,7 @@ export function DriverDashboard({
     loadStats();
   }, [driverId]);
 
-  // S'abonner aux changements en temps réel
+  // S'abonner aux changements en temps rÃ©el
   useEffect(() => {
     if (!driverId) return;
 
@@ -227,7 +227,7 @@ export function DriverDashboard({
           filter: `driver_id=eq.${driverId}`
         },
         (payload) => {
-          console.log('📊 Trip changed, refreshing dashboard...', payload);
+          console.log('ðŸ“Š Trip changed, refreshing dashboard...', payload);
           loadStats();
         }
       )
@@ -240,7 +240,7 @@ export function DriverDashboard({
 
   return (
     <div className="space-y-4 mt-4">
-      {/* En-tête avec statistiques et bouton en ligne */}
+      {/* En-tÃªte avec statistiques et bouton en ligne */}
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-lg font-bold text-gray-800">Statistiques du jour</h2>
         <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export function DriverDashboard({
               driverLoading
                 ? 'bg-gray-300 text-gray-500 cursor-wait'
                 : isOnline 
-                ? 'bg-green-600 hover:bg-green-700 text-white' 
+                ? 'bg-primary-orange-600 hover:bg-primary-orange-700 text-white' 
                 : !hasSubscription
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-gray-400 hover:bg-gray-500 text-white'
@@ -274,14 +274,14 @@ export function DriverDashboard({
           <Button
             onClick={() => {
               loadStats();
-              toast.success('✓ Données actualisées');
+              toast.success('âœ“ DonnÃ©es actualisÃ©es');
             }}
             variant="outline"
             size="sm"
             className="gap-1"
             disabled={loading}
           >
-            {loading ? '⏳' : '🔄'}
+            {loading ? 'â³' : 'ðŸ”„'}
           </Button>
         </div>
       </div>
@@ -289,22 +289,22 @@ export function DriverDashboard({
       {/* Statistiques du jour */}
       <div className="grid grid-cols-2 gap-4">
         <Card 
-          className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
+          className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 border-primary-orange-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (stats.todayEarnings > 0) {
               onNavigate('history');
-              toast.success('💰 Détails des gains');
+              toast.success('ðŸ’° DÃ©tails des gains');
             } else {
               toast.info('Aucun gain aujourd\'hui. Commencez une course pour gagner de l\'argent.');
             }
           }}
         >
           <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-green-700 mb-1">
+            <div className="text-3xl font-bold text-primary-orange-700 mb-1">
               {stats.todayEarnings.toLocaleString()}
             </div>
             <div className="text-xs font-medium text-gray-600">GNF aujourd'hui</div>
-            <div className="text-xs text-green-600 mt-1">👆 Voir détails</div>
+            <div className="text-xs text-primary-orange-600 mt-1">ðŸ‘† Voir dÃ©tails</div>
           </CardContent>
         </Card>
 
@@ -313,7 +313,7 @@ export function DriverDashboard({
           onClick={() => {
             if (stats.todayRides > 0) {
               onNavigate('history');
-              toast.success('🚕 Historique des courses');
+              toast.success('ðŸš• Historique des courses');
             } else {
               toast.info('Aucune course active aujourd\'hui. Passez en ligne pour recevoir des demandes.');
             }
@@ -324,7 +324,7 @@ export function DriverDashboard({
               {stats.todayRides}
             </div>
             <div className="text-xs font-medium text-gray-600">Courses aujourd'hui</div>
-            <div className="text-xs text-blue-600 mt-1">👆 Voir historique</div>
+            <div className="text-xs text-blue-600 mt-1">ðŸ‘† Voir historique</div>
           </CardContent>
         </Card>
       </div>
@@ -335,9 +335,9 @@ export function DriverDashboard({
           onClick={() => {
             if (stats.totalRides > 0) {
               onNavigate('history');
-              toast.success(`⭐ Note moyenne: ${stats.rating.toFixed(1)}/5 sur ${stats.totalRides} courses`);
+              toast.success(`â­ Note moyenne: ${stats.rating.toFixed(1)}/5 sur ${stats.totalRides} courses`);
             } else {
-              toast.info('Aucune évaluation pour le moment. Effectuez des courses pour recevoir des notes.');
+              toast.info('Aucune Ã©valuation pour le moment. Effectuez des courses pour recevoir des notes.');
             }
           }}
         >
@@ -347,7 +347,7 @@ export function DriverDashboard({
               <Star className="w-6 h-6 fill-yellow-500 text-yellow-500" />
             </div>
             <div className="text-xs font-medium text-gray-600">Note moyenne</div>
-            <div className="text-xs text-yellow-600 mt-1">👆 Voir évaluations</div>
+            <div className="text-xs text-yellow-600 mt-1">ðŸ‘† Voir Ã©valuations</div>
           </CardContent>
         </Card>
 
@@ -355,9 +355,9 @@ export function DriverDashboard({
           className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95"
           onClick={() => {
             if (isOnline) {
-              toast.success(`⏱️ En ligne depuis ${currentOnlineTime}`);
+              toast.success(`â±ï¸ En ligne depuis ${currentOnlineTime}`);
             } else {
-              toast.info('Passez en ligne pour commencer à travailler');
+              toast.info('Passez en ligne pour commencer Ã  travailler');
             }
           }}
         >
@@ -391,19 +391,19 @@ export function DriverDashboard({
               <Badge className={`${
                 activeRide.status === 'accepted' ? 'bg-yellow-100 text-yellow-800' :
                 activeRide.status === 'arriving' ? 'bg-blue-100 text-blue-800' :
-                activeRide.status === 'picked_up' ? 'bg-green-100 text-green-800' :
+                activeRide.status === 'picked_up' ? 'bg-primary-orange-100 text-primary-orange-800' :
                 'bg-purple-100 text-purple-800'
               }`}>
-                {activeRide.status === 'accepted' ? 'Acceptée' :
+                {activeRide.status === 'accepted' ? 'AcceptÃ©e' :
                  activeRide.status === 'arriving' ? 'En route' :
-                 activeRide.status === 'picked_up' ? 'Client à bord' :
+                 activeRide.status === 'picked_up' ? 'Client Ã  bord' :
                  'En cours'}
               </Badge>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full"></div>
                 <span>{activeRide.pickup.address}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -435,12 +435,12 @@ export function DriverDashboard({
         </Card>
       )}
 
-      {/* État du système - Connexion temps réel */}
+      {/* Ã‰tat du systÃ¨me - Connexion temps rÃ©el */}
       <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Car className="w-5 h-5 text-blue-600" />
-            Informations du véhicule
+            Informations du vÃ©hicule
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -450,58 +450,58 @@ export function DriverDashboard({
               <span className="text-sm font-medium">Plaque</span>
             </div>
             <Badge variant="outline" className="font-mono">
-              {stats.vehiclePlate || 'Non renseignée'}
+              {stats.vehiclePlate || 'Non renseignÃ©e'}
             </Badge>
           </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Hash className="w-4 h-4 text-purple-600" />
-              <span className="text-sm font-medium">N° Série</span>
+              <span className="text-sm font-medium">NÂ° SÃ©rie</span>
             </div>
             <Badge variant="outline" className="font-mono text-xs">
-              {stats.serialNumber || 'Non renseigné'}
+              {stats.serialNumber || 'Non renseignÃ©'}
             </Badge>
           </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium">N° Gilet</span>
+              <CreditCard className="w-4 h-4 text-primary-orange-600" />
+              <span className="text-sm font-medium">NÂ° Gilet</span>
             </div>
             <Badge variant="outline" className="font-mono">
-              {stats.giletNumber || 'Non renseigné'}
+              {stats.giletNumber || 'Non renseignÃ©'}
             </Badge>
           </div>
         </CardContent>
       </Card>
 
-      {/* État du système - Connexion temps réel */}
+      {/* Ã‰tat du systÃ¨me - Connexion temps rÃ©el */}
       <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
-            État du système
+            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse' : 'bg-gray-400'}`}></div>
+            Ã‰tat du systÃ¨me
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-green-600" />
+              <MapPin className="w-4 h-4 text-primary-orange-600" />
               <span className="text-sm font-medium">GPS</span>
             </div>
-            <Badge className={location ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-              {location ? '✓ Actif' : '✗ Inactif'}
+            <Badge className={location ? "bg-primary-orange-100 text-primary-orange-800" : "bg-red-100 text-red-800"}>
+              {location ? 'âœ“ Actif' : 'âœ— Inactif'}
             </Badge>
           </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Wifi className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-medium">Base de données</span>
+              <Wifi className="w-4 h-4 text-primary-orange-600" />
+              <span className="text-sm font-medium">Base de donnÃ©es</span>
             </div>
-            <Badge className={driverId ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-              {driverId ? '✓ Connecté' : '⏳ En attente'}
+            <Badge className={driverId ? "bg-primary-orange-100 text-primary-orange-800" : "bg-yellow-100 text-yellow-800"}>
+              {driverId ? 'âœ“ ConnectÃ©' : 'â³ En attente'}
             </Badge>
           </div>
 
@@ -510,8 +510,8 @@ export function DriverDashboard({
               <Battery className="w-4 h-4 text-blue-600" />
               <span className="text-sm font-medium">Statut</span>
             </div>
-            <Badge className={isOnline ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-              {isOnline ? '🟢 En ligne' : '⚫ Hors ligne'}
+            <Badge className={isOnline ? "bg-primary-orange-100 text-primary-orange-800" : "bg-gray-100 text-gray-800"}>
+              {isOnline ? 'ðŸŸ¢ En ligne' : 'âš« Hors ligne'}
             </Badge>
           </div>
         </CardContent>

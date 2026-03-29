@@ -1,6 +1,6 @@
 /**
- * FORMULAIRE DE PAIEMENT PERSONNALISÉ 224SOLUTIONS
- * Design custom avec Stripe Elements pour la sécurité
+ * FORMULAIRE DE PAIEMENT PERSONNALISÃ‰ 224SOLUTIONS
+ * Design custom avec Stripe Elements pour la sÃ©curitÃ©
  * Branding 224Solutions avec gestion Stripe
  */
 
@@ -29,7 +29,7 @@ interface Custom224PaymentFormProps {
   onError: (error: string) => void;
 }
 
-// Style personnalisé 224Solutions pour les champs Stripe
+// Style personnalisÃ© 224Solutions pour les champs Stripe
 const STRIPE_ELEMENT_STYLE = {
   base: {
     color: '#1a1a1a',
@@ -75,11 +75,11 @@ export function Custom224PaymentForm({
     e.preventDefault();
 
     if (!stripe || !elements) {
-      setErrorMessage('Le système de paiement n\'est pas encore chargé. Veuillez patienter.');
+      setErrorMessage('Le systÃ¨me de paiement n\'est pas encore chargÃ©. Veuillez patienter.');
       return;
     }
 
-    // Vérifier que tous les champs sont remplis
+    // VÃ©rifier que tous les champs sont remplis
     if (!cardComplete.number || !cardComplete.expiry || !cardComplete.cvc) {
       setErrorMessage('Veuillez remplir tous les champs de la carte');
       return;
@@ -92,10 +92,10 @@ export function Custom224PaymentForm({
       const cardNumberElement = elements.getElement(CardNumberElement);
       
       if (!cardNumberElement) {
-        throw new Error('Élément de carte introuvable');
+        throw new Error('Ã‰lÃ©ment de carte introuvable');
       }
 
-      // Créer le Payment Method
+      // CrÃ©er le Payment Method
       const { error: paymentMethodError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardNumberElement,
@@ -108,7 +108,7 @@ export function Custom224PaymentForm({
       // Confirmer le paiement avec le Payment Method
       const clientSecret = (window as any).clientSecret;
       const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
-        clientSecret, // Défini par StripePaymentWrapper
+        clientSecret, // DÃ©fini par StripePaymentWrapper
         {
           payment_method: paymentMethod.id,
         }
@@ -120,7 +120,7 @@ export function Custom224PaymentForm({
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
         setSucceeded(true);
-        toast.success('Paiement réussi !');
+        toast.success('Paiement rÃ©ussi !');
         onSuccess(paymentIntent.id);
       } else if (paymentIntent && paymentIntent.status === 'processing') {
         toast.info('Votre paiement est en cours de traitement...');
@@ -140,16 +140,16 @@ export function Custom224PaymentForm({
 
   if (succeeded) {
     return (
-      <Card className="w-full max-w-lg mx-auto bg-gradient-to-br from-green-50 to-emerald-50">
+      <Card className="w-full max-w-lg mx-auto bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
         <CardContent className="pt-8 pb-8">
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="rounded-full bg-green-100 p-4">
-                <CheckCircle2 className="w-16 h-16 text-green-600" />
+              <div className="rounded-full bg-primary-orange-100 p-4">
+                <CheckCircle2 className="w-16 h-16 text-primary-orange-600" />
               </div>
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-green-600">Paiement réussi !</h3>
+              <h3 className="text-2xl font-bold text-primary-orange-600">Paiement rÃ©ussi !</h3>
               <p className="text-gray-600 mt-2 text-lg">
                 <strong>{formatAmount(amount, currency)}</strong>
               </p>
@@ -174,7 +174,7 @@ export function Custom224PaymentForm({
             </div>
             <div>
               <h2 className="text-xl font-bold">224Solutions Paiement</h2>
-              <p className="text-sm text-white/90">Paiement sécurisé par Stripe</p>
+              <p className="text-sm text-white/90">Paiement sÃ©curisÃ© par Stripe</p>
             </div>
           </div>
           <Shield className="w-8 h-8 text-white/90" />
@@ -186,8 +186,8 @@ export function Custom224PaymentForm({
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-5 border-2 border-primary/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 font-medium">Montant à payer</p>
-              <p className="text-xs text-gray-500 mt-1">à {sellerName}</p>
+              <p className="text-sm text-gray-600 font-medium">Montant Ã  payer</p>
+              <p className="text-xs text-gray-500 mt-1">Ã  {sellerName}</p>
               {orderDescription && (
                 <p className="text-xs text-gray-500">{orderDescription}</p>
               )}
@@ -208,10 +208,10 @@ export function Custom224PaymentForm({
               <span className="font-semibold text-gray-700">Informations de carte</span>
             </div>
 
-            {/* Numéro de carte */}
+            {/* NumÃ©ro de carte */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Numéro de carte
+                NumÃ©ro de carte
               </label>
               <div className="border-2 border-gray-300 rounded-lg p-4 hover:border-primary focus-within:border-primary transition-colors bg-white">
                 <CardNumberElement
@@ -253,7 +253,7 @@ export function Custom224PaymentForm({
           {errorMessage && (
             <Alert variant="destructive" className="border-2">
               <AlertDescription className="flex items-center gap-2">
-                <span className="font-medium">❌</span>
+                <span className="font-medium">âŒ</span>
                 {errorMessage}
               </AlertDescription>
             </Alert>
@@ -278,16 +278,16 @@ export function Custom224PaymentForm({
             )}
           </Button>
 
-          {/* Sécurité */}
+          {/* SÃ©curitÃ© */}
           <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-4">
             <Shield className="w-4 h-4" />
-            <span>Paiement sécurisé par Stripe • Cryptage SSL • PCI-DSS</span>
+            <span>Paiement sÃ©curisÃ© par Stripe â€¢ Cryptage SSL â€¢ PCI-DSS</span>
           </div>
           
           {/* Logo 224Solutions */}
           <div className="text-center pt-3 border-t">
             <p className="text-xs text-gray-400">
-              Propulsé par <span className="font-bold text-primary">224Solutions</span>
+              PropulsÃ© par <span className="font-bold text-primary">224Solutions</span>
             </p>
           </div>
         </form>

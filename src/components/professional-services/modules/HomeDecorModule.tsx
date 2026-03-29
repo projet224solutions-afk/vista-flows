@@ -1,7 +1,7 @@
 /**
- * MODULE MAISON & DÉCO PROFESSIONNEL
- * Inspiré de: IKEA, Wayfair, Made.com, Houzz
- * Gestion catalogue, projets de décoration, commandes et showroom
+ * MODULE MAISON & DÃ‰CO PROFESSIONNEL
+ * InspirÃ© de: IKEA, Wayfair, Made.com, Houzz
+ * Gestion catalogue, projets de dÃ©coration, commandes et showroom
  */
 
 import { useState } from 'react';
@@ -63,29 +63,29 @@ interface Order {
 
 const CATEGORIES = [
   { id: 'furniture', name: 'Meubles', icon: Sofa, count: 45, color: 'from-amber-500 to-orange-500' },
-  { id: 'lighting', name: 'Éclairage', icon: Lamp, count: 32, color: 'from-yellow-400 to-amber-500' },
+  { id: 'lighting', name: 'Ã‰clairage', icon: Lamp, count: 32, color: 'from-yellow-400 to-amber-500' },
   { id: 'bedroom', name: 'Chambre', icon: Bed, count: 28, color: 'from-blue-500 to-indigo-500' },
-  { id: 'decor', name: 'Décoration', icon: Home, count: 52, color: 'from-pink-500 to-rose-500' },
-  { id: 'kitchen', name: 'Cuisine', icon: Package, count: 18, color: 'from-green-500 to-emerald-500' },
+  { id: 'decor', name: 'DÃ©coration', icon: Home, count: 52, color: 'from-pink-500 to-rose-500' },
+  { id: 'kitchen', name: 'Cuisine', icon: Package, count: 18, color: 'from-primary-blue-500 to-primary-orange-500' },
   { id: 'textiles', name: 'Textiles', icon: Palette, count: 24, color: 'from-purple-500 to-violet-500' },
 ];
 
-const ROOM_TYPES = ['Salon', 'Chambre', 'Cuisine', 'Salle de bain', 'Bureau', 'Terrasse', 'Entrée'];
-const STYLES = ['Moderne', 'Traditionnel', 'Scandinave', 'Bohème', 'Industriel', 'Art Déco', 'Minimaliste'];
+const ROOM_TYPES = ['Salon', 'Chambre', 'Cuisine', 'Salle de bain', 'Bureau', 'Terrasse', 'EntrÃ©e'];
+const STYLES = ['Moderne', 'Traditionnel', 'Scandinave', 'BohÃ¨me', 'Industriel', 'Art DÃ©co', 'Minimaliste'];
 
 const STATUS_STYLES: Record<string, { label: string; color: string }> = {
   consultation: { label: 'Consultation', color: 'bg-blue-100 text-blue-800' },
-  devis: { label: 'Devis envoyé', color: 'bg-yellow-100 text-yellow-800' },
+  devis: { label: 'Devis envoyÃ©', color: 'bg-yellow-100 text-yellow-800' },
   en_cours: { label: 'En cours', color: 'bg-purple-100 text-purple-800' },
-  livre: { label: 'Livré', color: 'bg-cyan-100 text-cyan-800' },
-  termine: { label: 'Terminé', color: 'bg-green-100 text-green-800' },
+  livre: { label: 'LivrÃ©', color: 'bg-primary-blue-100 text-primary-blue-800' },
+  termine: { label: 'TerminÃ©', color: 'bg-primary-orange-100 text-primary-orange-800' },
 };
 
 const ORDER_STATUS: Record<string, { label: string; color: string }> = {
   pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
-  preparing: { label: 'Préparation', color: 'bg-blue-100 text-blue-800' },
-  shipped: { label: 'Expédié', color: 'bg-purple-100 text-purple-800' },
-  delivered: { label: 'Livré', color: 'bg-green-100 text-green-800' },
+  preparing: { label: 'PrÃ©paration', color: 'bg-blue-100 text-blue-800' },
+  shipped: { label: 'ExpÃ©diÃ©', color: 'bg-purple-100 text-purple-800' },
+  delivered: { label: 'LivrÃ©', color: 'bg-primary-orange-100 text-primary-orange-800' },
 };
 
 export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProps) {
@@ -93,18 +93,18 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
   const [showNewProject, setShowNewProject] = useState(false);
 
   const [products] = useState<Product[]>([
-    { id: '1', name: 'Canapé 3 places Abidjan', category: 'furniture', price: 2500000, stock: 5, dimensions: '220x90x85 cm', material: 'Tissu + Bois massif', status: 'en_stock' },
-    { id: '2', name: 'Lampe suspension bambou', category: 'lighting', price: 180000, stock: 12, material: 'Bambou tressé', status: 'en_stock' },
+    { id: '1', name: 'CanapÃ© 3 places Abidjan', category: 'furniture', price: 2500000, stock: 5, dimensions: '220x90x85 cm', material: 'Tissu + Bois massif', status: 'en_stock' },
+    { id: '2', name: 'Lampe suspension bambou', category: 'lighting', price: 180000, stock: 12, material: 'Bambou tressÃ©', status: 'en_stock' },
     { id: '3', name: 'Table basse manguier', category: 'furniture', price: 850000, stock: 2, dimensions: '120x60x45 cm', material: 'Bois de manguier', status: 'stock_bas' },
-    { id: '4', name: 'Tapis berbère 200x300', category: 'textiles', price: 650000, stock: 0, dimensions: '200x300 cm', material: 'Laine naturelle', status: 'rupture' },
+    { id: '4', name: 'Tapis berbÃ¨re 200x300', category: 'textiles', price: 650000, stock: 0, dimensions: '200x300 cm', material: 'Laine naturelle', status: 'rupture' },
     { id: '5', name: 'Lit king-size Confort+', category: 'bedroom', price: 3200000, stock: 3, dimensions: '180x200 cm', material: 'Bois massif + cuir', status: 'en_stock' },
-    { id: '6', name: 'Vase artisanal céramique', category: 'decor', price: 85000, stock: 20, material: 'Céramique faite main', status: 'en_stock' },
+    { id: '6', name: 'Vase artisanal cÃ©ramique', category: 'decor', price: 85000, stock: 20, material: 'CÃ©ramique faite main', status: 'en_stock' },
   ]);
 
   const [projects] = useState<DecoProject[]>([
     { id: '1', clientName: 'Mme Diallo', clientPhone: '+224 621 00 00 00', roomType: 'Salon', style: 'Moderne', budget: 15000000, status: 'en_cours', startDate: '2026-03-01', progress: 65 },
     { id: '2', clientName: 'M. Camara', clientPhone: '+224 622 00 00 00', roomType: 'Chambre', style: 'Scandinave', budget: 8000000, status: 'devis', startDate: '2026-03-10', progress: 15 },
-    { id: '3', clientName: 'Hôtel Riviera', clientPhone: '+224 623 00 00 00', roomType: 'Hall d\'entrée', style: 'Art Déco', budget: 35000000, status: 'consultation', startDate: '2026-03-15', progress: 5 },
+    { id: '3', clientName: 'HÃ´tel Riviera', clientPhone: '+224 623 00 00 00', roomType: 'Hall d\'entrÃ©e', style: 'Art DÃ©co', budget: 35000000, status: 'consultation', startDate: '2026-03-15', progress: 5 },
   ]);
 
   const [orders] = useState<Order[]>([
@@ -129,8 +129,8 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
             <Home className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold">{businessName || 'Maison & Déco'}</h2>
-            <p className="text-muted-foreground">Showroom & Décoration d'intérieur</p>
+            <h2 className="text-2xl font-bold">{businessName || 'Maison & DÃ©co'}</h2>
+            <p className="text-muted-foreground">Showroom & DÃ©coration d'intÃ©rieur</p>
           </div>
         </div>
         <Badge variant="outline" className="gap-1">
@@ -150,7 +150,7 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
         </Card>
         <Card>
           <CardContent className="p-4">
-            <DollarSign className="h-4 w-4 text-green-500 mb-1" />
+            <DollarSign className="h-4 w-4 text-primary-orange-500 mb-1" />
             <p className="text-lg font-bold">{(totalCatalogValue / 1e6).toFixed(1)}M</p>
             <p className="text-xs text-muted-foreground">Valeur stock GNF</p>
           </CardContent>
@@ -159,7 +159,7 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
           <CardContent className="p-4">
             <Palette className="h-4 w-4 text-purple-500 mb-1" />
             <p className="text-2xl font-bold">{activeProjects}</p>
-            <p className="text-xs text-muted-foreground">Projets déco actifs</p>
+            <p className="text-xs text-muted-foreground">Projets dÃ©co actifs</p>
           </CardContent>
         </Card>
         <Card>
@@ -171,7 +171,7 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
         </Card>
         <Card>
           <CardContent className="p-4">
-            <TrendingUp className={`h-4 w-4 mb-1 ${lowStock > 0 ? 'text-red-500' : 'text-green-500'}`} />
+            <TrendingUp className={`h-4 w-4 mb-1 ${lowStock > 0 ? 'text-red-500' : 'text-primary-orange-500'}`} />
             <p className="text-2xl font-bold">{lowStock}</p>
             <p className="text-xs text-muted-foreground">Alertes stock</p>
           </CardContent>
@@ -182,7 +182,7 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="catalog"><Package className="h-4 w-4 mr-1 hidden sm:inline" /> Catalogue</TabsTrigger>
-          <TabsTrigger value="projects"><Palette className="h-4 w-4 mr-1 hidden sm:inline" /> Projets Déco</TabsTrigger>
+          <TabsTrigger value="projects"><Palette className="h-4 w-4 mr-1 hidden sm:inline" /> Projets DÃ©co</TabsTrigger>
           <TabsTrigger value="orders"><ShoppingCart className="h-4 w-4 mr-1 hidden sm:inline" /> Commandes</TabsTrigger>
           <TabsTrigger value="showroom"><Image className="h-4 w-4 mr-1 hidden sm:inline" /> Showroom</TabsTrigger>
         </TabsList>
@@ -211,7 +211,7 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
           <div className="space-y-3">
             {products.map(product => {
               const stockBadge = product.status === 'en_stock'
-                ? <Badge className="bg-green-100 text-green-800 text-xs">En stock ({product.stock})</Badge>
+                ? <Badge className="bg-primary-orange-100 text-primary-orange-800 text-xs">En stock ({product.stock})</Badge>
                 : product.status === 'stock_bas'
                 ? <Badge className="bg-yellow-100 text-yellow-800 text-xs">Stock bas ({product.stock})</Badge>
                 : <Badge className="bg-red-100 text-red-800 text-xs">Rupture</Badge>;
@@ -225,8 +225,8 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
                           {stockBadge}
                         </div>
                         <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-                          {product.dimensions && <span>📐 {product.dimensions}</span>}
-                          {product.material && <span>🪵 {product.material}</span>}
+                          {product.dimensions && <span>ðŸ“ {product.dimensions}</span>}
+                          {product.material && <span>ðŸªµ {product.material}</span>}
                         </div>
                       </div>
                       <p className="font-bold text-primary shrink-0 ml-4">{product.price.toLocaleString()} GNF</p>
@@ -238,24 +238,24 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
           </div>
         </TabsContent>
 
-        {/* PROJETS DÉCO */}
+        {/* PROJETS DÃ‰CO */}
         <TabsContent value="projects" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Projets de décoration ({projects.length})</h3>
+            <h3 className="font-semibold">Projets de dÃ©coration ({projects.length})</h3>
             <Dialog open={showNewProject} onOpenChange={setShowNewProject}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Nouveau projet</Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>Nouveau projet de décoration</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>Nouveau projet de dÃ©coration</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2"><Label>Client</Label><Input placeholder="Nom du client" /></div>
-                    <div className="space-y-2"><Label>Téléphone</Label><Input placeholder="+224 6XX XX XX XX" /></div>
+                    <div className="space-y-2"><Label>TÃ©lÃ©phone</Label><Input placeholder="+224 6XX XX XX XX" /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Pièce</Label>
+                      <Label>PiÃ¨ce</Label>
                       <Select><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
                         <SelectContent>{ROOM_TYPES.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
                       </Select>
@@ -268,11 +268,11 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
                     </div>
                   </div>
                   <div className="space-y-2"><Label>Budget (GNF)</Label><Input type="number" placeholder="0" /></div>
-                  <div className="space-y-2"><Label>Notes</Label><Textarea placeholder="Préférences du client..." /></div>
+                  <div className="space-y-2"><Label>Notes</Label><Textarea placeholder="PrÃ©fÃ©rences du client..." /></div>
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setShowNewProject(false)}>Annuler</Button>
-                  <Button onClick={() => { toast.success('Projet créé'); setShowNewProject(false); }}>Créer</Button>
+                  <Button onClick={() => { toast.success('Projet crÃ©Ã©'); setShowNewProject(false); }}>CrÃ©er</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -290,7 +290,7 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
                           <h4 className="font-semibold">{project.clientName}</h4>
                           <Badge className={st.color}>{st.label}</Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">🏠 {project.roomType} • 🎨 Style {project.style}</p>
+                        <p className="text-sm text-muted-foreground">ðŸ  {project.roomType} â€¢ ðŸŽ¨ Style {project.style}</p>
                       </div>
                       <p className="font-bold text-primary">{project.budget.toLocaleString()} GNF</p>
                     </div>
@@ -310,7 +310,7 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
 
         {/* COMMANDES */}
         <TabsContent value="orders" className="space-y-4">
-          <h3 className="font-semibold">Commandes récentes ({orders.length})</h3>
+          <h3 className="font-semibold">Commandes rÃ©centes ({orders.length})</h3>
           <div className="space-y-3">
             {orders.map(order => {
               const st = ORDER_STATUS[order.status];
@@ -323,7 +323,7 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
                           <h4 className="font-semibold text-sm">{order.customerName}</h4>
                           <Badge className={st.color}>{st.label}</Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground">{order.items} article(s) • {order.date}</p>
+                        <p className="text-xs text-muted-foreground">{order.items} article(s) â€¢ {order.date}</p>
                       </div>
                       <p className="font-bold text-primary">{order.total.toLocaleString()} GNF</p>
                     </div>
@@ -339,7 +339,7 @@ export function HomeDecorModule({ serviceId, businessName }: HomeDecorModuleProp
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Image className="w-5 h-5" /> Showroom Virtuel</CardTitle>
-              <CardDescription>Présentez vos réalisations et inspirations</CardDescription>
+              <CardDescription>PrÃ©sentez vos rÃ©alisations et inspirations</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

@@ -1,7 +1,7 @@
 /**
- * SIEM DASHBOARD - VERSION CONNECTÉE
+ * SIEM DASHBOARD - VERSION CONNECTÃ‰E
  * Security Information and Event Management
- * Corrélation des logs et détection des menaces en temps réel
+ * CorrÃ©lation des logs et dÃ©tection des menaces en temps rÃ©el
  */
 
 import { useState, useEffect } from 'react';
@@ -28,7 +28,7 @@ const recentEvents: SecurityEvent[] = [
   {
     id: '1',
     timestamp: new Date().toISOString(),
-    type: 'Tentative d\'accès non autorisé',
+    type: 'Tentative d\'accÃ¨s non autorisÃ©',
     severity: 'critical',
     source: '192.168.1.45',
     description: 'Multiple failed login attempts detected',
@@ -89,7 +89,7 @@ export function SIEMDashboard() {
         responseTime: '2.1s'
       });
 
-      // Générer données graphique depuis les logs
+      // GÃ©nÃ©rer donnÃ©es graphique depuis les logs
       const last24h = auditLogs.slice(0, 100);
       const hourlyData = Array.from({ length: 6 }, (_, i) => ({
         time: `${i * 4}:00`,
@@ -101,7 +101,7 @@ export function SIEMDashboard() {
 
   const handleRefresh = () => {
     refetch();
-    toast.success('Dashboard SIEM actualisé');
+    toast.success('Dashboard SIEM actualisÃ©');
   };
 
   const getSeverityColor = (severity: string) => {
@@ -130,10 +130,10 @@ export function SIEMDashboard() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Database className="w-5 h-5 text-primary" />
-              SIEM - Corrélation en Temps Réel
+              SIEM - CorrÃ©lation en Temps RÃ©el
             </CardTitle>
             <CardDescription>
-              Analyse multi-sources avec intelligence de corrélation
+              Analyse multi-sources avec intelligence de corrÃ©lation
             </CardDescription>
           </div>
           <Button 
@@ -152,28 +152,28 @@ export function SIEMDashboard() {
           <div className="p-4 bg-muted rounded-lg">
             <Activity className="w-8 h-8 text-blue-500 mb-2" />
             <div className="text-2xl font-bold">{siemStats.eventsProcessed.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">Événements traités</div>
+            <div className="text-xs text-muted-foreground">Ã‰vÃ©nements traitÃ©s</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <AlertTriangle className="w-8 h-8 text-red-500 mb-2" />
             <div className="text-2xl font-bold">{siemStats.threatsDetected.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">Menaces détectées</div>
+            <div className="text-xs text-muted-foreground">Menaces dÃ©tectÃ©es</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <TrendingUp className="w-8 h-8 text-purple-500 mb-2" />
             <div className="text-2xl font-bold">{siemStats.correlatedIncidents}</div>
-            <div className="text-xs text-muted-foreground">Incidents corrélés</div>
+            <div className="text-xs text-muted-foreground">Incidents corrÃ©lÃ©s</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <Eye className="w-8 h-8 text-green-500 mb-2" />
+            <Eye className="w-8 h-8 text-primary-orange-500 mb-2" />
             <div className="text-2xl font-bold">{siemStats.responseTime}</div>
-            <div className="text-xs text-muted-foreground">Temps de réponse</div>
+            <div className="text-xs text-muted-foreground">Temps de rÃ©ponse</div>
           </div>
         </ResponsiveGrid>
 
         {/* Graphique des menaces */}
         <div>
-          <h4 className="font-semibold text-sm mb-3">Détection des menaces (24h)</h4>
+          <h4 className="font-semibold text-sm mb-3">DÃ©tection des menaces (24h)</h4>
           <div className="h-48">
             <RechartsContainer width="100%" height="100%">
               <LineChart data={threatData}>
@@ -187,10 +187,10 @@ export function SIEMDashboard() {
           </div>
         </div>
 
-        {/* Événements récents */}
+        {/* Ã‰vÃ©nements rÃ©cents */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-sm">Événements de sécurité récents</h4>
+            <h4 className="font-semibold text-sm">Ã‰vÃ©nements de sÃ©curitÃ© rÃ©cents</h4>
             <Button variant="outline" size="sm">
               Voir tout
             </Button>
@@ -204,7 +204,7 @@ export function SIEMDashboard() {
                   </Badge>
                   {event.correlated && (
                     <Badge variant="outline" className="text-xs">
-                      Corrélé
+                      CorrÃ©lÃ©
                     </Badge>
                   )}
                 </div>
@@ -219,13 +219,13 @@ export function SIEMDashboard() {
           ))}
         </div>
 
-        <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+        <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
           <div className="flex items-center gap-2 mb-2">
-            <Activity className="w-4 h-4 text-green-600" />
-            <span className="font-semibold text-sm">Système SIEM opérationnel</span>
+            <Activity className="w-4 h-4 text-primary-orange-600" />
+            <span className="font-semibold text-sm">SystÃ¨me SIEM opÃ©rationnel</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Tous les services de surveillance sont actifs. Corrélation automatique des événements activée.
+            Tous les services de surveillance sont actifs. CorrÃ©lation automatique des Ã©vÃ©nements activÃ©e.
           </p>
         </div>
       </CardContent>

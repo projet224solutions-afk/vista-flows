@@ -1,6 +1,6 @@
 /**
- * COMPOSANT FLOW DE PAIEMENT POUR COURSE TERMINÉE
- * Intégration exclusive ChapChapPay
+ * COMPOSANT FLOW DE PAIEMENT POUR COURSE TERMINÃ‰E
+ * IntÃ©gration exclusive ChapChapPay
  * 224Solutions - Taxi-Moto System
  */
 
@@ -29,7 +29,7 @@ export default function RidePaymentFlow({
 
     const handlePaymentSuccess = (transactionId: string) => {
         console.log('[RidePaymentFlow] Payment success:', transactionId);
-        toast.success('🎉 Paiement effectué avec succès !');
+        toast.success('ðŸŽ‰ Paiement effectuÃ© avec succÃ¨s !');
         setShowRating(true);
     };
 
@@ -40,7 +40,7 @@ export default function RidePaymentFlow({
 
     const handleSubmitRating = () => {
         if (rating > 0) {
-            toast.success(`Merci pour votre note de ${rating} étoiles !`);
+            toast.success(`Merci pour votre note de ${rating} Ã©toiles !`);
         }
         onPaymentSuccess();
     };
@@ -50,15 +50,15 @@ export default function RidePaymentFlow({
             <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <CheckCircle className="w-6 h-6 text-green-500" />
-                        Paiement réussi !
+                        <CheckCircle className="w-6 h-6 text-primary-orange-500" />
+                        Paiement rÃ©ussi !
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="text-center">
-                        <p className="text-lg font-semibold mb-2">Comment était votre course ?</p>
+                        <p className="text-lg font-semibold mb-2">Comment Ã©tait votre course ?</p>
                         <p className="text-sm text-muted-foreground mb-4">
-                            Notez votre expérience
+                            Notez votre expÃ©rience
                         </p>
 
                         <div className="flex justify-center gap-2 mb-6">

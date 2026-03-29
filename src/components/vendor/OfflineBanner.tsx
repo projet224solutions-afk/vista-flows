@@ -1,9 +1,9 @@
 /**
- * BANNIÈRE OFFLINE VENDEUR - 224SOLUTIONS
+ * BANNIÃˆRE OFFLINE VENDEUR - 224SOLUTIONS
  * S'affiche automatiquement quand l'utilisateur passe en mode hors-ligne
- * Intègre le système de synchronisation automatique
+ * IntÃ¨gre le systÃ¨me de synchronisation automatique
  *
- * @version 2.0.0 - Intégration useOfflineStatus et sync automatique
+ * @version 2.0.0 - IntÃ©gration useOfflineStatus et sync automatique
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -17,11 +17,11 @@ import { cn } from '@/lib/utils';
 interface OfflineBannerProps {
   /** Afficher les informations de synchronisation */
   showSyncInfo?: boolean;
-  /** Callback pour déclencher une synchronisation */
+  /** Callback pour dÃ©clencher une synchronisation */
   onSync?: () => Promise<void>;
-  /** Nombre d'éléments en attente (optionnel, sinon lecture IndexedDB) */
+  /** Nombre d'Ã©lÃ©ments en attente (optionnel, sinon lecture IndexedDB) */
   pendingCount?: number;
-  /** Position de la bannière */
+  /** Position de la banniÃ¨re */
   position?: 'top' | 'bottom';
 }
 
@@ -32,9 +32,9 @@ export default function OfflineBanner({
   position = 'bottom'
 }: OfflineBannerProps) {
   const { isOnline, isOffline, offlineDuration } = useOfflineStatus({
-    showToasts: true, // Les toasts sont gérés par le hook
+    showToasts: true, // Les toasts sont gÃ©rÃ©s par le hook
     onOnline: async () => {
-      // Déclencher la synchronisation au retour en ligne
+      // DÃ©clencher la synchronisation au retour en ligne
       if (onSync) {
         setIsSyncing(true);
         try {
@@ -51,7 +51,7 @@ export default function OfflineBanner({
   const [isSyncing, setIsSyncing] = useState(false);
   const [wasOffline, setWasOffline] = useState(false);
 
-  // Tracker si on était offline pour afficher la bannière de sync
+  // Tracker si on Ã©tait offline pour afficher la banniÃ¨re de sync
   useEffect(() => {
     if (isOffline) {
       setWasOffline(true);
@@ -59,14 +59,14 @@ export default function OfflineBanner({
     }
   }, [isOffline]);
 
-  // Mettre à jour le pendingCount depuis la prop externe
+  // Mettre Ã  jour le pendingCount depuis la prop externe
   useEffect(() => {
     if (externalPendingCount !== undefined) {
       setPendingCount(externalPendingCount);
     }
   }, [externalPendingCount]);
 
-  // Vérifier les données en attente dans IndexedDB si pas de prop externe
+  // VÃ©rifier les donnÃ©es en attente dans IndexedDB si pas de prop externe
   useEffect(() => {
     if (externalPendingCount !== undefined) return;
 
@@ -96,7 +96,7 @@ export default function OfflineBanner({
     return () => clearInterval(interval);
   }, [externalPendingCount, isOffline]);
 
-  // Formater la durée offline
+  // Formater la durÃ©e offline
   const formatOfflineDuration = (seconds: number): string => {
     if (seconds < 60) return `${seconds}s`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)} min`;
@@ -113,7 +113,7 @@ export default function OfflineBanner({
     setIsSyncing(true);
     try {
       await onSync();
-      toast.success('Synchronisation terminée');
+      toast.success('Synchronisation terminÃ©e');
     } catch {
       toast.error('Erreur de synchronisation');
     } finally {
@@ -121,12 +121,12 @@ export default function OfflineBanner({
     }
   }, [onSync]);
 
-  // Ne rien afficher si en ligne sans pending et pas de sync récente
+  // Ne rien afficher si en ligne sans pending et pas de sync rÃ©cente
   if (isOnline && pendingCount === 0 && !isSyncing && (!wasOffline || isDismissed)) {
     return null;
   }
 
-  // Bannière de synchronisation réussie (affichée brièvement après retour en ligne)
+  // BanniÃ¨re de synchronisation rÃ©ussie (affichÃ©e briÃ¨vement aprÃ¨s retour en ligne)
   if (isOnline && wasOffline && !isDismissed && pendingCount === 0 && !isSyncing) {
     return (
       <AnimatePresence>
@@ -139,16 +139,16 @@ export default function OfflineBanner({
             position === 'bottom' ? 'bottom-0' : 'top-0'
           )}
         >
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-3 shadow-lg">
+          <div className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 text-white px-4 py-3 shadow-lg">
             <div className="max-w-screen-xl mx-auto flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
                   <CheckCircle className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="font-semibold">Connexion rétablie</p>
+                  <p className="font-semibold">Connexion rÃ©tablie</p>
                   <p className="text-sm text-white/90">
-                    Toutes les données ont été synchronisées
+                    Toutes les donnÃ©es ont Ã©tÃ© synchronisÃ©es
                   </p>
                 </div>
               </div>
@@ -173,7 +173,7 @@ export default function OfflineBanner({
   // Ne pas afficher si online et dismissed
   if (isOnline && isDismissed && pendingCount === 0) return null;
 
-  // Bannière principale (offline ou avec pending)
+  // BanniÃ¨re principale (offline ou avec pending)
   return (
     <AnimatePresence>
       {(isOffline || pendingCount > 0 || isSyncing) && (
@@ -211,16 +211,16 @@ export default function OfflineBanner({
                       ? 'Synchronisation en cours...'
                       : isOffline
                         ? 'Mode Hors-Ligne'
-                        : 'Données en attente'}
+                        : 'DonnÃ©es en attente'}
                   </p>
                   <p className="text-sm text-white/90">
                     {isSyncing
-                      ? `Synchronisation de ${pendingCount} élément(s)...`
+                      ? `Synchronisation de ${pendingCount} Ã©lÃ©ment(s)...`
                       : isOffline
                         ? offlineDuration > 0
                           ? `Hors ligne depuis ${formatOfflineDuration(offlineDuration)}`
-                          : 'Vos données seront synchronisées à la reconnexion'
-                        : `${pendingCount} opération(s) en attente de synchronisation`
+                          : 'Vos donnÃ©es seront synchronisÃ©es Ã  la reconnexion'
+                        : `${pendingCount} opÃ©ration(s) en attente de synchronisation`
                     }
                   </p>
                 </div>
@@ -250,7 +250,7 @@ export default function OfflineBanner({
                     ) : (
                       <>
                         <RefreshCw className="w-4 h-4 mr-1" />
-                        Réessayer
+                        RÃ©essayer
                       </>
                     )}
                   </Button>

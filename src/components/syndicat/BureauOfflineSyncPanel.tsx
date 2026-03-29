@@ -68,7 +68,7 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
         if (!isOnline) return "bg-red-500";
         if (hasFailedEvents) return "bg-orange-500";
         if (hasPendingEvents) return "bg-yellow-500";
-        return "bg-green-500";
+        return "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500";
     };
 
     const getStatusText = () => {
@@ -76,7 +76,7 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
         if (!isOnline) return "Hors ligne";
         if (hasFailedEvents) return "Erreurs de sync";
         if (hasPendingEvents) return "En attente";
-        return "Synchronisé";
+        return "SynchronisÃ©";
     };
 
     const getEventIcon = (type: string) => {
@@ -128,12 +128,12 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                                 <div className="text-sm text-gray-600">En attente</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                                <div className="text-2xl font-bold text-green-600">{syncStats.synced}</div>
-                                <div className="text-sm text-gray-600">Synchronisés</div>
+                                <div className="text-2xl font-bold text-primary-orange-600">{syncStats.synced}</div>
+                                <div className="text-sm text-gray-600">SynchronisÃ©s</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
                                 <div className="text-2xl font-bold text-red-600">{syncStats.failed}</div>
-                                <div className="text-sm text-gray-600">Échoués</div>
+                                <div className="text-sm text-gray-600">Ã‰chouÃ©s</div>
                             </div>
                         </div>
 
@@ -151,14 +151,14 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                             </div>
                         )}
 
-                        {/* Dernière sync */}
+                        {/* DerniÃ¨re sync */}
                         {lastSyncTime && (
-                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                                <div className="flex items-center gap-2 text-green-800">
+                            <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+                                <div className="flex items-center gap-2 text-primary-orange-800">
                                     <CheckCircle className="w-4 h-4" />
-                                    <span className="font-medium">Dernière synchronisation</span>
+                                    <span className="font-medium">DerniÃ¨re synchronisation</span>
                                 </div>
-                                <div className="text-sm text-green-600 mt-1">
+                                <div className="text-sm text-primary-orange-600 mt-1">
                                     {lastSyncTime.toLocaleString('fr-FR')}
                                 </div>
                             </div>
@@ -179,7 +179,7 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                                 </div>
                                 <div className="text-sm text-red-600 mt-2 space-y-1">
                                     {syncErrors.slice(0, 3).map((error, index) => (
-                                        <div key={index}>• {error}</div>
+                                        <div key={index}>â€¢ {error}</div>
                                     ))}
                                     {syncErrors.length > 3 && (
                                         <div>... et {syncErrors.length - 3} autres</div>
@@ -190,7 +190,7 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                     </TabsContent>
 
                     <TabsContent value="history" className="space-y-4">
-                        <h3 className="font-semibold text-gray-800">Activité récente</h3>
+                        <h3 className="font-semibold text-gray-800">ActivitÃ© rÃ©cente</h3>
                         {syncHistory && Object.keys(syncHistory.by_type).length > 0 ? (
                             <div className="space-y-2">
                                 {Object.entries(syncHistory.by_type).map(([type, stats]: [string, any]) => (
@@ -200,16 +200,16 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                                             <span className="capitalize font-medium">{type.replace('_', ' ')}</span>
                                         </div>
                                         <div className="flex gap-3 text-sm">
-                                            <span className="text-yellow-600">⏳ {stats.pending || 0}</span>
-                                            <span className="text-green-600">✅ {stats.synced || 0}</span>
-                                            <span className="text-red-600">❌ {stats.failed || 0}</span>
+                                            <span className="text-yellow-600">â³ {stats.pending || 0}</span>
+                                            <span className="text-primary-orange-600">âœ… {stats.synced || 0}</span>
+                                            <span className="text-red-600">âŒ {stats.failed || 0}</span>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             <div className="text-center py-8 text-gray-500">
-                                Aucune activité récente
+                                Aucune activitÃ© rÃ©cente
                             </div>
                         )}
                     </TabsContent>
@@ -238,8 +238,8 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                             <div className="flex items-center gap-2">
                                 {isOnline ? (
                                     <>
-                                        <Wifi className="w-5 h-5 text-green-600" />
-                                        <span className="font-medium text-green-800">Mode en ligne</span>
+                                        <Wifi className="w-5 h-5 text-primary-orange-600" />
+                                        <span className="font-medium text-primary-orange-800">Mode en ligne</span>
                                     </>
                                 ) : (
                                     <>
@@ -250,19 +250,19 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                             </div>
                             <p className="text-sm text-gray-600">
                                 {isOnline
-                                    ? "Toutes les données sont synchronisées automatiquement"
-                                    : "Les données seront synchronisées dès la reconnexion"
+                                    ? "Toutes les donnÃ©es sont synchronisÃ©es automatiquement"
+                                    : "Les donnÃ©es seront synchronisÃ©es dÃ¨s la reconnexion"
                                 }
                             </p>
                         </div>
 
                         <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                            <h4 className="font-medium text-blue-900 mb-2">💡 Fonctionnement hors ligne</h4>
+                            <h4 className="font-medium text-blue-900 mb-2">ðŸ’¡ Fonctionnement hors ligne</h4>
                             <ul className="text-sm text-blue-800 space-y-1">
-                                <li>✓ Enregistrement de motos</li>
-                                <li>✓ Mise à jour des membres</li>
-                                <li>✓ Alertes de sécurité</li>
-                                <li>✓ Consultation de l'historique local</li>
+                                <li>âœ“ Enregistrement de motos</li>
+                                <li>âœ“ Mise Ã  jour des membres</li>
+                                <li>âœ“ Alertes de sÃ©curitÃ©</li>
+                                <li>âœ“ Consultation de l'historique local</li>
                             </ul>
                         </div>
                     </TabsContent>

@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import type { ServiceType } from '@/hooks/useProfessionalServices';
 
 const serviceSetupSchema = z.object({
-  business_name: z.string().min(3, 'Le nom doit contenir au moins 3 caractères'),
+  business_name: z.string().min(3, 'Le nom doit contenir au moins 3 caractÃ¨res'),
   description: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email('Email invalide').optional().or(z.literal('')),
@@ -70,7 +70,7 @@ export const ServiceSetupDialog = ({
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
-      toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
+      toast.error('La gÃ©olocalisation n\'est pas supportÃ©e par votre navigateur');
       return;
     }
 
@@ -82,22 +82,22 @@ export const ServiceSetupDialog = ({
           lng: position.coords.longitude,
         });
         setGeoLoading(false);
-        toast.success('Position récupérée avec succès !');
+        toast.success('Position rÃ©cupÃ©rÃ©e avec succÃ¨s !');
       },
       (error) => {
         setGeoLoading(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            toast.error('Accès à la localisation refusé. Veuillez autoriser l\'accès dans les paramètres.');
+            toast.error('AccÃ¨s Ã  la localisation refusÃ©. Veuillez autoriser l\'accÃ¨s dans les paramÃ¨tres.');
             break;
           case error.POSITION_UNAVAILABLE:
             toast.error('Position non disponible.');
             break;
           case error.TIMEOUT:
-            toast.error('Délai d\'attente dépassé.');
+            toast.error('DÃ©lai d\'attente dÃ©passÃ©.');
             break;
           default:
-            toast.error('Erreur de géolocalisation.');
+            toast.error('Erreur de gÃ©olocalisation.');
         }
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
@@ -128,11 +128,11 @@ export const ServiceSetupDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-3">
             <span className="text-3xl">{selectedService?.icon}</span>
-            <span>Créer votre {selectedService?.name}</span>
+            <span>CrÃ©er votre {selectedService?.name}</span>
           </DialogTitle>
           <DialogDescription>
-            Remplissez les informations de base pour créer votre service professionnel.
-            Vous pourrez le compléter plus tard.
+            Remplissez les informations de base pour crÃ©er votre service professionnel.
+            Vous pourrez le complÃ©ter plus tard.
           </DialogDescription>
         </DialogHeader>
 
@@ -167,14 +167,14 @@ export const ServiceSetupDialog = ({
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Décrivez votre service..."
+                      placeholder="DÃ©crivez votre service..."
                       rows={3}
                       {...field}
                       disabled={isSubmitting}
                     />
                   </FormControl>
                   <FormDescription>
-                    Une brève présentation de votre activité
+                    Une brÃ¨ve prÃ©sentation de votre activitÃ©
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -187,7 +187,7 @@ export const ServiceSetupDialog = ({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Téléphone</FormLabel>
+                    <FormLabel>TÃ©lÃ©phone</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="+224 xxx xxx xxx"
@@ -241,13 +241,13 @@ export const ServiceSetupDialog = ({
               )}
             />
 
-            {/* Bouton de géolocalisation */}
+            {/* Bouton de gÃ©olocalisation */}
             <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">📍 Position du service</p>
+                  <p className="text-sm font-medium">ðŸ“ Position du service</p>
                   <p className="text-xs text-muted-foreground">
-                    Permet à vos clients de vous trouver sur la carte de proximité
+                    Permet Ã  vos clients de vous trouver sur la carte de proximitÃ©
                   </p>
                 </div>
                 <Button
@@ -265,7 +265,7 @@ export const ServiceSetupDialog = ({
                     </>
                   ) : coords ? (
                     <>
-                      <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />
+                      <CheckCircle2 className="mr-2 h-4 w-4 text-primary-orange-500" />
                       Repositionner
                     </>
                   ) : (
@@ -277,9 +277,9 @@ export const ServiceSetupDialog = ({
                 </Button>
               </div>
               {coords && (
-                <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 rounded-md px-3 py-2">
+                <div className="flex items-center gap-2 text-xs text-primary-orange-600 dark:text-primary-orange-400 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/30 rounded-md px-3 py-2">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                  <span>Position enregistrée ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})</span>
+                  <span>Position enregistrÃ©e ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})</span>
                 </div>
               )}
             </div>
@@ -295,7 +295,7 @@ export const ServiceSetupDialog = ({
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Créer le service
+                CrÃ©er le service
               </Button>
             </div>
           </form>

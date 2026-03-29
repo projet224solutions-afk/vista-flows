@@ -21,7 +21,7 @@ export function AgentIdDisplay({
   const handleCopy = () => {
     navigator.clipboard.writeText(agentCode);
     setCopied(true);
-    toast.success(`ID Agent copié: ${agentCode}`);
+    toast.success(`ID Agent copiÃ©: ${agentCode}`);
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -56,7 +56,7 @@ export function AgentIdDisplay({
         {agentCode}
       </span>
       {copied ? (
-        <Check className="w-3.5 h-3.5 text-green-600" />
+        <Check className="w-3.5 h-3.5 text-primary-orange-600" />
       ) : (
         <Copy className="w-3.5 h-3.5 text-primary/60" />
       )}

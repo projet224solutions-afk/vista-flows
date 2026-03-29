@@ -51,7 +51,7 @@ export function QuantityKeypadPopup({
       return;
     }
     
-    // Empêcher les décimales pour les quantités
+    // EmpÃªcher les dÃ©cimales pour les quantitÃ©s
     if (input === '.') return;
     
     setQuantity(prev => prev + input);
@@ -71,7 +71,7 @@ export function QuantityKeypadPopup({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xs p-0 overflow-hidden">
-        {/* Header stylisé */}
+        {/* Header stylisÃ© */}
         <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 border-b border-border/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -79,16 +79,16 @@ export function QuantityKeypadPopup({
                 <Calculator className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <h3 className="font-bold text-foreground">Quantité</h3>
+                <h3 className="font-bold text-foreground">QuantitÃ©</h3>
                 <p className="text-xs text-muted-foreground">Saisir le nombre d'articles</p>
               </div>
             </div>
-            <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse shadow-lg shadow-green-500/50" />
+            <div className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse shadow-lg shadow-primary-orange-500/50" />
           </div>
         </div>
 
         <div className="p-4 space-y-4">
-          {/* Info produit sélectionné */}
+          {/* Info produit sÃ©lectionnÃ© */}
           {selectedProduct && (
             <div className="bg-gradient-to-br from-primary/5 to-primary/2 rounded-xl p-3 border border-primary/20">
               <div className="flex items-center gap-2 mb-2">
@@ -102,7 +102,7 @@ export function QuantityKeypadPopup({
             </div>
           )}
 
-          {/* Affichage quantité */}
+          {/* Affichage quantitÃ© */}
           <div className="space-y-2">
             <Input
               type="text"
@@ -112,11 +112,11 @@ export function QuantityKeypadPopup({
               className="text-center text-3xl font-mono font-bold h-16 bg-background border-2 border-primary/30 focus:border-primary"
             />
             
-            {/* Total calculé */}
+            {/* Total calculÃ© */}
             {quantityNum > 0 && (
               <div className={`text-sm font-medium px-3 py-2 rounded-lg text-center ${
                 isValidQuantity 
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                  ? 'bg-primary-orange-100 text-primary-orange-700 dark:bg-primary-orange-900/30 dark:text-primary-orange-400' 
                   : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
               }`}>
                 {isValidQuantity ? (
@@ -128,7 +128,7 @@ export function QuantityKeypadPopup({
             )}
           </div>
 
-          {/* Grille numérique */}
+          {/* Grille numÃ©rique */}
           <div className="grid grid-cols-3 gap-2">
             {['7', '8', '9', '4', '5', '6', '1', '2', '3'].map((num) => (
               <Button
@@ -180,7 +180,7 @@ export function QuantityKeypadPopup({
             <Button
               onClick={() => handleInput('enter')}
               disabled={!isValidQuantity}
-              className="h-12 font-semibold bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              className="h-12 font-semibold bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 hover:from-primary-blue-500 hover:to-primary-orange-400 text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
             >
               <CheckSquare className="h-4 w-4 mr-2" />
               Ajouter

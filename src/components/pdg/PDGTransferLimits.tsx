@@ -27,7 +27,7 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
   {
     key: 'min_transfer_amount',
     label: 'Montant Minimum par Transfert',
-    description: 'En GNF — converti automatiquement dans la devise de l\'expéditeur',
+    description: 'En GNF â€” converti automatiquement dans la devise de l\'expÃ©diteur',
     icon: <ArrowUpDown className="w-5 h-5" />,
     defaultValue: 100,
     category: 'amount',
@@ -36,16 +36,16 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
   {
     key: 'max_transfer_amount',
     label: 'Montant Maximum par Transfert',
-    description: 'En GNF — converti automatiquement dans la devise de l\'expéditeur',
+    description: 'En GNF â€” converti automatiquement dans la devise de l\'expÃ©diteur',
     icon: <Banknote className="w-5 h-5" />,
     defaultValue: 50_000_000,
     category: 'amount',
-    color: 'text-green-500',
+    color: 'text-primary-orange-500',
   },
   {
     key: 'max_daily_transfer_amount',
     label: 'Limite Quotidienne Globale',
-    description: 'En GNF — montant cumulé max par jour, converti par devise',
+    description: 'En GNF â€” montant cumulÃ© max par jour, converti par devise',
     icon: <TrendingUp className="w-5 h-5" />,
     defaultValue: 50_000_000,
     category: 'daily',
@@ -54,16 +54,16 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
   {
     key: 'min_international_transfer_amount',
     label: 'Minimum par Transfert International',
-    description: 'En GNF — converti dans la devise de l\'expéditeur au taux du jour',
+    description: 'En GNF â€” converti dans la devise de l\'expÃ©diteur au taux du jour',
     icon: <Globe className="w-5 h-5" />,
     defaultValue: 500,
     category: 'daily',
-    color: 'text-cyan-500',
+    color: 'text-primary-blue-500',
   },
   {
     key: 'max_international_transfer_amount',
     label: 'Maximum par Transfert International',
-    description: 'En GNF — converti dans la devise de l\'expéditeur au taux du jour',
+    description: 'En GNF â€” converti dans la devise de l\'expÃ©diteur au taux du jour',
     icon: <Globe className="w-5 h-5" />,
     defaultValue: 50_000_000,
     category: 'daily',
@@ -140,7 +140,7 @@ export default function PDGTransferLimits() {
       }
 
       setLimits(prev => ({ ...prev, [key]: val }));
-      toast.success('Limite mise à jour avec succès');
+      toast.success('Limite mise Ã  jour avec succÃ¨s');
     } catch (err) {
       console.error('Error saving limit:', err);
       toast.error('Erreur lors de la sauvegarde');
@@ -158,15 +158,15 @@ export default function PDGTransferLimits() {
     const maxIntlVal = Number(editValues['max_international_transfer_amount']);
 
     if (minVal >= maxVal) {
-      toast.error('Le minimum doit être inférieur au maximum');
+      toast.error('Le minimum doit Ãªtre infÃ©rieur au maximum');
       return;
     }
     if (minIntlVal >= maxIntlVal) {
-      toast.error('Le minimum international doit être inférieur au maximum international');
+      toast.error('Le minimum international doit Ãªtre infÃ©rieur au maximum international');
       return;
     }
     if (maxIntlVal > dailyVal) {
-      toast.error('La limite internationale ne peut pas dépasser la limite quotidienne');
+      toast.error('La limite internationale ne peut pas dÃ©passer la limite quotidienne');
       return;
     }
 
@@ -195,7 +195,7 @@ export default function PDGTransferLimits() {
 
         setLimits(prev => ({ ...prev, [cfg.key]: val }));
       }
-      toast.success('Toutes les limites ont été mises à jour');
+      toast.success('Toutes les limites ont Ã©tÃ© mises Ã  jour');
     } catch (err) {
       console.error('Error saving all limits:', err);
       toast.error('Erreur lors de la sauvegarde globale');
@@ -228,7 +228,7 @@ export default function PDGTransferLimits() {
             Limites de Transfert
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Configurez les montants min/max autorisés pour les transferts wallet
+            Configurez les montants min/max autorisÃ©s pour les transferts wallet
           </p>
         </div>
         <div className="flex gap-2">
@@ -262,7 +262,7 @@ export default function PDGTransferLimits() {
                   {cfg.label}
                   {hasChanges(cfg.key) && (
                     <Badge variant="outline" className="ml-auto text-xs border-amber-500/50 text-amber-500">
-                      Modifié
+                      ModifiÃ©
                     </Badge>
                   )}
                 </CardTitle>
@@ -320,7 +320,7 @@ export default function PDGTransferLimits() {
                   {cfg.label}
                   {hasChanges(cfg.key) && (
                     <Badge variant="outline" className="ml-auto text-xs border-amber-500/50 text-amber-500">
-                      Modifié
+                      ModifiÃ©
                     </Badge>
                   )}
                 </CardTitle>
@@ -365,7 +365,7 @@ export default function PDGTransferLimits() {
           <CardContent className="flex items-center gap-3 py-4">
             <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />
             <p className="text-sm text-destructive font-medium">
-              Le montant minimum doit être inférieur au montant maximum
+              Le montant minimum doit Ãªtre infÃ©rieur au montant maximum
             </p>
           </CardContent>
         </Card>

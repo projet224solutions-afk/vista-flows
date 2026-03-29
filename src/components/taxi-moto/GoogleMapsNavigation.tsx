@@ -62,7 +62,7 @@ export function GoogleMapsNavigation({
   const mapInitialized = useRef(false);
   const lastCleanupLog = useRef(0);
 
-  // Récupérer la clé API Google Maps depuis le backend
+  // RÃ©cupÃ©rer la clÃ© API Google Maps depuis le backend
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
@@ -73,10 +73,10 @@ export function GoogleMapsNavigation({
         if (data?.apiKey) {
           setApiKey(data.apiKey);
         } else {
-          toast.error('Clé Google Maps non configurée');
+          toast.error('ClÃ© Google Maps non configurÃ©e');
         }
       } catch (error) {
-        console.error('Erreur récupération clé API:', error);
+        console.error('Erreur rÃ©cupÃ©ration clÃ© API:', error);
         toast.error('Impossible de charger Google Maps');
       } finally {
         setLoading(false);
@@ -86,7 +86,7 @@ export function GoogleMapsNavigation({
     fetchApiKey();
   }, []);
 
-  // Charger Google Maps API avec la vraie clé
+  // Charger Google Maps API avec la vraie clÃ©
   useEffect(() => {
     if (!apiKey) return;
 
@@ -101,7 +101,7 @@ export function GoogleMapsNavigation({
     script.defer = true;
     script.onload = () => {
       setMapLoaded(true);
-      toast.success('Google Maps chargé');
+      toast.success('Google Maps chargÃ©');
     };
     script.onerror = () => {
       toast.error('Erreur de chargement de Google Maps');
@@ -122,7 +122,7 @@ export function GoogleMapsNavigation({
 
     const center = currentLocation 
       ? { lat: currentLocation.latitude, lng: currentLocation.longitude }
-      : { lat: 9.5, lng: -13.7 }; // Conakry par défaut
+      : { lat: 9.5, lng: -13.7 }; // Conakry par dÃ©faut
 
     mapInstance.current = new window.google.maps.Map(mapRef.current, {
       center,
@@ -150,7 +150,7 @@ export function GoogleMapsNavigation({
       }
     });
 
-    // Ajouter le marqueur du chauffeur immédiatement
+    // Ajouter le marqueur du chauffeur immÃ©diatement
     if (currentLocation) {
       driverMarker.current = new window.google.maps.Marker({
         position: center,
@@ -169,10 +169,10 @@ export function GoogleMapsNavigation({
     }
 
     mapInitialized.current = true;
-    toast.success('Carte initialisée');
+    toast.success('Carte initialisÃ©e');
   }, [mapLoaded, currentLocation]);
 
-  // Mettre à jour la position du chauffeur
+  // Mettre Ã  jour la position du chauffeur
   useEffect(() => {
     if (!mapLoaded || !mapInstance.current || !currentLocation || !window.google) return;
 
@@ -208,11 +208,11 @@ export function GoogleMapsNavigation({
   useEffect(() => {
     if (!mapLoaded || !directionsRenderer.current) return;
 
-    // Si pas de course active, nettoyer la carte (log limité)
+    // Si pas de course active, nettoyer la carte (log limitÃ©)
     if (!activeRide) {
       const now = Date.now();
       if (now - lastCleanupLog.current > 30000) { // Log max toutes les 30 secondes
-        console.log('🧹 Nettoyage de la carte - pas de course active');
+        console.log('ðŸ§¹ Nettoyage de la carte - pas de course active');
         lastCleanupLog.current = now;
       }
       directionsRenderer.current.setDirections({ routes: [] });
@@ -244,7 +244,7 @@ export function GoogleMapsNavigation({
       optimizeWaypoints: true
     };
 
-    console.log('🗺️ Calcul de la route:', { origin, destination });
+    console.log('ðŸ—ºï¸ Calcul de la route:', { origin, destination });
 
     directionsService.current.route(request, (result: any, status: any) => {
       if (status === window.google.maps.DirectionsStatus.OK) {
@@ -261,15 +261,15 @@ export function GoogleMapsNavigation({
           duration: durationMin
         });
 
-        console.log('✅ Route calculée:', { distanceKm, durationMin });
+        console.log('âœ… Route calculÃ©e:', { distanceKm, durationMin });
       } else {
-        console.error('❌ Erreur calcul route:', status);
+        console.error('âŒ Erreur calcul route:', status);
         toast.error('Impossible de calculer la route');
       }
     });
   }, [mapLoaded, activeRide, currentLocation]);
 
-  // Sauvegarder la position en temps réel dans la base de données
+  // Sauvegarder la position en temps rÃ©el dans la base de donnÃ©es
   useEffect(() => {
     if (!activeRide || !currentLocation) return;
 
@@ -312,7 +312,7 @@ export function GoogleMapsNavigation({
       return;
     }
 
-    // Si course active, naviguer vers la destination appropriée
+    // Si course active, naviguer vers la destination appropriÃ©e
     if (activeRide) {
       const target = activeRide.status === 'accepted' || activeRide.status === 'arriving'
         ? activeRide.pickup.coords
@@ -325,7 +325,7 @@ export function GoogleMapsNavigation({
       window.open(mapsUrl, '_blank', 'noopener,noreferrer');
       toast.success("Navigation ouverte dans Google Maps");
     } else {
-      // Sans course active, ouvrir Google Maps centré sur la position actuelle
+      // Sans course active, ouvrir Google Maps centrÃ© sur la position actuelle
       const mapsUrl = `https://www.google.com/maps/@${currentLocation.latitude},${currentLocation.longitude},15z`;
       window.open(mapsUrl, '_blank', 'noopener,noreferrer');
       toast.success("Google Maps ouvert sur votre position");
@@ -350,7 +350,7 @@ export function GoogleMapsNavigation({
 
   return (
     <div className="space-y-4">
-      {/* Carte Google Maps - Affichée toujours */}
+      {/* Carte Google Maps - AffichÃ©e toujours */}
       <Card className="overflow-hidden">
         <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50">
           <CardTitle className="flex items-center justify-between">
@@ -362,7 +362,7 @@ export function GoogleMapsNavigation({
               {hasActiveRide && (
                 <Badge className="bg-blue-600 text-white">
                   {activeRide!.status === 'accepted' || activeRide!.status === 'arriving' 
-                    ? "Récupération du client" 
+                    ? "RÃ©cupÃ©ration du client" 
                     : "En direction de la destination"}
                 </Badge>
               )}
@@ -406,14 +406,14 @@ export function GoogleMapsNavigation({
 
       {/* Informations de position actuelle + Bouton navigation */}
       {currentLocation && (
-        <Card className="bg-gradient-to-r from-green-50 to-emerald-50">
+        <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50">
           <CardContent className="pt-4 space-y-3">
             <div className="flex items-center gap-3">
-              <MapPin className="w-8 h-8 text-green-600" />
+              <MapPin className="w-8 h-8 text-primary-orange-600" />
               <div className="flex-1">
                 <p className="text-sm font-semibold text-gray-700">Ma position actuelle</p>
                 <p className="text-xs font-mono text-gray-600">
-                  📍 {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
+                  ðŸ“ {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
                 </p>
               </div>
             </div>
@@ -422,7 +422,7 @@ export function GoogleMapsNavigation({
             {!hasActiveRide && (
               <Button 
                 onClick={openGoogleMapsExternal}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-blue-700 hover:to-primary-orange-700 text-white"
               >
                 <Navigation className="w-4 h-4 mr-2" />
                 Ouvrir Google Maps
@@ -446,7 +446,7 @@ export function GoogleMapsNavigation({
               <div className="bg-white rounded-lg p-3 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Clock className="w-3 h-3 text-gray-600" />
-                  <p className="text-xs text-gray-600">Durée</p>
+                  <p className="text-xs text-gray-600">DurÃ©e</p>
                 </div>
                 <p className="text-2xl font-bold text-blue-600">
                   {routeInfo.duration} <span className="text-sm">min</span>
@@ -457,7 +457,7 @@ export function GoogleMapsNavigation({
         </Card>
       )}
 
-      {/* Informations client et itinéraire - Uniquement si course active */}
+      {/* Informations client et itinÃ©raire - Uniquement si course active */}
       {hasActiveRide && activeRide && (
         <Card>
         <CardContent className="pt-4 space-y-3">
@@ -479,13 +479,13 @@ export function GoogleMapsNavigation({
             <p className="text-sm text-gray-600">{activeRide.customerPhone}</p>
           </div>
 
-          {/* Itinéraire */}
+          {/* ItinÃ©raire */}
           <div className="space-y-2">
-            <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+            <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-3 border border-primary-orange-200">
               <div className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
+                <MapPin className="w-5 h-5 text-primary-orange-600 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-green-800 uppercase">Départ</p>
+                  <p className="text-xs font-semibold text-primary-orange-800 uppercase">DÃ©part</p>
                   <p className="text-sm text-gray-900">{activeRide.pickup.address}</p>
                 </div>
               </div>
@@ -499,7 +499,7 @@ export function GoogleMapsNavigation({
               <div className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-red-600 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-red-800 uppercase">Arrivée</p>
+                  <p className="text-xs font-semibold text-red-800 uppercase">ArrivÃ©e</p>
                   <p className="text-sm text-gray-900">{activeRide.destination.address}</p>
                 </div>
               </div>
@@ -519,45 +519,45 @@ export function GoogleMapsNavigation({
           <Button
             onClick={async () => {
               const confirmed = window.confirm(
-                '⚠️ Êtes-vous sûr de vouloir annuler cette course ?\n\n' +
-                'Le client sera notifié et vous pourriez recevoir une pénalité.'
+                'âš ï¸ ÃŠtes-vous sÃ»r de vouloir annuler cette course ?\n\n' +
+                'Le client sera notifiÃ© et vous pourriez recevoir une pÃ©nalitÃ©.'
               );
               
               if (confirmed) {
                 try {
-                  console.log('🚫 Annulation de la course:', activeRide.id);
+                  console.log('ðŸš« Annulation de la course:', activeRide.id);
                   
                   const { error } = await supabase
                     .from('taxi_trips')
                     .update({ 
                       status: 'cancelled',
-                      cancel_reason: 'Annulée par le conducteur',
+                      cancel_reason: 'AnnulÃ©e par le conducteur',
                       cancelled_at: new Date().toISOString(),
                       updated_at: new Date().toISOString()
                     })
                     .eq('id', activeRide.id);
 
                   if (error) {
-                    console.error('❌ Erreur DB:', error);
+                    console.error('âŒ Erreur DB:', error);
                     throw error;
                   }
 
-                  console.log('✅ Course annulée dans la DB');
+                  console.log('âœ… Course annulÃ©e dans la DB');
                   
-                  toast.success('✅ Course annulée avec succès');
+                  toast.success('âœ… Course annulÃ©e avec succÃ¨s');
                   
-                  // Nettoyer immédiatement la carte
+                  // Nettoyer immÃ©diatement la carte
                   if (directionsRenderer.current) {
                     directionsRenderer.current.setDirections({ routes: [] });
                   }
                   setRouteInfo(null);
                   
-                  // Recharger la page pour mettre à jour tous les composants
+                  // Recharger la page pour mettre Ã  jour tous les composants
                   setTimeout(() => {
                     window.location.reload();
                   }, 1000);
                 } catch (error) {
-                  console.error('❌ Erreur annulation:', error);
+                  console.error('âŒ Erreur annulation:', error);
                   toast.error('Impossible d\'annuler la course');
                 }
               }
@@ -565,14 +565,14 @@ export function GoogleMapsNavigation({
             variant="outline"
             className="w-full border-red-300 text-red-700 hover:bg-red-50"
           >
-            ❌ Annuler la course
+            âŒ Annuler la course
           </Button>
 
           {/* Revenus */}
           <div className="grid grid-cols-2 gap-3 pt-2 border-t">
             <div className="text-center">
               <p className="text-xs text-gray-600 mb-1">Prix course</p>
-              <p className="text-lg font-bold text-green-600">
+              <p className="text-lg font-bold text-primary-orange-600">
                 {(activeRide.estimatedPrice || 0).toLocaleString()} GNF
               </p>
             </div>
@@ -596,7 +596,7 @@ export function GoogleMapsNavigation({
               Aucune course active
             </h3>
             <p className="text-sm text-gray-500">
-              Acceptez une course pour démarrer la navigation guidée
+              Acceptez une course pour dÃ©marrer la navigation guidÃ©e
             </p>
           </CardContent>
         </Card>

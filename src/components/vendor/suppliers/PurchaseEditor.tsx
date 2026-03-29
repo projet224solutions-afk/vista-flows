@@ -1,6 +1,6 @@
 /**
- * Éditeur d'achat de stock complet
- * Ajout produits, calculs automatiques, génération PDF, validation
+ * Ã‰diteur d'achat de stock complet
+ * Ajout produits, calculs automatiques, gÃ©nÃ©ration PDF, validation
  */
 
 import { useState } from 'react';
@@ -96,7 +96,7 @@ interface Product {
   price: number;
   category_id: string | null;
   stock_quantity: number | null;
-  supplier_unit_cost?: number | null; // Coût chez le fournisseur
+  supplier_unit_cost?: number | null; // CoÃ»t chez le fournisseur
 }
 
 interface Category {
@@ -177,7 +177,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
   const { data: products = [] } = useQuery({
     queryKey: ['vendor-products-by-supplier', vendorId, newItem.supplier_id, newItem.category_id],
     queryFn: async () => {
-      // Si un fournisseur est sélectionné, on récupère ses produits liés
+      // Si un fournisseur est sÃ©lectionnÃ©, on rÃ©cupÃ¨re ses produits liÃ©s
       if (newItem.supplier_id) {
         const { data: supplierProducts, error: spError } = await supabase
           .from('vendor_supplier_products')
@@ -198,7 +198,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
 
         if (spError) throw spError;
 
-        // Transformer les données pour avoir le format Product attendu
+        // Transformer les donnÃ©es pour avoir le format Product attendu
         let filteredProducts = (supplierProducts || [])
           .filter(sp => sp.products)
           .map(sp => ({
@@ -207,10 +207,10 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
             price: (sp.products as any).price,
             category_id: (sp.products as any).category_id,
             stock_quantity: (sp.products as any).stock_quantity,
-            supplier_unit_cost: sp.unit_cost, // Coût unitaire chez ce fournisseur
+            supplier_unit_cost: sp.unit_cost, // CoÃ»t unitaire chez ce fournisseur
           }));
 
-        // Filtrer par catégorie si sélectionnée
+        // Filtrer par catÃ©gorie si sÃ©lectionnÃ©e
         if (newItem.category_id) {
           filteredProducts = filteredProducts.filter(p => p.category_id === newItem.category_id);
         }
@@ -257,7 +257,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     onSuccess: () => {
       refetchItems();
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
-      toast.success('Produit ajouté');
+      toast.success('Produit ajoutÃ©');
       setIsAddItemDialogOpen(false);
       resetNewItem();
     },
@@ -279,7 +279,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     onSuccess: () => {
       refetchItems();
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
-      toast.success('Produit retiré');
+      toast.success('Produit retirÃ©');
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -297,14 +297,14 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Notes enregistrées');
+      toast.success('Notes enregistrÃ©es');
     },
   });
 
   // Generate document mutation with PDF
   const generateDocMutation = useMutation({
     mutationFn: async () => {
-      // Appel à l'Edge Function pour générer le PDF
+      // Appel Ã  l'Edge Function pour gÃ©nÃ©rer le PDF
       const { data, error: funcError } = await supabase.functions.invoke('generate-purchase-pdf', {
         body: {
           purchase_id: purchase.id,
@@ -314,7 +314,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
 
       if (funcError) throw funcError;
 
-      // Générer le PDF côté client avec jsPDF
+      // GÃ©nÃ©rer le PDF cÃ´tÃ© client avec jsPDF
       const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF();
       
@@ -337,8 +337,8 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       doc.setFontSize(9);
       doc.setTextColor(100);
       doc.text('TOTAL ACHAT', 41.5, 52, { align: 'center' });
-      doc.text('TOTAL VENTE ESTIMÉ', 104.5, 52, { align: 'center' });
-      doc.text('PROFIT ESTIMÉ', 167.5, 52, { align: 'center' });
+      doc.text('TOTAL VENTE ESTIMÃ‰', 104.5, 52, { align: 'center' });
+      doc.text('PROFIT ESTIMÃ‰', 167.5, 52, { align: 'center' });
       
       doc.setFontSize(12);
       doc.setTextColor(220, 38, 38);
@@ -355,7 +355,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       doc.setFontSize(9);
       doc.setTextColor(255);
       doc.text('Produit', 16, yPos + 5.5);
-      doc.text('Qté', 90, yPos + 5.5);
+      doc.text('QtÃ©', 90, yPos + 5.5);
       doc.text('Prix Achat', 110, yPos + 5.5);
       doc.text('Prix Vente', 140, yPos + 5.5);
       doc.text('Profit', 175, yPos + 5.5);
@@ -392,7 +392,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
-      toast.success('Document PDF généré et téléchargé');
+      toast.success('Document PDF gÃ©nÃ©rÃ© et tÃ©lÃ©chargÃ©');
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -402,7 +402,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
   // Validate purchase mutation - Using Edge Function for atomic transaction
   const validateMutation = useMutation({
     mutationFn: async () => {
-      // Appel à l'Edge Function pour transaction atomique
+      // Appel Ã  l'Edge Function pour transaction atomique
       const { data, error } = await supabase.functions.invoke('validate-purchase', {
         body: {
           purchase_id: purchase.id,
@@ -422,7 +422,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['vendor-expenses'] });
-      toast.success('Achat validé! Stock, prix d\'achat et dépenses mis à jour.');
+      toast.success('Achat validÃ©! Stock, prix d\'achat et dÃ©penses mis Ã  jour.');
       setShowValidateConfirm(false);
       onClose();
     },
@@ -451,7 +451,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         product_id: productId,
         product_name: product.name,
         selling_price: product.price,
-        // Utiliser le coût fournisseur si disponible
+        // Utiliser le coÃ»t fournisseur si disponible
         purchase_price: product.supplier_unit_cost || newItem.purchase_price,
       });
     }
@@ -463,7 +463,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       return;
     }
     if (newItem.quantity < 1) {
-      toast.error('La quantité doit être supérieure à 0');
+      toast.error('La quantitÃ© doit Ãªtre supÃ©rieure Ã  0');
       return;
     }
     if (newItem.purchase_price <= 0) {
@@ -508,9 +508,9 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               }
             >
               {purchase.status === 'validated'
-                ? 'Validé'
+                ? 'ValidÃ©'
                 : purchase.status === 'document_generated'
-                ? 'Document généré'
+                ? 'Document gÃ©nÃ©rÃ©'
                 : 'Brouillon'}
             </Badge>
           </div>
@@ -524,7 +524,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         )}
       </div>
 
-      {/* Récapitulatif achat (pour bon d'achat - sans profit) */}
+      {/* RÃ©capitulatif achat (pour bon d'achat - sans profit) */}
       <Card className="bg-muted/50">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -537,7 +537,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
             <div className="text-right">
               <p className="text-sm text-muted-foreground">{items.length} article(s)</p>
               <p className="text-sm text-muted-foreground">
-                {items.reduce((sum, item) => sum + item.quantity, 0)} unité(s)
+                {items.reduce((sum, item) => sum + item.quantity, 0)} unitÃ©(s)
               </p>
             </div>
           </div>
@@ -556,7 +556,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
           {items.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Calculator className="mx-auto h-8 w-8 mb-2 opacity-50" />
-              <p>Aucun produit ajouté</p>
+              <p>Aucun produit ajoutÃ©</p>
             </div>
           ) : (
             <ScrollArea className="max-h-[300px]">
@@ -569,7 +569,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                     <div className="flex-1">
                       <p className="font-medium text-sm">{item.product_name}</p>
                       <div className="flex gap-4 text-xs text-muted-foreground mt-1">
-                        <span>Qté: {item.quantity}</span>
+                        <span>QtÃ©: {item.quantity}</span>
                         <span>Prix unitaire: {formatCurrency(item.purchase_price)}</span>
                       </div>
                     </div>
@@ -595,12 +595,12 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         </CardContent>
       </Card>
 
-      {/* Analyse Financière (Profits) - Section séparée */}
-      <Card className="border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20">
+      {/* Analyse FinanciÃ¨re (Profits) - Section sÃ©parÃ©e */}
+      <Card className="border-primary-orange-200 dark:border-primary-orange-900 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50 dark:bg-primary-orange-950/20">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2 text-green-700 dark:text-green-400">
+          <CardTitle className="text-sm flex items-center gap-2 text-primary-orange-700 dark:text-primary-orange-400">
             <Calculator className="h-4 w-4" />
-            Analyse Financière & Profits
+            Analyse FinanciÃ¨re & Profits
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -612,22 +612,22 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               </p>
             </div>
             <div className="p-3 rounded-lg bg-background">
-              <p className="text-xs text-muted-foreground">Total Vente Estimé</p>
+              <p className="text-xs text-muted-foreground">Total Vente EstimÃ©</p>
               <p className="text-lg font-bold">{formatCurrency(totalSelling)}</p>
             </div>
             <div className="p-3 rounded-lg bg-background">
-              <p className="text-xs text-muted-foreground">Profit Estimé</p>
-              <p className="text-lg font-bold text-green-600">
+              <p className="text-xs text-muted-foreground">Profit EstimÃ©</p>
+              <p className="text-lg font-bold text-primary-orange-600">
                 +{formatCurrency(totalProfit)}
               </p>
             </div>
           </div>
 
-          {/* Détail profits par produit */}
+          {/* DÃ©tail profits par produit */}
           {items.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Détail par produit
+                DÃ©tail par produit
               </p>
               <div className="space-y-1">
                 {items.map((item) => (
@@ -638,20 +638,20 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                     <div className="flex-1">
                       <span className="font-medium">{item.product_name}</span>
                       <span className="text-xs text-muted-foreground ml-2">
-                        ({item.quantity} × {formatCurrency(item.selling_price - item.purchase_price)})
+                        ({item.quantity} Ã— {formatCurrency(item.selling_price - item.purchase_price)})
                       </span>
                     </div>
-                    <span className={`font-semibold ${item.total_profit >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                    <span className={`font-semibold ${item.total_profit >= 0 ? 'text-primary-orange-600' : 'text-destructive'}`}>
                       {item.total_profit >= 0 ? '+' : ''}{formatCurrency(item.total_profit)}
                     </span>
                   </div>
                 ))}
               </div>
               
-              {/* Marge bénéficiaire */}
+              {/* Marge bÃ©nÃ©ficiaire */}
               <div className="mt-3 pt-3 border-t flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Marge bénéficiaire</span>
-                <span className="font-bold text-green-600">
+                <span className="text-sm text-muted-foreground">Marge bÃ©nÃ©ficiaire</span>
+                <span className="font-bold text-primary-orange-600">
                   {totalPurchase > 0 ? ((totalProfit / totalPurchase) * 100).toFixed(1) : 0}%
                 </span>
               </div>
@@ -687,12 +687,12 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
             className="gap-2"
           >
             <FileText className="h-4 w-4" />
-            Générer document
+            GÃ©nÃ©rer document
           </Button>
           <Button
             onClick={() => setShowVerificationDialog(true)}
             disabled={items.length === 0}
-            className="gap-2 bg-green-600 hover:bg-green-700"
+            className="gap-2 bg-primary-orange-600 hover:bg-primary-orange-700"
           >
             <CheckCircle className="h-4 w-4" />
             Valider l'achat
@@ -706,15 +706,15 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
           <DialogHeader className="pb-4 border-b">
             <DialogTitle className="text-xl flex items-center gap-2">
               <Package className="h-5 w-5 text-primary" />
-              Ajouter un produit à l'achat
+              Ajouter un produit Ã  l'achat
             </DialogTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Sélectionnez un produit existant ou créez-en un nouveau pour cet achat
+              SÃ©lectionnez un produit existant ou crÃ©ez-en un nouveau pour cet achat
             </p>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* Section Sélection */}
+            {/* Section SÃ©lection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium flex items-center gap-2">
@@ -733,12 +733,12 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                   })}
                 >
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder={suppliers.length === 0 ? 'Aucun fournisseur disponible' : 'Sélectionner un fournisseur...'} />
+                    <SelectValue placeholder={suppliers.length === 0 ? 'Aucun fournisseur disponible' : 'SÃ©lectionner un fournisseur...'} />
                   </SelectTrigger>
                   <SelectContent>
                     {suppliers.length === 0 ? (
                       <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                        Aucun fournisseur créé. Créez d'abord un fournisseur dans l'onglet "Fournisseurs".
+                        Aucun fournisseur crÃ©Ã©. CrÃ©ez d'abord un fournisseur dans l'onglet "Fournisseurs".
                       </div>
                     ) : (
                       suppliers.map((s) => (
@@ -752,13 +752,13 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Catégorie (optionnel)</Label>
+                <Label className="text-sm font-medium">CatÃ©gorie (optionnel)</Label>
                 <Select
                   value={newItem.category_id}
                   onValueChange={(v) => setNewItem({ ...newItem, category_id: v, product_id: '' })}
                 >
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Filtrer par catégorie..." />
+                    <SelectValue placeholder="Filtrer par catÃ©gorie..." />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
@@ -773,9 +773,9 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
 
             <Separator />
 
-            {/* Sélection du produit avec images */}
+            {/* SÃ©lection du produit avec images */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Sélectionner un produit existant</Label>
+              <Label className="text-sm font-medium">SÃ©lectionner un produit existant</Label>
               
               {products.length > 0 ? (
                 <ScrollArea className="h-48 border rounded-lg p-2">
@@ -810,12 +810,12 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                 </ScrollArea>
               ) : (
                 <div className="h-32 border rounded-lg flex items-center justify-center text-muted-foreground text-sm">
-                  Aucun produit disponible. Créez des produits d'abord.
+                  Aucun produit disponible. CrÃ©ez des produits d'abord.
                 </div>
               )}
             </div>
 
-            {/* Produit sélectionné - Aperçu */}
+            {/* Produit sÃ©lectionnÃ© - AperÃ§u */}
             {selectedProduct && (
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-4">
@@ -830,7 +830,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                       </p>
                       {selectedProduct.stock_quantity !== null && (
                         <Badge variant="secondary" className="mt-1">
-                          Stock actuel: {selectedProduct.stock_quantity} unités
+                          Stock actuel: {selectedProduct.stock_quantity} unitÃ©s
                         </Badge>
                       )}
                     </div>
@@ -854,11 +854,11 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               />
             </div>
 
-            {/* Quantité et Prix */}
+            {/* QuantitÃ© et Prix */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">
-                  Quantité <span className="text-destructive">*</span>
+                  QuantitÃ© <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   type="number"
@@ -910,18 +910,18 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               </div>
             </div>
 
-            {/* Calculs en temps réel - Amélioré */}
+            {/* Calculs en temps rÃ©el - AmÃ©liorÃ© */}
             {newItem.purchase_price > 0 && newItem.selling_price > 0 && (
-              <Card className={`${newItem.selling_price < newItem.purchase_price ? 'bg-destructive/10 border-destructive/30' : 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900'}`}>
+              <Card className={`${newItem.selling_price < newItem.purchase_price ? 'bg-destructive/10 border-destructive/30' : 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 border-primary-orange-200 dark:border-primary-orange-900'}`}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Calculator className="h-4 w-4" />
-                    <span className="font-medium text-sm">Récapitulatif des calculs</span>
+                    <span className="font-medium text-sm">RÃ©capitulatif des calculs</span>
                   </div>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Profit unitaire</p>
-                      <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-green-600' : 'text-destructive'}`}>
+                      <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-primary-orange-600' : 'text-destructive'}`}>
                         {newItem.selling_price >= newItem.purchase_price ? '+' : ''}
                         {formatCurrency(newItem.selling_price - newItem.purchase_price)}
                       </p>
@@ -934,7 +934,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Profit total</p>
-                      <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-green-600' : 'text-destructive'}`}>
+                      <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-primary-orange-600' : 'text-destructive'}`}>
                         {newItem.selling_price >= newItem.purchase_price ? '+' : ''}
                         {formatCurrency(newItem.quantity * (newItem.selling_price - newItem.purchase_price))}
                       </p>
@@ -944,7 +944,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                   {newItem.selling_price < newItem.purchase_price && (
                     <div className="mt-3 flex items-center gap-2 text-destructive text-sm">
                       <AlertTriangle className="h-4 w-4" />
-                      <span>Attention: Le prix de vente est inférieur au prix d'achat!</span>
+                      <span>Attention: Le prix de vente est infÃ©rieur au prix d'achat!</span>
                     </div>
                   )}
                 </CardContent>
@@ -972,7 +972,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de vérification des produits manquants */}
+      {/* Dialog de vÃ©rification des produits manquants */}
       <MissingProductsVerificationDialog
         open={showVerificationDialog}
         onOpenChange={setShowVerificationDialog}
@@ -992,24 +992,24 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-500" />
-              Valider définitivement cet achat ?
+              Valider dÃ©finitivement cet achat ?
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>Cette action est <strong>irréversible</strong>. Une fois validé :</p>
+              <p>Cette action est <strong>irrÃ©versible</strong>. Une fois validÃ© :</p>
               <ul className="list-disc list-inside text-sm space-y-1">
-                <li>Le stock sera automatiquement mis à jour</li>
-                <li>Une dépense sera créée ({formatCurrency(totalPurchase)})</li>
-                <li>Les prix de vente seront synchronisés</li>
-                <li>L'achat sera verrouillé</li>
+                <li>Le stock sera automatiquement mis Ã  jour</li>
+                <li>Une dÃ©pense sera crÃ©Ã©e ({formatCurrency(totalPurchase)})</li>
+                <li>Les prix de vente seront synchronisÃ©s</li>
+                <li>L'achat sera verrouillÃ©</li>
               </ul>
               {missingProductsData.length > 0 && (
                 <div className="mt-3 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
                   <p className="text-sm font-medium text-destructive flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4" />
-                    {missingProductsData.length} produit(s) manquant(s) signalé(s)
+                    {missingProductsData.length} produit(s) manquant(s) signalÃ©(s)
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Ces informations seront enregistrées pour suivi.
+                    Ces informations seront enregistrÃ©es pour suivi.
                   </p>
                 </div>
               )}
@@ -1019,7 +1019,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => validateMutation.mutate()}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-primary-orange-600 hover:bg-primary-orange-700"
             >
               {validateMutation.isPending ? 'Validation...' : 'Confirmer la validation'}
             </AlertDialogAction>

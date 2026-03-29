@@ -1,5 +1,5 @@
 /**
- * COMPOSANT DE SUIVI TAXI-MOTO EN TEMPS RÉEL
+ * COMPOSANT DE SUIVI TAXI-MOTO EN TEMPS RÃ‰EL
  * Interface de suivi avec carte interactive et partage de trajet
  * 224Solutions - Taxi-Moto System
  */
@@ -79,14 +79,14 @@ export default function TaxiMotoTracking({
     const [driverInfo, setDriverInfo] = useState<any>(null);
     const [showPayment, setShowPayment] = useState(false);
 
-    // Charger les détails de la course
+    // Charger les dÃ©tails de la course
     useEffect(() => {
         if (currentRide?.id) {
             loadRideDetails();
         }
     }, [currentRide?.id]);
 
-    // Écouter les mises à jour en temps réel
+    // Ã‰couter les mises Ã  jour en temps rÃ©el
     useEffect(() => {
         if (!currentRide?.id) return;
 
@@ -115,7 +115,7 @@ export default function TaxiMotoTracking({
                         longitude: (payload.new as any).longitude
                     });
                     
-                    // Estimer le temps d'arrivée basé sur la distance
+                    // Estimer le temps d'arrivÃ©e basÃ© sur la distance
                     if (userLocation) {
                         const distance = calculateDistance(
                             userLocation.latitude,
@@ -142,7 +142,7 @@ export default function TaxiMotoTracking({
             setRideDetails(details);
             updateRideProgress(details);
             
-            // Charger les infos du conducteur si assigné
+            // Charger les infos du conducteur si assignÃ©
             if (details.driver_id && !currentRide.driver) {
                 loadDriverInfo(details.driver_id);
             }
@@ -192,7 +192,7 @@ export default function TaxiMotoTracking({
         };
         setRideProgress(statusProgress[ride.status as keyof typeof statusProgress] || 0);
         
-        // Afficher le paiement si la course est terminée
+        // Afficher le paiement si la course est terminÃ©e
         if (ride.status === 'completed' && !ride.payment_status) {
             setShowPayment(true);
         }
@@ -204,12 +204,12 @@ export default function TaxiMotoTracking({
     const shareRide = () => {
         if (!currentRide) return;
 
-        const shareText = `🚗 Je suis en course avec 224Solutions Taxi-Moto
+        const shareText = `ðŸš— Je suis en course avec 224Solutions Taxi-Moto
 Course: ${currentRide.id}
 De: ${currentRide.pickupAddress}
 Vers: ${currentRide.destinationAddress}
 Conducteur: ${currentRide.driver?.name || 'En attente'}
-Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
+Suivi en temps rÃ©el: https://224solution.net/track/${currentRide.id}`;
 
         if (navigator.share) {
             navigator.share({
@@ -218,7 +218,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
             });
         } else {
             navigator.clipboard.writeText(shareText);
-            toast.success('Lien de suivi copié dans le presse-papier');
+            toast.success('Lien de suivi copiÃ© dans le presse-papier');
         }
     };
 
@@ -229,7 +229,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
         if (currentRide?.driver?.phone) {
             window.open(`tel:${currentRide.driver.phone}`);
         } else {
-            toast.error('Numéro du conducteur non disponible');
+            toast.error('NumÃ©ro du conducteur non disponible');
         }
     };
 
@@ -239,10 +239,10 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
     const cancelRide = async () => {
         if (!currentRide) return;
 
-        if (window.confirm('Êtes-vous sûr de vouloir annuler cette course ?')) {
+        if (window.confirm('ÃŠtes-vous sÃ»r de vouloir annuler cette course ?')) {
             try {
                 await RidesService.updateRideStatus(currentRide.id, 'cancelled');
-                toast.success('Course annulée');
+                toast.success('Course annulÃ©e');
             } catch (error) {
                 console.error('Error cancelling ride:', error);
                 toast.error('Erreur lors de l\'annulation');
@@ -251,7 +251,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
     };
 
     /**
-     * Obtient le statut formaté
+     * Obtient le statut formatÃ©
      */
     const getStatusInfo = (status: string) => {
         const statusMap = {
@@ -268,10 +268,10 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                 description: 'Nous recherchons un conducteur proche de vous'
             },
             accepted: {
-                label: 'Conducteur assigné',
+                label: 'Conducteur assignÃ©',
                 color: 'bg-blue-100 text-blue-800',
                 icon: CheckCircle,
-                description: 'Un conducteur a accepté votre course'
+                description: 'Un conducteur a acceptÃ© votre course'
             },
             driver_arriving: {
                 label: 'Conducteur en route',
@@ -280,28 +280,28 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                 description: 'Le conducteur se dirige vers vous'
             },
             picked_up: {
-                label: 'À bord',
+                label: 'Ã€ bord',
                 color: 'bg-purple-100 text-purple-800',
                 icon: Car,
-                description: 'Vous êtes à bord, en route vers la destination'
+                description: 'Vous Ãªtes Ã  bord, en route vers la destination'
             },
             in_progress: {
                 label: 'Course en cours',
-                color: 'bg-green-100 text-green-800',
+                color: 'bg-primary-orange-100 text-primary-orange-800',
                 icon: Car,
-                description: 'Vous êtes en route vers votre destination'
+                description: 'Vous Ãªtes en route vers votre destination'
             },
             completed: {
-                label: 'Course terminée',
+                label: 'Course terminÃ©e',
                 color: 'bg-gray-100 text-gray-800',
                 icon: CheckCircle,
-                description: 'Vous êtes arrivé à destination'
+                description: 'Vous Ãªtes arrivÃ© Ã  destination'
             },
             cancelled: {
-                label: 'Course annulée',
+                label: 'Course annulÃ©e',
                 color: 'bg-red-100 text-red-800',
                 icon: AlertTriangle,
-                description: 'Cette course a été annulée'
+                description: 'Cette course a Ã©tÃ© annulÃ©e'
             }
         };
 
@@ -317,14 +317,14 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                         Aucune course active
                     </h3>
                     <p className="text-muted-foreground">
-                        Réservez une course pour voir le suivi en temps réel
+                        RÃ©servez une course pour voir le suivi en temps rÃ©el
                     </p>
                 </CardContent>
             </Card>
         );
     }
 
-    // Afficher le flow de paiement si la course est terminée
+    // Afficher le flow de paiement si la course est terminÃ©e
     if (showPayment && currentRide.status === 'completed') {
         return (
             <RidePaymentFlow
@@ -332,7 +332,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                 amount={currentRide.estimatedPrice}
                 onPaymentSuccess={() => {
                     setShowPayment(false);
-                    toast.success('Merci ! À bientôt sur 224Solutions');
+                    toast.success('Merci ! Ã€ bientÃ´t sur 224Solutions');
                 }}
                 onCancel={() => {
                     setShowPayment(false);
@@ -362,7 +362,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                     {/* Barre de progression */}
                     <div className="w-full bg-secondary rounded-full h-2 mb-4">
                         <div
-                            className="bg-gradient-to-r from-primary to-green-500 h-2 rounded-full transition-all duration-500"
+                            className="bg-gradient-to-r from-primary to-primary-orange-500 h-2 rounded-full transition-all duration-500"
                             style={{ width: `${rideProgress}%` }}
                         ></div>
                     </div>
@@ -370,7 +370,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                     {estimatedArrival && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="w-4 h-4" />
-                            <span>Arrivée estimée dans {estimatedArrival}</span>
+                            <span>ArrivÃ©e estimÃ©e dans {estimatedArrival}</span>
                         </div>
                     )}
                 </CardContent>
@@ -407,7 +407,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                                                 <span>{driver.rating?.toFixed(1)}</span>
-                                                <span>•</span>
+                                                <span>â€¢</span>
                                                 <span>{driver.vehicleType}</span>
                                             </div>
                                             <p className="text-sm text-muted-foreground">
@@ -429,7 +429,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                                 Appeler
                             </Button>
                             <Button
-                                onClick={() => toast.info('Fonctionnalité de chat bientôt disponible')}
+                                onClick={() => toast.info('FonctionnalitÃ© de chat bientÃ´t disponible')}
                                 variant="outline"
                                 className="flex-1"
                             >
@@ -441,16 +441,16 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                 </Card>
             )}
 
-            {/* Détails du trajet */}
+            {/* DÃ©tails du trajet */}
             <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
-                    <CardTitle className="text-lg">Détails du trajet</CardTitle>
+                    <CardTitle className="text-lg">DÃ©tails du trajet</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-start gap-3">
-                        <div className="w-3 h-3 bg-green-500 rounded-full mt-2"></div>
+                        <div className="w-3 h-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full mt-2"></div>
                         <div>
-                            <p className="font-medium">Départ</p>
+                            <p className="font-medium">DÃ©part</p>
                             <p className="text-sm text-muted-foreground">{currentRide.pickupAddress}</p>
                         </div>
                     </div>
@@ -464,24 +464,24 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                     </div>
 
                     <div className="flex items-center justify-between pt-4 border-t">
-                        <span className="font-medium">Prix estimé</span>
+                        <span className="font-medium">Prix estimÃ©</span>
                         <LocalPrice amount={currentRide.estimatedPrice} currency="GNF" size="lg" />
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Suivi GPS en temps réel */}
+            {/* Suivi GPS en temps rÃ©el */}
             <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
-                    <CardTitle className="text-lg">Suivi en temps réel</CardTitle>
+                    <CardTitle className="text-lg">Suivi en temps rÃ©el</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-64 bg-gradient-to-br from-primary/10 to-green-500/10 rounded-lg flex items-center justify-center">
+                    <div className="h-64 bg-gradient-to-br from-primary/10 to-primary-orange-500/10 rounded-lg flex items-center justify-center">
                         <div className="text-center">
                             <MapPin className="w-12 h-12 mx-auto mb-2 text-primary" />
                             <p className="text-foreground font-medium">Carte interactive</p>
                             <p className="text-sm text-muted-foreground">
-                                Position en temps réel du conducteur
+                                Position en temps rÃ©el du conducteur
                             </p>
                         </div>
                     </div>
@@ -489,7 +489,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                     {driverLocation && (
                         <div className="mt-4 p-3 bg-primary/10 rounded-lg">
                             <p className="text-sm text-foreground">
-                                📍 Conducteur à {driverLocation.latitude.toFixed(4)}, {driverLocation.longitude.toFixed(4)}
+                                ðŸ“ Conducteur Ã  {driverLocation.latitude.toFixed(4)}, {driverLocation.longitude.toFixed(4)}
                             </p>
                         </div>
                     )}
@@ -531,7 +531,7 @@ Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
                         </div>
                         <Button
                             variant="destructive"
-                            onClick={() => toast.error('🚨 Alerte SOS activée !')}
+                            onClick={() => toast.error('ðŸš¨ Alerte SOS activÃ©e !')}
                         >
                             <AlertTriangle className="w-4 h-4 mr-2" />
                             SOS

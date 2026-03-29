@@ -36,41 +36,41 @@ const PLAN_COLORS: Record<string, string> = {
 };
 
 const PLAN_DESCRIPTIONS: Record<string, string> = {
-  'free': "Plan basique pour démarrer : gestion des produits, commandes simples, tableau de bord et profil public.",
-  'basic': "Plan intermédiaire pour une gestion structurée : produits avancés, suivi des commandes/livraisons, CRM et analytics de base, facturation automatique.",
-  'pro': "Plan avancé pour développer l’activité : inventaire, marketing/affiliation, agents de vente, liens de paiement et support prioritaire.",
-  'business': "Plan complet pour une gestion étendue : POS, fournisseurs et dettes, multi‑entrepôts, exports et accès API.",
-  'premium': "Plan premium avec outils et accompagnement avancés : assistant IA Gemini, hub de communication, analytics temps réel, account manager dédié et formation.",
+  'free': "Plan basique pour dÃ©marrer : gestion des produits, commandes simples, tableau de bord et profil public.",
+  'basic': "Plan intermÃ©diaire pour une gestion structurÃ©e : produits avancÃ©s, suivi des commandes/livraisons, CRM et analytics de base, facturation automatique.",
+  'pro': "Plan avancÃ© pour dÃ©velopper lâ€™activitÃ© : inventaire, marketing/affiliation, agents de vente, liens de paiement et support prioritaire.",
+  'business': "Plan complet pour une gestion Ã©tendue : POS, fournisseurs et dettes, multiâ€‘entrepÃ´ts, exports et accÃ¨s API.",
+  'premium': "Plan premium avec outils et accompagnement avancÃ©s : assistant IA Gemini, hub de communication, analytics temps rÃ©el, account manager dÃ©diÃ© et formation.",
 };
 
 const PLAN_FEATURES_PREVIEW: Record<string, string[]> = {
   'basic': [
     'POS - Point de vente',
     'Gestion inventaire',
-    'Livraison intégrée',
+    'Livraison intÃ©grÃ©e',
     'Messages clients',
     'Copilot IA',
   ],
   'pro': [
     'Tout de Basic +',
     'Marketing & Promotions',
-    'Gestion clients avancée',
+    'Gestion clients avancÃ©e',
     'Programme affiliation',
-    'Analytics avancés',
+    'Analytics avancÃ©s',
   ],
   'business': [
     'Tout de Pro +',
     'Devis & Factures',
     'Liens de paiement',
     'Gestion dettes',
-    'Produits illimités',
+    'Produits illimitÃ©s',
   ],
   'premium': [
-    'Toutes les fonctionnalités',
-    'Support prioritaire dédié',
+    'Toutes les fonctionnalitÃ©s',
+    'Support prioritaire dÃ©diÃ©',
     'Assistant IA Gemini',
     'API Premium',
-    'Formation personnalisée',
+    'Formation personnalisÃ©e',
   ],
 };
 
@@ -89,8 +89,8 @@ export function FeatureGuard({
     return <div className="animate-pulse bg-muted h-20 rounded" />;
   }
 
-  // Vérifier l'accès à la fonctionnalité
-  // Pour le plan gratuit, on vérifie si la feature est dans le plan free
+  // VÃ©rifier l'accÃ¨s Ã  la fonctionnalitÃ©
+  // Pour le plan gratuit, on vÃ©rifie si la feature est dans le plan free
   const hasAccess = canAccessFeature(feature);
 
   if (hasAccess) {
@@ -127,11 +127,11 @@ export function FeatureGuard({
                 <Lock className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Fonctionnalité Premium</h3>
+                <h3 className="text-lg font-semibold">FonctionnalitÃ© Premium</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   {!isActive() 
-                    ? "Votre abonnement est expiré ou inactif."
-                    : <>Requiert le plan <Badge className={PLAN_COLORS[minPlan]}>{minPlanDisplay}</Badge> ou supérieur</>
+                    ? "Votre abonnement est expirÃ© ou inactif."
+                    : <>Requiert le plan <Badge className={PLAN_COLORS[minPlan]}>{minPlanDisplay}</Badge> ou supÃ©rieur</>
                   }
                 </p>
               </div>
@@ -140,7 +140,7 @@ export function FeatureGuard({
                 onClick={() => setShowDialog(true)}
               >
                 <Crown className="w-4 h-4" />
-                Mettre à niveau
+                Mettre Ã  niveau
               </Button>
             </div>
           </div>
@@ -154,17 +154,17 @@ export function FeatureGuard({
                 <div className="p-2 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500">
                   <Crown className="w-5 h-5 text-white" />
                 </div>
-                <span>Fonctionnalité Premium</span>
+                <span>FonctionnalitÃ© Premium</span>
               </DialogTitle>
               <DialogDescription className="pt-2">
                 {!isActive() ? (
                   <span className="text-destructive font-medium">
-                    Votre abonnement est expiré ou inactif.
+                    Votre abonnement est expirÃ© ou inactif.
                   </span>
                 ) : (
                   <span>
-                    Cette fonctionnalité nécessite le plan{' '}
-                    <Badge className={PLAN_COLORS[minPlan]}>{minPlanDisplay}</Badge> ou supérieur.
+                    Cette fonctionnalitÃ© nÃ©cessite le plan{' '}
+                    <Badge className={PLAN_COLORS[minPlan]}>{minPlanDisplay}</Badge> ou supÃ©rieur.
                   </span>
                 )}
               </DialogDescription>
@@ -177,7 +177,7 @@ export function FeatureGuard({
                 <Badge variant="outline">{getPlanName()}</Badge>
               </div>
 
-              {/* Aperçu des fonctionnalités du plan minimum */}
+              {/* AperÃ§u des fonctionnalitÃ©s du plan minimum */}
               {minPlan !== 'free' && PLAN_FEATURES_PREVIEW[minPlan] && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium flex items-center gap-2">
@@ -187,7 +187,7 @@ export function FeatureGuard({
                   <ul className="space-y-1.5">
                     {PLAN_FEATURES_PREVIEW[minPlan]?.slice(0, 5).map((feat, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        <Check className="w-4 h-4 text-primary-orange-500 flex-shrink-0" />
                         {feat}
                       </li>
                     ))}
@@ -205,13 +205,13 @@ export function FeatureGuard({
                 className="flex-1 bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/40"
               >
                 <Crown className="w-4 h-4 mr-2" />
-                Mettre à niveau
+                Mettre Ã  niveau
               </Button>
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* Sélecteur de plan intégré */}
+        {/* SÃ©lecteur de plan intÃ©grÃ© */}
         <VendorSubscriptionPlanSelector 
           open={showPlanSelector} 
           onOpenChange={setShowPlanSelector}
@@ -224,7 +224,7 @@ export function FeatureGuard({
   return null;
 }
 
-// Composant pour les boutons de fonctionnalité
+// Composant pour les boutons de fonctionnalitÃ©
 interface FeatureButtonProps {
   feature: SubscriptionFeature;
   onClick: () => void;
@@ -248,7 +248,7 @@ export function FeatureButton({
   const [showDialog, setShowDialog] = useState(false);
   const [showPlanSelector, setShowPlanSelector] = useState(false);
 
-  // Vérifier l'accès à la fonctionnalité ET que l'abonnement est actif
+  // VÃ©rifier l'accÃ¨s Ã  la fonctionnalitÃ© ET que l'abonnement est actif
   const hasAccess = isActive() && canAccessFeature(feature);
 
   const handleClick = () => {
@@ -287,19 +287,19 @@ export function FeatureButton({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Crown className="w-5 h-5 text-yellow-500" />
-              Fonctionnalité Premium
+              FonctionnalitÃ© Premium
             </DialogTitle>
             <DialogDescription>
               {!isActive() 
-                ? "Votre abonnement est expiré ou inactif. Veuillez le renouveler pour accéder à cette fonctionnalité."
-                : `Cette fonctionnalité n'est pas disponible avec votre plan actuel: ${getPlanName()}`
+                ? "Votre abonnement est expirÃ© ou inactif. Veuillez le renouveler pour accÃ©der Ã  cette fonctionnalitÃ©."
+                : `Cette fonctionnalitÃ© n'est pas disponible avec votre plan actuel: ${getPlanName()}`
               }
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-4">
             <p className="text-sm text-muted-foreground">
-              Passez à un plan supérieur pour accéder à cette fonctionnalité et bien d'autres avantages.
+              Passez Ã  un plan supÃ©rieur pour accÃ©der Ã  cette fonctionnalitÃ© et bien d'autres avantages.
             </p>
           </div>
 

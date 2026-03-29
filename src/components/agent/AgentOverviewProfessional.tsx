@@ -64,16 +64,16 @@ export function AgentOverviewProfessional({
   const quickActions = [
     {
       icon: <UserPlus className="w-5 h-5" />,
-      label: 'Créer Utilisateur',
+      label: 'CrÃ©er Utilisateur',
       description: 'Ajouter un nouveau client',
-      gradient: 'from-blue-500 to-cyan-500',
+      gradient: 'from-blue-500 to-primary-blue-500',
       shadowColor: 'shadow-blue-500/25',
       tab: 'create-user'
     },
     {
       icon: <Link2 className="w-5 h-5" />,
       label: 'Affiliation',
-      description: 'Gérer vos liens',
+      description: 'GÃ©rer vos liens',
       gradient: 'from-fuchsia-500 to-pink-500',
       shadowColor: 'shadow-fuchsia-500/25',
       tab: 'affiliate'
@@ -81,9 +81,9 @@ export function AgentOverviewProfessional({
     {
       icon: <Wallet className="w-5 h-5" />,
       label: 'Portefeuille',
-      description: 'Gérer vos fonds',
-      gradient: 'from-emerald-500 to-teal-500',
-      shadowColor: 'shadow-emerald-500/25',
+      description: 'GÃ©rer vos fonds',
+      gradient: 'from-primary-blue-500 to-primary-orange-500',
+      shadowColor: 'shadow-primary-orange-500/25',
       tab: 'wallet'
     },
     {
@@ -96,8 +96,8 @@ export function AgentOverviewProfessional({
     },
     {
       icon: <Users className="w-5 h-5" />,
-      label: 'Équipe',
-      description: 'Gérer sous-agents',
+      label: 'Ã‰quipe',
+      description: 'GÃ©rer sous-agents',
       gradient: 'from-orange-500 to-amber-500',
       shadowColor: 'shadow-orange-500/25',
       tab: 'sub-agents'
@@ -127,7 +127,7 @@ export function AgentOverviewProfessional({
             {agent.name}
           </h1>
           <p className="text-slate-500 mt-1 text-sm lg:text-base">
-            Gérez vos activités et suivez vos performances
+            GÃ©rez vos activitÃ©s et suivez vos performances
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -149,15 +149,15 @@ export function AgentOverviewProfessional({
       {/* Main Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Wallet Balance */}
-        <Card className="col-span-2 lg:col-span-1 overflow-hidden border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+        <Card className="col-span-2 lg:col-span-1 overflow-hidden border-0 shadow-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-emerald-100 text-sm font-medium">Solde Total</p>
+                <p className="text-primary-blue-100 text-sm font-medium">Solde Total</p>
                 <h3 className="text-2xl lg:text-3xl font-bold mt-1">
                   {formatCurrency(walletBalance)}
                 </h3>
-                <p className="text-emerald-200 text-sm mt-1">GNF</p>
+                <p className="text-primary-blue-200 text-sm mt-1">GNF</p>
               </div>
               <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
                 <CreditCard className="w-6 h-6" />
@@ -168,7 +168,7 @@ export function AgentOverviewProfessional({
               className="mt-4 w-full bg-white/20 hover:bg-white/30 text-white border-0"
               onClick={() => onNavigate('wallet')}
             >
-              Gérer le wallet
+              GÃ©rer le wallet
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </CardContent>
@@ -182,7 +182,7 @@ export function AgentOverviewProfessional({
                 <Users className="w-5 h-5 text-blue-600" />
               </div>
               {(stats.usersThisMonth || 0) > 0 && (
-                <Badge className="bg-emerald-100 text-emerald-700 border-0 text-xs">
+                <Badge className="bg-primary-blue-100 text-primary-blue-700 border-0 text-xs">
                   +{stats.usersThisMonth}
                 </Badge>
               )}
@@ -287,12 +287,12 @@ export function AgentOverviewProfessional({
               </div>
               <div>
                 <CardTitle className="text-base">Performance Mensuelle</CardTitle>
-                <CardDescription>Vos objectifs et progrès</CardDescription>
+                <CardDescription>Vos objectifs et progrÃ¨s</CardDescription>
               </div>
             </div>
             <Button variant="outline" size="sm" className="text-xs">
               <PieChart className="w-3.5 h-3.5 mr-1.5" />
-              Détails
+              DÃ©tails
             </Button>
           </div>
         </CardHeader>
@@ -318,7 +318,7 @@ export function AgentOverviewProfessional({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-emerald-500" />
+                <DollarSign className="w-4 h-4 text-primary-blue-500" />
                 <span className="text-sm font-medium text-slate-700">Commissions</span>
               </div>
               <span className="text-sm font-bold text-slate-900">
@@ -339,7 +339,7 @@ export function AgentOverviewProfessional({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-violet-500" />
-                <span className="text-sm font-medium text-slate-700">Taux d'Activité</span>
+                <span className="text-sm font-medium text-slate-700">Taux d'ActivitÃ©</span>
               </div>
               <span className="text-sm font-bold text-slate-900">
                 {stats.performance || 100}%

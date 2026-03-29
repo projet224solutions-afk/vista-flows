@@ -1,6 +1,6 @@
 /**
- * 🔒 GESTION ESCROW PDG
- * Interface complète de gestion des transactions escrow pour le PDG
+ * ðŸ”’ GESTION ESCROW PDG
+ * Interface complÃ¨te de gestion des transactions escrow pour le PDG
  */
 
 import { useState, lazy, Suspense } from 'react';
@@ -36,19 +36,19 @@ const statusConfig = {
     color: 'text-yellow-600'
   },
   held: {
-    label: 'Bloqué',
+    label: 'BloquÃ©',
     className: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
     icon: AlertCircle,
     color: 'text-orange-600'
   },
   released: {
-    label: 'Libéré',
-    className: 'bg-green-500/10 text-green-600 border-green-500/20',
+    label: 'LibÃ©rÃ©',
+    className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20',
     icon: CheckCircle,
-    color: 'text-green-600'
+    color: 'text-primary-orange-600'
   },
   refunded: {
-    label: 'Remboursé',
+    label: 'RemboursÃ©',
     className: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
     icon: XCircle,
     color: 'text-blue-600'
@@ -105,22 +105,22 @@ export default function PDGEscrowManagement() {
         case 'release':
           await releaseEscrow(selectedTransaction);
           toast({
-            title: "✅ Fonds libérés",
-            description: "Les fonds ont été transférés au vendeur avec commission."
+            title: "âœ… Fonds libÃ©rÃ©s",
+            description: "Les fonds ont Ã©tÃ© transfÃ©rÃ©s au vendeur avec commission."
           });
           break;
         case 'refund':
           await refundEscrow(selectedTransaction);
           toast({
-            title: "✅ Remboursement effectué",
-            description: "Les fonds ont été retournés au payeur."
+            title: "âœ… Remboursement effectuÃ©",
+            description: "Les fonds ont Ã©tÃ© retournÃ©s au payeur."
           });
           break;
         case 'dispute':
           await disputeEscrow(selectedTransaction);
           toast({
-            title: "⚠️ Litige ouvert",
-            description: "La transaction a été marquée en litige."
+            title: "âš ï¸ Litige ouvert",
+            description: "La transaction a Ã©tÃ© marquÃ©e en litige."
           });
           break;
       }
@@ -129,8 +129,8 @@ export default function PDGEscrowManagement() {
     } catch (error) {
       console.error('Erreur lors de l\'action escrow:', error);
       toast({
-        title: "❌ Erreur",
-        description: error instanceof Error ? error.message : "Échec de l'action",
+        title: "âŒ Erreur",
+        description: error instanceof Error ? error.message : "Ã‰chec de l'action",
         variant: "destructive"
       });
     }
@@ -147,8 +147,8 @@ export default function PDGEscrowManagement() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsRefreshing(false);
     toast({
-      title: "🔄 Données actualisées",
-      description: `${transactions.length} transactions chargées`
+      title: "ðŸ”„ DonnÃ©es actualisÃ©es",
+      description: `${transactions.length} transactions chargÃ©es`
     });
   };
 
@@ -156,7 +156,7 @@ export default function PDGEscrowManagement() {
     <>
       <Tabs defaultValue="transactions" className="space-y-6">
       <div className="space-y-6">
-        {/* En-tête */}
+        {/* En-tÃªte */}
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold flex items-center gap-3">
@@ -164,7 +164,7 @@ export default function PDGEscrowManagement() {
               Gestion Escrow
             </h2>
             <p className="text-muted-foreground mt-1">
-              Gérez toutes les transactions sécurisées avec escrow
+              GÃ©rez toutes les transactions sÃ©curisÃ©es avec escrow
             </p>
           </div>
           <div className="flex gap-2">
@@ -179,7 +179,7 @@ export default function PDGEscrowManagement() {
             <TabsList>
               <TabsTrigger value="transactions">Transactions</TabsTrigger>
               <TabsTrigger value="disputes" className="text-destructive">
-                🚨 Litiges ({stats.dispute})
+                ðŸš¨ Litiges ({stats.dispute})
               </TabsTrigger>
             </TabsList>
           </div>
@@ -207,13 +207,13 @@ export default function PDGEscrowManagement() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-green-500/20">
+          <Card className="bg-gradient-to-br from-primary-blue-500/10 to-primary-orange-600/10 border-primary-orange-500/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Libérées</p>
-                <CheckCircle className="w-4 h-4 text-green-600" />
+                <p className="text-sm text-muted-foreground">LibÃ©rÃ©es</p>
+                <CheckCircle className="w-4 h-4 text-primary-orange-600" />
               </div>
-              <p className="text-3xl font-bold text-green-600">{stats.released}</p>
+              <p className="text-3xl font-bold text-primary-orange-600">{stats.released}</p>
             </CardContent>
           </Card>
 
@@ -264,9 +264,9 @@ export default function PDGEscrowManagement() {
                   variant={statusFilter === 'released' ? 'default' : 'outline'}
                   onClick={() => setStatusFilter('released')}
                   size="sm"
-                  className="border-green-500/30"
+                  className="border-primary-orange-500/30"
                 >
-                  Libérées ({stats.released})
+                  LibÃ©rÃ©es ({stats.released})
                 </Button>
               </div>
             </div>
@@ -292,13 +292,13 @@ export default function PDGEscrowManagement() {
                 <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                 <h3 className="text-lg font-semibold mb-2">
                   {searchTerm || statusFilter !== 'all' 
-                    ? 'Aucun résultat' 
+                    ? 'Aucun rÃ©sultat' 
                     : 'Aucune transaction escrow'}
                 </h3>
                 <p className="text-muted-foreground">
                   {searchTerm || statusFilter !== 'all'
                     ? 'Essayez de modifier vos filtres'
-                    : 'Les transactions escrow apparaîtront ici'}
+                    : 'Les transactions escrow apparaÃ®tront ici'}
                 </p>
               </div>
             ) : (
@@ -330,13 +330,13 @@ export default function PDGEscrowManagement() {
                           {transaction.receiver && (
                             <div className="bg-blue-50/50 border border-blue-200 rounded-lg p-3 mb-3">
                               <h5 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-2">
-                                🏪 Informations Vendeur
+                                ðŸª Informations Vendeur
                               </h5>
                               <div className="text-sm space-y-1">
                                 <p>
                                   <span className="text-muted-foreground">Nom:</span>{' '}
                                   <span className="font-semibold text-foreground">
-                                    {transaction.receiver.business_name || 'Non spécifié'}
+                                    {transaction.receiver.business_name || 'Non spÃ©cifiÃ©'}
                                   </span>
                                 </p>
                                 <p>
@@ -372,13 +372,13 @@ export default function PDGEscrowManagement() {
 
                           <div className="mt-3 text-sm text-muted-foreground grid grid-cols-2 gap-2">
                             <div>
-                              ⏰ Créé: {new Date(transaction.created_at).toLocaleString('fr-FR', {
+                              â° CrÃ©Ã©: {new Date(transaction.created_at).toLocaleString('fr-FR', {
                                 dateStyle: 'short',
                                 timeStyle: 'short'
                               })}
                             </div>
                             <div>
-                              🔄 Maj: {new Date(transaction.updated_at).toLocaleString('fr-FR', {
+                              ðŸ”„ Maj: {new Date(transaction.updated_at).toLocaleString('fr-FR', {
                                 dateStyle: 'short',
                                 timeStyle: 'short'
                               })}
@@ -392,10 +392,10 @@ export default function PDGEscrowManagement() {
                                 size="sm"
                                 variant="default"
                                 onClick={() => openActionDialog(transaction.id, 'release')}
-                                className="bg-green-600 hover:bg-green-700"
+                                className="bg-primary-orange-600 hover:bg-primary-orange-700"
                               >
                                 <CheckCircle className="w-4 h-4 mr-2" />
-                                Libérer
+                                LibÃ©rer
                               </Button>
                               <Button
                                 size="sm"
@@ -439,20 +439,20 @@ export default function PDGEscrowManagement() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              {actionType === 'release' && <><CheckCircle className="w-5 h-5 text-green-600" />Libérer les fonds (Admin)</>}
+              {actionType === 'release' && <><CheckCircle className="w-5 h-5 text-primary-orange-600" />LibÃ©rer les fonds (Admin)</>}
               {actionType === 'refund' && <><XCircle className="w-5 h-5 text-blue-600" />Rembourser la transaction</>}
               {actionType === 'dispute' && <><AlertCircle className="w-5 h-5 text-red-600" />Ouvrir un litige</>}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {actionType === 'release' && '⚠️ Les fonds seront transférés au vendeur avec une commission de 2.5%. Cette action est irréversible.'}
-              {actionType === 'refund' && '⚠️ Les fonds seront retournés intégralement au payeur. Cette action est irréversible.'}
-              {actionType === 'dispute' && '⚠️ Un litige sera ouvert sur cette transaction. Elle sera mise en attente de résolution.'}
+              {actionType === 'release' && 'âš ï¸ Les fonds seront transfÃ©rÃ©s au vendeur avec une commission de 2.5%. Cette action est irrÃ©versible.'}
+              {actionType === 'refund' && 'âš ï¸ Les fonds seront retournÃ©s intÃ©gralement au payeur. Cette action est irrÃ©versible.'}
+              {actionType === 'dispute' && 'âš ï¸ Un litige sera ouvert sur cette transaction. Elle sera mise en attente de rÃ©solution.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleAction} className={
-              actionType === 'release' ? 'bg-green-600 hover:bg-green-700' :
+              actionType === 'release' ? 'bg-primary-orange-600 hover:bg-primary-orange-700' :
               actionType === 'refund' ? 'bg-blue-600 hover:bg-blue-700' :
               'bg-red-600 hover:bg-red-700'
             }>

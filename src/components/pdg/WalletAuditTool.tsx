@@ -1,6 +1,6 @@
 /**
- * 🔐 OUTIL D'AUDIT WALLET COMPLET
- * Permet au PDG de diagnostiquer, vérifier et corriger les wallets
+ * ðŸ” OUTIL D'AUDIT WALLET COMPLET
+ * Permet au PDG de diagnostiquer, vÃ©rifier et corriger les wallets
  */
 
 import { useState, useCallback } from 'react';
@@ -137,7 +137,7 @@ export function WalletAuditTool() {
   const fc = useFormatCurrency();
   const formatAmount = (amount: number, currency = 'GNF') => fc(amount, currency);
 
-  // Audit d'un wallet spécifique
+  // Audit d'un wallet spÃ©cifique
   const auditWallet = useCallback(async (customId?: string) => {
     const idToUse = customId || searchId.trim().toUpperCase();
     if (!idToUse) {
@@ -155,7 +155,7 @@ export function WalletAuditTool() {
       if (data?.error) throw new Error(data.error);
 
       setAuditResult(data);
-      toast.success(`Audit terminé pour ${idToUse}`);
+      toast.success(`Audit terminÃ© pour ${idToUse}`);
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors de l\'audit');
       console.error('Audit error:', err);
@@ -178,7 +178,7 @@ export function WalletAuditTool() {
       setGlobalStats(data.stats);
       setUsersWithoutWallet(data.usersWithoutWallet || []);
       setProblematicWallets(data.problematicWallets || []);
-      toast.success('Statistiques chargées');
+      toast.success('Statistiques chargÃ©es');
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors du chargement');
     } finally {
@@ -186,7 +186,7 @@ export function WalletAuditTool() {
     }
   }, []);
 
-  // Vérifier les signatures API
+  // VÃ©rifier les signatures API
   const verifySignatures = useCallback(async () => {
     setLoading(true);
     try {
@@ -196,15 +196,15 @@ export function WalletAuditTool() {
 
       if (error) throw error;
       setApiSignatures(data);
-      toast.success('Signatures vérifiées');
+      toast.success('Signatures vÃ©rifiÃ©es');
     } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la vérification');
+      toast.error(err.message || 'Erreur lors de la vÃ©rification');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Réconcilier le solde
+  // RÃ©concilier le solde
   const reconcileBalance = useCallback(async () => {
     if (!auditResult?.wallet) return;
     
@@ -217,17 +217,17 @@ export function WalletAuditTool() {
       if (error) throw error;
       if (!data?.success) throw new Error(data.error);
 
-      toast.success(`Solde réconcilié: ${formatAmount(data.oldBalance)} → ${formatAmount(data.newBalance)}`);
+      toast.success(`Solde rÃ©conciliÃ©: ${formatAmount(data.oldBalance)} â†’ ${formatAmount(data.newBalance)}`);
       // Recharger l'audit
       await auditWallet();
     } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la réconciliation');
+      toast.error(err.message || 'Erreur lors de la rÃ©conciliation');
     } finally {
       setLoading(false);
     }
   }, [auditResult, auditWallet]);
 
-  // Débloquer un wallet
+  // DÃ©bloquer un wallet
   const unblockWallet = useCallback(async () => {
     if (!auditResult?.wallet) return;
     
@@ -240,10 +240,10 @@ export function WalletAuditTool() {
       if (error) throw error;
       if (!data?.success) throw new Error(data.error);
 
-      toast.success('Wallet débloqué');
+      toast.success('Wallet dÃ©bloquÃ©');
       await auditWallet();
     } catch (err: any) {
-      toast.error(err.message || 'Erreur lors du déblocage');
+      toast.error(err.message || 'Erreur lors du dÃ©blocage');
     } finally {
       setLoading(false);
     }
@@ -262,7 +262,7 @@ export function WalletAuditTool() {
       if (error) throw error;
       if (!data?.success) throw new Error(data.error);
 
-      toast.success('Wallet activé');
+      toast.success('Wallet activÃ©');
       await auditWallet();
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors de l\'activation');
@@ -271,7 +271,7 @@ export function WalletAuditTool() {
     }
   }, [auditResult, auditWallet]);
 
-  // Créer un wallet manquant
+  // CrÃ©er un wallet manquant
   const createWallet = useCallback(async (customId: string) => {
     setLoading(true);
     try {
@@ -282,16 +282,16 @@ export function WalletAuditTool() {
       if (error) throw error;
       if (!data?.success) throw new Error(data.error);
 
-      toast.success(`Wallet créé pour ${customId}`);
+      toast.success(`Wallet crÃ©Ã© pour ${customId}`);
       await loadGlobalStats();
     } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la création');
+      toast.error(err.message || 'Erreur lors de la crÃ©ation');
     } finally {
       setLoading(false);
     }
   }, [loadGlobalStats]);
 
-  // Réconcilier tous les wallets
+  // RÃ©concilier tous les wallets
   const reconcileAllWallets = useCallback(async () => {
     setActionLoading('reconcile-all');
     setBatchResult(null);
@@ -304,16 +304,16 @@ export function WalletAuditTool() {
       if (!data?.success) throw new Error(data.error);
 
       setBatchResult(data);
-      toast.success(`Réconciliation terminée: ${data.stats.reconciled} wallets corrigés`);
+      toast.success(`RÃ©conciliation terminÃ©e: ${data.stats.reconciled} wallets corrigÃ©s`);
       await loadGlobalStats();
     } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la réconciliation');
+      toast.error(err.message || 'Erreur lors de la rÃ©conciliation');
     } finally {
       setActionLoading(null);
     }
   }, [loadGlobalStats]);
 
-  // Créer tous les wallets manquants
+  // CrÃ©er tous les wallets manquants
   const createAllMissingWallets = useCallback(async () => {
     setActionLoading('create-all');
     setBatchResult(null);
@@ -326,10 +326,10 @@ export function WalletAuditTool() {
       if (!data?.success) throw new Error(data.error);
 
       setBatchResult(data);
-      toast.success(`${data.stats.created} wallets créés`);
+      toast.success(`${data.stats.created} wallets crÃ©Ã©s`);
       await loadGlobalStats();
     } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la création');
+      toast.error(err.message || 'Erreur lors de la crÃ©ation');
     } finally {
       setActionLoading(null);
     }
@@ -345,14 +345,14 @@ export function WalletAuditTool() {
         body: { 
           action: 'block-wallet', 
           userId: auditResult.wallet.user_id,
-          reason: reason || blockReason || 'Blocage de sécurité'
+          reason: reason || blockReason || 'Blocage de sÃ©curitÃ©'
         }
       });
 
       if (error) throw error;
       if (!data?.success) throw new Error(data.error);
 
-      toast.success('Wallet bloqué avec succès');
+      toast.success('Wallet bloquÃ© avec succÃ¨s');
       setShowBlockDialog(false);
       setBlockReason('');
       await auditWallet();
@@ -363,7 +363,7 @@ export function WalletAuditTool() {
     }
   }, [auditResult, auditWallet, blockReason]);
 
-  // Débloquer un wallet (déjà existant dans unblockWallet)
+  // DÃ©bloquer un wallet (dÃ©jÃ  existant dans unblockWallet)
 
   // Charger les abonnements d'un utilisateur
   const loadUserSubscriptions = useCallback(async () => {
@@ -408,7 +408,7 @@ export function WalletAuditTool() {
       if (error) throw error;
       if (!data?.success) throw new Error(data.error);
 
-      toast.success('Abonnement annulé avec succès');
+      toast.success('Abonnement annulÃ© avec succÃ¨s');
       setCancelReason('');
       // Recharger les abonnements
       await loadUserSubscriptions();
@@ -429,7 +429,7 @@ export function WalletAuditTool() {
 
   const getSignatureStatusColor = (status: string) => {
     switch (status) {
-      case 'valid': return 'bg-green-100 text-green-800';
+      case 'valid': return 'bg-primary-orange-100 text-primary-orange-800';
       case 'invalid': return 'bg-red-100 text-red-800';
       case 'expired': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -438,7 +438,7 @@ export function WalletAuditTool() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête et onglets */}
+      {/* En-tÃªte et onglets */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -446,7 +446,7 @@ export function WalletAuditTool() {
             Audit & Diagnostic Wallet Complet
           </CardTitle>
           <CardDescription>
-            Vérifiez, diagnostiquez et corrigez les problèmes de wallet des utilisateurs
+            VÃ©rifiez, diagnostiquez et corrigez les problÃ¨mes de wallet des utilisateurs
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -466,7 +466,7 @@ export function WalletAuditTool() {
               </TabsTrigger>
               <TabsTrigger value="issues" className="gap-1">
                 <AlertTriangle className="h-4 w-4" />
-                Problèmes
+                ProblÃ¨mes
               </TabsTrigger>
             </TabsList>
 
@@ -486,30 +486,30 @@ export function WalletAuditTool() {
                 </Button>
               </div>
 
-              {/* Résultats de l'audit */}
+              {/* RÃ©sultats de l'audit */}
               {auditResult && (
                 <div className="space-y-4">
-                  {/* Score de santé */}
+                  {/* Score de santÃ© */}
                   <Card className={`border-2 ${
-                    auditResult.summary.healthScore >= 80 ? 'border-green-500' :
+                    auditResult.summary.healthScore >= 80 ? 'border-primary-orange-500' :
                     auditResult.summary.healthScore >= 50 ? 'border-yellow-500' : 'border-red-500'
                   }`}>
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className={`p-3 rounded-full ${
-                            auditResult.summary.healthScore >= 80 ? 'bg-green-100' :
+                            auditResult.summary.healthScore >= 80 ? 'bg-primary-orange-100' :
                             auditResult.summary.healthScore >= 50 ? 'bg-yellow-100' : 'bg-red-100'
                           }`}>
                             <Wallet className={`h-6 w-6 ${
-                              auditResult.summary.healthScore >= 80 ? 'text-green-600' :
+                              auditResult.summary.healthScore >= 80 ? 'text-primary-orange-600' :
                               auditResult.summary.healthScore >= 50 ? 'text-yellow-600' : 'text-red-600'
                             }`} />
                           </div>
                           <div>
-                            <h3 className="text-lg font-bold">Score de Santé: {auditResult.summary.healthScore}%</h3>
+                            <h3 className="text-lg font-bold">Score de SantÃ©: {auditResult.summary.healthScore}%</h3>
                             <p className="text-sm text-muted-foreground">
-                              {auditResult.walletFound ? 'Wallet trouvé' : 'Aucun wallet'}
+                              {auditResult.walletFound ? 'Wallet trouvÃ©' : 'Aucun wallet'}
                             </p>
                           </div>
                         </div>
@@ -519,7 +519,7 @@ export function WalletAuditTool() {
                       {/* Stats rapides */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="text-center p-3 bg-muted rounded-lg">
-                          <p className="text-2xl font-bold text-green-600">
+                          <p className="text-2xl font-bold text-primary-orange-600">
                             {formatAmount(auditResult.storedBalance)}
                           </p>
                           <p className="text-xs text-muted-foreground">Solde actuel</p>
@@ -528,13 +528,13 @@ export function WalletAuditTool() {
                           <p className="text-2xl font-bold">
                             {formatAmount(auditResult.calculatedBalance)}
                           </p>
-                          <p className="text-xs text-muted-foreground">Solde calculé</p>
+                          <p className="text-xs text-muted-foreground">Solde calculÃ©</p>
                         </div>
                         <div className="text-center p-3 bg-muted rounded-lg">
                           <p className={`text-2xl font-bold ${
-                            auditResult.isBalanceCorrect ? 'text-green-600' : 'text-red-600'
+                            auditResult.isBalanceCorrect ? 'text-primary-orange-600' : 'text-red-600'
                           }`}>
-                            {auditResult.isBalanceCorrect ? '✓' : formatAmount(auditResult.balanceDifference)}
+                            {auditResult.isBalanceCorrect ? 'âœ“' : formatAmount(auditResult.balanceDifference)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {auditResult.isBalanceCorrect ? 'Solde correct' : 'Divergence'}
@@ -548,13 +548,13 @@ export function WalletAuditTool() {
                     </CardContent>
                   </Card>
 
-                  {/* Problèmes détectés */}
+                  {/* ProblÃ¨mes dÃ©tectÃ©s */}
                   {auditResult.issues.length > 0 && (
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
                           <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                          Problèmes Détectés ({auditResult.issues.length})
+                          ProblÃ¨mes DÃ©tectÃ©s ({auditResult.issues.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -573,7 +573,7 @@ export function WalletAuditTool() {
                                   <AlertDescription>{issue.message}</AlertDescription>
                                   {issue.details && (
                                     <details className="mt-2">
-                                      <summary className="text-xs cursor-pointer text-primary">Détails</summary>
+                                      <summary className="text-xs cursor-pointer text-primary">DÃ©tails</summary>
                                       <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-auto">
                                         {JSON.stringify(issue.details, null, 2)}
                                       </pre>
@@ -614,13 +614,13 @@ export function WalletAuditTool() {
                         {!auditResult.isBalanceCorrect && auditResult.walletFound && (
                           <Button onClick={reconcileBalance} disabled={loading} variant="outline">
                             <RefreshCw className="h-4 w-4 mr-2" />
-                            Réconcilier le solde
+                            RÃ©concilier le solde
                           </Button>
                         )}
                         {auditResult.wallet?.is_blocked && (
                           <Button onClick={unblockWallet} disabled={loading} variant="outline">
                             <Unlock className="h-4 w-4 mr-2" />
-                            Débloquer le wallet
+                            DÃ©bloquer le wallet
                           </Button>
                         )}
                         {auditResult.wallet?.wallet_status !== 'active' && auditResult.walletFound && (
@@ -632,44 +632,44 @@ export function WalletAuditTool() {
                         {!auditResult.walletFound && (
                           <Button onClick={() => createWallet(searchId)} disabled={loading}>
                             <Plus className="h-4 w-4 mr-2" />
-                            Créer le wallet
+                            CrÃ©er le wallet
                           </Button>
                         )}
                       </div>
                     </CardContent>
                   </Card>
 
-                  {/* Actions de sécurité */}
+                  {/* Actions de sÃ©curitÃ© */}
                   {auditResult.walletFound && (
                     <Card className="border-destructive/30">
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
                           <ShieldX className="h-5 w-5 text-destructive" />
-                          Mesures de Sécurité
+                          Mesures de SÃ©curitÃ©
                         </CardTitle>
                         <CardDescription>
-                          Actions restrictives pour protéger l'utilisateur ou la plateforme
+                          Actions restrictives pour protÃ©ger l'utilisateur ou la plateforme
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {/* Blocage/Déblocage Wallet */}
+                        {/* Blocage/DÃ©blocage Wallet */}
                         <div className="flex flex-col gap-3">
                           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                             <div className="flex items-center gap-3">
                               <div className={`p-2 rounded-full ${
                                 auditResult.wallet?.wallet_status === 'blocked' 
                                   ? 'bg-red-100' 
-                                  : 'bg-green-100'
+                                  : 'bg-primary-orange-100'
                               }`}>
                                 {auditResult.wallet?.wallet_status === 'blocked' ? (
                                   <Lock className="h-5 w-5 text-red-600" />
                                 ) : (
-                                  <Unlock className="h-5 w-5 text-green-600" />
+                                  <Unlock className="h-5 w-5 text-primary-orange-600" />
                                 )}
                               </div>
                               <div>
                                 <p className="font-medium">
-                                  Statut: {auditResult.wallet?.wallet_status === 'blocked' ? 'Bloqué' : 'Actif'}
+                                  Statut: {auditResult.wallet?.wallet_status === 'blocked' ? 'BloquÃ©' : 'Actif'}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                   {auditResult.wallet?.wallet_status === 'blocked' 
@@ -684,14 +684,14 @@ export function WalletAuditTool() {
                                 onClick={unblockWallet} 
                                 disabled={actionLoading === 'unblock'}
                                 variant="outline"
-                                className="border-green-500 text-green-600 hover:bg-green-50"
+                                className="border-primary-orange-500 text-primary-orange-600 hover:bg-gradient-to-br from-primary-blue-50 to-primary-orange-50"
                               >
                                 {actionLoading === 'unblock' ? (
                                   <RefreshCw className="h-4 w-4 animate-spin mr-2" />
                                 ) : (
                                   <Unlock className="h-4 w-4 mr-2" />
                                 )}
-                                Débloquer
+                                DÃ©bloquer
                               </Button>
                             ) : (
                               <Button 
@@ -717,8 +717,8 @@ export function WalletAuditTool() {
                                 <span className="font-medium">Bloquer ce wallet</span>
                               </div>
                               <p className="text-sm text-muted-foreground">
-                                Cette action empêchera l'utilisateur d'effectuer des transactions. 
-                                Une notification sera envoyée.
+                                Cette action empÃªchera l'utilisateur d'effectuer des transactions. 
+                                Une notification sera envoyÃ©e.
                               </p>
                               <Input
                                 placeholder="Raison du blocage (obligatoire)"
@@ -764,7 +764,7 @@ export function WalletAuditTool() {
                             <div>
                               <p className="font-medium">Abonnements</p>
                               <p className="text-sm text-muted-foreground">
-                                Gérer ou annuler les abonnements de l'utilisateur
+                                GÃ©rer ou annuler les abonnements de l'utilisateur
                               </p>
                             </div>
                           </div>
@@ -803,7 +803,7 @@ export function WalletAuditTool() {
 
                             <div className="grid grid-cols-3 gap-3">
                               <div className="text-center p-2 bg-background rounded">
-                                <p className="text-xl font-bold text-green-600">
+                                <p className="text-xl font-bold text-primary-orange-600">
                                   {userSubscriptions.stats?.active || 0}
                                 </p>
                                 <p className="text-xs text-muted-foreground">Actifs</p>
@@ -812,7 +812,7 @@ export function WalletAuditTool() {
                                 <p className="text-xl font-bold text-destructive">
                                   {userSubscriptions.stats?.expired || 0}
                                 </p>
-                                <p className="text-xs text-muted-foreground">Expirés</p>
+                                <p className="text-xs text-muted-foreground">ExpirÃ©s</p>
                               </div>
                               <div className="text-center p-2 bg-background rounded">
                                 <p className="text-xl font-bold text-blue-600">
@@ -864,12 +864,12 @@ export function WalletAuditTool() {
                                         <div className="flex items-center gap-1 text-muted-foreground">
                                           <Clock className="h-3 w-3" />
                                           <span>Expire:</span>
-                                          <span className={sub._is_expired ? 'text-destructive font-medium' : (sub._is_unlimited ? 'text-green-600 font-medium' : 'font-medium')}>
+                                          <span className={sub._is_expired ? 'text-destructive font-medium' : (sub._is_unlimited ? 'text-primary-orange-600 font-medium' : 'font-medium')}>
                                             {sub._is_unlimited 
-                                              ? '∞ Illimité' 
+                                              ? 'âˆž IllimitÃ©' 
                                               : (sub._end_date 
                                                   ? format(new Date(sub._end_date), 'dd/MM/yyyy HH:mm')
-                                                  : 'Non définie'
+                                                  : 'Non dÃ©finie'
                                                 )
                                             }
                                           </span>
@@ -878,14 +878,14 @@ export function WalletAuditTool() {
                                           <CreditCard className="h-3 w-3" />
                                           <span>Paiement:</span>
                                           <Badge variant="outline" className="text-xs">
-                                            {sub._payment_method || sub.payment_method || 'Non défini'}
+                                            {sub._payment_method || sub.payment_method || 'Non dÃ©fini'}
                                           </Badge>
                                         </div>
                                       </div>
                                       
                                       {sub.price_paid && (
                                         <div className="mt-2 text-xs text-muted-foreground">
-                                          Montant payé: <span className="font-medium">{formatAmount(sub.price_paid)}</span>
+                                          Montant payÃ©: <span className="font-medium">{formatAmount(sub.price_paid)}</span>
                                         </div>
                                       )}
                                     </div>
@@ -895,7 +895,7 @@ export function WalletAuditTool() {
                             ) : (
                               <div className="text-center py-4 text-muted-foreground">
                                 <CreditCard className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                <p>Aucun abonnement trouvé</p>
+                                <p>Aucun abonnement trouvÃ©</p>
                               </div>
                             )}
                           </div>
@@ -904,12 +904,12 @@ export function WalletAuditTool() {
                     </Card>
                   )}
 
-                  {/* Transactions récentes */}
+                  {/* Transactions rÃ©centes */}
                   {auditResult.transactions.length > 0 && (
                     <Card>
                       <CardHeader>
                         <CardTitle className="text-lg">
-                          Transactions Récentes ({auditResult.transactions.length})
+                          Transactions RÃ©centes ({auditResult.transactions.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -918,10 +918,10 @@ export function WalletAuditTool() {
                             {auditResult.transactions.slice(0, 50).map((tx, idx) => (
                               <div key={idx} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                                 <div className={`p-2 rounded-full ${
-                                  tx._direction === 'received' ? 'bg-green-100' : 'bg-red-100'
+                                  tx._direction === 'received' ? 'bg-primary-orange-100' : 'bg-red-100'
                                 }`}>
                                   {tx._direction === 'received' ? (
-                                    <TrendingUp className="h-4 w-4 text-green-600" />
+                                    <TrendingUp className="h-4 w-4 text-primary-orange-600" />
                                   ) : (
                                     <TrendingDown className="h-4 w-4 text-red-600" />
                                   )}
@@ -941,7 +941,7 @@ export function WalletAuditTool() {
                                 </div>
                                 <div className="text-right">
                                   <p className={`font-bold ${
-                                    tx._direction === 'received' ? 'text-green-600' : 'text-red-600'
+                                    tx._direction === 'received' ? 'text-primary-orange-600' : 'text-red-600'
                                   }`}>
                                     {tx._direction === 'received' ? '+' : '-'}
                                     {formatAmount(Number(tx.amount) || 0)}
@@ -961,11 +961,11 @@ export function WalletAuditTool() {
                     </Card>
                   )}
 
-                  {/* Historique de réconciliation */}
+                  {/* Historique de rÃ©conciliation */}
                   {auditResult.reconciliationHistory.length > 0 && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Historique de Réconciliation</CardTitle>
+                        <CardTitle className="text-lg">Historique de RÃ©conciliation</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ScrollArea className="h-[200px]">
@@ -975,10 +975,10 @@ export function WalletAuditTool() {
                                 <FileText className="h-4 w-4 text-muted-foreground" />
                                 <div className="flex-1">
                                   <p className="text-sm">
-                                    {formatAmount(rec.stored_balance)} → {formatAmount(rec.calculated_balance)}
+                                    {formatAmount(rec.stored_balance)} â†’ {formatAmount(rec.calculated_balance)}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    Différence: {formatAmount(rec.difference)}
+                                    DiffÃ©rence: {formatAmount(rec.difference)}
                                   </p>
                                 </div>
                                 <div className="text-right text-xs text-muted-foreground">
@@ -992,13 +992,13 @@ export function WalletAuditTool() {
                     </Card>
                   )}
 
-                  {/* Activités suspectes */}
+                  {/* ActivitÃ©s suspectes */}
                   {auditResult.suspiciousActivities.length > 0 && (
                     <Card className="border-red-200">
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2 text-red-600">
                           <AlertTriangle className="h-5 w-5" />
-                          Activités Suspectes ({auditResult.suspiciousActivities.length})
+                          ActivitÃ©s Suspectes ({auditResult.suspiciousActivities.length})
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
@@ -1008,8 +1008,8 @@ export function WalletAuditTool() {
                               <Alert key={idx} variant="destructive">
                                 <AlertTitle>{activity.activity_type}</AlertTitle>
                                 <AlertDescription>
-                                  Niveau de risque: {activity.risk_level} • 
-                                  {activity.is_resolved ? ' Résolu' : ' Non résolu'}
+                                  Niveau de risque: {activity.risk_level} â€¢ 
+                                  {activity.is_resolved ? ' RÃ©solu' : ' Non rÃ©solu'}
                                 </AlertDescription>
                               </Alert>
                             ))}
@@ -1044,9 +1044,9 @@ export function WalletAuditTool() {
                     </Card>
                     <Card>
                       <CardContent className="pt-6 text-center">
-                        <Wallet className="h-8 w-8 mx-auto text-green-600 mb-2" />
+                        <Wallet className="h-8 w-8 mx-auto text-primary-orange-600 mb-2" />
                         <p className="text-2xl font-bold">{globalStats.totalWallets}</p>
-                        <p className="text-xs text-muted-foreground">Wallets créés</p>
+                        <p className="text-xs text-muted-foreground">Wallets crÃ©Ã©s</p>
                       </CardContent>
                     </Card>
                     <Card className={globalStats.usersWithoutWalletCount > 0 ? 'border-yellow-500' : ''}>
@@ -1060,14 +1060,14 @@ export function WalletAuditTool() {
                       <CardContent className="pt-6 text-center">
                         <XCircle className="h-8 w-8 mx-auto text-red-500 mb-2" />
                         <p className="text-2xl font-bold">{globalStats.problematicWalletsCount}</p>
-                        <p className="text-xs text-muted-foreground">Wallets problématiques</p>
+                        <p className="text-xs text-muted-foreground">Wallets problÃ©matiques</p>
                       </CardContent>
                     </Card>
                     <Card className={globalStats.unresolvedSuspiciousCount > 0 ? 'border-red-500' : ''}>
                       <CardContent className="pt-6 text-center">
                         <Shield className="h-8 w-8 mx-auto text-red-500 mb-2" />
                         <p className="text-2xl font-bold">{globalStats.unresolvedSuspiciousCount}</p>
-                        <p className="text-xs text-muted-foreground">Activités suspectes</p>
+                        <p className="text-xs text-muted-foreground">ActivitÃ©s suspectes</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -1097,7 +1097,7 @@ export function WalletAuditTool() {
                                   disabled={loading}
                                 >
                                   <Plus className="h-3 w-3 mr-1" />
-                                  Créer
+                                  CrÃ©er
                                 </Button>
                               </div>
                             ))}
@@ -1107,11 +1107,11 @@ export function WalletAuditTool() {
                     </Card>
                   )}
 
-                  {/* Wallets problématiques */}
+                  {/* Wallets problÃ©matiques */}
                   {problematicWallets.length > 0 && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Wallets Problématiques</CardTitle>
+                        <CardTitle className="text-lg">Wallets ProblÃ©matiques</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ScrollArea className="h-[250px]">
@@ -1157,7 +1157,7 @@ export function WalletAuditTool() {
               <div className="flex justify-end">
                 <Button onClick={verifySignatures} disabled={loading}>
                   {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
-                  Vérifier les signatures
+                  VÃ©rifier les signatures
                 </Button>
               </div>
 
@@ -1171,10 +1171,10 @@ export function WalletAuditTool() {
                         <p className="text-xs text-muted-foreground">Total APIs</p>
                       </CardContent>
                     </Card>
-                    <Card className="border-green-500">
+                    <Card className="border-primary-orange-500">
                       <CardContent className="pt-6 text-center">
-                        <CheckCircle className="h-6 w-6 mx-auto text-green-600 mb-1" />
-                        <p className="text-2xl font-bold text-green-600">{apiSignatures.stats.valid}</p>
+                        <CheckCircle className="h-6 w-6 mx-auto text-primary-orange-600 mb-1" />
+                        <p className="text-2xl font-bold text-primary-orange-600">{apiSignatures.stats.valid}</p>
                         <p className="text-xs text-muted-foreground">Valides</p>
                       </CardContent>
                     </Card>
@@ -1189,7 +1189,7 @@ export function WalletAuditTool() {
                       <CardContent className="pt-6 text-center">
                         <Clock className="h-6 w-6 mx-auto text-yellow-600 mb-1" />
                         <p className="text-2xl font-bold text-yellow-600">{apiSignatures.stats.expired}</p>
-                        <p className="text-xs text-muted-foreground">Expirées</p>
+                        <p className="text-xs text-muted-foreground">ExpirÃ©es</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -1197,7 +1197,7 @@ export function WalletAuditTool() {
                   {/* Liste des signatures */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">État des API de Paiement</CardTitle>
+                      <CardTitle className="text-lg">Ã‰tat des API de Paiement</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
@@ -1229,11 +1229,11 @@ export function WalletAuditTool() {
                     </CardContent>
                   </Card>
 
-                  {/* Webhooks récents */}
+                  {/* Webhooks rÃ©cents */}
                   {apiSignatures.recentWebhooks && apiSignatures.recentWebhooks.length > 0 && (
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Webhooks Récents</CardTitle>
+                        <CardTitle className="text-lg">Webhooks RÃ©cents</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <ScrollArea className="h-[200px]">
@@ -1258,13 +1258,13 @@ export function WalletAuditTool() {
               )}
             </TabsContent>
 
-            {/* Onglet Problèmes */}
+            {/* Onglet ProblÃ¨mes */}
             <TabsContent value="issues" className="space-y-4">
               <Alert>
                 <ListChecks className="h-4 w-4" />
-                <AlertTitle>Checklist de Vérification</AlertTitle>
+                <AlertTitle>Checklist de VÃ©rification</AlertTitle>
                 <AlertDescription>
-                  Utilisez cette section pour vérifier l'état global des wallets et identifier les problèmes à résoudre.
+                  Utilisez cette section pour vÃ©rifier l'Ã©tat global des wallets et identifier les problÃ¨mes Ã  rÃ©soudre.
                 </AlertDescription>
               </Alert>
 
@@ -1273,7 +1273,7 @@ export function WalletAuditTool() {
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Activity className="h-5 w-5 text-blue-500" />
-                      Vérifications Automatiques
+                      VÃ©rifications Automatiques
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1302,7 +1302,7 @@ export function WalletAuditTool() {
                         ) : (
                           <Key className="h-4 w-4 mr-2" />
                         )}
-                        Vérifier les clés API
+                        VÃ©rifier les clÃ©s API
                       </Button>
                     </div>
                   </CardContent>
@@ -1328,7 +1328,7 @@ export function WalletAuditTool() {
                         ) : (
                           <RefreshCw className="h-4 w-4 mr-2" />
                         )}
-                        Réconcilier tous les soldes
+                        RÃ©concilier tous les soldes
                       </Button>
                       <Button 
                         className="w-full justify-start" 
@@ -1341,7 +1341,7 @@ export function WalletAuditTool() {
                         ) : (
                           <Plus className="h-4 w-4 mr-2" />
                         )}
-                        Créer wallets manquants
+                        CrÃ©er wallets manquants
                       </Button>
                     </div>
                   </CardContent>
@@ -1354,7 +1354,7 @@ export function WalletAuditTool() {
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <BarChart3 className="h-5 w-5 text-primary" />
-                      Résultats du Scan
+                      RÃ©sultats du Scan
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1364,8 +1364,8 @@ export function WalletAuditTool() {
                         <p className="text-xs text-muted-foreground">Utilisateurs</p>
                       </div>
                       <div className="text-center p-3 bg-muted rounded-lg">
-                        <p className="text-xl font-bold text-green-600">{globalStats.totalWallets}</p>
-                        <p className="text-xs text-muted-foreground">Wallets créés</p>
+                        <p className="text-xl font-bold text-primary-orange-600">{globalStats.totalWallets}</p>
+                        <p className="text-xs text-muted-foreground">Wallets crÃ©Ã©s</p>
                       </div>
                       <div className="text-center p-3 bg-yellow-100 dark:bg-yellow-950/30 rounded-lg">
                         <p className="text-xl font-bold text-yellow-600">{globalStats.usersWithoutWalletCount}</p>
@@ -1373,7 +1373,7 @@ export function WalletAuditTool() {
                       </div>
                       <div className="text-center p-3 bg-red-100 dark:bg-red-950/30 rounded-lg">
                         <p className="text-xl font-bold text-red-600">{globalStats.problematicWalletsCount}</p>
-                        <p className="text-xs text-muted-foreground">Problématiques</p>
+                        <p className="text-xs text-muted-foreground">ProblÃ©matiques</p>
                       </div>
                       <div className="text-center p-3 bg-red-100 dark:bg-red-950/30 rounded-lg">
                         <p className="text-xl font-bold text-red-600">{globalStats.unresolvedSuspiciousCount}</p>
@@ -1384,13 +1384,13 @@ export function WalletAuditTool() {
                 </Card>
               )}
 
-              {/* Résultats des actions batch */}
+              {/* RÃ©sultats des actions batch */}
               {batchResult && (
-                <Card className="border-green-500">
+                <Card className="border-primary-orange-500">
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                      Résultat de l'Action
+                      <CheckCircle className="h-5 w-5 text-primary-orange-500" />
+                      RÃ©sultat de l'Action
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1406,13 +1406,13 @@ export function WalletAuditTool() {
                             <span>Manquants: <strong>{batchResult.stats.totalMissing}</strong></span>
                           )}
                           {batchResult.stats.reconciled !== undefined && (
-                            <span className="text-green-600">Réconciliés: <strong>{batchResult.stats.reconciled}</strong></span>
+                            <span className="text-primary-orange-600">RÃ©conciliÃ©s: <strong>{batchResult.stats.reconciled}</strong></span>
                           )}
                           {batchResult.stats.created !== undefined && (
-                            <span className="text-green-600">Créés: <strong>{batchResult.stats.created}</strong></span>
+                            <span className="text-primary-orange-600">CrÃ©Ã©s: <strong>{batchResult.stats.created}</strong></span>
                           )}
                           {batchResult.stats.skipped !== undefined && (
-                            <span className="text-muted-foreground">Ignorés: <strong>{batchResult.stats.skipped}</strong></span>
+                            <span className="text-muted-foreground">IgnorÃ©s: <strong>{batchResult.stats.skipped}</strong></span>
                           )}
                           {batchResult.stats.errors !== undefined && batchResult.stats.errors > 0 && (
                             <span className="text-red-600">Erreurs: <strong>{batchResult.stats.errors}</strong></span>
@@ -1428,7 +1428,7 @@ export function WalletAuditTool() {
                             <div key={idx} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg text-sm">
                               <div className="flex items-center gap-2">
                                 {result.status === 'reconciled' || result.status === 'created' ? (
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                  <CheckCircle className="h-4 w-4 text-primary-orange-500" />
                                 ) : (
                                   <XCircle className="h-4 w-4 text-red-500" />
                                 )}
@@ -1441,8 +1441,8 @@ export function WalletAuditTool() {
                                   <span className="text-muted-foreground">
                                     {formatAmount(result.oldBalance)}
                                   </span>
-                                  <span>→</span>
-                                  <span className="text-green-600 font-medium">
+                                  <span>â†’</span>
+                                  <span className="text-primary-orange-600 font-medium">
                                     {formatAmount(result.newBalance)}
                                   </span>
                                   {result.difference !== 0 && (
@@ -1453,8 +1453,8 @@ export function WalletAuditTool() {
                                 </div>
                               )}
                               {result.walletId && (
-                                <Badge variant="outline" className="text-xs text-green-600">
-                                  Wallet créé
+                                <Badge variant="outline" className="text-xs text-primary-orange-600">
+                                  Wallet crÃ©Ã©
                                 </Badge>
                               )}
                             </div>
@@ -1472,7 +1472,7 @@ export function WalletAuditTool() {
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Key className="h-5 w-5" />
-                      État des API de Paiement
+                      Ã‰tat des API de Paiement
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1481,8 +1481,8 @@ export function WalletAuditTool() {
                         <p className="text-lg font-bold">{apiSignatures.stats.total}</p>
                         <p className="text-xs text-muted-foreground">Total</p>
                       </div>
-                      <div className="text-center p-2 bg-green-100 dark:bg-green-950/30 rounded-lg">
-                        <p className="text-lg font-bold text-green-600">{apiSignatures.stats.valid}</p>
+                      <div className="text-center p-2 bg-primary-orange-100 dark:bg-primary-orange-950/30 rounded-lg">
+                        <p className="text-lg font-bold text-primary-orange-600">{apiSignatures.stats.valid}</p>
                         <p className="text-xs text-muted-foreground">Valides</p>
                       </div>
                       <div className="text-center p-2 bg-red-100 dark:bg-red-950/30 rounded-lg">
@@ -1491,7 +1491,7 @@ export function WalletAuditTool() {
                       </div>
                       <div className="text-center p-2 bg-yellow-100 dark:bg-yellow-950/30 rounded-lg">
                         <p className="text-lg font-bold text-yellow-600">{apiSignatures.stats.expired}</p>
-                        <p className="text-xs text-muted-foreground">Expirées</p>
+                        <p className="text-xs text-muted-foreground">ExpirÃ©es</p>
                       </div>
                     </div>
                     <div className="space-y-2">

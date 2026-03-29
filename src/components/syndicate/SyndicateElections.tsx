@@ -1,6 +1,6 @@
 /**
- * SYSTÈME D'ÉLECTIONS SYNDICALES ULTRA PROFESSIONNEL
- * Interface complète pour la gouvernance démocratique
+ * SYSTÃˆME D'Ã‰LECTIONS SYNDICALES ULTRA PROFESSIONNEL
+ * Interface complÃ¨te pour la gouvernance dÃ©mocratique
  * 224Solutions - Bureau Syndicat System
  */
 
@@ -29,15 +29,15 @@ export default function SyndicateElections({ bureauId }: SyndicateElectionsProps
                     <CardContent className="p-6 text-center">
                         <Vote className="w-8 h-8 mx-auto mb-2 text-blue-600" />
                         <div className="text-2xl font-bold text-blue-600">{electionStats.activeElections}</div>
-                        <div className="text-sm text-gray-600">Élections Actives</div>
+                        <div className="text-sm text-gray-600">Ã‰lections Actives</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardContent className="p-6 text-center">
-                        <Users className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                        <div className="text-2xl font-bold text-green-600">{electionStats.totalVoters}</div>
-                        <div className="text-sm text-gray-600">Électeurs Inscrits</div>
+                        <Users className="w-8 h-8 mx-auto mb-2 text-primary-orange-600" />
+                        <div className="text-2xl font-bold text-primary-orange-600">{electionStats.totalVoters}</div>
+                        <div className="text-sm text-gray-600">Ã‰lecteurs Inscrits</div>
                     </CardContent>
                 </Card>
 
@@ -45,7 +45,7 @@ export default function SyndicateElections({ bureauId }: SyndicateElectionsProps
                     <CardContent className="p-6 text-center">
                         <Trophy className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
                         <div className="text-2xl font-bold text-yellow-600">{electionStats.completedElections}</div>
-                        <div className="text-sm text-gray-600">Élections Terminées</div>
+                        <div className="text-sm text-gray-600">Ã‰lections TerminÃ©es</div>
                     </CardContent>
                 </Card>
 
@@ -53,7 +53,7 @@ export default function SyndicateElections({ bureauId }: SyndicateElectionsProps
                     <CardContent className="p-6 text-center">
                         <Calendar className="w-8 h-8 mx-auto mb-2 text-purple-600" />
                         <div className="text-2xl font-bold text-purple-600">{electionStats.upcomingElections}</div>
-                        <div className="text-sm text-gray-600">À Venir</div>
+                        <div className="text-sm text-gray-600">Ã€ Venir</div>
                     </CardContent>
                 </Card>
             </div>
@@ -61,10 +61,10 @@ export default function SyndicateElections({ bureauId }: SyndicateElectionsProps
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                        Élections en Cours
+                        Ã‰lections en Cours
                         <Button className="bg-blue-600 hover:bg-blue-700">
                             <Plus className="w-4 h-4 mr-2" />
-                            Nouvelle Élection
+                            Nouvelle Ã‰lection
                         </Button>
                     </CardTitle>
                 </CardHeader>
@@ -72,7 +72,7 @@ export default function SyndicateElections({ bureauId }: SyndicateElectionsProps
                     <div className="space-y-4">
                         <div className="border rounded-lg p-4 bg-blue-50">
                             <div className="flex items-center justify-between mb-3">
-                                <h3 className="font-semibold">Élection du Secrétaire Général</h3>
+                                <h3 className="font-semibold">Ã‰lection du SecrÃ©taire GÃ©nÃ©ral</h3>
                                 <Badge className="bg-blue-100 text-blue-800">En cours</Badge>
                             </div>
                             <div className="grid grid-cols-3 gap-4 text-sm">
@@ -81,7 +81,7 @@ export default function SyndicateElections({ bureauId }: SyndicateElectionsProps
                                     <p className="font-bold">3</p>
                                 </div>
                                 <div>
-                                    <p className="text-gray-600">Votes reçus</p>
+                                    <p className="text-gray-600">Votes reÃ§us</p>
                                     <p className="font-bold">28/42</p>
                                 </div>
                                 <div>
@@ -92,7 +92,7 @@ export default function SyndicateElections({ bureauId }: SyndicateElectionsProps
                             <div className="mt-4 flex gap-2">
                                 <Button size="sm" variant="outline">
                                     <Vote className="w-4 h-4 mr-2" />
-                                    Voir Résultats
+                                    Voir RÃ©sultats
                                 </Button>
                                 <Button size="sm" variant="outline">
                                     <Users className="w-4 h-4 mr-2" />
@@ -106,29 +106,29 @@ export default function SyndicateElections({ bureauId }: SyndicateElectionsProps
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Gouvernance Démocratique</CardTitle>
+                    <CardTitle>Gouvernance DÃ©mocratique</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="text-center py-8">
                         <Vote className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                         <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                            Système Électoral Sécurisé
+                            SystÃ¨me Ã‰lectoral SÃ©curisÃ©
                         </h3>
                         <p className="text-gray-600 mb-4">
-                            Élections transparentes avec votes cryptés et résultats automatiques
+                            Ã‰lections transparentes avec votes cryptÃ©s et rÃ©sultats automatiques
                         </p>
                         <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
                             <div className="space-y-2">
-                                <CheckCircle className="w-6 h-6 mx-auto text-green-600" />
+                                <CheckCircle className="w-6 h-6 mx-auto text-primary-orange-600" />
                                 <div className="text-sm">
-                                    <div className="font-medium">Votes Cryptés</div>
-                                    <div className="text-xs text-gray-600">Sécurité maximale</div>
+                                    <div className="font-medium">Votes CryptÃ©s</div>
+                                    <div className="text-xs text-gray-600">SÃ©curitÃ© maximale</div>
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <Trophy className="w-6 h-6 mx-auto text-yellow-600" />
                                 <div className="text-sm">
-                                    <div className="font-medium">Résultats Auto</div>
+                                    <div className="font-medium">RÃ©sultats Auto</div>
                                     <div className="text-xs text-gray-600">Transparence totale</div>
                                 </div>
                             </div>

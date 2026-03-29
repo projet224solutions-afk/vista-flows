@@ -14,7 +14,7 @@ interface AutoIdDisplayProps {
 
 /**
  * Composant d'affichage d'ID automatique
- * S'intègre partout sans modifier le code existant
+ * S'intÃ¨gre partout sans modifier le code existant
  */
 export function AutoIdDisplay({ 
   id, 
@@ -31,7 +31,7 @@ export function AutoIdDisplay({
     try {
       await navigator.clipboard.writeText(id);
       setCopied(true);
-      toast.success('ID copié dans le presse-papier');
+      toast.success('ID copiÃ© dans le presse-papier');
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast.error('Erreur lors de la copie');
@@ -52,7 +52,7 @@ export function AutoIdDisplay({
           title="Copier l'ID"
         >
           {copied ? (
-            <Check className="w-3 h-3 text-green-500" />
+            <Check className="w-3 h-3 text-primary-orange-500" />
           ) : (
             <Copy className="w-3 h-3" />
           )}
@@ -83,7 +83,7 @@ export function AutoIdCard({ id, roleType, label }: AutoIdCardProps) {
       client: 'Code Client',
       pdg: 'Code PDG',
       transitaire: 'Code Transitaire',
-      worker: 'Code Employé'
+      worker: 'Code EmployÃ©'
     };
     return labels[type];
   };

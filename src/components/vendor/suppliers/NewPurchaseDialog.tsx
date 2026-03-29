@@ -1,7 +1,7 @@
 /**
- * Dialog de création d'un nouvel achat
- * Étape 1: sélection du fournisseur
- * Étape 2: sélection manuelle des produits à acheter avec quantités
+ * Dialog de crÃ©ation d'un nouvel achat
+ * Ã‰tape 1: sÃ©lection du fournisseur
+ * Ã‰tape 2: sÃ©lection manuelle des produits Ã  acheter avec quantitÃ©s
  */
 
 import { useState, useEffect } from 'react';
@@ -288,7 +288,7 @@ export function NewPurchaseDialog({
   const handleChangeSupplier = () => {
     setStep(1);
     setSelectedSupplier(null);
-    // Ne pas effacer les produits sélectionnés pour permettre d'acheter chez plusieurs fournisseurs
+    // Ne pas effacer les produits sÃ©lectionnÃ©s pour permettre d'acheter chez plusieurs fournisseurs
     setSelectedCategoryFilter('all');
     setProductSearchTerm('');
   };
@@ -422,8 +422,8 @@ export function NewPurchaseDialog({
               </DialogTitle>
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1 truncate">
                 {step === 1
-                  ? 'Étape 1/2: Sélectionnez le fournisseur'
-                  : 'Étape 2/2: Sélectionnez les produits'}
+                  ? 'Ã‰tape 1/2: SÃ©lectionnez le fournisseur'
+                  : 'Ã‰tape 2/2: SÃ©lectionnez les produits'}
               </p>
             </div>
           </div>
@@ -468,8 +468,8 @@ export function NewPurchaseDialog({
                   <Building2 className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/40 mb-2 sm:mb-3" />
                   <p className="text-xs sm:text-sm text-muted-foreground text-center">
                     {suppliers.length === 0
-                      ? "Aucun fournisseur. Créez-en un d'abord."
-                      : 'Aucun fournisseur trouvé'}
+                      ? "Aucun fournisseur. CrÃ©ez-en un d'abord."
+                      : 'Aucun fournisseur trouvÃ©'}
                   </p>
                 </div>
               ) : (
@@ -581,11 +581,11 @@ export function NewPurchaseDialog({
                 <SelectTrigger className="w-[130px] sm:w-48 h-9 sm:h-10 text-xs sm:text-sm">
                   <Filter className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                   <span className="truncate">
-                    <SelectValue placeholder="Catégorie" />
+                    <SelectValue placeholder="CatÃ©gorie" />
                   </span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes catégories</SelectItem>
+                  <SelectItem value="all">Toutes catÃ©gories</SelectItem>
                   {availableCategories.map(cat => (
                     <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                   ))}
@@ -613,10 +613,10 @@ export function NewPurchaseDialog({
                     <Package className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/40 mb-2" />
                     <p className="text-[10px] sm:text-xs text-muted-foreground text-center">
                       {supplierProducts.length === 0
-                        ? "Aucun produit lié"
+                        ? "Aucun produit liÃ©"
                         : selectedProducts.length === supplierProducts.length
-                        ? "Tous ajoutés"
-                        : 'Aucun trouvé'}
+                        ? "Tous ajoutÃ©s"
+                        : 'Aucun trouvÃ©'}
                     </p>
                   </div>
                 ) : (
@@ -661,7 +661,7 @@ export function NewPurchaseDialog({
               <div className="flex flex-col min-h-0 border rounded-lg border-primary/30">
                 <div className="p-2 sm:p-3 border-b bg-primary/5">
                   <Label className="text-xs sm:text-sm font-medium flex items-center justify-between">
-                    <span className="text-primary">Sélectionnés</span>
+                    <span className="text-primary">SÃ©lectionnÃ©s</span>
                     <Badge className="bg-primary text-[10px] sm:text-xs">{selectedProducts.length} produit(s)</Badge>
                   </Label>
                 </div>
@@ -717,18 +717,18 @@ export function NewPurchaseDialog({
                               <button
                                 type="button"
                                 onClick={() => openKeypadFor(product, 'price')}
-                                className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border-2 border-emerald-500/30 hover:border-emerald-500/50 active:scale-[0.98] transition-all"
+                                className="w-full flex items-center justify-between p-3 rounded-xl bg-primary-blue-500/10 border-2 border-primary-orange-500/30 hover:border-primary-orange-500/50 active:scale-[0.98] transition-all"
                               >
                                 <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                                  <div className="w-8 h-8 rounded-lg bg-primary-blue-500/20 flex items-center justify-center">
+                                    <DollarSign className="h-4 w-4 text-primary-blue-600" />
                                   </div>
                                   <span className="text-sm font-medium text-muted-foreground">Prix d'achat</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className={cn(
                                     "text-lg font-bold tabular-nums",
-                                    product.unitCost > 0 ? "text-emerald-600" : "text-muted-foreground"
+                                    product.unitCost > 0 ? "text-primary-blue-600" : "text-muted-foreground"
                                   )}>
                                     {product.unitCost > 0 ? product.unitCost.toLocaleString() : '0'}
                                   </span>
@@ -749,7 +749,7 @@ export function NewPurchaseDialog({
                                   <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
                                     <Hash className="h-4 w-4 text-blue-600" />
                                   </div>
-                                  <span className="text-sm font-medium text-muted-foreground">Quantité (unités)</span>
+                                  <span className="text-sm font-medium text-muted-foreground">QuantitÃ© (unitÃ©s)</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className={cn(
@@ -793,7 +793,7 @@ export function NewPurchaseDialog({
                               {/* Summary */}
                               <div className="flex justify-between items-center pt-2 border-t border-dashed">
                                 <span className="text-sm text-muted-foreground">
-                                  {calculateTotalUnits(product)} unités total
+                                  {calculateTotalUnits(product)} unitÃ©s total
                                 </span>
                                 <span className="text-base font-bold text-primary">
                                   {productTotal.toLocaleString()} {product.unitCostCurrency}
@@ -814,9 +814,9 @@ export function NewPurchaseDialog({
               <div className="p-2.5 sm:p-4 rounded-lg bg-primary/10 border border-primary/20 flex-shrink-0">
                 <div className="flex justify-between items-center gap-2">
                   <div className="min-w-0">
-                    <span className="font-medium text-xs sm:text-base">Total estimé</span>
+                    <span className="font-medium text-xs sm:text-base">Total estimÃ©</span>
                     <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
-                      {selectedProducts.length} produit(s) • {totalItems} unités
+                      {selectedProducts.length} produit(s) â€¢ {totalItems} unitÃ©s
                     </p>
                   </div>
                   <span className="text-base sm:text-xl font-bold text-primary flex-shrink-0">
@@ -855,11 +855,11 @@ export function NewPurchaseDialog({
                 className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-9 sm:h-10 flex-1 sm:flex-none"
               >
                 {isCreating ? (
-                  'Création...'
+                  'CrÃ©ation...'
                 ) : (
                   <>
                     <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span className="truncate">Créer ({totalAmount.toLocaleString()} GNF)</span>
+                    <span className="truncate">CrÃ©er ({totalAmount.toLocaleString()} GNF)</span>
                   </>
                 )}
               </Button>

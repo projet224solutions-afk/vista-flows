@@ -1,5 +1,5 @@
 /**
- * Header dédié pour le vendeur digital
+ * Header dÃ©diÃ© pour le vendeur digital
  */
 
 import { memo, Suspense, lazy } from 'react';
@@ -45,7 +45,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
         <div className="flex items-center justify-between w-full min-w-0 gap-2">
           <div className="flex items-center gap-1 min-w-0 flex-1">
             <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1 min-w-0">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse flex-shrink-0" />
+              <span className="w-1.5 h-1.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse flex-shrink-0" />
               <span className="truncate max-w-[120px] sm:max-w-[200px]">{displayName}</span>
             </p>
           </div>
@@ -60,7 +60,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
               size="icon"
               className="h-8 w-8 md:h-10 md:w-10"
               onClick={() => navigate('/vendeur-digital/settings')}
-              aria-label="Paramètres"
+              aria-label="ParamÃ¨tres"
             >
               <Settings className="w-4 h-4 md:w-5 md:h-5" />
             </Button>
@@ -70,7 +70,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
               size="icon"
               onClick={onSignOut}
               className="h-8 w-8 md:h-10 md:w-10"
-              aria-label="Se déconnecter"
+              aria-label="Se dÃ©connecter"
             >
               <LogOut className="w-4 h-4 md:w-5 md:h-5" />
             </Button>

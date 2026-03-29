@@ -1,6 +1,6 @@
 /**
- * Formulaire spécialisé pour les produits d'affiliation
- * Inspiré de ClickBank, ShareASale, Impact
+ * Formulaire spÃ©cialisÃ© pour les produits d'affiliation
+ * InspirÃ© de ClickBank, ShareASale, Impact
  */
 
 import { useState } from 'react';
@@ -50,21 +50,21 @@ interface AffiliateFormProps {
 const affiliateNetworks = [
   { id: 'direct', name: 'Programme Direct', description: 'Affiliation directe avec le vendeur' },
   { id: 'amazon', name: 'Amazon Associates', description: 'Programme d\'affiliation Amazon' },
-  { id: 'clickbank', name: 'ClickBank', description: 'Produits numériques, commissions élevées' },
+  { id: 'clickbank', name: 'ClickBank', description: 'Produits numÃ©riques, commissions Ã©levÃ©es' },
   { id: 'cj', name: 'CJ Affiliate', description: 'Grandes marques internationales' },
-  { id: 'shareasale', name: 'ShareASale', description: 'Réseau diversifié de marchands' },
+  { id: 'shareasale', name: 'ShareASale', description: 'RÃ©seau diversifiÃ© de marchands' },
   { id: 'impact', name: 'Impact', description: 'Partenariats de marques premium' },
-  { id: 'systeme', name: 'Systeme.io', description: 'Formations et produits numériques' },
-  { id: 'booking', name: 'Booking.com', description: 'Réservations hôtelières' },
-  { id: 'awin', name: 'Awin', description: 'Réseau européen majeur' },
-  { id: 'rakuten', name: 'Rakuten', description: 'Grands détaillants en ligne' },
-  { id: 'other', name: 'Autre réseau', description: 'Autre plateforme d\'affiliation' }
+  { id: 'systeme', name: 'Systeme.io', description: 'Formations et produits numÃ©riques' },
+  { id: 'booking', name: 'Booking.com', description: 'RÃ©servations hÃ´teliÃ¨res' },
+  { id: 'awin', name: 'Awin', description: 'RÃ©seau europÃ©en majeur' },
+  { id: 'rakuten', name: 'Rakuten', description: 'Grands dÃ©taillants en ligne' },
+  { id: 'other', name: 'Autre rÃ©seau', description: 'Autre plateforme d\'affiliation' }
 ];
 
 const commissionTypes = [
   { id: 'percentage', label: 'Pourcentage', description: 'Commission en % de la vente' },
   { id: 'fixed', label: 'Montant fixe', description: 'Commission fixe par vente' },
-  { id: 'recurring', label: 'Récurrent', description: 'Commission sur abonnements' }
+  { id: 'recurring', label: 'RÃ©current', description: 'Commission sur abonnements' }
 ];
 
 export function AffiliateForm({ 
@@ -92,15 +92,15 @@ export function AffiliateForm({
 
   return (
     <div className="space-y-4">
-      {/* Sélection du réseau d'affiliation */}
+      {/* SÃ©lection du rÃ©seau d'affiliation */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Globe className="w-4 h-4 text-primary" />
-            Réseau d'Affiliation
+            RÃ©seau d'Affiliation
           </CardTitle>
           <CardDescription className="text-xs">
-            Sélectionnez la plateforme d'où provient votre lien d'affiliation
+            SÃ©lectionnez la plateforme d'oÃ¹ provient votre lien d'affiliation
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -109,7 +109,7 @@ export function AffiliateForm({
             onValueChange={(v) => onChange({ affiliateNetwork: v })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Choisir un réseau" />
+              <SelectValue placeholder="Choisir un rÃ©seau" />
             </SelectTrigger>
             <SelectContent>
               {affiliateNetworks.map((network) => (
@@ -127,7 +127,7 @@ export function AffiliateForm({
             <div className="mt-3 p-2 bg-muted/50 rounded-lg">
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Shield className="w-3 h-3" />
-                Réseau vérifié : {selectedNetwork.name}
+                RÃ©seau vÃ©rifiÃ© : {selectedNetwork.name}
               </p>
             </div>
           )}
@@ -159,7 +159,7 @@ export function AffiliateForm({
                   placeholder={getUrlPlaceholder()}
                   className={cn(
                     'pr-10',
-                    urlValidationStatus === 'valid' && 'border-green-500 focus-visible:ring-green-500',
+                    urlValidationStatus === 'valid' && 'border-primary-orange-500 focus-visible:ring-primary-orange-500',
                     urlValidationStatus === 'invalid' && 'border-destructive focus-visible:ring-destructive'
                   )}
                 />
@@ -168,7 +168,7 @@ export function AffiliateForm({
                     <RefreshCw className="w-4 h-4 text-muted-foreground animate-spin" />
                   )}
                   {urlValidationStatus === 'valid' && (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <CheckCircle2 className="w-4 h-4 text-primary-orange-500" />
                   )}
                   {urlValidationStatus === 'invalid' && (
                     <AlertCircle className="w-4 h-4 text-destructive" />
@@ -183,7 +183,7 @@ export function AffiliateForm({
                   onClick={onValidateUrl}
                   disabled={!data.affiliateUrl || urlValidationStatus === 'validating'}
                 >
-                  Vérifier
+                  VÃ©rifier
                 </Button>
               )}
             </div>
@@ -220,15 +220,15 @@ export function AffiliateForm({
         </CardContent>
       </Card>
 
-      {/* Prix affiché au client */}
+      {/* Prix affichÃ© au client */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Tag className="w-4 h-4 text-primary" />
-            Prix affiché
+            Prix affichÃ©
           </CardTitle>
           <CardDescription className="text-xs">
-            Prix indicatif affiché aux visiteurs (optionnel)
+            Prix indicatif affichÃ© aux visiteurs (optionnel)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -259,7 +259,7 @@ export function AffiliateForm({
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground">
-            Ce prix est affiché pour information. Le prix réel est défini sur la plateforme partenaire.
+            Ce prix est affichÃ© pour information. Le prix rÃ©el est dÃ©fini sur la plateforme partenaire.
           </p>
         </CardContent>
       </Card>
@@ -272,7 +272,7 @@ export function AffiliateForm({
             Structure de Commission
           </CardTitle>
           <CardDescription className="text-xs">
-            Définissez les termes de votre commission d'affiliation
+            DÃ©finissez les termes de votre commission d'affiliation
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -320,14 +320,14 @@ export function AffiliateForm({
             <div>
               <Label htmlFor="cookieDuration" className="text-xs flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                Durée du cookie
+                DurÃ©e du cookie
               </Label>
               <Select
                 value={data.cookieDuration}
                 onValueChange={(v) => onChange({ cookieDuration: v })}
               >
                 <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Durée" />
+                  <SelectValue placeholder="DurÃ©e" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="24h">24 heures</SelectItem>
@@ -336,18 +336,18 @@ export function AffiliateForm({
                   <SelectItem value="60d">60 jours</SelectItem>
                   <SelectItem value="90d">90 jours</SelectItem>
                   <SelectItem value="lifetime">Lifetime</SelectItem>
-                  <SelectItem value="unknown">Non spécifié</SelectItem>
+                  <SelectItem value="unknown">Non spÃ©cifiÃ©</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Info récurrent */}
+          {/* Info rÃ©current */}
           {data.commissionType === 'recurring' && (
             <Alert>
               <TrendingUp className="w-4 h-4" />
               <AlertDescription className="text-xs">
-                Les commissions récurrentes sont versées chaque mois tant que le client reste abonné.
+                Les commissions rÃ©currentes sont versÃ©es chaque mois tant que le client reste abonnÃ©.
               </AlertDescription>
             </Alert>
           )}
@@ -358,8 +358,8 @@ export function AffiliateForm({
       <Alert className="bg-primary/5 border-primary/20">
         <ExternalLink className="w-4 h-4 text-primary" />
         <AlertDescription className="text-xs text-muted-foreground">
-          <strong className="text-foreground">Note :</strong> Les visiteurs seront redirigés vers votre lien d'affiliation. 
-          Assurez-vous que votre lien est actif et correctement configuré sur la plateforme partenaire.
+          <strong className="text-foreground">Note :</strong> Les visiteurs seront redirigÃ©s vers votre lien d'affiliation. 
+          Assurez-vous que votre lien est actif et correctement configurÃ© sur la plateforme partenaire.
         </AlertDescription>
       </Alert>
     </div>

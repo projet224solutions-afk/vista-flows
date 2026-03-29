@@ -1,6 +1,6 @@
 /**
  * MODULE CONSTRUCTION & BTP PROFESSIONNEL
- * Plateforme complète de gestion de chantiers, professionnels, devis et matériaux
+ * Plateforme complÃ¨te de gestion de chantiers, professionnels, devis et matÃ©riaux
  */
 
 import { useState } from 'react';
@@ -28,36 +28,36 @@ interface ConstructionModuleProps {
 }
 
 const PROJECT_TYPE_LABELS: Record<string, string> = {
-  maison: '🏠 Maison', immeuble: '🏢 Immeuble', renovation: '🔧 Rénovation',
-  route: '🛣️ Route', pont: '🌉 Pont', bureau: '🏬 Bureau',
-  entrepot: '🏭 Entrepôt', autre: '📐 Autre',
+  maison: 'ðŸ  Maison', immeuble: 'ðŸ¢ Immeuble', renovation: 'ðŸ”§ RÃ©novation',
+  route: 'ðŸ›£ï¸ Route', pont: 'ðŸŒ‰ Pont', bureau: 'ðŸ¬ Bureau',
+  entrepot: 'ðŸ­ EntrepÃ´t', autre: 'ðŸ“ Autre',
 };
 
 const STATUS_COLORS: Record<string, string> = {
   planifie: 'bg-muted text-muted-foreground',
   en_cours: 'bg-blue-100 text-blue-800',
   en_pause: 'bg-amber-100 text-amber-800',
-  termine: 'bg-green-100 text-green-800',
+  termine: 'bg-primary-orange-100 text-primary-orange-800',
   annule: 'bg-red-100 text-red-800',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  planifie: 'Planifié', en_cours: 'En cours', en_pause: 'En pause',
-  termine: 'Terminé', annule: 'Annulé',
+  planifie: 'PlanifiÃ©', en_cours: 'En cours', en_pause: 'En pause',
+  termine: 'TerminÃ©', annule: 'AnnulÃ©',
 };
 
 const SPECIALTY_LABELS: Record<string, string> = {
-  macon: '🧱 Maçon', electricien: '⚡ Électricien', plombier: '🔧 Plombier',
-  architecte: '📐 Architecte', ingenieur: '👷 Ingénieur', menuisier: '🪚 Menuisier',
-  peintre: '🎨 Peintre', carreleur: '🔲 Carreleur', soudeur: '🔥 Soudeur',
-  chef_chantier: '🏗️ Chef de chantier',
+  macon: 'ðŸ§± MaÃ§on', electricien: 'âš¡ Ã‰lectricien', plombier: 'ðŸ”§ Plombier',
+  architecte: 'ðŸ“ Architecte', ingenieur: 'ðŸ‘· IngÃ©nieur', menuisier: 'ðŸªš Menuisier',
+  peintre: 'ðŸŽ¨ Peintre', carreleur: 'ðŸ”² Carreleur', soudeur: 'ðŸ”¥ Soudeur',
+  chef_chantier: 'ðŸ—ï¸ Chef de chantier',
 };
 
 const QUOTE_STATUS: Record<string, { label: string; color: string }> = {
   en_attente: { label: 'En attente', color: 'bg-amber-100 text-amber-800' },
-  repondu: { label: 'Répondu', color: 'bg-green-100 text-green-800' },
-  accepte: { label: 'Accepté', color: 'bg-blue-100 text-blue-800' },
-  refuse: { label: 'Refusé', color: 'bg-red-100 text-red-800' },
+  repondu: { label: 'RÃ©pondu', color: 'bg-primary-orange-100 text-primary-orange-800' },
+  accepte: { label: 'AcceptÃ©', color: 'bg-blue-100 text-blue-800' },
+  refuse: { label: 'RefusÃ©', color: 'bg-red-100 text-red-800' },
 };
 
 export function ConstructionModule({ serviceId, businessName }: ConstructionModuleProps) {
@@ -97,7 +97,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
             <HardHat className="w-7 h-7 text-primary" />
             {businessName || 'Construction & BTP'}
           </h2>
-          <p className="text-muted-foreground text-sm">Gestion de chantiers, professionnels et matériaux</p>
+          <p className="text-muted-foreground text-sm">Gestion de chantiers, professionnels et matÃ©riaux</p>
         </div>
       </div>
 
@@ -139,7 +139,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
         <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-green-100"><TrendingUp className="h-4 w-4 text-green-600" /></div>
+              <div className="p-2 rounded-lg bg-primary-orange-100"><TrendingUp className="h-4 w-4 text-primary-orange-600" /></div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalBudget > 0 ? `${(stats.totalBudget / 1e6).toFixed(0)}M` : '0'}</p>
                 <p className="text-xs text-muted-foreground">Budget GNF</p>
@@ -153,9 +153,9 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full grid grid-cols-4">
           <TabsTrigger value="projets"><Building className="h-4 w-4 mr-1 hidden sm:inline" /> Projets</TabsTrigger>
-          <TabsTrigger value="equipe"><Users className="h-4 w-4 mr-1 hidden sm:inline" /> Équipe</TabsTrigger>
+          <TabsTrigger value="equipe"><Users className="h-4 w-4 mr-1 hidden sm:inline" /> Ã‰quipe</TabsTrigger>
           <TabsTrigger value="devis"><FileText className="h-4 w-4 mr-1 hidden sm:inline" /> Devis</TabsTrigger>
-          <TabsTrigger value="materiaux"><Package className="h-4 w-4 mr-1 hidden sm:inline" /> Matériaux</TabsTrigger>
+          <TabsTrigger value="materiaux"><Package className="h-4 w-4 mr-1 hidden sm:inline" /> MatÃ©riaux</TabsTrigger>
         </TabsList>
 
         {/* ===== PROJETS ===== */}
@@ -170,7 +170,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
           {projects.length === 0 ? (
             <Card><CardContent className="py-12 text-center">
               <Building className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-muted-foreground">Aucun projet. Créez votre premier projet de construction !</p>
+              <p className="text-muted-foreground">Aucun projet. CrÃ©ez votre premier projet de construction !</p>
             </CardContent></Card>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
@@ -182,7 +182,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                         <h4 className="font-bold truncate">{project.title}</h4>
                         <p className="text-xs text-muted-foreground">
                           {PROJECT_TYPE_LABELS[project.project_type] || project.project_type}
-                          {project.city && <> • <MapPin className="h-3 w-3 inline" /> {project.city}</>}
+                          {project.city && <> â€¢ <MapPin className="h-3 w-3 inline" /> {project.city}</>}
                         </p>
                       </div>
                       <Badge className={STATUS_COLORS[project.status] || ''}>{STATUS_LABELS[project.status] || project.status}</Badge>
@@ -195,8 +195,8 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                       <Progress value={project.progress_percent} className="h-2" />
                     </div>
                     <div className="flex justify-between mt-3 text-xs text-muted-foreground">
-                      <span>💰 {Number(project.budget_estimated).toLocaleString()} GNF</span>
-                      <span>📅 {project.estimated_duration_days}j</span>
+                      <span>ðŸ’° {Number(project.budget_estimated).toLocaleString()} GNF</span>
+                      <span>ðŸ“… {project.estimated_duration_days}j</span>
                     </div>
                     <div className="flex justify-end gap-1 mt-2" onClick={e => e.stopPropagation()}>
                       <Button size="sm" variant="ghost" onClick={() => setSelectedProject(project)}>
@@ -213,7 +213,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
           )}
         </TabsContent>
 
-        {/* ===== ÉQUIPE ===== */}
+        {/* ===== Ã‰QUIPE ===== */}
         <TabsContent value="equipe" className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold">Professionnels ({professionals.length})</h3>
@@ -225,7 +225,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
           {professionals.length === 0 ? (
             <Card><CardContent className="py-12 text-center">
               <Users className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-muted-foreground">Aucun professionnel. Ajoutez votre équipe !</p>
+              <p className="text-muted-foreground">Aucun professionnel. Ajoutez votre Ã©quipe !</p>
             </CardContent></Card>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -234,7 +234,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                   <CardContent className="pt-4">
                     <div className="flex items-start gap-3">
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <span className="text-lg">{(SPECIALTY_LABELS[pro.specialty] || '👷').split(' ')[0]}</span>
+                        <span className="text-lg">{(SPECIALTY_LABELS[pro.specialty] || 'ðŸ‘·').split(' ')[0]}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm truncate">{pro.name}</h4>
@@ -242,7 +242,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                         <div className="flex items-center gap-2 mt-1">
                           {pro.experience_years > 0 && <span className="text-xs text-muted-foreground">{pro.experience_years} ans</span>}
                           {pro.rating > 0 && <span className="text-xs flex items-center gap-0.5"><Star className="h-3 w-3 text-amber-500 fill-amber-500" />{pro.rating}</span>}
-                          <Badge variant={pro.is_available ? 'default' : 'secondary'} className="text-[10px]">{pro.is_available ? 'Dispo' : 'Occupé'}</Badge>
+                          <Badge variant={pro.is_available ? 'default' : 'secondary'} className="text-[10px]">{pro.is_available ? 'Dispo' : 'OccupÃ©'}</Badge>
                         </div>
                         {pro.city && <p className="text-xs text-muted-foreground mt-1"><MapPin className="h-3 w-3 inline" /> {pro.city}</p>}
                         <div className="flex gap-2 mt-2">
@@ -282,7 +282,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-bold text-sm">{quote.client_name}</h4>
-                          <p className="text-xs text-muted-foreground">{PROJECT_TYPE_LABELS[quote.project_type] || quote.project_type} • {quote.location || 'Non précisé'}</p>
+                          <p className="text-xs text-muted-foreground">{PROJECT_TYPE_LABELS[quote.project_type] || quote.project_type} â€¢ {quote.location || 'Non prÃ©cisÃ©'}</p>
                           <p className="text-sm mt-1">{quote.description}</p>
                           {quote.budget_range && <p className="text-xs text-muted-foreground mt-1">Budget: {quote.budget_range}</p>}
                         </div>
@@ -293,12 +293,12 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                         respondingQuote?.id === quote.id ? (
                           <div className="mt-3 space-y-2 border-t border-border pt-3">
                             <div className="grid grid-cols-2 gap-2">
-                              <input className="border border-border rounded-md px-3 py-1.5 text-sm bg-background" type="number" placeholder="Coût estimé (GNF)"
+                              <input className="border border-border rounded-md px-3 py-1.5 text-sm bg-background" type="number" placeholder="CoÃ»t estimÃ© (GNF)"
                                 value={quoteResponse.estimated_cost} onChange={e => setQuoteResponse(p => ({ ...p, estimated_cost: e.target.value }))} />
-                              <input className="border border-border rounded-md px-3 py-1.5 text-sm bg-background" placeholder="Durée (ex: 3 mois)"
+                              <input className="border border-border rounded-md px-3 py-1.5 text-sm bg-background" placeholder="DurÃ©e (ex: 3 mois)"
                                 value={quoteResponse.estimated_duration} onChange={e => setQuoteResponse(p => ({ ...p, estimated_duration: e.target.value }))} />
                             </div>
-                            <textarea className="w-full border border-border rounded-md px-3 py-1.5 text-sm bg-background" rows={2} placeholder="Détails du devis..."
+                            <textarea className="w-full border border-border rounded-md px-3 py-1.5 text-sm bg-background" rows={2} placeholder="DÃ©tails du devis..."
                               value={quoteResponse.response_details} onChange={e => setQuoteResponse(p => ({ ...p, response_details: e.target.value }))} />
                             <div className="flex justify-end gap-2">
                               <Button size="sm" variant="outline" onClick={() => setRespondingQuote(null)}>Annuler</Button>
@@ -315,14 +315,14 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                           </div>
                         ) : (
                           <Button size="sm" variant="outline" className="mt-2" onClick={() => setRespondingQuote(quote)}>
-                            Répondre au devis
+                            RÃ©pondre au devis
                           </Button>
                         )
                       )}
 
                       {quote.status === 'repondu' && (
                         <div className="mt-2 bg-muted/50 rounded-lg p-3 text-sm">
-                          <p>💰 {Number(quote.estimated_cost).toLocaleString()} GNF • ⏱ {quote.estimated_duration}</p>
+                          <p>ðŸ’° {Number(quote.estimated_cost).toLocaleString()} GNF â€¢ â± {quote.estimated_duration}</p>
                           {quote.response_details && <p className="text-muted-foreground mt-1">{quote.response_details}</p>}
                         </div>
                       )}
@@ -334,10 +334,10 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
           )}
         </TabsContent>
 
-        {/* ===== MATÉRIAUX ===== */}
+        {/* ===== MATÃ‰RIAUX ===== */}
         <TabsContent value="materiaux" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Matériaux ({materials.length})</h3>
+            <h3 className="font-semibold">MatÃ©riaux ({materials.length})</h3>
             <Button onClick={() => setShowMaterial(true)} size="sm">
               <Plus className="h-4 w-4 mr-1" /> Ajouter
             </Button>
@@ -346,7 +346,7 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
           {materials.length === 0 ? (
             <Card><CardContent className="py-12 text-center">
               <Package className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-muted-foreground">Aucun matériau ajouté</p>
+              <p className="text-muted-foreground">Aucun matÃ©riau ajoutÃ©</p>
             </CardContent></Card>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -359,15 +359,15 @@ export function ConstructionModule({ serviceId, businessName }: ConstructionModu
                         <p className="text-xs text-muted-foreground">{mat.category}</p>
                       </div>
                       <Badge variant={mat.is_available ? 'default' : 'secondary'} className="text-xs">
-                        {mat.is_available ? 'En stock' : 'Épuisé'}
+                        {mat.is_available ? 'En stock' : 'Ã‰puisÃ©'}
                       </Badge>
                     </div>
                     <div className="mt-2 text-sm">
-                      <p>💰 {Number(mat.unit_price).toLocaleString()} GNF / {mat.unit}</p>
-                      <p className="text-muted-foreground">📦 {mat.quantity_available} {mat.unit}(s) disponibles</p>
+                      <p>ðŸ’° {Number(mat.unit_price).toLocaleString()} GNF / {mat.unit}</p>
+                      <p className="text-muted-foreground">ðŸ“¦ {mat.quantity_available} {mat.unit}(s) disponibles</p>
                     </div>
                     {mat.supplier_name && (
-                      <p className="text-xs text-muted-foreground mt-2">🏭 {mat.supplier_name} {mat.supplier_phone && `• ${mat.supplier_phone}`}</p>
+                      <p className="text-xs text-muted-foreground mt-2">ðŸ­ {mat.supplier_name} {mat.supplier_phone && `â€¢ ${mat.supplier_phone}`}</p>
                     )}
                   </CardContent>
                 </Card>

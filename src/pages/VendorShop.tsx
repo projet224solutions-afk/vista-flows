@@ -83,16 +83,16 @@ export default function VendorShop() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Récupérer les produits numériques du vendeur
+  // RÃ©cupÃ©rer les produits numÃ©riques du vendeur
   const { products: digitalProducts, loading: digitalProductsLoading } = useVendorDigitalProducts(vendor?.id);
   const identifier = params.slug || params.vendorId;
 
-  // ── Structured log helper ──
+  // â”€â”€ Structured log helper â”€â”€
   const log = useCallback((tag: string, data?: Record<string, unknown>) => {
-    console.log(`🏪 [VendorShop] ${tag}`, data ?? '');
+    console.log(`ðŸª [VendorShop] ${tag}`, data ?? '');
   }, []);
 
-  // ── Mount log ──
+  // â”€â”€ Mount log â”€â”€
   useEffect(() => {
     log('SHOP PAGE START', {
       vendorId: params.vendorId,
@@ -103,7 +103,7 @@ export default function VendorShop() {
     });
   }, []);
 
-  // ── Timeout management ──
+  // â”€â”€ Timeout management â”€â”€
   const startTimeout = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     const ms = isMobile() ? 15000 : 10000;
@@ -126,7 +126,7 @@ export default function VendorShop() {
     abortRef.current?.abort();
   }, [clearShopTimeout]);
 
-  // ── Load vendor data ──
+  // â”€â”€ Load vendor data â”€â”€
   const loadVendorData = useCallback(async () => {
     const id = identifier;
     if (!id) {
@@ -149,7 +149,7 @@ export default function VendorShop() {
     log('SHOP IDENTIFIER DETECTED', { id, mobile: isMobile() });
 
     try {
-      // ── Fetch vendor ──
+      // â”€â”€ Fetch vendor â”€â”€
       log('SHOP VENDOR FETCH START', { id });
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
@@ -211,15 +211,15 @@ export default function VendorShop() {
 
       setVendor({ ...vendorData, public_id: vendorPublicId });
 
-      // Inactive shop – show page but no products for clients
+      // Inactive shop â€“ show page but no products for clients
       if (!vendorData.is_active && !vendorIsOwned) {
         log('SHOP INACTIVE', { vendorId: vendorData.id });
         setProducts([]);
-        setErrorType('none'); // Not an error, just inactive – handled in UI
+        setErrorType('none'); // Not an error, just inactive â€“ handled in UI
         return;
       }
 
-      // ── Fetch products ──
+      // â”€â”€ Fetch products â”€â”€
       log('SHOP PRODUCTS FETCH START', { vendorId: vendorData.id });
       const { data: productsData, error: productsError } = await supabase
         .from('products')
@@ -273,14 +273,14 @@ export default function VendorShop() {
     }
   }, [identifier, user?.id, navigate, log, startTimeout, clearShopTimeout, params.vendorId]);
 
-  // ── Trigger load ──
+  // â”€â”€ Trigger load â”€â”€
   useEffect(() => {
     if (identifier) {
       loadVendorData();
     }
   }, [identifier, user?.id]);
 
-  // ── Track visit ──
+  // â”€â”€ Track visit â”€â”€
   useEffect(() => {
     if (vendor && vendor.id && !hasTrackedVisit.current && !isOwner) {
       hasTrackedVisit.current = true;
@@ -288,14 +288,14 @@ export default function VendorShop() {
     }
   }, [vendor, isOwner]);
 
-  // ── Timeout effect (separate from loadVendorData for the case where loading stays true) ──
+  // â”€â”€ Timeout effect (separate from loadVendorData for the case where loading stays true) â”€â”€
   useEffect(() => {
     if (!loading) {
       setLoadingTimedOut(false);
     }
   }, [loading]);
 
-  // ── Retry handler ──
+  // â”€â”€ Retry handler â”€â”€
   const handleRetry = useCallback(() => {
     log('SHOP RETRY TRIGGERED');
     setLoadingTimedOut(false);
@@ -303,9 +303,9 @@ export default function VendorShop() {
     loadVendorData();
   }, [loadVendorData, log]);
 
-  // ═══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   //  RENDER: Loading state
-  // ═══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (loading && !loadingTimedOut) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -317,9 +317,9 @@ export default function VendorShop() {
     );
   }
 
-  // ═══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   //  RENDER: Timeout state
-  // ═══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (loading && loadingTimedOut) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -327,12 +327,12 @@ export default function VendorShop() {
           <WifiOff className="w-10 h-10 text-destructive mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2 text-foreground">Connexion lente</h2>
           <p className="text-muted-foreground mb-6">
-            La boutique met trop de temps à charger. Votre connexion est peut-être instable.
+            La boutique met trop de temps Ã  charger. Votre connexion est peut-Ãªtre instable.
           </p>
           <div className="flex flex-col gap-2">
             <Button onClick={handleRetry} className="w-full">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Réessayer
+              RÃ©essayer
             </Button>
             <Button variant="outline" onClick={() => navigate('/marketplace')} className="w-full">
               Retour au marketplace
@@ -343,9 +343,9 @@ export default function VendorShop() {
     );
   }
 
-  // ═══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   //  RENDER: Error states (differentiated)
-  // ═══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   if (errorType === 'network_error') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -353,12 +353,12 @@ export default function VendorShop() {
           <WifiOff className="w-10 h-10 text-destructive mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2 text-foreground">Erreur de connexion</h2>
           <p className="text-muted-foreground mb-6">
-            Impossible de contacter le serveur. Vérifiez votre connexion Internet.
+            Impossible de contacter le serveur. VÃ©rifiez votre connexion Internet.
           </p>
           <div className="flex flex-col gap-2">
             <Button onClick={handleRetry} className="w-full">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Réessayer
+              RÃ©essayer
             </Button>
             <Button variant="outline" onClick={() => navigate('/marketplace')} className="w-full">
               Retour au marketplace
@@ -370,7 +370,7 @@ export default function VendorShop() {
   }
 
   if (errorType === 'products_error' && vendor) {
-    // Vendor loaded but products failed – show vendor info + error for products section
+    // Vendor loaded but products failed â€“ show vendor info + error for products section
     // Fall through to normal render below, products section will show inline error
   }
 
@@ -381,12 +381,12 @@ export default function VendorShop() {
           <SearchX className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2 text-foreground">Boutique introuvable</h2>
           <p className="text-muted-foreground mb-6">
-            Cette boutique n'existe pas ou a été supprimée.
+            Cette boutique n'existe pas ou a Ã©tÃ© supprimÃ©e.
           </p>
           <div className="flex flex-col gap-2">
             <Button onClick={handleRetry} className="w-full" variant="outline">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Réessayer
+              RÃ©essayer
             </Button>
             <Button onClick={() => navigate('/marketplace')} className="w-full">
               Retour au marketplace
@@ -401,9 +401,9 @@ export default function VendorShop() {
     return null; // Should not happen, safety guard
   }
 
-  // ═══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   //  HELPERS
-  // ═══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   const handleContactVendor = async () => {
     if (!vendor) return;
 
@@ -425,7 +425,7 @@ export default function VendorShop() {
         });
 
       if (error) throw error;
-      toast.success('Message envoyé au vendeur');
+      toast.success('Message envoyÃ© au vendeur');
       navigate(`/messages?recipientId=${vendor.user_id}`);
     } catch (error) {
       console.error('Erreur envoi message:', error);
@@ -452,15 +452,15 @@ export default function VendorShop() {
     </div>
   );
 
-  // ═══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   //  RENDER: Main shop page
-  // ═══════════════════════════════════════════
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* SEO Meta Tags */}
       <SEOHead
         title={vendor.business_name}
-        description={vendor.description || `Découvrez la boutique ${vendor.business_name} sur 224Solutions`}
+        description={vendor.description || `DÃ©couvrez la boutique ${vendor.business_name} sur 224Solutions`}
         image={vendor.cover_image_url || vendor.logo_url}
         type="website"
       />
@@ -479,7 +479,7 @@ export default function VendorShop() {
                   className="p-0 h-auto text-primary ml-1"
                   onClick={() => navigate('/vendeur')}
                 >
-                  Activez-la dans vos paramètres vendeur
+                  Activez-la dans vos paramÃ¨tres vendeur
                 </Button>
               </>
             ) : (
@@ -514,7 +514,7 @@ export default function VendorShop() {
           </div>
           <ShareButton
             title={vendor.business_name}
-            text={`Découvrez la boutique ${vendor.business_name} sur 224 Solutions`}
+            text={`DÃ©couvrez la boutique ${vendor.business_name} sur 224 Solutions`}
             url={`${window.location.origin}/boutique/${vendor.shop_slug || vendor.id}`}
             variant="outline"
             size="sm"
@@ -533,7 +533,7 @@ export default function VendorShop() {
         {vendor.cover_image_url && (
           <img
             src={vendor.cover_image_url}
-            alt={`Bannière ${vendor.business_name}`}
+            alt={`BanniÃ¨re ${vendor.business_name}`}
             className="w-full h-full object-cover"
             loading="lazy"
           />
@@ -581,9 +581,9 @@ export default function VendorShop() {
               {vendor.service_type && (
                 <Badge variant="outline">
                   <Truck className="w-3 h-3 mr-1" />
-                  {vendor.service_type === 'retail' ? 'Vente au détail' :
+                  {vendor.service_type === 'retail' ? 'Vente au dÃ©tail' :
                    vendor.service_type === 'wholesale' ? 'Vente en gros' :
-                   vendor.service_type === 'mixed' ? 'Détail + Gros' :
+                   vendor.service_type === 'mixed' ? 'DÃ©tail + Gros' :
                    vendor.service_type === 'services' ? 'Services' : vendor.service_type}
                 </Badge>
               )}
@@ -662,7 +662,7 @@ export default function VendorShop() {
             </Button>
             <ShareButton
               title={vendor.business_name}
-              text={`Découvrez la boutique ${vendor.business_name} sur 224 Solutions`}
+              text={`DÃ©couvrez la boutique ${vendor.business_name} sur 224 Solutions`}
               url={`${window.location.origin}/boutique/${vendor.shop_slug || vendor.id}`}
               variant="outline"
               size="icon"
@@ -677,25 +677,25 @@ export default function VendorShop() {
         </div>
       </div>
 
-      {/* Products section – with inline error if products failed */}
+      {/* Products section â€“ with inline error if products failed */}
       <div className="px-4">
         {errorType === 'products_error' && (
           <Card className="p-6 text-center mb-4 border-destructive/30">
             <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />
             <p className="text-foreground font-medium mb-1">Impossible de charger les produits</p>
             <p className="text-sm text-muted-foreground mb-4">
-              Le vendeur existe mais ses produits n'ont pas pu être récupérés.
+              Le vendeur existe mais ses produits n'ont pas pu Ãªtre rÃ©cupÃ©rÃ©s.
             </p>
             <Button onClick={handleRetry} size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Réessayer
+              RÃ©essayer
             </Button>
           </Card>
         )}
 
         {errorType !== 'products_error' && (
           <>
-            {/* Tabs pour produits physiques et numériques */}
+            {/* Tabs pour produits physiques et numÃ©riques */}
             {digitalProducts.length > 0 ? (
               <Tabs value={vendor?.business_type === 'digital' ? 'digital' : activeTab} onValueChange={setActiveTab} className="w-full">
                 {vendor?.business_type !== 'digital' && (
@@ -706,14 +706,14 @@ export default function VendorShop() {
                     </TabsTrigger>
                     <TabsTrigger value="digital" className="gap-2">
                       <Laptop className="w-4 h-4" />
-                      Numériques ({digitalProducts.length})
+                      NumÃ©riques ({digitalProducts.length})
                     </TabsTrigger>
                   </TabsList>
                 )}
                 {vendor?.business_type === 'digital' && (
                   <div className="flex items-center gap-2 mb-4">
                     <Laptop className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold text-foreground">Produits numériques ({digitalProducts.length})</h3>
+                    <h3 className="font-semibold text-foreground">Produits numÃ©riques ({digitalProducts.length})</h3>
                   </div>
                 )}
 
@@ -743,7 +743,7 @@ export default function VendorShop() {
                           category={product.categories?.name}
                           onBuy={() => handleProductClick(product.id)}
                           onAddToCart={() => {
-                            toast.success('Produit ajouté au panier');
+                            toast.success('Produit ajoutÃ© au panier');
                           }}
                           onContact={handleContactVendor}
                         />
@@ -752,7 +752,7 @@ export default function VendorShop() {
                   )}
                 </TabsContent>
 
-                {/* Produits numériques */}
+                {/* Produits numÃ©riques */}
                 <TabsContent value="digital">
                   <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 mobile-landscape-grid">
                     {digitalProducts.map((product: any) => (
@@ -804,10 +804,10 @@ export default function VendorShop() {
                                 })()}
                               </span>
                             ) : (
-                              <span className="font-bold text-lg text-green-600">Gratuit</span>
+                              <span className="font-bold text-lg text-primary-orange-600">Gratuit</span>
                             )}
                             <Button size="sm" variant="outline">
-                              Voir détails
+                              Voir dÃ©tails
                             </Button>
                           </div>
                         </CardContent>
@@ -817,7 +817,7 @@ export default function VendorShop() {
                 </TabsContent>
               </Tabs>
             ) : (
-              // Affichage simple si pas de produits numériques
+              // Affichage simple si pas de produits numÃ©riques
               <>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">
@@ -850,7 +850,7 @@ export default function VendorShop() {
                         category={product.categories?.name}
                         onBuy={() => handleProductClick(product.id)}
                         onAddToCart={() => {
-                          toast.success('Produit ajouté au panier');
+                          toast.success('Produit ajoutÃ© au panier');
                         }}
                         onContact={handleContactVendor}
                       />

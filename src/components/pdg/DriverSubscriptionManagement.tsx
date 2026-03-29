@@ -118,7 +118,7 @@ export default function DriverSubscriptionManagement() {
       ]);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error('Erreur lors du chargement des donnÃ©es');
     } finally {
       setLoading(false);
     }
@@ -133,7 +133,7 @@ export default function DriverSubscriptionManagement() {
 
     if (error) throw error;
 
-    // Récupérer les profils séparément
+    // RÃ©cupÃ©rer les profils sÃ©parÃ©ment
     const userIds = [...new Set(data?.map(s => s.user_id) || [])];
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
@@ -210,33 +210,33 @@ export default function DriverSubscriptionManagement() {
 
     const days = parseInt(offerData.days);
     if (isNaN(days) || days <= 0 || days > 365) {
-      toast.error('Le nombre de jours doit être entre 1 et 365');
+      toast.error('Le nombre de jours doit Ãªtre entre 1 et 365');
       return;
     }
 
     setSubmitting(true);
     try {
-      console.log('🎁 [PDG] Offre abonnement:', { userId: offerData.userId, type: offerData.type, days });
+      console.log('ðŸŽ [PDG] Offre abonnement:', { userId: offerData.userId, type: offerData.type, days });
 
-      // Résoudre l'ID utilisateur via RPC (contourne RLS)
+      // RÃ©soudre l'ID utilisateur via RPC (contourne RLS)
       let resolvedUserId = offerData.userId.trim();
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
       if (!uuidRegex.test(resolvedUserId)) {
-        console.log('🔍 [PDG] Recherche utilisateur:', resolvedUserId);
+        console.log('ðŸ” [PDG] Recherche utilisateur:', resolvedUserId);
 
-        // Utiliser la fonction RPC pour résoudre l'utilisateur (SECURITY DEFINER)
+        // Utiliser la fonction RPC pour rÃ©soudre l'utilisateur (SECURITY DEFINER)
         const { data: foundUserId, error: resolveError } = await supabase
           .rpc('resolve_user_for_subscription' as any, {
             p_identifier: resolvedUserId
           } as any);
 
         if (resolveError || !foundUserId) {
-          console.error('❌ [PDG] Erreur résolution:', resolveError);
+          console.error('âŒ [PDG] Erreur rÃ©solution:', resolveError);
 
           // Fallback: recherche directe dans profiles (si RPC n'existe pas)
           if (resolveError?.code === 'PGRST202') {
-            console.log('⚠️ [PDG] RPC non trouvée, recherche directe...');
+            console.log('âš ï¸ [PDG] RPC non trouvÃ©e, recherche directe...');
 
             // Recherche par email exact
             let { data: profileData, error: profileError } = await supabase
@@ -245,7 +245,7 @@ export default function DriverSubscriptionManagement() {
               .eq('email', resolvedUserId.toLowerCase())
               .maybeSingle();
 
-            // Si pas trouvé par email, chercher par téléphone
+            // Si pas trouvÃ© par email, chercher par tÃ©lÃ©phone
             if (!profileData) {
               const { data: phoneData } = await supabase
                 .from('profiles')
@@ -255,7 +255,7 @@ export default function DriverSubscriptionManagement() {
               profileData = phoneData;
             }
 
-            // Si pas trouvé, chercher par custom_id/public_id
+            // Si pas trouvÃ©, chercher par custom_id/public_id
             if (!profileData) {
               const { data: idData } = await supabase
                 .from('profiles')
@@ -266,22 +266,22 @@ export default function DriverSubscriptionManagement() {
             }
 
             if (!profileData) {
-              throw new Error(`Utilisateur "${resolvedUserId}" non trouvé. Vérifiez l'ID, email ou téléphone.`);
+              throw new Error(`Utilisateur "${resolvedUserId}" non trouvÃ©. VÃ©rifiez l'ID, email ou tÃ©lÃ©phone.`);
             }
 
-            console.log('✅ [PDG] Utilisateur trouvé:', profileData.email);
+            console.log('âœ… [PDG] Utilisateur trouvÃ©:', profileData.email);
             resolvedUserId = profileData.id;
           } else {
-            throw new Error(`Utilisateur "${resolvedUserId}" non trouvé. Vérifiez l'ID, email ou téléphone.`);
+            throw new Error(`Utilisateur "${resolvedUserId}" non trouvÃ©. VÃ©rifiez l'ID, email ou tÃ©lÃ©phone.`);
           }
         } else {
-          console.log('✅ [PDG] Utilisateur résolu via RPC:', foundUserId);
+          console.log('âœ… [PDG] Utilisateur rÃ©solu via RPC:', foundUserId);
           resolvedUserId = foundUserId;
         }
       }
 
-      // Utiliser la fonction RPC pour créer l'abonnement (plus fiable)
-      console.log('📝 [PDG] Appel fonction pdg_offer_subscription');
+      // Utiliser la fonction RPC pour crÃ©er l'abonnement (plus fiable)
+      console.log('ðŸ“ [PDG] Appel fonction pdg_offer_subscription');
       const { data: subscriptionId, error: rpcError } = await (supabase as any)
         .rpc('pdg_offer_subscription', {
           p_user_id: resolvedUserId,
@@ -290,13 +290,13 @@ export default function DriverSubscriptionManagement() {
         });
 
       if (rpcError) {
-        console.error('❌ [PDG] Erreur RPC:', rpcError);
+        console.error('âŒ [PDG] Erreur RPC:', rpcError);
         
-        // Si fonction n'existe pas encore, fallback sur méthode directe
+        // Si fonction n'existe pas encore, fallback sur mÃ©thode directe
         if (rpcError.code === 'PGRST202' || rpcError.message?.includes('function')) {
-          console.warn('⚠️ [PDG] Fonction RPC non trouvée, utilisation méthode directe');
+          console.warn('âš ï¸ [PDG] Fonction RPC non trouvÃ©e, utilisation mÃ©thode directe');
           
-          // Méthode fallback
+          // MÃ©thode fallback
           const startDate = new Date();
           const endDate = new Date();
           endDate.setDate(endDate.getDate() + days);
@@ -328,8 +328,8 @@ export default function DriverSubscriptionManagement() {
         }
       }
 
-      console.log('✅ [PDG] Abonnement créé:', subscriptionId);
-      toast.success(`🎁 Abonnement ${offerData.type} de ${days} jours offert avec succès!`, {
+      console.log('âœ… [PDG] Abonnement crÃ©Ã©:', subscriptionId);
+      toast.success(`ðŸŽ Abonnement ${offerData.type} de ${days} jours offert avec succÃ¨s!`, {
         description: 'L\'utilisateur peut maintenant utiliser l\'application'
       });
       
@@ -337,22 +337,22 @@ export default function DriverSubscriptionManagement() {
       setOfferData({ userId: '', type: 'taxi', days: '30', isFree: true });
       fetchData();
     } catch (error: any) {
-      console.error('❌ [PDG] Erreur offre abonnement:', error);
+      console.error('âŒ [PDG] Erreur offre abonnement:', error);
       
-      // Messages d'erreur détaillés
+      // Messages d'erreur dÃ©taillÃ©s
       let errorMessage = 'Erreur lors de l\'offre d\'abonnement';
-      if (error.message?.includes('non trouvé') || error.message?.includes('not found')) {
-        errorMessage = 'Utilisateur introuvable. Vérifiez l\'ID, email ou téléphone.';
+      if (error.message?.includes('non trouvÃ©') || error.message?.includes('not found')) {
+        errorMessage = 'Utilisateur introuvable. VÃ©rifiez l\'ID, email ou tÃ©lÃ©phone.';
       } else if (error.message?.includes('Type invalide')) {
         errorMessage = 'Type d\'abonnement invalide. Choisissez taxi ou livreur.';
       } else if (error.message?.includes('constraint') && error.message?.includes('payment_method')) {
-        errorMessage = 'Erreur de configuration. La migration SQL doit être appliquée.';
+        errorMessage = 'Erreur de configuration. La migration SQL doit Ãªtre appliquÃ©e.';
       } else if (error.message) {
         errorMessage = error.message;
       }
       
       toast.error(errorMessage, {
-        description: 'Vérifiez les informations et réessayez'
+        description: 'VÃ©rifiez les informations et rÃ©essayez'
       });
     } finally {
       setSubmitting(false);
@@ -365,7 +365,7 @@ export default function DriverSubscriptionManagement() {
     const durationDays = parseInt(configForm.durationDays);
 
     if (isNaN(price) || price <= 0) {
-      toast.error('Le prix mensuel doit être positif');
+      toast.error('Le prix mensuel doit Ãªtre positif');
       return;
     }
 
@@ -397,12 +397,12 @@ export default function DriverSubscriptionManagement() {
         if (error) throw error;
       }
 
-      toast.success('Configuration mise à jour avec succès');
+      toast.success('Configuration mise Ã  jour avec succÃ¨s');
       setIsConfigDialogOpen(false);
       fetchConfig();
     } catch (error: any) {
       console.error('Error updating config:', error);
-      toast.error(error.message || 'Erreur lors de la mise à jour');
+      toast.error(error.message || 'Erreur lors de la mise Ã  jour');
     } finally {
       setSubmitting(false);
     }
@@ -418,7 +418,7 @@ export default function DriverSubscriptionManagement() {
 
       if (error) throw error;
 
-      toast.success(`Abonnement ${newStatus === 'active' ? 'réactivé' : 'suspendu'}`);
+      toast.success(`Abonnement ${newStatus === 'active' ? 'rÃ©activÃ©' : 'suspendu'}`);
       fetchSubscriptions();
     } catch (error) {
       toast.error('Erreur lors de la modification');
@@ -444,9 +444,9 @@ export default function DriverSubscriptionManagement() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-green-500/10 text-green-600 border-green-500/20"><CheckCircle className="w-3 h-3 mr-1" /> Actif</Badge>;
+        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20"><CheckCircle className="w-3 h-3 mr-1" /> Actif</Badge>;
       case 'expired':
-        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Expiré</Badge>;
+        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> ExpirÃ©</Badge>;
       case 'suspended':
         return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Suspendu</Badge>;
       default:
@@ -469,7 +469,7 @@ export default function DriverSubscriptionManagement() {
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Abonnements Drivers</h2>
           <p className="text-muted-foreground text-sm">
-            Gérez les abonnements Taxi-Moto et Livreurs
+            GÃ©rez les abonnements Taxi-Moto et Livreurs
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -495,7 +495,7 @@ export default function DriverSubscriptionManagement() {
               <CardTitle className="text-xs font-medium text-muted-foreground">Actifs</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.total_active}</div>
+              <div className="text-2xl font-bold text-primary-orange-600">{stats.total_active}</div>
             </CardContent>
           </Card>
           
@@ -525,7 +525,7 @@ export default function DriverSubscriptionManagement() {
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-muted-foreground">Expirés</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground">ExpirÃ©s</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-muted-foreground">{stats.total_expired}</div>
@@ -537,7 +537,7 @@ export default function DriverSubscriptionManagement() {
               <CardTitle className="text-xs font-medium text-muted-foreground">Revenus Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-lg font-bold text-green-600">{formatAmount(stats.total_revenue)}</div>
+              <div className="text-lg font-bold text-primary-orange-600">{formatAmount(stats.total_revenue)}</div>
             </CardContent>
           </Card>
           
@@ -569,7 +569,7 @@ export default function DriverSubscriptionManagement() {
                 </Badge>
               )}
               <Badge variant="secondary">
-                Durée: {config.duration_days} jours
+                DurÃ©e: {config.duration_days} jours
               </Badge>
             </div>
           </CardContent>
@@ -583,7 +583,7 @@ export default function DriverSubscriptionManagement() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par nom, email, téléphone..."
+                placeholder="Rechercher par nom, email, tÃ©lÃ©phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -606,7 +606,7 @@ export default function DriverSubscriptionManagement() {
               <SelectContent>
                 <SelectItem value="all">Tous statuts</SelectItem>
                 <SelectItem value="active">Actif</SelectItem>
-                <SelectItem value="expired">Expiré</SelectItem>
+                <SelectItem value="expired">ExpirÃ©</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -630,7 +630,7 @@ export default function DriverSubscriptionManagement() {
                   <TableHead>Type</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Prix</TableHead>
-                  <TableHead>Période</TableHead>
+                  <TableHead>PÃ©riode</TableHead>
                   <TableHead>Paiement</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -639,7 +639,7 @@ export default function DriverSubscriptionManagement() {
                 {filteredSubscriptions.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      Aucun abonnement trouvé
+                      Aucun abonnement trouvÃ©
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -689,7 +689,7 @@ export default function DriverSubscriptionManagement() {
                           onClick={() => handleToggleStatus(sub)}
                           disabled={sub.status === 'expired'}
                         >
-                          {sub.status === 'active' ? 'Suspendre' : 'Réactiver'}
+                          {sub.status === 'active' ? 'Suspendre' : 'RÃ©activer'}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -710,19 +710,19 @@ export default function DriverSubscriptionManagement() {
               Offrir un Abonnement
             </DialogTitle>
             <DialogDescription>
-              Offrez un abonnement gratuit à un driver
+              Offrez un abonnement gratuit Ã  un driver
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Identifiant Utilisateur</Label>
               <Input
-                placeholder="UUID, DRV0001, email ou téléphone..."
+                placeholder="UUID, DRV0001, email ou tÃ©lÃ©phone..."
                 value={offerData.userId}
                 onChange={(e) => setOfferData({ ...offerData, userId: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
-                Accepte: UUID, code DRV/CLT, email ou téléphone
+                Accepte: UUID, code DRV/CLT, email ou tÃ©lÃ©phone
               </p>
             </div>
             <div className="space-y-2">
@@ -802,7 +802,7 @@ export default function DriverSubscriptionManagement() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Durée (jours)</Label>
+              <Label>DurÃ©e (jours)</Label>
               <Input
                 type="number"
                 min="1"

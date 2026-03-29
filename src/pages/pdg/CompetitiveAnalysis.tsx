@@ -44,7 +44,7 @@ export default function CompetitiveAnalysis() {
   const [error, setError] = useState<string | null>(null);
 
   const competitors = ['Amazon', 'Alibaba', 'Odoo', 'AliExpress', 'Africa Coin'];
-  const criteria = ['Sécurité', 'Fiabilité', 'Fonctionnalité', 'Innovation'];
+  const criteria = ['SÃ©curitÃ©', 'FiabilitÃ©', 'FonctionnalitÃ©', 'Innovation'];
 
   const runCompetitiveAnalysis = async () => {
     setLoadingCompetitive(true);
@@ -60,20 +60,20 @@ export default function CompetitiveAnalysis() {
       }
 
       if (data?.success && data?.analysis) {
-        // Validation des données reçues
+        // Validation des donnÃ©es reÃ§ues
         if (!data.analysis.platforms || !Array.isArray(data.analysis.platforms)) {
-          throw new Error('Format de données invalide: platforms manquant');
+          throw new Error('Format de donnÃ©es invalide: platforms manquant');
         }
         
         setCompetitiveAnalysis(data.analysis);
         setError(null);
-        toast.success('✅ Analyse comparative terminée avec succès');
+        toast.success('âœ… Analyse comparative terminÃ©e avec succÃ¨s');
       } else {
-        throw new Error(data?.error || 'Aucune analyse reçue du serveur');
+        throw new Error(data?.error || 'Aucune analyse reÃ§ue du serveur');
       }
     } catch (error: any) {
       const errorMessage = error?.message || 'Erreur inconnue lors de l\'analyse';
-      console.error('❌ Error running competitive analysis:', {
+      console.error('âŒ Error running competitive analysis:', {
         error,
         message: errorMessage,
         timestamp: new Date().toISOString()
@@ -81,7 +81,7 @@ export default function CompetitiveAnalysis() {
       
       setError(errorMessage);
       setCompetitiveAnalysis(null);
-      toast.error(`Échec de l'analyse: ${errorMessage}`);
+      toast.error(`Ã‰chec de l'analyse: ${errorMessage}`);
     } finally {
       setLoadingCompetitive(false);
     }
@@ -99,20 +99,20 @@ export default function CompetitiveAnalysis() {
       }
       
       if (data?.analysis) {
-        // Validation des données
+        // Validation des donnÃ©es
         if (!data.analysis.platforms || !Array.isArray(data.analysis.platforms)) {
-          throw new Error('Format de données invalide: platforms manquant');
+          throw new Error('Format de donnÃ©es invalide: platforms manquant');
         }
         
         setSecurityAnalysis(data.analysis);
         setError(null);
-        toast.success('✅ Analyse de sécurité terminée avec succès');
+        toast.success('âœ… Analyse de sÃ©curitÃ© terminÃ©e avec succÃ¨s');
       } else {
-        throw new Error('Aucune analyse reçue du serveur');
+        throw new Error('Aucune analyse reÃ§ue du serveur');
       }
     } catch (error: any) {
       const errorMessage = error?.message || 'Erreur inconnue';
-      console.error('❌ Security analysis error:', {
+      console.error('âŒ Security analysis error:', {
         error,
         message: errorMessage,
         timestamp: new Date().toISOString()
@@ -120,14 +120,14 @@ export default function CompetitiveAnalysis() {
       
       setError(errorMessage);
       setSecurityAnalysis(null);
-      toast.error(`Échec de l'analyse de sécurité: ${errorMessage}`);
+      toast.error(`Ã‰chec de l'analyse de sÃ©curitÃ©: ${errorMessage}`);
     } finally {
       setLoadingSecurity(false);
     }
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80 || score >= 8) return 'text-green-600 dark:text-green-400';
+    if (score >= 80 || score >= 8) return 'text-primary-orange-600 dark:text-primary-orange-400';
     if (score >= 60 || score >= 6) return 'text-yellow-600 dark:text-yellow-400';
     return 'text-red-600 dark:text-red-400';
   };
@@ -160,7 +160,7 @@ export default function CompetitiveAnalysis() {
             <div className="flex-1">
               <h1 className="text-3xl font-bold">Analyse Concurrentielle</h1>
               <p className="text-muted-foreground">
-                Comparaison avec les leaders du marché
+                Comparaison avec les leaders du marchÃ©
               </p>
             </div>
           </div>
@@ -170,11 +170,11 @@ export default function CompetitiveAnalysis() {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="competitive" className="gap-2">
                 <TrendingUp className="w-4 h-4" />
-                Analyse Compétitive
+                Analyse CompÃ©titive
               </TabsTrigger>
               <TabsTrigger value="security" className="gap-2">
                 <Shield className="w-4 h-4" />
-                Sécurité vs Concurrents
+                SÃ©curitÃ© vs Concurrents
               </TabsTrigger>
             </TabsList>
 
@@ -185,7 +185,7 @@ export default function CompetitiveAnalysis() {
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="font-semibold text-destructive mb-1">Erreur détectée</h4>
+                      <h4 className="font-semibold text-destructive mb-1">Erreur dÃ©tectÃ©e</h4>
                       <p className="text-sm text-muted-foreground">{error}</p>
                       <Button
                         onClick={() => setError(null)}
@@ -206,13 +206,13 @@ export default function CompetitiveAnalysis() {
                 <CardHeader>
                   <CardTitle>Lancer l'Analyse Comparative</CardTitle>
                   <CardDescription>
-                    Analyse IA comparative de 224Solutions vs les géants du marché
+                    Analyse IA comparative de 224Solutions vs les gÃ©ants du marchÃ©
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div>
-                      <h4 className="font-semibold mb-2">Concurrents analysés:</h4>
+                      <h4 className="font-semibold mb-2">Concurrents analysÃ©s:</h4>
                       <div className="flex flex-wrap gap-2">
                         {competitors.map((comp) => (
                           <Badge key={comp} variant="outline">{comp}</Badge>
@@ -221,7 +221,7 @@ export default function CompetitiveAnalysis() {
                     </div>
                     
                     <div>
-                      <h4 className="font-semibold mb-2">Critères d'évaluation:</h4>
+                      <h4 className="font-semibold mb-2">CritÃ¨res d'Ã©valuation:</h4>
                       <div className="flex flex-wrap gap-2">
                         {criteria.map((crit) => (
                           <Badge key={crit} variant="secondary">{crit}</Badge>
@@ -257,12 +257,12 @@ export default function CompetitiveAnalysis() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Award className="w-6 h-6 text-primary" />
-                      Résumé de l'Analyse
+                      RÃ©sumÃ© de l'Analyse
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm leading-relaxed">
-                      {competitiveAnalysis.summary || 'Analyse comparative complétée.'}
+                      {competitiveAnalysis.summary || 'Analyse comparative complÃ©tÃ©e.'}
                     </p>
                   </CardContent>
                 </Card>
@@ -297,7 +297,7 @@ export default function CompetitiveAnalysis() {
                       <CardContent className="space-y-4">
                         {platform.scores && Object.keys(platform.scores).length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold">Scores par critère</h4>
+                            <h4 className="text-sm font-semibold">Scores par critÃ¨re</h4>
                             {Object.entries(platform.scores).map(([criterion, score]) => (
                               <div key={criterion} className="flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">{criterion}</span>
@@ -311,12 +311,12 @@ export default function CompetitiveAnalysis() {
 
                         {platform.strengths && platform.strengths.length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-green-600 dark:text-green-400">
-                              ✓ Points forts
+                            <h4 className="text-sm font-semibold text-primary-orange-600 dark:text-primary-orange-400">
+                              âœ“ Points forts
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">
                               {platform.strengths.map((strength, i) => (
-                                <li key={i}>• {strength}</li>
+                                <li key={i}>â€¢ {strength}</li>
                               ))}
                             </ul>
                           </div>
@@ -325,11 +325,11 @@ export default function CompetitiveAnalysis() {
                         {platform.weaknesses && platform.weaknesses.length > 0 && (
                           <div className="space-y-2">
                             <h4 className="text-sm font-semibold text-red-600 dark:text-red-400">
-                              ✗ Faiblesses
+                              âœ— Faiblesses
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">
                               {platform.weaknesses.map((weakness, i) => (
-                                <li key={i}>• {weakness}</li>
+                                <li key={i}>â€¢ {weakness}</li>
                               ))}
                             </ul>
                           </div>
@@ -343,7 +343,7 @@ export default function CompetitiveAnalysis() {
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">
                               {platform.innovations.map((innovation, i) => (
-                                <li key={i}>• {innovation}</li>
+                                <li key={i}>â€¢ {innovation}</li>
                               ))}
                             </ul>
                           </div>
@@ -356,7 +356,7 @@ export default function CompetitiveAnalysis() {
                 {competitiveAnalysis?.ranking && competitiveAnalysis.ranking.length > 0 && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Classement Général</CardTitle>
+                      <CardTitle>Classement GÃ©nÃ©ral</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
@@ -385,7 +385,7 @@ export default function CompetitiveAnalysis() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-100">
                         <TrendingUp className="w-5 h-5" />
-                        Recommandations Stratégiques
+                        Recommandations StratÃ©giques
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -422,9 +422,9 @@ export default function CompetitiveAnalysis() {
             {!securityAnalysis && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Analyse de Sécurité Comparative</CardTitle>
+                  <CardTitle>Analyse de SÃ©curitÃ© Comparative</CardTitle>
                   <CardDescription>
-                    Évaluation de la sécurité de 224Solutions face aux standards des leaders
+                    Ã‰valuation de la sÃ©curitÃ© de 224Solutions face aux standards des leaders
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -434,8 +434,8 @@ export default function CompetitiveAnalysis() {
                       <div>
                         <h4 className="font-semibold mb-1">Analyse approfondie</h4>
                         <p className="text-sm text-muted-foreground">
-                          Cette analyse compare nos mesures de sécurité avec celles des géants du marché
-                          et identifie les axes d'amélioration prioritaires.
+                          Cette analyse compare nos mesures de sÃ©curitÃ© avec celles des gÃ©ants du marchÃ©
+                          et identifie les axes d'amÃ©lioration prioritaires.
                         </p>
                       </div>
                     </div>
@@ -454,7 +454,7 @@ export default function CompetitiveAnalysis() {
                       ) : (
                         <>
                           <Shield className="w-5 h-5" />
-                          Lancer l'Analyse de Sécurité
+                          Lancer l'Analyse de SÃ©curitÃ©
                         </>
                       )}
                     </Button>
@@ -469,7 +469,7 @@ export default function CompetitiveAnalysis() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Shield className="w-6 h-6 text-primary" />
-                      Résumé de l'Analyse de Sécurité
+                      RÃ©sumÃ© de l'Analyse de SÃ©curitÃ©
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -507,7 +507,7 @@ export default function CompetitiveAnalysis() {
                       <CardContent className="space-y-4">
                         {platform.scores && Object.keys(platform.scores).length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold">Scores de sécurité</h4>
+                            <h4 className="text-sm font-semibold">Scores de sÃ©curitÃ©</h4>
                             {Object.entries(platform.scores).map(([criterion, score]) => (
                               <div key={criterion} className="flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">{criterion}</span>
@@ -521,12 +521,12 @@ export default function CompetitiveAnalysis() {
 
                         {platform.strengths && platform.strengths.length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-green-600 dark:text-green-400">
-                              ✓ Points forts sécurité
+                            <h4 className="text-sm font-semibold text-primary-orange-600 dark:text-primary-orange-400">
+                              âœ“ Points forts sÃ©curitÃ©
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">
                               {platform.strengths.map((strength, i) => (
-                                <li key={i}>• {strength}</li>
+                                <li key={i}>â€¢ {strength}</li>
                               ))}
                             </ul>
                           </div>
@@ -535,11 +535,11 @@ export default function CompetitiveAnalysis() {
                         {platform.weaknesses && platform.weaknesses.length > 0 && (
                           <div className="space-y-2">
                             <h4 className="text-sm font-semibold text-red-600 dark:text-red-400">
-                              ✗ Vulnérabilités
+                              âœ— VulnÃ©rabilitÃ©s
                             </h4>
                             <ul className="text-sm space-y-1 text-muted-foreground">
                               {platform.weaknesses.map((weakness, i) => (
-                                <li key={i}>• {weakness}</li>
+                                <li key={i}>â€¢ {weakness}</li>
                               ))}
                             </ul>
                           </div>
@@ -554,10 +554,10 @@ export default function CompetitiveAnalysis() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Zap className="w-6 h-6 text-primary" />
-                        Priorités pour 224Solutions
+                        PrioritÃ©s pour 224Solutions
                       </CardTitle>
                       <CardDescription>
-                        Plan d'action pour atteindre le niveau des leaders du marché
+                        Plan d'action pour atteindre le niveau des leaders du marchÃ©
                       </CardDescription>
                     </CardHeader>
                     <CardContent>

@@ -1,6 +1,6 @@
 /**
- * 🚕 PDG BUREAU MONITORING - Vue globale des bureaux syndicaux
- * Utilise la fonction get_bureau_realtime_stats pour afficher les stats en temps réel
+ * ðŸš• PDG BUREAU MONITORING - Vue globale des bureaux syndicaux
+ * Utilise la fonction get_bureau_realtime_stats pour afficher les stats en temps rÃ©el
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -51,7 +51,7 @@ export default function PDGBureauMonitoring() {
   const fetchBureausWithStats = useCallback(async () => {
     setLoading(true);
     try {
-      // Récupérer tous les bureaux
+      // RÃ©cupÃ©rer tous les bureaux
       const { data: bureausData, error: bureausError } = await supabase
         .from('bureaus')
         .select('id, bureau_code, commune, prefecture, president_name, status, total_members')
@@ -64,7 +64,7 @@ export default function PDGBureauMonitoring() {
         return;
       }
 
-      // Initialiser les bureaux avec un état de chargement
+      // Initialiser les bureaux avec un Ã©tat de chargement
       const initialBureaus: BureauStats[] = bureausData.map(bureau => ({
         bureau,
         stats: null,
@@ -73,7 +73,7 @@ export default function PDGBureauMonitoring() {
       }));
       setBureaus(initialBureaus);
 
-      // Récupérer les stats pour chaque bureau en parallèle
+      // RÃ©cupÃ©rer les stats pour chaque bureau en parallÃ¨le
       const statsPromises = bureausData.map(async (bureau) => {
         try {
           const { data, error } = await supabase.rpc('get_bureau_realtime_stats', {
@@ -121,7 +121,7 @@ export default function PDGBureauMonitoring() {
   useEffect(() => {
     fetchBureausWithStats();
     
-    // Rafraîchir toutes les 30 secondes
+    // RafraÃ®chir toutes les 30 secondes
     const interval = setInterval(fetchBureausWithStats, 30000);
     return () => clearInterval(interval);
   }, [fetchBureausWithStats]);
@@ -162,14 +162,14 @@ export default function PDGBureauMonitoring() {
             Monitoring Global des Bureaux
           </h2>
           <p className="text-muted-foreground">
-            Vue en temps réel de tous les bureaux syndicaux
+            Vue en temps rÃ©el de tous les bureaux syndicaux
           </p>
         </div>
         <div className="flex items-center gap-3">
           {lastUpdate && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              Mis à jour: {lastUpdate.toLocaleTimeString()}
+              Mis Ã  jour: {lastUpdate.toLocaleTimeString()}
             </span>
           )}
           <Button onClick={fetchBureausWithStats} variant="outline" size="sm" disabled={loading}>
@@ -189,18 +189,18 @@ export default function PDGBureauMonitoring() {
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+        <Card className="bg-gradient-to-br from-primary-blue-500/10 to-primary-orange-600/5 border-primary-orange-500/20">
           <CardContent className="p-4 text-center">
-            <Users className="w-6 h-6 mx-auto mb-2 text-green-500" />
-            <div className="text-2xl font-bold text-green-600">{globalStats.totalDrivers}</div>
+            <Users className="w-6 h-6 mx-auto mb-2 text-primary-orange-500" />
+            <div className="text-2xl font-bold text-primary-orange-600">{globalStats.totalDrivers}</div>
             <div className="text-xs text-muted-foreground">Chauffeurs Total</div>
           </CardContent>
         </Card>
         
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
+        <Card className="bg-gradient-to-br from-primary-blue-500/10 to-primary-orange-600/5 border-primary-orange-500/20">
           <CardContent className="p-4 text-center">
-            <Activity className="w-6 h-6 mx-auto mb-2 text-emerald-500" />
-            <div className="text-2xl font-bold text-emerald-600">{globalStats.onlineDrivers}</div>
+            <Activity className="w-6 h-6 mx-auto mb-2 text-primary-blue-500" />
+            <div className="text-2xl font-bold text-primary-blue-600">{globalStats.onlineDrivers}</div>
             <div className="text-xs text-muted-foreground">En Ligne</div>
           </CardContent>
         </Card>
@@ -233,20 +233,20 @@ export default function PDGBureauMonitoring() {
       </div>
 
       {/* Revenus du jour */}
-      <Card className="bg-gradient-to-r from-emerald-500/5 to-green-500/10 border-emerald-500/20">
+      <Card className="bg-gradient-to-r from-primary-blue-500/5 to-primary-orange-500/10 border-primary-orange-500/20">
         <CardContent className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <DollarSign className="w-8 h-8 text-emerald-500" />
+            <DollarSign className="w-8 h-8 text-primary-blue-500" />
             <div>
               <p className="text-sm text-muted-foreground">Revenus totaux du jour</p>
-              <p className="text-3xl font-bold text-emerald-600">
+              <p className="text-3xl font-bold text-primary-blue-600">
                 {formatCurrency(globalStats.todayEarnings)}
               </p>
             </div>
           </div>
-          <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
+          <Badge className="bg-primary-blue-500/20 text-primary-blue-600 border-primary-orange-500/30">
             <Shield className="w-3 h-3 mr-1" />
-            Temps réel
+            Temps rÃ©el
           </Badge>
         </CardContent>
       </Card>
@@ -267,7 +267,7 @@ export default function PDGBureauMonitoring() {
               </div>
             ) : bureaus.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
-                Aucun bureau trouvé
+                Aucun bureau trouvÃ©
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -304,8 +304,8 @@ export default function PDGBureauMonitoring() {
                             <div className="text-lg font-bold">{stats.total_drivers}</div>
                             <div className="text-xs text-muted-foreground">Chauffeurs</div>
                           </div>
-                          <div className="p-2 bg-green-500/10 rounded">
-                            <div className="text-lg font-bold text-green-600">{stats.online_drivers}</div>
+                          <div className="p-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 rounded">
+                            <div className="text-lg font-bold text-primary-orange-600">{stats.online_drivers}</div>
                             <div className="text-xs text-muted-foreground">En ligne</div>
                           </div>
                           <div className="p-2 bg-purple-500/10 rounded">

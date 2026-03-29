@@ -79,14 +79,14 @@ export default function DeliveryPaymentModal({
     {
       id: 'wallet' as DeliveryPaymentMethod,
       name: 'Wallet 224Solutions',
-      description: 'Paiement instantané depuis votre wallet',
+      description: 'Paiement instantanÃ© depuis votre wallet',
       icon: Wallet,
       color: 'text-primary'
     },
     {
       id: 'card' as DeliveryPaymentMethod,
       name: 'Carte bancaire (Stripe)',
-      description: 'Visa, Mastercard - Paiement sécurisé',
+      description: 'Visa, Mastercard - Paiement sÃ©curisÃ©',
       icon: CreditCard,
       color: 'text-blue-600'
     },
@@ -99,15 +99,15 @@ export default function DeliveryPaymentModal({
     },
     {
       id: 'cash' as DeliveryPaymentMethod,
-      name: 'Paiement à la livraison',
-      description: 'Payez en espèces au livreur',
+      name: 'Paiement Ã  la livraison',
+      description: 'Payez en espÃ¨ces au livreur',
       icon: Banknote,
-      color: 'text-green-600'
+      color: 'text-primary-orange-600'
     }
   ];
 
   const handlePayment = useCallback(async () => {
-    // Si carte bancaire sélectionnée, ouvrir le modal Stripe
+    // Si carte bancaire sÃ©lectionnÃ©e, ouvrir le modal Stripe
     if (paymentMethod === 'card') {
       setShowStripeModal(true);
       return;
@@ -124,7 +124,7 @@ export default function DeliveryPaymentModal({
         paymentMethod
       });
 
-      // Vérifier le solde pour wallet
+      // VÃ©rifier le solde pour wallet
       if (paymentMethod === 'wallet') {
         if (walletBalance !== null && walletBalance < amount) {
           toast.error('Solde insuffisant', {
@@ -137,8 +137,8 @@ export default function DeliveryPaymentModal({
 
       // Validation des champs requis
       if (paymentMethod === 'mobile_money' && (!phoneNumber || phoneNumber.length < 8)) {
-        toast.error('Numéro de téléphone requis', {
-          description: 'Veuillez entrer votre numéro Mobile Money'
+        toast.error('NumÃ©ro de tÃ©lÃ©phone requis', {
+          description: 'Veuillez entrer votre numÃ©ro Mobile Money'
         });
         setProcessing(false);
         return;
@@ -146,7 +146,7 @@ export default function DeliveryPaymentModal({
 
       let result;
 
-      // Appeler le service de paiement approprié
+      // Appeler le service de paiement appropriÃ©
       switch (paymentMethod) {
         case 'wallet':
           result = await DeliveryPaymentService.payWithWallet(deliveryId, amount, customerId);
@@ -164,11 +164,11 @@ export default function DeliveryPaymentModal({
           result = await DeliveryPaymentService.payWithCash(deliveryId, amount, customerId);
           break;
         default:
-          throw new Error('Méthode de paiement non supportée');
+          throw new Error('MÃ©thode de paiement non supportÃ©e');
       }
 
       if (result.success) {
-        toast.success('Paiement effectué avec succès!', {
+        toast.success('Paiement effectuÃ© avec succÃ¨s!', {
           description: `Transaction ID: ${result.transaction_id}`
         });
         onPaymentSuccess();
@@ -181,7 +181,7 @@ export default function DeliveryPaymentModal({
     } catch (error) {
       console.error('[DeliveryPayment] Error:', error);
       toast.error('Erreur de paiement', {
-        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+        description: error instanceof Error ? error.message : 'Veuillez rÃ©essayer'
       });
     } finally {
       setProcessing(false);
@@ -191,8 +191,8 @@ export default function DeliveryPaymentModal({
   const handleStripeSuccess = async (paymentIntentId: string) => {
     console.log('[DeliveryPayment] Stripe payment success:', paymentIntentId);
     
-    toast.success('Paiement par carte réussi !', {
-      description: `${amount.toLocaleString()} GNF payés par carte`
+    toast.success('Paiement par carte rÃ©ussi !', {
+      description: `${amount.toLocaleString()} GNF payÃ©s par carte`
     });
 
     setShowStripeModal(false);
@@ -212,7 +212,7 @@ export default function DeliveryPaymentModal({
               Paiement de la livraison
             </DialogTitle>
             <DialogDescription>
-              Montant à payer: <span className="font-bold text-lg">{amount.toLocaleString()} GNF</span>
+              Montant Ã  payer: <span className="font-bold text-lg">{amount.toLocaleString()} GNF</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -237,7 +237,7 @@ export default function DeliveryPaymentModal({
               <Alert>
                 <Shield className="h-4 w-4" />
                 <AlertDescription>
-                  Paiement sécurisé: Les fonds sont conservés jusqu'à la livraison confirmée
+                  Paiement sÃ©curisÃ©: Les fonds sont conservÃ©s jusqu'Ã  la livraison confirmÃ©e
                 </AlertDescription>
               </Alert>
             )}
@@ -276,7 +276,7 @@ export default function DeliveryPaymentModal({
             {paymentMethod === 'mobile_money' && (
               <div className="space-y-3">
                 <div>
-                  <Label>Opérateur Mobile Money</Label>
+                  <Label>OpÃ©rateur Mobile Money</Label>
                   <Select value={mobileProvider} onValueChange={(v: any) => setMobileProvider(v)}>
                     <SelectTrigger>
                       <SelectValue />
@@ -289,7 +289,7 @@ export default function DeliveryPaymentModal({
                   </Select>
                 </div>
                 <div>
-                  <Label>Numéro de téléphone</Label>
+                  <Label>NumÃ©ro de tÃ©lÃ©phone</Label>
                   <Input
                     type="tel"
                     placeholder="622123456"
@@ -304,7 +304,7 @@ export default function DeliveryPaymentModal({
               <Alert className="bg-blue-50 border-blue-200">
                 <CreditCard className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-sm text-blue-700">
-                  Vous serez redirigé vers le formulaire de paiement Stripe sécurisé
+                  Vous serez redirigÃ© vers le formulaire de paiement Stripe sÃ©curisÃ©
                 </AlertDescription>
               </Alert>
             )}
@@ -313,7 +313,7 @@ export default function DeliveryPaymentModal({
               <Alert>
                 <Banknote className="h-4 w-4" />
                 <AlertDescription>
-                  Vous paierez en espèces au livreur lors de la remise du colis
+                  Vous paierez en espÃ¨ces au livreur lors de la remise du colis
                 </AlertDescription>
               </Alert>
             )}

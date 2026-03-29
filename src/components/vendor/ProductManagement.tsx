@@ -1,6 +1,6 @@
 /**
- * PRODUCT MANAGEMENT - VERSION REFACTORISÉE & OPTIMISÉE
- * Interface professionnelle avec gestion IA améliorée
+ * PRODUCT MANAGEMENT - VERSION REFACTORISÃ‰E & OPTIMISÃ‰E
+ * Interface professionnelle avec gestion IA amÃ©liorÃ©e
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
@@ -45,15 +45,15 @@ interface Product {
   cost_price?: number;
   sku?: string;
   barcode?: string;
-  // Stock affiché côté produit (peut être synchronisé depuis inventory)
+  // Stock affichÃ© cÃ´tÃ© produit (peut Ãªtre synchronisÃ© depuis inventory)
   stock_quantity: number;
   low_stock_threshold: number;
   is_active: boolean;
   category_id?: string;
   category?: { id: string; name: string } | null;
-  section?: string; // Section personnalisée du vendeur
+  section?: string; // Section personnalisÃ©e du vendeur
   images?: string[];
-  promotional_videos?: string[]; // URLs des vidéos publicitaires (max 2)
+  promotional_videos?: string[]; // URLs des vidÃ©os publicitaires (max 2)
   tags?: string[];
   weight?: number;
   created_at?: string;
@@ -157,7 +157,7 @@ export default function ProductManagement() {
     low_stock_threshold: '10',
     category_id: '',
     category_name: '',
-    section: '', // Section personnalisée du vendeur
+    section: '', // Section personnalisÃ©e du vendeur
     weight: '',
     tags: '',
     is_active: true,
@@ -171,7 +171,7 @@ export default function ProductManagement() {
 
   const saveDraftNow = useCallback(() => {
     if (!productDraftKey) return;
-    // On ne persiste que le mode création (pas l'édition) pour éviter les incohérences.
+    // On ne persiste que le mode crÃ©ation (pas l'Ã©dition) pour Ã©viter les incohÃ©rences.
     if (!showDialog || !!editingProduct) return;
     if (saving) return;
 
@@ -196,7 +196,7 @@ export default function ProductManagement() {
     }
   }, [productDraftKey]);
 
-  // Si le dialog est fermé (ou si on passe en mode édition), on nettoie le draft
+  // Si le dialog est fermÃ© (ou si on passe en mode Ã©dition), on nettoie le draft
   useEffect(() => {
     if (!productDraftKey) return;
     if (!showDialog || !!editingProduct) {
@@ -221,7 +221,7 @@ export default function ProductManagement() {
       }
       if (parsed?.mode !== 'create' || !parsed?.formData) return;
 
-      // Réouvrir le formulaire et restaurer les champs
+      // RÃ©ouvrir le formulaire et restaurer les champs
       setEditingProduct(null);
       setFormData((prev) => ({ ...prev, ...parsed.formData }));
       setShowDialog(true);
@@ -230,7 +230,7 @@ export default function ProductManagement() {
     }
   }, [productDraftKey, vendorId, vendorLoading]);
 
-  // Sauvegarde automatique (debounced) + sauvegarde immédiate sur sortie d'onglet/app
+  // Sauvegarde automatique (debounced) + sauvegarde immÃ©diate sur sortie d'onglet/app
   useEffect(() => {
     if (!productDraftKey) return;
     if (!showDialog || !!editingProduct) return;
@@ -346,8 +346,8 @@ export default function ProductManagement() {
     // Check if user has premium subscription
     const isPremium = await checkPremiumStatus();
     if (!isPremium) {
-      toast.error('⭐ Fonctionnalité Premium uniquement', {
-        description: 'Passez à un abonnement Premium pour télécharger des vidéos publicitaires',
+      toast.error('â­ FonctionnalitÃ© Premium uniquement', {
+        description: 'Passez Ã  un abonnement Premium pour tÃ©lÃ©charger des vidÃ©os publicitaires',
         action: {
           label: 'Voir les offres',
           onClick: () => navigate('/vendeur/subscription')
@@ -358,21 +358,21 @@ export default function ProductManagement() {
 
     // Validate file type
     if (!file.type.startsWith('video/')) {
-      toast.error('Format invalide. Veuillez sélectionner une vidéo');
+      toast.error('Format invalide. Veuillez sÃ©lectionner une vidÃ©o');
       return;
     }
 
     // Validate file size (max 50MB)
     const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
-      toast.error('Vidéo trop volumineuse. Taille maximale : 50MB');
+      toast.error('VidÃ©o trop volumineuse. Taille maximale : 50MB');
       return;
     }
 
     // Check max 2 videos (including existing ones)
     const totalVideos = selectedVideos.length + (editingProduct?.promotional_videos?.length || 0);
     if (totalVideos >= 2) {
-      toast.error('Maximum 2 vidéos par produit');
+      toast.error('Maximum 2 vidÃ©os par produit');
       return;
     }
 
@@ -386,7 +386,7 @@ export default function ProductManagement() {
         video.onloadedmetadata = () => {
           window.URL.revokeObjectURL(video.src);
           if (video.duration > 45) {
-            reject(new Error('Durée maximale dépassée'));
+            reject(new Error('DurÃ©e maximale dÃ©passÃ©e'));
           } else {
             resolve();
           }
@@ -396,12 +396,12 @@ export default function ProductManagement() {
       });
 
       setSelectedVideos(prev => [...prev, file]);
-      toast.success(`✅ Vidéo ${selectedVideos.length + 1}/2 ajoutée`);
+      toast.success(`âœ… VidÃ©o ${selectedVideos.length + 1}/2 ajoutÃ©e`);
     } catch (error: any) {
-      if (error.message === 'Durée maximale dépassée') {
-        toast.error('Vidéo trop longue. Durée maximale : 45 secondes');
+      if (error.message === 'DurÃ©e maximale dÃ©passÃ©e') {
+        toast.error('VidÃ©o trop longue. DurÃ©e maximale : 45 secondes');
       } else {
-        toast.error('Erreur lors de la validation de la vidéo');
+        toast.error('Erreur lors de la validation de la vidÃ©o');
       }
     } finally {
       setUploadingVideo(false);
@@ -415,7 +415,7 @@ export default function ProductManagement() {
       await Promise.all([fetchProducts(), fetchCategories()]);
     } catch (error: any) {
       captureError('product', 'Failed to fetch products', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error('Erreur lors du chargement des donnÃ©es');
     } finally {
       setLoading(false);
     }
@@ -425,16 +425,16 @@ export default function ProductManagement() {
     if (!vendorId) return;
     
     try {
-      // 1. Appliquer les limites d'abonnement et désactiver les produits en excès
+      // 1. Appliquer les limites d'abonnement et dÃ©sactiver les produits en excÃ¨s
       const limitStatus = await ProductLimitService.enforceProductLimit(vendorId, user?.id);
       setProductLimitStatus(limitStatus);
       
-      // 2. Notifier le vendeur si des produits ont été désactivés
+      // 2. Notifier le vendeur si des produits ont Ã©tÃ© dÃ©sactivÃ©s
       if (limitStatus.excess_products > 0) {
         ProductLimitService.notifyProductDeactivation(limitStatus);
       }
       
-      // 3. Charger les produits mis à jour
+      // 3. Charger les produits mis Ã  jour
       const { data, error } = await supabase
         .from('products')
         .select('*, category:categories(id, name), inventory:inventory(quantity)')
@@ -451,7 +451,7 @@ export default function ProductManagement() {
       captureError('product', 'Failed to enforce product limits', error);
       console.error('[ProductLimit] Error:', error);
       
-      // Charger quand même les produits même en cas d'erreur
+      // Charger quand mÃªme les produits mÃªme en cas d'erreur
       const { data, error: fetchError } = await supabase
         .from('products')
         .select('*, category:categories(id, name), inventory:inventory(quantity)')
@@ -488,7 +488,7 @@ export default function ProductManagement() {
     if (payload.sell_by_carton) {
       const unitsPerCarton = parseInt(payload.units_per_carton || '', 10);
       if (!unitsPerCarton || Number.isNaN(unitsPerCarton) || unitsPerCarton < 1) {
-        toast.error("Veuillez renseigner 'Unités par carton'");
+        toast.error("Veuillez renseigner 'UnitÃ©s par carton'");
         return;
       }
 
@@ -546,14 +546,14 @@ export default function ProductManagement() {
     } catch (error: any) {
       console.error('[ProductSave] Exception:', error);
       captureError('product', 'Failed to save product', error);
-      toast.error(`Erreur: ${error.message || 'Échec de la sauvegarde'}`);
+      toast.error(`Erreur: ${error.message || 'Ã‰chec de la sauvegarde'}`);
     } finally {
       setSaving(false);
     }
   };
 
   const handleEdit = (product: Product) => {
-    // Stock exact basé sur inventory si disponible
+    // Stock exact basÃ© sur inventory si disponible
     const inv = product.inventory as any;
     const invQty = Array.isArray(inv) ? inv?.[0]?.quantity : inv?.quantity;
     const effectiveStock = (typeof invQty === 'number' ? invQty : product.stock_quantity) || 0;
@@ -577,7 +577,7 @@ export default function ProductManagement() {
       low_stock_threshold: product.low_stock_threshold.toString(),
       category_id: product.category_id || '',
       category_name: '',
-      section: product.section || '', // Section personnalisée
+      section: product.section || '', // Section personnalisÃ©e
       weight: product.weight?.toString() || '',
       tags: product.tags?.join(', ') || '',
       is_active: product.is_active,
@@ -593,12 +593,12 @@ export default function ProductManagement() {
   };
 
   const handleDelete = async (productId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return;
+    if (!confirm('ÃŠtes-vous sÃ»r de vouloir supprimer ce produit ?')) return;
 
     try {
       const success = await deleteProduct(productId);
       if (success) {
-        // Recharger les produits et réappliquer les limites
+        // Recharger les produits et rÃ©appliquer les limites
         await fetchProducts();
         await loadProductLimit();
       }
@@ -609,11 +609,11 @@ export default function ProductManagement() {
   };
 
   const handleDuplicate = async (productId: string) => {
-    if (!confirm('Voulez-vous créer une copie de ce produit ?')) return;
+    if (!confirm('Voulez-vous crÃ©er une copie de ce produit ?')) return;
 
     try {
       await duplicateProduct(productId);
-      toast.success('Produit dupliqué avec succès');
+      toast.success('Produit dupliquÃ© avec succÃ¨s');
       fetchProducts();
     } catch (error: any) {
       captureError('product', 'Failed to duplicate product', error);
@@ -633,7 +633,7 @@ export default function ProductManagement() {
       low_stock_threshold: '10',
       category_id: '',
       category_name: '',
-      section: '', // Section personnalisée
+      section: '', // Section personnalisÃ©e
       weight: '',
       tags: '',
       is_active: true,
@@ -659,11 +659,11 @@ export default function ProductManagement() {
     );
 
     if (imageFiles.length !== files.length) {
-      toast.error('Certains fichiers ont été ignorés (format invalide ou taille > 10MB)');
+      toast.error('Certains fichiers ont Ã©tÃ© ignorÃ©s (format invalide ou taille > 10MB)');
     }
 
     setSelectedImages(prev => [...prev, ...imageFiles]);
-    toast.success(`${imageFiles.length} image(s) sélectionnée(s)`);
+    toast.success(`${imageFiles.length} image(s) sÃ©lectionnÃ©e(s)`);
   };
 
   const removeImage = (index: number) => {
@@ -679,7 +679,7 @@ export default function ProductManagement() {
 
     try {
       setGeneratingDescription(true);
-      toast.info('🤖 Génération IA en cours...');
+      toast.info('ðŸ¤– GÃ©nÃ©ration IA en cours...');
       
       const categoryName = categoryMode === 'existing' && formData.category_id 
         ? categories.find(c => c.id === formData.category_id)?.name 
@@ -697,13 +697,13 @@ export default function ProductManagement() {
 
       if (data?.description) {
         setFormData(prev => ({ ...prev, description: data.description }));
-        toast.success('✅ Description générée par IA');
+        toast.success('âœ… Description gÃ©nÃ©rÃ©e par IA');
       } else if (data?.error) {
         throw new Error(data.error);
       }
     } catch (error: any) {
-      console.error('Erreur génération description:', error);
-      toast.error(error.message || 'Erreur lors de la génération');
+      console.error('Erreur gÃ©nÃ©ration description:', error);
+      toast.error(error.message || 'Erreur lors de la gÃ©nÃ©ration');
     } finally {
       setGeneratingDescription(false);
     }
@@ -717,7 +717,7 @@ export default function ProductManagement() {
 
     try {
       setGeneratingImage(true);
-      toast.info('🎨 Génération image IA en cours...');
+      toast.info('ðŸŽ¨ GÃ©nÃ©ration image IA en cours...');
       
       const categoryName = categoryMode === 'existing' && formData.category_id 
         ? categories.find(c => c.id === formData.category_id)?.name 
@@ -739,13 +739,13 @@ export default function ProductManagement() {
         const blob = await response.blob();
         const file = new File([blob], `ai-generated-${Date.now()}.png`, { type: 'image/png' });
         setSelectedImages(prev => [...prev, file]);
-        toast.success('✅ Image générée par IA');
+        toast.success('âœ… Image gÃ©nÃ©rÃ©e par IA');
       } else if (data?.error) {
         throw new Error(data.error);
       }
     } catch (error: any) {
-      console.error('Erreur génération image:', error);
-      toast.error(error.message || 'Erreur lors de la génération');
+      console.error('Erreur gÃ©nÃ©ration image:', error);
+      toast.error(error.message || 'Erreur lors de la gÃ©nÃ©ration');
     } finally {
       setGeneratingImage(false);
     }
@@ -757,7 +757,7 @@ export default function ProductManagement() {
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     const sku = `SKU-${timestamp}-${random}`;
     setFormData(prev => ({ ...prev, sku }));
-    toast.success('SKU généré');
+    toast.success('SKU gÃ©nÃ©rÃ©');
   };
 
   // Generate Barcode (EAN-13 format)
@@ -776,10 +776,10 @@ export default function ProductManagement() {
     
     const barcode = baseCode + checkDigit;
     setFormData(prev => ({ ...prev, barcode }));
-    toast.success('Code-barres EAN-13 généré');
+    toast.success('Code-barres EAN-13 gÃ©nÃ©rÃ©');
   };
 
-  // Helpers (stock exact basé sur inventory si disponible)
+  // Helpers (stock exact basÃ© sur inventory si disponible)
   const getEffectiveStock = (product: Product) => {
     const inv = product.inventory as any;
     const invQty = Array.isArray(inv) ? inv?.[0]?.quantity : inv?.quantity;
@@ -837,7 +837,7 @@ export default function ProductManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Product Limit Exceeded Banner - Produits désactivés */}
+      {/* Product Limit Exceeded Banner - Produits dÃ©sactivÃ©s */}
       {productLimitStatus && productLimitStatus.excess_products > 0 && (
         <Card className="border-red-500 bg-red-50 dark:bg-red-950">
           <CardContent className="p-4">
@@ -845,14 +845,14 @@ export default function ProductManagement() {
               <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="font-semibold text-red-900 dark:text-red-100">
-                  ⚠️ Produits automatiquement désactivés
+                  âš ï¸ Produits automatiquement dÃ©sactivÃ©s
                 </h3>
                 <p className="text-sm text-red-800 dark:text-red-200 mt-1">
                   Vous avez {productLimitStatus.total_products} produits mais votre abonnement ne permet que {productLimitStatus.max_allowed} produits actifs.
                   <br />
-                  <strong>{productLimitStatus.excess_products} produit(s)</strong> ont été automatiquement désactivés et ne sont pas visibles sur le marketplace.
+                  <strong>{productLimitStatus.excess_products} produit(s)</strong> ont Ã©tÃ© automatiquement dÃ©sactivÃ©s et ne sont pas visibles sur le marketplace.
                   <br />
-                  Les produits les plus récents restent actifs, les plus anciens sont désactivés.
+                  Les produits les plus rÃ©cents restent actifs, les plus anciens sont dÃ©sactivÃ©s.
                 </p>
                 <div className="flex gap-2 mt-3">
                   <Button
@@ -860,7 +860,7 @@ export default function ProductManagement() {
                     size="sm"
                     variant="default"
                   >
-                    Mettre à niveau pour réactiver tous mes produits
+                    Mettre Ã  niveau pour rÃ©activer tous mes produits
                   </Button>
                   <Button
                     onClick={fetchProducts}
@@ -884,7 +884,7 @@ export default function ProductManagement() {
               <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="font-semibold text-orange-900 dark:text-orange-100">
-                  🚫 Limite de produits atteinte
+                  ðŸš« Limite de produits atteinte
                 </h3>
                 <p className="text-sm text-orange-800 dark:text-orange-200 mt-1">
                   Vous avez atteint la limite de {productLimit.max_products} produits pour votre plan actuel ({productLimit.current_count}/{productLimit.max_products}).
@@ -895,7 +895,7 @@ export default function ProductManagement() {
                   className="mt-3"
                   variant="default"
                 >
-                  Mettre à niveau mon abonnement
+                  Mettre Ã  niveau mon abonnement
                 </Button>
               </div>
             </div>
@@ -936,7 +936,7 @@ export default function ProductManagement() {
               Gestion des produits
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground">
-              Gérez votre catalogue de produits
+              GÃ©rez votre catalogue de produits
             </p>
           </div>
         </div>
@@ -964,9 +964,9 @@ export default function ProductManagement() {
           <CardContent className="p-2 md:p-6 pt-0">
             <div className="text-lg md:text-2xl font-bold">{stats.total}</div>
             <div className="flex items-center gap-2 text-[10px] md:text-xs text-muted-foreground">
-              <span className="text-green-600">✓ {stats.active} actifs</span>
+              <span className="text-primary-orange-600">âœ“ {stats.active} actifs</span>
               {stats.total - stats.active > 0 && (
-                <span className="text-red-600">● {stats.total - stats.active} désactivés</span>
+                <span className="text-red-600">â— {stats.total - stats.active} dÃ©sactivÃ©s</span>
               )}
             </div>
           </CardContent>
@@ -980,7 +980,7 @@ export default function ProductManagement() {
           <CardContent className="p-2 md:p-6 pt-0">
             <div className="text-lg md:text-2xl font-bold text-orange-500">{stats.lowStock}</div>
             <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-1">
-              Réappro. requis
+              RÃ©appro. requis
             </p>
           </CardContent>
         </Card>
@@ -1002,13 +1002,13 @@ export default function ProductManagement() {
 
         <Card className="p-2 md:p-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 md:p-6 pb-1 md:pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Catégories</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">CatÃ©gories</CardTitle>
             <FolderOpen className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-2 md:p-6 pt-0">
             <div className="text-lg md:text-2xl font-bold">{usedCategories.length}</div>
             <p className="text-[10px] md:text-xs text-muted-foreground">
-              Catégories utilisées
+              CatÃ©gories utilisÃ©es
             </p>
           </CardContent>
         </Card>
@@ -1047,10 +1047,10 @@ export default function ProductManagement() {
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-[140px] h-9 text-xs md:text-sm">
                   <FolderOpen className="h-3 w-3 mr-1" />
-                  <SelectValue placeholder="Catégorie" />
+                  <SelectValue placeholder="CatÃ©gorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes catégories</SelectItem>
+                  <SelectItem value="all">Toutes catÃ©gories</SelectItem>
                   {usedCategories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
@@ -1109,7 +1109,7 @@ export default function ProductManagement() {
               {!product.is_active && (
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
                   <Badge className="text-xs md:text-sm px-3 py-1.5" variant="destructive">
-                    ❌ Produit désactivé
+                    âŒ Produit dÃ©sactivÃ©
                   </Badge>
                 </div>
               )}
@@ -1160,7 +1160,7 @@ export default function ProductManagement() {
               <div className="flex items-center justify-between text-[10px] md:text-sm">
                 <span className="text-muted-foreground">Stock:</span>
                 <span className={`font-medium ${getEffectiveStock(product) <= product.low_stock_threshold ? 'text-orange-500' : ''}`}>
-                  {getEffectiveStock(product)} unités
+                  {getEffectiveStock(product)} unitÃ©s
                 </span>
               </div>
 
@@ -1173,7 +1173,7 @@ export default function ProductManagement() {
                   className="flex-1 h-7 md:h-9 text-[10px] md:text-sm px-1 md:px-3"
                 >
                   <Edit className="h-3 w-3 md:mr-1" />
-                  <span className="hidden md:inline">Éditer</span>
+                  <span className="hidden md:inline">Ã‰diter</span>
                 </Button>
                 <Button
                   size="sm"
@@ -1201,14 +1201,14 @@ export default function ProductManagement() {
         <Card>
           <CardContent className="py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">Aucun produit trouvé</p>
+            <p className="text-muted-foreground">Aucun produit trouvÃ©</p>
             <Button 
               variant="outline" 
               className="mt-4"
               onClick={() => { resetForm(); setShowDialog(true); }}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Créer votre premier produit
+              CrÃ©er votre premier produit
             </Button>
           </CardContent>
         </Card>
@@ -1258,14 +1258,14 @@ export default function ProductManagement() {
                     ) : (
                       <Sparkles className="h-4 w-4 mr-2" />
                     )}
-                    Générer avec IA
+                    GÃ©nÃ©rer avec IA
                   </Button>
                 </div>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Description détaillée du produit..."
+                  placeholder="Description dÃ©taillÃ©e du produit..."
                   rows={4}
                 />
               </div>
@@ -1274,7 +1274,7 @@ export default function ProductManagement() {
               <div className="space-y-3">
                 <Label className="flex items-center gap-2">
                   <FolderOpen className="h-4 w-4" />
-                  Catégorie
+                  CatÃ©gorie
                 </Label>
                 
                 <div className="flex gap-2 mb-2">
@@ -1302,15 +1302,15 @@ export default function ProductManagement() {
                       >
                         {formData.category_id
                           ? categories.find((cat) => cat.id === formData.category_id)?.name
-                          : "Rechercher une catégorie..."}
+                          : "Rechercher une catÃ©gorie..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0" align="start">
                       <Command>
-                        <CommandInput placeholder="Rechercher catégorie..." />
+                        <CommandInput placeholder="Rechercher catÃ©gorie..." />
                         <CommandList>
-                          <CommandEmpty>Aucune catégorie trouvée.</CommandEmpty>
+                          <CommandEmpty>Aucune catÃ©gorie trouvÃ©e.</CommandEmpty>
                           <CommandGroup>
                             {categories.map((cat) => (
                               <CommandItem
@@ -1341,17 +1341,17 @@ export default function ProductManagement() {
                       autoFocus
                       value={formData.category_name}
                       onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
-                      placeholder="Tapez le nom de la nouvelle catégorie..."
+                      placeholder="Tapez le nom de la nouvelle catÃ©gorie..."
                       className="border-primary/50 focus:border-primary"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Une nouvelle catégorie sera créée avec ce nom lors de l'enregistrement du produit.
+                      Une nouvelle catÃ©gorie sera crÃ©Ã©e avec ce nom lors de l'enregistrement du produit.
                     </p>
                   </div>
                 )}
               </div>
 
-              {/* Section - Affiché uniquement si une catégorie est sélectionnée */}
+              {/* Section - AffichÃ© uniquement si une catÃ©gorie est sÃ©lectionnÃ©e */}
               {(formData.category_id || formData.category_name) && (
                 <div className="space-y-2">
                   <Label htmlFor="section" className="flex items-center gap-2">
@@ -1374,13 +1374,13 @@ export default function ProductManagement() {
               <div className="space-y-2">
                 <Label htmlFor="tags" className="flex items-center gap-2">
                   <Tags className="h-4 w-4" />
-                  Tags (séparés par virgules)
+                  Tags (sÃ©parÃ©s par virgules)
                 </Label>
                 <Input
                   id="tags"
                   value={formData.tags}
                   onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                  placeholder="été, promo, nouveauté"
+                  placeholder="Ã©tÃ©, promo, nouveautÃ©"
                 />
               </div>
             </TabsContent>
@@ -1399,7 +1399,7 @@ export default function ProductManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="compare_price">Prix barré (GNF)</Label>
+                  <Label htmlFor="compare_price">Prix barrÃ© (GNF)</Label>
                   <Input
                     id="compare_price"
                     type="number"
@@ -1422,7 +1422,7 @@ export default function ProductManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="stock">Quantité en stock (unités) *</Label>
+                  <Label htmlFor="stock">QuantitÃ© en stock (unitÃ©s) *</Label>
                   <Input
                     id="stock"
                     type="number"
@@ -1455,7 +1455,7 @@ export default function ProductManagement() {
                       className="h-6 px-2 text-xs"
                     >
                       <Sparkles className="h-3 w-3 mr-1" />
-                      Générer
+                      GÃ©nÃ©rer
                     </Button>
                   </div>
                   <Input
@@ -1476,7 +1476,7 @@ export default function ProductManagement() {
                       className="h-6 px-2 text-xs"
                     >
                       <Sparkles className="h-3 w-3 mr-1" />
-                      Générer
+                      GÃ©nÃ©rer
                     </Button>
                   </div>
                   <Input
@@ -1506,7 +1506,7 @@ export default function ProductManagement() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="sell_by_carton" className="text-base font-semibold cursor-pointer">
-                      📦 Vente par carton
+                      ðŸ“¦ Vente par carton
                     </Label>
                     <p className="text-xs text-muted-foreground mt-1">
                       Permet de vendre ce produit en gros par carton
@@ -1525,7 +1525,7 @@ export default function ProductManagement() {
                   <div className="space-y-4 pt-3 border-t border-border/30">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="units_per_carton">Unités par carton *</Label>
+                        <Label htmlFor="units_per_carton">UnitÃ©s par carton *</Label>
                         <Input
                           id="units_per_carton"
                           type="number"
@@ -1554,7 +1554,7 @@ export default function ProductManagement() {
                           placeholder="Ex: 12, 24, 50"
                         />
                         <p className="text-xs text-muted-foreground">
-                          Nombre d'unités dans un carton
+                          Nombre d'unitÃ©s dans un carton
                         </p>
                       </div>
                       <div className="space-y-2">
@@ -1567,11 +1567,11 @@ export default function ProductManagement() {
                           placeholder="Ex: 230000"
                         />
                         {formData.units_per_carton && formData.price && (
-                          <p className="text-xs text-green-600">
-                            Économie: {(
+                          <p className="text-xs text-primary-orange-600">
+                            Ã‰conomie: {(
                               (parseFloat(formData.price) * parseInt(formData.units_per_carton || '1')) -
                               parseFloat(formData.price_carton || '0')
-                            ).toLocaleString()} GNF vs unités
+                            ).toLocaleString()} GNF vs unitÃ©s
                           </p>
                         )}
                       </div>
@@ -1607,12 +1607,12 @@ export default function ProductManagement() {
                           placeholder="Ex: 15"
                         />
                         <p className="text-xs text-muted-foreground">
-                          Remplit automatiquement la quantité en stock (unités)
+                          Remplit automatiquement la quantitÃ© en stock (unitÃ©s)
                         </p>
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Stock calculé (unités)</Label>
+                        <Label>Stock calculÃ© (unitÃ©s)</Label>
                         <Input
                           value={(() => {
                             const cartons = parseInt(formData.cartons_in_stock || '0', 10);
@@ -1666,7 +1666,7 @@ export default function ProductManagement() {
                       <ImagePlus className="h-6 w-6" />
                     )}
                     <span className="text-xs">
-                      {generatingImage ? 'Génération...' : 'Générer avec IA'}
+                      {generatingImage ? 'GÃ©nÃ©ration...' : 'GÃ©nÃ©rer avec IA'}
                     </span>
                   </Button>
                   <Button
@@ -1674,8 +1674,8 @@ export default function ProductManagement() {
                     variant="outline"
                     onClick={() => {
                       if (!isPremium) {
-                        toast.error('⭐ Fonctionnalité Premium uniquement', {
-                          description: 'Passez à un abonnement Premium/Pro/Business pour ajouter des vidéos',
+                        toast.error('â­ FonctionnalitÃ© Premium uniquement', {
+                          description: 'Passez Ã  un abonnement Premium/Pro/Business pour ajouter des vidÃ©os',
                           action: {
                             label: 'Voir les offres',
                             onClick: () => navigate('/vendeur/subscription')
@@ -1695,14 +1695,14 @@ export default function ProductManagement() {
                         <Video className="h-6 w-6" />
                         <Badge 
                           variant={isPremium ? "default" : "secondary"} 
-                          className={`absolute top-1 right-1 text-[10px] px-1 ${isPremium ? 'bg-green-500' : ''}`}
+                          className={`absolute top-1 right-1 text-[10px] px-1 ${isPremium ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : ''}`}
                         >
-                          {isPremium ? '✓ Premium' : '🔒 Premium'}
+                          {isPremium ? 'âœ“ Premium' : 'ðŸ”’ Premium'}
                         </Badge>
                       </>
                     )}
                     <span className="text-xs">
-                      {uploadingVideo ? 'Validation...' : `Vidéos (${selectedVideos.length}/2)`}
+                      {uploadingVideo ? 'Validation...' : `VidÃ©os (${selectedVideos.length}/2)`}
                     </span>
                   </Button>
                 </div>
@@ -1728,7 +1728,7 @@ export default function ProductManagement() {
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Video className="h-4 w-4" />
-                    Vidéos publicitaires Premium ({(editingProduct?.promotional_videos?.length || 0) + selectedVideos.length}/2)
+                    VidÃ©os publicitaires Premium ({(editingProduct?.promotional_videos?.length || 0) + selectedVideos.length}/2)
                     <Badge variant="secondary" className="text-[10px]">Max 45s</Badge>
                   </Label>
                   <div className="grid grid-cols-2 gap-2">
@@ -1754,13 +1754,13 @@ export default function ProductManagement() {
                           <X className="h-3 w-3" />
                         </Button>
                         <Badge className="absolute bottom-2 left-2 text-xs" variant="secondary">
-                          Vidéo {index + 1}
+                          VidÃ©o {index + 1}
                         </Badge>
                       </div>
                     ))}
                     {/* New Videos */}
                     {selectedVideos.map((video, index) => (
-                      <div key={`new-video-${index}`} className="relative aspect-video rounded-lg overflow-hidden border-2 border-green-500/50 bg-black">
+                      <div key={`new-video-${index}`} className="relative aspect-video rounded-lg overflow-hidden border-2 border-primary-orange-500/50 bg-black">
                         <video
                           src={URL.createObjectURL(video)}
                           controls
@@ -1777,7 +1777,7 @@ export default function ProductManagement() {
                           <X className="h-3 w-3" />
                         </Button>
                         <Badge className="absolute bottom-2 left-2 text-xs" variant="default">
-                          Nouvelle • {(video.size / (1024 * 1024)).toFixed(1)} MB
+                          Nouvelle â€¢ {(video.size / (1024 * 1024)).toFixed(1)} MB
                         </Badge>
                       </div>
                     ))}
@@ -1788,7 +1788,7 @@ export default function ProductManagement() {
               {/* Image Previews */}
               {(selectedImages.length > 0 || (editingProduct?.images?.length || 0) > 0) && (
                 <div className="space-y-2">
-                  <Label>Aperçu ({selectedImages.length} nouvelle(s))</Label>
+                  <Label>AperÃ§u ({selectedImages.length} nouvelle(s))</Label>
                   <div className="grid grid-cols-4 gap-2">
                     {/* Existing Images */}
                     {editingProduct?.images?.map((url, index) => (
@@ -1847,12 +1847,12 @@ export default function ProductManagement() {
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {editingProduct ? 'Mise à jour...' : 'Création...'}
+                  {editingProduct ? 'Mise Ã  jour...' : 'CrÃ©ation...'}
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {editingProduct ? 'Mettre à jour' : 'Créer le produit'}
+                  {editingProduct ? 'Mettre Ã  jour' : 'CrÃ©er le produit'}
                 </>
               )}
             </Button>

@@ -1,8 +1,8 @@
 // @ts-nocheck
 /**
- * COMPOSANT GESTION ALERTES SÉCURITÉ MOTOS
- * Interface pour gérer les alertes de motos volées
- * 224Solutions - Module de sécurité intelligent
+ * COMPOSANT GESTION ALERTES SÃ‰CURITÃ‰ MOTOS
+ * Interface pour gÃ©rer les alertes de motos volÃ©es
+ * 224Solutions - Module de sÃ©curitÃ© intelligent
  */
 
 import React, { useState, useEffect } from 'react';
@@ -71,7 +71,7 @@ interface SecurityStats {
     alertes_en_cours: number;
     alertes_resolues: number;
     faux_positifs: number;
-    motos_uniques_signalées: number;
+    motos_uniques_signalÃ©es: number;
     temps_moyen_resolution_heures: number;
 }
 
@@ -114,7 +114,7 @@ export default function MotoSecurityAlerts({
                 toast.error('Erreur lors du chargement des alertes');
             }
         } catch (error) {
-            console.error('❌ Erreur chargement alertes:', error);
+            console.error('âŒ Erreur chargement alertes:', error);
             toast.error('Erreur de connexion');
         } finally {
             setLoading(false);
@@ -133,7 +133,7 @@ export default function MotoSecurityAlerts({
                 setStats(result.global_stats);
             }
         } catch (error) {
-            console.error('❌ Erreur chargement stats:', error);
+            console.error('âŒ Erreur chargement stats:', error);
         }
     };
 
@@ -147,7 +147,7 @@ export default function MotoSecurityAlerts({
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    user_id: 'current-user-id', // À remplacer par l'ID utilisateur réel
+                    user_id: 'current-user-id', // Ã€ remplacer par l'ID utilisateur rÃ©el
                     resolution_type: 'resolue'
                 })
             });
@@ -155,14 +155,14 @@ export default function MotoSecurityAlerts({
             const result = await response.json();
 
             if (result.success) {
-                toast.success('✅ Alerte résolue avec succès');
+                toast.success('âœ… Alerte rÃ©solue avec succÃ¨s');
                 loadAlerts();
                 loadStats();
             } else {
-                toast.error('Erreur lors de la résolution');
+                toast.error('Erreur lors de la rÃ©solution');
             }
         } catch (error) {
-            console.error('❌ Erreur résolution alerte:', error);
+            console.error('âŒ Erreur rÃ©solution alerte:', error);
             toast.error('Erreur de connexion');
         } finally {
             setResolving(null);
@@ -172,7 +172,7 @@ export default function MotoSecurityAlerts({
     const getStatusColor = (statut: string) => {
         switch (statut) {
             case 'en_cours': return 'bg-red-100 text-red-800 border-red-200';
-            case 'resolue': return 'bg-green-100 text-green-800 border-green-200';
+            case 'resolue': return 'bg-primary-orange-100 text-primary-orange-800 border-primary-orange-200';
             case 'faux_positif': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
@@ -190,7 +190,7 @@ export default function MotoSecurityAlerts({
     const getStatusLabel = (statut: string) => {
         switch (statut) {
             case 'en_cours': return 'En cours';
-            case 'resolue': return 'Résolue';
+            case 'resolue': return 'RÃ©solue';
             case 'faux_positif': return 'Faux positif';
             default: return statut;
         }
@@ -225,14 +225,14 @@ export default function MotoSecurityAlerts({
                         </CardContent>
                     </Card>
 
-                    <Card className="border-green-200">
+                    <Card className="border-primary-orange-200">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-green-600">Résolues</p>
-                                    <p className="text-2xl font-bold text-green-800">{stats.alertes_resolues}</p>
+                                    <p className="text-sm font-medium text-primary-orange-600">RÃ©solues</p>
+                                    <p className="text-2xl font-bold text-primary-orange-800">{stats.alertes_resolues}</p>
                                 </div>
-                                <CheckCircle className="w-8 h-8 text-green-600" />
+                                <CheckCircle className="w-8 h-8 text-primary-orange-600" />
                             </div>
                         </CardContent>
                     </Card>
@@ -254,7 +254,7 @@ export default function MotoSecurityAlerts({
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-purple-600">Motos uniques</p>
-                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalées}</p>
+                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalÃ©es}</p>
                                 </div>
                                 <Activity className="w-8 h-8 text-purple-600" />
                             </div>
@@ -269,7 +269,7 @@ export default function MotoSecurityAlerts({
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2">
                             <Shield className="w-6 h-6 text-blue-600" />
-                            Alertes de sécurité motos
+                            Alertes de sÃ©curitÃ© motos
                         </CardTitle>
                         <div className="flex gap-2">
                             <Button
@@ -293,7 +293,7 @@ export default function MotoSecurityAlerts({
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                 <input
                                     type="text"
-                                    placeholder="Rechercher par numéro de série, ville..."
+                                    placeholder="Rechercher par numÃ©ro de sÃ©rie, ville..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full"
@@ -311,7 +311,7 @@ export default function MotoSecurityAlerts({
                                 >
                                     {status === 'all' ? 'Toutes' : 
                                      status === 'en_cours' ? 'En cours' :
-                                     status === 'resolue' ? 'Résolues' : 'Faux positifs'}
+                                     status === 'resolue' ? 'RÃ©solues' : 'Faux positifs'}
                                 </Button>
                             ))}
                         </div>
@@ -326,7 +326,7 @@ export default function MotoSecurityAlerts({
                     ) : filteredAlerts.length === 0 ? (
                         <div className="text-center py-8">
                             <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-600">Aucune alerte trouvée</p>
+                            <p className="text-gray-600">Aucune alerte trouvÃ©e</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -354,7 +354,7 @@ export default function MotoSecurityAlerts({
                                                         {alert.ville_detection && (
                                                             <p className="text-sm text-gray-600 mb-1">
                                                                 <MapPin className="w-4 h-4 inline mr-1" />
-                                                                Ville détection: {alert.ville_detection}
+                                                                Ville dÃ©tection: {alert.ville_detection}
                                                             </p>
                                                         )}
                                                     </div>
@@ -392,7 +392,7 @@ export default function MotoSecurityAlerts({
                                                     {alert.bureau_detection && (
                                                         <span>
                                                             <Building className="w-3 h-3 inline mr-1" />
-                                                            Détection: {alert.bureau_detection.bureau_code}
+                                                            DÃ©tection: {alert.bureau_detection.bureau_code}
                                                         </span>
                                                     )}
                                                 </div>
@@ -404,14 +404,14 @@ export default function MotoSecurityAlerts({
                                                         onClick={() => resolveAlert(alert.id)}
                                                         disabled={resolving === alert.id}
                                                         size="sm"
-                                                        className="bg-green-600 hover:bg-green-700"
+                                                        className="bg-primary-orange-600 hover:bg-primary-orange-700"
                                                     >
                                                         {resolving === alert.id ? (
                                                             <Loader2 className="w-4 h-4 animate-spin" />
                                                         ) : (
                                                             <CheckCircle className="w-4 h-4 mr-1" />
                                                         )}
-                                                        Résoudre
+                                                        RÃ©soudre
                                                     </Button>
                                                 )}
                                                 
@@ -420,7 +420,7 @@ export default function MotoSecurityAlerts({
                                                     size="sm"
                                                 >
                                                     <Eye className="w-4 h-4 mr-1" />
-                                                    Détails
+                                                    DÃ©tails
                                                 </Button>
                                             </div>
                                         </div>

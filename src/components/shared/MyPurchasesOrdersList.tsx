@@ -1,6 +1,6 @@
 /**
- * Liste des achats personnels avec possibilité de confirmer la réception (Escrow)
- * Utilisable par vendeurs et agents quand ils achètent sur le marketplace
+ * Liste des achats personnels avec possibilitÃ© de confirmer la rÃ©ception (Escrow)
+ * Utilisable par vendeurs et agents quand ils achÃ¨tent sur le marketplace
  */
 
 import { useState, useEffect } from 'react';
@@ -59,7 +59,7 @@ interface MyPurchasesOrdersListProps {
   emptyMessage?: string;
 }
 
-// Helper pour vérifier si une commande est paiement à la livraison
+// Helper pour vÃ©rifier si une commande est paiement Ã  la livraison
 const isCashOnDelivery = (order: Order): boolean => {
   return order.payment_method === 'cash' && 
          order.shipping_address?.is_cod === true;
@@ -69,10 +69,10 @@ const isCashOnDelivery = (order: Order): boolean => {
 function OrderProgressTracker({ status }: { status: string }) {
   const steps = [
     { key: 'pending', label: 'En attente', icon: Clock },
-    { key: 'confirmed', label: 'Confirmée', icon: CheckCircle },
-    { key: 'preparing', label: 'Préparation', icon: Package },
-    { key: 'in_transit', label: 'Expédiée', icon: Truck },
-    { key: 'delivered', label: 'Livrée', icon: CheckCircle },
+    { key: 'confirmed', label: 'ConfirmÃ©e', icon: CheckCircle },
+    { key: 'preparing', label: 'PrÃ©paration', icon: Package },
+    { key: 'in_transit', label: 'ExpÃ©diÃ©e', icon: Truck },
+    { key: 'delivered', label: 'LivrÃ©e', icon: CheckCircle },
   ];
 
   const currentIndex = steps.findIndex(s => s.key === status);
@@ -89,7 +89,7 @@ function OrderProgressTracker({ status }: { status: string }) {
           />
         </div>
         
-        {/* Étapes */}
+        {/* Ã‰tapes */}
         <div className="flex justify-between relative">
           {steps.map((step, index) => {
             const Icon = step.icon;
@@ -119,7 +119,7 @@ function OrderProgressTracker({ status }: { status: string }) {
 
 export default function MyPurchasesOrdersList({ 
   title = "Mes achats", 
-  emptyMessage = "Vous n'avez pas encore effectué d'achats" 
+  emptyMessage = "Vous n'avez pas encore effectuÃ© d'achats" 
 }: MyPurchasesOrdersListProps) {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -141,7 +141,7 @@ export default function MyPurchasesOrdersList({
     if (user) {
       loadOrders();
       
-      // Écoute temps réel des commandes
+      // Ã‰coute temps rÃ©el des commandes
       const ordersChannel = supabase
         .channel('my-purchases-orders-realtime')
         .on(
@@ -151,7 +151,7 @@ export default function MyPurchasesOrdersList({
         )
         .subscribe();
 
-      // Écoute temps réel des escrows
+      // Ã‰coute temps rÃ©el des escrows
       const escrowChannel = supabase
         .channel('my-purchases-escrow-realtime')
         .on(
@@ -172,7 +172,7 @@ export default function MyPurchasesOrdersList({
     try {
       if (!user?.id) return;
 
-      // Récupérer le customer_id lié à cet utilisateur
+      // RÃ©cupÃ©rer le customer_id liÃ© Ã  cet utilisateur
       const { data: customer } = await supabase
         .from('customers')
         .select('id')
@@ -184,14 +184,14 @@ export default function MyPurchasesOrdersList({
         return;
       }
 
-      // Vérifier si l'utilisateur est aussi un vendeur (pour exclure ses propres ventes)
+      // VÃ©rifier si l'utilisateur est aussi un vendeur (pour exclure ses propres ventes)
       const { data: userVendor } = await supabase
         .from('vendors')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
-      // Récupérer les commandes où l'utilisateur est CLIENT (pas vendeur)
+      // RÃ©cupÃ©rer les commandes oÃ¹ l'utilisateur est CLIENT (pas vendeur)
       let query = supabase
         .from('orders')
         .select(`
@@ -202,7 +202,7 @@ export default function MyPurchasesOrdersList({
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
 
-      // Si l'utilisateur est aussi vendeur, exclure ses propres commandes reçues
+      // Si l'utilisateur est aussi vendeur, exclure ses propres commandes reÃ§ues
       if (userVendor?.id) {
         query = query.neq('vendor_id', userVendor.id);
       }
@@ -278,11 +278,11 @@ export default function MyPurchasesOrdersList({
 
       const isCardOrder = selectedOrder.payment_method === 'card';
       if (isCardOrder && !escrow) {
-        throw new Error("Commande carte non synchronisée avec l'escrow. Rechargez la page puis réessayez.");
+        throw new Error("Commande carte non synchronisÃ©e avec l'escrow. Rechargez la page puis rÃ©essayez.");
       }
 
       if (escrow) {
-        // Avec escrow: appeler la fonction de confirmation + libération escrow
+        // Avec escrow: appeler la fonction de confirmation + libÃ©ration escrow
         const { data, error } = await supabase.functions.invoke('confirm-delivery', {
           body: { order_id: selectedOrder.id }
         });
@@ -290,7 +290,7 @@ export default function MyPurchasesOrdersList({
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Erreur lors de la confirmation');
       } else {
-        // Sans escrow: mettre à jour directement le statut de la commande
+        // Sans escrow: mettre Ã  jour directement le statut de la commande
         const { error } = await supabase
           .from('orders')
           .update({ status: 'delivered', updated_at: new Date().toISOString() })
@@ -299,8 +299,8 @@ export default function MyPurchasesOrdersList({
         if (error) throw error;
       }
 
-      toast.success('Réception confirmée !', {
-        description: escrow ? 'Le paiement a été transféré au vendeur' : 'Merci d\'avoir confirmé la réception'
+      toast.success('RÃ©ception confirmÃ©e !', {
+        description: escrow ? 'Le paiement a Ã©tÃ© transfÃ©rÃ© au vendeur' : 'Merci d\'avoir confirmÃ© la rÃ©ception'
       });
 
       await loadOrders();
@@ -333,8 +333,8 @@ export default function MyPurchasesOrdersList({
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Erreur lors de l\'annulation');
 
-      toast.success('Commande annulée', {
-        description: data.refunded ? 'Votre paiement a été remboursé' : undefined
+      toast.success('Commande annulÃ©e', {
+        description: data.refunded ? 'Votre paiement a Ã©tÃ© remboursÃ©' : undefined
       });
 
       await loadOrders();
@@ -373,7 +373,7 @@ export default function MyPurchasesOrdersList({
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Erreur lors de la demande');
 
-      toast.success('Demande de remboursement envoyée');
+      toast.success('Demande de remboursement envoyÃ©e');
       await loadOrders();
     } catch (error) {
       console.error('Error requesting refund:', error);
@@ -389,12 +389,12 @@ export default function MyPurchasesOrdersList({
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
       pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-      confirmed: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
-      preparing: { label: 'En préparation', color: 'bg-purple-100 text-purple-800', icon: Package },
-      ready: { label: 'Prête', color: 'bg-blue-100 text-blue-800', icon: Package },
+      confirmed: { label: 'ConfirmÃ©e', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
+      preparing: { label: 'En prÃ©paration', color: 'bg-purple-100 text-purple-800', icon: Package },
+      ready: { label: 'PrÃªte', color: 'bg-blue-100 text-blue-800', icon: Package },
       in_transit: { label: 'En transit', color: 'bg-orange-100 text-orange-800', icon: Truck },
-      delivered: { label: 'Livrée', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800', icon: XCircle }
+      delivered: { label: 'LivrÃ©e', color: 'bg-primary-orange-100 text-primary-orange-800', icon: CheckCircle },
+      cancelled: { label: 'AnnulÃ©e', color: 'bg-red-100 text-red-800', icon: XCircle }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
@@ -412,10 +412,10 @@ export default function MyPurchasesOrdersList({
     if (!escrowStatus) return null;
 
     const escrowConfig: Record<string, { label: string; color: string }> = {
-      pending: { label: 'Fonds bloqués', color: 'bg-orange-100 text-orange-800' },
-      held: { label: 'Fonds sécurisés', color: 'bg-blue-100 text-blue-800' },
-      released: { label: 'Fonds libérés', color: 'bg-green-100 text-green-800' },
-      refunded: { label: 'Remboursé', color: 'bg-gray-100 text-gray-800' },
+      pending: { label: 'Fonds bloquÃ©s', color: 'bg-orange-100 text-orange-800' },
+      held: { label: 'Fonds sÃ©curisÃ©s', color: 'bg-blue-100 text-blue-800' },
+      released: { label: 'Fonds libÃ©rÃ©s', color: 'bg-primary-orange-100 text-primary-orange-800' },
+      refunded: { label: 'RemboursÃ©', color: 'bg-gray-100 text-gray-800' },
       dispute: { label: 'Litige', color: 'bg-red-100 text-red-800' }
     };
 
@@ -496,7 +496,7 @@ export default function MyPurchasesOrdersList({
               <Truck className="w-4 h-4 mr-1" /> En cours ({inProgressCount})
             </Button>
             <Button variant={activeFilter === 'delivered' ? 'default' : 'outline'} onClick={() => setActiveFilter('delivered')} size="sm">
-              <CheckCircle className="w-4 h-4 mr-1" /> Livrées ({deliveredCount})
+              <CheckCircle className="w-4 h-4 mr-1" /> LivrÃ©es ({deliveredCount})
             </Button>
           </div>
         </CardContent>
@@ -508,7 +508,7 @@ export default function MyPurchasesOrdersList({
             {filteredOrders.length === 0 ? (
               <div className="text-center py-8">
                 <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Aucune commande dans cette catégorie</p>
+                <p className="text-muted-foreground">Aucune commande dans cette catÃ©gorie</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -555,19 +555,19 @@ export default function MyPurchasesOrdersList({
                           {escrow && getEscrowBadge(escrow.status)}
                           {isCashOnDelivery(order) && (
                             <Badge className="bg-amber-100 text-amber-800">
-                              <Banknote className="w-3 h-3 mr-1" /> Paiement à la livraison
+                              <Banknote className="w-3 h-3 mr-1" /> Paiement Ã  la livraison
                             </Badge>
                           )}
                         </div>
 
                         {/* Info Escrow */}
                         {escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
-                          <div className="flex items-start gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                            <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex items-start gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+                            <Shield className="w-5 h-5 text-primary-orange-600 flex-shrink-0 mt-0.5" />
                             <div>
-                              <p className="text-sm font-medium text-green-800">Paiement protégé</p>
-                              <p className="text-xs text-green-700">
-                                {escrow.amount.toLocaleString()} GNF sécurisés jusqu'à confirmation
+                              <p className="text-sm font-medium text-primary-orange-800">Paiement protÃ©gÃ©</p>
+                              <p className="text-xs text-primary-orange-700">
+                                {escrow.amount.toLocaleString()} GNF sÃ©curisÃ©s jusqu'Ã  confirmation
                               </p>
                             </div>
                           </div>
@@ -592,15 +592,15 @@ export default function MyPurchasesOrdersList({
                           {canConfirmDelivery && (
                             <Button onClick={() => handleConfirmDelivery(order)} disabled={confirmingOrderId === order.id} className="w-full">
                               {confirmingOrderId === order.id ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-                              J'ai reçu ma commande
+                              J'ai reÃ§u ma commande
                             </Button>
                           )}
                         </div>
 
                         {order.status === 'delivered' && escrow?.status === 'released' && (
                           <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                            <CheckCircle className="w-4 h-4 text-green-600" />
-                            <span className="text-sm text-muted-foreground">Livrée - Paiement transféré au vendeur</span>
+                            <CheckCircle className="w-4 h-4 text-primary-orange-600" />
+                            <span className="text-sm text-muted-foreground">LivrÃ©e - Paiement transfÃ©rÃ© au vendeur</span>
                           </div>
                         )}
                       </CardContent>
@@ -617,13 +617,13 @@ export default function MyPurchasesOrdersList({
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la réception ?</AlertDialogTitle>
+            <AlertDialogTitle>Confirmer la rÃ©ception ?</AlertDialogTitle>
             <AlertDialogDescription>
-              En confirmant, vous attestez avoir reçu votre commande. Le paiement sera transféré au vendeur.
+              En confirmant, vous attestez avoir reÃ§u votre commande. Le paiement sera transfÃ©rÃ© au vendeur.
               <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5" />
-                  <span className="text-sm text-orange-800">Action irréversible. Vérifiez votre colis.</span>
+                  <span className="text-sm text-orange-800">Action irrÃ©versible. VÃ©rifiez votre colis.</span>
                 </div>
               </div>
             </AlertDialogDescription>
@@ -641,7 +641,7 @@ export default function MyPurchasesOrdersList({
             <AlertDialogTitle>Annuler la commande ?</AlertDialogTitle>
             <AlertDialogDescription>
               <div className="space-y-4">
-                <p>Vous êtes sur le point d'annuler cette commande.</p>
+                <p>Vous Ãªtes sur le point d'annuler cette commande.</p>
                 <textarea
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
@@ -652,7 +652,7 @@ export default function MyPurchasesOrdersList({
                 <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-start gap-2">
                     <Shield className="w-4 h-4 text-blue-600 mt-0.5" />
-                    <span className="text-sm text-blue-800">Votre paiement sera automatiquement remboursé via Escrow.</span>
+                    <span className="text-sm text-blue-800">Votre paiement sera automatiquement remboursÃ© via Escrow.</span>
                   </div>
                 </div>
               </div>
@@ -671,7 +671,7 @@ export default function MyPurchasesOrdersList({
             <AlertDialogTitle>Demander un remboursement</AlertDialogTitle>
             <AlertDialogDescription>
               <div className="space-y-4">
-                <p>Décrivez la raison de votre demande.</p>
+                <p>DÃ©crivez la raison de votre demande.</p>
                 <textarea
                   value={refundReason}
                   onChange={(e) => setRefundReason(e.target.value)}

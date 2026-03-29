@@ -36,7 +36,7 @@ export function ManageCommissionsSection({
       setLoading(true);
 
       // Charger vraies commissions depuis agent_commissions_log
-      // (table typée dans Supabase; évite aussi les types trop profonds avec select('*'))
+      // (table typÃ©e dans Supabase; Ã©vite aussi les types trop profonds avec select('*'))
       const { data, error } = await supabase
         .from('agent_commissions_log')
         .select('id, amount, created_at, source_type, description')
@@ -85,12 +85,12 @@ export function ManageCommissionsSection({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Total Commissions</span>
-                <DollarSign className="w-4 h-4 text-green-500" />
+                <DollarSign className="w-4 h-4 text-primary-orange-500" />
               </div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-primary-orange-600">
                 {totalCommissions.toLocaleString()} GNF
               </div>
-              <p className="text-xs text-muted-foreground">Depuis le début</p>
+              <p className="text-xs text-muted-foreground">Depuis le dÃ©but</p>
             </div>
           </CardContent>
         </Card>
@@ -134,7 +134,7 @@ export function ManageCommissionsSection({
             <div className="text-center py-12 text-muted-foreground">
               <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-20" />
               <p>Aucune commission pour le moment</p>
-              <p className="text-sm mt-2">Les commissions apparaîtront ici dès que vous créerez des utilisateurs</p>
+              <p className="text-sm mt-2">Les commissions apparaÃ®tront ici dÃ¨s que vous crÃ©erez des utilisateurs</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -152,7 +152,7 @@ export function ManageCommissionsSection({
                         </p>
                       </div>
                       <Badge variant={commission.status === 'paid' ? 'default' : 'secondary'}>
-                        {commission.status === 'paid' ? 'Payé' : 'En attente'}
+                        {commission.status === 'paid' ? 'PayÃ©' : 'En attente'}
                       </Badge>
                     </div>
                   </CardContent>

@@ -1,7 +1,7 @@
 /**
- * DASHBOARD SÉCURITÉ MOTOS
- * Interface complète de gestion de la sécurité des motos
- * 224Solutions - Module de sécurité intelligent
+ * DASHBOARD SÃ‰CURITÃ‰ MOTOS
+ * Interface complÃ¨te de gestion de la sÃ©curitÃ© des motos
+ * 224Solutions - Module de sÃ©curitÃ© intelligent
  */
 
 import React, { useState } from 'react';
@@ -52,12 +52,12 @@ export default function MotoSecurityDashboard({
 
     const handleForceSync = async () => {
         await forceSync();
-        toast.success('🔄 Synchronisation forcée effectuée');
+        toast.success('ðŸ”„ Synchronisation forcÃ©e effectuÃ©e');
     };
 
     const handleMarkAllRead = async () => {
         await markAllAsRead();
-        toast.success('✅ Toutes les notifications marquées comme lues');
+        toast.success('âœ… Toutes les notifications marquÃ©es comme lues');
     };
 
     return (
@@ -70,10 +70,10 @@ export default function MotoSecurityDashboard({
                             <Shield className="w-8 h-8 text-blue-600" />
                             <div>
                                 <CardTitle className="text-xl text-blue-800">
-                                    Sécurité Motos - 224Solutions
+                                    SÃ©curitÃ© Motos - 224Solutions
                                 </CardTitle>
                                 <p className="text-blue-600 text-sm">
-                                    Système de détection et d'alerte inter-bureaux
+                                    SystÃ¨me de dÃ©tection et d'alerte inter-bureaux
                                 </p>
                             </div>
                         </div>
@@ -84,7 +84,7 @@ export default function MotoSecurityDashboard({
                                 className="text-sm"
                             >
                                 <Activity className="w-4 h-4 mr-1" />
-                                {isConnected ? "Connecté" : "Déconnecté"}
+                                {isConnected ? "ConnectÃ©" : "DÃ©connectÃ©"}
                             </Badge>
                             
                             {unreadCount > 0 && (
@@ -123,14 +123,14 @@ export default function MotoSecurityDashboard({
                         </CardContent>
                     </Card>
 
-                    <Card className="border-green-200">
+                    <Card className="border-primary-orange-200">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-green-600">Résolues</p>
-                                    <p className="text-2xl font-bold text-green-800">{stats.alertes_resolues}</p>
+                                    <p className="text-sm font-medium text-primary-orange-600">RÃ©solues</p>
+                                    <p className="text-2xl font-bold text-primary-orange-800">{stats.alertes_resolues}</p>
                                 </div>
-                                <CheckCircle className="w-8 h-8 text-green-600" />
+                                <CheckCircle className="w-8 h-8 text-primary-orange-600" />
                             </div>
                         </CardContent>
                     </Card>
@@ -152,7 +152,7 @@ export default function MotoSecurityDashboard({
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-purple-600">Motos uniques</p>
-                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalées}</p>
+                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalÃ©es}</p>
                                 </div>
                                 <Activity className="w-8 h-8 text-purple-600" />
                             </div>
@@ -165,7 +165,7 @@ export default function MotoSecurityDashboard({
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-                    <TabsTrigger value="report">Déclarer vol</TabsTrigger>
+                    <TabsTrigger value="report">DÃ©clarer vol</TabsTrigger>
                     <TabsTrigger value="alerts">Alertes</TabsTrigger>
                     <TabsTrigger value="notifications">Notifications</TabsTrigger>
                 </TabsList>
@@ -173,12 +173,12 @@ export default function MotoSecurityDashboard({
                 {/* Vue d'ensemble */}
                 <TabsContent value="overview" className="space-y-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Résumé des alertes */}
+                        {/* RÃ©sumÃ© des alertes */}
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <AlertTriangle className="w-5 h-5 text-red-600" />
-                                    Alertes récentes
+                                    Alertes rÃ©centes
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -192,19 +192,19 @@ export default function MotoSecurityDashboard({
                                                 </span>
                                             </div>
                                             <p className="text-sm text-red-700">
-                                                Des motos signalées volées nécessitent votre attention
+                                                Des motos signalÃ©es volÃ©es nÃ©cessitent votre attention
                                             </p>
                                         </div>
                                     ) : (
-                                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                        <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg p-4">
                                             <div className="flex items-center gap-2 mb-2">
-                                                <CheckCircle className="w-5 h-5 text-green-600" />
-                                                <span className="font-medium text-green-800">
+                                                <CheckCircle className="w-5 h-5 text-primary-orange-600" />
+                                                <span className="font-medium text-primary-orange-800">
                                                     Aucune alerte active
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-green-700">
-                                                Toutes les alertes sont résolues
+                                            <p className="text-sm text-primary-orange-700">
+                                                Toutes les alertes sont rÃ©solues
                                             </p>
                                         </div>
                                     )}
@@ -212,12 +212,12 @@ export default function MotoSecurityDashboard({
                             </CardContent>
                         </Card>
 
-                        {/* Notifications récentes */}
+                        {/* Notifications rÃ©centes */}
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Bell className="w-5 h-5 text-blue-600" />
-                                    Notifications récentes
+                                    Notifications rÃ©centes
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -249,7 +249,7 @@ export default function MotoSecurityDashboard({
                                     
                                     {notifications.length === 0 && (
                                         <p className="text-gray-500 text-sm text-center py-4">
-                                            Aucune notification récente
+                                            Aucune notification rÃ©cente
                                         </p>
                                     )}
                                 </div>
@@ -258,12 +258,12 @@ export default function MotoSecurityDashboard({
                     </div>
                 </TabsContent>
 
-                {/* Déclaration de vol */}
+                {/* DÃ©claration de vol */}
                 <TabsContent value="report" className="space-y-6">
                     <ReportStolenMoto 
                         onSuccess={() => {
                             setActiveTab('alerts');
-                            toast.success('✅ Déclaration enregistrée - Vérifiez les alertes');
+                            toast.success('âœ… DÃ©claration enregistrÃ©e - VÃ©rifiez les alertes');
                         }}
                     />
                 </TabsContent>
@@ -283,7 +283,7 @@ export default function MotoSecurityDashboard({
                             <div className="flex items-center justify-between">
                                 <CardTitle className="flex items-center gap-2">
                                     <Bell className="w-5 h-5 text-blue-600" />
-                                    Notifications de sécurité
+                                    Notifications de sÃ©curitÃ©
                                 </CardTitle>
                                 {unreadCount > 0 && (
                                     <Button

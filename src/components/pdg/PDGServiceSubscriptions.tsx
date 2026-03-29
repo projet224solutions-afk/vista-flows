@@ -34,7 +34,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
-// Codes de service qui sont des BOUTIQUES/DIGITAL, pas des services de proximité
+// Codes de service qui sont des BOUTIQUES/DIGITAL, pas des services de proximitÃ©
 const EXCLUDED_SERVICE_CODES = ['ecommerce', 'dropshipping', 'digital_livre', 'digital_logiciel'];
 
 // Service type icon mapping
@@ -62,17 +62,17 @@ const SERVICE_COLORS: Record<string, string> = {
   location: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
   construction: 'from-amber-500/20 to-amber-600/10 border-amber-500/30',
   vtc: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
-  sport: 'from-green-500/20 to-green-600/10 border-green-500/30',
+  sport: 'from-primary-blue-500/20 to-primary-orange-600/10 border-primary-orange-500/30',
   beaute: 'from-pink-500/20 to-pink-600/10 border-pink-500/30',
-  informatique: 'from-cyan-500/20 to-cyan-600/10 border-cyan-500/30',
+  informatique: 'from-primary-blue-500/20 to-primary-blue-600/10 border-primary-blue-500/30',
   education: 'from-indigo-500/20 to-indigo-600/10 border-indigo-500/30',
-  livraison: 'from-teal-500/20 to-teal-600/10 border-teal-500/30',
+  livraison: 'from-primary-orange-500/20 to-primary-orange-600/10 border-primary-orange-500/30',
   media: 'from-rose-500/20 to-rose-600/10 border-rose-500/30',
   agriculture: 'from-lime-500/20 to-lime-600/10 border-lime-500/30',
   sante: 'from-red-500/20 to-red-600/10 border-red-500/30',
   reparation: 'from-slate-500/20 to-slate-600/10 border-slate-500/30',
   menage: 'from-violet-500/20 to-violet-600/10 border-violet-500/30',
-  ecommerce: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30',
+  ecommerce: 'from-primary-blue-500/20 to-primary-orange-600/10 border-primary-orange-500/30',
   securite: 'from-sky-500/20 to-sky-600/10 border-sky-500/30',
 };
 
@@ -149,14 +149,14 @@ export default function PDGServiceSubscriptions() {
       setPriceHistory(historyData);
       setStats(statsData);
       setSubscriptions(subsData);
-      // Filtrer les boutiques/digital - ne garder que les services de proximité
+      // Filtrer les boutiques/digital - ne garder que les services de proximitÃ©
       const proximityServices = (stData || []).filter(
         (st: any) => !EXCLUDED_SERVICE_CODES.includes(st.code)
       );
       setServiceTypes(proximityServices);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast({ title: 'Erreur', description: 'Impossible de charger les données', variant: 'destructive' });
+      toast({ title: 'Erreur', description: 'Impossible de charger les donnÃ©es', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -220,13 +220,13 @@ export default function PDGServiceSubscriptions() {
     try {
       setSubmitting(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Non authentifié');
+      if (!user) throw new Error('Non authentifiÃ©');
       const success = await ServiceSubscriptionService.changePlanPrice(selectedPlan.id, priceValue, user.id, reason || undefined);
       if (success) {
-        toast({ title: 'Succès', description: `Prix du plan ${selectedPlan.display_name} modifié` });
+        toast({ title: 'SuccÃ¨s', description: `Prix du plan ${selectedPlan.display_name} modifiÃ©` });
         setIsDialogOpen(false);
         fetchData();
-      } else throw new Error('Échec');
+      } else throw new Error('Ã‰chec');
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
     } finally {
@@ -264,10 +264,10 @@ export default function PDGServiceSubscriptions() {
         priority_listing: editLimitsForm.priority_listing,
       });
       if (success) {
-        toast({ title: 'Succès', description: `Limites du plan ${selectedPlan.display_name} mises à jour` });
+        toast({ title: 'SuccÃ¨s', description: `Limites du plan ${selectedPlan.display_name} mises Ã  jour` });
         setIsEditLimitsOpen(false);
         fetchData();
-      } else throw new Error('Échec');
+      } else throw new Error('Ã‰chec');
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
     } finally {
@@ -292,12 +292,12 @@ export default function PDGServiceSubscriptions() {
         .select('id, user_id')
         .eq('id', freeSubscriptionData.serviceId)
         .single();
-      if (serviceError || !service) throw new Error('Service non trouvé');
+      if (serviceError || !service) throw new Error('Service non trouvÃ©');
       const success = await ServiceSubscriptionService.offerFreeSubscription(
         service.id, service.user_id, freeSubscriptionData.planId, days
       );
       if (success) {
-        toast({ title: 'Succès', description: `Abonnement de ${days} jours offert` });
+        toast({ title: 'SuccÃ¨s', description: `Abonnement de ${days} jours offert` });
         setIsFreeDialogOpen(false);
         setFreeSubscriptionData({ serviceId: '', planId: '', days: '' });
         fetchData();
@@ -312,22 +312,22 @@ export default function PDGServiceSubscriptions() {
   const handleCancelSubscription = async (subscriptionId: string) => {
     if (!confirm('Annuler cet abonnement ?')) return;
     const success = await ServiceSubscriptionService.cancelSubscription(subscriptionId);
-    if (success) { toast({ title: 'Abonnement annulé' }); fetchData(); }
+    if (success) { toast({ title: 'Abonnement annulÃ©' }); fetchData(); }
     else toast({ title: 'Erreur', variant: 'destructive' });
   };
 
   const handleMarkExpired = async () => {
     const count = await ServiceSubscriptionService.markExpiredSubscriptions();
-    toast({ title: `${count} abonnement(s) expiré(s) marqué(s)` });
+    toast({ title: `${count} abonnement(s) expirÃ©(s) marquÃ©(s)` });
     fetchData();
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active': return <Badge className="bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1" />Actif</Badge>;
-      case 'expired': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Expiré</Badge>;
-      case 'cancelled': return <Badge variant="secondary"><XCircle className="w-3 h-3 mr-1" />Annulé</Badge>;
-      case 'past_due': return <Badge className="bg-orange-500 text-white"><AlertCircle className="w-3 h-3 mr-1" />Impayé</Badge>;
+      case 'active': return <Badge className="bg-primary-orange-600 text-white"><CheckCircle className="w-3 h-3 mr-1" />Actif</Badge>;
+      case 'expired': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />ExpirÃ©</Badge>;
+      case 'cancelled': return <Badge variant="secondary"><XCircle className="w-3 h-3 mr-1" />AnnulÃ©</Badge>;
+      case 'past_due': return <Badge className="bg-orange-500 text-white"><AlertCircle className="w-3 h-3 mr-1" />ImpayÃ©</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -364,15 +364,15 @@ export default function PDGServiceSubscriptions() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Abonnements Services de Proximité</h2>
-          <p className="text-muted-foreground text-sm">Gestion unifiée par catégorie de service</p>
+          <h2 className="text-2xl font-bold text-foreground">Abonnements Services de ProximitÃ©</h2>
+          <p className="text-muted-foreground text-sm">Gestion unifiÃ©e par catÃ©gorie de service</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button onClick={() => setIsFreeDialogOpen(true)} size="sm" variant="outline">
             <Gift className="w-4 h-4 mr-2" />Offrir
           </Button>
           <Button onClick={handleMarkExpired} variant="outline" size="sm">
-            <Clock className="w-4 h-4 mr-2" />Marquer expirés
+            <Clock className="w-4 h-4 mr-2" />Marquer expirÃ©s
           </Button>
           <Button onClick={fetchData} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />Actualiser
@@ -443,9 +443,9 @@ export default function PDGServiceSubscriptions() {
             <CardContent>
               <div className="text-2xl font-bold">{currentStats.total_subscriptions}</div>
               <p className="text-xs text-muted-foreground">
-                <span className="text-green-500 font-medium">{currentStats.active_subscriptions} actifs</span>
+                <span className="text-primary-orange-500 font-medium">{currentStats.active_subscriptions} actifs</span>
                 {currentStats.expired_subscriptions > 0 && (
-                  <span className="text-destructive ml-2">{currentStats.expired_subscriptions} expirés</span>
+                  <span className="text-destructive ml-2">{currentStats.expired_subscriptions} expirÃ©s</span>
                 )}
               </p>
             </CardContent>
@@ -498,7 +498,7 @@ export default function PDGServiceSubscriptions() {
       {/* Service-specific breakdown when "all" */}
       {activeServiceTab === 'all' && activeServiceTypes.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Répartition par service</h3>
+          <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">RÃ©partition par service</h3>
           <ScrollArea className="w-full">
             <div className="flex gap-3 pb-3">
               {activeServiceTypes.map(st => {
@@ -521,12 +521,12 @@ export default function PDGServiceSubscriptions() {
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-center">
                         <div>
-                          <p className="text-lg font-bold text-green-500">{stStats.active}</p>
+                          <p className="text-lg font-bold text-primary-orange-500">{stStats.active}</p>
                           <p className="text-[10px] text-muted-foreground">Actifs</p>
                         </div>
                         <div>
                           <p className="text-lg font-bold text-destructive">{stStats.expired}</p>
-                          <p className="text-[10px] text-muted-foreground">Expirés</p>
+                          <p className="text-[10px] text-muted-foreground">ExpirÃ©s</p>
                         </div>
                         <div>
                           <p className="text-lg font-bold">{stStats.total}</p>
@@ -555,7 +555,7 @@ export default function PDGServiceSubscriptions() {
           <span className="text-sm font-semibold">
             {serviceTypes.find(s => s.id === activeServiceTab)?.name}
           </span>
-          <span className="text-xs text-muted-foreground">— {filteredSubscriptions.length} abonnement(s)</span>
+          <span className="text-xs text-muted-foreground">â€” {filteredSubscriptions.length} abonnement(s)</span>
           <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setActiveServiceTab('all')}>
             <Eye className="w-4 h-4 mr-1" /> Vue globale
           </Button>
@@ -628,7 +628,7 @@ export default function PDGServiceSubscriptions() {
                         <TableCell colSpan={activeServiceTab === 'all' ? 8 : 7} className="text-center text-muted-foreground py-12">
                           <div className="flex flex-col items-center gap-2">
                             <Store className="w-8 h-8 opacity-30" />
-                            <span>Aucun abonnement trouvé</span>
+                            <span>Aucun abonnement trouvÃ©</span>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -670,7 +670,7 @@ export default function PDGServiceSubscriptions() {
                                   "text-xs font-medium",
                                   daysRemaining <= 0 ? "text-destructive" : daysRemaining <= 7 ? "text-orange-500" : "text-muted-foreground"
                                 )}>
-                                  {daysRemaining <= 0 ? 'Expiré' : `${daysRemaining}j restants`}
+                                  {daysRemaining <= 0 ? 'ExpirÃ©' : `${daysRemaining}j restants`}
                                 </div>
                               </div>
                             </TableCell>
@@ -703,13 +703,13 @@ export default function PDGServiceSubscriptions() {
               <CardTitle className="flex items-center gap-2">
                 {activeServiceTab !== 'all' && getIcon(serviceTypes.find(s => s.id === activeServiceTab)?.code || '')}
                 {activeServiceTab !== 'all'
-                  ? `Plans — ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
-                  : "Plans d'Abonnement — Tous les Services"}
+                  ? `Plans â€” ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
+                  : "Plans d'Abonnement â€” Tous les Services"}
               </CardTitle>
               <CardDescription>
                 {activeServiceTab !== 'all' 
-                  ? `Plans spécifiques au service ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
-                  : 'Plans unifiés pour tous les types de services professionnels'}
+                  ? `Plans spÃ©cifiques au service ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
+                  : 'Plans unifiÃ©s pour tous les types de services professionnels'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -721,7 +721,7 @@ export default function PDGServiceSubscriptions() {
                       <TableHead>Prix Mensuel</TableHead>
                       <TableHead>Prix Annuel</TableHead>
                       <TableHead>Limites</TableHead>
-                      <TableHead>Fonctionnalités</TableHead>
+                      <TableHead>FonctionnalitÃ©s</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -731,8 +731,8 @@ export default function PDGServiceSubscriptions() {
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
                           <div className="flex flex-col items-center gap-2">
                             <CreditCard className="w-8 h-8 opacity-30" />
-                            <span>Aucun plan configuré pour ce service</span>
-                            <p className="text-xs">Créez des plans spécifiques ou vérifiez la configuration.</p>
+                            <span>Aucun plan configurÃ© pour ce service</span>
+                            <p className="text-xs">CrÃ©ez des plans spÃ©cifiques ou vÃ©rifiez la configuration.</p>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -754,9 +754,9 @@ export default function PDGServiceSubscriptions() {
                             )}
                           </TableCell>
                           <TableCell className="text-xs space-y-0.5">
-                            <div>Réservations: <span className="font-medium">{plan.max_bookings_per_month || '∞'}</span></div>
-                            <div>Produits: <span className="font-medium">{plan.max_products || '∞'}</span></div>
-                            <div>Staff: <span className="font-medium">{plan.max_staff || '∞'}</span></div>
+                            <div>RÃ©servations: <span className="font-medium">{plan.max_bookings_per_month || 'âˆž'}</span></div>
+                            <div>Produits: <span className="font-medium">{plan.max_products || 'âˆž'}</span></div>
+                            <div>Staff: <span className="font-medium">{plan.max_staff || 'âˆž'}</span></div>
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1 max-w-xs">
@@ -771,7 +771,7 @@ export default function PDGServiceSubscriptions() {
                               <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)} title="Modifier le prix">
                                 <DollarSign className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" onClick={() => handleOpenEditLimits(plan)} title="Modifier limites & fonctionnalités">
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenEditLimits(plan)} title="Modifier limites & fonctionnalitÃ©s">
                                 <Settings2 className="w-4 h-4" />
                               </Button>
                             </div>
@@ -793,10 +793,10 @@ export default function PDGServiceSubscriptions() {
             <CardHeader>
               <CardTitle>
                 {activeServiceTab !== 'all'
-                  ? `Historique des Prix — ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
+                  ? `Historique des Prix â€” ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
                   : 'Historique des Changements de Prix'}
               </CardTitle>
-              <CardDescription>Traçabilité des modifications tarifaires</CardDescription>
+              <CardDescription>TraÃ§abilitÃ© des modifications tarifaires</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -825,7 +825,7 @@ export default function PDGServiceSubscriptions() {
                             <div className="flex flex-col items-center gap-2">
                               <History className="w-8 h-8 opacity-30" />
                               <span>Aucun historique de prix</span>
-                              <p className="text-xs">Les changements de prix apparaîtront ici après modification d'un plan</p>
+                              <p className="text-xs">Les changements de prix apparaÃ®tront ici aprÃ¨s modification d'un plan</p>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -868,7 +868,7 @@ export default function PDGServiceSubscriptions() {
           <DialogHeader>
             <DialogTitle>Modifier le Prix</DialogTitle>
             <DialogDescription>
-              {selectedPlan?.display_name} — Actuel: {selectedPlan && ServiceSubscriptionService.formatAmount(selectedPlan.monthly_price_gnf)}
+              {selectedPlan?.display_name} â€” Actuel: {selectedPlan && ServiceSubscriptionService.formatAmount(selectedPlan.monthly_price_gnf)}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -895,7 +895,7 @@ export default function PDGServiceSubscriptions() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Offrir un Abonnement Gratuit</DialogTitle>
-            <DialogDescription>Attribuer un abonnement gratuit à un service de proximité</DialogDescription>
+            <DialogDescription>Attribuer un abonnement gratuit Ã  un service de proximitÃ©</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -913,14 +913,14 @@ export default function PDGServiceSubscriptions() {
                 value={freeSubscriptionData.planId}
                 onChange={e => setFreeSubscriptionData(prev => ({ ...prev, planId: e.target.value }))}
               >
-                <option value="">Sélectionner un plan</option>
+                <option value="">SÃ©lectionner un plan</option>
                 {filteredPlans.map(plan => (
-                  <option key={plan.id} value={plan.id}>{plan.display_name} — {ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}/mois</option>
+                  <option key={plan.id} value={plan.id}>{plan.display_name} â€” {ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}/mois</option>
                 ))}
               </select>
             </div>
             <div>
-              <Label>Durée (jours)</Label>
+              <Label>DurÃ©e (jours)</Label>
               <Input
                 type="number"
                 value={freeSubscriptionData.days}
@@ -942,9 +942,9 @@ export default function PDGServiceSubscriptions() {
       <Dialog open={isEditLimitsOpen} onOpenChange={setIsEditLimitsOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Modifier Limites & Fonctionnalités</DialogTitle>
+            <DialogTitle>Modifier Limites & FonctionnalitÃ©s</DialogTitle>
             <DialogDescription>
-              {selectedPlan?.display_name} — Ajustez les limites et les fonctionnalités incluses
+              {selectedPlan?.display_name} â€” Ajustez les limites et les fonctionnalitÃ©s incluses
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-5">
@@ -953,12 +953,12 @@ export default function PDGServiceSubscriptions() {
               <h4 className="text-sm font-semibold text-foreground">Limites</h4>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">Réservations/mois</Label>
+                  <Label className="text-xs">RÃ©servations/mois</Label>
                   <Input
                     type="number"
                     value={editLimitsForm.max_bookings_per_month}
                     onChange={e => setEditLimitsForm(f => ({ ...f, max_bookings_per_month: e.target.value }))}
-                    placeholder="∞ (vide)"
+                    placeholder="âˆž (vide)"
                   />
                 </div>
                 <div className="space-y-1">
@@ -967,7 +967,7 @@ export default function PDGServiceSubscriptions() {
                     type="number"
                     value={editLimitsForm.max_products}
                     onChange={e => setEditLimitsForm(f => ({ ...f, max_products: e.target.value }))}
-                    placeholder="∞ (vide)"
+                    placeholder="âˆž (vide)"
                   />
                 </div>
                 <div className="space-y-1">
@@ -976,22 +976,22 @@ export default function PDGServiceSubscriptions() {
                     type="number"
                     value={editLimitsForm.max_staff}
                     onChange={e => setEditLimitsForm(f => ({ ...f, max_staff: e.target.value }))}
-                    placeholder="∞ (vide)"
+                    placeholder="âˆž (vide)"
                   />
                 </div>
               </div>
-              <p className="text-[11px] text-muted-foreground">Laissez vide pour illimité (∞)</p>
+              <p className="text-[11px] text-muted-foreground">Laissez vide pour illimitÃ© (âˆž)</p>
             </div>
 
-            {/* Fonctionnalités */}
+            {/* FonctionnalitÃ©s */}
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-foreground">Fonctionnalités</h4>
+              <h4 className="text-sm font-semibold text-foreground">FonctionnalitÃ©s</h4>
               <div className="space-y-2">
                 {[
                   { key: 'analytics_access', label: 'Analytics' },
                   { key: 'sms_notifications', label: 'Notifications SMS' },
                   { key: 'email_notifications', label: 'Notifications Email' },
-                  { key: 'custom_branding', label: 'Branding personnalisé' },
+                  { key: 'custom_branding', label: 'Branding personnalisÃ©' },
                   { key: 'priority_listing', label: 'Mise en avant prioritaire' },
                 ].map(({ key, label }) => (
                   <div key={key} className="flex items-center justify-between py-1.5 px-3 rounded-lg border border-border bg-muted/30">

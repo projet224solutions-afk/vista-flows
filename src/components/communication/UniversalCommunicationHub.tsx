@@ -1,6 +1,6 @@
 /**
  * Hub de Communication Universel pour 224SOLUTIONS
- * Interface mobile-first optimisée
+ * Interface mobile-first optimisÃ©e
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -87,7 +87,7 @@ export default function UniversalCommunicationHub({
     }
   }, [user, refreshTrigger]);
 
-  // 🔔 Real-time subscription pour synchroniser les badges
+  // ðŸ”” Real-time subscription pour synchroniser les badges
   useEffect(() => {
     if (!user?.id) return;
 
@@ -101,7 +101,7 @@ export default function UniversalCommunicationHub({
           table: 'messages'
         },
         () => {
-          console.log('[Hub] 📩 Nouveau message - rechargement conversations');
+          console.log('[Hub] ðŸ“© Nouveau message - rechargement conversations');
           loadConversations();
         }
       )
@@ -113,7 +113,7 @@ export default function UniversalCommunicationHub({
           table: 'messages'
         },
         () => {
-          console.log('[Hub] ✅ Message mis à jour - rechargement conversations');
+          console.log('[Hub] âœ… Message mis Ã  jour - rechargement conversations');
           loadConversations();
         }
       )
@@ -124,7 +124,7 @@ export default function UniversalCommunicationHub({
     };
   }, [user?.id]);
 
-  // Sélectionner automatiquement une conversation
+  // SÃ©lectionner automatiquement une conversation
   useEffect(() => {
     if (selectedConversationId && conversations.length > 0) {
       const conv = conversations.find(c => c.id === selectedConversationId);
@@ -138,7 +138,7 @@ export default function UniversalCommunicationHub({
   useEffect(() => {
     if (!user?.id) return;
 
-    console.log('[Hub] 🔔 Subscription notifications pour:', user.id);
+    console.log('[Hub] ðŸ”” Subscription notifications pour:', user.id);
     
     const channel = universalCommunicationService.subscribeToNotifications(
       user.id,
@@ -153,20 +153,20 @@ export default function UniversalCommunicationHub({
         try {
           const audio = new Audio('/notification.mp3');
           audio.play().catch(err => {
-            console.warn('[Hub] ⚠️ Impossible de jouer le son:', err);
+            console.warn('[Hub] âš ï¸ Impossible de jouer le son:', err);
           });
         } catch (err) {
-          console.warn('[Hub] ⚠️ Audio non disponible:', err);
+          console.warn('[Hub] âš ï¸ Audio non disponible:', err);
         }
       }
     );
 
     return () => {
-      console.log('[Hub] 🔌 Cleanup subscription notifications');
+      console.log('[Hub] ðŸ”Œ Cleanup subscription notifications');
       try {
         channel.unsubscribe();
       } catch (err) {
-        console.error('[Hub] ❌ Erreur cleanup notifications:', err);
+        console.error('[Hub] âŒ Erreur cleanup notifications:', err);
       }
     };
   }, [user?.id, toast]);
@@ -176,23 +176,23 @@ export default function UniversalCommunicationHub({
     if (!selectedConversation?.id) return;
     if (!user?.id) return;
 
-    console.log('[Hub] 🔔 Subscription messages pour:', selectedConversation.id);
+    console.log('[Hub] ðŸ”” Subscription messages pour:', selectedConversation.id);
 
     const channel = universalCommunicationService.subscribeToMessages(
       selectedConversation.id,
       (message) => {
-        console.log('[Hub] 📨 Nouveau message:', message.id);
+        console.log('[Hub] ðŸ“¨ Nouveau message:', message.id);
         
         setMessages(prev => {
-          // Éviter les doublons
+          // Ã‰viter les doublons
           if (prev.some(m => m.id === message.id)) {
-            console.warn('[Hub] ⚠️ Message déjà présent:', message.id);
+            console.warn('[Hub] âš ï¸ Message dÃ©jÃ  prÃ©sent:', message.id);
             return prev;
           }
           return [...prev, message];
         });
         
-        // Scroll automatique avec délai pour le rendu
+        // Scroll automatique avec dÃ©lai pour le rendu
         setTimeout(() => scrollToBottom(), 100);
 
         // Si message d'un autre utilisateur: son + marquer comme lu
@@ -206,18 +206,18 @@ export default function UniversalCommunicationHub({
             selectedConversation.id,
             user.id
           ).catch(err => {
-            console.warn('[Hub] ⚠️ Erreur mark as read:', err);
+            console.warn('[Hub] âš ï¸ Erreur mark as read:', err);
           });
         }
       }
     );
 
     return () => {
-      console.log('[Hub] 🔌 Cleanup subscription messages:', selectedConversation.id);
+      console.log('[Hub] ðŸ”Œ Cleanup subscription messages:', selectedConversation.id);
       try {
         channel.unsubscribe();
       } catch (err) {
-        console.error('[Hub] ❌ Erreur cleanup messages:', err);
+        console.error('[Hub] âŒ Erreur cleanup messages:', err);
       }
     };
   }, [selectedConversation?.id, user?.id]);
@@ -234,36 +234,36 @@ export default function UniversalCommunicationHub({
 
   const loadMessages = async (conversationId: string) => {
     if (!conversationId) {
-      console.error('[Hub] ❌ Impossible de charger: conversationId manquant');
+      console.error('[Hub] âŒ Impossible de charger: conversationId manquant');
       return;
     }
 
     try {
-      console.log('[Hub] 📥 Chargement messages pour:', conversationId);
+      console.log('[Hub] ðŸ“¥ Chargement messages pour:', conversationId);
       
       const data = await universalCommunicationService.getMessages(conversationId);
       
       setMessages(data);
-      console.log('[Hub] ✅ Messages chargés:', data.length);
+      console.log('[Hub] âœ… Messages chargÃ©s:', data.length);
       
-      // Scroll avec délai pour le rendu
+      // Scroll avec dÃ©lai pour le rendu
       setTimeout(() => scrollToBottom(), 150);
 
       // Marquer comme lus
       if (user?.id) {
         await universalCommunicationService.markMessagesAsRead(conversationId, user.id)
           .catch(err => {
-            console.warn('[Hub] ⚠️ Erreur mark as read (non-bloquant):', err);
+            console.warn('[Hub] âš ï¸ Erreur mark as read (non-bloquant):', err);
           });
         
-        // Recharger conversations pour mettre à jour le compteur
+        // Recharger conversations pour mettre Ã  jour le compteur
         loadConversations().catch(err => {
-          console.warn('[Hub] ⚠️ Erreur reload conversations (non-bloquant):', err);
+          console.warn('[Hub] âš ï¸ Erreur reload conversations (non-bloquant):', err);
         });
       }
     } catch (error: any) {
       const errorMessage = error?.message || 'Erreur inconnue';
-      console.error('[Hub] ❌ Erreur chargement messages:', {
+      console.error('[Hub] âŒ Erreur chargement messages:', {
         error: errorMessage,
         conversationId,
         stack: error?.stack
@@ -272,7 +272,7 @@ export default function UniversalCommunicationHub({
       toast({
         title: 'Erreur de chargement',
         description: errorMessage.includes('timeout')
-          ? 'Temps d\'attente dépassé. Vérifiez votre connexion.'
+          ? 'Temps d\'attente dÃ©passÃ©. VÃ©rifiez votre connexion.'
           : `Impossible de charger les messages: ${errorMessage}`,
         variant: 'destructive'
       });
@@ -297,10 +297,10 @@ export default function UniversalCommunicationHub({
 
   const handleSendMessage = async (message: string, attachments?: File[]) => {
     if (!selectedConversation || !user?.id) {
-      console.error('[Hub] ❌ Impossible d\'envoyer: pas de conversation ou utilisateur');
+      console.error('[Hub] âŒ Impossible d\'envoyer: pas de conversation ou utilisateur');
       toast({
         title: 'Erreur',
-        description: 'Sélectionnez une conversation et connectez-vous',
+        description: 'SÃ©lectionnez une conversation et connectez-vous',
         variant: 'destructive'
       });
       return;
@@ -311,7 +311,7 @@ export default function UniversalCommunicationHub({
     const hasAttachments = attachments && attachments.length > 0;
     
     if (!hasMessage && !hasAttachments) {
-      console.warn('[Hub] ⚠️ Message et pièces jointes vides');
+      console.warn('[Hub] âš ï¸ Message et piÃ¨ces jointes vides');
       return;
     }
 
@@ -323,7 +323,7 @@ export default function UniversalCommunicationHub({
           if (file.size > 50 * 1024 * 1024) {
             toast({
               title: 'Fichier trop volumineux',
-              description: `${file.name} dépasse 50MB`,
+              description: `${file.name} dÃ©passe 50MB`,
               variant: 'destructive'
             });
             continue;
@@ -335,7 +335,7 @@ export default function UniversalCommunicationHub({
             else if (file.type.startsWith('video/')) fileType = 'video';
             else if (file.type.startsWith('audio/') || file.name.startsWith('audio_')) fileType = 'audio';
 
-            console.log('[Hub] 📤 Envoi fichier:', { name: file.name, type: fileType, size: file.size });
+            console.log('[Hub] ðŸ“¤ Envoi fichier:', { name: file.name, type: fileType, size: file.size });
             
             await universalCommunicationService.sendFileMessage(
               selectedConversation.id,
@@ -344,9 +344,9 @@ export default function UniversalCommunicationHub({
               fileType
             );
             
-            console.log('[Hub] ✅ Fichier envoyé:', file.name);
+            console.log('[Hub] âœ… Fichier envoyÃ©:', file.name);
           } catch (fileError: any) {
-            console.error('[Hub] ❌ Erreur envoi fichier:', fileError);
+            console.error('[Hub] âŒ Erreur envoi fichier:', fileError);
             toast({
               title: 'Erreur fichier',
               description: `Impossible d'envoyer ${file.name}: ${fileError.message}`,
@@ -364,13 +364,13 @@ export default function UniversalCommunicationHub({
         if (trimmedMessage.length > 5000) {
           toast({
             title: 'Message trop long',
-            description: `Le message ne peut pas dépasser 5000 caractères (actuellement: ${trimmedMessage.length})`,
+            description: `Le message ne peut pas dÃ©passer 5000 caractÃ¨res (actuellement: ${trimmedMessage.length})`,
             variant: 'destructive'
           });
           return;
         }
 
-        console.log('[Hub] 📤 Envoi message texte:', { length: trimmedMessage.length });
+        console.log('[Hub] ðŸ“¤ Envoi message texte:', { length: trimmedMessage.length });
         
         await universalCommunicationService.sendTextMessage(
           selectedConversation.id,
@@ -378,12 +378,12 @@ export default function UniversalCommunicationHub({
           trimmedMessage
         );
         
-        console.log('[Hub] ✅ Message texte envoyé');
+        console.log('[Hub] âœ… Message texte envoyÃ©');
       }
       
     } catch (error: any) {
       const errorMessage = error?.message || 'Erreur inconnue';
-      console.error('[Hub] ❌ Erreur lors de l\'envoi:', {
+      console.error('[Hub] âŒ Erreur lors de l\'envoi:', {
         error: errorMessage,
         stack: error?.stack,
         conversationId: selectedConversation?.id,
@@ -393,7 +393,7 @@ export default function UniversalCommunicationHub({
       toast({
         title: 'Erreur d\'envoi',
         description: errorMessage.includes('timeout') 
-          ? 'Temps d\'attente dépassé. Vérifiez votre connexion.'
+          ? 'Temps d\'attente dÃ©passÃ©. VÃ©rifiez votre connexion.'
           : `Impossible d'envoyer le message: ${errorMessage}`,
         variant: 'destructive'
       });
@@ -401,12 +401,12 @@ export default function UniversalCommunicationHub({
   };
 
   const handleStartCall = async (type: 'audio' | 'video') => {
-    console.log('📞 handleStartCall appelé:', { type, selectedConversation, userId: user?.id });
+    console.log('ðŸ“ž handleStartCall appelÃ©:', { type, selectedConversation, userId: user?.id });
     
     if (!selectedConversation) {
       toast({
         title: 'Erreur',
-        description: 'Veuillez sélectionner une conversation',
+        description: 'Veuillez sÃ©lectionner une conversation',
         variant: 'destructive'
       });
       return;
@@ -415,7 +415,7 @@ export default function UniversalCommunicationHub({
     if (!user?.id) {
       toast({
         title: 'Erreur',
-        description: 'Vous devez être connecté pour passer un appel',
+        description: 'Vous devez Ãªtre connectÃ© pour passer un appel',
         variant: 'destructive'
       });
       return;
@@ -425,36 +425,36 @@ export default function UniversalCommunicationHub({
       p => p.user_id !== user.id
     );
 
-    console.log('📞 Autre participant:', otherParticipant);
+    console.log('ðŸ“ž Autre participant:', otherParticipant);
 
     if (!otherParticipant) {
       toast({
         title: 'Erreur',
-        description: 'Aucun participant trouvé dans cette conversation',
+        description: 'Aucun participant trouvÃ© dans cette conversation',
         variant: 'destructive'
       });
       return;
     }
 
     try {
-      console.log('📞 Création de l\'appel...');
+      console.log('ðŸ“ž CrÃ©ation de l\'appel...');
       const call = await universalCommunicationService.startCall(
         user.id,
         otherParticipant.user_id,
         type
       );
-      console.log('📞 Appel créé:', call);
+      console.log('ðŸ“ž Appel crÃ©Ã©:', call);
       setActiveCall(call);
       setCallType(type);
       toast({
-        title: type === 'video' ? '📹 Appel vidéo' : '📞 Appel audio',
+        title: type === 'video' ? 'ðŸ“¹ Appel vidÃ©o' : 'ðŸ“ž Appel audio',
         description: 'Connexion en cours...'
       });
     } catch (error) {
-      console.error('📞 Erreur startCall:', error);
+      console.error('ðŸ“ž Erreur startCall:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de démarrer l\'appel',
+        description: 'Impossible de dÃ©marrer l\'appel',
         variant: 'destructive'
       });
     }
@@ -494,7 +494,7 @@ export default function UniversalCommunicationHub({
       const profile = await searchById(customId);
       
       if (!profile) {
-        // Le hook affiche déjà un toast d'erreur
+        // Le hook affiche dÃ©jÃ  un toast d'erreur
         return;
       }
 
@@ -524,9 +524,9 @@ export default function UniversalCommunicationHub({
       setSelectedConversation(conversation);
       setShowNewConversation(false);
       setShowMobileChat(true);
-      toast({ title: 'Conversation créée', description: 'Vous pouvez maintenant discuter' });
+      toast({ title: 'Conversation crÃ©Ã©e', description: 'Vous pouvez maintenant discuter' });
     } catch (error) {
-      toast({ title: 'Erreur', description: 'Impossible de créer la conversation', variant: 'destructive' });
+      toast({ title: 'Erreur', description: 'Impossible de crÃ©er la conversation', variant: 'destructive' });
     }
   };
 
@@ -669,10 +669,10 @@ export default function UniversalCommunicationHub({
                             {other?.user?.first_name?.[0]}{other?.user?.last_name?.[0]}
                           </AvatarFallback>
                         </Avatar>
-                        {/* Indicateur de présence */}
+                        {/* Indicateur de prÃ©sence */}
                         <span className={cn(
                           "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background",
-                          isOnline ? "bg-green-500" : 
+                          isOnline ? "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" : 
                           presenceStatus?.status === 'away' ? "bg-yellow-500" : "bg-gray-400"
                         )} />
                       </div>
@@ -687,7 +687,7 @@ export default function UniversalCommunicationHub({
                               </span>
                             )}
                             {isOnline && (
-                              <span className="text-[10px] text-green-500 font-medium flex-shrink-0">En ligne</span>
+                              <span className="text-[10px] text-primary-orange-500 font-medium flex-shrink-0">En ligne</span>
                             )}
                           </div>
                           {conv.last_message_at && (
@@ -735,7 +735,7 @@ export default function UniversalCommunicationHub({
                 </Avatar>
                 <span className={cn(
                   "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background",
-                  isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') ? "bg-green-500" : "bg-gray-400"
+                  isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') ? "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" : "bg-gray-400"
                 )} />
               </div>
               
@@ -746,7 +746,7 @@ export default function UniversalCommunicationHub({
                 </h2>
                 <p className="text-xs text-muted-foreground truncate">
                   {isUserOnline(getOtherParticipant(selectedConversation)?.user_id || '') 
-                    ? '🟢 En ligne' 
+                    ? 'ðŸŸ¢ En ligne' 
                     : 'Hors ligne'}
                 </p>
               </div>
@@ -842,14 +842,14 @@ export default function UniversalCommunicationHub({
             <div className="p-3 border-t border-border bg-card">
               <ImprovedMessageInput
                 onSendMessage={handleSendMessage}
-                placeholder="Écrivez votre message..."
+                placeholder="Ã‰crivez votre message..."
               />
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
             <MessageSquare className="w-20 h-20 mb-4 opacity-20" />
-            <p className="text-lg">Sélectionnez une conversation</p>
+            <p className="text-lg">SÃ©lectionnez une conversation</p>
           </div>
         )}
       </div>
@@ -861,7 +861,7 @@ export default function UniversalCommunicationHub({
           <DialogHeader>
             <DialogTitle>Nouvelle conversation</DialogTitle>
             <DialogDescription>
-              Recherchez un utilisateur pour démarrer une conversation
+              Recherchez un utilisateur pour dÃ©marrer une conversation
             </DialogDescription>
           </DialogHeader>
           <Tabs defaultValue="search" className="w-full">
@@ -925,7 +925,7 @@ export default function UniversalCommunicationHub({
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Formats acceptés: USR0001 (3 lettres + 4 chiffres) ou 224-123-456
+                Formats acceptÃ©s: USR0001 (3 lettres + 4 chiffres) ou 224-123-456
               </p>
             </TabsContent>
           </Tabs>

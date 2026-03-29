@@ -1,6 +1,6 @@
 /**
- * 🚨 GESTION DES LITIGES ESCROW - PDG
- * Interface pour consulter et résoudre les litiges
+ * ðŸš¨ GESTION DES LITIGES ESCROW - PDG
+ * Interface pour consulter et rÃ©soudre les litiges
  */
 
 import { useState, useEffect } from 'react';
@@ -138,12 +138,12 @@ export default function PDGEscrowDisputes() {
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Erreur');
 
-      toast.success('Litige résolu avec succès');
+      toast.success('Litige rÃ©solu avec succÃ¨s');
       setResolveDialog(null);
       setResolutionNotes('');
       await loadDisputes();
     } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la résolution');
+      toast.error(err.message || 'Erreur lors de la rÃ©solution');
     } finally {
       setResolving(false);
     }
@@ -162,7 +162,7 @@ export default function PDGEscrowDisputes() {
               Litiges Escrow
             </h2>
             <p className="text-muted-foreground text-sm">
-              {openDisputes.length} litige(s) en attente de résolution
+              {openDisputes.length} litige(s) en attente de rÃ©solution
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={loadDisputes} disabled={loading}>
@@ -174,7 +174,7 @@ export default function PDGEscrowDisputes() {
         {/* Open disputes */}
         {openDisputes.length > 0 && (
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg text-destructive">🔴 Litiges ouverts</h3>
+            <h3 className="font-semibold text-lg text-destructive">ðŸ”´ Litiges ouverts</h3>
             {openDisputes.map((dispute) => (
               <Card key={dispute.id} className="border-destructive/30 bg-destructive/5">
                 <CardContent className="p-6 space-y-4">
@@ -183,7 +183,7 @@ export default function PDGEscrowDisputes() {
                       <div className="flex items-center gap-2">
                         <Badge variant="destructive">Ouvert</Badge>
                         <Badge variant="outline">
-                          {dispute.initiator_role === 'buyer' ? '🛒 Acheteur' : '🏪 Vendeur'}
+                          {dispute.initiator_role === 'buyer' ? 'ðŸ›’ Acheteur' : 'ðŸª Vendeur'}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
                           {new Date(dispute.created_at).toLocaleString('fr-FR')}
@@ -196,11 +196,11 @@ export default function PDGEscrowDisputes() {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-primary-orange-600 hover:bg-primary-orange-700"
                         onClick={() => setResolveDialog({ disputeId: dispute.id, resolution: 'release_to_seller' })}
                       >
                         <CheckCircle className="w-4 h-4 mr-1" />
-                        Libérer au vendeur
+                        LibÃ©rer au vendeur
                       </Button>
                       <Button
                         size="sm"
@@ -222,7 +222,7 @@ export default function PDGEscrowDisputes() {
                     {/* Initiator info */}
                     <div className="bg-background border rounded-lg p-3 space-y-2">
                       <p className="text-xs font-semibold text-primary uppercase">
-                        {dispute.initiator_role === 'buyer' ? '🛒 Acheteur (Déclencheur)' : '🏪 Vendeur (Déclencheur)'}
+                        {dispute.initiator_role === 'buyer' ? 'ðŸ›’ Acheteur (DÃ©clencheur)' : 'ðŸª Vendeur (DÃ©clencheur)'}
                       </p>
                       <div className="space-y-1 text-sm">
                         <p className="flex items-center gap-2">
@@ -246,7 +246,7 @@ export default function PDGEscrowDisputes() {
                     {/* Other party */}
                     <div className="bg-background border rounded-lg p-3 space-y-2">
                       <p className="text-xs font-semibold text-primary uppercase">
-                        {dispute.initiator_role === 'buyer' ? '🏪 Vendeur' : '🛒 Acheteur'}
+                        {dispute.initiator_role === 'buyer' ? 'ðŸª Vendeur' : 'ðŸ›’ Acheteur'}
                       </p>
                       {(() => {
                         const otherProfile = dispute.initiator_role === 'buyer'
@@ -280,20 +280,20 @@ export default function PDGEscrowDisputes() {
         {/* Resolved disputes */}
         {resolvedDisputes.length > 0 && (
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg text-muted-foreground">✅ Litiges résolus ({resolvedDisputes.length})</h3>
+            <h3 className="font-semibold text-lg text-muted-foreground">âœ… Litiges rÃ©solus ({resolvedDisputes.length})</h3>
             {resolvedDisputes.slice(0, 10).map((dispute) => (
               <Card key={dispute.id} className="opacity-80">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Badge variant="secondary">
-                        {dispute.resolution === 'release_to_seller' ? '→ Vendeur' : '← Acheteur'}
+                        {dispute.resolution === 'release_to_seller' ? 'â†’ Vendeur' : 'â† Acheteur'}
                       </Badge>
                       <span className="text-sm">
                         <LocalPrice amount={dispute.escrow?.amount || 0} currency={dispute.escrow?.currency || 'GNF'} size="sm" />
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Résolu le {dispute.resolved_at ? new Date(dispute.resolved_at).toLocaleDateString('fr-FR') : 'N/A'}
+                        RÃ©solu le {dispute.resolved_at ? new Date(dispute.resolved_at).toLocaleDateString('fr-FR') : 'N/A'}
                       </span>
                     </div>
                     {dispute.resolution_notes && (
@@ -313,7 +313,7 @@ export default function PDGEscrowDisputes() {
             <CardContent className="py-12 text-center">
               <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
               <p className="text-lg font-semibold">Aucun litige</p>
-              <p className="text-muted-foreground text-sm">Tous les paiements escrow se déroulent normalement.</p>
+              <p className="text-muted-foreground text-sm">Tous les paiements escrow se dÃ©roulent normalement.</p>
             </CardContent>
           </Card>
         )}
@@ -325,19 +325,19 @@ export default function PDGEscrowDisputes() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               {resolveDialog?.resolution === 'release_to_seller'
-                ? <><CheckCircle className="w-5 h-5 text-green-600" />Libérer les fonds au vendeur</>
+                ? <><CheckCircle className="w-5 h-5 text-primary-orange-600" />LibÃ©rer les fonds au vendeur</>
                 : <><XCircle className="w-5 h-5 text-blue-600" />Rembourser l'acheteur</>
               }
             </AlertDialogTitle>
             <AlertDialogDescription>
               {resolveDialog?.resolution === 'release_to_seller'
-                ? 'Les fonds seront transférés au vendeur avec la commission. Cette action est irréversible.'
-                : 'Les fonds seront intégralement remboursés à l\'acheteur. Cette action est irréversible.'
+                ? 'Les fonds seront transfÃ©rÃ©s au vendeur avec la commission. Cette action est irrÃ©versible.'
+                : 'Les fonds seront intÃ©gralement remboursÃ©s Ã  l\'acheteur. Cette action est irrÃ©versible.'
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Textarea
-            placeholder="Notes de résolution (optionnel)..."
+            placeholder="Notes de rÃ©solution (optionnel)..."
             value={resolutionNotes}
             onChange={(e) => setResolutionNotes(e.target.value)}
             className="min-h-[80px]"
@@ -347,7 +347,7 @@ export default function PDGEscrowDisputes() {
             <AlertDialogAction
               onClick={handleResolve}
               disabled={resolving}
-              className={resolveDialog?.resolution === 'release_to_seller' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'}
+              className={resolveDialog?.resolution === 'release_to_seller' ? 'bg-primary-orange-600 hover:bg-primary-orange-700' : 'bg-blue-600 hover:bg-blue-700'}
             >
               {resolving ? 'Traitement...' : 'Confirmer'}
             </AlertDialogAction>

@@ -1,7 +1,7 @@
 /**
  * VENDOR HEADER COMPONENT
- * Header optimisé et mémoïsé pour le dashboard vendeur
- * 224Solutions - Optimisation Performance & Accessibilité
+ * Header optimisÃ© et mÃ©moÃ¯sÃ© pour le dashboard vendeur
+ * 224Solutions - Optimisation Performance & AccessibilitÃ©
  */
 
 import { memo, Suspense, lazy } from 'react';
@@ -40,12 +40,12 @@ const NotificationBellButton = lazy(() =>
 interface VendorHeaderProps {
   /** Nom d'affichage de l'utilisateur */
   displayName: string;
-  /** Callback de déconnexion */
+  /** Callback de dÃ©connexion */
   onSignOut: () => Promise<void>;
 }
 
 // ============================================================================
-// Sous-composants mémoïsés
+// Sous-composants mÃ©moÃ¯sÃ©s
 // ============================================================================
 
 /**
@@ -81,7 +81,7 @@ const UserStatus = memo(function UserStatus({ displayName }: { displayName: stri
     <div className="flex items-center gap-1 md:gap-2 min-w-0 flex-1">
       <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1 min-w-0">
         <span
-          className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse flex-shrink-0"
+          className="w-1.5 h-1.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse flex-shrink-0"
           aria-label="En ligne"
         />
         <span className="truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
@@ -140,7 +140,7 @@ const HeaderActions = memo(function HeaderActions({
           className="h-8 w-8 md:h-10 md:w-10"
           iconSize="w-4 h-4 md:w-5 md:h-5"
           externalUnreadCount={vendorUnreadCount}
-          badgeClassName="bg-green-500 text-white"
+          badgeClassName="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white"
         />
       </Suspense>
 
@@ -150,8 +150,8 @@ const HeaderActions = memo(function HeaderActions({
         size="icon"
         className="h-8 w-8 md:h-10 md:w-10"
         onClick={onNavigateToSettings}
-        aria-label="Paramètres"
-        title="Paramètres"
+        aria-label="ParamÃ¨tres"
+        title="ParamÃ¨tres"
       >
         <Settings className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
       </Button>
@@ -162,8 +162,8 @@ const HeaderActions = memo(function HeaderActions({
         size="icon"
         onClick={onSignOut}
         className="h-8 w-8 md:h-10 md:w-10"
-        aria-label="Se déconnecter"
-        title="Se déconnecter"
+        aria-label="Se dÃ©connecter"
+        title="Se dÃ©connecter"
       >
         <LogOut className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
       </Button>
@@ -192,7 +192,7 @@ const VendorHeader = memo(function VendorHeader({
         {/* Ligne 1 (mobile): menu + logo + nom app */}
         <AppBranding />
 
-        {/* Ligne 2 (mobile): user+ID à gauche, actions à droite */}
+        {/* Ligne 2 (mobile): user+ID Ã  gauche, actions Ã  droite */}
         <div className="flex items-center justify-between w-full min-w-0 gap-2">
           <UserStatus displayName={displayName} />
           <HeaderActions
@@ -203,7 +203,7 @@ const VendorHeader = memo(function VendorHeader({
         </div>
       </div>
 
-      {/* Wallet compact - visible uniquement sur grands écrans */}
+      {/* Wallet compact - visible uniquement sur grands Ã©crans */}
       <div className="hidden xl:block pb-2">
         <Suspense fallback={null}>
           <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />

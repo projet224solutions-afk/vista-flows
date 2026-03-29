@@ -30,7 +30,7 @@ export default function CopilotAuditTrail() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      // TODO: Créer la table copilot_audit_logs dans la base de données
+      // TODO: CrÃ©er la table copilot_audit_logs dans la base de donnÃ©es
       console.warn('Table copilot_audit_logs not implemented yet');
       setLogs([]);
       // let query = supabase
@@ -64,7 +64,7 @@ export default function CopilotAuditTrail() {
 
   const getActionIcon = (log: AuditLog) => {
     if (log.success) {
-      return <CheckCircle className="w-4 h-4 text-green-500" />;
+      return <CheckCircle className="w-4 h-4 text-primary-orange-500" />;
     }
     return <XCircle className="w-4 h-4 text-red-500" />;
   };
@@ -73,7 +73,7 @@ export default function CopilotAuditTrail() {
     const colors: Record<string, string> = {
       'chat_message': 'bg-blue-500',
       'business_action': 'bg-purple-500',
-      'analyze_system': 'bg-green-500',
+      'analyze_system': 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
       'status_check': 'bg-gray-500',
       'rate_limit_exceeded': 'bg-red-500',
       'business_action_blocked': 'bg-orange-500',
@@ -102,7 +102,7 @@ export default function CopilotAuditTrail() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête avec statistiques */}
+      {/* En-tÃªte avec statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
@@ -118,13 +118,13 @@ export default function CopilotAuditTrail() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Succès
+              SuccÃ¨s
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold text-green-600">{stats.success}</span>
-              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-2xl font-bold text-primary-orange-600">{stats.success}</span>
+              <CheckCircle className="w-5 h-5 text-primary-orange-500" />
             </div>
           </CardContent>
         </Card>
@@ -146,7 +146,7 @@ export default function CopilotAuditTrail() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Taux de Succès
+              Taux de SuccÃ¨s
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -168,7 +168,7 @@ export default function CopilotAuditTrail() {
                 Audit Trail du Copilote
               </CardTitle>
               <CardDescription>
-                Historique détaillé de toutes les actions du copilote IA
+                Historique dÃ©taillÃ© de toutes les actions du copilote IA
               </CardDescription>
             </div>
             <Button onClick={loadAuditLogs} variant="outline" size="sm">
@@ -197,7 +197,7 @@ export default function CopilotAuditTrail() {
               onClick={() => setFilter('success')}
               size="sm"
             >
-              Succès
+              SuccÃ¨s
             </Button>
             <Button
               variant={filter === 'error' ? 'default' : 'outline'}
@@ -219,7 +219,7 @@ export default function CopilotAuditTrail() {
                   <TableRow>
                     <TableHead className="w-12">Statut</TableHead>
                     <TableHead>Action</TableHead>
-                    <TableHead>Données</TableHead>
+                    <TableHead>DonnÃ©es</TableHead>
                     <TableHead>Erreur</TableHead>
                     <TableHead className="text-right">Date</TableHead>
                   </TableRow>
@@ -228,7 +228,7 @@ export default function CopilotAuditTrail() {
                   {filteredLogs.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        Aucun log trouvé
+                        Aucun log trouvÃ©
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -245,7 +245,7 @@ export default function CopilotAuditTrail() {
                           {log.error_message ? (
                             <span className="text-xs text-red-600">{log.error_message}</span>
                           ) : (
-                            <span className="text-xs text-green-600">-</span>
+                            <span className="text-xs text-primary-orange-600">-</span>
                           )}
                         </TableCell>
                         <TableCell className="text-right text-sm text-muted-foreground">
@@ -261,7 +261,7 @@ export default function CopilotAuditTrail() {
         </CardContent>
       </Card>
 
-      {/* Alertes de sécurité */}
+      {/* Alertes de sÃ©curitÃ© */}
       {stats.errors > 10 && (
         <Card className="border-orange-500 bg-orange-500/10">
           <CardContent className="pt-6">
@@ -269,10 +269,10 @@ export default function CopilotAuditTrail() {
               <AlertTriangle className="w-5 h-5 text-orange-500" />
               <div>
                 <p className="font-medium text-orange-600">
-                  Nombre élevé d'erreurs détecté
+                  Nombre Ã©levÃ© d'erreurs dÃ©tectÃ©
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {stats.errors} erreurs sur {stats.total} actions. Vérifiez la configuration du copilote.
+                  {stats.errors} erreurs sur {stats.total} actions. VÃ©rifiez la configuration du copilote.
                 </p>
               </div>
             </div>

@@ -174,7 +174,7 @@ export function VendorKYCReview() {
 
       if (kycError) {
         console.error('Error updating vendor_kyc:', kycError);
-        throw new Error(`Erreur mise à jour KYC: ${kycError.message}`);
+        throw new Error(`Erreur mise Ã  jour KYC: ${kycError.message}`);
       }
 
       // Update vendors table kyc_status (use upsert pattern)
@@ -238,8 +238,8 @@ export function VendorKYCReview() {
 
       toast.success(
         dialogAction === 'APPROVE' 
-          ? 'KYC approuvé avec succès' 
-          : 'KYC rejeté'
+          ? 'KYC approuvÃ© avec succÃ¨s' 
+          : 'KYC rejetÃ©'
       );
       
       // Reload records
@@ -267,11 +267,11 @@ export function VendorKYCReview() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-green-500 text-white">✓ Vérifié</Badge>;
+        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white">âœ“ VÃ©rifiÃ©</Badge>;
       case 'rejected':
-        return <Badge variant="destructive">✗ Rejeté</Badge>;
+        return <Badge variant="destructive">âœ— RejetÃ©</Badge>;
       case 'under_review':
-        return <Badge className="bg-blue-500 text-white">En révision</Badge>;
+        return <Badge className="bg-blue-500 text-white">En rÃ©vision</Badge>;
       case 'pending':
       default:
         return <Badge variant="secondary">En attente</Badge>;
@@ -280,12 +280,12 @@ export function VendorKYCReview() {
 
   const getDocumentTypeName = (type?: string) => {
     const types: Record<string, string> = {
-      carte_identite: 'Carte d\'identité',
+      carte_identite: 'Carte d\'identitÃ©',
       passeport: 'Passeport',
       permis_conduire: 'Permis de conduire',
       registre_commerce: 'Registre de commerce'
     };
-    return types[type || ''] || type || 'Document non spécifié';
+    return types[type || ''] || type || 'Document non spÃ©cifiÃ©';
   };
 
   if (loading) {
@@ -303,10 +303,10 @@ export function VendorKYCReview() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Shield className="w-8 h-8 text-primary" />
-            Vérification KYC Vendeurs
+            VÃ©rification KYC Vendeurs
           </h1>
           <p className="text-muted-foreground mt-1">
-            Approuver ou rejeter les documents d'identité des vendeurs
+            Approuver ou rejeter les documents d'identitÃ© des vendeurs
           </p>
         </div>
       </div>
@@ -327,19 +327,19 @@ export function VendorKYCReview() {
         </Card>
         <Card className="border-blue-200 bg-blue-50">
           <CardHeader className="pb-2">
-            <CardDescription>En révision</CardDescription>
+            <CardDescription>En rÃ©vision</CardDescription>
             <CardTitle className="text-2xl text-blue-600">{stats.under_review}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
           <CardHeader className="pb-2">
-            <CardDescription>Vérifiés</CardDescription>
-            <CardTitle className="text-2xl text-green-600">{stats.verified}</CardTitle>
+            <CardDescription>VÃ©rifiÃ©s</CardDescription>
+            <CardTitle className="text-2xl text-primary-orange-600">{stats.verified}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="border-red-200 bg-red-50">
           <CardHeader className="pb-2">
-            <CardDescription>Rejetés</CardDescription>
+            <CardDescription>RejetÃ©s</CardDescription>
             <CardTitle className="text-2xl text-red-600">{stats.rejected}</CardTitle>
           </CardHeader>
         </Card>
@@ -352,9 +352,9 @@ export function VendorKYCReview() {
             <TabsList className="grid grid-cols-5 w-full max-w-3xl">
               <TabsTrigger value="ALL">Tous ({stats.total})</TabsTrigger>
               <TabsTrigger value="pending">En attente ({stats.pending})</TabsTrigger>
-              <TabsTrigger value="under_review">Révision ({stats.under_review})</TabsTrigger>
-              <TabsTrigger value="verified">Vérifiés ({stats.verified})</TabsTrigger>
-              <TabsTrigger value="rejected">Rejetés ({stats.rejected})</TabsTrigger>
+              <TabsTrigger value="under_review">RÃ©vision ({stats.under_review})</TabsTrigger>
+              <TabsTrigger value="verified">VÃ©rifiÃ©s ({stats.verified})</TabsTrigger>
+              <TabsTrigger value="rejected">RejetÃ©s ({stats.rejected})</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
@@ -365,7 +365,7 @@ export function VendorKYCReview() {
         {filteredRecords.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">
-              Aucun KYC à afficher dans cette catégorie
+              Aucun KYC Ã  afficher dans cette catÃ©gorie
             </CardContent>
           </Card>
         ) : (
@@ -390,7 +390,7 @@ export function VendorKYCReview() {
                         <Phone className="w-4 h-4 text-muted-foreground" />
                         <span>{kyc.phone_number || 'Non fourni'}</span>
                         {kyc.phone_verified && (
-                          <Badge variant="outline" className="text-xs">Vérifié</Badge>
+                          <Badge variant="outline" className="text-xs">VÃ©rifiÃ©</Badge>
                         )}
                       </div>
 
@@ -440,7 +440,7 @@ export function VendorKYCReview() {
                           size="sm"
                           variant="default"
                           onClick={() => openDialog(kyc, 'APPROVE')}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-primary-orange-600 hover:bg-primary-orange-700"
                         >
                           <CheckCircle2 className="w-4 h-4 mr-1" />
                           Approuver
@@ -492,7 +492,7 @@ export function VendorKYCReview() {
                   id="rejection_reason"
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Expliquez pourquoi le document est rejeté (photo floue, document expiré, etc.)..."
+                  placeholder="Expliquez pourquoi le document est rejetÃ© (photo floue, document expirÃ©, etc.)..."
                   rows={4}
                   required
                 />
@@ -500,13 +500,13 @@ export function VendorKYCReview() {
             )}
 
             {dialogAction === 'APPROVE' && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg">
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
+                  <CheckCircle2 className="w-5 h-5 text-primary-orange-600 mt-0.5" />
                   <div>
-                    <p className="font-medium text-green-900">Vérification KYC</p>
-                    <p className="text-sm text-green-700 mt-1">
-                      En approuvant ce KYC, le vendeur pourra être certifié par le CEO.
+                    <p className="font-medium text-primary-orange-900">VÃ©rification KYC</p>
+                    <p className="text-sm text-primary-orange-700 mt-1">
+                      En approuvant ce KYC, le vendeur pourra Ãªtre certifiÃ© par le CEO.
                       Assurez-vous que le document est valide et lisible.
                     </p>
                   </div>
@@ -532,7 +532,7 @@ export function VendorKYCReview() {
               disabled={submitting || (dialogAction === 'REJECT' && !rejectionReason.trim())}
               className={
                 dialogAction === 'APPROVE' 
-                  ? 'bg-green-600 hover:bg-green-700'
+                  ? 'bg-primary-orange-600 hover:bg-primary-orange-700'
                   : ''
               }
             >
@@ -546,7 +546,7 @@ export function VendorKYCReview() {
       <Dialog open={viewImageDialog} onOpenChange={setViewImageDialog}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Document d'identité</DialogTitle>
+            <DialogTitle>Document d'identitÃ©</DialogTitle>
             <DialogDescription>
               {selectedKYC?.vendor_name} - {getDocumentTypeName(selectedKYC?.id_document_type)}
             </DialogDescription>
@@ -556,7 +556,7 @@ export function VendorKYCReview() {
             {selectedKYC?.id_document_url ? (
               <img 
                 src={selectedKYC.id_document_url} 
-                alt="Document d'identité" 
+                alt="Document d'identitÃ©" 
                 className="w-full h-auto rounded-lg border"
               />
             ) : (
@@ -575,7 +575,7 @@ export function VendorKYCReview() {
                 onClick={() => window.open(selectedKYC.id_document_url, '_blank', 'noopener,noreferrer')}
               >
                 <Download className="w-4 h-4 mr-2" />
-                Télécharger
+                TÃ©lÃ©charger
               </Button>
             )}
           </DialogFooter>

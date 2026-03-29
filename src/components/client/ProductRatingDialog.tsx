@@ -224,7 +224,7 @@ export default function ProductRatingDialog({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Check className="w-5 h-5 text-green-500" />
+              <Check className="w-5 h-5 text-primary-orange-500" />
               {t('rating.product.thanksTitle')}
             </DialogTitle>
             <DialogDescription>
@@ -266,7 +266,7 @@ export default function ProductRatingDialog({
                   index === currentProductIndex
                     ? 'border-primary bg-primary/5'
                     : product.rated
-                    ? 'border-green-500 bg-green-50 dark:bg-green-950 opacity-60'
+                    ? 'border-primary-orange-500 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950 opacity-60'
                     : 'border-border hover:border-primary/50'
                 }`}
               >
@@ -283,7 +283,7 @@ export default function ProductRatingDialog({
                     </div>
                   )}
                   {product.rated && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-full flex items-center justify-center">
                       <Check className="w-3 h-3 text-white" />
                     </div>
                   )}

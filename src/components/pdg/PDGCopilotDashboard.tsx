@@ -1,5 +1,5 @@
 /**
- * 🎯 DASHBOARD COPILOTE PDG
+ * ðŸŽ¯ DASHBOARD COPILOTE PDG
  * Interface de chat pour le PDG
  */
 
@@ -26,12 +26,12 @@ const PDGCopilotDashboard: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Vérifier que l'utilisateur est PDG/OWNER
+  // VÃ©rifier que l'utilisateur est PDG/OWNER
   if (user?.role !== 'pdg' && user?.role !== 'owner') {
     return (
       <Alert className="m-4 border-red-500">
         <AlertDescription>
-          ❌ Accès refusé. Cette interface est réservée au PDG/Propriétaire.
+          âŒ AccÃ¨s refusÃ©. Cette interface est rÃ©servÃ©e au PDG/PropriÃ©taire.
         </AlertDescription>
       </Alert>
     );
@@ -89,7 +89,7 @@ const PDGCopilotDashboard: React.FC = () => {
               <div>
                 <CardTitle className="text-2xl">Copilote PDG - 224Solutions</CardTitle>
                 <p className="text-sm text-gray-500 mt-1">
-                  Analyse intelligente et insights exécutifs
+                  Analyse intelligente et insights exÃ©cutifs
                 </p>
               </div>
             </div>
@@ -100,15 +100,15 @@ const PDGCopilotDashboard: React.FC = () => {
               className="text-gray-600"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Réinitialiser
+              RÃ©initialiser
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="chat" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="chat">💬 Chat IA</TabsTrigger>
-              <TabsTrigger value="quick">⚡ Actions Rapides</TabsTrigger>
+              <TabsTrigger value="chat">ðŸ’¬ Chat IA</TabsTrigger>
+              <TabsTrigger value="quick">âš¡ Actions Rapides</TabsTrigger>
             </TabsList>
 
             {/* TAB CHAT */}
@@ -132,7 +132,7 @@ const PDGCopilotDashboard: React.FC = () => {
               {/* Erreur */}
               {error && (
                 <Alert className="border-red-500">
-                  <AlertDescription>❌ {error}</AlertDescription>
+                  <AlertDescription>âŒ {error}</AlertDescription>
                 </Alert>
               )}
 
@@ -164,13 +164,13 @@ const PDGCopilotDashboard: React.FC = () => {
 
               {/* Exemples */}
               <div className="text-xs text-gray-500 space-y-1">
-                <p className="font-semibold">💡 Exemples de requêtes :</p>
+                <p className="font-semibold">ðŸ’¡ Exemples de requÃªtes :</p>
                 <ul className="list-disc list-inside space-y-1 ml-2">
-                  <li>VND-123456 (analyse complète d'un vendeur)</li>
-                  <li>CLT-789012 (analyse complète d'un client)</li>
-                  <li>"Résumé financier du jour"</li>
+                  <li>VND-123456 (analyse complÃ¨te d'un vendeur)</li>
+                  <li>CLT-789012 (analyse complÃ¨te d'un client)</li>
+                  <li>"RÃ©sumÃ© financier du jour"</li>
                   <li>"Top 10 vendeurs de la semaine"</li>
-                  <li>"Clients à risque élevé"</li>
+                  <li>"Clients Ã  risque Ã©levÃ©"</li>
                 </ul>
               </div>
             </TabsContent>
@@ -182,7 +182,7 @@ const PDGCopilotDashboard: React.FC = () => {
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <DollarSign className="w-5 h-5 text-green-600" />
+                      <DollarSign className="w-5 h-5 text-primary-orange-600" />
                       Finances
                     </CardTitle>
                   </CardHeader>
@@ -193,7 +193,7 @@ const PDGCopilotDashboard: React.FC = () => {
                       onClick={() => handleQuickAction('financial-today')}
                       disabled={loading}
                     >
-                      Résumé d'aujourd'hui
+                      RÃ©sumÃ© d'aujourd'hui
                     </Button>
                     <Button
                       variant="outline"
@@ -201,7 +201,7 @@ const PDGCopilotDashboard: React.FC = () => {
                       onClick={() => handleQuickAction('financial-week')}
                       disabled={loading}
                     >
-                      Résumé de la semaine
+                      RÃ©sumÃ© de la semaine
                     </Button>
                     <Button
                       variant="outline"
@@ -209,7 +209,7 @@ const PDGCopilotDashboard: React.FC = () => {
                       onClick={() => handleQuickAction('financial-month')}
                       disabled={loading}
                     >
-                      Résumé du mois
+                      RÃ©sumÃ© du mois
                     </Button>
                   </CardContent>
                 </Card>
@@ -234,7 +234,7 @@ const PDGCopilotDashboard: React.FC = () => {
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => sendMessage('Vendeurs à faible performance')}
+                      onClick={() => sendMessage('Vendeurs Ã  faible performance')}
                       disabled={loading}
                     >
                       Vendeurs sous-performants
@@ -262,18 +262,18 @@ const PDGCopilotDashboard: React.FC = () => {
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => sendMessage('Vendeurs à risque élevé')}
+                      onClick={() => sendMessage('Vendeurs Ã  risque Ã©levÃ©')}
                       disabled={loading}
                     >
-                      Vendeurs à risque
+                      Vendeurs Ã  risque
                     </Button>
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => sendMessage('Clients à risque élevé')}
+                      onClick={() => sendMessage('Clients Ã  risque Ã©levÃ©')}
                       disabled={loading}
                     >
-                      Clients à risque
+                      Clients Ã  risque
                     </Button>
                     <Button
                       variant="outline"
@@ -314,10 +314,10 @@ const PDGCopilotDashboard: React.FC = () => {
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => sendMessage('Taux de rétention clients')}
+                      onClick={() => sendMessage('Taux de rÃ©tention clients')}
                       disabled={loading}
                     >
-                      Taux de rétention
+                      Taux de rÃ©tention
                     </Button>
                   </CardContent>
                 </Card>

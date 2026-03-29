@@ -73,15 +73,15 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
     const configs: Record<string, { label: string; icon: any; color: string }> = {
       pending: { label: 'En attente', icon: Clock, color: 'text-gray-500' },
       awaiting_supplier: { label: 'Attente fournisseur', icon: Clock, color: 'text-orange-500' },
-      ordered_from_supplier: { label: 'Commandé', icon: Package, color: 'text-blue-500' },
-      supplier_confirmed: { label: 'Confirmé', icon: CheckCircle, color: 'text-blue-600' },
-      supplier_processing: { label: 'En préparation', icon: Package, color: 'text-indigo-500' },
-      shipped_by_supplier: { label: 'Expédié', icon: Truck, color: 'text-purple-500' },
+      ordered_from_supplier: { label: 'CommandÃ©', icon: Package, color: 'text-blue-500' },
+      supplier_confirmed: { label: 'ConfirmÃ©', icon: CheckCircle, color: 'text-blue-600' },
+      supplier_processing: { label: 'En prÃ©paration', icon: Package, color: 'text-indigo-500' },
+      shipped_by_supplier: { label: 'ExpÃ©diÃ©', icon: Truck, color: 'text-purple-500' },
       in_transit: { label: 'En transit', icon: Truck, color: 'text-purple-600' },
-      delivered_to_customer: { label: 'Livré', icon: CheckCircle, color: 'text-green-500' },
-      completed: { label: 'Terminé', icon: CheckCircle, color: 'text-green-600' },
-      cancelled: { label: 'Annulé', icon: XCircle, color: 'text-red-500' },
-      refunded: { label: 'Remboursé', icon: XCircle, color: 'text-red-600' },
+      delivered_to_customer: { label: 'LivrÃ©', icon: CheckCircle, color: 'text-primary-orange-500' },
+      completed: { label: 'TerminÃ©', icon: CheckCircle, color: 'text-primary-orange-600' },
+      cancelled: { label: 'AnnulÃ©', icon: XCircle, color: 'text-red-500' },
+      refunded: { label: 'RemboursÃ©', icon: XCircle, color: 'text-red-600' },
       disputed: { label: 'Litige', icon: AlertTriangle, color: 'text-yellow-600' }
     };
     return configs[status] || { label: status, icon: Clock, color: 'text-gray-500' };
@@ -90,7 +90,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
   const handleUpdateTracking = async () => {
     if (!selectedOrder) return;
     
-    // Mise à jour avec tracking
+    // Mise Ã  jour avec tracking
     await onUpdateStatus(selectedOrder.id, 'shipped_by_supplier', `Tracking: ${trackingNumber}`);
     setShowTrackingDialog(false);
     setSelectedOrder(null);
@@ -124,14 +124,14 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
             <div className="text-center py-12 text-muted-foreground">
               <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <h3 className="font-medium text-lg mb-2">Aucune commande</h3>
-              <p>Les commandes de produits dropshipping apparaîtront ici</p>
+              <p>Les commandes de produits dropshipping apparaÃ®tront ici</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Référence</TableHead>
+                    <TableHead>RÃ©fÃ©rence</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Fournisseur</TableHead>
                     <TableHead>Articles</TableHead>
@@ -162,7 +162,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                           {formatCurrency(order.customer_total)}
                         </TableCell>
                         <TableCell>
-                          <span className="text-green-600 font-medium">
+                          <span className="text-primary-orange-600 font-medium">
                             {formatCurrency(order.profit_amount || 0)}
                           </span>
                         </TableCell>
@@ -183,7 +183,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                               {order.status === 'pending' && (
                                 <DropdownMenuItem onClick={() => onUpdateStatus(order.id, 'ordered_from_supplier')}>
                                   <Package className="w-4 h-4 mr-2" />
-                                  Marquer comme commandé
+                                  Marquer comme commandÃ©
                                 </DropdownMenuItem>
                               )}
                               {order.status === 'ordered_from_supplier' && (
@@ -206,13 +206,13 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                               {order.status === 'shipped_by_supplier' && (
                                 <DropdownMenuItem onClick={() => onUpdateStatus(order.id, 'delivered_to_customer')}>
                                   <CheckCircle className="w-4 h-4 mr-2" />
-                                  Marquer livré
+                                  Marquer livrÃ©
                                 </DropdownMenuItem>
                               )}
                               {order.status === 'delivered_to_customer' && (
                                 <DropdownMenuItem onClick={() => onUpdateStatus(order.id, 'completed')}>
                                   <CheckCircle className="w-4 h-4 mr-2" />
-                                  Compléter
+                                  ComplÃ©ter
                                 </DropdownMenuItem>
                               )}
                               
@@ -253,12 +253,12 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
       <Dialog open={showTrackingDialog} onOpenChange={setShowTrackingDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ajouter le numéro de suivi</DialogTitle>
+            <DialogTitle>Ajouter le numÃ©ro de suivi</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="tracking">Numéro de suivi</Label>
+              <Label htmlFor="tracking">NumÃ©ro de suivi</Label>
               <Input
                 id="tracking"
                 value={trackingNumber}
@@ -273,7 +273,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Notes sur l'expédition..."
+                placeholder="Notes sur l'expÃ©dition..."
                 rows={3}
               />
             </div>
@@ -284,7 +284,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
               Annuler
             </Button>
             <Button onClick={handleUpdateTracking} disabled={!trackingNumber}>
-              Confirmer l'expédition
+              Confirmer l'expÃ©dition
             </Button>
           </DialogFooter>
         </DialogContent>

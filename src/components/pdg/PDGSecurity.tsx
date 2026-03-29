@@ -14,7 +14,7 @@ export default function PDGSecurity() {
       case 'critical': return 'bg-red-500/10 text-red-500 border-red-500/20';
       case 'high': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
       case 'medium': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-      default: return 'bg-green-500/10 text-green-500 border-green-500/20';
+      default: return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500 border-primary-orange-500/20';
     }
   };
 
@@ -23,7 +23,7 @@ export default function PDGSecurity() {
       return 'bg-red-500/10 text-red-500 border-red-500/20';
     }
     if (action.includes('ACTIVATED') || action.includes('CREATED')) {
-      return 'bg-green-500/10 text-green-500 border-green-500/20';
+      return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500 border-primary-orange-500/20';
     }
     return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
   };
@@ -41,8 +41,8 @@ export default function PDGSecurity() {
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Sécurité & Audit</h2>
-          <p className="text-muted-foreground">Surveillance et détection des menaces en temps réel</p>
+          <h2 className="text-2xl font-bold">SÃ©curitÃ© & Audit</h2>
+          <p className="text-muted-foreground">Surveillance et dÃ©tection des menaces en temps rÃ©el</p>
         </div>
         <Button onClick={refetch} variant="outline" className="gap-2">
           <RefreshCw className="w-4 h-4" />
@@ -98,15 +98,15 @@ export default function PDGSecurity() {
         </Card>
 
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="pt-6 relative">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-500" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-primary-orange-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.reviewed_alerts}</p>
-                <p className="text-sm text-muted-foreground">Alertes Traitées</p>
+                <p className="text-sm text-muted-foreground">Alertes TraitÃ©es</p>
               </div>
             </div>
           </CardContent>
@@ -120,9 +120,9 @@ export default function PDGSecurity() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
-                Détection de Fraude
+                DÃ©tection de Fraude
               </CardTitle>
-              <CardDescription>Alertes de sécurité et transactions suspectes</CardDescription>
+              <CardDescription>Alertes de sÃ©curitÃ© et transactions suspectes</CardDescription>
             </div>
             {stats.pending_alerts > 0 && (
               <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
@@ -134,12 +134,12 @@ export default function PDGSecurity() {
         <CardContent>
           {fraudLogs.length === 0 ? (
             <div className="text-center py-12">
-              <Shield className="w-16 h-16 mx-auto mb-4 text-green-500 opacity-50" />
+              <Shield className="w-16 h-16 mx-auto mb-4 text-primary-orange-500 opacity-50" />
               <h3 className="text-lg font-semibold text-muted-foreground mb-2">
                 Aucune alerte de fraude
               </h3>
               <p className="text-sm text-muted-foreground">
-                Tous les systèmes fonctionnent normalement
+                Tous les systÃ¨mes fonctionnent normalement
               </p>
             </div>
           ) : (
@@ -170,9 +170,9 @@ export default function PDGSecurity() {
                           </Badge>
                           <span className="text-sm font-semibold">Score: {fraud.risk_score}/100</span>
                           {fraud.reviewed && (
-                            <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                            <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500 border-primary-orange-500/20">
                               <CheckCircle className="w-3 h-3 mr-1" />
-                              Traité
+                              TraitÃ©
                             </Badge>
                           )}
                         </div>
@@ -200,7 +200,7 @@ export default function PDGSecurity() {
                         className="gap-2"
                       >
                         <CheckCircle className="w-4 h-4" />
-                        Marquer traité
+                        Marquer traitÃ©
                       </Button>
                     )}
                   </div>
@@ -247,7 +247,7 @@ export default function PDGSecurity() {
                         </Badge>
                         {log.target_type && (
                           <span className="text-xs text-muted-foreground">
-                            • {log.target_type}
+                            â€¢ {log.target_type}
                           </span>
                         )}
                       </div>

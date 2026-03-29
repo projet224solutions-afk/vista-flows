@@ -61,7 +61,7 @@ export default function InventoryManagement() {
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [products, setProducts] = useState<Array<{ id: string; name: string; sku?: string; price: number }>>([]);
   
-  // États pour le mode offline
+  // Ã‰tats pour le mode offline
   const [isOnline, setIsOnline] = useState(offlinePOSManager.isOnline());
 
   const fetchWarehouses = useCallback(async () => {
@@ -92,7 +92,7 @@ export default function InventoryManagement() {
         .order('name');
 
       if (error) throw error;
-      console.log('📦 Produits chargés dans InventoryManagement:', productsData?.length);
+      console.log('ðŸ“¦ Produits chargÃ©s dans InventoryManagement:', productsData?.length);
       setProducts(productsData || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -103,19 +103,19 @@ export default function InventoryManagement() {
   useEffect(() => {
     if (!vendorId) return;
 
-    console.log('🔄 Chargement initial InventoryManagement');
+    console.log('ðŸ”„ Chargement initial InventoryManagement');
     fetchWarehouses();
     fetchProducts();
     refresh(); // Forcer le rechargement de l'inventaire
   }, [vendorId, fetchWarehouses, fetchProducts, refresh]);
 
-  // Détection du statut réseau
+  // DÃ©tection du statut rÃ©seau
   useEffect(() => {
     const cleanup = offlinePOSManager.onNetworkChange((online) => {
       setIsOnline(online);
       
       if (online) {
-        toast({ title: 'Connexion rétablie', description: 'Inventaire en ligne' });
+        toast({ title: 'Connexion rÃ©tablie', description: 'Inventaire en ligne' });
         // Recharger l'inventaire
         refresh();
       } else {
@@ -130,12 +130,12 @@ export default function InventoryManagement() {
     return cleanup;
   }, [refresh, toast]);
 
-  // Note: Rechargement automatique désactivé pour éviter les actualisations intempestives
-  // L'utilisateur peut rafraîchir manuellement si nécessaire
+  // Note: Rechargement automatique dÃ©sactivÃ© pour Ã©viter les actualisations intempestives
+  // L'utilisateur peut rafraÃ®chir manuellement si nÃ©cessaire
 
-  // Synchronisation produits gérée dans useInventoryService (centralisée)
+  // Synchronisation produits gÃ©rÃ©e dans useInventoryService (centralisÃ©e)
 
-  // Combiner les produits avec leur stock (même sans entrée inventory)
+  // Combiner les produits avec leur stock (mÃªme sans entrÃ©e inventory)
   const allProductsWithStock = products.map(product => {
     const inventoryItem = inventory.find(item => item.product_id === product.id);
     return {
@@ -169,7 +169,7 @@ export default function InventoryManagement() {
     return matchesSearch && matchesFilter;
   });
 
-  // Statistiques basées sur tous les produits (avec ou sans stock)
+  // Statistiques basÃ©es sur tous les produits (avec ou sans stock)
   const lowStockItems = allProductsWithStock.filter(item => item.quantity <= item.minimum_stock && item.quantity > 0);
   const outOfStockItems = allProductsWithStock.filter(item => item.quantity === 0);
   const totalProducts = products.length; // Total des produits du vendeur
@@ -185,7 +185,7 @@ export default function InventoryManagement() {
   const totalCost = stats?.total_cost || 0;
   const potentialProfit = stats?.potential_profit || (totalValue - totalCost);
 
-  console.log('📊 Stats inventaire - Total produits:', totalProducts, 'Valeur totale:', totalValue, 'Stock faible:', lowStockItems.length, 'Rupture:', outOfStockItems.length);
+  console.log('ðŸ“Š Stats inventaire - Total produits:', totalProducts, 'Valeur totale:', totalValue, 'Stock faible:', lowStockItems.length, 'Rupture:', outOfStockItems.length);
 
 
   const [addOpen, setAddOpen] = useState(false);
@@ -211,22 +211,22 @@ export default function InventoryManagement() {
 
   const addStock = async () => {
     if (!selectedProductId) {
-      toast({ title: 'Sélectionnez un produit', variant: 'destructive' });
+      toast({ title: 'SÃ©lectionnez un produit', variant: 'destructive' });
       return;
     }
     const qty = parseInt(addQty || '0', 10);
     if (qty <= 0) {
-      toast({ title: 'Quantité invalide', variant: 'destructive' });
+      toast({ title: 'QuantitÃ© invalide', variant: 'destructive' });
       return;
     }
     try {
       const inventoryItem = inventory.find(item => item.product_id === selectedProductId);
       if (inventoryItem) {
-        // Mettre à jour le stock existant
+        // Mettre Ã  jour le stock existant
         const newQty = inventoryItem.quantity + qty;
         await updateStock(inventoryItem.id, newQty);
       } else {
-        // Créer une nouvelle entrée d'inventaire
+        // CrÃ©er une nouvelle entrÃ©e d'inventaire
         if (vendorId) {
           const { error } = await supabase
             .from('inventory')
@@ -244,7 +244,7 @@ export default function InventoryManagement() {
       setAddOpen(false);
       setAddQty('');
       setSelectedProductId('');
-      toast({ title: '✅ Stock ajouté avec succès' });
+      toast({ title: 'âœ… Stock ajoutÃ© avec succÃ¨s' });
     } catch (e: any) {
       toast({ title: 'Erreur ajout stock', description: e?.message, variant: 'destructive' });
     }
@@ -261,7 +261,7 @@ export default function InventoryManagement() {
       return;
     }
     if (!newWarehouse.name.trim()) {
-      toast({ title: 'Erreur', description: 'Le nom de l\'entrepôt est requis', variant: 'destructive' });
+      toast({ title: 'Erreur', description: 'Le nom de l\'entrepÃ´t est requis', variant: 'destructive' });
       return;
     }
 
@@ -284,12 +284,12 @@ export default function InventoryManagement() {
 
       if (error) throw error;
 
-      toast({ title: '✅ Entrepôt créé avec succès' });
+      toast({ title: 'âœ… EntrepÃ´t crÃ©Ã© avec succÃ¨s' });
       setWarehouseOpen(false);
       setNewWarehouse({ country: '', city: '', name: '', address: '', manager_name: '', manager_phone: '', manager_email: '' });
       await fetchWarehouses();
       
-      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      // DÃ©clencher un Ã©vÃ©nement pour synchroniser avec l'onglet EntrepÃ´ts
       window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
       toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
@@ -305,10 +305,10 @@ export default function InventoryManagement() {
 
       if (error) throw error;
 
-      toast({ title: '✅ Statut mis à jour' });
+      toast({ title: 'âœ… Statut mis Ã  jour' });
       await fetchWarehouses();
       
-      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      // DÃ©clencher un Ã©vÃ©nement pour synchroniser avec l'onglet EntrepÃ´ts
       window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
       toast({ title: 'Erreur', description: e?.message, variant: 'destructive' });
@@ -320,7 +320,7 @@ export default function InventoryManagement() {
     
     const qty = parseInt(restockQty || '0', 10);
     if (qty <= 0) {
-      toast({ title: 'Quantité invalide', variant: 'destructive' });
+      toast({ title: 'QuantitÃ© invalide', variant: 'destructive' });
       return;
     }
 
@@ -330,9 +330,9 @@ export default function InventoryManagement() {
       setRestockOpen(false);
       setRestockItem(null);
       setRestockQty('');
-      toast({ title: '✅ Stock réapprovisionné avec succès' });
+      toast({ title: 'âœ… Stock rÃ©approvisionnÃ© avec succÃ¨s' });
     } catch (e: any) {
-      toast({ title: 'Erreur réapprovisionnement', description: e?.message, variant: 'destructive' });
+      toast({ title: 'Erreur rÃ©approvisionnement', description: e?.message, variant: 'destructive' });
     }
   };
 
@@ -357,9 +357,9 @@ export default function InventoryManagement() {
       
       setEditingWarehouse(null);
       await fetchWarehouses();
-      toast({ title: '✅ Entrepôt modifié avec succès' });
+      toast({ title: 'âœ… EntrepÃ´t modifiÃ© avec succÃ¨s' });
       
-      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      // DÃ©clencher un Ã©vÃ©nement pour synchroniser avec l'onglet EntrepÃ´ts
       window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
       toast({ title: 'Erreur modification', description: e?.message, variant: 'destructive' });
@@ -379,9 +379,9 @@ export default function InventoryManagement() {
       
       setDeletingWarehouse(null);
       await fetchWarehouses();
-      toast({ title: '✅ Entrepôt supprimé avec succès' });
+      toast({ title: 'âœ… EntrepÃ´t supprimÃ© avec succÃ¨s' });
       
-      // Déclencher un événement pour synchroniser avec l'onglet Entrepôts
+      // DÃ©clencher un Ã©vÃ©nement pour synchroniser avec l'onglet EntrepÃ´ts
       window.dispatchEvent(new CustomEvent('warehouseUpdated'));
     } catch (e: any) {
       toast({ title: 'Erreur suppression', description: e?.message, variant: 'destructive' });
@@ -390,25 +390,25 @@ export default function InventoryManagement() {
 
   return (
     <div className="space-y-4 md:space-y-6 px-2 md:px-0">
-      {/* Header mobile optimisé */}
+      {/* Header mobile optimisÃ© */}
       <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-3">
             <div>
-              <h2 className="text-lg md:text-2xl font-bold truncate">📦 Gestion des Stocks</h2>
-              <p className="text-xs md:text-sm text-muted-foreground truncate">Inventaire synchronisé en temps réel</p>
+              <h2 className="text-lg md:text-2xl font-bold truncate">ðŸ“¦ Gestion des Stocks</h2>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">Inventaire synchronisÃ© en temps rÃ©el</p>
             </div>
             
-            {/* Indicateur de statut réseau */}
+            {/* Indicateur de statut rÃ©seau */}
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${
               isOnline 
-                ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800' 
+                ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200 dark:bg-primary-orange-950 dark:border-primary-orange-800' 
                 : 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800'
             }`}>
               {isOnline ? (
                 <>
-                  <Wifi className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-                  <span className="font-medium text-green-700 dark:text-green-300 hidden md:inline">
+                  <Wifi className="h-3.5 w-3.5 text-primary-orange-600 dark:text-primary-orange-400" />
+                  <span className="font-medium text-primary-orange-700 dark:text-primary-orange-300 hidden md:inline">
                     En ligne
                   </span>
                 </>
@@ -448,7 +448,7 @@ export default function InventoryManagement() {
                     onChange={(e) => setSelectedProductId(e.target.value)}
                     className="w-full px-3 py-2 border rounded-md bg-background text-sm"
                   >
-                    <option value="">Sélectionner un produit</option>
+                    <option value="">SÃ©lectionner un produit</option>
                     {products.map((product) => {
                       const inventoryItem = inventory.find(item => item.product_id === product.id);
                       return (
@@ -460,10 +460,10 @@ export default function InventoryManagement() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Quantité à ajouter</label>
+                  <label className="text-sm font-medium mb-2 block">QuantitÃ© Ã  ajouter</label>
                   <Input 
                     type="number" 
-                    placeholder="Quantité" 
+                    placeholder="QuantitÃ©" 
                     value={addQty} 
                     onChange={(e) => setAddQty(e.target.value)}
                     min="1"
@@ -480,16 +480,16 @@ export default function InventoryManagement() {
             <DialogTrigger asChild>
               <Button variant="outline" className="flex-shrink-0 h-9 px-3 text-xs md:text-sm">
                 <Warehouse className="w-3.5 h-3.5 mr-1.5" />
-                Entrepôts
+                EntrepÃ´ts
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Gestion des entrepôts</DialogTitle>
+                <DialogTitle>Gestion des entrepÃ´ts</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-3">
-                  <h3 className="font-medium">Ajouter un entrepôt</h3>
+                  <h3 className="font-medium">Ajouter un entrepÃ´t</h3>
                   <div className="grid grid-cols-1 gap-3">
                     <Input
                       placeholder="Pays *"
@@ -506,7 +506,7 @@ export default function InventoryManagement() {
                       required
                     />
                     <Input
-                      placeholder="Nom de l'entrepôt *"
+                      placeholder="Nom de l'entrepÃ´t *"
                       value={newWarehouse.name}
                       onChange={(e) => setNewWarehouse({ ...newWarehouse, name: e.target.value })}
                       maxLength={100}
@@ -525,7 +525,7 @@ export default function InventoryManagement() {
                       maxLength={100}
                     />
                     <Input
-                      placeholder="Téléphone du responsable"
+                      placeholder="TÃ©lÃ©phone du responsable"
                       value={newWarehouse.manager_phone}
                       onChange={(e) => setNewWarehouse({ ...newWarehouse, manager_phone: e.target.value })}
                       maxLength={20}
@@ -540,12 +540,12 @@ export default function InventoryManagement() {
                   </div>
                   <Button onClick={addWarehouse} className="w-full">
                     <Plus className="w-4 h-4 mr-2" />
-                    Créer l'entrepôt
+                    CrÃ©er l'entrepÃ´t
                   </Button>
                 </div>
 
                 <div className="border-t pt-4">
-                  <h3 className="font-medium mb-3">Entrepôts existants ({warehouses.length})</h3>
+                  <h3 className="font-medium mb-3">EntrepÃ´ts existants ({warehouses.length})</h3>
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                      {warehouses.map((warehouse) => (
                       <div key={warehouse.id} className="space-y-2 p-3 border rounded-lg">
@@ -586,7 +586,7 @@ export default function InventoryManagement() {
                               variant="outline"
                               onClick={() => toggleWarehouseStatus(warehouse.id, warehouse.is_active)}
                             >
-                              {warehouse.is_active ? 'Désactiver' : 'Activer'}
+                              {warehouse.is_active ? 'DÃ©sactiver' : 'Activer'}
                             </Button>
                           </div>
                         </div>
@@ -594,13 +594,13 @@ export default function InventoryManagement() {
                           <div className="border-t pt-2 mt-2">
                             <p className="text-sm font-medium mb-1">Responsable:</p>
                             {(warehouse as any).manager_name && (
-                              <p className="text-sm text-muted-foreground">• {(warehouse as any).manager_name}</p>
+                              <p className="text-sm text-muted-foreground">â€¢ {(warehouse as any).manager_name}</p>
                             )}
                             {(warehouse as any).manager_phone && (
-                              <p className="text-sm text-muted-foreground">• {(warehouse as any).manager_phone}</p>
+                              <p className="text-sm text-muted-foreground">â€¢ {(warehouse as any).manager_phone}</p>
                             )}
                             {(warehouse as any).manager_email && (
-                              <p className="text-sm text-muted-foreground">• {(warehouse as any).manager_email}</p>
+                              <p className="text-sm text-muted-foreground">â€¢ {(warehouse as any).manager_email}</p>
                             )}
                           </div>
                         )}
@@ -608,7 +608,7 @@ export default function InventoryManagement() {
                     ))}
                     {warehouses.length === 0 && (
                       <p className="text-center text-muted-foreground py-4">
-                        Aucun entrepôt configuré
+                        Aucun entrepÃ´t configurÃ©
                       </p>
                     )}
                   </div>
@@ -619,11 +619,11 @@ export default function InventoryManagement() {
         </div>
       </div>
 
-      {/* Dialog Réapprovisionnement */}
+      {/* Dialog RÃ©approvisionnement */}
       <Dialog open={restockOpen} onOpenChange={setRestockOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Réapprovisionner le stock</DialogTitle>
+            <DialogTitle>RÃ©approvisionner le stock</DialogTitle>
           </DialogHeader>
           {restockItem && (
             <div className="space-y-4">
@@ -641,17 +641,17 @@ export default function InventoryManagement() {
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">Quantité à ajouter</label>
+                <label className="text-sm font-medium mb-2 block">QuantitÃ© Ã  ajouter</label>
                 <Input 
                   type="number" 
-                  placeholder="Quantité" 
+                  placeholder="QuantitÃ©" 
                   value={restockQty} 
                   onChange={(e) => setRestockQty(e.target.value)}
                   min="1"
                 />
                 {restockQty && parseInt(restockQty) > 0 && (
                   <p className="text-sm text-muted-foreground mt-2">
-                    Nouveau stock: {restockItem.quantity + parseInt(restockQty)} unités
+                    Nouveau stock: {restockItem.quantity + parseInt(restockQty)} unitÃ©s
                   </p>
                 )}
               </div>
@@ -670,7 +670,7 @@ export default function InventoryManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Statistiques - Mobile optimisé en grille 2x2 puis 3 colonnes */}
+      {/* Statistiques - Mobile optimisÃ© en grille 2x2 puis 3 colonnes */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
         <Card>
           <CardContent className="p-3 md:p-6">
@@ -708,10 +708,10 @@ export default function InventoryManagement() {
         <Card>
           <CardContent className="p-3 md:p-6">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-green-600 flex-shrink-0" />
+              <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-primary-orange-600 flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] md:text-sm text-muted-foreground truncate">Valeur Stock</p>
-                <p className="text-sm md:text-xl font-bold truncate text-green-600">{totalValue.toLocaleString()} GNF</p>
+                <p className="text-sm md:text-xl font-bold truncate text-primary-orange-600">{totalValue.toLocaleString()} GNF</p>
               </div>
             </div>
           </CardContent>
@@ -739,7 +739,7 @@ export default function InventoryManagement() {
           </TabsTrigger>
           <TabsTrigger value="warehouse" className="flex-shrink-0 text-xs md:text-sm px-2 md:px-4">
             <Warehouse className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
-            Entrepôts
+            EntrepÃ´ts
           </TabsTrigger>
           <TabsTrigger value="alerts" className="flex-shrink-0 text-xs md:text-sm px-2 md:px-4">
             <AlertTriangle className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
@@ -753,7 +753,7 @@ export default function InventoryManagement() {
         </TabsList>
 
         <TabsContent value="inventory" className="space-y-4">
-          {/* Filtres - Mobile optimisé */}
+          {/* Filtres - Mobile optimisÃ© */}
           <Card>
             <CardContent className="p-3 md:p-4">
               <div className="flex flex-col gap-2 md:flex-row md:gap-4 md:items-center">
@@ -785,7 +785,7 @@ export default function InventoryManagement() {
           {/* Liste d'inventaire */}
           <Card>
         <CardHeader>
-          <CardTitle>Inventaire détaillé</CardTitle>
+          <CardTitle>Inventaire dÃ©taillÃ©</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -821,7 +821,7 @@ export default function InventoryManagement() {
                         <p className="font-medium">{availableStock}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Réservé</p>
+                        <p className="text-muted-foreground">RÃ©servÃ©</p>
                         <p className="font-medium">{item.reserved_quantity}</p>
                       </div>
                       <div>
@@ -833,7 +833,7 @@ export default function InventoryManagement() {
                     {item.lot_number && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Lot: {item.lot_number}
-                        {item.expiry_date && ` • Expire le: ${new Date(item.expiry_date).toLocaleDateString('fr-FR')}`}
+                        {item.expiry_date && ` â€¢ Expire le: ${new Date(item.expiry_date).toLocaleDateString('fr-FR')}`}
                       </p>
                     )}
 
@@ -846,7 +846,7 @@ export default function InventoryManagement() {
                     <div className="mt-2">
                       <Progress 
                         value={Math.min(stockPercentage, 100)} 
-                        className={`h-2 ${stockPercentage <= 100 ? 'bg-red-100' : 'bg-green-100'}`}
+                        className={`h-2 ${stockPercentage <= 100 ? 'bg-red-100' : 'bg-primary-orange-100'}`}
                       />
                     </div>
                   </div>
@@ -856,7 +856,7 @@ export default function InventoryManagement() {
                       {(item.quantity * item.product.price).toLocaleString()} GNF
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {item.product.price.toLocaleString()} GNF/unité
+                      {item.product.price.toLocaleString()} GNF/unitÃ©
                     </p>
                   </div>
 
@@ -872,7 +872,7 @@ export default function InventoryManagement() {
                           setRestockOpen(true);
                         }}
                       >
-                        Réapprovisionner
+                        RÃ©approvisionner
                       </Button>
                     )}
                   </div>
@@ -884,10 +884,10 @@ export default function InventoryManagement() {
           {filteredInventory.length === 0 && (
             <div className="text-center py-8">
               <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucun produit trouvé</h3>
+              <h3 className="text-lg font-semibold mb-2">Aucun produit trouvÃ©</h3>
               <p className="text-muted-foreground">
                 {searchTerm || stockFilter !== 'all' 
-                  ? 'Aucun produit ne correspond aux critères de recherche.' 
+                  ? 'Aucun produit ne correspond aux critÃ¨res de recherche.' 
                   : 'Votre inventaire est vide. Commencez par ajouter des produits.'}
               </p>
             </div>
@@ -895,13 +895,13 @@ export default function InventoryManagement() {
         </CardContent>
           </Card>
 
-          {/* Entrepôts */}
+          {/* EntrepÃ´ts */}
       {warehouses.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Warehouse className="w-5 h-5" />
-              Entrepôts
+              EntrepÃ´ts
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -946,7 +946,7 @@ export default function InventoryManagement() {
       <Dialog open={!!editingWarehouse} onOpenChange={() => setEditingWarehouse(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Modifier l'entrepôt</DialogTitle>
+            <DialogTitle>Modifier l'entrepÃ´t</DialogTitle>
           </DialogHeader>
           {editingWarehouse && (
             <div className="space-y-4">
@@ -963,7 +963,7 @@ export default function InventoryManagement() {
                 maxLength={100}
               />
               <Input
-                placeholder="Nom de l'entrepôt *"
+                placeholder="Nom de l'entrepÃ´t *"
                 value={editingWarehouse.name || ""}
                 onChange={(e) => setEditingWarehouse({ ...editingWarehouse, name: e.target.value })}
                 maxLength={100}
@@ -981,7 +981,7 @@ export default function InventoryManagement() {
                 maxLength={100}
               />
               <Input
-                placeholder="Téléphone du responsable"
+                placeholder="TÃ©lÃ©phone du responsable"
                 value={(editingWarehouse as any).manager_phone || ""}
                 onChange={(e) => setEditingWarehouse({ ...editingWarehouse, manager_phone: e.target.value })}
                 maxLength={20}
@@ -1010,12 +1010,12 @@ export default function InventoryManagement() {
       <Dialog open={!!deletingWarehouse} onOpenChange={() => setDeletingWarehouse(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Supprimer l'entrepôt</DialogTitle>
+            <DialogTitle>Supprimer l'entrepÃ´t</DialogTitle>
           </DialogHeader>
           {deletingWarehouse && (
             <div className="space-y-4">
-              <p>Êtes-vous sûr de vouloir supprimer l'entrepôt <strong>{deletingWarehouse.name}</strong> ?</p>
-              <p className="text-sm text-muted-foreground">Cette action est irréversible.</p>
+              <p>ÃŠtes-vous sÃ»r de vouloir supprimer l'entrepÃ´t <strong>{deletingWarehouse.name}</strong> ?</p>
+              <p className="text-sm text-muted-foreground">Cette action est irrÃ©versible.</p>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setDeletingWarehouse(null)}>
                   Annuler

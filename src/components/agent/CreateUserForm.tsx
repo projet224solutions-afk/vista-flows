@@ -22,28 +22,28 @@ import { toast } from 'sonner';
 import { useAgentActions, CreateUserData } from '@/hooks/useAgentActions';
 
 const USER_ROLES = [
-  { value: 'client', label: 'Client', icon: Users, description: 'Utilisateur acheteur', color: 'text-green-600' },
+  { value: 'client', label: 'Client', icon: Users, description: 'Utilisateur acheteur', color: 'text-primary-orange-600' },
   { value: 'vendeur', label: 'Vendeur', icon: ShoppingBag, description: 'Boutique/Commerce', color: 'text-blue-600' },
   { value: 'livreur', label: 'Livreur', icon: Truck, description: 'Livraison de colis', color: 'text-yellow-600' },
   { value: 'taxi', label: 'Taxi', icon: Car, description: 'Transport de personnes', color: 'text-purple-600' },
   { value: 'transitaire', label: 'Transitaire', icon: Ship, description: 'Logistique internationale', color: 'text-orange-600' },
   { value: 'syndicat', label: 'Syndicat', icon: Building2, description: 'Organisation syndicale', color: 'text-pink-600' },
-  { value: 'prestataire', label: 'Prestataire', icon: Building2, description: 'Service de proximité', color: 'text-teal-600' },
+  { value: 'prestataire', label: 'Prestataire', icon: Building2, description: 'Service de proximitÃ©', color: 'text-primary-orange-600' },
 ];
 
-// Codes synchronisés avec service_types en BDD
+// Codes synchronisÃ©s avec service_types en BDD
 const VENDOR_SERVICE_TYPES = [
   { value: 'ecommerce', label: 'Boutique / E-commerce' },
   { value: 'restaurant', label: 'Restaurant / Alimentation' },
-  { value: 'beaute', label: 'Beauté & Bien-être' },
-  { value: 'reparation', label: 'Réparation / Mécanique' },
-  { value: 'location', label: 'Location Immobilière' },
+  { value: 'beaute', label: 'BeautÃ© & Bien-Ãªtre' },
+  { value: 'reparation', label: 'RÃ©paration / MÃ©canique' },
+  { value: 'location', label: 'Location ImmobiliÃ¨re' },
   { value: 'freelance', label: 'Services Professionnels' },
-  { value: 'media', label: 'Photographe / Vidéaste' },
-  { value: 'education', label: 'Éducation / Formation' },
-  { value: 'sante', label: 'Santé & Bien-être' },
+  { value: 'media', label: 'Photographe / VidÃ©aste' },
+  { value: 'education', label: 'Ã‰ducation / Formation' },
+  { value: 'sante', label: 'SantÃ© & Bien-Ãªtre' },
   { value: 'voyage', label: 'Voyage / Tourisme' },
-  { value: 'menage', label: 'Ménage & Entretien' },
+  { value: 'menage', label: 'MÃ©nage & Entretien' },
   { value: 'informatique', label: 'Informatique / Tech' },
   { value: 'construction', label: 'Construction / BTP' },
   { value: 'agriculture', label: 'Agriculture' },
@@ -53,8 +53,8 @@ const VENDOR_SERVICE_TYPES = [
 interface CreateUserFormProps {
   agentId: string;
   agentCode: string;
-  accessToken?: string; // Token d'accès pour les agents/sous-agents publics
-  onUserCreated?: () => void; // Callback après création réussie
+  accessToken?: string; // Token d'accÃ¨s pour les agents/sous-agents publics
+  onUserCreated?: () => void; // Callback aprÃ¨s crÃ©ation rÃ©ussie
 }
 
 export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated }: CreateUserFormProps) {
@@ -70,19 +70,19 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
     phone: '',
     password: '',
     role: 'client' as CreateUserData['role'],
-    country: 'Guinée',
+    country: 'GuinÃ©e',
     city: '',
-    // Données syndicat
+    // DonnÃ©es syndicat
     bureau_code: '',
     prefecture: '',
     commune: '',
     full_location: '',
-    // Données vendeur
+    // DonnÃ©es vendeur
     business_name: '',
     business_description: '',
     business_address: '',
     service_type: '',
-    // Données taxi/livreur
+    // DonnÃ©es taxi/livreur
     license_number: '',
     vehicle_type: 'moto',
     vehicle_brand: '',
@@ -97,13 +97,13 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
     // Validation du mot de passe
     if (!formData.password || formData.password.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error('Le mot de passe doit contenir au moins 8 caractÃ¨res');
       setIsSubmitting(false);
       return;
     }
 
     try {
-      // Préparer les données selon le rôle
+      // PrÃ©parer les donnÃ©es selon le rÃ´le
       const userData: CreateUserData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -115,7 +115,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
         city: formData.city
       };
 
-      // Ajouter données spécifiques selon le rôle
+      // Ajouter donnÃ©es spÃ©cifiques selon le rÃ´le
       if (formData.role === 'syndicat') {
         userData.syndicatData = {
           bureau_code: formData.bureau_code,
@@ -142,7 +142,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
       }
 
       // Appeler le hook
-      console.log('🔄 [CreateUserForm] Tentative création utilisateur:', {
+      console.log('ðŸ”„ [CreateUserForm] Tentative crÃ©ation utilisateur:', {
         agentId,
         agentCode,
         role: userData.role,
@@ -152,10 +152,10 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
       const result = await createUser(userData, agentId, agentCode, accessToken);
 
-      console.log('📥 [CreateUserForm] Résultat:', result);
+      console.log('ðŸ“¥ [CreateUserForm] RÃ©sultat:', result);
 
       if (result.success) {
-        toast.success('✅ Utilisateur créé avec succès!');
+        toast.success('âœ… Utilisateur crÃ©Ã© avec succÃ¨s!');
         // Reset form
         setFormData({
           firstName: '',
@@ -164,7 +164,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           phone: '',
           password: '',
           role: 'client',
-          country: 'Guinée',
+          country: 'GuinÃ©e',
           city: '',
           bureau_code: '',
           prefecture: '',
@@ -184,12 +184,12 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
         setShowPassword(false);
         setIsOpen(false);
       } else {
-        console.error('❌ [CreateUserForm] Erreur:', result.error);
-        toast.error(result.error || 'Erreur lors de la création');
+        console.error('âŒ [CreateUserForm] Erreur:', result.error);
+        toast.error(result.error || 'Erreur lors de la crÃ©ation');
       }
     } catch (error: any) {
-      console.error('Erreur création utilisateur:', error);
-      toast.error(error.message || 'Erreur lors de la création de l\'utilisateur');
+      console.error('Erreur crÃ©ation utilisateur:', error);
+      toast.error(error.message || 'Erreur lors de la crÃ©ation de l\'utilisateur');
     } finally {
       setIsSubmitting(false);
     }
@@ -203,19 +203,19 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
       <DialogTrigger asChild>
         <Button className="w-full" size="lg">
           <UserPlus className="w-5 h-5 mr-2" />
-          Créer un Utilisateur
+          CrÃ©er un Utilisateur
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl w-[95vw] h-[80vh] flex flex-col p-0 top-[10%] translate-y-0">
-        <DialogHeader className="flex-shrink-0 bg-gradient-to-r from-emerald-600 to-green-600 text-white p-4 rounded-t-lg">
-          <DialogTitle className="text-lg font-bold">Créer un Nouvel Utilisateur</DialogTitle>
-          <DialogDescription className="text-emerald-100">
-            Sélectionnez le type d'utilisateur et remplissez les informations
+        <DialogHeader className="flex-shrink-0 bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 text-white p-4 rounded-t-lg">
+          <DialogTitle className="text-lg font-bold">CrÃ©er un Nouvel Utilisateur</DialogTitle>
+          <DialogDescription className="text-primary-blue-100">
+            SÃ©lectionnez le type d'utilisateur et remplissez les informations
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Sélection du type d'utilisateur */}
+          {/* SÃ©lection du type d'utilisateur */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">Type d'utilisateur *</Label>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -258,14 +258,14 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
               <div className="space-y-1.5">
                 <Label htmlFor="firstName" className="flex items-center gap-1 text-sm">
                   <Users className="w-3 h-3" />
-                  Prénom *
+                  PrÃ©nom *
                 </Label>
                 <Input
                   id="firstName"
                   required
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  placeholder="Prénom"
+                  placeholder="PrÃ©nom"
                   className="h-9"
                 />
               </div>
@@ -300,7 +300,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
               <div className="space-y-1.5">
                 <Label htmlFor="phone" className="flex items-center gap-1 text-sm">
                   <Phone className="w-3 h-3" />
-                  Téléphone *
+                  TÃ©lÃ©phone *
                 </Label>
                 <Input
                   id="phone"
@@ -327,7 +327,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   minLength={8}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Minimum 8 caractères"
+                  placeholder="Minimum 8 caractÃ¨res"
                   className="h-9 pr-10"
                 />
                 <button
@@ -339,7 +339,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Ce mot de passe sera utilisé par l'utilisateur pour se connecter
+                Ce mot de passe sera utilisÃ© par l'utilisateur pour se connecter
               </p>
             </div>
 
@@ -353,7 +353,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   id="country"
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  placeholder="Guinée"
+                  placeholder="GuinÃ©e"
                   className="h-9"
                 />
               </div>
@@ -373,7 +373,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
             </div>
           </div>
 
-          {/* Champs spécifiques au rôle Syndicat */}
+          {/* Champs spÃ©cifiques au rÃ´le Syndicat */}
           {formData.role === 'syndicat' && (
             <div className="space-y-3 p-4 bg-pink-50 dark:bg-pink-950/20 rounded-lg border-2 border-pink-200 dark:border-pink-800">
               <div className="flex items-center gap-2">
@@ -394,7 +394,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="prefecture" className="text-sm">Préfecture *</Label>
+                  <Label htmlFor="prefecture" className="text-sm">PrÃ©fecture *</Label>
                   <Input
                     id="prefecture"
                     required
@@ -421,7 +421,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     id="full_location"
                     value={formData.full_location}
                     onChange={(e) => setFormData({ ...formData, full_location: e.target.value })}
-                    placeholder="Ex: Près du marché"
+                    placeholder="Ex: PrÃ¨s du marchÃ©"
                     className="h-9"
                   />
                 </div>
@@ -429,7 +429,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
             </div>
           )}
 
-          {/* Champs spécifiques au rôle Vendeur */}
+          {/* Champs spÃ©cifiques au rÃ´le Vendeur */}
           {formData.role === 'vendeur' && (
             <div className="space-y-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
               <div className="flex items-center gap-2">
@@ -447,7 +447,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
                     required
                   >
-                    <option value="">Sélectionnez…</option>
+                    <option value="">SÃ©lectionnezâ€¦</option>
                     {VENDOR_SERVICE_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
@@ -467,7 +467,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                 </div>
 
                 <div className="space-y-1.5 md:col-span-2">
-                  <Label htmlFor="business_description" className="text-sm">Description de l'activité</Label>
+                  <Label htmlFor="business_description" className="text-sm">Description de l'activitÃ©</Label>
                   <Input
                     id="business_description"
                     value={formData.business_description}
@@ -483,7 +483,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     id="business_address"
                     value={formData.business_address}
                     onChange={(e) => setFormData({ ...formData, business_address: e.target.value })}
-                    placeholder="Ex: Marché Madina, Conakry"
+                    placeholder="Ex: MarchÃ© Madina, Conakry"
                     className="h-9"
                   />
                 </div>
@@ -491,12 +491,12 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
             </div>
           )}
 
-          {/* Champs spécifiques au rôle Prestataire */}
+          {/* Champs spÃ©cifiques au rÃ´le Prestataire */}
           {formData.role === 'prestataire' && (
-            <div className="space-y-3 p-4 bg-teal-50 dark:bg-teal-950/20 rounded-lg border-2 border-teal-200 dark:border-teal-800">
+            <div className="space-y-3 p-4 bg-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg border-2 border-primary-orange-200 dark:border-primary-orange-800">
               <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-teal-600" />
-                <h3 className="font-semibold text-teal-900 dark:text-teal-100">Informations du Service</h3>
+                <Building2 className="w-5 h-5 text-primary-orange-600" />
+                <h3 className="font-semibold text-primary-orange-900 dark:text-primary-orange-100">Informations du Service</h3>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -509,7 +509,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
                     required
                   >
-                    <option value="">Sélectionnez…</option>
+                    <option value="">SÃ©lectionnezâ€¦</option>
                     {VENDOR_SERVICE_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
@@ -532,7 +532,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     id="business_description_prest"
                     value={formData.business_description}
                     onChange={(e) => setFormData({ ...formData, business_description: e.target.value })}
-                    placeholder="Décrivez votre service..."
+                    placeholder="DÃ©crivez votre service..."
                     className="h-9"
                   />
                 </div>
@@ -549,7 +549,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
               </div>
             </div>
           )}
-          {/* Champs spécifiques aux rôles Taxi et Livreur */}
+          {/* Champs spÃ©cifiques aux rÃ´les Taxi et Livreur */}
           {(formData.role === 'taxi' || formData.role === 'livreur') && (
             <div className="space-y-3 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
               <div className="flex items-center gap-2">
@@ -559,13 +559,13 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   <Truck className="w-5 h-5 text-yellow-600" />
                 )}
                 <h3 className="font-semibold text-yellow-900 dark:text-yellow-100">
-                  Informations du Véhicule
+                  Informations du VÃ©hicule
                 </h3>
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="license_number" className="text-sm">Numéro de permis *</Label>
+                  <Label htmlFor="license_number" className="text-sm">NumÃ©ro de permis *</Label>
                   <Input
                     id="license_number"
                     required
@@ -576,7 +576,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="vehicle_type" className="text-sm">Type de véhicule *</Label>
+                  <Label htmlFor="vehicle_type" className="text-sm">Type de vÃ©hicule *</Label>
                   <select
                     id="vehicle_type"
                     className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
@@ -603,7 +603,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="vehicle_model" className="text-sm">Modèle</Label>
+                  <Label htmlFor="vehicle_model" className="text-sm">ModÃ¨le</Label>
                   <Input
                     id="vehicle_model"
                     value={formData.vehicle_model}
@@ -613,7 +613,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="vehicle_year" className="text-sm">Année</Label>
+                  <Label htmlFor="vehicle_year" className="text-sm">AnnÃ©e</Label>
                   <Input
                     id="vehicle_year"
                     value={formData.vehicle_year}
@@ -658,12 +658,12 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Création...
+                CrÃ©ation...
               </>
             ) : (
               <>
                 <UserPlus className="w-4 h-4 mr-2" />
-                Créer l'utilisateur
+                CrÃ©er l'utilisateur
               </>
             )}
           </Button>

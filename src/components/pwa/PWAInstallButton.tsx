@@ -20,13 +20,13 @@ export default function PWAInstallButton({
     const installed = await promptInstall();
     
     if (installed) {
-      toast.success('🎉 Application installée!', {
-        description: 'Ouvrez 224Solutions depuis votre écran d\'accueil'
+      toast.success('ðŸŽ‰ Application installÃ©e!', {
+        description: 'Ouvrez 224Solutions depuis votre Ã©cran d\'accueil'
       });
     }
   };
 
-  // Si déjà installé
+  // Si dÃ©jÃ  installÃ©
   if (isInstalled) {
     return (
       <Button
@@ -35,8 +35,8 @@ export default function PWAInstallButton({
         className={className}
         disabled
       >
-        <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
-        Application installée
+        <CheckCircle className="w-4 h-4 mr-2 text-primary-orange-600" />
+        Application installÃ©e
       </Button>
     );
   }

@@ -52,24 +52,24 @@ export interface SubAgentStats {
   averageCommission: number;
 }
 
-// Schéma de validation pour le sous-agent
+// SchÃ©ma de validation pour le sous-agent
 const subAgentSchema = z.object({
   name: z.string()
     .trim()
-    .min(2, { message: "Le nom doit contenir au moins 2 caractères" })
-    .max(100, { message: "Le nom ne peut pas dépasser 100 caractères" }),
+    .min(2, { message: "Le nom doit contenir au moins 2 caractÃ¨res" })
+    .max(100, { message: "Le nom ne peut pas dÃ©passer 100 caractÃ¨res" }),
   email: z.string()
     .trim()
     .email({ message: "Email invalide" })
-    .max(255, { message: "L'email ne peut pas dépasser 255 caractères" }),
+    .max(255, { message: "L'email ne peut pas dÃ©passer 255 caractÃ¨res" }),
   phone: z.string()
     .trim()
-    .min(8, { message: "Le téléphone doit contenir au moins 8 chiffres" })
-    .max(15, { message: "Le téléphone ne peut pas dépasser 15 chiffres" })
-    .regex(/^[0-9]+$/, { message: "Le téléphone ne doit contenir que des chiffres" }),
+    .min(8, { message: "Le tÃ©lÃ©phone doit contenir au moins 8 chiffres" })
+    .max(15, { message: "Le tÃ©lÃ©phone ne peut pas dÃ©passer 15 chiffres" })
+    .regex(/^[0-9]+$/, { message: "Le tÃ©lÃ©phone ne doit contenir que des chiffres" }),
   commission_rate: z.number()
-    .min(0, { message: "Le taux de commission doit être positif" })
-    .max(100, { message: "Le taux de commission ne peut pas dépasser 100%" })
+    .min(0, { message: "Le taux de commission doit Ãªtre positif" })
+    .max(100, { message: "Le taux de commission ne peut pas dÃ©passer 100%" })
 });
 
 export interface AgentSubAgentsManagementProps {
@@ -122,7 +122,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
         if (agentId) {
           query = query.eq('id', agentId);
         } else {
-          // Sinon charger l'agent lié à l'utilisateur
+          // Sinon charger l'agent liÃ© Ã  l'utilisateur
           query = query.eq('user_id', user.id).eq('is_active', true);
         }
 
@@ -169,11 +169,11 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           .order('created_at', { ascending: false });
 
         if (subAgentsError) {
-          console.error('Erreur récupération sous-agents:', subAgentsError);
+          console.error('Erreur rÃ©cupÃ©ration sous-agents:', subAgentsError);
           throw subAgentsError;
         }
 
-        // Récupérer les statistiques de tous les sous-agents en une seule requête
+        // RÃ©cupÃ©rer les statistiques de tous les sous-agents en une seule requÃªte
         const subAgentIds = (subAgentsData || []).map(sa => sa.id);
         
         let usersCountMap: Record<string, number> = {};
@@ -242,19 +242,19 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
     commission_rate?: number;
   }) => {
     if (!agentProfile?.id || !agentProfile?.pdg_id) {
-      toast.error('Profil agent non trouvé');
+      toast.error('Profil agent non trouvÃ©');
       return null;
     }
 
     if (!agentProfile.can_create_sub_agent) {
-      toast.error('Vous n\'avez pas la permission de créer des sous-agents');
+      toast.error('Vous n\'avez pas la permission de crÃ©er des sous-agents');
       return null;
     }
 
     try {
       const agentCode = `SAG-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
 
-      console.log('📤 Création sous-agent via edge function:', {
+      console.log('ðŸ“¤ CrÃ©ation sous-agent via edge function:', {
         parentAgentId: agentProfile.id,
         pdgId: agentProfile.pdg_id,
         email: subAgentData.email,
@@ -269,7 +269,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           name: subAgentData.name.trim(),
           email: subAgentData.email.trim().toLowerCase(),
           phone: subAgentData.phone.trim(),
-          agent_type: 'sales', // Type par défaut
+          agent_type: 'sales', // Type par dÃ©faut
           password: subAgentData.password, // Mot de passe fourni par l'utilisateur
           permissions: subAgentData.permissions,
           commission_rate: subAgentData.commission_rate || 5,
@@ -277,10 +277,10 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
         }
       });
 
-      console.log('📥 Réponse Edge Function:', { data, error });
+      console.log('ðŸ“¥ RÃ©ponse Edge Function:', { data, error });
 
       if (error) {
-        console.error('❌ Edge function error détaillé:', {
+        console.error('âŒ Edge function error dÃ©taillÃ©:', {
           message: error.message,
           context: error.context,
           status: error.status,
@@ -293,22 +293,22 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
       }
       
       if (data?.error) {
-        console.error('❌ Response error:', data.error);
+        console.error('âŒ Response error:', data.error);
         throw new Error(data.error);
       }
 
-      console.log('✅ Sous-agent créé:', data?.agent);
-      toast.success(`Sous-agent ${subAgentData.name} créé avec succès!`);
+      console.log('âœ… Sous-agent crÃ©Ã©:', data?.agent);
+      toast.success(`Sous-agent ${subAgentData.name} crÃ©Ã© avec succÃ¨s!`);
       
-      // Recharger la liste après un délai
+      // Recharger la liste aprÃ¨s un dÃ©lai
       setTimeout(() => {
         window.location.reload();
       }, 1000);
       
       return data?.agent;
     } catch (error: any) {
-      console.error('Erreur création sous-agent:', error);
-      toast.error(error.message || 'Erreur lors de la création du sous-agent');
+      console.error('Erreur crÃ©ation sous-agent:', error);
+      toast.error(error.message || 'Erreur lors de la crÃ©ation du sous-agent');
       return null;
     }
   };
@@ -325,12 +325,12 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
       if (error) throw error;
 
-      toast.success('Sous-agent mis à jour avec succès');
+      toast.success('Sous-agent mis Ã  jour avec succÃ¨s');
       window.location.reload();
       return true;
     } catch (error: any) {
-      console.error('Erreur mise à jour sous-agent:', error);
-      toast.error(error.message || 'Erreur lors de la mise à jour');
+      console.error('Erreur mise Ã  jour sous-agent:', error);
+      toast.error(error.message || 'Erreur lors de la mise Ã  jour');
       return false;
     }
   };
@@ -344,7 +344,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
       if (error) throw error;
 
-      toast.success('Sous-agent désactivé avec succès');
+      toast.success('Sous-agent dÃ©sactivÃ© avec succÃ¨s');
       window.location.reload();
       return true;
     } catch (error: any) {
@@ -366,7 +366,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
       return;
     }
 
-    // Validation des données
+    // Validation des donnÃ©es
     const validationResult = subAgentSchema.safeParse({
       name: formData.name,
       email: formData.email,
@@ -380,9 +380,9 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
       return;
     }
 
-    // Validation du mot de passe pour la création uniquement
+    // Validation du mot de passe pour la crÃ©ation uniquement
     if (!editingSubAgent && (!formData.password || formData.password.length < 8)) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error('Le mot de passe doit contenir au moins 8 caractÃ¨res');
       return;
     }
 
@@ -394,7 +394,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
         .map(([key]) => key);
 
       if (editingSubAgent) {
-        // Mode édition
+        // Mode Ã©dition
         await updateSubAgent(editingSubAgent.id, {
           name: formData.name.trim(),
           email: formData.email.trim().toLowerCase(),
@@ -403,7 +403,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           commission_rate: formData.commission_rate,
         });
       } else {
-        // Mode création
+        // Mode crÃ©ation
         await createSubAgent({
           name: formData.name,
           email: formData.email,
@@ -414,7 +414,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
         });
       }
 
-      // Réinitialiser le formulaire
+      // RÃ©initialiser le formulaire
       setFormData({
         name: '',
         email: '',
@@ -459,7 +459,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
   const handleSubAgentAction = async (subAgentId: string, action: 'activate' | 'suspend' | 'delete') => {
     if (action === 'delete') {
-      if (!confirm('Êtes-vous sûr de vouloir désactiver ce sous-agent ?')) return;
+      if (!confirm('ÃŠtes-vous sÃ»r de vouloir dÃ©sactiver ce sous-agent ?')) return;
       await deleteSubAgent(subAgentId);
     } else if (action === 'suspend') {
       await toggleSubAgentStatus(subAgentId, false);
@@ -488,7 +488,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
         <CardContent className="py-12 text-center">
           <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">
-            Vous n'avez pas la permission de gérer des sous-agents
+            Vous n'avez pas la permission de gÃ©rer des sous-agents
           </p>
         </CardContent>
       </Card>
@@ -497,12 +497,12 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
+      {/* En-tÃªte */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Gestion des Sous-Agents</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Créez et gérez vos sous-agents
+            CrÃ©ez et gÃ©rez vos sous-agents
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -528,13 +528,13 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Créer un Sous-Agent
+              CrÃ©er un Sous-Agent
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingSubAgent ? 'Modifier le Sous-Agent' : 'Créer un Sous-Agent'}
+                {editingSubAgent ? 'Modifier le Sous-Agent' : 'CrÃ©er un Sous-Agent'}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateSubAgent} className="space-y-4">
@@ -563,7 +563,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Téléphone *</Label>
+                <Label htmlFor="phone">TÃ©lÃ©phone *</Label>
                 <Input
                   id="phone"
                   required
@@ -575,14 +575,14 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
               {!editingSubAgent && (
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
+                  <Label htmlFor="password">Mot de passe * (min. 8 caractÃ¨res)</Label>
                   <Input
                     id="password"
                     type="password"
                     required
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="••••••••"
+                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   />
                 </div>
               )}
@@ -599,7 +599,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
                 />
               </div>
 
-              {/* Sélecteur de permissions avec toutes les catégories */}
+              {/* SÃ©lecteur de permissions avec toutes les catÃ©gories */}
               <AgentPermissionsSelector
                 selectedPermissions={formData.permissions}
                 onChange={(newPerms) => setFormData({ ...formData, permissions: newPerms })}
@@ -618,7 +618,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
                   {isSubmitting ? (
                     <>
                       <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      {editingSubAgent ? 'Modification...' : 'Création...'}
+                      {editingSubAgent ? 'Modification...' : 'CrÃ©ation...'}
                     </>
                   ) : editingSubAgent ? (
                     <>
@@ -628,7 +628,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
                   ) : (
                     <>
                       <Plus className="w-4 h-4 mr-2" />
-                      Créer
+                      CrÃ©er
                     </>
                   )}
                 </Button>
@@ -660,10 +660,10 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Sous-Agents Actifs
             </CardTitle>
-            <UserCheck className="h-4 w-4 text-green-500" />
+            <UserCheck className="h-4 w-4 text-primary-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.activeSubAgents}</div>
+            <div className="text-2xl font-bold text-primary-orange-600">{stats.activeSubAgents}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {stats.inactiveSubAgents} inactifs
             </p>
@@ -727,7 +727,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
                     <span className="font-medium">{subAgent.commission_rate}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Utilisateurs créés:</span>
+                    <span className="text-muted-foreground">Utilisateurs crÃ©Ã©s:</span>
                     <span className="font-medium">{subAgent.total_users_created || 0}</span>
                   </div>
                 </div>
@@ -782,7 +782,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
           <CardContent className="py-12 text-center">
             <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              {searchTerm ? 'Aucun sous-agent trouvé' : 'Aucun sous-agent pour le moment'}
+              {searchTerm ? 'Aucun sous-agent trouvÃ©' : 'Aucun sous-agent pour le moment'}
             </p>
           </CardContent>
         </Card>

@@ -1,6 +1,6 @@
 /**
  * PROGRAMME BUG BOUNTY
- * Gestion du programme de chasse aux vulnérabilités - Connecté à Supabase
+ * Gestion du programme de chasse aux vulnÃ©rabilitÃ©s - ConnectÃ© Ã  Supabase
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -49,7 +49,7 @@ export function BugBountyProgram() {
     try {
       setLoading(true);
 
-      // Charger les rapports récents
+      // Charger les rapports rÃ©cents
       const { data: reportsData, error: reportsError } = await supabase
         .from('bug_reports')
         .select('id, severity, title, reporter_name, reward_amount, status, created_at')
@@ -102,7 +102,7 @@ export function BugBountyProgram() {
 
     } catch (error) {
       console.error('Erreur Bug Bounty:', error);
-      toast.error('Erreur lors du chargement des données Bug Bounty');
+      toast.error('Erreur lors du chargement des donnÃ©es Bug Bounty');
     } finally {
       setLoading(false);
     }
@@ -124,10 +124,10 @@ export function BugBountyProgram() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'resolved': return <Badge className="bg-green-500">Résolu</Badge>;
+      case 'resolved': return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">RÃ©solu</Badge>;
       case 'in_review': return <Badge className="bg-blue-500">En revue</Badge>;
-      case 'confirmed': return <Badge className="bg-purple-500">Confirmé</Badge>;
-      case 'rejected': return <Badge variant="destructive">Rejeté</Badge>;
+      case 'confirmed': return <Badge className="bg-purple-500">ConfirmÃ©</Badge>;
+      case 'rejected': return <Badge variant="destructive">RejetÃ©</Badge>;
       default: return <Badge variant="outline">En attente</Badge>;
     }
   };
@@ -143,7 +143,7 @@ export function BugBountyProgram() {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            Chargement des données Bug Bounty...
+            Chargement des donnÃ©es Bug Bounty...
           </div>
         </CardContent>
       </Card>
@@ -160,7 +160,7 @@ export function BugBountyProgram() {
               Programme Bug Bounty
             </CardTitle>
             <CardDescription>
-              Communauté de chercheurs en sécurité
+              CommunautÃ© de chercheurs en sÃ©curitÃ©
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -192,14 +192,14 @@ export function BugBountyProgram() {
             <div className="text-xs text-muted-foreground">Rapports totaux</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <TrendingUp className="w-8 h-8 text-green-500 mb-2" />
+            <TrendingUp className="w-8 h-8 text-primary-orange-500 mb-2" />
             <div className="text-2xl font-bold">{stats.resolvedVulnerabilities}</div>
-            <div className="text-xs text-muted-foreground">Vulnérabilités corrigées</div>
+            <div className="text-xs text-muted-foreground">VulnÃ©rabilitÃ©s corrigÃ©es</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <DollarSign className="w-8 h-8 text-yellow-500 mb-2" />
             <div className="text-2xl font-bold">{stats.totalRewards.toLocaleString()} GNF</div>
-            <div className="text-xs text-muted-foreground">Récompenses versées</div>
+            <div className="text-xs text-muted-foreground">RÃ©compenses versÃ©es</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <Users className="w-8 h-8 text-blue-500 mb-2" />
@@ -218,9 +218,9 @@ export function BugBountyProgram() {
           </div>
         )}
 
-        {/* Rapports récents */}
+        {/* Rapports rÃ©cents */}
         <div className="space-y-2">
-          <h4 className="font-semibold text-sm">Rapports récents</h4>
+          <h4 className="font-semibold text-sm">Rapports rÃ©cents</h4>
           {reports.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Bug className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -239,12 +239,12 @@ export function BugBountyProgram() {
                     </div>
                     <h5 className="font-medium text-sm truncate">{report.title}</h5>
                     <p className="text-xs text-muted-foreground">
-                      Par {report.reporter_name} • {new Date(report.created_at).toLocaleDateString('fr-FR')}
+                      Par {report.reporter_name} â€¢ {new Date(report.created_at).toLocaleDateString('fr-FR')}
                     </p>
                   </div>
                   {report.reward_amount && report.reward_amount > 0 && (
                     <div className="text-right">
-                      <div className="font-bold text-green-600">{report.reward_amount.toLocaleString()} GNF</div>
+                      <div className="font-bold text-primary-orange-600">{report.reward_amount.toLocaleString()} GNF</div>
                     </div>
                   )}
                 </div>

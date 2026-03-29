@@ -13,17 +13,17 @@ import { CheckCircle2, Clock, AlertTriangle, Plus, ClipboardList, FileText, Sun,
 import type { BTPProject, BTPTask, BTPDailyReport, BTPProfessional } from '@/hooks/useBTPData';
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  'planifie': { label: 'Planifié', color: 'bg-muted text-muted-foreground' },
+  'planifie': { label: 'PlanifiÃ©', color: 'bg-muted text-muted-foreground' },
   'en_cours': { label: 'En cours', color: 'bg-blue-100 text-blue-800' },
   'en_pause': { label: 'En pause', color: 'bg-amber-100 text-amber-800' },
-  'termine': { label: 'Terminé', color: 'bg-green-100 text-green-800' },
-  'annule': { label: 'Annulé', color: 'bg-red-100 text-red-800' },
+  'termine': { label: 'TerminÃ©', color: 'bg-primary-orange-100 text-primary-orange-800' },
+  'annule': { label: 'AnnulÃ©', color: 'bg-red-100 text-red-800' },
 };
 
 const TASK_STATUS_MAP: Record<string, { label: string; icon: any }> = {
-  'a_faire': { label: 'À faire', icon: Clock },
+  'a_faire': { label: 'Ã€ faire', icon: Clock },
   'en_cours': { label: 'En cours', icon: AlertTriangle },
-  'termine': { label: 'Terminé', icon: CheckCircle2 },
+  'termine': { label: 'TerminÃ©', icon: CheckCircle2 },
 };
 
 interface Props {
@@ -88,7 +88,7 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
             <DialogTitle className="text-xl">{project.title}</DialogTitle>
             <Badge className={status.color}>{status.label}</Badge>
           </div>
-          <p className="text-sm text-muted-foreground">{project.city} {project.location && `• ${project.location}`}</p>
+          <p className="text-sm text-muted-foreground">{project.city} {project.location && `â€¢ ${project.location}`}</p>
         </DialogHeader>
 
         {/* Progress overview */}
@@ -105,11 +105,11 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
             </div>
             <div className="bg-muted/50 rounded-lg p-2">
               <p className="font-bold">{project.estimated_duration_days}j</p>
-              <p className="text-muted-foreground text-xs">Durée estimée</p>
+              <p className="text-muted-foreground text-xs">DurÃ©e estimÃ©e</p>
             </div>
             <div className="bg-muted/50 rounded-lg p-2">
               <p className="font-bold">{tasks.length}</p>
-              <p className="text-muted-foreground text-xs">Tâches</p>
+              <p className="text-muted-foreground text-xs">TÃ¢ches</p>
             </div>
           </div>
         </div>
@@ -126,19 +126,19 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
 
         <Tabs defaultValue="tasks">
           <TabsList className="w-full">
-            <TabsTrigger value="tasks" className="flex-1"><ClipboardList className="h-4 w-4 mr-1" /> Tâches ({tasks.length})</TabsTrigger>
+            <TabsTrigger value="tasks" className="flex-1"><ClipboardList className="h-4 w-4 mr-1" /> TÃ¢ches ({tasks.length})</TabsTrigger>
             <TabsTrigger value="reports" className="flex-1"><FileText className="h-4 w-4 mr-1" /> Rapports ({reports.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tasks" className="space-y-3">
             <Button size="sm" onClick={() => setShowAddTask(!showAddTask)}>
-              <Plus className="h-4 w-4 mr-1" /> Ajouter une tâche
+              <Plus className="h-4 w-4 mr-1" /> Ajouter une tÃ¢che
             </Button>
 
             {showAddTask && (
               <Card>
                 <CardContent className="pt-4 space-y-3">
-                  <Input placeholder="Titre de la tâche *" value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} />
+                  <Input placeholder="Titre de la tÃ¢che *" value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} />
                   <div className="grid grid-cols-2 gap-3">
                     <Select value={taskForm.priority} onValueChange={v => setTaskForm(p => ({ ...p, priority: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
@@ -149,7 +149,7 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
                       </SelectContent>
                     </Select>
                     <Select value={taskForm.assigned_to} onValueChange={v => setTaskForm(p => ({ ...p, assigned_to: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Assigner à..." /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Assigner Ã ..." /></SelectTrigger>
                       <SelectContent>
                         {professionals.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                       </SelectContent>
@@ -165,7 +165,7 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
             )}
 
             {tasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Aucune tâche. Ajoutez-en une !</p>
+              <p className="text-sm text-muted-foreground text-center py-6">Aucune tÃ¢che. Ajoutez-en une !</p>
             ) : (
               <div className="space-y-2">
                 {tasks.map(task => {
@@ -174,10 +174,10 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
                   const assigned = professionals.find(p => p.id === task.assigned_to);
                   return (
                     <div key={task.id} className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                      <Icon className={`h-5 w-5 shrink-0 ${task.status === 'termine' ? 'text-green-500' : task.status === 'en_cours' ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                      <Icon className={`h-5 w-5 shrink-0 ${task.status === 'termine' ? 'text-primary-orange-500' : task.status === 'en_cours' ? 'text-blue-500' : 'text-muted-foreground'}`} />
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium ${task.status === 'termine' ? 'line-through text-muted-foreground' : ''}`}>{task.title}</p>
-                        {assigned && <p className="text-xs text-muted-foreground">👷 {assigned.name}</p>}
+                        {assigned && <p className="text-xs text-muted-foreground">ðŸ‘· {assigned.name}</p>}
                       </div>
                       <Badge variant="outline" className="text-xs">{task.priority}</Badge>
                     </div>
@@ -197,17 +197,17 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
                 <CardContent className="pt-4 space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <Select value={reportForm.weather} onValueChange={v => setReportForm(p => ({ ...p, weather: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Météo" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="MÃ©tÃ©o" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="ensoleille">☀️ Ensoleillé</SelectItem>
-                        <SelectItem value="nuageux">☁️ Nuageux</SelectItem>
-                        <SelectItem value="pluie">🌧️ Pluie</SelectItem>
+                        <SelectItem value="ensoleille">â˜€ï¸ EnsoleillÃ©</SelectItem>
+                        <SelectItem value="nuageux">â˜ï¸ Nuageux</SelectItem>
+                        <SelectItem value="pluie">ðŸŒ§ï¸ Pluie</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input type="number" placeholder="Ouvriers présents" value={reportForm.workers_present} onChange={e => setReportForm(p => ({ ...p, workers_present: e.target.value }))} />
+                    <Input type="number" placeholder="Ouvriers prÃ©sents" value={reportForm.workers_present} onChange={e => setReportForm(p => ({ ...p, workers_present: e.target.value }))} />
                   </div>
-                  <Textarea placeholder="Résumé des travaux du jour *" rows={3} value={reportForm.summary} onChange={e => setReportForm(p => ({ ...p, summary: e.target.value }))} />
-                  <Textarea placeholder="Problèmes rencontrés (optionnel)" rows={2} value={reportForm.issues} onChange={e => setReportForm(p => ({ ...p, issues: e.target.value }))} />
+                  <Textarea placeholder="RÃ©sumÃ© des travaux du jour *" rows={3} value={reportForm.summary} onChange={e => setReportForm(p => ({ ...p, summary: e.target.value }))} />
+                  <Textarea placeholder="ProblÃ¨mes rencontrÃ©s (optionnel)" rows={2} value={reportForm.issues} onChange={e => setReportForm(p => ({ ...p, issues: e.target.value }))} />
                   <div className="flex justify-end gap-2">
                     <Button size="sm" variant="outline" onClick={() => setShowAddReport(false)}>Annuler</Button>
                     <Button size="sm" onClick={handleAddReport} disabled={!reportForm.summary}>Enregistrer</Button>
@@ -229,11 +229,11 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
                           {report.weather === 'ensoleille' && <Sun className="h-4 w-4 text-amber-500" />}
                           {report.weather === 'nuageux' && <Cloud className="h-4 w-4" />}
                           {report.weather === 'pluie' && <CloudRain className="h-4 w-4 text-blue-500" />}
-                          <span>👷 {report.workers_present}</span>
+                          <span>ðŸ‘· {report.workers_present}</span>
                         </div>
                       </div>
                       <p className="text-sm">{report.summary}</p>
-                      {report.issues && <p className="text-sm text-destructive mt-1">⚠️ {report.issues}</p>}
+                      {report.issues && <p className="text-sm text-destructive mt-1">âš ï¸ {report.issues}</p>}
                     </CardContent>
                   </Card>
                 ))}

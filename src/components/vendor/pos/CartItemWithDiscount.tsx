@@ -1,7 +1,7 @@
 /**
  * CartItemWithDiscount - Composant panier avec remise par article
  * Permet d'appliquer des remises en montant ou pourcentage par article
- * Affiche une alerte si le prix final < coût d'achat
+ * Affiche une alerte si le prix final < coÃ»t d'achat
  */
 
 import { useState } from 'react';
@@ -30,7 +30,7 @@ import { toast } from 'sonner';
 export interface CartItemDiscount {
   type: 'percent' | 'amount' | null;
   value: number;
-  amount: number; // Montant de la remise calculé
+  amount: number; // Montant de la remise calculÃ©
 }
 
 export interface CartItemWithDiscountData {
@@ -82,7 +82,7 @@ export function CartItemWithDiscount({
     }
 
     if (finalPrice < 0) {
-      toast.error('La remise ne peut pas être supérieure au prix');
+      toast.error('La remise ne peut pas Ãªtre supÃ©rieure au prix');
       return;
     }
 
@@ -93,7 +93,7 @@ export function CartItemWithDiscount({
     });
 
     setIsDiscountDialogOpen(false);
-    toast.success('Remise appliquée');
+    toast.success('Remise appliquÃ©e');
   };
 
   const handleRemoveDiscount = () => {
@@ -103,7 +103,7 @@ export function CartItemWithDiscount({
       amount: 0,
     });
     setDiscountValue(0);
-    toast.info('Remise supprimée');
+    toast.info('Remise supprimÃ©e');
   };
 
   return (
@@ -124,8 +124,8 @@ export function CartItemWithDiscount({
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{item.name}</p>
               <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                <span>Qté: {item.quantity}</span>
-                <span>×</span>
+                <span>QtÃ©: {item.quantity}</span>
+                <span>Ã—</span>
                 <span>{formatCurrency(item.unitPrice)}</span>
               </div>
 
@@ -148,7 +148,7 @@ export function CartItemWithDiscount({
                   <span className="text-xs text-muted-foreground line-through">
                     {formatCurrency(item.unitPrice)}
                   </span>
-                  <span className="text-xs font-medium text-green-600">
+                  <span className="text-xs font-medium text-primary-orange-600">
                     {formatCurrency(item.finalUnitPrice)}
                   </span>
                 </div>
@@ -161,7 +161,7 @@ export function CartItemWithDiscount({
                     Perte: {formatCurrency(Math.abs(item.profitAfterDiscount))}
                   </span>
                 ) : (
-                  <span className="text-green-600">
+                  <span className="text-primary-orange-600">
                     Profit: +{formatCurrency(item.profitAfterDiscount)}
                   </span>
                 )}
@@ -243,7 +243,7 @@ export function CartItemWithDiscount({
               />
             </div>
 
-            {/* Prévisualisation */}
+            {/* PrÃ©visualisation */}
             {discountValue > 0 && (
               <Card className="bg-muted/50">
                 <CardContent className="p-3 text-sm space-y-1">
@@ -282,7 +282,7 @@ export function CartItemWithDiscount({
                         <div className="flex items-center gap-2 mt-2 p-2 bg-destructive/10 rounded text-destructive">
                           <AlertTriangle className="h-4 w-4" />
                           <span className="text-xs">
-                            Attention: Prix inférieur au coût d'achat (
+                            Attention: Prix infÃ©rieur au coÃ»t d'achat (
                             {formatCurrency(item.costPrice)})
                           </span>
                         </div>
@@ -313,7 +313,7 @@ export function CartItemWithDiscount({
 }
 
 /**
- * Calcule les données d'un article avec remise
+ * Calcule les donnÃ©es d'un article avec remise
  */
 export function calculateCartItemWithDiscount(
   id: string,

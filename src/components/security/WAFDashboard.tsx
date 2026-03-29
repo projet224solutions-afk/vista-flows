@@ -1,6 +1,6 @@
 /**
  * WAF - WEB APPLICATION FIREWALL
- * Protection applicative avec règles personnalisées - Connecté à Supabase
+ * Protection applicative avec rÃ¨gles personnalisÃ©es - ConnectÃ© Ã  Supabase
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -54,15 +54,15 @@ export function WAFDashboard() {
     try {
       setLoading(true);
 
-      // Charger les règles WAF
+      // Charger les rÃ¨gles WAF
       const { data: rulesData, error: rulesError } = await supabase
         .from('waf_rules')
         .select('*')
         .order('priority', { ascending: true });
 
       if (rulesError) {
-        console.error('Erreur chargement règles WAF:', rulesError);
-        // Utiliser des données par défaut si erreur
+        console.error('Erreur chargement rÃ¨gles WAF:', rulesError);
+        // Utiliser des donnÃ©es par dÃ©faut si erreur
         setRules([]);
       } else {
         setRules(rulesData || []);
@@ -95,7 +95,7 @@ export function WAFDashboard() {
           activeRules: activeRulesCount
         });
       } else {
-        // Stats par défaut basées sur les règles
+        // Stats par dÃ©faut basÃ©es sur les rÃ¨gles
         setStats({
           totalRequests: totalBlocked * 10, // Estimation
           blockedRequests: totalBlocked,
@@ -109,7 +109,7 @@ export function WAFDashboard() {
 
     } catch (error) {
       console.error('Erreur WAF:', error);
-      toast.error('Erreur lors du chargement des données WAF');
+      toast.error('Erreur lors du chargement des donnÃ©es WAF');
     } finally {
       setLoading(false);
     }
@@ -121,12 +121,12 @@ export function WAFDashboard() {
 
   const getRuleTypeIcon = (type: string) => {
     switch (type) {
-      case 'sql_injection': return '🛡️';
-      case 'xss': return '🔒';
-      case 'ddos': return '⚡';
-      case 'rate_limit': return '⏱️';
-      case 'bot_protection': return '🤖';
-      default: return '🔧';
+      case 'sql_injection': return 'ðŸ›¡ï¸';
+      case 'xss': return 'ðŸ”’';
+      case 'ddos': return 'âš¡';
+      case 'rate_limit': return 'â±ï¸';
+      case 'bot_protection': return 'ðŸ¤–';
+      default: return 'ðŸ”§';
     }
   };
 
@@ -138,11 +138,11 @@ export function WAFDashboard() {
       .eq('id', ruleId);
 
     if (error) {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error('Erreur lors de la mise Ã  jour');
       return;
     }
 
-    toast.success(`Règle ${newStatus === 'active' ? 'activée' : 'désactivée'}`);
+    toast.success(`RÃ¨gle ${newStatus === 'active' ? 'activÃ©e' : 'dÃ©sactivÃ©e'}`);
     loadWAFData();
   };
 
@@ -157,7 +157,7 @@ export function WAFDashboard() {
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
-            Chargement des données WAF...
+            Chargement des donnÃ©es WAF...
           </div>
         </CardContent>
       </Card>
@@ -174,7 +174,7 @@ export function WAFDashboard() {
               Web Application Firewall (WAF)
             </CardTitle>
             <CardDescription>
-              Protection applicative multicouche avec règles personnalisées
+              Protection applicative multicouche avec rÃ¨gles personnalisÃ©es
             </CardDescription>
           </div>
           <Button
@@ -189,13 +189,13 @@ export function WAFDashboard() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Statut WAF */}
-        <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+        <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
           <div className="flex items-center gap-2 mb-2">
-            <Shield className="w-5 h-5 text-green-600" />
-            <span className="font-semibold">WAF actif et protégé</span>
+            <Shield className="w-5 h-5 text-primary-orange-600" />
+            <span className="font-semibold">WAF actif et protÃ©gÃ©</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            {stats.activeRules} règles actives • Mise à jour automatique activée • Protection temps réel
+            {stats.activeRules} rÃ¨gles actives â€¢ Mise Ã  jour automatique activÃ©e â€¢ Protection temps rÃ©el
           </p>
         </div>
 
@@ -204,39 +204,39 @@ export function WAFDashboard() {
           <div className="p-4 bg-muted rounded-lg">
             <Activity className="w-8 h-8 text-blue-500 mb-2" />
             <div className="text-2xl font-bold">{stats.totalRequests.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">Requêtes analysées</div>
+            <div className="text-xs text-muted-foreground">RequÃªtes analysÃ©es</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <Ban className="w-8 h-8 text-red-500 mb-2" />
             <div className="text-2xl font-bold">{stats.blockedRequests.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">Requêtes bloquées</div>
+            <div className="text-xs text-muted-foreground">RequÃªtes bloquÃ©es</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <TrendingUp className="w-8 h-8 text-green-500 mb-2" />
+            <TrendingUp className="w-8 h-8 text-primary-orange-500 mb-2" />
             <div className="text-2xl font-bold">{stats.legitTraffic}%</div>
-            <div className="text-xs text-muted-foreground">Trafic légitime</div>
+            <div className="text-xs text-muted-foreground">Trafic lÃ©gitime</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <Shield className="w-8 h-8 text-purple-500 mb-2" />
             <div className="text-2xl font-bold">{stats.activeRules}</div>
-            <div className="text-xs text-muted-foreground">Règles actives</div>
+            <div className="text-xs text-muted-foreground">RÃ¨gles actives</div>
           </div>
         </ResponsiveGrid>
 
-        {/* Règles WAF */}
+        {/* RÃ¨gles WAF */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-sm">Règles de protection actives</h4>
+            <h4 className="font-semibold text-sm">RÃ¨gles de protection actives</h4>
             <Button variant="outline" size="sm">
               <Plus className="w-4 h-4 mr-1" />
-              Ajouter règle
+              Ajouter rÃ¨gle
             </Button>
           </div>
           
           {rules.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Aucune règle WAF configurée</p>
+              <p>Aucune rÃ¨gle WAF configurÃ©e</p>
             </div>
           ) : (
             rules.map((rule) => (
@@ -247,13 +247,13 @@ export function WAFDashboard() {
                     <div>
                       <h5 className="font-medium text-sm">{rule.name}</h5>
                       <p className="text-xs text-muted-foreground">
-                        {(rule.blocked_requests || 0).toLocaleString()} menaces bloquées
-                        {rule.description && ` • ${rule.description}`}
+                        {(rule.blocked_requests || 0).toLocaleString()} menaces bloquÃ©es
+                        {rule.description && ` â€¢ ${rule.description}`}
                       </p>
                     </div>
                   </div>
                   <Badge 
-                    className={`cursor-pointer ${rule.status === 'active' ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500 hover:bg-gray-600'}`}
+                    className={`cursor-pointer ${rule.status === 'active' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600' : 'bg-gray-500 hover:bg-gray-600'}`}
                     onClick={() => toggleRuleStatus(rule.id, rule.status)}
                   >
                     {rule.status}
@@ -261,7 +261,7 @@ export function WAFDashboard() {
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span>Efficacité</span>
+                    <span>EfficacitÃ©</span>
                     <span className="font-medium">
                       {stats.blockedRequests > 0 
                         ? ((rule.blocked_requests / stats.blockedRequests) * 100).toFixed(1) 
@@ -285,7 +285,7 @@ export function WAFDashboard() {
             <div>
               <h5 className="font-semibold text-sm mb-1">Protection Anti-DDoS Active</h5>
               <p className="text-sm text-muted-foreground">
-                Cloudflare/AWS Shield integration recommandée pour une protection DDoS Layer 3/4
+                Cloudflare/AWS Shield integration recommandÃ©e pour une protection DDoS Layer 3/4
               </p>
               <Button variant="outline" size="sm" className="mt-2">
                 Configurer CDN

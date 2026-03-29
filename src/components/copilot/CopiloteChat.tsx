@@ -516,7 +516,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                   <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background"></div>
+              <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full border-2 border-background"></div>
             </div>
             <div className="min-w-0 flex-1">
               <CardTitle className="text-sm sm:text-lg flex items-center gap-1 flex-wrap">

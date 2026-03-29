@@ -1,5 +1,5 @@
 /**
- * 📱 FORMULAIRE DE PAIEMENT CHAPCHAPPAY - 224SOLUTIONS
+ * ðŸ“± FORMULAIRE DE PAIEMENT CHAPCHAPPAY - 224SOLUTIONS
  * Composant de paiement Mobile Money via ChapChapPay
  */
 
@@ -38,21 +38,21 @@ const PAYMENT_METHODS = [
   { 
     id: 'orange_money' as PaymentMethod, 
     name: 'Orange Money', 
-    icon: '🍊',
+    icon: 'ðŸŠ',
     color: 'border-orange-500 bg-orange-50 dark:bg-orange-950/30',
     activeColor: 'ring-2 ring-orange-500 border-orange-500'
   },
   { 
     id: 'mtn_momo' as PaymentMethod, 
     name: 'MTN Mobile Money', 
-    icon: '💛',
+    icon: 'ðŸ’›',
     color: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
     activeColor: 'ring-2 ring-yellow-500 border-yellow-500'
   },
   { 
     id: 'paycard' as PaymentMethod, 
     name: 'PayCard', 
-    icon: '💳',
+    icon: 'ðŸ’³',
     color: 'border-blue-500 bg-blue-50 dark:bg-blue-950/30',
     activeColor: 'ring-2 ring-blue-500 border-blue-500'
   },
@@ -94,14 +94,14 @@ export function ChapChapPayForm({
     e.preventDefault();
 
     if (!validatePhone(phoneNumber)) {
-      toast.error('Numéro de téléphone invalide');
+      toast.error('NumÃ©ro de tÃ©lÃ©phone invalide');
       return;
     }
 
     setStatus({ status: 'processing', message: 'Initialisation du paiement...' });
 
     try {
-      // Formater le numéro de téléphone pour ChapChapPay (format 224XXXXXXXXX)
+      // Formater le numÃ©ro de tÃ©lÃ©phone pour ChapChapPay (format 224XXXXXXXXX)
       const digits = phoneNumber.replace(/\s/g, '');
       const customerPhone = digits.length === 9 ? `224${digits}` : digits;
 
@@ -122,11 +122,11 @@ export function ChapChapPayForm({
       if (data?.success) {
         setStatus({
           status: 'success',
-          message: 'Paiement initié ! Validez sur votre téléphone.',
+          message: 'Paiement initiÃ© ! Validez sur votre tÃ©lÃ©phone.',
           transactionId: data.transactionId,
         });
         
-        toast.success('Paiement initié avec succès');
+        toast.success('Paiement initiÃ© avec succÃ¨s');
         onSuccess?.(data.transactionId);
       } else {
         throw new Error(data?.error || 'Erreur inconnue');
@@ -149,29 +149,29 @@ export function ChapChapPayForm({
       <Card className={cn('max-w-md mx-auto', className)}>
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <div className="w-16 h-16 bg-primary-orange-100 dark:bg-primary-orange-900/30 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-8 h-8 text-primary-orange-600 dark:text-primary-orange-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-green-600 dark:text-green-400">
-                Paiement initié !
+              <h3 className="text-lg font-semibold text-primary-orange-600 dark:text-primary-orange-400">
+                Paiement initiÃ© !
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Veuillez valider le paiement sur votre téléphone
+                Veuillez valider le paiement sur votre tÃ©lÃ©phone
               </p>
             </div>
             <div className="bg-muted rounded-lg p-4 space-y-2">
               <p className="text-sm"><strong>Montant :</strong> {formatAmount(amount)}</p>
-              <p className="text-sm"><strong>Méthode :</strong> {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}</p>
+              <p className="text-sm"><strong>MÃ©thode :</strong> {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}</p>
               {status.transactionId && (
                 <p className="text-xs text-muted-foreground font-mono">
-                  Réf: {status.transactionId.slice(0, 8)}...
+                  RÃ©f: {status.transactionId.slice(0, 8)}...
                 </p>
               )}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <AlertCircle className="w-4 h-4" />
-              <span>Vous recevrez une notification une fois le paiement confirmé</span>
+              <span>Vous recevrez une notification une fois le paiement confirmÃ©</span>
             </div>
           </div>
         </CardContent>
@@ -189,7 +189,7 @@ export function ChapChapPayForm({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">
-                Échec du paiement
+                Ã‰chec du paiement
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
                 {status.message}
@@ -200,7 +200,7 @@ export function ChapChapPayForm({
                 variant="outline"
                 onClick={() => setStatus({ status: 'idle' })}
               >
-                Réessayer
+                RÃ©essayer
               </Button>
               {onCancel && (
                 <Button
@@ -233,7 +233,7 @@ export function ChapChapPayForm({
         <CardContent className="space-y-6">
           {/* Montant */}
           <div className="bg-primary/10 rounded-lg p-4 text-center">
-            <p className="text-sm text-muted-foreground">Montant à payer</p>
+            <p className="text-sm text-muted-foreground">Montant Ã  payer</p>
             <p className="text-3xl font-bold text-primary mt-1">
               {formatAmount(amount)}
             </p>
@@ -271,9 +271,9 @@ export function ChapChapPayForm({
             </RadioGroup>
           </div>
 
-          {/* Numéro de téléphone */}
+          {/* NumÃ©ro de tÃ©lÃ©phone */}
           <div className="space-y-2">
-            <Label htmlFor="phone">Numéro de téléphone</Label>
+            <Label htmlFor="phone">NumÃ©ro de tÃ©lÃ©phone</Label>
             <Input
               id="phone"
               type="tel"
@@ -284,7 +284,7 @@ export function ChapChapPayForm({
               className="text-lg tracking-wider"
             />
             <p className="text-xs text-muted-foreground">
-              Le numéro associé à votre compte {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}
+              Le numÃ©ro associÃ© Ã  votre compte {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}
             </p>
           </div>
 
@@ -335,7 +335,7 @@ export function ChapChapPayForm({
           )}
           
           <p className="text-xs text-muted-foreground text-center">
-            🔒 Paiement sécurisé via ChapChapPay
+            ðŸ”’ Paiement sÃ©curisÃ© via ChapChapPay
           </p>
         </CardFooter>
       </form>
@@ -343,5 +343,5 @@ export function ChapChapPayForm({
   );
 }
 
-// Export pour rétrocompatibilité avec les imports existants
+// Export pour rÃ©trocompatibilitÃ© avec les imports existants
 export { ChapChapPayForm as MobileMoneyPaymentForm };

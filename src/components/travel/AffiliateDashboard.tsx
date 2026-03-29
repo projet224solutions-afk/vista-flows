@@ -1,5 +1,5 @@
 /**
- * Dashboard Affilié Voyage
+ * Dashboard AffiliÃ© Voyage
  * Affiche les stats, commissions et liens
  */
 
@@ -58,7 +58,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
 
   const loadAffiliateData = async () => {
     try {
-      // Charger les données affilié
+      // Charger les donnÃ©es affiliÃ©
       const { data: affiliateData, error: affiliateError } = await (supabase as any)
         .from('travel_affiliates')
         .select('*')
@@ -90,7 +90,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
     if (!affiliate) return;
     const link = `${window.location.origin}/travel?ref=${affiliate.affiliate_code}`;
     navigator.clipboard.writeText(link);
-    toast.success('Lien copié!');
+    toast.success('Lien copiÃ©!');
   };
 
   const fc = useFormatCurrency();
@@ -99,7 +99,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-green-500">Approuvé</Badge>;
+        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">ApprouvÃ©</Badge>;
       case 'pending':
         return <Badge variant="secondary">En attente</Badge>;
       case 'suspended':
@@ -128,7 +128,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-bold text-foreground">Dashboard Affilié</h2>
+              <h2 className="font-bold text-foreground">Dashboard AffiliÃ©</h2>
               <p className="text-sm text-muted-foreground">
                 Code: <span className="font-mono font-bold">{affiliate.affiliate_code}</span>
               </p>
@@ -158,11 +158,11 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-primary-orange-500" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Total gagné</p>
+                <p className="text-xs text-muted-foreground">Total gagnÃ©</p>
                 <p className="font-bold text-foreground">
                   {formatPrice(affiliate.total_earnings)}
                 </p>
@@ -194,7 +194,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
                 <Users className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Référrals</p>
+                <p className="text-xs text-muted-foreground">RÃ©fÃ©rrals</p>
                 <p className="font-bold text-foreground">{affiliate.total_referrals}</p>
               </div>
             </div>
@@ -208,7 +208,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
                 <BarChart3 className="w-5 h-5 text-purple-500" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Réservations</p>
+                <p className="text-xs text-muted-foreground">RÃ©servations</p>
                 <p className="font-bold text-foreground">{affiliate.total_bookings}</p>
               </div>
             </div>
@@ -225,17 +225,17 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
           </div>
           <Progress value={affiliate.commission_rate * 10} className="h-2" />
           <p className="text-xs text-muted-foreground mt-2">
-            Augmentez vos ventes pour débloquer des taux plus élevés
+            Augmentez vos ventes pour dÃ©bloquer des taux plus Ã©levÃ©s
           </p>
         </CardContent>
       </Card>
 
-      {/* Dernières commissions */}
+      {/* DerniÃ¨res commissions */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            Dernières commissions
+            DerniÃ¨res commissions
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
@@ -252,7 +252,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
                 >
                   <div className="flex items-center gap-2">
                     {commission.status === 'paid' ? (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-primary-orange-500" />
                     ) : commission.status === 'approved' ? (
                       <Clock className="w-4 h-4 text-yellow-500" />
                     ) : (
@@ -274,8 +274,8 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
                     }
                     className="text-xs"
                   >
-                    {commission.status === 'paid' ? 'Payé' : 
-                     commission.status === 'approved' ? 'Approuvé' : 'En attente'}
+                    {commission.status === 'paid' ? 'PayÃ©' : 
+                     commission.status === 'approved' ? 'ApprouvÃ©' : 'En attente'}
                   </Badge>
                 </div>
               ))}

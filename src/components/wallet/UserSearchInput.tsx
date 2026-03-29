@@ -306,12 +306,12 @@ export const UserSearchInput = ({
 
       {/* Résultat de la recherche */}
       {userInfo && (
-        <div className="mt-2 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-            <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+        <div className="mt-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950/20 border border-primary-orange-200 dark:border-primary-orange-800 rounded-lg flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary-orange-100 dark:bg-primary-orange-900 flex items-center justify-center">
+            <Check className="w-4 h-4 text-primary-orange-600 dark:text-primary-orange-400" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-green-900 dark:text-green-100">
+            <p className="text-sm font-medium text-primary-blue-900 dark:text-primary-orange-100">
               {getUserDisplayName(userInfo)}
             </p>
             <div className="flex items-center gap-2 mt-1">

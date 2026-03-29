@@ -1300,9 +1300,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
   const getTransactionColor = (tx: Transaction) => {
     if (tx.sender_id === effectiveUserId && tx.receiver_id === effectiveUserId) {
-      return tx.method === 'deposit' ? 'text-green-600' : 'text-orange-600';
+      return tx.method === 'deposit' ? 'text-primary-orange-600' : 'text-orange-600';
     }
-    return tx.sender_id === effectiveUserId ? 'text-red-600' : 'text-green-600';
+    return tx.sender_id === effectiveUserId ? 'text-red-600' : 'text-primary-orange-600';
   };
 
   if (loading) {
@@ -1389,7 +1389,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="flex flex-col h-16 sm:h-20 gap-1 sm:gap-2 px-1 sm:px-4">
-                <ArrowDownToLine className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                <ArrowDownToLine className="w-4 h-4 sm:w-5 sm:h-5 text-primary-orange-600" />
                 <span className="text-[10px] sm:text-xs">Dépôt</span>
               </Button>
             </DialogTrigger>
@@ -1500,7 +1500,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   <Button 
                     onClick={handleDeposit} 
                     disabled={processing || !depositAmount || !mobileMoneyPhone || mobileMoneyPhone.length !== 9}
-                    className="w-full bg-green-600 hover:bg-green-700"
+                    className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-orange-600 hover:to-primary-blue-600"
                   >
                     {processing ? 'Traitement...' : `Recharger ${depositAmount ? parseFloat(depositAmount).toLocaleString() : '0'} GNF`}
                   </Button>
@@ -1920,7 +1920,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       <span className="text-sm font-medium">📉 Total débité de votre compte</span>
                       <span className="text-xl font-bold text-destructive">{formatWalletBalance(transferPreview?.total_debit || 0)}</span>
                     </div>
-                    <div className="flex justify-between items-center text-green-600">
+                    <div className="flex justify-between items-center text-primary-orange-600">
                       <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
                       <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.amount_received || 0)}</span>
                     </div>

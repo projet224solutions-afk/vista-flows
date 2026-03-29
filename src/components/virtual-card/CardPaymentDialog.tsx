@@ -130,16 +130,16 @@ export function CardPaymentDialog({
         {result ? (
           <div className={cn(
             "p-6 rounded-lg text-center",
-            result.success ? "bg-green-500/20" : "bg-red-500/20"
+            result.success ? "bg-primary-orange-500/20" : "bg-red-500/20"
           )}>
             {result.success ? (
-              <CheckCircle2 className="w-12 h-12 text-green-400 mx-auto mb-3" />
+              <CheckCircle2 className="w-12 h-12 text-primary-orange-400 mx-auto mb-3" />
             ) : (
               <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
             )}
             <p className={cn(
               "font-medium",
-              result.success ? "text-green-400" : "text-red-400"
+              result.success ? "text-primary-orange-400" : "text-red-400"
             )}>
               {result.message}
             </p>

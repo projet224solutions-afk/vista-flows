@@ -221,7 +221,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
     orders: { title: 'Toutes vos commandes', icon: Package, color: 'text-client-primary' },
     active: { title: 'Commandes en cours', icon: TrendingUp, color: 'text-orange-600' },
     favorites: { title: 'Vos favoris', icon: Heart, color: 'text-purple-600' },
-    spent: { title: 'Détail des dépenses', icon: CreditCard, color: 'text-green-600' },
+    spent: { title: 'Détail des dépenses', icon: CreditCard, color: 'text-primary-orange-600' },
   };
 
   const config = statType ? titles[statType] : null;
@@ -252,8 +252,8 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                       <p className="text-lg font-bold">{summary.total}</p>
                       <p className="text-[10px] text-muted-foreground">Total</p>
                     </div>
-                    <div className="text-center p-2 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                      <p className="text-lg font-bold text-green-600">{summary.completed}</p>
+                    <div className="text-center p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950/20 rounded-lg">
+                      <p className="text-lg font-bold text-primary-orange-600">{summary.completed}</p>
                       <p className="text-[10px] text-muted-foreground">Livrées</p>
                     </div>
                     <div className="text-center p-2 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
@@ -289,7 +289,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
               <div className="space-y-2">
                 {data.length === 0 && (
                   <div className="text-center py-8">
-                    <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-2" />
+                    <CheckCircle className="w-12 h-12 mx-auto text-primary-orange-500 mb-2" />
                     <p className="text-muted-foreground">Aucune commande en cours</p>
                     <p className="text-xs text-muted-foreground mt-1">Toutes vos commandes sont terminées</p>
                   </div>
@@ -418,9 +418,9 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
               <div className="space-y-4">
                 {summary && (
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                    <div className="text-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950/20 rounded-lg">
                       <p className="text-xs text-muted-foreground mb-1">Total dépensé</p>
-                      <p className="text-lg font-bold text-green-600">{formatPrice(summary.total)}</p>
+                      <p className="text-lg font-bold text-primary-orange-600">{formatPrice(summary.total)}</p>
                     </div>
                     <div className="text-center p-3 bg-muted rounded-lg">
                       <p className="text-xs text-muted-foreground mb-1">Panier moyen</p>
@@ -445,7 +445,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                         <p className="text-xs font-medium">#{order.order_number || order.id.slice(0, 8)}</p>
                         <p className="text-[10px] text-muted-foreground">{formatDate(order.created_at)}</p>
                       </div>
-                      <p className="text-sm font-bold text-green-600">-{formatPrice(order.total_amount || 0)}</p>
+                      <p className="text-sm font-bold text-primary-orange-600">-{formatPrice(order.total_amount || 0)}</p>
                     </div>
                   ))}
                 </div>

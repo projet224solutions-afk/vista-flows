@@ -1,5 +1,5 @@
 /**
- * COMPOSANT: Statut de libération des fonds (Vendeur)
+ * COMPOSANT: Statut de libÃ©ration des fonds (Vendeur)
  * 224SOLUTIONS - Affichage transparent du statut des fonds en attente
  */
 
@@ -67,7 +67,7 @@ export function FundsReleaseStatus() {
   useEffect(() => {
     fetchUserData();
     
-    // Rafraîchir toutes les minutes
+    // RafraÃ®chir toutes les minutes
     const interval = setInterval(fetchUserData, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -79,7 +79,7 @@ export function FundsReleaseStatus() {
       
       setUserId(user.id);
 
-      // Récupérer le wallet avec gestion robuste des colonnes
+      // RÃ©cupÃ©rer le wallet avec gestion robuste des colonnes
       const { data: wallet, error: walletError } = await supabase
         .from('wallets')
         .select('id, balance')
@@ -94,7 +94,7 @@ export function FundsReleaseStatus() {
       
       setWalletBalance({ ...wallet, total_received: 0, total_sent: 0 } as any);
 
-      // Récupérer les libérations en cours
+      // RÃ©cupÃ©rer les libÃ©rations en cours
       const { data: releasesData, error: releasesError } = await supabase
         .from('funds_release_schedule')
         .select(`
@@ -121,7 +121,7 @@ export function FundsReleaseStatus() {
         return;
       }
       
-      // Valider et filtrer les données
+      // Valider et filtrer les donnÃ©es
       const validReleases = (releasesData || []).filter(release => {
         return release.stripe_transaction != null;
       }) as FundsRelease[];
@@ -136,10 +136,10 @@ export function FundsReleaseStatus() {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string; icon: any }> = {
-      PENDING: { variant: 'secondary', label: 'En révision', icon: AlertTriangle },
-      SCHEDULED: { variant: 'default', label: 'Planifié', icon: Clock },
-      RELEASED: { variant: 'default', label: 'Libéré', icon: CheckCircle },
-      REJECTED: { variant: 'destructive', label: 'Rejeté', icon: AlertTriangle },
+      PENDING: { variant: 'secondary', label: 'En rÃ©vision', icon: AlertTriangle },
+      SCHEDULED: { variant: 'default', label: 'PlanifiÃ©', icon: Clock },
+      RELEASED: { variant: 'default', label: 'LibÃ©rÃ©', icon: CheckCircle },
+      REJECTED: { variant: 'destructive', label: 'RejetÃ©', icon: AlertTriangle },
       DISPUTED: { variant: 'destructive', label: 'En litige', icon: AlertTriangle },
     };
 
@@ -171,7 +171,7 @@ export function FundsReleaseStatus() {
     const remainingMinutes = differenceInMinutes(scheduled, now);
 
     if (remainingMinutes <= 0) {
-      return 'Bientôt disponible';
+      return 'BientÃ´t disponible';
     }
 
     if (remainingMinutes < 60) {
@@ -207,7 +207,7 @@ export function FundsReleaseStatus() {
               {((walletBalance?.balance || 0) / 100).toFixed(2)} XOF
             </div>
             <p className="text-xs text-muted-foreground">
-              Utilisable immédiatement
+              Utilisable immÃ©diatement
             </p>
           </CardContent>
         </Card>
@@ -215,7 +215,7 @@ export function FundsReleaseStatus() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total reçu
+              Total reÃ§u
             </CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
@@ -232,16 +232,16 @@ export function FundsReleaseStatus() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total envoyé
+              Total envoyÃ©
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <TrendingUp className="h-4 w-4 text-primary-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-primary-orange-600">
               {((walletBalance?.total_sent || 0) / 100).toFixed(2)} XOF
             </div>
             <p className="text-xs text-muted-foreground">
-              Toutes périodes confondues
+              Toutes pÃ©riodes confondues
             </p>
           </CardContent>
         </Card>
@@ -253,10 +253,10 @@ export function FundsReleaseStatus() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              Libérations en cours
+              LibÃ©rations en cours
             </CardTitle>
             <CardDescription>
-              Vos paiements en cours de validation et de libération
+              Vos paiements en cours de validation et de libÃ©ration
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -281,7 +281,7 @@ export function FundsReleaseStatus() {
                             {getStatusBadge(release.status)}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            Reçu {formatDistanceToNow(new Date(release.held_at), {
+                            ReÃ§u {formatDistanceToNow(new Date(release.held_at), {
                               addSuffix: true,
                               locale: fr,
                             })}
@@ -296,7 +296,7 @@ export function FundsReleaseStatus() {
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">
-                              Libération dans: {getRemainingTime(release.scheduled_release_at)}
+                              LibÃ©ration dans: {getRemainingTime(release.scheduled_release_at)}
                             </span>
                             <span className="font-medium">{Math.round(progress)}%</span>
                           </div>
@@ -311,10 +311,10 @@ export function FundsReleaseStatus() {
                             <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
                             <div>
                               <p className="font-medium text-yellow-900">
-                                Révision en cours
+                                RÃ©vision en cours
                               </p>
                               <p className="text-sm text-yellow-700 mt-1">
-                                Votre paiement nécessite une validation manuelle par notre équipe. Cela peut prendre jusqu'à 24 heures.
+                                Votre paiement nÃ©cessite une validation manuelle par notre Ã©quipe. Cela peut prendre jusqu'Ã  24 heures.
                               </p>
                             </div>
                           </div>
@@ -355,12 +355,12 @@ export function FundsReleaseStatus() {
             <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
             <div className="space-y-2">
               <p className="font-medium text-blue-900">
-                Système de protection des paiements
+                SystÃ¨me de protection des paiements
               </p>
               <p className="text-sm text-blue-700">
-                Pour votre sécurité, tous les paiements font l'objet d'une vérification automatique 
-                avant libération des fonds. Les paiements à faible risque sont libérés automatiquement 
-                après un délai de 30 minutes à 2 heures.
+                Pour votre sÃ©curitÃ©, tous les paiements font l'objet d'une vÃ©rification automatique 
+                avant libÃ©ration des fonds. Les paiements Ã  faible risque sont libÃ©rÃ©s automatiquement 
+                aprÃ¨s un dÃ©lai de 30 minutes Ã  2 heures.
               </p>
             </div>
           </div>

@@ -1,6 +1,6 @@
 /**
- * Calculateur de coûts Dropshipping Chine
- * Calcul automatique des coûts réels
+ * Calculateur de coÃ»ts Dropshipping Chine
+ * Calcul automatique des coÃ»ts rÃ©els
  */
 
 import { useState, useMemo } from 'react';
@@ -60,8 +60,8 @@ export function ChinaCostCalculator() {
 
   const transportOptions = [
     { value: 'express', label: 'Express (15-20j)', icon: Plane, description: 'DHL, FedEx, UPS' },
-    { value: 'air', label: 'Aérien standard (20-30j)', icon: Plane, description: 'Fret aérien' },
-    { value: 'sea', label: 'Maritime (45-60j)', icon: Ship, description: 'Économique' },
+    { value: 'air', label: 'AÃ©rien standard (20-30j)', icon: Plane, description: 'Fret aÃ©rien' },
+    { value: 'sea', label: 'Maritime (45-60j)', icon: Ship, description: 'Ã‰conomique' },
     { value: 'economy', label: 'Economy (25-40j)', icon: Truck, description: 'Mixte' }
   ];
 
@@ -71,10 +71,10 @@ export function ChinaCostCalculator() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Calculateur de Coûts Chine
+            Calculateur de CoÃ»ts Chine
           </CardTitle>
           <CardDescription>
-            Estimez vos coûts réels et marges pour le dropshipping depuis la Chine
+            Estimez vos coÃ»ts rÃ©els et marges pour le dropshipping depuis la Chine
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -103,7 +103,7 @@ export function ChinaCostCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>Méthode de transport</Label>
+              <Label>MÃ©thode de transport</Label>
               <Select value={transportMethod} onValueChange={setTransportMethod}>
                 <SelectTrigger>
                   <SelectValue />
@@ -128,7 +128,7 @@ export function ChinaCostCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>Quantité</Label>
+              <Label>QuantitÃ©</Label>
               <Input
                 type="number"
                 min="1"
@@ -138,11 +138,11 @@ export function ChinaCostCalculator() {
             </div>
           </div>
 
-          {/* Détail des coûts */}
+          {/* DÃ©tail des coÃ»ts */}
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="bg-muted/50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Décomposition des Coûts</CardTitle>
+                <CardTitle className="text-base">DÃ©composition des CoÃ»ts</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
@@ -171,7 +171,7 @@ export function ChinaCostCalculator() {
                 <div className="flex justify-between items-center">
                   <span className="flex items-center gap-2 text-sm">
                     <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                    Douanes estimées ({settings?.default_customs_estimate_percent || 15}%)
+                    Douanes estimÃ©es ({settings?.default_customs_estimate_percent || 15}%)
                   </span>
                   <span className="font-medium">${costs.estimated_customs?.toFixed(2)}</span>
                 </div>
@@ -185,27 +185,27 @@ export function ChinaCostCalculator() {
 
                 <div className="border-t pt-3 mt-3">
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold">Coût total unitaire</span>
+                    <span className="font-semibold">CoÃ»t total unitaire</span>
                     <span className="text-lg font-bold">${costs.total_cost_usd?.toFixed(2)}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    ≈ {((costs.total_cost_usd || 0) * 8500).toLocaleString('fr-FR')} GNF
+                    â‰ˆ {((costs.total_cost_usd || 0) * 8500).toLocaleString('fr-FR')} GNF
                   </p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Résultat marge */}
-            <Card className={`${margin.marginPercent >= 20 ? 'bg-green-50 dark:bg-green-950 border-green-200' : 'bg-orange-50 dark:bg-orange-950 border-orange-200'}`}>
+            {/* RÃ©sultat marge */}
+            <Card className={`${margin.marginPercent >= 20 ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 border-primary-orange-200' : 'bg-orange-50 dark:bg-orange-950 border-orange-200'}`}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
-                  Analyse de Rentabilité
+                  Analyse de RentabilitÃ©
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center py-4">
-                  <div className={`text-4xl font-bold ${margin.marginPercent >= 20 ? 'text-green-600' : 'text-orange-600'}`}>
+                  <div className={`text-4xl font-bold ${margin.marginPercent >= 20 ? 'text-primary-orange-600' : 'text-orange-600'}`}>
                     {margin.marginPercent.toFixed(1)}%
                   </div>
                   <p className="text-sm text-muted-foreground">Marge nette</p>
@@ -222,16 +222,16 @@ export function ChinaCostCalculator() {
                     <p className="text-xl font-semibold">
                       {(margin.profit / parseInt(quantity)).toLocaleString('fr-FR')} GNF
                     </p>
-                    <p className="text-xs text-muted-foreground">Profit/unité</p>
+                    <p className="text-xs text-muted-foreground">Profit/unitÃ©</p>
                   </div>
                 </div>
 
                 <div className="flex justify-center gap-2 pt-2">
                   {margin.marginPercent >= 30 && (
-                    <Badge className="bg-green-500">Excellent</Badge>
+                    <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Excellent</Badge>
                   )}
                   {margin.marginPercent >= 20 && margin.marginPercent < 30 && (
-                    <Badge className="bg-emerald-500">Bon</Badge>
+                    <Badge className="bg-primary-blue-500">Bon</Badge>
                   )}
                   {margin.marginPercent >= 10 && margin.marginPercent < 20 && (
                     <Badge className="bg-orange-500">Moyen</Badge>
@@ -243,7 +243,7 @@ export function ChinaCostCalculator() {
 
                 {margin.marginPercent < 15 && (
                   <p className="text-xs text-orange-600 dark:text-orange-400 text-center">
-                    ⚠️ Marge inférieure à 15%. Envisagez d'augmenter le prix de vente.
+                    âš ï¸ Marge infÃ©rieure Ã  15%. Envisagez d'augmenter le prix de vente.
                   </p>
                 )}
               </CardContent>

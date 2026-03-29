@@ -1,6 +1,6 @@
 /**
  * MODULE BROADCAST MESSAGE CENTER - PDG
- * Interface complète pour envoyer des messages globaux/ciblés
+ * Interface complÃ¨te pour envoyer des messages globaux/ciblÃ©s
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -93,9 +93,9 @@ interface DashboardData {
 const SEGMENTS = [
   { value: 'all', label: 'Tous les utilisateurs', icon: Users, color: 'bg-blue-500' },
   { value: 'agents', label: 'Agents uniquement', icon: Target, color: 'bg-purple-500' },
-  { value: 'vendors', label: 'Vendeurs uniquement', icon: Megaphone, color: 'bg-green-500' },
+  { value: 'vendors', label: 'Vendeurs uniquement', icon: Megaphone, color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' },
   { value: 'clients', label: 'Clients uniquement', icon: Users, color: 'bg-orange-500' },
-  { value: 'drivers', label: 'Livreurs/Chauffeurs', icon: Zap, color: 'bg-cyan-500' },
+  { value: 'drivers', label: 'Livreurs/Chauffeurs', icon: Zap, color: 'bg-primary-blue-500' },
 ];
 
 const PRIORITIES = [
@@ -109,8 +109,8 @@ const MESSAGE_TYPES = [
   { value: 'promotion', label: 'Promotion' },
   { value: 'alert', label: 'Alerte' },
   { value: 'maintenance', label: 'Maintenance' },
-  { value: 'update', label: 'Mise à jour' },
-  { value: 'news', label: 'Actualité' },
+  { value: 'update', label: 'Mise Ã  jour' },
+  { value: 'news', label: 'ActualitÃ©' },
 ];
 
 const BroadcastMessageCenter: React.FC = () => {
@@ -135,7 +135,7 @@ const BroadcastMessageCenter: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [targetCount, setTargetCount] = useState<number>(0);
 
-  // Vérifier les permissions
+  // VÃ©rifier les permissions
   const isPDG = profile?.role === 'admin' || profile?.role === 'pdg' || profile?.role === 'ceo';
 
   // Charger le dashboard
@@ -155,7 +155,7 @@ const BroadcastMessageCenter: React.FC = () => {
     }
   }, [isPDG]);
 
-  // Compter les utilisateurs ciblés
+  // Compter les utilisateurs ciblÃ©s
   const countTargetUsers = useCallback(async () => {
     if (!segment) return;
 
@@ -214,7 +214,7 @@ const BroadcastMessageCenter: React.FC = () => {
       const result = data as { success: boolean; recipients_count?: number; error?: string };
 
       if (result.success) {
-        toast.success(`Message envoyé à ${result.recipients_count || targetCount} utilisateurs`);
+        toast.success(`Message envoyÃ© Ã  ${result.recipients_count || targetCount} utilisateurs`);
         // Reset form
         setTitle('');
         setContent('');
@@ -244,7 +244,7 @@ const BroadcastMessageCenter: React.FC = () => {
         <CardContent className="pt-6">
           <div className="flex items-center gap-3 text-red-500">
             <AlertTriangle className="h-6 w-6" />
-            <p>Accès réservé aux administrateurs et PDG</p>
+            <p>AccÃ¨s rÃ©servÃ© aux administrateurs et PDG</p>
           </div>
         </CardContent>
       </Card>
@@ -261,7 +261,7 @@ const BroadcastMessageCenter: React.FC = () => {
             Centre de Diffusion
           </h1>
           <p className="text-muted-foreground">
-            Envoyez des messages à tous les utilisateurs ou à un segment ciblé
+            Envoyez des messages Ã  tous les utilisateurs ou Ã  un segment ciblÃ©
           </p>
         </div>
         <Button variant="outline" onClick={loadDashboard} disabled={loading}>
@@ -277,7 +277,7 @@ const BroadcastMessageCenter: React.FC = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Send className="h-4 w-4 text-blue-500" />
-                Total envoyés
+                Total envoyÃ©s
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -288,12 +288,12 @@ const BroadcastMessageCenter: React.FC = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Bell className="h-4 w-4 text-green-500" />
-                Envoyés aujourd'hui
+                <Bell className="h-4 w-4 text-primary-orange-500" />
+                EnvoyÃ©s aujourd'hui
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{dashboardData.sent_today}</div>
+              <div className="text-2xl font-bold text-primary-orange-600">{dashboardData.sent_today}</div>
             </CardContent>
           </Card>
 
@@ -301,7 +301,7 @@ const BroadcastMessageCenter: React.FC = () => {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Clock className="h-4 w-4 text-orange-500" />
-                Programmés
+                ProgrammÃ©s
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -325,7 +325,7 @@ const BroadcastMessageCenter: React.FC = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="h-4 w-4 text-cyan-500" />
+                <Users className="h-4 w-4 text-primary-blue-500" />
                 Destinataires (24h)
               </CardTitle>
             </CardHeader>
@@ -355,7 +355,7 @@ const BroadcastMessageCenter: React.FC = () => {
             <div className="lg:col-span-2 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Rédiger le message</CardTitle>
+                  <CardTitle>RÃ©diger le message</CardTitle>
                   <CardDescription>Composez votre message de diffusion</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -365,7 +365,7 @@ const BroadcastMessageCenter: React.FC = () => {
                       id="title"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Ex: Nouvelle fonctionnalité disponible !"
+                      placeholder="Ex: Nouvelle fonctionnalitÃ© disponible !"
                       maxLength={100}
                     />
                     <p className="text-xs text-muted-foreground mt-1">{title.length}/100</p>
@@ -377,7 +377,7 @@ const BroadcastMessageCenter: React.FC = () => {
                       id="content"
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
-                      placeholder="Écrivez votre message ici..."
+                      placeholder="Ã‰crivez votre message ici..."
                       rows={6}
                       maxLength={2000}
                     />
@@ -463,7 +463,7 @@ const BroadcastMessageCenter: React.FC = () => {
                   </div>
 
                   <div>
-                    <Label>Priorité</Label>
+                    <Label>PrioritÃ©</Label>
                     <Select value={priority} onValueChange={setPriority}>
                       <SelectTrigger>
                         <SelectValue />
@@ -523,7 +523,7 @@ const BroadcastMessageCenter: React.FC = () => {
                     disabled={!title || !content}
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    Aperçu
+                    AperÃ§u
                   </Button>
 
                   <Button
@@ -559,14 +559,14 @@ const BroadcastMessageCenter: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>Historique des envois</CardTitle>
-              <CardDescription>Messages envoyés récemment</CardDescription>
+              <CardDescription>Messages envoyÃ©s rÃ©cemment</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[500px]">
                 {!dashboardData?.recent_broadcasts?.length ? (
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <Megaphone className="h-12 w-12 mb-4 opacity-50" />
-                    <p>Aucun message envoyé</p>
+                    <p>Aucun message envoyÃ©</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -596,7 +596,7 @@ const BroadcastMessageCenter: React.FC = () => {
                                   <Clock className="h-3 w-3" />
                                   {broadcast.sent_at
                                     ? new Date(broadcast.sent_at).toLocaleString('fr-FR')
-                                    : 'Programmé'}
+                                    : 'ProgrammÃ©'}
                                 </span>
                               </div>
                             </div>
@@ -622,13 +622,13 @@ const BroadcastMessageCenter: React.FC = () => {
               Confirmer l'envoi
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir envoyer ce message au segment sélectionné ?
+              ÃŠtes-vous sÃ»r de vouloir envoyer ce message au segment sÃ©lectionnÃ© ?
               <div className="mt-4 p-3 bg-muted rounded-lg">
                 <p><strong>Segment :</strong> {getSegmentInfo(segment).label}</p>
                 <p><strong>Destinataires :</strong> ~{targetCount} utilisateurs</p>
-                <p><strong>Priorité :</strong> {getPriorityInfo(priority).label}</p>
+                <p><strong>PrioritÃ© :</strong> {getPriorityInfo(priority).label}</p>
                 {scheduledAt && (
-                  <p><strong>Programmé pour :</strong> {new Date(scheduledAt).toLocaleString('fr-FR')}</p>
+                  <p><strong>ProgrammÃ© pour :</strong> {new Date(scheduledAt).toLocaleString('fr-FR')}</p>
                 )}
               </div>
             </AlertDialogDescription>
@@ -647,8 +647,8 @@ const BroadcastMessageCenter: React.FC = () => {
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Aperçu du message</DialogTitle>
-            <DialogDescription>Voici comment votre message apparaîtra</DialogDescription>
+            <DialogTitle>AperÃ§u du message</DialogTitle>
+            <DialogDescription>Voici comment votre message apparaÃ®tra</DialogDescription>
           </DialogHeader>
           <div className="p-4 border rounded-lg bg-card">
             <div className="flex items-center gap-2 mb-3">

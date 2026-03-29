@@ -22,10 +22,10 @@ import { syncCognitoProfile } from "@/services/cognitoSyncService";
 import { resolvePostAuthRoute, cleanupOAuthFlags, cleanupAffiliateFlags } from "@/utils/postAuthRoute";
 import { COUNTRY_PHONE_CODES, WORLD_PHONE_CODES, PHONE_VALIDATION_RULES, validatePhoneNumber, getPhoneExample, getPhoneLengthHint } from "@/utils/phoneData";
 
-// Validation schemas avec tous les rôles
+// Validation schemas avec tous les rÃ´les
 // Password strength: 8+ chars, uppercase, lowercase, digit
 const passwordSchema = z.string()
-  .min(8, "Le mot de passe doit faire au moins 8 caractères")
+  .min(8, "Le mot de passe doit faire au moins 8 caractÃ¨res")
   .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
   .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
   .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre");
@@ -38,7 +38,7 @@ const loginSchema = z.object({
 const signupSchema = z.object({
   email: z.string().email("Adresse email invalide"),
   password: passwordSchema,
-  firstName: z.string().min(1, "Le prénom est requis"),
+  firstName: z.string().min(1, "Le prÃ©nom est requis"),
   lastName: z.string().min(1, "Le nom est requis"),
   role: z.enum(['client', 'vendeur', 'livreur', 'taxi', 'syndicat', 'transitaire', 'admin', 'prestataire']),
   city: z.string().min(1, "La ville est requise")
@@ -67,28 +67,28 @@ export default function Auth() {
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  // Cognito désactivé comme auth principal - Supabase est le système principal
+  // Cognito dÃ©sactivÃ© comme auth principal - Supabase est le systÃ¨me principal
   const navigate = useNavigate();
   
-  // ✅ FIX: Ref pour bloquer le handler SIGNED_IN pendant que handleSubmit gère la création
+  // âœ… FIX: Ref pour bloquer le handler SIGNED_IN pendant que handleSubmit gÃ¨re la crÃ©ation
   const isFormSubmittingRef = useRef(false);
   
   // === AFFILIATION AGENT ===
-  // Lire le token d'affiliation depuis localStorage (stocké par AgentAffiliateRedirect)
+  // Lire le token d'affiliation depuis localStorage (stockÃ© par AgentAffiliateRedirect)
   const [affiliateData, setAffiliateData] = useState<{
     token: string | null;
     agentName: string | null;
     targetRole: string | null;
   }>({ token: null, agentName: null, targetRole: null });
   
-  // Charger les données d'affiliation au montage
+  // Charger les donnÃ©es d'affiliation au montage
   useEffect(() => {
     const token = localStorage.getItem('affiliate_token');
     const agentName = localStorage.getItem('affiliate_agent_name');
     const targetRole = localStorage.getItem('affiliate_target_role');
     const timestamp = localStorage.getItem('affiliate_timestamp');
     
-    // Vérifier si le token est encore valide (max 24h)
+    // VÃ©rifier si le token est encore valide (max 24h)
     const isValid = timestamp && (Date.now() - parseInt(timestamp)) < 24 * 60 * 60 * 1000;
     
     if (token && isValid) {
@@ -98,13 +98,13 @@ export default function Auth() {
       if (locationState?.fromAffiliate) {
         toast({
           title: `Bienvenue !`,
-          description: `Vous avez été invité par ${agentName || 'un agent'}. Créez votre compte pour continuer.`,
+          description: `Vous avez Ã©tÃ© invitÃ© par ${agentName || 'un agent'}. CrÃ©ez votre compte pour continuer.`,
         });
         // Passer automatiquement en mode inscription
         setShowSignup(true);
       }
     } else {
-      // Nettoyer les données expirées
+      // Nettoyer les donnÃ©es expirÃ©es
       localStorage.removeItem('affiliate_token');
       localStorage.removeItem('affiliate_agent_name');
       localStorage.removeItem('affiliate_agent_id');
@@ -125,9 +125,9 @@ export default function Auth() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successRedirectRoute, setSuccessRedirectRoute] = useState<string | null>(null);
 
-  // === OAUTH HANDLERS AMÉLIORÉS (Google & Facebook) ===
+  // === OAUTH HANDLERS AMÃ‰LIORÃ‰S (Google & Facebook) ===
   
-  // 📊 Analytics tracking
+  // ðŸ“Š Analytics tracking
   const trackOAuthEvent = useCallback((provider: 'google' | 'facebook', event: 'click' | 'success' | 'error', metadata?: any) => {
     const timestamp = Date.now();
     const analyticsData = {
@@ -141,17 +141,17 @@ export default function Auth() {
       ...metadata
     };
     
-    // Log to console (en dev) ou envoyer à analytics service (en prod)
-    console.log('📊 OAuth Analytics:', analyticsData);
+    // Log to console (en dev) ou envoyer Ã  analytics service (en prod)
+    console.log('ðŸ“Š OAuth Analytics:', analyticsData);
     
-    // TODO: Envoyer à Google Analytics, Mixpanel, ou autre
+    // TODO: Envoyer Ã  Google Analytics, Mixpanel, ou autre
     // analytics.track('oauth_event', analyticsData);
     
     // Sauvegarder localement pour debug
     try {
       const existingLogs = JSON.parse(localStorage.getItem('oauth_analytics') || '[]');
       existingLogs.push(analyticsData);
-      // Garder seulement les 50 derniers événements
+      // Garder seulement les 50 derniers Ã©vÃ©nements
       if (existingLogs.length > 50) existingLogs.shift();
       localStorage.setItem('oauth_analytics', JSON.stringify(existingLogs));
     } catch (e) {
@@ -160,28 +160,28 @@ export default function Auth() {
   }, [selectedRole, showSignup]);
 
   const handleGoogleLogin = async (isRetry = false) => {
-    // 🛡️ Rate limiting: Max 3 tentatives par minute
+    // ðŸ›¡ï¸ Rate limiting: Max 3 tentatives par minute
     const now = Date.now();
     const lastAttemptKey = 'oauth_google_last_attempt';
     const lastAttempt = parseInt(localStorage.getItem(lastAttemptKey) || '0');
     
     if (!isRetry && now - lastAttempt < 20000 && oauthAttempts.google >= 3) {
       toast({
-        title: "⏱️ Trop de tentatives",
-        description: "Veuillez patienter 20 secondes avant de réessayer.",
+        title: "â±ï¸ Trop de tentatives",
+        description: "Veuillez patienter 20 secondes avant de rÃ©essayer.",
         variant: "destructive",
       });
       return;
     }
     
-    // Si l'utilisateur est en mode inscription mais n'a pas choisi de rôle, on force un choix
+    // Si l'utilisateur est en mode inscription mais n'a pas choisi de rÃ´le, on force un choix
     if (showSignup && !selectedRole) {
       setShowRoleSelectionModal(true);
       trackOAuthEvent('google', 'click', { blocked: 'no_role' });
       return;
     }
 
-    // Persister l'intention (rôle) pour que le callback OAuth crée/ajuste le profil correctement
+    // Persister l'intention (rÃ´le) pour que le callback OAuth crÃ©e/ajuste le profil correctement
     if (selectedRole) {
       localStorage.setItem('oauth_intent_role', selectedRole);
     }
@@ -189,16 +189,16 @@ export default function Auth() {
     if (showSignup) {
       localStorage.setItem('oauth_is_new_signup', 'true');
     }
-    // ✅ FIX: Persister le type de boutique pour les vendeurs
+    // âœ… FIX: Persister le type de boutique pour les vendeurs
     if (vendorShopType) {
       localStorage.setItem('oauth_vendor_shop_type', vendorShopType);
     }
-    // ✅ Persister le service type pour les prestataires
+    // âœ… Persister le service type pour les prestataires
     if (selectedServiceType) {
       localStorage.setItem('oauth_service_type', selectedServiceType);
     }
 
-    // 📊 Track click
+    // ðŸ“Š Track click
     trackOAuthEvent('google', 'click', { attempt: oauthAttempts.google + 1, isRetry });
     
     setOauthLoading('google');
@@ -213,9 +213,9 @@ export default function Auth() {
       const safeOrigin = origin.includes('224solution.net') ? origin.replace('http://', 'https://') : origin;
       const redirectUrl = `${safeOrigin}/`;
 
-      // ✨ Toast de démarrage
+      // âœ¨ Toast de dÃ©marrage
       toast({
-        title: "🔄 Connexion Google",
+        title: "ðŸ”„ Connexion Google",
         description: "Redirection vers Google en cours...",
       });
 
@@ -232,21 +232,21 @@ export default function Auth() {
 
       if (error) throw error;
       
-      // 📊 Track success
+      // ðŸ“Š Track success
       trackOAuthEvent('google', 'success');
       
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur de connexion Google';
       setError(message);
-      console.error('❌ Erreur Google OAuth:', err);
+      console.error('âŒ Erreur Google OAuth:', err);
       
-      // 📊 Track error
+      // ðŸ“Š Track error
       trackOAuthEvent('google', 'error', { error: message });
       
-      // 🔄 Toast d'erreur avec option retry
+      // ðŸ”„ Toast d'erreur avec option retry
       toast({
-        title: "❌ Erreur de connexion",
-        description: message + " • Cliquez sur le bouton Google pour réessayer.",
+        title: "âŒ Erreur de connexion",
+        description: message + " â€¢ Cliquez sur le bouton Google pour rÃ©essayer.",
         variant: "destructive",
       });
     } finally {
@@ -256,15 +256,15 @@ export default function Auth() {
   };
 
   const handleFacebookLogin = async (isRetry = false) => {
-    // 🛡️ Rate limiting
+    // ðŸ›¡ï¸ Rate limiting
     const now = Date.now();
     const lastAttemptKey = 'oauth_facebook_last_attempt';
     const lastAttempt = parseInt(localStorage.getItem(lastAttemptKey) || '0');
     
     if (!isRetry && now - lastAttempt < 20000 && oauthAttempts.facebook >= 3) {
       toast({
-        title: "⏱️ Trop de tentatives",
-        description: "Veuillez patienter 20 secondes avant de réessayer.",
+        title: "â±ï¸ Trop de tentatives",
+        description: "Veuillez patienter 20 secondes avant de rÃ©essayer.",
         variant: "destructive",
       });
       return;
@@ -283,7 +283,7 @@ export default function Auth() {
       localStorage.setItem('oauth_is_new_signup', 'true');
     }
 
-    // 📊 Track click
+    // ðŸ“Š Track click
     trackOAuthEvent('facebook', 'click', { attempt: oauthAttempts.facebook + 1, isRetry });
 
     setOauthLoading('facebook');
@@ -297,9 +297,9 @@ export default function Auth() {
       const safeOrigin = origin.includes('224solution.net') ? origin.replace('http://', 'https://') : origin;
       const redirectUrl = `${safeOrigin}/`;
 
-      // ✨ Toast de démarrage
+      // âœ¨ Toast de dÃ©marrage
       toast({
-        title: "🔄 Connexion Facebook",
+        title: "ðŸ”„ Connexion Facebook",
         description: "Redirection vers Facebook en cours...",
       });
 
@@ -312,21 +312,21 @@ export default function Auth() {
 
       if (error) throw error;
       
-      // 📊 Track success
+      // ðŸ“Š Track success
       trackOAuthEvent('facebook', 'success');
       
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur de connexion Facebook';
       setError(message);
-      console.error('❌ Erreur Facebook OAuth:', err);
+      console.error('âŒ Erreur Facebook OAuth:', err);
       
-      // 📊 Track error
+      // ðŸ“Š Track error
       trackOAuthEvent('facebook', 'error', { error: message });
       
-      // 🔄 Toast d'erreur avec option retry
+      // ðŸ”„ Toast d'erreur avec option retry
       toast({
-        title: "❌ Erreur de connexion",
-        description: message + " • Cliquez sur le bouton Facebook pour réessayer.",
+        title: "âŒ Erreur de connexion",
+        description: message + " â€¢ Cliquez sur le bouton Facebook pour rÃ©essayer.",
         variant: "destructive",
       });
     } finally {
@@ -335,56 +335,56 @@ export default function Auth() {
     }
   };
 
-  // ⚡ IMPORTANT: Écouter les événements OAuth et PASSWORD_RECOVERY pour rediriger correctement
+  // âš¡ IMPORTANT: Ã‰couter les Ã©vÃ©nements OAuth et PASSWORD_RECOVERY pour rediriger correctement
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔔 [Auth] Auth state change:', event, session?.user?.email || 'no user');
+      console.log('ðŸ”” [Auth] Auth state change:', event, session?.user?.email || 'no user');
       
-      // ✅ Gérer l'événement PASSWORD_RECOVERY (quand l'utilisateur clique sur le lien de réinitialisation)
+      // âœ… GÃ©rer l'Ã©vÃ©nement PASSWORD_RECOVERY (quand l'utilisateur clique sur le lien de rÃ©initialisation)
       if (event === 'PASSWORD_RECOVERY') {
-        console.log('🔐 [Auth] PASSWORD_RECOVERY détecté - affichage du formulaire de nouveau mot de passe');
+        console.log('ðŸ” [Auth] PASSWORD_RECOVERY dÃ©tectÃ© - affichage du formulaire de nouveau mot de passe');
         setShowNewPasswordForm(true);
         setShowResetPassword(false);
         setIsLogin(false);
         return;
       }
       
-      // Rediriger après connexion OAuth réussie
+      // Rediriger aprÃ¨s connexion OAuth rÃ©ussie
       if (event === 'SIGNED_IN' && session?.user) {
-        // ✅ FIX: Ne pas interférer si handleSubmit est en cours d'exécution
-        // handleSubmit gère lui-même la création vendor/service et la redirection
+        // âœ… FIX: Ne pas interfÃ©rer si handleSubmit est en cours d'exÃ©cution
+        // handleSubmit gÃ¨re lui-mÃªme la crÃ©ation vendor/service et la redirection
         if (isFormSubmittingRef.current) {
-          console.log('⏭️ [Auth] SIGNED_IN ignoré - handleSubmit en cours');
+          console.log('â­ï¸ [Auth] SIGNED_IN ignorÃ© - handleSubmit en cours');
           return;
         }
         
-        // ✅ Ne pas rediriger si on est en mode réinitialisation de mot de passe
+        // âœ… Ne pas rediriger si on est en mode rÃ©initialisation de mot de passe
         const params = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const isReset = params.get('reset') === 'true' || hashParams.get('type') === 'recovery';
         
         if (isReset) {
-          console.log('🔐 [Auth] Mode réinitialisation détecté, affichage du formulaire');
+          console.log('ðŸ” [Auth] Mode rÃ©initialisation dÃ©tectÃ©, affichage du formulaire');
           setShowNewPasswordForm(true);
           setShowResetPassword(false);
           setIsLogin(false);
           return;
         }
         
-        console.log('🔐 [Auth] SIGNED_IN détecté - vérification du profil...');
+        console.log('ðŸ” [Auth] SIGNED_IN dÃ©tectÃ© - vÃ©rification du profil...');
         setIsAuthenticating(true);
         
-        // Vérifier si c'est une connexion OAuth (Google/Facebook)
+        // VÃ©rifier si c'est une connexion OAuth (Google/Facebook)
         const provider = session.user.app_metadata?.provider;
         const isOAuthUser = provider === 'google' || provider === 'facebook';
         
-        // ✅ IMPORTANT: Lire le rôle OAuth AVANT de poller le profil
-        // Ce rôle a été défini AVANT la redirection OAuth et persiste dans localStorage
+        // âœ… IMPORTANT: Lire le rÃ´le OAuth AVANT de poller le profil
+        // Ce rÃ´le a Ã©tÃ© dÃ©fini AVANT la redirection OAuth et persiste dans localStorage
         const oauthIntentRole = localStorage.getItem('oauth_intent_role');
         const isNewOAuthSignup = localStorage.getItem('oauth_is_new_signup') === 'true';
         
-        // Délai pour laisser useAuth (source unique) créer/charger le profil
-        // useAuth.tsx gère TOUTE la création de profil OAuth - pas de duplication ici
+        // DÃ©lai pour laisser useAuth (source unique) crÃ©er/charger le profil
+        // useAuth.tsx gÃ¨re TOUTE la crÃ©ation de profil OAuth - pas de duplication ici
         const maxWait = 15;
         let profile: any = null;
         
@@ -398,38 +398,38 @@ export default function Auth() {
               .maybeSingle();
             
             if (data?.role) {
-              // ✅ FIX: Si c'est une nouvelle inscription OAuth avec un rôle choisi,
-              // attendre que useAuth.tsx mette à jour le rôle (pas le rôle 'client' du trigger)
+              // âœ… FIX: Si c'est une nouvelle inscription OAuth avec un rÃ´le choisi,
+              // attendre que useAuth.tsx mette Ã  jour le rÃ´le (pas le rÃ´le 'client' du trigger)
               if (isNewOAuthSignup && oauthIntentRole && oauthIntentRole !== 'client' && data.role === 'client') {
-                console.log(`⏳ [Auth] Attente mise à jour rôle OAuth... (${i + 1}/${maxWait}) - actuel: client, attendu: ${oauthIntentRole}`);
-                // Continuer à attendre que useAuth mette à jour le rôle
+                console.log(`â³ [Auth] Attente mise Ã  jour rÃ´le OAuth... (${i + 1}/${maxWait}) - actuel: client, attendu: ${oauthIntentRole}`);
+                // Continuer Ã  attendre que useAuth mette Ã  jour le rÃ´le
                 continue;
               }
               profile = data;
               break;
             }
-            console.log(`⏳ [Auth] Attente profil... (${i + 1}/${maxWait})`);
+            console.log(`â³ [Auth] Attente profil... (${i + 1}/${maxWait})`);
           }
           
-          // ✅ Si après l'attente le rôle est toujours 'client' mais on attendait un autre rôle,
-          // utiliser le rôle intentionnel directement
+          // âœ… Si aprÃ¨s l'attente le rÃ´le est toujours 'client' mais on attendait un autre rÃ´le,
+          // utiliser le rÃ´le intentionnel directement
           const effectiveRole = (isNewOAuthSignup && oauthIntentRole && oauthIntentRole !== 'client' && profile?.role === 'client')
             ? oauthIntentRole
             : profile?.role;
           
-          // Vérifier si l'utilisateur OAuth a déjà défini un mot de passe ou passé l'étape
+          // VÃ©rifier si l'utilisateur OAuth a dÃ©jÃ  dÃ©fini un mot de passe ou passÃ© l'Ã©tape
           const hasSetPassword = localStorage.getItem(`oauth_password_set_${session.user.id}`);
           const alreadyHandled = hasSetPassword === 'true' || hasSetPassword === 'skipped';
           const hasPasswordInDB = (profile as any)?.has_password === true;
           const needsPassword = isOAuthUser && !alreadyHandled && !hasPasswordInDB;
           
-          // Si le mot de passe est défini en BDD mais pas en localStorage, synchroniser
+          // Si le mot de passe est dÃ©fini en BDD mais pas en localStorage, synchroniser
           if (hasPasswordInDB && !alreadyHandled) {
             localStorage.setItem(`oauth_password_set_${session.user.id}`, 'true');
           }
           
           if (needsPassword) {
-            console.log('🔐 [Auth] Utilisateur OAuth sans mot de passe, redirection vers /auth/set-password');
+            console.log('ðŸ” [Auth] Utilisateur OAuth sans mot de passe, redirection vers /auth/set-password');
             localStorage.setItem('needs_oauth_password', 'true');
             localStorage.removeItem('oauth_is_new_signup');
             navigate('/auth/set-password', { replace: true });
@@ -445,10 +445,10 @@ export default function Auth() {
               vendorShopType: oauthShopType,
             });
             
-            console.log(`🚀 [Auth] Redirection vers ${targetRoute} (rôle effectif: ${effectiveRole}, DB: ${profile?.role})`);
+            console.log(`ðŸš€ [Auth] Redirection vers ${targetRoute} (rÃ´le effectif: ${effectiveRole}, DB: ${profile?.role})`);
             
             toast({
-              title: "✅ Connexion réussie",
+              title: "âœ… Connexion rÃ©ussie",
               description: `Bienvenue ! Redirection vers votre espace ${effectiveRole}...`,
             });
             
@@ -456,16 +456,16 @@ export default function Auth() {
             const pendingRedirectOAuth = sessionStorage.getItem('post_auth_redirect');
             if (pendingRedirectOAuth) {
               sessionStorage.removeItem('post_auth_redirect');
-              console.log('🔗 [Auth OAuth] Redirection vers lien partagé:', pendingRedirectOAuth);
+              console.log('ðŸ”— [Auth OAuth] Redirection vers lien partagÃ©:', pendingRedirectOAuth);
               navigate(pendingRedirectOAuth, { replace: true });
             } else {
               navigate(targetRoute, { replace: true });
             }
           } else {
-            console.log('⚠️ [Auth] Pas de rôle trouvé, reste sur /auth');
+            console.log('âš ï¸ [Auth] Pas de rÃ´le trouvÃ©, reste sur /auth');
           }
         } catch (err) {
-          console.error('❌ [Auth] Erreur callback OAuth:', err);
+          console.error('âŒ [Auth] Erreur callback OAuth:', err);
         } finally {
           setIsAuthenticating(false);
         }
@@ -475,12 +475,12 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
-  // Vérifier si l'utilisateur est déjà connecté au chargement de la page
+  // VÃ©rifier si l'utilisateur est dÃ©jÃ  connectÃ© au chargement de la page
   useEffect(() => {
     let isMounted = true;
     
     const checkExistingSession = async () => {
-      // Ne pas vérifier si on est en train de se connecter
+      // Ne pas vÃ©rifier si on est en train de se connecter
       if (isAuthenticating) return;
       
       const params = new URLSearchParams(window.location.search);
@@ -490,17 +490,17 @@ export default function Auth() {
       const isRecoveryHash = hashParams.get('type') === 'recovery';
       const hasAccessToken = hash.includes('access_token');
       
-      // Ne pas rediriger si c'est une réinitialisation de mot de passe
+      // Ne pas rediriger si c'est une rÃ©initialisation de mot de passe
       // (via query param OU via hash fragment du lien email)
       if (isReset || isRecoveryHash || (hasAccessToken && hash.includes('type=recovery'))) {
-        console.log('🔐 [Auth Mount] Mode réinitialisation détecté, pas de redirection automatique');
+        console.log('ðŸ” [Auth Mount] Mode rÃ©initialisation dÃ©tectÃ©, pas de redirection automatique');
         return;
       }
       
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user && isMounted) {
-        console.log('🔍 [Auth Mount] Utilisateur déjà connecté détecté');
+        console.log('ðŸ” [Auth Mount] Utilisateur dÃ©jÃ  connectÃ© dÃ©tectÃ©');
         
         const { data: profileData } = await supabase
           .from('profiles')
@@ -513,11 +513,11 @@ export default function Auth() {
             userId: session.user.id,
             role: profileData.role,
           });
-          console.log('🚀 [Auth Mount] Redirection utilisateur existant vers:', targetRoute);
+          console.log('ðŸš€ [Auth Mount] Redirection utilisateur existant vers:', targetRoute);
           const pendingRedirectMount = sessionStorage.getItem('post_auth_redirect');
           if (pendingRedirectMount) {
             sessionStorage.removeItem('post_auth_redirect');
-            console.log('🔗 [Auth Mount] Redirection vers lien partagé:', pendingRedirectMount);
+            console.log('ðŸ”— [Auth Mount] Redirection vers lien partagÃ©:', pendingRedirectMount);
             navigate(pendingRedirectMount, { replace: true });
           } else {
             navigate(targetRoute, { replace: true });
@@ -531,24 +531,24 @@ export default function Auth() {
     return () => {
       isMounted = false;
     };
-  }, [isAuthenticating]); // Ajouter isAuthenticating comme dépendance
+  }, [isAuthenticating]); // Ajouter isAuthenticating comme dÃ©pendance
 
-  // Détecter si on vient d'un lien de réinitialisation et vérifier la session
+  // DÃ©tecter si on vient d'un lien de rÃ©initialisation et vÃ©rifier la session
   useEffect(() => {
     const checkResetSession = async () => {
-      // Supabase gère le reset par lien (pas par code)
+      // Supabase gÃ¨re le reset par lien (pas par code)
 
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
       const hashParams = new URLSearchParams(hash.substring(1));
       
-      // Détecter tous les cas de réinitialisation possibles
+      // DÃ©tecter tous les cas de rÃ©initialisation possibles
       const isResetQuery = params.get('reset') === 'true';
       const isRecoveryType = hashParams.get('type') === 'recovery';
       const hasAccessToken = hash.includes('access_token');
       const hasErrorInHash = hashParams.get('error_description');
       
-      console.log('🔍 [Auth] Vérification reset:', { 
+      console.log('ðŸ” [Auth] VÃ©rification reset:', { 
         isResetQuery, 
         isRecoveryType, 
         hasAccessToken, 
@@ -556,11 +556,11 @@ export default function Auth() {
         hash: hash.substring(0, 100) + '...'
       });
       
-      // Si erreur dans le hash (lien expiré)
+      // Si erreur dans le hash (lien expirÃ©)
       if (hasErrorInHash) {
         const errorDesc = decodeURIComponent(hashParams.get('error_description') || '');
-        console.error('❌ Erreur dans le lien:', errorDesc);
-        setError(`Le lien de réinitialisation est invalide ou a expiré. ${errorDesc.includes('expired') ? 'Veuillez demander un nouveau lien.' : ''}`);
+        console.error('âŒ Erreur dans le lien:', errorDesc);
+        setError(`Le lien de rÃ©initialisation est invalide ou a expirÃ©. ${errorDesc.includes('expired') ? 'Veuillez demander un nouveau lien.' : ''}`);
         setShowResetPassword(true);
         setShowNewPasswordForm(false);
         // Nettoyer l'URL
@@ -571,13 +571,13 @@ export default function Auth() {
       const isReset = isResetQuery || isRecoveryType || (hasAccessToken && hash.includes('type=recovery'));
       
       if (isReset || (hasAccessToken && !hash.includes('type=signup'))) {
-        console.log('🔑 Lien de réinitialisation détecté, vérification de la session...');
+        console.log('ðŸ”‘ Lien de rÃ©initialisation dÃ©tectÃ©, vÃ©rification de la session...');
         setCheckingResetLink(true);
         setLoading(true);
         
-        // ✅ Méthode améliorée: utiliser setSession pour traiter le hash directement
+        // âœ… MÃ©thode amÃ©liorÃ©e: utiliser setSession pour traiter le hash directement
         if (hasAccessToken) {
-          console.log('🔐 Traitement du hash avec access_token...');
+          console.log('ðŸ” Traitement du hash avec access_token...');
           
           // Extraire les tokens du hash
           const accessToken = hashParams.get('access_token');
@@ -591,24 +591,24 @@ export default function Auth() {
               });
               
               if (sessionError) {
-                console.error('❌ Erreur setSession:', sessionError);
+                console.error('âŒ Erreur setSession:', sessionError);
                 throw sessionError;
               }
               
               if (data.session) {
-                console.log('✅ Session créée avec succès via setSession');
+                console.log('âœ… Session crÃ©Ã©e avec succÃ¨s via setSession');
                 setShowNewPasswordForm(true);
                 setShowResetPassword(false);
                 setIsLogin(false);
                 setError(null);
-                // Nettoyer l'URL pour éviter les re-traitements
+                // Nettoyer l'URL pour Ã©viter les re-traitements
                 window.history.replaceState({}, document.title, window.location.pathname + '?reset=true');
                 setLoading(false);
                 setCheckingResetLink(false);
                 return;
               }
             } catch (e) {
-              console.error('❌ Exception lors de setSession:', e);
+              console.error('âŒ Exception lors de setSession:', e);
             }
           }
         }
@@ -616,26 +616,26 @@ export default function Auth() {
         // Fallback: attendre que Supabase traite le hash automatiquement
         await new Promise(resolve => setTimeout(resolve, 3000));
         
-        // Vérifier qu'on a bien une session active
+        // VÃ©rifier qu'on a bien une session active
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        console.log('🔐 Session après attente:', { 
+        console.log('ðŸ” Session aprÃ¨s attente:', { 
           hasSession: !!session, 
           userId: session?.user?.id?.substring(0, 8),
           error 
         });
         
         if (session) {
-          console.log('✅ Session de réinitialisation active - affichage du formulaire');
+          console.log('âœ… Session de rÃ©initialisation active - affichage du formulaire');
           setShowNewPasswordForm(true);
           setShowResetPassword(false);
           setIsLogin(false);
           setError(null);
-          // Nettoyer l'URL pour éviter les re-traitements
+          // Nettoyer l'URL pour Ã©viter les re-traitements
           window.history.replaceState({}, document.title, window.location.pathname + '?reset=true');
         } else {
-          console.error('❌ Aucune session trouvée après traitement du hash:', error);
-          setError('Le lien de réinitialisation est invalide ou a expiré. Veuillez demander un nouveau lien.');
+          console.error('âŒ Aucune session trouvÃ©e aprÃ¨s traitement du hash:', error);
+          setError('Le lien de rÃ©initialisation est invalide ou a expirÃ©. Veuillez demander un nouveau lien.');
           setShowResetPassword(true);
           setShowNewPasswordForm(false);
           // Nettoyer l'URL
@@ -652,7 +652,7 @@ export default function Auth() {
 
   // Form data is already declared above (before trackOAuthEvent)
 
-  // Détecter si l'utilisateur vient de "Devenir Marchand" pour créer un compte séparé
+  // DÃ©tecter si l'utilisateur vient de "Devenir Marchand" pour crÃ©er un compte sÃ©parÃ©
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode');
@@ -660,12 +660,12 @@ export default function Auth() {
     const clientEmail = params.get('currentEmail');
     
     if (mode === 'signup' && role === 'merchant' && clientEmail) {
-      console.log('🏪 Création compte marchand séparé détectée pour:', clientEmail);
+      console.log('ðŸª CrÃ©ation compte marchand sÃ©parÃ© dÃ©tectÃ©e pour:', clientEmail);
       setShowSignup(true);
       setIsLogin(false);
       setSelectedRole('vendeur');
       setCurrentClientEmail(clientEmail);
-      setError(`⚠️ Veuillez utiliser une adresse email différente de ${clientEmail} pour créer votre compte marchand.`);
+      setError(`âš ï¸ Veuillez utiliser une adresse email diffÃ©rente de ${clientEmail} pour crÃ©er votre compte marchand.`);
     }
   }, []);
 
@@ -691,7 +691,7 @@ export default function Auth() {
     address: ''
   });
 
-  // Auto-détection de l'indicatif téléphonique basé sur le pays
+  // Auto-dÃ©tection de l'indicatif tÃ©lÃ©phonique basÃ© sur le pays
   useEffect(() => {
     if (formData.country) {
       const countryLower = formData.country.toLowerCase().trim();
@@ -702,7 +702,7 @@ export default function Auth() {
     }
   }, [formData.country]);
 
-  // Validation du numéro quand il change
+  // Validation du numÃ©ro quand il change
   useEffect(() => {
     if (formData.phone) {
       const isValid = validatePhoneNumber(formData.phone, phoneCode);
@@ -741,7 +741,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     setIsAuthenticating(true);
-    isFormSubmittingRef.current = true; // ✅ FIX: Bloquer le handler SIGNED_IN
+    isFormSubmittingRef.current = true; // âœ… FIX: Bloquer le handler SIGNED_IN
     setError(null);
     setSuccess(null);
 
@@ -749,40 +749,40 @@ export default function Auth() {
       if (showSignup) {
         // Inscription
         if (!selectedRole) {
-          throw new Error("⚠️ Veuillez d'abord sélectionner un type de compte ci-dessus (Client, Marchand, Livreur, etc.)");
+          throw new Error("âš ï¸ Veuillez d'abord sÃ©lectionner un type de compte ci-dessus (Client, Marchand, Livreur, etc.)");
         }
         
-        // Vérifier que l'email est différent de celui du compte client actuel (si création de compte marchand séparé)
+        // VÃ©rifier que l'email est diffÃ©rent de celui du compte client actuel (si crÃ©ation de compte marchand sÃ©parÃ©)
         if (currentClientEmail && formData.email.toLowerCase() === currentClientEmail.toLowerCase()) {
-          throw new Error(`❌ Vous devez utiliser une adresse email différente de ${currentClientEmail} pour créer votre compte marchand. Les comptes client et marchand doivent être séparés.`);
+          throw new Error(`âŒ Vous devez utiliser une adresse email diffÃ©rente de ${currentClientEmail} pour crÃ©er votre compte marchand. Les comptes client et marchand doivent Ãªtre sÃ©parÃ©s.`);
         }
         
         if (formData.password !== formData.confirmPassword) {
-          throw new Error("❌ Les mots de passe ne correspondent pas");
+          throw new Error("âŒ Les mots de passe ne correspondent pas");
         }
 
-        // Validation du numéro de téléphone
+        // Validation du numÃ©ro de tÃ©lÃ©phone
         if (!validatePhoneNumber(formData.phone, phoneCode)) {
           const hint = getPhoneLengthHint(phoneCode);
-          throw new Error(`❌ Numéro de téléphone invalide pour ${phoneCode}. Format attendu: ${hint}`);
+          throw new Error(`âŒ NumÃ©ro de tÃ©lÃ©phone invalide pour ${phoneCode}. Format attendu: ${hint}`);
         }
         const validatedData = signupSchema.parse({ ...formData, role: selectedRole });
 
-        // Générer un ID utilisateur avec le bon préfixe selon le rôle
+        // GÃ©nÃ©rer un ID utilisateur avec le bon prÃ©fixe selon le rÃ´le
         const { data: userCustomId, error: generateError } = await supabase
           .rpc('generate_custom_id_with_role', { p_role: selectedRole });
 
         if (generateError) {
-          console.error('❌ Erreur génération ID:', generateError);
-          throw new Error('Erreur lors de la génération de votre identifiant');
+          console.error('âŒ Erreur gÃ©nÃ©ration ID:', generateError);
+          throw new Error('Erreur lors de la gÃ©nÃ©ration de votre identifiant');
         }
 
-        // Supabase est le système principal - pas de Cognito signup
+        // Supabase est le systÃ¨me principal - pas de Cognito signup
         
-        // 🔑 ÉTAPE 2: Synchroniser avec Supabase Auth (pour RLS/DB)
-        // Supabase est le système principal - sync Cloud SQL en arrière-plan
+        // ðŸ”‘ Ã‰TAPE 2: Synchroniser avec Supabase Auth (pour RLS/DB)
+        // Supabase est le systÃ¨me principal - sync Cloud SQL en arriÃ¨re-plan
         
-        // 🔑 Signup Supabase directement
+        // ðŸ”‘ Signup Supabase directement
         const { data: authData, error } = await supabase.auth.signUp({
           email: validatedData.email,
           password: validatedData.password,
@@ -803,13 +803,13 @@ export default function Auth() {
           }
         });
         
-        // Si c'est un taxi-motard, créer son profil conducteur et le lier à son bureau
+        // Si c'est un taxi-motard, crÃ©er son profil conducteur et le lier Ã  son bureau
         if (!error && authData.user && validatedData.role === 'taxi') {
           try {
-            // Trouver le bureau de la ville sélectionnée
+            // Trouver le bureau de la ville sÃ©lectionnÃ©e
             const bureau = bureaus.find(b => b.commune === validatedData.city);
             
-            // 1. Créer l'entrée taxi_drivers avec les infos du bureau pour la synchronisation
+            // 1. CrÃ©er l'entrÃ©e taxi_drivers avec les infos du bureau pour la synchronisation
             const { error: driverError } = await supabase
               .from('taxi_drivers')
               .insert({
@@ -825,12 +825,12 @@ export default function Auth() {
               });
             
             if (driverError) {
-              console.error('❌ Erreur création profil conducteur:', driverError);
+              console.error('âŒ Erreur crÃ©ation profil conducteur:', driverError);
             } else {
-              console.log('✅ Profil taxi-motard créé avec succès');
+              console.log('âœ… Profil taxi-motard crÃ©Ã© avec succÃ¨s');
             }
 
-            // 2. SYNCHRONISATION BUREAU: Créer l'entrée dans la table members pour que le bureau le voit
+            // 2. SYNCHRONISATION BUREAU: CrÃ©er l'entrÃ©e dans la table members pour que le bureau le voit
             if (bureau?.id) {
               const { error: memberError } = await supabase
                 .from('members')
@@ -846,25 +846,25 @@ export default function Auth() {
                 });
               
               if (memberError) {
-                console.error('❌ Erreur synchronisation bureau:', memberError);
+                console.error('âŒ Erreur synchronisation bureau:', memberError);
               } else {
-                console.log('✅ Taxi-motard synchronisé avec le bureau syndical de', validatedData.city);
+                console.log('âœ… Taxi-motard synchronisÃ© avec le bureau syndical de', validatedData.city);
               }
             } else {
-              console.warn('⚠️ Aucun bureau trouvé pour la ville:', validatedData.city);
+              console.warn('âš ï¸ Aucun bureau trouvÃ© pour la ville:', validatedData.city);
             }
           } catch (syncError) {
-            console.error('❌ Erreur synchronisation:', syncError);
+            console.error('âŒ Erreur synchronisation:', syncError);
           }
         }
 
-        // Si c'est un vendeur (marchand), créer automatiquement son profil vendor avec le nom d'entreprise
-        // ✅ IMPORTANT: Les services professionnels n'utilisent PLUS le rôle vendeur
+        // Si c'est un vendeur (marchand), crÃ©er automatiquement son profil vendor avec le nom d'entreprise
+        // âœ… IMPORTANT: Les services professionnels n'utilisent PLUS le rÃ´le vendeur
         if (!error && authData.user && validatedData.role === 'vendeur') {
           try {
             const businessName = formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`;
             
-            // 1. Créer le profil vendor (PAS de service professionnel ici)
+            // 1. CrÃ©er le profil vendor (PAS de service professionnel ici)
             const { error: vendorError } = await supabase
               .from('vendors')
               .insert({
@@ -881,27 +881,27 @@ export default function Auth() {
               });
             
             if (vendorError) {
-              console.error('❌ Erreur création profil vendeur:', vendorError);
+              console.error('âŒ Erreur crÃ©ation profil vendeur:', vendorError);
               toast({
-                title: "Erreur création profil vendeur",
-                description: vendorError.message || "Impossible de créer le profil vendeur. Contactez le support.",
+                title: "Erreur crÃ©ation profil vendeur",
+                description: vendorError.message || "Impossible de crÃ©er le profil vendeur. Contactez le support.",
                 variant: "destructive"
               });
             } else {
-              console.log('✅ Profil vendeur créé avec nom entreprise:', businessName);
+              console.log('âœ… Profil vendeur crÃ©Ã© avec nom entreprise:', businessName);
             }
           } catch (vendorSyncError) {
-            console.error('❌ Erreur synchronisation vendeur:', vendorSyncError);
+            console.error('âŒ Erreur synchronisation vendeur:', vendorSyncError);
           }
         }
 
-        // ✅ NOUVEAU: Si c'est un prestataire de service, créer le professional_service SANS vendor
+        // âœ… NOUVEAU: Si c'est un prestataire de service, crÃ©er le professional_service SANS vendor
         if (!error && authData.user && validatedData.role === 'prestataire' && selectedServiceType) {
           try {
             const businessName = formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`;
-            console.log('🔧 Création du professional_service pour prestataire:', selectedServiceType);
+            console.log('ðŸ”§ CrÃ©ation du professional_service pour prestataire:', selectedServiceType);
             
-            // Récupérer le service_type_id à partir du code
+            // RÃ©cupÃ©rer le service_type_id Ã  partir du code
             const { data: serviceType, error: serviceTypeError } = await supabase
               .from('service_types')
               .select('id')
@@ -909,7 +909,7 @@ export default function Auth() {
               .maybeSingle();
             
             if (serviceTypeError) {
-              console.error('❌ Erreur récupération service_type:', serviceTypeError);
+              console.error('âŒ Erreur rÃ©cupÃ©ration service_type:', serviceTypeError);
             } else if (serviceType) {
               const { error: professionalServiceError } = await supabase
                 .from('professional_services')
@@ -925,43 +925,43 @@ export default function Auth() {
                 });
               
               if (professionalServiceError) {
-                console.error('❌ Erreur création professional_service:', professionalServiceError);
+                console.error('âŒ Erreur crÃ©ation professional_service:', professionalServiceError);
                 toast({
-                  title: "Erreur création service professionnel",
-                  description: professionalServiceError.message || "Le service n'a pas pu être créé.",
+                  title: "Erreur crÃ©ation service professionnel",
+                  description: professionalServiceError.message || "Le service n'a pas pu Ãªtre crÃ©Ã©.",
                   variant: "destructive"
                 });
               } else {
-                console.log('✅ Professional service créé pour prestataire:', selectedServiceType);
+                console.log('âœ… Professional service crÃ©Ã© pour prestataire:', selectedServiceType);
               }
             } else {
-              console.warn('⚠️ Service type non trouvé pour le code:', selectedServiceType);
+              console.warn('âš ï¸ Service type non trouvÃ© pour le code:', selectedServiceType);
             }
           } catch (serviceError) {
-            console.error('❌ Erreur création service prestataire:', serviceError);
+            console.error('âŒ Erreur crÃ©ation service prestataire:', serviceError);
           }
         }
 
         if (error) {
           if (error.message.includes('User already registered') || error.message.includes('already been registered')) {
-            throw new Error('📧 Cette adresse email est déjà inscrite. Veuillez vous connecter ou utiliser une autre adresse.');
+            throw new Error('ðŸ“§ Cette adresse email est dÃ©jÃ  inscrite. Veuillez vous connecter ou utiliser une autre adresse.');
           } else if (error.message.includes('rate limit') || error.message.includes('email rate limit exceeded') || error.status === 429) {
-            throw new Error('⏱️ Trop de tentatives d\'inscription. Veuillez patienter quelques minutes avant de réessayer.');
+            throw new Error('â±ï¸ Trop de tentatives d\'inscription. Veuillez patienter quelques minutes avant de rÃ©essayer.');
           } else {
             throw error;
           }
         }
         
-        // ✅ FIX: Supabase ne retourne pas toujours une erreur pour les emails existants
-        // Il retourne un user sans identities[] si l'email existe déjà (comportement sécurité)
+        // âœ… FIX: Supabase ne retourne pas toujours une erreur pour les emails existants
+        // Il retourne un user sans identities[] si l'email existe dÃ©jÃ  (comportement sÃ©curitÃ©)
         if (authData.user && authData.user.identities && authData.user.identities.length === 0) {
-          throw new Error('📧 Cette adresse email est déjà inscrite. Veuillez vous connecter ou utiliser une autre adresse.');
+          throw new Error('ðŸ“§ Cette adresse email est dÃ©jÃ  inscrite. Veuillez vous connecter ou utiliser une autre adresse.');
         }
         
-        // === AFFILIATION AGENT: Enregistrer le parrainage si token présent ===
+        // === AFFILIATION AGENT: Enregistrer le parrainage si token prÃ©sent ===
         if (authData.user && affiliateData.token) {
           try {
-            console.log('🔗 [Affiliation] Enregistrement du parrainage...');
+            console.log('ðŸ”— [Affiliation] Enregistrement du parrainage...');
             const { data: affiliateResult, error: affiliateError } = await supabase.functions.invoke('register-with-affiliate', {
               body: {
                 user_id: authData.user.id,
@@ -975,24 +975,24 @@ export default function Auth() {
             });
             
             if (affiliateError) {
-              console.error('⚠️ [Affiliation] Erreur:', affiliateError);
+              console.error('âš ï¸ [Affiliation] Erreur:', affiliateError);
             } else if (affiliateResult?.success) {
-              console.log('✅ [Affiliation] Parrainage enregistré avec succès');
+              console.log('âœ… [Affiliation] Parrainage enregistrÃ© avec succÃ¨s');
               toast({
-                title: "Parrainage enregistré !",
-                description: `Vous avez été parrainé par ${affiliateData.agentName || 'un agent'}.`,
+                title: "Parrainage enregistrÃ© !",
+                description: `Vous avez Ã©tÃ© parrainÃ© par ${affiliateData.agentName || 'un agent'}.`,
               });
             }
             
             cleanupAffiliateFlags();
           } catch (affiliateErr) {
-            console.error('⚠️ [Affiliation] Erreur inattendue:', affiliateErr);
+            console.error('âš ï¸ [Affiliation] Erreur inattendue:', affiliateErr);
           }
         }
         
-        // ✅ Afficher le modal de succès puis rediriger
+        // âœ… Afficher le modal de succÃ¨s puis rediriger
         if (authData.user) {
-          // Attendre que le profil soit créé avec retry (max 5 secondes)
+          // Attendre que le profil soit crÃ©Ã© avec retry (max 5 secondes)
           let profileData = null;
           let attempts = 0;
           const maxAttempts = 10;
@@ -1012,10 +1012,10 @@ export default function Auth() {
             }
             
             attempts++;
-            console.log(`⏳ Attente création profil... (tentative ${attempts}/${maxAttempts})`);
+            console.log(`â³ Attente crÃ©ation profil... (tentative ${attempts}/${maxAttempts})`);
           }
           
-          // Déterminer la route cible
+          // DÃ©terminer la route cible
           let targetRoute = '/home';
           if (profileData?.role) {
             targetRoute = await resolvePostAuthRoute({
@@ -1025,32 +1025,32 @@ export default function Auth() {
             });
           }
 
-          // Afficher le modal de succès
+          // Afficher le modal de succÃ¨s
           setSuccessRedirectRoute(targetRoute);
           setShowSuccessModal(true);
           
-          // Rediriger après 2.5 secondes
+          // Rediriger aprÃ¨s 2.5 secondes
           setTimeout(() => {
             setShowSuccessModal(false);
             const pendingRedirectSignup = sessionStorage.getItem('post_auth_redirect');
             if (pendingRedirectSignup) {
               sessionStorage.removeItem('post_auth_redirect');
-              console.log('🔗 [Auth Signup] Redirection vers lien partagé:', pendingRedirectSignup);
+              console.log('ðŸ”— [Auth Signup] Redirection vers lien partagÃ©:', pendingRedirectSignup);
               navigate(pendingRedirectSignup, { replace: true });
             } else {
-              console.log('🚀 [Auth Signup] Redirection vers:', targetRoute);
+              console.log('ðŸš€ [Auth Signup] Redirection vers:', targetRoute);
               navigate(targetRoute, { replace: true });
             }
           }, 2500);
         } else {
-          setSuccess("✅ Inscription réussie ! Vérifiez votre boîte mail pour confirmer votre compte, puis connectez-vous.");
+          setSuccess("âœ… Inscription rÃ©ussie ! VÃ©rifiez votre boÃ®te mail pour confirmer votre compte, puis connectez-vous.");
         }
       } else {
-        // Connexion - Supabase Auth est le système principal
-        console.log('🔐 [Auth] Tentative de connexion Supabase...');
+        // Connexion - Supabase Auth est le systÃ¨me principal
+        console.log('ðŸ” [Auth] Tentative de connexion Supabase...');
         const validatedData = loginSchema.parse(formData);
         
-        // 🔑 Login Supabase (système principal)
+        // ðŸ”‘ Login Supabase (systÃ¨me principal)
         const { data, error } = await supabase.auth.signInWithPassword({
           email: validatedData.email,
           password: validatedData.password,
@@ -1058,28 +1058,28 @@ export default function Auth() {
 
         if (error) {
           if (error.message.includes('Email not confirmed')) {
-            throw new Error('📧 Email non confirmé. Veuillez vérifier votre boîte mail et cliquer sur le lien de confirmation.');
+            throw new Error('ðŸ“§ Email non confirmÃ©. Veuillez vÃ©rifier votre boÃ®te mail et cliquer sur le lien de confirmation.');
           } else if (error.message.includes('Invalid login credentials')) {
-            throw new Error('❌ Email ou mot de passe incorrect. Veuillez réessayer.');
+            throw new Error('âŒ Email ou mot de passe incorrect. Veuillez rÃ©essayer.');
           } else {
             throw error;
           }
         }
 
-        console.log('✅ [Auth] Login Supabase réussi');
+        console.log('âœ… [Auth] Login Supabase rÃ©ussi');
         
-        // 🔄 Sync Cloud SQL en arrière-plan (non bloquant)
+        // ðŸ”„ Sync Cloud SQL en arriÃ¨re-plan (non bloquant)
         if (data.session?.access_token) {
           syncCognitoProfile(data.session.access_token).catch(err => {
-            console.warn('⚠️ [Auth] Sync Cloud SQL échouée (non bloquant):', err);
+            console.warn('âš ï¸ [Auth] Sync Cloud SQL Ã©chouÃ©e (non bloquant):', err);
           });
         }
 
         
         if (data.user) {
-          setSuccess("✅ Connexion réussie ! Redirection en cours...");
+          setSuccess("âœ… Connexion rÃ©ussie ! Redirection en cours...");
           
-          // ⚡ Récupérer le profil avec retry pour s'assurer qu'il est chargé
+          // âš¡ RÃ©cupÃ©rer le profil avec retry pour s'assurer qu'il est chargÃ©
           let profileData = null;
           let attempts = 0;
           const maxAttempts = 10;
@@ -1102,7 +1102,7 @@ export default function Auth() {
               await new Promise(resolve => setTimeout(resolve, 200));
             }
             attempts++;
-            console.log(`⏳ [Auth Login] Chargement profil... (tentative ${attempts}/${maxAttempts})`);
+            console.log(`â³ [Auth Login] Chargement profil... (tentative ${attempts}/${maxAttempts})`);
           }
           
           if (profileData?.role) {
@@ -1110,19 +1110,19 @@ export default function Auth() {
               userId,
               role: profileData.role,
             });
-            console.log('🚀 [Auth Login] Redirection vers:', targetRoute, '(rôle:', profileData.role, ')');
+            console.log('ðŸš€ [Auth Login] Redirection vers:', targetRoute, '(rÃ´le:', profileData.role, ')');
             await new Promise(resolve => setTimeout(resolve, 300));
             const pendingRedirectLogin = sessionStorage.getItem('post_auth_redirect');
             if (pendingRedirectLogin) {
               sessionStorage.removeItem('post_auth_redirect');
-              console.log('🔗 [Auth Login] Redirection vers lien partagé:', pendingRedirectLogin);
+              console.log('ðŸ”— [Auth Login] Redirection vers lien partagÃ©:', pendingRedirectLogin);
               navigate(pendingRedirectLogin, { replace: true });
             } else {
               navigate(targetRoute, { replace: true });
             }
           } else {
             // Fallback: rediriger vers home, useRoleRedirect prendra le relais
-            console.log('⚠️ [Auth Login] Pas de profil trouvé, redirection vers /home');
+            console.log('âš ï¸ [Auth Login] Pas de profil trouvÃ©, redirection vers /home');
             navigate('/home', { replace: true });
           }
         }
@@ -1145,22 +1145,22 @@ export default function Auth() {
     } finally {
       setLoading(false);
       setIsAuthenticating(false);
-      isFormSubmittingRef.current = false; // ✅ FIX: Débloquer le handler SIGNED_IN
+      isFormSubmittingRef.current = false; // âœ… FIX: DÃ©bloquer le handler SIGNED_IN
     }
   };
 
   const handleRoleClick = (role: UserRole) => {
-    // Si on clique sur un autre rôle que vendeur et que showServiceSelection est ouvert, le fermer
+    // Si on clique sur un autre rÃ´le que vendeur et que showServiceSelection est ouvert, le fermer
     if (role !== 'vendeur' && showServiceSelection) {
       setShowServiceSelection(false);
       setSelectedServiceType(null);
     }
     
     if (role === 'vendeur') {
-      // Pour les marchands, afficher d'abord la sélection du type de service
+      // Pour les marchands, afficher d'abord la sÃ©lection du type de service
       setShowServiceSelection(true);
       setSelectedRole(role);
-      // Scroll vers le milieu pour afficher la fenêtre de sélection
+      // Scroll vers le milieu pour afficher la fenÃªtre de sÃ©lection
       setTimeout(() => {
         const serviceCard = document.getElementById('service-selection-card');
         if (serviceCard) {
@@ -1173,7 +1173,7 @@ export default function Auth() {
     }
   };
 
-  // Fonction pour fermer la sélection de service quand on clique ailleurs
+  // Fonction pour fermer la sÃ©lection de service quand on clique ailleurs
   const handleCloseServiceSelection = () => {
     setShowServiceSelection(false);
     setSelectedServiceType(null);
@@ -1182,41 +1182,41 @@ export default function Auth() {
 
   const handleSkipServiceSelection = () => {
     setShowServiceSelection(false);
-    setSelectedServiceType(null); // Pas de service professionnel sélectionné
+    setSelectedServiceType(null); // Pas de service professionnel sÃ©lectionnÃ©
     setShowSignup(true);
   };
 
   const handleServiceTypeSelect = (serviceTypeId: string) => {
-    // ✅ FIX: Traitement spécial pour les types non-service
+    // âœ… FIX: Traitement spÃ©cial pour les types non-service
     if (serviceTypeId === 'digital') {
-      // Produits numériques → vendeur digital (pas un service professionnel)
+      // Produits numÃ©riques â†’ vendeur digital (pas un service professionnel)
       setSelectedServiceType(null);
       setSelectedRole('vendeur');
       setVendorShopType('digital');
       setShowServiceSelection(false);
       setShowSignup(true);
-      console.log('🔧 [Auth] Type digital sélectionné → vendeur digital');
+      console.log('ðŸ”§ [Auth] Type digital sÃ©lectionnÃ© â†’ vendeur digital');
       return;
     }
     
     if (serviceTypeId === 'ecommerce') {
-      // Boutique e-commerce → vendeur classique (pas un service professionnel)
+      // Boutique e-commerce â†’ vendeur classique (pas un service professionnel)
       setSelectedServiceType(null);
       setSelectedRole('vendeur');
       setVendorShopType('physical');
       setShowServiceSelection(false);
       setShowSignup(true);
-      console.log('🔧 [Auth] Type ecommerce sélectionné → vendeur physique');
+      console.log('ðŸ”§ [Auth] Type ecommerce sÃ©lectionnÃ© â†’ vendeur physique');
       return;
     }
     
-    // ✅ NOUVEAU: Les services professionnels utilisent le rôle 'prestataire' (PAS 'vendeur')
+    // âœ… NOUVEAU: Les services professionnels utilisent le rÃ´le 'prestataire' (PAS 'vendeur')
     setSelectedServiceType(serviceTypeId);
     setSelectedRole('prestataire');
     setVendorShopType(null);
     setShowServiceSelection(false);
     setShowSignup(true);
-    console.log('🔧 [Auth] Service sélectionné:', serviceTypeId, '→ rôle: prestataire (indépendant du vendeur)');
+    console.log('ðŸ”§ [Auth] Service sÃ©lectionnÃ©:', serviceTypeId, 'â†’ rÃ´le: prestataire (indÃ©pendant du vendeur)');
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -1233,14 +1233,14 @@ export default function Auth() {
       const emailSchema = z.string().email("Adresse email invalide");
       emailSchema.parse(resetEmail);
 
-      // ✅ Supabase Auth - système principal
+      // âœ… Supabase Auth - systÃ¨me principal
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       
       if (error) throw error;
 
-      setSuccess("✅ Lien de réinitialisation envoyé. Vérifiez votre email.");
+      setSuccess("âœ… Lien de rÃ©initialisation envoyÃ©. VÃ©rifiez votre email.");
       setShowResetPassword(false);
       setIsLogin(true);
     } catch (err) {
@@ -1250,7 +1250,7 @@ export default function Auth() {
         errorMessage = (err as any).issues[0]?.message || errorMessage;
       }
       setError(errorMessage);
-      console.error('Erreur réinitialisation mot de passe:', err);
+      console.error('Erreur rÃ©initialisation mot de passe:', err);
     } finally {
       setLoading(false);
     }
@@ -1263,33 +1263,33 @@ export default function Auth() {
     setSuccess(null);
 
     try {
-      // Validation du nouveau mot de passe (mêmes règles que l'inscription)
+      // Validation du nouveau mot de passe (mÃªmes rÃ¨gles que l'inscription)
       passwordSchema.parse(newPassword);
 
       if (newPassword !== confirmNewPassword) {
         throw new Error("Les mots de passe ne correspondent pas");
       }
 
-      // Supabase Auth - mise à jour du mot de passe via session de recovery
+      // Supabase Auth - mise Ã  jour du mot de passe via session de recovery
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        throw new Error("Session expirée. Veuillez demander un nouveau lien de réinitialisation.");
+        throw new Error("Session expirÃ©e. Veuillez demander un nouveau lien de rÃ©initialisation.");
       }
 
-      console.log('🔐 Session active, mise à jour du mot de passe...');
+      console.log('ðŸ” Session active, mise Ã  jour du mot de passe...');
 
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
 
       if (error) {
-        console.error('❌ Erreur Supabase:', error);
+        console.error('âŒ Erreur Supabase:', error);
         throw error;
       }
 
-      console.log('✅ Mot de passe mis à jour avec succès');
-      setSuccess("✅ Mot de passe réinitialisé avec succès ! Vous pouvez maintenant vous connecter.");
+      console.log('âœ… Mot de passe mis Ã  jour avec succÃ¨s');
+      setSuccess("âœ… Mot de passe rÃ©initialisÃ© avec succÃ¨s ! Vous pouvez maintenant vous connecter.");
       setNewPassword('');
       setConfirmNewPassword('');
       
@@ -1309,13 +1309,13 @@ export default function Auth() {
       }
       
       setError(errorMessage);
-      console.error('❌ Erreur changement mot de passe:', err);
+      console.error('âŒ Erreur changement mot de passe:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // UI: panneau d'inscription (à droite) uniquement quand on est vraiment en mode inscription
+  // UI: panneau d'inscription (Ã  droite) uniquement quand on est vraiment en mode inscription
   // (pas pendant reset password / nouveau mot de passe)
   const showSignupLayout = (showSignup || showVendorTypeSelection) && !showResetPassword && !showNewPasswordForm;
 
@@ -1333,7 +1333,7 @@ export default function Auth() {
         <div className="flex items-center justify-center gap-3 mb-8">
           <Button
             size="sm"
-            className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full"
+            className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600 text-white px-6 py-2 rounded-full"
             onClick={() => navigate('/home')}
           >
             {t('auth.home')}
@@ -1353,15 +1353,15 @@ export default function Auth() {
           </Button>
         </div>
 
-        {/* Titre principal - encore plus rapproché du bloc de sélection */}
+        {/* Titre principal - encore plus rapprochÃ© du bloc de sÃ©lection */}
         <h2 className="text-2xl text-gray-600 mb-2">
           {t('auth.connectToSpace')} <span className="font-bold text-gray-800">{t('auth.professionalSpace')}</span>
         </h2>
       </div>
 
-      {/* NB: Les types de comptes sont désormais affichés dans le panneau d'inscription (à droite) */}
+      {/* NB: Les types de comptes sont dÃ©sormais affichÃ©s dans le panneau d'inscription (Ã  droite) */}
 
-      {/* Sélection du type de service professionnel pour les marchands */}
+      {/* SÃ©lection du type de service professionnel pour les marchands */}
       {showServiceSelection && (
         <>
           {/* Overlay cliquable pour fermer */}
@@ -1392,11 +1392,11 @@ export default function Auth() {
                   Choisissez votre Type de Service
                 </h3>
                 <p className="text-muted-foreground text-sm">
-                  Sélectionnez le service que vous souhaitez proposer sur la plateforme
+                  SÃ©lectionnez le service que vous souhaitez proposer sur la plateforme
                 </p>
               </div>
 
-              {/* Section: Inscription directe par rôle (Taxi Moto, Livreur, Transitaire) */}
+              {/* Section: Inscription directe par rÃ´le (Taxi Moto, Livreur, Transitaire) */}
               <div className="mb-6">
                 <h4 className="text-sm font-semibold text-amber-600 mb-3 flex items-center justify-center gap-2">
                   <span className="w-8 h-0.5 bg-amber-500 rounded"></span>
@@ -1405,9 +1405,9 @@ export default function Auth() {
                 </h4>
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { role: 'taxi' as UserRole, name: 'Taxi Moto', icon: '🏍️', desc: 'Conducteur taxi-moto' },
-                    { role: 'livreur' as UserRole, name: 'Livreur', icon: '📦', desc: 'Coursier & livraison' },
-                    { role: 'transitaire' as UserRole, name: 'Transitaire', icon: '🚢', desc: 'Import & export' },
+                    { role: 'taxi' as UserRole, name: 'Taxi Moto', icon: 'ðŸï¸', desc: 'Conducteur taxi-moto' },
+                    { role: 'livreur' as UserRole, name: 'Livreur', icon: 'ðŸ“¦', desc: 'Coursier & livraison' },
+                    { role: 'transitaire' as UserRole, name: 'Transitaire', icon: 'ðŸš¢', desc: 'Import & export' },
                   ].map((item) => (
                     <button
                       key={item.role}
@@ -1427,23 +1427,23 @@ export default function Auth() {
                 </div>
               </div>
 
-              {/* Section: Services de Proximité */}
+              {/* Section: Services de ProximitÃ© */}
               <div className="mb-6">
                 <h4 className="text-sm font-semibold text-primary mb-3 flex items-center justify-center gap-2">
                   <span className="w-8 h-0.5 bg-primary rounded"></span>
-                  Services de Proximité
+                  Services de ProximitÃ©
                   <span className="w-8 h-0.5 bg-primary rounded"></span>
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
-                    { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
-                    { id: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
-                    { id: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & mécanique' },
-                    { id: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
-                    { id: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
-                    { id: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
-                    { id: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
+                    { id: 'restaurant', name: 'Restaurant', icon: 'ðŸ½ï¸', desc: 'Cuisine & plats' },
+                    { id: 'beaute', name: 'BeautÃ© & Coiffure', icon: 'ðŸ’‡', desc: 'Soins & styling' },
+                    { id: 'vtc', name: 'Transport VTC', icon: 'ðŸš—', desc: 'VÃ©hicules privÃ©s' },
+                    { id: 'reparation', name: 'RÃ©paration', icon: 'ðŸ”§', desc: 'Ã‰lectro & mÃ©canique' },
+                    { id: 'menage', name: 'Nettoyage', icon: 'âœ¨', desc: 'MÃ©nage & pressing' },
+                    { id: 'informatique', name: 'Informatique', icon: 'ðŸ’»', desc: 'Tech & dÃ©pannage' },
+                    { id: 'livraison', name: 'Livraison', icon: 'ðŸšš', desc: 'Coursier & colis' },
+                    { id: 'ecommerce', name: 'Boutique', icon: 'ðŸª', desc: 'E-commerce' },
                   ].map((service) => (
                     <button
                       key={service.id}
@@ -1469,17 +1469,17 @@ export default function Auth() {
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { id: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
-                    { id: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
-                    { id: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
-                    { id: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
-                    { id: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
-                    { id: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
-                    { id: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
-                    { id: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
-                    { id: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
-                    { id: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
-                    { id: 'digital', name: 'Produits Numériques', icon: '📱', desc: 'E-books & logiciels' },
+                    { id: 'sport', name: 'Sport & Fitness', icon: 'ðŸ‹ï¸', desc: 'Coaching' },
+                    { id: 'location', name: 'Immobilier', icon: 'ðŸ¢', desc: 'Location & vente' },
+                    { id: 'media', name: 'Photo & VidÃ©o', icon: 'ðŸ“¸', desc: 'Ã‰vÃ©nements' },
+                    { id: 'construction', name: 'Construction & BTP', icon: 'ðŸ—ï¸', desc: 'BÃ¢timent' },
+                    { id: 'agriculture', name: 'Agriculture', icon: 'ðŸŒ¾', desc: 'Produits locaux' },
+                    { id: 'freelance', name: 'Administratif', icon: 'ðŸ’¼', desc: 'SecrÃ©tariat' },
+                    { id: 'sante', name: 'SantÃ© & Bien-Ãªtre', icon: 'ðŸ’Š', desc: 'Pharmacie & soins' },
+                    { id: 'maison', name: 'Maison & DÃ©co', icon: 'ðŸ ', desc: 'IntÃ©rieur' },
+                    { id: 'education', name: 'Formation', icon: 'ðŸŽ“', desc: 'Cours & coaching' },
+                    { id: 'voyage', name: 'Voyage', icon: 'âœˆï¸', desc: 'Tourisme & voyages' },
+                    { id: 'digital', name: 'Produits NumÃ©riques', icon: 'ðŸ“±', desc: 'E-books & logiciels' },
                   ].map((service) => (
                     <button
                       key={service.id}
@@ -1498,11 +1498,11 @@ export default function Auth() {
 
               {/* Google OAuth pour inscription service */}
               <div className="mt-4 pt-4 border-t border-border/50">
-                <p className="text-xs text-muted-foreground text-center mb-3">ou créer votre compte professionnel avec</p>
+                <p className="text-xs text-muted-foreground text-center mb-3">ou crÃ©er votre compte professionnel avec</p>
                 <button
                   type="button"
                   onClick={() => {
-                    // ✅ NOUVEAU: Les services utilisent le rôle 'prestataire' (pas 'vendeur')
+                    // âœ… NOUVEAU: Les services utilisent le rÃ´le 'prestataire' (pas 'vendeur')
                     setSelectedRole('prestataire');
                     setShowServiceSelection(false);
                     localStorage.setItem('oauth_intent_role', 'prestataire');
@@ -1542,14 +1542,14 @@ export default function Auth() {
               <div>
                 <Card className="shadow-lg border-2 border-primary/20">
                   <CardContent className="p-8">
-            {/* Écran de chargement pendant la vérification du lien de réinitialisation */}
+            {/* Ã‰cran de chargement pendant la vÃ©rification du lien de rÃ©initialisation */}
             {checkingResetLink ? (
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
                 <Loader2 className="w-12 h-12 animate-spin text-primary" />
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-foreground">🔐 Vérification en cours...</h3>
+                  <h3 className="text-lg font-semibold text-foreground">ðŸ” VÃ©rification en cours...</h3>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Validation de votre lien de réinitialisation
+                    Validation de votre lien de rÃ©initialisation
                   </p>
                 </div>
               </div>
@@ -1568,17 +1568,17 @@ export default function Auth() {
                 className="gap-2 mb-4"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Retour à la connexion
+                Retour Ã  la connexion
               </Button>
             )}
 
             {/* Messages d'information */}
-            {/* Boutons Connexion / Créer un compte - toujours visibles sauf reset password */}
+            {/* Boutons Connexion / CrÃ©er un compte - toujours visibles sauf reset password */}
             {/* Onglets Connexion / Inscription - Design professionnel */}
             {!showResetPassword && !showNewPasswordForm && (
               <div className="mb-6">
                 <div className="relative flex p-1 rounded-2xl border border-border/50">
-                  {/* Indicateur animé */}
+                  {/* Indicateur animÃ© */}
                   <div 
                     className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-primary to-primary/90 rounded-xl shadow-lg transition-all duration-300 ease-out ${
                       showSignup ? 'left-[calc(50%+2px)]' : 'left-1'
@@ -1641,7 +1641,7 @@ export default function Auth() {
                     <div>
                       <p className="text-foreground font-semibold text-sm mb-1">Connexion intelligente</p>
                       <p className="text-muted-foreground text-xs leading-relaxed">
-                        Utilisez vos identifiants habituels. Le système reconnaîtra automatiquement votre type de compte.
+                        Utilisez vos identifiants habituels. Le systÃ¨me reconnaÃ®tra automatiquement votre type de compte.
                       </p>
                     </div>
                   </div>
@@ -1658,7 +1658,7 @@ export default function Auth() {
             )}
 
             {/* Types de comptes - Vendeur classique & Service */}
-            {/* Sélection du type de boutique vendeur - Page dédiée */}
+            {/* SÃ©lection du type de boutique vendeur - Page dÃ©diÃ©e */}
             {showVendorTypeSelection && !showSignup && (
               <div className="mb-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
@@ -1690,7 +1690,7 @@ export default function Auth() {
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs sm:text-sm font-bold text-foreground block mb-0.5 sm:mb-1">E-commerce</span>
-                        <span className="text-[10px] sm:text-[11px] leading-tight text-muted-foreground block">Produits physiques, vêtements, électronique…</span>
+                        <span className="text-[10px] sm:text-[11px] leading-tight text-muted-foreground block">Produits physiques, vÃªtements, Ã©lectroniqueâ€¦</span>
                       </div>
                     </button>
 
@@ -1712,14 +1712,14 @@ export default function Auth() {
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs sm:text-sm font-bold text-foreground block mb-0.5 sm:mb-1">Digitaux</span>
-                        <span className="text-[10px] sm:text-[11px] leading-tight text-muted-foreground block">Fichiers, formations, ebooks, logiciels…</span>
+                        <span className="text-[10px] sm:text-[11px] leading-tight text-muted-foreground block">Fichiers, formations, ebooks, logicielsâ€¦</span>
                       </div>
                     </button>
                   </div>
 
                   {/* Google OAuth pour vendeur classique */}
                   <div className="mt-4 pt-4 border-t border-border/50">
-                    <p className="text-xs text-muted-foreground text-center mb-3">ou créer votre boutique avec</p>
+                    <p className="text-xs text-muted-foreground text-center mb-3">ou crÃ©er votre boutique avec</p>
                     <button
                       type="button"
                       onClick={() => {
@@ -1756,10 +1756,10 @@ export default function Auth() {
               <div className="mb-6 bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-5 shadow-sm">
                 <div className="text-center mb-4">
                   <h3 className="text-sm font-bold text-foreground mb-1">Choisissez votre profil</h3>
-                  <p className="text-xs text-muted-foreground">Sélectionnez le type de compte qui vous correspond</p>
+                  <p className="text-xs text-muted-foreground">SÃ©lectionnez le type de compte qui vous correspond</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Vendeur classique - Un seul bouton qui ouvre la page dédiée */}
+                  {/* Vendeur classique - Un seul bouton qui ouvre la page dÃ©diÃ©e */}
                   <button
                     type="button"
                     onClick={() => {
@@ -1793,14 +1793,14 @@ export default function Auth() {
                     onClick={() => handleRoleClick('vendeur')}
                     className={`group flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 ${
                       selectedRole === 'prestataire'
-                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 border-emerald-500 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]'
-                        : 'bg-background border-border/60 hover:border-emerald-300 hover:bg-emerald-50/50'
+                        ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 border-primary-orange-500 text-white shadow-lg shadow-primary-orange-500/25 scale-[1.02]'
+                        : 'bg-background border-border/60 hover:border-primary-orange-300 hover:bg-primary-blue-50/50'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-                      selectedRole === 'prestataire' ? 'bg-white/20' : 'bg-emerald-100 group-hover:bg-emerald-200'
+                      selectedRole === 'prestataire' ? 'bg-white/20' : 'bg-primary-blue-100 group-hover:bg-primary-blue-200'
                     }`}>
-                      <Briefcase className={`h-6 w-6 ${selectedRole === 'prestataire' ? 'text-white' : 'text-emerald-600'}`} />
+                      <Briefcase className={`h-6 w-6 ${selectedRole === 'prestataire' ? 'text-white' : 'text-primary-blue-600'}`} />
                     </div>
                     <span className={`text-sm font-semibold ${selectedRole === 'prestataire' ? 'text-white' : 'text-foreground'}`}>
                       Service
@@ -1816,55 +1816,55 @@ export default function Auth() {
               {showSignup && selectedRole && (
               <div className={`mb-6 p-4 rounded-lg border ${
                 selectedRole === 'vendeur' ? 'bg-primary/5 border-primary/20' :
-                selectedRole === 'prestataire' ? 'bg-emerald-50 border-emerald-200' :
+                selectedRole === 'prestataire' ? 'bg-primary-blue-50 border-primary-orange-200' :
                 selectedRole === 'livreur' ? 'bg-orange-50 border-orange-200' :
                 selectedRole === 'taxi' ? 'bg-yellow-50 border-yellow-200' :
                 selectedRole === 'transitaire' ? 'bg-purple-50 border-purple-200' :
-                selectedRole === 'client' ? 'bg-emerald-50 border-emerald-200' :
+                selectedRole === 'client' ? 'bg-primary-blue-50 border-primary-orange-200' :
                 'bg-muted/50 border-border'
               }`}>
                 <p className={`text-sm ${
                   selectedRole === 'vendeur' ? 'text-primary' :
-                  selectedRole === 'prestataire' ? 'text-emerald-800' :
+                  selectedRole === 'prestataire' ? 'text-primary-blue-800' :
                   selectedRole === 'livreur' ? 'text-orange-800' :
                   selectedRole === 'taxi' ? 'text-yellow-800' :
                   selectedRole === 'transitaire' ? 'text-purple-800' :
-                  selectedRole === 'client' ? 'text-emerald-800' :
+                  selectedRole === 'client' ? 'text-primary-blue-800' :
                   'text-foreground'
                 }`}>
-                  <strong>🎯 Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'prestataire' ? 'Prestataire de Service' : selectedRole === 'vendeur' ? 'Vendeur E-commerce' : selectedRole}` : ''}.
+                  <strong>ðŸŽ¯ CrÃ©ation de compte :</strong> Remplissez les informations ci-dessous pour crÃ©er votre compte {selectedRole ? `en tant que ${selectedRole === 'prestataire' ? 'Prestataire de Service' : selectedRole === 'vendeur' ? 'Vendeur E-commerce' : selectedRole}` : ''}.
                   {selectedServiceType && (
                     <span className={`block mt-2 font-semibold ${
                       selectedRole === 'vendeur' ? 'text-primary' :
                       selectedRole === 'livreur' ? 'text-orange-700' :
                       selectedRole === 'taxi' ? 'text-yellow-700' :
                       selectedRole === 'transitaire' ? 'text-purple-700' :
-                      selectedRole === 'client' ? 'text-emerald-700' :
+                      selectedRole === 'client' ? 'text-primary-blue-700' :
                       'text-primary'
                     }`}>
-                      ✓ Service sélectionné : {(() => {
+                      âœ“ Service sÃ©lectionnÃ© : {(() => {
                         const allServices = [
-                          // Services de Proximité Populaires (6)
-                          { id: 'restaurant', name: 'Restaurant', icon: '🍽️' },
-                          { id: 'beaute', name: 'Beauté & Coiffure', icon: '💇' },
-                          { id: 'vtc', name: 'Transport VTC', icon: '🚗' },
-                          { id: 'reparation', name: 'Réparation', icon: '🔧' },
-                          { id: 'menage', name: 'Nettoyage', icon: '✨' },
-                          { id: 'informatique', name: 'Informatique', icon: '💻' },
+                          // Services de ProximitÃ© Populaires (6)
+                          { id: 'restaurant', name: 'Restaurant', icon: 'ðŸ½ï¸' },
+                          { id: 'beaute', name: 'BeautÃ© & Coiffure', icon: 'ðŸ’‡' },
+                          { id: 'vtc', name: 'Transport VTC', icon: 'ðŸš—' },
+                          { id: 'reparation', name: 'RÃ©paration', icon: 'ðŸ”§' },
+                          { id: 'menage', name: 'Nettoyage', icon: 'âœ¨' },
+                          { id: 'informatique', name: 'Informatique', icon: 'ðŸ’»' },
                           // Services Professionnels (8)
-                          { id: 'sport', name: 'Sport & Fitness', icon: '🏋️' },
-                          { id: 'location', name: 'Immobilier', icon: '🏢' },
-                          { id: 'media', name: 'Photo & Vidéo', icon: '📸' },
-                          { id: 'construction', name: 'Construction & BTP', icon: '🏗️' },
-                          { id: 'agriculture', name: 'Agriculture', icon: '🌾' },
-                          { id: 'freelance', name: 'Administratif', icon: '💼' },
-                          { id: 'sante', name: 'Santé & Bien-être', icon: '💊' },
-                          { id: 'maison', name: 'Maison & Déco', icon: '🏠' },
+                          { id: 'sport', name: 'Sport & Fitness', icon: 'ðŸ‹ï¸' },
+                          { id: 'location', name: 'Immobilier', icon: 'ðŸ¢' },
+                          { id: 'media', name: 'Photo & VidÃ©o', icon: 'ðŸ“¸' },
+                          { id: 'construction', name: 'Construction & BTP', icon: 'ðŸ—ï¸' },
+                          { id: 'agriculture', name: 'Agriculture', icon: 'ðŸŒ¾' },
+                          { id: 'freelance', name: 'Administratif', icon: 'ðŸ’¼' },
+                          { id: 'sante', name: 'SantÃ© & Bien-Ãªtre', icon: 'ðŸ’Š' },
+                          { id: 'maison', name: 'Maison & DÃ©co', icon: 'ðŸ ' },
                           // Autres Services (4)
-                          { id: 'education', name: 'Formation', icon: '🎓' },
-                          { id: 'livraison', name: 'Livraison', icon: '🚚' },
-                          { id: 'voyage', name: 'Voyage', icon: '✈️' },
-                          { id: 'ecommerce', name: 'Boutique', icon: '🏪' },
+                          { id: 'education', name: 'Formation', icon: 'ðŸŽ“' },
+                          { id: 'livraison', name: 'Livraison', icon: 'ðŸšš' },
+                          { id: 'voyage', name: 'Voyage', icon: 'âœˆï¸' },
+                          { id: 'ecommerce', name: 'Boutique', icon: 'ðŸª' },
                         ];
                         const service = allServices.find(s => s.id === selectedServiceType);
                         return service ? `${service.icon} ${service.name}` : selectedServiceType;
@@ -1873,19 +1873,19 @@ export default function Auth() {
                   )}
                   {selectedRole === 'vendeur' && !selectedServiceType && vendorShopType === 'digital' && (
                     <span className="block mt-1 font-semibold text-purple-700">
-                      ✓ Mode Produits digitaux (fichiers, formations, ebooks)
+                      âœ“ Mode Produits digitaux (fichiers, formations, ebooks)
                     </span>
                   )}
                   {selectedRole === 'vendeur' && !selectedServiceType && vendorShopType !== 'digital' && (
                     <span className="block mt-1 font-semibold text-blue-700">
-                      ✓ Mode Boutique E-commerce (produits physiques)
+                      âœ“ Mode Boutique E-commerce (produits physiques)
                     </span>
                   )}
                 </p>
               </div>
             )}
 
-            {/* Formulaire de réinitialisation de mot de passe */}
+            {/* Formulaire de rÃ©initialisation de mot de passe */}
             {showResetPassword ? (
               <form onSubmit={handlePasswordReset} className="space-y-4">
                 {error && (
@@ -1898,9 +1898,9 @@ export default function Auth() {
                 )}
 
                 {success && (
-                  <Alert className="bg-green-50 border-green-200">
-                    <AlertCircle className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">
+                  <Alert className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
+                    <AlertCircle className="h-4 w-4 text-primary-orange-600" />
+                    <AlertDescription className="text-primary-orange-800">
                       {success}
                     </AlertDescription>
                   </Alert>
@@ -1908,7 +1908,7 @@ export default function Auth() {
                 
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground mb-4">
-                    Entrez votre adresse email pour recevoir un lien de réinitialisation de mot de passe.
+                    Entrez votre adresse email pour recevoir un lien de rÃ©initialisation de mot de passe.
                   </p>
                   <Label htmlFor="reset-email">Adresse email</Label>
                   <Input
@@ -1932,7 +1932,7 @@ export default function Auth() {
                       Envoi en cours...
                     </>
                   ) : (
-                    'Envoyer le lien de réinitialisation'
+                    'Envoyer le lien de rÃ©initialisation'
                   )}
                 </Button>
 
@@ -1947,7 +1947,7 @@ export default function Auth() {
                     setResetCode('');
                   }}
                 >
-                  Retour à la connexion
+                  Retour Ã  la connexion
                 </Button>
               </form>
             ) : showNewPasswordForm ? (
@@ -1962,9 +1962,9 @@ export default function Auth() {
                 )}
 
                 {success && (
-                  <Alert className="bg-green-50 border-green-200">
-                    <AlertCircle className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">
+                  <Alert className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
+                    <AlertCircle className="h-4 w-4 text-primary-orange-600" />
+                    <AlertDescription className="text-primary-orange-800">
                       {success}
                     </AlertDescription>
                   </Alert>
@@ -1972,7 +1972,7 @@ export default function Auth() {
                 
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground mb-4">
-                    🔐 Choisissez votre nouveau mot de passe.
+                    ðŸ” Choisissez votre nouveau mot de passe.
                   </p>
 
                   <Label htmlFor="new-password">Nouveau mot de passe</Label>
@@ -1980,7 +1980,7 @@ export default function Auth() {
                     <Input
                       id="new-password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Minimum 6 caractères"
+                      placeholder="Minimum 6 caractÃ¨res"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
@@ -2026,10 +2026,10 @@ export default function Auth() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Réinitialisation en cours...
+                      RÃ©initialisation en cours...
                     </>
                   ) : (
-                    'Réinitialiser mon mot de passe'
+                    'RÃ©initialiser mon mot de passe'
                   )}
                 </Button>
               </form>
@@ -2043,9 +2043,9 @@ export default function Auth() {
               )}
 
               {success && (
-                <Alert className="border-green-200 bg-green-50">
-                  <AlertCircle className="h-4 w-4 text-green-600" />
-                  <AlertDescription className="text-green-800">{success}</AlertDescription>
+                <Alert className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+                  <AlertCircle className="h-4 w-4 text-primary-orange-600" />
+                  <AlertDescription className="text-primary-orange-800">{success}</AlertDescription>
                 </Alert>
               )}
 
@@ -2090,14 +2090,14 @@ export default function Auth() {
                         type="text"
                         value={formData.businessName}
                         onChange={(e) => handleInputChange('businessName', e.target.value)}
-                        placeholder="Ex: Boutique Fatou, Restaurant Le Délice..."
+                        placeholder="Ex: Boutique Fatou, Restaurant Le DÃ©lice..."
                         required
                         className="mt-1"
                       />
                     </div>
                   )}
 
-                  {/* Bouton détection position */}
+                  {/* Bouton dÃ©tection position */}
                   <Button
                     type="button"
                     variant="outline"
@@ -2111,9 +2111,9 @@ export default function Auth() {
                         handleInputChange('country', data.country_name || '');
                         handleInputChange('city', data.city || '');
                         handleInputChange('address', [data.region, data.city, data.country_name].filter(Boolean).join(', '));
-                        toast({ title: "📍 Position détectée", description: `${data.city}, ${data.country_name}` });
+                        toast({ title: "ðŸ“ Position dÃ©tectÃ©e", description: `${data.city}, ${data.country_name}` });
                       } catch {
-                        toast({ title: "Erreur", description: "Impossible de détecter la position", variant: "destructive" });
+                        toast({ title: "Erreur", description: "Impossible de dÃ©tecter la position", variant: "destructive" });
                       } finally {
                         setLoading(false);
                       }
@@ -2121,7 +2121,7 @@ export default function Auth() {
                     disabled={loading}
                   >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                    Détecter ma position automatiquement
+                    DÃ©tecter ma position automatiquement
                   </Button>
 
                   <div>
@@ -2140,7 +2140,7 @@ export default function Auth() {
                                   const found = WORLD_PHONE_CODES.find(c => c.country === formData.country);
                                   return found ? `${found.flag} ${found.country}` : formData.country;
                                 })()
-                              : "Sélectionner un pays..."}
+                              : "SÃ©lectionner un pays..."}
                           </span>
                           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -2149,7 +2149,7 @@ export default function Auth() {
                         <Command>
                           <CommandInput placeholder="Rechercher un pays..." className="h-9" />
                           <CommandList>
-                            <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                            <CommandEmpty>Aucun pays trouvÃ©</CommandEmpty>
                             <CommandGroup className="max-h-60 overflow-auto">
                               {WORLD_PHONE_CODES.map((item) => (
                                 <CommandItem
@@ -2178,7 +2178,7 @@ export default function Auth() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <Label htmlFor="city">Ville / Commune</Label>
-                      {/* Afficher le bouton de sélection uniquement pour taxi (synchronisation bureau) */}
+                      {/* Afficher le bouton de sÃ©lection uniquement pour taxi (synchronisation bureau) */}
                       {selectedRole === 'taxi' && (
                         <button
                           type="button"
@@ -2188,7 +2188,7 @@ export default function Auth() {
                           }}
                           className="text-xs text-primary hover:underline"
                         >
-                          {manualCityEntry ? '📋 Choisir dans la liste' : '✏️ Saisir manuellement'}
+                          {manualCityEntry ? 'ðŸ“‹ Choisir dans la liste' : 'âœï¸ Saisir manuellement'}
                         </button>
                       )}
                     </div>
@@ -2221,7 +2221,7 @@ export default function Auth() {
                         required
                         className="mt-1 w-full px-3 py-2 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring z-50"
                       >
-                        <option value="">Sélectionnez votre ville</option>
+                        <option value="">SÃ©lectionnez votre ville</option>
                         {bureaus.map((bureau) => (
                           <option key={bureau.id} value={bureau.commune}>
                             {bureau.commune} - {bureau.prefecture}
@@ -2231,13 +2231,13 @@ export default function Auth() {
                     )}
                     
                     {selectedRole === 'taxi' && formData.city && !manualCityEntry && (
-                      <p className="text-xs text-green-600 mt-1">
-                        ✅ Vous serez automatiquement synchronisé avec le bureau syndical de {formData.city}
+                      <p className="text-xs text-primary-orange-600 mt-1">
+                        âœ… Vous serez automatiquement synchronisÃ© avec le bureau syndical de {formData.city}
                       </p>
                     )}
                     {selectedRole === 'taxi' && formData.city && manualCityEntry && (
                       <p className="text-xs text-amber-600 mt-1">
-                        ⚠️ Ville saisie manuellement - synchronisation bureau non garantie
+                        âš ï¸ Ville saisie manuellement - synchronisation bureau non garantie
                       </p>
                     )}
                   </div>
@@ -2255,9 +2255,9 @@ export default function Auth() {
                   </div>
 
                   <div>
-                    <Label htmlFor="phone">Numéro de téléphone</Label>
+                    <Label htmlFor="phone">NumÃ©ro de tÃ©lÃ©phone</Label>
                     <div className="flex gap-2 mt-1">
-                      {/* Sélecteur d'indicatif pays avec recherche */}
+                      {/* SÃ©lecteur d'indicatif pays avec recherche */}
                       <Popover open={phoneCodeOpen} onOpenChange={setPhoneCodeOpen}>
                         <PopoverTrigger asChild>
                           <Button
@@ -2276,7 +2276,7 @@ export default function Auth() {
                           <Command>
                             <CommandInput placeholder="Rechercher un pays..." className="h-9" />
                             <CommandList>
-                              <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                              <CommandEmpty>Aucun pays trouvÃ©</CommandEmpty>
                               <CommandGroup className="max-h-60 overflow-auto">
                                 {WORLD_PHONE_CODES.map((item) => (
                                   <CommandItem
@@ -2301,13 +2301,13 @@ export default function Auth() {
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      {/* Numéro de téléphone */}
+                      {/* NumÃ©ro de tÃ©lÃ©phone */}
                       <Input
                         id="phone"
                         type="tel"
                         value={formData.phone}
                         onChange={(e) => {
-                          // Nettoyer le numéro (enlever espaces et caractères non numériques)
+                          // Nettoyer le numÃ©ro (enlever espaces et caractÃ¨res non numÃ©riques)
                           const cleaned = e.target.value.replace(/[^\d]/g, '');
                           handleInputChange('phone', cleaned);
                         }}
@@ -2318,15 +2318,15 @@ export default function Auth() {
                     </div>
                     {phoneError ? (
                       <p className="text-xs text-red-500 mt-1">
-                        ❌ {phoneError}
+                        âŒ {phoneError}
                       </p>
                     ) : formData.phone && !phoneError ? (
-                      <p className="text-xs text-green-600 mt-1">
-                        ✅ Format valide ({getPhoneLengthHint(phoneCode)})
+                      <p className="text-xs text-primary-orange-600 mt-1">
+                        âœ… Format valide ({getPhoneLengthHint(phoneCode)})
                       </p>
                     ) : (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Format attendu: {getPhoneLengthHint(phoneCode)} • Ex: {getPhoneExample(phoneCode)}
+                        Format attendu: {getPhoneLengthHint(phoneCode)} â€¢ Ex: {getPhoneExample(phoneCode)}
                       </p>
                     )}
                   </div>
@@ -2476,7 +2476,7 @@ export default function Auth() {
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                       </svg>
-                      <span>Redirection sécurisée vers Google...</span>
+                      <span>Redirection sÃ©curisÃ©e vers Google...</span>
                     </div>
                   )}
                 </>
@@ -2493,12 +2493,12 @@ export default function Auth() {
                       className="inline-flex items-center gap-1.5 py-2 px-4 text-sm font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-all duration-200"
                     >
                       <UserPlus className="h-4 w-4" />
-                      Créer un compte
+                      CrÃ©er un compte
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-sm text-muted-foreground">Déjà inscrit ?</span>
+                    <span className="text-sm text-muted-foreground">DÃ©jÃ  inscrit ?</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -2526,7 +2526,7 @@ export default function Auth() {
         </div>
       )}
 
-      {/* Modal de création de compte Client */}
+      {/* Modal de crÃ©ation de compte Client */}
       {showRoleSelectionModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto" onClick={() => setShowRoleSelectionModal(false)}>
           <div 
@@ -2534,7 +2534,7 @@ export default function Auth() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-bold text-center mb-1 text-gray-800">
-              Créer un compte Client
+              CrÃ©er un compte Client
             </h3>
             <p className="text-xs text-muted-foreground text-center mb-4">
               Remplissez vos informations pour vous inscrire
@@ -2553,18 +2553,18 @@ export default function Auth() {
               setSuccess(null);
               try {
                 if (formData.password !== formData.confirmPassword) {
-                  throw new Error("❌ Les mots de passe ne correspondent pas");
+                  throw new Error("âŒ Les mots de passe ne correspondent pas");
                 }
                 if (!validatePhoneNumber(formData.phone, phoneCode)) {
                   const hint = getPhoneLengthHint(phoneCode);
-                  throw new Error(`❌ Numéro de téléphone invalide pour ${phoneCode}. Format attendu: ${hint}`);
+                  throw new Error(`âŒ NumÃ©ro de tÃ©lÃ©phone invalide pour ${phoneCode}. Format attendu: ${hint}`);
                 }
                 const validatedData = signupSchema.parse({ ...formData, role: 'client' });
                 const { data: userCustomId, error: generateError } = await supabase
                   .rpc('generate_custom_id_with_role', { p_role: 'client' });
-                if (generateError) throw new Error('Erreur lors de la génération de votre identifiant');
+                if (generateError) throw new Error('Erreur lors de la gÃ©nÃ©ration de votre identifiant');
                 
-                // 🔑 Cognito signup d'abord (principal)
+                // ðŸ”‘ Cognito signup d'abord (principal)
                 // Supabase signup directement (pas de Cognito)
                 
                 // Sync avec Supabase pour RLS
@@ -2584,7 +2584,7 @@ export default function Auth() {
                     },
                   });
                 } catch (syncErr) {
-                  console.warn('⚠️ Sync Supabase échouée:', syncErr);
+                  console.warn('âš ï¸ Sync Supabase Ã©chouÃ©e:', syncErr);
                 }
                 
                 const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -2605,15 +2605,15 @@ export default function Auth() {
                 });
                 if (signUpError) throw signUpError;
                 setShowRoleSelectionModal(false);
-                setSuccess("✅ Compte créé ! Vérifiez votre email pour confirmer votre inscription.");
+                setSuccess("âœ… Compte crÃ©Ã© ! VÃ©rifiez votre email pour confirmer votre inscription.");
               } catch (err: any) {
-                setError(err.message || 'Erreur lors de la création du compte');
+                setError(err.message || 'Erreur lors de la crÃ©ation du compte');
               } finally {
                 setLoading(false);
                 setIsAuthenticating(false);
               }
             }} className="space-y-3">
-              {/* Prénom & Nom */}
+              {/* PrÃ©nom & Nom */}
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label htmlFor="modal-firstName" className="text-xs">{t('auth.firstName')}</Label>
@@ -2621,7 +2621,7 @@ export default function Auth() {
                     id="modal-firstName"
                     value={formData.firstName}
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    placeholder="Prénom"
+                    placeholder="PrÃ©nom"
                     className="h-9 text-sm"
                     required
                   />
@@ -2653,7 +2653,7 @@ export default function Auth() {
                 />
               </div>
 
-              {/* Téléphone */}
+              {/* TÃ©lÃ©phone */}
               <div>
                 <Label htmlFor="modal-phone" className="text-xs">{t('auth.phone')}</Label>
                 <div className="flex gap-1">
@@ -2674,7 +2674,7 @@ export default function Auth() {
                       <Command>
                         <CommandInput placeholder="Rechercher..." className="h-9" />
                         <CommandList>
-                          <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                          <CommandEmpty>Aucun pays trouvÃ©</CommandEmpty>
                           <CommandGroup className="max-h-60 overflow-auto">
                             {WORLD_PHONE_CODES.map((item) => (
                               <CommandItem
@@ -2725,7 +2725,7 @@ export default function Auth() {
                             ? WORLD_PHONE_CODES.find(c => c.country === formData.country)
                               ? `${WORLD_PHONE_CODES.find(c => c.country === formData.country)!.flag} ${formData.country}`
                               : formData.country
-                            : 'Sélectionner...'}
+                            : 'SÃ©lectionner...'}
                         </span>
                         <ChevronDown className="ml-1 h-3 w-3 shrink-0 opacity-50" />
                       </Button>
@@ -2734,7 +2734,7 @@ export default function Auth() {
                       <Command>
                         <CommandInput placeholder="Rechercher un pays..." className="h-8 text-sm" />
                         <CommandList className="max-h-[200px]">
-                          <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                          <CommandEmpty>Aucun pays trouvÃ©</CommandEmpty>
                           <CommandGroup>
                             {WORLD_PHONE_CODES.map((entry) => (
                               <CommandItem
@@ -2777,7 +2777,7 @@ export default function Auth() {
                   type="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="h-9 text-sm"
                   required
                 />
@@ -2791,7 +2791,7 @@ export default function Auth() {
                   type="password"
                   value={formData.confirmPassword}
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="h-9 text-sm"
                   required
                 />
@@ -2801,7 +2801,7 @@ export default function Auth() {
                 <p className="text-xs text-red-600 bg-red-50 p-2 rounded-md">{error}</p>
               )}
 
-              {/* Bouton Créer */}
+              {/* Bouton CrÃ©er */}
               <Button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
@@ -2812,11 +2812,11 @@ export default function Auth() {
                 ) : (
                   <UserPlus className="h-4 w-4 mr-2" />
                 )}
-                {loading ? 'Création...' : 'Créer mon compte'}
+                {loading ? 'CrÃ©ation...' : 'CrÃ©er mon compte'}
               </Button>
             </form>
             
-            {/* Séparateur OAuth */}
+            {/* SÃ©parateur OAuth */}
             <div className="relative my-3">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-gray-200"></span>
@@ -2862,30 +2862,30 @@ export default function Auth() {
         </div>
       )}
 
-      {/* ===== MODAL SUCCÈS INSCRIPTION ===== */}
+      {/* ===== MODAL SUCCÃˆS INSCRIPTION ===== */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <DialogContent className="sm:max-w-md border-0 shadow-2xl rounded-2xl p-0 overflow-hidden [&>button]:hidden">
           <div className="flex flex-col items-center text-center p-8">
-            {/* Cercle animé avec checkmark */}
+            {/* Cercle animÃ© avec checkmark */}
             <div className="relative mb-6">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 animate-[scale-in_0.4s_ease-out]">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-blue-400 to-primary-orange-600 flex items-center justify-center shadow-lg shadow-primary-orange-500/30 animate-[scale-in_0.4s_ease-out]">
                 <CheckCircle2 className="h-10 w-10 text-white" />
               </div>
               {/* Pulse ring */}
-              <div className="absolute inset-0 w-20 h-20 rounded-full bg-emerald-400/30 animate-ping" style={{ animationDuration: '1.5s' }} />
+              <div className="absolute inset-0 w-20 h-20 rounded-full bg-primary-blue-400/30 animate-ping" style={{ animationDuration: '1.5s' }} />
             </div>
             
             <h3 className="text-xl font-bold text-foreground mb-2">
-              Inscription réussie !
+              Inscription rÃ©ussie !
             </h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Votre compte a été créé avec succès. Vous allez être redirigé vers votre espace.
+              Votre compte a Ã©tÃ© crÃ©Ã© avec succÃ¨s. Vous allez Ãªtre redirigÃ© vers votre espace.
             </p>
             
             {/* Barre de progression */}
             <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full"
+                className="h-full bg-gradient-to-r from-primary-blue-400 to-primary-orange-600 rounded-full"
                 style={{ 
                   animation: 'progress-fill 2.5s ease-in-out forwards'
                 }}

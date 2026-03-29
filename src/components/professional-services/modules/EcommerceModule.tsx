@@ -1,6 +1,6 @@
 /**
  * MODULE E-COMMERCE - Complet
- * Utilise serviceId pour afficher les données spécifiques au service professionnel
+ * Utilise serviceId pour afficher les donnÃ©es spÃ©cifiques au service professionnel
  */
 
 import { useState } from 'react';
@@ -30,28 +30,28 @@ const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   confirmed: 'bg-blue-100 text-blue-800',
   preparing: 'bg-purple-100 text-purple-800',
-  ready: 'bg-cyan-100 text-cyan-800',
+  ready: 'bg-primary-blue-100 text-primary-blue-800',
   in_transit: 'bg-orange-100 text-orange-800',
-  delivered: 'bg-green-100 text-green-800',
-  completed: 'bg-green-100 text-green-800',
+  delivered: 'bg-primary-orange-100 text-primary-orange-800',
+  completed: 'bg-primary-orange-100 text-primary-orange-800',
   cancelled: 'bg-red-100 text-red-800',
 };
 
 const statusLabels: Record<string, string> = {
   pending: 'En attente',
-  confirmed: 'Confirmée',
-  preparing: 'En préparation',
-  ready: 'Prête',
+  confirmed: 'ConfirmÃ©e',
+  preparing: 'En prÃ©paration',
+  ready: 'PrÃªte',
   in_transit: 'En transit',
-  delivered: 'Livrée',
-  completed: 'Terminée',
-  cancelled: 'Annulée',
+  delivered: 'LivrÃ©e',
+  completed: 'TerminÃ©e',
+  cancelled: 'AnnulÃ©e',
 };
 
-// formatCurrency importé depuis @/lib/formatters
+// formatCurrency importÃ© depuis @/lib/formatters
 
 export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProps) {
-  // Utiliser le hook avec serviceId pour charger les données spécifiques au service professionnel
+  // Utiliser le hook avec serviceId pour charger les donnÃ©es spÃ©cifiques au service professionnel
   const { stats, recentOrders, topProducts, loading, error, refresh } = useServiceEcommerceStats(serviceId);
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
           <p className="text-destructive">{error}</p>
           <Button onClick={refresh} className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
-            Réessayer
+            RÃ©essayer
           </Button>
         </CardContent>
       </Card>
@@ -100,7 +100,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
             <ShoppingCart className="w-7 h-7 text-primary" />
             {businessName || 'Module E-commerce'}
           </h2>
-          <p className="text-muted-foreground">Gérez vos ventes, produits et clients</p>
+          <p className="text-muted-foreground">GÃ©rez vos ventes, produits et clients</p>
         </div>
         <Button onClick={refresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -136,7 +136,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
           <CardContent>
             <div className="text-2xl font-bold">{stats?.products.total || 0}</div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="text-green-600">{stats?.products.active || 0} actifs</span>
+              <span className="text-primary-orange-600">{stats?.products.active || 0} actifs</span>
               {(stats?.products.lowStock || 0) > 0 && (
                 <Badge variant="destructive" className="text-xs">
                   <AlertTriangle className="w-3 h-3 mr-1" />
@@ -157,8 +157,8 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
             <div className="flex items-center gap-1 text-xs">
               {(stats?.clients.newThisMonth || 0) > 0 ? (
                 <>
-                  <ArrowUpRight className="w-3 h-3 text-green-500" />
-                  <span className="text-green-600">+{stats?.clients.newThisMonth} ce mois</span>
+                  <ArrowUpRight className="w-3 h-3 text-primary-orange-500" />
+                  <span className="text-primary-orange-600">+{stats?.clients.newThisMonth} ce mois</span>
                 </>
               ) : (
                 <span className="text-muted-foreground">Aucun nouveau ce mois</span>
@@ -192,7 +192,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
           </TabsTrigger>
           <TabsTrigger value="orders">
             <ShoppingBag className="w-4 h-4 mr-2" />
-            Commandes récentes
+            Commandes rÃ©centes
           </TabsTrigger>
           <TabsTrigger value="products">
             <Package className="w-4 h-4 mr-2" />
@@ -202,26 +202,26 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
 
         <TabsContent value="overview" className="mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Sales Summary - Séparé POS / Online */}
+            {/* Sales Summary - SÃ©parÃ© POS / Online */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <DollarSign className="w-5 h-5" />
-                  Résumé des ventes
+                  RÃ©sumÃ© des ventes
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Total */}
                 <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                  <span className="text-sm font-medium">Total général</span>
+                  <span className="text-sm font-medium">Total gÃ©nÃ©ral</span>
                   <span className="font-bold text-primary">{formatCurrency(stats?.sales.totalRevenue || 0)}</span>
                 </div>
                 
-                {/* Séparation POS / Online */}
+                {/* SÃ©paration POS / Online */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                     <div className="flex items-center gap-1 mb-1">
-                      <span className="text-xs font-medium text-orange-700">🏪 POS</span>
+                      <span className="text-xs font-medium text-orange-700">ðŸª POS</span>
                     </div>
                     <div className="text-lg font-bold text-orange-600">
                       {formatCurrency(stats?.salesPos.totalRevenue || 0)}
@@ -229,7 +229,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   </div>
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center gap-1 mb-1">
-                      <span className="text-xs font-medium text-blue-700">🌐 En ligne</span>
+                      <span className="text-xs font-medium text-blue-700">ðŸŒ En ligne</span>
                     </div>
                     <div className="text-lg font-bold text-blue-600">
                       {formatCurrency(stats?.salesOnline.totalRevenue || 0)}
@@ -252,28 +252,28 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
               </CardContent>
             </Card>
 
-            {/* Order Status Distribution - Séparé POS / Online */}
+            {/* Order Status Distribution - SÃ©parÃ© POS / Online */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <ShoppingCart className="w-5 h-5" />
-                  État des commandes
+                  Ã‰tat des commandes
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Séparation POS / Online pour les commandes */}
+                {/* SÃ©paration POS / Online pour les commandes */}
                 <div className="grid grid-cols-2 gap-3 pb-3 border-b">
                   <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-center">
-                    <span className="text-xs font-medium text-orange-700">🏪 POS</span>
+                    <span className="text-xs font-medium text-orange-700">ðŸª POS</span>
                     <div className="text-xl font-bold text-orange-600">{stats?.ordersPos.total || 0}</div>
                   </div>
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
-                    <span className="text-xs font-medium text-blue-700">🌐 En ligne</span>
+                    <span className="text-xs font-medium text-blue-700">ðŸŒ En ligne</span>
                     <div className="text-xl font-bold text-blue-600">{stats?.ordersOnline.total || 0}</div>
                   </div>
                 </div>
 
-                {/* Détails par statut */}
+                {/* DÃ©tails par statut */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
@@ -305,8 +305,8 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                      <span className="text-sm">Livrées</span>
+                      <CheckCircle className="w-4 h-4 text-primary-orange-500" />
+                      <span className="text-sm">LivrÃ©es</span>
                     </div>
                     <div className="flex gap-2">
                       <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
@@ -320,7 +320,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <XCircle className="w-4 h-4 text-red-500" />
-                      <span className="text-sm">Annulées</span>
+                      <span className="text-sm">AnnulÃ©es</span>
                     </div>
                     <div className="flex gap-2">
                       <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
@@ -340,7 +340,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
         <TabsContent value="orders" className="mt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Commandes récentes</CardTitle>
+              <CardTitle className="text-lg">Commandes rÃ©centes</CardTitle>
               <Button variant="outline" size="sm" onClick={() => navigate('/vendeur/orders')}>
                 <Eye className="w-4 h-4 mr-2" />
                 Voir tout
@@ -369,16 +369,16 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                           </Badge>
                           {order.source === 'pos' ? (
                             <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
-                              🏪 POS
+                              ðŸª POS
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">
-                              🌐 En ligne
+                              ðŸŒ En ligne
                             </Badge>
                           )}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {order.customer_name} • {formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: fr })}
+                          {order.customer_name} â€¢ {formatDistanceToNow(new Date(order.created_at), { addSuffix: true, locale: fr })}
                         </div>
                       </div>
                       <div className="text-right">
@@ -398,14 +398,14 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
               <CardTitle className="text-lg">Produits les plus vendus</CardTitle>
               <Button variant="outline" size="sm" onClick={() => navigate('/vendeur/products')}>
                 <Eye className="w-4 h-4 mr-2" />
-                Gérer les produits
+                GÃ©rer les produits
               </Button>
             </CardHeader>
             <CardContent>
               {topProducts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune vente enregistrée</p>
+                  <p>Aucune vente enregistrÃ©e</p>
                 </div>
               ) : (
                 <div className="space-y-3">

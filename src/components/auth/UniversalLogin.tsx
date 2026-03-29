@@ -1,11 +1,11 @@
 /**
  * Composant de Connexion Universelle Intelligente
  * Support: Agent, Bureau Syndicat, Travailleur
- * Identifiant flexible: Email, Téléphone, ID unique
+ * Identifiant flexible: Email, TÃ©lÃ©phone, ID unique
  *
- * CORRECTIONS DE SÉCURITÉ:
+ * CORRECTIONS DE SÃ‰CURITÃ‰:
  * - Utilisation de SecureStorage au lieu de localStorage
- * - Sessions chiffrées avec AES-GCM
+ * - Sessions chiffrÃ©es avec AES-GCM
  * - Protection contre XSS
  */
 
@@ -41,7 +41,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
   const [showPassword, setShowPassword] = useState(false);
   const [identifierType, setIdentifierType] = useState<'email' | 'phone' | 'id' | null>(null);
 
-  // Détection automatique du type d'identifiant
+  // DÃ©tection automatique du type d'identifiant
   const detectIdentifierType = (value: string): 'email' | 'phone' | 'id' => {
     if (value.includes('@')) return 'email';
     const cleanValue = value.replace(/\s+/g, '');
@@ -68,9 +68,9 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
         throw new Error(t('auth.universal.errors.fillAllFields'));
       }
 
-      console.log('🔐 Tentative de connexion:', { userType, identifier, identifierType });
+      console.log('ðŸ” Tentative de connexion:', { userType, identifier, identifierType });
 
-      // Appel à l'Edge Function de connexion universelle
+      // Appel Ã  l'Edge Function de connexion universelle
       const { data, error: fnError } = await supabase.functions.invoke('universal-login', {
         body: {
           identifier: identifier.trim(),
@@ -82,14 +82,14 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
       if (fnError) throw fnError;
       if (!data?.success) throw new Error(data?.error || t('auth.universal.errors.connection'));
 
-      console.log('✅ Connexion réussie:', data.session.role);
+      console.log('âœ… Connexion rÃ©ussie:', data.session.role);
 
-      // Stocker la session de manière sécurisée (chiffrée avec AES-GCM)
+      // Stocker la session de maniÃ¨re sÃ©curisÃ©e (chiffrÃ©e avec AES-GCM)
       await SecureStorage.setItem(`${userType}_session`, data.session);
 
       toast.success(t('auth.universal.toast.success'));
       
-      // Redirection selon le rôle
+      // Redirection selon le rÃ´le
       if (data.session.role === 'agent') {
         navigate('/agent-dashboard');
       } else if (data.session.role === 'bureau') {
@@ -104,7 +104,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
       const errorMessage = err instanceof Error ? err.message : t('auth.universal.errors.connection');
       setError(errorMessage);
       toast.error(errorMessage);
-      console.error('❌ Erreur connexion:', err);
+      console.error('âŒ Erreur connexion:', err);
     } finally {
       setLoading(false);
     }
@@ -122,7 +122,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
       value: 'bureau' as UserType, 
       label: t('auth.universal.accountType.bureau'), 
       icon: Building2,
-      color: 'bg-green-500',
+      color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
       description: t('auth.universal.accountType.bureauDesc')
     },
     { 
@@ -159,7 +159,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Sélection du type d'utilisateur */}
+          {/* SÃ©lection du type d'utilisateur */}
           <div className="space-y-3">
             <Label className="text-sm font-semibold">{t('auth.universal.accountType.label')}</Label>
             <div className="grid grid-cols-1 gap-2">
@@ -275,7 +275,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
             </Button>
           </form>
 
-          {/* Information système */}
+          {/* Information systÃ¨me */}
           <div className="pt-4 border-t">
             <div className="bg-primary/5 rounded-lg p-4 space-y-2">
               <div className="flex items-center gap-2 text-sm font-semibold text-primary">

@@ -1,7 +1,7 @@
 /**
  * DELIVERY DRIVER - INTERFACE ULTRA-PROFESSIONNELLE
  * 224Solutions Delivery System
- * Interface moderne avec glassmorphism, GPS unifié et gestion d'erreurs robuste
+ * Interface moderne avec glassmorphism, GPS unifiÃ© et gestion d'erreurs robuste
  */
 
 import { useState, useEffect } from 'react';
@@ -54,17 +54,17 @@ export default function DeliveryDriver() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   
-  // État local
+  // Ã‰tat local
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showProofUpload, setShowProofUpload] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isOnline, setIsOnline] = useState(false);
 
-  // Gestion des erreurs centralisée
+  // Gestion des erreurs centralisÃ©e
   const { error, captureError, clearError } = useLivreurErrorBoundary();
 
-  // Vérification subscription et KYC
+  // VÃ©rification subscription et KYC
   const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
 
   // Hook pour le profil et statut du driver
@@ -138,12 +138,12 @@ export default function DeliveryDriver() {
     if (isOnline && hasAccess && location) {
       startWatching();
       // Note: startWatching() ne prend pas de callbacks selon le hook
-      // TODO: Implémenter un effet séparé pour tracker la position
+      // TODO: ImplÃ©menter un effet sÃ©parÃ© pour tracker la position
       /* 
-      // Ancienne version avec callbacks (à réimplémenter si nécessaire):
+      // Ancienne version avec callbacks (Ã  rÃ©implÃ©menter si nÃ©cessaire):
       startWatching(
         (position) => {
-          // Mettre à jour position du conducteur
+          // Mettre Ã  jour position du conducteur
           updateLocation({ lat: position.latitude, lng: position.longitude });
 
           // Si livraison active, tracker position
@@ -152,11 +152,11 @@ export default function DeliveryDriver() {
               currentDelivery.id,
               position.latitude,
               position.longitude
-            ).catch(err => console.error('❌ Erreur tracking livraison:', err));
+            ).catch(err => console.error('âŒ Erreur tracking livraison:', err));
           }
         },
         (error) => {
-          console.error('❌ Erreur suivi GPS:', error);
+          console.error('âŒ Erreur suivi GPS:', error);
           captureError('gps', error || 'Erreur suivi GPS');
         }
       );
@@ -177,7 +177,7 @@ export default function DeliveryDriver() {
     }
   }, [location, currentDelivery]);
 
-  // S'abonner au tracking temps réel
+  // S'abonner au tracking temps rÃ©el
   useEffect(() => {
     if (currentDelivery?.id) {
       const unsubscribe = subscribeToTracking(currentDelivery.id);
@@ -185,7 +185,7 @@ export default function DeliveryDriver() {
     }
   }, [currentDelivery?.id]);
 
-  // Charger données initiales
+  // Charger donnÃ©es initiales
   useEffect(() => {
     if (user?.id) {
       loadCurrentDelivery();
@@ -200,37 +200,37 @@ export default function DeliveryDriver() {
     const next = !isOnline;
 
     if (!user?.id) {
-      toast.error('Profil conducteur non trouvé');
+      toast.error('Profil conducteur non trouvÃ©');
       return;
     }
 
     if (next && !hasAccess) {
-      toast.error('⚠️ Abonnement requis', {
+      toast.error('âš ï¸ Abonnement requis', {
         description: 'Vous devez avoir un abonnement actif pour recevoir des livraisons'
       });
       return;
     }
 
     if (next) {
-      toast.loading('📍 Activation GPS...', { id: 'gps-loading' });
+      toast.loading('ðŸ“ Activation GPS...', { id: 'gps-loading' });
 
       try {
-        // Vérifier que la position GPS est disponible
+        // VÃ©rifier que la position GPS est disponible
         if (!location) {
           toast.dismiss('gps-loading');
           toast.error('Position GPS non disponible');
           return;
         }
 
-        // Mettre à jour statut - passer en ligne
+        // Mettre Ã  jour statut - passer en ligne
         setIsOnline(true);
         await goOnline({ lat: location.latitude, lng: location.longitude });
         toast.dismiss('gps-loading');
-        toast.success('🟢 Vous êtes maintenant en ligne');
+        toast.success('ðŸŸ¢ Vous Ãªtes maintenant en ligne');
 
       } catch (error: any) {
         toast.dismiss('gps-loading');
-        console.error('❌ Erreur activation:', error);
+        console.error('âŒ Erreur activation:', error);
         captureError('network', 'Erreur activation', error);
       }
     } else {
@@ -238,7 +238,7 @@ export default function DeliveryDriver() {
       try {
         setIsOnline(false);
         await goOffline();
-        toast.info('🔴 Vous êtes maintenant hors ligne');
+        toast.info('ðŸ”´ Vous Ãªtes maintenant hors ligne');
       } catch (error) {
         console.error('Erreur changement statut', error);
         toast.error('Erreur lors du changement de statut');
@@ -252,21 +252,21 @@ export default function DeliveryDriver() {
   const handleAcceptDelivery = async (deliveryId: string) => {
     await acceptDelivery(deliveryId);
     setActiveTab('active');
-    toast.success('✅ Livraison acceptée');
+    toast.success('âœ… Livraison acceptÃ©e');
   };
 
   /**
-   * Démarrer une livraison (ramassage effectué)
+   * DÃ©marrer une livraison (ramassage effectuÃ©)
    */
   const handleStartDelivery = async () => {
     if (!currentDelivery) return;
     
     await startDelivery(currentDelivery.id);
-    toast.success('🚚 Livraison en cours');
+    toast.success('ðŸšš Livraison en cours');
   };
 
   /**
-   * Compléter livraison avec preuve
+   * ComplÃ©ter livraison avec preuve
    */
   const handleCompleteDelivery = async (proofUrl: string, signature?: string) => {
     if (!currentDelivery) return;
@@ -278,17 +278,17 @@ export default function DeliveryDriver() {
     );
 
     setShowProofUpload(false);
-    toast.success('✅ Livraison terminée');
+    toast.success('âœ… Livraison terminÃ©e');
   };
 
   /**
-   * Signaler un problème
+   * Signaler un problÃ¨me
    */
   const handleReportProblem = async (problem: string) => {
     if (!currentDelivery) return;
     
     await reportProblem(currentDelivery.id, problem);
-    toast.success('Problème signalé');
+    toast.success('ProblÃ¨me signalÃ©');
   };
 
   /**
@@ -300,7 +300,7 @@ export default function DeliveryDriver() {
 
   // ========== RENDU ==========
 
-  // Bannière d'erreur GPS
+  // BanniÃ¨re d'erreur GPS
   const renderGPSError = () => {
     if (!gpsError) return null;
 
@@ -319,7 +319,7 @@ export default function DeliveryDriver() {
 
   // Mode hors ligne - Ne plus utiliser isOfflineMode qui n'existe plus
   const renderOfflineMode = () => {
-    // Fonction désactivée car isOfflineMode n'existe plus dans useGPSLocation
+    // Fonction dÃ©sactivÃ©e car isOfflineMode n'existe plus dans useGPSLocation
     return null;
   };
 
@@ -351,7 +351,7 @@ export default function DeliveryDriver() {
                 disabled={!hasAccess || gpsLoading}
                 className={`relative px-6 py-2 rounded-full font-medium transition-all ${
                   isOnline
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/40'
+                    ? 'bg-primary-blue-600 text-white shadow-lg shadow-primary-orange-600/40'
                     : 'bg-white/10 text-gray-300 hover:bg-white/20'
                 }`}
               >
@@ -380,7 +380,7 @@ export default function DeliveryDriver() {
         {renderGPSError()}
         {renderOfflineMode()}
 
-        {/* Bannière abonnement */}
+        {/* BanniÃ¨re abonnement */}
         {!hasAccess && (
           <>
             <DriverSubscriptionBanner
@@ -415,7 +415,7 @@ export default function DeliveryDriver() {
                     {stats?.todayEarnings?.toFixed(2) || '0.00'} GNF
                   </p>
                 </div>
-                <Wallet className="h-8 w-8 text-green-400" />
+                <Wallet className="h-8 w-8 text-primary-orange-400" />
               </div>
             </CardContent>
           </Card>
@@ -438,7 +438,7 @@ export default function DeliveryDriver() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Taux réussite</p>
+                  <p className="text-sm text-gray-400">Taux rÃ©ussite</p>
                   <p className="text-2xl font-bold text-white">
                     100%
                   </p>
@@ -494,7 +494,7 @@ export default function DeliveryDriver() {
                               <h4 className="font-medium text-white">{delivery.vendor_name || 'Magasin'}</h4>
                               <p className="text-sm text-gray-400">{delivery.delivery_address?.address || 'Adresse non disponible'}</p>
                             </div>
-                            <Badge className="bg-green-500/20 text-green-400">
+                            <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 text-primary-orange-400">
                               {delivery.delivery_fee} GNF
                             </Badge>
                           </div>
@@ -553,7 +553,7 @@ export default function DeliveryDriver() {
                   <Badge className={`
                     ${currentDelivery.status === 'assigned' ? 'bg-blue-500/20 text-blue-400' : ''}
                     ${currentDelivery.status === 'picked_up' ? 'bg-yellow-500/20 text-yellow-400' : ''}
-                    ${currentDelivery.status === 'in_transit' ? 'bg-green-500/20 text-green-400' : ''}
+                    ${currentDelivery.status === 'in_transit' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 text-primary-orange-400' : ''}
                   `}>
                     {currentDelivery.status}
                   </Badge>
@@ -584,9 +584,9 @@ export default function DeliveryDriver() {
                   {currentDelivery.status === 'assigned' && (
                     <Button
                       onClick={handleStartDelivery}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
+                      className="w-full bg-primary-blue-600 hover:bg-primary-blue-700 shadow-lg shadow-primary-orange-600/40"
                     >
-                      Ramassage effectué
+                      Ramassage effectuÃ©
                     </Button>
                   )}
 
@@ -595,7 +595,7 @@ export default function DeliveryDriver() {
                       onClick={() => setShowProofUpload(true)}
                       className="w-full bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/40"
                     >
-                      Livraison effectuée
+                      Livraison effectuÃ©e
                     </Button>
                   )}
                 </CardContent>
@@ -618,7 +618,7 @@ export default function DeliveryDriver() {
                 {deliveryHistory.length === 0 ? (
                   <div className="text-center py-12 text-gray-400">
                     <Clock className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                    <p>Aucune livraison terminée</p>
+                    <p>Aucune livraison terminÃ©e</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -635,7 +635,7 @@ export default function DeliveryDriver() {
                               {new Date(delivery.created_at).toLocaleDateString()}
                             </p>
                           </div>
-                          <Badge className="bg-green-500/20 text-green-400">
+                          <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 text-primary-orange-400">
                             {delivery.delivery_fee} GNF
                           </Badge>
                         </div>
@@ -665,7 +665,7 @@ export default function DeliveryDriver() {
             <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
               <MyPurchasesOrdersList 
                 title="Mes Achats Personnels" 
-                emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 
+                emptyMessage="Vous n'avez pas encore effectuÃ© d'achats sur le marketplace" 
               />
             </Suspense>
           </TabsContent>

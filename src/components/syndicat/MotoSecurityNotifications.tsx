@@ -63,7 +63,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
           filter: `bureau_id=eq.${bureauId}`
         },
         (payload: any) => {
-          toast.error('Nouvelle alerte de sécurité!', {
+          toast.error('Nouvelle alerte de sÃ©curitÃ©!', {
             description: payload.new.title
           });
           loadNotifications();
@@ -85,7 +85,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
 
       if (error) throw error;
       loadNotifications();
-      toast.success('Notification marquée comme lue');
+      toast.success('Notification marquÃ©e comme lue');
     } catch (error) {
       console.error('Erreur marquage notification:', error);
       toast.error('Erreur lors du marquage de la notification');
@@ -102,7 +102,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
 
       if (error) throw error;
       
-      toast.success('Toutes les notifications ont été marquées comme lues');
+      toast.success('Toutes les notifications ont Ã©tÃ© marquÃ©es comme lues');
       loadNotifications();
     } catch (error) {
       console.error('Erreur marquage notifications:', error);
@@ -118,7 +118,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
         return <AlertTriangle className="w-5 h-5 text-red-500" />;
       case 'success':
       case 'resolved':
-        return <CheckCircle2 className="w-5 h-5 text-green-500" />;
+        return <CheckCircle2 className="w-5 h-5 text-primary-orange-500" />;
       case 'info':
       case 'maintenance':
       default:

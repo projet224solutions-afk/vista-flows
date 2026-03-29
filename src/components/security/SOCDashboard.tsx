@@ -1,6 +1,6 @@
 /**
  * SOC - SECURITY OPERATIONS CENTER
- * Centre opérationnel de sécurité 24/7
+ * Centre opÃ©rationnel de sÃ©curitÃ© 24/7
  */
 
 import { useState, useEffect } from 'react';
@@ -23,12 +23,12 @@ export function SOCDashboard() {
 
   const handleRefresh = () => {
     loadSecurityData();
-    toast.success('Dashboard SOC actualisé');
+    toast.success('Dashboard SOC actualisÃ©');
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'resolved': return 'text-green-600';
+      case 'resolved': return 'text-primary-orange-600';
       case 'contained': return 'text-yellow-600';
       case 'investigating': return 'text-blue-600';
       default: return 'text-red-600';
@@ -44,10 +44,10 @@ export function SOCDashboard() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
-              Centre Opérationnel de Sécurité (SOC)
+              Centre OpÃ©rationnel de SÃ©curitÃ© (SOC)
             </CardTitle>
             <CardDescription>
-              Surveillance et réponse aux incidents 24/7
+              Surveillance et rÃ©ponse aux incidents 24/7
             </CardDescription>
           </div>
           <Button 
@@ -64,25 +64,25 @@ export function SOCDashboard() {
         {/* Statut SOC */}
         <div className={`p-4 rounded-lg border ${
           socStatus.operational 
-            ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' 
+            ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 border-primary-orange-200 dark:border-primary-orange-800' 
             : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800'
         }`}>
           <div className="flex items-center gap-2 mb-2">
             {socStatus.operational ? (
-              <CheckCircle className="w-5 h-5 text-green-600" />
+              <CheckCircle className="w-5 h-5 text-primary-orange-600" />
             ) : (
               <XCircle className="w-5 h-5 text-red-600" />
             )}
             <span className="font-semibold">
-              {socStatus.operational ? 'SOC opérationnel' : 'SOC hors ligne'}
+              {socStatus.operational ? 'SOC opÃ©rationnel' : 'SOC hors ligne'}
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Couverture {socStatus.coverage} • {socStatus.activeAnalysts} analystes actifs • Temps de réponse moyen: {socStatus.responseTime}
+            Couverture {socStatus.coverage} â€¢ {socStatus.activeAnalysts} analystes actifs â€¢ Temps de rÃ©ponse moyen: {socStatus.responseTime}
           </p>
         </div>
 
-        {/* Métriques SOC */}
+        {/* MÃ©triques SOC */}
         <ResponsiveGrid mobileCols={2} tabletCols={4} desktopCols={4} gap="sm">
           <div className="p-4 bg-muted rounded-lg">
             <AlertTriangle className="w-8 h-8 text-red-500 mb-2" />
@@ -95,7 +95,7 @@ export function SOCDashboard() {
             <div className="text-xs text-muted-foreground">Alertes en cours</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
-            <CheckCircle className="w-8 h-8 text-green-500 mb-2" />
+            <CheckCircle className="w-8 h-8 text-primary-orange-500 mb-2" />
             <div className="text-2xl font-bold">{stats?.open_incidents || 0}</div>
             <div className="text-xs text-muted-foreground">Incidents ouverts</div>
           </div>
@@ -106,16 +106,16 @@ export function SOCDashboard() {
           </div>
         </ResponsiveGrid>
 
-        {/* Incidents récents */}
+        {/* Incidents rÃ©cents */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-sm">Incidents récents</h4>
+            <h4 className="font-semibold text-sm">Incidents rÃ©cents</h4>
             <Badge variant="outline">{recentIncidents.length} actifs</Badge>
           </div>
           
           {recentIncidents.length === 0 ? (
             <div className="p-4 border rounded-lg text-center text-muted-foreground">
-              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
+              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-primary-orange-500" />
               <p className="text-sm">Aucun incident actif</p>
             </div>
           ) : (
@@ -148,7 +148,7 @@ export function SOCDashboard() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="flex-1">
             <Users className="w-4 h-4 mr-2" />
-            Équipe SOC
+            Ã‰quipe SOC
           </Button>
           <Button variant="outline" size="sm" className="flex-1">
             <Activity className="w-4 h-4 mr-2" />

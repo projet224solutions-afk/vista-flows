@@ -29,7 +29,7 @@ export default function PWADiagnostic() {
   const [swStatus, setSwStatus] = useState<string>('checking');
   const [cacheStatus, setCacheStatus] = useState<{ cached: number; size: string } | null>(null);
 
-  // Écouter l'événement d'installation PWA
+  // Ã‰couter l'Ã©vÃ©nement d'installation PWA
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
@@ -39,7 +39,7 @@ export default function PWADiagnostic() {
 
     window.addEventListener('beforeinstallprompt', handler);
     
-    // Vérifier si déjà installé
+    // VÃ©rifier si dÃ©jÃ  installÃ©
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstallable(false);
     }
@@ -47,21 +47,21 @@ export default function PWADiagnostic() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  // Exécuter le diagnostic
+  // ExÃ©cuter le diagnostic
   const runDiagnostic = async () => {
     setIsRunning(true);
     const results: DiagnosticItem[] = [];
 
-    // 1. Vérifier HTTPS
+    // 1. VÃ©rifier HTTPS
     const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
     results.push({
-      label: 'Connexion sécurisée (HTTPS)',
+      label: 'Connexion sÃ©curisÃ©e (HTTPS)',
       status: isSecure ? 'success' : 'error',
       message: isSecure ? 'HTTPS actif' : 'HTTPS requis pour PWA',
       icon: <Shield className="w-4 h-4" />
     });
 
-    // 2. Vérifier Service Worker
+    // 2. VÃ©rifier Service Worker
     let swRegistered = false;
     if ('serviceWorker' in navigator) {
       try {
@@ -74,11 +74,11 @@ export default function PWADiagnostic() {
           status: swRegistered ? 'success' : 'error',
           message: swRegistered 
             ? `Actif (${registration?.active?.state || 'installed'})` 
-            : 'Non enregistré',
+            : 'Non enregistrÃ©',
           icon: <Database className="w-4 h-4" />
         });
 
-        // Vérifier les caches
+        // VÃ©rifier les caches
         if (swRegistered) {
           const cacheNames = await caches.keys();
           let totalSize = 0;
@@ -103,7 +103,7 @@ export default function PWADiagnostic() {
         results.push({
           label: 'Service Worker',
           status: 'error',
-          message: 'Erreur lors de la vérification',
+          message: 'Erreur lors de la vÃ©rification',
           icon: <Database className="w-4 h-4" />
         });
       }
@@ -111,12 +111,12 @@ export default function PWADiagnostic() {
       results.push({
         label: 'Service Worker',
         status: 'error',
-        message: 'Non supporté par ce navigateur',
+        message: 'Non supportÃ© par ce navigateur',
         icon: <Database className="w-4 h-4" />
       });
     }
 
-    // 3. Vérifier le Manifest
+    // 3. VÃ©rifier le Manifest
     try {
       const manifestLink = document.querySelector('link[rel="manifest"]');
       if (manifestLink) {
@@ -138,7 +138,7 @@ export default function PWADiagnostic() {
         results.push({
           label: 'Manifest PWA',
           status: 'error',
-          message: 'Manifest non trouvé',
+          message: 'Manifest non trouvÃ©',
           icon: <Globe className="w-4 h-4" />
         });
       }
@@ -151,7 +151,7 @@ export default function PWADiagnostic() {
       });
     }
 
-    // 4. Vérifier la connectivité
+    // 4. VÃ©rifier la connectivitÃ©
     const isOnline = navigator.onLine;
     results.push({
       label: 'Connexion Internet',
@@ -160,7 +160,7 @@ export default function PWADiagnostic() {
       icon: isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />
     });
 
-    // 5. Vérifier l'installabilité
+    // 5. VÃ©rifier l'installabilitÃ©
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const isInFrame = window.top !== window.self;
     
@@ -168,7 +168,7 @@ export default function PWADiagnostic() {
       results.push({
         label: 'Mode d\'affichage',
         status: 'success',
-        message: 'Application installée (standalone)',
+        message: 'Application installÃ©e (standalone)',
         icon: <Smartphone className="w-4 h-4" />
       });
     } else if (isInFrame) {
@@ -187,7 +187,7 @@ export default function PWADiagnostic() {
       });
     }
 
-    // 6. Vérifier IndexedDB
+    // 6. VÃ©rifier IndexedDB
     try {
       const testDB = await new Promise((resolve, reject) => {
         const request = indexedDB.open('pwa-diagnostic-test', 1);
@@ -202,7 +202,7 @@ export default function PWADiagnostic() {
       results.push({
         label: 'Stockage IndexedDB',
         status: 'success',
-        message: 'Disponible pour données offline',
+        message: 'Disponible pour donnÃ©es offline',
         icon: <Database className="w-4 h-4" />
       });
     } catch (error) {
@@ -214,7 +214,7 @@ export default function PWADiagnostic() {
       });
     }
 
-    // 7. Vérifier le navigateur
+    // 7. VÃ©rifier le navigateur
     const isChrome = /Chrome/.test(navigator.userAgent) && !/Edge|Edg/.test(navigator.userAgent);
     const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
     const isFirefox = /Firefox/.test(navigator.userAgent);
@@ -253,10 +253,10 @@ export default function PWADiagnostic() {
       const { outcome } = await deferredPrompt.userChoice;
       
       if (outcome === 'accepted') {
-        toast.success("🎉 Installation réussie !");
+        toast.success("ðŸŽ‰ Installation rÃ©ussie !");
         setIsInstallable(false);
       } else {
-        toast.info("Installation annulée");
+        toast.info("Installation annulÃ©e");
       }
       
       setDeferredPrompt(null);
@@ -274,7 +274,7 @@ export default function PWADiagnostic() {
       // Ouvrir le cache dynamique
       const cache = await caches.open('224solutions-dynamic-v6');
       
-      // Liste des ressources essentielles à mettre en cache
+      // Liste des ressources essentielles Ã  mettre en cache
       const essentialUrls = [
         '/',
         '/vendeur',
@@ -301,7 +301,7 @@ export default function PWADiagnostic() {
         }
       }
 
-      toast.success(`✅ ${cached} ressources mises en cache`, {
+      toast.success(`âœ… ${cached} ressources mises en cache`, {
         description: "Le mode offline est maintenant disponible"
       });
 
@@ -313,27 +313,27 @@ export default function PWADiagnostic() {
     }
   };
 
-  // Réinitialiser le Service Worker
+  // RÃ©initialiser le Service Worker
   const resetServiceWorker = async () => {
     try {
-      toast.info("Réinitialisation en cours...");
+      toast.info("RÃ©initialisation en cours...");
 
       // Supprimer tous les caches
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
 
-      // Désenregistrer le SW
+      // DÃ©senregistrer le SW
       const registrations = await navigator.serviceWorker.getRegistrations();
       await Promise.all(registrations.map(reg => reg.unregister()));
 
-      toast.success("Service Worker réinitialisé", {
-        description: "Rechargez la page pour réactiver le mode offline"
+      toast.success("Service Worker rÃ©initialisÃ©", {
+        description: "Rechargez la page pour rÃ©activer le mode offline"
       });
 
       setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
-      console.error('Erreur réinitialisation:', error);
-      toast.error("Erreur lors de la réinitialisation");
+      console.error('Erreur rÃ©initialisation:', error);
+      toast.error("Erreur lors de la rÃ©initialisation");
     }
   };
 
@@ -344,7 +344,7 @@ export default function PWADiagnostic() {
 
   const getStatusIcon = (status: DiagnosticItem['status']) => {
     switch (status) {
-      case 'success': return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'success': return <CheckCircle className="w-5 h-5 text-primary-orange-500" />;
       case 'error': return <XCircle className="w-5 h-5 text-red-500" />;
       case 'warning': return <AlertCircle className="w-5 h-5 text-yellow-500" />;
       case 'loading': return <RefreshCw className="w-5 h-5 text-blue-500 animate-spin" />;
@@ -353,7 +353,7 @@ export default function PWADiagnostic() {
 
   const getStatusColor = (status: DiagnosticItem['status']) => {
     switch (status) {
-      case 'success': return 'bg-green-100 text-green-800';
+      case 'success': return 'bg-primary-orange-100 text-primary-orange-800';
       case 'error': return 'bg-red-100 text-red-800';
       case 'warning': return 'bg-yellow-100 text-yellow-800';
       case 'loading': return 'bg-blue-100 text-blue-800';
@@ -373,7 +373,7 @@ export default function PWADiagnostic() {
             Diagnostic PWA
           </span>
           <Badge className={`${
-            overallStatus === 'success' ? 'bg-green-500' : 
+            overallStatus === 'success' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 
             overallStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'
           } text-white`}>
             {successCount}/{diagnostics.length} OK
@@ -382,7 +382,7 @@ export default function PWADiagnostic() {
       </CardHeader>
 
       <CardContent className="p-6 space-y-4">
-        {/* Résultats du diagnostic */}
+        {/* RÃ©sultats du diagnostic */}
         <div className="space-y-3">
           {diagnostics.map((item, index) => (
             <div 
@@ -415,7 +415,7 @@ export default function PWADiagnostic() {
           </Button>
 
           {isInstallable && (
-            <Button onClick={handleInstall} className="bg-green-600 hover:bg-green-700">
+            <Button onClick={handleInstall} className="bg-primary-orange-600 hover:bg-primary-orange-700">
               <Download className="w-4 h-4 mr-2" />
               Installer l'app
             </Button>
@@ -428,7 +428,7 @@ export default function PWADiagnostic() {
 
           <Button onClick={resetServiceWorker} variant="destructive">
             <RefreshCw className="w-4 h-4 mr-2" />
-            Réinitialiser SW
+            RÃ©initialiser SW
           </Button>
         </div>
 
@@ -436,17 +436,17 @@ export default function PWADiagnostic() {
         {errorCount > 0 && (
           <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <h4 className="font-semibold text-yellow-800 mb-2">
-              ⚠️ Actions recommandées
+              âš ï¸ Actions recommandÃ©es
             </h4>
             <ul className="text-sm text-yellow-700 space-y-1">
               {diagnostics.find(d => d.label === 'Service Worker' && d.status !== 'success') && (
-                <li>• Rechargez la page pour activer le Service Worker</li>
+                <li>â€¢ Rechargez la page pour activer le Service Worker</li>
               )}
               {!navigator.onLine && (
-                <li>• Connectez-vous à Internet pour une première utilisation</li>
+                <li>â€¢ Connectez-vous Ã  Internet pour une premiÃ¨re utilisation</li>
               )}
               {window.top !== window.self && (
-                <li>• Ouvrez l'application dans un nouvel onglet (pas en iframe)</li>
+                <li>â€¢ Ouvrez l'application dans un nouvel onglet (pas en iframe)</li>
               )}
             </ul>
           </div>

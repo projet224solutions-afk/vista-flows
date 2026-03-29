@@ -1,7 +1,7 @@
 /**
  * MODULE NETTOYAGE PROFESSIONNEL
- * Inspiré de: Handy, TaskRabbit, Helpling
- * Gestion complète des services de nettoyage et entretien
+ * InspirÃ© de: Handy, TaskRabbit, Helpling
+ * Gestion complÃ¨te des services de nettoyage et entretien
  */
 
 import { useState, useEffect } from 'react';
@@ -53,11 +53,11 @@ interface Booking {
 const CLEANING_SERVICES: CleaningService[] = [
   {
     id: 'home_basic',
-    name: 'Ménage Résidentiel Basique',
+    name: 'MÃ©nage RÃ©sidentiel Basique',
     icon: Home,
     basePrice: 50000,
     unit: 'par session',
-    description: 'Nettoyage standard: dépoussiérage, aspirateur, sols',
+    description: 'Nettoyage standard: dÃ©poussiÃ©rage, aspirateur, sols',
     duration: 3
   },
   {
@@ -93,7 +93,7 @@ const CLEANING_SERVICES: CleaningService[] = [
     icon: Home,
     basePrice: 30000,
     unit: 'par session',
-    description: 'Nettoyage complet des vitres intérieur/extérieur',
+    description: 'Nettoyage complet des vitres intÃ©rieur/extÃ©rieur',
     duration: 2
   },
   {
@@ -101,7 +101,7 @@ const CLEANING_SERVICES: CleaningService[] = [
     name: 'Nettoyage Moquette/Tapis',
     icon: Home,
     basePrice: 40000,
-    unit: 'par pièce',
+    unit: 'par piÃ¨ce',
     description: 'Nettoyage vapeur professionnel',
     duration: 2
   }
@@ -161,7 +161,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
 
     setLoading(true);
     try {
-      toast.success('Réservation enregistrée avec succès !');
+      toast.success('RÃ©servation enregistrÃ©e avec succÃ¨s !');
       setNewBooking({
         customerName: '',
         phone: '',
@@ -177,7 +177,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
       });
       loadBookings();
     } catch (error) {
-      toast.error('Erreur lors de la réservation');
+      toast.error('Erreur lors de la rÃ©servation');
     } finally {
       setLoading(false);
     }
@@ -186,10 +186,10 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
   const getStatusBadge = (status: Booking['status']) => {
     const variants = {
       pending: { color: 'bg-yellow-500', label: 'En attente' },
-      confirmed: { color: 'bg-blue-500', label: 'Confirmé' },
-      in_progress: { color: 'bg-green-500', label: 'En cours' },
-      completed: { color: 'bg-gray-500', label: 'Terminé' },
-      cancelled: { color: 'bg-red-500', label: 'Annulé' }
+      confirmed: { color: 'bg-blue-500', label: 'ConfirmÃ©' },
+      in_progress: { color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500', label: 'En cours' },
+      completed: { color: 'bg-gray-500', label: 'TerminÃ©' },
+      cancelled: { color: 'bg-red-500', label: 'AnnulÃ©' }
     };
     return variants[status];
   };
@@ -207,7 +207,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
         </div>
         <Badge variant="outline" className="gap-1">
           <Calendar className="w-3 h-3" />
-          {stats.todayBookings} réservations aujourd'hui
+          {stats.todayBookings} rÃ©servations aujourd'hui
         </Badge>
       </div>
 
@@ -215,23 +215,23 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Réservations du Jour</CardTitle>
+            <CardTitle className="text-sm font-medium">RÃ©servations du Jour</CardTitle>
             <Calendar className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.todayBookings}</div>
-            <p className="text-xs text-muted-foreground">Interventions planifiées</p>
+            <p className="text-xs text-muted-foreground">Interventions planifiÃ©es</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Complétées cette Semaine</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CardTitle className="text-sm font-medium">ComplÃ©tÃ©es cette Semaine</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-primary-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.completedThisWeek}</div>
-            <p className="text-xs text-muted-foreground">+8% vs semaine dernière</p>
+            <p className="text-xs text-muted-foreground">+8% vs semaine derniÃ¨re</p>
           </CardContent>
         </Card>
 
@@ -260,7 +260,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="dashboard">Nouvelle Réservation</TabsTrigger>
+          <TabsTrigger value="dashboard">Nouvelle RÃ©servation</TabsTrigger>
           <TabsTrigger value="bookings">Planning</TabsTrigger>
           <TabsTrigger value="services">Services & Tarifs</TabsTrigger>
         </TabsList>
@@ -269,7 +269,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
         <TabsContent value="dashboard" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Nouvelle Réservation</CardTitle>
+              <CardTitle>Nouvelle RÃ©servation</CardTitle>
               <CardDescription>Enregistrez une demande de nettoyage</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -285,7 +285,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Téléphone *</Label>
+                  <Label htmlFor="phone">TÃ©lÃ©phone *</Label>
                   <Input
                     id="phone"
                     placeholder="+224 621 00 00 00"
@@ -337,23 +337,23 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="rooms">Nombre de pièces</Label>
+                  <Label htmlFor="rooms">Nombre de piÃ¨ces</Label>
                   <Select value={newBooking.rooms} onValueChange={(value) => setNewBooking({ ...newBooking, rooms: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">1 pièce</SelectItem>
-                      <SelectItem value="2">2 pièces</SelectItem>
-                      <SelectItem value="3">3 pièces</SelectItem>
-                      <SelectItem value="4">4 pièces</SelectItem>
-                      <SelectItem value="5+">5+ pièces</SelectItem>
+                      <SelectItem value="1">1 piÃ¨ce</SelectItem>
+                      <SelectItem value="2">2 piÃ¨ces</SelectItem>
+                      <SelectItem value="3">3 piÃ¨ces</SelectItem>
+                      <SelectItem value="4">4 piÃ¨ces</SelectItem>
+                      <SelectItem value="5+">5+ piÃ¨ces</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="squareMeters">Surface (m²)</Label>
+                  <Label htmlFor="squareMeters">Surface (mÂ²)</Label>
                   <Input
                     id="squareMeters"
                     type="number"
@@ -385,13 +385,13 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
                   onCheckedChange={(checked) => setNewBooking({ ...newBooking, recurring: checked as boolean })}
                 />
                 <Label htmlFor="recurring" className="cursor-pointer">
-                  Service récurrent (économisez jusqu'à 20%)
+                  Service rÃ©current (Ã©conomisez jusqu'Ã  20%)
                 </Label>
               </div>
 
               {newBooking.recurring && (
                 <div className="space-y-2">
-                  <Label htmlFor="frequency">Fréquence</Label>
+                  <Label htmlFor="frequency">FrÃ©quence</Label>
                   <Select value={newBooking.frequency} onValueChange={(value) => setNewBooking({ ...newBooking, frequency: value })}>
                     <SelectTrigger>
                       <SelectValue />
@@ -407,10 +407,10 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="specialInstructions">Instructions spéciales</Label>
+                <Label htmlFor="specialInstructions">Instructions spÃ©ciales</Label>
                 <Textarea
                   id="specialInstructions"
-                  placeholder="Ex: Présence d'animaux, produits spécifiques, accès..."
+                  placeholder="Ex: PrÃ©sence d'animaux, produits spÃ©cifiques, accÃ¨s..."
                   value={newBooking.specialInstructions}
                   onChange={(e) => setNewBooking({ ...newBooking, specialInstructions: e.target.value })}
                   rows={3}
@@ -418,7 +418,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
               </div>
 
               <Button onClick={handleCreateBooking} disabled={loading} className="w-full" size="lg">
-                {loading ? 'Enregistrement...' : 'Confirmer la réservation'}
+                {loading ? 'Enregistrement...' : 'Confirmer la rÃ©servation'}
               </Button>
             </CardContent>
           </Card>
@@ -429,13 +429,13 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
           <Card>
             <CardHeader>
               <CardTitle>Planning des Interventions</CardTitle>
-              <CardDescription>Gérez vos réservations</CardDescription>
+              <CardDescription>GÃ©rez vos rÃ©servations</CardDescription>
             </CardHeader>
             <CardContent>
               {bookings.length === 0 ? (
                 <div className="text-center py-12">
                   <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Aucune réservation</p>
+                  <p className="text-muted-foreground">Aucune rÃ©servation</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -458,7 +458,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
                                     {statusInfo.label}
                                   </Badge>
                                   {booking.recurring && (
-                                    <Badge variant="outline">Récurrent</Badge>
+                                    <Badge variant="outline">RÃ©current</Badge>
                                   )}
                                 </div>
                                 <h3 className="font-bold">{booking.customerName}</h3>
@@ -487,7 +487,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
                             <div className="text-right">
                               <p className="text-2xl font-bold text-primary">{booking.price.toLocaleString()} GNF</p>
                               <Button size="sm" variant="outline" className="mt-2">
-                                Gérer
+                                GÃ©rer
                               </Button>
                             </div>
                           </div>
@@ -522,7 +522,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
                             </div>
                             <div>
                               <CardTitle className="text-lg">{service.name}</CardTitle>
-                              <p className="text-sm text-muted-foreground">Durée: ~{service.duration}h</p>
+                              <p className="text-sm text-muted-foreground">DurÃ©e: ~{service.duration}h</p>
                             </div>
                           </div>
                         </div>
@@ -534,7 +534,7 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
                             <p className="text-2xl font-bold text-primary">{service.basePrice.toLocaleString()} GNF</p>
                             <p className="text-xs text-muted-foreground">{service.unit}</p>
                           </div>
-                          <Button size="sm">Réserver</Button>
+                          <Button size="sm">RÃ©server</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -547,9 +547,9 @@ export function CleaningModule({ serviceId, businessName }: CleaningModuleProps)
                   <div className="flex items-center gap-3">
                     <Sparkles className="w-8 h-8 text-primary" />
                     <div>
-                      <h3 className="font-bold">Réductions pour Contrats Récurrents</h3>
+                      <h3 className="font-bold">RÃ©ductions pour Contrats RÃ©currents</h3>
                       <p className="text-sm text-muted-foreground">
-                        Quotidien: -20% • Hebdomadaire: -15% • Bi-hebdomadaire: -10% • Mensuel: -5%
+                        Quotidien: -20% â€¢ Hebdomadaire: -15% â€¢ Bi-hebdomadaire: -10% â€¢ Mensuel: -5%
                       </p>
                     </div>
                   </div>

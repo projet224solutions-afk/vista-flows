@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
- * DASHBOARD DE SÉCURITÉ ULTRA-PROFESSIONNEL - 224SOLUTIONS
- * Interface centralisée pour le monitoring et la gestion de la sécurité
+ * DASHBOARD DE SÃ‰CURITÃ‰ ULTRA-PROFESSIONNEL - 224SOLUTIONS
+ * Interface centralisÃ©e pour le monitoring et la gestion de la sÃ©curitÃ©
  */
 
 import React, { useState, useEffect } from 'react';
@@ -64,14 +64,14 @@ export default function SecurityDashboard() {
 
     return (
         <div className="space-y-6">
-            {/* Header avec contrôles */}
+            {/* Header avec contrÃ´les */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
                         <Shield className="w-8 h-8 text-blue-600" />
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Centre de Sécurité</h1>
-                            <p className="text-sm text-gray-600">Monitoring et protection en temps réel</p>
+                            <h1 className="text-2xl font-bold text-gray-900">Centre de SÃ©curitÃ©</h1>
+                            <p className="text-sm text-gray-600">Monitoring et protection en temps rÃ©el</p>
                         </div>
                     </div>
                 </div>
@@ -84,7 +84,7 @@ export default function SecurityDashboard() {
                         className="flex items-center space-x-2"
                     >
                         {isRealTime ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                        <span>{isRealTime ? 'Temps Réel' : 'Pausé'}</span>
+                        <span>{isRealTime ? 'Temps RÃ©el' : 'PausÃ©'}</span>
                     </Button>
 
                     <Button variant="outline" size="sm">
@@ -116,7 +116,7 @@ export default function SecurityDashboard() {
                     <SecurityOverview isRealTime={isRealTime} />
                 </TabsContent>
 
-                {/* Monitoring temps réel */}
+                {/* Monitoring temps rÃ©el */}
                 <TabsContent value="monitoring">
                     <RealTimeMonitoring isRealTime={isRealTime} />
                 </TabsContent>
@@ -165,7 +165,7 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
 
     const getHealthColor = (health: string) => {
         switch (health) {
-            case 'excellent': return 'text-green-600 bg-green-100';
+            case 'excellent': return 'text-primary-orange-600 bg-primary-orange-100';
             case 'good': return 'text-blue-600 bg-blue-100';
             case 'warning': return 'text-yellow-600 bg-yellow-100';
             case 'critical': return 'text-red-600 bg-red-100';
@@ -185,13 +185,13 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
 
     return (
         <div className="space-y-6">
-            {/* Statut global du système */}
+            {/* Statut global du systÃ¨me */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <Activity className="w-5 h-5" />
-                        <span>Statut Global du Système</span>
-                        {isRealTime && <Badge variant="outline" className="ml-auto">Temps Réel</Badge>}
+                        <span>Statut Global du SystÃ¨me</span>
+                        {isRealTime && <Badge variant="outline" className="ml-auto">Temps RÃ©el</Badge>}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -200,7 +200,7 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                             {getHealthIcon(stats?.systemHealth || 'good')}
                             <div>
                                 <div className="font-semibold capitalize">{stats?.systemHealth || 'Bon'}</div>
-                                <div className="text-sm opacity-80">Santé du système</div>
+                                <div className="text-sm opacity-80">SantÃ© du systÃ¨me</div>
                             </div>
                         </div>
 
@@ -216,20 +216,20 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                 </CardContent>
             </Card>
 
-            {/* Métriques clés */}
+            {/* MÃ©triques clÃ©s */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">Événements Totaux</p>
+                                <p className="text-sm font-medium text-gray-600">Ã‰vÃ©nements Totaux</p>
                                 <p className="text-2xl font-bold">{stats?.totalEvents || 0}</p>
                             </div>
                             <Activity className="w-8 h-8 text-blue-600" />
                         </div>
                         <div className="mt-2 flex items-center text-sm">
-                            <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
-                            <span className="text-green-600">+12% cette semaine</span>
+                            <TrendingUp className="w-4 h-4 text-primary-orange-600 mr-1" />
+                            <span className="text-primary-orange-600">+12% cette semaine</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -238,14 +238,14 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">Événements Critiques</p>
+                                <p className="text-sm font-medium text-gray-600">Ã‰vÃ©nements Critiques</p>
                                 <p className="text-2xl font-bold text-red-600">{stats?.criticalEvents || 0}</p>
                             </div>
                             <AlertTriangle className="w-8 h-8 text-red-600" />
                         </div>
                         <div className="mt-2 flex items-center text-sm">
-                            <TrendingDown className="w-4 h-4 text-green-600 mr-1" />
-                            <span className="text-green-600">-5% cette semaine</span>
+                            <TrendingDown className="w-4 h-4 text-primary-orange-600 mr-1" />
+                            <span className="text-primary-orange-600">-5% cette semaine</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -254,7 +254,7 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                     <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-gray-600">IPs Bloquées</p>
+                                <p className="text-sm font-medium text-gray-600">IPs BloquÃ©es</p>
                                 <p className="text-2xl font-bold">{stats?.blockedIPs || 0}</p>
                             </div>
                             <Ban className="w-8 h-8 text-orange-600" />
@@ -283,13 +283,13 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                 </Card>
             </div>
 
-            {/* Alertes récentes et graphiques */}
+            {/* Alertes rÃ©centes et graphiques */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Alertes récentes */}
+                {/* Alertes rÃ©centes */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center justify-between">
-                            <span>Alertes Récentes</span>
+                            <span>Alertes RÃ©centes</span>
                             <Badge variant="destructive">{unreadCount}</Badge>
                         </CardTitle>
                     </CardHeader>
@@ -342,8 +342,8 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
                                 <YAxis />
                                 <Tooltip />
                                 <Legend />
-                                <Area type="monotone" dataKey="threats" stackId="1" stroke="#ef4444" fill="#fecaca" name="Menaces détectées" />
-                                <Area type="monotone" dataKey="blocked" stackId="1" stroke="#f97316" fill="#fed7aa" name="Menaces bloquées" />
+                                <Area type="monotone" dataKey="threats" stackId="1" stroke="#ef4444" fill="#fecaca" name="Menaces dÃ©tectÃ©es" />
+                                <Area type="monotone" dataKey="blocked" stackId="1" stroke="#f97316" fill="#fed7aa" name="Menaces bloquÃ©es" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </CardContent>
@@ -354,7 +354,7 @@ function SecurityOverview({ isRealTime }: { isRealTime: boolean }) {
 }
 
 // =====================================================
-// COMPOSANT MONITORING TEMPS RÉEL
+// COMPOSANT MONITORING TEMPS RÃ‰EL
 // =====================================================
 
 function RealTimeMonitoring({ isRealTime }: { isRealTime: boolean }) {
@@ -392,20 +392,20 @@ function RealTimeMonitoring({ isRealTime }: { isRealTime: boolean }) {
                         <div className="flex items-center space-x-3">
                             {isConnected && isRealTime ? (
                                 <>
-                                    <Wifi className="w-5 h-5 text-green-600" />
-                                    <span className="text-green-600 font-medium">Connecté - Monitoring actif</span>
+                                    <Wifi className="w-5 h-5 text-primary-orange-600" />
+                                    <span className="text-primary-orange-600 font-medium">ConnectÃ© - Monitoring actif</span>
                                 </>
                             ) : (
                                 <>
                                     <WifiOff className="w-5 h-5 text-red-600" />
-                                    <span className="text-red-600 font-medium">Déconnecté - Monitoring en pause</span>
+                                    <span className="text-red-600 font-medium">DÃ©connectÃ© - Monitoring en pause</span>
                                 </>
                             )}
                         </div>
 
                         <div className="flex items-center space-x-4">
                             <div className="text-sm text-gray-600">
-                                Événements: <span className="font-medium">{events.length}</span>
+                                Ã‰vÃ©nements: <span className="font-medium">{events.length}</span>
                             </div>
 
                             <select
@@ -423,16 +423,16 @@ function RealTimeMonitoring({ isRealTime }: { isRealTime: boolean }) {
                 </CardContent>
             </Card>
 
-            {/* Flux d'événements temps réel */}
+            {/* Flux d'Ã©vÃ©nements temps rÃ©el */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                         <Activity className="w-5 h-5" />
-                        <span>Flux d'Événements Temps Réel</span>
+                        <span>Flux d'Ã‰vÃ©nements Temps RÃ©el</span>
                         {isRealTime && (
                             <div className="flex items-center space-x-1 ml-auto">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-sm text-green-600">Live</span>
+                                <div className="w-2 h-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse"></div>
+                                <span className="text-sm text-primary-orange-600">Live</span>
                             </div>
                         )}
                     </CardTitle>
@@ -442,7 +442,7 @@ function RealTimeMonitoring({ isRealTime }: { isRealTime: boolean }) {
                         <div className="space-y-2">
                             {filteredEvents.length === 0 ? (
                                 <div className="text-center py-8 text-gray-500">
-                                    Aucun événement à afficher
+                                    Aucun Ã©vÃ©nement Ã  afficher
                                 </div>
                             ) : (
                                 filteredEvents.map((event, index) => (
@@ -470,7 +470,7 @@ function RealTimeMonitoring({ isRealTime }: { isRealTime: boolean }) {
                                                     </Badge>
                                                     {event.auto_response_taken && (
                                                         <Badge variant="secondary" className="text-xs">
-                                                            Réponse auto
+                                                            RÃ©ponse auto
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -530,7 +530,7 @@ function ThreatManagement() {
                     <div className="flex space-x-3">
                         <input
                             type="text"
-                            placeholder="Adresse IP à analyser (ex: 192.168.1.1)"
+                            placeholder="Adresse IP Ã  analyser (ex: 192.168.1.1)"
                             value={ipToAnalyze}
                             onChange={(e) => setIpToAnalyze(e.target.value)}
                             className="flex-1 px-3 py-2 border rounded-lg"
@@ -543,7 +543,7 @@ function ThreatManagement() {
                     {analysisResult && (
                         <div className="border rounded-lg p-4 space-y-4">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-semibold">Résultats pour {analysisResult.ip_address}</h3>
+                                <h3 className="font-semibold">RÃ©sultats pour {analysisResult.ip_address}</h3>
                                 <Badge variant={
                                     analysisResult.recommendation === 'block' ? 'destructive' :
                                         analysisResult.recommendation === 'investigate' ? 'secondary' :
@@ -563,8 +563,8 @@ function ThreatManagement() {
                                 </div>
 
                                 <div>
-                                    <p className="text-sm text-gray-600">Activité récente</p>
-                                    <p className="font-medium">{analysisResult.recent_activity.length} événements</p>
+                                    <p className="text-sm text-gray-600">ActivitÃ© rÃ©cente</p>
+                                    <p className="font-medium">{analysisResult.recent_activity.length} Ã©vÃ©nements</p>
                                 </div>
                             </div>
 
@@ -587,7 +587,7 @@ function ThreatManagement() {
                                     <Button
                                         variant="destructive"
                                         size="sm"
-                                        onClick={() => handleBlock(analysisResult.ip_address, 'Menace détectée par analyse')}
+                                        onClick={() => handleBlock(analysisResult.ip_address, 'Menace dÃ©tectÃ©e par analyse')}
                                     >
                                         Bloquer cette IP
                                     </Button>
@@ -601,15 +601,15 @@ function ThreatManagement() {
             {/* Top des menaces */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Top des Menaces Détectées</CardTitle>
+                    <CardTitle>Top des Menaces DÃ©tectÃ©es</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         {[
-                            { type: 'Tentatives de connexion échouées', count: 45, severity: 'high' },
+                            { type: 'Tentatives de connexion Ã©chouÃ©es', count: 45, severity: 'high' },
                             { type: 'Appels API suspects', count: 23, severity: 'medium' },
                             { type: 'Patterns de transaction inhabituels', count: 12, severity: 'low' },
-                            { type: 'Tentatives d\'accès IP bloquées', count: 8, severity: 'high' }
+                            { type: 'Tentatives d\'accÃ¨s IP bloquÃ©es', count: 8, severity: 'high' }
                         ].map((threat, index) => (
                             <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                                 <div className="flex items-center space-x-3">
@@ -647,11 +647,11 @@ function IncidentManagement() {
 
     return (
         <div className="space-y-6">
-            {/* Header avec bouton de création */}
+            {/* Header avec bouton de crÃ©ation */}
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Gestion des Incidents</h2>
                 <Button onClick={() => setShowCreateForm(true)}>
-                    Créer un Incident
+                    CrÃ©er un Incident
                 </Button>
             </div>
 
@@ -710,7 +710,7 @@ function ActiveProtection() {
             case 'critical': return 'text-red-600 bg-red-100';
             case 'high': return 'text-orange-600 bg-orange-100';
             case 'medium': return 'text-yellow-600 bg-yellow-100';
-            case 'low': return 'text-green-600 bg-green-100';
+            case 'low': return 'text-primary-orange-600 bg-primary-orange-100';
             default: return 'text-gray-600 bg-gray-100';
         }
     };
@@ -742,7 +742,7 @@ function ActiveProtection() {
                         {Object.entries(protectionStatus).map(([service, isActive]) => (
                             <div key={service} className="flex items-center justify-between p-4 border rounded-lg">
                                 <div className="flex items-center space-x-3">
-                                    <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                    <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-red-500'}`}></div>
                                     <div>
                                         <p className="font-medium capitalize">{service.replace(/([A-Z])/g, ' $1')}</p>
                                         <p className="text-sm text-gray-600">
@@ -755,7 +755,7 @@ function ActiveProtection() {
                                     size="sm"
                                     onClick={() => toggleProtection(service as keyof typeof protectionStatus)}
                                 >
-                                    {isActive ? 'Désactiver' : 'Activer'}
+                                    {isActive ? 'DÃ©sactiver' : 'Activer'}
                                 </Button>
                             </div>
                         ))}
@@ -767,7 +767,7 @@ function ActiveProtection() {
 }
 
 // =====================================================
-// COMPOSANT AUDIT DE SÉCURITÉ
+// COMPOSANT AUDIT DE SÃ‰CURITÃ‰
 // =====================================================
 
 function SecurityAudit() {
@@ -775,7 +775,7 @@ function SecurityAudit() {
 
     return (
         <div className="space-y-6">
-            {/* Contrôles et filtres */}
+            {/* ContrÃ´les et filtres */}
             <Card>
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -785,7 +785,7 @@ function SecurityAudit() {
                                 onChange={(e) => updateFilters({ dateRange: e.target.value })}
                                 className="text-sm border rounded px-2 py-1"
                             >
-                                <option value="24h">Dernières 24h</option>
+                                <option value="24h">DerniÃ¨res 24h</option>
                                 <option value="7d">7 derniers jours</option>
                                 <option value="30d">30 derniers jours</option>
                             </select>
@@ -795,10 +795,10 @@ function SecurityAudit() {
                                 onChange={(e) => updateFilters({ severity: e.target.value })}
                                 className="text-sm border rounded px-2 py-1"
                             >
-                                <option value="all">Toutes les sévérités</option>
+                                <option value="all">Toutes les sÃ©vÃ©ritÃ©s</option>
                                 <option value="low">Faible</option>
                                 <option value="medium">Moyen</option>
-                                <option value="high">Élevé</option>
+                                <option value="high">Ã‰levÃ©</option>
                             </select>
                         </div>
 
@@ -865,7 +865,7 @@ function SecurityAudit() {
 }
 
 // =====================================================
-// COMPOSANT RAPPORTS DE SÉCURITÉ
+// COMPOSANT RAPPORTS DE SÃ‰CURITÃ‰
 // =====================================================
 
 function SecurityReports() {
@@ -873,11 +873,11 @@ function SecurityReports() {
 
     return (
         <div className="space-y-6">
-            {/* Contrôles de génération */}
+            {/* ContrÃ´les de gÃ©nÃ©ration */}
             <Card>
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="font-semibold">Analyse de Sécurité Avancée</h3>
+                        <h3 className="font-semibold">Analyse de SÃ©curitÃ© AvancÃ©e</h3>
                         <Button onClick={runAnalysis} disabled={loading}>
                             {loading ? 'Analyse en cours...' : 'Lancer l\'Analyse'}
                         </Button>
@@ -887,10 +887,10 @@ function SecurityReports() {
 
             {analysisData && (
                 <>
-                    {/* Score de sécurité */}
+                    {/* Score de sÃ©curitÃ© */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Score de Sécurité Global</CardTitle>
+                            <CardTitle>Score de SÃ©curitÃ© Global</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-center justify-center">
@@ -914,7 +914,7 @@ function SecurityReports() {
                                             fill="transparent"
                                             strokeDasharray={`${2 * Math.PI * 56}`}
                                             strokeDashoffset={`${2 * Math.PI * 56 * (1 - analysisData.securityScore / 100)}`}
-                                            className={`${analysisData.securityScore >= 80 ? 'text-green-500' :
+                                            className={`${analysisData.securityScore >= 80 ? 'text-primary-orange-500' :
                                                     analysisData.securityScore >= 60 ? 'text-yellow-500' :
                                                         'text-red-500'
                                                 }`}
@@ -978,7 +978,7 @@ function SecurityReports() {
                     {/* Recommandations */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Recommandations de Sécurité</CardTitle>
+                            <CardTitle>Recommandations de SÃ©curitÃ©</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">

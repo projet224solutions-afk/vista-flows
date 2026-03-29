@@ -1,7 +1,7 @@
 /**
- * Gestionnaire de réservations pour le restaurant
- * Permet au propriétaire de voir et gérer toutes les réservations
- * Vue temps réel avec notifications et actions rapides
+ * Gestionnaire de rÃ©servations pour le restaurant
+ * Permet au propriÃ©taire de voir et gÃ©rer toutes les rÃ©servations
+ * Vue temps rÃ©el avec notifications et actions rapides
  */
 
 import { useState, useEffect } from 'react';
@@ -51,7 +51,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
   // Statistiques
   const stats = getReservationStats();
   
-  // Filtrer les réservations
+  // Filtrer les rÃ©servations
   const filterReservations = (reservationList: RestaurantReservation[]) => {
     return reservationList.filter(r => {
       // Filtre par recherche
@@ -73,7 +73,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
     });
   };
 
-  // Réservations par période
+  // RÃ©servations par pÃ©riode
   const today = new Date().toISOString().split('T')[0];
   const todayReservations = filterReservations(
     reservations.filter(r => r.reservation_date === today)
@@ -98,13 +98,13 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
       case 'pending':
         return { label: 'En attente', color: 'bg-yellow-500', icon: Clock };
       case 'confirmed':
-        return { label: 'Confirmée', color: 'bg-blue-500', icon: CheckCircle };
+        return { label: 'ConfirmÃ©e', color: 'bg-blue-500', icon: CheckCircle };
       case 'seated':
-        return { label: 'À table', color: 'bg-purple-500', icon: Users };
+        return { label: 'Ã€ table', color: 'bg-purple-500', icon: Users };
       case 'completed':
-        return { label: 'Terminée', color: 'bg-green-500', icon: CheckCircle };
+        return { label: 'TerminÃ©e', color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500', icon: CheckCircle };
       case 'cancelled':
-        return { label: 'Annulée', color: 'bg-red-500', icon: XCircle };
+        return { label: 'AnnulÃ©e', color: 'bg-red-500', icon: XCircle };
       case 'no_show':
         return { label: 'Absent', color: 'bg-gray-500', icon: XCircle };
       default:
@@ -122,16 +122,16 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
   const handleStatusChange = async (id: string, newStatus: RestaurantReservation['status']) => {
     try {
       await updateReservationStatus(id, newStatus);
-      toast.success(`Réservation ${getStatusConfig(newStatus).label.toLowerCase()}`);
+      toast.success(`RÃ©servation ${getStatusConfig(newStatus).label.toLowerCase()}`);
     } catch (error) {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error('Erreur lors de la mise Ã  jour');
     }
   };
 
   const handleCancel = async (id: string) => {
     try {
       await cancelReservation(id);
-      toast.success('Réservation annulée');
+      toast.success('RÃ©servation annulÃ©e');
       setShowDetailModal(false);
     } catch (error) {
       toast.error('Erreur lors de l\'annulation');
@@ -184,10 +184,10 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
                 )}
               </div>
 
-              {/* Notes spéciales */}
+              {/* Notes spÃ©ciales */}
               {reservation.special_requests && (
                 <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded-md line-clamp-1">
-                  💬 {reservation.special_requests}
+                  ðŸ’¬ {reservation.special_requests}
                 </p>
               )}
             </div>
@@ -258,7 +258,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
         <Card>
           <CardContent className="py-12 text-center">
             <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <p className="text-muted-foreground">Aucune réservation</p>
+            <p className="text-muted-foreground">Aucune rÃ©servation</p>
           </CardContent>
         </Card>
       );
@@ -303,10 +303,10 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Calendar className="w-6 h-6 text-primary" />
-            Réservations
+            RÃ©servations
           </h2>
           <p className="text-muted-foreground text-sm">
-            Gérez les réservations de votre restaurant
+            GÃ©rez les rÃ©servations de votre restaurant
           </p>
         </div>
         <Button onClick={refresh} variant="outline" size="sm">
@@ -335,10 +335,10 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
             <div className="text-xs text-purple-600/80">Couverts</div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-900/10">
+        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-100/50 dark:from-primary-blue-900/20 dark:to-primary-orange-900/10">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{stats.confirmed}</div>
-            <div className="text-xs text-green-600/80">Confirmées</div>
+            <div className="text-2xl font-bold text-primary-orange-600">{stats.confirmed}</div>
+            <div className="text-xs text-primary-orange-600/80">ConfirmÃ©es</div>
           </CardContent>
         </Card>
       </div>
@@ -348,7 +348,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher par nom, téléphone..."
+            placeholder="Rechercher par nom, tÃ©lÃ©phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -362,10 +362,10 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
           <SelectContent>
             <SelectItem value="all">Tous les statuts</SelectItem>
             <SelectItem value="pending">En attente</SelectItem>
-            <SelectItem value="confirmed">Confirmées</SelectItem>
-            <SelectItem value="seated">À table</SelectItem>
-            <SelectItem value="completed">Terminées</SelectItem>
-            <SelectItem value="cancelled">Annulées</SelectItem>
+            <SelectItem value="confirmed">ConfirmÃ©es</SelectItem>
+            <SelectItem value="seated">Ã€ table</SelectItem>
+            <SelectItem value="completed">TerminÃ©es</SelectItem>
+            <SelectItem value="cancelled">AnnulÃ©es</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -377,7 +377,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
             Aujourd'hui ({todayReservations.length})
           </TabsTrigger>
           <TabsTrigger value="upcoming">
-            À venir ({upcomingReservations.length})
+            Ã€ venir ({upcomingReservations.length})
           </TabsTrigger>
           <TabsTrigger value="past">
             Historique ({pastReservations.length})
@@ -403,11 +403,11 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
         </TabsContent>
       </Tabs>
 
-      {/* Modal de détail */}
+      {/* Modal de dÃ©tail */}
       <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Détails de la réservation</DialogTitle>
+            <DialogTitle>DÃ©tails de la rÃ©servation</DialogTitle>
           </DialogHeader>
           
           {selectedReservation && (
@@ -436,7 +436,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
                 </div>
               </div>
 
-              {/* Détails réservation */}
+              {/* DÃ©tails rÃ©servation */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-muted/30 rounded-lg">
                   <div className="text-xs text-muted-foreground mb-1">Date</div>
@@ -472,17 +472,17 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
                 <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200">
                   <div className="text-xs font-medium text-amber-700 mb-1 flex items-center gap-1">
                     <MessageSquare className="w-3 h-3" />
-                    Demandes spéciales
+                    Demandes spÃ©ciales
                   </div>
                   <p className="text-sm">{selectedReservation.special_requests}</p>
                 </div>
               )}
 
-              {/* Table assignée */}
+              {/* Table assignÃ©e */}
               {selectedReservation.table_number && (
-                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-                  <span className="text-sm text-green-700">Table assignée: </span>
-                  <span className="font-bold text-green-700">{selectedReservation.table_number}</span>
+                <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-900/20 rounded-lg text-center">
+                  <span className="text-sm text-primary-orange-700">Table assignÃ©e: </span>
+                  <span className="font-bold text-primary-orange-700">{selectedReservation.table_number}</span>
                 </div>
               )}
             </div>
@@ -520,7 +520,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
                   }}
                 >
                   <Users className="w-4 h-4 mr-2" />
-                  Installer à table
+                  Installer Ã  table
                 </Button>
                 <Button 
                   variant="outline"

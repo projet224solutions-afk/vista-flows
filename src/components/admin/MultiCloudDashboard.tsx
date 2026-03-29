@@ -18,14 +18,14 @@ import type { ServiceStatus, CloudProvider, CloudServiceCheck } from '@/services
 import { cn } from '@/lib/utils';
 
 const statusConfig: Record<ServiceStatus, { color: string; bgColor: string; icon: typeof CheckCircle; label: string; textColor: string }> = {
-  operational: { color: 'bg-emerald-500', bgColor: 'bg-emerald-500/10', icon: CheckCircle, label: 'Opérationnel', textColor: 'text-emerald-600' },
-  degraded: { color: 'bg-amber-500', bgColor: 'bg-amber-500/10', icon: AlertTriangle, label: 'Dégradé', textColor: 'text-amber-600' },
+  operational: { color: 'bg-primary-blue-500', bgColor: 'bg-primary-blue-500/10', icon: CheckCircle, label: 'OpÃ©rationnel', textColor: 'text-primary-blue-600' },
+  degraded: { color: 'bg-amber-500', bgColor: 'bg-amber-500/10', icon: AlertTriangle, label: 'DÃ©gradÃ©', textColor: 'text-amber-600' },
   outage: { color: 'bg-red-500', bgColor: 'bg-red-500/10', icon: XCircle, label: 'Panne', textColor: 'text-red-600' },
   unknown: { color: 'bg-slate-400', bgColor: 'bg-slate-400/10', icon: HelpCircle, label: 'Inconnu', textColor: 'text-slate-500' }
 };
 
 const providerConfig: Record<CloudProvider, { label: string; icon: typeof Cloud; color: string; bgGradient: string; description: string }> = {
-  supabase: { label: 'Supabase', icon: Database, color: 'text-emerald-600', bgGradient: 'from-emerald-500/5 to-emerald-500/10', description: 'DB, Auth, Realtime, Edge Functions, Storage' },
+  supabase: { label: 'Supabase', icon: Database, color: 'text-primary-blue-600', bgGradient: 'from-primary-blue-500/5 to-primary-orange-500/10', description: 'DB, Auth, Realtime, Edge Functions, Storage' },
   aws: { label: 'AWS', icon: Server, color: 'text-orange-500', bgGradient: 'from-orange-500/5 to-orange-500/10', description: 'Lambda Backend, Cognito Auth' },
   google_cloud: { label: 'Google Cloud', icon: Cloud, color: 'text-blue-500', bgGradient: 'from-blue-500/5 to-blue-500/10', description: 'Cloud Storage, Cloud Functions' },
   firebase: { label: 'Firebase', icon: Bell, color: 'text-yellow-500', bgGradient: 'from-yellow-500/5 to-yellow-500/10', description: 'Cloud Messaging (FCM)' }
@@ -44,7 +44,7 @@ function StatusDot({ status, pulse = false }: { status: ServiceStatus; pulse?: b
 function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
   const config = statusConfig[svc.status];
   const Icon = config.icon;
-  const latencyColor = svc.responseTime < 500 ? 'text-emerald-600' : svc.responseTime < 1500 ? 'text-amber-600' : 'text-red-600';
+  const latencyColor = svc.responseTime < 500 ? 'text-primary-blue-600' : svc.responseTime < 1500 ? 'text-amber-600' : 'text-red-600';
   
   return (
     <TooltipProvider>
@@ -62,9 +62,9 @@ function ServiceRow({ svc }: { svc: CloudServiceCheck }) {
           <div className="space-y-1">
             <p className="font-semibold text-sm">{svc.service}</p>
             <p className="text-xs text-muted-foreground">{svc.message}</p>
-            <p className="text-xs text-muted-foreground">✅ Vérification réelle</p>
+            <p className="text-xs text-muted-foreground">âœ… VÃ©rification rÃ©elle</p>
             <p className="text-xs text-muted-foreground">
-              Vérifié : {new Date(svc.lastChecked).toLocaleTimeString('fr-FR')}
+              VÃ©rifiÃ© : {new Date(svc.lastChecked).toLocaleTimeString('fr-FR')}
             </p>
           </div>
         </TooltipContent>
@@ -86,7 +86,7 @@ export default function MultiCloudDashboard() {
         </div>
         <div className="text-center space-y-1">
           <p className="font-medium text-foreground">Analyse de l'infrastructure...</p>
-          <p className="text-sm text-muted-foreground">Vérification de 10 services cloud en cours</p>
+          <p className="text-sm text-muted-foreground">VÃ©rification de 10 services cloud en cours</p>
         </div>
       </div>
     );
@@ -113,7 +113,7 @@ export default function MultiCloudDashboard() {
           <div>
             <h2 className="text-xl font-bold text-foreground">Infrastructure Multi-Cloud</h2>
             <p className="text-sm text-muted-foreground">
-              Monitoring temps réel — 4 providers, {totalServices} services (100% checks réels)
+              Monitoring temps rÃ©el â€” 4 providers, {totalServices} services (100% checks rÃ©els)
             </p>
           </div>
         </div>
@@ -130,14 +130,14 @@ export default function MultiCloudDashboard() {
             className="gap-1.5"
           >
             <RefreshCw className={cn('h-4 w-4', isChecking && 'animate-spin')} />
-            {isChecking ? 'Vérification...' : 'Rafraîchir'}
+            {isChecking ? 'VÃ©rification...' : 'RafraÃ®chir'}
           </Button>
         </div>
       </div>
 
       {/* === SCORE GLOBAL === */}
       <Card className={cn('border-2', 
-        report.overall === 'operational' ? 'border-emerald-500/30' :
+        report.overall === 'operational' ? 'border-primary-orange-500/30' :
         report.overall === 'degraded' ? 'border-amber-500/30' : 'border-red-500/30'
       )}>
         <CardContent className="pt-6">
@@ -154,7 +154,7 @@ export default function MultiCloudDashboard() {
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {report.healthyChecks}/{report.totalChecks} services opérationnels
+                  {report.healthyChecks}/{report.totalChecks} services opÃ©rationnels
                 </p>
               </div>
             </div>
@@ -229,7 +229,7 @@ export default function MultiCloudDashboard() {
                 <p className="text-xs font-semibold text-destructive">Incidents ouverts ({dbIncidents.length})</p>
                 {dbIncidents.slice(0, 5).map(inc => (
                   <div key={inc.id} className="text-xs p-1.5 rounded bg-destructive/10 text-destructive">
-                    {inc.title} — {inc.message}
+                    {inc.title} â€” {inc.message}
                   </div>
                 ))}
               </div>
@@ -304,7 +304,7 @@ export default function MultiCloudDashboard() {
                       <TooltipTrigger asChild>
                         <div className={cn(
                           'w-3 h-8 rounded-sm flex-shrink-0 transition-all cursor-pointer hover:opacity-80',
-                          h.overall === 'operational' ? 'bg-emerald-500' :
+                          h.overall === 'operational' ? 'bg-primary-blue-500' :
                           h.overall === 'degraded' ? 'bg-amber-500' :
                           h.overall === 'outage' ? 'bg-red-500' : 'bg-slate-400',
                           'opacity-60 hover:opacity-100'
@@ -312,7 +312,7 @@ export default function MultiCloudDashboard() {
                       </TooltipTrigger>
                       <TooltipContent className="text-xs">
                         <p>{new Date(h.timestamp).toLocaleTimeString('fr-FR')}</p>
-                        <p>{h.healthyChecks}/{h.totalChecks} OK — {h.uptimePercent}%</p>
+                        <p>{h.healthyChecks}/{h.totalChecks} OK â€” {h.uptimePercent}%</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -327,7 +327,7 @@ export default function MultiCloudDashboard() {
         </Card>
       )}
 
-      {/* === LÉGENDE === */}
+      {/* === LÃ‰GENDE === */}
       <div className="flex flex-wrap items-center gap-4 px-2 text-xs text-muted-foreground">
         {Object.entries(statusConfig).map(([key, val]) => (
           <div key={key} className="flex items-center gap-1.5">
@@ -335,7 +335,7 @@ export default function MultiCloudDashboard() {
             <span>{val.label}</span>
           </div>
         ))}
-        <span className="ml-2 text-[10px]">• Données persistées en DB + Supabase Realtime</span>
+        <span className="ml-2 text-[10px]">â€¢ DonnÃ©es persistÃ©es en DB + Supabase Realtime</span>
       </div>
     </div>
   );

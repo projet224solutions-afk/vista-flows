@@ -1,4 +1,4 @@
-// ⚠️ Liste des alertes de sécurité
+// âš ï¸ Liste des alertes de sÃ©curitÃ©
 import React from 'react';
 import { Bell, Check, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,8 +25,8 @@ const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-2xl font-bold">Alertes de Sécurité</h3>
-        <p className="text-muted-foreground">Alertes temps réel nécessitant attention</p>
+        <h3 className="text-2xl font-bold">Alertes de SÃ©curitÃ©</h3>
+        <p className="text-muted-foreground">Alertes temps rÃ©el nÃ©cessitant attention</p>
       </div>
 
       <div className="space-y-3">
@@ -36,14 +36,14 @@ const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   {alert.acknowledged ? (
-                    <Check className="h-5 w-5 text-green-500" />
+                    <Check className="h-5 w-5 text-primary-orange-500" />
                   ) : (
                     <AlertCircle className="h-5 w-5 text-yellow-500 animate-pulse" />
                   )}
                   <div>
                     <CardTitle className="text-base">{alert.description}</CardTitle>
                     <CardDescription className="mt-1">
-                      {alert.alert_type} • {new Date(alert.created_at).toLocaleString('fr-FR')}
+                      {alert.alert_type} â€¢ {new Date(alert.created_at).toLocaleString('fr-FR')}
                     </CardDescription>
                   </div>
                 </div>
@@ -54,7 +54,7 @@ const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
                   {!alert.acknowledged && (
                     <Button size="sm" variant="outline" onClick={() => onAcknowledge(alert.id)}>
                       <Check className="h-4 w-4 mr-1" />
-                      Reconnaître
+                      ReconnaÃ®tre
                     </Button>
                   )}
                 </div>

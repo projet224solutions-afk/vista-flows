@@ -19,33 +19,33 @@ export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProp
     navigate('/agent/settings?tab=kyc');
   };
 
-  // Agent vérifié
+  // Agent vÃ©rifiÃ©
   if (kyc_status === 'verified') {
     return (
-      <Badge variant="default" className="bg-green-500 hover:bg-green-600 gap-1.5">
+      <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600 gap-1.5">
         <ShieldCheck className="h-3.5 w-3.5" />
-        <span>Compte vérifié</span>
+        <span>Compte vÃ©rifiÃ©</span>
       </Badge>
     );
   }
 
-  // Vérification en cours
+  // VÃ©rification en cours
   if (kyc_status === 'pending') {
     return (
       <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600 gap-1.5">
         <Shield className="h-3.5 w-3.5" />
-        <span>Vérification en cours...</span>
+        <span>VÃ©rification en cours...</span>
       </Badge>
     );
   }
 
-  // Rejeté
+  // RejetÃ©
   if (kyc_status === 'rejected') {
     return (
       <div className="flex items-center gap-2">
         <Badge variant="destructive" className="gap-1.5">
           <ShieldAlert className="h-3.5 w-3.5" />
-          <span>Vérifié rejeté</span>
+          <span>VÃ©rifiÃ© rejetÃ©</span>
         </Badge>
         <Button
           size="sm"
@@ -53,18 +53,18 @@ export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProp
           onClick={handleVerifyClick}
           className="h-7 text-xs"
         >
-          Réessayer
+          RÃ©essayer
         </Button>
       </div>
     );
   }
 
-  // Non vérifié (défaut)
+  // Non vÃ©rifiÃ© (dÃ©faut)
   return (
     <div className="flex items-center gap-2">
       <Badge variant="destructive" className="gap-1.5">
         <ShieldAlert className="h-3.5 w-3.5" />
-        <span>Non vérifié</span>
+        <span>Non vÃ©rifiÃ©</span>
       </Badge>
       <Button
         size="sm"
@@ -72,7 +72,7 @@ export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProp
         onClick={handleVerifyClick}
         className="h-7 text-xs"
       >
-        Vérifier maintenant
+        VÃ©rifier maintenant
       </Button>
     </div>
   );

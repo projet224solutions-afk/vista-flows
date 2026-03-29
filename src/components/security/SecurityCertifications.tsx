@@ -1,6 +1,6 @@
 /**
- * CERTIFICATIONS DE SÉCURITÉ
- * Gestion des certifications ISO 27001, PCI-DSS - Connecté à Supabase
+ * CERTIFICATIONS DE SÃ‰CURITÃ‰
+ * Gestion des certifications ISO 27001, PCI-DSS - ConnectÃ© Ã  Supabase
  */
 
 import { useState, useEffect } from "react";
@@ -58,13 +58,13 @@ export function SecurityCertifications() {
   const getStatusBadge = (status: Certification['status']) => {
     switch (status) {
       case 'certified':
-        return <Badge className="bg-green-500"><CheckCircle2 className="w-3 h-3 mr-1" />Certifié</Badge>;
+        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500"><CheckCircle2 className="w-3 h-3 mr-1" />CertifiÃ©</Badge>;
       case 'in_progress':
         return <Badge className="bg-blue-500"><Clock className="w-3 h-3 mr-1" />En cours</Badge>;
       case 'planned':
-        return <Badge variant="outline"><AlertTriangle className="w-3 h-3 mr-1" />Planifié</Badge>;
+        return <Badge variant="outline"><AlertTriangle className="w-3 h-3 mr-1" />PlanifiÃ©</Badge>;
       case 'expired':
-        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />Expiré</Badge>;
+        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />ExpirÃ©</Badge>;
     }
   };
 
@@ -74,7 +74,7 @@ export function SecurityCertifications() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary animate-pulse" />
-            Certifications de Sécurité
+            Certifications de SÃ©curitÃ©
           </CardTitle>
           <CardDescription>
             Chargement des certifications...
@@ -96,10 +96,10 @@ export function SecurityCertifications() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
-              Certifications de Sécurité
+              Certifications de SÃ©curitÃ©
             </CardTitle>
             <CardDescription>
-              Conformité aux normes internationales de sécurité
+              ConformitÃ© aux normes internationales de sÃ©curitÃ©
             </CardDescription>
           </div>
           <Button
@@ -116,7 +116,7 @@ export function SecurityCertifications() {
         {certifications.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Aucune certification trouvée</p>
+            <p>Aucune certification trouvÃ©e</p>
           </div>
         ) : (
           <>
@@ -128,7 +128,7 @@ export function SecurityCertifications() {
                     <p className="text-sm text-muted-foreground">{cert.description}</p>
                     {cert.issuing_authority && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Autorité: {cert.issuing_authority}
+                        AutoritÃ©: {cert.issuing_authority}
                       </p>
                     )}
                   </div>
@@ -158,13 +158,13 @@ export function SecurityCertifications() {
                     className="p-0 h-auto"
                     onClick={() => window.open(cert.certificate_url, '_blank', 'noopener,noreferrer')}
                   >
-                    Voir le certificat →
+                    Voir le certificat â†’
                   </Button>
                 )}
               </div>
             ))}
             <Button variant="outline" className="w-full">
-              Télécharger les rapports de conformité
+              TÃ©lÃ©charger les rapports de conformitÃ©
             </Button>
           </>
         )}

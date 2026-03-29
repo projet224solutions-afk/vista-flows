@@ -1,6 +1,6 @@
 /**
  * FORMULAIRE DE DEMANDE DE LIVRAISON PAR ID
- * Le livreur saisit l'ID du fournisseur et du client pour géolocalisation automatique
+ * Le livreur saisit l'ID du fournisseur et du client pour gÃ©olocalisation automatique
  */
 
 import { useState } from 'react';
@@ -39,29 +39,29 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
 
     setGeolocating(true);
     try {
-      // Géolocaliser le vendeur
+      // GÃ©olocaliser le vendeur
       console.log('[DeliveryRequest] Geolocating vendor:', vendorId);
       const vendorLoc = await UserGeolocService.getVendorInfo(vendorId);
       if (!vendorLoc) {
-        toast.error('Fournisseur introuvable. Vérifiez le nom ou téléphone.');
+        toast.error('Fournisseur introuvable. VÃ©rifiez le nom ou tÃ©lÃ©phone.');
         setGeolocating(false);
         return false;
       }
       console.log('[DeliveryRequest] Vendor found:', vendorLoc);
       setVendorLocation(vendorLoc);
 
-      // Géolocaliser le client
+      // GÃ©olocaliser le client
       console.log('[DeliveryRequest] Geolocating client:', clientId);
       const clientLoc = await UserGeolocService.getUserLocation(clientId);
       if (!clientLoc) {
-        toast.error('Client introuvable. Vérifiez le nom ou téléphone.');
+        toast.error('Client introuvable. VÃ©rifiez le nom ou tÃ©lÃ©phone.');
         setGeolocating(false);
         return false;
       }
       console.log('[DeliveryRequest] Client found:', clientLoc);
       setClientLocation(clientLoc);
 
-      // Calculer le prix estimé
+      // Calculer le prix estimÃ©
       const estimate = await PricingService.estimateDeliveryPrice(
         vendorLoc.latitude,
         vendorLoc.longitude,
@@ -71,11 +71,11 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
       console.log('[DeliveryRequest] Price estimate:', estimate);
       setEstimatedPrice(estimate.totalPrice);
 
-      toast.success('Géolocalisation réussie !');
+      toast.success('GÃ©olocalisation rÃ©ussie !');
       return true;
     } catch (error) {
       console.error('[DeliveryRequest] Error geolocating:', error);
-      toast.error('Erreur lors de la géolocalisation');
+      toast.error('Erreur lors de la gÃ©olocalisation');
       return false;
     } finally {
       setGeolocating(false);
@@ -88,17 +88,17 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
       return;
     }
 
-    // Auto-géolocaliser si pas encore fait
+    // Auto-gÃ©olocaliser si pas encore fait
     let vLoc = vendorLocation;
     let cLoc = clientLocation;
     let price = estimatedPrice;
 
     if (!vLoc || !cLoc || price === null) {
-      toast.info('Géolocalisation en cours...');
+      toast.info('GÃ©olocalisation en cours...');
       const success = await handleGeolocate();
       if (!success) return;
       
-      // Récupérer les valeurs mises à jour après handleGeolocate
+      // RÃ©cupÃ©rer les valeurs mises Ã  jour aprÃ¨s handleGeolocate
       // On doit refaire les appels car setState est async
       const vendorLoc = await UserGeolocService.getVendorInfo(vendorId);
       const clientLoc = await UserGeolocService.getUserLocation(clientId);
@@ -120,7 +120,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
-        toast.error('Vous devez être connecté');
+        toast.error('Vous devez Ãªtre connectÃ©');
         return;
       }
 
@@ -165,11 +165,11 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
         throw error;
       }
 
-      toast.success('Livraison créée avec succès !');
+      toast.success('Livraison crÃ©Ã©e avec succÃ¨s !');
       onDeliveryCreated(data.id);
     } catch (error) {
       console.error('[DeliveryRequest] Error creating delivery:', error);
-      toast.error('Erreur lors de la création de la livraison');
+      toast.error('Erreur lors de la crÃ©ation de la livraison');
     } finally {
       setLoading(false);
     }
@@ -192,15 +192,15 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
               Fournisseur (retrait du colis)
             </Label>
             <Input
-              placeholder="Nom boutique, téléphone ou ID..."
+              placeholder="Nom boutique, tÃ©lÃ©phone ou ID..."
               value={vendorId}
               onChange={(e) => setVendorId(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Saisir le nom de la boutique, numéro de téléphone ou l'ID
+              Saisir le nom de la boutique, numÃ©ro de tÃ©lÃ©phone ou l'ID
             </p>
             {vendorLocation && (
-              <div className="flex items-center gap-2 text-sm text-green-600">
+              <div className="flex items-center gap-2 text-sm text-primary-orange-600">
                 <CheckCircle2 className="h-4 w-4" />
                 <span>{vendorLocation.name} {vendorLocation.phone && `(${vendorLocation.phone})`}</span>
               </div>
@@ -210,26 +210,26 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
           {/* Client */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <User className="h-4 w-4 text-green-600" />
+              <User className="h-4 w-4 text-primary-orange-600" />
               Client (livraison)
             </Label>
             <Input
-              placeholder="Nom, téléphone ou ID..."
+              placeholder="Nom, tÃ©lÃ©phone ou ID..."
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Saisir le nom du client, numéro de téléphone ou l'ID
+              Saisir le nom du client, numÃ©ro de tÃ©lÃ©phone ou l'ID
             </p>
             {clientLocation && (
-              <div className="flex items-center gap-2 text-sm text-green-600">
+              <div className="flex items-center gap-2 text-sm text-primary-orange-600">
                 <CheckCircle2 className="h-4 w-4" />
                 <span>{clientLocation.name} {clientLocation.phone && `(${clientLocation.phone})`}</span>
               </div>
             )}
           </div>
 
-          {/* Bouton de géolocalisation */}
+          {/* Bouton de gÃ©olocalisation */}
           <Button
             className="w-full"
             onClick={handleGeolocate}
@@ -239,21 +239,21 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
             {geolocating ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Géolocalisation...
+                GÃ©olocalisation...
               </>
             ) : (
               <>
                 <MapPin className="h-4 w-4 mr-2" />
-                Géolocaliser les deux parties
+                GÃ©olocaliser les deux parties
               </>
             )}
           </Button>
 
-          {/* Prix estimé */}
+          {/* Prix estimÃ© */}
           {estimatedPrice && (
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-800 font-medium">
-                Prix estimé: <span className="text-xl">{estimatedPrice.toLocaleString()} GNF</span>
+            <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+              <p className="text-sm text-primary-orange-800 font-medium">
+                Prix estimÃ©: <span className="text-xl">{estimatedPrice.toLocaleString()} GNF</span>
               </p>
             </div>
           )}
@@ -262,15 +262,15 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
           <div className="space-y-2">
             <Label>Description du colis</Label>
             <Input
-              placeholder="Ex: Documents, vêtements..."
+              placeholder="Ex: Documents, vÃªtements..."
               value={packageDescription}
               onChange={(e) => setPackageDescription(e.target.value)}
             />
           </div>
 
-          {/* Instructions spéciales */}
+          {/* Instructions spÃ©ciales */}
           <div className="space-y-2">
-            <Label>Instructions spéciales (optionnel)</Label>
+            <Label>Instructions spÃ©ciales (optionnel)</Label>
             <Textarea
               placeholder="Instructions pour la livraison..."
               value={specialInstructions}
@@ -279,7 +279,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
             />
           </div>
 
-          {/* Bouton de création */}
+          {/* Bouton de crÃ©ation */}
           <Button
             className="w-full"
             size="lg"
@@ -293,12 +293,12 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
             {loading ? (
               <>
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Création en cours...
+                CrÃ©ation en cours...
               </>
             ) : (
               <>
                 <Package className="h-5 w-5 mr-2" />
-                Créer la livraison
+                CrÃ©er la livraison
               </>
             )}
           </Button>

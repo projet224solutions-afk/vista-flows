@@ -53,8 +53,8 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
       if (error) throw error;
       setBookings((data || []) as Booking[]);
     } catch (error) {
-      console.error('Erreur chargement réservations:', error);
-      toast.error('Erreur lors du chargement des réservations');
+      console.error('Erreur chargement rÃ©servations:', error);
+      toast.error('Erreur lors du chargement des rÃ©servations');
     } finally {
       setLoading(false);
     }
@@ -69,11 +69,11 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
 
       if (error) throw error;
       
-      toast.success(`Réservation ${status === 'confirmed' ? 'confirmée' : status === 'completed' ? 'terminée' : 'annulée'}`);
+      toast.success(`RÃ©servation ${status === 'confirmed' ? 'confirmÃ©e' : status === 'completed' ? 'terminÃ©e' : 'annulÃ©e'}`);
       loadBookings();
     } catch (error) {
-      console.error('Erreur mise à jour:', error);
-      toast.error('Erreur lors de la mise à jour');
+      console.error('Erreur mise Ã  jour:', error);
+      toast.error('Erreur lors de la mise Ã  jour');
     }
   };
 
@@ -81,7 +81,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
     switch (status) {
       case 'pending': return 'bg-yellow-500';
       case 'confirmed': return 'bg-blue-500';
-      case 'completed': return 'bg-green-500';
+      case 'completed': return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
       case 'cancelled': return 'bg-red-500';
       default: return 'bg-gray-500';
     }
@@ -90,9 +90,9 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
   const getStatusLabel = (status: Booking['status']) => {
     switch (status) {
       case 'pending': return 'En attente';
-      case 'confirmed': return 'Confirmé';
-      case 'completed': return 'Terminé';
-      case 'cancelled': return 'Annulé';
+      case 'confirmed': return 'ConfirmÃ©';
+      case 'completed': return 'TerminÃ©';
+      case 'cancelled': return 'AnnulÃ©';
       default: return status;
     }
   };
@@ -110,9 +110,9 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-2xl font-bold">Gestion des Réservations</h3>
+        <h3 className="text-2xl font-bold">Gestion des RÃ©servations</h3>
         <p className="text-sm text-muted-foreground">
-          Suivez et gérez vos rendez-vous clients
+          Suivez et gÃ©rez vos rendez-vous clients
         </p>
       </div>
 
@@ -130,7 +130,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
               <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${limitCheck.allowed ? 'text-muted-foreground' : 'text-destructive'}`} />
               <p className="text-sm">
                 {limitCheck.allowed
-                  ? `Réservations : ${activeCount}/${limits.maxBookings} utilisées ce mois`
+                  ? `RÃ©servations : ${activeCount}/${limits.maxBookings} utilisÃ©es ce mois`
                   : limitCheck.message
                 }
               </p>
@@ -149,13 +149,13 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
             En attente ({getBookingCount('pending')})
           </TabsTrigger>
           <TabsTrigger value="confirmed">
-            Confirmés ({getBookingCount('confirmed')})
+            ConfirmÃ©s ({getBookingCount('confirmed')})
           </TabsTrigger>
           <TabsTrigger value="completed">
-            Terminés ({getBookingCount('completed')})
+            TerminÃ©s ({getBookingCount('completed')})
           </TabsTrigger>
           <TabsTrigger value="cancelled">
-            Annulés ({getBookingCount('cancelled')})
+            AnnulÃ©s ({getBookingCount('cancelled')})
           </TabsTrigger>
         </TabsList>
 
@@ -169,7 +169,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
               <CardContent className="py-12 text-center">
                 <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  Aucune réservation {activeTab !== 'all' ? getStatusLabel(activeTab as Booking['status']).toLowerCase() : ''} pour le moment.
+                  Aucune rÃ©servation {activeTab !== 'all' ? getStatusLabel(activeTab as Booking['status']).toLowerCase() : ''} pour le moment.
                 </p>
               </CardContent>
             </Card>
@@ -259,7 +259,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
                               className="gap-2"
                             >
                               <CheckCircle className="w-4 h-4" />
-                              Marquer comme terminé
+                              Marquer comme terminÃ©
                             </Button>
                           </div>
                         )}

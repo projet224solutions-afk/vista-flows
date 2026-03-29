@@ -1,11 +1,11 @@
 /**
- * Page de définition de mot de passe pour les utilisateurs OAuth
- * Affichée après la première connexion via Google/Facebook
+ * Page de dÃ©finition de mot de passe pour les utilisateurs OAuth
+ * AffichÃ©e aprÃ¨s la premiÃ¨re connexion via Google/Facebook
  * 
  * WORKFLOW:
- * - Utilisateur OAuth (Google/Facebook) → DOIT définir un mot de passe (obligatoire)
- * - Utilisateur email/password → Redirigé automatiquement vers son dashboard
- * - Une fois le mot de passe défini, l'utilisateur ne reverra jamais cette page
+ * - Utilisateur OAuth (Google/Facebook) â†’ DOIT dÃ©finir un mot de passe (obligatoire)
+ * - Utilisateur email/password â†’ RedirigÃ© automatiquement vers son dashboard
+ * - Une fois le mot de passe dÃ©fini, l'utilisateur ne reverra jamais cette page
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -42,7 +42,7 @@ export default function SetPasswordAfterOAuth() {
   const submitRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Observer pour détecter si le bouton submit est visible
+  // Observer pour dÃ©tecter si le bouton submit est visible
   useEffect(() => {
     if (!submitRef.current) return;
     const observer = new IntersectionObserver(
@@ -61,7 +61,7 @@ export default function SetPasswordAfterOAuth() {
     }
   };
 
-  // Vérifications de sécurité du mot de passe
+  // VÃ©rifications de sÃ©curitÃ© du mot de passe
   const passwordChecks = {
     minLength: password.length >= 8,
     hasUppercase: /[A-Z]/.test(password),
@@ -76,7 +76,7 @@ export default function SetPasswordAfterOAuth() {
   const redirectToProperDashboard = async () => {
     let targetRoute = getDashboardRoute(profile?.role);
     
-    // ✅ FIX: Vérifier si c'est un vendeur digital
+    // âœ… FIX: VÃ©rifier si c'est un vendeur digital
     if (profile?.role === 'vendeur') {
       const oauthShopType = localStorage.getItem('oauth_vendor_shop_type');
       
@@ -85,7 +85,7 @@ export default function SetPasswordAfterOAuth() {
       }
     }
     
-    // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
+    // âœ… NOUVEAU: Pour les prestataires, chercher le professional_service
     if ((profile?.role as string) === 'prestataire') {
       try {
         const { data: proService } = await supabase
@@ -97,49 +97,49 @@ export default function SetPasswordAfterOAuth() {
           targetRoute = `/dashboard/service/${proService.id}`;
         }
       } catch (e) {
-        console.warn('⚠️ Erreur récupération service:', e);
+        console.warn('âš ï¸ Erreur rÃ©cupÃ©ration service:', e);
       }
     }
     
-    // Nettoyer les flags après utilisation
+    // Nettoyer les flags aprÃ¨s utilisation
     localStorage.removeItem('oauth_vendor_shop_type');
     localStorage.removeItem('oauth_service_type');
     
-    console.log(`🚀 [SetPasswordAfterOAuth] Redirection vers ${targetRoute}`);
+    console.log(`ðŸš€ [SetPasswordAfterOAuth] Redirection vers ${targetRoute}`);
     navigate(targetRoute, { replace: true });
   };
 
-  // Vérifier si l'utilisateur doit voir cette page
+  // VÃ©rifier si l'utilisateur doit voir cette page
   useEffect(() => {
     const checkUserStatus = async () => {
-      // Attendre que l'auth soit chargée
+      // Attendre que l'auth soit chargÃ©e
       if (authLoading) return;
 
-      // Pas d'utilisateur → rediriger vers /auth
+      // Pas d'utilisateur â†’ rediriger vers /auth
       if (!user) {
         navigate('/auth', { replace: true });
         return;
       }
 
-      // Attendre que le profil soit chargé
+      // Attendre que le profil soit chargÃ©
       if (profileLoading) return;
 
-      // ⚡ Récupérer la session actuelle pour vérifier la méthode de connexion
+      // âš¡ RÃ©cupÃ©rer la session actuelle pour vÃ©rifier la mÃ©thode de connexion
       const { data: sessionData } = await supabase.auth.getSession();
       const session = sessionData?.session;
       
-      // ⚡ Vérifier le AMR (Authentication Methods Reference) pour savoir
-      // COMMENT l'utilisateur s'est connecté dans cette session
+      // âš¡ VÃ©rifier le AMR (Authentication Methods Reference) pour savoir
+      // COMMENT l'utilisateur s'est connectÃ© dans cette session
       const amr = (session?.user as any)?.amr as Array<{ method?: string }> | undefined;
       const currentAuthMethod = amr?.[0]?.method;
       
       const provider = user.app_metadata?.provider;
       const isOAuthProvider = provider === 'google' || provider === 'facebook';
       
-      // ✅ Si l'utilisateur s'est connecté avec mot de passe (peu importe le provider d'origine)
-      // → Il a DÉJÀ un mot de passe, rediriger directement
+      // âœ… Si l'utilisateur s'est connectÃ© avec mot de passe (peu importe le provider d'origine)
+      // â†’ Il a DÃ‰JÃ€ un mot de passe, rediriger directement
       if (currentAuthMethod === 'password') {
-        console.log('🔐 [SetPasswordAfterOAuth] Connexion par mot de passe détectée, mise à jour et redirection...');
+        console.log('ðŸ” [SetPasswordAfterOAuth] Connexion par mot de passe dÃ©tectÃ©e, mise Ã  jour et redirection...');
         
         // Marquer has_password = true en BDD
         if (profile?.has_password !== true) {
@@ -155,41 +155,41 @@ export default function SetPasswordAfterOAuth() {
         return;
       }
       
-      console.log('🔍 [SetPasswordAfterOAuth] Vérification:', { 
+      console.log('ðŸ” [SetPasswordAfterOAuth] VÃ©rification:', { 
         provider, 
         isOAuthProvider,
         currentAuthMethod,
         hasPassword: profile?.has_password 
       });
 
-      // ✅ Si ce n'est PAS un utilisateur OAuth d'origine, rediriger directement
+      // âœ… Si ce n'est PAS un utilisateur OAuth d'origine, rediriger directement
       if (!isOAuthProvider) {
-        console.log('🔐 [SetPasswordAfterOAuth] Utilisateur email d\'origine, redirection...');
+        console.log('ðŸ” [SetPasswordAfterOAuth] Utilisateur email d\'origine, redirection...');
         localStorage.removeItem('needs_oauth_password');
         redirectToProperDashboard();
         return;
       }
 
-      // ✅ Si l'utilisateur OAuth a déjà défini un mot de passe (vérifié en BDD)
+      // âœ… Si l'utilisateur OAuth a dÃ©jÃ  dÃ©fini un mot de passe (vÃ©rifiÃ© en BDD)
       if (profile?.has_password === true) {
-        console.log('✅ [SetPasswordAfterOAuth] Mot de passe déjà défini (BDD), redirection...');
+        console.log('âœ… [SetPasswordAfterOAuth] Mot de passe dÃ©jÃ  dÃ©fini (BDD), redirection...');
         localStorage.removeItem('needs_oauth_password');
         localStorage.setItem(`oauth_password_set_${user.id}`, 'true');
         redirectToProperDashboard();
         return;
       }
 
-      // ✅ Fallback: si l'utilisateur a déjà validé/ignoré cette étape en local
+      // âœ… Fallback: si l'utilisateur a dÃ©jÃ  validÃ©/ignorÃ© cette Ã©tape en local
       const localStatus = localStorage.getItem(`oauth_password_set_${user.id}`);
       if (localStatus === 'true' || localStatus === 'skipped') {
-        console.log('✅ [SetPasswordAfterOAuth] Étape déjà traitée (localStorage), redirection...', { localStatus });
+        console.log('âœ… [SetPasswordAfterOAuth] Ã‰tape dÃ©jÃ  traitÃ©e (localStorage), redirection...', { localStatus });
         localStorage.removeItem('needs_oauth_password');
         redirectToProperDashboard();
         return;
       }
 
-      // L'utilisateur OAuth doit définir son mot de passe
-      console.log('🔐 [SetPasswordAfterOAuth] Utilisateur OAuth sans mot de passe, affichage du formulaire');
+      // L'utilisateur OAuth doit dÃ©finir son mot de passe
+      console.log('ðŸ” [SetPasswordAfterOAuth] Utilisateur OAuth sans mot de passe, affichage du formulaire');
       setCheckingStatus(false);
     };
 
@@ -199,14 +199,14 @@ export default function SetPasswordAfterOAuth() {
   const handleSkipPassword = async () => {
     if (!user) return;
     
-    // Marquer has_password = true en BDD même si "skipped" pour ne plus revoir cette page
+    // Marquer has_password = true en BDD mÃªme si "skipped" pour ne plus revoir cette page
     try {
       await supabase
         .from('profiles')
         .update({ has_password: true })
         .eq('id', user.id);
     } catch (err) {
-      console.error('Erreur mise à jour profil:', err);
+      console.error('Erreur mise Ã  jour profil:', err);
     }
     
     localStorage.removeItem('needs_oauth_password');
@@ -227,22 +227,22 @@ export default function SetPasswordAfterOAuth() {
     setLoading(true);
 
     try {
-      // 1. Mettre à jour le mot de passe dans Supabase Auth
+      // 1. Mettre Ã  jour le mot de passe dans Supabase Auth
       const { error: updateError } = await supabase.auth.updateUser({
         password: password
       });
 
       if (updateError) throw updateError;
 
-      // 2. Marquer has_password = true dans le profil (persisté en BDD)
+      // 2. Marquer has_password = true dans le profil (persistÃ© en BDD)
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ has_password: true })
         .eq('id', user?.id);
 
       if (profileError) {
-        console.error('Erreur mise à jour profil (has_password):', profileError);
-        // Ne pas bloquer, le mot de passe est déjà défini dans Auth
+        console.error('Erreur mise Ã  jour profil (has_password):', profileError);
+        // Ne pas bloquer, le mot de passe est dÃ©jÃ  dÃ©fini dans Auth
       }
 
       // 3. Nettoyer les flags localStorage (backup)
@@ -252,12 +252,12 @@ export default function SetPasswordAfterOAuth() {
       setSuccess(true);
       toast.success(t('auth.setPassword.success'));
 
-      // Rediriger après un court délai
+      // Rediriger aprÃ¨s un court dÃ©lai
       setTimeout(() => {
         redirectToProperDashboard();
       }, 1200);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur lors de la définition du mot de passe';
+      const message = err instanceof Error ? err.message : 'Erreur lors de la dÃ©finition du mot de passe';
       setError(message);
       toast.error(message);
     } finally {
@@ -265,7 +265,7 @@ export default function SetPasswordAfterOAuth() {
     }
   };
 
-  // Affichage pendant la vérification
+  // Affichage pendant la vÃ©rification
   if (checkingStatus || authLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 flex items-center justify-center p-4">
@@ -279,13 +279,13 @@ export default function SetPasswordAfterOAuth() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-primary-orange-50 to-slate-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-2xl border-0">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            <div className="w-16 h-16 bg-primary-orange-100 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="h-8 w-8 text-primary-orange-600" />
             </div>
-            <h2 className="text-xl font-bold text-green-700">{t('auth.setPassword.success')}</h2>
+            <h2 className="text-xl font-bold text-primary-orange-700">{t('auth.setPassword.success')}</h2>
             <p className="text-muted-foreground">
               {t('auth.setPassword.successDesc')}
             </p>
@@ -329,7 +329,7 @@ export default function SetPasswordAfterOAuth() {
             </AlertDescription>
           </Alert>
 
-          {/* Email affiché */}
+          {/* Email affichÃ© */}
           <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-3">
             <Mail className="h-5 w-5 text-muted-foreground" />
             <div>
@@ -346,7 +346,7 @@ export default function SetPasswordAfterOAuth() {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
@@ -370,7 +370,7 @@ export default function SetPasswordAfterOAuth() {
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={loading}
@@ -387,7 +387,7 @@ export default function SetPasswordAfterOAuth() {
               </div>
             </div>
 
-            {/* Indicateurs de sécurité */}
+            {/* Indicateurs de sÃ©curitÃ© */}
             <div className="bg-muted/30 rounded-lg p-4 space-y-2">
               <p className="text-sm font-medium text-muted-foreground mb-2">
                 {t('auth.setPassword.securityCriteria')}
@@ -449,12 +449,12 @@ export default function SetPasswordAfterOAuth() {
         </CardContent>
       </Card>
 
-      {/* Bouton flottant de défilement */}
+      {/* Bouton flottant de dÃ©filement */}
       <button
         type="button"
         onClick={handleScrollToggle}
         className="fixed bottom-20 right-4 z-50 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40 flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95"
-        aria-label={showScrollDown ? 'Défiler vers le bas' : 'Défiler vers le haut'}
+        aria-label={showScrollDown ? 'DÃ©filer vers le bas' : 'DÃ©filer vers le haut'}
       >
         {showScrollDown ? <ChevronDown className="h-6 w-6" /> : <ChevronUp className="h-6 w-6" />}
       </button>
@@ -474,7 +474,7 @@ function PasswordCheck({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-        valid ? 'bg-green-100 text-green-600' : 'bg-muted text-muted-foreground'
+        valid ? 'bg-primary-orange-100 text-primary-orange-600' : 'bg-muted text-muted-foreground'
       }`}>
         {valid ? (
           <CheckCircle2 className="h-3 w-3" />
@@ -482,7 +482,7 @@ function PasswordCheck({
           <div className="w-1.5 h-1.5 bg-current rounded-full" />
         )}
       </div>
-      <span className={valid ? 'text-green-700' : 'text-muted-foreground'}>
+      <span className={valid ? 'text-primary-orange-700' : 'text-muted-foreground'}>
         {label}
       </span>
     </div>

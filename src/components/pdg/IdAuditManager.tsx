@@ -1,6 +1,6 @@
 /**
- * 🔍 ID AUDIT MANAGER - Système d'audit et correction des IDs
- * Détecte et corrige les désynchronisations entre tables
+ * ðŸ” ID AUDIT MANAGER - SystÃ¨me d'audit et correction des IDs
+ * DÃ©tecte et corrige les dÃ©synchronisations entre tables
  */
 
 import { useState, useEffect } from 'react';
@@ -63,7 +63,7 @@ export function IdAuditManager() {
   const runAudit = async () => {
     setLoading(true);
     try {
-      // Audit côté client (pas de RPC nécessaire)
+      // Audit cÃ´tÃ© client (pas de RPC nÃ©cessaire)
       await runClientSideAudit();
     } catch (err) {
       console.error('Erreur audit:', err);
@@ -76,7 +76,7 @@ export function IdAuditManager() {
 
   const runClientSideAudit = async () => {
     try {
-      // Récupérer toutes les données nécessaires
+      // RÃ©cupÃ©rer toutes les donnÃ©es nÃ©cessaires
       const [profilesRes, userIdsRes, vendorsRes] = await Promise.all([
         supabase.from('profiles').select('id, email, first_name, last_name, public_id, role'),
         supabase.from('user_ids').select('user_id, custom_id'),
@@ -92,7 +92,7 @@ export function IdAuditManager() {
       const userIdsByCustomId = new Map(userIdsData.map(u => [u.custom_id, u.user_id]));
       const vendors = new Map(vendorsData.map(v => [v.user_id, v.vendor_code]));
 
-      // Détection des doublons dans profiles.public_id
+      // DÃ©tection des doublons dans profiles.public_id
       const publicIdCounts = new Map<string, string[]>();
       for (const profile of profiles) {
         if (profile.public_id) {
@@ -118,7 +118,7 @@ export function IdAuditManager() {
         const userIdCustomId = userIdsByUserId.get(profile.id);
         const vendorCode = vendors.get(profile.id);
 
-        // Vérifier si le public_id cible est déjà utilisé par un autre user dans user_ids
+        // VÃ©rifier si le public_id cible est dÃ©jÃ  utilisÃ© par un autre user dans user_ids
         const existingOwner = userIdsByCustomId.get(profile.public_id);
         const hasConflict = existingOwner && existingOwner !== profile.id;
 
@@ -131,7 +131,7 @@ export function IdAuditManager() {
 
         if (hasConflict) {
           status = 'conflict';
-          canAutoFix = false; // Conflit = correction manuelle nécessaire
+          canAutoFix = false; // Conflit = correction manuelle nÃ©cessaire
         } else if (isUserIdDesync && isVendorDesync) {
           status = 'desync_both';
         } else if (isUserIdDesync) {
@@ -179,7 +179,7 @@ export function IdAuditManager() {
 
   const fixSelectedIds = async () => {
     if (selectedIds.size === 0) {
-      toast.warning('Sélectionnez au moins un utilisateur');
+      toast.warning('SÃ©lectionnez au moins un utilisateur');
       return;
     }
 
@@ -195,14 +195,14 @@ export function IdAuditManager() {
 
         // Ne pas corriger les conflits automatiquement
         if (discrepancy.status === 'conflict') {
-          console.warn(`⚠️ Conflit détecté pour ${userId}, correction manuelle requise`);
+          console.warn(`âš ï¸ Conflit dÃ©tectÃ© pour ${userId}, correction manuelle requise`);
           skipped++;
           continue;
         }
 
-        // Créer ou corriger user_ids.custom_id
+        // CrÃ©er ou corriger user_ids.custom_id
         if (discrepancy.status === 'missing_user_id') {
-          // Créer une nouvelle entrée
+          // CrÃ©er une nouvelle entrÃ©e
           const { error: insertError } = await supabase
             .from('user_ids')
             .insert({ 
@@ -233,7 +233,7 @@ export function IdAuditManager() {
           continue;
         }
 
-        // Corriger user_ids.custom_id (désynchronisé)
+        // Corriger user_ids.custom_id (dÃ©synchronisÃ©)
         if (discrepancy.status === 'desync_user_ids' || discrepancy.status === 'desync_both') {
           const { error: userIdError } = await supabase
             .from('user_ids')
@@ -265,13 +265,13 @@ export function IdAuditManager() {
       }
 
       if (fixed > 0) {
-        toast.success(`✅ ${fixed} utilisateur(s) corrigé(s)`);
+        toast.success(`âœ… ${fixed} utilisateur(s) corrigÃ©(s)`);
       }
       if (skipped > 0) {
-        toast.warning(`⚠️ ${skipped} conflit(s) ignoré(s) - correction manuelle requise`);
+        toast.warning(`âš ï¸ ${skipped} conflit(s) ignorÃ©(s) - correction manuelle requise`);
       }
       if (errors > 0) {
-        toast.error(`❌ ${errors} erreur(s) lors de la correction`);
+        toast.error(`âŒ ${errors} erreur(s) lors de la correction`);
       }
 
       // Relancer l'audit
@@ -291,7 +291,7 @@ export function IdAuditManager() {
     const allIds = new Set(discrepancies.filter(d => d.canAutoFix).map(d => d.userId));
     setSelectedIds(allIds);
     
-    // Attendre un tick pour que l'état soit mis à jour
+    // Attendre un tick pour que l'Ã©tat soit mis Ã  jour
     setTimeout(() => fixSelectedIds(), 100);
   };
 
@@ -316,15 +316,15 @@ export function IdAuditManager() {
   const getStatusBadge = (status: IdDiscrepancy['status']) => {
     switch (status) {
       case 'desync_user_ids':
-        return <Badge variant="destructive" className="text-xs">user_ids désync</Badge>;
+        return <Badge variant="destructive" className="text-xs">user_ids dÃ©sync</Badge>;
       case 'desync_vendor':
-        return <Badge className="bg-amber-500 text-white text-xs">vendor désync</Badge>;
+        return <Badge className="bg-amber-500 text-white text-xs">vendor dÃ©sync</Badge>;
       case 'desync_both':
         return <Badge variant="destructive" className="text-xs animate-pulse">CRITIQUE</Badge>;
       case 'missing_user_id':
         return <Badge className="bg-blue-500 text-white text-xs">Manquant</Badge>;
       case 'conflict':
-        return <Badge className="bg-purple-600 text-white text-xs animate-pulse">⚠️ CONFLIT</Badge>;
+        return <Badge className="bg-purple-600 text-white text-xs animate-pulse">âš ï¸ CONFLIT</Badge>;
       default:
         return <Badge variant="secondary" className="text-xs">OK</Badge>;
     }
@@ -343,9 +343,9 @@ export function IdAuditManager() {
               <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-lg">Audit des IDs Système</CardTitle>
+              <CardTitle className="text-lg">Audit des IDs SystÃ¨me</CardTitle>
               <CardDescription>
-                Vérification et correction des désynchronisations d'identifiants
+                VÃ©rification et correction des dÃ©synchronisations d'identifiants
               </CardDescription>
             </div>
           </div>
@@ -394,11 +394,11 @@ export function IdAuditManager() {
         {duplicates.length > 0 && (
           <Alert variant="destructive" className="animate-pulse">
             <XCircle className="h-4 w-4" />
-            <AlertTitle>🚨 Doublons détectés dans profiles.public_id!</AlertTitle>
+            <AlertTitle>ðŸš¨ Doublons dÃ©tectÃ©s dans profiles.public_id!</AlertTitle>
             <AlertDescription>
               {duplicates.map(d => (
                 <div key={d.id} className="mt-1">
-                  <code className="bg-muted px-1 rounded">{d.id}</code> utilisé par {d.count} utilisateurs
+                  <code className="bg-muted px-1 rounded">{d.id}</code> utilisÃ© par {d.count} utilisateurs
                 </div>
               ))}
             </AlertDescription>
@@ -411,24 +411,24 @@ export function IdAuditManager() {
           </p>
         )}
 
-        {/* Alerte si problèmes */}
+        {/* Alerte si problÃ¨mes */}
         {discrepancies.length > 0 && (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Désynchronisations détectées</AlertTitle>
+            <AlertTitle>DÃ©synchronisations dÃ©tectÃ©es</AlertTitle>
             <AlertDescription>
-              {discrepancies.length} utilisateur(s) avec des IDs incohérents. 
-              La source de vérité est <code className="bg-muted px-1 rounded">profiles.public_id</code>.
+              {discrepancies.length} utilisateur(s) avec des IDs incohÃ©rents. 
+              La source de vÃ©ritÃ© est <code className="bg-muted px-1 rounded">profiles.public_id</code>.
             </AlertDescription>
           </Alert>
         )}
 
         {discrepancies.length === 0 && !loading && (
-          <Alert className="border-green-500/50 bg-green-500/10">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <AlertTitle className="text-green-600">Système synchronisé</AlertTitle>
-            <AlertDescription className="text-green-600/80">
-              Tous les IDs sont correctement synchronisés entre les tables.
+          <Alert className="border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10">
+            <CheckCircle2 className="h-4 w-4 text-primary-orange-500" />
+            <AlertTitle className="text-primary-orange-600">SystÃ¨me synchronisÃ©</AlertTitle>
+            <AlertDescription className="text-primary-orange-600/80">
+              Tous les IDs sont correctement synchronisÃ©s entre les tables.
             </AlertDescription>
           </Alert>
         )}
@@ -439,7 +439,7 @@ export function IdAuditManager() {
             <Button 
               onClick={fixAllDiscrepancies}
               disabled={fixing || discrepancies.length === 0}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-primary-orange-600 hover:bg-primary-orange-700"
             >
               <Wrench className="w-4 h-4 mr-2" />
               Corriger tout ({discrepancies.length})
@@ -450,12 +450,12 @@ export function IdAuditManager() {
               variant="outline"
             >
               <Wrench className="w-4 h-4 mr-2" />
-              Corriger sélection ({selectedIds.size})
+              Corriger sÃ©lection ({selectedIds.size})
             </Button>
           </div>
         )}
 
-        {/* Table des problèmes */}
+        {/* Table des problÃ¨mes */}
         {discrepancies.length > 0 && (
           <ScrollArea className="h-[400px] rounded-md border">
             <Table>
@@ -470,7 +470,7 @@ export function IdAuditManager() {
                   <TableHead>Utilisateur</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>
-                    <span className="text-green-600">profiles.public_id</span>
+                    <span className="text-primary-orange-600">profiles.public_id</span>
                     <span className="text-xs ml-1">(source)</span>
                   </TableHead>
                   <TableHead>
@@ -500,7 +500,7 @@ export function IdAuditManager() {
                         <p className="text-xs text-muted-foreground">{d.email}</p>
                         {d.conflictWith && (
                           <p className="text-xs text-purple-600 mt-1">
-                            ⚠️ ID déjà utilisé par un autre user
+                            âš ï¸ ID dÃ©jÃ  utilisÃ© par un autre user
                           </p>
                         )}
                       </div>
@@ -539,7 +539,7 @@ export function IdAuditManager() {
                           {d.vendorCode}
                         </code>
                       ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
+                        <span className="text-muted-foreground text-xs">â€”</span>
                       )}
                     </TableCell>
                   </TableRow>
@@ -549,19 +549,19 @@ export function IdAuditManager() {
           </ScrollArea>
         )}
 
-        {/* Légende */}
+        {/* LÃ©gende */}
         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2 border-t">
           <div className="flex items-center gap-1">
             <Database className="w-3 h-3" />
-            <span>Source de vérité: <code className="bg-muted px-1 rounded">profiles.public_id</code></span>
+            <span>Source de vÃ©ritÃ©: <code className="bg-muted px-1 rounded">profiles.public_id</code></span>
           </div>
           <div className="flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-green-500" />
-            <span>Synchronisé</span>
+            <CheckCircle2 className="w-3 h-3 text-primary-orange-500" />
+            <span>SynchronisÃ©</span>
           </div>
           <div className="flex items-center gap-1">
             <XCircle className="w-3 h-3 text-red-500" />
-            <span>Désynchronisé</span>
+            <span>DÃ©synchronisÃ©</span>
           </div>
         </div>
       </CardContent>

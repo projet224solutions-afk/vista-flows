@@ -1,5 +1,5 @@
 /**
- * Liste des commandes du client avec possibilité de confirmer la réception
+ * Liste des commandes du client avec possibilitÃ© de confirmer la rÃ©ception
  */
 
 import { useState, useEffect } from 'react';
@@ -49,7 +49,7 @@ interface Order {
   }[];
 }
 
-// Helper pour vérifier si une commande est paiement à la livraison
+// Helper pour vÃ©rifier si une commande est paiement Ã  la livraison
 const isCashOnDelivery = (order: Order): boolean => {
   return order.payment_method === 'cash' && 
          order.shipping_address?.is_cod === true;
@@ -83,7 +83,7 @@ export default function ClientOrdersList() {
     if (user) {
       loadOrders();
       
-      // Configurer l'écoute en temps réel pour les commandes ET les escrows
+      // Configurer l'Ã©coute en temps rÃ©el pour les commandes ET les escrows
       const ordersChannel = supabase
         .channel('client-orders-realtime')
         .on(
@@ -94,13 +94,13 @@ export default function ClientOrdersList() {
             table: 'orders'
           },
           (payload) => {
-            console.log('🔄 Mise à jour en temps réel des commandes:', payload);
+            console.log('ðŸ”„ Mise Ã  jour en temps rÃ©el des commandes:', payload);
             loadOrders(); // Recharger les commandes
           }
         )
         .subscribe();
 
-      // Écouter aussi les changements d'escrow pour mettre à jour le bouton
+      // Ã‰couter aussi les changements d'escrow pour mettre Ã  jour le bouton
       const escrowChannel = supabase
         .channel('client-escrow-realtime')
         .on(
@@ -111,7 +111,7 @@ export default function ClientOrdersList() {
             table: 'escrow_transactions'
           },
           (payload) => {
-            console.log('🔄 Mise à jour en temps réel des escrows:', payload);
+            console.log('ðŸ”„ Mise Ã  jour en temps rÃ©el des escrows:', payload);
             loadOrders(); // Recharger les commandes et escrows
           }
         )
@@ -128,7 +128,7 @@ export default function ClientOrdersList() {
     try {
       if (!user?.id) return;
 
-      // Récupérer le customer_id
+      // RÃ©cupÃ©rer le customer_id
       const { data: customer } = await supabase
         .from('customers')
         .select('id')
@@ -137,7 +137,7 @@ export default function ClientOrdersList() {
 
       if (!customer) return;
 
-      // Récupérer toutes les commandes du client (online et pos)
+      // RÃ©cupÃ©rer toutes les commandes du client (online et pos)
       const { data: ordersData, error } = await supabase
         .from('orders')
         .select(`
@@ -221,7 +221,7 @@ export default function ClientOrdersList() {
 
       const isCardOrder = selectedOrder.payment_method === 'card';
       if (isCardOrder && !escrow) {
-        throw new Error("Commande carte non synchronisée avec l'escrow. Rechargez la page puis réessayez.");
+        throw new Error("Commande carte non synchronisÃ©e avec l'escrow. Rechargez la page puis rÃ©essayez.");
       }
 
       if (escrow) {
@@ -240,11 +240,11 @@ export default function ClientOrdersList() {
         if (error) throw error;
       }
 
-      toast.success('Livraison confirmée !', {
-        description: 'Le vendeur a reçu le paiement'
+      toast.success('Livraison confirmÃ©e !', {
+        description: 'Le vendeur a reÃ§u le paiement'
       });
 
-      // Afficher la fenêtre de notation
+      // Afficher la fenÃªtre de notation
       setRatingOrderData({
         orderId: selectedOrder.id,
         vendorId: selectedOrder.vendor_id,
@@ -257,7 +257,7 @@ export default function ClientOrdersList() {
     } catch (error) {
       console.error('Error confirming delivery:', error);
       toast.error('Erreur lors de la confirmation', {
-        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+        description: error instanceof Error ? error.message : 'Veuillez rÃ©essayer'
       });
     } finally {
       setConfirmingOrderId(null);
@@ -291,8 +291,8 @@ export default function ClientOrdersList() {
         throw new Error(data?.error || 'Erreur lors de l\'annulation');
       }
 
-      toast.success('Commande annulée avec succès', {
-        description: data.refunded ? 'Votre paiement a été remboursé' : undefined
+      toast.success('Commande annulÃ©e avec succÃ¨s', {
+        description: data.refunded ? 'Votre paiement a Ã©tÃ© remboursÃ©' : undefined
       });
 
       // Recharger les commandes
@@ -300,7 +300,7 @@ export default function ClientOrdersList() {
     } catch (error) {
       console.error('Error cancelling order:', error);
       toast.error('Erreur lors de l\'annulation', {
-        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+        description: error instanceof Error ? error.message : 'Veuillez rÃ©essayer'
       });
     } finally {
       setCancellingOrderId(null);
@@ -338,8 +338,8 @@ export default function ClientOrdersList() {
         throw new Error(data?.error || 'Erreur lors de la demande de remboursement');
       }
 
-      toast.success('Demande de remboursement envoyée', {
-        description: 'Le vendeur et l\'équipe ont été notifiés'
+      toast.success('Demande de remboursement envoyÃ©e', {
+        description: 'Le vendeur et l\'Ã©quipe ont Ã©tÃ© notifiÃ©s'
       });
 
       // Recharger les commandes
@@ -347,7 +347,7 @@ export default function ClientOrdersList() {
     } catch (error) {
       console.error('Error requesting refund:', error);
       toast.error('Erreur lors de la demande', {
-        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+        description: error instanceof Error ? error.message : 'Veuillez rÃ©essayer'
       });
     } finally {
       setRefundingOrderId(null);
@@ -360,12 +360,12 @@ export default function ClientOrdersList() {
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
       pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-      confirmed: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
-      preparing: { label: 'En préparation', color: 'bg-purple-100 text-purple-800', icon: Package },
-      ready: { label: 'Prête', color: 'bg-blue-100 text-blue-800', icon: Package },
+      confirmed: { label: 'ConfirmÃ©e', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
+      preparing: { label: 'En prÃ©paration', color: 'bg-purple-100 text-purple-800', icon: Package },
+      ready: { label: 'PrÃªte', color: 'bg-blue-100 text-blue-800', icon: Package },
       in_transit: { label: 'En transit', color: 'bg-orange-100 text-orange-800', icon: Truck },
-      delivered: { label: 'Livrée', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800', icon: XCircle }
+      delivered: { label: 'LivrÃ©e', color: 'bg-primary-orange-100 text-primary-orange-800', icon: CheckCircle },
+      cancelled: { label: 'AnnulÃ©e', color: 'bg-red-100 text-red-800', icon: XCircle }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
@@ -383,9 +383,9 @@ export default function ClientOrdersList() {
     if (!escrowStatus) return null;
 
     const escrowConfig: Record<string, { label: string; color: string }> = {
-      pending: { label: 'Fonds bloqués (Escrow)', color: 'bg-orange-100 text-orange-800' },
-      released: { label: 'Fonds libérés', color: 'bg-green-100 text-green-800' },
-      refunded: { label: 'Remboursé', color: 'bg-gray-100 text-gray-800' },
+      pending: { label: 'Fonds bloquÃ©s (Escrow)', color: 'bg-orange-100 text-orange-800' },
+      released: { label: 'Fonds libÃ©rÃ©s', color: 'bg-primary-orange-100 text-primary-orange-800' },
+      refunded: { label: 'RemboursÃ©', color: 'bg-gray-100 text-gray-800' },
       dispute: { label: 'Litige', color: 'bg-red-100 text-red-800' }
     };
 
@@ -422,7 +422,7 @@ export default function ClientOrdersList() {
       return orders.filter(o => o.status === 'in_transit');
     }
     if (activeFilter === 'delivered') {
-      // Livrées = delivered
+      // LivrÃ©es = delivered
       return orders.filter(o => o.status === 'delivered');
     }
     return orders;
@@ -484,13 +484,13 @@ export default function ClientOrdersList() {
               className="flex items-center gap-2"
             >
               <CheckCircle className="w-4 h-4" />
-              Livrées ({deliveredCount})
+              LivrÃ©es ({deliveredCount})
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Liste des commandes filtrées */}
+      {/* Liste des commandes filtrÃ©es */}
       <Card>
         <CardContent className="p-6">
           <ScrollArea className="h-[600px] pr-4">
@@ -500,7 +500,7 @@ export default function ClientOrdersList() {
                 <p className="text-muted-foreground">
                   {activeFilter === 'pending' && 'Aucune commande en attente actuellement'}
                   {activeFilter === 'in_progress' && 'Aucune commande en cours actuellement'}
-                  {activeFilter === 'delivered' && 'Aucune commande livrée actuellement'}
+                  {activeFilter === 'delivered' && 'Aucune commande livrÃ©e actuellement'}
                 </p>
               </div>
             ) : (
@@ -548,25 +548,25 @@ export default function ClientOrdersList() {
                 <div className="flex flex-wrap gap-2">
                   {getStatusBadge(order.status)}
                   {escrow && getEscrowBadge(escrow.status)}
-                  {/* Badge paiement à la livraison */}
+                  {/* Badge paiement Ã  la livraison */}
                   {isCashOnDelivery(order) && (
                     <Badge className="bg-amber-100 text-amber-800">
                       <Banknote className="w-3 h-3 mr-1" />
-                      Paiement à la livraison
+                      Paiement Ã  la livraison
                     </Badge>
                   )}
                 </div>
 
-                {/* Info Paiement à la livraison */}
+                {/* Info Paiement Ã  la livraison */}
                 {isCashOnDelivery(order) && order.status !== 'delivered' && order.status !== 'cancelled' && (
                   <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
                     <Banknote className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                        Paiement à la livraison
+                        Paiement Ã  la livraison
                       </p>
                       <p className="text-xs text-amber-700 dark:text-amber-300">
-                        Vous paierez {order.total_amount.toLocaleString()} GNF à la réception de votre commande
+                        Vous paierez {order.total_amount.toLocaleString()} GNF Ã  la rÃ©ception de votre commande
                       </p>
                     </div>
                   </div>
@@ -574,14 +574,14 @@ export default function ClientOrdersList() {
 
                 {/* Protection Escrow */}
                 {escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
-                  <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                    <Shield className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
+                    <Shield className="w-5 h-5 text-primary-orange-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                        Paiement protégé
+                      <p className="text-sm font-medium text-primary-orange-800 dark:text-primary-orange-200">
+                        Paiement protÃ©gÃ©
                       </p>
-                      <p className="text-xs text-green-700 dark:text-green-300">
-                        Vos {escrow.amount.toLocaleString()} GNF sont sécurisés en escrow jusqu'à confirmation de livraison
+                      <p className="text-xs text-primary-orange-700 dark:text-primary-orange-300">
+                        Vos {escrow.amount.toLocaleString()} GNF sont sÃ©curisÃ©s en escrow jusqu'Ã  confirmation de livraison
                       </p>
                     </div>
                   </div>
@@ -648,19 +648,19 @@ export default function ClientOrdersList() {
                       ) : (
                         <>
                           <CheckCircle className="w-4 h-4 mr-2" />
-                          J'ai reçu ma commande
+                          J'ai reÃ§u ma commande
                         </>
                       )}
                     </Button>
                   )}
                 </div>
 
-                {/* Info si déjà livrée */}
+                {/* Info si dÃ©jÃ  livrÃ©e */}
                 {order.status === 'delivered' && escrow?.status === 'released' && (
                   <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <CheckCircle className="w-4 h-4 text-primary-orange-600" />
                     <span className="text-sm text-muted-foreground">
-                      Commande livrée et paiement transféré au vendeur
+                      Commande livrÃ©e et paiement transfÃ©rÃ© au vendeur
                     </span>
                   </div>
                 )}
@@ -678,15 +678,15 @@ export default function ClientOrdersList() {
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la réception ?</AlertDialogTitle>
+            <AlertDialogTitle>Confirmer la rÃ©ception ?</AlertDialogTitle>
             <AlertDialogDescription>
-              En confirmant, vous attestez avoir reçu votre commande en bon état.
-              Le paiement sera immédiatement transféré au vendeur.
+              En confirmant, vous attestez avoir reÃ§u votre commande en bon Ã©tat.
+              Le paiement sera immÃ©diatement transfÃ©rÃ© au vendeur.
               <div className="mt-3 p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-orange-800 dark:text-orange-200">
-                    Cette action est irréversible. Assurez-vous que votre colis est bien conforme.
+                    Cette action est irrÃ©versible. Assurez-vous que votre colis est bien conforme.
                   </span>
                 </div>
               </div>
@@ -695,7 +695,7 @@ export default function ClientOrdersList() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelivery}>
-              Confirmer la réception
+              Confirmer la rÃ©ception
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -708,7 +708,7 @@ export default function ClientOrdersList() {
             <AlertDialogTitle>Annuler la commande ?</AlertDialogTitle>
             <AlertDialogDescription>
               <div className="space-y-4">
-                <p>Vous êtes sur le point d'annuler cette commande.</p>
+                <p>Vous Ãªtes sur le point d'annuler cette commande.</p>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Raison de l'annulation (optionnel)</label>
                   <textarea
@@ -716,14 +716,14 @@ export default function ClientOrdersList() {
                     onChange={(e) => setCancelReason(e.target.value)}
                     className="w-full p-2 border rounded-md resize-none"
                     rows={3}
-                    placeholder="Ex: J'ai changé d'avis, produit indisponible ailleurs..."
+                    placeholder="Ex: J'ai changÃ© d'avis, produit indisponible ailleurs..."
                   />
                 </div>
                 <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-start gap-2">
                     <Shield className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-blue-800 dark:text-blue-200">
-                      Si vous avez payé, votre argent sera automatiquement remboursé via le système Escrow.
+                      Si vous avez payÃ©, votre argent sera automatiquement remboursÃ© via le systÃ¨me Escrow.
                     </span>
                   </div>
                 </div>
@@ -746,7 +746,7 @@ export default function ClientOrdersList() {
             <AlertDialogTitle>Demander un remboursement</AlertDialogTitle>
             <AlertDialogDescription>
               <div className="space-y-4">
-                <p>Décrivez la raison de votre demande de remboursement. Votre demande sera examinée par notre équipe.</p>
+                <p>DÃ©crivez la raison de votre demande de remboursement. Votre demande sera examinÃ©e par notre Ã©quipe.</p>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Raison du remboursement *</label>
                   <textarea
@@ -754,12 +754,12 @@ export default function ClientOrdersList() {
                     onChange={(e) => setRefundReason(e.target.value)}
                     className="w-full p-2 border rounded-md resize-none"
                     rows={4}
-                    placeholder="Ex: Produit défectueux, non conforme, endommagé..."
+                    placeholder="Ex: Produit dÃ©fectueux, non conforme, endommagÃ©..."
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Montant demandé (optionnel)</label>
+                  <label className="text-sm font-medium">Montant demandÃ© (optionnel)</label>
                   <input
                     type="number"
                     value={refundAmount}
@@ -772,7 +772,7 @@ export default function ClientOrdersList() {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-orange-800 dark:text-orange-200">
-                      Un litige sera ouvert. Le vendeur pourra répondre avant qu'une décision finale ne soit prise.
+                      Un litige sera ouvert. Le vendeur pourra rÃ©pondre avant qu'une dÃ©cision finale ne soit prise.
                     </span>
                   </div>
                 </div>

@@ -42,7 +42,7 @@ const planLimits = {
   basic: { perMinute: 30, perDay: 5000 },
   pro: { perMinute: 100, perDay: 50000 },
   business: { perMinute: 500, perDay: 200000 },
-  premium: { perMinute: -1, perDay: -1 } // Illimité
+  premium: { perMinute: -1, perDay: -1 } // IllimitÃ©
 };
 
 export function ApiKeyManager() {
@@ -80,7 +80,7 @@ export function ApiKeyManager() {
       if (error) throw error;
       setKeys((data as any) || []);
     } catch (error) {
-      console.error('Erreur chargement clés:', error);
+      console.error('Erreur chargement clÃ©s:', error);
     } finally {
       setLoading(false);
     }
@@ -103,7 +103,7 @@ export function ApiKeyManager() {
       const planName = subscription.plan_name?.toLowerCase() || 'free';
       const limits = planLimits[planName as keyof typeof planLimits] || planLimits.free;
 
-      // Générer la clé API
+      // GÃ©nÃ©rer la clÃ© API
       const { data: keyData, error: keyError } = await supabase
         .rpc('generate_api_key' as any);
 
@@ -133,7 +133,7 @@ export function ApiKeyManager() {
         description: t('apiKeys.toast.createdDescription')
       });
     } catch (error) {
-      console.error('Erreur création clé:', error);
+      console.error('Erreur crÃ©ation clÃ©:', error);
       toast({
         title: t('apiKeys.toast.errorTitle'),
         description: t('apiKeys.toast.createError'),
@@ -160,7 +160,7 @@ export function ApiKeyManager() {
 
       loadKeys();
     } catch (error) {
-      console.error('Erreur suppression clé:', error);
+      console.error('Erreur suppression clÃ©:', error);
       toast({
         title: t('apiKeys.toast.errorTitle'),
         description: t('apiKeys.toast.deleteError'),
@@ -188,7 +188,7 @@ export function ApiKeyManager() {
   };
 
   const maskKey = (key: string) => {
-    return key.substring(0, 12) + '•'.repeat(20);
+    return key.substring(0, 12) + 'â€¢'.repeat(20);
   };
 
   if (loading) {
@@ -270,7 +270,7 @@ export function ApiKeyManager() {
         </Dialog>
       </div>
 
-      {/* Nouvelle clé créée - à copier */}
+      {/* Nouvelle clÃ© crÃ©Ã©e - Ã  copier */}
       {newKey && (
         <Card className="border-primary">
           <CardContent className="p-6">
@@ -299,7 +299,7 @@ export function ApiKeyManager() {
         </Card>
       )}
 
-      {/* Liste des clés */}
+      {/* Liste des clÃ©s */}
       <div className="grid gap-4">
         {keys.length === 0 ? (
           <Card>
@@ -319,7 +319,7 @@ export function ApiKeyManager() {
                     <CardTitle className="text-lg flex items-center gap-2">
                       {key.key_name}
                       {key.is_active ? (
-                        <Badge className="bg-green-500">{t('apiKeys.status.active')}</Badge>
+                        <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">{t('apiKeys.status.active')}</Badge>
                       ) : (
                         <Badge variant="secondary">{t('apiKeys.status.inactive')}</Badge>
                       )}

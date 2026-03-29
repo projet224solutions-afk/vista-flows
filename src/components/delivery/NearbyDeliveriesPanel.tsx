@@ -1,11 +1,11 @@
 /**
- * PANNEAU DES COLIS À PROXIMITÉ - AMÉLIORÉ
- * Affiche tous les détails AVANT acceptation:
- * - Distance livreur → vendeur
- * - Distance vendeur → client  
- * - Prix total à gagner
+ * PANNEAU DES COLIS Ã€ PROXIMITÃ‰ - AMÃ‰LIORÃ‰
+ * Affiche tous les dÃ©tails AVANT acceptation:
+ * - Distance livreur â†’ vendeur
+ * - Distance vendeur â†’ client  
+ * - Prix total Ã  gagner
  * - Nom et adresse vendeur
- * - Adresse client CACHÉE (sécurité)
+ * - Adresse client CACHÃ‰E (sÃ©curitÃ©)
  */
 
 import { useEffect, useState } from 'react';
@@ -68,7 +68,7 @@ export function NearbyDeliveriesPanel() {
 
   const fetchDeliveries = async (driverPos: { lat: number; lng: number } | null) => {
     try {
-      // Charger les livraisons en attente (sans filtre ready_for_pickup pour inclure toutes les livraisons créées par les vendeurs)
+      // Charger les livraisons en attente (sans filtre ready_for_pickup pour inclure toutes les livraisons crÃ©Ã©es par les vendeurs)
       const { data, error } = await supabase
         .from('deliveries')
         .select('*')
@@ -95,8 +95,8 @@ export function NearbyDeliveriesPanel() {
 
         return {
           id: d.id,
-          pickup_address: pickup.address || 'Adresse de récupération',
-          delivery_address: '🔒 Révélée après acceptation',
+          pickup_address: pickup.address || 'Adresse de rÃ©cupÃ©ration',
+          delivery_address: 'ðŸ”’ RÃ©vÃ©lÃ©e aprÃ¨s acceptation',
           pickup_lat: pickup.lat,
           pickup_lng: pickup.lng,
           delivery_lat: delivery.lat,
@@ -140,23 +140,23 @@ export function NearbyDeliveriesPanel() {
     try {
       const acceptedDelivery = await DeliveryService.acceptDelivery(deliveryId);
       
-      // Retirer immédiatement de la liste pour un feedback visuel instantané
+      // Retirer immÃ©diatement de la liste pour un feedback visuel instantanÃ©
       setDeliveries(prev => prev.filter(d => d.id !== deliveryId));
       
-      toast.success('✅ Livraison acceptée avec succès !', {
-        description: 'Rendez-vous chez le vendeur pour récupérer le colis'
+      toast.success('âœ… Livraison acceptÃ©e avec succÃ¨s !', {
+        description: 'Rendez-vous chez le vendeur pour rÃ©cupÃ©rer le colis'
       });
       
-      // Rafraîchir la liste complète après un court délai
+      // RafraÃ®chir la liste complÃ¨te aprÃ¨s un court dÃ©lai
       setTimeout(() => loadNearbyDeliveries(), 1000);
       
       return acceptedDelivery;
     } catch (error: any) {
       console.error('[NearbyDeliveriesPanel] Accept error:', error);
       toast.error(error.message || 'Erreur lors de l\'acceptation', {
-        description: 'La livraison est peut-être déjà prise par un autre livreur'
+        description: 'La livraison est peut-Ãªtre dÃ©jÃ  prise par un autre livreur'
       });
-      // Rafraîchir pour avoir l'état actuel
+      // RafraÃ®chir pour avoir l'Ã©tat actuel
       loadNearbyDeliveries();
     } finally {
       setAcceptingId(null);
@@ -185,7 +185,7 @@ export function NearbyDeliveriesPanel() {
               <Navigation className="h-5 w-5 text-orange-600" />
               Livraisons disponibles
             </CardTitle>
-            <CardDescription>{deliveries.length} offres près de vous</CardDescription>
+            <CardDescription>{deliveries.length} offres prÃ¨s de vous</CardDescription>
           </div>
           <Button variant="ghost" size="sm" onClick={loadNearbyDeliveries}>
             <RefreshCw className="h-4 w-4" />
@@ -200,7 +200,7 @@ export function NearbyDeliveriesPanel() {
           </div>
         ) : (
           deliveries.map((d) => (
-            <div key={d.id} className="p-4 bg-gradient-to-r from-orange-50 to-green-50 dark:from-orange-950/20 dark:to-green-950/20 rounded-xl border border-orange-200/50 space-y-3">
+            <div key={d.id} className="p-4 bg-gradient-to-r from-orange-50 to-primary-orange-50 dark:from-orange-950/20 dark:to-primary-orange-950/20 rounded-xl border border-orange-200/50 space-y-3">
               {/* Vendeur */}
               <div className="flex items-start gap-3">
                 <Store className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
@@ -218,12 +218,12 @@ export function NearbyDeliveriesPanel() {
               {/* Distances */}
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Vous → Vendeur</p>
+                  <p className="text-xs text-muted-foreground">Vous â†’ Vendeur</p>
                   <p className="font-bold text-orange-700">{d.distance_to_vendor} km</p>
                 </div>
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Vendeur → Client</p>
-                  <p className="font-bold text-green-700">{d.distance_vendor_to_client} km</p>
+                <div className="p-2 bg-primary-orange-100 dark:bg-primary-orange-900/30 rounded-lg">
+                  <p className="text-xs text-muted-foreground">Vendeur â†’ Client</p>
+                  <p className="font-bold text-primary-orange-700">{d.distance_vendor_to_client} km</p>
                 </div>
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                   <p className="text-xs text-muted-foreground">Total</p>
@@ -232,7 +232,7 @@ export function NearbyDeliveriesPanel() {
               </div>
 
               {/* Prix et infos */}
-              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white">
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-lg text-white">
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
                   <span className="font-bold text-lg">{formatCurrency(d.estimated_earnings || 0)}</span>
@@ -240,7 +240,7 @@ export function NearbyDeliveriesPanel() {
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className={d.payment_method === 'cod' ? 'bg-yellow-100 text-yellow-800' : 'bg-white/20 text-white'}>
                     <CreditCard className="h-3 w-3 mr-1" />
-                    {d.payment_method === 'cod' ? 'COD' : 'Prépayé'}
+                    {d.payment_method === 'cod' ? 'COD' : 'PrÃ©payÃ©'}
                   </Badge>
                   <Badge variant="secondary" className="bg-white/20 text-white">
                     <Clock className="h-3 w-3 mr-1" />
@@ -249,14 +249,14 @@ export function NearbyDeliveriesPanel() {
                 </div>
               </div>
 
-              {/* Note sécurité */}
+              {/* Note sÃ©curitÃ© */}
               <p className="text-xs text-center text-muted-foreground italic">
-                🔒 L'adresse du client sera révélée après acceptation
+                ðŸ”’ L'adresse du client sera rÃ©vÃ©lÃ©e aprÃ¨s acceptation
               </p>
 
               {/* Bouton accepter */}
               <Button
-                className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
+                className="w-full bg-primary-blue-600 hover:bg-primary-blue-700 shadow-lg shadow-primary-orange-600/40"
                 onClick={() => handleAccept(d.id)}
                 disabled={acceptingId === d.id}
               >

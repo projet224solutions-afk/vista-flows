@@ -1,5 +1,5 @@
 /**
- * SOC AVANCÉ - Security Operations Center avec analystes humains
+ * SOC AVANCÃ‰ - Security Operations Center avec analystes humains
  * Surveillance 24/7 avec analyse humaine proactive
  */
 
@@ -88,12 +88,12 @@ export function EnhancedSOCDashboard() {
     loadSecurityData();
     loadAnalysts();
     loadInvestigations();
-    toast.success('Dashboard SOC actualisé');
+    toast.success('Dashboard SOC actualisÃ©');
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'bg-green-500';
+      case 'available': return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
       case 'busy': return 'bg-yellow-500';
       case 'on_call': return 'bg-blue-500';
       case 'offline': return 'bg-gray-500';
@@ -103,7 +103,7 @@ export function EnhancedSOCDashboard() {
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case 'team_lead': return 'Chef d\'équipe';
+      case 'team_lead': return 'Chef d\'Ã©quipe';
       case 'senior_analyst': return 'Analyste Senior';
       case 'analyst': return 'Analyste';
       case 'manager': return 'Manager';
@@ -136,10 +136,10 @@ export function EnhancedSOCDashboard() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="w-6 h-6 text-primary" />
-                Centre Opérationnel de Sécurité (SOC)
+                Centre OpÃ©rationnel de SÃ©curitÃ© (SOC)
               </CardTitle>
               <CardDescription>
-                Surveillance et réponse aux incidents 24/7 avec analyse humaine proactive
+                Surveillance et rÃ©ponse aux incidents 24/7 avec analyse humaine proactive
               </CardDescription>
             </div>
             <Button 
@@ -154,21 +154,21 @@ export function EnhancedSOCDashboard() {
         </CardHeader>
         <CardContent>
           {/* Statut SOC */}
-          <div className="p-4 rounded-lg border bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+          <div className="p-4 rounded-lg border bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 border-primary-orange-200 dark:border-primary-orange-800">
             <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="font-semibold">SOC Opérationnel - Couverture 24/7</span>
+              <CheckCircle className="w-5 h-5 text-primary-orange-600" />
+              <span className="font-semibold">SOC OpÃ©rationnel - Couverture 24/7</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {activeAnalysts} analystes actifs • {onCallAnalysts} analystes de garde • 
-              Capacité: {currentLoad}/{totalCapacity} cas ({loadPercentage.toFixed(0)}%)
+              {activeAnalysts} analystes actifs â€¢ {onCallAnalysts} analystes de garde â€¢ 
+              CapacitÃ©: {currentLoad}/{totalCapacity} cas ({loadPercentage.toFixed(0)}%)
             </p>
             <Progress value={loadPercentage} className="h-2 mt-2" />
           </div>
         </CardContent>
       </Card>
 
-      {/* Métriques principales */}
+      {/* MÃ©triques principales */}
       <ResponsiveGrid mobileCols={2} tabletCols={4} desktopCols={4} gap="md">
         <Card>
           <CardContent className="pt-6">
@@ -187,7 +187,7 @@ export function EnhancedSOCDashboard() {
               <Eye className="w-8 h-8 text-blue-500" />
               <div>
                 <div className="text-2xl font-bold">{investigations.filter(i => i.status === 'in_progress').length}</div>
-                <div className="text-xs text-muted-foreground">Enquêtes en cours</div>
+                <div className="text-xs text-muted-foreground">EnquÃªtes en cours</div>
               </div>
             </div>
           </CardContent>
@@ -195,7 +195,7 @@ export function EnhancedSOCDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Users className="w-8 h-8 text-green-500" />
+              <Users className="w-8 h-8 text-primary-orange-500" />
               <div>
                 <div className="text-2xl font-bold">{activeAnalysts}</div>
                 <div className="text-xs text-muted-foreground">Analystes actifs</div>
@@ -209,22 +209,22 @@ export function EnhancedSOCDashboard() {
               <Clock className="w-8 h-8 text-purple-500" />
               <div>
                 <div className="text-2xl font-bold">&lt; 2 min</div>
-                <div className="text-xs text-muted-foreground">Temps de réponse</div>
+                <div className="text-xs text-muted-foreground">Temps de rÃ©ponse</div>
               </div>
             </div>
           </CardContent>
         </Card>
       </ResponsiveGrid>
 
-      {/* Équipe SOC */}
+      {/* Ã‰quipe SOC */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Équipe SOC - Analystes
+            Ã‰quipe SOC - Analystes
           </CardTitle>
           <CardDescription>
-            Équipe dédiée à l'analyse de sécurité et réponse aux incidents
+            Ã‰quipe dÃ©diÃ©e Ã  l'analyse de sÃ©curitÃ© et rÃ©ponse aux incidents
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -241,7 +241,7 @@ export function EnhancedSOCDashboard() {
                   <div className="flex gap-1">
                     <Badge className={getStatusColor(analyst.status)}>
                       {analyst.status === 'available' ? 'Disponible' : 
-                       analyst.status === 'busy' ? 'Occupé' : 
+                       analyst.status === 'busy' ? 'OccupÃ©' : 
                        analyst.status === 'on_call' ? 'De garde' : 'Hors ligne'}
                     </Badge>
                     {analyst.is_on_call && (
@@ -281,22 +281,22 @@ export function EnhancedSOCDashboard() {
         </CardContent>
       </Card>
 
-      {/* Enquêtes récentes */}
+      {/* EnquÃªtes rÃ©centes */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Enquêtes & Investigations
+            EnquÃªtes & Investigations
           </CardTitle>
           <CardDescription>
-            Analyse approfondie des incidents de sécurité
+            Analyse approfondie des incidents de sÃ©curitÃ©
           </CardDescription>
         </CardHeader>
         <CardContent>
           {investigations.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle className="w-12 h-12 mx-auto mb-2 text-green-500" />
-              <p>Aucune enquête active</p>
+              <CheckCircle className="w-12 h-12 mx-auto mb-2 text-primary-orange-500" />
+              <p>Aucune enquÃªte active</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -306,7 +306,7 @@ export function EnhancedSOCDashboard() {
                     <div>
                       <h4 className="font-medium">{inv.title}</h4>
                       <p className="text-xs text-muted-foreground">
-                        Type: {inv.investigation_type} • Temps: {inv.time_spent_minutes} min
+                        Type: {inv.investigation_type} â€¢ Temps: {inv.time_spent_minutes} min
                       </p>
                     </div>
                     <div className="flex gap-1">
@@ -316,7 +316,7 @@ export function EnhancedSOCDashboard() {
                       <Badge variant="outline">
                         {inv.status === 'open' ? 'Ouvert' :
                          inv.status === 'in_progress' ? 'En cours' :
-                         inv.status === 'closed' ? 'Fermé' : inv.status}
+                         inv.status === 'closed' ? 'FermÃ©' : inv.status}
                       </Badge>
                     </div>
                   </div>

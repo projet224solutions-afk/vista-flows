@@ -1,6 +1,6 @@
 /**
  * PANNEAU DE LIVRAISON ACTIVE
- * Gère le workflow complet après acceptation d'une livraison
+ * GÃ¨re le workflow complet aprÃ¨s acceptation d'une livraison
  */
 
 import { useState } from 'react';
@@ -62,13 +62,13 @@ interface ActiveDeliveryPanelProps {
 }
 
 const STATUS_STEPS: { status: DeliveryStatus; label: string; icon: any }[] = [
-  { status: 'assigned', label: 'Acceptée', icon: Check },
+  { status: 'assigned', label: 'AcceptÃ©e', icon: Check },
   { status: 'driver_on_way_to_vendor', label: 'En route vers vendeur', icon: Navigation },
-  { status: 'driver_arrived_vendor', label: 'Arrivé chez vendeur', icon: Store },
-  { status: 'package_picked', label: 'Colis récupéré', icon: Package },
+  { status: 'driver_arrived_vendor', label: 'ArrivÃ© chez vendeur', icon: Store },
+  { status: 'package_picked', label: 'Colis rÃ©cupÃ©rÃ©', icon: Package },
   { status: 'driver_on_way_to_client', label: 'En route vers client', icon: Navigation },
-  { status: 'driver_arrived', label: 'Arrivé chez client', icon: MapPin },
-  { status: 'delivered', label: 'Livré', icon: Check },
+  { status: 'driver_arrived', label: 'ArrivÃ© chez client', icon: MapPin },
+  { status: 'delivered', label: 'LivrÃ©', icon: Check },
 ];
 
 export function ActiveDeliveryPanel({
@@ -101,14 +101,14 @@ export function ActiveDeliveryPanel({
 
   const getNextActionLabel = (): string => {
     const labels: Record<DeliveryStatus, string> = {
-      'assigned': '🚗 Démarrer la navigation',
-      'driver_on_way_to_vendor': '📍 Je suis arrivé',
-      'driver_arrived_vendor': '📦 Colis récupéré',
-      'package_picked': '🚗 En route vers client',
-      'driver_on_way_to_client': '📍 Je suis arrivé',
-      'driver_5min_away': '📍 Je suis arrivé',
-      'driver_arrived': '✅ Livraison effectuée',
-      'delivered': delivery.paymentMethod === 'cod' ? '💰 Paiement reçu' : '',
+      'assigned': 'ðŸš— DÃ©marrer la navigation',
+      'driver_on_way_to_vendor': 'ðŸ“ Je suis arrivÃ©',
+      'driver_arrived_vendor': 'ðŸ“¦ Colis rÃ©cupÃ©rÃ©',
+      'package_picked': 'ðŸš— En route vers client',
+      'driver_on_way_to_client': 'ðŸ“ Je suis arrivÃ©',
+      'driver_5min_away': 'ðŸ“ Je suis arrivÃ©',
+      'driver_arrived': 'âœ… Livraison effectuÃ©e',
+      'delivered': delivery.paymentMethod === 'cod' ? 'ðŸ’° Paiement reÃ§u' : '',
       'paid': ''
     };
     return labels[delivery.status];
@@ -121,9 +121,9 @@ export function ActiveDeliveryPanel({
     setLoading(true);
     try {
       await onUpdateStatus(nextStatus);
-      toast.success('Statut mis à jour');
+      toast.success('Statut mis Ã  jour');
     } catch (error) {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error('Erreur lors de la mise Ã  jour');
     } finally {
       setLoading(false);
     }
@@ -143,7 +143,7 @@ export function ActiveDeliveryPanel({
     setLoading(true);
     try {
       await onUploadProof(file);
-      toast.success('Photo de preuve uploadée');
+      toast.success('Photo de preuve uploadÃ©e');
     } catch (error) {
       toast.error('Erreur lors de l\'upload');
     } finally {
@@ -159,14 +159,14 @@ export function ActiveDeliveryPanel({
     : { location: delivery.clientLocation, label: delivery.clientName, address: delivery.clientAddress, phone: delivery.clientPhone };
 
   return (
-    <Card className="border-green-500 shadow-lg">
+    <Card className="border-primary-orange-500 shadow-lg">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <Package className="h-5 w-5 text-green-600" />
+            <Package className="h-5 w-5 text-primary-orange-600" />
             Livraison en cours
           </CardTitle>
-          <Badge variant="default" className="bg-green-500">
+          <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
             {STATUS_STEPS[currentStepIndex]?.label || delivery.status}
           </Badge>
         </div>
@@ -175,17 +175,17 @@ export function ActiveDeliveryPanel({
 
       <CardContent className="space-y-4">
         {/* Destination actuelle */}
-        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200">
+        <div className="p-4 bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/30 dark:to-primary-orange-950/30 rounded-lg border border-primary-orange-200">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               {isAtVendorPhase ? (
                 <Store className="h-6 w-6 text-orange-600 flex-shrink-0" />
               ) : (
-                <User className="h-6 w-6 text-green-600 flex-shrink-0" />
+                <User className="h-6 w-6 text-primary-orange-600 flex-shrink-0" />
               )}
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                  {isAtVendorPhase ? 'Récupération chez' : 'Livraison à'}
+                  {isAtVendorPhase ? 'RÃ©cupÃ©ration chez' : 'Livraison Ã '}
                 </p>
                 <p className="font-bold text-lg">{currentDestination.label}</p>
                 <p className="text-sm text-muted-foreground">{currentDestination.address}</p>
@@ -216,10 +216,10 @@ export function ActiveDeliveryPanel({
           <div className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm">
-              {delivery.paymentMethod === 'cod' ? 'Paiement à la livraison' : 'Déjà payé'}
+              {delivery.paymentMethod === 'cod' ? 'Paiement Ã  la livraison' : 'DÃ©jÃ  payÃ©'}
             </span>
           </div>
-          <span className="font-bold text-green-600">
+          <span className="font-bold text-primary-orange-600">
             {formatCurrency(delivery.estimatedEarnings)}
           </span>
         </div>
@@ -229,7 +229,7 @@ export function ActiveDeliveryPanel({
           {/* Bouton action principale */}
           {getNextStatus() && (
             <Button
-              className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
+              className="w-full bg-primary-blue-600 hover:bg-primary-blue-700 shadow-lg shadow-primary-orange-600/40"
               onClick={handleNextStep}
               disabled={loading}
             >
@@ -241,7 +241,7 @@ export function ActiveDeliveryPanel({
             </Button>
           )}
 
-          {/* Upload photo de preuve (après livraison) */}
+          {/* Upload photo de preuve (aprÃ¨s livraison) */}
           {delivery.status === 'delivered' && (
             <div className="flex gap-2">
               <Button
@@ -277,7 +277,7 @@ export function ActiveDeliveryPanel({
           )}
         </div>
 
-        {/* Étapes de progression */}
+        {/* Ã‰tapes de progression */}
         <div className="pt-2 border-t">
           <p className="text-xs text-muted-foreground mb-2">Progression</p>
           <div className="flex justify-between">
@@ -290,11 +290,11 @@ export function ActiveDeliveryPanel({
                 <div
                   key={step.status}
                   className={`flex flex-col items-center ${
-                    isCompleted ? 'text-green-600' : isCurrent ? 'text-orange-600' : 'text-muted-foreground'
+                    isCompleted ? 'text-primary-orange-600' : isCurrent ? 'text-orange-600' : 'text-muted-foreground'
                   }`}
                 >
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    isCompleted ? 'bg-green-100' : isCurrent ? 'bg-orange-100' : 'bg-muted'
+                    isCompleted ? 'bg-primary-orange-100' : isCurrent ? 'bg-orange-100' : 'bg-muted'
                   }`}>
                     {isCompleted ? (
                       <Check className="h-3 w-3" />

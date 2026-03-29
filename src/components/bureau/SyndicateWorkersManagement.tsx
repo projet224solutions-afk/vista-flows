@@ -127,9 +127,9 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
   const getAccessLevelBadge = (level: string) => {
     switch (level) {
       case 'president':
-        return <Badge className="bg-amber-500 text-white"><Crown className="w-3 h-3 mr-1" />Président</Badge>;
+        return <Badge className="bg-amber-500 text-white"><Crown className="w-3 h-3 mr-1" />PrÃ©sident</Badge>;
       case 'secretary':
-        return <Badge className="bg-blue-500 text-white">Secrétaire</Badge>;
+        return <Badge className="bg-blue-500 text-white">SecrÃ©taire</Badge>;
       default:
         return <Badge variant="secondary">Membre</Badge>;
     }
@@ -155,8 +155,8 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                <UserCheck className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 rounded-lg bg-primary-orange-100 flex items-center justify-center">
+                <UserCheck className="w-5 h-5 text-primary-orange-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.activeWorkers}</p>
@@ -173,7 +173,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.presidentCount}</p>
-                <p className="text-xs text-muted-foreground">Présidents</p>
+                <p className="text-xs text-muted-foreground">PrÃ©sidents</p>
               </div>
             </div>
           </CardContent>
@@ -186,7 +186,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.secretaryCount}</p>
-                <p className="text-xs text-muted-foreground">Secrétaires</p>
+                <p className="text-xs text-muted-foreground">SecrÃ©taires</p>
               </div>
             </div>
           </CardContent>
@@ -221,7 +221,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={refetch}>
               <RefreshCw className="w-4 h-4 mr-2" />
-              Rafraîchir
+              RafraÃ®chir
             </Button>
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
@@ -234,7 +234,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                 <DialogHeader>
                   <DialogTitle>Ajouter un Membre</DialogTitle>
                   <DialogDescription>
-                    Créez un nouveau membre du bureau syndicat
+                    CrÃ©ez un nouveau membre du bureau syndicat
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -249,12 +249,12 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="prenom">Prénom</Label>
+                      <Label htmlFor="prenom">PrÃ©nom</Label>
                       <Input
                         id="prenom"
                         value={newWorker.prenom}
                         onChange={(e) => setNewWorker({ ...newWorker, prenom: e.target.value })}
-                        placeholder="Prénom"
+                        placeholder="PrÃ©nom"
                       />
                     </div>
                   </div>
@@ -269,7 +269,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="telephone">Téléphone</Label>
+                    <Label htmlFor="telephone">TÃ©lÃ©phone</Label>
                     <Input
                       id="telephone"
                       value={newWorker.telephone}
@@ -278,7 +278,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="access_level">Niveau d'accès</Label>
+                    <Label htmlFor="access_level">Niveau d'accÃ¨s</Label>
                     <Select
                       value={newWorker.access_level}
                       onValueChange={(value) => setNewWorker({ ...newWorker, access_level: value })}
@@ -287,8 +287,8 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="president">Président</SelectItem>
-                        <SelectItem value="secretary">Secrétaire</SelectItem>
+                        <SelectItem value="president">PrÃ©sident</SelectItem>
+                        <SelectItem value="secretary">SecrÃ©taire</SelectItem>
                         <SelectItem value="member">Membre</SelectItem>
                       </SelectContent>
                     </Select>
@@ -301,12 +301,12 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                     {creating ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Création...
+                        CrÃ©ation...
                       </>
                     ) : (
                       <>
                         <Plus className="w-4 h-4 mr-2" />
-                        Créer le Membre
+                        CrÃ©er le Membre
                       </>
                     )}
                   </Button>
@@ -322,7 +322,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher par nom, email, téléphone, ID..."
+                  placeholder="Rechercher par nom, email, tÃ©lÃ©phone, ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -345,8 +345,8 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous niveaux</SelectItem>
-                <SelectItem value="president">Présidents</SelectItem>
-                <SelectItem value="secretary">Secrétaires</SelectItem>
+                <SelectItem value="president">PrÃ©sidents</SelectItem>
+                <SelectItem value="secretary">SecrÃ©taires</SelectItem>
                 <SelectItem value="member">Membres</SelectItem>
               </SelectContent>
             </Select>
@@ -360,7 +360,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
           ) : filteredWorkers.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Users className="w-16 h-16 mx-auto mb-4 opacity-20" />
-              <p>Aucun membre trouvé</p>
+              <p>Aucun membre trouvÃ©</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -388,7 +388,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                       </div>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         {worker.email && <span>{worker.email}</span>}
-                        {worker.telephone && <span>• {worker.telephone}</span>}
+                        {worker.telephone && <span>â€¢ {worker.telephone}</span>}
                       </div>
                     </div>
                   </div>
@@ -406,13 +406,13 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleOpenPermissions(worker)}>
                           <Shield className="w-4 h-4 mr-2" />
-                          Gérer les Permissions
+                          GÃ©rer les Permissions
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => toggleWorkerStatus(worker.id, !worker.is_active)}>
                           {worker.is_active ? (
                             <>
                               <UserX className="w-4 h-4 mr-2" />
-                              Désactiver
+                              DÃ©sactiver
                             </>
                           ) : (
                             <>
@@ -451,8 +451,8 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer le membre "{workerToDelete?.nom} {workerToDelete?.prenom}" ? 
-              Cette action est irréversible.
+              ÃŠtes-vous sÃ»r de vouloir supprimer le membre "{workerToDelete?.nom} {workerToDelete?.prenom}" ? 
+              Cette action est irrÃ©versible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

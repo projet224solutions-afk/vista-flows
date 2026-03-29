@@ -89,6 +89,15 @@ All colors MUST be HSL.
     --gradient-hero-accent: linear-gradient(135deg, hsl(220 96% 27% / 0.06) 0%, hsl(15 100% 50% / 0.04) 100%);
     --gradient-glass: linear-gradient(180deg, hsl(0 0% 100% / 0.95) 0%, hsl(0 0% 100% / 0.85) 100%);
     --gradient-bottom-nav: linear-gradient(180deg, hsl(0 0% 100% / 0) 0%, hsl(0 0% 100%) 30%);
+
+    /* Couleurs primaires globales - Orange & Bleu */
+    --primary-orange: 15 100% 50%;
+    --primary-blue: 220 96% 32%;
+    --gradient-primary: linear-gradient(135deg, hsl(220 96% 32%), hsl(15 100% 50%));
+    --gradient-primary-reverse: linear-gradient(135deg, hsl(15 100% 50%), hsl(220 96% 32%));
+    --gradient-primary-light: linear-gradient(135deg, hsl(220 96% 32% / 0.1), hsl(15 100% 50% / 0.1));
+    --gradient-success: linear-gradient(135deg, hsl(220 96% 32%), hsl(15 100% 50%));
+
     --shadow-elegant: 0 4px 24px hsl(220 96% 27% / 0.07);
     --shadow-glow: 0 0 30px hsl(220 96% 27% / 0.15);
     --shadow-card: 0 1px 3px hsl(220 20% 50% / 0.04), 0 4px 12px hsl(220 20% 50% / 0.06);

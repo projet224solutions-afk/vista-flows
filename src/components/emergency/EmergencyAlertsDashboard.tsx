@@ -229,12 +229,12 @@ export const EmergencyAlertsDashboard: React.FC<EmergencyAlertsDashboardProps> =
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
+              <CheckCircle className="h-4 w-4 text-primary-orange-600" />
               Résolues Aujourd'hui
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-green-600">{stats?.resolved_alerts || 0}</p>
+            <p className="text-3xl font-bold text-primary-orange-600">{stats?.resolved_alerts || 0}</p>
           </CardContent>
         </Card>
 
@@ -271,7 +271,7 @@ export const EmergencyAlertsDashboard: React.FC<EmergencyAlertsDashboardProps> =
       {activeAlerts.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <CheckCircle className="h-16 w-16 text-primary-orange-500 mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">Aucune Alerte Active</h3>
             <p className="text-muted-foreground">
               Tous les conducteurs sont en sécurité. Le système surveille en temps réel.

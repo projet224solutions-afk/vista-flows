@@ -38,10 +38,10 @@ export function NumericKeypadPopup({
 }: NumericKeypadPopupProps) {
   
   const handleInput = (input: string) => {
-    // Empêcher les décimales pour les quantités
+    // EmpÃªcher les dÃ©cimales pour les quantitÃ©s
     if (mode === 'quantity' && input === '.') return;
     
-    // Vérifier la quantité max
+    // VÃ©rifier la quantitÃ© max
     if (mode === 'quantity' && input !== 'clear' && input !== 'enter' && maxQuantity) {
       const newValue = numericInput + input;
       const numValue = parseInt(newValue, 10);
@@ -61,7 +61,7 @@ export function NumericKeypadPopup({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xs p-0 overflow-hidden">
-        {/* Header stylisé */}
+        {/* Header stylisÃ© */}
         <div className={`bg-gradient-to-r ${isQuantityMode ? 'from-blue-500/10 via-blue-500/5' : 'from-primary/10 via-primary/5'} to-transparent p-4 border-b border-border/50`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -74,17 +74,17 @@ export function NumericKeypadPopup({
               </div>
               <div>
                 <h3 className="font-bold text-foreground">
-                  {isQuantityMode ? 'Saisir la quantité' : 'Pavé numérique'}
+                  {isQuantityMode ? 'Saisir la quantitÃ©' : 'PavÃ© numÃ©rique'}
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   {isQuantityMode 
-                    ? (productName || 'Modifier la quantité')
+                    ? (productName || 'Modifier la quantitÃ©')
                     : 'Saisie du montant'
                   }
                 </p>
               </div>
             </div>
-            <div className={`h-2.5 w-2.5 rounded-full ${isQuantityMode ? 'bg-blue-500' : 'bg-green-500'} animate-pulse shadow-lg`} />
+            <div className={`h-2.5 w-2.5 rounded-full ${isQuantityMode ? 'bg-blue-500' : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500'} animate-pulse shadow-lg`} />
           </div>
         </div>
 
@@ -93,9 +93,9 @@ export function NumericKeypadPopup({
           <div className="space-y-2">
             {isQuantityMode ? (
               <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-3 border border-blue-200 dark:border-blue-800">
-                <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Quantité actuelle</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">QuantitÃ© actuelle</p>
                 <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
-                  {numericInput || '0'} unités
+                  {numericInput || '0'} unitÃ©s
                   {maxQuantity && (
                     <span className="text-sm font-normal text-blue-500 ml-2">(max: {maxQuantity})</span>
                   )}
@@ -103,7 +103,7 @@ export function NumericKeypadPopup({
               </div>
             ) : (
               <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                <p className="text-xs text-muted-foreground mb-1">Montant à payer</p>
+                <p className="text-xs text-muted-foreground mb-1">Montant Ã  payer</p>
                 <p className="text-lg font-bold text-primary">{total.toLocaleString()} {currency}</p>
               </div>
             )}
@@ -119,7 +119,7 @@ export function NumericKeypadPopup({
             {!isQuantityMode && receivedAmount > 0 && (
               <div className={`text-sm font-medium px-3 py-2 rounded-lg ${
                 change >= 0 
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                  ? 'bg-primary-orange-100 text-primary-orange-700 dark:bg-primary-orange-900/30 dark:text-primary-orange-400' 
                   : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
               }`}>
                 Rendu: {change.toLocaleString()} {currency}
@@ -127,7 +127,7 @@ export function NumericKeypadPopup({
             )}
           </div>
 
-          {/* Grille numérique */}
+          {/* Grille numÃ©rique */}
           <div className="grid grid-cols-3 gap-2">
             {['7', '8', '9', '4', '5', '6', '1', '2', '3'].map((num) => (
               <Button
@@ -171,7 +171,7 @@ export function NumericKeypadPopup({
                 onClick={() => handleInput('.')}
                 className="h-14 text-2xl font-bold bg-background/80 hover:bg-primary/10 hover:border-primary/50 hover:scale-105 active:scale-95 transition-all duration-150 shadow-sm"
               >
-                •
+                â€¢
               </Button>
             )}
           </div>
@@ -190,10 +190,10 @@ export function NumericKeypadPopup({
             )}
             <Button
               onClick={() => handleInput('enter')}
-              className={`h-12 font-semibold shadow-lg hover:shadow-xl transition-all ${isQuantityMode ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400' : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400'} text-white`}
+              className={`h-12 font-semibold shadow-lg hover:shadow-xl transition-all ${isQuantityMode ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400' : 'bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 hover:from-primary-blue-500 hover:to-primary-orange-400'} text-white`}
             >
               <CheckSquare className="h-4 w-4 mr-2" />
-              {isQuantityMode ? 'Confirmer quantité' : 'Valider'}
+              {isQuantityMode ? 'Confirmer quantitÃ©' : 'Valider'}
             </Button>
           </div>
         </div>

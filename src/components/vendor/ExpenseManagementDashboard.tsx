@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
- * 💰 DASHBOARD DE GESTION DES DÉPENSES - 224SOLUTIONS
- * Interface complète pour la gestion des dépenses vendeurs
+ * ðŸ’° DASHBOARD DE GESTION DES DÃ‰PENSES - 224SOLUTIONS
+ * Interface complÃ¨te pour la gestion des dÃ©penses vendeurs
  */
 
 import React, { useState, useMemo } from 'react';
@@ -47,10 +47,10 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
   const [activeTab, setActiveTab] = useState('profit');
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   
-  // Récupérer le vendorId et userId via le hook
+  // RÃ©cupÃ©rer le vendorId et userId via le hook
   const { vendorId, userId, loading: vendorLoading } = useCurrentVendor();
 
-  // Hook principal de gestion des dépenses - utiliser userId pour vendor_expenses
+  // Hook principal de gestion des dÃ©penses - utiliser userId pour vendor_expenses
   const expenseData = useExpenseManagement(userId);
 
   const {
@@ -67,26 +67,26 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
     createCategory
   } = expenseData;
 
-  // Valeurs par défaut pour éviter les erreurs de null
+  // Valeurs par dÃ©faut pour Ã©viter les erreurs de null
   const safeStats = stats || {
     total_expenses: 0,
     expense_count: 0,
     average_expense: 0
   };
 
-  // Calculs pour les métriques
+  // Calculs pour les mÃ©triques
   const metrics = useMemo(() => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
 
-    // Dépenses du mois actuel
+    // DÃ©penses du mois actuel
     const currentMonthExpenses = expenses.filter(expense => {
       const expenseDate = new Date(expense.created_at);
       return expenseDate.getMonth() === currentMonth &&
         expenseDate.getFullYear() === currentYear;
     });
 
-    // Dépenses du mois précédent
+    // DÃ©penses du mois prÃ©cÃ©dent
     const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
     const lastMonthExpenses = expenses.filter(expense => {
@@ -113,7 +113,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
     };
   }, [expenses]);
 
-  // Données pour les graphiques
+  // DonnÃ©es pour les graphiques
   const chartData = useMemo(() => {
     return { categoryData: [], pieData: [], trendData: [] };
   }, []);
@@ -142,9 +142,9 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
       <Alert className="m-4">
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          Erreur lors du chargement des données de dépenses.
+          Erreur lors du chargement des donnÃ©es de dÃ©penses.
           <Button variant="link" onClick={refetch} className="ml-2">
-            Réessayer
+            RÃ©essayer
           </Button>
         </AlertDescription>
       </Alert>
@@ -153,11 +153,11 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
   return (
     <div className={`space-y-4 sm:space-y-6 ${className}`}>
-      {/* En-tête avec alertes - Mobile optimized */}
+      {/* En-tÃªte avec alertes - Mobile optimized */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Gestion des Dépenses</h2>
-          <p className="text-xs sm:text-sm text-gray-600 line-clamp-1">Suivez vos dépenses professionnelles</p>
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Gestion des DÃ©penses</h2>
+          <p className="text-xs sm:text-sm text-gray-600 line-clamp-1">Suivez vos dÃ©penses professionnelles</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -175,14 +175,14 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
         </div>
       </div>
 
-      {/* Métriques principales - Grid 2x2 on mobile */}
+      {/* MÃ©triques principales - Grid 2x2 on mobile */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        {/* Total des dépenses */}
+        {/* Total des dÃ©penses */}
         <Card>
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Dépenses</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total DÃ©penses</p>
                 <p className="text-base sm:text-2xl font-bold text-gray-900 truncate">
                   {safeStats.total_expenses?.toLocaleString() || 0}
                 </p>
@@ -190,9 +190,9 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                   {metrics.monthlyChange >= 0 ? (
                     <TrendingUp className="w-3 h-3 text-red-500 mr-1" />
                   ) : (
-                    <TrendingDown className="w-3 h-3 text-green-500 mr-1" />
+                    <TrendingDown className="w-3 h-3 text-primary-orange-500 mr-1" />
                   )}
-                  <span className={`text-xs ${metrics.monthlyChange >= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  <span className={`text-xs ${metrics.monthlyChange >= 0 ? 'text-red-600' : 'text-primary-orange-600'}`}>
                     {Math.abs(metrics.monthlyChange).toFixed(0)}%
                   </span>
                 </div>
@@ -204,12 +204,12 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           </CardContent>
         </Card>
 
-        {/* Nombre de dépenses */}
+        {/* Nombre de dÃ©penses */}
         <Card>
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Nb. Dépenses</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Nb. DÃ©penses</p>
                 <p className="text-base sm:text-2xl font-bold text-gray-900">{expenses.length}</p>
                 <p className="text-xs text-gray-500 mt-1 truncate">
                   {metrics.currentMonthCount} ce mois
@@ -222,12 +222,12 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           </CardContent>
         </Card>
 
-        {/* Dépense moyenne */}
+        {/* DÃ©pense moyenne */}
         <Card>
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Dép. Moyenne</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">DÃ©p. Moyenne</p>
                 <p className="text-base sm:text-2xl font-bold text-gray-900 truncate">
                   {(expenses.length > 0 ? (safeStats.total_expenses || 0) / expenses.length : 0).toLocaleString()}
                 </p>
@@ -235,22 +235,22 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                   {metrics.averageExpense.toLocaleString()} ce mois
                 </p>
               </div>
-              <div className="p-2 sm:p-3 bg-green-50 rounded-full shrink-0">
-                <Target className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-full shrink-0">
+                <Target className="w-4 h-4 sm:w-6 sm:h-6 text-primary-orange-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Catégories actives */}
+        {/* CatÃ©gories actives */}
         <Card>
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Catégories</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">CatÃ©gories</p>
                 <p className="text-base sm:text-2xl font-bold text-gray-900">{categories?.length || 0}</p>
                 <p className="text-xs text-gray-500 mt-1 truncate">
-                  {categories.filter(c => expenses.some(e => e.category_id === c.id)).length} utilisées
+                  {categories.filter(c => expenses.some(e => e.category_id === c.id)).length} utilisÃ©es
                 </p>
               </div>
               <div className="p-2 sm:p-3 bg-purple-50 rounded-full shrink-0">
@@ -279,11 +279,11 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
             </TabsTrigger>
             <TabsTrigger value="expenses" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">
               <Receipt className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Dépenses
+              DÃ©penses
             </TabsTrigger>
             <TabsTrigger value="categories" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">
               <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Catégories
+              CatÃ©gories
             </TabsTrigger>
             <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-nowrap">
               <Brain className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -303,7 +303,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           ) : (
             <Card>
               <CardContent className="p-6 text-center text-muted-foreground">
-                Chargement des données vendeur...
+                Chargement des donnÃ©es vendeur...
               </CardContent>
             </Card>
           )}
@@ -312,12 +312,12 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
         {/* Dashboard - Graphiques et analyses */}
         <TabsContent value="dashboard" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Graphique en barres par catégorie */}
+            {/* Graphique en barres par catÃ©gorie */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart className="w-5 h-5" />
-                  Dépenses par Catégorie
+                  DÃ©penses par CatÃ©gorie
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -353,7 +353,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <PieChart className="w-5 h-5" />
-                  Répartition des Dépenses
+                  RÃ©partition des DÃ©penses
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -389,7 +389,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                Évolution Mensuelle des Dépenses
+                Ã‰volution Mensuelle des DÃ©penses
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -415,14 +415,14 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
             </CardContent>
           </Card>
 
-          {/* Alertes récentes */}
+          {/* Alertes rÃ©centes */}
           {alerts.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-orange-600">
                     <Bell className="w-5 h-5" />
-                    Alertes Récentes ({alerts.length})
+                    Alertes RÃ©centes ({alerts.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -446,29 +446,29 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           )}
         </TabsContent>
 
-        {/* Achats - Dépenses liées aux achats de stock */}
+        {/* Achats - DÃ©penses liÃ©es aux achats de stock */}
         <TabsContent value="purchases" className="space-y-6">
           {userId ? (
             <PurchaseExpensesSection vendorId={userId} />
           ) : (
             <Card>
               <CardContent className="p-6 text-center text-muted-foreground">
-                Chargement des données vendeur...
+                Chargement des donnÃ©es vendeur...
               </CardContent>
             </Card>
           )}
         </TabsContent>
 
-        {/* Dépenses - Opérationnel */}
+        {/* DÃ©penses - OpÃ©rationnel */}
         <TabsContent value="expenses" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Nouvelle Dépense</CardTitle>
+              <CardTitle>Nouvelle DÃ©pense</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label>Libellé</Label>
+                  <Label>LibellÃ©</Label>
                   <Input placeholder="Ex: Achat fournitures" id="expense-label" />
                 </div>
                 <div>
@@ -476,11 +476,11 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                   <Input type="number" placeholder="0" id="expense-amount" />
                 </div>
                 <div>
-                  <Label>Catégorie</Label>
+                  <Label>CatÃ©gorie</Label>
                   <select id="expense-category" className="w-full h-10 px-3 border rounded-md bg-white">
-                    <option value="">Sélectionner</option>
+                    <option value="">SÃ©lectionner</option>
                     {categories?.map((c: any) => (
-                      <option key={c?.id} value={c?.id}>{c?.name || c?.label || `Catégorie #${c?.id}`}</option>
+                      <option key={c?.id} value={c?.id}>{c?.name || c?.label || `CatÃ©gorie #${c?.id}`}</option>
                     ))}
                   </select>
                 </div>
@@ -495,18 +495,18 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       const amount = Number(amountEl?.value || 0);
                       const category_id = catEl?.value || '';
                       if (!label || !amount || !category_id) {
-                        toast({ title: 'Champs requis', description: 'Libellé, montant et catégorie sont requis', variant: 'destructive' });
+                        toast({ title: 'Champs requis', description: 'LibellÃ©, montant et catÃ©gorie sont requis', variant: 'destructive' });
                         return;
                       }
                       try {
                         await createExpense({ label, amount, category_id });
-                        toast({ title: 'Dépense ajoutée' });
+                        toast({ title: 'DÃ©pense ajoutÃ©e' });
                         await refetch();
                         if (labelEl) labelEl.value = '';
                         if (amountEl) amountEl.value = '';
                         if (catEl) catEl.value = '';
                       } catch (e) {
-                        toast({ title: 'Erreur', description: 'Impossible d\'ajouter la dépense', variant: 'destructive' });
+                        toast({ title: 'Erreur', description: 'Impossible d\'ajouter la dÃ©pense', variant: 'destructive' });
                       }
                     }}
                   >
@@ -519,18 +519,18 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
           <Card>
             <CardHeader>
-              <CardTitle>Liste des Dépenses</CardTitle>
+              <CardTitle>Liste des DÃ©penses</CardTitle>
             </CardHeader>
             <CardContent>
               {expenses.length === 0 ? (
-                <p className="text-gray-500">Aucune dépense enregistrée</p>
+                <p className="text-gray-500">Aucune dÃ©pense enregistrÃ©e</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left border-b">
-                        <th className="py-2 pr-4">Libellé</th>
-                        <th className="py-2 pr-4">Catégorie</th>
+                        <th className="py-2 pr-4">LibellÃ©</th>
+                        <th className="py-2 pr-4">CatÃ©gorie</th>
                         <th className="py-2 pr-4">Montant</th>
                         <th className="py-2 pr-4">Date</th>
                         <th className="py-2 pr-4 text-right">Actions</th>
@@ -539,15 +539,15 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                     <tbody>
                       {expenses.map((e: any) => (
                         <tr key={e?.id} className="border-b last:border-0">
-                          <td className="py-2 pr-4">{e?.label || e?.name || '—'}</td>
-                          <td className="py-2 pr-4">{categories?.find((c: any) => c?.id === (e?.category_id || e?.category))?.name || '—'}</td>
+                          <td className="py-2 pr-4">{e?.label || e?.name || 'â€”'}</td>
+                          <td className="py-2 pr-4">{categories?.find((c: any) => c?.id === (e?.category_id || e?.category))?.name || 'â€”'}</td>
                           <td className="py-2 pr-4">{Number(e?.amount || 0).toLocaleString()} GNF</td>
-                          <td className="py-2 pr-4">{e?.created_at ? new Date(e.created_at).toLocaleString('fr-FR') : '—'}</td>
+                          <td className="py-2 pr-4">{e?.created_at ? new Date(e.created_at).toLocaleString('fr-FR') : 'â€”'}</td>
                           <td className="py-2 pr-0 text-right">
                             <Button variant="ghost" size="sm" onClick={async () => {
                               try {
                                 await deleteExpense(e?.id);
-                                toast({ title: 'Dépense supprimée' });
+                                toast({ title: 'DÃ©pense supprimÃ©e' });
                                 await refetch();
                               } catch (err) {
                                 toast({ title: 'Erreur suppression', variant: 'destructive' });
@@ -566,11 +566,11 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           </Card>
         </TabsContent>
 
-        {/* Catégories - Opérationnel */}
+        {/* CatÃ©gories - OpÃ©rationnel */}
         <TabsContent value="categories" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Créer une Catégorie</CardTitle>
+              <CardTitle>CrÃ©er une CatÃ©gorie</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -591,14 +591,14 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                     if (!name) { toast({ title: 'Nom requis', variant: 'destructive' }); return; }
                     try {
                       await createCategory({ name, monthly_budget: budget } as any);
-                      toast({ title: 'Catégorie créée' });
+                      toast({ title: 'CatÃ©gorie crÃ©Ã©e' });
                       await refetch();
                       if (nameEl) nameEl.value = '';
                       if (budgetEl) budgetEl.value = '';
                     } catch (e) {
-                      toast({ title: 'Erreur', description: 'Impossible de créer la catégorie', variant: 'destructive' });
+                      toast({ title: 'Erreur', description: 'Impossible de crÃ©er la catÃ©gorie', variant: 'destructive' });
                     }
-                  }}>Créer</Button>
+                  }}>CrÃ©er</Button>
                 </div>
               </div>
             </CardContent>
@@ -606,11 +606,11 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
           <Card>
             <CardHeader>
-              <CardTitle>Liste des Catégories</CardTitle>
+              <CardTitle>Liste des CatÃ©gories</CardTitle>
             </CardHeader>
             <CardContent>
               {(!categories || categories.length === 0) ? (
-                <p className="text-gray-500">Aucune catégorie</p>
+                <p className="text-gray-500">Aucune catÃ©gorie</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -623,7 +623,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                     <tbody>
                       {categories.map((c: any) => (
                         <tr key={c?.id} className="border-b last:border-0">
-                          <td className="py-2 pr-4">{c?.name || '—'}</td>
+                          <td className="py-2 pr-4">{c?.name || 'â€”'}</td>
                           <td className="py-2 pr-4">{Number(c?.monthly_budget || 0).toLocaleString()} GNF</td>
                         </tr>
                       ))}
@@ -668,15 +668,15 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       <strong>Total du mois:</strong> {total.toLocaleString()} GNF
                     </div>
                     <div>
-                      <div className="font-medium mb-2">Top catégories du mois</div>
+                      <div className="font-medium mb-2">Top catÃ©gories du mois</div>
                       <div className="space-y-2">
                         {ranked.length === 0 ? (
-                          <p className="text-gray-500">Aucune dépense ce mois.</p>
+                          <p className="text-gray-500">Aucune dÃ©pense ce mois.</p>
                         ) : ranked.map((r) => {
                           const cat = categories?.find((c: any) => String(c?.id) === String(r.id));
                           return (
                             <div key={r.id} className="flex items-center justify-between p-2 rounded border">
-                              <span>{cat?.name || `Catégorie #${r.id}`}</span>
+                              <span>{cat?.name || `CatÃ©gorie #${r.id}`}</span>
                               <span className="font-semibold">{r.sum.toLocaleString()} GNF</span>
                             </div>
                           );
@@ -691,7 +691,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
           <Card>
             <CardHeader>
-              <CardTitle>Détection de Dépassement de Budget</CardTitle>
+              <CardTitle>DÃ©tection de DÃ©passement de Budget</CardTitle>
             </CardHeader>
             <CardContent>
               {(() => {
@@ -718,7 +718,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 return (
                   <div className="space-y-2">
                     {over.length === 0 ? (
-                      <p className="text-green-700 bg-green-50 p-2 rounded">Aucun dépassement détecté ce mois.</p>
+                      <p className="text-primary-orange-700 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 p-2 rounded">Aucun dÃ©passement dÃ©tectÃ© ce mois.</p>
                     ) : (
                       over.map((o: any) => (
                         <div key={o.id} className="p-2 rounded border border-red-200 bg-red-50">
@@ -742,9 +742,9 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
             <CardContent>
               {(() => {
                 const recs: string[] = [];
-                if (metrics.monthlyChange > 10) recs.push('Les dépenses ont augmenté de plus de 10% vs le mois dernier. Envisagez un audit des catégories principales.');
-                if ((categories?.length || 0) === 0) recs.push('Aucune catégorie configurée. Créez des catégories avec un budget mensuel pour un meilleur contrôle.');
-                if ((expenses?.length || 0) === 0) recs.push('Aucune dépense saisie. Ajoutez vos premières dépenses pour démarrer le suivi.');
+                if (metrics.monthlyChange > 10) recs.push('Les dÃ©penses ont augmentÃ© de plus de 10% vs le mois dernier. Envisagez un audit des catÃ©gories principales.');
+                if ((categories?.length || 0) === 0) recs.push('Aucune catÃ©gorie configurÃ©e. CrÃ©ez des catÃ©gories avec un budget mensuel pour un meilleur contrÃ´le.');
+                if ((expenses?.length || 0) === 0) recs.push('Aucune dÃ©pense saisie. Ajoutez vos premiÃ¨res dÃ©penses pour dÃ©marrer le suivi.');
                 return (
                   <ul className="list-disc pl-5 space-y-1 text-gray-700">
                     {recs.length === 0 ? (

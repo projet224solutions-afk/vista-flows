@@ -40,12 +40,12 @@ export default function PlatformRevenueOverview() {
   const fetchRevenueData = async () => {
     try {
       setLoading(true);
-      console.log('🔄 [PlatformRevenue] Chargement des revenus...');
+      console.log('ðŸ”„ [PlatformRevenue] Chargement des revenus...');
       const data = await CommissionService.getAllServicesRevenue();
-      console.log('✅ [PlatformRevenue] Revenus chargés:', data);
+      console.log('âœ… [PlatformRevenue] Revenus chargÃ©s:', data);
       setRevenues(data);
     } catch (error: any) {
-      console.error('❌ [PlatformRevenue] Erreur chargement revenus:', error);
+      console.error('âŒ [PlatformRevenue] Erreur chargement revenus:', error);
       toast.error('Erreur lors du chargement des revenus');
     } finally {
       setLoading(false);
@@ -56,14 +56,14 @@ export default function PlatformRevenueOverview() {
     setRefreshing(true);
     await fetchRevenueData();
     setRefreshing(false);
-    toast.success('Données actualisées');
+    toast.success('DonnÃ©es actualisÃ©es');
   };
 
   useEffect(() => {
     fetchRevenueData();
 
-    // S'abonner aux changements de transactions en temps réel
-    console.log('📡 [PlatformRevenue] Abonnement temps réel activé');
+    // S'abonner aux changements de transactions en temps rÃ©el
+    console.log('ðŸ“¡ [PlatformRevenue] Abonnement temps rÃ©el activÃ©');
     const channel = supabase
       .channel('platform-revenue-updates')
       .on(
@@ -74,8 +74,8 @@ export default function PlatformRevenueOverview() {
           table: 'wallet_transactions',
         },
         (payload) => {
-          console.log('💰 [PlatformRevenue] Transaction détectée:', payload);
-          // Recharger les données après un délai pour laisser la transaction se finaliser
+          console.log('ðŸ’° [PlatformRevenue] Transaction dÃ©tectÃ©e:', payload);
+          // Recharger les donnÃ©es aprÃ¨s un dÃ©lai pour laisser la transaction se finaliser
           setTimeout(() => {
             fetchRevenueData();
           }, 1000);
@@ -84,7 +84,7 @@ export default function PlatformRevenueOverview() {
       .subscribe();
 
     return () => {
-      console.log('🔌 [PlatformRevenue] Déconnexion temps réel');
+      console.log('ðŸ”Œ [PlatformRevenue] DÃ©connexion temps rÃ©el');
       channel.unsubscribe();
     };
   }, []);
@@ -129,11 +129,11 @@ export default function PlatformRevenueOverview() {
   const getServiceColor = (serviceName: string) => {
     switch (serviceName) {
       case 'wallet_transfer':
-        return 'from-cyan-500/20 to-cyan-600/20 border-cyan-500/30';
+        return 'from-primary-blue-500/20 to-primary-blue-600/20 border-primary-blue-500/30';
       case 'subscription':
         return 'from-pink-500/20 to-pink-600/20 border-pink-500/30';
       case 'marketplace':
-        return 'from-green-500/20 to-green-600/20 border-green-500/30';
+        return 'from-primary-blue-500/20 to-primary-orange-600/20 border-primary-orange-500/30';
       case 'taxi':
         return 'from-blue-500/20 to-blue-600/20 border-blue-500/30';
       case 'delivery':
@@ -165,24 +165,24 @@ export default function PlatformRevenueOverview() {
         <TabsList className="inline-flex w-max sm:w-full sm:max-w-md sm:grid sm:grid-cols-2 gap-1 bg-muted/50 p-1 rounded-xl">
           <TabsTrigger value="summary" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>Résumé</span>
+            <span>RÃ©sumÃ©</span>
           </TabsTrigger>
           <TabsTrigger value="details" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <List className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>Transactions Détaillées</span>
+            <span>Transactions DÃ©taillÃ©es</span>
           </TabsTrigger>
         </TabsList>
       </div>
 
       <TabsContent value="summary" className="space-y-4 sm:space-y-6">
-        {/* Résumé Global - Mobile: Full width single column */}
+        {/* RÃ©sumÃ© Global - Mobile: Full width single column */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
           <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardHeader className="pb-2 sm:pb-3 p-4 sm:p-6">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                  <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-orange-500" />
                 </div>
                 <span className="truncate">Revenus Totaux Plateforme</span>
               </CardTitle>
@@ -192,7 +192,7 @@ export default function PlatformRevenueOverview() {
                 <p className="text-xl sm:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                   {formatAmount(revenues?.total_revenue || 0)}
                 </p>
-                <p className="text-[10px] sm:text-xs text-green-500 flex items-center gap-1">
+                <p className="text-[10px] sm:text-xs text-primary-orange-500 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
                   Tous services confondus
                 </p>
@@ -240,14 +240,14 @@ export default function PlatformRevenueOverview() {
                     : 0}%
                 </p>
                 <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  Calculé sur tous les services
+                  CalculÃ© sur tous les services
                 </p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Détail par Service - Mobile optimized */}
+        {/* DÃ©tail par Service - Mobile optimized */}
         <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
           <CardHeader className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
@@ -256,7 +256,7 @@ export default function PlatformRevenueOverview() {
                   <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
                   <span className="truncate">Revenus par Service</span>
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm mt-1">Détail par type de service</CardDescription>
+                <CardDescription className="text-xs sm:text-sm mt-1">DÃ©tail par type de service</CardDescription>
               </div>
               <Button 
                 variant="outline" 
@@ -274,7 +274,7 @@ export default function PlatformRevenueOverview() {
             <div className="space-y-3 sm:space-y-4">
               {!revenues?.services || revenues.services.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">
-                  Aucune transaction enregistrée pour le moment
+                  Aucune transaction enregistrÃ©e pour le moment
                 </div>
               ) : (
                 revenues.services
@@ -324,14 +324,14 @@ export default function PlatformRevenueOverview() {
               </div>
               <div className="space-y-2 min-w-0">
                 <h4 className="font-semibold text-blue-900 dark:text-blue-100 text-sm sm:text-base">
-                  💡 Fonctionnement des Commissions
+                  ðŸ’¡ Fonctionnement des Commissions
                 </h4>
                 <ul className="text-xs sm:text-sm space-y-1 text-blue-800 dark:text-blue-200 list-disc list-inside">
-                  <li>Les commissions sont calculées automatiquement</li>
+                  <li>Les commissions sont calculÃ©es automatiquement</li>
                   <li>Chaque service a sa propre configuration</li>
-                  <li className="hidden sm:list-item">Les frais sont automatiquement appliqués lors des transactions</li>
-                  <li className="hidden sm:list-item">Les revenus sont trackés en temps réel par service</li>
-                  <li className="hidden sm:list-item">Les configurations peuvent être modifiées dans l'onglet "Configuration"</li>
+                  <li className="hidden sm:list-item">Les frais sont automatiquement appliquÃ©s lors des transactions</li>
+                  <li className="hidden sm:list-item">Les revenus sont trackÃ©s en temps rÃ©el par service</li>
+                  <li className="hidden sm:list-item">Les configurations peuvent Ãªtre modifiÃ©es dans l'onglet "Configuration"</li>
                 </ul>
               </div>
             </div>

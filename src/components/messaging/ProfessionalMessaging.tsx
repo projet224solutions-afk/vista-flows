@@ -101,7 +101,7 @@ export default function ProfessionalMessaging() {
 
   const handleStartCall = (type: 'audio' | 'video') => {
     if (!activeConversation?.participantId || !user?.id) {
-      toast.error('Impossible de démarrer l\'appel');
+      toast.error('Impossible de dÃ©marrer l\'appel');
       return;
     }
     setCallType(type);
@@ -149,7 +149,7 @@ export default function ProfessionalMessaging() {
 
           const otherProfile = otherParticipant?.profiles as any;
           
-          // ✅ Calculer le nombre réel de messages non lus
+          // âœ… Calculer le nombre rÃ©el de messages non lus
           const { count: unreadCount } = await supabase
             .from('messages')
             .select('*', { count: 'exact', head: true })
@@ -293,10 +293,10 @@ export default function ProfessionalMessaging() {
       setActiveConversation(newConversation);
       setShowNewChat(false);
       setShowMobileChat(true);
-      toast.success('Conversation créée');
+      toast.success('Conversation crÃ©Ã©e');
     } catch (error) {
       console.error('Error creating conversation:', error);
-      toast.error('Erreur lors de la création');
+      toast.error('Erreur lors de la crÃ©ation');
     }
   };
 
@@ -310,7 +310,7 @@ export default function ProfessionalMessaging() {
 
     try {
       if (selectedFile) {
-        // Déterminer le folder GCS basé sur le type MIME
+        // DÃ©terminer le folder GCS basÃ© sur le type MIME
         let folder: StorageFolder = 'documents';
         if (selectedFile.type.startsWith('image/')) folder = 'products';
         else if (selectedFile.type.startsWith('video/')) folder = 'videos';
@@ -325,10 +325,10 @@ export default function ProfessionalMessaging() {
         });
 
         if (!uploadResult.success || !uploadResult.publicUrl) {
-          throw new Error(uploadResult.error || 'Upload échoué');
+          throw new Error(uploadResult.error || 'Upload Ã©chouÃ©');
         }
 
-        console.log(`[ProfessionalMessaging] ✅ File uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
+        console.log(`[ProfessionalMessaging] âœ… File uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
 
         fileUrl = uploadResult.publicUrl;
         fileName = selectedFile.name;
@@ -362,7 +362,7 @@ export default function ProfessionalMessaging() {
       await supabase
         .from('conversations')
         .update({
-          last_message: newMessage.trim() || `📎 ${fileName}`,
+          last_message: newMessage.trim() || `ðŸ“Ž ${fileName}`,
           last_message_at: new Date().toISOString()
         })
         .eq('id', activeConversation.id);
@@ -396,7 +396,7 @@ export default function ProfessionalMessaging() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('Le fichier ne doit pas dépasser 10 Mo');
+        toast.error('Le fichier ne doit pas dÃ©passer 10 Mo');
         return;
       }
       setSelectedFile(file);
@@ -447,7 +447,7 @@ export default function ProfessionalMessaging() {
     loadConversations();
   }, [loadConversations]);
 
-  // 🔔 Real-time subscription pour synchroniser les badges
+  // ðŸ”” Real-time subscription pour synchroniser les badges
   useEffect(() => {
     if (!user?.id) return;
 
@@ -461,7 +461,7 @@ export default function ProfessionalMessaging() {
           table: 'messages'
         },
         () => {
-          console.log('[ProfessionalMessaging] 📩 Nouveau message - rechargement conversations');
+          console.log('[ProfessionalMessaging] ðŸ“© Nouveau message - rechargement conversations');
           loadConversations();
         }
       )
@@ -473,7 +473,7 @@ export default function ProfessionalMessaging() {
           table: 'messages'
         },
         () => {
-          console.log('[ProfessionalMessaging] ✅ Message mis à jour - rechargement conversations');
+          console.log('[ProfessionalMessaging] âœ… Message mis Ã  jour - rechargement conversations');
           loadConversations();
         }
       )
@@ -551,7 +551,7 @@ export default function ProfessionalMessaging() {
                       </AvatarFallback>
                     </Avatar>
                     {conv.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background" />
+                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full border-2 border-background" />
                     )}
                   </div>
                   
@@ -603,7 +603,7 @@ export default function ProfessionalMessaging() {
               
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate">{activeConversation.name}</h2>
-                {activeConversation.isOnline && <p className="text-xs text-green-500">En ligne</p>}
+                {activeConversation.isOnline && <p className="text-xs text-primary-orange-500">En ligne</p>}
               </div>
               
               <div className="flex items-center gap-1">
@@ -634,7 +634,7 @@ export default function ProfessionalMessaging() {
                       id: msg.id,
                       content: msg.content,
                       sender_id: msg.sender_id,
-                      recipient_id: '', // Non utilisé pour la traduction
+                      recipient_id: '', // Non utilisÃ© pour la traduction
                       type: msg.type || 'text',
                       status: msg.status as any,
                       created_at: msg.created_at,
@@ -712,7 +712,7 @@ export default function ProfessionalMessaging() {
                   ref={inputRef}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Écrivez votre message..."
+                  placeholder="Ã‰crivez votre message..."
                   className="flex-1 bg-muted/50 border-0"
                   disabled={isSending}
                 />
@@ -726,7 +726,7 @@ export default function ProfessionalMessaging() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
             <MessageSquare className="w-20 h-20 mb-4 opacity-20" />
-            <p className="text-lg">Sélectionnez une conversation</p>
+            <p className="text-lg">SÃ©lectionnez une conversation</p>
           </div>
         )}
       </div>

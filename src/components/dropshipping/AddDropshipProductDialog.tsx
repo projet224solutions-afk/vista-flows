@@ -117,7 +117,7 @@ export function AddDropshipProductDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Sélection fournisseur */}
+          {/* SÃ©lection fournisseur */}
           <div className="space-y-2">
             <Label htmlFor="supplier">Fournisseur *</Label>
             <Select
@@ -125,7 +125,7 @@ export function AddDropshipProductDialog({
               onValueChange={(value) => setFormData(prev => ({ ...prev, supplier_id: value }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un fournisseur" />
+                <SelectValue placeholder="SÃ©lectionner un fournisseur" />
               </SelectTrigger>
               <SelectContent>
                 {suppliers.map((supplier) => (
@@ -144,7 +144,7 @@ export function AddDropshipProductDialog({
               id="product_name"
               value={formData.product_name}
               onChange={(e) => setFormData(prev => ({ ...prev, product_name: e.target.value }))}
-              placeholder="Ex: Écouteurs Bluetooth Sans Fil"
+              placeholder="Ex: Ã‰couteurs Bluetooth Sans Fil"
             />
           </div>
 
@@ -201,30 +201,30 @@ export function AddDropshipProductDialog({
           {formData.supplier_price && formData.selling_price && (
             <div className={`p-3 rounded-lg ${
               parseFloat(marginValue) > 20 
-                ? 'bg-green-50 border-green-200 dark:bg-green-950' 
+                ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200 dark:bg-primary-orange-950' 
                 : 'bg-orange-50 border-orange-200 dark:bg-orange-950'
             } border`}>
               <p className="text-sm">
-                <strong>Marge estimée:</strong>{' '}
-                <span className={parseFloat(marginValue) > 20 ? 'text-green-600' : 'text-orange-600'}>
+                <strong>Marge estimÃ©e:</strong>{' '}
+                <span className={parseFloat(marginValue) > 20 ? 'text-primary-orange-600' : 'text-orange-600'}>
                   {marginValue}%
                 </span>
               </p>
             </div>
           )}
 
-          {/* Catégorie */}
+          {/* CatÃ©gorie */}
           <div className="space-y-2">
-            <Label htmlFor="category">Catégorie</Label>
+            <Label htmlFor="category">CatÃ©gorie</Label>
             <Input
               id="category"
               value={formData.category}
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              placeholder="Ex: Électronique, Mode, Beauté..."
+              placeholder="Ex: Ã‰lectronique, Mode, BeautÃ©..."
             />
           </div>
 
-          {/* Délais de livraison */}
+          {/* DÃ©lais de livraison */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="delivery_min">Livraison min (jours)</Label>

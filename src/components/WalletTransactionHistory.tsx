@@ -131,13 +131,13 @@ export const WalletTransactionHistory = ({
     
     // Déterminer si c'est un crédit ou débit basé sur sender_id
     const isCredit = transaction.receiver_id === user?.id;
-    if (isCredit) return <ArrowUp className="w-4 h-4 text-green-500" />;
+    if (isCredit) return <ArrowUp className="w-4 h-4 text-primary-orange-500" />;
     return <ArrowDown className="w-4 h-4 text-red-500" />;
   };
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      completed: 'bg-green-100 text-green-700',
+      completed: 'bg-primary-orange-100 text-primary-orange-700',
       pending: 'bg-orange-100 text-orange-700',
       failed: 'bg-red-100 text-red-700'
     };
@@ -191,11 +191,11 @@ export const WalletTransactionHistory = ({
     : transactions.slice(0, INITIAL_DISPLAY_COUNT);
 
   return (
-    <Card className={`${className} border-2 border-green-100 bg-gradient-to-br from-green-50 to-emerald-50`}>
+    <Card className={`${className} border-2 border-primary-orange-100 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <History className="w-5 h-5 text-green-600" />
+            <History className="w-5 h-5 text-primary-orange-600" />
             {t('wallet.history.title')}
           </CardTitle>
           <Button
@@ -240,7 +240,7 @@ export const WalletTransactionHistory = ({
             {displayedTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-green-200 hover:bg-white/80 transition-colors"
+                className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-primary-orange-200 hover:bg-white/80 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   {getTransactionIcon(transaction, transaction.status)}
@@ -268,7 +268,7 @@ export const WalletTransactionHistory = ({
                 <div className="text-right">
                   <p className={`font-bold ${
                     transaction.receiver_id === user?.id
-                      ? 'text-green-600' 
+                      ? 'text-primary-orange-600' 
                       : 'text-red-600'
                   }`}>
                     {formatAmount(transaction.amount, transaction)}

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, CreditCard, ShoppingCart, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Import dynamique du POS (suppression du fallback démo)
+// Import dynamique du POS (suppression du fallback dÃ©mo)
 const POSSystem = React.lazy(() => import('./POSSystem'));
 
 // Composant de chargement
@@ -25,7 +25,7 @@ const POSLoading = () => (
     <CardContent className="p-8">
       <div className="flex items-center justify-center space-y-4 flex-col">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="text-gray-600 text-lg">Chargement du système de caisse...</p>
+        <p className="text-gray-600 text-lg">Chargement du systÃ¨me de caisse...</p>
         <div className="flex items-center gap-4 text-sm text-gray-500">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-4 h-4" />
@@ -60,10 +60,10 @@ const POSError = ({ error, retry }: { error: Error, retry: () => void }) => (
           <AlertTriangle className="w-8 h-8 text-red-600" />
         </div>
         <h3 className="text-xl font-semibold text-gray-800 mb-2">
-          Impossible de charger le système de caisse
+          Impossible de charger le systÃ¨me de caisse
         </h3>
         <p className="text-gray-600 mb-4">
-          Une erreur s'est produite lors du chargement du POS. Cela peut être dû à :
+          Une erreur s'est produite lors du chargement du POS. Cela peut Ãªtre dÃ» Ã  :
         </p>
         <ul className="text-sm text-gray-600 text-left max-w-md mx-auto space-y-2">
           <li className="flex items-center gap-2">
@@ -72,7 +72,7 @@ const POSError = ({ error, retry }: { error: Error, retry: () => void }) => (
           </li>
           <li className="flex items-center gap-2">
             <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-            Problème de connexion réseau
+            ProblÃ¨me de connexion rÃ©seau
           </li>
           <li className="flex items-center gap-2">
             <div className="w-2 h-2 bg-red-400 rounded-full"></div>
@@ -87,7 +87,7 @@ const POSError = ({ error, retry }: { error: Error, retry: () => void }) => (
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
-          Réessayer
+          RÃ©essayer
         </Button>
 
         <Button
@@ -103,16 +103,16 @@ const POSError = ({ error, retry }: { error: Error, retry: () => void }) => (
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <h4 className="font-semibold text-blue-800 mb-2">💡 Solution Rapide</h4>
+        <h4 className="font-semibold text-blue-800 mb-2">ðŸ’¡ Solution Rapide</h4>
         <p className="text-sm text-blue-700">
-          Vérifiez que vos variables d'environnement Supabase sont correctement configurées dans le fichier <code>.env.local</code>
+          VÃ©rifiez que vos variables d'environnement Supabase sont correctement configurÃ©es dans le fichier <code>.env.local</code>
         </p>
       </div>
 
       {error && (
         <details className="bg-gray-50 border border-gray-200 rounded-xl p-4">
           <summary className="font-semibold text-gray-800 cursor-pointer">
-            Détails de l'erreur (pour les développeurs)
+            DÃ©tails de l'erreur (pour les dÃ©veloppeurs)
           </summary>
           <pre className="text-xs text-gray-600 mt-2 overflow-auto">
             {error.message}
@@ -129,7 +129,7 @@ const POSFallback = () => (
     <CardHeader>
       <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-3">
         <CreditCard className="w-7 h-7 text-blue-600" />
-        POS - Point de Vente (Mode Simplifié)
+        POS - Point de Vente (Mode SimplifiÃ©)
       </CardTitle>
     </CardHeader>
     <CardContent className="p-8">
@@ -140,10 +140,10 @@ const POSFallback = () => (
 
         <div>
           <h3 className="text-xl font-semibold text-gray-800 mb-2">
-            Système de Caisse 224Solutions
+            SystÃ¨me de Caisse 224Solutions
           </h3>
           <p className="text-gray-600">
-            Le système POS complet est en cours de chargement. En attendant, vous pouvez utiliser les fonctionnalités de base.
+            Le systÃ¨me POS complet est en cours de chargement. En attendant, vous pouvez utiliser les fonctionnalitÃ©s de base.
           </p>
         </div>
 
@@ -155,7 +155,7 @@ const POSFallback = () => (
           </div>
 
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-            <Calculator className="w-8 h-8 text-green-600 mx-auto mb-2" />
+            <Calculator className="w-8 h-8 text-primary-orange-600 mx-auto mb-2" />
             <h4 className="font-semibold text-gray-800">Calculs Automatiques</h4>
             <p className="text-sm text-gray-600">Prix, taxes, remises</p>
           </div>
@@ -163,7 +163,7 @@ const POSFallback = () => (
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
             <CreditCard className="w-8 h-8 text-purple-600 mx-auto mb-2" />
             <h4 className="font-semibold text-gray-800">Paiements</h4>
-            <p className="text-sm text-gray-600">Espèces, carte, mobile</p>
+            <p className="text-sm text-gray-600">EspÃ¨ces, carte, mobile</p>
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 /**
  * Dashboard Dropshipping Chine
- * Vue d'ensemble des opérations Chine
+ * Vue d'ensemble des opÃ©rations Chine
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,18 +33,18 @@ export function ChinaDashboard() {
       title: 'Commandes Chine',
       value: stats?.totalChinaOrders || 0,
       icon: Ship,
-      color: 'text-emerald-500',
-      bgColor: 'bg-emerald-50 dark:bg-emerald-950'
+      color: 'text-primary-blue-500',
+      bgColor: 'bg-primary-blue-50 dark:bg-primary-blue-950'
     },
     {
       title: 'Marge moyenne',
       value: `${stats?.averageMargin || 0}%`,
       icon: TrendingUp,
-      color: 'text-green-500',
-      bgColor: 'bg-green-50 dark:bg-green-950'
+      color: 'text-primary-orange-500',
+      bgColor: 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950'
     },
     {
-      title: 'Délai moyen',
+      title: 'DÃ©lai moyen',
       value: `${stats?.averageDeliveryDays || 0}j`,
       icon: Clock,
       color: 'text-orange-500',
@@ -84,7 +84,7 @@ export function ChinaDashboard() {
           <div>
             <h2 className="text-2xl font-bold">Dropshipping Chine</h2>
             <p className="text-muted-foreground">
-              Alibaba • AliExpress • 1688
+              Alibaba â€¢ AliExpress â€¢ 1688
             </p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export function ChinaDashboard() {
         ))}
       </div>
 
-      {/* Alertes prix récentes */}
+      {/* Alertes prix rÃ©centes */}
       {priceAlerts.length > 0 && (
         <Card className="border-orange-200 dark:border-orange-800">
           <CardHeader className="pb-3">
@@ -127,8 +127,8 @@ export function ChinaDashboard() {
                 >
                   <div>
                     <Badge variant={alert.alert_type === 'increase' ? 'destructive' : 'default'}>
-                      {alert.alert_type === 'increase' ? '↑ Hausse' : 
-                       alert.alert_type === 'decrease' ? '↓ Baisse' : '⚠ Indisponible'}
+                      {alert.alert_type === 'increase' ? 'â†‘ Hausse' : 
+                       alert.alert_type === 'decrease' ? 'â†“ Baisse' : 'âš  Indisponible'}
                     </Badge>
                     <span className="ml-2 text-sm">
                       {alert.change_percent > 0 ? '+' : ''}{alert.change_percent}%
@@ -144,7 +144,7 @@ export function ChinaDashboard() {
         </Card>
       )}
 
-      {/* Produits récents par plateforme */}
+      {/* Produits rÃ©cents par plateforme */}
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -189,12 +189,12 @@ export function ChinaDashboard() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Taux blocage douane</span>
-                <Badge variant="outline" className="text-green-600">
+                <Badge variant="outline" className="text-primary-orange-600">
                   {stats?.customsBlockedRate || 0}%
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">Délai moyen livraison</span>
+                <span className="text-sm">DÃ©lai moyen livraison</span>
                 <Badge variant="outline">
                   {stats?.averageDeliveryDays || 0} jours
                 </Badge>

@@ -1,6 +1,6 @@
 /**
- * Sélecteur de mode de vente ultra professionnel
- * Design moderne aligné horizontalement
+ * SÃ©lecteur de mode de vente ultra professionnel
+ * Design moderne alignÃ© horizontalement
  */
 
 import React from 'react';
@@ -40,13 +40,13 @@ const salesModes = {
     subtitle: 'Vendez vos propres produits',
     icon: Store,
     color: 'emerald',
-    badgeText: 'Recommandé',
+    badgeText: 'RecommandÃ©',
     badgeVariant: 'secondary' as const,
-    description: 'Créez et vendez vos propres produits numériques',
+    description: 'CrÃ©ez et vendez vos propres produits numÃ©riques',
     features: [
       { icon: Wallet, text: '100% des revenus' },
-      { icon: ShieldCheck, text: 'Contrôle total' },
-      { icon: Users, text: 'Votre clientèle' },
+      { icon: ShieldCheck, text: 'ContrÃ´le total' },
+      { icon: Users, text: 'Votre clientÃ¨le' },
       { icon: FileText, text: 'Gestion fichiers' }
     ],
     highlight: 'Gardez 100% de vos ventes',
@@ -58,12 +58,12 @@ const salesModes = {
     subtitle: 'Promouvez des partenaires',
     icon: Link2,
     color: 'violet',
-    badgeText: 'Commission élevée',
+    badgeText: 'Commission Ã©levÃ©e',
     badgeVariant: 'default' as const,
     description: 'Gagnez des commissions sur les ventes',
     features: [
-      { icon: Percent, text: 'Jusqu\'à 75%' },
-      { icon: Zap, text: 'Sans création' },
+      { icon: Percent, text: 'Jusqu\'Ã  75%' },
+      { icon: Zap, text: 'Sans crÃ©ation' },
       { icon: Globe, text: 'Milliers de produits' },
       { icon: TrendingUp, text: 'Tracking auto' }
     ],
@@ -92,7 +92,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
     }
   }, [hideDirectSale, value, onChange]);
 
-  // Si seulement l'affiliation est disponible, ne pas afficher le sélecteur
+  // Si seulement l'affiliation est disponible, ne pas afficher le sÃ©lecteur
   if (hideDirectSale) {
     return null;
   }
@@ -103,13 +103,13 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 rounded-full border border-primary/20">
           <Crown className="w-4 h-4 text-primary" />
-          <span className="text-sm font-semibold text-primary">Modèle de vente</span>
+          <span className="text-sm font-semibold text-primary">ModÃ¨le de vente</span>
         </div>
         <h2 className="text-xl font-bold text-foreground">
-          Choisissez votre stratégie
+          Choisissez votre stratÃ©gie
         </h2>
         <p className="text-sm text-muted-foreground">
-          Sélectionnez le mode qui correspond à vos objectifs
+          SÃ©lectionnez le mode qui correspond Ã  vos objectifs
         </p>
       </div>
 
@@ -138,7 +138,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
-              {/* Badge en haut à droite */}
+              {/* Badge en haut Ã  droite */}
               <div className="absolute top-3 right-3">
                 <Badge 
                   variant={mode.badgeVariant}
@@ -151,7 +151,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 </Badge>
               </div>
 
-              {/* Indicateur de sélection */}
+              {/* Indicateur de sÃ©lection */}
               <div className={cn(
                 'absolute top-3 left-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
                 isSelected 
@@ -163,11 +163,11 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
 
               {/* Contenu principal */}
               <div className="pt-6 space-y-3">
-                {/* Icône */}
+                {/* IcÃ´ne */}
                 <div className={cn(
                   'w-12 h-12 rounded-xl flex items-center justify-center mx-auto',
                   mode.color === 'emerald' 
-                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
+                    ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-600' 
                     : 'bg-gradient-to-br from-violet-500 to-purple-600',
                   'text-white shadow-lg'
                 )}>
@@ -184,7 +184,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 <div className={cn(
                   'text-center py-2 px-3 rounded-lg text-xs font-medium',
                   mode.color === 'emerald' 
-                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
+                    ? 'bg-primary-blue-500/10 text-primary-blue-600 dark:text-primary-blue-400' 
                     : 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
                 )}>
                   {mode.highlight}
@@ -229,7 +229,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                   'flex items-center justify-center gap-1 pt-2 text-xs font-medium transition-colors',
                   isSelected ? 'text-primary' : 'text-muted-foreground'
                 )}>
-                  <span>{isSelected ? 'Sélectionné' : 'Sélectionner'}</span>
+                  <span>{isSelected ? 'SÃ©lectionnÃ©' : 'SÃ©lectionner'}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </div>
               </div>

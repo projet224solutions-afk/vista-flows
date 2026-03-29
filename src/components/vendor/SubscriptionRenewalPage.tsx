@@ -87,7 +87,7 @@ export function SubscriptionRenewalPage() {
       console.error('Error loading data:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de charger les données",
+        description: "Impossible de charger les donnÃ©es",
         variant: "destructive"
       });
     } finally {
@@ -115,7 +115,7 @@ export function SubscriptionRenewalPage() {
         body: {
           subscription_id: subscription.id,
           payment_method: paymentMethod,
-          // 🔐 SÉCURITÉ: amount_gnf est calculé côté backend, pas envoyé du frontend
+          // ðŸ” SÃ‰CURITÃ‰: amount_gnf est calculÃ© cÃ´tÃ© backend, pas envoyÃ© du frontend
         }
       });
 
@@ -123,8 +123,8 @@ export function SubscriptionRenewalPage() {
 
       if (data.success) {
         toast({
-          title: "Succès !",
-          description: "Votre abonnement a été renouvelé avec succès",
+          title: "SuccÃ¨s !",
+          description: "Votre abonnement a Ã©tÃ© renouvelÃ© avec succÃ¨s",
         });
 
         // Reload data
@@ -162,7 +162,7 @@ export function SubscriptionRenewalPage() {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">Aucun abonnement trouvé</p>
+          <p className="text-muted-foreground">Aucun abonnement trouvÃ©</p>
         </CardContent>
       </Card>
     );
@@ -178,7 +178,7 @@ export function SubscriptionRenewalPage() {
       <div>
         <h1 className="text-3xl font-bold">Renouvellement d'abonnement</h1>
         <p className="text-muted-foreground mt-2">
-          Renouvelez votre abonnement pour continuer à profiter de toutes les fonctionnalités
+          Renouvelez votre abonnement pour continuer Ã  profiter de toutes les fonctionnalitÃ©s
         </p>
       </div>
 
@@ -188,7 +188,7 @@ export function SubscriptionRenewalPage() {
           <CardTitle className="flex items-center justify-between">
             Statut actuel
             <Badge variant={isExpired ? "destructive" : "default"}>
-              {isExpired ? "Expiré" : "Actif"}
+              {isExpired ? "ExpirÃ©" : "Actif"}
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -203,12 +203,12 @@ export function SubscriptionRenewalPage() {
               <p className="font-semibold">{subscription.plans.price_gnf.toLocaleString()} GNF</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Durée</p>
+              <p className="text-sm text-muted-foreground">DurÃ©e</p>
               <p className="font-semibold">{subscription.plans.duration_days} jours</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">
-                {isExpired ? "Expiré le" : "Expire le"}
+                {isExpired ? "ExpirÃ© le" : "Expire le"}
               </p>
               <p className="font-semibold flex items-center gap-2">
                 {isExpired && <AlertTriangle className="w-4 h-4 text-destructive" />}
@@ -222,7 +222,7 @@ export function SubscriptionRenewalPage() {
               <Clock className="w-5 h-5 text-yellow-600 mt-0.5" />
               <div>
                 <p className="font-medium text-yellow-900">
-                  Votre abonnement expire bientôt
+                  Votre abonnement expire bientÃ´t
                 </p>
                 <p className="text-sm text-yellow-700">
                   Plus que {daysRemaining} jour(s) avant l'expiration
@@ -236,7 +236,7 @@ export function SubscriptionRenewalPage() {
       {/* Payment method selection */}
       <Card>
         <CardHeader>
-          <CardTitle>Méthode de paiement</CardTitle>
+          <CardTitle>MÃ©thode de paiement</CardTitle>
           <CardDescription>
             Choisissez comment vous souhaitez renouveler votre abonnement
           </CardDescription>
@@ -257,7 +257,7 @@ export function SubscriptionRenewalPage() {
                     </div>
                   </div>
                   {walletBalance >= subscription.plans.price_gnf && (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <CheckCircle className="w-5 h-5 text-primary-orange-600" />
                   )}
                 </div>
               </Label>
@@ -281,10 +281,10 @@ export function SubscriptionRenewalPage() {
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-900">
-              <strong>Montant à payer :</strong> {subscription.plans.price_gnf.toLocaleString()} GNF
+              <strong>Montant Ã  payer :</strong> {subscription.plans.price_gnf.toLocaleString()} GNF
             </p>
             <p className="text-sm text-blue-700 mt-1">
-              Votre abonnement sera renouvelé pour {subscription.plans.duration_days} jours supplémentaires
+              Votre abonnement sera renouvelÃ© pour {subscription.plans.duration_days} jours supplÃ©mentaires
             </p>
           </div>
         </CardContent>

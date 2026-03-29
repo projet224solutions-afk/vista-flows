@@ -118,7 +118,7 @@ export default function PDGSyndicatManagement() {
   };
 
   const handleDeleteBureau = async (bureauId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce bureau ? Cette action supprimera également tous les travailleurs, membres et véhicules associés.")) return;
+    if (!confirm("ÃŠtes-vous sÃ»r de vouloir supprimer ce bureau ? Cette action supprimera Ã©galement tous les travailleurs, membres et vÃ©hicules associÃ©s.")) return;
     await deleteBureauAction(bureauId);
   };
 
@@ -151,7 +151,7 @@ export default function PDGSyndicatManagement() {
   };
 
   const handleDeleteWorker = async (workerId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce travailleur ?")) return;
+    if (!confirm("ÃŠtes-vous sÃ»r de vouloir supprimer ce travailleur ?")) return;
     await deleteWorker(workerId);
   };
 
@@ -177,7 +177,7 @@ export default function PDGSyndicatManagement() {
   };
 
   const handleDeleteMember = async (memberId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce membre ?")) return;
+    if (!confirm("ÃŠtes-vous sÃ»r de vouloir supprimer ce membre ?")) return;
     await deleteMember(memberId);
   };
 
@@ -197,7 +197,7 @@ export default function PDGSyndicatManagement() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête */}
+      {/* En-tÃªte */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">Gestion des Bureaux Syndicaux</h2>
@@ -212,7 +212,7 @@ export default function PDGSyndicatManagement() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Créer un nouveau bureau syndical</DialogTitle>
+              <DialogTitle>CrÃ©er un nouveau bureau syndical</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateBureau} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -227,7 +227,7 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="prefecture">Préfecture *</Label>
+                  <Label htmlFor="prefecture">PrÃ©fecture *</Label>
                   <Input
                     id="prefecture"
                     required
@@ -250,20 +250,20 @@ export default function PDGSyndicatManagement() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="full_location">Adresse complète</Label>
+                <Label htmlFor="full_location">Adresse complÃ¨te</Label>
                 <Input
                   id="full_location"
                   value={formData.full_location}
                   onChange={(e) => setFormData({ ...formData, full_location: e.target.value })}
-                  placeholder="Ex: Avenue de la République, près du marché central"
+                  placeholder="Ex: Avenue de la RÃ©publique, prÃ¨s du marchÃ© central"
                 />
               </div>
 
               <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Informations du Président</h3>
+                <h3 className="font-semibold mb-3">Informations du PrÃ©sident</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="president_name">Nom complet du président</Label>
+                    <Label htmlFor="president_name">Nom complet du prÃ©sident</Label>
                     <Input
                       id="president_name"
                       value={formData.president_name}
@@ -283,7 +283,7 @@ export default function PDGSyndicatManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="president_phone">Téléphone</Label>
+                      <Label htmlFor="president_phone">TÃ©lÃ©phone</Label>
                       <Input
                         id="president_phone"
                         type="tel"
@@ -294,7 +294,7 @@ export default function PDGSyndicatManagement() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
+                    <Label htmlFor="password">Mot de passe * (min. 8 caractÃ¨res)</Label>
                     <Input
                       id="password"
                       type="password"
@@ -302,7 +302,7 @@ export default function PDGSyndicatManagement() {
                       minLength={8}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="••••••••"
+                      placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                     />
                   </div>
                 </div>
@@ -314,7 +314,7 @@ export default function PDGSyndicatManagement() {
                 </Button>
                 <Button type="submit">
                   <Plus className="w-4 h-4 mr-2" />
-                  Créer le bureau
+                  CrÃ©er le bureau
                 </Button>
               </div>
             </form>
@@ -347,10 +347,10 @@ export default function PDGSyndicatManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Membres</CardTitle>
-            <Users className="w-4 h-4 text-green-500" />
+            <Users className="w-4 h-4 text-primary-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">
+            <div className="text-2xl font-bold text-primary-orange-500">
               {bureaus.reduce((acc, b) => acc + b.total_members, 0)}
             </div>
           </CardContent>
@@ -358,7 +358,7 @@ export default function PDGSyndicatManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Véhicules</CardTitle>
+            <CardTitle className="text-sm font-medium">Total VÃ©hicules</CardTitle>
             <Bike className="w-4 h-4 text-purple-500" />
           </CardHeader>
           <CardContent>
@@ -379,7 +379,7 @@ export default function PDGSyndicatManagement() {
         </Card>
       </div>
 
-      {/* Tabs pour les différentes sections */}
+      {/* Tabs pour les diffÃ©rentes sections */}
       <Tabs defaultValue="bureaus" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="bureaus">
@@ -400,7 +400,7 @@ export default function PDGSyndicatManagement() {
           </TabsTrigger>
           <TabsTrigger value="features">
             <Settings className="w-4 h-4 mr-2" />
-            Fonctionnalités ({features.length})
+            FonctionnalitÃ©s ({features.length})
           </TabsTrigger>
           <TabsTrigger value="sync">
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -418,7 +418,7 @@ export default function PDGSyndicatManagement() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher par code, préfecture ou commune..."
+                  placeholder="Rechercher par code, prÃ©fecture ou commune..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -439,7 +439,7 @@ export default function PDGSyndicatManagement() {
                     key={bureau.id}
                     className="p-6 rounded-lg border bg-card hover:shadow-md transition-shadow space-y-4"
                   >
-                    {/* En-tête avec infos principales */}
+                    {/* En-tÃªte avec infos principales */}
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-4 flex-1">
                         <div className="p-3 rounded-lg bg-primary/10">
@@ -449,7 +449,7 @@ export default function PDGSyndicatManagement() {
                           <div className="flex items-center gap-3">
                             <h3 className="font-semibold text-lg">{bureau.bureau_code}</h3>
                             {bureau.status === 'active' ? (
-                              <Badge variant="default" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                              <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-700 dark:text-primary-orange-400 border-primary-orange-500/20">
                                 Actif
                               </Badge>
                             ) : (
@@ -459,28 +459,28 @@ export default function PDGSyndicatManagement() {
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            📍 {bureau.prefecture} - {bureau.commune}
+                            ðŸ“ {bureau.prefecture} - {bureau.commune}
                           </p>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                            <span>👥 {bureau.total_members} membres</span>
-                            <span>🏍️ {bureau.total_vehicles} véhicules</span>
+                            <span>ðŸ‘¥ {bureau.total_members} membres</span>
+                            <span>ðŸï¸ {bureau.total_vehicles} vÃ©hicules</span>
                           </div>
                           {bureau.president_name && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              👤 Président: <span className="font-medium">{bureau.president_name}</span>
+                              ðŸ‘¤ PrÃ©sident: <span className="font-medium">{bureau.president_name}</span>
                             </p>
                           )}
                         </div>
                       </div>
                     </div>
                     
-                    {/* Lien d'accès à l'interface */}
+                    {/* Lien d'accÃ¨s Ã  l'interface */}
                     {bureau.access_token && (
                       <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex-1 min-w-0 space-y-2">
                             <p className="text-xs font-semibold text-foreground flex items-center gap-2">
-                              <span className="text-primary">🔗</span> Lien d'accès à l'interface
+                              <span className="text-primary">ðŸ”—</span> Lien d'accÃ¨s Ã  l'interface
                             </p>
                             <p className="text-xs font-mono text-muted-foreground truncate bg-background p-2 rounded border">
                               {window.location.origin}/bureau/{encodeURIComponent(bureau.access_token)}
@@ -534,7 +534,7 @@ export default function PDGSyndicatManagement() {
                           size="sm"
                           onClick={() => handleValidate(bureau.id)}
                         >
-                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <CheckCircle className="w-4 h-4 text-primary-orange-500" />
                         </Button>
                       )}
                     </div>
@@ -542,7 +542,7 @@ export default function PDGSyndicatManagement() {
                 ))}
                 {filteredBureaus.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
-                    Aucun bureau trouvé
+                    Aucun bureau trouvÃ©
                   </div>
                 )}
               </div>
@@ -564,15 +564,15 @@ export default function PDGSyndicatManagement() {
                       <div className="flex-1">
                         <h3 className="font-medium">{worker.nom}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {worker.email} • Bureau: {bureau?.bureau_code || 'N/A'}
+                          {worker.email} â€¢ Bureau: {bureau?.bureau_code || 'N/A'}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Accès: {worker.access_level}
+                          AccÃ¨s: {worker.access_level}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         {worker.is_active ? (
-                          <Badge className="bg-green-500">Actif</Badge>
+                          <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                         ) : (
                           <Badge className="bg-gray-500">Inactif</Badge>
                         )}
@@ -596,7 +596,7 @@ export default function PDGSyndicatManagement() {
                 })}
                 {workers.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
-                    Aucun travailleur trouvé
+                    Aucun travailleur trouvÃ©
                   </div>
                 )}
               </div>
@@ -630,7 +630,7 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="worker_phone">Téléphone</Label>
+                  <Label htmlFor="worker_phone">TÃ©lÃ©phone</Label>
                   <Input
                     id="worker_phone"
                     value={editingWorker.telephone || ''}
@@ -638,7 +638,7 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="worker_access">Niveau d'accès</Label>
+                  <Label htmlFor="worker_access">Niveau d'accÃ¨s</Label>
                   <Input
                     id="worker_access"
                     value={editingWorker.access_level}
@@ -682,15 +682,15 @@ export default function PDGSyndicatManagement() {
                       <div className="flex-1">
                         <h3 className="font-medium">{member.full_name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {member.email || 'Pas d\'email'} • Bureau: {bureau?.bureau_code || 'N/A'}
+                          {member.email || 'Pas d\'email'} â€¢ Bureau: {bureau?.bureau_code || 'N/A'}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Code: {member.member_code} • Tél: {member.phone || 'N/A'}
+                          Code: {member.member_code} â€¢ TÃ©l: {member.phone || 'N/A'}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         {member.status === 'active' ? (
-                          <Badge className="bg-green-500">Actif</Badge>
+                          <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                         ) : (
                           <Badge className="bg-gray-500">Inactif</Badge>
                         )}
@@ -714,7 +714,7 @@ export default function PDGSyndicatManagement() {
                 })}
                 {members.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
-                    Aucun membre trouvé
+                    Aucun membre trouvÃ©
                   </div>
                 )}
               </div>
@@ -748,7 +748,7 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="member_phone">Téléphone</Label>
+                  <Label htmlFor="member_phone">TÃ©lÃ©phone</Label>
                   <Input
                     id="member_phone"
                     value={editingMember.phone || ''}
@@ -797,7 +797,7 @@ export default function PDGSyndicatManagement() {
                         <h3 className="font-medium text-red-900">{alert.title}</h3>
                         <p className="text-sm text-red-700 mt-1">{alert.message}</p>
                         <p className="text-xs text-red-600 mt-2">
-                          Bureau: {bureau?.bureau_code || 'N/A'} • {new Date(alert.created_at).toLocaleDateString('fr-FR')}
+                          Bureau: {bureau?.bureau_code || 'N/A'} â€¢ {new Date(alert.created_at).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
                       <Badge className="bg-red-500">{alert.severity}</Badge>
@@ -817,7 +817,7 @@ export default function PDGSyndicatManagement() {
         <TabsContent value="features" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Fonctionnalités Disponibles</CardTitle>
+              <CardTitle>FonctionnalitÃ©s Disponibles</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
@@ -827,11 +827,11 @@ export default function PDGSyndicatManagement() {
                       <h3 className="font-medium">{feature.feature_name}</h3>
                       <p className="text-sm text-muted-foreground mt-1">{feature.description}</p>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Version: {feature.version} • Code: {feature.feature_code}
+                        Version: {feature.version} â€¢ Code: {feature.feature_code}
                       </p>
                     </div>
                     {feature.is_active ? (
-                      <Badge className="bg-green-500">Active</Badge>
+                      <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Active</Badge>
                     ) : (
                       <Badge className="bg-gray-500">Inactive</Badge>
                     )}
@@ -839,7 +839,7 @@ export default function PDGSyndicatManagement() {
                 ))}
                 {features.length === 0 && (
                   <div className="text-center py-12 text-muted-foreground">
-                    Aucune fonctionnalité trouvée
+                    Aucune fonctionnalitÃ© trouvÃ©e
                   </div>
                 )}
               </div>
@@ -852,7 +852,7 @@ export default function PDGSyndicatManagement() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialog d'édition */}
+      {/* Dialog d'Ã©dition */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -876,21 +876,21 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Préfecture</Label>
+                  <Label>PrÃ©fecture</Label>
                   <Input
                     value={editingBureau.prefecture}
                     onChange={(e) => setEditingBureau({...editingBureau, prefecture: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Nom du Président</Label>
+                  <Label>Nom du PrÃ©sident</Label>
                   <Input
                     value={editingBureau.president_name || ''}
                     onChange={(e) => setEditingBureau({...editingBureau, president_name: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Email du Président</Label>
+                  <Label>Email du PrÃ©sident</Label>
                   <Input
                     type="email"
                     value={editingBureau.president_email || ''}
@@ -898,14 +898,14 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Téléphone du Président</Label>
+                  <Label>TÃ©lÃ©phone du PrÃ©sident</Label>
                   <Input
                     value={editingBureau.president_phone || ''}
                     onChange={(e) => setEditingBureau({...editingBureau, president_phone: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Localisation complète</Label>
+                  <Label>Localisation complÃ¨te</Label>
                   <Input
                     value={editingBureau.full_location || ''}
                     onChange={(e) => setEditingBureau({...editingBureau, full_location: e.target.value})}

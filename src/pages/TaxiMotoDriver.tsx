@@ -1,9 +1,9 @@
 /**
  * INTERFACE CONDUCTEUR TAXI-MOTO ULTRA PROFESSIONNELLE
- * Dashboard complet pour les conducteurs avec navigation temps réel
+ * Dashboard complet pour les conducteurs avec navigation temps rÃ©el
  * 224Solutions - Taxi-Moto System
  * 
- * REFACTORISÉ - Utilise les hooks modulaires pour une meilleure maintenabilité
+ * REFACTORISÃ‰ - Utilise les hooks modulaires pour une meilleure maintenabilitÃ©
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -20,7 +20,7 @@ import { GeolocationService } from "@/services/taxi/GeolocationService";
 import { supabase } from "@/integrations/supabase/client";
 import { Car, Star } from "lucide-react";
 
-// Hooks modulaires refactorisés
+// Hooks modulaires refactorisÃ©s
 import { useTaxiDriverProfile } from "@/hooks/useTaxiDriverProfile";
 import { useTaxiDriverStats } from "@/hooks/useTaxiDriverStats";
 import { useTaxiRideRequests, type RideRequest } from "@/hooks/useTaxiRideRequests";
@@ -50,7 +50,7 @@ export default function TaxiMotoDriver() {
     const { error, capture, clear } = useTaxiErrorBoundary();
     const { t } = useTranslation();
     
-    // GPS unifié avec fallback et error handling
+    // GPS unifiÃ© avec fallback et error handling
     const { 
         location, 
         loading: gpsLoading, 
@@ -80,7 +80,7 @@ export default function TaxiMotoDriver() {
                         undefined,
                         undefined,
                         loc.accuracy || undefined
-                    ).catch(err => console.error('❌ Erreur tracking course:', err));
+                    ).catch(err => console.error('âŒ Erreur tracking course:', err));
                 }
             }
         },
@@ -95,11 +95,11 @@ export default function TaxiMotoDriver() {
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useTaxiNotifications();
     const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
 
-    // États UI
+    // Ã‰tats UI
     const [activeTab, setActiveTab] = useState('dashboard');
     const [onlineSince, setOnlineSince] = useState<Date | null>(null);
 
-    // États de navigation
+    // Ã‰tats de navigation
     const [distanceToDestination, setDistanceToDestination] = useState(0);
     const [timeToDestination, setTimeToDestination] = useState(0);
     const [nextInstruction, setNextInstruction] = useState('');
@@ -136,12 +136,12 @@ export default function TaxiMotoDriver() {
     useEffect(() => { driverIdRef.current = driverId; }, [driverId]);
     useEffect(() => { isOnlineRef.current = isOnline; }, [isOnline]);
 
-    // ID affichable (code métier)
+    // ID affichable (code mÃ©tier)
     const driverDisplayId = hookDriverDisplayId || driverId;
 
-    // Fonction de démarrage de navigation (passée aux hooks)
+    // Fonction de dÃ©marrage de navigation (passÃ©e aux hooks)
     const startNavigation = useCallback(async (destination: { latitude: number; longitude: number }) => {
-        setNextInstruction('📍 Calcul de l\'itinéraire...');
+        setNextInstruction('ðŸ“ Calcul de l\'itinÃ©raire...');
         
         if (!location) {
             toast.error('Position GPS non disponible');
@@ -162,13 +162,13 @@ export default function TaxiMotoDriver() {
         try {
             // calculateRoute may not be available, use fallback
             fallbackDistance();
-            setNextInstruction('Navigation démarrée - Suivez les indications');
-            toast.info('Navigation activée');
+            setNextInstruction('Navigation dÃ©marrÃ©e - Suivez les indications');
+            toast.info('Navigation activÃ©e');
         } catch (navError) {
             console.error('Navigation error:', navError);
             fallbackDistance();
-            setNextInstruction('Navigation activée');
-            toast.warning('Navigation en mode simplifié');
+            setNextInstruction('Navigation activÃ©e');
+            toast.warning('Navigation en mode simplifiÃ©');
         }
     }, [location]);
 
@@ -199,7 +199,7 @@ export default function TaxiMotoDriver() {
 
     // ========== EFFETS ==========
 
-    // Gérer le suivi GPS: démarrer quand online, arrêter quand offline
+    // GÃ©rer le suivi GPS: dÃ©marrer quand online, arrÃªter quand offline
     useEffect(() => {
         if (isOnline && driverId && hasAccess) {
             if (!isWatching) {
@@ -211,7 +211,7 @@ export default function TaxiMotoDriver() {
         }
     }, [isOnline, driverId, hasAccess, isWatching, startWatching, stopWatching, loadPendingRides]);
 
-    // Cleanup au démontage
+    // Cleanup au dÃ©montage
     useEffect(() => {
         return () => {
             stopWatching();
@@ -221,18 +221,18 @@ export default function TaxiMotoDriver() {
     // ========== FONCTIONS ==========
 
     /**
-     * Bascule le statut en ligne/hors ligne avec GPS unifié
+     * Bascule le statut en ligne/hors ligne avec GPS unifiÃ©
      */
     const toggleOnlineStatus = async () => {
         const next = !isOnline;
         
         if (!driverId) {
-            toast.error('Profil conducteur non trouvé');
+            toast.error('Profil conducteur non trouvÃ©');
             return;
         }
 
         if (next && !hasAccess) {
-            toast.error('⚠️ Abonnement requis', {
+            toast.error('âš ï¸ Abonnement requis', {
                 description: 'Vous devez avoir un abonnement actif pour recevoir des courses'
             });
             return;
@@ -240,7 +240,7 @@ export default function TaxiMotoDriver() {
 
         if (next) {
             // PASSER EN LIGNE
-            toast.loading('📍 Activation GPS...', { id: 'gps-loading' });
+            toast.loading('ðŸ“ Activation GPS...', { id: 'gps-loading' });
             
             try {
                 const position = await getCurrentLocation();
@@ -251,7 +251,7 @@ export default function TaxiMotoDriver() {
                     return;
                 }
                 
-                console.log('🟢 [Online] Position GPS:', position.latitude, position.longitude);
+                console.log('ðŸŸ¢ [Online] Position GPS:', position.latitude, position.longitude);
                 
                 await TaxiMotoService.updateDriverStatus(
                     driverId,
@@ -265,21 +265,21 @@ export default function TaxiMotoDriver() {
                 setOnlineSince(new Date());
                 // startWatching is triggered by the useEffect above when isOnline changes
                 
-                toast.success('🟢 Vous êtes maintenant en ligne', {
+                toast.success('ðŸŸ¢ Vous Ãªtes maintenant en ligne', {
                     description: `GPS: ${position.latitude.toFixed(4)}, ${position.longitude.toFixed(4)}`
                 });
                 
             } catch (onlineError: unknown) {
                 toast.dismiss('gps-loading');
-                console.error('❌ Erreur activation:', onlineError);
-                const errMsg = onlineError instanceof Error ? onlineError.message : 'Veuillez réessayer';
+                console.error('âŒ Erreur activation:', onlineError);
+                const errMsg = onlineError instanceof Error ? onlineError.message : 'Veuillez rÃ©essayer';
                 capture('network', 'Erreur lors de la mise en ligne', onlineError);
                 toast.error('Impossible de passer en ligne', { description: errMsg });
                 return;
             }
         } else {
             // PASSER HORS LIGNE
-            console.log('🔴 [Offline] Déconnexion en cours...');
+            console.log('ðŸ”´ [Offline] DÃ©connexion en cours...');
             
             try {
                 // stopWatching is triggered by the useEffect above when isOnline changes
@@ -296,11 +296,11 @@ export default function TaxiMotoDriver() {
                 setOnlineSince(null);
                 clearRideRequests();
                 
-                toast.info('🔴 Vous êtes maintenant hors ligne');
+                toast.info('ðŸ”´ Vous Ãªtes maintenant hors ligne');
                 
             } catch (offlineError: unknown) {
-                console.error('🔴 [Offline] Erreur:', offlineError);
-                const errMsg = offlineError instanceof Error ? offlineError.message : 'Veuillez réessayer';
+                console.error('ðŸ”´ [Offline] Erreur:', offlineError);
+                const errMsg = offlineError instanceof Error ? offlineError.message : 'Veuillez rÃ©essayer';
                 capture('network', 'Erreur lors du changement de statut', offlineError);
                 toast.error('Erreur lors du changement de statut', { description: errMsg });
             }
@@ -322,7 +322,7 @@ export default function TaxiMotoDriver() {
             const relatedNotifs = notifications.filter(n => n.data?.rideId === request.id);
             relatedNotifs.forEach(n => markAsRead(n.id));
 
-            // Démarrer la navigation
+            // DÃ©marrer la navigation
             startNavigation(request.pickupCoords);
         }
     };
@@ -346,10 +346,10 @@ export default function TaxiMotoDriver() {
     };
 
     /**
-     * Déconnexion - met à jour le statut DB AVANT signOut
+     * DÃ©connexion - met Ã  jour le statut DB AVANT signOut
      */
     const handleSignOut = async () => {
-        // 1. Mettre le conducteur hors ligne côté DB
+        // 1. Mettre le conducteur hors ligne cÃ´tÃ© DB
         if (driverId && isOnline) {
             try {
                 stopWatching();
@@ -361,7 +361,7 @@ export default function TaxiMotoDriver() {
         setIsOnline(false);
         setOnlineSince(null);
         await signOut();
-        toast.success('Déconnexion réussie');
+        toast.success('DÃ©connexion rÃ©ussie');
     };
 
     // ========== RENDU ==========
@@ -444,7 +444,7 @@ export default function TaxiMotoDriver() {
                     {!location ? (
                         <GPSPermissionHelper
                             onLocationGranted={async () => {
-                                toast.loading('Récupération de la position...', { id: 'gps-load' });
+                                toast.loading('RÃ©cupÃ©ration de la position...', { id: 'gps-load' });
                                 try {
                                     await getCurrentLocation();
                                     toast.dismiss('gps-load');
@@ -452,7 +452,7 @@ export default function TaxiMotoDriver() {
                                 } catch (err) {
                                     console.error('[TaxiMotoDriver] GPS error:', err);
                                     toast.dismiss('gps-load');
-                                    toast.error('Erreur GPS - Veuillez réessayer');
+                                    toast.error('Erreur GPS - Veuillez rÃ©essayer');
                                 }
                             }}
                             currentError={null}
@@ -491,7 +491,7 @@ export default function TaxiMotoDriver() {
                         {rideHistory.length === 0 ? (
                             <div className="text-center py-12">
                                 <Car className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                                <p className="text-gray-500">Aucune course complétée</p>
+                                <p className="text-gray-500">Aucune course complÃ©tÃ©e</p>
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -499,21 +499,21 @@ export default function TaxiMotoDriver() {
                                     <div key={ride.id as string} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
                                         <div className="flex justify-between items-start mb-2">
                                             <span className={`text-xs px-2 py-1 rounded-full ${
-                                                ride.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                ride.status === 'completed' ? 'bg-primary-blue-500/20 text-primary-blue-400' :
                                                 ride.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
                                                 'bg-blue-500/20 text-blue-400'
                                             }`}>
-                                                {ride.status === 'completed' ? 'Terminée' : 
-                                                 ride.status === 'cancelled' ? 'Annulée' : String(ride.status)}
+                                                {ride.status === 'completed' ? 'TerminÃ©e' : 
+                                                 ride.status === 'cancelled' ? 'AnnulÃ©e' : String(ride.status)}
                                             </span>
                                             <span className="text-gray-400 text-xs">
                                                 {new Date(ride.created_at as string).toLocaleDateString('fr-FR')}
                                             </span>
                                         </div>
-                                        <p className="text-white text-sm mb-1 truncate">{String(ride.pickup_address || 'Adresse départ')}</p>
-                                        <p className="text-gray-400 text-xs truncate">→ {String(ride.dropoff_address || 'Destination')}</p>
+                                        <p className="text-white text-sm mb-1 truncate">{String(ride.pickup_address || 'Adresse dÃ©part')}</p>
+                                        <p className="text-gray-400 text-xs truncate">â†’ {String(ride.dropoff_address || 'Destination')}</p>
                                         {ride.driver_share && (
-                                            <p className="text-emerald-400 font-bold mt-2">{Number(ride.driver_share).toLocaleString()} GNF</p>
+                                            <p className="text-primary-blue-400 font-bold mt-2">{Number(ride.driver_share).toLocaleString()} GNF</p>
                                         )}
                                     </div>
                                 ))}
@@ -530,7 +530,7 @@ export default function TaxiMotoDriver() {
                         
                         <div className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 rounded-2xl p-6 border border-amber-500/30 text-center">
                             <div className="text-5xl font-bold text-amber-400 mb-2">
-                                {driverStats.rating > 0 ? driverStats.rating.toFixed(1) : '—'}
+                                {driverStats.rating > 0 ? driverStats.rating.toFixed(1) : 'â€”'}
                             </div>
                             <div className="flex justify-center gap-1 mb-3">
                                 {[1, 2, 3, 4, 5].map((star) => (
@@ -544,27 +544,27 @@ export default function TaxiMotoDriver() {
                                     />
                                 ))}
                             </div>
-                            <p className="text-gray-400 text-sm">Basé sur {driverStats.totalRides || 0} courses</p>
+                            <p className="text-gray-400 text-sm">BasÃ© sur {driverStats.totalRides || 0} courses</p>
                         </div>
 
                         <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                            <h3 className="text-white font-medium mb-3">Comment améliorer votre note</h3>
+                            <h3 className="text-white font-medium mb-3">Comment amÃ©liorer votre note</h3>
                             <ul className="space-y-2 text-gray-400 text-sm">
                                 <li className="flex items-start gap-2">
-                                    <span className="text-emerald-400">✓</span>
+                                    <span className="text-primary-blue-400">âœ“</span>
                                     Soyez ponctuel aux rendez-vous
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <span className="text-emerald-400">✓</span>
+                                    <span className="text-primary-blue-400">âœ“</span>
                                     Conduisez prudemment et respectez le code
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <span className="text-emerald-400">✓</span>
+                                    <span className="text-primary-blue-400">âœ“</span>
                                     Soyez courtois avec les clients
                                 </li>
                                 <li className="flex items-start gap-2">
-                                    <span className="text-emerald-400">✓</span>
-                                    Maintenez votre véhicule propre
+                                    <span className="text-primary-blue-400">âœ“</span>
+                                    Maintenez votre vÃ©hicule propre
                                 </li>
                             </ul>
                         </div>
@@ -582,7 +582,7 @@ export default function TaxiMotoDriver() {
                 <div className="min-h-screen bg-gray-950 pb-24 p-4">
                     <MyPurchasesOrdersList 
                         title="Mes Achats Personnels" 
-                        emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" 
+                        emptyMessage="Vous n'avez pas encore effectuÃ© d'achats sur le marketplace" 
                     />
                 </div>
             )}

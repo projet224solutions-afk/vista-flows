@@ -15,15 +15,15 @@ import { useToast } from "@/hooks/use-toast";
 const statusColors = {
   prospection: 'bg-blue-100 text-blue-800',
   proposition: 'bg-yellow-100 text-yellow-800',
-  négociation: 'bg-orange-100 text-orange-800',
-  conclusion: 'bg-green-100 text-green-800',
+  nÃ©gociation: 'bg-orange-100 text-orange-800',
+  conclusion: 'bg-primary-orange-100 text-primary-orange-800',
   perdu: 'bg-red-100 text-red-800'
 };
 
 const statusLabels = {
   prospection: 'Prospection',
   proposition: 'Proposition',
-  négociation: 'Négociation',
+  nÃ©gociation: 'NÃ©gociation',
   conclusion: 'Conclusion',
   perdu: 'Perdu'
 };
@@ -64,14 +64,14 @@ export default function ProspectManagement() {
       if (editingProspect) {
         await updateProspect(editingProspect.id, formData);
         toast({
-          title: "Prospect mis à jour",
-          description: "Les informations du prospect ont été mises à jour avec succès."
+          title: "Prospect mis Ã  jour",
+          description: "Les informations du prospect ont Ã©tÃ© mises Ã  jour avec succÃ¨s."
         });
       } else {
         await createProspect(formData);
         toast({
-          title: "Prospect créé",
-          description: "Le nouveau prospect a été ajouté avec succès."
+          title: "Prospect crÃ©Ã©",
+          description: "Le nouveau prospect a Ã©tÃ© ajoutÃ© avec succÃ¨s."
         });
       }
       setIsDialogOpen(false);
@@ -104,13 +104,13 @@ export default function ProspectManagement() {
     try {
       await updateProspect(prospect.id, { status: newStatus });
       toast({
-        title: "Statut mis à jour",
-        description: `Le statut du prospect a été changé vers "${statusLabels[newStatus]}".`
+        title: "Statut mis Ã  jour",
+        description: `Le statut du prospect a Ã©tÃ© changÃ© vers "${statusLabels[newStatus]}".`
       });
     } catch (err) {
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour le statut.",
+        description: "Impossible de mettre Ã  jour le statut.",
         variant: "destructive"
       });
     }
@@ -129,7 +129,7 @@ export default function ProspectManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Gestion des Prospects</h2>
-          <p className="text-muted-foreground">Gérez votre pipeline commercial et transformez vos prospects en clients</p>
+          <p className="text-muted-foreground">GÃ©rez votre pipeline commercial et transformez vos prospects en clients</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -173,7 +173,7 @@ export default function ProspectManagement() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phone">Téléphone</Label>
+                  <Label htmlFor="phone">TÃ©lÃ©phone</Label>
                   <Input
                     id="phone"
                     value={formData.contact_phone}
@@ -183,7 +183,7 @@ export default function ProspectManagement() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="value">Valeur estimée (GNF)</Label>
+                  <Label htmlFor="value">Valeur estimÃ©e (GNF)</Label>
                   <Input
                     id="value"
                     type="number"
@@ -192,7 +192,7 @@ export default function ProspectManagement() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="probability">Probabilité (%)</Label>
+                  <Label htmlFor="probability">ProbabilitÃ© (%)</Label>
                   <Input
                     id="probability"
                     type="number"
@@ -230,7 +230,7 @@ export default function ProspectManagement() {
               </div>
               <div className="flex gap-2">
                 <Button type="submit" className="flex-1">
-                  {editingProspect ? 'Mettre à jour' : 'Créer'}
+                  {editingProspect ? 'Mettre Ã  jour' : 'CrÃ©er'}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Annuler
@@ -257,7 +257,7 @@ export default function ProspectManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
+              <TrendingUp className="w-5 h-5 text-primary-orange-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Valeur pipeline</p>
                 <p className="text-2xl font-bold">{totalValue.toLocaleString()} GNF</p>
@@ -270,7 +270,7 @@ export default function ProspectManagement() {
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-orange-600 rounded-full" />
               <div>
-                <p className="text-sm text-muted-foreground">Probabilité moyenne</p>
+                <p className="text-sm text-muted-foreground">ProbabilitÃ© moyenne</p>
                 <p className="text-2xl font-bold">{Math.round(avgProbability)}%</p>
               </div>
             </div>
@@ -307,15 +307,15 @@ export default function ProspectManagement() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Valeur estimée</span>
-                <span className="font-semibold text-green-600">
+                <span className="text-sm text-muted-foreground">Valeur estimÃ©e</span>
+                <span className="font-semibold text-primary-orange-600">
                   {prospect.estimated_value.toLocaleString()} GNF
                 </span>
               </div>
               
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Probabilité</span>
+                  <span className="text-sm text-muted-foreground">ProbabilitÃ©</span>
                   <span className="text-sm font-medium">{prospect.success_probability}%</span>
                 </div>
                 <Progress value={prospect.success_probability} className="h-2" />
@@ -351,7 +351,7 @@ export default function ProspectManagement() {
             <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Aucun prospect</h3>
             <p className="text-muted-foreground mb-4">
-              Commencez à développer votre pipeline commercial en ajoutant des prospects.
+              Commencez Ã  dÃ©velopper votre pipeline commercial en ajoutant des prospects.
             </p>
             <Button onClick={() => setIsDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />

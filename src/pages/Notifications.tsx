@@ -37,7 +37,7 @@ const notificationIcons: Record<string, React.ElementType> = {
 
 const notificationColors: Record<string, string> = {
   order: 'text-blue-600 bg-blue-100',
-  payment: 'text-green-600 bg-green-100',
+  payment: 'text-primary-orange-600 bg-primary-orange-100',
   message: 'text-purple-600 bg-purple-100',
   security: 'text-red-600 bg-red-100',
   stock: 'text-orange-600 bg-orange-100',
@@ -217,7 +217,7 @@ export default function Notifications() {
             </h2>
             <p className="text-muted-foreground">
               {filter === 'unread' 
-                ? 'Toutes vos notifications ont été lues'
+                ? 'Toutes vos notifications ont Ã©tÃ© lues'
                 : 'Vous recevrez des notifications ici'}
             </p>
           </Card>

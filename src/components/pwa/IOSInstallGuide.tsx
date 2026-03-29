@@ -1,6 +1,6 @@
 /**
  * Guide d'installation PWA iOS - Style natif immersif
- * Overlay plein écran avec flèche animée pointant vers le bouton Share de Safari
+ * Overlay plein Ã©cran avec flÃ¨che animÃ©e pointant vers le bouton Share de Safari
  */
 
 import { useState, useEffect } from 'react';
@@ -44,7 +44,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
 
     try {
       window.location.assign(safariUrl);
-      // Si le schéma n'est pas supporté, proposer la copie du lien après un court delai
+      // Si le schÃ©ma n'est pas supportÃ©, proposer la copie du lien aprÃ¨s un court delai
       setTimeout(async () => {
         if (document.visibilityState === 'visible') {
           await copyCurrentLink();
@@ -91,7 +91,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
 
   if (!open) return null;
 
-  // Si pas Safari → message "ouvrir dans Safari"
+  // Si pas Safari â†’ message "ouvrir dans Safari"
   if (!isSafari) {
     return (
       <AnimatePresence>
@@ -141,7 +141,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
 
   const steps = [
     {
-      // Étape 0 : Flèche vers le bouton Share
+      // Ã‰tape 0 : FlÃ¨che vers le bouton Share
       render: () => (
         <motion.div
           initial={{ opacity: 0 }}
@@ -170,7 +170,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                 {t('pwa.ios.step1.description')}
               </p>
               
-              {/* Icône Share stylisée */}
+              {/* IcÃ´ne Share stylisÃ©e */}
               <div className="flex items-center justify-center gap-2 py-2">
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
                   <Share className="w-6 h-6 text-blue-600" />
@@ -195,7 +195,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             </motion.div>
           </div>
 
-          {/* Flèche animée pointant vers le bas (vers le bouton Share de Safari) */}
+          {/* FlÃ¨che animÃ©e pointant vers le bas (vers le bouton Share de Safari) */}
           <div className={`bg-black/70 ${isIPad ? 'pb-4' : 'pb-16'} pt-4 flex flex-col items-center`}>
             <motion.div
               animate={{ y: [0, 12, 0] }}
@@ -218,7 +218,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
       ),
     },
     {
-      // Étape 1 : "Sur l'écran d'accueil"
+      // Ã‰tape 1 : "Sur l'Ã©cran d'accueil"
       render: () => (
         <motion.div
           initial={{ opacity: 0 }}
@@ -242,8 +242,8 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                   <Plus className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-sm text-foreground">Sur l'écran d'accueil</p>
-                  <p className="text-xs text-muted-foreground">Ajouter à l'écran d'accueil</p>
+                  <p className="font-semibold text-sm text-foreground">Sur l'Ã©cran d'accueil</p>
+                  <p className="text-xs text-muted-foreground">Ajouter Ã  l'Ã©cran d'accueil</p>
                 </div>
                 <motion.div
                   animate={{ x: [-4, 4, -4] }}
@@ -254,7 +254,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                 </motion.div>
               </div>
               
-              {/* Faux éléments du menu */}
+              {/* Faux Ã©lÃ©ments du menu */}
               <div className="flex items-center gap-3 p-3 bg-white/60 dark:bg-slate-700/60 rounded-xl opacity-40">
                 <div className="w-10 h-10 bg-gray-300 dark:bg-slate-600 rounded-lg" />
                 <div className="h-3 w-24 bg-gray-200 dark:bg-slate-600 rounded" />
@@ -304,7 +304,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
       ),
     },
     {
-      // Étape 2 : Confirmation "Ajouter"
+      // Ã‰tape 2 : Confirmation "Ajouter"
       render: () => (
         <motion.div
           initial={{ opacity: 0 }}
@@ -317,14 +317,14 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             animate={{ scale: 1, y: 0 }}
             className={modalCardClass}
           >
-              <div className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-700 dark:border-green-900/60 dark:bg-green-900/20 dark:text-green-300">
+              <div className="inline-flex items-center rounded-full border border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 px-3 py-1 text-xs font-medium text-primary-orange-700 dark:border-primary-orange-900/60 dark:bg-primary-orange-900/20 dark:text-primary-orange-300">
                 {t('pwa.ios.step3.badge')}
               </div>
             {/* Simulation de la confirmation iOS */}
             <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <button className="text-blue-600 text-sm font-medium">Annuler</button>
-                <p className="font-semibold text-sm text-foreground">Ajouter à l'écran</p>
+                <p className="font-semibold text-sm text-foreground">Ajouter Ã  l'Ã©cran</p>
                 <motion.button
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ repeat: Infinity, duration: 1.5 }}
@@ -353,7 +353,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
 
             <Button
               onClick={() => onOpenChange(false)}
-              className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
+              className="w-full h-12 bg-primary-orange-600 hover:bg-primary-orange-700 text-white font-semibold"
             >
               <Check className="w-5 h-5 mr-2" />
               {t('pwa.ios.actions.finish')}

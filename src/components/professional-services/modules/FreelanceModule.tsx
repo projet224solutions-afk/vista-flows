@@ -1,7 +1,7 @@
 /**
  * MODULE FREELANCE & ADMINISTRATIF PROFESSIONNEL
- * Inspiré de: Upwork, Fiverr, Notion, Freshbooks
- * Gestion complète des missions, contrats, facturation et suivi horaire
+ * InspirÃ© de: Upwork, Fiverr, Notion, Freshbooks
+ * Gestion complÃ¨te des missions, contrats, facturation et suivi horaire
  */
 
 import { useState } from 'react';
@@ -56,25 +56,25 @@ interface Client {
 }
 
 const TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
-  secretariat: { label: 'Secrétariat', icon: '📋', color: 'bg-blue-100 text-blue-800' },
-  comptabilite: { label: 'Comptabilité', icon: '🧮', color: 'bg-green-100 text-green-800' },
-  rh: { label: 'Ressources Humaines', icon: '👥', color: 'bg-purple-100 text-purple-800' },
-  traduction: { label: 'Traduction', icon: '🌍', color: 'bg-amber-100 text-amber-800' },
-  conseil: { label: 'Conseil', icon: '💡', color: 'bg-cyan-100 text-cyan-800' },
-  juridique: { label: 'Juridique', icon: '⚖️', color: 'bg-red-100 text-red-800' },
+  secretariat: { label: 'SecrÃ©tariat', icon: 'ðŸ“‹', color: 'bg-blue-100 text-blue-800' },
+  comptabilite: { label: 'ComptabilitÃ©', icon: 'ðŸ§®', color: 'bg-primary-orange-100 text-primary-orange-800' },
+  rh: { label: 'Ressources Humaines', icon: 'ðŸ‘¥', color: 'bg-purple-100 text-purple-800' },
+  traduction: { label: 'Traduction', icon: 'ðŸŒ', color: 'bg-amber-100 text-amber-800' },
+  conseil: { label: 'Conseil', icon: 'ðŸ’¡', color: 'bg-primary-blue-100 text-primary-blue-800' },
+  juridique: { label: 'Juridique', icon: 'âš–ï¸', color: 'bg-red-100 text-red-800' },
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   en_cours: { label: 'En cours', color: 'bg-blue-100 text-blue-800' },
-  termine: { label: 'Terminé', color: 'bg-green-100 text-green-800' },
+  termine: { label: 'TerminÃ©', color: 'bg-primary-orange-100 text-primary-orange-800' },
   en_attente: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800' },
-  facture: { label: 'Facturé', color: 'bg-purple-100 text-purple-800' },
+  facture: { label: 'FacturÃ©', color: 'bg-purple-100 text-purple-800' },
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
   haute: 'bg-red-500',
   moyenne: 'bg-yellow-500',
-  basse: 'bg-green-500',
+  basse: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
 };
 
 export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProps) {
@@ -83,22 +83,22 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
 
   const [missions] = useState<Mission[]>([
     {
-      id: '1', title: 'Rédaction contrats fournisseurs', client: 'Groupe Alpha', clientPhone: '+224 621 00 00 00',
+      id: '1', title: 'RÃ©daction contrats fournisseurs', client: 'Groupe Alpha', clientPhone: '+224 621 00 00 00',
       type: 'juridique', status: 'en_cours', startDate: '2026-03-01', deadline: '2026-03-25',
       hoursEstimated: 40, hoursWorked: 28, budget: 2500000, paid: 1250000, priority: 'haute',
     },
     {
-      id: '2', title: 'Comptabilité mensuelle Q1', client: 'PME Solutions', clientPhone: '+224 622 00 00 00',
+      id: '2', title: 'ComptabilitÃ© mensuelle Q1', client: 'PME Solutions', clientPhone: '+224 622 00 00 00',
       type: 'comptabilite', status: 'en_cours', startDate: '2026-03-05', deadline: '2026-03-30',
       hoursEstimated: 60, hoursWorked: 35, budget: 3000000, paid: 1500000, priority: 'moyenne',
     },
     {
-      id: '3', title: 'Traduction documents techniques', client: 'ONG Santé+', clientPhone: '+224 623 00 00 00',
+      id: '3', title: 'Traduction documents techniques', client: 'ONG SantÃ©+', clientPhone: '+224 623 00 00 00',
       type: 'traduction', status: 'termine', startDate: '2026-02-15', deadline: '2026-03-10',
       hoursEstimated: 20, hoursWorked: 18, budget: 800000, paid: 800000, priority: 'basse',
     },
     {
-      id: '4', title: 'Recrutement développeurs', client: 'Tech Guinée', clientPhone: '+224 624 00 00 00',
+      id: '4', title: 'Recrutement dÃ©veloppeurs', client: 'Tech GuinÃ©e', clientPhone: '+224 624 00 00 00',
       type: 'rh', status: 'en_attente', startDate: '2026-03-20', deadline: '2026-04-15',
       hoursEstimated: 30, hoursWorked: 0, budget: 1500000, paid: 0, priority: 'moyenne',
     },
@@ -107,7 +107,7 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
   const [clients] = useState<Client[]>([
     { id: '1', name: 'Mamadou Barry', company: 'Groupe Alpha', phone: '+224 621 00 00 00', email: 'mamadou@alpha.gn', totalMissions: 8, totalPaid: 12500000, rating: 5 },
     { id: '2', name: 'Fatou Diallo', company: 'PME Solutions', phone: '+224 622 00 00 00', email: 'fatou@pme.gn', totalMissions: 5, totalPaid: 7800000, rating: 4.8 },
-    { id: '3', name: 'Dr. Camara', company: 'ONG Santé+', phone: '+224 623 00 00 00', email: 'camara@santeplus.org', totalMissions: 3, totalPaid: 2400000, rating: 4.9 },
+    { id: '3', name: 'Dr. Camara', company: 'ONG SantÃ©+', phone: '+224 623 00 00 00', email: 'camara@santeplus.org', totalMissions: 3, totalPaid: 2400000, rating: 4.9 },
   ]);
 
   // Stats
@@ -137,7 +137,7 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
             <Button><Plus className="h-4 w-4 mr-2" /> Nouvelle mission</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Créer une mission</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>CrÃ©er une mission</DialogTitle></DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2"><Label>Titre</Label><Input placeholder="Ex: Audit comptable" /></div>
               <div className="grid grid-cols-2 gap-4">
@@ -155,14 +155,14 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2"><Label>Budget (GNF)</Label><Input type="number" placeholder="0" /></div>
-                <div className="space-y-2"><Label>Heures estimées</Label><Input type="number" placeholder="0" /></div>
+                <div className="space-y-2"><Label>Heures estimÃ©es</Label><Input type="number" placeholder="0" /></div>
                 <div className="space-y-2"><Label>Deadline</Label><Input type="date" /></div>
               </div>
-              <div className="space-y-2"><Label>Description</Label><Textarea placeholder="Détails de la mission..." /></div>
+              <div className="space-y-2"><Label>Description</Label><Textarea placeholder="DÃ©tails de la mission..." /></div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowNewMission(false)}>Annuler</Button>
-              <Button onClick={() => { toast.success('Mission créée'); setShowNewMission(false); }}>Créer</Button>
+              <Button onClick={() => { toast.success('Mission crÃ©Ã©e'); setShowNewMission(false); }}>CrÃ©er</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -184,7 +184,7 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
             <p className="text-xs opacity-80">En attente</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
           <CardContent className="p-4">
             <DollarSign className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{(totalRevenue / 1e6).toFixed(1)}M</p>
@@ -195,17 +195,17 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
           <CardContent className="p-4">
             <AlertCircle className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{(pendingPayments / 1e6).toFixed(1)}M</p>
-            <p className="text-xs opacity-80">Impayés GNF</p>
+            <p className="text-xs opacity-80">ImpayÃ©s GNF</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
           <CardContent className="p-4">
             <Timer className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{totalHours}h</p>
-            <p className="text-xs opacity-80">Heures facturées</p>
+            <p className="text-xs opacity-80">Heures facturÃ©es</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white">
+        <Card className="bg-gradient-to-br from-primary-orange-500 to-primary-blue-600 text-white">
           <CardContent className="p-4">
             <TrendingUp className="h-4 w-4 opacity-80" />
             <p className="text-lg font-bold mt-1">{avgHourlyRate.toLocaleString()}</p>
@@ -248,19 +248,19 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
                       </div>
                       <div className="text-right shrink-0 ml-4">
                         <p className="font-bold text-primary">{fc(mission.budget, 'GNF')}</p>
-                        <p className="text-xs text-muted-foreground">Payé: {fc(mission.paid, 'GNF')}</p>
+                        <p className="text-xs text-muted-foreground">PayÃ©: {fc(mission.paid, 'GNF')}</p>
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-xs">
-                        <span>{mission.hoursWorked}h / {mission.hoursEstimated}h estimées</span>
+                        <span>{mission.hoursWorked}h / {mission.hoursEstimated}h estimÃ©es</span>
                         <span className="font-bold">{progress}%</span>
                       </div>
                       <Progress value={progress} className="h-2" />
                     </div>
                     <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                      <span>📅 Début: {mission.startDate}</span>
-                      <span>⏰ Deadline: {mission.deadline}</span>
+                      <span>ðŸ“… DÃ©but: {mission.startDate}</span>
+                      <span>â° Deadline: {mission.deadline}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -306,7 +306,7 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Timer className="w-5 h-5" /> Suivi du temps</CardTitle>
-              <CardDescription>Heures travaillées par mission</CardDescription>
+              <CardDescription>Heures travaillÃ©es par mission</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -351,7 +351,7 @@ export function FreelanceModule({ serviceId, businessName }: FreelanceModuleProp
 
         {/* SERVICES */}
         <TabsContent value="services" className="space-y-4">
-          <h3 className="font-semibold">Services proposés</h3>
+          <h3 className="font-semibold">Services proposÃ©s</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {Object.entries(TYPE_LABELS).map(([key, val]) => (
               <Card key={key} className="hover:border-primary transition-colors cursor-pointer group">

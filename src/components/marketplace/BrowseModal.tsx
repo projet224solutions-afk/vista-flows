@@ -1,6 +1,6 @@
 /**
- * BROWSE MODAL - Fenêtre de navigation rapide
- * Affiche catégories, produits récents, vendeurs et fournisseurs certifiés
+ * BROWSE MODAL - FenÃªtre de navigation rapide
+ * Affiche catÃ©gories, produits rÃ©cents, vendeurs et fournisseurs certifiÃ©s
  */
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -63,7 +63,7 @@ export function BrowseModal({
         .eq("is_active", true)
         .order("rating", { ascending: false })
         .limit(20) as any),
-      // Fournisseurs certifiés
+      // Fournisseurs certifiÃ©s
       (supabase
         .from("vendors")
         .select("id, business_name, logo_url, country, rating")
@@ -71,7 +71,7 @@ export function BrowseModal({
         .eq("is_verified", true)
         .order("rating", { ascending: false })
         .limit(10) as any),
-      // Produits récents
+      // Produits rÃ©cents
       (supabase
         .from("products")
         .select("id, name, price, images")
@@ -97,7 +97,7 @@ export function BrowseModal({
           <div className="px-4 sm:px-6 pb-3 sm:pb-4 overflow-x-auto">
             <TabsList className="inline-flex h-10 sm:h-11 w-full bg-muted/60 rounded-xl p-1 gap-1">
               <TabsTrigger value="categories" className="flex-1 min-w-0 text-[11px] sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all px-2 sm:px-3 whitespace-nowrap">
-                <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Catégories</span>
+                <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">CatÃ©gories</span>
               </TabsTrigger>
               <TabsTrigger value="products" className="flex-1 min-w-0 text-[11px] sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all px-2 sm:px-3 whitespace-nowrap">
                 <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Produits</span>
@@ -106,13 +106,13 @@ export function BrowseModal({
                 <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Vendeurs</span>
               </TabsTrigger>
               <TabsTrigger value="certified" className="flex-1 min-w-0 text-[11px] sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all px-2 sm:px-3 whitespace-nowrap">
-                <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Certifiés</span>
+                <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">CertifiÃ©s</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
           <ScrollArea className="h-[55vh] px-6 pb-6">
-            {/* CATÉGORIES */}
+            {/* CATÃ‰GORIES */}
             <TabsContent value="categories" className="mt-0 space-y-2">
               {categories.filter(c => c.id !== "all").map((cat) => (
                 <button
@@ -132,11 +132,11 @@ export function BrowseModal({
                 </button>
               ))}
               {categories.filter(c => c.id !== "all").length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8">Aucune catégorie disponible</p>
+                <p className="text-sm text-muted-foreground text-center py-8">Aucune catÃ©gorie disponible</p>
               )}
             </TabsContent>
 
-            {/* PRODUITS RÉCENTS */}
+            {/* PRODUITS RÃ‰CENTS */}
             <TabsContent value="products" className="mt-0">
               <div className="grid grid-cols-2 gap-2">
                 {recentProducts.map((product) => {
@@ -195,7 +195,7 @@ export function BrowseModal({
                   </div>
                   {v.is_certified && (
                     <Badge variant="secondary" className="text-[10px] shrink-0">
-                      <ShieldCheck className="w-3 h-3 mr-0.5" /> Certifié
+                      <ShieldCheck className="w-3 h-3 mr-0.5" /> CertifiÃ©
                     </Badge>
                   )}
                 </button>
@@ -205,19 +205,19 @@ export function BrowseModal({
               )}
             </TabsContent>
 
-            {/* FOURNISSEURS CERTIFIÉS */}
+            {/* FOURNISSEURS CERTIFIÃ‰S */}
             <TabsContent value="certified" className="mt-0 space-y-2">
               {certifiedVendors.length > 0 ? certifiedVendors.map((v) => (
                 <button
                   key={v.id}
                   onClick={() => { onSelectVendor(v.id); onOpenChange(false); }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-950/20 hover:border-green-400 hover:shadow-md transition-all text-left group"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50 dark:border-primary-orange-900/50 dark:bg-primary-orange-950/20 hover:border-primary-orange-400 hover:shadow-md transition-all text-left group"
                 >
                   {v.logo_url ? (
-                    <img src={v.logo_url} alt={v.business_name} className="w-10 h-10 rounded-full object-cover border-2 border-green-300" />
+                    <img src={v.logo_url} alt={v.business_name} className="w-10 h-10 rounded-full object-cover border-2 border-primary-orange-300" />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
-                      <ShieldCheck className="w-5 h-5 text-green-600" />
+                    <div className="w-10 h-10 rounded-full bg-primary-orange-100 dark:bg-primary-orange-900/40 flex items-center justify-center">
+                      <ShieldCheck className="w-5 h-5 text-primary-orange-600" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
@@ -231,12 +231,12 @@ export function BrowseModal({
                       )}
                     </div>
                   </div>
-                  <Badge className="bg-green-600 text-white text-[10px] shrink-0">
-                    <ShieldCheck className="w-3 h-3 mr-0.5" /> Certifié
+                  <Badge className="bg-primary-orange-600 text-white text-[10px] shrink-0">
+                    <ShieldCheck className="w-3 h-3 mr-0.5" /> CertifiÃ©
                   </Badge>
                 </button>
               )) : (
-                <p className="text-sm text-muted-foreground text-center py-8">Aucun fournisseur certifié pour le moment</p>
+                <p className="text-sm text-muted-foreground text-center py-8">Aucun fournisseur certifiÃ© pour le moment</p>
               )}
             </TabsContent>
           </ScrollArea>

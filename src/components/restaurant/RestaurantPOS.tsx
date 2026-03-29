@@ -1,6 +1,6 @@
 /**
  * Restaurant POS - Point de vente pour plats, boissons et services
- * Utilise le menu du restaurant pour créer des ventes rapides
+ * Utilise le menu du restaurant pour crÃ©er des ventes rapides
  */
 
 import { useState, useMemo, useCallback } from 'react';
@@ -42,12 +42,12 @@ type PaymentMethod = 'cash' | 'mobile_money' | 'card';
 
 const ORDER_TYPES: { value: OrderType; label: string; icon: React.ReactNode }[] = [
   { value: 'sur_place', label: 'Sur place', icon: <MapPin className="w-4 h-4" /> },
-  { value: 'emporter', label: 'À emporter', icon: <ShoppingBag className="w-4 h-4" /> },
+  { value: 'emporter', label: 'Ã€ emporter', icon: <ShoppingBag className="w-4 h-4" /> },
   { value: 'livraison', label: 'Livraison', icon: <Truck className="w-4 h-4" /> },
 ];
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: React.ReactNode }[] = [
-  { value: 'cash', label: 'Espèces', icon: <Banknote className="w-4 h-4" /> },
+  { value: 'cash', label: 'EspÃ¨ces', icon: <Banknote className="w-4 h-4" /> },
   { value: 'mobile_money', label: 'Mobile Money', icon: <Smartphone className="w-4 h-4" /> },
   { value: 'card', label: 'Carte', icon: <CreditCard className="w-4 h-4" /> },
 ];
@@ -127,7 +127,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
 
     setSubmitting(true);
     try {
-      // Pour le paiement carte, créer la commande en statut 'pending' d'abord
+      // Pour le paiement carte, crÃ©er la commande en statut 'pending' d'abord
       const isPendingPayment = paymentMethod === 'card';
       
       const orderData = {
@@ -177,10 +177,10 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
       setTableNumber('');
       setOrderNotes('');
 
-      toast.success(`Commande #${data.id.slice(-6).toUpperCase()} créée !`);
+      toast.success(`Commande #${data.id.slice(-6).toUpperCase()} crÃ©Ã©e !`);
     } catch (error: any) {
-      console.error('Erreur création commande:', error);
-      toast.error('Erreur lors de la création de la commande');
+      console.error('Erreur crÃ©ation commande:', error);
+      toast.error('Erreur lors de la crÃ©ation de la commande');
     } finally {
       setSubmitting(false);
     }
@@ -190,7 +190,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
     if (!pendingCardOrder) return;
 
     try {
-      // Marquer la commande comme payée
+      // Marquer la commande comme payÃ©e
       await supabase
         .from('restaurant_orders')
         .update({ payment_status: 'paid' })
@@ -216,10 +216,10 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
       setTableNumber('');
       setOrderNotes('');
 
-      toast.success('Paiement par carte réussi !');
+      toast.success('Paiement par carte rÃ©ussi !');
     } catch (err) {
       console.error('Error updating order after payment:', err);
-      toast.error('Paiement reçu mais erreur de mise à jour');
+      toast.error('Paiement reÃ§u mais erreur de mise Ã  jour');
     }
   };
 
@@ -269,7 +269,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
                 onClick={() => setSelectedCategory(cat.id)}
                 className="whitespace-nowrap text-xs"
               >
-                {cat.icon || '🍽️'} {cat.name}
+                {cat.icon || 'ðŸ½ï¸'} {cat.name}
               </Button>
             ))}
           </div>
@@ -471,7 +471,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
 
               {orderType === 'sur_place' && (
                 <div>
-                  <label className="text-xs font-medium mb-1 block">N° Table</label>
+                  <label className="text-xs font-medium mb-1 block">NÂ° Table</label>
                   <Input
                     value={tableNumber}
                     onChange={e => setTableNumber(e.target.value)}
@@ -504,7 +504,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
                 <Textarea
                   value={orderNotes}
                   onChange={e => setOrderNotes(e.target.value)}
-                  placeholder="Instructions spéciales..."
+                  placeholder="Instructions spÃ©ciales..."
                   className="h-16 text-sm"
                 />
               </div>
@@ -524,7 +524,7 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
               ) : (
                 <>
                   <Check className="w-4 h-4" />
-                  Confirmer • {formatCurrency(subtotal)}
+                  Confirmer â€¢ {formatCurrency(subtotal)}
                 </>
               )}
             </Button>
@@ -536,16 +536,16 @@ export function RestaurantPOS({ serviceId }: RestaurantPOSProps) {
       <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-green-600">
+            <DialogTitle className="flex items-center gap-2 text-primary-orange-600">
               <Check className="w-5 h-5" />
-              Commande enregistrée !
+              Commande enregistrÃ©e !
             </DialogTitle>
           </DialogHeader>
 
           {lastOrder && (
             <div className="bg-muted/30 rounded-lg p-4 font-mono text-xs space-y-2">
               <div className="text-center border-b pb-2">
-                <p className="font-bold text-sm">REÇU DE COMMANDE</p>
+                <p className="font-bold text-sm">REÃ‡U DE COMMANDE</p>
                 <p>#{lastOrder.id?.slice(-6).toUpperCase()}</p>
                 <p>{new Date(lastOrder.created_at).toLocaleString('fr-FR')}</p>
               </div>

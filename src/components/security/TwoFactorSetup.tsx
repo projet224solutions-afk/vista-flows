@@ -49,20 +49,20 @@ export const TwoFactorSetup: React.FC = () => {
   const handleCopySecret = () => {
     if (secretKey) {
       navigator.clipboard.writeText(secretKey);
-      toast.success('Secret copié dans le presse-papier');
+      toast.success('Secret copiÃ© dans le presse-papier');
     }
   };
 
   const handleCopyBackupCodes = () => {
     if (backupCodes) {
       navigator.clipboard.writeText(backupCodes.join('\n'));
-      toast.success('Codes de récupération copiés');
+      toast.success('Codes de rÃ©cupÃ©ration copiÃ©s');
     }
   };
 
   const handleDownloadBackupCodes = () => {
     if (backupCodes) {
-      const content = `Codes de récupération 224Solutions 2FA\n${'='.repeat(40)}\n\nGardez ces codes en lieu sûr. Chaque code ne peut être utilisé qu'une seule fois.\n\n${backupCodes.join('\n')}\n\nGénéré le: ${new Date().toLocaleString()}`;
+      const content = `Codes de rÃ©cupÃ©ration 224Solutions 2FA\n${'='.repeat(40)}\n\nGardez ces codes en lieu sÃ»r. Chaque code ne peut Ãªtre utilisÃ© qu'une seule fois.\n\n${backupCodes.join('\n')}\n\nGÃ©nÃ©rÃ© le: ${new Date().toLocaleString()}`;
       const blob = new Blob([content], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -70,7 +70,7 @@ export const TwoFactorSetup: React.FC = () => {
       a.download = '224solutions-2fa-backup-codes.txt';
       a.click();
       URL.revokeObjectURL(url);
-      toast.success('Codes téléchargés');
+      toast.success('Codes tÃ©lÃ©chargÃ©s');
     }
   };
 
@@ -110,33 +110,33 @@ export const TwoFactorSetup: React.FC = () => {
     );
   }
 
-  // Si 2FA est activée
+  // Si 2FA est activÃ©e
   if (settings?.isEnabled) {
     return (
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Shield className="h-6 w-6 text-green-600" />
+              <Shield className="h-6 w-6 text-primary-orange-600" />
               <div>
-                <CardTitle>Authentification à Deux Facteurs</CardTitle>
-                <CardDescription>Votre compte est protégé</CardDescription>
+                <CardTitle>Authentification Ã  Deux Facteurs</CardTitle>
+                <CardDescription>Votre compte est protÃ©gÃ©</CardDescription>
               </div>
             </div>
-            <Badge variant="default" className="bg-green-600">
+            <Badge variant="default" className="bg-primary-orange-600">
               <CheckCircle2 className="h-3 w-3 mr-1" />
-              Activée
+              ActivÃ©e
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Alert className="border-green-200 bg-green-50">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">
-              Votre compte est sécurisé avec l'authentification à deux facteurs.
+          <Alert className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+            <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
+            <AlertDescription className="text-primary-orange-800">
+              Votre compte est sÃ©curisÃ© avec l'authentification Ã  deux facteurs.
               {settings.lastUsedAt && (
                 <span className="block text-sm mt-1">
-                  Dernière utilisation: {new Date(settings.lastUsedAt).toLocaleString()}
+                  DerniÃ¨re utilisation: {new Date(settings.lastUsedAt).toLocaleString()}
                 </span>
               )}
             </AlertDescription>
@@ -149,32 +149,32 @@ export const TwoFactorSetup: React.FC = () => {
               className="flex-1"
             >
               <Key className="h-4 w-4 mr-2" />
-              Régénérer codes de récupération
+              RÃ©gÃ©nÃ©rer codes de rÃ©cupÃ©ration
             </Button>
 
             <Dialog open={showDisableDialog} onOpenChange={setShowDisableDialog}>
               <DialogTrigger asChild>
                 <Button variant="destructive">
                   <XCircle className="h-4 w-4 mr-2" />
-                  Désactiver
+                  DÃ©sactiver
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Désactiver la 2FA</DialogTitle>
+                  <DialogTitle>DÃ©sactiver la 2FA</DialogTitle>
                   <DialogDescription>
-                    Entrez votre code 2FA actuel pour confirmer la désactivation.
+                    Entrez votre code 2FA actuel pour confirmer la dÃ©sactivation.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
-                      Désactiver la 2FA rendra votre compte moins sécurisé.
+                      DÃ©sactiver la 2FA rendra votre compte moins sÃ©curisÃ©.
                     </AlertDescription>
                   </Alert>
                   <Input
-                    placeholder="Code à 6 chiffres"
+                    placeholder="Code Ã  6 chiffres"
                     value={disableCode}
                     onChange={(e) => setDisableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     maxLength={6}
@@ -189,7 +189,7 @@ export const TwoFactorSetup: React.FC = () => {
                       disabled={disableCode.length !== 6 || verifying}
                       className="flex-1"
                     >
-                      {verifying ? 'Vérification...' : 'Désactiver'}
+                      {verifying ? 'VÃ©rification...' : 'DÃ©sactiver'}
                     </Button>
                   </div>
                 </div>
@@ -201,7 +201,7 @@ export const TwoFactorSetup: React.FC = () => {
             <div className="p-4 bg-muted rounded-lg">
               <h4 className="font-medium mb-2 flex items-center gap-2">
                 <Key className="h-4 w-4" />
-                Nouveaux codes de récupération
+                Nouveaux codes de rÃ©cupÃ©ration
               </h4>
               <div className="grid grid-cols-2 gap-2 mb-4">
                 {backupCodes.map((code, i) => (
@@ -215,7 +215,7 @@ export const TwoFactorSetup: React.FC = () => {
                   <Copy className="h-3 w-3 mr-1" /> Copier
                 </Button>
                 <Button size="sm" variant="outline" onClick={handleDownloadBackupCodes}>
-                  <Download className="h-3 w-3 mr-1" /> Télécharger
+                  <Download className="h-3 w-3 mr-1" /> TÃ©lÃ©charger
                 </Button>
               </div>
             </div>
@@ -232,9 +232,9 @@ export const TwoFactorSetup: React.FC = () => {
         <div className="flex items-center gap-3">
           <Lock className="h-6 w-6 text-primary" />
           <div>
-            <CardTitle>Authentification à Deux Facteurs</CardTitle>
+            <CardTitle>Authentification Ã  Deux Facteurs</CardTitle>
             <CardDescription>
-              Ajoutez une couche de sécurité supplémentaire à votre compte
+              Ajoutez une couche de sÃ©curitÃ© supplÃ©mentaire Ã  votre compte
             </CardDescription>
           </div>
         </div>
@@ -244,7 +244,7 @@ export const TwoFactorSetup: React.FC = () => {
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="intro" disabled={step !== 'intro'}>Introduction</TabsTrigger>
             <TabsTrigger value="setup" disabled={step === 'intro'}>Configuration</TabsTrigger>
-            <TabsTrigger value="verify" disabled={step === 'intro' || step === 'setup'}>Vérification</TabsTrigger>
+            <TabsTrigger value="verify" disabled={step === 'intro' || step === 'setup'}>VÃ©rification</TabsTrigger>
             <TabsTrigger value="backup" disabled={step !== 'backup'}>Codes</TabsTrigger>
           </TabsList>
 
@@ -252,7 +252,7 @@ export const TwoFactorSetup: React.FC = () => {
             <Alert>
               <Shield className="h-4 w-4" />
               <AlertDescription>
-                L'authentification à deux facteurs (2FA) protège votre compte même si votre mot de passe est compromis.
+                L'authentification Ã  deux facteurs (2FA) protÃ¨ge votre compte mÃªme si votre mot de passe est compromis.
               </AlertDescription>
             </Alert>
 
@@ -269,9 +269,9 @@ export const TwoFactorSetup: React.FC = () => {
               <div className="flex items-start gap-3 p-3 border rounded-lg">
                 <Key className="h-5 w-5 text-primary mt-0.5" />
                 <div>
-                  <h4 className="font-medium">Codes de récupération</h4>
+                  <h4 className="font-medium">Codes de rÃ©cupÃ©ration</h4>
                   <p className="text-sm text-muted-foreground">
-                    10 codes de secours en cas de perte de votre téléphone
+                    10 codes de secours en cas de perte de votre tÃ©lÃ©phone
                   </p>
                 </div>
               </div>
@@ -281,7 +281,7 @@ export const TwoFactorSetup: React.FC = () => {
               {generating ? (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Génération...
+                  GÃ©nÃ©ration...
                 </>
               ) : (
                 <>
@@ -329,7 +329,7 @@ export const TwoFactorSetup: React.FC = () => {
             <Alert>
               <Smartphone className="h-4 w-4" />
               <AlertDescription>
-                Entrez le code à 6 chiffres affiché dans votre application authenticator
+                Entrez le code Ã  6 chiffres affichÃ© dans votre application authenticator
               </AlertDescription>
             </Alert>
 
@@ -350,16 +350,16 @@ export const TwoFactorSetup: React.FC = () => {
                 disabled={verificationCode.length !== 6 || verifying}
                 className="flex-1"
               >
-                {verifying ? 'Vérification...' : 'Vérifier et Activer'}
+                {verifying ? 'VÃ©rification...' : 'VÃ©rifier et Activer'}
               </Button>
             </div>
           </TabsContent>
 
           <TabsContent value="backup" className="space-y-4 mt-4">
-            <Alert className="border-green-200 bg-green-50">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
-                2FA activée avec succès ! Sauvegardez vos codes de récupération.
+            <Alert className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+              <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
+              <AlertDescription className="text-primary-orange-800">
+                2FA activÃ©e avec succÃ¨s ! Sauvegardez vos codes de rÃ©cupÃ©ration.
               </AlertDescription>
             </Alert>
 
@@ -367,10 +367,10 @@ export const TwoFactorSetup: React.FC = () => {
               <div className="p-4 bg-muted rounded-lg">
                 <h4 className="font-medium mb-3 flex items-center gap-2">
                   <Key className="h-4 w-4" />
-                  Codes de récupération
+                  Codes de rÃ©cupÃ©ration
                 </h4>
                 <p className="text-sm text-muted-foreground mb-3">
-                  Gardez ces codes en lieu sûr. Chaque code ne peut être utilisé qu'une fois.
+                  Gardez ces codes en lieu sÃ»r. Chaque code ne peut Ãªtre utilisÃ© qu'une fois.
                 </p>
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   {backupCodes.map((code, i) => (
@@ -384,14 +384,14 @@ export const TwoFactorSetup: React.FC = () => {
                     <Copy className="h-3 w-3 mr-1" /> Copier
                   </Button>
                   <Button size="sm" variant="outline" onClick={handleDownloadBackupCodes}>
-                    <Download className="h-3 w-3 mr-1" /> Télécharger
+                    <Download className="h-3 w-3 mr-1" /> TÃ©lÃ©charger
                   </Button>
                 </div>
               </div>
             )}
 
             <Button onClick={() => window.location.reload()} className="w-full">
-              Terminé
+              TerminÃ©
             </Button>
           </TabsContent>
         </Tabs>

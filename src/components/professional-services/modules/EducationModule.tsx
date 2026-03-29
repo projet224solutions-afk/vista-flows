@@ -1,7 +1,7 @@
 /**
- * MODULE ÉDUCATION / FORMATION PROFESSIONNEL
- * Inspiré de: Udemy, Coursera, Teachable
- * Gestion complète: cours, étudiants, planning, évaluations
+ * MODULE Ã‰DUCATION / FORMATION PROFESSIONNEL
+ * InspirÃ© de: Udemy, Coursera, Teachable
+ * Gestion complÃ¨te: cours, Ã©tudiants, planning, Ã©valuations
  */
 
 import { useState } from 'react';
@@ -31,7 +31,7 @@ interface Course {
   id: string;
   title: string;
   category: string;
-  level: 'débutant' | 'intermédiaire' | 'avancé';
+  level: 'dÃ©butant' | 'intermÃ©diaire' | 'avancÃ©';
   instructor: string;
   duration: string;
   enrolled: number;
@@ -54,25 +54,25 @@ interface Student {
 }
 
 const CATEGORIES = [
-  { id: 'languages', name: 'Langues', emoji: '🌍' },
-  { id: 'tech', name: 'Informatique', emoji: '💻' },
-  { id: 'business', name: 'Gestion & Business', emoji: '📊' },
-  { id: 'skills', name: 'Compétences Pro', emoji: '🎯' },
-  { id: 'arts', name: 'Arts & Création', emoji: '🎨' },
-  { id: 'health', name: 'Santé & Social', emoji: '💊' },
+  { id: 'languages', name: 'Langues', emoji: 'ðŸŒ' },
+  { id: 'tech', name: 'Informatique', emoji: 'ðŸ’»' },
+  { id: 'business', name: 'Gestion & Business', emoji: 'ðŸ“Š' },
+  { id: 'skills', name: 'CompÃ©tences Pro', emoji: 'ðŸŽ¯' },
+  { id: 'arts', name: 'Arts & CrÃ©ation', emoji: 'ðŸŽ¨' },
+  { id: 'health', name: 'SantÃ© & Social', emoji: 'ðŸ’Š' },
 ];
 
 const LEVEL_COLORS: Record<string, string> = {
-  débutant: 'bg-green-100 text-green-800',
-  intermédiaire: 'bg-yellow-100 text-yellow-800',
-  avancé: 'bg-red-100 text-red-800',
+  dÃ©butant: 'bg-primary-orange-100 text-primary-orange-800',
+  intermÃ©diaire: 'bg-yellow-100 text-yellow-800',
+  avancÃ©: 'bg-red-100 text-red-800',
 };
 
 const STATUS_COLORS: Record<string, { label: string; color: string }> = {
-  actif: { label: 'Actif', color: 'bg-green-100 text-green-800' },
+  actif: { label: 'Actif', color: 'bg-primary-orange-100 text-primary-orange-800' },
   brouillon: { label: 'Brouillon', color: 'bg-muted text-muted-foreground' },
   complet: { label: 'Complet', color: 'bg-blue-100 text-blue-800' },
-  archive: { label: 'Archivé', color: 'bg-muted text-muted-foreground' },
+  archive: { label: 'ArchivÃ©', color: 'bg-muted text-muted-foreground' },
 };
 
 export function EducationModule({ serviceId, businessName }: EducationModuleProps) {
@@ -80,10 +80,10 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
   const [showNewCourse, setShowNewCourse] = useState(false);
 
   const [courses] = useState<Course[]>([
-    { id: '1', title: 'Anglais des affaires - Niveau B2', category: 'languages', level: 'intermédiaire', instructor: 'M. Johnson', duration: '3 mois', enrolled: 18, maxStudents: 25, price: 500000, rating: 4.8, status: 'actif', format: 'hybride', startDate: '2026-03-01' },
-    { id: '2', title: 'Excel & Comptabilité pour PME', category: 'business', level: 'débutant', instructor: 'Mme Diallo', duration: '6 semaines', enrolled: 22, maxStudents: 20, price: 350000, rating: 4.9, status: 'complet', format: 'presentiel', startDate: '2026-02-15' },
-    { id: '3', title: 'Développement Web (React)', category: 'tech', level: 'intermédiaire', instructor: 'M. Camara', duration: '4 mois', enrolled: 12, maxStudents: 15, price: 800000, rating: 4.7, status: 'actif', format: 'en_ligne', startDate: '2026-03-10' },
-    { id: '4', title: 'Marketing Digital & Réseaux Sociaux', category: 'business', level: 'débutant', instructor: 'Mme Sow', duration: '2 mois', enrolled: 0, maxStudents: 30, price: 250000, rating: 0, status: 'brouillon', format: 'en_ligne', startDate: '2026-04-01' },
+    { id: '1', title: 'Anglais des affaires - Niveau B2', category: 'languages', level: 'intermÃ©diaire', instructor: 'M. Johnson', duration: '3 mois', enrolled: 18, maxStudents: 25, price: 500000, rating: 4.8, status: 'actif', format: 'hybride', startDate: '2026-03-01' },
+    { id: '2', title: 'Excel & ComptabilitÃ© pour PME', category: 'business', level: 'dÃ©butant', instructor: 'Mme Diallo', duration: '6 semaines', enrolled: 22, maxStudents: 20, price: 350000, rating: 4.9, status: 'complet', format: 'presentiel', startDate: '2026-02-15' },
+    { id: '3', title: 'DÃ©veloppement Web (React)', category: 'tech', level: 'intermÃ©diaire', instructor: 'M. Camara', duration: '4 mois', enrolled: 12, maxStudents: 15, price: 800000, rating: 4.7, status: 'actif', format: 'en_ligne', startDate: '2026-03-10' },
+    { id: '4', title: 'Marketing Digital & RÃ©seaux Sociaux', category: 'business', level: 'dÃ©butant', instructor: 'Mme Sow', duration: '2 mois', enrolled: 0, maxStudents: 30, price: 250000, rating: 0, status: 'brouillon', format: 'en_ligne', startDate: '2026-04-01' },
   ]);
 
   const [students] = useState<Student[]>([
@@ -118,12 +118,12 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
             <Button><Plus className="h-4 w-4 mr-2" /> Nouveau cours</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Créer un cours</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>CrÃ©er un cours</DialogTitle></DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2"><Label>Titre du cours</Label><Input placeholder="Ex: Anglais des affaires" /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Catégorie</Label>
+                  <Label>CatÃ©gorie</Label>
                   <Select><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
                     <SelectContent>{CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.emoji} {c.name}</SelectItem>)}</SelectContent>
                   </Select>
@@ -132,9 +132,9 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
                   <Label>Niveau</Label>
                   <Select><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="débutant">Débutant</SelectItem>
-                      <SelectItem value="intermédiaire">Intermédiaire</SelectItem>
-                      <SelectItem value="avancé">Avancé</SelectItem>
+                      <SelectItem value="dÃ©butant">DÃ©butant</SelectItem>
+                      <SelectItem value="intermÃ©diaire">IntermÃ©diaire</SelectItem>
+                      <SelectItem value="avancÃ©">AvancÃ©</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -145,7 +145,7 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
                   <Label>Format</Label>
                   <Select><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="presentiel">Présentiel</SelectItem>
+                      <SelectItem value="presentiel">PrÃ©sentiel</SelectItem>
                       <SelectItem value="en_ligne">En ligne</SelectItem>
                       <SelectItem value="hybride">Hybride</SelectItem>
                     </SelectContent>
@@ -155,12 +155,12 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2"><Label>Prix (GNF)</Label><Input type="number" placeholder="0" /></div>
                 <div className="space-y-2"><Label>Places max</Label><Input type="number" placeholder="25" /></div>
-                <div className="space-y-2"><Label>Durée</Label><Input placeholder="Ex: 3 mois" /></div>
+                <div className="space-y-2"><Label>DurÃ©e</Label><Input placeholder="Ex: 3 mois" /></div>
               </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowNewCourse(false)}>Annuler</Button>
-              <Button onClick={() => { toast.success('Cours créé'); setShowNewCourse(false); }}>Créer</Button>
+              <Button onClick={() => { toast.success('Cours crÃ©Ã©'); setShowNewCourse(false); }}>CrÃ©er</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -175,11 +175,11 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
             <p className="text-xs opacity-80">Cours actifs</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
           <CardContent className="p-4">
             <Users className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{activeStudents}</p>
-            <p className="text-xs opacity-80">Étudiants actifs</p>
+            <p className="text-xs opacity-80">Ã‰tudiants actifs</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-purple-500 to-violet-600 text-white">
@@ -196,11 +196,11 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
             <p className="text-xs opacity-80">Note moyenne</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white">
+        <Card className="bg-gradient-to-br from-primary-orange-500 to-primary-blue-600 text-white">
           <CardContent className="p-4">
             <Award className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{students.filter(s => s.status === 'diplome').length}</p>
-            <p className="text-xs opacity-80">Diplômés</p>
+            <p className="text-xs opacity-80">DiplÃ´mÃ©s</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-pink-500 to-rose-600 text-white">
@@ -216,7 +216,7 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="courses"><BookOpen className="h-4 w-4 mr-1 hidden sm:inline" /> Cours</TabsTrigger>
-          <TabsTrigger value="students"><Users className="h-4 w-4 mr-1 hidden sm:inline" /> Étudiants</TabsTrigger>
+          <TabsTrigger value="students"><Users className="h-4 w-4 mr-1 hidden sm:inline" /> Ã‰tudiants</TabsTrigger>
           <TabsTrigger value="schedule"><Calendar className="h-4 w-4 mr-1 hidden sm:inline" /> Planning</TabsTrigger>
         </TabsList>
 
@@ -255,9 +255,9 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
                           <Badge className={LEVEL_COLORS[course.level]}>{course.level}</Badge>
                         </div>
                         <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-                          <span>👨‍🏫 {course.instructor}</span>
+                          <span>ðŸ‘¨â€ðŸ« {course.instructor}</span>
                           <span><Clock className="w-3 h-3 inline" /> {course.duration}</span>
-                          <span>{course.format === 'en_ligne' ? '🖥️ En ligne' : course.format === 'presentiel' ? '🏫 Présentiel' : '🔄 Hybride'}</span>
+                          <span>{course.format === 'en_ligne' ? 'ðŸ–¥ï¸ En ligne' : course.format === 'presentiel' ? 'ðŸ« PrÃ©sentiel' : 'ðŸ”„ Hybride'}</span>
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
@@ -273,7 +273,7 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span>{course.enrolled}/{course.maxStudents} inscrits</span>
-                        <span className={`font-bold ${fillRate >= 90 ? 'text-red-500' : fillRate >= 70 ? 'text-yellow-600' : 'text-green-600'}`}>{fillRate}%</span>
+                        <span className={`font-bold ${fillRate >= 90 ? 'text-red-500' : fillRate >= 70 ? 'text-yellow-600' : 'text-primary-orange-600'}`}>{fillRate}%</span>
                       </div>
                       <Progress value={fillRate} className="h-1.5" />
                     </div>
@@ -284,9 +284,9 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
           </div>
         </TabsContent>
 
-        {/* ÉTUDIANTS */}
+        {/* Ã‰TUDIANTS */}
         <TabsContent value="students" className="space-y-4">
-          <h3 className="font-semibold">Étudiants ({students.length})</h3>
+          <h3 className="font-semibold">Ã‰tudiants ({students.length})</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {students.map(student => (
               <Card key={student.id} className="hover:shadow-md transition-shadow">
@@ -298,11 +298,11 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-bold text-sm">{student.name}</h4>
-                        <Badge className={student.status === 'actif' ? 'bg-green-100 text-green-800' : student.status === 'diplome' ? 'bg-blue-100 text-blue-800' : 'bg-muted text-muted-foreground'}>
-                          {student.status === 'diplome' ? '🎓 Diplômé' : student.status === 'actif' ? 'Actif' : 'Inactif'}
+                        <Badge className={student.status === 'actif' ? 'bg-primary-orange-100 text-primary-orange-800' : student.status === 'diplome' ? 'bg-blue-100 text-blue-800' : 'bg-muted text-muted-foreground'}>
+                          {student.status === 'diplome' ? 'ðŸŽ“ DiplÃ´mÃ©' : student.status === 'actif' ? 'Actif' : 'Inactif'}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">{student.coursesEnrolled} cours • {student.totalPaid.toLocaleString()} GNF</p>
+                      <p className="text-xs text-muted-foreground">{student.coursesEnrolled} cours â€¢ {student.totalPaid.toLocaleString()} GNF</p>
                       <div className="mt-2">
                         <div className="flex justify-between text-xs mb-0.5">
                           <span>Progression</span>
@@ -336,7 +336,7 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
                       </div>
                       <div className="flex-1">
                         <h4 className="font-semibold text-sm">{course.title}</h4>
-                        <p className="text-xs text-muted-foreground">{course.instructor} • {course.format === 'en_ligne' ? '🖥️' : '🏫'} {course.format}</p>
+                        <p className="text-xs text-muted-foreground">{course.instructor} â€¢ {course.format === 'en_ligne' ? 'ðŸ–¥ï¸' : 'ðŸ«'} {course.format}</p>
                       </div>
                       <div className="text-right">
                         <Badge variant="outline" className="text-xs">{course.enrolled}/{course.maxStudents}</Badge>

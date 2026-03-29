@@ -1,5 +1,5 @@
 /**
- * 💳 PAYMENT CORE FORM - FORMULAIRE DE PAIEMENT UNIFIÉ 224SOLUTIONS
+ * ðŸ’³ PAYMENT CORE FORM - FORMULAIRE DE PAIEMENT UNIFIÃ‰ 224SOLUTIONS
  * Interface utilisateur pour tous types de paiements
  * Orange Money, MTN MoMo, Carte bancaire, KULU
  */
@@ -72,7 +72,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
     e.preventDefault();
     
     if (!phone || phone.length < 8) {
-      toast.error('Veuillez entrer un numéro de téléphone valide');
+      toast.error('Veuillez entrer un numÃ©ro de tÃ©lÃ©phone valide');
       return;
     }
 
@@ -105,7 +105,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
       }
 
       setStatus('success');
-      setResultMessage('Paiement initié avec succès ! Vérifiez votre téléphone.');
+      setResultMessage('Paiement initiÃ© avec succÃ¨s ! VÃ©rifiez votre tÃ©lÃ©phone.');
       toast.success('Paiement en cours de traitement');
       
       onSuccess?.(data.transaction_id, data.order_id);
@@ -123,13 +123,13 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
 
   if (status === 'success') {
     return (
-      <Card className="w-full max-w-md mx-auto border-green-200 bg-green-50">
+      <Card className="w-full max-w-md mx-auto border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
         <CardContent className="pt-6 text-center">
-          <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-green-700 mb-2">Paiement Initié</h3>
-          <p className="text-green-600 mb-4">{resultMessage}</p>
+          <CheckCircle2 className="h-16 w-16 text-primary-orange-500 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-primary-orange-700 mb-2">Paiement InitiÃ©</h3>
+          <p className="text-primary-orange-600 mb-4">{resultMessage}</p>
           <p className="text-sm text-muted-foreground mb-4">
-            Confirmez le paiement sur votre téléphone pour finaliser la transaction.
+            Confirmez le paiement sur votre tÃ©lÃ©phone pour finaliser la transaction.
           </p>
           <Button variant="outline" onClick={onCancel}>
             Fermer
@@ -144,13 +144,13 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
       <CardHeader className="text-center pb-4">
         <div className="flex items-center justify-center gap-2 mb-2">
           <Shield className="h-5 w-5 text-primary" />
-          <span className="text-sm font-medium text-primary">Paiement Sécurisé</span>
+          <span className="text-sm font-medium text-primary">Paiement SÃ©curisÃ©</span>
         </div>
         <CardTitle className="text-xl">{typeLabels[type]}</CardTitle>
-        <CardDescription>{description || `Référence: ${referenceId}`}</CardDescription>
+        <CardDescription>{description || `RÃ©fÃ©rence: ${referenceId}`}</CardDescription>
         
         <div className="mt-4 p-4 bg-muted rounded-lg">
-          <p className="text-sm text-muted-foreground">Montant à payer</p>
+          <p className="text-sm text-muted-foreground">Montant Ã  payer</p>
           <p className="text-3xl font-bold text-foreground">
             {formatAmount(amount)} <span className="text-lg font-normal">{currency}</span>
           </p>
@@ -159,7 +159,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Méthode de paiement */}
+          {/* MÃ©thode de paiement */}
           <div className="space-y-3">
             <Label className="text-base font-medium">Moyen de paiement</Label>
             <RadioGroup
@@ -194,10 +194,10 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
             </RadioGroup>
           </div>
 
-          {/* Numéro de téléphone */}
+          {/* NumÃ©ro de tÃ©lÃ©phone */}
           <div className="space-y-2">
             <Label htmlFor="phone" className="text-base font-medium">
-              Numéro de téléphone
+              NumÃ©ro de tÃ©lÃ©phone
             </Label>
             <div className="flex gap-2">
               <div className="flex items-center px-3 bg-muted rounded-l-md border border-r-0">
@@ -215,7 +215,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Entrez le numéro associé à votre compte {selectedMethod === 'OM' ? 'Orange Money' : selectedMethod === 'MOMO' || selectedMethod === 'MTN' ? 'MTN MoMo' : 'de paiement'}
+              Entrez le numÃ©ro associÃ© Ã  votre compte {selectedMethod === 'OM' ? 'Orange Money' : selectedMethod === 'MOMO' || selectedMethod === 'MTN' ? 'MTN MoMo' : 'de paiement'}
             </p>
           </div>
 
@@ -256,11 +256,11 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
             </Button>
           </div>
 
-          {/* Badge sécurité */}
+          {/* Badge sÃ©curitÃ© */}
           <div className="flex items-center justify-center gap-2 pt-2">
             <Badge variant="secondary" className="text-xs">
               <Shield className="h-3 w-3 mr-1" />
-              Paiement 100% sécurisé
+              Paiement 100% sÃ©curisÃ©
             </Badge>
           </div>
         </form>

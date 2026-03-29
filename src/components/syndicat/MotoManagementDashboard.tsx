@@ -49,7 +49,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
   const loadMotos = async () => {
     try {
       setLoading(true);
-      // CENTRALISÉ: Utilise la table vehicles au lieu de registered_motos
+      // CENTRALISÃ‰: Utilise la table vehicles au lieu de registered_motos
       let query = supabase
         .from('vehicles')
         .select(`
@@ -85,10 +85,10 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
 
       if (error) throw error;
       
-      // Transformer les données pour compatibilité avec l'interface existante
+      // Transformer les donnÃ©es pour compatibilitÃ© avec l'interface existante
       const transformedData = (data || []).map((v: any) => ({
         id: v.id,
-        owner_name: v.syndicate_workers?.nom || 'Non assigné',
+        owner_name: v.syndicate_workers?.nom || 'Non assignÃ©',
         owner_phone: v.syndicate_workers?.telephone || '',
         vest_number: '',
         plate_number: v.license_plate || v.serial_number,
@@ -127,7 +127,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
     try {
       setLoadingAction(true);
       
-      // CENTRALISÉ: Utilise la table vehicles
+      // CENTRALISÃ‰: Utilise la table vehicles
       const { error } = await supabase
         .from('vehicles')
         .update({ status: 'active', verified: true, verified_at: new Date().toISOString() })
@@ -135,7 +135,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
 
       if (error) throw error;
 
-      toast.success('Véhicule validé avec succès!');
+      toast.success('VÃ©hicule validÃ© avec succÃ¨s!');
       setValidationComment('');
       setSelectedMoto(null);
       loadMotos();
@@ -147,16 +147,16 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
     }
   };
 
-  const handleReportStolen = async (motoId: string, reason: string = 'Vol signalé via interface bureau') => {
+  const handleReportStolen = async (motoId: string, reason: string = 'Vol signalÃ© via interface bureau') => {
     try {
       setLoadingAction(true);
       
-      // CENTRALISÉ: Utilise le RPC declare_vehicle_stolen
+      // CENTRALISÃ‰: Utilise le RPC declare_vehicle_stolen
       const { data, error } = await supabase.rpc('declare_vehicle_stolen', {
         p_vehicle_id: motoId,
         p_bureau_id: bureauId,
-        p_declared_by: null, // Sera rempli côté serveur si possible
-        p_reason: reason || validationComment || 'Vol signalé via gestion motos',
+        p_declared_by: null, // Sera rempli cÃ´tÃ© serveur si possible
+        p_reason: reason || validationComment || 'Vol signalÃ© via gestion motos',
         p_location: null,
         p_ip_address: null,
         p_user_agent: navigator.userAgent
@@ -164,7 +164,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
 
       if (error) throw error;
 
-      toast.success('Véhicule signalé volé! Alerte diffusée à tous les bureaux.');
+      toast.success('VÃ©hicule signalÃ© volÃ©! Alerte diffusÃ©e Ã  tous les bureaux.');
       setValidationComment('');
       setSelectedMoto(null);
       loadMotos();
@@ -179,9 +179,9 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
   const getStatutBadge = (statut: string) => {
     const statuts: Record<string, { label: string; variant: 'default' | 'destructive' | 'secondary' | 'outline'; className?: string }> = {
       'pending': { label: 'En attente', variant: 'secondary' },
-      'validated': { label: 'Validé', variant: 'default', className: 'bg-green-500 text-white' },
-      'rejected': { label: 'Refusé', variant: 'destructive' },
-      'stolen': { label: 'VOLÉE', variant: 'destructive' },
+      'validated': { label: 'ValidÃ©', variant: 'default', className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white' },
+      'rejected': { label: 'RefusÃ©', variant: 'destructive' },
+      'stolen': { label: 'VOLÃ‰E', variant: 'destructive' },
       'suspended': { label: 'Suspendu', variant: 'secondary' },
       'active': { label: 'Actif', variant: 'default', className: 'bg-blue-500 text-white' },
     };
@@ -195,7 +195,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
       <div className="flex justify-between items-center gap-4">
         <div className="flex-1">
           <Input
-            placeholder="Rechercher par immatriculation, châssis, propriétaire..."
+            placeholder="Rechercher par immatriculation, chÃ¢ssis, propriÃ©taire..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -207,9 +207,9 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
           <SelectContent>
             <SelectItem value="all">Tous les statuts</SelectItem>
             <SelectItem value="pending">En attente</SelectItem>
-            <SelectItem value="validated">Validés</SelectItem>
-            <SelectItem value="rejected">Refusés</SelectItem>
-            <SelectItem value="stolen">Volées</SelectItem>
+            <SelectItem value="validated">ValidÃ©s</SelectItem>
+            <SelectItem value="rejected">RefusÃ©s</SelectItem>
+            <SelectItem value="stolen">VolÃ©es</SelectItem>
             <SelectItem value="suspended">Suspendus</SelectItem>
           </SelectContent>
         </Select>
@@ -220,20 +220,20 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
               setMotoForBadge(motos[0]);
               setShowBadgeGenerator(true);
             } else {
-              toast.error('Aucune moto disponible pour générer un badge');
+              toast.error('Aucune moto disponible pour gÃ©nÃ©rer un badge');
             }
           }}
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           <CreditCard className="w-4 h-4 mr-2" />
-          Générer Badge
+          GÃ©nÃ©rer Badge
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Liste des Motos Enregistrées</CardTitle>
-          <CardDescription>{filteredMotos.length} moto(s) trouvée(s)</CardDescription>
+          <CardTitle>Liste des Motos EnregistrÃ©es</CardTitle>
+          <CardDescription>{filteredMotos.length} moto(s) trouvÃ©e(s)</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -246,9 +246,9 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                 <TableHeader>
                   <TableRow>
                     <TableHead>Immatriculation</TableHead>
-                    <TableHead>Marque/Modèle</TableHead>
-                    <TableHead>Propriétaire</TableHead>
-                    <TableHead>Téléphone</TableHead>
+                    <TableHead>Marque/ModÃ¨le</TableHead>
+                    <TableHead>PropriÃ©taire</TableHead>
+                    <TableHead>TÃ©lÃ©phone</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Actions</TableHead>
@@ -278,7 +278,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                             </DialogTrigger>
                           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle>Détails de la Moto</DialogTitle>
+                              <DialogTitle>DÃ©tails de la Moto</DialogTitle>
                             </DialogHeader>
                             {selectedMoto && (
                               <div className="space-y-6">
@@ -289,7 +289,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                                     <p className="font-medium">{selectedMoto.plate_number}</p>
                                   </div>
                                   <div>
-                                    <p className="text-sm text-muted-foreground">Numéro de série</p>
+                                    <p className="text-sm text-muted-foreground">NumÃ©ro de sÃ©rie</p>
                                     <p className="font-medium">{selectedMoto.serial_number}</p>
                                   </div>
                                   <div>
@@ -297,15 +297,15 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                                     <p className="font-medium">{selectedMoto.brand}</p>
                                   </div>
                                   <div>
-                                    <p className="text-sm text-muted-foreground">Modèle</p>
+                                    <p className="text-sm text-muted-foreground">ModÃ¨le</p>
                                     <p className="font-medium">{selectedMoto.model}</p>
                                   </div>
                                   <div>
-                                    <p className="text-sm text-muted-foreground">Propriétaire</p>
+                                    <p className="text-sm text-muted-foreground">PropriÃ©taire</p>
                                     <p className="font-medium">{selectedMoto.owner_name}</p>
                                   </div>
                                   <div>
-                                    <p className="text-sm text-muted-foreground">Téléphone</p>
+                                    <p className="text-sm text-muted-foreground">TÃ©lÃ©phone</p>
                                     <p className="font-medium">{selectedMoto.owner_phone}</p>
                                   </div>
                                   <div>
@@ -342,7 +342,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                                         className="flex-1"
                                       >
                                         <AlertTriangle className="w-4 h-4 mr-2" />
-                                        Signaler Volée
+                                        Signaler VolÃ©e
                                       </Button>
                                     </div>
                                   </div>
@@ -357,7 +357,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                                       className="w-full"
                                     >
                                       <AlertTriangle className="w-4 h-4 mr-2" />
-                                      Signaler comme Volée
+                                      Signaler comme VolÃ©e
                                     </Button>
                                   </div>
                                 )}
@@ -387,7 +387,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
 
               {filteredMotos.length === 0 && !loading && (
                 <div className="text-center py-8 text-muted-foreground">
-                  Aucune moto trouvée
+                  Aucune moto trouvÃ©e
                 </div>
               )}
             </div>

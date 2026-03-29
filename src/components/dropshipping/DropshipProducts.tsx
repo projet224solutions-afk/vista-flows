@@ -73,7 +73,7 @@ export function DropshipProducts({
       low_stock: { label: 'Stock faible', variant: 'secondary' },
       out_of_stock: { label: 'Rupture', variant: 'destructive' },
       temporarily_unavailable: { label: 'Indisponible', variant: 'outline' },
-      discontinued: { label: 'Arrêté', variant: 'destructive' }
+      discontinued: { label: 'ArrÃªtÃ©', variant: 'destructive' }
     };
     const c = config[status] || { label: status, variant: 'secondary' as const };
     return <Badge variant={c.variant}>{c.label}</Badge>;
@@ -88,7 +88,7 @@ export function DropshipProducts({
 
   return (
     <div className="space-y-6">
-      {/* En-tête avec recherche et actions */}
+      {/* En-tÃªte avec recherche et actions */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -124,7 +124,7 @@ export function DropshipProducts({
             <div className="text-center py-12 text-muted-foreground">
               <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <h3 className="font-medium text-lg mb-2">Aucun produit dropshipping</h3>
-              <p className="mb-4">Importez des produits depuis vos fournisseurs pour commencer à vendre</p>
+              <p className="mb-4">Importez des produits depuis vos fournisseurs pour commencer Ã  vendre</p>
               <Button onClick={() => setShowAddDialog(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Importer un Produit
@@ -140,7 +140,7 @@ export function DropshipProducts({
                     <TableHead>Prix Achat</TableHead>
                     <TableHead>Prix Vente</TableHead>
                     <TableHead>Marge</TableHead>
-                    <TableHead>Disponibilité</TableHead>
+                    <TableHead>DisponibilitÃ©</TableHead>
                     <TableHead>Livraison</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -185,7 +185,7 @@ export function DropshipProducts({
                       <TableCell>
                         <span className={`font-medium ${
                           calculateMargin(product.selling_price, product.supplier_price) > 20 
-                            ? 'text-green-600' 
+                            ? 'text-primary-orange-600' 
                             : 'text-orange-600'
                         }`}>
                           {calculateMargin(product.selling_price, product.supplier_price).toFixed(1)}%
@@ -225,7 +225,7 @@ export function DropshipProducts({
                               {product.is_active ? (
                                 <>
                                   <EyeOff className="w-4 h-4 mr-2" />
-                                  Désactiver
+                                  DÃ©sactiver
                                 </>
                               ) : (
                                 <>

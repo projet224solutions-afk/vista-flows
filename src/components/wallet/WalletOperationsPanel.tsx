@@ -148,8 +148,8 @@ export function WalletOperationsPanel() {
 
           {/* Dépôt */}
           <TabsContent value="deposit" className="space-y-4">
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-800">
+            <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+              <p className="text-sm text-primary-blue-900">
                 Solde actuel: <span className="font-bold">{balance.toLocaleString()} {currency}</span>
               </p>
             </div>
@@ -189,7 +189,7 @@ export function WalletOperationsPanel() {
               <Button
                 onClick={handleDeposit}
                 disabled={!depositAmount || processing}
-                className="w-full bg-green-600 hover:bg-green-700"
+                className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-orange-600 hover:to-primary-blue-600"
               >
                 {processing ? (
                   <>

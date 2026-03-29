@@ -35,7 +35,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
   const [showActivationDialog, setShowActivationDialog] = useState(false);
 
   const isMerchant = profile?.role === 'vendeur';
-  const gradient = 'from-blue-500 to-cyan-500';
+  const gradient = 'from-blue-500 to-primary-blue-500';
 
   useEffect(() => {
     loadProducts();

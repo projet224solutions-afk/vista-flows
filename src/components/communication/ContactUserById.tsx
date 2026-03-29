@@ -25,7 +25,7 @@ export default function ContactUserById({
   const [foundUser, setFoundUser] = useState<UserProfile | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Obtenir l'ID de l'utilisateur connecté
+  // Obtenir l'ID de l'utilisateur connectÃ©
   useState(() => {
     supabase.auth.getSession().then(({ data }) => {
       setCurrentUserId(data.session?.user.id || null);
@@ -41,7 +41,7 @@ export default function ContactUserById({
     // Valider le format
     if (!validateIdFormat(searchInput)) {
       toast.error("Format ID invalide", {
-        description: "Formats acceptés: USR0001 ou 224-123-456"
+        description: "Formats acceptÃ©s: USR0001 ou 224-123-456"
       });
       return;
     }
@@ -49,9 +49,9 @@ export default function ContactUserById({
     const user = await searchById(searchInput);
     
     if (user) {
-      // Vérifier qu'on ne contacte pas soi-même
+      // VÃ©rifier qu'on ne contacte pas soi-mÃªme
       if (user.id === currentUserId) {
-        toast.error("Vous ne pouvez pas vous contacter vous-même");
+        toast.error("Vous ne pouvez pas vous contacter vous-mÃªme");
         setFoundUser(null);
         return;
       }
@@ -86,7 +86,7 @@ export default function ContactUserById({
             Rechercher par ID
           </CardTitle>
           <CardDescription>
-            Recherchez un utilisateur par son ID standardisé
+            Recherchez un utilisateur par son ID standardisÃ©
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -94,7 +94,7 @@ export default function ContactUserById({
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-2">
               <Hash className="w-4 h-4 text-orange-500" />
-              ID Standardisé
+              ID StandardisÃ©
             </label>
             <div className="flex gap-2">
               <Input
@@ -114,9 +114,9 @@ export default function ContactUserById({
             </div>
           </div>
 
-          {/* Résultat de recherche */}
+          {/* RÃ©sultat de recherche */}
           {foundUser && (
-            <div className="p-4 border rounded-lg bg-green-50 space-y-3">
+            <div className="p-4 border rounded-lg bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 space-y-3">
               <div className="flex items-start gap-3">
                 <Avatar className="w-12 h-12">
                   <AvatarImage src={foundUser.avatar_url} />
@@ -155,7 +155,7 @@ export default function ContactUserById({
                   variant="default"
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
-                  Démarrer conversation
+                  DÃ©marrer conversation
                 </Button>
               )}
             </div>
@@ -163,7 +163,7 @@ export default function ContactUserById({
 
           {/* Aide */}
           <div className="text-xs text-muted-foreground space-y-1">
-            <p className="font-medium">💡 Formats acceptés:</p>
+            <p className="font-medium">ðŸ’¡ Formats acceptÃ©s:</p>
             <ul className="list-disc list-inside space-y-0.5 pl-2">
               <li><code className="bg-gray-100 px-1 py-0.5 rounded">USR0001</code> - Format standard (3 lettres + 4 chiffres)</li>
               <li><code className="bg-gray-100 px-1 py-0.5 rounded">224-123-456</code> - Format Guinea (224 + 6 chiffres)</li>

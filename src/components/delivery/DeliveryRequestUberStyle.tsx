@@ -1,6 +1,6 @@
 /**
  * FORMULAIRE DE DEMANDE DE LIVRAISON - Style Uber
- * Interface moderne avec estimation de prix en temps réel
+ * Interface moderne avec estimation de prix en temps rÃ©el
  */
 
 import { useState, useEffect } from 'react';
@@ -42,7 +42,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
   const [priceEstimate, setPriceEstimate] = useState<PriceEstimate | null>(null);
   const [estimating, setEstimating] = useState(false);
 
-  // Calculer le prix dès que les coordonnées changent
+  // Calculer le prix dÃ¨s que les coordonnÃ©es changent
   useEffect(() => {
     if (pickupCoords && deliveryCoords) {
       estimatePrice();
@@ -71,11 +71,11 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
 
     setLoading(true);
     try {
-      toast.success('✅ Livraison créée ! Les livreurs vont recevoir la notification.');
+      toast.success('âœ… Livraison crÃ©Ã©e ! Les livreurs vont recevoir la notification.');
       onDeliveryCreated(transactionId || 'temp-id');
     } catch (error) {
       console.error('Error creating delivery:', error);
-      toast.error('Erreur lors de la création');
+      toast.error('Erreur lors de la crÃ©ation');
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
 
   return (
     <div className="space-y-4">
-      {/* Étape 1: Adresses */}
+      {/* Ã‰tape 1: Adresses */}
       {step === 'address' && (
         <>
           <Card>
@@ -101,7 +101,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
                   Adresse de retrait
                 </Label>
                 <Input
-                  placeholder="Où récupérer le colis ?"
+                  placeholder="OÃ¹ rÃ©cupÃ©rer le colis ?"
                   value={pickupAddress}
                   onChange={(e) => setPickupAddress(e.target.value)}
                 />
@@ -110,11 +110,11 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
               {/* Adresse de livraison */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-green-600" />
+                  <MapPin className="h-4 w-4 text-primary-orange-600" />
                   Adresse de livraison
                 </Label>
                 <Input
-                  placeholder="Où livrer le colis ?"
+                  placeholder="OÃ¹ livrer le colis ?"
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                 />
@@ -136,7 +136,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <Phone className="h-4 w-4" />
-                    Téléphone
+                    TÃ©lÃ©phone
                   </Label>
                   <Input
                     placeholder="+224 XXX XX XX XX"
@@ -150,15 +150,15 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
               <div className="space-y-2">
                 <Label>Description du colis</Label>
                 <Input
-                  placeholder="Ex: Documents, vêtements, nourriture..."
+                  placeholder="Ex: Documents, vÃªtements, nourriture..."
                   value={packageDescription}
                   onChange={(e) => setPackageDescription(e.target.value)}
                 />
               </div>
 
-              {/* Instructions spéciales */}
+              {/* Instructions spÃ©ciales */}
               <div className="space-y-2">
-                <Label>Instructions spéciales (optionnel)</Label>
+                <Label>Instructions spÃ©ciales (optionnel)</Label>
                 <Textarea
                   placeholder="Instructions pour le livreur..."
                   value={specialInstructions}
@@ -178,23 +178,23 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
                 }}
               >
                 <Navigation className="h-5 w-5 mr-2" />
-                Voir le prix estimé
+                Voir le prix estimÃ©
               </Button>
             </CardContent>
           </Card>
         </>
       )}
 
-      {/* Étape 2: Confirmation & Prix */}
+      {/* Ã‰tape 2: Confirmation & Prix */}
       {step === 'confirm' && (
         <>
           {/* Estimation de prix */}
           <PriceEstimatorCard estimate={priceEstimate} loading={estimating} />
 
-          {/* Résumé */}
+          {/* RÃ©sumÃ© */}
           <Card>
             <CardHeader>
-              <CardTitle>Résumé de la commande</CardTitle>
+              <CardTitle>RÃ©sumÃ© de la commande</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3">
@@ -205,7 +205,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <MapPin className="h-5 w-5 text-primary-orange-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium">Livraison</p>
                   <p className="text-sm text-muted-foreground">{deliveryAddress}</p>
@@ -247,7 +247,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
         </>
       )}
 
-      {/* Étape 3: Paiement */}
+      {/* Ã‰tape 3: Paiement */}
       {step === 'payment' && priceEstimate && (
         <PaymentMethodSelector
           amount={priceEstimate.totalPrice}

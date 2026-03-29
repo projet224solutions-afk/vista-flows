@@ -26,8 +26,8 @@ export function GoOnlineButton({
         {/* Outer pulsing ring when online */}
         {isOnline && !isLoading && (
           <>
-            <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="absolute -inset-2 rounded-full bg-emerald-500/10 animate-pulse" />
+            <div className="absolute inset-0 rounded-full bg-primary-blue-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="absolute -inset-2 rounded-full bg-primary-blue-500/10 animate-pulse" />
           </>
         )}
         
@@ -35,11 +35,11 @@ export function GoOnlineButton({
         <div className={cn(
           "absolute -inset-2 rounded-full blur-xl transition-all duration-500",
           isOnline 
-            ? "bg-emerald-500/30 opacity-100" 
+            ? "bg-primary-blue-500/30 opacity-100" 
             : "bg-gray-500/20 opacity-50"
         )} />
         
-        {/* Main Button - taille réduite pour mobile */}
+        {/* Main Button - taille rÃ©duite pour mobile */}
         <button
           onClick={onToggle}
           disabled={isLoading || !hasSubscription}
@@ -53,7 +53,7 @@ export function GoOnlineButton({
             isLoading && "animate-pulse",
             !isLoading && !isOnline && hasSubscription && "hover:scale-105 active:scale-95",
             isOnline 
-              ? "bg-emerald-500 text-white shadow-emerald-500/60" 
+              ? "bg-primary-blue-500 text-white shadow-primary-orange-500/60" 
               : "bg-gray-800 text-gray-300 shadow-black/50 border border-gray-600"
           )}
         >
@@ -88,13 +88,13 @@ export function GoOnlineButton({
         "flex items-center gap-2 px-3 py-1.5 rounded-full",
         "text-xs font-medium transition-all duration-300",
         isOnline 
-          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
+          ? "bg-primary-blue-500/10 text-primary-blue-400 border border-primary-orange-500/20" 
           : "bg-gray-800/50 text-gray-400 border border-gray-700/50"
       )}>
         {isOnline ? (
           <>
             <Wifi className="w-3.5 h-3.5 animate-pulse" />
-            <span>Prêt à recevoir des courses</span>
+            <span>PrÃªt Ã  recevoir des courses</span>
           </>
         ) : (
           <>

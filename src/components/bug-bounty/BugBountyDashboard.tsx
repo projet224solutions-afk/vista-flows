@@ -68,11 +68,11 @@ const severityColors: Record<BugSeverity, string> = {
 const statusColors: Record<BugReportStatus, string> = {
   pending: "bg-yellow-500",
   reviewing: "bg-blue-500",
-  accepted: "bg-green-500",
+  accepted: "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500",
   rejected: "bg-red-500",
   duplicate: "bg-gray-500",
   resolved: "bg-purple-500",
-  rewarded: "bg-emerald-500",
+  rewarded: "bg-primary-blue-500",
 };
 
 // ============================================
@@ -89,15 +89,15 @@ const BugBountyDashboard = () => {
   const [rewardAmount, setRewardAmount] = useState<string>("");
   const [newStatus, setNewStatus] = useState<BugReportStatus | "">("");
 
-  // Vérification admin simplifiée
+  // VÃ©rification admin simplifiÃ©e
   const isAdmin = profile?.role === 'admin' || profile?.role === 'ceo';
 
-  console.log('🔍 Bug Bounty - User:', user?.id, 'Profile:', profile?.role, 'isAdmin:', isAdmin);
+  console.log('ðŸ” Bug Bounty - User:', user?.id, 'Profile:', profile?.role, 'isAdmin:', isAdmin);
 
   const { data: reports, isLoading, error: reportsError } = useQuery<BugReport[], Error>({
     queryKey: ["bug-reports"],
     queryFn: async () => {
-      console.log('🔍 Chargement bug reports...');
+      console.log('ðŸ” Chargement bug reports...');
       
       const { data, error } = await supabase
         .from("bug_reports")
@@ -105,11 +105,11 @@ const BugBountyDashboard = () => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error('❌ Erreur chargement bug reports:', error);
+        console.error('âŒ Erreur chargement bug reports:', error);
         throw error;
       }
 
-      console.log('✅ Bug reports chargés:', data?.length || 0);
+      console.log('âœ… Bug reports chargÃ©s:', data?.length || 0);
       return data as BugReport[];
     },
     enabled: !!user && isAdmin,
@@ -118,14 +118,14 @@ const BugBountyDashboard = () => {
   const { data: stats } = useQuery<BugBountyStats, Error>({
     queryKey: ["bug-bounty-stats"],
     queryFn: async () => {
-      console.log('📊 Chargement stats bug bounty...');
+      console.log('ðŸ“Š Chargement stats bug bounty...');
       
       const { data: allReports, error } = await supabase
         .from("bug_reports")
         .select("status, severity, reward_amount");
       
       if (error) {
-        console.error('❌ Erreur chargement stats:', error);
+        console.error('âŒ Erreur chargement stats:', error);
         throw error;
       }
 
@@ -144,7 +144,7 @@ const BugBountyDashboard = () => {
         }, 0),
       };
 
-      console.log('✅ Stats calculées:', stats);
+      console.log('âœ… Stats calculÃ©es:', stats);
       return stats;
     },
     enabled: !!user && isAdmin,
@@ -152,7 +152,7 @@ const BugBountyDashboard = () => {
 
   const updateReportMutation = useMutation<void, Error, { id: string; updates: Partial<BugReport> }>({
     mutationFn: async ({ id, updates }) => {
-      console.log('📝 Mise à jour rapport:', id, updates);
+      console.log('ðŸ“ Mise Ã  jour rapport:', id, updates);
       
       const { error } = await supabase
         .from("bug_reports")
@@ -164,17 +164,17 @@ const BugBountyDashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bug-reports"] });
       queryClient.invalidateQueries({ queryKey: ["bug-bounty-stats"] });
-      toast.success("Rapport mis à jour avec succès");
+      toast.success("Rapport mis Ã  jour avec succÃ¨s");
       
-      // Réinitialiser tous les states
+      // RÃ©initialiser tous les states
       setSelectedReport(null);
       setAdminNotes("");
       setRewardAmount("");
       setNewStatus("");
     },
     onError: (error: Error) => {
-      console.error('❌ Erreur mise à jour rapport:', error);
-      toast.error("Erreur lors de la mise à jour", { 
+      console.error('âŒ Erreur mise Ã  jour rapport:', error);
+      toast.error("Erreur lors de la mise Ã  jour", { 
         description: error.message 
       });
     },
@@ -201,7 +201,7 @@ const BugBountyDashboard = () => {
       }
     }
 
-    console.log('🔄 Envoi mise à jour:', updates);
+    console.log('ðŸ”„ Envoi mise Ã  jour:', updates);
     updateReportMutation.mutate({ id: selectedReport.id, updates });
   };
 
@@ -210,12 +210,12 @@ const BugBountyDashboard = () => {
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Erreur d'accès aux données</strong>
+          <strong>Erreur d'accÃ¨s aux donnÃ©es</strong>
           <p className="text-sm mt-2">
             {reportsError.message}
           </p>
           <p className="text-xs mt-2 text-muted-foreground">
-            Si le problème persiste, vérifiez que les policies RLS sont correctement configurées.
+            Si le problÃ¨me persiste, vÃ©rifiez que les policies RLS sont correctement configurÃ©es.
           </p>
         </AlertDescription>
       </Alert>
@@ -260,11 +260,11 @@ const BugBountyDashboard = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
-              Résolus
+              RÃ©solus
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats?.resolved || 0}</div>
+            <div className="text-2xl font-bold text-primary-orange-600">{stats?.resolved || 0}</div>
           </CardContent>
         </Card>
 
@@ -272,20 +272,20 @@ const BugBountyDashboard = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <Trophy className="w-4 h-4" />
-              Récompensés
+              RÃ©compensÃ©s
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">{stats?.rewarded || 0}</div>
+            <div className="text-2xl font-bold text-primary-blue-600">{stats?.rewarded || 0}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Payé</CardTitle>
+            <CardTitle className="text-sm font-medium">Total PayÃ©</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalPaid.toFixed(2)}€</div>
+            <div className="text-2xl font-bold">{stats?.totalPaid.toFixed(2)}â‚¬</div>
           </CardContent>
         </Card>
       </div>
@@ -295,10 +295,10 @@ const BugBountyDashboard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5" />
-            Rapports de vulnérabilité
+            Rapports de vulnÃ©rabilitÃ©
           </CardTitle>
           <CardDescription>
-            Gérez les rapports soumis par la communauté
+            GÃ©rez les rapports soumis par la communautÃ©
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -309,7 +309,7 @@ const BugBountyDashboard = () => {
                 open={selectedReport?.id === report.id}
                 onOpenChange={(open) => {
                   if (!open) {
-                    // Réinitialiser tous les states à la fermeture
+                    // RÃ©initialiser tous les states Ã  la fermeture
                     setSelectedReport(null);
                     setAdminNotes("");
                     setRewardAmount("");
@@ -345,13 +345,13 @@ const BugBountyDashboard = () => {
                           </p>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span>Par: {report.reporter_name}</span>
-                            <span>•</span>
+                            <span>â€¢</span>
                             <span>{format(new Date(report.created_at), "PPP", { locale: fr })}</span>
                             {report.reward_amount && (
                               <>
-                                <span>•</span>
-                                <span className="text-green-600 font-semibold">
-                                  {report.reward_amount}€
+                                <span>â€¢</span>
+                                <span className="text-primary-orange-600 font-semibold">
+                                  {report.reward_amount}â‚¬
                                 </span>
                               </>
                             )}
@@ -393,7 +393,7 @@ const BugBountyDashboard = () => {
                     </div>
 
                     <div>
-                      <h3 className="font-semibold mb-2">Étapes de reproduction</h3>
+                      <h3 className="font-semibold mb-2">Ã‰tapes de reproduction</h3>
                       <p className="text-sm whitespace-pre-wrap">{report.steps_to_reproduce}</p>
                     </div>
 
@@ -411,7 +411,7 @@ const BugBountyDashboard = () => {
 
                     {report.suggested_fix && (
                       <div>
-                        <h3 className="font-semibold mb-2">Correction suggérée</h3>
+                        <h3 className="font-semibold mb-2">Correction suggÃ©rÃ©e</h3>
                         <p className="text-sm whitespace-pre-wrap">{report.suggested_fix}</p>
                       </div>
                     )}
@@ -429,17 +429,17 @@ const BugBountyDashboard = () => {
                           <SelectContent>
                             <SelectItem value="pending">En attente</SelectItem>
                             <SelectItem value="reviewing">En revue</SelectItem>
-                            <SelectItem value="accepted">Accepté</SelectItem>
-                            <SelectItem value="rejected">Rejeté</SelectItem>
+                            <SelectItem value="accepted">AcceptÃ©</SelectItem>
+                            <SelectItem value="rejected">RejetÃ©</SelectItem>
                             <SelectItem value="duplicate">Duplicata</SelectItem>
-                            <SelectItem value="resolved">Résolu</SelectItem>
-                            <SelectItem value="rewarded">Récompensé</SelectItem>
+                            <SelectItem value="resolved">RÃ©solu</SelectItem>
+                            <SelectItem value="rewarded">RÃ©compensÃ©</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="reward">Montant de la récompense (€)</Label>
+                        <Label htmlFor="reward">Montant de la rÃ©compense (â‚¬)</Label>
                         <Input
                           id="reward"
                           type="number"
@@ -461,7 +461,7 @@ const BugBountyDashboard = () => {
                       </div>
 
                       <Button onClick={handleUpdateReport} className="w-full">
-                        Mettre à jour le rapport
+                        Mettre Ã  jour le rapport
                       </Button>
                     </div>
                   </div>
@@ -471,7 +471,7 @@ const BugBountyDashboard = () => {
 
             {reports?.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
-                Aucun rapport de vulnérabilité pour le moment
+                Aucun rapport de vulnÃ©rabilitÃ© pour le moment
               </div>
             )}
           </div>

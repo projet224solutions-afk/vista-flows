@@ -69,7 +69,7 @@ export default function PDGWalletApiManagement() {
     try {
       setSubmitting(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Non authentifié');
+      if (!user) throw new Error('Non authentifiÃ©');
 
       const rate = parseFloat(commissionRate);
       if (isNaN(rate) || rate < 0 || rate > 100) {
@@ -79,7 +79,7 @@ export default function PDGWalletApiManagement() {
 
       const success = await WalletApiService.approveRequest(request.id, user.id, rate);
       if (success) {
-        toast({ title: '✅ Demande approuvée', description: 'Les clés API ont été générées' });
+        toast({ title: 'âœ… Demande approuvÃ©e', description: 'Les clÃ©s API ont Ã©tÃ© gÃ©nÃ©rÃ©es' });
         fetchData();
       } else {
         toast({ title: 'Erreur', variant: 'destructive' });
@@ -99,11 +99,11 @@ export default function PDGWalletApiManagement() {
     try {
       setSubmitting(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Non authentifié');
+      if (!user) throw new Error('Non authentifiÃ©');
 
       const success = await WalletApiService.rejectRequest(selectedRequest.id, user.id, rejectionReason);
       if (success) {
-        toast({ title: 'Demande refusée' });
+        toast({ title: 'Demande refusÃ©e' });
         setShowRejectDialog(false);
         setRejectionReason('');
         fetchData();
@@ -118,7 +118,7 @@ export default function PDGWalletApiManagement() {
   const handleToggleKey = async (keyId: string, isActive: boolean) => {
     const success = await WalletApiService.toggleKey(keyId, isActive);
     if (success) {
-      toast({ title: isActive ? 'Clé activée' : 'Clé désactivée' });
+      toast({ title: isActive ? 'ClÃ© activÃ©e' : 'ClÃ© dÃ©sactivÃ©e' });
       fetchData();
     }
   };
@@ -126,8 +126,8 @@ export default function PDGWalletApiManagement() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending': return <Badge variant="outline" className="text-amber-500 border-amber-500/50"><Clock className="w-3 h-3 mr-1" />En attente</Badge>;
-      case 'approved': return <Badge className="bg-green-600 text-white"><CheckCircle className="w-3 h-3 mr-1" />Approuvée</Badge>;
-      case 'rejected': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Refusée</Badge>;
+      case 'approved': return <Badge className="bg-primary-orange-600 text-white"><CheckCircle className="w-3 h-3 mr-1" />ApprouvÃ©e</Badge>;
+      case 'rejected': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />RefusÃ©e</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -147,9 +147,9 @@ export default function PDGWalletApiManagement() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Key className="w-6 h-6 text-primary" />
-            API 224Wallet — Gestion
+            API 224Wallet â€” Gestion
           </h2>
-          <p className="text-sm text-muted-foreground">Demandes d'accès, clés API et transactions</p>
+          <p className="text-sm text-muted-foreground">Demandes d'accÃ¨s, clÃ©s API et transactions</p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData}>
           <RefreshCw className="w-4 h-4 mr-2" /> Actualiser
@@ -170,15 +170,15 @@ export default function PDGWalletApiManagement() {
             <p className="text-xl font-bold text-amber-500">{stats.pendingRequests}</p>
           </CardContent>
         </Card>
-        <Card className="border-green-500/30 bg-green-500/5">
+        <Card className="border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
           <CardContent className="p-3">
-            <p className="text-xs text-green-500">Approuvées</p>
-            <p className="text-xl font-bold text-green-500">{stats.approvedRequests}</p>
+            <p className="text-xs text-primary-orange-500">ApprouvÃ©es</p>
+            <p className="text-xl font-bold text-primary-orange-500">{stats.approvedRequests}</p>
           </CardContent>
         </Card>
         <Card className="border-border/50">
           <CardContent className="p-3">
-            <p className="text-xs text-muted-foreground">Clés actives</p>
+            <p className="text-xs text-muted-foreground">ClÃ©s actives</p>
             <p className="text-xl font-bold">{stats.activeKeys}</p>
           </CardContent>
         </Card>
@@ -207,7 +207,7 @@ export default function PDGWalletApiManagement() {
             )}
           </TabsTrigger>
           <TabsTrigger value="keys">
-            <Key className="w-3.5 h-3.5 mr-1.5" />Clés API
+            <Key className="w-3.5 h-3.5 mr-1.5" />ClÃ©s API
           </TabsTrigger>
         </TabsList>
 
@@ -218,8 +218,8 @@ export default function PDGWalletApiManagement() {
             {[
               { value: 'all', label: 'Toutes', count: requests.length },
               { value: 'pending', label: 'En attente', count: requests.filter(r => r.status === 'pending').length },
-              { value: 'approved', label: 'Approuvées', count: requests.filter(r => r.status === 'approved').length },
-              { value: 'rejected', label: 'Refusées', count: requests.filter(r => r.status === 'rejected').length },
+              { value: 'approved', label: 'ApprouvÃ©es', count: requests.filter(r => r.status === 'approved').length },
+              { value: 'rejected', label: 'RefusÃ©es', count: requests.filter(r => r.status === 'rejected').length },
             ].map(f => (
               <Button
                 key={f.value}
@@ -240,7 +240,7 @@ export default function PDGWalletApiManagement() {
                     <TableRow>
                       <TableHead>Service</TableHead>
                       <TableHead>Cas d'utilisation</TableHead>
-                      <TableHead>Volume estimé</TableHead>
+                      <TableHead>Volume estimÃ©</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Statut</TableHead>
                       <TableHead>Actions</TableHead>
@@ -291,7 +291,7 @@ export default function PDGWalletApiManagement() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="text-green-600 hover:text-green-700 h-7"
+                                  className="text-primary-orange-600 hover:text-primary-orange-700 h-7"
                                   onClick={() => handleApprove(req)}
                                   disabled={submitting}
                                 >
@@ -322,12 +322,12 @@ export default function PDGWalletApiManagement() {
           </Card>
         </TabsContent>
 
-        {/* Clés API */}
+        {/* ClÃ©s API */}
         <TabsContent value="keys" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Clés API Actives</CardTitle>
-              <CardDescription>Toutes les clés API 224Wallet générées</CardDescription>
+              <CardTitle>ClÃ©s API Actives</CardTitle>
+              <CardDescription>Toutes les clÃ©s API 224Wallet gÃ©nÃ©rÃ©es</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="w-full">
@@ -335,7 +335,7 @@ export default function PDGWalletApiManagement() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nom</TableHead>
-                      <TableHead>Clé</TableHead>
+                      <TableHead>ClÃ©</TableHead>
                       <TableHead>Mode</TableHead>
                       <TableHead>Commission</TableHead>
                       <TableHead>Transactions</TableHead>
@@ -348,7 +348,7 @@ export default function PDGWalletApiManagement() {
                     {keys.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
-                          Aucune clé API
+                          Aucune clÃ© API
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -364,7 +364,7 @@ export default function PDGWalletApiManagement() {
                                 <AlertTriangle className="w-3 h-3 mr-0.5" /> Test
                               </Badge>
                             ) : (
-                              <Badge className="bg-green-600 text-white text-[10px]">Production</Badge>
+                              <Badge className="bg-primary-orange-600 text-white text-[10px]">Production</Badge>
                             )}
                           </TableCell>
                           <TableCell className="text-sm">{key.commission_rate}%</TableCell>
@@ -380,10 +380,10 @@ export default function PDGWalletApiManagement() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleToggleKey(key.id, !key.is_active)}
-                              className={key.is_active ? 'text-destructive' : 'text-green-600'}
+                              className={key.is_active ? 'text-destructive' : 'text-primary-orange-600'}
                             >
                               {key.is_active ? <Ban className="w-4 h-4 mr-1" /> : <CheckCircle className="w-4 h-4 mr-1" />}
-                              {key.is_active ? 'Désactiver' : 'Activer'}
+                              {key.is_active ? 'DÃ©sactiver' : 'Activer'}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -412,7 +412,7 @@ export default function PDGWalletApiManagement() {
             <Textarea
               value={rejectionReason}
               onChange={e => setRejectionReason(e.target.value)}
-              placeholder="Expliquez pourquoi la demande est refusée..."
+              placeholder="Expliquez pourquoi la demande est refusÃ©e..."
               rows={3}
             />
           </div>

@@ -1,6 +1,6 @@
 /**
- * 🎙️ COMPOSANT D'ENREGISTREMENT VOCAL AVEC TRADUCTION AUTOMATIQUE
- * Enregistre un message vocal, l'envoie et déclenche automatiquement
+ * ðŸŽ™ï¸ COMPOSANT D'ENREGISTREMENT VOCAL AVEC TRADUCTION AUTOMATIQUE
+ * Enregistre un message vocal, l'envoie et dÃ©clenche automatiquement
  * la traduction vers la langue du destinataire
  */
 
@@ -46,7 +46,7 @@ export function VoiceRecorderWithTranslation({
     subscribeToTranslationStatus
   } = useVoiceMessageWithTranslation();
 
-  // Nettoyer l'URL audio précédente
+  // Nettoyer l'URL audio prÃ©cÃ©dente
   useEffect(() => {
     return () => {
       if (audioUrl) {
@@ -62,7 +62,7 @@ export function VoiceRecorderWithTranslation({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Détecter iOS/Safari
+  // DÃ©tecter iOS/Safari
   const isIOSDevice = useCallback(() => {
     return /iPhone|iPad|iPod/i.test(navigator.userAgent);
   }, []);
@@ -71,7 +71,7 @@ export function VoiceRecorderWithTranslation({
     return /Safari/i.test(navigator.userAgent) && !/CriOS|FxiOS|Chrome/i.test(navigator.userAgent);
   }, []);
 
-  // Démarrer l'enregistrement
+  // DÃ©marrer l'enregistrement
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -86,7 +86,7 @@ export function VoiceRecorderWithTranslation({
       streamRef.current = stream;
       audioChunksRef.current = [];
 
-      // iOS/Safari: utiliser mp4/aac en priorité
+      // iOS/Safari: utiliser mp4/aac en prioritÃ©
       // Autres navigateurs: utiliser webm/opus
       let mimeType: string;
       
@@ -100,8 +100,8 @@ export function VoiceRecorderWithTranslation({
           mimeType = 'audio/wav';
         } else {
           // Fallback - iOS peut ne pas supporter MediaRecorder du tout
-          console.warn('⚠️ MediaRecorder non supporté sur ce navigateur iOS');
-          mimeType = 'audio/mp4'; // Essayer quand même
+          console.warn('âš ï¸ MediaRecorder non supportÃ© sur ce navigateur iOS');
+          mimeType = 'audio/mp4'; // Essayer quand mÃªme
         }
       } else {
         // Chrome, Firefox, Edge, etc.
@@ -112,7 +112,7 @@ export function VoiceRecorderWithTranslation({
             : 'audio/mp4';
       }
 
-      console.log('🎙️ Using MIME type:', mimeType, '| iOS:', isIOSDevice(), '| Safari:', isSafariBrowser());
+      console.log('ðŸŽ™ï¸ Using MIME type:', mimeType, '| iOS:', isIOSDevice(), '| Safari:', isSafariBrowser());
 
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
@@ -128,7 +128,7 @@ export function VoiceRecorderWithTranslation({
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         
-        // Arrêter les pistes audio
+        // ArrÃªter les pistes audio
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -136,7 +136,7 @@ export function VoiceRecorderWithTranslation({
       setIsRecording(true);
       setRecordingTime(0);
 
-      // Timer pour afficher la durée
+      // Timer pour afficher la durÃ©e
       timerRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
@@ -146,7 +146,7 @@ export function VoiceRecorderWithTranslation({
     }
   }, [isIOSDevice, isSafariBrowser]);
 
-  // Arrêter l'enregistrement
+  // ArrÃªter l'enregistrement
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
@@ -181,14 +181,14 @@ export function VoiceRecorderWithTranslation({
     if (result.success && result.messageId) {
       onMessageSent?.(result.messageId, result.audioUrl || '');
       
-      // Écouter les mises à jour de traduction
+      // Ã‰couter les mises Ã  jour de traduction
       if (result.needsTranslation) {
         subscribeToTranslationStatus(result.messageId, (status, data) => {
           console.log('Translation status:', status, data);
         });
       }
 
-      // Réinitialiser
+      // RÃ©initialiser
       setAudioBlob(null);
       setAudioUrl(null);
       setRecordingTime(0);
@@ -203,7 +203,7 @@ export function VoiceRecorderWithTranslation({
       <div className={cn(
         "flex items-center gap-1 text-xs",
         translationStatus === 'pending' && "text-yellow-500",
-        translationStatus === 'completed' && "text-green-500",
+        translationStatus === 'completed' && "text-primary-orange-500",
         translationStatus === 'failed' && "text-red-500"
       )}>
         {translationStatus === 'pending' && (
@@ -219,7 +219,7 @@ export function VoiceRecorderWithTranslation({
           </>
         )}
         {translationStatus === 'failed' && (
-          <span>Échec traduction</span>
+          <span>Ã‰chec traduction</span>
         )}
       </div>
     );
@@ -245,7 +245,7 @@ export function VoiceRecorderWithTranslation({
       "flex items-center gap-2 p-2 bg-secondary/50 rounded-full",
       className
     )}>
-      {/* État: En cours d'enregistrement */}
+      {/* Ã‰tat: En cours d'enregistrement */}
       {isRecording && (
         <>
           <Button
@@ -266,14 +266,14 @@ export function VoiceRecorderWithTranslation({
             variant="default"
             size="icon"
             onClick={stopRecording}
-            className="rounded-full bg-green-500 hover:bg-green-600"
+            className="rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600"
           >
             <MicOff className="h-5 w-5" />
           </Button>
         </>
       )}
 
-      {/* État: Audio enregistré, prêt à envoyer */}
+      {/* Ã‰tat: Audio enregistrÃ©, prÃªt Ã  envoyer */}
       {!isRecording && audioBlob && (
         <>
           <Button
@@ -316,7 +316,7 @@ export function VoiceRecorderWithTranslation({
         </>
       )}
 
-      {/* État: Prêt à enregistrer */}
+      {/* Ã‰tat: PrÃªt Ã  enregistrer */}
       {!isRecording && !audioBlob && (
         <>
           <Button

@@ -17,7 +17,7 @@ const notificationIcons: Record<string, any> = {
 
 const notificationColors: Record<string, string> = {
   order: 'text-blue-600',
-  payment: 'text-green-600',
+  payment: 'text-primary-orange-600',
   message: 'text-purple-600',
   security: 'text-red-600',
   stock: 'text-orange-600'

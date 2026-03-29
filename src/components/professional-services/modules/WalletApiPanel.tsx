@@ -63,7 +63,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
 
   const handleSubmitRequest = async () => {
     if (!user || !requestForm.useCase.trim()) {
-      toast.error('Décrivez votre cas d\'utilisation');
+      toast.error('DÃ©crivez votre cas d\'utilisation');
       return;
     }
     try {
@@ -77,7 +77,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
         expectedVolume: requestForm.expectedVolume || undefined,
       });
       if (id) {
-        toast.success('Demande soumise avec succès ! Elle sera examinée sous 24-48h.');
+        toast.success('Demande soumise avec succÃ¨s ! Elle sera examinÃ©e sous 24-48h.');
         setShowRequestDialog(false);
         loadData();
       } else {
@@ -93,25 +93,25 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
   const handleToggleKey = async (keyId: string, isActive: boolean) => {
     const success = await WalletApiService.toggleKey(keyId, isActive);
     if (success) {
-      toast.success(isActive ? 'Clé activée' : 'Clé désactivée');
+      toast.success(isActive ? 'ClÃ© activÃ©e' : 'ClÃ© dÃ©sactivÃ©e');
       loadData();
     }
   };
 
   const handleToggleTestMode = async (keyId: string, isTestMode: boolean) => {
     if (!isTestMode) {
-      if (!confirm('⚠️ Passer en mode production ? Les transactions seront réelles.')) return;
+      if (!confirm('âš ï¸ Passer en mode production ? Les transactions seront rÃ©elles.')) return;
     }
     const success = await WalletApiService.toggleTestMode(keyId, isTestMode);
     if (success) {
-      toast.success(isTestMode ? 'Mode test activé' : 'Mode production activé');
+      toast.success(isTestMode ? 'Mode test activÃ©' : 'Mode production activÃ©');
       loadData();
     }
   };
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    toast.success(`${label} copié`);
+    toast.success(`${label} copiÃ©`);
   };
 
   if (loading) {
@@ -133,26 +133,26 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
             </div>
             <h3 className="text-xl font-bold mb-2">API de Paiement 224Wallet</h3>
             <p className="text-muted-foreground max-w-md mb-6">
-              Intégrez les paiements 224Wallet directement dans votre site web ou application. 
-              Acceptez les paiements de vos clients en toute sécurité.
+              IntÃ©grez les paiements 224Wallet directement dans votre site web ou application. 
+              Acceptez les paiements de vos clients en toute sÃ©curitÃ©.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 w-full max-w-lg">
               <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
                 <Shield className="w-5 h-5 text-primary" />
-                <span className="text-xs font-medium">Sécurisé</span>
+                <span className="text-xs font-medium">SÃ©curisÃ©</span>
               </div>
               <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
                 <Zap className="w-5 h-5 text-primary" />
-                <span className="text-xs font-medium">Instantané</span>
+                <span className="text-xs font-medium">InstantanÃ©</span>
               </div>
               <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
                 <Code className="w-5 h-5 text-primary" />
-                <span className="text-xs font-medium">Simple à intégrer</span>
+                <span className="text-xs font-medium">Simple Ã  intÃ©grer</span>
               </div>
             </div>
             <Button onClick={() => setShowRequestDialog(true)} size="lg">
               <Send className="w-4 h-4 mr-2" />
-              Demander l'accès API
+              Demander l'accÃ¨s API
             </Button>
           </CardContent>
         </Card>
@@ -161,9 +161,9 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
         <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Demande d'accès API 224Wallet</DialogTitle>
+              <DialogTitle>Demande d'accÃ¨s API 224Wallet</DialogTitle>
               <DialogDescription>
-                Décrivez votre projet pour obtenir vos clés d'API. Votre demande sera examinée sous 24-48h.
+                DÃ©crivez votre projet pour obtenir vos clÃ©s d'API. Votre demande sera examinÃ©e sous 24-48h.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -180,12 +180,12 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
                 <Textarea
                   value={requestForm.useCase}
                   onChange={e => setRequestForm(f => ({ ...f, useCase: e.target.value }))}
-                  placeholder="Décrivez comment vous comptez utiliser l'API de paiement..."
+                  placeholder="DÃ©crivez comment vous comptez utiliser l'API de paiement..."
                   rows={4}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Volume de transactions estimé (optionnel)</Label>
+                <Label>Volume de transactions estimÃ© (optionnel)</Label>
                 <Input
                   value={requestForm.expectedVolume}
                   onChange={e => setRequestForm(f => ({ ...f, expectedVolume: e.target.value }))}
@@ -215,9 +215,9 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
           </div>
           <h3 className="text-xl font-bold mb-2">Demande en cours d'examen</h3>
           <p className="text-muted-foreground max-w-md mb-4">
-            Votre demande d'accès API a été soumise le{' '}
+            Votre demande d'accÃ¨s API a Ã©tÃ© soumise le{' '}
             {format(new Date(request.created_at), 'dd MMMM yyyy', { locale: fr })}.
-            Elle sera examinée par notre équipe sous 24-48h.
+            Elle sera examinÃ©e par notre Ã©quipe sous 24-48h.
           </p>
           <Badge variant="outline" className="text-amber-500 border-amber-500/50">
             <Clock className="w-3 h-3 mr-1" /> En attente d'approbation
@@ -227,7 +227,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
     );
   }
 
-  // Demande rejetée
+  // Demande rejetÃ©e
   if (request.status === 'rejected') {
     return (
       <Card>
@@ -235,9 +235,9 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
           <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
             <XCircle className="w-8 h-8 text-destructive" />
           </div>
-          <h3 className="text-xl font-bold mb-2">Demande refusée</h3>
+          <h3 className="text-xl font-bold mb-2">Demande refusÃ©e</h3>
           <p className="text-muted-foreground max-w-md mb-2">
-            Votre demande d'accès API a été refusée.
+            Votre demande d'accÃ¨s API a Ã©tÃ© refusÃ©e.
           </p>
           {request.rejection_reason && (
             <p className="text-sm bg-destructive/5 border border-destructive/20 rounded-lg p-3 max-w-md mb-4">
@@ -252,7 +252,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
     );
   }
 
-  // ✅ Demande approuvée - Afficher les clés & dashboard
+  // âœ… Demande approuvÃ©e - Afficher les clÃ©s & dashboard
   return (
     <div className="space-y-6">
       {/* Stats rapides */}
@@ -261,7 +261,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Key className="w-4 h-4" />
-              <span className="text-xs">Clés actives</span>
+              <span className="text-xs">ClÃ©s actives</span>
             </div>
             <p className="text-2xl font-bold">{keys.filter(k => k.is_active).length}</p>
           </CardContent>
@@ -290,25 +290,25 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <CheckCircle className="w-4 h-4" />
-              <span className="text-xs">Réussies</span>
+              <span className="text-xs">RÃ©ussies</span>
             </div>
-            <p className="text-2xl font-bold text-green-500">
+            <p className="text-2xl font-bold text-primary-orange-500">
               {transactions.filter(t => t.status === 'completed').length}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Clés API */}
+      {/* ClÃ©s API */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Key className="w-5 h-5" />
-                Vos Clés API
+                Vos ClÃ©s API
               </CardTitle>
-              <CardDescription>Utilisez ces clés pour intégrer 224Wallet dans votre application</CardDescription>
+              <CardDescription>Utilisez ces clÃ©s pour intÃ©grer 224Wallet dans votre application</CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={loadData}>
               <RefreshCw className="w-4 h-4 mr-1" /> Actualiser
@@ -317,7 +317,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
         </CardHeader>
         <CardContent className="space-y-4">
           {keys.length === 0 ? (
-            <p className="text-center text-muted-foreground py-6">Aucune clé API générée</p>
+            <p className="text-center text-muted-foreground py-6">Aucune clÃ© API gÃ©nÃ©rÃ©e</p>
           ) : (
             keys.map(key => (
               <div key={key.id} className={cn(
@@ -332,7 +332,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
                         <AlertTriangle className="w-3 h-3 mr-0.5" /> TEST
                       </Badge>
                     ) : (
-                      <Badge className="bg-green-600 text-white text-[10px]">
+                      <Badge className="bg-primary-orange-600 text-white text-[10px]">
                         <Zap className="w-3 h-3 mr-0.5" /> PRODUCTION
                       </Badge>
                     )}
@@ -348,15 +348,15 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
 
                 {/* API Key */}
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Clé API</Label>
+                  <Label className="text-xs text-muted-foreground">ClÃ© API</Label>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 bg-background border rounded-md px-3 py-2 text-xs font-mono truncate">
-                      {showSecrets[`key-${key.id}`] ? key.api_key : key.api_key.slice(0, 12) + '••••••••••••••••'}
+                      {showSecrets[`key-${key.id}`] ? key.api_key : key.api_key.slice(0, 12) + 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢'}
                     </code>
                     <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setShowSecrets(s => ({ ...s, [`key-${key.id}`]: !s[`key-${key.id}`] }))}>
                       {showSecrets[`key-${key.id}`] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="shrink-0" onClick={() => copyToClipboard(key.api_key, 'Clé API')}>
+                    <Button variant="ghost" size="icon" className="shrink-0" onClick={() => copyToClipboard(key.api_key, 'ClÃ© API')}>
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
@@ -367,7 +367,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
                   <Label className="text-xs text-muted-foreground">Secret API</Label>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 bg-background border rounded-md px-3 py-2 text-xs font-mono truncate">
-                      {showSecrets[`secret-${key.id}`] ? key.api_secret : '••••••••••••••••••••••••'}
+                      {showSecrets[`secret-${key.id}`] ? key.api_secret : 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢'}
                     </code>
                     <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setShowSecrets(s => ({ ...s, [`secret-${key.id}`]: !s[`secret-${key.id}`] }))}>
                       {showSecrets[`secret-${key.id}`] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -391,7 +391,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
                     <span className="text-xs text-muted-foreground">Commission: {key.commission_rate}%</span>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    Limites: {key.rate_limit_per_minute}/min • {key.rate_limit_per_day}/jour
+                    Limites: {key.rate_limit_per_minute}/min â€¢ {key.rate_limit_per_day}/jour
                   </span>
                 </div>
               </div>
@@ -405,7 +405,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Code className="w-5 h-5" />
-            Intégration rapide
+            IntÃ©gration rapide
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -423,7 +423,7 @@ const response = await fetch('${window.location.origin}/api/224wallet/pay', {
     currency: 'GNF',
     payer_phone: '+224XXXXXXXXX',
     description: 'Paiement commande #123',
-    reference: 'CMD-123',   // Votre référence unique
+    reference: 'CMD-123',   // Votre rÃ©fÃ©rence unique
   }),
 });
 
@@ -431,16 +431,16 @@ const { payment_id, status } = await response.json();`}</pre>
           </div>
           <p className="text-xs text-muted-foreground mt-3">
             <ExternalLink className="w-3 h-3 inline mr-1" />
-            Documentation complète disponible prochainement
+            Documentation complÃ¨te disponible prochainement
           </p>
         </CardContent>
       </Card>
 
-      {/* Dernières transactions */}
+      {/* DerniÃ¨res transactions */}
       {transactions.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Dernières Transactions</CardTitle>
+            <CardTitle className="text-base">DerniÃ¨res Transactions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -455,7 +455,7 @@ const { payment_id, status } = await response.json();`}</pre>
                   <div className="text-right">
                     <p className="text-sm font-bold">{WalletApiService.formatAmount(tx.amount_gnf)}</p>
                     <Badge variant={tx.status === 'completed' ? 'default' : tx.status === 'failed' ? 'destructive' : 'outline'} className="text-[10px]">
-                      {tx.status === 'completed' ? 'Réussi' : tx.status === 'failed' ? 'Échoué' : 'En cours'}
+                      {tx.status === 'completed' ? 'RÃ©ussi' : tx.status === 'failed' ? 'Ã‰chouÃ©' : 'En cours'}
                     </Badge>
                   </div>
                 </div>

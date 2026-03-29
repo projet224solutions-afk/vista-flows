@@ -1,7 +1,7 @@
 /**
  * Page publique Menu Restaurant
  * Permet aux clients de voir le menu et passer une commande directement
- * v2 - Achat direct sans panier intermédiaire
+ * v2 - Achat direct sans panier intermÃ©diaire
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -103,7 +103,7 @@ export default function RestaurantPublicMenu() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState('');
   
-  // États persistés - Checkout form + Cart
+  // Ã‰tats persistÃ©s - Checkout form + Cart
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Persistance du panier restaurant
@@ -129,7 +129,7 @@ export default function RestaurantPublicMenu() {
     { enabled: !!serviceId, maxAge: 30 * 60 * 1000 }
   );
   
-  // Aliases pour compatibilité avec le code existant
+  // Aliases pour compatibilitÃ© avec le code existant
   const cart = persistedCart.state;
   const setCart = persistedCart.setState;
   const customerName = checkoutForm.customerName;
@@ -265,10 +265,10 @@ export default function RestaurantPublicMenu() {
   );
 
   // Submit order (from cart or quick order)
-  // Fonction pour créditer le wallet du restaurant
+  // Fonction pour crÃ©diter le wallet du restaurant
   const creditRestaurantWallet = async (restaurantServiceId: string, amount: number, orderNumber: string) => {
     try {
-      // Récupérer le user_id du restaurant (propriétaire du service professionnel)
+      // RÃ©cupÃ©rer le user_id du restaurant (propriÃ©taire du service professionnel)
       const { data: serviceData, error: serviceError } = await supabase
         .from('professional_services')
         .select('user_id, business_name')
@@ -276,11 +276,11 @@ export default function RestaurantPublicMenu() {
         .single();
 
       if (serviceError || !serviceData?.user_id) {
-        console.error('Erreur récupération user_id restaurant:', serviceError);
+        console.error('Erreur rÃ©cupÃ©ration user_id restaurant:', serviceError);
         return false;
       }
 
-      // Vérifier/créer le wallet du restaurant
+      // VÃ©rifier/crÃ©er le wallet du restaurant
       let { data: wallet, error: walletError } = await supabase
         .from('wallets')
         .select('id, balance')
@@ -288,7 +288,7 @@ export default function RestaurantPublicMenu() {
         .single();
 
       if (walletError && walletError.code === 'PGRST116') {
-        // Créer le wallet s'il n'existe pas
+        // CrÃ©er le wallet s'il n'existe pas
         const { data: newWallet, error: createError } = await supabase
           .from('wallets')
           .insert({
@@ -300,7 +300,7 @@ export default function RestaurantPublicMenu() {
           .single();
 
         if (createError) {
-          console.error('Erreur création wallet restaurant:', createError);
+          console.error('Erreur crÃ©ation wallet restaurant:', createError);
           return false;
         }
         wallet = newWallet;
@@ -311,7 +311,7 @@ export default function RestaurantPublicMenu() {
         return false;
       }
 
-      // Créditer le wallet
+      // CrÃ©diter le wallet
       const newBalance = (wallet.balance || 0) + amount;
       const { error: updateError } = await supabase
         .from('wallets')
@@ -319,11 +319,11 @@ export default function RestaurantPublicMenu() {
         .eq('id', wallet.id);
 
       if (updateError) {
-        console.error('Erreur crédit wallet restaurant:', updateError);
+        console.error('Erreur crÃ©dit wallet restaurant:', updateError);
         return false;
       }
 
-      // Créer le log de transaction (bypass type check car les types générés sont incorrects)
+      // CrÃ©er le log de transaction (bypass type check car les types gÃ©nÃ©rÃ©s sont incorrects)
       try {
         await (supabase.from('wallet_logs') as any).insert({
           wallet_id: wallet.id,
@@ -345,7 +345,7 @@ export default function RestaurantPublicMenu() {
         console.warn('Erreur log transaction:', logError);
       }
 
-      console.log(`✅ Wallet restaurant crédité: +${amount} GNF`);
+      console.log(`âœ… Wallet restaurant crÃ©ditÃ©: +${amount} GNF`);
       return true;
     } catch (err) {
       console.error('Erreur creditRestaurantWallet:', err);
@@ -359,11 +359,11 @@ export default function RestaurantPublicMenu() {
       return;
     }
     if (!customerPhone.trim()) {
-      toast.error('Veuillez entrer votre numéro de téléphone');
+      toast.error('Veuillez entrer votre numÃ©ro de tÃ©lÃ©phone');
       return;
     }
     if (orderType === 'dine_in' && !tableNumber.trim()) {
-      toast.error('Veuillez entrer le numéro de table');
+      toast.error('Veuillez entrer le numÃ©ro de table');
       return;
     }
     if (orderType === 'delivery' && !deliveryAddress.trim()) {
@@ -377,7 +377,7 @@ export default function RestaurantPublicMenu() {
       : cart;
 
     if (itemsToOrder.length === 0) {
-      toast.error('Aucun article à commander');
+      toast.error('Aucun article Ã  commander');
       return;
     }
 
@@ -396,7 +396,7 @@ export default function RestaurantPublicMenu() {
 
       const orderNumber = `CMD-${Date.now().toString(36).toUpperCase()}`;
       
-      // Déterminer le statut de paiement
+      // DÃ©terminer le statut de paiement
       const isPaid = paymentMethod === 'card' || paymentMethod === 'mobile';
 
       const { data: order, error } = await supabase
@@ -424,11 +424,11 @@ export default function RestaurantPublicMenu() {
 
       if (error) throw error;
 
-      // Créditer le wallet du restaurant si paiement en ligne (card ou mobile)
+      // CrÃ©diter le wallet du restaurant si paiement en ligne (card ou mobile)
       if (isPaid && serviceId) {
         const credited = await creditRestaurantWallet(serviceId, total, orderNumber);
         if (credited) {
-          toast.success('💰 Paiement reçu par le restaurant');
+          toast.success('ðŸ’° Paiement reÃ§u par le restaurant');
         }
       }
 
@@ -436,9 +436,9 @@ export default function RestaurantPublicMenu() {
       
       if (isQuickOrder) {
         setOrderSuccess(true);
-        toast.success(`Commande ${orderNumber} envoyée !`);
+        toast.success(`Commande ${orderNumber} envoyÃ©e !`);
       } else {
-        toast.success(`Commande ${orderNumber} envoyée avec succès !`);
+        toast.success(`Commande ${orderNumber} envoyÃ©e avec succÃ¨s !`);
         clearCart();
         setShowCheckout(false);
       }
@@ -463,8 +463,8 @@ export default function RestaurantPublicMenu() {
 
   // Get category name
   const getCategoryName = (categoryId: string | null) => {
-    if (!categoryId) return 'Sans catégorie';
-    return categories.find(c => c.id === categoryId)?.name || 'Sans catégorie';
+    if (!categoryId) return 'Sans catÃ©gorie';
+    return categories.find(c => c.id === categoryId)?.name || 'Sans catÃ©gorie';
   };
 
   if (loading) {
@@ -483,7 +483,7 @@ export default function RestaurantPublicMenu() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <ChefHat className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Restaurant non trouvé</h2>
+          <h2 className="text-xl font-semibold mb-2">Restaurant non trouvÃ©</h2>
           <Button onClick={() => navigate(-1)}>Retour</Button>
         </div>
       </div>
@@ -624,7 +624,7 @@ export default function RestaurantPublicMenu() {
         {filteredItems.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <ChefHat className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Aucun plat disponible dans cette catégorie</p>
+            <p>Aucun plat disponible dans cette catÃ©gorie</p>
           </div>
         ) : (
           <div className="grid gap-3">
@@ -678,17 +678,17 @@ export default function RestaurantPublicMenu() {
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {!item.is_available && (
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-orange-500 border-orange-200">
-                              <Clock className="w-2.5 h-2.5 mr-0.5" /> Bientôt disponible
+                              <Clock className="w-2.5 h-2.5 mr-0.5" /> BientÃ´t disponible
                             </Badge>
                           )}
                           {item.spicy_level > 0 && (
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-red-500 border-red-200">
-                              🌶️ {item.spicy_level > 2 ? 'Très épicé' : 'Épicé'}
+                              ðŸŒ¶ï¸ {item.spicy_level > 2 ? 'TrÃ¨s Ã©picÃ©' : 'Ã‰picÃ©'}
                             </Badge>
                           )}
                           {item.dietary_tags?.includes('vegetarian') && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-green-600 border-green-200">
-                              <Leaf className="w-2.5 h-2.5 mr-0.5" /> Végé
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-primary-orange-600 border-primary-orange-200">
+                              <Leaf className="w-2.5 h-2.5 mr-0.5" /> VÃ©gÃ©
                             </Badge>
                           )}
                           {item.preparation_time > 0 && (
@@ -729,7 +729,7 @@ export default function RestaurantPublicMenu() {
                             ) : (
                               <Button
                                 size="sm"
-                                className="h-8 gap-1 bg-green-600 hover:bg-green-700"
+                                className="h-8 gap-1 bg-primary-orange-600 hover:bg-primary-orange-700"
                                 onClick={() => openQuickOrder(item)}
                               >
                                 <ShoppingCart className="w-3.5 h-3.5" />
@@ -830,15 +830,15 @@ export default function RestaurantPublicMenu() {
                         orderType === 'takeaway' && 'border-primary bg-primary/5'
                       )}>
                         <RadioGroupItem value="takeaway" className="sr-only" />
-                        <span className="text-lg">🥡</span>
-                        <span className="text-xs font-medium">À emporter</span>
+                        <span className="text-lg">ðŸ¥¡</span>
+                        <span className="text-xs font-medium">Ã€ emporter</span>
                       </label>
                       <label className={cn(
                         'flex flex-col items-center gap-1 p-3 border rounded-xl cursor-pointer transition-colors',
                         orderType === 'dine_in' && 'border-primary bg-primary/5'
                       )}>
                         <RadioGroupItem value="dine_in" className="sr-only" />
-                        <span className="text-lg">🍽️</span>
+                        <span className="text-lg">ðŸ½ï¸</span>
                         <span className="text-xs font-medium">Sur place</span>
                       </label>
                       <label className={cn(
@@ -846,7 +846,7 @@ export default function RestaurantPublicMenu() {
                         orderType === 'delivery' && 'border-primary bg-primary/5'
                       )}>
                         <RadioGroupItem value="delivery" className="sr-only" />
-                        <span className="text-lg">🛵</span>
+                        <span className="text-lg">ðŸ›µ</span>
                         <span className="text-xs font-medium">Livraison</span>
                       </label>
                     </div>
@@ -866,7 +866,7 @@ export default function RestaurantPublicMenu() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone">Téléphone *</Label>
+                    <Label htmlFor="phone">TÃ©lÃ©phone *</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -879,7 +879,7 @@ export default function RestaurantPublicMenu() {
                   
                   {orderType === 'dine_in' && (
                     <div>
-                      <Label htmlFor="table">Numéro de table *</Label>
+                      <Label htmlFor="table">NumÃ©ro de table *</Label>
                       <Input
                         id="table"
                         value={tableNumber}
@@ -897,7 +897,7 @@ export default function RestaurantPublicMenu() {
                         id="address"
                         value={deliveryAddress}
                         onChange={(e) => setDeliveryAddress(e.target.value)}
-                        placeholder="Entrez votre adresse complète"
+                        placeholder="Entrez votre adresse complÃ¨te"
                         className="mt-1"
                         rows={2}
                       />
@@ -910,7 +910,7 @@ export default function RestaurantPublicMenu() {
                       id="notes"
                       value={orderNotes}
                       onChange={(e) => setOrderNotes(e.target.value)}
-                      placeholder="Instructions spéciales..."
+                      placeholder="Instructions spÃ©ciales..."
                       className="mt-1"
                       rows={2}
                     />
@@ -941,7 +941,7 @@ export default function RestaurantPublicMenu() {
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
-                      Confirmer la commande • {cartTotal.toLocaleString()} GNF
+                      Confirmer la commande â€¢ {cartTotal.toLocaleString()} GNF
                     </>
                   )}
                 </Button>
@@ -964,12 +964,12 @@ export default function RestaurantPublicMenu() {
           {orderSuccess ? (
             // Success state
             <div className="text-center py-6 space-y-4">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
-                <Check className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-primary-orange-100 dark:bg-primary-orange-900/30 rounded-full flex items-center justify-center mx-auto">
+                <Check className="w-8 h-8 text-primary-orange-600" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-green-600">Commande envoyée !</h3>
-                <p className="text-muted-foreground mt-1">Référence: {lastOrderNumber}</p>
+                <h3 className="text-xl font-bold text-primary-orange-600">Commande envoyÃ©e !</h3>
+                <p className="text-muted-foreground mt-1">RÃ©fÃ©rence: {lastOrderNumber}</p>
               </div>
               <Card className="bg-muted/50">
                 <CardContent className="p-4 text-left space-y-2">
@@ -978,7 +978,7 @@ export default function RestaurantPublicMenu() {
                     <span className="font-medium">{quickOrderItem?.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Quantité</span>
+                    <span className="text-muted-foreground">QuantitÃ©</span>
                     <span className="font-medium">{quickOrderQuantity}</span>
                   </div>
                   <div className="flex justify-between font-bold">
@@ -988,7 +988,7 @@ export default function RestaurantPublicMenu() {
                 </CardContent>
               </Card>
               <p className="text-sm text-muted-foreground">
-                Le restaurant va préparer votre commande. Vous serez notifié quand elle sera prête.
+                Le restaurant va prÃ©parer votre commande. Vous serez notifiÃ© quand elle sera prÃªte.
               </p>
               <Button className="w-full" onClick={() => setShowQuickOrder(false)}>
                 Fermer
@@ -1022,7 +1022,7 @@ export default function RestaurantPublicMenu() {
                     
                     {/* Quantity selector */}
                     <div className="flex items-center justify-between mt-4 pt-3 border-t">
-                      <span className="font-medium">Quantité</span>
+                      <span className="font-medium">QuantitÃ©</span>
                       <div className="flex items-center gap-3">
                         <Button
                           size="icon"
@@ -1057,15 +1057,15 @@ export default function RestaurantPublicMenu() {
                       orderType === 'takeaway' && 'border-primary bg-primary/5'
                     )}>
                       <RadioGroupItem value="takeaway" className="sr-only" />
-                      <span className="text-lg">🥡</span>
-                      <span className="text-xs">À emporter</span>
+                      <span className="text-lg">ðŸ¥¡</span>
+                      <span className="text-xs">Ã€ emporter</span>
                     </label>
                     <label className={cn(
                       'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
                       orderType === 'dine_in' && 'border-primary bg-primary/5'
                     )}>
                       <RadioGroupItem value="dine_in" className="sr-only" />
-                      <span className="text-lg">🍽️</span>
+                      <span className="text-lg">ðŸ½ï¸</span>
                       <span className="text-xs">Sur place</span>
                     </label>
                     <label className={cn(
@@ -1073,7 +1073,7 @@ export default function RestaurantPublicMenu() {
                       orderType === 'delivery' && 'border-primary bg-primary/5'
                     )}>
                       <RadioGroupItem value="delivery" className="sr-only" />
-                      <span className="text-lg">🛵</span>
+                      <span className="text-lg">ðŸ›µ</span>
                       <span className="text-xs">Livraison</span>
                     </label>
                   </div>
@@ -1093,7 +1093,7 @@ export default function RestaurantPublicMenu() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="quick-phone">Téléphone *</Label>
+                  <Label htmlFor="quick-phone">TÃ©lÃ©phone *</Label>
                   <Input
                     id="quick-phone"
                     type="tel"
@@ -1107,7 +1107,7 @@ export default function RestaurantPublicMenu() {
 
               {orderType === 'dine_in' && (
                 <div>
-                  <Label htmlFor="quick-table">Numéro de table *</Label>
+                  <Label htmlFor="quick-table">NumÃ©ro de table *</Label>
                   <Input
                     id="quick-table"
                     value={tableNumber}
@@ -1141,8 +1141,8 @@ export default function RestaurantPublicMenu() {
                       paymentMethod === 'cash' && 'border-primary bg-primary/5'
                     )}>
                       <RadioGroupItem value="cash" className="sr-only" />
-                      <Wallet className="w-5 h-5 text-green-600" />
-                      <span className="text-xs">Espèces</span>
+                      <Wallet className="w-5 h-5 text-primary-orange-600" />
+                      <span className="text-xs">EspÃ¨ces</span>
                     </label>
                     <label className={cn(
                       'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
@@ -1185,7 +1185,7 @@ export default function RestaurantPublicMenu() {
                 </div>
                 
                 <Button
-                  className="w-full h-12 text-base bg-green-600 hover:bg-green-700"
+                  className="w-full h-12 text-base bg-primary-orange-600 hover:bg-primary-orange-700"
                   onClick={() => handleSubmitOrder(true)}
                   disabled={isSubmitting}
                 >

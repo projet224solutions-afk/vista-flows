@@ -110,20 +110,20 @@ export default function UserActivationPage() {
 
   if (isActivated && activationResult) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-blue-50 via-white to-primary-orange-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10 text-white" />
             </div>
-            <CardTitle className="text-2xl text-green-600">
+            <CardTitle className="text-2xl bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 bg-clip-text text-transparent">
               {t('activation.success.title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Alert className="border-green-200 bg-green-50">
-              <Sparkles className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+            <Alert className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+              <Sparkles className="h-4 w-4 text-primary-orange-600" />
+              <AlertDescription className="text-primary-blue-900">
                 {t('activation.success.description')}
               </AlertDescription>
             </Alert>
@@ -242,19 +242,19 @@ export default function UserActivationPage() {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-primary-orange-500" />
                 <span>{t('activation.benefits.item1')}</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-primary-orange-500" />
                 <span>{t('activation.benefits.item2')}</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-primary-orange-500" />
                 <span>{t('activation.benefits.item3')}</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-primary-orange-500" />
                 <span>{t('activation.benefits.item4')}</span>
               </div>
             </div>

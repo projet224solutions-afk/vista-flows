@@ -38,7 +38,7 @@ export default function AgentAffiliateRedirect() {
         throw new Error('Token d\'affiliation manquant');
       }
 
-      // Valider le token auprès de la Edge Function
+      // Valider le token auprÃ¨s de la Edge Function
       // CORRECT: utiliser le chemin avec query params dans l'URL de invoke
       const { data, error } = await supabase.functions.invoke(
         'agent-affiliate-link',
@@ -82,10 +82,10 @@ export default function AgentAffiliateRedirect() {
         }
 
         toast.success(`Bienvenue !`, {
-          description: `Vous avez été invité par ${data.agent_name || 'un agent'}. Créez votre compte pour continuer.`
+          description: `Vous avez Ã©tÃ© invitÃ© par ${data.agent_name || 'un agent'}. CrÃ©ez votre compte pour continuer.`
         });
 
-        // Rediriger vers la page de connexion après un court délai
+        // Rediriger vers la page de connexion aprÃ¨s un court dÃ©lai
         setTimeout(() => {
           navigate('/auth', { 
             state: { 
@@ -97,11 +97,11 @@ export default function AgentAffiliateRedirect() {
         }, 1500);
       } else {
         setStatus('invalid');
-        toast.error('Lien invalide ou expiré', {
+        toast.error('Lien invalide ou expirÃ©', {
           description: 'Ce lien d\'affiliation n\'est plus valide.'
         });
         
-        // Rediriger vers /auth quand même après un délai
+        // Rediriger vers /auth quand mÃªme aprÃ¨s un dÃ©lai
         setTimeout(() => {
           navigate('/auth');
         }, 2000);
@@ -123,17 +123,17 @@ export default function AgentAffiliateRedirect() {
           {status === 'loading' && (
             <>
               <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Vérification du lien...</h2>
+              <h2 className="text-xl font-semibold mb-2">VÃ©rification du lien...</h2>
               <p className="text-muted-foreground">Veuillez patienter</p>
             </>
           )}
 
           {status === 'valid' && (
             <>
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+              <div className="w-16 h-16 rounded-full bg-primary-orange-100 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-primary-orange-600" />
               </div>
-              <h2 className="text-xl font-semibold mb-2 text-green-700">Lien vérifié !</h2>
+              <h2 className="text-xl font-semibold mb-2 text-primary-orange-700">Lien vÃ©rifiÃ© !</h2>
               <p className="text-muted-foreground mb-4">
                 Invitation de <span className="font-semibold text-primary">{agentName}</span>
               </p>
@@ -150,7 +150,7 @@ export default function AgentAffiliateRedirect() {
               </div>
               <h2 className="text-xl font-semibold mb-2 text-red-700">Lien invalide</h2>
               <p className="text-muted-foreground mb-4">
-                Ce lien d'affiliation n'existe pas ou a expiré.
+                Ce lien d'affiliation n'existe pas ou a expirÃ©.
               </p>
               <p className="text-sm text-muted-foreground">
                 Redirection vers la page de connexion...

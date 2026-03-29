@@ -48,7 +48,7 @@ export default function CommunicationNotificationCenter({
       case 'missed_call':
         return 'bg-red-500';
       case 'call_incoming':
-        return 'bg-green-500';
+        return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
       default:
         return 'bg-gray-500';
     }

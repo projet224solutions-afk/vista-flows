@@ -1,6 +1,6 @@
 /**
- * Vue d'ensemble pharmacie — inspiré CVS Health Executive Dashboard
- * Revenue + Stock + Clients en un coup d'œil
+ * Vue d'ensemble pharmacie â€” inspirÃ© CVS Health Executive Dashboard
+ * Revenue + Stock + Clients en un coup d'Å“il
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +25,7 @@ export function PharmacyOverviewPanel({ stats, recentSales }: PharmacyOverviewPa
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* Revenue card — Main */}
+      {/* Revenue card â€” Main */}
       <Card className="lg:col-span-2 bg-gradient-to-br from-primary/5 via-background to-primary/3">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
@@ -65,7 +65,7 @@ export function PharmacyOverviewPanel({ stats, recentSales }: PharmacyOverviewPa
             </div>
             {stats.sales.totalOrders > 0 && (
               <div className="flex items-center gap-1.5 text-sm">
-                <TrendingUp className="w-4 h-4 text-emerald-500" />
+                <TrendingUp className="w-4 h-4 text-primary-blue-500" />
                 <span className="text-muted-foreground">
                   Panier moyen: {formatCurrency(stats.sales.totalRevenue / stats.sales.totalOrders)}
                 </span>
@@ -80,18 +80,18 @@ export function PharmacyOverviewPanel({ stats, recentSales }: PharmacyOverviewPa
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <Pill className="w-5 h-5 text-primary" />
-            État du stock
+            Ã‰tat du stock
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Circular score indicator */}
           <div className="flex items-center gap-4">
             <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${
-              stockPercent >= 80 ? 'border-emerald-500' :
+              stockPercent >= 80 ? 'border-primary-orange-500' :
               stockPercent >= 50 ? 'border-orange-500' : 'border-red-500'
             }`}>
               <span className={`text-lg font-bold ${
-                stockPercent >= 80 ? 'text-emerald-600' :
+                stockPercent >= 80 ? 'text-primary-blue-600' :
                 stockPercent >= 50 ? 'text-orange-600' : 'text-red-600'
               }`}>
                 {stockPercent}%
@@ -99,8 +99,8 @@ export function PharmacyOverviewPanel({ stats, recentSales }: PharmacyOverviewPa
             </div>
             <div className="flex-1 space-y-1">
               <div className="text-sm font-medium">
-                {stockPercent >= 80 ? '✅ Stock optimal' :
-                 stockPercent >= 50 ? '⚠️ Attention requise' : '🚨 Stock critique'}
+                {stockPercent >= 80 ? 'âœ… Stock optimal' :
+                 stockPercent >= 50 ? 'âš ï¸ Attention requise' : 'ðŸš¨ Stock critique'}
               </div>
               <div className="text-xs text-muted-foreground">
                 {inStock} / {stats.stock.totalProducts} produits en stock
@@ -112,7 +112,7 @@ export function PharmacyOverviewPanel({ stats, recentSales }: PharmacyOverviewPa
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                <CheckCircle className="w-3.5 h-3.5 text-primary-blue-500" />
                 <span className="text-muted-foreground">Normal</span>
               </span>
               <span className="font-semibold">{inStock}</span>
@@ -120,7 +120,7 @@ export function PharmacyOverviewPanel({ stats, recentSales }: PharmacyOverviewPa
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5 text-orange-500" />
-                <span className="text-muted-foreground">Bas (≤5)</span>
+                <span className="text-muted-foreground">Bas (â‰¤5)</span>
               </span>
               <span className="font-semibold text-orange-600">{stats.stock.lowStockCount}</span>
             </div>

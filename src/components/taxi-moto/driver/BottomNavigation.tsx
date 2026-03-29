@@ -1,5 +1,5 @@
 /**
- * NAVIGATION INFÉRIEURE - ULTRA PROFESSIONNEL
+ * NAVIGATION INFÃ‰RIEURE - ULTRA PROFESSIONNEL
  * Design glassmorphism avec animations fluides
  */
 
@@ -30,7 +30,7 @@ export function BottomNavigation({
     },
     { id: 'earnings', label: 'Gains', icon: Wallet },
     { id: 'my-purchases', label: 'Achats', icon: ShoppingBag },
-    { id: 'settings', label: 'Réglages', icon: Settings },
+    { id: 'settings', label: 'RÃ©glages', icon: Settings },
   ];
 
   return (
@@ -56,12 +56,12 @@ export function BottomNavigation({
               >
                 {/* Active background pill */}
                 {isActive && (
-                  <div className="absolute inset-x-2 inset-y-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20" />
+                  <div className="absolute inset-x-2 inset-y-1.5 rounded-xl bg-primary-blue-500/10 border border-primary-orange-500/20" />
                 )}
                 
                 {/* Highlight glow for active ride */}
                 {item.highlight && !isActive && (
-                  <div className="absolute inset-x-3 inset-y-2 rounded-xl bg-emerald-500/5 animate-pulse" />
+                  <div className="absolute inset-x-3 inset-y-2 rounded-xl bg-primary-blue-500/5 animate-pulse" />
                 )}
                 
                 {/* Icon container */}
@@ -69,15 +69,15 @@ export function BottomNavigation({
                   <item.icon className={cn(
                     "w-5 h-5 transition-all duration-200",
                     isActive 
-                      ? "text-emerald-400 scale-110" 
+                      ? "text-primary-blue-400 scale-110" 
                       : item.highlight 
-                        ? "text-emerald-400/70 animate-pulse"
+                        ? "text-primary-blue-400/70 animate-pulse"
                         : "text-gray-500"
                   )} />
                   
                   {/* Active ride badge */}
                   {item.badge && (
-                    <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50" />
+                    <span className="absolute -top-1 -right-1.5 w-2.5 h-2.5 bg-primary-blue-500 rounded-full animate-pulse shadow-lg shadow-primary-orange-500/50" />
                   )}
                 </div>
                 
@@ -85,9 +85,9 @@ export function BottomNavigation({
                 <span className={cn(
                   "text-[10px] font-medium relative z-10 transition-colors duration-200",
                   isActive 
-                    ? "text-emerald-400 font-semibold" 
+                    ? "text-primary-blue-400 font-semibold" 
                     : item.highlight 
-                      ? "text-emerald-400/70"
+                      ? "text-primary-blue-400/70"
                       : "text-gray-500"
                 )}>
                   {item.label}
@@ -95,7 +95,7 @@ export function BottomNavigation({
                 
                 {/* Active indicator line */}
                 {isActive && (
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent rounded-full" />
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-transparent via-primary-blue-400 to-transparent rounded-full" />
                 )}
               </button>
             );

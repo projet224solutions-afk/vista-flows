@@ -1,7 +1,7 @@
 /**
  * Bouton SOS d'urgence pour conducteurs Taxi Moto
- * Pression longue de 1.5s pour déclencher
- * Inclut enregistrement audio/vidéo après déclenchement
+ * Pression longue de 1.5s pour dÃ©clencher
+ * Inclut enregistrement audio/vidÃ©o aprÃ¨s dÃ©clenchement
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -57,7 +57,7 @@ export function TaxiMotoSOSButton({
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const cooldownTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Vérifier le cooldown au montage
+  // VÃ©rifier le cooldown au montage
   useEffect(() => {
     if (!taxiMotoSOSService.canTriggerSOS()) {
       const remaining = taxiMotoSOSService.getCooldownRemaining();
@@ -99,7 +99,7 @@ export function TaxiMotoSOSButton({
 
   const handleMouseDown = () => {
     if (!taxiMotoSOSService.canTriggerSOS()) {
-      toast.warning(`Attendez ${cooldownRemaining}s avant de réutiliser le SOS`);
+      toast.warning(`Attendez ${cooldownRemaining}s avant de rÃ©utiliser le SOS`);
       return;
     }
 
@@ -128,18 +128,18 @@ export function TaxiMotoSOSButton({
         driverName,
         driverPhone,
         bureauSyndicatId,
-        'Alerte SOS déclenchée par le conducteur'
+        'Alerte SOS dÃ©clenchÃ©e par le conducteur'
       );
 
       if (result.success && result.sos_id) {
         setActiveSOSId(result.sos_id);
         
-        toast.success('🚨 SOS ENVOYÉ!', {
-          description: '📹 Enregistrement audio/vidéo démarré automatiquement. Bureau Syndicat notifié.',
+        toast.success('ðŸš¨ SOS ENVOYÃ‰!', {
+          description: 'ðŸ“¹ Enregistrement audio/vidÃ©o dÃ©marrÃ© automatiquement. Bureau Syndicat notifiÃ©.',
           duration: 10000
         });
         
-        // Démarrer le cooldown
+        // DÃ©marrer le cooldown
         setCooldownRemaining(60);
         startCooldownTimer();
       } else {
@@ -159,13 +159,13 @@ export function TaxiMotoSOSButton({
     if (!activeSOSId) return;
     
     try {
-      // Mettre à jour le statut du SOS à "cancelled" ou "resolved"
+      // Mettre Ã  jour le statut du SOS Ã  "cancelled" ou "resolved"
       const { error } = await supabase
         .from('sos_alerts')
         .update({ 
           status: 'resolved',
           resolved_at: new Date().toISOString(),
-          resolution_notes: 'Annulé par le conducteur - fausse alerte'
+          resolution_notes: 'AnnulÃ© par le conducteur - fausse alerte'
         })
         .eq('id', activeSOSId);
 
@@ -176,14 +176,14 @@ export function TaxiMotoSOSButton({
       setShowRecorder(false);
       setShowCancelConfirm(false);
       
-      // Réinitialiser le cooldown
+      // RÃ©initialiser le cooldown
       setCooldownRemaining(0);
       if (cooldownTimer.current) {
         clearInterval(cooldownTimer.current);
       }
 
-      toast.success('SOS annulé', {
-        description: 'Le Bureau Syndicat a été notifié de l\'annulation'
+      toast.success('SOS annulÃ©', {
+        description: 'Le Bureau Syndicat a Ã©tÃ© notifiÃ© de l\'annulation'
       });
     } catch (error) {
       console.error('Erreur annulation SOS:', error);
@@ -200,7 +200,7 @@ export function TaxiMotoSOSButton({
         baseClasses,
         'fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full shadow-2xl',
         isPressed && 'scale-95',
-        isActive ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700',
+        isActive ? 'bg-primary-orange-600 hover:bg-primary-orange-700' : 'bg-red-600 hover:bg-red-700',
         cooldownRemaining > 0 && 'opacity-50 cursor-not-allowed',
         className
       );
@@ -211,7 +211,7 @@ export function TaxiMotoSOSButton({
         baseClasses,
         'h-9 px-3',
         isPressed && 'scale-95',
-        isActive ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700',
+        isActive ? 'bg-primary-orange-600 hover:bg-primary-orange-700' : 'bg-red-600 hover:bg-red-700',
         cooldownRemaining > 0 && 'opacity-50 cursor-not-allowed',
         className
       );
@@ -222,7 +222,7 @@ export function TaxiMotoSOSButton({
       baseClasses,
       'w-full h-14',
       isPressed && 'scale-95',
-      isActive ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700',
+      isActive ? 'bg-primary-orange-600 hover:bg-primary-orange-700' : 'bg-red-600 hover:bg-red-700',
       cooldownRemaining > 0 && 'opacity-50 cursor-not-allowed',
       className
     );
@@ -233,7 +233,7 @@ export function TaxiMotoSOSButton({
       return (
         <>
           <AlertTriangle className="w-5 h-5" />
-          {variant !== 'floating' && <span>⏱️ {cooldownRemaining}s</span>}
+          {variant !== 'floating' && <span>â±ï¸ {cooldownRemaining}s</span>}
         </>
       );
     }
@@ -242,7 +242,7 @@ export function TaxiMotoSOSButton({
       return (
         <>
           <AlertTriangle className="w-5 h-5 animate-pulse" />
-          {variant !== 'floating' && <span>SOS ENVOYÉ</span>}
+          {variant !== 'floating' && <span>SOS ENVOYÃ‰</span>}
         </>
       );
     }
@@ -309,8 +309,8 @@ export function TaxiMotoSOSButton({
           {/* Label informatif */}
           <div className="absolute -left-2 top-1/2 -translate-y-1/2 -translate-x-full mr-3 bg-black/80 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="flex flex-col gap-1">
-              <span className="font-semibold">🎥 Enregistrer preuve</span>
-              <span className="text-gray-300">❌ Annuler SOS</span>
+              <span className="font-semibold">ðŸŽ¥ Enregistrer preuve</span>
+              <span className="text-gray-300">âŒ Annuler SOS</span>
             </div>
           </div>
         </div>
@@ -326,19 +326,19 @@ export function TaxiMotoSOSButton({
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 pt-2">
               <p className="text-base">
-                Êtes-vous sûr de vouloir annuler cette alerte d'urgence ?
+                ÃŠtes-vous sÃ»r de vouloir annuler cette alerte d'urgence ?
               </p>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1 text-sm">
                 <p className="flex items-center gap-2">
-                  <span className="text-amber-600">⚠️</span>
+                  <span className="text-amber-600">âš ï¸</span>
                   <span className="text-amber-900">
-                    Le Bureau Syndicat sera notifié de l'annulation
+                    Le Bureau Syndicat sera notifiÃ© de l'annulation
                   </span>
                 </p>
                 <p className="flex items-center gap-2">
-                  <span className="text-green-600">✓</span>
+                  <span className="text-primary-orange-600">âœ“</span>
                   <span className="text-gray-700">
-                    L'alerte sera marquée comme "fausse alerte"
+                    L'alerte sera marquÃ©e comme "fausse alerte"
                   </span>
                 </p>
               </div>
@@ -377,7 +377,7 @@ export function TaxiMotoSOSButton({
               driverId={taxiId}
               driverName={driverName}
               onMediaSent={() => {
-                toast.success('Preuve envoyée!');
+                toast.success('Preuve envoyÃ©e!');
                 setShowRecorder(false);
               }}
             />

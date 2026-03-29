@@ -1,6 +1,6 @@
 /**
- * CATEGORIES PAGE - Catégories de produits et services
- * 224Solutions - Page des catégories
+ * CATEGORIES PAGE - CatÃ©gories de produits et services
+ * 224Solutions - Page des catÃ©gories
  */
 
 import { useNavigate } from 'react-router-dom';
@@ -31,14 +31,14 @@ const mainCategories: Category[] = [
     name: 'Billetterie',
     icon: <Ticket className="w-6 h-6" />,
     gradient: 'from-orange-500 to-red-500',
-    description: 'Événements, concerts, spectacles',
+    description: 'Ã‰vÃ©nements, concerts, spectacles',
     path: '/events'
   },
   {
     id: 'formations',
     name: 'Formations',
     icon: <GraduationCap className="w-6 h-6" />,
-    gradient: 'from-emerald-500 to-teal-500',
+    gradient: 'from-primary-blue-500 to-primary-orange-500',
     description: 'Cours et formations en ligne',
     path: '/formations'
   },
@@ -62,7 +62,7 @@ export default function Categories() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-bold text-foreground">Catégories</h1>
+            <h1 className="text-lg font-bold text-foreground">CatÃ©gories</h1>
             <p className="text-xs text-muted-foreground">Explorez nos produits et services</p>
           </div>
         </div>

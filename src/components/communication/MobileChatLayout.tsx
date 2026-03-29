@@ -1,6 +1,6 @@
 /**
- * Layout de Chat Mobile-First Réutilisable
- * Composant optimisé pour toutes les interfaces de messagerie
+ * Layout de Chat Mobile-First RÃ©utilisable
+ * Composant optimisÃ© pour toutes les interfaces de messagerie
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -64,12 +64,12 @@ export interface ChatConversation {
 }
 
 interface MobileChatLayoutProps {
-  // Données
+  // DonnÃ©es
   conversations: ChatConversation[];
   messages: ChatMessage[];
   currentUserId?: string;
   
-  // État
+  // Ã‰tat
   selectedConversation: ChatConversation | null;
   isLoading?: boolean;
   isSending?: boolean;
@@ -206,7 +206,7 @@ function ConversationItem({
           </AvatarFallback>
         </Avatar>
         {conversation.isOnline && (
-          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-background" />
+          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full border-2 border-background" />
         )}
       </div>
       
@@ -263,10 +263,10 @@ export default function MobileChatLayout({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Locale pour date-fns basée sur la langue globale
+  // Locale pour date-fns basÃ©e sur la langue globale
   const currentLocale = dateLocales[language] || enUS;
   
-  // Valeurs par défaut traduites
+  // Valeurs par dÃ©faut traduites
   const defaultEmptyMessage = emptyStateMessage || t('messaging.selectConversation') || 'Select a conversation';
   const defaultPlaceholder = placeholder || t('messaging.placeholder') || 'Type your message...';
 
@@ -405,7 +405,7 @@ export default function MobileChatLayout({
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold truncate">{selectedConversation.name}</h2>
                 {selectedConversation.isOnline && (
-                  <p className="text-xs text-green-500">En ligne</p>
+                  <p className="text-xs text-primary-orange-500">En ligne</p>
                 )}
               </div>
               
@@ -494,7 +494,7 @@ export default function MobileChatLayout({
             </div>
           </>
         ) : (
-          // État vide
+          // Ã‰tat vide
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
             <MessageSquare className="w-20 h-20 mb-4 opacity-20" />
             <p className="text-lg">{defaultEmptyMessage}</p>

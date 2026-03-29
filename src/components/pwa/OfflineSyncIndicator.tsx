@@ -2,9 +2,9 @@
  * OFFLINE SYNC INDICATOR - 224SOLUTIONS
  * Indicateur visuel du statut de connexion et de synchronisation
  *
- * Fonctionnalités:
+ * FonctionnalitÃ©s:
  * - Affiche le statut en ligne/hors ligne
- * - Montre le nombre d'éléments en attente de synchronisation
+ * - Montre le nombre d'Ã©lÃ©ments en attente de synchronisation
  * - Animation pendant la synchronisation
  * - Bouton pour forcer la synchronisation
  */
@@ -32,17 +32,17 @@ import {
 import { cn } from '@/lib/utils';
 
 interface OfflineSyncIndicatorProps {
-  /** Nombre d'éléments en attente de sync */
+  /** Nombre d'Ã©lÃ©ments en attente de sync */
   pendingCount?: number;
-  /** Nombre d'éléments en échec */
+  /** Nombre d'Ã©lÃ©ments en Ã©chec */
   failedCount?: number;
   /** La synchronisation est en cours */
   isSyncing?: boolean;
-  /** Date de la dernière synchronisation */
+  /** Date de la derniÃ¨re synchronisation */
   lastSyncAt?: Date | null;
   /** Callback pour forcer la synchronisation */
   onSync?: () => void;
-  /** Afficher en mode compact (icône seule) */
+  /** Afficher en mode compact (icÃ´ne seule) */
   compact?: boolean;
   /** Position du badge */
   position?: 'fixed' | 'inline';
@@ -66,30 +66,30 @@ export function OfflineSyncIndicator({
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-  // Déterminer l'état général
+  // DÃ©terminer l'Ã©tat gÃ©nÃ©ral
   const hasIssues = failedCount > 0;
   const hasPending = pendingCount > 0;
 
-  // Formater la durée offline
+  // Formater la durÃ©e offline
   const formatOfflineDuration = (seconds: number): string => {
     if (seconds < 60) return `${seconds}s`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}min`;
     return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}min`;
   };
 
-  // Formater la date de dernière sync
+  // Formater la date de derniÃ¨re sync
   const formatLastSync = (date: Date): string => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
 
-    if (minutes < 1) return 'À l\'instant';
+    if (minutes < 1) return 'Ã€ l\'instant';
     if (minutes < 60) return `Il y a ${minutes}min`;
     if (minutes < 1440) return `Il y a ${Math.floor(minutes / 60)}h`;
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
   };
 
-  // Icône principale
+  // IcÃ´ne principale
   const getStatusIcon = () => {
     if (isSyncing) {
       return <Loader2 className="w-4 h-4 animate-spin text-blue-500" />;
@@ -107,7 +107,7 @@ export function OfflineSyncIndicator({
       return <Cloud className="w-4 h-4 text-yellow-500" />;
     }
 
-    return <Wifi className="w-4 h-4 text-green-500" />;
+    return <Wifi className="w-4 h-4 text-primary-orange-500" />;
   };
 
   // Couleur du badge
@@ -116,19 +116,19 @@ export function OfflineSyncIndicator({
     if (isOffline) return 'bg-orange-500';
     if (hasIssues) return 'bg-red-500';
     if (hasPending) return 'bg-yellow-500';
-    return 'bg-green-500';
+    return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
   };
 
   // Texte du statut
   const getStatusText = () => {
     if (isSyncing) return 'Synchronisation...';
     if (isOffline) return 'Hors ligne';
-    if (hasIssues) return `${failedCount} en échec`;
+    if (hasIssues) return `${failedCount} en Ã©chec`;
     if (hasPending) return `${pendingCount} en attente`;
-    return 'Synchronisé';
+    return 'SynchronisÃ©';
   };
 
-  // Version compacte (icône seule avec badge)
+  // Version compacte (icÃ´ne seule avec badge)
   if (compact) {
     return (
       <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
@@ -176,7 +176,7 @@ export function OfflineSyncIndicator({
     );
   }
 
-  // Version étendue (barre complète)
+  // Version Ã©tendue (barre complÃ¨te)
   return (
     <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
       <PopoverTrigger asChild>
@@ -188,7 +188,7 @@ export function OfflineSyncIndicator({
             isOffline ? 'bg-orange-100 dark:bg-orange-900/30' :
             hasIssues ? 'bg-red-100 dark:bg-red-900/30' :
             hasPending ? 'bg-yellow-100 dark:bg-yellow-900/30' :
-            'bg-green-100 dark:bg-green-900/30',
+            'bg-primary-orange-100 dark:bg-primary-orange-900/30',
             'hover:opacity-80',
             className
           )}
@@ -199,7 +199,7 @@ export function OfflineSyncIndicator({
             isOffline ? 'text-orange-700 dark:text-orange-300' :
             hasIssues ? 'text-red-700 dark:text-red-300' :
             hasPending ? 'text-yellow-700 dark:text-yellow-300' :
-            'text-green-700 dark:text-green-300'
+            'text-primary-orange-700 dark:text-primary-orange-300'
           )}>
             {getStatusText()}
           </span>
@@ -262,16 +262,16 @@ function SyncPopoverContent({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold">État de la synchronisation</h4>
+        <h4 className="font-semibold">Ã‰tat de la synchronisation</h4>
         <div className={cn(
           'px-2 py-0.5 rounded-full text-xs font-medium',
-          isOffline ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+          isOffline ? 'bg-orange-100 text-orange-700' : 'bg-primary-orange-100 text-primary-orange-700'
         )}>
           {isOffline ? 'Hors ligne' : 'En ligne'}
         </div>
       </div>
 
-      {/* Durée offline */}
+      {/* DurÃ©e offline */}
       {isOffline && offlineDuration > 0 && (
         <div className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400">
           <Clock className="w-4 h-4" />
@@ -290,7 +290,7 @@ function SyncPopoverContent({
             'font-medium',
             pendingCount > 0 ? 'text-yellow-600' : 'text-gray-600'
           )}>
-            {pendingCount} élément(s)
+            {pendingCount} Ã©lÃ©ment(s)
           </span>
         </div>
 
@@ -298,10 +298,10 @@ function SyncPopoverContent({
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
-              En échec
+              En Ã©chec
             </span>
             <span className="font-medium text-red-600">
-              {failedCount} élément(s)
+              {failedCount} Ã©lÃ©ment(s)
             </span>
           </div>
         )}
@@ -310,7 +310,7 @@ function SyncPopoverContent({
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500 flex items-center gap-1">
               <CheckCircle className="w-3 h-3" />
-              Dernière sync
+              DerniÃ¨re sync
             </span>
             <span className="font-medium text-gray-600">
               {formatLastSync(lastSyncAt)}
@@ -344,7 +344,7 @@ function SyncPopoverContent({
       {/* Message hors ligne */}
       {isOffline && pendingCount > 0 && (
         <p className="text-xs text-gray-500 text-center">
-          Les données seront synchronisées automatiquement au retour de la connexion
+          Les donnÃ©es seront synchronisÃ©es automatiquement au retour de la connexion
         </p>
       )}
     </div>

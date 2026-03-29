@@ -1,6 +1,6 @@
 /**
  * CHINA LOGISTICS TRACKING COMPONENT
- * Suivi logistique multi-segments Chine → Client
+ * Suivi logistique multi-segments Chine â†’ Client
  * Extension du module dropshipping existant
  * 
  * @module ChinaLogisticsTracking
@@ -81,14 +81,14 @@ const TRACKING_STEPS: TrackingStep[] = [
     key: 'pending_supplier_confirm',
     label: 'En attente fournisseur',
     icon: <Clock className="w-4 h-4" />,
-    description: 'Commande envoyée au fournisseur',
+    description: 'Commande envoyÃ©e au fournisseur',
     segment: 'supplier'
   },
   {
     key: 'supplier_confirmed',
-    label: 'Confirmé par fournisseur',
+    label: 'ConfirmÃ© par fournisseur',
     icon: <CheckCircle className="w-4 h-4" />,
-    description: 'Le fournisseur a accepté la commande',
+    description: 'Le fournisseur a acceptÃ© la commande',
     segment: 'supplier'
   },
   {
@@ -100,44 +100,44 @@ const TRACKING_STEPS: TrackingStep[] = [
   },
   {
     key: 'quality_check',
-    label: 'Contrôle qualité',
+    label: 'ContrÃ´le qualitÃ©',
     icon: <ShieldAlert className="w-4 h-4" />,
-    description: 'Vérification avant expédition',
+    description: 'VÃ©rification avant expÃ©dition',
     segment: 'supplier'
   },
   {
     key: 'ready_to_ship',
-    label: 'Prêt à expédier',
+    label: 'PrÃªt Ã  expÃ©dier',
     icon: <Package className="w-4 h-4" />,
-    description: 'Produit emballé et prêt',
+    description: 'Produit emballÃ© et prÃªt',
     segment: 'supplier'
   },
   {
     key: 'shipped_domestic_china',
-    label: 'Expédié en Chine',
+    label: 'ExpÃ©diÃ© en Chine',
     icon: <Truck className="w-4 h-4" />,
-    description: 'En route vers entrepôt de consolidation',
+    description: 'En route vers entrepÃ´t de consolidation',
     segment: 'china'
   },
   {
     key: 'at_consolidation_warehouse',
-    label: 'Entrepôt de transit',
+    label: 'EntrepÃ´t de transit',
     icon: <Building2 className="w-4 h-4" />,
-    description: 'Arrivé à l\'entrepôt de consolidation',
+    description: 'ArrivÃ© Ã  l\'entrepÃ´t de consolidation',
     segment: 'china'
   },
   {
     key: 'shipped_international',
-    label: 'Expédition internationale',
+    label: 'ExpÃ©dition internationale',
     icon: <Plane className="w-4 h-4" />,
     description: 'En route vers le pays de destination',
     segment: 'international'
   },
   {
     key: 'customs_clearance',
-    label: 'Dédouanement',
+    label: 'DÃ©douanement',
     icon: <Globe className="w-4 h-4" />,
-    description: 'En cours de dédouanement',
+    description: 'En cours de dÃ©douanement',
     segment: 'customs'
   },
   {
@@ -149,7 +149,7 @@ const TRACKING_STEPS: TrackingStep[] = [
   },
   {
     key: 'delivered',
-    label: 'Livré',
+    label: 'LivrÃ©',
     icon: <Home className="w-4 h-4" />,
     description: 'Colis remis au destinataire',
     segment: 'lastmile'
@@ -161,13 +161,13 @@ const STATUS_COLORS: Record<string, string> = {
   supplier_confirmed: 'bg-blue-500',
   in_production: 'bg-purple-500',
   quality_check: 'bg-indigo-500',
-  ready_to_ship: 'bg-cyan-500',
-  shipped_domestic_china: 'bg-teal-500',
-  at_consolidation_warehouse: 'bg-emerald-500',
-  shipped_international: 'bg-green-500',
+  ready_to_ship: 'bg-primary-blue-500',
+  shipped_domestic_china: 'bg-primary-orange-500',
+  at_consolidation_warehouse: 'bg-primary-blue-500',
+  shipped_international: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
   customs_clearance: 'bg-orange-500',
   last_mile_delivery: 'bg-lime-500',
-  delivered: 'bg-green-600',
+  delivered: 'bg-primary-orange-600',
   cancelled: 'bg-red-500',
   disputed: 'bg-red-600'
 };
@@ -225,9 +225,9 @@ export function ChinaLogisticsTracking({
     setIsRefreshing(true);
     try {
       await onRefreshTracking();
-      toast.success('Tracking mis à jour');
+      toast.success('Tracking mis Ã  jour');
     } catch (error) {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error('Erreur lors de la mise Ã  jour');
     } finally {
       setIsRefreshing(false);
     }
@@ -235,7 +235,7 @@ export function ChinaLogisticsTracking({
 
   const copyTrackingNumber = (number: string) => {
     navigator.clipboard.writeText(number);
-    toast.success('Numéro copié !');
+    toast.success('NumÃ©ro copiÃ© !');
   };
 
   // ==================== RENDER ====================
@@ -263,7 +263,7 @@ export function ChinaLogisticsTracking({
             <div className="flex items-center gap-4">
               {estimatedDelivery && daysRemaining !== null && (
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Livraison estimée</p>
+                  <p className="text-sm text-muted-foreground">Livraison estimÃ©e</p>
                   <p className="font-semibold">
                     {format(estimatedDelivery, 'dd MMM yyyy', { locale: fr })}
                   </p>
@@ -296,12 +296,12 @@ export function ChinaLogisticsTracking({
         </CardContent>
       </Card>
 
-      {/* Timeline détaillée */}
+      {/* Timeline dÃ©taillÃ©e */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Suivi détaillé</CardTitle>
+          <CardTitle className="text-lg">Suivi dÃ©taillÃ©</CardTitle>
           <CardDescription>
-            Parcours de votre colis de la Chine jusqu'à destination
+            Parcours de votre colis de la Chine jusqu'Ã  destination
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -320,7 +320,7 @@ export function ChinaLogisticsTracking({
                       ${isCompleted 
                         ? isCurrent 
                           ? 'bg-primary text-primary-foreground ring-4 ring-primary/20' 
-                          : 'bg-green-500 text-white'
+                          : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white'
                         : 'bg-muted text-muted-foreground'
                       }
                     `}>
@@ -332,7 +332,7 @@ export function ChinaLogisticsTracking({
                     </div>
                     {index < TRACKING_STEPS.length - 1 && (
                       <div className={`w-0.5 flex-1 mt-2 ${
-                        isCompleted ? 'bg-green-500' : 'bg-muted'
+                        isCompleted ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-muted'
                       }`} />
                     )}
                   </div>
@@ -430,18 +430,18 @@ export function ChinaLogisticsTracking({
         </CardContent>
       </Card>
 
-      {/* Détails logistiques */}
+      {/* DÃ©tails logistiques */}
       {logistics && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Info className="w-4 h-4" />
-              Détails logistiques
+              DÃ©tails logistiques
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Méthode de transport */}
+              {/* MÃ©thode de transport */}
               <div className="space-y-4">
                 <h4 className="font-medium flex items-center gap-2">
                   {getTransportIcon(logistics.transport_method)}
@@ -472,7 +472,7 @@ export function ChinaLogisticsTracking({
               <div className="space-y-4">
                 <h4 className="font-medium flex items-center gap-2">
                   <Globe className="w-4 h-4" />
-                  Informations douanières
+                  Informations douaniÃ¨res
                 </h4>
                 
                 <div className="space-y-2 text-sm">
@@ -482,7 +482,7 @@ export function ChinaLogisticsTracking({
                       logistics.customs_status === 'cleared' ? 'default' :
                       logistics.customs_status === 'held' ? 'destructive' : 'secondary'
                     }>
-                      {logistics.customs_status === 'cleared' ? 'Dédouané' :
+                      {logistics.customs_status === 'cleared' ? 'DÃ©douanÃ©' :
                        logistics.customs_status === 'held' ? 'Retenu' :
                        logistics.customs_status === 'pending' ? 'En attente' : logistics.customs_status}
                     </Badge>
@@ -490,7 +490,7 @@ export function ChinaLogisticsTracking({
                   
                   {logistics.customs_reference && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Référence</span>
+                      <span className="text-muted-foreground">RÃ©fÃ©rence</span>
                       <span className="font-mono">{logistics.customs_reference}</span>
                     </div>
                   )}
@@ -512,7 +512,7 @@ export function ChinaLogisticsTracking({
               <Alert className="mt-4">
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Information client:</strong> Délai estimé {logistics.customer_estimated_min_days}-{logistics.customer_estimated_max_days} jours ouvrables
+                  <strong>Information client:</strong> DÃ©lai estimÃ© {logistics.customer_estimated_min_days}-{logistics.customer_estimated_max_days} jours ouvrables
                 </AlertDescription>
               </Alert>
             )}

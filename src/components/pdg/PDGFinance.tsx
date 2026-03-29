@@ -34,16 +34,16 @@ export default function PDGFinance() {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [showWalletsDialog, setShowWalletsDialog] = useState(false);
 
-  // Auto-rafraîchir les données au montage du composant
+  // Auto-rafraÃ®chir les donnÃ©es au montage du composant
   useEffect(() => {
-    console.log('🔄 PDGFinance monté - rafraîchissement des données');
+    console.log('ðŸ”„ PDGFinance montÃ© - rafraÃ®chissement des donnÃ©es');
     refetch();
   }, []);
 
   // Log des stats pour debug
   useEffect(() => {
     if (!loading) {
-      console.log('📊 Stats Finance PDG:', {
+      console.log('ðŸ“Š Stats Finance PDG:', {
         total_revenue: stats.total_revenue,
         total_commission: stats.total_commission,
         pending_payments: stats.pending_payments,
@@ -85,7 +85,7 @@ export default function PDGFinance() {
       a.click();
       window.URL.revokeObjectURL(url);
       
-      toast.success('Export réussi');
+      toast.success('Export rÃ©ussi');
     } catch (error) {
       console.error('Erreur export:', error);
       toast.error('Erreur lors de l\'export');
@@ -214,11 +214,11 @@ export default function PDGFinance() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-green-500" />
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-primary-orange-500" />
               </div>
               Revenus Totaux
             </CardTitle>
@@ -228,7 +228,7 @@ export default function PDGFinance() {
               <p className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                 {(stats.total_revenue || 0).toLocaleString()} GNF
               </p>
-              <p className="text-xs text-green-500 flex items-center gap-1">
+              <p className="text-xs text-primary-orange-500 flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 +12.5% ce mois
               </p>
@@ -299,7 +299,7 @@ export default function PDGFinance() {
                 {stats.active_wallets || 0}
               </p>
               <p className="text-xs text-muted-foreground">
-                Cliquez pour voir les détails
+                Cliquez pour voir les dÃ©tails
               </p>
             </div>
           </CardContent>
@@ -312,9 +312,9 @@ export default function PDGFinance() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-primary" />
-              Évolution des Transactions
+              Ã‰volution des Transactions
             </CardTitle>
-            <CardDescription>Volume des 10 dernières transactions</CardDescription>
+            <CardDescription>Volume des 10 derniÃ¨res transactions</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
@@ -339,7 +339,7 @@ export default function PDGFinance() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-primary" />
-              Répartition des Commissions
+              RÃ©partition des Commissions
             </CardTitle>
             <CardDescription>Par transaction</CardDescription>
           </CardHeader>
@@ -360,8 +360,8 @@ export default function PDGFinance() {
       {/* Export Section */}
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>Export des Données</CardTitle>
-          <CardDescription>Télécharger les rapports financiers</CardDescription>
+          <CardTitle>Export des DonnÃ©es</CardTitle>
+          <CardDescription>TÃ©lÃ©charger les rapports financiers</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
@@ -392,8 +392,8 @@ export default function PDGFinance() {
       {/* Recent Transactions */}
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Transactions Récentes</CardTitle>
-          <CardDescription>Les 10 dernières opérations financières</CardDescription>
+          <CardTitle className="text-xl">Transactions RÃ©centes</CardTitle>
+          <CardDescription>Les 10 derniÃ¨res opÃ©rations financiÃ¨res</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -406,12 +406,12 @@ export default function PDGFinance() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                      trans.status === 'completed' ? 'bg-green-500/10' : 
+                      trans.status === 'completed' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10' : 
                       trans.status === 'pending' ? 'bg-orange-500/10' : 
                       'bg-red-500/10'
                     }`}>
                       <DollarSign className={`w-6 h-6 ${
-                        trans.status === 'completed' ? 'text-green-500' : 
+                        trans.status === 'completed' ? 'text-primary-orange-500' : 
                         trans.status === 'pending' ? 'text-orange-500' : 
                         'text-red-500'
                       }`} />
@@ -441,7 +441,7 @@ export default function PDGFinance() {
                       {Number(trans.amount).toLocaleString()} GNF
                     </p>
                     <Badge variant="outline" className={
-                      trans.status === 'completed' ? 'border-green-500/50 bg-green-500/10 text-green-500' :
+                      trans.status === 'completed' ? 'border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500' :
                       trans.status === 'pending' ? 'border-orange-500/50 bg-orange-500/10 text-orange-500' :
                       'border-red-500/50 bg-red-500/10 text-red-500'
                     }>
@@ -461,17 +461,17 @@ export default function PDGFinance() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <Wallet className="w-6 h-6 text-primary" />
-              Détails des Wallets ({wallets?.length || 0})
+              DÃ©tails des Wallets ({wallets?.length || 0})
             </DialogTitle>
             <DialogDescription>
-              Liste complète de tous les wallets avec leurs informations détaillées
+              Liste complÃ¨te de tous les wallets avec leurs informations dÃ©taillÃ©es
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 mt-4">
             {!wallets || wallets.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                Aucun wallet trouvé
+                Aucun wallet trouvÃ©
               </div>
             ) : (
               wallets.map((wallet) => (
@@ -507,7 +507,7 @@ export default function PDGFinance() {
                           {wallet.profiles?.phone && (
                             <div className="flex items-center gap-2 text-sm">
                               <Phone className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-muted-foreground">Téléphone:</span>
+                              <span className="text-muted-foreground">TÃ©lÃ©phone:</span>
                               <span className="font-medium">{wallet.profiles.phone}</span>
                             </div>
                           )}
@@ -524,9 +524,9 @@ export default function PDGFinance() {
 
                       {/* Informations wallet */}
                       <div className="space-y-4">
-                        <div className="p-4 rounded-lg bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20">
+                        <div className="p-4 rounded-lg bg-gradient-to-br from-primary-blue-500/10 to-transparent border border-primary-orange-500/20">
                           <p className="text-sm text-muted-foreground mb-1">Solde</p>
-                          <p className="text-3xl font-bold text-green-600">
+                          <p className="text-3xl font-bold text-primary-orange-600">
                             {Number(wallet.balance).toLocaleString()} {wallet.currency}
                           </p>
                         </div>
@@ -536,7 +536,7 @@ export default function PDGFinance() {
                             <span className="text-muted-foreground">Statut:</span>
                             <Badge 
                               variant={wallet.wallet_status === 'active' ? 'default' : 'secondary'}
-                              className={wallet.wallet_status === 'active' ? 'bg-green-500' : ''}
+                              className={wallet.wallet_status === 'active' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : ''}
                             >
                               {wallet.wallet_status}
                             </Badge>
@@ -544,7 +544,7 @@ export default function PDGFinance() {
 
                           <div className="flex items-center gap-2 text-sm">
                             <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Créé le:</span>
+                            <span className="text-muted-foreground">CrÃ©Ã© le:</span>
                             <span className="font-medium">
                               {new Date(wallet.created_at).toLocaleDateString('fr-FR', {
                                 day: 'numeric',
@@ -556,7 +556,7 @@ export default function PDGFinance() {
 
                           <div className="flex items-center gap-2 text-sm">
                             <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Mis à jour:</span>
+                            <span className="text-muted-foreground">Mis Ã  jour:</span>
                             <span className="font-medium">
                               {new Date(wallet.updated_at).toLocaleDateString('fr-FR', {
                                 day: 'numeric',

@@ -36,17 +36,17 @@ const statusConfig = {
     icon: Clock
   },
   held: {
-    label: 'Bloqué',
+    label: 'BloquÃ©',
     className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
     icon: AlertCircle
   },
   released: {
-    label: 'Libéré',
-    className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+    label: 'LibÃ©rÃ©',
+    className: 'bg-primary-orange-100 text-primary-orange-800 dark:bg-primary-orange-900/30 dark:text-primary-orange-300',
     icon: CheckCircle
   },
   refunded: {
-    label: 'Remboursé',
+    label: 'RemboursÃ©',
     className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
     icon: XCircle
   },
@@ -110,7 +110,7 @@ export default function EscrowManagementDialog({
           <DialogHeader>
             <DialogTitle>Gestion des Transactions Escrow</DialogTitle>
             <DialogDescription>
-              Gérez les transactions sécurisées avec escrow
+              GÃ©rez les transactions sÃ©curisÃ©es avec escrow
             </DialogDescription>
           </DialogHeader>
 
@@ -121,7 +121,7 @@ export default function EscrowManagementDialog({
               <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Aucune transaction escrow</h3>
               <p className="text-muted-foreground">
-                Les transactions escrow apparaîtront ici
+                Les transactions escrow apparaÃ®tront ici
               </p>
             </div>
           ) : (
@@ -168,13 +168,13 @@ export default function EscrowManagementDialog({
 
                           <div className="mt-3 text-sm text-muted-foreground grid grid-cols-2 gap-2">
                             <div>
-                              ⏰ Créé: {new Date(transaction.created_at).toLocaleString('fr-FR', {
+                              â° CrÃ©Ã©: {new Date(transaction.created_at).toLocaleString('fr-FR', {
                                 dateStyle: 'short',
                                 timeStyle: 'short'
                               })}
                             </div>
                             <div>
-                              🔄 Maj: {new Date(transaction.updated_at).toLocaleString('fr-FR', {
+                              ðŸ”„ Maj: {new Date(transaction.updated_at).toLocaleString('fr-FR', {
                                 dateStyle: 'short',
                                 timeStyle: 'short'
                               })}
@@ -190,7 +190,7 @@ export default function EscrowManagementDialog({
                                 variant="default"
                                 onClick={() => openActionDialog(transaction.id, 'release')}
                               >
-                                Libérer (Admin)
+                                LibÃ©rer (Admin)
                               </Button>
                             ) : (
                               <Button
@@ -199,7 +199,7 @@ export default function EscrowManagementDialog({
                                 onClick={() => openActionDialog(transaction.id, 'request')}
                               >
                                 <Bell className="w-4 h-4 mr-2" />
-                                Demander libération
+                                Demander libÃ©ration
                               </Button>
                             )}
                             <Button
@@ -235,14 +235,14 @@ export default function EscrowManagementDialog({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {actionType === 'release' && 'Libérer les fonds (Admin)'}
-              {actionType === 'request' && 'Demander la libération'}
+              {actionType === 'release' && 'LibÃ©rer les fonds (Admin)'}
+              {actionType === 'request' && 'Demander la libÃ©ration'}
               {actionType === 'refund' && 'Rembourser la transaction'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {actionType === 'release' && 'Les fonds seront transférés au vendeur avec commission. Cette action est irréversible.'}
-              {actionType === 'request' && 'Une notification sera envoyée à l\'administrateur pour demander la libération des fonds. Le client peut aussi confirmer la réception pour libérer automatiquement.'}
-              {actionType === 'refund' && 'Les fonds seront retournés au payeur. Cette action est irréversible.'}
+              {actionType === 'release' && 'Les fonds seront transfÃ©rÃ©s au vendeur avec commission. Cette action est irrÃ©versible.'}
+              {actionType === 'request' && 'Une notification sera envoyÃ©e Ã  l\'administrateur pour demander la libÃ©ration des fonds. Le client peut aussi confirmer la rÃ©ception pour libÃ©rer automatiquement.'}
+              {actionType === 'refund' && 'Les fonds seront retournÃ©s au payeur. Cette action est irrÃ©versible.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

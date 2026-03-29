@@ -31,13 +31,13 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
     };
 
     try {
-      // 1. Vérifier session utilisateur
+      // 1. VÃ©rifier session utilisateur
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       result.checks.push({
         name: 'Session Utilisateur',
         status: !userError && user ? 'success' : 'error',
-        message: user ? `Connecté: ${user.email}` : 'Non connecté',
+        message: user ? `ConnectÃ©: ${user.email}` : 'Non connectÃ©',
         details: userError ? userError.message : null
       });
 
@@ -49,7 +49,7 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
         return;
       }
 
-      // 2. Vérifier profil agent
+      // 2. VÃ©rifier profil agent
       const { data: agentData, error: agentError } = await supabase
         .from('agents_management')
         .select('*')
@@ -59,14 +59,14 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
       result.checks.push({
         name: 'Profil Agent',
         status: !agentError && agentData ? 'success' : 'error',
-        message: agentData ? `Agent trouvé: ${agentData.name}` : 'Agent non trouvé',
+        message: agentData ? `Agent trouvÃ©: ${agentData.name}` : 'Agent non trouvÃ©',
         details: agentError ? agentError.message : null
       });
 
       result.agent = agentData;
 
       if (!agentData) {
-        // Vérifier si c'est un PDG
+        // VÃ©rifier si c'est un PDG
         const { data: pdgData, error: pdgError } = await supabase
           .from('pdg_management')
           .select('*')
@@ -76,7 +76,7 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
         result.checks.push({
           name: 'Profil PDG',
           status: !pdgError && pdgData ? 'success' : 'warning',
-          message: pdgData ? `PDG trouvé: ${pdgData.name}` : 'PDG non trouvé',
+          message: pdgData ? `PDG trouvÃ©: ${pdgData.name}` : 'PDG non trouvÃ©',
           details: pdgError ? pdgError.message : null
         });
 
@@ -89,7 +89,7 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
         }
       }
 
-      // 3. Vérifier permissions
+      // 3. VÃ©rifier permissions
       const permissions = result.agent?.permissions || [];
       const hasCreateUsers = permissions.includes('create_users') || 
                             permissions.includes('all') ||
@@ -100,27 +100,27 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
       result.checks.push({
         name: 'Permission create_users',
         status: hasCreateUsers ? 'success' : 'error',
-        message: hasCreateUsers ? 'Permission accordée' : 'Permission manquante',
+        message: hasCreateUsers ? 'Permission accordÃ©e' : 'Permission manquante',
         details: `Permissions actuelles: ${permissions.join(', ') || 'Aucune'}`
       });
 
-      // 4. Vérifier can_create_sub_agent
+      // 4. VÃ©rifier can_create_sub_agent
       const canCreateSubAgent = result.agent?.can_create_sub_agent || result.agent?.isPdg;
       result.canCreateAgents = canCreateSubAgent;
 
       result.checks.push({
-        name: 'Créer des agents',
+        name: 'CrÃ©er des agents',
         status: canCreateSubAgent ? 'success' : 'warning',
-        message: canCreateSubAgent ? 'Peut créer des sous-agents' : 'Ne peut pas créer de sous-agents',
-        details: result.agent?.isPdg ? 'PDG - toujours autorisé' : null
+        message: canCreateSubAgent ? 'Peut crÃ©er des sous-agents' : 'Ne peut pas crÃ©er de sous-agents',
+        details: result.agent?.isPdg ? 'PDG - toujours autorisÃ©' : null
       });
 
-      // 5. Vérifier agent actif
+      // 5. VÃ©rifier agent actif
       const isActive = result.agent?.is_active !== false;
       result.checks.push({
         name: 'Statut Agent',
         status: isActive ? 'success' : 'error',
-        message: isActive ? 'Agent actif' : 'Agent désactivé',
+        message: isActive ? 'Agent actif' : 'Agent dÃ©sactivÃ©',
         details: null
       });
 
@@ -128,8 +128,8 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
       result.checks.push({
         name: 'Test Edge Function',
         status: 'success',
-        message: 'Test à effectuer manuellement',
-        details: 'Essayez de créer un utilisateur pour tester'
+        message: 'Test Ã  effectuer manuellement',
+        details: 'Essayez de crÃ©er un utilisateur pour tester'
       });
 
     } catch (error: any) {
@@ -156,7 +156,7 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
       <Card>
         <CardHeader>
           <CardTitle>Diagnostic des Permissions</CardTitle>
-          <CardDescription>Vérifiez vos permissions agent</CardDescription>
+          <CardDescription>VÃ©rifiez vos permissions agent</CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={runDiagnostic} disabled={loading}>
@@ -178,7 +178,7 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
           <div>
             <CardTitle>Diagnostic des Permissions</CardTitle>
             <CardDescription>
-              Dernière vérification: {new Date(diagnosticResult.timestamp).toLocaleTimeString()}
+              DerniÃ¨re vÃ©rification: {new Date(diagnosticResult.timestamp).toLocaleTimeString()}
             </CardDescription>
           </div>
           <Button onClick={runDiagnostic} disabled={loading} size="sm">
@@ -187,12 +187,12 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Résumé */}
+        {/* RÃ©sumÃ© */}
         <Alert variant={hasErrors ? 'destructive' : allSuccess ? 'default' : 'default'}>
           <AlertDescription>
-            {allSuccess && '✅ Toutes les vérifications ont réussi'}
-            {hasErrors && '❌ Des erreurs ont été détectées'}
-            {!allSuccess && !hasErrors && '⚠️ Certaines permissions sont manquantes'}
+            {allSuccess && 'âœ… Toutes les vÃ©rifications ont rÃ©ussi'}
+            {hasErrors && 'âŒ Des erreurs ont Ã©tÃ© dÃ©tectÃ©es'}
+            {!allSuccess && !hasErrors && 'âš ï¸ Certaines permissions sont manquantes'}
           </AlertDescription>
         </Alert>
 
@@ -201,37 +201,37 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
           <div className="p-3 border rounded-lg">
             <div className="flex items-center gap-2">
               {diagnosticResult.canCreateUsers ? (
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <CheckCircle2 className="h-5 w-5 text-primary-orange-600" />
               ) : (
                 <XCircle className="h-5 w-5 text-red-600" />
               )}
-              <span className="font-medium">Créer Utilisateurs</span>
+              <span className="font-medium">CrÃ©er Utilisateurs</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {diagnosticResult.canCreateUsers ? 'Autorisé' : 'Non autorisé'}
+              {diagnosticResult.canCreateUsers ? 'AutorisÃ©' : 'Non autorisÃ©'}
             </p>
           </div>
           <div className="p-3 border rounded-lg">
             <div className="flex items-center gap-2">
               {diagnosticResult.canCreateAgents ? (
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <CheckCircle2 className="h-5 w-5 text-primary-orange-600" />
               ) : (
                 <AlertTriangle className="h-5 w-5 text-yellow-600" />
               )}
-              <span className="font-medium">Créer Agents</span>
+              <span className="font-medium">CrÃ©er Agents</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {diagnosticResult.canCreateAgents ? 'Autorisé' : 'Non autorisé'}
+              {diagnosticResult.canCreateAgents ? 'AutorisÃ©' : 'Non autorisÃ©'}
             </p>
           </div>
         </div>
 
-        {/* Détails des vérifications */}
+        {/* DÃ©tails des vÃ©rifications */}
         <div className="space-y-2">
-          <h4 className="font-semibold text-sm">Vérifications détaillées</h4>
+          <h4 className="font-semibold text-sm">VÃ©rifications dÃ©taillÃ©es</h4>
           {diagnosticResult.checks.map((check: any, index: number) => (
             <div key={index} className="flex items-start gap-3 p-2 bg-muted/30 rounded">
-              {check.status === 'success' && <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />}
+              {check.status === 'success' && <CheckCircle2 className="h-4 w-4 text-primary-orange-600 mt-0.5" />}
               {check.status === 'error' && <XCircle className="h-4 w-4 text-red-600 mt-0.5" />}
               {check.status === 'warning' && <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />}
               <div className="flex-1">
@@ -271,10 +271,10 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
             <AlertDescription>
               <strong>Solutions possibles:</strong>
               <ul className="list-disc list-inside mt-2 text-sm space-y-1">
-                <li>Vérifiez que votre compte agent est actif</li>
-                <li>Contactez le PDG pour obtenir les permissions nécessaires</li>
-                <li>Assurez-vous d'être connecté avec le bon compte</li>
-                <li>Essayez de vous déconnecter puis reconnecter</li>
+                <li>VÃ©rifiez que votre compte agent est actif</li>
+                <li>Contactez le PDG pour obtenir les permissions nÃ©cessaires</li>
+                <li>Assurez-vous d'Ãªtre connectÃ© avec le bon compte</li>
+                <li>Essayez de vous dÃ©connecter puis reconnecter</li>
               </ul>
             </AlertDescription>
           </Alert>

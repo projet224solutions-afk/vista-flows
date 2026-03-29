@@ -40,7 +40,7 @@ export default function AgentActivation() {
       if (result.valid && result.invitation) {
         setValid(true);
         setInvitation(result.invitation);
-        // Pré-remplir l'email
+        // PrÃ©-remplir l'email
         setFormData(prev => ({ ...prev, email: result.invitation.email }));
       } else {
         toast.error(result.error || 'Invitation invalide');
@@ -64,14 +64,14 @@ export default function AgentActivation() {
     }
 
     if (formData.password.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caractères');
+      toast.error('Le mot de passe doit contenir au moins 6 caractÃ¨res');
       return;
     }
 
     try {
       setValidating(true);
 
-      // 1. Créer le compte utilisateur
+      // 1. CrÃ©er le compte utilisateur
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -85,7 +85,7 @@ export default function AgentActivation() {
       if (authError) throw authError;
 
       if (!authData.user) {
-        throw new Error('Erreur lors de la création du compte');
+        throw new Error('Erreur lors de la crÃ©ation du compte');
       }
 
       // 2. Accepter l'invitation et lier le compte
@@ -98,7 +98,7 @@ export default function AgentActivation() {
         throw new Error(result.error);
       }
 
-      toast.success('🎉 Compte agent activé avec succès!');
+      toast.success('ðŸŽ‰ Compte agent activÃ© avec succÃ¨s!');
       
       // Redirection vers le dashboard agent
       setTimeout(() => {
@@ -120,7 +120,7 @@ export default function AgentActivation() {
           <CardContent className="pt-6">
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
-              <p className="text-lg">Vérification de l'invitation...</p>
+              <p className="text-lg">VÃ©rification de l'invitation...</p>
             </div>
           </CardContent>
         </Card>
@@ -140,10 +140,10 @@ export default function AgentActivation() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Cette invitation n'est pas valide ou a expiré.
+              Cette invitation n'est pas valide ou a expirÃ©.
             </p>
             <Button onClick={() => navigate('/')} className="w-full">
-              Retour à l'accueil
+              Retour Ã  l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -153,17 +153,17 @@ export default function AgentActivation() {
 
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-blue-50 to-blue-50">
         <Card className="w-full max-w-md">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <CheckCircle className="w-10 h-10 text-green-500" />
-              <CardTitle>Déjà Connecté</CardTitle>
+              <CheckCircle className="w-10 h-10 text-primary-orange-500" />
+              <CardTitle>DÃ©jÃ  ConnectÃ©</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              Vous êtes déjà connecté. Souhaitez-vous accepter cette invitation avec ce compte?
+              Vous Ãªtes dÃ©jÃ  connectÃ©. Souhaitez-vous accepter cette invitation avec ce compte?
             </p>
             <div className="flex gap-2">
               <Button 
@@ -196,9 +196,9 @@ export default function AgentActivation() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">🎉 Activation Compte Agent</CardTitle>
+          <CardTitle className="text-2xl">ðŸŽ‰ Activation Compte Agent</CardTitle>
           <p className="text-muted-foreground">
-            Bienvenue! Créez votre compte pour accéder à votre interface agent.
+            Bienvenue! CrÃ©ez votre compte pour accÃ©der Ã  votre interface agent.
           </p>
         </CardHeader>
         <CardContent>
@@ -224,7 +224,7 @@ export default function AgentActivation() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
                 minLength={6}
-                placeholder="Minimum 6 caractères"
+                placeholder="Minimum 6 caractÃ¨res"
               />
             </div>
 
@@ -245,7 +245,7 @@ export default function AgentActivation() {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h4 className="font-semibold mb-2">Informations Agent</h4>
                 <p className="text-sm text-muted-foreground">
-                  Rôle: Agent 224Solutions
+                  RÃ´le: Agent 224Solutions
                 </p>
               </div>
             )}
@@ -261,7 +261,7 @@ export default function AgentActivation() {
                   Activation en cours...
                 </>
               ) : (
-                '🚀 Activer mon compte'
+                'ðŸš€ Activer mon compte'
               )}
             </Button>
           </form>

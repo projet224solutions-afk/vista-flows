@@ -29,12 +29,12 @@ export default function PdgSecurity() {
             <div className="flex items-center gap-3 mb-2">
               <Shield className="w-8 h-8 text-red-600" />
               <h1 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">
-                Défense & Riposte - Sécurité
+                DÃ©fense & Riposte - SÃ©curitÃ©
               </h1>
             </div>
             <p className="text-sm text-muted-foreground flex items-center gap-2">
               <Lock className="w-3 h-3 text-red-500" />
-              Centre de sécurité et de surveillance de la plateforme
+              Centre de sÃ©curitÃ© et de surveillance de la plateforme
             </p>
           </div>
           <Button
@@ -47,10 +47,10 @@ export default function PdgSecurity() {
         </div>
 
         {/* Security Status Alert */}
-        <Alert className="border-green-500/50 bg-green-500/10">
-          <Activity className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-600">
-            Tous les systèmes de sécurité sont opérationnels
+        <Alert className="border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10">
+          <Activity className="h-4 w-4 text-primary-orange-600" />
+          <AlertDescription className="text-primary-orange-600">
+            Tous les systÃ¨mes de sÃ©curitÃ© sont opÃ©rationnels
           </AlertDescription>
         </Alert>
 
@@ -91,7 +91,7 @@ export default function PdgSecurity() {
             </TabsTrigger>
             <TabsTrigger value="blocked" className="gap-1 text-xs md:text-sm">
               <Ban className="w-3 h-3 md:w-4 md:h-4" />
-              {!isMobile && 'Bloqués'}
+              {!isMobile && 'BloquÃ©s'}
             </TabsTrigger>
           </TabsList>
 
@@ -101,14 +101,14 @@ export default function PdgSecurity() {
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Menaces Détectées
+                    Menaces DÃ©tectÃ©es
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <span className="text-3xl font-bold">0</span>
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-                      Sécurisé
+                    <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
+                      SÃ©curisÃ©
                     </Badge>
                   </div>
                 </CardContent>
@@ -117,7 +117,7 @@ export default function PdgSecurity() {
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    IPs Bloquées
+                    IPs BloquÃ©es
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -159,60 +159,60 @@ export default function PdgSecurity() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Systèmes de Protection</CardTitle>
+                <CardTitle>SystÃ¨mes de Protection</CardTitle>
                 <CardDescription>
-                  État des différents systèmes de sécurité
+                  Ã‰tat des diffÃ©rents systÃ¨mes de sÃ©curitÃ©
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
                   <div className="flex items-center gap-3">
-                    <Shield className="w-5 h-5 text-green-600" />
+                    <Shield className="w-5 h-5 text-primary-orange-600" />
                     <div>
-                      <p className="font-medium">Détection d'anomalies IA</p>
-                      <p className="text-sm text-muted-foreground">Surveillance en temps réel</p>
+                      <p className="font-medium">DÃ©tection d'anomalies IA</p>
+                      <p className="text-sm text-muted-foreground">Surveillance en temps rÃ©el</p>
                     </div>
                   </div>
-                  <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                  <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
                     Actif
                   </Badge>
                 </div>
 
                 <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
                   <div className="flex items-center gap-3">
-                    <Lock className="w-5 h-5 text-green-600" />
+                    <Lock className="w-5 h-5 text-primary-orange-600" />
                     <div>
                       <p className="font-medium">RLS (Row Level Security)</p>
-                      <p className="text-sm text-muted-foreground">Protection des données</p>
+                      <p className="text-sm text-muted-foreground">Protection des donnÃ©es</p>
                     </div>
                   </div>
-                  <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                  <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
                     Actif
                   </Badge>
                 </div>
 
                 <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
                   <div className="flex items-center gap-3">
-                    <Ban className="w-5 h-5 text-green-600" />
+                    <Ban className="w-5 h-5 text-primary-orange-600" />
                     <div>
                       <p className="font-medium">Blocage automatique</p>
                       <p className="text-sm text-muted-foreground">IPs malveillantes</p>
                     </div>
                   </div>
-                  <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                  <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
                     Actif
                   </Badge>
                 </div>
 
                 <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-green-600" />
+                    <FileText className="w-5 h-5 text-primary-orange-600" />
                     <div>
                       <p className="font-medium">Analyse forensique</p>
                       <p className="text-sm text-muted-foreground">Investigation automatique</p>
                     </div>
                   </div>
-                  <Badge className="bg-green-500/10 text-green-600 border-green-500/20">
+                  <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
                     Actif
                   </Badge>
                 </div>
@@ -249,16 +249,16 @@ export default function PdgSecurity() {
           <TabsContent value="threats" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Menaces Détectées</CardTitle>
+                <CardTitle>Menaces DÃ©tectÃ©es</CardTitle>
                 <CardDescription>
-                  Aucune menace active détectée
+                  Aucune menace active dÃ©tectÃ©e
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
-                  <Shield className="w-16 h-16 text-green-500 mx-auto mb-4 opacity-50" />
+                  <Shield className="w-16 h-16 text-primary-orange-500 mx-auto mb-4 opacity-50" />
                   <p className="text-muted-foreground">
-                    Tous les systèmes sont sécurisés
+                    Tous les systÃ¨mes sont sÃ©curisÃ©s
                   </p>
                 </div>
               </CardContent>
@@ -269,9 +269,9 @@ export default function PdgSecurity() {
           <TabsContent value="monitoring" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Surveillance en Temps Réel</CardTitle>
+                <CardTitle>Surveillance en Temps RÃ©el</CardTitle>
                 <CardDescription>
-                  Activité du système de surveillance
+                  ActivitÃ© du systÃ¨me de surveillance
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -289,16 +289,16 @@ export default function PdgSecurity() {
           <TabsContent value="blocked" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Entités Bloquées</CardTitle>
+                <CardTitle>EntitÃ©s BloquÃ©es</CardTitle>
                 <CardDescription>
-                  IPs et utilisateurs bloqués
+                  IPs et utilisateurs bloquÃ©s
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-12">
                   <Ban className="w-16 h-16 text-red-500 mx-auto mb-4 opacity-50" />
                   <p className="text-muted-foreground">
-                    Aucune entité bloquée actuellement
+                    Aucune entitÃ© bloquÃ©e actuellement
                   </p>
                 </div>
               </CardContent>

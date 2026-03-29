@@ -38,7 +38,7 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
     }
 
     if (formData.new_password.length < 8) {
-      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractères');
+      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractÃ¨res');
       return;
     }
 
@@ -55,7 +55,7 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
       if (error) throw error;
 
       if (data.success) {
-        toast.success('Mot de passe modifié avec succès');
+        toast.success('Mot de passe modifiÃ© avec succÃ¨s');
         setFormData({ current_password: '', new_password: '', confirm_password: '' });
         onOpenChange(false);
         onSuccess?.();
@@ -75,7 +75,7 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5 text-emerald-600" />
+            <Lock className="w-5 h-5 text-primary-blue-600" />
             Modifier le mot de passe
           </DialogTitle>
         </DialogHeader>
@@ -89,7 +89,7 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
                 required
                 value={formData.current_password}
                 onChange={(e) => setFormData({ ...formData, current_password: e.target.value })}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               />
               <button
                 type="button"
@@ -102,7 +102,7 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="new_password">Nouveau mot de passe * (min. 8 caractères)</Label>
+            <Label htmlFor="new_password">Nouveau mot de passe * (min. 8 caractÃ¨res)</Label>
             <div className="relative">
               <Input
                 id="new_password"
@@ -111,7 +111,7 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
                 minLength={8}
                 value={formData.new_password}
                 onChange={(e) => setFormData({ ...formData, new_password: e.target.value })}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               />
               <button
                 type="button"
@@ -133,7 +133,7 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
                 minLength={8}
                 value={formData.confirm_password}
                 onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               />
               <button
                 type="button"
@@ -152,7 +152,7 @@ export function ChangePasswordDialog({ open, onOpenChange, bureauId, onSuccess }
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="bg-gradient-to-r from-emerald-600 to-teal-600"
+              className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-600"
             >
               {isLoading ? (
                 <>
@@ -197,7 +197,7 @@ export function ChangeEmailDialog({ open, onOpenChange, bureauId, currentEmail, 
     }
 
     if (newEmail.toLowerCase() === currentEmail.toLowerCase()) {
-      toast.error('Le nouvel email doit être différent de l\'actuel');
+      toast.error('Le nouvel email doit Ãªtre diffÃ©rent de l\'actuel');
       return;
     }
 
@@ -213,7 +213,7 @@ export function ChangeEmailDialog({ open, onOpenChange, bureauId, currentEmail, 
       if (error) throw error;
 
       if (data.success) {
-        toast.success('Email modifié avec succès');
+        toast.success('Email modifiÃ© avec succÃ¨s');
         setNewEmail('');
         onOpenChange(false);
         onSuccess?.();

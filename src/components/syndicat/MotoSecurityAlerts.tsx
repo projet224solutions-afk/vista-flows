@@ -34,8 +34,8 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
     try {
       setLoading(true);
       
-      // CENTRALISÉ: Charger depuis vehicles + vehicle_security_log
-      // Véhicules actuellement volés (is_stolen = true ou stolen_status = 'stolen')
+      // CENTRALISÃ‰: Charger depuis vehicles + vehicle_security_log
+      // VÃ©hicules actuellement volÃ©s (is_stolen = true ou stolen_status = 'stolen')
       const { data: stolenVehicles, error: vehiclesError } = await supabase
         .from('vehicles')
         .select(`
@@ -67,28 +67,28 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
         throw vehiclesError;
       }
       
-      // Transformer en format d'alerte pour compatibilité
+      // Transformer en format d'alerte pour compatibilitÃ©
       const transformedAlerts: SecurityAlert[] = (stolenVehicles || []).map((v: any) => ({
         id: v.id,
         plate_number: v.license_plate || v.serial_number,
         serial_number: v.serial_number,
-        brand: v.brand || 'Non spécifié',
+        brand: v.brand || 'Non spÃ©cifiÃ©',
         model: v.model || '',
-        owner_name: v.syndicate_workers?.nom || 'Non assigné',
+        owner_name: v.syndicate_workers?.nom || 'Non assignÃ©',
         owner_phone: v.syndicate_workers?.telephone || '',
         reported_bureau_name: v.bureaus?.commune || 'Bureau inconnu',
         reported_location: v.stolen_location || v.bureaus?.prefecture || '',
-        description: v.stolen_reason || 'Vol déclaré',
+        description: v.stolen_reason || 'Vol dÃ©clarÃ©',
         status: 'active',
         created_at: v.stolen_declared_at || new Date().toISOString()
       }));
       
-      console.log('✅ Alertes centralisées chargées:', transformedAlerts.length);
+      console.log('âœ… Alertes centralisÃ©es chargÃ©es:', transformedAlerts.length);
       setAlerts(transformedAlerts);
     } catch (error: any) {
-      console.error('❌ Erreur chargement alertes sécurité:', error);
-      toast.error('Erreur lors du chargement des données', {
-        description: error.message || 'Impossible de charger les alertes de sécurité'
+      console.error('âŒ Erreur chargement alertes sÃ©curitÃ©:', error);
+      toast.error('Erreur lors du chargement des donnÃ©es', {
+        description: error.message || 'Impossible de charger les alertes de sÃ©curitÃ©'
       });
       setAlerts([]);
     } finally {
@@ -99,7 +99,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
   useEffect(() => {
     loadAlerts();
 
-    // CENTRALISÉ: Subscribe to real-time updates sur vehicles (stolen changes)
+    // CENTRALISÃ‰: Subscribe to real-time updates sur vehicles (stolen changes)
     const channel = supabase
       .channel('stolen_vehicles_alerts')
       .on(
@@ -111,7 +111,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
           filter: 'is_stolen=eq.true'
         },
         (payload: any) => {
-          console.log('🔔 Alerte vol temps réel:', payload);
+          console.log('ðŸ”” Alerte vol temps rÃ©el:', payload);
           loadAlerts();
         }
       )
@@ -123,7 +123,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
           table: 'vehicle_security_log'
         },
         (payload: any) => {
-          console.log('🔔 Nouveau log sécurité:', payload);
+          console.log('ðŸ”” Nouveau log sÃ©curitÃ©:', payload);
           loadAlerts();
         }
       )
@@ -136,12 +136,12 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
 
   const handleResolve = async (alertId: string) => {
     try {
-      // CENTRALISÉ: Utilise le RPC declare_vehicle_recovered
+      // CENTRALISÃ‰: Utilise le RPC declare_vehicle_recovered
       const { data, error } = await supabase.rpc('declare_vehicle_recovered', {
         p_vehicle_id: alertId,
         p_bureau_id: bureauId,
-        p_recovered_by: null as any, // Sera rempli côté serveur si possible
-        p_recovery_notes: 'Résolu via interface alertes',
+        p_recovered_by: null as any, // Sera rempli cÃ´tÃ© serveur si possible
+        p_recovery_notes: 'RÃ©solu via interface alertes',
         p_recovery_location: null,
         p_ip_address: null,
         p_user_agent: navigator.userAgent
@@ -149,18 +149,18 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
 
       if (error) throw error;
       
-      toast.success('Véhicule marqué comme récupéré avec succès');
+      toast.success('VÃ©hicule marquÃ© comme rÃ©cupÃ©rÃ© avec succÃ¨s');
       loadAlerts();
     } catch (error: any) {
-      console.error('Erreur résolution alerte:', error);
-      toast.error(error.message || 'Erreur lors de la résolution');
+      console.error('Erreur rÃ©solution alerte:', error);
+      toast.error(error.message || 'Erreur lors de la rÃ©solution');
     }
   };
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; className: string }> = {
       'active': { label: 'Active', className: 'bg-red-500 text-white' },
-      'resolved': { label: 'Résolue', className: 'bg-green-500 text-white' },
+      'resolved': { label: 'RÃ©solue', className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white' },
       'investigating': { label: 'En cours', className: 'bg-yellow-500 text-white' }
     };
 
@@ -186,17 +186,17 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-red-500" />
-            Alertes de Sécurité
+            Alertes de SÃ©curitÃ©
           </CardTitle>
           <CardDescription>
-            {alerts.length} alerte(s) de sécurité détectée(s)
+            {alerts.length} alerte(s) de sÃ©curitÃ© dÃ©tectÃ©e(s)
           </CardDescription>
         </CardHeader>
         <CardContent>
           {alerts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-green-500" />
-              <p>Aucune alerte de sécurité active</p>
+              <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-primary-orange-500" />
+              <p>Aucune alerte de sÃ©curitÃ© active</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -204,7 +204,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
                 <Alert key={alert.id} variant="destructive" className="bg-red-50 dark:bg-red-950">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle className="flex items-center justify-between">
-                    <span>MOTO VOLÉE DÉTECTÉE</span>
+                    <span>MOTO VOLÃ‰E DÃ‰TECTÃ‰E</span>
                     {getStatusBadge(alert.status)}
                   </AlertTitle>
                   <AlertDescription>
@@ -214,20 +214,20 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
                           <strong>Plaque:</strong> {alert.plate_number}
                         </div>
                         <div>
-                          <strong>Châssis:</strong> {alert.serial_number}
+                          <strong>ChÃ¢ssis:</strong> {alert.serial_number}
                         </div>
                         <div>
                           <strong>Marque:</strong> {alert.brand} {alert.model}
                         </div>
                         <div>
-                          <strong>Propriétaire:</strong> {alert.owner_name}
+                          <strong>PropriÃ©taire:</strong> {alert.owner_name}
                         </div>
                       </div>
                       
                       <div className="pt-2 border-t">
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <MapPin className="w-4 h-4" />
-                          <span>Signalée par: {alert.reported_bureau_name} ({alert.reported_location})</span>
+                          <span>SignalÃ©e par: {alert.reported_bureau_name} ({alert.reported_location})</span>
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground mt-1">
                           <Clock className="w-4 h-4" />
@@ -250,7 +250,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
                             className="flex-1"
                           >
                             <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Marquer comme Résolue
+                            Marquer comme RÃ©solue
                           </Button>
                         </div>
                       )}

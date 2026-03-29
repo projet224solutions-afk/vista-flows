@@ -1,6 +1,6 @@
 /**
- * COMPOSANT: File d'attente de révision des paiements (Admin)
- * 224SOLUTIONS - Système de déblocage intelligent des fonds
+ * COMPOSANT: File d'attente de rÃ©vision des paiements (Admin)
+ * 224SOLUTIONS - SystÃ¨me de dÃ©blocage intelligent des fonds
  */
 
 import { useEffect, useState } from 'react';
@@ -81,7 +81,7 @@ export function PaymentReviewQueue() {
   useEffect(() => {
     fetchPendingPayments();
     
-    // Rafraîchir toutes les 30 secondes
+    // RafraÃ®chir toutes les 30 secondes
     const interval = setInterval(fetchPendingPayments, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -123,8 +123,8 @@ export function PaymentReviewQueue() {
 
       if (response.error) throw response.error;
 
-      toast.success('Paiement approuvé et fonds libérés', {
-        description: `${(selectedPayment.seller_net_amount / 100).toFixed(2)} XOF crédités`,
+      toast.success('Paiement approuvÃ© et fonds libÃ©rÃ©s', {
+        description: `${(selectedPayment.seller_net_amount / 100).toFixed(2)} XOF crÃ©ditÃ©s`,
       });
 
       setShowApproveDialog(false);
@@ -162,8 +162,8 @@ export function PaymentReviewQueue() {
 
       if (response.error) throw response.error;
 
-      toast.success('Paiement rejeté et remboursement initié', {
-        description: 'L\'acheteur sera remboursé sous 5-10 jours',
+      toast.success('Paiement rejetÃ© et remboursement initiÃ©', {
+        description: 'L\'acheteur sera remboursÃ© sous 5-10 jours',
       });
 
       setShowRejectDialog(false);
@@ -199,7 +199,7 @@ export function PaymentReviewQueue() {
   };
 
   const getTrustScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
+    if (score >= 80) return 'text-primary-orange-600';
     if (score >= 60) return 'text-yellow-600';
     return 'text-red-600';
   };
@@ -221,10 +221,10 @@ export function PaymentReviewQueue() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-6 w-6 text-primary" />
-                File d'attente de révision des paiements
+                File d'attente de rÃ©vision des paiements
               </CardTitle>
               <CardDescription>
-                Paiements nécessitant une validation manuelle
+                Paiements nÃ©cessitant une validation manuelle
               </CardDescription>
             </div>
             <Badge variant="outline" className="text-lg px-4 py-2">
@@ -241,7 +241,7 @@ export function PaymentReviewQueue() {
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
               <CheckCircle className="h-16 w-16 mb-4" />
               <p className="text-lg font-medium">Aucun paiement en attente</p>
-              <p className="text-sm">Tous les paiements ont été traités</p>
+              <p className="text-sm">Tous les paiements ont Ã©tÃ© traitÃ©s</p>
             </div>
           ) : (
             <Table>
@@ -274,7 +274,7 @@ export function PaymentReviewQueue() {
                       </div>
                       {payment.random_review && (
                         <Badge variant="outline" className="mt-1 text-xs">
-                          Contrôle aléatoire
+                          ContrÃ´le alÃ©atoire
                         </Badge>
                       )}
                     </TableCell>
@@ -335,7 +335,7 @@ export function PaymentReviewQueue() {
                       <Badge 
                         variant={payment.seller_kyc_status === 'verified' ? 'default' : 'secondary'}
                       >
-                        {payment.seller_kyc_status === 'verified' ? '✓ Vérifié' : 'Non vérifié'}
+                        {payment.seller_kyc_status === 'verified' ? 'âœ“ VÃ©rifiÃ©' : 'Non vÃ©rifiÃ©'}
                       </Badge>
                     </TableCell>
 
@@ -391,7 +391,7 @@ export function PaymentReviewQueue() {
           <DialogHeader>
             <DialogTitle>Approuver le paiement</DialogTitle>
             <DialogDescription>
-              Les fonds seront immédiatement libérés sur le wallet du vendeur.
+              Les fonds seront immÃ©diatement libÃ©rÃ©s sur le wallet du vendeur.
             </DialogDescription>
           </DialogHeader>
 
@@ -440,7 +440,7 @@ export function PaymentReviewQueue() {
               Annuler
             </Button>
             <Button onClick={handleApprove} disabled={actionLoading}>
-              {actionLoading ? 'Traitement...' : 'Approuver et libérer'}
+              {actionLoading ? 'Traitement...' : 'Approuver et libÃ©rer'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -452,7 +452,7 @@ export function PaymentReviewQueue() {
           <DialogHeader>
             <DialogTitle>Rejeter le paiement</DialogTitle>
             <DialogDescription>
-              Un remboursement sera automatiquement initié via Stripe.
+              Un remboursement sera automatiquement initiÃ© via Stripe.
             </DialogDescription>
           </DialogHeader>
 
@@ -460,7 +460,7 @@ export function PaymentReviewQueue() {
             <div className="space-y-4">
               <div className="bg-destructive/10 p-4 rounded-lg space-y-2">
                 <div className="flex justify-between">
-                  <span className="font-medium">Montant à rembourser:</span>
+                  <span className="font-medium">Montant Ã  rembourser:</span>
                   <span className="font-bold">
                     {(selectedPayment.amount / 100).toFixed(2)} XOF
                   </span>
@@ -478,7 +478,7 @@ export function PaymentReviewQueue() {
                 <Textarea
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Expliquez pourquoi ce paiement est rejeté (fraude suspectée, montant anormal, etc.)..."
+                  placeholder="Expliquez pourquoi ce paiement est rejetÃ© (fraude suspectÃ©e, montant anormal, etc.)..."
                   rows={4}
                   required
                 />

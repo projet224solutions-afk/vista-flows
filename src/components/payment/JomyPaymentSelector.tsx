@@ -1,7 +1,7 @@
 /**
- * 💳 SÉLECTEUR DE PAIEMENT - MULTI-PROVIDERS
+ * ðŸ’³ SÃ‰LECTEUR DE PAIEMENT - MULTI-PROVIDERS
  * Stripe pour les cartes bancaires, ChapChapPay pour Mobile Money (Orange, MTN, PayCard)
- * Méthodes: Carte Bancaire (Stripe), Orange Money, MTN MoMo, PayCard (ChapChapPay)
+ * MÃ©thodes: Carte Bancaire (Stripe), Orange Money, MTN MoMo, PayCard (ChapChapPay)
  */
 
 import { useState, useEffect, useMemo } from 'react';
@@ -34,7 +34,7 @@ import { formatCurrency } from '@/lib/formatters';
 
 interface JomyPaymentSelectorProps {
   amount: number;
-  currency?: string; // Devise du produit/vendeur (ex: XOF, EUR). Défaut: GNF
+  currency?: string; // Devise du produit/vendeur (ex: XOF, EUR). DÃ©faut: GNF
   orderId?: string;
   description?: string;
   transactionType?: 'product' | 'taxi' | 'delivery' | 'service' | 'transfer';
@@ -88,7 +88,7 @@ export function JomyPaymentSelector({
   const displayCurrency = currency.toUpperCase();
   const formattedAmount = formatCurrency(amount, displayCurrency);
   
-  // Conversion si devise produit ≠ devise utilisateur
+  // Conversion si devise produit â‰  devise utilisateur
   const converted = useMemo(() => {
     if (!amount || displayCurrency === userCurrency.toUpperCase()) return null;
     return convert(amount, displayCurrency);
@@ -109,7 +109,7 @@ export function JomyPaymentSelector({
     setShowStripeInline(false);
   };
 
-  // État pour adresse de livraison (COD)
+  // Ã‰tat pour adresse de livraison (COD)
   const [deliveryAddress, setDeliveryAddress] = useState({
     street: '',
     neighborhood: '',
@@ -139,22 +139,22 @@ export function JomyPaymentSelector({
     loadWalletBalance();
   }, [user?.id]);
 
-  // Méthodes de paiement disponibles
+  // MÃ©thodes de paiement disponibles
   const paymentMethods: PaymentMethodOption[] = [
     // Option Wallet en premier si recipientId est fourni
     ...(recipientId ? [{
       id: 'WALLET' as const,
       name: 'Wallet 224Solutions',
       description: `Solde: ${walletBalance !== null ? formatCurrency(walletBalance, walletCurrency) : '...'}`,
-      icon: <Wallet className="h-5 w-5 text-green-600" />,
-      iconBg: 'bg-green-100',
+      icon: <Wallet className="h-5 w-5 text-primary-orange-600" />,
+      iconBg: 'bg-primary-orange-100',
       requiresPhone: false,
       provider: 'wallet' as const
     }] : []),
     {
       id: 'CARD' as const,
       name: 'Carte Bancaire',
-      description: 'Paiement sécurisé par carte VISA / Mastercard via Stripe',
+      description: 'Paiement sÃ©curisÃ© par carte VISA / Mastercard via Stripe',
       icon: <CreditCard className="h-5 w-5 text-blue-600" />,
       iconBg: 'bg-blue-100',
       requiresPhone: false,
@@ -164,7 +164,7 @@ export function JomyPaymentSelector({
     {
       id: 'CCP_ORANGE' as const,
       name: 'Orange Money',
-      description: 'Paiement instantané via ChapChapPay',
+      description: 'Paiement instantanÃ© via ChapChapPay',
       icon: <Smartphone className="h-5 w-5 text-orange-500" />,
       iconBg: 'bg-orange-100',
       requiresPhone: true,
@@ -184,13 +184,13 @@ export function JomyPaymentSelector({
       phonePlaceholder: '660 XX XX XX',
       provider: 'chapchappay' as const
     },
-    // Paiement à la livraison - uniquement pour produits physiques
+    // Paiement Ã  la livraison - uniquement pour produits physiques
     ...(productType === 'physical' && transactionType === 'product' && onCashOnDelivery ? [{
       id: 'CASH_ON_DELIVERY' as const,
-      name: 'Paiement à la livraison',
-      description: 'Vous serez contacté pour confirmer l\'adresse de livraison',
-      icon: <Truck className="h-5 w-5 text-emerald-600" />,
-      iconBg: 'bg-emerald-100',
+      name: 'Paiement Ã  la livraison',
+      description: 'Vous serez contactÃ© pour confirmer l\'adresse de livraison',
+      icon: <Truck className="h-5 w-5 text-primary-blue-600" />,
+      iconBg: 'bg-primary-blue-100',
       requiresPhone: false,
       provider: undefined
     }] : [])
@@ -200,27 +200,27 @@ export function JomyPaymentSelector({
   const requiresPhone = selectedOption?.requiresPhone || false;
 
   const handlePayment = async () => {
-    console.log('🔵 [JomyPaymentSelector] handlePayment called');
-    console.log('🔵 [JomyPaymentSelector] selectedMethod:', selectedMethod);
+    console.log('ðŸ”µ [JomyPaymentSelector] handlePayment called');
+    console.log('ðŸ”µ [JomyPaymentSelector] selectedMethod:', selectedMethod);
     
     if (!user) {
-      toast.error('Vous devez être connecté pour effectuer un paiement');
+      toast.error('Vous devez Ãªtre connectÃ© pour effectuer un paiement');
       return;
     }
 
-    // Paiement à la livraison
+    // Paiement Ã  la livraison
     if (selectedMethod === 'CASH_ON_DELIVERY') {
-      // Valider adresse complète
+      // Valider adresse complÃ¨te
       if (!deliveryAddress.street.trim()) {
         toast.error('Adresse requise', {
-          description: 'Veuillez entrer votre adresse complète'
+          description: 'Veuillez entrer votre adresse complÃ¨te'
         });
         return;
       }
       
       if (!deliveryAddress.city) {
         toast.error('Ville requise', {
-          description: 'Veuillez sélectionner votre ville'
+          description: 'Veuillez sÃ©lectionner votre ville'
         });
         return;
       }
@@ -233,7 +233,7 @@ export function JomyPaymentSelector({
 
     // Paiement par Carte Bancaire (Stripe)
     if (selectedMethod === 'CARD') {
-      console.log('🔵 [JomyPaymentSelector] Showing Stripe inline');
+      console.log('ðŸ”µ [JomyPaymentSelector] Showing Stripe inline');
       setShowStripeInline(true);
       return;
     }
@@ -264,11 +264,11 @@ export function JomyPaymentSelector({
         });
 
         if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || 'Échec du transfert');
+          throw new Error(data?.error || error?.message || 'Ã‰chec du transfert');
         }
 
         setPaymentStatus('success');
-        toast.success('🎉 Transfert réussi !');
+        toast.success('ðŸŽ‰ Transfert rÃ©ussi !');
         onPaymentSuccess(data.transaction_id || '', 'SUCCESS');
       } catch (err) {
         console.error('[Wallet] Transfer error:', err);
@@ -286,7 +286,7 @@ export function JomyPaymentSelector({
     
     if (isChapChapPayMethod) {
       if (requiresPhone && (!phoneNumber || phoneNumber.length < 9)) {
-        toast.error('Numéro de téléphone invalide');
+        toast.error('NumÃ©ro de tÃ©lÃ©phone invalide');
         return;
       }
 
@@ -294,7 +294,7 @@ export function JomyPaymentSelector({
       setPaymentStatus('processing');
 
       try {
-        // Mapper vers les méthodes ChapChapPay
+        // Mapper vers les mÃ©thodes ChapChapPay
         const ccpMethodMap: Record<string, CCPPaymentMethod> = {
           'CCP_ORANGE': 'orange_money',
           'CCP_MTN': 'mtn_momo',
@@ -311,22 +311,22 @@ export function JomyPaymentSelector({
         });
 
         if (!result.success) {
-          throw new Error(result.error || 'Échec du paiement');
+          throw new Error(result.error || 'Ã‰chec du paiement');
         }
 
-        // Polling pour vérifier le statut ChapChapPay
+        // Polling pour vÃ©rifier le statut ChapChapPay
         if (result.transactionId) {
           setPaymentStatus('polling');
           
           const finalStatus = await pollStatus(result.transactionId, (status) => {
             if (status.status === 'completed') {
               setPaymentStatus('success');
-              toast.success('🎉 Paiement réussi via ChapChapPay !');
+              toast.success('ðŸŽ‰ Paiement rÃ©ussi via ChapChapPay !');
               onPaymentSuccess(result.transactionId!, 'SUCCESS');
             } else if (status.status === 'failed' || status.status === 'cancelled') {
               setPaymentStatus('failed');
-              toast.error('Paiement échoué');
-              onPaymentFailed?.(status.error || 'Paiement refusé');
+              toast.error('Paiement Ã©chouÃ©');
+              onPaymentFailed?.(status.error || 'Paiement refusÃ©');
             }
           });
 
@@ -339,7 +339,7 @@ export function JomyPaymentSelector({
               toast.info('Paiement en attente de confirmation');
             } else {
               setPaymentStatus('failed');
-              onPaymentFailed?.(finalStatus.error || 'Paiement échoué');
+              onPaymentFailed?.(finalStatus.error || 'Paiement Ã©chouÃ©');
             }
           }
         }
@@ -354,20 +354,20 @@ export function JomyPaymentSelector({
       return;
     }
 
-    // Ce bloc n'est plus utilisé - ChapChapPay gère tous les paiements Mobile Money
-    toast.error('Méthode de paiement non supportée');
+    // Ce bloc n'est plus utilisÃ© - ChapChapPay gÃ¨re tous les paiements Mobile Money
+    toast.error('MÃ©thode de paiement non supportÃ©e');
     setProcessing(false);
   };
 
   const handleStripeSuccess = (data: { paymentIntentId: string; amount: number; currency: string }) => {
-    console.log('✅ [JomyPaymentSelector] Stripe payment success:', data);
+    console.log('âœ… [JomyPaymentSelector] Stripe payment success:', data);
     setShowStripeInline(false);
     setPaymentStatus('success');
     onPaymentSuccess(data.paymentIntentId, 'SUCCESS');
   };
 
   const handleStripeError = (errorMsg: string) => {
-    console.error('❌ [JomyPaymentSelector] Stripe payment error:', errorMsg);
+    console.error('âŒ [JomyPaymentSelector] Stripe payment error:', errorMsg);
     setShowStripeInline(false);
     setPaymentStatus('failed');
     onPaymentFailed?.(errorMsg);
@@ -378,15 +378,15 @@ export function JomyPaymentSelector({
     isLoading || 
     (requiresPhone && (!phoneNumber || phoneNumber.length < 9));
 
-  // Affichage succès
+  // Affichage succÃ¨s
   if (paymentStatus === 'success') {
     return (
       <Card className="w-full max-w-lg mx-auto">
         <CardContent className="p-8 text-center">
-          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-green-700 mb-2">Paiement réussi !</h3>
+          <CheckCircle className="h-16 w-16 text-primary-orange-500 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-primary-orange-700 mb-2">Paiement rÃ©ussi !</h3>
           <p className="text-muted-foreground mb-4">
-            Votre paiement de {formattedAmount} a été effectué avec succès.
+            Votre paiement de {formattedAmount} a Ã©tÃ© effectuÃ© avec succÃ¨s.
           </p>
           <Button onClick={() => onPaymentSuccess('', 'SUCCESS')} className="w-full">
             Continuer
@@ -402,16 +402,16 @@ export function JomyPaymentSelector({
         <CardHeader>
           <CardTitle className="flex items-center justify-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            Paiement sécurisé
+            Paiement sÃ©curisÃ©
           </CardTitle>
           <div className="text-center mt-2">
             <p className="text-3xl font-bold text-primary">
               {formattedAmount}
             </p>
-            <p className="text-sm text-muted-foreground">Montant à payer</p>
+            <p className="text-sm text-muted-foreground">Montant Ã  payer</p>
             {converted && (
               <p className="text-sm text-muted-foreground mt-1">
-                ≈ {converted.formatted} dans votre devise
+                â‰ˆ {converted.formatted} dans votre devise
               </p>
             )}
             
@@ -419,7 +419,7 @@ export function JomyPaymentSelector({
               <Alert className="mt-3">
                 <Shield className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de la livraison
+                  Vos fonds sont protÃ©gÃ©s par notre systÃ¨me Escrow jusqu'Ã  la confirmation de la livraison
                 </AlertDescription>
               </Alert>
             )}
@@ -427,17 +427,17 @@ export function JomyPaymentSelector({
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {/* Erreur — only show ChapChapPay error when a ChapChapPay method is selected */}
+          {/* Erreur â€” only show ChapChapPay error when a ChapChapPay method is selected */}
           {paymentStatus === 'failed' && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                {(selectedMethod.startsWith('CCP_') && error) ? error : 'Paiement échoué. Veuillez réessayer.'}
+                {(selectedMethod.startsWith('CCP_') && error) ? error : 'Paiement Ã©chouÃ©. Veuillez rÃ©essayer.'}
               </AlertDescription>
             </Alert>
           )}
 
-          {/* Méthodes de paiement */}
+          {/* MÃ©thodes de paiement */}
           <RadioGroup
             value={selectedMethod}
             onValueChange={handleMethodChange}
@@ -476,12 +476,12 @@ export function JomyPaymentSelector({
             ))}
           </RadioGroup>
 
-          {/* Champ téléphone pour Mobile Money */}
+          {/* Champ tÃ©lÃ©phone pour Mobile Money */}
           {requiresPhone && (
             <div className="space-y-2 p-3 bg-muted/50 rounded-lg border animate-in slide-in-from-top-2">
               <Label htmlFor="phone-number" className="flex items-center gap-2 text-sm">
                 <Smartphone className="h-4 w-4" />
-                Numéro {selectedOption?.name}
+                NumÃ©ro {selectedOption?.name}
               </Label>
               <Input
                 id="phone-number"
@@ -492,22 +492,22 @@ export function JomyPaymentSelector({
                 disabled={processing}
               />
               <p className="text-xs text-muted-foreground">
-                Une demande de confirmation sera envoyée sur ce numéro
+                Une demande de confirmation sera envoyÃ©e sur ce numÃ©ro
               </p>
             </div>
           )}
 
-          {/* Formulaire téléphone et ville pour COD */}
+          {/* Formulaire tÃ©lÃ©phone et ville pour COD */}
           {selectedMethod === 'CASH_ON_DELIVERY' && (
-            <div className="space-y-3 p-4 bg-emerald-50 border border-emerald-200 rounded-lg animate-in slide-in-from-top-2">
-              <h4 className="font-semibold text-emerald-800 flex items-center gap-2 text-sm">
+            <div className="space-y-3 p-4 bg-primary-blue-50 border border-primary-orange-200 rounded-lg animate-in slide-in-from-top-2">
+              <h4 className="font-semibold text-primary-blue-800 flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4" />
                 Informations de contact
               </h4>
 
               <div className="space-y-2">
                 <Label htmlFor="cod-phone" className="text-sm">
-                  Numéro à contacter <span className="text-red-500">*</span>
+                  NumÃ©ro Ã  contacter <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="cod-phone"
@@ -535,12 +535,12 @@ export function JomyPaymentSelector({
                 />
               </div>
 
-              <Alert className="bg-emerald-50 border-emerald-200 mt-2">
-                <Truck className="h-4 w-4 text-emerald-600" />
-                <AlertDescription className="text-emerald-700">
-                  <strong>Paiement à la livraison confirmé</strong><br/>
-                  Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison. 
-                  Préparez {formattedAmount} en espèces.
+              <Alert className="bg-primary-blue-50 border-primary-orange-200 mt-2">
+                <Truck className="h-4 w-4 text-primary-blue-600" />
+                <AlertDescription className="text-primary-blue-700">
+                  <strong>Paiement Ã  la livraison confirmÃ©</strong><br/>
+                  Vous serez contactÃ© par tÃ©lÃ©phone pour confirmer votre adresse exacte avant la livraison. 
+                  PrÃ©parez {formattedAmount} en espÃ¨ces.
                 </AlertDescription>
               </Alert>
             </div>
@@ -556,7 +556,7 @@ export function JomyPaymentSelector({
             </Alert>
           )}
 
-          {/* Stripe inline — formulaire carte affiché directement */}
+          {/* Stripe inline â€” formulaire carte affichÃ© directement */}
           {showStripeInline && selectedMethod === 'CARD' ? (
             <div className="pt-4 space-y-3">
               <div className="flex items-center gap-2 mb-2">

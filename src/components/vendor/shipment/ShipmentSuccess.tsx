@@ -1,6 +1,6 @@
 /**
- * ÉCRAN DE CONFIRMATION D'EXPÉDITION
- * Affiche le numéro de suivi et les détails après création
+ * Ã‰CRAN DE CONFIRMATION D'EXPÃ‰DITION
+ * Affiche le numÃ©ro de suivi et les dÃ©tails aprÃ¨s crÃ©ation
  */
 
 import { useEffect, useState } from 'react';
@@ -61,7 +61,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
       setShipment(data as any);
     } catch (error) {
       console.error('Error loading shipment:', error);
-      toast.error('Erreur lors du chargement des détails');
+      toast.error('Erreur lors du chargement des dÃ©tails');
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
 
   const copyTrackingNumber = () => {
     navigator.clipboard.writeText(trackingNumber);
-    toast.success('Numéro de suivi copié !');
+    toast.success('NumÃ©ro de suivi copiÃ© !');
   };
 
   if (loading || !shipment) {
@@ -84,20 +84,20 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Animation de succès */}
-      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+      {/* Animation de succÃ¨s */}
+      <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
         <CardContent className="p-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-            <CheckCircle className="h-10 w-10 text-green-600 animate-in zoom-in duration-300" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-orange-100 rounded-full mb-4">
+            <CheckCircle className="h-10 w-10 text-primary-orange-600 animate-in zoom-in duration-300" />
           </div>
-          <h2 className="text-2xl font-bold text-green-900 mb-2">下单成功 !</h2>
-          <p className="text-green-700 mb-6">Commande d'expédition créée avec succès</p>
+          <h2 className="text-2xl font-bold text-primary-orange-900 mb-2">ä¸‹å•æˆåŠŸ !</h2>
+          <p className="text-primary-orange-700 mb-6">Commande d'expÃ©dition crÃ©Ã©e avec succÃ¨s</p>
           
-          {/* Numéro de suivi */}
-          <div className="bg-white rounded-lg p-4 mb-4 border-2 border-green-300">
-            <p className="text-sm text-muted-foreground mb-1">Numéro de suivi</p>
+          {/* NumÃ©ro de suivi */}
+          <div className="bg-white rounded-lg p-4 mb-4 border-2 border-primary-orange-300">
+            <p className="text-sm text-muted-foreground mb-1">NumÃ©ro de suivi</p>
             <div className="flex items-center justify-center gap-2">
-              <p className="text-2xl font-bold text-green-900 tracking-wider">{trackingNumber}</p>
+              <p className="text-2xl font-bold text-primary-orange-900 tracking-wider">{trackingNumber}</p>
               <Button
                 variant="ghost"
                 size="icon"
@@ -112,25 +112,25 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
           {/* Date et heure */}
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
-            <span>{format(new Date(shipment.created_at), 'dd/MM/yyyy à HH:mm')}</span>
+            <span>{format(new Date(shipment.created_at), 'dd/MM/yyyy Ã  HH:mm')}</span>
           </div>
         </CardContent>
       </Card>
 
-      {/* Détails de l'expédition */}
+      {/* DÃ©tails de l'expÃ©dition */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-orange-600" />
-            Détails de l'expédition
+            DÃ©tails de l'expÃ©dition
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Expéditeur */}
+          {/* ExpÃ©diteur */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-orange-600">
               <User className="h-4 w-4" />
-              <span>Expéditeur</span>
+              <span>ExpÃ©diteur</span>
             </div>
             <div className="ml-6 space-y-1">
               <p className="font-medium">{shipment.sender_name}</p>
@@ -141,7 +141,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
 
           {/* Destinataire */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-green-600">
+            <div className="flex items-center gap-2 text-sm font-medium text-primary-orange-600">
               <MapPin className="h-4 w-4" />
               <span>Destinataire</span>
             </div>
@@ -152,7 +152,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
             </div>
           </div>
 
-          {/* Détails du colis */}
+          {/* DÃ©tails du colis */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-blue-600">
               <Package className="h-4 w-4" />
@@ -164,7 +164,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
                 <p className="font-medium">{shipment.weight} kg</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Nombre de pièces</p>
+                <p className="text-sm text-muted-foreground">Nombre de piÃ¨ces</p>
                 <p className="font-medium">{shipment.pieces_count}</p>
               </div>
               {shipment.item_type && (
@@ -191,7 +191,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
             )}
             {shipment.insurance && (
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                Assuré: {shipment.insurance_amount?.toLocaleString()} GNF
+                AssurÃ©: {shipment.insurance_amount?.toLocaleString()} GNF
               </Badge>
             )}
             {shipment.return_option && (
@@ -203,8 +203,8 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
 
           {/* Statut */}
           <div className="flex items-center gap-2">
-            <Badge className="bg-green-100 text-green-800">
-              Commande créée
+            <Badge className="bg-primary-orange-100 text-primary-orange-800">
+              Commande crÃ©Ã©e
             </Badge>
           </div>
         </CardContent>
@@ -227,7 +227,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
           className="bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/40 flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
-          Créer un nouvel envoi
+          CrÃ©er un nouvel envoi
         </Button>
       </div>
     </div>

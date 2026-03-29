@@ -55,7 +55,7 @@ export function ShareButton({
 
   /**
    * Obtient l'URL de partage.
-   * Si useShortUrl=true, crée un vrai short link serveur.
+   * Si useShortUrl=true, crÃ©e un vrai short link serveur.
    * Plus de fallback vers des liens longs og-meta.
    */
   const getShareUrl = async (): Promise<string> => {
@@ -77,15 +77,15 @@ export function ShareButton({
       });
 
       if (shortUrl) {
-        console.log('🔗 [ShareButton] Short link created:', shortUrl);
+        console.log('ðŸ”— [ShareButton] Short link created:', shortUrl);
         return shortUrl;
       }
 
-      // Si la création échoue, on utilise l'URL publique propre (pas de lien og-meta long)
-      console.warn('🔗 [ShareButton] Short link creation failed, using clean public URL');
+      // Si la crÃ©ation Ã©choue, on utilise l'URL publique propre (pas de lien og-meta long)
+      console.warn('ðŸ”— [ShareButton] Short link creation failed, using clean public URL');
       return shareUrl;
     } catch (error) {
-      console.error("🔗 [ShareButton] Error creating short URL:", error);
+      console.error("ðŸ”— [ShareButton] Error creating short URL:", error);
       return shareUrl;
     } finally {
       setLoading(false);
@@ -97,7 +97,7 @@ export function ShareButton({
       const urlToShare = await getShareUrl();
       await navigator.clipboard.writeText(urlToShare);
       setCopied(true);
-      toast.success("Lien copié dans le presse-papier !");
+      toast.success("Lien copiÃ© dans le presse-papier !");
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Erreur lors de la copie:", error);
@@ -111,11 +111,11 @@ export function ShareButton({
 
       if (navigator.share) {
         await navigator.share({ title, text: shareText, url: urlToShare });
-        toast.success("Partage réussi !");
+        toast.success("Partage rÃ©ussi !");
       } else {
         await navigator.clipboard.writeText(urlToShare);
         setCopied(true);
-        toast.success("Lien copié dans le presse-papier !");
+        toast.success("Lien copiÃ© dans le presse-papier !");
         setTimeout(() => setCopied(false), 2000);
       }
     } catch (error) {
@@ -171,7 +171,7 @@ export function ShareButton({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer">
-          {copied ? <Check className="w-4 h-4 mr-2 text-green-500" /> : <Link2 className="w-4 h-4 mr-2" />}
+          {copied ? <Check className="w-4 h-4 mr-2 text-primary-orange-500" /> : <Link2 className="w-4 h-4 mr-2" />}
           Copier le lien
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleWhatsAppShare} className="cursor-pointer">

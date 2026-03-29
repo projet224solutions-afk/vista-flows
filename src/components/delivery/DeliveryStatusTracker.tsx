@@ -1,6 +1,6 @@
 /**
- * SUIVI DES STATUTS DE LIVRAISON EN TEMPS RÉEL
- * Affiche la timeline complète avec notifications automatiques
+ * SUIVI DES STATUTS DE LIVRAISON EN TEMPS RÃ‰EL
+ * Affiche la timeline complÃ¨te avec notifications automatiques
  */
 
 import { useState, useEffect } from 'react';
@@ -44,14 +44,14 @@ interface StatusStep {
 }
 
 const STATUS_STEPS: StatusStep[] = [
-  { key: 'assigned', label: 'Livreur assigné', icon: User, description: 'Un livreur a accepté votre commande' },
+  { key: 'assigned', label: 'Livreur assignÃ©', icon: User, description: 'Un livreur a acceptÃ© votre commande' },
   { key: 'driver_on_way_to_vendor', label: 'En route vers le vendeur', icon: Navigation, description: 'Le livreur se dirige vers le point de retrait' },
-  { key: 'driver_arrived_vendor', label: 'Arrivé chez le vendeur', icon: Store, description: 'Le livreur est arrivé pour récupérer le colis' },
-  { key: 'picked_up', label: 'Colis récupéré', icon: Package, description: 'Le colis a été récupéré' },
+  { key: 'driver_arrived_vendor', label: 'ArrivÃ© chez le vendeur', icon: Store, description: 'Le livreur est arrivÃ© pour rÃ©cupÃ©rer le colis' },
+  { key: 'picked_up', label: 'Colis rÃ©cupÃ©rÃ©', icon: Package, description: 'Le colis a Ã©tÃ© rÃ©cupÃ©rÃ©' },
   { key: 'in_transit', label: 'En route vers vous', icon: Truck, description: 'Le livreur est en chemin' },
-  { key: 'driver_5min_away', label: 'À 5 minutes', icon: Clock, description: 'Le livreur arrive dans environ 5 minutes' },
-  { key: 'driver_arrived', label: 'Livreur arrivé', icon: MapPin, description: 'Le livreur est à votre porte' },
-  { key: 'delivered', label: 'Livré', icon: CheckCircle2, description: 'Votre colis a été livré avec succès' }
+  { key: 'driver_5min_away', label: 'Ã€ 5 minutes', icon: Clock, description: 'Le livreur arrive dans environ 5 minutes' },
+  { key: 'driver_arrived', label: 'Livreur arrivÃ©', icon: MapPin, description: 'Le livreur est Ã  votre porte' },
+  { key: 'delivered', label: 'LivrÃ©', icon: CheckCircle2, description: 'Votre colis a Ã©tÃ© livrÃ© avec succÃ¨s' }
 ];
 
 interface DeliveryStatusTrackerProps {
@@ -63,7 +63,7 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
   const [delivery, setDelivery] = useState<DeliveryStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Charger les données de livraison
+  // Charger les donnÃ©es de livraison
   const loadDelivery = async () => {
     try {
       const { data, error } = await supabase
@@ -84,7 +84,7 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
   useEffect(() => {
     loadDelivery();
 
-    // Souscription temps réel
+    // Souscription temps rÃ©el
     const channel = supabase
       .channel(`delivery-${deliveryId}`)
       .on(
@@ -103,7 +103,7 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
           if ('Notification' in window && Notification.permission === 'granted') {
             const statusLabel = STATUS_STEPS.find(s => s.key === (payload.new as any).status)?.label;
             new Notification('224Solutions Livraison', {
-              body: statusLabel || 'Mise à jour de votre livraison',
+              body: statusLabel || 'Mise Ã  jour de votre livraison',
               icon: '/favicon.ico'
             });
           }
@@ -149,13 +149,13 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
   return (
     <div className="space-y-4">
       {/* Statut actuel */}
-      <Card className="border-2 border-orange-500 bg-gradient-to-br from-orange-50 to-green-50 dark:from-orange-950/20 dark:to-green-950/20">
+      <Card className="border-2 border-orange-500 bg-gradient-to-br from-orange-50 to-primary-orange-50 dark:from-orange-950/20 dark:to-primary-orange-950/20">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Suivi de livraison</CardTitle>
             <Badge variant="outline" className="animate-pulse">
               <Bell className="h-3 w-3 mr-1" />
-              En temps réel
+              En temps rÃ©el
             </Badge>
           </div>
         </CardHeader>
@@ -220,19 +220,19 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
 
               return (
                 <div key={step.key} className="flex gap-3">
-                  {/* Ligne verticale et icône */}
+                  {/* Ligne verticale et icÃ´ne */}
                   <div className="flex flex-col items-center">
                     <div className={`
                       w-8 h-8 rounded-full flex items-center justify-center
                       ${isCompleted 
-                        ? 'bg-green-500 text-white' 
+                        ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white' 
                         : 'bg-muted text-muted-foreground'}
-                      ${isCurrent ? 'ring-2 ring-green-500 ring-offset-2' : ''}
+                      ${isCurrent ? 'ring-2 ring-primary-orange-500 ring-offset-2' : ''}
                     `}>
                       <Icon className="h-4 w-4" />
                     </div>
                     {index < STATUS_STEPS.length - 1 && (
-                      <div className={`w-0.5 h-8 ${isCompleted ? 'bg-green-500' : 'bg-muted'}`} />
+                      <div className={`w-0.5 h-8 ${isCompleted ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-muted'}`} />
                     )}
                   </div>
 
@@ -267,7 +267,7 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
           </div>
           <div className="border-l-2 border-dashed ml-2 h-4" />
           <div className="flex items-start gap-3">
-            <MapPin className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <MapPin className="h-5 w-5 text-primary-orange-600 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-muted-foreground">Destination</p>
               <p className="font-medium">{delivery.delivery_address}</p>

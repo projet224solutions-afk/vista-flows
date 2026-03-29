@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * 🗺️ COMPOSANT CARTE DE LIVRAISON - 224SOLUTIONS
+ * ðŸ—ºï¸ COMPOSANT CARTE DE LIVRAISON - 224SOLUTIONS
  * Carte interactive avec Mapbox pour la livraison
  */
 
@@ -52,7 +52,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
             return;
         }
 
-        // Créer la carte
+        // CrÃ©er la carte
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
             style: 'mapbox://styles/mapbox/streets-v11',
@@ -62,17 +62,17 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
             bearing: 0
         });
 
-        // Ajouter les contrôles de navigation
+        // Ajouter les contrÃ´les de navigation
         map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
         map.current.addControl(new mapboxgl.FullscreenControl(), 'top-right');
 
-        // Gérer le chargement de la carte
+        // GÃ©rer le chargement de la carte
         map.current.on('load', () => {
             setIsMapLoaded(true);
-            console.log('🗺️ Carte de livraison chargée');
+            console.log('ðŸ—ºï¸ Carte de livraison chargÃ©e');
         });
 
-        // Nettoyer à la destruction
+        // Nettoyer Ã  la destruction
         return () => {
             if (map.current) {
                 map.current.remove();
@@ -81,7 +81,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
         };
     }, []);
 
-    // Mettre à jour le centre de la carte
+    // Mettre Ã  jour le centre de la carte
     useEffect(() => {
         if (map.current && isMapLoaded) {
             map.current.setCenter([center.longitude, center.latitude]);
@@ -100,7 +100,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
         deliveryUsers.forEach((user, index) => {
             if (!user.currentPosition) return;
 
-            // Créer l'élément du marqueur
+            // CrÃ©er l'Ã©lÃ©ment du marqueur
             const markerElement = document.createElement('div');
             markerElement.className = 'delivery-user-marker';
             markerElement.style.cssText = `
@@ -118,9 +118,9 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
         color: white;
         font-weight: bold;
       `;
-            markerElement.textContent = '🚚';
+            markerElement.textContent = 'ðŸšš';
 
-            // Créer le marqueur Mapbox
+            // CrÃ©er le marqueur Mapbox
             const marker = new mapboxgl.Marker(markerElement)
                 .setLngLat([user.currentPosition.longitude, user.currentPosition.latitude])
                 .addTo(map.current!);
@@ -133,21 +133,21 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
             <p class="text-sm text-gray-600">${user.vehicleType.toUpperCase()}</p>
             <p class="text-sm text-gray-600">Note: ${user.rating}/5</p>
             <p class="text-sm text-gray-600">${user.totalDeliveries} livraisons</p>
-            <p class="text-sm ${user.isAvailable ? 'text-green-600' : 'text-red-600'}">
-              ${user.isAvailable ? 'Disponible' : 'Occupé'}
+            <p class="text-sm ${user.isAvailable ? 'text-primary-orange-600' : 'text-red-600'}">
+              ${user.isAvailable ? 'Disponible' : 'OccupÃ©'}
             </p>
             <button 
               class="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
               onclick="window.deliveryUserClick('${user.id}')"
             >
-              Sélectionner
+              SÃ©lectionner
             </button>
           </div>
         `);
 
             marker.setPopup(popup);
 
-            // Gérer le clic
+            // GÃ©rer le clic
             markerElement.addEventListener('click', () => {
                 if (onUserClick) {
                     onUserClick(user);
@@ -172,7 +172,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
         const existingRequestMarkers = document.querySelectorAll('.delivery-request-marker');
         existingRequestMarkers.forEach(marker => marker.remove());
 
-        // Marqueur de départ
+        // Marqueur de dÃ©part
         const pickupElement = document.createElement('div');
         pickupElement.className = 'delivery-request-marker';
         pickupElement.style.cssText = `
@@ -188,14 +188,14 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
       font-size: 14px;
       color: white;
     `;
-        pickupElement.textContent = '📍';
+        pickupElement.textContent = 'ðŸ“';
 
         new mapboxgl.Marker(pickupElement)
             .setLngLat([deliveryRequest.pickupPosition.longitude, deliveryRequest.pickupPosition.latitude])
             .setPopup(new mapboxgl.Popup({ offset: 25 })
                 .setHTML(`
           <div class="p-3">
-            <h3 class="font-semibold text-gray-800">Point de départ</h3>
+            <h3 class="font-semibold text-gray-800">Point de dÃ©part</h3>
             <p class="text-sm text-gray-600">${deliveryRequest.pickupAddress}</p>
           </div>
         `))
@@ -217,7 +217,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
       font-size: 14px;
       color: white;
     `;
-        deliveryElement.textContent = '🏁';
+        deliveryElement.textContent = 'ðŸ';
 
         new mapboxgl.Marker(deliveryElement)
             .setLngLat([deliveryRequest.deliveryPosition.longitude, deliveryRequest.deliveryPosition.latitude])
@@ -227,14 +227,14 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
             <h3 class="font-semibold text-gray-800">Destination</h3>
             <p class="text-sm text-gray-600">${deliveryRequest.deliveryAddress}</p>
             <p class="text-sm text-gray-600">Distance: ${Math.round(deliveryRequest.distance / 1000 * 10) / 10} km</p>
-            <p class="text-sm text-gray-600">Temps estimé: ${deliveryRequest.estimatedTime} min</p>
+            <p class="text-sm text-gray-600">Temps estimÃ©: ${deliveryRequest.estimatedTime} min</p>
             <p class="text-sm text-gray-600">Prix: ${deliveryRequest.totalPrice} GNF</p>
           </div>
         `))
             .addTo(map.current);
     }, [deliveryRequest, isMapLoaded]);
 
-    // Calculer et afficher l'itinéraire
+    // Calculer et afficher l'itinÃ©raire
     useEffect(() => {
         if (!map.current || !isMapLoaded || !showRoute || !deliveryRequest) return;
 
@@ -245,7 +245,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
                 );
 
                 if (!response.ok) {
-                    throw new Error('Erreur calcul itinéraire');
+                    throw new Error('Erreur calcul itinÃ©raire');
                 }
 
                 const data = await response.json();
@@ -254,7 +254,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
                 if (route) {
                     setRoute(route);
 
-                    // Ajouter la source de l'itinéraire
+                    // Ajouter la source de l'itinÃ©raire
                     if (!map.current!.getSource('route')) {
                         map.current!.addSource('route', {
                             type: 'geojson',
@@ -278,7 +278,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
                         });
                     }
 
-                    // Ajouter le style de l'itinéraire
+                    // Ajouter le style de l'itinÃ©raire
                     if (!map.current!.getLayer('route')) {
                         map.current!.addLayer({
                             id: 'route',
@@ -295,7 +295,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
                         });
                     }
 
-                    // Ajuster la vue pour inclure l'itinéraire
+                    // Ajuster la vue pour inclure l'itinÃ©raire
                     const coordinates = route.geometry.coordinates;
                     const bounds = coordinates.reduce((bounds: unknown, coord: unknown) => {
                         return bounds.extend(coord);
@@ -305,13 +305,13 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
                         padding: 50
                     });
 
-                    // Émettre l'événement de route
+                    // Ã‰mettre l'Ã©vÃ©nement de route
                     if (onRouteClick) {
                         onRouteClick(route);
                     }
                 }
             } catch (error) {
-                console.error('Erreur calcul itinéraire:', error);
+                console.error('Erreur calcul itinÃ©raire:', error);
             }
         };
 
@@ -338,12 +338,12 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
             {route && (
                 <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3">
                     <div className="text-sm">
-                        <p className="font-semibold text-gray-800">Itinéraire</p>
+                        <p className="font-semibold text-gray-800">ItinÃ©raire</p>
                         <p className="text-gray-600">
                             Distance: {Math.round(route.distance / 1000 * 10) / 10} km
                         </p>
                         <p className="text-gray-600">
-                            Durée: {Math.round(route.duration / 60)} min
+                            DurÃ©e: {Math.round(route.duration / 60)} min
                         </p>
                     </div>
                 </div>

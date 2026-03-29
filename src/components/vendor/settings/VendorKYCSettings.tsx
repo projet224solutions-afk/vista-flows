@@ -1,6 +1,6 @@
 /**
- * VENDOR KYC SETTINGS - Section KYC dans les paramètres vendeur
- * Affiche le formulaire KYC si activé par le PDG
+ * VENDOR KYC SETTINGS - Section KYC dans les paramÃ¨tres vendeur
+ * Affiche le formulaire KYC si activÃ© par le PDG
  */
 
 import { useState, useEffect } from 'react';
@@ -52,7 +52,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     try {
       setLoading(true);
       
-      // 1. Vérifier si le KYC est activé globalement pour les vendeurs
+      // 1. VÃ©rifier si le KYC est activÃ© globalement pour les vendeurs
       const { data: settings } = await supabase
         .from('system_settings')
         .select('setting_value')
@@ -68,7 +68,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
         }
       }
 
-      // 2. Charger les données KYC existantes du vendeur
+      // 2. Charger les donnÃ©es KYC existantes du vendeur
       const { data: kycRow } = await supabase
         .from('vendor_kyc')
         .select('*')
@@ -94,7 +94,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Le fichier ne doit pas dépasser 5 Mo');
+        toast.error('Le fichier ne doit pas dÃ©passer 5 Mo');
         return;
       }
       setDocumentFile(file);
@@ -110,7 +110,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     e.preventDefault();
     
     if (!user) {
-      toast.error('Vous devez être connecté');
+      toast.error('Vous devez Ãªtre connectÃ©');
       return;
     }
 
@@ -121,7 +121,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
 
     // Si pas de nouveau fichier et pas d'ancien document
     if (!documentFile && !kycData?.id_document_url) {
-      toast.error('Veuillez télécharger un document d\'identité');
+      toast.error('Veuillez tÃ©lÃ©charger un document d\'identitÃ©');
       return;
     }
 
@@ -130,7 +130,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     try {
       let documentUrl = kycData?.id_document_url || '';
 
-      // Upload du nouveau document si présent
+      // Upload du nouveau document si prÃ©sent
       if (documentFile) {
         const fileExt = documentFile.name.split('.').pop();
         const fileName = `${vendorId}/${Date.now()}.${fileExt}`;
@@ -150,7 +150,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
         documentUrl = publicUrl;
       }
 
-      // Créer ou mettre à jour le KYC
+      // CrÃ©er ou mettre Ã  jour le KYC
       const { error: kycError } = await supabase
         .from('vendor_kyc')
         .upsert({
@@ -169,7 +169,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
         throw kycError;
       }
 
-      toast.success('Documents KYC soumis pour vérification');
+      toast.success('Documents KYC soumis pour vÃ©rification');
       await loadKYCSettings();
     } catch (error: any) {
       console.error('Erreur soumission KYC:', error);
@@ -183,9 +183,9 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     switch (status) {
       case 'approved':
         return (
-          <Badge className="bg-green-100 text-green-800 border-green-300 gap-1">
+          <Badge className="bg-primary-orange-100 text-primary-orange-800 border-primary-orange-300 gap-1">
             <ShieldCheck className="w-3 h-3" />
-            Vérifié
+            VÃ©rifiÃ©
           </Badge>
         );
       case 'under_review':
@@ -193,14 +193,14 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
         return (
           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 gap-1">
             <Shield className="w-3 h-3" />
-            En cours de vérification
+            En cours de vÃ©rification
           </Badge>
         );
       case 'rejected':
         return (
           <Badge variant="destructive" className="gap-1">
             <ShieldX className="w-3 h-3" />
-            Rejeté
+            RejetÃ©
           </Badge>
         );
       default:
@@ -223,25 +223,25 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     );
   }
 
-  // Si le KYC n'est pas activé pour les vendeurs
+  // Si le KYC n'est pas activÃ© pour les vendeurs
   if (!kycEnabled) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5" />
-            Vérification KYC
+            VÃ©rification KYC
           </CardTitle>
           <CardDescription>
-            Vérification d'identité pour votre compte vendeur
+            VÃ©rification d'identitÃ© pour votre compte vendeur
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-            <p className="font-medium">La vérification KYC n'est pas requise actuellement</p>
+            <p className="font-medium">La vÃ©rification KYC n'est pas requise actuellement</p>
             <p className="text-sm mt-2">
-              L'administrateur n'a pas activé la vérification KYC pour les vendeurs.
+              L'administrateur n'a pas activÃ© la vÃ©rification KYC pour les vendeurs.
             </p>
           </div>
         </CardContent>
@@ -249,25 +249,25 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     );
   }
 
-  // Si le KYC est déjà approuvé
+  // Si le KYC est dÃ©jÃ  approuvÃ©
   if (kycData?.status === 'approved') {
     return (
-      <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
+      <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50 dark:bg-primary-orange-950/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
+          <CardTitle className="flex items-center gap-2 text-primary-orange-700 dark:text-primary-orange-400">
             <ShieldCheck className="w-5 h-5" />
-            Vérification KYC
+            VÃ©rification KYC
           </CardTitle>
           <CardDescription>
-            Votre identité a été vérifiée avec succès
+            Votre identitÃ© a Ã©tÃ© vÃ©rifiÃ©e avec succÃ¨s
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
-            <h3 className="text-lg font-semibold text-green-700 dark:text-green-400">Compte vérifié</h3>
+            <CheckCircle className="w-16 h-16 mx-auto mb-4 text-primary-orange-500" />
+            <h3 className="text-lg font-semibold text-primary-orange-700 dark:text-primary-orange-400">Compte vÃ©rifiÃ©</h3>
             <p className="text-sm text-muted-foreground mt-2">
-              Votre vérification d'identité a été approuvée le{' '}
+              Votre vÃ©rification d'identitÃ© a Ã©tÃ© approuvÃ©e le{' '}
               {kycData.verified_at ? new Date(kycData.verified_at).toLocaleDateString('fr-FR') : 'N/A'}
             </p>
           </div>
@@ -283,10 +283,10 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
           <div>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
-              Vérification KYC
+              VÃ©rification KYC
             </CardTitle>
             <CardDescription>
-              Soumettez vos documents pour vérifier votre identité
+              Soumettez vos documents pour vÃ©rifier votre identitÃ©
             </CardDescription>
           </div>
           {kycData && getStatusBadge(kycData.status)}
@@ -305,18 +305,18 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
           </div>
         )}
 
-        {/* Message en cours de vérification */}
+        {/* Message en cours de vÃ©rification */}
         {(kycData?.status === 'under_review' || kycData?.status === 'pending') && (
           <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <p className="text-sm text-yellow-800 dark:text-yellow-300">
-              Vos documents sont en cours de vérification. Nous vous notifierons dès que le processus sera terminé.
+              Vos documents sont en cours de vÃ©rification. Nous vous notifierons dÃ¨s que le processus sera terminÃ©.
             </p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="phone">Numéro de téléphone *</Label>
+            <Label htmlFor="phone">NumÃ©ro de tÃ©lÃ©phone *</Label>
             <Input
               id="phone"
               type="tel"
@@ -336,10 +336,10 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
               disabled={kycData?.status === 'under_review'}
             >
               <SelectTrigger id="docType">
-                <SelectValue placeholder="Sélectionner un document" />
+                <SelectValue placeholder="SÃ©lectionner un document" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="carte_identite">Carte d'identité nationale</SelectItem>
+                <SelectItem value="carte_identite">Carte d'identitÃ© nationale</SelectItem>
                 <SelectItem value="passeport">Passeport</SelectItem>
                 <SelectItem value="permis_conduire">Permis de conduire</SelectItem>
                 <SelectItem value="registre_commerce">Registre de commerce</SelectItem>
@@ -348,13 +348,13 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="document">Document d'identité * (max 5 Mo)</Label>
+            <Label htmlFor="document">Document d'identitÃ© * (max 5 Mo)</Label>
             <div className="mt-2">
               {documentPreview ? (
                 <div className="relative">
                   <img 
                     src={documentPreview} 
-                    alt="Aperçu" 
+                    alt="AperÃ§u" 
                     className="max-h-48 rounded-lg border"
                   />
                   {kycData?.status !== 'under_review' && (
@@ -375,7 +375,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
               ) : (
                 <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50">
                   <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Cliquez pour télécharger</span>
+                  <span className="text-sm text-muted-foreground">Cliquez pour tÃ©lÃ©charger</span>
                   <input
                     id="document"
                     type="file"
@@ -399,12 +399,12 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
               ) : kycData ? (
                 <>
                   <Shield className="w-4 h-4 mr-2" />
-                  Soumettre à nouveau
+                  Soumettre Ã  nouveau
                 </>
               ) : (
                 <>
                   <Shield className="w-4 h-4 mr-2" />
-                  Soumettre pour vérification
+                  Soumettre pour vÃ©rification
                 </>
               )}
             </Button>

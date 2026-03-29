@@ -59,19 +59,19 @@ export function DriverSubscriptionCard() {
           {isExpired && (
             <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive">
               <XCircle className="h-3 w-3 mr-1" />
-              Expiré
+              ExpirÃ©
             </Badge>
           )}
         </CardTitle>
         <CardDescription>
-          Abonnement mensuel ou annuel pour accéder aux services de 224Solutions
+          Abonnement mensuel ou annuel pour accÃ©der aux services de 224Solutions
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Choix du cycle de facturation */}
         {(!hasAccess || isExpired) && (
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Durée de l'abonnement</Label>
+            <Label className="text-sm font-medium">DurÃ©e de l'abonnement</Label>
             <RadioGroup value={billingCycle} onValueChange={(v) => setBillingCycle(v as 'monthly' | 'yearly')}>
               <div className={`flex items-center space-x-2 p-4 border rounded-lg hover:bg-accent cursor-pointer ${billingCycle === 'monthly' ? 'border-primary bg-primary/5' : ''}`}>
                 <RadioGroupItem value="monthly" id="monthly" />
@@ -93,8 +93,8 @@ export function DriverSubscriptionCard() {
                     <div>
                       <p className="font-medium">Annuel</p>
                       <p className="text-sm text-muted-foreground">365 jours</p>
-                      <Badge variant="secondary" className="mt-1 bg-green-100 text-green-800">
-                        Économisez {discount}%
+                      <Badge variant="secondary" className="mt-1 bg-primary-orange-100 text-primary-orange-800">
+                        Ã‰conomisez {discount}%
                       </Badge>
                     </div>
                     <div className="text-right">
@@ -119,7 +119,7 @@ export function DriverSubscriptionCard() {
               <Calendar className="h-12 w-12 text-primary opacity-20" />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {subscription?.billing_cycle === 'yearly' ? 'Valable 365 jours' : 'Valable 30 jours'} à compter de l'activation
+              {subscription?.billing_cycle === 'yearly' ? 'Valable 365 jours' : 'Valable 30 jours'} Ã  compter de l'activation
             </p>
           </div>
         )}
@@ -143,7 +143,7 @@ export function DriverSubscriptionCard() {
           </div>
         )}
 
-        {/* Méthodes de paiement */}
+        {/* MÃ©thodes de paiement */}
         {(!hasAccess || isExpired) && (
           <>
             <div className="space-y-3">
@@ -155,7 +155,7 @@ export function DriverSubscriptionCard() {
                     <Wallet className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium">Wallet 224Solutions</p>
-                      <p className="text-xs text-muted-foreground">Paiement instantané</p>
+                      <p className="text-xs text-muted-foreground">Paiement instantanÃ©</p>
                     </div>
                   </Label>
                 </div>
@@ -165,7 +165,7 @@ export function DriverSubscriptionCard() {
                     <Smartphone className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">Mobile Money</p>
-                      <p className="text-xs text-muted-foreground">Bientôt disponible</p>
+                      <p className="text-xs text-muted-foreground">BientÃ´t disponible</p>
                     </div>
                   </Label>
                 </div>
@@ -175,7 +175,7 @@ export function DriverSubscriptionCard() {
                     <CreditCard className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">Carte bancaire</p>
-                      <p className="text-xs text-muted-foreground">Bientôt disponible</p>
+                      <p className="text-xs text-muted-foreground">BientÃ´t disponible</p>
                     </div>
                   </Label>
                 </div>
@@ -205,19 +205,19 @@ export function DriverSubscriptionCard() {
 
         {/* Avantages */}
         <div className="bg-primary/5 p-4 rounded-lg space-y-2">
-          <p className="font-medium text-sm">Avec l'abonnement, vous accédez à :</p>
+          <p className="font-medium text-sm">Avec l'abonnement, vous accÃ©dez Ã  :</p>
           <ul className="text-sm space-y-1 text-muted-foreground">
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-success" />
-              Réception illimitée de courses/livraisons
+              RÃ©ception illimitÃ©e de courses/livraisons
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-success" />
-              Système GPS et tracking en temps réel
+              SystÃ¨me GPS et tracking en temps rÃ©el
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-success" />
-              Notifications instantanées
+              Notifications instantanÃ©es
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-success" />

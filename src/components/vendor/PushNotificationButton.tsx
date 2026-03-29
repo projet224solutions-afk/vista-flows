@@ -1,6 +1,6 @@
 /**
  * BOUTON D'ACTIVATION DES NOTIFICATIONS PUSH
- * Permet aux vendeurs d'activer/désactiver les notifications FCM
+ * Permet aux vendeurs d'activer/dÃ©sactiver les notifications FCM
  * 224SOLUTIONS
  */
 
@@ -63,11 +63,11 @@ export function PushNotificationButton({
     setOpen(false);
   };
 
-  // Icône selon l'état
+  // IcÃ´ne selon l'Ã©tat
   const getIcon = () => {
     if (isLoading) return <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />;
     if (!isSupported) return <BellOff className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />;
-    if (isEnabled) return <BellRing className="w-4 h-4 md:w-5 md:h-5 text-green-500" />;
+    if (isEnabled) return <BellRing className="w-4 h-4 md:w-5 md:h-5 text-primary-orange-500" />;
     if (permission === 'denied') return <BellOff className="w-4 h-4 md:w-5 md:h-5 text-red-500" />;
     return <Bell className="w-4 h-4 md:w-5 md:h-5" />;
   };
@@ -86,10 +86,10 @@ export function PushNotificationButton({
         size={size}
         className={className}
         disabled
-        title="Notifications non supportées"
+        title="Notifications non supportÃ©es"
       >
         {getIcon()}
-        {showText && <span className="ml-2">Non supporté</span>}
+        {showText && <span className="ml-2">Non supportÃ©</span>}
       </Button>
     );
   }
@@ -101,7 +101,7 @@ export function PushNotificationButton({
           variant={variant}
           size={size}
           className={`${className} relative`}
-          title={isEnabled ? 'Notifications activées' : 'Activer les notifications'}
+          title={isEnabled ? 'Notifications activÃ©es' : 'Activer les notifications'}
           onClick={unreadCount > 0 ? handleButtonClick : undefined}
         >
           {getIcon()}
@@ -112,11 +112,11 @@ export function PushNotificationButton({
           )}
           {/* Badge compteur de notifications non lues */}
           {unreadCount > 0 ? (
-            <span className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center rounded-full bg-green-500 text-white text-xs font-bold border-2 border-background p-0">
+            <span className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white text-xs font-bold border-2 border-background p-0">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           ) : isEnabled ? (
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse" />
           ) : null}
         </Button>
       </PopoverTrigger>
@@ -125,7 +125,7 @@ export function PushNotificationButton({
           <div className="flex items-center justify-between">
             <h4 className="font-semibold">Notifications Push</h4>
             <UiBadge variant={getBadgeVariant()}>
-              {isEnabled ? 'Activées' : permission === 'denied' ? 'Bloquées' : 'Désactivées'}
+              {isEnabled ? 'ActivÃ©es' : permission === 'denied' ? 'BloquÃ©es' : 'DÃ©sactivÃ©es'}
             </UiBadge>
           </div>
 
@@ -133,7 +133,7 @@ export function PushNotificationButton({
             {isEnabled
               ? 'Vous recevez les notifications pour les commandes, paiements et messages.'
               : permission === 'denied'
-              ? 'Les notifications sont bloquées par votre navigateur. Modifiez les paramètres du site.'
+              ? 'Les notifications sont bloquÃ©es par votre navigateur. Modifiez les paramÃ¨tres du site.'
               : 'Activez les notifications pour ne rien manquer.'}
           </p>
 
@@ -156,7 +156,7 @@ export function PushNotificationButton({
                   className="w-full"
                 >
                   <BellOff className="w-4 h-4 mr-2" />
-                  Désactiver
+                  DÃ©sactiver
                 </Button>
               </>
             ) : permission !== 'denied' ? (
@@ -175,7 +175,7 @@ export function PushNotificationButton({
               </Button>
             ) : (
               <p className="text-xs text-muted-foreground text-center">
-                Cliquez sur l'icône 🔒 dans la barre d'adresse pour autoriser les notifications.
+                Cliquez sur l'icÃ´ne ðŸ”’ dans la barre d'adresse pour autoriser les notifications.
               </p>
             )}
           </div>

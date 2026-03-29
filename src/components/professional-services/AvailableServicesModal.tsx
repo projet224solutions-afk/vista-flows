@@ -82,11 +82,11 @@ const getCategoryGradient = (category: string | null) => {
   const gradients: Record<string, string> = {
     'commerce': 'from-primary to-secondary',
     'food': 'from-accent to-destructive',
-    'services': 'from-emerald-500 to-teal-500',
+    'services': 'from-primary-blue-500 to-primary-orange-500',
     'transport': 'from-violet-500 to-purple-500',
     'health': 'from-pink-500 to-rose-500',
     'education': 'from-amber-500 to-yellow-500',
-    'tech': 'from-cyan-500 to-blue-500',
+    'tech': 'from-primary-blue-500 to-blue-500',
     'creative': 'from-fuchsia-500 to-pink-500',
   };
   return gradients[category || ''] || 'from-primary to-primary/70';
@@ -168,7 +168,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
       return 'Email invalide';
     }
     if (user?.email && email.toLowerCase() === user.email.toLowerCase()) {
-      return 'Vous devez utiliser un email différent de votre compte actuel';
+      return 'Vous devez utiliser un email diffÃ©rent de votre compte actuel';
     }
     return '';
   };
@@ -189,7 +189,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
         sessionStorage.setItem('selected_service_type_name', selectedServiceType.name);
       }
       
-      toast.success('Email enregistré ! Vous allez être redirigé vers la création de service.');
+      toast.success('Email enregistrÃ© ! Vous allez Ãªtre redirigÃ© vers la crÃ©ation de service.');
       onOpenChange(false);
       
       // Navigate to service selection with the pre-selected service type
@@ -224,7 +224,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
         Aucun type de service disponible
       </h3>
       <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-        Les types de services seront bientôt disponibles. Revenez plus tard !
+        Les types de services seront bientÃ´t disponibles. Revenez plus tard !
       </p>
     </div>
   );
@@ -242,10 +242,10 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
           </div>
         )}
         <h3 className="font-semibold text-foreground mb-2">
-          Créer votre {selectedServiceType?.name || 'service'}
+          CrÃ©er votre {selectedServiceType?.name || 'service'}
         </h3>
         <p className="text-sm text-muted-foreground">
-          Pour créer votre service, vous devez utiliser une adresse email différente de celle de votre compte actuel.
+          Pour crÃ©er votre service, vous devez utiliser une adresse email diffÃ©rente de celle de votre compte actuel.
         </p>
       </div>
 
@@ -254,10 +254,10 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
           <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div className="text-sm">
             <p className="font-medium text-amber-800 dark:text-amber-200 mb-1">
-              Pourquoi un email différent ?
+              Pourquoi un email diffÃ©rent ?
             </p>
             <p className="text-amber-700 dark:text-amber-300">
-              Cette séparation permet de mieux gérer votre activité professionnelle et de protéger votre compte personnel.
+              Cette sÃ©paration permet de mieux gÃ©rer votre activitÃ© professionnelle et de protÃ©ger votre compte personnel.
             </p>
           </div>
         </div>
@@ -328,7 +328,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
       <div className="max-h-[55vh] overflow-y-auto pr-1 -mx-1 px-1">
         {filteredServiceTypes.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground text-sm">
-            Aucun service trouvé pour "{searchQuery}"
+            Aucun service trouvÃ© pour "{searchQuery}"
           </div>
         ) : (
           <div className="grid grid-cols-2 landscape:grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
@@ -399,13 +399,13 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
             </div>
             <span className="truncate">
-              {showCreateForm ? `Créer: ${selectedServiceType?.name}` : 'Services disponibles'}
+              {showCreateForm ? `CrÃ©er: ${selectedServiceType?.name}` : 'Services disponibles'}
             </span>
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
             {showCreateForm 
               ? 'Configurez votre nouveau service professionnel'
-              : 'Choisissez le type de service que vous souhaitez créer'
+              : 'Choisissez le type de service que vous souhaitez crÃ©er'
             }
           </DialogDescription>
         </DialogHeader>

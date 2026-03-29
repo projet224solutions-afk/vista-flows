@@ -45,7 +45,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
   const [distance, setDistance] = useState<number | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
 
-  // Parse les coordonnées d'une adresse
+  // Parse les coordonnÃ©es d'une adresse
   const parseCoords = (addr: DeliveryAddress | string | null): Coordinates | null => {
     if (!addr) return null;
     if (typeof addr === 'string') {
@@ -89,7 +89,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
       return;
     }
 
-    // Déterminer la destination selon le statut
+    // DÃ©terminer la destination selon le statut
     const isPickingUp = ['assigned', 'accepted', 'picked_up'].includes(activeDelivery.status);
     const targetAddr = isPickingUp ? activeDelivery.pickup_address : activeDelivery.delivery_address;
     const target = parseCoords(targetAddr);
@@ -100,7 +100,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
       return;
     }
 
-    // Utiliser Mapbox pour obtenir la route réelle
+    // Utiliser Mapbox pour obtenir la route rÃ©elle
     TaxiMotoGeolocationService.getRoute(
       { latitude: currentLocation.latitude, longitude: currentLocation.longitude },
       { latitude: target.latitude, longitude: target.longitude }
@@ -133,7 +133,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
 
     let mapsUrl: string;
 
-    // Si on a des coordonnées GPS valides, les utiliser
+    // Si on a des coordonnÃ©es GPS valides, les utiliser
     if (target && target.latitude !== 0 && target.longitude !== 0) {
       if (currentLocation) {
         const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
@@ -145,7 +145,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
     } 
     // Sinon utiliser l'adresse textuelle
     else if (addressText && addressText !== 'Adresse non disponible') {
-      const encodedAddress = encodeURIComponent(addressText + ', Guinée');
+      const encodedAddress = encodeURIComponent(addressText + ', GuinÃ©e');
       if (currentLocation) {
         const origin = `${currentLocation.latitude},${currentLocation.longitude}`;
         mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${encodedAddress}&travelmode=driving`;
@@ -153,7 +153,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
         mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
       }
     } 
-    // Aucune donnée disponible
+    // Aucune donnÃ©e disponible
     else {
       toast.error("Adresse non disponible pour la navigation");
       return;
@@ -172,7 +172,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
             Aucune livraison active
           </h3>
           <p className="text-sm text-muted-foreground/70">
-            Acceptez une livraison pour démarrer la navigation
+            Acceptez une livraison pour dÃ©marrer la navigation
           </p>
         </CardContent>
       </Card>
@@ -180,7 +180,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
   }
 
   const isPickingUp = ['assigned', 'accepted', 'picked_up'].includes(activeDelivery.status);
-  const statusLabel = isPickingUp ? "Récupération du colis" : "En route vers le client";
+  const statusLabel = isPickingUp ? "RÃ©cupÃ©ration du colis" : "En route vers le client";
 
   const pickupCoords = parseCoords(activeDelivery.pickup_address);
   const deliveryCoords = parseCoords(activeDelivery.delivery_address);
@@ -188,7 +188,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
   return (
     <div className="space-y-4">
       {/* Carte de navigation active */}
-      <Card className="bg-gradient-to-r from-orange-50 to-green-50 dark:from-orange-950/30 dark:to-green-950/30 border-orange-200 dark:border-orange-800">
+      <Card className="bg-gradient-to-r from-orange-50 to-primary-orange-50 dark:from-orange-950/30 dark:to-primary-orange-950/30 border-orange-200 dark:border-orange-800">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -232,14 +232,14 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
             </p>
           </div>
 
-          {/* Itinéraire */}
+          {/* ItinÃ©raire */}
           <div className="space-y-3">
-            <div className="bg-green-50 dark:bg-green-950/30 rounded-lg p-3 border border-green-200 dark:border-green-800">
+            <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/30 rounded-lg p-3 border border-primary-orange-200 dark:border-primary-orange-800">
               <div className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
+                <MapPin className="w-5 h-5 text-primary-orange-600 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-green-800 dark:text-green-400 uppercase mb-1">
-                    📦 Point de récupération
+                  <p className="text-xs font-semibold text-primary-orange-800 dark:text-primary-orange-400 uppercase mb-1">
+                    ðŸ“¦ Point de rÃ©cupÃ©ration
                   </p>
                   <p className="text-sm text-foreground">
                     {parseAddress(activeDelivery.pickup_address)}
@@ -262,7 +262,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
                 <MapPin className="w-5 h-5 text-red-600 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-xs font-semibold text-red-800 dark:text-red-400 uppercase mb-1">
-                    🏠 Destination finale
+                    ðŸ  Destination finale
                   </p>
                   <p className="text-sm text-foreground">
                     {parseAddress(activeDelivery.delivery_address)}
@@ -277,7 +277,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
             </div>
           </div>
 
-          {/* Distance et temps estimé */}
+          {/* Distance et temps estimÃ© */}
           {distance !== null && duration !== null && (
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-card rounded-lg p-3 border border-orange-200 dark:border-orange-800 text-center">
@@ -289,7 +289,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
               <div className="bg-card rounded-lg p-3 border border-orange-200 dark:border-orange-800 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Clock className="w-3 h-3 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">Temps estimé</p>
+                  <p className="text-xs text-muted-foreground">Temps estimÃ©</p>
                 </div>
                 <p className="text-2xl font-bold text-orange-600">
                   {Math.round(duration)} <span className="text-sm">min</span>
@@ -301,7 +301,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
           {/* Position actuelle */}
           {currentLocation && (
             <div className="bg-card rounded-lg p-3 border border-border">
-              <p className="text-xs text-muted-foreground mb-1">📍 Ma position actuelle</p>
+              <p className="text-xs text-muted-foreground mb-1">ðŸ“ Ma position actuelle</p>
               <p className="text-xs font-mono text-foreground">
                 {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
               </p>
@@ -316,31 +316,31 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
             style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))' }}
           >
             <ExternalLink className="w-5 h-5" />
-            🗺️ Ouvrir dans Google Maps
+            ðŸ—ºï¸ Ouvrir dans Google Maps
           </Button>
         </CardContent>
       </Card>
 
-      {/* Informations supplémentaires */}
+      {/* Informations supplÃ©mentaires */}
       <Card className="bg-card/95 backdrop-blur-sm">
         <CardContent className="pt-4">
           <div className="grid grid-cols-2 gap-3 text-center">
             <div>
-              <p className="text-xs text-muted-foreground mb-1">💰 Rémunération</p>
-              <p className="text-lg font-bold text-green-600">
+              <p className="text-xs text-muted-foreground mb-1">ðŸ’° RÃ©munÃ©ration</p>
+              <p className="text-lg font-bold text-primary-orange-600">
                 {(activeDelivery.delivery_fee || activeDelivery.driver_earning || 0).toLocaleString()} GNF
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-1">💳 Paiement</p>
+              <p className="text-xs text-muted-foreground mb-1">ðŸ’³ Paiement</p>
               <p className="text-lg font-bold text-orange-600 capitalize">
-                {activeDelivery.payment_method || 'Non défini'}
+                {activeDelivery.payment_method || 'Non dÃ©fini'}
               </p>
             </div>
           </div>
           {activeDelivery.package_type && (
             <div className="mt-3 text-center">
-              <p className="text-xs text-muted-foreground mb-1">📦 Type de colis</p>
+              <p className="text-xs text-muted-foreground mb-1">ðŸ“¦ Type de colis</p>
               <Badge variant="outline" className="capitalize">
                 {activeDelivery.package_type}
               </Badge>

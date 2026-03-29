@@ -1,6 +1,6 @@
 /**
- * 🎨 NAVIGATION PDG - INTERFACE ORGANISÉE
- * Navigation par catégories avec version mobile optimisée
+ * ðŸŽ¨ NAVIGATION PDG - INTERFACE ORGANISÃ‰E
+ * Navigation par catÃ©gories avec version mobile optimisÃ©e
  * Filtrage automatique selon les permissions de l'utilisateur
  */
 
@@ -39,11 +39,11 @@ interface NavCategory {
 const categories: NavCategory[] = [
   {
     title: 'Finance',
-    color: 'from-emerald-500 to-emerald-600',
-    bgColor: 'bg-emerald-500',
+    color: 'from-primary-blue-500 to-primary-orange-600',
+    bgColor: 'bg-primary-blue-500',
     items: [
       { value: 'finance', label: 'Finance & Revenus', icon: DollarSign, permission: 'view_finance' },
-      { value: 'banking', label: 'Système Bancaire', icon: Landmark, badge: true, permission: 'view_banking' },
+      { value: 'banking', label: 'SystÃ¨me Bancaire', icon: Landmark, badge: true, permission: 'view_banking' },
     ]
   },
   {
@@ -60,36 +60,36 @@ const categories: NavCategory[] = [
     ]
   },
   {
-    title: 'Opérations',
-    color: 'from-green-500 to-green-600',
-    bgColor: 'bg-green-500',
+    title: 'OpÃ©rations',
+    color: 'from-primary-blue-500 to-primary-orange-600',
+    bgColor: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
     items: [
       { value: 'agents', label: 'Agents', icon: UserCheck, permission: 'view_agents' },
       { value: 'syndicat', label: 'Bureaux Syndicaux', icon: Building2, permission: 'view_syndicat' },
       { value: 'bureau-monitoring', label: 'Monitoring Bureaux', icon: Car, badge: true, permission: 'view_bureau_monitoring' },
       { value: 'driver-subscriptions', label: 'Abonnements Chauffeurs', icon: Bike, permission: 'view_driver_subscriptions' },
-      { value: 'stolen-vehicles', label: 'Motos Volées', icon: Shield, badge: true, permission: 'view_stolen_vehicles' },
+      { value: 'stolen-vehicles', label: 'Motos VolÃ©es', icon: Shield, badge: true, permission: 'view_stolen_vehicles' },
       { value: 'orders', label: 'Commandes', icon: Package, permission: 'view_orders' },
       { value: 'vendors', label: 'Vendeurs', icon: Store, permission: 'view_vendors' },
-      { value: 'vendor-kyc-review', label: 'Vérification KYC', icon: Shield, badge: true, permission: 'view_vendor_kyc' },
+      { value: 'vendor-kyc-review', label: 'VÃ©rification KYC', icon: Shield, badge: true, permission: 'view_vendor_kyc' },
       { value: 'vendor-certification', label: 'Certification Vendeurs', icon: Shield, badge: true, permission: 'view_vendor_certification' },
       { value: 'drivers', label: 'Livreurs', icon: Bike, permission: 'view_drivers' },
       { value: 'quotes-invoices', label: 'Devis & Factures', icon: FileText, permission: 'view_quotes_invoices' },
       { value: 'communication', label: 'Communication', icon: MessageSquare, permission: 'access_communication' },
-      { value: 'broadcast-center', label: '📢 Diffusion Globale', icon: Megaphone, badge: true, permission: 'manage_broadcasts' },
+      { value: 'broadcast-center', label: 'ðŸ“¢ Diffusion Globale', icon: Megaphone, badge: true, permission: 'manage_broadcasts' },
       { value: 'agent-wallet-audit', label: 'Audit Wallet Agents', icon: Shield, permission: 'view_agent_wallet_audit' },
     ]
   },
   {
-    title: 'Système',
+    title: 'SystÃ¨me',
     color: 'from-purple-500 to-purple-600',
     bgColor: 'bg-purple-500',
     items: [
-      { value: 'security', label: 'Sécurité', icon: Shield, permission: 'view_security' },
+      { value: 'security', label: 'SÃ©curitÃ©', icon: Shield, permission: 'view_security' },
       { value: 'logic-surveillance', label: 'Surveillance Logique', icon: Zap, badge: true, permission: 'view_debug' },
       { value: 'sync-dashboard', label: 'Synchronisation', icon: RefreshCw, badge: true, permission: 'view_debug' },
       { value: 'id-normalization', label: 'Audit ID', icon: Shield, badge: true, permission: 'view_id_normalization' },
-      { value: 'deleted-users-restore', label: '🔄 Restauration', icon: RefreshCw, badge: true, permission: 'view_security' },
+      { value: 'deleted-users-restore', label: 'ðŸ”„ Restauration', icon: RefreshCw, badge: true, permission: 'view_security' },
       { value: 'bug-bounty', label: 'Bug Bounty', icon: Shield, permission: 'view_bug_bounty' },
       { value: 'config', label: 'Configuration', icon: Settings, permission: 'view_config' },
       { value: 'maintenance', label: 'Maintenance', icon: Wrench, permission: 'view_maintenance' },
@@ -128,9 +128,9 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
     setExpandedCategory(expandedCategory === title ? null : title);
   };
 
-  // Filtrer les catégories et items selon les permissions de l'utilisateur
+  // Filtrer les catÃ©gories et items selon les permissions de l'utilisateur
   const filteredCategories = useMemo(() => {
-    // PDG a accès à tout
+    // PDG a accÃ¨s Ã  tout
     if (isPDG) return categories;
 
     // Filtrer les items selon les permissions de l'agent
@@ -140,14 +140,14 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
         items: category.items.filter(item => {
           // Si pas de permission requise, l'item est accessible
           if (!item.permission) return true;
-          // Vérifier la permission
+          // VÃ©rifier la permission
           return hasPermission(item.permission);
         })
       }))
-      .filter(category => category.items.length > 0); // Exclure les catégories vides
+      .filter(category => category.items.length > 0); // Exclure les catÃ©gories vides
   }, [isPDG, hasPermission]);
 
-  // Auto-expand la catégorie active au chargement
+  // Auto-expand la catÃ©gorie active au chargement
   useEffect(() => {
     const activeCategory = filteredCategories.find(cat =>
       cat.items.some(item => item.value === activeTab)
@@ -158,13 +158,13 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
       return;
     }
 
-    // Quand on est sur un onglet non listé (ex: dashboard), ouvrir la première catégorie disponible
+    // Quand on est sur un onglet non listÃ© (ex: dashboard), ouvrir la premiÃ¨re catÃ©gorie disponible
     if (activeTab === 'dashboard' && filteredCategories.length > 0) {
       setExpandedCategory(filteredCategories[0].title);
     }
   }, [activeTab, filteredCategories]);
 
-  // Trouver la catégorie et l'item actifs (dans les catégories filtrées)
+  // Trouver la catÃ©gorie et l'item actifs (dans les catÃ©gories filtrÃ©es)
   const activeCategory = filteredCategories.find(cat =>
     cat.items.some(item => item.value === activeTab)
   );
@@ -228,7 +228,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                     
                     return (
                       <div key={category.title} className="space-y-1">
-                        {/* Header catégorie */}
+                        {/* Header catÃ©gorie */}
                         <button
                           onClick={() => toggleCategory(category.title)}
                           className={cn(
@@ -253,7 +253,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                           )}
                         </button>
                         
-                        {/* Items de la catégorie */}
+                        {/* Items de la catÃ©gorie */}
                         {isExpanded && (
                           <div className="pl-2 space-y-1 animate-in slide-in-from-top-2 duration-200">
                             {category.items.map((item) => {
@@ -296,12 +296,12 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
         {filteredCategories.length === 0 && !permissionsLoading && (
           <Card>
             <CardContent className="p-3 text-sm text-muted-foreground">
-              Aucune section disponible. Vérifiez le rôle/permissions de ce compte.
+              Aucune section disponible. VÃ©rifiez le rÃ´le/permissions de ce compte.
             </CardContent>
           </Card>
         )}
 
-        {/* Accès rapide catégories - horizontal scroll */}
+        {/* AccÃ¨s rapide catÃ©gories - horizontal scroll */}
         <div className="flex flex-wrap gap-2 pb-2 w-full px-0.5">
           {filteredCategories.map((category) => {
             const hasActiveItem = category.items.some(item => item.value === activeTab);
@@ -345,7 +345,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                 hasActiveItem && "ring-2 ring-primary shadow-lg"
               )}
             >
-              {/* En-tête de catégorie */}
+              {/* En-tÃªte de catÃ©gorie */}
               <div
                 className={cn(
                   "bg-gradient-to-br p-4 cursor-pointer flex items-center justify-between",
@@ -373,7 +373,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                 )}
               </div>
 
-              {/* Items de navigation avec défilement pour les longues listes */}
+              {/* Items de navigation avec dÃ©filement pour les longues listes */}
               <CardContent 
                 className={cn(
                   "p-2 transition-all duration-300",
