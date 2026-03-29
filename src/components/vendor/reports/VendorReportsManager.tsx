@@ -23,7 +23,7 @@ interface ReportData {
   returns: number;
 }
 
-const COLORS = ['#ff4000', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function VendorReportsManager() {
   const { vendorId, userId } = useCurrentVendor();

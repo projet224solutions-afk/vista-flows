@@ -31,7 +31,7 @@ const COLORS = [
   { name: 'Blanc', hex: '#FFFFFF' },
   { name: 'Rouge', hex: '#EF4444' },
   { name: 'Bleu', hex: '#3B82F6' },
-  { name: 'Vert', hex: '#ff4000' },
+  { name: 'Vert', hex: '#10B981' },
   { name: 'Jaune', hex: '#EAB308' },
   { name: 'Rose', hex: '#EC4899' },
   { name: 'Gris', hex: '#6B7280' }

@@ -56,7 +56,7 @@ interface SecurityEvent {
   created_at: string;
 }
 
-const COLORS = ['#ff4000', '#f59e0b', '#ef4444', '#6366f1'];
+const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6366f1'];
 
 export const RealTimeSecurityDashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<SecurityMetrics>({
@@ -369,7 +369,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
                 <YAxis />
                 <Tooltip />
                 <Area type="monotone" dataKey="threats" stroke="#ef4444" fill="#fecaca" name="DÃ©tectÃ©es" />
-                <Area type="monotone" dataKey="blocked" stroke="#ff4000" fill="#e8f0ff" name="BloquÃ©es" />
+                <Area type="monotone" dataKey="blocked" stroke="#10b981" fill="#d1fae5" name="BloquÃ©es" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>

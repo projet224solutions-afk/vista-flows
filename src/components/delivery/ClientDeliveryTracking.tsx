@@ -62,7 +62,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
       ? delivery.delivery_address
       : delivery.delivery_address?.address || 'Destination';
 
-    new mapboxgl.Marker({ color: '#ff4000' })
+    new mapboxgl.Marker({ color: '#22c55e' })
       .setLngLat([delivery.delivery_lng || -13.7122, delivery.delivery_lat || 9.5091])
       .setPopup(new mapboxgl.Popup().setHTML(`<strong>Destination</strong><br/>${deliveryAddr}`))
       .addTo(map.current);

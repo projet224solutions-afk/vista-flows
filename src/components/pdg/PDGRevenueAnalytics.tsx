@@ -291,7 +291,7 @@ export default function PDGRevenueAnalytics() {
                     <Legend />
                     <Line type="monotone" dataKey="wallet" stroke="#8B5CF6" name="Frais Wallet" />
                     <Line type="monotone" dataKey="purchase" stroke="#EC4899" name="Commissions" />
-                    <Line type="monotone" dataKey="total" stroke="#ff4000" name="Total" strokeWidth={2} />
+                    <Line type="monotone" dataKey="total" stroke="#10B981" name="Total" strokeWidth={2} />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>

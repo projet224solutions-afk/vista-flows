@@ -85,8 +85,8 @@ const COST_TYPE_LABELS: Record<string, { label: string; icon: React.ReactNode; c
   abonnement: { label: 'Abonnement', icon: <CreditCard className="w-4 h-4" />, color: '#8B5CF6' },
   salaires: { label: 'Salaires', icon: <Users className="w-4 h-4" />, color: '#3B82F6' },
   electricite: { label: 'Ã‰lectricitÃ©', icon: <Zap className="w-4 h-4" />, color: '#F59E0B' },
-  internet: { label: 'Internet', icon: <Wifi className="w-4 h-4" />, color: '#04439e' },
-  assurance: { label: 'Assurance', icon: <Shield className="w-4 h-4" />, color: '#ff4000' },
+  internet: { label: 'Internet', icon: <Wifi className="w-4 h-4" />, color: '#06B6D4' },
+  assurance: { label: 'Assurance', icon: <Shield className="w-4 h-4" />, color: '#10B981' },
   autre: { label: 'Autre', icon: <HelpCircle className="w-4 h-4" />, color: '#6B7280' }
 };
 

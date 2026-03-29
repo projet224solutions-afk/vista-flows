@@ -125,7 +125,7 @@ export function InteractiveMapNavigation({
       const pickupEl = document.createElement('div');
       pickupEl.style.width = '30px';
       pickupEl.style.height = '30px';
-      pickupEl.style.backgroundColor = '#ff4000';
+      pickupEl.style.backgroundColor = '#10B981';
       pickupEl.style.borderRadius = '50%';
       pickupEl.style.border = '3px solid white';
       pickupEl.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';

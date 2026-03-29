@@ -39,7 +39,7 @@ const salesModes = {
     title: 'Vente Directe',
     subtitle: 'Vendez vos propres produits',
     icon: Store,
-    color: 'blue',
+    color: 'emerald',
     badgeText: 'RecommandÃ©',
     badgeVariant: 'secondary' as const,
     description: 'CrÃ©ez et vendez vos propres produits numÃ©riques',
@@ -57,7 +57,7 @@ const salesModes = {
     title: 'Affiliation',
     subtitle: 'Promouvez des partenaires',
     icon: Link2,
-    color: 'orange',
+    color: 'violet',
     badgeText: 'Commission Ã©levÃ©e',
     badgeVariant: 'default' as const,
     description: 'Gagnez des commissions sur les ventes',
@@ -144,7 +144,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                   variant={mode.badgeVariant}
                   className={cn(
                     'text-[10px] font-medium',
-                    mode.color === 'orange' && 'bg-gradient-to-r from-primary-orange-500 to-primary-blue-500 text-white border-0'
+                    mode.color === 'violet' && 'bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0'
                   )}
                 >
                   {mode.badgeText}
@@ -166,9 +166,9 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 {/* IcÃ´ne */}
                 <div className={cn(
                   'w-12 h-12 rounded-xl flex items-center justify-center mx-auto',
-                  mode.color === 'blue' 
+                  mode.color === 'emerald' 
                     ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-600' 
-                    : 'bg-gradient-to-br from-primary-orange-500 to-primary-blue-600',
+                    : 'bg-gradient-to-br from-violet-500 to-purple-600',
                   'text-white shadow-lg'
                 )}>
                   <Icon className="w-6 h-6" />
@@ -183,9 +183,9 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 {/* Highlight */}
                 <div className={cn(
                   'text-center py-2 px-3 rounded-lg text-xs font-medium',
-                  mode.color === 'blue' 
+                  mode.color === 'emerald' 
                     ? 'bg-primary-blue-500/10 text-primary-blue-600 dark:text-primary-blue-400' 
-                    : 'bg-primary-orange-500/10 text-primary-orange-600 dark:text-primary-orange-400'
+                    : 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
                 )}>
                   {mode.highlight}
                 </div>

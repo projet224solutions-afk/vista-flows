@@ -610,7 +610,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                     className="overflow-hidden hover:shadow-md transition-all cursor-pointer border-l-4"
                     style={{
                       borderLeftColor: order.escrow?.status === 'pending' ? '#3b82f6' : 
-                                       order.escrow?.status === 'released' ? '#ff4000' :
+                                       order.escrow?.status === 'released' ? '#22c55e' :
                                        order.status === 'cancelled' ? '#ef4444' : '#e2e8f0'
                     }}
                     onClick={() => loadOrderDetails(order)}
