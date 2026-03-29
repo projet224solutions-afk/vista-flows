@@ -22,7 +22,9 @@ import {
   Loader2,
   Sparkles,
   MessageSquare,
-  Clock
+  Clock,
+  ImagePlus,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -35,6 +37,11 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+}
+
+interface UserLocationPayload {
+  latitude: number;
+  longitude: number;
 }
 
 interface UserContext {
@@ -64,6 +71,9 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
   const [showHistory, setShowHistory] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
+  const [attachedImage, setAttachedImage] = useState<{ name: string; dataUrl: string } | null>(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [vendorAccess, setVendorAccess] = useState<{ loading: boolean; hasVendor: boolean | null }>({
     loading: userRole === 'vendeur',
     hasVendor: userRole === 'vendeur' ? null : true,
@@ -76,6 +86,149 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const quickSuggestions = userRole === 'vendeur'
+    ? [
+        'Analyse ma boutique et donne 3 priorites',
+        'Comment augmenter mes ventes cette semaine ?',
+        'Trouve des opportunites business sur la plateforme',
+        'Donne-moi des actions pour mes produits les moins performants',
+      ]
+    : [
+        'Trouver un produit',
+        'Comment acheter ?',
+        'Comment vendre ici ?',
+        'Quelles opportunites business ?',
+        'Trouver un service proche et fiable',
+      ];
+
+  const detectIntent = (text: string): string => {
+    const query = text.toLowerCase().trim();
+    if (!query) return 'conversation_simple';
+    if (/bonjour|salut|hello|bonsoir|coucou|yo/.test(query)) return 'conversation_simple';
+    if (/photo|image|analyse|reconnai|visuel/.test(query)) return 'analyse_image';
+    if (/trouve|cherche|produit|ebook|telephone|robe|chaussure|pas cher|similaire/.test(query)) return 'recherche_interne';
+    if (/tendance|marche|prix mondial|internet|web|comparaison/.test(query)) return 'recherche_externe';
+    if (/comment|etape|utiliser|acheter|vendre|wallet|commande|livraison|publier/.test(query)) return 'assistant_application';
+    if (/business|revenu|opportunite|croissance|marketing/.test(query)) return 'assistant_business';
+    return 'assistant_application';
+  };
+
+  const buildMemorySnapshot = (history: Message[], pendingUserText: string) => {
+    const recent = history.slice(-8);
+    const summary = recent
+      .map((m) => `${m.role === 'user' ? 'U' : 'A'}: ${m.content}`)
+      .join(' | ')
+      .slice(0, 1500);
+
+    const userUtterances = history
+      .filter((m) => m.role === 'user')
+      .map((m) => m.content)
+      .slice(-12);
+
+    const pinnedFacts = userUtterances
+      .filter((entry) => /je veux|mon objectif|je cherche|j'ai besoin|rappelle|important/i.test(entry))
+      .slice(-5);
+
+    const detectedIntent = detectIntent(pendingUserText);
+    return { summary, pinnedFacts, detectedIntent };
+  };
+
+  const toDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(String(e.target?.result || ''));
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAttachImage = async (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Veuillez sélectionner une image.');
+      return;
+    }
+    const dataUrl = await toDataUrl(file);
+    setAttachedImage({ name: file.name, dataUrl });
+  };
+
+  const analyzeAttachedImage = async (dataUrl: string): Promise<string> => {
+    setIsAnalyzingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('visual-search', {
+        body: { imageBase64: dataUrl }
+      });
+
+      if (error) throw error;
+
+      const keywords = Array.isArray(data?.keywords) ? data.keywords : [];
+      const results = Array.isArray(data?.results) ? data.results.slice(0, 5) : [];
+      const description = data?.analysis?.description || 'Analyse visuelle disponible.';
+
+      if (results.length === 0) {
+        return `Image analysee: ${description}\nAucun produit exact trouve. Mots-cles detectes: ${keywords.join(', ') || 'aucun'}\nPropose des alternatives similaires.`;
+      }
+
+      const compactResults = results
+        .map((item: any) => `- ${item.name} (${Math.round((item.similarity || 0) * 100)}%)`)
+        .join('\n');
+
+      return `Image analysee: ${description}\nMots-cles detectes: ${keywords.join(', ') || 'aucun'}\nProduits similaires trouves:\n${compactResults}`;
+    } catch (error) {
+      console.error('Erreur analyse image copilote:', error);
+      return 'Image jointe, mais analyse visuelle indisponible actuellement. Aide l\'utilisateur avec des alternatives textuelles.';
+    } finally {
+      setIsAnalyzingImage(false);
+    }
+  };
+
+  const getCurrentUserLocation = async (): Promise<UserLocationPayload | null> => {
+    if (!navigator.geolocation) return null;
+
+    return new Promise((resolve) => {
+      const timeoutId = setTimeout(() => resolve(null), 2500);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          clearTimeout(timeoutId);
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        () => {
+          clearTimeout(timeoutId);
+          resolve(null);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 2000,
+          maximumAge: 5 * 60 * 1000,
+        }
+      );
+    });
+  };
+
+  const extractSourceLabel = (content: string): string | null => {
+    const match = content.match(/\[Source principale:\s*([^\]]+)\]/i);
+    if (match?.[1]) return match[1].trim();
+
+    const normalized = content.toLowerCase();
+    if (normalized.includes('recherche web') || normalized.includes('duckduckgo') || normalized.includes('wikipedia')) {
+      return 'Source : recherche web';
+    }
+    if (normalized.includes('produit') || normalized.includes('catalogue')) {
+      return 'Source : catalogue 224SOLUTIONS';
+    }
+    if (normalized.includes('service proche') || normalized.includes('distance') || normalized.includes('proximite')) {
+      return 'Source : services proches';
+    }
+    if (normalized.includes('wallet') || normalized.includes('commande') || normalized.includes('votre compte')) {
+      return 'Source : votre compte';
+    }
+    return null;
+  };
 
   // Initialiser ou récupérer le session ID
   useEffect(() => {
@@ -201,17 +354,29 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
 
   const sendMessage = async () => {
     console.log('📤 Copilote: Envoi message, isLoading =', isLoading);
-    if (!input.trim() || isLoading || (userRole === 'vendeur' && vendorCopilot.loading)) return;
+    if ((!input.trim() && !attachedImage) || isLoading || (userRole === 'vendeur' && vendorCopilot.loading)) return;
+
+    let messageToSend = input.trim();
+    if (attachedImage) {
+      const imageAnalysis = await analyzeAttachedImage(attachedImage.dataUrl);
+      messageToSend = `${messageToSend || 'Analyse cette image et aide-moi'}\n\n[CONTEXTE_IMAGE]\n${imageAnalysis}`;
+    }
 
     // NOUVEAU: Mode Enterprise pour vendeur avec analyse complète
     if (userRole === 'vendeur' && useEnterpriseMode && vendorId) {
-      const messageToSend = input.trim();
+      const history = messages.filter(m => m.id !== 'welcome').slice(-15);
+      const memory = buildMemorySnapshot(history, messageToSend);
       setInput('');
+      setAttachedImage(null);
       setIsLoading(true);
       setIsTyping(true);
 
       try {
-        await vendorCopilot.processQuery(messageToSend, vendorId);
+        await vendorCopilot.processQuery(messageToSend, vendorId, {
+          memorySummary: memory.summary,
+          pinnedFacts: memory.pinnedFacts,
+          detectedIntent: memory.detectedIntent
+        });
         // La synchronisation est gérée par le useEffect
       } catch (err: any) {
         console.error('❌ Erreur Copilote Enterprise:', err);
@@ -238,16 +403,19 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim(),
+      content: messageToSend,
       timestamp: new Date().toISOString()
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInput('');
+    setAttachedImage(null);
     setIsLoading(true);
     setIsTyping(true);
 
     try {
+      const userLocation = await getCurrentUserLocation();
+
       // Déterminer quelle edge function appeler selon le rôle
       const functionName = userRole === 'vendeur' ? 'vendor-ai-assistant' : 'client-ai-assistant';
 
@@ -269,6 +437,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
         ...historyMessages,
         { role: 'user', content: userMessage.content }
       ];
+      const memory = buildMemorySnapshot(messages.filter(m => m.id !== 'welcome'), userMessage.content);
 
       console.log(`📜 Sending ${conversationMessages.length} messages to AI (history: ${historyMessages.length}, session: ${sessionId})`);
 
@@ -285,7 +454,12 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
             message: userMessage.content,
             messages: conversationMessages,
             sessionId: sessionId, // Pour la traçabilité côté serveur
-            userRole: userRole
+            userRole: userRole,
+            memorySummary: memory.summary,
+            pinnedFacts: memory.pinnedFacts,
+            detectedIntent: memory.detectedIntent,
+            hasImageAttachment: userMessage.content.includes('[CONTEXTE_IMAGE]'),
+            userLocation,
           }),
         }
       );
@@ -439,6 +613,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       const newSession = generateSessionId();
       localStorage.setItem(sessionKey, newSession);
       setSessionId(newSession);
+      setAttachedImage(null);
       console.log(`🔄 Nouvelle session créée: ${newSession}`);
       
       toast.success('Conversation réinitialisée');
@@ -655,6 +830,14 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                           : 'bg-muted'
                       }`}>
                         {/* NOUVEAU: Support Markdown pour mode Enterprise */}
+                        {!isUser && extractSourceLabel(message.content) && (
+                          <div className="mb-2">
+                            <Badge variant="secondary" className="text-[10px] sm:text-xs">
+                              {extractSourceLabel(message.content)}
+                            </Badge>
+                          </div>
+                        )}
+
                         {!isUser && useEnterpriseMode ? (
                           <div className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm [&_p]:mb-1.5 [&_ul]:my-1 [&_li]:my-0.5 [&_a]:break-all [&_*]:max-w-full overflow-hidden">
                             <ReactMarkdown>{message.content}</ReactMarkdown>
@@ -709,7 +892,33 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div
+          className={`space-y-2 rounded-lg transition-colors ${isDragOver ? 'bg-muted/40' : ''}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragOver(false);
+            handleAttachImage(e.dataTransfer.files?.[0]);
+          }}
+        >
+          {attachedImage && (
+            <div className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2 text-xs sm:text-sm">
+              <div className="flex items-center gap-2 min-w-0">
+                <ImagePlus className="h-4 w-4 text-muted-foreground" />
+                <span className="truncate">Image jointe: {attachedImage.name}</span>
+                {isAnalyzingImage && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              </div>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAttachedImage(null)}>
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+
+          <div className="flex gap-2">
           <Input
             ref={inputRef}
             value={input}
@@ -722,10 +931,30 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
             }
             className="flex-1 h-10 sm:h-11 text-sm"
           />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleAttachImage(e.target.files?.[0])}
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={
+              isLoading ||
+              (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
+            }
+            className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg"
+            title="Ajouter une image"
+          >
+            <ImagePlus className="h-4 w-4" />
+          </Button>
           <Button
             onClick={sendMessage}
             disabled={
-              !input.trim() ||
+              (!input.trim() && !attachedImage) ||
               isLoading ||
               (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
             }
@@ -738,6 +967,23 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
               <Send className="h-4 w-4" />
             )}
           </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {quickSuggestions.map((suggestion) => (
+              <Button
+                key={suggestion}
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px]"
+                onClick={() => setInput(suggestion)}
+                disabled={isLoading}
+              >
+                {suggestion}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <div className="mt-1.5 text-[10px] sm:text-xs text-muted-foreground text-center hidden sm:block">

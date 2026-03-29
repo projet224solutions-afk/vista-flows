@@ -6,6 +6,100 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const SIMPLE_INTENTS = [
+  'conversation_simple',
+  'assistant_application',
+  'recherche_interne',
+  'recherche_externe',
+  'analyse_image',
+  'assistant_business'
+] as const;
+
+function normalizeIntent(text: string, preferred?: string): string {
+  if (preferred && SIMPLE_INTENTS.includes(preferred as any)) {
+    return preferred;
+  }
+
+  const q = (text || '').toLowerCase();
+  if (/bonjour|salut|hello|bonsoir|coucou|yo/.test(q)) return 'conversation_simple';
+  if (/photo|image|analyse visuelle|reconnai/.test(q)) return 'analyse_image';
+  if (/trouve|cherche|produit|ebook|telephone|robe|chaussure|similaire|pas cher/.test(q)) return 'recherche_interne';
+  if (/tendance|prix mondial|internet|web|veille|comparaison/.test(q)) return 'recherche_externe';
+  if (/business|revenu|opportunite|croissance|marketing/.test(q)) return 'assistant_business';
+  return 'assistant_application';
+}
+
+async function researchMarketInsights(params: any) {
+  const topic = String(params?.topic || '').trim();
+  const region = String(params?.region || "Afrique de l'Ouest").trim();
+  const limit = Math.min(Math.max(Number(params?.limit || 5), 1), 8);
+
+  if (!topic || topic.length < 3) {
+    return {
+      success: false,
+      error: 'Paramètre topic requis (minimum 3 caractères).',
+      data: { externalDataStatus: 'unavailable' }
+    };
+  }
+
+  const query = encodeURIComponent(`${topic} ${region}`);
+  const [wikiRaw, ddgRaw] = await Promise.allSettled([
+    fetch(`https://fr.wikipedia.org/w/api.php?action=opensearch&search=${query}&limit=${limit}&namespace=0&format=json`),
+    fetch(`https://api.duckduckgo.com/?q=${query}&format=json&no_html=1&skip_disambig=1`),
+  ]);
+
+  const sources: Array<{ title: string; url: string; snippet: string; source: string }> = [];
+
+  if (wikiRaw.status === 'fulfilled' && wikiRaw.value.ok) {
+    try {
+      const wiki = await wikiRaw.value.json();
+      const titles: string[] = Array.isArray(wiki?.[1]) ? wiki[1] : [];
+      const snippets: string[] = Array.isArray(wiki?.[2]) ? wiki[2] : [];
+      const urls: string[] = Array.isArray(wiki?.[3]) ? wiki[3] : [];
+      for (let i = 0; i < Math.min(titles.length, limit); i++) {
+        if (urls[i]) {
+          sources.push({
+            title: titles[i] || 'Wikipedia',
+            url: urls[i],
+            snippet: snippets[i] || '',
+            source: 'wikipedia'
+          });
+        }
+      }
+    } catch (error) {
+      console.error('[client-ai-assistant] wikipedia parse error:', error);
+    }
+  }
+
+  if (ddgRaw.status === 'fulfilled' && ddgRaw.value.ok) {
+    try {
+      const ddg = await ddgRaw.value.json();
+      if (ddg?.AbstractURL) {
+        sources.push({
+          title: ddg?.Heading || 'DuckDuckGo',
+          url: ddg.AbstractURL,
+          snippet: ddg?.AbstractText || '',
+          source: 'duckduckgo'
+        });
+      }
+    } catch (error) {
+      console.error('[client-ai-assistant] duckduckgo parse error:', error);
+    }
+  }
+
+  const unique = sources.filter((entry, index, all) => all.findIndex((candidate) => candidate.url === entry.url) === index).slice(0, limit);
+  return {
+    success: true,
+    data: {
+      topic,
+      region,
+      externalDataStatus: unique.length > 0 ? 'verified' : 'unavailable',
+      sources: unique,
+      transparency: 'Résultats externes: vérifiez les URL avant décision importante.'
+    }
+  };
+}
+
 // Fonction de recherche de produits avec infos boutique enrichies
 async function searchProducts(supabaseClient: any, query: string, category?: string, maxPrice?: number, minPrice?: number) {
   console.log("Searching products with:", { query, category, maxPrice, minPrice });
@@ -121,6 +215,85 @@ async function searchProducts(supabaseClient: any, query: string, category?: str
       deliveryBasePrice: p.vendor?.delivery_base_price
     }
   })) || [];
+}
+
+async function searchInternalCatalog(
+  supabaseClient: any,
+  query: string,
+  category?: string,
+  maxPrice?: number,
+  minPrice?: number,
+  productType: 'all' | 'physical' | 'digital' = 'all'
+) {
+  const physicalResults = productType === 'digital'
+    ? []
+    : await searchProducts(supabaseClient, query, category, maxPrice, minPrice);
+
+  let digitalResults: any[] = [];
+  if (productType !== 'physical') {
+    try {
+      let digitalQuery = supabaseClient
+        .from('digital_products')
+        .select('id, title, name, description, price, thumbnail_url, images, status, is_active, sales_count, views_count')
+        .or(`title.ilike.%${query}%,name.ilike.%${query}%,description.ilike.%${query}%`)
+        .limit(12);
+
+      if (category) {
+        digitalQuery = digitalQuery.ilike('category', `%${category}%`);
+      }
+      if (maxPrice) {
+        digitalQuery = digitalQuery.lte('price', maxPrice);
+      }
+      if (minPrice) {
+        digitalQuery = digitalQuery.gte('price', minPrice);
+      }
+
+      const { data } = await digitalQuery;
+      digitalResults = (data || []).map((item: any) => ({
+        id: item.id,
+        name: item.title || item.name || 'Produit digital',
+        description: item.description?.substring(0, 150),
+        price: item.price,
+        image: item.thumbnail_url || item.images?.[0] || null,
+        category: 'Produit digital',
+        sourceType: 'digital',
+        salesCount: item.sales_count || 0,
+        viewsCount: item.views_count || 0,
+      }));
+    } catch (error) {
+      console.error('[client-ai-assistant] digital search error:', error);
+      digitalResults = [];
+    }
+  }
+
+  const normalizedPhysical = (physicalResults || []).map((item: any) => ({
+    ...item,
+    sourceType: 'physical',
+  }));
+
+  const merged = [...normalizedPhysical, ...digitalResults].slice(0, 15);
+
+  if (merged.length > 0) {
+    return {
+      success: true,
+      query,
+      internalDataStatus: 'verified',
+      total: merged.length,
+      results: merged,
+      alternatives: []
+    };
+  }
+
+  const alternatives = await getPopularProducts(supabaseClient, 6);
+  return {
+    success: true,
+    query,
+    internalDataStatus: 'verified',
+    total: 0,
+    results: [],
+    alternatives,
+    message: 'Aucun résultat exact trouvé. Alternatives proposées depuis les données internes.'
+  };
 }
 
 // Fonction pour obtenir les détails d'une boutique/vendeur
@@ -330,6 +503,129 @@ async function searchProximityServices(supabaseClient: any, query?: string, serv
     isVerified: s.verification_status === 'verified',
     serviceType: s.service_type?.name || 'Service'
   })) || [];
+}
+
+function haversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function computeServiceRecommendationScore(input: {
+  distanceKm: number | null;
+  rating: number;
+  reviews: number;
+  verificationStatus?: string;
+  status?: string;
+  categoryMatch?: boolean;
+}) {
+  const distanceScore = input.distanceKm == null
+    ? 45
+    : Math.max(0, Math.min(100, 100 - (input.distanceKm * 12)));
+
+  const ratingBase = Math.max(0, Math.min(100, (input.rating / 5) * 100));
+  const reviewsBoost = Math.min(20, Math.log10((input.reviews || 0) + 1) * 10);
+  const verificationBoost = input.verificationStatus === 'verified' ? 12 : input.verificationStatus === 'pending' ? 4 : 0;
+  const reliabilityScore = Math.max(0, Math.min(100, ratingBase + reviewsBoost + verificationBoost));
+
+  const availabilityScore = input.status === 'active' ? 100 : input.status === 'pending' ? 50 : 10;
+  const categoryScore = input.categoryMatch ? 100 : 55;
+
+  const composite =
+    (distanceScore * 0.40) +
+    (reliabilityScore * 0.35) +
+    (availabilityScore * 0.15) +
+    (categoryScore * 0.10);
+
+  return {
+    proximity: Number(distanceScore.toFixed(2)),
+    reliability: Number(reliabilityScore.toFixed(2)),
+    availability: Number(availabilityScore.toFixed(2)),
+    category: Number(categoryScore.toFixed(2)),
+    composite: Number(composite.toFixed(2)),
+  };
+}
+
+async function searchNearbyReliableServices(
+  supabaseClient: any,
+  params: {
+    query?: string;
+    service_type?: string;
+    user_latitude?: number;
+    user_longitude?: number;
+    radius_km?: number;
+  }
+) {
+  const radiusKm = Math.min(Math.max(Number(params.radius_km || 15), 1), 50);
+  const userLat = Number(params.user_latitude);
+  const userLon = Number(params.user_longitude);
+  const hasCoords = Number.isFinite(userLat) && Number.isFinite(userLon);
+
+  const baseServices = await searchProximityServices(supabaseClient, params.query, params.service_type);
+  const enriched = baseServices.map((service: any) => {
+    const sLat = Number(service.latitude ?? service.lat);
+    const sLon = Number(service.longitude ?? service.lng);
+    const serviceHasCoords = Number.isFinite(sLat) && Number.isFinite(sLon);
+
+    const distanceKm = hasCoords && serviceHasCoords
+      ? haversineDistanceKm(userLat, userLon, sLat, sLon)
+      : null;
+
+    const categoryMatch = params.service_type
+      ? String(service.serviceType || '').toLowerCase().includes(String(params.service_type).toLowerCase())
+      : true;
+
+    const score = computeServiceRecommendationScore({
+      distanceKm,
+      rating: Number(service.rating || 0),
+      reviews: Number(service.totalReviews || 0),
+      verificationStatus: service.isVerified ? 'verified' : 'unverified',
+      status: 'active',
+      categoryMatch,
+    });
+
+    return {
+      ...service,
+      distanceKm: distanceKm == null ? null : Number(distanceKm.toFixed(2)),
+      recommendationScore: score,
+    };
+  });
+
+  const filteredByRadius = enriched.filter((item: any) => item.distanceKm == null || item.distanceKm <= radiusKm);
+  const ranked = [...filteredByRadius].sort((a: any, b: any) => b.recommendationScore.composite - a.recommendationScore.composite);
+
+  const closest = ranked
+    .filter((item: any) => item.distanceKm != null)
+    .sort((a: any, b: any) => (a.distanceKm || 0) - (b.distanceKm || 0))[0] || null;
+
+  const bestRated = [...ranked].sort((a: any, b: any) => (b.rating || 0) - (a.rating || 0))[0] || null;
+  const bestCompromise = ranked[0] || null;
+
+  return {
+    success: true,
+    source: 'services_proches',
+    weights: {
+      proximity: '40%',
+      reliability: '35%',
+      availability: '15%',
+      category: '10%'
+    },
+    hasUserLocation: hasCoords,
+    radiusKm,
+    total: ranked.length,
+    results: ranked.slice(0, 10),
+    summary: {
+      closest,
+      bestRated,
+      bestCompromise,
+    }
+  };
 }
 
 // Fonction pour obtenir les types de services disponibles
@@ -815,7 +1111,7 @@ const tools = [
     type: "function",
     function: {
       name: "search_proximity_services",
-      description: "Rechercher des services de proximité (beauté, réparation, restauration, ménage, santé, formation, etc.). Utilise cette fonction quand le client cherche un service local ou professionnel.",
+      description: "Rechercher et classer des services de proximité avec score pondéré: 40% proximité, 35% fiabilité, 15% disponibilité, 10% pertinence catégorie. Utilise cette fonction quand le client cherche un service local/professionnel et veux des recommandations fiables.",
       parameters: {
         type: "object",
         properties: {
@@ -826,6 +1122,18 @@ const tools = [
           service_type: {
             type: "string",
             description: "Type de service (ex: Beauté, Réparation, Restauration, Ménage, Santé, Formation)"
+          },
+          user_latitude: {
+            type: "number",
+            description: "Latitude utilisateur pour calcul de proximité"
+          },
+          user_longitude: {
+            type: "number",
+            description: "Longitude utilisateur pour calcul de proximité"
+          },
+          radius_km: {
+            type: "number",
+            description: "Rayon de recherche en km (1 à 50, défaut 15)"
           }
         },
         required: []
@@ -981,6 +1289,65 @@ const tools = [
         required: []
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_internal_catalog",
+      description: "Recherche interne premium dans les données réelles de la plateforme (produits physiques + produits digitaux). Ne jamais inventer de produits.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Texte recherché"
+          },
+          category: {
+            type: "string",
+            description: "Catégorie optionnelle"
+          },
+          max_price: {
+            type: "number",
+            description: "Prix max"
+          },
+          min_price: {
+            type: "number",
+            description: "Prix min"
+          },
+          product_type: {
+            type: "string",
+            enum: ["all", "physical", "digital"],
+            description: "Type de produit"
+          }
+        },
+        required: ["query"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "research_market_insights",
+      description: "Recherche externe contrôlée (web) pour tendances, opportunités business et comparaison de marché. Toujours citer les URL.",
+      parameters: {
+        type: "object",
+        properties: {
+          topic: {
+            type: "string",
+            description: "Sujet recherché"
+          },
+          region: {
+            type: "string",
+            description: "Zone géographique ciblée"
+          },
+          limit: {
+            type: "number",
+            description: "Nombre max de sources"
+          }
+        },
+        required: ["topic"]
+      }
+    }
   }
 ];
 
@@ -1053,7 +1420,20 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { message, messages, role = "client" } = body;
+    const {
+      message,
+      messages,
+      role = "client",
+      memorySummary = "",
+      pinnedFacts = [],
+      detectedIntent: preferredIntent,
+      hasImageAttachment = false,
+      userLocation = null
+    } = body;
+
+    const userLatitude = Number((userLocation as any)?.latitude);
+    const userLongitude = Number((userLocation as any)?.longitude);
+    const hasUserLocation = Number.isFinite(userLatitude) && Number.isFinite(userLongitude);
     
     let conversationMessages = [];
     if (message) {
@@ -1064,8 +1444,19 @@ serve(async (req) => {
       throw new Error("Message requis");
     }
 
-    // Déterminer le contexte: marketplace ou compte client
-    const isAccountContext = body.context === 'account' || body.userRole === 'account';
+    const latestUserMessage = Array.isArray(conversationMessages)
+      ? [...conversationMessages].reverse().find((m: any) => m?.role === 'user')?.content || ''
+      : '';
+    const detectedIntent = normalizeIntent(String(latestUserMessage), preferredIntent);
+    const modeByIntent: Record<string, string> = {
+      conversation_simple: 'Mode 1 - conversation simple',
+      assistant_application: 'Mode 2 - assistant application',
+      recherche_interne: 'Mode 3 - recherche interne plateforme',
+      recherche_externe: 'Mode 4 - recherche internet externe',
+      analyse_image: 'Mode 5 - analyse image + matching produit',
+      assistant_business: 'Mode 2 - assistant application'
+    };
+    const activeMode = modeByIntent[detectedIntent] || 'Mode 2 - assistant application';
 
     // Prompt système unifié - COPILOTE OFFICIEL 224SOLUTIONS V3
     const clientSystemPrompt = `
@@ -1136,6 +1527,21 @@ En cas de demande interdite :
 💰 Solde wallet: ${userContext.balance?.toLocaleString() || 0} ${userContext.currency || "GNF"}
 📜 Dernières transactions: ${JSON.stringify(userContext.recentTransactions || [])}
 📦 Dernières commandes: ${JSON.stringify(userContext.recentOrders || [])}
+
+🧠 MÉMOIRE DE SESSION
+- Résumé récent: ${memorySummary || 'Aucun résumé de session fourni'}
+- Faits épinglés: ${Array.isArray(pinnedFacts) && pinnedFacts.length > 0 ? pinnedFacts.join(' | ') : 'Aucun'}
+- Intention détectée: ${detectedIntent}
+- Mode actif: ${activeMode}
+- Image jointe dans ce tour: ${hasImageAttachment ? 'oui' : 'non'}
+- Position utilisateur disponible: ${hasUserLocation ? `${userLatitude.toFixed(5)}, ${userLongitude.toFixed(5)}` : 'non'}
+
+RÈGLES ABSOLUES:
+- Distinguer clairement Données internes vs Recherche web externe vs Suggestions.
+- Ne jamais inventer de produit inexistant.
+- Si aucun résultat interne, proposer des alternatives internes.
+- Pour les services de proximité, privilégier les résultats scorés et présenter: Le plus proche, Le mieux noté, Le meilleur compromis.
+- Réponse brève si demande brève, experte si demande complexe.
 
 ════════════════════════════════════════════════════════════════
 👤 GESTION DES COMPTES
@@ -1288,7 +1694,13 @@ Ce comportement est une exigence fonctionnelle, pas une option.
             result = await getVendorProducts(supabaseClient, args.vendor_id, args.vendor_name, args.limit || 10);
             break;
           case "search_proximity_services":
-            result = await searchProximityServices(supabaseClient, args.query, args.service_type);
+            result = await searchNearbyReliableServices(supabaseClient, {
+              query: args.query,
+              service_type: args.service_type,
+              user_latitude: Number.isFinite(Number(args.user_latitude)) ? Number(args.user_latitude) : (hasUserLocation ? userLatitude : undefined),
+              user_longitude: Number.isFinite(Number(args.user_longitude)) ? Number(args.user_longitude) : (hasUserLocation ? userLongitude : undefined),
+              radius_km: Number.isFinite(Number(args.radius_km)) ? Number(args.radius_km) : 15,
+            });
             break;
           case "get_service_types":
             result = await getServiceTypes(supabaseClient);
@@ -1316,6 +1728,19 @@ Ce comportement est une exigence fonctionnelle, pas une option.
             break;
           case "get_marketplace_stats":
             result = await getMarketplaceStats(supabaseClient);
+            break;
+          case "search_internal_catalog":
+            result = await searchInternalCatalog(
+              supabaseClient,
+              args.query,
+              args.category,
+              args.max_price,
+              args.min_price,
+              args.product_type || 'all'
+            );
+            break;
+          case "research_market_insights":
+            result = await researchMarketInsights(args);
             break;
           default:
             result = { error: "Fonction inconnue" };

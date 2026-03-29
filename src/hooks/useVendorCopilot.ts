@@ -24,6 +24,12 @@ export interface VendorCopilotState {
   vendorContext: any | null;
 }
 
+interface ConversationMemoryPayload {
+  memorySummary?: string;
+  pinnedFacts?: string[];
+  detectedIntent?: string;
+}
+
 export function useVendorCopilot() {
   const [messages, setMessages] = useState<CopilotMessage[]>([
     {
@@ -160,7 +166,7 @@ export function useVendorCopilot() {
   }, []);
 
   // Traiter une requête au copilote via l'edge function
-  const processQuery = useCallback(async (query: string, vendorId: string) => {
+  const processQuery = useCallback(async (query: string, vendorId: string, memory?: ConversationMemoryPayload) => {
     setLoading(true);
     setError(null);
 
@@ -200,6 +206,9 @@ export function useVendorCopilot() {
           message: query,
           vendorContext: context,
           messages: [...messageHistory, { role: 'user', content: query }],
+          memorySummary: memory?.memorySummary,
+          pinnedFacts: memory?.pinnedFacts || [],
+          detectedIntent: memory?.detectedIntent,
           stream: false // Mode JSON pour compatibilité avec invoke
         }
       });

@@ -2539,7 +2539,13 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { message, messages } = body;
+    const {
+      message,
+      messages,
+      memorySummary = '',
+      pinnedFacts = [],
+      detectedIntent = ''
+    } = body;
     
     let conversationMessages = [];
     if (message) {
@@ -2783,6 +2789,9 @@ Ce comportement est une exigence fonctionnelle, pas une option.
 Contexte de generation:
 - Dernier message utilisateur: ${latestUserInput || "(vide)"}
 - Est une salutation: ${greetingLike ? "oui" : "non"}
+- Intention detectee: ${detectedIntent || 'non fournie'}
+- Resume de session: ${memorySummary || 'aucun'}
+- Faits epingles: ${Array.isArray(pinnedFacts) && pinnedFacts.length > 0 ? pinnedFacts.join(' | ') : 'aucun'}
 - Regle de sortie: toujours separer faits verifies, incertitudes, actions.
 `;
 
