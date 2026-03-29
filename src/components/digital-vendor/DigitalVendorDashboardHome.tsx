@@ -100,9 +100,9 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         {/* Welcome */}
-        <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/30 dark:to-primary-orange-950/30 border-primary-blue-200/50 shadow-sm">
+        <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/30 dark:to-primary-orange-950/30 border-primary-blue-200/50 shadow-sm transition-all duration-300 hover:shadow-md">
           <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
@@ -116,7 +116,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               </div>
               <Button
                 onClick={() => navigate('/vendeur-digital/add-product')}
-                className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 hover:from-primary-blue-700 hover:to-primary-orange-600 text-white gap-2"
+                className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 hover:from-primary-blue-700 hover:to-primary-orange-600 text-white gap-2 transition-all duration-200 hover:-translate-y-0.5"
               >
                 <Plus className="w-4 h-4" />
                 Nouveau produit
@@ -262,7 +262,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </div>
 
         {/* Recent Products */}
-        <Card>
+        <Card className="shadow-sm transition-all duration-300 hover:shadow-md">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div>
@@ -327,7 +327,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </Card>
 
         {/* Quick Actions */}
-        <Card>
+        <Card className="shadow-sm transition-all duration-300 hover:shadow-md">
           <CardHeader>
             <CardTitle className="text-base">Actions rapides</CardTitle>
           </CardHeader>

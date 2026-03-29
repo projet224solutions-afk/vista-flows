@@ -83,7 +83,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
   return (
     <Sidebar className={cn(
       collapsed ? "w-12" : "w-52",
-      "border-r border-primary-blue-200/40 shadow-lg"
+      "border-r border-primary-blue-200/40 shadow-lg animate-fade-in"
     )} collapsible="icon">
       <ScrollArea className="h-full pr-4 overflow-visible">
         <SidebarContent className="bg-gradient-to-b from-primary-blue-50/25 via-background to-primary-orange-50/15 py-2 pr-3 pb-96">
@@ -128,7 +128,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
                             if (e.key === 'Enter' || e.key === ' ') handleNavigation(item.path);
                           }}
                           className={cn(
-                            "group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none",
+                            "group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none hover:-translate-y-0.5",
                             "hover:bg-primary-blue-50 hover:text-primary-blue-700",
                             active && "bg-gradient-to-r from-primary-blue-100/90 to-primary-orange-100/70 text-primary-blue-800 font-semibold shadow-sm",
                             collapsed && "justify-center px-1"

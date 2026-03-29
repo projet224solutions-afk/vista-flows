@@ -130,7 +130,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
               className={cn(
-                'relative text-left rounded-2xl border-2 p-4 transition-all duration-300 h-full',
+                'group relative text-left rounded-2xl border-2 p-4 transition-all duration-300 h-full hover:-translate-y-1',
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-orange-400',
                 isSelected
                   ? 'border-primary-blue-300 shadow-xl shadow-primary-blue-500/15 bg-gradient-to-b from-primary-blue-50/60 to-primary-orange-50/40'
@@ -169,7 +169,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                   mode.color === 'blue' 
                     ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-600' 
                     : 'bg-gradient-to-br from-primary-orange-500 to-primary-blue-600',
-                  'text-white shadow-lg'
+                  'text-white shadow-lg transition-transform duration-300 group-hover:scale-105'
                 )}>
                   <Icon className="w-6 h-6" />
                 </div>
