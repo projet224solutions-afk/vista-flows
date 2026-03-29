@@ -43,7 +43,7 @@ interface Client {
   email: string;
   age: number;
   goal: string;
-  level: 'dÃ©butant' | 'intermÃ©diaire' | 'avancÃ©';
+  level: 'debutant' | 'intermediaire' | 'avance';
   program: string;
   sessionsCompleted: number;
   totalSessions: number;
@@ -58,7 +58,7 @@ interface Program {
   description: string;
   duration: string;
   sessionsPerWeek: number;
-  level: 'dÃ©butant' | 'intermÃ©diaire' | 'avancÃ©';
+  level: 'debutant' | 'intermediaire' | 'avance';
   price: number;
   clientsEnrolled: number;
   exercises: string[];
@@ -92,7 +92,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       email: 'mamadou@email.com',
       age: 28,
       goal: 'Prise de masse',
-      level: 'intermÃ©diaire',
+      level: 'intermediaire',
       program: 'Musculation intensive',
       sessionsCompleted: 12,
       totalSessions: 24,
@@ -107,7 +107,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       email: 'fatou@email.com',
       age: 32,
       goal: 'Perte de poids',
-      level: 'dÃ©butant',
+      level: 'debutant',
       program: 'Cardio & Fitness',
       sessionsCompleted: 8,
       totalSessions: 16,
@@ -122,7 +122,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       email: 'ibrahim@email.com',
       age: 25,
       goal: 'PrÃ©paration compÃ©tition',
-      level: 'avancÃ©',
+      level: 'avance',
       program: 'Performance athlÃ©tique',
       sessionsCompleted: 20,
       totalSessions: 30,
@@ -138,7 +138,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       description: 'Programme pour dÃ©velopper la masse musculaire',
       duration: '3 mois',
       sessionsPerWeek: 4,
-      level: 'intermÃ©diaire',
+      level: 'intermediaire',
       price: 500000,
       clientsEnrolled: 5,
       exercises: ['Squats', 'DÃ©veloppÃ© couchÃ©', 'SoulevÃ© de terre', 'Rowing']
@@ -149,7 +149,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       description: 'Programme de remise en forme et perte de poids',
       duration: '2 mois',
       sessionsPerWeek: 3,
-      level: 'dÃ©butant',
+      level: 'debutant',
       price: 400000,
       clientsEnrolled: 8,
       exercises: ['Course', 'HIIT', 'Corde Ã  sauter', 'Burpees']
@@ -160,7 +160,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       description: 'PrÃ©paration pour compÃ©titions sportives',
       duration: '4 mois',
       sessionsPerWeek: 5,
-      level: 'avancÃ©',
+      level: 'avance',
       price: 800000,
       clientsEnrolled: 3,
       exercises: ['Sprints', 'PliomÃ©trie', 'Force explosive', 'Endurance']
@@ -371,9 +371,9 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                           <SelectValue placeholder="SÃ©lectionner" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="dÃ©butant">DÃ©butant</SelectItem>
-                          <SelectItem value="intermÃ©diaire">IntermÃ©diaire</SelectItem>
-                          <SelectItem value="avancÃ©">AvancÃ©</SelectItem>
+                          <SelectItem value="debutant">DÃ©butant</SelectItem>
+                          <SelectItem value="intermediaire">IntermÃ©diaire</SelectItem>
+                          <SelectItem value="avance">AvancÃ©</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -584,9 +584,9 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                           <SelectValue placeholder="Niveau" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="dÃ©butant">DÃ©butant</SelectItem>
-                          <SelectItem value="intermÃ©diaire">IntermÃ©diaire</SelectItem>
-                          <SelectItem value="avancÃ©">AvancÃ©</SelectItem>
+                          <SelectItem value="debutant">DÃ©butant</SelectItem>
+                          <SelectItem value="intermediaire">IntermÃ©diaire</SelectItem>
+                          <SelectItem value="avance">AvancÃ©</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

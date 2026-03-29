@@ -82,7 +82,7 @@ const serviceFormSchema = z.object({
     .min(3, 'Le nom doit contenir au moins 3 caractÃ¨res')
     .max(100, 'Le nom ne peut pas dÃ©passer 100 caractÃ¨res')
     .regex(
-      /^[a-zA-Z0-9\sÃ€-Ã¿\-'&.]+$/,
+      /^[a-zA-Z0-9\s\u00C0-\u00FF\-'&.]+$/,
       'Le nom contient des caractÃ¨res non autorisÃ©s'
     )
     .transform(val => val.trim()),

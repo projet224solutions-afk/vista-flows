@@ -1717,7 +1717,7 @@ export default function OrderManagement() {
                     const url = URL.createObjectURL(blob);
                     const opened = window.open(url, '_blank', 'noopener,noreferrer');
                     if (!opened) {
-                      toast.error('Popup bloquÃ©e - autorisez les popups');
+                      toast('Popup bloqu\u00e9e - autorisez les popups');
                     }
                     setTimeout(() => URL.revokeObjectURL(url), 10000);
                   }}
