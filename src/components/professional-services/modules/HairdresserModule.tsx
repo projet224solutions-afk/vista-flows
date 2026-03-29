@@ -210,11 +210,11 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
 
   const getStatusBadge = (status: Appointment['status']) => {
     const styles = {
-      confirmÃ©: 'bg-primary-orange-100 text-primary-orange-800',
+      confirme: 'bg-primary-orange-100 text-primary-orange-800',
       en_attente: 'bg-yellow-100 text-yellow-800',
       en_cours: 'bg-blue-100 text-blue-800',
-      terminÃ©: 'bg-gray-100 text-gray-800',
-      annulÃ©: 'bg-red-100 text-red-800'
+      termine: 'bg-gray-100 text-gray-800',
+      annule: 'bg-red-100 text-red-800'
     };
     return <Badge className={styles[status]}>{status.replace('_', ' ')}</Badge>;
   };

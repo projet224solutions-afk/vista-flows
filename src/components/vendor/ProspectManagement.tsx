@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 const statusColors = {
   prospection: 'bg-blue-100 text-blue-800',
   proposition: 'bg-yellow-100 text-yellow-800',
-  nÃ©gociation: 'bg-orange-100 text-orange-800',
+  negociation: 'bg-orange-100 text-orange-800',
   conclusion: 'bg-primary-orange-100 text-primary-orange-800',
   perdu: 'bg-red-100 text-red-800'
 };
@@ -23,7 +23,7 @@ const statusColors = {
 const statusLabels = {
   prospection: 'Prospection',
   proposition: 'Proposition',
-  nÃ©gociation: 'NÃ©gociation',
+  negociation: 'N\u00e9gociation',
   conclusion: 'Conclusion',
   perdu: 'Perdu'
 };
