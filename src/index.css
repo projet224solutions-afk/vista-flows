@@ -93,10 +93,10 @@ All colors MUST be HSL.
     /* Couleurs primaires globales - Orange & Bleu */
     --primary-orange: 15 100% 50%;
     --primary-blue: 220 96% 32%;
-    --gradient-primary: linear-gradient(135deg, hsl(220 96% 32%), hsl(15 100% 50%));
-    --gradient-primary-reverse: linear-gradient(135deg, hsl(15 100% 50%), hsl(220 96% 32%));
-    --gradient-primary-light: linear-gradient(135deg, hsl(220 96% 32% / 0.1), hsl(15 100% 50% / 0.1));
-    --gradient-success: linear-gradient(135deg, hsl(220 96% 32%), hsl(15 100% 50%));
+    --gradient-primary: linear-gradient(90deg, hsl(220 96% 32%) 0 50%, hsl(15 100% 50%) 50% 100%);
+    --gradient-primary-reverse: linear-gradient(90deg, hsl(15 100% 50%) 0 50%, hsl(220 96% 32%) 50% 100%);
+    --gradient-primary-light: hsl(220 96% 97%);
+    --gradient-success: hsl(15 100% 50%);
 
     --shadow-elegant: 0 4px 24px hsl(220 96% 27% / 0.07);
     --shadow-glow: 0 0 30px hsl(220 96% 27% / 0.15);
@@ -174,8 +174,8 @@ All colors MUST be HSL.
 
   /* SYSTÈME HOVER BLEU GLOBAL - Ultra Professionnel */
   /* Tous les boutons - hover bleu uniforme */
-  button:not(:disabled):not([data-radix-collection-item]):not(.no-hover-effect):hover,
-  [role="button"]:not(:disabled):not(.no-hover-effect):hover,
+  button:not(:disabled):not([data-radix-collection-item]):not(.no-hover-effect):not([class*="bg-primary-blue"]):not([class*="bg-primary-orange"]):not([class*="bg-gradient-to-"]):hover,
+  [role="button"]:not(:disabled):not(.no-hover-effect):not([class*="bg-primary-blue"]):not([class*="bg-primary-orange"]):not([class*="bg-gradient-to-"]):hover,
   .btn:not(:disabled):hover,
   input[type="submit"]:not(:disabled):hover,
   input[type="button"]:not(:disabled):hover {
@@ -187,7 +187,7 @@ All colors MUST be HSL.
   }
 
   /* Links stylés comme boutons */
-  a[class*="bg-"]:not(.no-hover-effect):hover,
+  a[class*="bg-"]:not(.no-hover-effect):not([class*="bg-primary-blue"]):not([class*="bg-primary-orange"]):not([class*="bg-gradient-to-"]):hover,
   a[class*="btn"]:not(.no-hover-effect):hover,
   a.button:hover {
     background-color: hsl(var(--hover-bg)) !important;
@@ -260,6 +260,59 @@ All colors MUST be HSL.
   .scrollbar-thin::-webkit-scrollbar {
     width: 8px;
     height: 8px;
+  }
+
+  /* Normalisation globale: pas de dégradé mélangé bleu-orange sur les surfaces */
+  div[class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"]:not([class*="bg-clip-text"]),
+  section[class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"]:not([class*="bg-clip-text"]),
+  article[class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"]:not([class*="bg-clip-text"]),
+  aside[class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"]:not([class*="bg-clip-text"]),
+  main[class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"]:not([class*="bg-clip-text"]),
+  header[class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"]:not([class*="bg-clip-text"]),
+  nav[class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"]:not([class*="bg-clip-text"]),
+  [role="alert"][class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"]:not([class*="bg-clip-text"]) {
+    background-image: none !important;
+    background-color: hsl(220 96% 97%) !important;
+  }
+
+  div[class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"]:not([class*="bg-clip-text"]),
+  section[class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"]:not([class*="bg-clip-text"]),
+  article[class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"]:not([class*="bg-clip-text"]),
+  aside[class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"]:not([class*="bg-clip-text"]),
+  main[class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"]:not([class*="bg-clip-text"]),
+  header[class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"]:not([class*="bg-clip-text"]),
+  nav[class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"]:not([class*="bg-clip-text"]),
+  [role="alert"][class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"]:not([class*="bg-clip-text"]) {
+    background-image: none !important;
+    background-color: hsl(15 100% 97%) !important;
+  }
+
+  /* Normalisation globale: boutons mono-couleur, sans fondu bleu-orange */
+  button[class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"],
+  .btn[class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"],
+  [role="button"][class*="bg-gradient-to-"][class*="from-primary-blue-"][class*="to-primary-orange-"] {
+    background-image: none !important;
+    background-color: hsl(var(--primary-blue)) !important;
+    border-color: hsl(var(--primary-blue)) !important;
+    color: white !important;
+  }
+
+  button[class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"],
+  .btn[class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"],
+  [role="button"][class*="bg-gradient-to-"][class*="from-primary-orange-"][class*="to-primary-blue-"] {
+    background-image: none !important;
+    background-color: hsl(var(--accent)) !important;
+    border-color: hsl(var(--accent)) !important;
+    color: white !important;
+  }
+
+  /* Variante explicite si un bouton doit être bicolore net: bleu à gauche, orange à droite */
+  .brand-split,
+  button.brand-split,
+  .btn.brand-split {
+    background-image: linear-gradient(90deg, hsl(var(--primary-blue)) 0 50%, hsl(var(--accent)) 50% 100%) !important;
+    color: white !important;
+    border-color: hsl(var(--primary-blue)) !important;
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
