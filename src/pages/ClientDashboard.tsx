@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ShoppingBag, Heart, Package, Search, CreditCard,
-  LogOut, Home, ShoppingCart, TrendingUp, Bot, User, Settings, Trash2
+  LogOut, Home, ShoppingCart, TrendingUp, Bot, User, Settings, Trash2, History
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -270,7 +270,7 @@ export default function ClientDashboard() {
       <main className={`container ${responsive.isMobile ? 'px-3 py-4' : 'px-4 py-6'}`}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
-            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-5 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
+            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-6 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
               <TabsTrigger value="overview" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Home className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 {responsive.isMobile ? 'Vue' : "Vue d'ensemble"}
@@ -282,6 +282,10 @@ export default function ClientDashboard() {
               <TabsTrigger value="orders" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Package className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 {responsive.isMobile ? 'Cmd' : 'Commandes'}
+              </TabsTrigger>
+              <TabsTrigger value="recent" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
+                <History className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                {responsive.isMobile ? 'Vus' : 'Derniers visites'}
               </TabsTrigger>
               <TabsTrigger value="copilot" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Bot className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
@@ -402,9 +406,6 @@ export default function ClientDashboard() {
               </CardContent>
             </Card>
 
-            <Suspense fallback={<div className="text-sm text-muted-foreground">Chargement de l'historique...</div>}>
-              <RecentlyViewedProducts maxItems={8} />
-            </Suspense>
           </TabsContent>
 
           {/* Panier - utilise CartContext comme seule source */}
@@ -492,6 +493,20 @@ export default function ClientDashboard() {
               </CardHeader>
               <CardContent>
                 <ClientOrdersList />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="recent" className="space-y-6 animate-fade-in">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>Derniers produits visites</CardTitle>
+                <CardDescription>Retrouvez rapidement les produits que vous avez consultes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<div className="text-sm text-muted-foreground">Chargement de l'historique...</div>}>
+                  <RecentlyViewedProducts maxItems={12} />
+                </Suspense>
               </CardContent>
             </Card>
           </TabsContent>
