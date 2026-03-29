@@ -152,7 +152,7 @@ export default function MotoSecurityDashboard({
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-purple-600">Motos uniques</p>
-                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalÃ©es}</p>
+                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalees}</p>
                                 </div>
                                 <Activity className="w-8 h-8 text-purple-600" />
                             </div>
