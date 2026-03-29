@@ -58,7 +58,7 @@ const RISK_COLORS = {
   critical: '#ef4444',
   high: '#f97316',
   medium: '#eab308',
-  low: '#22c55e'
+  low: '#ff4000'
 };
 
 export const MLFraudDashboard: React.FC = () => {

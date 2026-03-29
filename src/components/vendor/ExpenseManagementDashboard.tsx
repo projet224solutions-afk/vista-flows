@@ -34,8 +34,8 @@ import { fr } from 'date-fns/locale';
 
 // Couleurs pour les graphiques
 const CHART_COLORS = [
-  '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444',
-  '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6B7280'
+  '#ff4000', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444',
+  '#04439e', '#ff4000', '#F97316', '#EC4899', '#6B7280'
 ];
 
 interface ExpenseManagementDashboardProps {

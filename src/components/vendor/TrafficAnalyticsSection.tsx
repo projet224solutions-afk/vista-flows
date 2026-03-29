@@ -4,7 +4,7 @@ import { Eye, Users, MousePointer, Store, TrendingUp, Smartphone, Globe, MapPin 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', '#ff4000', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export function TrafficAnalyticsSection() {
   const { stats, loading, error } = useTrafficAnalytics();
@@ -189,8 +189,8 @@ export function TrafficAnalyticsSection() {
                   type="monotone" 
                   dataKey="shopVisits" 
                   name="Visites boutique"
-                  stroke="#22c55e" 
-                  fill="#22c55e" 
+                  stroke="#ff4000" 
+                  fill="#ff4000" 
                   fillOpacity={0.3}
                 />
               </AreaChart>

@@ -38,7 +38,7 @@ const STATUS_LABELS = {
   error: 'Erreur'
 };
 
-const API_TYPE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+const API_TYPE_COLORS = ['#3B82F6', '#ff4000', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 export default function ApiSupervision() {
   const navigate = useNavigate();
@@ -305,7 +305,7 @@ export default function ApiSupervision() {
                       <Tooltip />
                       <Legend />
                       <Bar dataKey="utilisÃ©s" fill="#3B82F6" />
-                      <Bar dataKey="restants" fill="#10B981" />
+                      <Bar dataKey="restants" fill="#ff4000" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>

@@ -127,12 +127,12 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
 
   // Distribution des codes de statut
   const statusDistribution = [
-    { name: '2xx SuccÃ¨s', value: allLogs.filter(log => log.status_code && log.status_code >= 200 && log.status_code < 300).length, color: '#10B981' },
+    { name: '2xx SuccÃ¨s', value: allLogs.filter(log => log.status_code && log.status_code >= 200 && log.status_code < 300).length, color: '#ff4000' },
     { name: '4xx Client', value: allLogs.filter(log => log.status_code && log.status_code >= 400 && log.status_code < 500).length, color: '#F59E0B' },
     { name: '5xx Serveur', value: allLogs.filter(log => log.status_code && log.status_code >= 500).length, color: '#EF4444' }
   ].filter(item => item.value > 0);
 
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+  const COLORS = ['#3B82F6', '#ff4000', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
   if (loading) {
     return (
@@ -233,8 +233,8 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                       <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorTokens" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#ff4000" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#ff4000" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -243,7 +243,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                   <Tooltip />
                   <Legend />
                   <Area type="monotone" dataKey="requetes" stroke="#3B82F6" fillOpacity={1} fill="url(#colorRequetes)" />
-                  <Area type="monotone" dataKey="tokens" stroke="#10B981" fillOpacity={1} fill="url(#colorTokens)" />
+                  <Area type="monotone" dataKey="tokens" stroke="#ff4000" fillOpacity={1} fill="url(#colorTokens)" />
                 </AreaChart>
               </ResponsiveContainer>
             </CardContent>
@@ -285,7 +285,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                   <Tooltip />
                   <Legend />
                   <Bar dataKey="requests" fill="#3B82F6" name="RequÃªtes" />
-                  <Bar dataKey="tokens" fill="#10B981" name="Tokens" />
+                  <Bar dataKey="tokens" fill="#ff4000" name="Tokens" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -305,7 +305,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                   <PolarGrid />
                   <PolarAngleAxis dataKey="api" />
                   <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                  <Radar name="FiabilitÃ©" dataKey="fiabilite" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
+                  <Radar name="FiabilitÃ©" dataKey="fiabilite" stroke="#ff4000" fill="#ff4000" fillOpacity={0.6} />
                   <Radar name="Vitesse" dataKey="vitesse" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} />
                   <Radar name="Utilisation" dataKey="utilisation" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.6} />
                   <Legend />

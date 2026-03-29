@@ -107,7 +107,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: ${user.isAvailable ? '#10B981' : '#EF4444'};
+        background: ${user.isAvailable ? '#ff4000' : '#EF4444'};
         border: 3px solid white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         cursor: pointer;
@@ -208,7 +208,7 @@ const DeliveryMap: React.FC<DeliveryMapProps> = ({
       width: 30px;
       height: 30px;
       border-radius: 50%;
-      background: #10B981;
+      background: #ff4000;
       border: 3px solid white;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: flex;

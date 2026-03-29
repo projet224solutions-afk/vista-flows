@@ -143,7 +143,7 @@ export default function FeatureDetailSheet({
               <span className="text-slate-300 font-medium">Score de SantÃ©</span>
               <span 
                 className="text-2xl font-bold"
-                style={{ color: score >= 80 ? '#10b981' : score >= 50 ? '#f97316' : '#ef4444' }}
+                style={{ color: score >= 80 ? '#ff4000' : score >= 50 ? '#f97316' : '#ef4444' }}
               >
                 {score}%
               </span>
@@ -181,7 +181,7 @@ export default function FeatureDetailSheet({
               </div>
               <p 
                 className="text-2xl font-bold"
-                style={{ color: healthData.anomalyCount > 0 ? '#f97316' : '#10b981' }}
+                style={{ color: healthData.anomalyCount > 0 ? '#f97316' : '#ff4000' }}
               >
                 {healthData.anomalyCount}
               </p>

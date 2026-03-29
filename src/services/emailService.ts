@@ -148,8 +148,8 @@ class EmailService {
         .info-row { display: flex; justify-content: space-between; margin: 8px 0; }
         .info-label { font-weight: 600; color: #64748b; }
         .info-value { color: #1e293b; }
-        .access-section { background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: 8px; padding: 25px; margin: 25px 0; text-align: center; }
-        .access-link { display: inline-block; background-color: white; color: #059669; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin: 15px 0; }
+        .access-section { background: linear-gradient(135deg, #ff4000, #ff4000); color: white; border-radius: 8px; padding: 25px; margin: 25px 0; text-align: center; }
+        .access-link { display: inline-block; background-color: white; color: #ff4000; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin: 15px 0; }
         .access-link:hover { background-color: #f0fdf4; }
         .token-info { background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 15px; margin: 20px 0; }
         .token-code { font-family: 'Courier New', monospace; background-color: #374151; color: #f3f4f6; padding: 8px 12px; border-radius: 4px; font-size: 14px; letter-spacing: 1px; }

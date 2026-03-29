@@ -422,7 +422,7 @@ export function StripeCardPaymentModal({
               appearance: {
                 theme: 'stripe',
                 variables: {
-                  colorPrimary: '#10b981',
+                  colorPrimary: '#ff4000',
                   colorBackground: '#ffffff',
                   colorText: '#1f2937',
                 },

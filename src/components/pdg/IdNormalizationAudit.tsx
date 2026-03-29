@@ -85,23 +85,23 @@ const REASONS_MAP: Record<string, { label: string; color: string }> = {
   'format_invalid': { label: 'Format invalide', color: '#F59E0B' },
   'sequence_gap': { label: 'Gap de sÃ©quence', color: '#3B82F6' },
   'counter_mismatch': { label: 'Compteur dÃ©synchronisÃ©', color: '#8B5CF6' },
-  'manual_override': { label: 'Correction manuelle', color: '#10B981' },
+  'manual_override': { label: 'Correction manuelle', color: '#ff4000' },
   'collision_resolved': { label: 'Collision rÃ©solue', color: '#EC4899' },
   'prefix_mismatch': { label: 'PrÃ©fixe incorrect', color: '#F97316' },
-  'migration_fix': { label: 'Correction migration', color: '#06B6D4' },
+  'migration_fix': { label: 'Correction migration', color: '#04439e' },
 };
 
 const ROLE_COLORS: Record<string, string> = {
   'vendor': '#3B82F6',
-  'client': '#10B981',
+  'client': '#ff4000',
   'agent': '#F59E0B',
   'driver': '#8B5CF6',
   'bureau': '#EC4899',
   'taxi': '#6366F1',
-  'livreur': '#14B8A6',
+  'livreur': '#04439e',
   'pdg': '#EF4444',
   'transitaire': '#F97316',
-  'worker': '#84CC16',
+  'worker': '#ff4000',
 };
 
 const PREFIX_TO_ROLE: Record<string, string> = {
@@ -123,7 +123,7 @@ const PREFIX_TO_ROLE: Record<string, string> = {
   'USR': 'Utilisateur',
 };
 
-const PIE_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
+const PIE_COLORS = ['#3B82F6', '#ff4000', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444'];
 
 export default function IdNormalizationAudit() {
   const [logs, setLogs] = useState<NormalizationLog[]>([]);
