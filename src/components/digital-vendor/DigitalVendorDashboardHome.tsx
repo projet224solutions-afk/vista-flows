@@ -102,12 +102,12 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     <TooltipProvider>
       <div className="space-y-6">
         {/* Welcome */}
-        <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border-purple-200/50">
+        <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/30 dark:to-primary-orange-950/30 border-primary-blue-200/50">
           <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
-                  <Laptop className="w-5 h-5 text-purple-600" />
+                  <Laptop className="w-5 h-5 text-primary-blue-600" />
                   Espace Vendeur Digital
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -116,7 +116,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               </div>
               <Button
                 onClick={() => navigate('/vendeur-digital/add-product')}
-                className="bg-purple-600 hover:bg-purple-700 gap-2"
+                className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 hover:from-primary-blue-700 hover:to-primary-orange-600 text-white gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Nouveau produit
@@ -143,7 +143,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-1">
-                <DollarSign className="w-4 h-4 text-orange-600" />
+                <DollarSign className="w-4 h-4 text-primary-orange-600" />
                 <span className="text-xs text-muted-foreground">CA brut</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -154,7 +154,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-orange-600">
+              <div className="text-xl sm:text-2xl font-bold text-primary-orange-600">
                 {statsLoading ? '...' : fmtNum(stats.grossRevenue)}
               </div>
               <p className="text-[10px] text-muted-foreground mt-1">GNF total</p>
@@ -189,10 +189,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Users className="w-4 h-4 text-purple-600" />
+                <Users className="w-4 h-4 text-primary-blue-600" />
                 <span className="text-xs text-muted-foreground">AbonnÃ©s</span>
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-purple-600">
+              <div className="text-xl sm:text-2xl font-bold text-primary-blue-600">
                 {statsLoading ? '...' : stats.activeSubscribers}
               </div>
               {!statsLoading && stats.subscriptionRevenue > 0 && (
@@ -236,10 +236,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Download className="w-4 h-4 text-blue-600" />
+                <Download className="w-4 h-4 text-primary-blue-600" />
                 <span className="text-xs text-muted-foreground">TÃ©lÃ©chargements</span>
               </div>
-              <div className="text-lg font-bold text-blue-600">
+              <div className="text-lg font-bold text-primary-blue-600">
                 {statsLoading ? '...' : stats.totalDownloads}
               </div>
             </CardContent>
@@ -248,10 +248,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-1">
-                <Eye className="w-4 h-4 text-blue-600" />
+                <Eye className="w-4 h-4 text-primary-blue-600" />
                 <span className="text-xs text-muted-foreground">Vues totales</span>
               </div>
-              <div className="text-lg font-bold text-blue-600">{totalViews}</div>
+              <div className="text-lg font-bold text-primary-blue-600">{totalViews}</div>
               {stats.totalSales > 0 && (
                 <p className="text-[10px] text-muted-foreground mt-1">
                   Conversion : {((stats.totalSales / Math.max(totalViews, 1)) * 100).toFixed(1)}%
@@ -332,11 +332,11 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vendeur-digital/add-product')}>
-                <Plus className="w-5 h-5 text-purple-600" />
+                <Plus className="w-5 h-5 text-primary-blue-600" />
                 <span className="text-xs">Ajouter un produit</span>
               </Button>
               <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vendeur-digital/products')}>
-                <Laptop className="w-5 h-5 text-blue-600" />
+                <Laptop className="w-5 h-5 text-primary-blue-600" />
                 <span className="text-xs">Mes produits</span>
               </Button>
               <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vendeur-digital/affiliate')}>
@@ -344,7 +344,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                 <span className="text-xs">Affiliation</span>
               </Button>
               <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vendeur-digital/wallet')}>
-                <DollarSign className="w-5 h-5 text-orange-600" />
+                <DollarSign className="w-5 h-5 text-primary-orange-600" />
                 <span className="text-xs">Portefeuille</span>
               </Button>
             </div>
