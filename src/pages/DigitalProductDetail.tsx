@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 import { useAuth } from "@/hooks/useAuth";
+import { addRecentProduct } from "@/lib/recentProductHistory";
 
 interface DigitalProductWithVendor {
   id: string;
@@ -71,6 +72,23 @@ export default function DigitalProductDetail() {
       incrementViews();
     }
   }, [productId]);
+
+  useEffect(() => {
+    if (!product) return;
+    addRecentProduct(
+      {
+        id: product.id,
+        type: 'digital',
+        title: product.title,
+        price: product.price,
+        currency: product.currency || 'GNF',
+        imageUrl: product.images?.[0],
+        vendorName: product.vendors?.business_name,
+        route: `/digital-product/${product.id}`,
+      },
+      user?.id || null
+    );
+  }, [product, user?.id]);
 
   const loadProduct = async () => {
     try {

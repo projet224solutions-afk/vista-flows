@@ -20,6 +20,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import RecentlyViewedProducts from '@/components/shared/RecentlyViewedProducts';
 
 const categoryIcons: Record<string, React.ComponentType<any>> = {
   voyage: Plane,
@@ -350,6 +351,12 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
             </div>
           </CardContent>
         </Card>
+
+        <RecentlyViewedProducts
+          title="Produits consultes recemment"
+          subtitle="Historique de navigation de vos dernieres consultations"
+          maxItems={6}
+        />
       </div>
     </TooltipProvider>
   );

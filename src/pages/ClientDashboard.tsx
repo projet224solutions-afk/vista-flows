@@ -35,6 +35,7 @@ const ResponsiveGrid = lazy(() => import("@/components/responsive/ResponsiveCont
 const ProductDetailModal = lazy(() => import("@/components/marketplace/ProductDetailModal"));
 const ClientSettings = lazy(() => import("@/components/client/ClientSettings"));
 const NotificationBellButton = lazy(() => import("@/components/shared/NotificationBellButton").then(m => ({ default: m.NotificationBellButton })));
+const RecentlyViewedProducts = lazy(() => import("@/components/shared/RecentlyViewedProducts"));
 
 export default function ClientDashboard() {
   const { user, profile, signOut } = useAuth();
@@ -400,6 +401,10 @@ export default function ClientDashboard() {
                 </div>
               </CardContent>
             </Card>
+
+            <Suspense fallback={<div className="text-sm text-muted-foreground">Chargement de l'historique...</div>}>
+              <RecentlyViewedProducts maxItems={8} />
+            </Suspense>
           </TabsContent>
 
           {/* Panier - utilise CartContext comme seule source */}

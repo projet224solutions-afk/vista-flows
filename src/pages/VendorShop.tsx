@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareButton } from "@/components/shared/ShareButton";
+import RecentlyViewedProducts from "@/components/shared/RecentlyViewedProducts";
 import { TranslatedProductCard } from "@/components/marketplace/TranslatedProductCard";
 import QuickFooter from "@/components/QuickFooter";
 import { useAuth } from "@/hooks/useAuth";
@@ -679,6 +680,10 @@ export default function VendorShop() {
 
       {/* Products section – with inline error if products failed */}
       <div className="px-4">
+        <div className="mb-4">
+          <RecentlyViewedProducts maxItems={6} />
+        </div>
+
         {errorType === 'products_error' && (
           <Card className="p-6 text-center mb-4 border-destructive/30">
             <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />

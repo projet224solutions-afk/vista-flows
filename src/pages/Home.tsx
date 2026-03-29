@@ -27,6 +27,7 @@ import {
   NearbyDeliveryModal,
   SplineBackground,
 } from '@/components/home';
+import RecentlyViewedProducts from '@/components/shared/RecentlyViewedProducts';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -140,6 +141,10 @@ export default function Home() {
           onProductClick={handleProductClick}
           onAddToCart={handleAddToCart}
         />
+
+        <div className="px-4 mt-4">
+          <RecentlyViewedProducts maxItems={6} />
+        </div>
 
         {/* Bottom Navigation */}
         <BottomNavigation />

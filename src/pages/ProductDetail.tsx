@@ -17,6 +17,7 @@ import { usePriceConverter } from "@/hooks/usePriceConverter";
 import { getCurrencyForCountry } from "@/data/countryMappings";
 import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
+import { addRecentProduct } from "@/lib/recentProductHistory";
 
 // Mini composant pour afficher l'icône certifié à côté du nom vendeur
 function VendorCertBadge({ vendorId }: { vendorId: string }) {
@@ -104,8 +105,21 @@ export default function ProductDetail() {
     if (product && product.vendor_id && !hasTrackedView.current) {
       hasTrackedView.current = true;
       trackProductView(product.id, product.vendor_id);
+      addRecentProduct(
+        {
+          id: product.id,
+          type: 'physical',
+          title: product.name,
+          price: product.price,
+          currency: product.currency || getCurrencyForCountry(product.vendors?.country || ''),
+          imageUrl: product.images?.[0],
+          vendorName: product.vendors?.business_name,
+          route: `/product/${product.id}`,
+        },
+        userId
+      );
     }
-  }, [product]);
+  }, [product, userId]);
 
   useEffect(() => {
     loadCustomerId();

@@ -7,7 +7,7 @@ import { memo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Laptop, Link, Wallet, Settings,
-  BarChart3, LogOut, Home, Plus, Eye, ShoppingBag
+  BarChart3, Home, Plus, Eye, ShoppingBag, Bot
 } from "lucide-react";
 import {
   Sidebar,
@@ -49,6 +49,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
       items: [
         { title: "Tableau de bord", icon: LayoutDashboard, path: "dashboard" },
         { title: "Statistiques", icon: BarChart3, path: "analytics" },
+        { title: "Copilote IA", icon: Bot, path: "copilot" },
       ]
     },
     {

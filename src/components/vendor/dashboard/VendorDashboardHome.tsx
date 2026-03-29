@@ -32,6 +32,9 @@ const VendorAnalyticsDashboard = lazy(() =>
 const UniversalWalletTransactions = lazy(() =>
   import('@/components/wallet/UniversalWalletTransactions')
 );
+const RecentlyViewedProducts = lazy(() =>
+  import('@/components/shared/RecentlyViewedProducts')
+);
 
 // ============================================================================
 // Types
@@ -278,6 +281,14 @@ const VendorDashboardHome = memo(function VendorDashboardHome({
 
         {/* Actions rapides */}
         <QuickActionsSection canAccessPOS={canAccessPOS} />
+
+        <Suspense fallback={<SectionLoader text="Chargement de l'historique..." />}>
+          <RecentlyViewedProducts
+            title="Produits consultes recemment"
+            subtitle="Retrouvez les derniers produits visites depuis vos interfaces"
+            maxItems={6}
+          />
+        </Suspense>
       </div>
     </Suspense>
   );

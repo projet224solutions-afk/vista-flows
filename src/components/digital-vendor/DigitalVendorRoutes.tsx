@@ -9,6 +9,7 @@ import { SectionLoader } from '@/components/ui/GlobalLoader';
 
 // Core
 const DigitalVendorDashboardHome = lazy(() => import('./DigitalVendorDashboardHome'));
+const DigitalVendorCopilot = lazy(() => import('./DigitalVendorCopilot'));
 
 // Produits numériques
 const VendorDigitalProducts = lazy(() => import('@/components/vendor/VendorDigitalProducts'));
@@ -40,6 +41,7 @@ const DigitalVendorRoutes = memo(function DigitalVendorRoutes({ vendorId }: Digi
         {/* Dashboard */}
         <Route index element={<DigitalVendorDashboardHome />} />
         <Route path="dashboard" element={<DigitalVendorDashboardHome />} />
+        <Route path="copilot" element={<DigitalVendorCopilot />} />
 
         {/* Produits numériques */}
         <Route path="products" element={<VendorDigitalProducts />} />
