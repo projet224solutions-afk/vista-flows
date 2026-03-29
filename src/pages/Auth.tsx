@@ -1329,29 +1329,6 @@ export default function Auth() {
         <img src="/logo-224solutions.png" alt="224Solutions" className="w-24 h-24 mx-auto mb-4 object-contain rounded-2xl bg-primary/5 p-2 shadow-sm" />
         <h1 className="text-4xl font-bold text-primary mb-6">224Solutions</h1>
 
-        {/* Boutons du header */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <Button
-            size="sm"
-            className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full"
-            onClick={() => navigate('/home')}
-          >
-            {t('auth.home')}
-          </Button>
-          <Button
-            size="sm"
-            className="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-full"
-            onClick={() => navigate('/marketplace')}
-          >
-            {t('auth.market')}
-          </Button>
-          <Button
-            size="sm"
-            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full"
-          >
-            {t('auth.services')}
-          </Button>
-        </div>
 
         {/* Titre principal - encore plus rapproché du bloc de sélection */}
         <h2 className="text-2xl text-gray-600 mb-2">
