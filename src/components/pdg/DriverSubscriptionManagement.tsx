@@ -444,7 +444,7 @@ export default function DriverSubscriptionManagement() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20"><CheckCircle className="w-3 h-3 mr-1" /> Actif</Badge>;
+        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20"><CheckCircle className="w-3 h-3 mr-1" /> Actif</Badge>;
       case 'expired':
         return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> ExpirÃ©</Badge>;
       case 'suspended':

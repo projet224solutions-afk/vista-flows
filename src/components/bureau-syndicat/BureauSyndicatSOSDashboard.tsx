@@ -299,7 +299,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           </CardContent>
         </Card>
 
-        <Card className="border-primary-orange-200 bg-primary-blue-50 dark:bg-primary-orange-950/20">
+        <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20">
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Statut Realtime</div>

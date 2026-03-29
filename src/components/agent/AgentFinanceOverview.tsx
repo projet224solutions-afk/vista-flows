@@ -174,7 +174,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
         <CardContent className="p-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gradient-to-br bg-primary-blue-600 rounded-xl p-4 text-white">
+            <div className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <Wallet className="w-5 h-5" />
                 <span className="text-sm opacity-90">Solde Wallet</span>
@@ -201,7 +201,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
               <p className="text-xs opacity-75">GNF</p>
             </div>
 
-            <div className="bg-gradient-to-br bg-primary-blue-600 rounded-xl p-4 text-white">
+            <div className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="w-5 h-5" />
                 <span className="text-sm opacity-90">PayÃ©es</span>

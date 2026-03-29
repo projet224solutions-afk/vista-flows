@@ -143,7 +143,7 @@ export const ProfessionalVirtualCard = () => {
 
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-      active: { color: 'brand-split', icon: <CheckCircle2 className="w-3 h-3" />, label: 'Active' },
+      active: { color: 'bg-gradient-to-r from-primary-blue-500 to-primary-orange-500', icon: <CheckCircle2 className="w-3 h-3" />, label: 'Active' },
       frozen: { color: 'bg-blue-500', icon: <Snowflake className="w-3 h-3" />, label: 'Gelée' },
       blocked: { color: 'bg-red-500', icon: <AlertTriangle className="w-3 h-3" />, label: 'Bloquée' }
     };
@@ -345,7 +345,7 @@ export const ProfessionalVirtualCard = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 brand-split bg-opacity-20 rounded-lg">
+                        <div className="p-2 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 bg-opacity-20 rounded-lg">
                           <Zap className="w-5 h-5 text-primary-orange-400" />
                         </div>
                         <div>
@@ -473,7 +473,7 @@ export const ProfessionalVirtualCard = () => {
                       <div className="flex justify-between text-sm">
                         <span className="text-white/60">Statut</span>
                         <Badge className={cn(
-                          card.status === 'active' ? 'brand-split' : 
+                          card.status === 'active' ? 'bg-gradient-to-r from-primary-blue-500 to-primary-orange-500' : 
                           card.status === 'frozen' ? 'bg-blue-500' : 'bg-red-500'
                         )}>
                           {card.status === 'active' ? 'Active' : 

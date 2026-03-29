@@ -218,7 +218,7 @@ export default function PaymentPage() {
 
   if (paymentDetails.status === 'success') {
     return (
-      <div className="min-h-screen bg-primary-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <CheckCircle className="w-12 h-12 mx-auto mb-4 text-primary-orange-500" />
@@ -398,7 +398,7 @@ export default function PaymentPage() {
               </div>
 
               {/* SÃ©curitÃ© */}
-              <div className="flex items-center gap-2 p-3 bg-primary-blue-50 rounded-lg">
+              <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
                 <Shield className="w-5 h-5 text-primary-orange-600" />
                 <div className="text-sm">
                   <p className="font-semibold text-primary-orange-800">Paiement sÃ©curisÃ©</p>

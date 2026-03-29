@@ -62,7 +62,7 @@ export function ChinaProductImport() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default" className="bg-primary-blue-600"><CheckCircle2 className="h-3 w-3 mr-1" /> TerminÃ©</Badge>;
+        return <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500"><CheckCircle2 className="h-3 w-3 mr-1" /> TerminÃ©</Badge>;
       case 'failed':
         return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" /> Ã‰chec</Badge>;
       case 'processing':
@@ -227,7 +227,7 @@ export function ChinaProductImport() {
               </div>
 
               {sellingPrice && selectedImport.extracted_data?.price && (
-                <div className="p-3 bg-primary-blue-50 dark:bg-primary-orange-950 rounded-lg">
+                <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-lg">
                   <p className="text-sm font-medium text-primary-orange-700 dark:text-primary-orange-300">
                     Marge estimÃ©e calculÃ©e automatiquement aprÃ¨s crÃ©ation
                   </p>

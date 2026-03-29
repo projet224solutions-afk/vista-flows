@@ -425,7 +425,7 @@ export default function LivreurDashboard() {
                 <Badge variant="secondary" className="ml-1 text-xs bg-white text-orange-600">{nearbyDeliveries.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="active" disabled={!currentDelivery && !currentRide} className="text-xs md:text-sm data-[state=active]:bg-primary-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="active" disabled={!currentDelivery && !currentRide} className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary-blue-600 data-[state=active]:to-primary-orange-700 data-[state=active]:text-white">
               ðŸšš {isMobile ? 'Active' : 'En cours'}
               {(currentDelivery || currentRide) && <Badge variant="default" className="ml-1 text-xs bg-white text-primary-orange-600">1</Badge>}
             </TabsTrigger>
@@ -436,7 +436,7 @@ export default function LivreurDashboard() {
               )}
             </TabsTrigger>
             {!isMobile && (
-              <TabsTrigger value="my-purchases" className="text-xs md:text-sm data-[state=active]:bg-primary-blue-600 data-[state=active]:text-white">
+              <TabsTrigger value="my-purchases" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary-blue-600 data-[state=active]:to-primary-orange-700 data-[state=active]:text-white">
                 ðŸ›’ Mes Achats
               </TabsTrigger>
             )}

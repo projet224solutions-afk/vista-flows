@@ -82,7 +82,7 @@ export function AgentOverviewProfessional({
       icon: <Wallet className="w-5 h-5" />,
       label: 'Portefeuille',
       description: 'GÃ©rer vos fonds',
-      gradient: 'bg-primary-blue-600',
+      gradient: 'from-primary-blue-500 to-primary-orange-500',
       shadowColor: 'shadow-primary-orange-500/25',
       tab: 'wallet'
     },
@@ -149,7 +149,7 @@ export function AgentOverviewProfessional({
       {/* Main Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Wallet Balance */}
-        <Card className="col-span-2 lg:col-span-1 overflow-hidden border-0 shadow-lg bg-gradient-to-br bg-primary-blue-600 text-white">
+        <Card className="col-span-2 lg:col-span-1 overflow-hidden border-0 shadow-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>

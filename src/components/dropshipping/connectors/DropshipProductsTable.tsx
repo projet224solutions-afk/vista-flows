@@ -105,7 +105,7 @@ function SyncStatusBadge({ status, lastSync }: { status: string; lastSync: strin
   const getStatusConfig = () => {
     switch (status) {
       case 'synced':
-        return { icon: CheckCircle, label: 'SynchronisÃ©', variant: 'default' as const, className: 'bg-primary-blue-600' };
+        return { icon: CheckCircle, label: 'SynchronisÃ©', variant: 'default' as const, className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' };
       case 'pending':
         return { icon: Loader2, label: 'En cours', variant: 'secondary' as const, className: 'animate-spin' };
       case 'error':
@@ -353,7 +353,7 @@ export function DropshipProductsTable({
           <p className="text-sm text-muted-foreground">Total produits</p>
           <p className="text-2xl font-bold">{products.length}</p>
         </div>
-        <div className="bg-primary-blue-50 rounded-lg p-3">
+        <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-3">
           <p className="text-sm text-primary-orange-600">PubliÃ©s</p>
           <p className="text-2xl font-bold text-primary-orange-700">
             {products.filter(p => p.isPublished).length}
@@ -470,7 +470,7 @@ export function DropshipProductsTable({
                   
                   <TableCell>
                     {product.isPublished ? (
-                      <Badge className="bg-primary-blue-600">
+                      <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
                         <Eye className="w-3 h-3 mr-1" />
                         PubliÃ©
                       </Badge>

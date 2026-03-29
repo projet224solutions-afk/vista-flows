@@ -1500,7 +1500,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                   <Button 
                     onClick={handleDeposit} 
                     disabled={processing || !depositAmount || !mobileMoneyPhone || mobileMoneyPhone.length !== 9}
-                    className="w-full brand-split hover:opacity-90"
+                    className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-orange-600 hover:to-primary-blue-600"
                   >
                     {processing ? 'Traitement...' : `Recharger ${depositAmount ? parseFloat(depositAmount).toLocaleString() : '0'} GNF`}
                   </Button>

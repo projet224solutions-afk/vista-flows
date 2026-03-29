@@ -135,7 +135,7 @@ export function RideRequestNotification({
             }}
             size="lg"
             disabled={isAccepting}
-            className="flex-1 bg-primary-blue-600 hover:bg-primary-blue-700 text-white shadow-lg font-bold text-base animate-pulse hover:animate-none transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-primary-blue-600 to-primary-orange-700 hover:from-primary-blue-700 hover:to-primary-orange-800 text-white shadow-lg font-bold text-base animate-pulse hover:animate-none transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAccepting ? (
               <>

@@ -81,7 +81,7 @@ const UserStatus = memo(function UserStatus({ displayName }: { displayName: stri
     <div className="flex items-center gap-1 md:gap-2 min-w-0 flex-1">
       <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1 min-w-0">
         <span
-          className="w-1.5 h-1.5 bg-primary-blue-600 rounded-full animate-pulse flex-shrink-0"
+          className="w-1.5 h-1.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse flex-shrink-0"
           aria-label="En ligne"
         />
         <span className="truncate max-w-[120px] sm:max-w-[200px] md:max-w-none">
@@ -140,7 +140,7 @@ const HeaderActions = memo(function HeaderActions({
           className="h-8 w-8 md:h-10 md:w-10"
           iconSize="w-4 h-4 md:w-5 md:h-5"
           externalUnreadCount={vendorUnreadCount}
-          badgeClassName="bg-primary-blue-600 text-white"
+          badgeClassName="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white"
         />
       </Suspense>
 

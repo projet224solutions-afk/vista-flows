@@ -170,7 +170,7 @@ export default function PDGWalletApiManagement() {
             <p className="text-xl font-bold text-amber-500">{stats.pendingRequests}</p>
           </CardContent>
         </Card>
-        <Card className="border-primary-orange-500/30 bg-primary-blue-600/5">
+        <Card className="border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
           <CardContent className="p-3">
             <p className="text-xs text-primary-orange-500">ApprouvÃ©es</p>
             <p className="text-xl font-bold text-primary-orange-500">{stats.approvedRequests}</p>

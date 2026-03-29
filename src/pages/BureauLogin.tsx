@@ -54,7 +54,7 @@ export const BureauLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-primary-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-blue-50 via-white to-primary-orange-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo et titre */}
         <div className="text-center space-y-2">
@@ -121,7 +121,7 @@ export const BureauLogin: React.FC = () => {
                 </div>
 
                 {/* Infos sÃ©curitÃ© */}
-                <Alert className="bg-primary-blue-50 border-primary-orange-200">
+                <Alert className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
                   <ShieldCheck className="h-4 w-4 text-primary-orange-600" />
                   <AlertDescription className="text-sm text-primary-orange-900">
                     {t('auth.agent.securityInfo')}

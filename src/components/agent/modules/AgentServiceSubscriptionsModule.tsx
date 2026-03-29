@@ -160,7 +160,7 @@ export function AgentServiceSubscriptionsModule({
             </CardContent>
           </Card>
           
-          <Card className="border-0 shadow-md bg-primary-blue-50">
+          <Card className="border-0 shadow-md bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>

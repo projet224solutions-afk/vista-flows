@@ -98,7 +98,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
           title="En Ligne"
           value={stats.online_drivers}
           icon={<Wifi className="h-5 w-5" />}
-          color="bg-primary-blue-600/10 text-primary-orange-500"
+          color="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500"
           badge={stats.online_drivers > 0 ? 'live' : undefined}
         />
         <StatCard
@@ -231,7 +231,7 @@ function StatCard({ title, value, icon, color, badge, urgent, isText }: StatCard
             {icon}
           </div>
           {badge && (
-            <Badge variant="secondary" className="bg-primary-blue-600 text-white text-xs">
+            <Badge variant="secondary" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white text-xs">
               {badge}
             </Badge>
           )}
@@ -245,7 +245,7 @@ function StatCard({ title, value, icon, color, badge, urgent, isText }: StatCard
 
 function DriverCard({ driver }: { driver: OnlineDriver }) {
   const statusColors = {
-    available: 'bg-primary-blue-600',
+    available: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
     on_trip: 'bg-amber-500',
     offline: 'bg-gray-500'
   };

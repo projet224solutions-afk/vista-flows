@@ -171,7 +171,7 @@ export default function PDGKYCManagement() {
             key={key} 
             className={`transition-all duration-200 ${
               settings[key as keyof KYCSettings] 
-                ? 'border-primary-orange-500/50 bg-primary-blue-600/5' 
+                ? 'border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5' 
                 : 'border-muted'
             }`}
           >
@@ -180,7 +180,7 @@ export default function PDGKYCManagement() {
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${
                     settings[key as keyof KYCSettings]
-                      ? 'bg-primary-blue-600/20 text-primary-orange-600'
+                      ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 text-primary-orange-600'
                       : 'bg-muted text-muted-foreground'
                   }`}>
                     <Icon className="w-5 h-5" />

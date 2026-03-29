@@ -105,7 +105,7 @@ export function AdvancedMFA() {
   const getSecurityBadge = (security: string) => {
     switch (security) {
       case 'high':
-        return <Badge className="bg-primary-blue-600 text-white">Haute sÃ©curitÃ©</Badge>;
+        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white">Haute sÃ©curitÃ©</Badge>;
       case 'medium':
         return <Badge className="bg-yellow-500 text-white">SÃ©curitÃ© moyenne</Badge>;
       case 'low':

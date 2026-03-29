@@ -82,7 +82,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary-blue-50 rounded-lg">
+                  <div className="p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
                     <Phone className="w-4 h-4 text-primary-orange-600" />
                   </div>
                   <div>
@@ -142,7 +142,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
 
         {/* Performance Card */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-primary-blue-50 border-b">
+          <CardHeader className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 border-b">
             <CardTitle className="flex items-center gap-2 text-slate-800">
               <TrendingUp className="w-5 h-5 text-primary-blue-600" />
               Performance

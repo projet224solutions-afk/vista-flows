@@ -521,7 +521,7 @@ export function ProductImportDialog({
                 </div>
                 
                 {/* Profit estimÃ© */}
-                <div className="bg-primary-blue-50 rounded-lg p-3 border border-primary-orange-200">
+                <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-3 border border-primary-orange-200">
                   <p className="text-sm text-primary-orange-800">
                     Profit estimÃ© par vente:{' '}
                     <strong>

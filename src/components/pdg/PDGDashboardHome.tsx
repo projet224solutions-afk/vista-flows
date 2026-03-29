@@ -76,7 +76,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       change: `${(stats.revenueGrowth || 0) >= 0 ? '+' : ''}${stats.revenueGrowth || 0}%`,
       trend: (stats.revenueGrowth || 0) >= 0 ? 'up' : 'down',
       icon: DollarSign,
-      color: 'text-primary-orange-600 bg-primary-blue-600/10 border-primary-orange-500/20',
+      color: 'text-primary-orange-600 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/20',
       description: 'vs mois dernier'
     },
     {
@@ -94,7 +94,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       change: '+0%',
       trend: 'up',
       icon: UserCheck,
-      color: 'text-primary-orange-600 bg-primary-blue-600/10 border-primary-orange-500/20',
+      color: 'text-primary-orange-600 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/20',
       description: `${stats.totalAgents || 0} agents au total`
     },
     {
@@ -138,7 +138,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       type: 'success', 
       message: `${stats.activeVendors || 0} vendeurs actifs sur ${stats.totalVendors || 0}`,
       icon: CheckCircle,
-      color: 'text-primary-orange-600 bg-primary-blue-600/10 border-primary-orange-500/20',
+      color: 'text-primary-orange-600 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/20',
       action: 'vendors',
       show: true
     },
@@ -183,7 +183,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                     variant="secondary" 
                     className={cn(
                       "gap-0.5 sm:gap-1 text-[10px] sm:text-xs w-fit",
-                      kpi.trend === 'up' ? 'bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
+                      kpi.trend === 'up' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
                     )}
                   >
                     <TrendIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -329,7 +329,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 label: 'Finances',
                 labelFull: 'GÃ©rer Finances',
                 icon: DollarSign,
-                color: 'bg-primary-blue-600',
+                color: 'from-primary-blue-500 to-primary-orange-600',
                 action: 'finance',
                 count: stats.totalRevenue || '0 GNF',
               },
@@ -383,7 +383,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Gestion des Agents */}
         <Card 
-          className="border-2 border-primary-orange-200 bg-primary-blue-50 dark:bg-primary-blue-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          className="border-2 border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950 dark:to-primary-orange-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
           onClick={() => onNavigate?.('agents')}
         >
           <CardHeader className="pb-4">

@@ -80,7 +80,7 @@ export default function MonitoringDashboard() {
     toast.success('Health check terminÃ©');
   };
 
-  const overallBg = stats.overallStatus === 'healthy' ? 'bg-primary-blue-600/10 border-primary-orange-500/30'
+  const overallBg = stats.overallStatus === 'healthy' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/30'
     : stats.overallStatus === 'degraded' ? 'bg-yellow-500/10 border-yellow-500/30'
     : stats.overallStatus === 'critical' ? 'bg-red-500/10 border-red-500/30'
     : 'bg-muted/10 border-border';

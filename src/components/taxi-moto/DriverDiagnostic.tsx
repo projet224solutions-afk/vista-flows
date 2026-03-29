@@ -59,7 +59,7 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
   }, [driverId, isOnline]);
 
   const statusColor = {
-    'SUBSCRIBED': 'bg-primary-blue-600',
+    'SUBSCRIBED': 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
     'CHANNEL_ERROR': 'bg-red-500',
     'TIMED_OUT': 'bg-orange-500',
     'CLOSED': 'bg-gray-500',
@@ -117,7 +117,7 @@ export function DriverDiagnostic({ driverId, isOnline, hasAccess, userId }: Driv
         </div>
 
         {lastNotification && (
-          <div className="mt-3 p-2 bg-primary-blue-50 dark:bg-primary-orange-950 rounded border border-primary-orange-200">
+          <div className="mt-3 p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded border border-primary-orange-200">
             <div className="font-semibold text-primary-orange-700 dark:text-primary-orange-300">
               âœ… DerniÃ¨re notification:
             </div>

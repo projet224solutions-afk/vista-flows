@@ -351,7 +351,7 @@ export default function DigitalProductDetail() {
                       Prix libre
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20">
+                    <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
                       Achat unique â€” AccÃ¨s permanent
                     </Badge>
                   )}

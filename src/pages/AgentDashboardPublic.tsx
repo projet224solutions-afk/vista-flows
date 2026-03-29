@@ -448,7 +448,7 @@ export default function AgentDashboardPublic() {
       case 'create-user':
         return (
           <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-primary-blue-600 text-white rounded-t-lg">
+            <CardHeader className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 text-white rounded-t-lg">
               <CardTitle>CrÃ©er un Nouvel Utilisateur</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">

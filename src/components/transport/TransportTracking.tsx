@@ -304,7 +304,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
             <p className="text-sm text-blue-700">{request.pickupAddress}</p>
           </div>
           
-          <div className="p-4 bg-primary-blue-50 rounded-lg">
+          <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <MapPin className="w-4 h-4 text-primary-orange-600" />
               <span className="text-sm font-medium text-primary-orange-800">Destination</span>
@@ -369,7 +369,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
         </div>
 
         {/* Prix */}
-        <div className="p-4 bg-primary-blue-50 rounded-lg">
+        <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-primary-orange-800">Prix de la course</p>
@@ -419,7 +419,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
         {userType === 'client' && (
           <div className="space-y-3">
             {request.status === 'delivered' && (
-              <div className="p-4 bg-primary-blue-50 rounded-lg border border-primary-orange-200">
+              <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-primary-orange-600" />
                   <span className="text-sm font-medium text-primary-orange-800">Livraison confirmÃ©e</span>

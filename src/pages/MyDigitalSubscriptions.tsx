@@ -45,7 +45,7 @@ interface DigitalSubscription {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
-  active: { label: 'Actif', color: 'bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20', icon: CheckCircle },
+  active: { label: 'Actif', color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20', icon: CheckCircle },
   past_due: { label: 'Paiement en retard', color: 'bg-amber-500/10 text-amber-600 border-amber-500/20', icon: AlertTriangle },
   cancelled: { label: 'AnnulÃ©', color: 'bg-muted text-muted-foreground border-border', icon: XCircle },
   expired: { label: 'ExpirÃ©', color: 'bg-destructive/10 text-destructive border-destructive/20', icon: Clock },

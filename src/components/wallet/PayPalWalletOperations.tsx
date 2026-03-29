@@ -216,7 +216,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
                 <Button
                   onClick={handleCaptureDeposit}
                   disabled={processing}
-                  className="w-full brand-split hover:opacity-90 text-white"
+                  className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-orange-600 hover:to-primary-blue-600 text-white"
                   size="lg"
                 >
                   {processing ? (

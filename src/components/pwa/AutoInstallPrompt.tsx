@@ -349,7 +349,7 @@ export function AutoInstallPrompt({
                 displayContext === 'offline'
                   ? 'bg-gradient-to-r from-orange-500 via-red-500 to-rose-500'
                   : isVendor
-                    ? 'brand-split'
+                    ? 'bg-gradient-to-r from-primary-blue-600 via-primary-orange-600 to-primary-blue-600'
                     : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600'
               }`}>
                 <div className="flex items-center justify-between">
@@ -440,7 +440,7 @@ export function AutoInstallPrompt({
                         <WifiOff className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         <span className="text-sm font-medium">Mode hors ligne</span>
                       </div>
-                      <div className="flex items-center gap-2 p-3 bg-primary-blue-50 dark:bg-primary-orange-900/30 rounded-lg">
+                      <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-900/30 rounded-lg">
                         <Zap className="w-5 h-5 text-primary-orange-600 dark:text-primary-orange-400" />
                         <span className="text-sm font-medium">Plus rapide</span>
                       </div>
@@ -473,7 +473,7 @@ export function AutoInstallPrompt({
                     disabled={isInstalling}
                     className={`w-full h-12 text-base font-semibold ${
                       isVendor
-                        ? 'bg-primary-blue-600 hover:opacity-90'
+                        ? 'bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-blue-700 hover:to-primary-orange-700'
                         : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
                     }`}
                   >

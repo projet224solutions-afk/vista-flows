@@ -130,11 +130,11 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
               className={cn(
-                'group relative text-left rounded-2xl border-2 p-4 transition-all duration-300 h-full hover:-translate-y-1',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-orange-400',
-                isSelected
-                  ? 'border-primary-blue-300 shadow-xl shadow-primary-blue-500/15 bg-primary-blue-50'
-                  : 'border-border bg-card hover:border-primary-orange-200/70 hover:shadow-lg',
+                'relative text-left rounded-2xl border-2 p-4 transition-all duration-300 h-full',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                isSelected 
+                  ? 'border-primary shadow-xl shadow-primary/10 bg-gradient-to-b from-primary/5 to-background' 
+                  : 'border-border bg-card hover:border-muted-foreground/30 hover:shadow-lg',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -144,7 +144,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                   variant={mode.badgeVariant}
                   className={cn(
                     'text-[10px] font-medium',
-                    mode.color === 'orange' && 'brand-split text-white border-0'
+                    mode.color === 'orange' && 'bg-gradient-to-r from-primary-orange-500 to-primary-blue-500 text-white border-0'
                   )}
                 >
                   {mode.badgeText}
@@ -154,11 +154,11 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
               {/* Indicateur de sÃ©lection */}
               <div className={cn(
                 'absolute top-3 left-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
-                isSelected
-                  ? 'border-primary-blue-500 bg-primary-blue-600'
+                isSelected 
+                  ? 'border-primary bg-primary' 
                   : 'border-muted-foreground/30'
               )}>
-                {isSelected && <Check className="w-3 h-3 text-white" />}
+                {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
               </div>
 
               {/* Contenu principal */}
@@ -167,9 +167,9 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 <div className={cn(
                   'w-12 h-12 rounded-xl flex items-center justify-center mx-auto',
                   mode.color === 'blue' 
-                    ? 'bg-gradient-to-br bg-primary-blue-600' 
-                    : 'bg-gradient-to-br bg-primary-orange-600',
-                  'text-white shadow-lg transition-transform duration-300 group-hover:scale-105'
+                    ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-600' 
+                    : 'bg-gradient-to-br from-primary-orange-500 to-primary-blue-600',
+                  'text-white shadow-lg'
                 )}>
                   <Icon className="w-6 h-6" />
                 </div>

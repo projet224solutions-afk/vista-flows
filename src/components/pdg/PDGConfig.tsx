@@ -153,10 +153,10 @@ export default function PDGConfig() {
         </Card>
 
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
-          <div className="absolute inset-0 bg-primary-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="pt-6 relative">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary-blue-600/10 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 flex items-center justify-center">
                 <Settings className="w-6 h-6 text-primary-orange-500" />
               </div>
               <div>
@@ -393,7 +393,7 @@ export default function PDGConfig() {
                         <h4 className="font-semibold">
                           {config.service_name} - {config.transaction_type}
                         </h4>
-                        <Badge variant="outline" className={config.is_active ? 'bg-primary-blue-600/10 text-primary-orange-500 border-primary-orange-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}>
+                        <Badge variant="outline" className={config.is_active ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500 border-primary-orange-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}>
                           {config.is_active ? 'Actif' : 'Inactif'}
                         </Badge>
                       </div>
@@ -423,7 +423,7 @@ export default function PDGConfig() {
                         variant="outline"
                         size="sm"
                         onClick={() => toggleActive(config.id, config.is_active)}
-                        className={config.is_active ? 'border-orange-500/50 hover:bg-orange-500/10' : 'border-primary-orange-500/50 hover:bg-primary-blue-600/10'}
+                        className={config.is_active ? 'border-orange-500/50 hover:bg-orange-500/10' : 'border-primary-orange-500/50 hover:bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10'}
                       >
                         {config.is_active ? 'DÃ©sactiver' : 'Activer'}
                       </Button>

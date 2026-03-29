@@ -230,7 +230,7 @@ export default function VendorAgentInterface() {
             <p className="text-xs text-muted-foreground truncate">{agent.agent_code}</p>
           </div>
         </div>
-        <Badge variant="outline" className="mt-2 bg-primary-blue-50 text-primary-orange-700 border-primary-orange-200 text-xs">
+        <Badge variant="outline" className="mt-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200 text-xs">
           â— Agent Actif
         </Badge>
       </div>
@@ -437,7 +437,7 @@ export default function VendorAgentInterface() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="bg-primary-blue-50 text-primary-orange-700 border-primary-orange-200">
+                    <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200">
                       â— Actif
                     </Badge>
                     <Button onClick={handleSignOut} variant="outline" size="sm">

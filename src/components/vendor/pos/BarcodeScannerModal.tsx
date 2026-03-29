@@ -530,13 +530,13 @@ export function BarcodeScannerModal({
         {foundProduct && verificationState === 'confirmed' && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <Badge variant="outline" className="flex items-center gap-1 bg-primary-blue-50 text-primary-orange-700 border-primary-orange-300">
+              <Badge variant="outline" className="flex items-center gap-1 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-300">
                 <Check className="h-3 w-3" />
                 Produit vÃ©rifiÃ©
               </Badge>
             </div>
 
-            <Card className="border-2 border-primary-orange-300 bg-primary-blue-50/50">
+            <Card className="border-2 border-primary-orange-300 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50">
               <CardContent className="p-4">
                 <div className="flex gap-4 mb-4">
                   {/* Image produit */}

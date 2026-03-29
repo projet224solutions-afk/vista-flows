@@ -58,7 +58,7 @@ export function MiniMap({ latitude, longitude, isOnline, onExpand }: MiniMapProp
               "relative z-10 w-10 h-10 rounded-full flex items-center justify-center",
               "shadow-xl",
               isOnline 
-                ? "bg-primary-blue-400 shadow-primary-orange-500/30" 
+                ? "bg-gradient-to-br from-primary-blue-400 to-primary-orange-600 shadow-primary-orange-500/30" 
                 : "bg-gradient-to-br from-gray-600 to-gray-700 shadow-black/30"
             )}>
               <Navigation2 className={cn(

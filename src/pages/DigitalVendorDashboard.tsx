@@ -109,14 +109,14 @@ export default function DigitalVendorDashboard() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen w-full flex bg-primary-blue-50/30 dark:from-background dark:via-background dark:to-background overflow-x-hidden animate-fade-in">
+      <div className="min-h-screen w-full flex bg-gradient-to-br from-primary-blue-50/30 via-white to-primary-orange-50/30 dark:from-background dark:via-background dark:to-background overflow-x-hidden">
         <DigitalVendorSidebar />
 
         <div className="flex-1 flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">
           <DigitalVendorHeader displayName={displayName} onSignOut={handleSignOut} />
 
           <main
-            className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-auto overflow-y-auto pt-4 pb-24 md:pb-8 w-full max-w-full animate-fade-in"
+            className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-auto overflow-y-auto pt-4 pb-24 md:pb-8 w-full max-w-full"
             role="main"
             aria-label="Dashboard vendeur digital"
           >

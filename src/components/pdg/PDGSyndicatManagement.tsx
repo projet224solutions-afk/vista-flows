@@ -449,7 +449,7 @@ export default function PDGSyndicatManagement() {
                           <div className="flex items-center gap-3">
                             <h3 className="font-semibold text-lg">{bureau.bureau_code}</h3>
                             {bureau.status === 'active' ? (
-                              <Badge variant="default" className="bg-primary-blue-600/10 text-primary-orange-700 dark:text-primary-orange-400 border-primary-orange-500/20">
+                              <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-700 dark:text-primary-orange-400 border-primary-orange-500/20">
                                 Actif
                               </Badge>
                             ) : (
@@ -572,7 +572,7 @@ export default function PDGSyndicatManagement() {
                       </div>
                       <div className="flex items-center gap-2">
                         {worker.is_active ? (
-                          <Badge className="bg-primary-blue-600">Actif</Badge>
+                          <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                         ) : (
                           <Badge className="bg-gray-500">Inactif</Badge>
                         )}
@@ -690,7 +690,7 @@ export default function PDGSyndicatManagement() {
                       </div>
                       <div className="flex items-center gap-2">
                         {member.status === 'active' ? (
-                          <Badge className="bg-primary-blue-600">Actif</Badge>
+                          <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                         ) : (
                           <Badge className="bg-gray-500">Inactif</Badge>
                         )}
@@ -831,7 +831,7 @@ export default function PDGSyndicatManagement() {
                       </p>
                     </div>
                     {feature.is_active ? (
-                      <Badge className="bg-primary-blue-600">Active</Badge>
+                      <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Active</Badge>
                     ) : (
                       <Badge className="bg-gray-500">Inactive</Badge>
                     )}

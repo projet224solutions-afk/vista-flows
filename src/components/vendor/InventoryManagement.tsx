@@ -402,7 +402,7 @@ export default function InventoryManagement() {
             {/* Indicateur de statut rÃ©seau */}
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${
               isOnline 
-                ? 'bg-primary-blue-50 border-primary-orange-200 dark:bg-primary-orange-950 dark:border-primary-orange-800' 
+                ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200 dark:bg-primary-orange-950 dark:border-primary-orange-800' 
                 : 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800'
             }`}>
               {isOnline ? (

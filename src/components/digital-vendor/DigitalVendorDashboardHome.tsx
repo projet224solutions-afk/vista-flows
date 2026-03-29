@@ -100,9 +100,9 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6">
         {/* Welcome */}
-        <Card className="bg-primary-blue-50 dark:bg-primary-blue-950/30 border-primary-blue-200/50 shadow-sm transition-all duration-300 hover:shadow-md">
+        <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/30 dark:to-primary-orange-950/30 border-primary-blue-200/50">
           <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
@@ -116,7 +116,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               </div>
               <Button
                 onClick={() => navigate('/vendeur-digital/add-product')}
-                className="brand-split hover:opacity-90 text-white gap-2 transition-all duration-200 hover:-translate-y-0.5"
+                className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 hover:from-primary-blue-700 hover:to-primary-orange-600 text-white gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Nouveau produit
@@ -126,7 +126,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </Card>
 
         {/* Revenue Stats - with breakdown */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 [&>*]:shadow-sm [&>*]:transition-shadow [&>*]:hover:shadow-md [&>*]:border-primary-blue-100/70">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-1">
@@ -205,7 +205,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </div>
 
         {/* Secondary stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 [&>*]:shadow-sm [&>*]:transition-shadow [&>*]:hover:shadow-md [&>*]:border-primary-orange-100/70">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-1">
@@ -262,7 +262,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </div>
 
         {/* Recent Products */}
-        <Card className="shadow-sm transition-all duration-300 hover:shadow-md">
+        <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div>
@@ -293,7 +293,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                   return (
                     <div
                       key={product.id}
-                      className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-primary-blue-50/70 transition-colors cursor-pointer"
+                      className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
                       onClick={() => navigate(`/digital-product/${product.id}`)}
                     >
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -311,9 +311,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                       </div>
                       <Badge
                         variant={product.status === 'published' ? 'default' : 'secondary'}
-                        className={product.status === 'published'
-                          ? 'text-[10px] flex-shrink-0 bg-primary-blue-600 text-white border-0'
-                          : 'text-[10px] flex-shrink-0'}
+                        className="text-[10px] flex-shrink-0"
                       >
                         {product.status === 'published' ? 'PubliÃ©' : product.status === 'draft' ? 'Brouillon' :
                          product.status === 'rejected' ? 'RejetÃ©' : product.status === 'archived' ? 'ArchivÃ©' : product.status}
@@ -327,13 +325,13 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </Card>
 
         {/* Quick Actions */}
-        <Card className="shadow-sm transition-all duration-300 hover:shadow-md">
+        <Card>
           <CardHeader>
             <CardTitle className="text-base">Actions rapides</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:border-primary-blue-300 hover:bg-primary-blue-50/40" onClick={() => navigate('/vendeur-digital/add-product')}>
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vendeur-digital/add-product')}>
                 <Plus className="w-5 h-5 text-primary-blue-600" />
                 <span className="text-xs">Ajouter un produit</span>
               </Button>

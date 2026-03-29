@@ -191,7 +191,7 @@ export const WalletTransactionHistory = ({
     : transactions.slice(0, INITIAL_DISPLAY_COUNT);
 
   return (
-    <Card className={`${className} border-2 border-primary-orange-100 bg-primary-blue-50`}>
+    <Card className={`${className} border-2 border-primary-orange-100 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">

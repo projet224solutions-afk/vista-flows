@@ -365,7 +365,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
                     </span>
                     <span className="font-semibold text-primary-blue-700">{stats?.orders.ready || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded bg-primary-blue-50">
+                  <div className="flex justify-between items-center p-2 rounded bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
                     <span className="text-sm flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-primary-orange-500" /> TerminÃ©es
                     </span>

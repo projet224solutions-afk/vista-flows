@@ -71,7 +71,7 @@ interface SecurityStats {
     alertes_en_cours: number;
     alertes_resolues: number;
     faux_positifs: number;
-    motos_uniques_signalees: number;
+    motos_uniques_signalÃ©es: number;
     temps_moyen_resolution_heures: number;
 }
 
@@ -254,7 +254,7 @@ export default function MotoSecurityAlerts({
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-purple-600">Motos uniques</p>
-                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalees}</p>
+                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalÃ©es}</p>
                                 </div>
                                 <Activity className="w-8 h-8 text-purple-600" />
                             </div>

@@ -70,7 +70,7 @@ export function DriverStatusToggle({
   const getStatusColor = () => {
     switch (status) {
       case 'online':
-        return 'bg-primary-blue-600';
+        return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
       case 'on_delivery':
         return 'bg-blue-500';
       case 'paused':

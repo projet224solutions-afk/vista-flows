@@ -53,7 +53,7 @@ interface AgriOrder {
 }
 
 const CATEGORIES = [
-  { id: 'fruits', name: 'Fruits & LÃ©gumes', icon: Apple, emoji: 'ðŸŽ', color: 'bg-primary-blue-600' },
+  { id: 'fruits', name: 'Fruits & LÃ©gumes', icon: Apple, emoji: 'ðŸŽ', color: 'from-primary-blue-500 to-primary-orange-600' },
   { id: 'cereals', name: 'CÃ©rÃ©ales & Grains', icon: Sprout, emoji: 'ðŸŒ¾', color: 'from-amber-500 to-yellow-600' },
   { id: 'dairy', name: 'Produits Laitiers', icon: Egg, emoji: 'ðŸ¥›', color: 'from-blue-400 to-primary-blue-500' },
   { id: 'meat', name: 'Viandes & Volaille', icon: Fish, emoji: 'ðŸ¥©', color: 'from-red-500 to-rose-600' },
@@ -102,7 +102,7 @@ export function AgricultureModule({ serviceId, businessName }: AgricultureModule
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br bg-primary-blue-600 rounded-xl">
+          <div className="p-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 rounded-xl">
             <Sprout className="w-8 h-8 text-white" />
           </div>
           <div>
@@ -121,14 +121,14 @@ export function AgricultureModule({ serviceId, businessName }: AgricultureModule
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card className="bg-gradient-to-br bg-primary-blue-600 text-white">
+        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
           <CardContent className="p-4">
             <Package className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{totalProducts}</p>
             <p className="text-xs opacity-80">Produits</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br bg-primary-blue-600 text-white">
+        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
           <CardContent className="p-4">
             <Apple className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{availableProducts}</p>
@@ -156,7 +156,7 @@ export function AgricultureModule({ serviceId, businessName }: AgricultureModule
             <p className="text-xs opacity-80">Alertes stock</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br bg-primary-orange-600 text-white">
+        <Card className="bg-gradient-to-br from-primary-orange-500 to-primary-blue-600 text-white">
           <CardContent className="p-4">
             <Leaf className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{organicCount}</p>
@@ -255,7 +255,7 @@ export function AgricultureModule({ serviceId, businessName }: AgricultureModule
                           <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-semibold text-sm">{product.name}</h4>
                             {stockBadge}
-                            {product.organic && <Badge className="bg-primary-blue-50 text-primary-orange-700 text-[10px] border-primary-orange-200">ðŸŒ¿ Bio</Badge>}
+                            {product.organic && <Badge className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 text-[10px] border-primary-orange-200">ðŸŒ¿ Bio</Badge>}
                           </div>
                           <div className="flex gap-3 text-xs text-muted-foreground mt-0.5">
                             <span><MapPin className="w-3 h-3 inline" /> {product.origin}</span>

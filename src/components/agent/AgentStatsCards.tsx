@@ -48,7 +48,7 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
       value: formatAmount(walletBalance),
       subtitle: currency,
       icon: <Wallet className="w-5 h-5" />,
-      gradient: 'bg-primary-blue-600',
+      gradient: 'from-primary-blue-500 to-primary-orange-500',
       iconBg: 'bg-primary-blue-500/10',
       textColor: 'text-primary-blue-600'
     },

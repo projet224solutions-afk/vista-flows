@@ -1437,7 +1437,7 @@ export default function OrderManagement() {
                       order.escrow.status === 'pending' || order.escrow.status === 'held'
                         ? 'bg-blue-50 border-blue-200'
                         : order.escrow.status === 'released'
-                        ? 'bg-primary-blue-50 border-primary-orange-200'
+                        ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200'
                         : 'bg-gray-50 border-gray-200'
                     }`}>
                       <div className="flex items-start gap-2">
@@ -1717,7 +1717,7 @@ export default function OrderManagement() {
                     const url = URL.createObjectURL(blob);
                     const opened = window.open(url, '_blank', 'noopener,noreferrer');
                     if (!opened) {
-                      toast({ title: 'Popup bloquée', description: 'Autorisez les popups' });
+                      toast.error('Popup bloquÃ©e - autorisez les popups');
                     }
                     setTimeout(() => URL.revokeObjectURL(url), 10000);
                   }}

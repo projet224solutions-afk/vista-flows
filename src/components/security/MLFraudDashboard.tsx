@@ -240,7 +240,7 @@ export const MLFraudDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Confiance ML</p>
                 <p className="text-3xl font-bold">{stats.avgConfidence}%</p>
               </div>
-              <div className="p-3 bg-primary-blue-600/10 rounded-full">
+              <div className="p-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 rounded-full">
                 <Target className="h-6 w-6 text-primary-orange-500" />
               </div>
             </div>

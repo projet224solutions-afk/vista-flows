@@ -343,7 +343,7 @@ export default function ClientDashboard() {
                         <p className="text-[10px] sm:text-xs text-muted-foreground">Favoris</p>
                       </button>
 
-                      <button onClick={() => setStatDetailType('spent')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-primary-blue-50 dark:bg-primary-orange-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-primary-orange-400/40 transition-all active:scale-95">
+                      <button onClick={() => setStatDetailType('spent')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-primary-orange-400/40 transition-all active:scale-95">
                         <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-primary-orange-100 dark:bg-primary-orange-900/30 flex items-center justify-center mb-1`}>
                           <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-primary-orange-600`} />
                         </div>

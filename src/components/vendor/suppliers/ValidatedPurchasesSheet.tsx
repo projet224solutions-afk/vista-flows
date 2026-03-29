@@ -245,7 +245,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
                   <p className="text-xs text-muted-foreground">Total investi</p>
                 </CardContent>
               </Card>
-              <Card className="bg-primary-blue-600/10 border-primary-orange-500/20">
+              <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/20">
                 <CardContent className="p-3 text-center">
                   <p className="text-lg font-bold text-primary-orange-600">{formatCurrency(currentStats.totalProfit)}</p>
                   <p className="text-xs text-muted-foreground">Profit estimÃ©</p>

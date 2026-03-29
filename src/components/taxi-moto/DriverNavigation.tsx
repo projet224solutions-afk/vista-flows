@@ -371,7 +371,7 @@ export function DriverNavigation({
           </div>
 
           <div className="space-y-2 mb-4">
-            <div className="flex items-center gap-2 text-sm bg-primary-blue-50 p-3 rounded">
+            <div className="flex items-center gap-2 text-sm bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 p-3 rounded">
               <MapPin className="w-4 h-4 text-primary-orange-600" />
               <span className="font-medium">{activeRide.pickup.address}</span>
             </div>

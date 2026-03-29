@@ -235,7 +235,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                   {metrics.averageExpense.toLocaleString()} ce mois
                 </p>
               </div>
-              <div className="p-2 sm:p-3 bg-primary-blue-50 rounded-full shrink-0">
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-full shrink-0">
                 <Target className="w-4 h-4 sm:w-6 sm:h-6 text-primary-orange-600" />
               </div>
             </div>
@@ -718,7 +718,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 return (
                   <div className="space-y-2">
                     {over.length === 0 ? (
-                      <p className="text-primary-orange-700 bg-primary-blue-50 p-2 rounded">Aucun dÃ©passement dÃ©tectÃ© ce mois.</p>
+                      <p className="text-primary-orange-700 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 p-2 rounded">Aucun dÃ©passement dÃ©tectÃ© ce mois.</p>
                     ) : (
                       over.map((o: any) => (
                         <div key={o.id} className="p-2 rounded border border-red-200 bg-red-50">

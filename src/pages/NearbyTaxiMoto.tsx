@@ -435,7 +435,7 @@ export default function NearbyTaxiMoto() {
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
         {/* Quick Book Button */}
-        <Card className="bg-gradient-to-r bg-primary-blue-600 border-0 shadow-lg">
+        <Card className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-600 border-0 shadow-lg">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="text-white">

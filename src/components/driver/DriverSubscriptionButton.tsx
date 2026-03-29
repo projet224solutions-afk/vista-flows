@@ -58,7 +58,7 @@ export function DriverSubscriptionButton() {
           size="sm" 
           className={`gap-1 text-xs h-8 ${
             isActive 
-              ? 'border-primary-orange-300 bg-primary-blue-50 hover:bg-primary-orange-100' 
+              ? 'border-primary-orange-300 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 hover:bg-primary-orange-100' 
               : isExpired
               ? 'border-red-300 bg-red-50 hover:bg-red-100'
               : 'border-gray-300'
@@ -103,7 +103,7 @@ export function DriverSubscriptionButton() {
           )}
 
           {isActive && (
-            <div className="p-2 bg-primary-blue-50 border border-primary-orange-200 rounded text-xs text-center text-primary-orange-800 font-bold">
+            <div className="p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded text-xs text-center text-primary-orange-800 font-bold">
               âœ… Abonnement actif
             </div>
           )}

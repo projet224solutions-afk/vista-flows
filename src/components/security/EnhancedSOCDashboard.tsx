@@ -93,7 +93,7 @@ export function EnhancedSOCDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'bg-primary-blue-600';
+      case 'available': return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
       case 'busy': return 'bg-yellow-500';
       case 'on_call': return 'bg-blue-500';
       case 'offline': return 'bg-gray-500';
@@ -154,7 +154,7 @@ export function EnhancedSOCDashboard() {
         </CardHeader>
         <CardContent>
           {/* Statut SOC */}
-          <div className="p-4 rounded-lg border bg-primary-blue-50 dark:bg-primary-orange-950 border-primary-orange-200 dark:border-primary-orange-800">
+          <div className="p-4 rounded-lg border bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 border-primary-orange-200 dark:border-primary-orange-800">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="w-5 h-5 text-primary-orange-600" />
               <span className="font-semibold">SOC OpÃ©rationnel - Couverture 24/7</span>

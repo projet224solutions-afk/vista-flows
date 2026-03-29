@@ -68,7 +68,7 @@ const severityColors: Record<BugSeverity, string> = {
 const statusColors: Record<BugReportStatus, string> = {
   pending: "bg-yellow-500",
   reviewing: "bg-blue-500",
-  accepted: "bg-primary-blue-600",
+  accepted: "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500",
   rejected: "bg-red-500",
   duplicate: "bg-gray-500",
   resolved: "bg-purple-500",

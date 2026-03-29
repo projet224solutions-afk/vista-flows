@@ -866,7 +866,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
 
               {/* Option paiement */}
               {cartTotal > 0 && (
-                <Card className="bg-primary-blue-50 dark:from-primary-blue-900/20 ">
+                <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-900/20 dark:to-primary-orange-900/20">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <CreditCard className="w-5 h-5 text-primary-orange-600" />
@@ -1116,7 +1116,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   {confirmationData?.paymentIntentId && (
                     <div className="flex justify-between items-center mt-2">
                       <span className="text-muted-foreground">Paiement</span>
-                      <Badge className="bg-primary-blue-600">
+                      <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
                         <Check className="w-3 h-3 mr-1" />
                         Carte payÃ©e
                       </Badge>

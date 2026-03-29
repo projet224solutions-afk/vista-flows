@@ -85,7 +85,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Animation de succÃ¨s */}
-      <Card className="bg-primary-blue-50 border-primary-orange-200">
+      <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
         <CardContent className="p-8 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-orange-100 rounded-full mb-4">
             <CheckCircle className="h-10 w-10 text-primary-orange-600 animate-in zoom-in duration-300" />

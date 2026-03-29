@@ -73,7 +73,7 @@ export default function CopilotAuditTrail() {
     const colors: Record<string, string> = {
       'chat_message': 'bg-blue-500',
       'business_action': 'bg-purple-500',
-      'analyze_system': 'bg-primary-blue-600',
+      'analyze_system': 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
       'status_check': 'bg-gray-500',
       'rate_limit_exceeded': 'bg-red-500',
       'business_action_blocked': 'bg-orange-500',

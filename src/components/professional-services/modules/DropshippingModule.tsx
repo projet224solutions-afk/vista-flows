@@ -269,7 +269,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
                           <Badge 
                             variant="outline" 
                             className={supplier.is_verified 
-                              ? "bg-primary-blue-50 text-primary-orange-700 border-primary-orange-200" 
+                              ? "bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200" 
                               : "bg-yellow-50 text-yellow-700 border-yellow-200"
                             }
                           >

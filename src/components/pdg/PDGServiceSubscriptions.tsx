@@ -62,7 +62,7 @@ const SERVICE_COLORS: Record<string, string> = {
   location: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
   construction: 'from-amber-500/20 to-amber-600/10 border-amber-500/30',
   vtc: 'from-purple-500/20 to-purple-600/10 border-purple-500/30',
-  sport: 'bg-primary-blue-500/20 border-primary-orange-500/30',
+  sport: 'from-primary-blue-500/20 to-primary-orange-600/10 border-primary-orange-500/30',
   beaute: 'from-pink-500/20 to-pink-600/10 border-pink-500/30',
   informatique: 'from-primary-blue-500/20 to-primary-blue-600/10 border-primary-blue-500/30',
   education: 'from-indigo-500/20 to-indigo-600/10 border-indigo-500/30',
@@ -72,7 +72,7 @@ const SERVICE_COLORS: Record<string, string> = {
   sante: 'from-red-500/20 to-red-600/10 border-red-500/30',
   reparation: 'from-slate-500/20 to-slate-600/10 border-slate-500/30',
   menage: 'from-violet-500/20 to-violet-600/10 border-violet-500/30',
-  ecommerce: 'bg-primary-blue-500/20 border-primary-orange-500/30',
+  ecommerce: 'from-primary-blue-500/20 to-primary-orange-600/10 border-primary-orange-500/30',
   securite: 'from-sky-500/20 to-sky-600/10 border-sky-500/30',
 };
 

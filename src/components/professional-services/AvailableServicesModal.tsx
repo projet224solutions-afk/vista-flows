@@ -82,7 +82,7 @@ const getCategoryGradient = (category: string | null) => {
   const gradients: Record<string, string> = {
     'commerce': 'from-primary to-secondary',
     'food': 'from-accent to-destructive',
-    'services': 'bg-primary-blue-600',
+    'services': 'from-primary-blue-500 to-primary-orange-500',
     'transport': 'from-violet-500 to-purple-500',
     'health': 'from-pink-500 to-rose-500',
     'education': 'from-amber-500 to-yellow-500',

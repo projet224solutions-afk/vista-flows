@@ -58,7 +58,7 @@ const modes = [
     title: 'Affiliation Simple',
     description: 'Structure catÃ©gorisÃ©e avec liens affiliÃ©s',
     icon: <Briefcase className="w-6 h-6" />,
-    gradient: 'bg-primary-blue-600',
+    gradient: 'from-primary-blue-600 to-primary-orange-500',
     features: [
       'CatÃ©gories structurÃ©es',
       'Liens affiliÃ©s directs',

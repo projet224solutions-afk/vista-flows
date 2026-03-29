@@ -84,7 +84,7 @@ export function NumericKeypadPopup({
                 </p>
               </div>
             </div>
-            <div className={`h-2.5 w-2.5 rounded-full ${isQuantityMode ? 'bg-blue-500' : 'bg-primary-blue-600'} animate-pulse shadow-lg`} />
+            <div className={`h-2.5 w-2.5 rounded-full ${isQuantityMode ? 'bg-blue-500' : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500'} animate-pulse shadow-lg`} />
           </div>
         </div>
 
@@ -190,7 +190,7 @@ export function NumericKeypadPopup({
             )}
             <Button
               onClick={() => handleInput('enter')}
-              className={`h-12 font-semibold shadow-lg hover:shadow-xl transition-all ${isQuantityMode ? 'bg-blue-600 hover:bg-blue-500' : 'bg-primary-blue-600 hover:bg-primary-blue-500'} text-white`}
+              className={`h-12 font-semibold shadow-lg hover:shadow-xl transition-all ${isQuantityMode ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400' : 'bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 hover:from-primary-blue-500 hover:to-primary-orange-400'} text-white`}
             >
               <CheckSquare className="h-4 w-4 mr-2" />
               {isQuantityMode ? 'Confirmer quantitÃ©' : 'Valider'}

@@ -155,7 +155,7 @@ interface RiskProduct {
 
 const getStatusColor = (status: string): string => {
   switch (status) {
-    case 'delivered': return 'bg-primary-blue-600';
+    case 'delivered': return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
     case 'shipped_international':
     case 'last_mile_delivery': return 'bg-blue-500';
     case 'customs_clearance': return 'bg-yellow-500';

@@ -94,7 +94,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
 
   const getStatusBadge = (isActive: boolean) => {
     return isActive ? (
-      <Badge className="brand-split hover:opacity-90">
+      <Badge className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 hover:from-primary-orange-600 hover:to-primary-blue-600">
         <CheckCircle className="w-3 h-3 mr-1" />
         Actif
       </Badge>
@@ -332,7 +332,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full">
                         <div 
-                          className="h-full brand-split rounded-full"
+                          className="h-full bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-full"
                           style={{ width: `${(overview.activeAgents / overview.totalAgents) * 100}%` }}
                         />
                       </div>
@@ -539,7 +539,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                               : setting.description || 'Configuration'}
                           </h4>
                           {setting.setting_key === 'base_user_commission' && (
-                            <Badge className="brand-split">Actif</Badge>
+                            <Badge className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mb-3">

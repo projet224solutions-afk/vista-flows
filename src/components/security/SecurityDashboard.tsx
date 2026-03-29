@@ -431,7 +431,7 @@ function RealTimeMonitoring({ isRealTime }: { isRealTime: boolean }) {
                         <span>Flux d'Ã‰vÃ©nements Temps RÃ©el</span>
                         {isRealTime && (
                             <div className="flex items-center space-x-1 ml-auto">
-                                <div className="w-2 h-2 bg-primary-blue-600 rounded-full animate-pulse"></div>
+                                <div className="w-2 h-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse"></div>
                                 <span className="text-sm text-primary-orange-600">Live</span>
                             </div>
                         )}
@@ -742,7 +742,7 @@ function ActiveProtection() {
                         {Object.entries(protectionStatus).map(([service, isActive]) => (
                             <div key={service} className="flex items-center justify-between p-4 border rounded-lg">
                                 <div className="flex items-center space-x-3">
-                                    <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-primary-blue-600' : 'bg-red-500'}`}></div>
+                                    <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-red-500'}`}></div>
                                     <div>
                                         <p className="font-medium capitalize">{service.replace(/([A-Z])/g, ' $1')}</p>
                                         <p className="text-sm text-gray-600">

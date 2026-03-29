@@ -181,7 +181,7 @@ export default function WorkerDashboard() {
           <div className="grid grid-cols-2 gap-4">
             {Object.entries(worker.permissions as any).map(([key, value]) => (
               <div key={key} className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${value ? 'bg-primary-blue-600' : 'bg-gray-300'}`} />
+                <div className={`w-2 h-2 rounded-full ${value ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-gray-300'}`} />
                 <span className="text-sm">
                   {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>

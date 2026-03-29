@@ -166,15 +166,15 @@ const BureauChangePassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-primary-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-blue-50 via-white to-primary-orange-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="bg-primary-blue-500 p-4 rounded-2xl shadow-xl">
+            <div className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-700 p-4 rounded-2xl shadow-xl">
               <Shield className="h-12 w-12 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-primary-blue-700">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-blue-600 to-primary-orange-800 bg-clip-text text-transparent">
             Modifier votre mot de passe
           </h1>
           <p className="text-gray-600 mt-2">Bureau Syndicat - {bureauData.president_name || bureauData.bureau_code}</p>
@@ -191,7 +191,7 @@ const BureauChangePassword = () => {
           </CardHeader>
 
           <CardContent>
-            <Alert className="mb-6 border-primary-orange-200 bg-primary-blue-50">
+            <Alert className="mb-6 border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
               <AlertCircle className="h-4 w-4 text-primary-orange-600" />
               <AlertDescription className="text-primary-orange-800">
                 <strong>Exigences du mot de passe :</strong>

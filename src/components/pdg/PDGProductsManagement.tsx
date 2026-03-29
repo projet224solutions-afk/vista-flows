@@ -302,7 +302,7 @@ export default function PDGProductsManagement() {
                       </Badge>
                     )}
                     {product.is_active ? (
-                      <Badge className="bg-primary-blue-600">Actif</Badge>
+                      <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                     ) : (
                       <Badge className="bg-red-500">Inactif</Badge>
                     )}
@@ -377,13 +377,13 @@ export default function PDGProductsManagement() {
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Statut Boutique</Label>
-                  <Badge className={viewProduct.vendor_is_active ? "bg-primary-blue-600" : "bg-red-500"}>
+                  <Badge className={viewProduct.vendor_is_active ? "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" : "bg-red-500"}>
                     {viewProduct.vendor_is_active ? "Active" : "SupprimÃ©e"}
                   </Badge>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Statut</Label>
-                  <Badge className={viewProduct.is_active ? "bg-primary-blue-600" : "bg-red-500"}>
+                  <Badge className={viewProduct.is_active ? "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" : "bg-red-500"}>
                     {viewProduct.is_active ? "Actif" : "Inactif"}
                   </Badge>
                 </div>

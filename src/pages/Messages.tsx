@@ -1158,7 +1158,7 @@ export default function Messages() {
                     <div className="flex items-center gap-1.5">
                       <span className={cn(
                         "w-2 h-2 rounded-full",
-                        otherUserPresence === 'online' && "bg-primary-blue-600 animate-pulse",
+                        otherUserPresence === 'online' && "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse",
                         otherUserPresence === 'away' && "bg-yellow-500",
                         otherUserPresence === 'busy' && "bg-red-500",
                         otherUserPresence === 'in_call' && "bg-purple-500 animate-pulse",

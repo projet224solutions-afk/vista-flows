@@ -78,7 +78,7 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
                 <div
                   className={cn(
                     "absolute left-5 top-11 w-0.5 h-full -ml-px transition-all duration-500",
-                    status === 'completed' ? "bg-primary-blue-500" :
+                    status === 'completed' ? "bg-gradient-to-b from-primary-blue-500 to-primary-orange-400" :
                     status === 'current' ? "bg-gradient-to-b from-orange-500 to-gray-200" :
                     status === 'cancelled' ? "bg-red-200" :
                     "bg-gray-200"

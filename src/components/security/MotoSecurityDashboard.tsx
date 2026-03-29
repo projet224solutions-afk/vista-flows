@@ -152,7 +152,7 @@ export default function MotoSecurityDashboard({
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-purple-600">Motos uniques</p>
-                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalees}</p>
+                                    <p className="text-2xl font-bold text-purple-800">{stats.motos_uniques_signalÃ©es}</p>
                                 </div>
                                 <Activity className="w-8 h-8 text-purple-600" />
                             </div>
@@ -196,7 +196,7 @@ export default function MotoSecurityDashboard({
                                             </p>
                                         </div>
                                     ) : (
-                                        <div className="bg-primary-blue-50 border border-primary-orange-200 rounded-lg p-4">
+                                        <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg p-4">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <CheckCircle className="w-5 h-5 text-primary-orange-600" />
                                                 <span className="font-medium text-primary-orange-800">

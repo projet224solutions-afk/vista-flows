@@ -100,7 +100,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
   const driverEarning = Math.round(offer.estimatedEarnings * 0.985);
 
   return (
-    <Card className="border-2 border-orange-500 shadow-lg bg-gradient-to-br from-orange-50 to-primary-orange-50 dark:from-orange-950/20 ">
+    <Card className="border-2 border-orange-500 shadow-lg bg-gradient-to-br from-orange-50 to-primary-orange-50 dark:from-orange-950/20 dark:to-primary-orange-950/20">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -165,7 +165,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
         </div>
 
         {/* DÃ©tail du prix - Configuration vendeur */}
-        <div className="p-3 bg-primary-blue-50 dark:bg-primary-blue-950/30 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
+        <div className="p-3 bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/30 dark:to-primary-orange-950/30 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
           <div className="flex items-center gap-2 mb-2">
             <Calculator className="h-4 w-4 text-primary-orange-600" />
             <span className="text-sm font-medium text-primary-orange-800 dark:text-primary-orange-300">
@@ -199,7 +199,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
         </div>
 
         {/* Vos gains */}
-        <div className="flex items-center justify-between p-3 brand-split rounded-lg text-white">
+        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-lg text-white">
           <div className="flex items-center gap-2">
             <DollarSign className="h-6 w-6" />
             <div>

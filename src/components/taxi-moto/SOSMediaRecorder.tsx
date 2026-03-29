@@ -359,7 +359,7 @@ export function SOSMediaRecorder({
         {/* Ã‰tat stopped - Preview et envoi */}
         {recordingState === 'stopped' && (
           <div className="space-y-4">
-            <div className="bg-primary-blue-50 border border-primary-orange-200 rounded-lg p-3">
+            <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg p-3">
               <p className="text-sm text-primary-orange-800 font-medium flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-primary-orange-600" />
                 Enregistrement terminÃ© ! VÃ©rifiez avant d'envoyer.
@@ -430,7 +430,7 @@ export function SOSMediaRecorder({
               </Button>
               <Button
                 onClick={sendRecording}
-                className="flex-1 bg-primary-blue-600 hover:bg-primary-blue-700 text-white font-bold shadow-lg hover:shadow-xl transition-all"
+                className="flex-1 bg-gradient-to-r from-primary-blue-600 to-primary-orange-700 hover:from-primary-blue-700 hover:to-primary-orange-800 text-white font-bold shadow-lg hover:shadow-xl transition-all"
               >
                 <Send className="w-4 h-4 mr-2" />
                 Envoyer au Bureau
@@ -463,7 +463,7 @@ export function SOSMediaRecorder({
           <div className="flex flex-col items-center justify-center py-10 space-y-4">
             <div className="relative">
               <CheckCircle className="w-16 h-16 text-primary-orange-600" />
-              <div className="absolute inset-0 bg-primary-blue-600/20 rounded-full animate-ping" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 rounded-full animate-ping" />
             </div>
             <div className="text-center space-y-2">
               <p className="text-xl font-bold text-primary-orange-800">EnvoyÃ© avec succÃ¨s!</p>

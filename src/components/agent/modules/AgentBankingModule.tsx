@@ -137,7 +137,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'confirmed': return <Badge className="bg-primary-blue-600">ConfirmÃ©</Badge>;
+      case 'confirmed': return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">ConfirmÃ©</Badge>;
       case 'pending': return <Badge className="bg-yellow-500">En attente</Badge>;
       case 'quarantined': return <Badge className="bg-orange-500">Quarantaine</Badge>;
       case 'rejected': return <Badge variant="destructive">RejetÃ©</Badge>;
@@ -308,7 +308,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
                           </div>
                           <div className="flex items-center gap-2">
                             {alert.is_resolved ? (
-                              <Badge className="bg-primary-blue-600">RÃ©solu</Badge>
+                              <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">RÃ©solu</Badge>
                             ) : (
                               <Badge variant="outline">Non rÃ©solu</Badge>
                             )}

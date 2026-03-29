@@ -103,7 +103,7 @@ export function EscrowDashboard() {
     const styles = {
       pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
       held: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-      released: "brand-split bg-opacity-10 text-primary-orange-600 border-primary-orange-500/20",
+      released: "bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 bg-opacity-10 text-primary-orange-600 border-primary-orange-500/20",
       refunded: "bg-red-500/10 text-red-600 border-red-500/20",
     };
 
@@ -206,7 +206,7 @@ export function EscrowDashboard() {
                           setSelectedTransaction(transaction);
                           setActionType("release");
                         }}
-                        className="brand-split hover:opacity-90"
+                        className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-orange-600 hover:to-primary-blue-600"
                       >
                         <Unlock className="w-4 h-4 mr-2" />
                         LibÃ©rer

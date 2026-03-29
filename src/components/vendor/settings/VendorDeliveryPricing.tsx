@@ -241,19 +241,19 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-4 gap-3">
-              <div className="text-center p-3 bg-primary-blue-50 dark:bg-primary-orange-950/20 rounded-lg">
+              <div className="text-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">2 km</p>
                 <p className="font-bold text-primary-orange-600">{formatCurrency(calculateExample(2))}</p>
               </div>
-              <div className="text-center p-3 bg-primary-blue-50 dark:bg-primary-orange-950/20 rounded-lg">
+              <div className="text-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">5 km</p>
                 <p className="font-bold text-primary-orange-600">{formatCurrency(calculateExample(5))}</p>
               </div>
-              <div className="text-center p-3 bg-primary-blue-50 dark:bg-primary-orange-950/20 rounded-lg">
+              <div className="text-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">10 km</p>
                 <p className="font-bold text-primary-orange-600">{formatCurrency(calculateExample(10))}</p>
               </div>
-              <div className="text-center p-3 bg-primary-blue-50 dark:bg-primary-orange-950/20 rounded-lg">
+              <div className="text-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">20 km</p>
                 <p className="font-bold text-primary-orange-600">{formatCurrency(calculateExample(20))}</p>
               </div>

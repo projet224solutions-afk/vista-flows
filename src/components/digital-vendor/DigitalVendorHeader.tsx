@@ -27,7 +27,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
   const navigate = useNavigate();
 
   return (
-    <header className="min-h-14 md:min-h-16 bg-white/95 dark:bg-background/95 backdrop-blur-lg border-b border-vendeur-primary/20 sticky top-0 z-40 shadow-sm px-2 sm:px-3 md:px-6 w-full animate-fade-in">
+    <header className="min-h-14 md:min-h-16 bg-white/95 dark:bg-background/95 backdrop-blur-lg border-b border-vendeur-primary/20 sticky top-0 z-40 shadow-sm px-2 sm:px-3 md:px-6 w-full">
       <div className="flex flex-col sm:flex-row sm:items-center w-full min-w-0 gap-2 py-2 md:py-0">
         {/* Brand */}
         <div className="flex items-center gap-2 min-w-0">
@@ -45,20 +45,20 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
         <div className="flex items-center justify-between w-full min-w-0 gap-2">
           <div className="flex items-center gap-1 min-w-0 flex-1">
             <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1 min-w-0">
-              <span className="w-1.5 h-1.5 bg-primary-blue-600 rounded-full animate-pulse flex-shrink-0" />
+              <span className="w-1.5 h-1.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse flex-shrink-0" />
               <span className="truncate max-w-[120px] sm:max-w-[200px]">{displayName}</span>
             </p>
           </div>
 
           <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             <Suspense fallback={null}>
-              <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-8 w-8 md:h-10 md:w-10 transition-transform duration-200 hover:-translate-y-0.5" />
+              <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-8 w-8 md:h-10 md:w-10" />
             </Suspense>
 
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 md:h-10 md:w-10 hover:bg-primary-blue-50 hover:text-primary-blue-700 transition-all duration-200 hover:-translate-y-0.5"
+              className="h-8 w-8 md:h-10 md:w-10"
               onClick={() => navigate('/vendeur-digital/settings')}
               aria-label="ParamÃ¨tres"
             >
@@ -69,7 +69,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
               variant="ghost"
               size="icon"
               onClick={onSignOut}
-              className="h-8 w-8 md:h-10 md:w-10 hover:bg-primary-orange-50 hover:text-primary-orange-700 transition-all duration-200 hover:-translate-y-0.5"
+              className="h-8 w-8 md:h-10 md:w-10"
               aria-label="Se dÃ©connecter"
             >
               <LogOut className="w-4 h-4 md:w-5 md:h-5" />

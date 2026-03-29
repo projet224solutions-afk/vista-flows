@@ -143,7 +143,7 @@ export function MLFraudDetection() {
         <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center justify-between mb-2">
             <span className="font-semibold text-sm">ModÃ¨le ML actif</span>
-            <Badge className="bg-primary-blue-600">PrÃ©dictif activÃ©</Badge>
+            <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">PrÃ©dictif activÃ©</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
             Version {metrics.modelVersion} â€¢ Analyse comportementale en temps rÃ©el â€¢ {metrics.transactionsAnalyzed.toLocaleString()} transactions analysÃ©es

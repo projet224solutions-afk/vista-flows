@@ -34,7 +34,7 @@ export default function PDGSystemMaintenance() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'operational':
-        return <Badge className="bg-primary-blue-600">OpÃ©rationnel</Badge>;
+        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">OpÃ©rationnel</Badge>;
       case 'degraded':
         return <Badge className="bg-yellow-500">DÃ©gradÃ©</Badge>;
       case 'down':
@@ -275,7 +275,7 @@ export default function PDGSystemMaintenance() {
                       <p className="text-xs text-muted-foreground">{log.timestamp}</p>
                     </div>
                   </div>
-                  <Badge className="bg-primary-blue-600">SuccÃ¨s</Badge>
+                  <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">SuccÃ¨s</Badge>
                 </div>
               ))}
             </div>

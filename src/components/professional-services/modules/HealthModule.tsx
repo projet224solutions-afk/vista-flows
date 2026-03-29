@@ -82,7 +82,7 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
         <PharmacyHeader businessName={businessName} onRefresh={refresh} />
 
         <Card className="overflow-hidden">
-          <div className="bg-gradient-to-r bg-primary-blue-600 p-6 md:p-8">
+          <div className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-600 p-6 md:p-8">
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
                 <Pill className="w-7 h-7 text-white" />

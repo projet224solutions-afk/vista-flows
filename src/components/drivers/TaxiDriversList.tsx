@@ -72,7 +72,7 @@ const TaxiDriverCard = memo(function TaxiDriverCard({ driver, onBook }: TaxiDriv
               )}
             </div>
             <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-              isAvailable ? 'bg-primary-blue-600' : 'bg-yellow-500'
+              isAvailable ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-yellow-500'
             }`} />
           </div>
 

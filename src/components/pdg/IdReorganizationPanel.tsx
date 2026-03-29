@@ -286,7 +286,7 @@ export function IdReorganizationPanel() {
                           {result.oldId}
                         </Badge>
                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                        <Badge className="font-mono bg-primary-blue-600">
+                        <Badge className="font-mono bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
                           {result.newId}
                         </Badge>
                       </div>

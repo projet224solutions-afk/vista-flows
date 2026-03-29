@@ -189,7 +189,7 @@ export default function PDGBureauMonitoring() {
           </CardContent>
         </Card>
         
-        <Card className="bg-primary-blue-500/10 border-primary-orange-500/20">
+        <Card className="bg-gradient-to-br from-primary-blue-500/10 to-primary-orange-600/5 border-primary-orange-500/20">
           <CardContent className="p-4 text-center">
             <Users className="w-6 h-6 mx-auto mb-2 text-primary-orange-500" />
             <div className="text-2xl font-bold text-primary-orange-600">{globalStats.totalDrivers}</div>
@@ -197,7 +197,7 @@ export default function PDGBureauMonitoring() {
           </CardContent>
         </Card>
         
-        <Card className="bg-primary-blue-500/10 border-primary-orange-500/20">
+        <Card className="bg-gradient-to-br from-primary-blue-500/10 to-primary-orange-600/5 border-primary-orange-500/20">
           <CardContent className="p-4 text-center">
             <Activity className="w-6 h-6 mx-auto mb-2 text-primary-blue-500" />
             <div className="text-2xl font-bold text-primary-blue-600">{globalStats.onlineDrivers}</div>
@@ -233,7 +233,7 @@ export default function PDGBureauMonitoring() {
       </div>
 
       {/* Revenus du jour */}
-      <Card className="bg-primary-blue-500/10 border-primary-orange-500/20">
+      <Card className="bg-gradient-to-r from-primary-blue-500/5 to-primary-orange-500/10 border-primary-orange-500/20">
         <CardContent className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <DollarSign className="w-8 h-8 text-primary-blue-500" />
@@ -304,7 +304,7 @@ export default function PDGBureauMonitoring() {
                             <div className="text-lg font-bold">{stats.total_drivers}</div>
                             <div className="text-xs text-muted-foreground">Chauffeurs</div>
                           </div>
-                          <div className="p-2 bg-primary-blue-600/10 rounded">
+                          <div className="p-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 rounded">
                             <div className="text-lg font-bold text-primary-orange-600">{stats.online_drivers}</div>
                             <div className="text-xs text-muted-foreground">En ligne</div>
                           </div>

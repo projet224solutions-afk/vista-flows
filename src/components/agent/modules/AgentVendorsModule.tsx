@@ -149,10 +149,10 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
     <div className="space-y-6">
       {/* Header */}
       <Card className="border-0 shadow-lg">
-        <CardHeader className="bg-primary-blue-50 border-b">
+        <CardHeader className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-gradient-to-br bg-primary-blue-600 shadow-lg">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 shadow-lg">
                 <Store className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -174,7 +174,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
               <p className="text-2xl font-bold text-slate-700">{stats.total}</p>
               <p className="text-xs text-slate-500">Total</p>
             </div>
-            <div className="bg-gradient-to-br bg-primary-blue-100 rounded-xl p-4 text-center">
+            <div className="bg-gradient-to-br from-primary-blue-100 to-primary-orange-200 rounded-xl p-4 text-center">
               <CheckCircle className="w-6 h-6 text-primary-orange-600 mx-auto mb-2" />
               <p className="text-2xl font-bold text-primary-orange-700">{stats.active}</p>
               <p className="text-xs text-primary-orange-500">Actifs</p>

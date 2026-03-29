@@ -27,7 +27,7 @@ interface MotoSecurityStats {
     alertes_en_cours: number;
     alertes_resolues: number;
     faux_positifs: number;
-    motos_uniques_signalees: number;
+    motos_uniques_signalées: number;
     temps_moyen_resolution_heures: number;
 }
 

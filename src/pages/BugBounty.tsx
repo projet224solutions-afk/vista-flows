@@ -106,7 +106,7 @@ const BugBounty = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-primary-blue-500/10 border-primary-orange-500/20">
+          <Card className="bg-gradient-to-br from-primary-blue-500/10 to-primary-orange-600/10 border-primary-orange-500/20">
             <CardHeader className="pb-3">
               <Award className="w-8 h-8 text-primary-orange-600 mb-2" />
               <CardTitle className="text-lg">Basse</CardTitle>

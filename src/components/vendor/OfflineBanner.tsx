@@ -139,7 +139,7 @@ export default function OfflineBanner({
             position === 'bottom' ? 'bottom-0' : 'top-0'
           )}
         >
-          <div className="brand-split text-white px-4 py-3 shadow-lg">
+          <div className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 text-white px-4 py-3 shadow-lg">
             <div className="max-w-screen-xl mx-auto flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">

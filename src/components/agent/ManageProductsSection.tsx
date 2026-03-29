@@ -384,7 +384,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
                   </div>
                   <div className="flex items-center gap-2">
                     {product.is_active ? (
-                      <Badge className="bg-primary-blue-600">Actif</Badge>
+                      <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                     ) : (
                       <Badge className="bg-red-500">Inactif</Badge>
                     )}
@@ -463,7 +463,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Statut</Label>
-                  <Badge className={viewProduct.is_active ? "bg-primary-blue-600" : "bg-red-500"}>
+                  <Badge className={viewProduct.is_active ? "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" : "bg-red-500"}>
                     {viewProduct.is_active ? "Actif" : "Inactif"}
                   </Badge>
                 </div>

@@ -63,9 +63,9 @@ const CATEGORIES = [
 ];
 
 const LEVEL_COLORS: Record<string, string> = {
-  debutant: 'bg-primary-orange-100 text-primary-orange-800',
-  intermediaire: 'bg-yellow-100 text-yellow-800',
-  avance: 'bg-red-100 text-red-800',
+  dÃ©butant: 'bg-primary-orange-100 text-primary-orange-800',
+  intermÃ©diaire: 'bg-yellow-100 text-yellow-800',
+  avancÃ©: 'bg-red-100 text-red-800',
 };
 
 const STATUS_COLORS: Record<string, { label: string; color: string }> = {
@@ -175,7 +175,7 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
             <p className="text-xs opacity-80">Cours actifs</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br bg-primary-blue-600 text-white">
+        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
           <CardContent className="p-4">
             <Users className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{activeStudents}</p>
@@ -196,7 +196,7 @@ export function EducationModule({ serviceId, businessName }: EducationModuleProp
             <p className="text-xs opacity-80">Note moyenne</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br bg-primary-orange-600 text-white">
+        <Card className="bg-gradient-to-br from-primary-orange-500 to-primary-blue-600 text-white">
           <CardContent className="p-4">
             <Award className="h-4 w-4 opacity-80" />
             <p className="text-2xl font-bold mt-1">{students.filter(s => s.status === 'diplome').length}</p>

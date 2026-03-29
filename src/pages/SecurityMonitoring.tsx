@@ -75,7 +75,7 @@ export default function SecurityMonitoring() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy':
-        return 'bg-primary-blue-600';
+        return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
       case 'degraded':
         return 'bg-yellow-500';
       case 'critical':
@@ -402,19 +402,19 @@ export default function SecurityMonitoring() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Monitoring Service</span>
-                    <Badge className="bg-primary-blue-600">Actif</Badge>
+                    <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Health Check Service</span>
-                    <Badge className="bg-primary-blue-600">Actif</Badge>
+                    <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Content Security Policy</span>
-                    <Badge className="bg-primary-blue-600">Actif</Badge>
+                    <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Secure Logger</span>
-                    <Badge className="bg-primary-blue-600">Actif</Badge>
+                    <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>
                   </div>
                 </div>
               </div>

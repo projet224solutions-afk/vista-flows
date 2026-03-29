@@ -360,7 +360,7 @@ export default function BadgeVerification() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-primary-blue-50 rounded-lg p-3">
+              <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-3">
                 <div className="text-xs text-primary-orange-600 font-medium mb-1">Ã‰mis le</div>
                 <div className="font-semibold text-slate-900">{formatDate(generatedDate)}</div>
               </div>

@@ -125,7 +125,7 @@ export default function ReportStolenMoto({
 
     if (success) {
         return (
-            <Card className={`border-primary-orange-200 bg-primary-blue-50 ${className}`}>
+            <Card className={`border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 ${className}`}>
                 <CardContent className="p-6 text-center">
                     <CheckCircle className="w-16 h-16 text-primary-orange-600 mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-primary-orange-800 mb-2">

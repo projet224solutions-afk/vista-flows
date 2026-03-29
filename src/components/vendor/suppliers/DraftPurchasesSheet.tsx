@@ -77,7 +77,7 @@ const STATUS_CONFIG = {
   validated: {
     label: 'ValidÃ©',
     icon: Clock,
-    color: 'bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/30',
+    color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/30',
   },
 };
 

@@ -146,7 +146,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
           {/* ItinÃ©raire */}
           <div className="space-y-3">
             {isGoingToPickup && (
-              <div className="bg-primary-blue-50 rounded-lg p-3 border border-primary-orange-200">
+              <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-3 border border-primary-orange-200">
                 <div className="flex items-start gap-2">
                   <MapPin className="w-5 h-5 text-primary-orange-600 mt-0.5" />
                   <div className="flex-1">

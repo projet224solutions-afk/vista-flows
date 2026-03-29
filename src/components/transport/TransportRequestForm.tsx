@@ -141,7 +141,7 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
       </div>
 
       {/* Statut des transporteurs */}
-      <div className="mb-6 p-4 bg-primary-blue-50 rounded-lg border border-primary-orange-200">
+      <div className="mb-6 p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-primary-orange-600" />
           <span className="text-sm font-medium text-primary-orange-800">

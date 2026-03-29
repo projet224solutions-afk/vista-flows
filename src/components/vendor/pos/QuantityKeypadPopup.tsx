@@ -83,7 +83,7 @@ export function QuantityKeypadPopup({
                 <p className="text-xs text-muted-foreground">Saisir le nombre d'articles</p>
               </div>
             </div>
-            <div className="h-2.5 w-2.5 rounded-full bg-primary-blue-600 animate-pulse shadow-lg shadow-primary-orange-500/50" />
+            <div className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse shadow-lg shadow-primary-orange-500/50" />
           </div>
         </div>
 
@@ -180,7 +180,7 @@ export function QuantityKeypadPopup({
             <Button
               onClick={() => handleInput('enter')}
               disabled={!isValidQuantity}
-              className="h-12 font-semibold bg-primary-blue-600 hover:bg-primary-blue-500 text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              className="h-12 font-semibold bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 hover:from-primary-blue-500 hover:to-primary-orange-400 text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
             >
               <CheckSquare className="h-4 w-4 mr-2" />
               Ajouter

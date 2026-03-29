@@ -176,7 +176,7 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
               <p className="text-2xl font-bold text-slate-700">{stats.total}</p>
               <p className="text-xs text-slate-500">Total</p>
             </div>
-            <div className="bg-gradient-to-br bg-primary-blue-100 rounded-xl p-4 text-center">
+            <div className="bg-gradient-to-br from-primary-blue-100 to-primary-orange-200 rounded-xl p-4 text-center">
               <UserCheck className="w-6 h-6 text-primary-orange-600 mx-auto mb-2" />
               <p className="text-2xl font-bold text-primary-orange-700">{stats.active}</p>
               <p className="text-xs text-primary-orange-500">Actifs</p>

@@ -251,7 +251,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
 
           {/* Prix estimÃ© */}
           {estimatedPrice && (
-            <div className="p-4 bg-primary-blue-50 rounded-lg border border-primary-orange-200">
+            <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
               <p className="text-sm text-primary-orange-800 font-medium">
                 Prix estimÃ©: <span className="text-xl">{estimatedPrice.toLocaleString()} GNF</span>
               </p>

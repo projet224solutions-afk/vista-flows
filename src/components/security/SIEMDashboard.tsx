@@ -219,7 +219,7 @@ export function SIEMDashboard() {
           ))}
         </div>
 
-        <div className="p-4 bg-primary-blue-50 dark:bg-primary-orange-950 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
+        <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
           <div className="flex items-center gap-2 mb-2">
             <Activity className="w-4 h-4 text-primary-orange-600" />
             <span className="font-semibold text-sm">SystÃ¨me SIEM opÃ©rationnel</span>

@@ -252,7 +252,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                       <p className="text-lg font-bold">{summary.total}</p>
                       <p className="text-[10px] text-muted-foreground">Total</p>
                     </div>
-                    <div className="text-center p-2 bg-primary-blue-50 dark:bg-primary-blue-950/20 rounded-lg">
+                    <div className="text-center p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950/20 rounded-lg">
                       <p className="text-lg font-bold text-primary-orange-600">{summary.completed}</p>
                       <p className="text-[10px] text-muted-foreground">Livrées</p>
                     </div>
@@ -418,7 +418,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
               <div className="space-y-4">
                 {summary && (
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="text-center p-3 bg-primary-blue-50 dark:bg-primary-blue-950/20 rounded-lg">
+                    <div className="text-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950/20 rounded-lg">
                       <p className="text-xs text-muted-foreground mb-1">Total dépensé</p>
                       <p className="text-lg font-bold text-primary-orange-600">{formatPrice(summary.total)}</p>
                     </div>

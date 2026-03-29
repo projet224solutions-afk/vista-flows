@@ -458,7 +458,7 @@ export default function TaxiMotoPayment({
                         )}
 
                         {/* SÃ©curitÃ© */}
-                        <div className="flex items-center gap-2 p-3 bg-primary-blue-50 rounded-lg">
+                        <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
                             <Shield className="w-4 h-4 text-primary-orange-600" />
                             <p className="text-xs text-primary-orange-800">
                                 Paiement sÃ©curisÃ© par 224Solutions. Vos donnÃ©es sont protÃ©gÃ©es.
@@ -532,7 +532,7 @@ export default function TaxiMotoPayment({
                     <p className="text-gray-600 mb-4">
                         Votre paiement de {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF a Ã©tÃ© traitÃ© avec succÃ¨s.
                     </p>
-                    <div className="bg-primary-blue-50 p-4 rounded-lg mb-4">
+                    <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 p-4 rounded-lg mb-4">
                         <p className="text-sm text-primary-orange-800">
                             RÃ©fÃ©rence: {generatePaymentReference()}
                         </p>

@@ -227,7 +227,7 @@ export default function GoogleCloudMonitoring() {
       case 'loading':
         return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">Test en cours</Badge>;
       case 'success':
-        return <Badge variant="outline" className="bg-primary-blue-600/10 text-primary-orange-600 border-primary-orange-500/20">OpÃ©rationnel</Badge>;
+        return <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">OpÃ©rationnel</Badge>;
       case 'error':
         return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20">Erreur</Badge>;
       default:

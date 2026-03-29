@@ -286,7 +286,7 @@ export default function VendorSubscriptionPage() {
                 </CardDescription>
               </div>
               {hasAccess && !isExpired ? (
-                <Badge variant="outline" className="bg-primary-blue-50 text-primary-orange-700 border-primary-orange-200">
+                <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200">
                   <CheckCircle2 className="h-3 w-3 mr-1" /> Actif
                 </Badge>
               ) : isExpired ? (
@@ -564,7 +564,7 @@ export default function VendorSubscriptionPage() {
                   }`}
                 >
                   {selectedPlan && (
-                    <div className="absolute -top-2 -right-2 bg-primary-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                    <div className="absolute -top-2 -right-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                       -{getYearlySavingsPercent(selectedPlan)}%
                     </div>
                   )}

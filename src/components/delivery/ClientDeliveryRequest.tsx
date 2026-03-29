@@ -522,7 +522,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
       {/* Ã‰tape 3: Confirmation */}
       {step === 'confirm' && vendorInfo && priceEstimate && (
         <div className="space-y-4">
-          <Card className="border-2 border-primary-orange-500 bg-primary-blue-50 dark:bg-primary-blue-950/20">
+          <Card className="border-2 border-primary-orange-500 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/20 dark:to-primary-orange-950/20">
             <CardHeader>
               <CardTitle className="text-center">RÃ©capitulatif de la commande</CardTitle>
             </CardHeader>
@@ -565,7 +565,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
               </div>
 
               {/* Prix total */}
-              <div className="p-4 brand-split rounded-lg text-white text-center">
+              <div className="p-4 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-lg text-white text-center">
                 <p className="text-sm opacity-90">Prix total</p>
                 <p className="text-3xl font-bold">{formatCurrency(priceEstimate.estimatedPrice)}</p>
               </div>

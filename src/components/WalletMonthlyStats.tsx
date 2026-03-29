@@ -111,7 +111,7 @@ export default function WalletMonthlyStats() {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Revenus */}
-          <div className="bg-primary-blue-50 dark:bg-primary-blue-950 rounded-lg p-4 border border-primary-orange-200">
+          <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950 rounded-lg p-4 border border-primary-orange-200">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-4 w-4 text-primary-orange-600" />
               <span className="text-sm font-medium text-primary-orange-700 dark:text-primary-orange-400">Reçu</span>
@@ -147,7 +147,7 @@ export default function WalletMonthlyStats() {
         {/* Bilan du mois */}
         <div className={`mt-4 rounded-lg p-4 border ${
           stats.netChange >= 0 
-            ? 'bg-primary-blue-50 dark:bg-primary-blue-950 border-primary-orange-200' 
+            ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950 border-primary-orange-200' 
             : 'bg-red-50 dark:bg-red-950 border-red-200'
         }`}>
           <div className="flex items-center justify-between">

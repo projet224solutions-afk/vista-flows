@@ -37,7 +37,7 @@ const getQuickActions = (t: (key: string) => string): QuickAction[] => [
     id: 'livraison', 
     icon: <Truck className="w-5 h-5" />, 
     label: t('home.delivery'),
-    gradient: 'bg-primary-blue-600'
+    gradient: 'from-primary-blue-500 to-primary-orange-500'
   },
   { 
     id: 'transport', 

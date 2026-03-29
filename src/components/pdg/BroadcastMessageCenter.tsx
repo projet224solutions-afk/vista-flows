@@ -93,7 +93,7 @@ interface DashboardData {
 const SEGMENTS = [
   { value: 'all', label: 'Tous les utilisateurs', icon: Users, color: 'bg-blue-500' },
   { value: 'agents', label: 'Agents uniquement', icon: Target, color: 'bg-purple-500' },
-  { value: 'vendors', label: 'Vendeurs uniquement', icon: Megaphone, color: 'bg-primary-blue-600' },
+  { value: 'vendors', label: 'Vendeurs uniquement', icon: Megaphone, color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' },
   { value: 'clients', label: 'Clients uniquement', icon: Users, color: 'bg-orange-500' },
   { value: 'drivers', label: 'Livreurs/Chauffeurs', icon: Zap, color: 'bg-primary-blue-500' },
 ];

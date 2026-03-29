@@ -25,7 +25,7 @@ const statusConfig: Record<ServiceStatus, { color: string; bgColor: string; icon
 };
 
 const providerConfig: Record<CloudProvider, { label: string; icon: typeof Cloud; color: string; bgGradient: string; description: string }> = {
-  supabase: { label: 'Supabase', icon: Database, color: 'text-primary-blue-600', bgGradient: 'bg-primary-blue-500/10', description: 'DB, Auth, Realtime, Edge Functions, Storage' },
+  supabase: { label: 'Supabase', icon: Database, color: 'text-primary-blue-600', bgGradient: 'from-primary-blue-500/5 to-primary-orange-500/10', description: 'DB, Auth, Realtime, Edge Functions, Storage' },
   aws: { label: 'AWS', icon: Server, color: 'text-orange-500', bgGradient: 'from-orange-500/5 to-orange-500/10', description: 'Lambda Backend, Cognito Auth' },
   google_cloud: { label: 'Google Cloud', icon: Cloud, color: 'text-blue-500', bgGradient: 'from-blue-500/5 to-blue-500/10', description: 'Cloud Storage, Cloud Functions' },
   firebase: { label: 'Firebase', icon: Bell, color: 'text-yellow-500', bgGradient: 'from-yellow-500/5 to-yellow-500/10', description: 'Cloud Messaging (FCM)' }

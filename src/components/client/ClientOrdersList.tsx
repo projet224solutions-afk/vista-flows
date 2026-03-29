@@ -574,7 +574,7 @@ export default function ClientOrdersList() {
 
                 {/* Protection Escrow */}
                 {escrow && (escrow.status === 'pending' || escrow.status === 'held') && (
-                  <div className="flex items-start gap-2 p-3 bg-primary-blue-50 dark:bg-primary-orange-950 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
+                  <div className="flex items-start gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
                     <Shield className="w-5 h-5 text-primary-orange-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-primary-orange-800 dark:text-primary-orange-200">

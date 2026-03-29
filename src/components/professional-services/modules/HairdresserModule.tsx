@@ -210,11 +210,11 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
 
   const getStatusBadge = (status: Appointment['status']) => {
     const styles = {
-      confirme: 'bg-primary-orange-100 text-primary-orange-800',
+      confirmÃ©: 'bg-primary-orange-100 text-primary-orange-800',
       en_attente: 'bg-yellow-100 text-yellow-800',
       en_cours: 'bg-blue-100 text-blue-800',
-      termine: 'bg-gray-100 text-gray-800',
-      annule: 'bg-red-100 text-red-800'
+      terminÃ©: 'bg-gray-100 text-gray-800',
+      annulÃ©: 'bg-red-100 text-red-800'
     };
     return <Badge className={styles[status]}>{status.replace('_', ' ')}</Badge>;
   };
@@ -346,7 +346,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
             <p className="text-3xl font-bold mt-1">{todayAppointments}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br bg-primary-blue-600 text-white">
+        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <TrendingUp className="h-4 w-4" />

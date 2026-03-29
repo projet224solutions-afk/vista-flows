@@ -173,10 +173,10 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
           </CardContent>
         </Card>
 
-        <Card className="bg-primary-blue-50 dark:bg-primary-blue-950 border-primary-orange-200">
+        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 dark:from-primary-blue-950 dark:to-primary-orange-900 border-primary-orange-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-primary-blue-600/20 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 flex items-center justify-center">
                 <CheckCircle className="w-6 h-6 text-primary-orange-600" />
               </div>
               <div>

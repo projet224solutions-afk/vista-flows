@@ -424,7 +424,7 @@ export function IdAuditManager() {
         )}
 
         {discrepancies.length === 0 && !loading && (
-          <Alert className="border-primary-orange-500/50 bg-primary-blue-600/10">
+          <Alert className="border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10">
             <CheckCircle2 className="h-4 w-4 text-primary-orange-500" />
             <AlertTitle className="text-primary-orange-600">SystÃ¨me synchronisÃ©</AlertTitle>
             <AlertDescription className="text-primary-orange-600/80">

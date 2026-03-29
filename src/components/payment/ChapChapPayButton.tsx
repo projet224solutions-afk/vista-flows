@@ -235,7 +235,7 @@ export function ChapChapPayButton({
   // Affichage succÃ¨s
   if (paymentStatus === 'success') {
     return (
-      <div className="p-6 text-center bg-primary-blue-50 rounded-lg border border-primary-orange-200">
+      <div className="p-6 text-center bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
         <CheckCircle className="h-12 w-12 text-primary-orange-500 mx-auto mb-3" />
         <h3 className="text-lg font-bold text-primary-orange-700 mb-2">Paiement rÃ©ussi !</h3>
         <p className="text-sm text-primary-orange-600">

@@ -30,7 +30,7 @@ export function OfflineStatusBar({
     return (
       <div
         className={cn(
-          'bg-gradient-to-r bg-primary-blue-600 text-white',
+          'bg-gradient-to-r from-primary-blue-500 to-primary-orange-600 text-white',
           'py-2 px-4 rounded-lg shadow-lg',
           'animate-in slide-in-from-top duration-300',
           className

@@ -392,7 +392,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
   const getStatusBg = (status: TestStep['status']) => {
     switch (status) {
       case 'success':
-        return 'bg-primary-blue-600/10 border-primary-orange-500/30';
+        return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/30';
       case 'warning':
         return 'bg-yellow-500/10 border-yellow-500/30';
       case 'error':
@@ -407,7 +407,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
   const getResultStyle = () => {
     if (systemScore >= 80) {
       return {
-        bg: 'bg-primary-blue-900/50',
+        bg: 'from-primary-blue-900/50 to-primary-orange-900/50',
         border: 'border-primary-orange-500/30',
         text: 'text-primary-orange-400',
         textLight: 'text-primary-orange-300',

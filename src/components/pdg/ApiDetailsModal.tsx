@@ -83,7 +83,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
   }));
 
   const statusColor = {
-    active: 'bg-primary-blue-600',
+    active: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
     suspended: 'bg-yellow-500',
     expired: 'bg-red-500',
     error: 'bg-orange-500'

@@ -20,7 +20,7 @@ export default function MotoManagementOffline({ moto, bureauName, bureauLocation
   const getSyncBadge = () => {
     if (moto.synced_from_firestore || moto.synced_from_supabase) {
       return (
-        <Badge variant="outline" className="bg-primary-blue-50 text-primary-orange-700 border-primary-orange-200">
+        <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200">
           <CheckCircle className="w-3 h-3 mr-1" />
           SynchronisÃ©
         </Badge>

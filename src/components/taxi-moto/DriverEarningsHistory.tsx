@@ -138,7 +138,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
                 <span className="text-xs text-gray-600 w-16">{date}</span>
                 <div className="flex-1 bg-gray-100 rounded-full h-8 relative overflow-hidden">
                   <div 
-                    className="bg-gradient-to-r bg-primary-blue-600 h-full rounded-full flex items-center justify-end px-2"
+                    className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-600 h-full rounded-full flex items-center justify-end px-2"
                     style={{ width: `${Math.min((data.earnings / (stats.week.earnings / 7)) * 100, 100)}%` }}
                   >
                     <span className="text-xs font-bold text-white">{data.rides}</span>
@@ -192,7 +192,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
                         </div>
                         <div className="text-xs text-gray-600 space-y-1">
                           <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 bg-primary-blue-600 rounded-full flex-shrink-0"></div>
+                            <div className="w-1.5 h-1.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full flex-shrink-0"></div>
                             <span className="truncate">{ride.pickup_address}</span>
                           </div>
                           <div className="flex items-center gap-1">

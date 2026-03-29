@@ -230,7 +230,7 @@ export const CompareWithCompetitors = () => {
             ))}
           </div>
           
-          <div className="mt-6 p-4 bg-primary-blue-50 dark:bg-primary-orange-900/20 rounded-lg">
+          <div className="mt-6 p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-900/20 rounded-lg">
             <h4 className="font-semibold text-primary-orange-700 dark:text-primary-orange-400 flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
               Avantages 224SOLUTIONS
