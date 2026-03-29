@@ -150,8 +150,8 @@ export default function SubscriptionsPage() {
                   onClick={() => setBillingCycle('monthly')}
                   className={`p-3 rounded-lg border-2 transition-all text-left ${
                     billingCycle === 'monthly'
-                      ? 'border-[#ff4000] bg-primary/5'
-                      : 'border-[#ff4000] hover:border-[#ff4000]'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -166,8 +166,8 @@ export default function SubscriptionsPage() {
                   onClick={() => setBillingCycle('yearly')}
                   className={`p-3 rounded-lg border-2 transition-all text-left relative ${
                     billingCycle === 'yearly'
-                      ? 'border-[#ff4000] bg-primary/5'
-                      : 'border-[#ff4000] hover:border-[#ff4000]'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
                   }`}
                 >
                   <div className="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">

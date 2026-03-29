@@ -17,9 +17,8 @@ import { supabase } from '@/integrations/supabase/client';
 // API Key (publishable PayPal Client ID - from env only)
 const HMAC_API_KEY = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
 
-// Signing secret must never live in frontend code.
-// Keep disabled client-side; signing must be handled server-side only.
-const HMAC_SECRET = "";
+// Signing secret - uses TRANSACTION_SECRET_KEY
+const HMAC_SECRET = import.meta.env.VITE_TRANSACTION_SECRET_KEY || import.meta.env.VITE_HMAC_SECRET || "";
 
 const encoder = new TextEncoder();
 
