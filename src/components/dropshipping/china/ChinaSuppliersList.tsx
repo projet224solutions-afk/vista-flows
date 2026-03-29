@@ -57,8 +57,8 @@ export function ChinaSuppliersList() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 4.5) return 'text-primary-orange-500';
-    if (score >= 4) return 'text-primary-blue-500';
+    if (score >= 4.5) return 'text-green-500';
+    if (score >= 4) return 'text-emerald-500';
     if (score >= 3.5) return 'text-yellow-500';
     if (score >= 3) return 'text-orange-500';
     return 'text-red-500';
@@ -91,7 +91,7 @@ export function ChinaSuppliersList() {
                 <SelectItem value="ALIBABA">Alibaba</SelectItem>
                 <SelectItem value="ALIEXPRESS">AliExpress</SelectItem>
                 <SelectItem value="1688">1688</SelectItem>
-                <SelectItem value="PRIVATE">PrivÃ©</SelectItem>
+                <SelectItem value="PRIVATE">Privé</SelectItem>
               </SelectContent>
             </Select>
 
@@ -124,14 +124,14 @@ export function ChinaSuppliersList() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 bg-primary-orange-100 dark:bg-primary-orange-900 rounded-lg">
-              <CheckCircle2 className="h-5 w-5 text-primary-orange-600" />
+            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">
                 {chinaSuppliers.filter(s => s.is_verified).length}
               </p>
-              <p className="text-xs text-muted-foreground">VÃ©rifiÃ©s</p>
+              <p className="text-xs text-muted-foreground">Vérifiés</p>
             </div>
           </CardContent>
         </Card>
@@ -179,11 +179,11 @@ export function ChinaSuppliersList() {
                     </Badge>
                     <h3 className="font-semibold text-lg">{supplier.name}</h3>
                     {supplier.is_verified && (
-                      <CheckCircle2 className="h-5 w-5 text-primary-orange-500" />
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {supplier.country} â€¢ {supplier.currency}
+                    {supplier.country} • {supplier.currency}
                   </p>
                   {supplier.website_url && (
                     <a 
@@ -200,7 +200,7 @@ export function ChinaSuppliersList() {
                 {/* Score */}
                 <div className="text-center px-4">
                   <div className={`text-3xl font-bold ${getScoreColor(supplier.quality_score || 0)}`}>
-                    {supplier.quality_score?.toFixed(1) || 'â€”'}
+                    {supplier.quality_score?.toFixed(1) || '—'}
                   </div>
                   <div className="flex items-center justify-center gap-1 mt-1">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -214,10 +214,10 @@ export function ChinaSuppliersList() {
                       />
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Score qualitÃ©</p>
+                  <p className="text-xs text-muted-foreground mt-1">Score qualité</p>
                 </div>
 
-                {/* MÃ©triques */}
+                {/* Métriques */}
                 <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
@@ -231,7 +231,7 @@ export function ChinaSuppliersList() {
                   </div>
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    <span>{supplier.delivery_success_rate || 100}% succÃ¨s</span>
+                    <span>{supplier.delivery_success_rate || 100}% succès</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 text-muted-foreground" />
@@ -248,24 +248,24 @@ export function ChinaSuppliersList() {
                 </div>
               </div>
 
-              {/* Badges supplÃ©mentaires */}
+              {/* Badges supplémentaires */}
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
                 {supplier.chinese_language_support && (
-                  <Badge variant="secondary">ðŸ‡¨ðŸ‡³ Support chinois</Badge>
+                  <Badge variant="secondary">🇨🇳 Support chinois</Badge>
                 )}
                 {supplier.on_time_rate >= 95 && (
-                  <Badge variant="secondary" className="text-primary-orange-600">
-                    â° Ponctuel ({supplier.on_time_rate}%)
+                  <Badge variant="secondary" className="text-green-600">
+                    ⏰ Ponctuel ({supplier.on_time_rate}%)
                   </Badge>
                 )}
                 {supplier.total_orders > 100 && (
                   <Badge variant="secondary">
-                    ðŸ“¦ {supplier.total_orders}+ commandes
+                    📦 {supplier.total_orders}+ commandes
                   </Badge>
                 )}
                 {supplier.production_time_days && (
                   <Badge variant="outline">
-                    ðŸ­ Production: {supplier.production_time_days}j
+                    🏭 Production: {supplier.production_time_days}j
                   </Badge>
                 )}
               </div>
@@ -277,7 +277,7 @@ export function ChinaSuppliersList() {
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">
               <Globe className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p>Aucun fournisseur trouvÃ©</p>
+              <p>Aucun fournisseur trouvé</p>
             </CardContent>
           </Card>
         )}

@@ -1,7 +1,7 @@
 /**
- * PDG - SUPERVISION DES MOTOS VOLÃ‰ES
- * Vue centralisÃ©e de toutes les alertes de vol de tous les bureaux
- * 224Solutions - SÃ©curitÃ© Institutionnelle
+ * PDG - SUPERVISION DES MOTOS VOLÉES
+ * Vue centralisée de toutes les alertes de vol de tous les bureaux
+ * 224Solutions - Sécurité Institutionnelle
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -90,19 +90,19 @@ export default function PDGStolenVehiclesSupervision() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            console.log('ðŸ” [PDG Security] DÃ©but chargement donnÃ©es...');
+            console.log('🔍 [PDG Security] Début chargement données...');
             
-            // Charger tous les vÃ©hicules avec stolen_status = 'stolen'
+            // Charger tous les véhicules avec stolen_status = 'stolen'
             const { data: vehicles, error: vehiclesError } = await supabase
                 .from('vehicles')
                 .select('*')
                 .eq('stolen_status', 'stolen');
 
-            console.log('ðŸš— [PDG Security] VÃ©hicules volÃ©s:', { vehicles, error: vehiclesError });
+            console.log('🚗 [PDG Security] Véhicules volés:', { vehicles, error: vehiclesError });
 
             let formattedVehicles: StolenVehicle[] = [];
             if (!vehiclesError && vehicles && vehicles.length > 0) {
-                // Charger les bureaux sÃ©parÃ©ment
+                // Charger les bureaux séparément
                 const bureauIds = [...new Set(vehicles.map((v: any) => v.bureau_id).filter(Boolean))];
                 const { data: bureausData } = await supabase
                     .from('bureaus')
@@ -115,23 +115,23 @@ export default function PDGStolenVehiclesSupervision() {
                     const bureau = bureauMap.get(v.bureau_id);
                     return {
                         ...v,
-                        owner_name: 'PropriÃ©taire',
+                        owner_name: 'Propriétaire',
                         bureau_name: bureau ? `${bureau.commune} - ${bureau.prefecture}` : 'Bureau inconnu'
                     };
                 });
             } else if (vehiclesError) {
-                console.error('âŒ [PDG Security] Erreur vÃ©hicules:', vehiclesError);
+                console.error('❌ [PDG Security] Erreur véhicules:', vehiclesError);
             }
 
-            console.log('ðŸ“Š [PDG Security] VÃ©hicules formatÃ©s:', formattedVehicles);
+            console.log('📊 [PDG Security] Véhicules formatés:', formattedVehicles);
             setStolenVehicles(formattedVehicles);
 
-            // Stats globales - requÃªte simplifiÃ©e
+            // Stats globales - requête simplifiée
             const { data: allVehicles, error: allVehiclesError } = await supabase
                 .from('vehicles')
                 .select('stolen_status');
 
-            console.log('ðŸ“ˆ [PDG Security] All vehicles stats:', { count: allVehicles?.length, error: allVehiclesError });
+            console.log('📈 [PDG Security] All vehicles stats:', { count: allVehicles?.length, error: allVehiclesError });
 
             const { count: bureauCount } = await supabase
                 .from('bureaus')
@@ -140,7 +140,7 @@ export default function PDGStolenVehiclesSupervision() {
             const stolenCount = (allVehicles || []).filter((v: any) => v.stolen_status === 'stolen').length;
             const recoveredCount = (allVehicles || []).filter((v: any) => v.stolen_status === 'recovered').length;
             
-            console.log('ðŸ“Š [PDG Security] Stats calculÃ©es:', { stolenCount, recoveredCount, bureauCount });
+            console.log('📊 [PDG Security] Stats calculées:', { stolenCount, recoveredCount, bureauCount });
 
             setStats({
                 totalStolen: stolenCount,
@@ -149,7 +149,7 @@ export default function PDGStolenVehiclesSupervision() {
                 totalBureaus: bureauCount || 0
             });
 
-            // Charger les alertes de fraude non rÃ©solues
+            // Charger les alertes de fraude non résolues
             const { data: alerts, error: alertsError } = await supabase
                 .from('vehicle_fraud_alerts')
                 .select('*')
@@ -157,21 +157,21 @@ export default function PDGStolenVehiclesSupervision() {
                 .order('created_at', { ascending: false })
                 .limit(100);
 
-            console.log('âš ï¸ [PDG Security] Alertes:', { alerts, error: alertsError });
+            console.log('⚠️ [PDG Security] Alertes:', { alerts, error: alertsError });
 
             if (alerts) {
                 setFraudAlerts(alerts as FraudAlert[]);
                 setStats(prev => ({ ...prev, pendingAlerts: alerts.length }));
             }
 
-            // Charger le journal de sÃ©curitÃ© global - sans jointure
+            // Charger le journal de sécurité global - sans jointure
             const { data: logs, error: logsError } = await supabase
                 .from('vehicle_security_log')
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(200);
 
-            console.log('ðŸ“‹ [PDG Security] Logs sÃ©curitÃ©:', { logs, error: logsError });
+            console.log('📋 [PDG Security] Logs sécurité:', { logs, error: logsError });
 
             if (logs && logs.length > 0) {
                 // Charger les bureaux pour les logs
@@ -195,11 +195,11 @@ export default function PDGStolenVehiclesSupervision() {
                 setSecurityLogs([]);
             }
 
-            console.log('âœ… [PDG Security] Chargement terminÃ©');
+            console.log('✅ [PDG Security] Chargement terminé');
 
         } catch (error) {
-            console.error('Erreur chargement donnÃ©es:', error);
-            toast.error('Erreur lors du chargement des donnÃ©es');
+            console.error('Erreur chargement données:', error);
+            toast.error('Erreur lors du chargement des données');
         } finally {
             setLoading(false);
         }
@@ -217,11 +217,11 @@ export default function PDGStolenVehiclesSupervision() {
                 table: 'vehicles',
                 filter: 'stolen_status=eq.stolen'
             }, (payload) => {
-                console.log('ðŸš¨ Changement vÃ©hicule volÃ©:', payload);
+                console.log('🚨 Changement véhicule volé:', payload);
                 loadData();
                 if (payload.eventType === 'UPDATE' && (payload.new as any).stolen_status === 'stolen') {
-                    toast.error('ðŸš¨ Nouvelle moto dÃ©clarÃ©e volÃ©e!', {
-                        description: 'Un bureau a signalÃ© un vol de moto',
+                    toast.error('🚨 Nouvelle moto déclarée volée!', {
+                        description: 'Un bureau a signalé un vol de moto',
                         duration: 10000
                     });
                 }
@@ -231,8 +231,8 @@ export default function PDGStolenVehiclesSupervision() {
                 schema: 'public',
                 table: 'vehicle_fraud_alerts'
             }, (payload) => {
-                toast.error('âš ï¸ Alerte de fraude dÃ©tectÃ©e!', {
-                    description: 'ActivitÃ© suspecte sur un vÃ©hicule volÃ©',
+                toast.error('⚠️ Alerte de fraude détectée!', {
+                    description: 'Activité suspecte sur un véhicule volé',
                     duration: 10000
                 });
                 loadData();
@@ -245,7 +245,7 @@ export default function PDGStolenVehiclesSupervision() {
     }, [loadData]);
 
     const openGoogleMaps = (lat: number, lng: number) => {
-        window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank', 'noopener,noreferrer');
+        window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
     };
 
     const filteredVehicles = stolenVehicles.filter(v =>
@@ -258,11 +258,11 @@ export default function PDGStolenVehiclesSupervision() {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'stolen':
-                return <Badge className="bg-red-600 text-white">ðŸš¨ VOLÃ‰E</Badge>;
+                return <Badge className="bg-red-600 text-white">🚨 VOLÉE</Badge>;
             case 'recovered':
-                return <Badge className="bg-primary-orange-600 text-white">âœ… RetrouvÃ©e</Badge>;
+                return <Badge className="bg-green-600 text-white">✅ Retrouvée</Badge>;
             case 'blocked':
-                return <Badge className="bg-orange-600 text-white">ðŸ”’ BloquÃ©e</Badge>;
+                return <Badge className="bg-orange-600 text-white">🔒 Bloquée</Badge>;
             default:
                 return <Badge className="bg-gray-500 text-white">Normal</Badge>;
         }
@@ -273,7 +273,7 @@ export default function PDGStolenVehiclesSupervision() {
             case 'critical':
                 return <Badge className="bg-red-600 text-white">Critique</Badge>;
             case 'high':
-                return <Badge className="bg-orange-600 text-white">Ã‰levÃ©e</Badge>;
+                return <Badge className="bg-orange-600 text-white">Élevée</Badge>;
             case 'medium':
                 return <Badge className="bg-yellow-600 text-white">Moyenne</Badge>;
             default:
@@ -284,7 +284,7 @@ export default function PDGStolenVehiclesSupervision() {
     const getActionIcon = (action: string) => {
         switch (action) {
             case 'THEFT_DECLARED': return <ShieldAlert className="w-4 h-4 text-red-600" />;
-            case 'RECOVERY_DECLARED': return <ShieldCheck className="w-4 h-4 text-primary-orange-600" />;
+            case 'RECOVERY_DECLARED': return <ShieldCheck className="w-4 h-4 text-green-600" />;
             case 'GPS_TRACKED': return <MapPin className="w-4 h-4 text-blue-600" />;
             case 'FRAUD_ATTEMPT': return <AlertTriangle className="w-4 h-4 text-orange-600" />;
             default: return <Activity className="w-4 h-4 text-gray-600" />;
@@ -301,13 +301,13 @@ export default function PDGStolenVehiclesSupervision() {
 
     return (
         <div className="space-y-6">
-            {/* En-tÃªte */}
+            {/* En-tête */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <ShieldAlert className="w-8 h-8 text-red-600" />
                     <div>
-                        <h2 className="text-2xl font-bold">Supervision Motos VolÃ©es</h2>
-                        <p className="text-muted-foreground">Vue centralisÃ©e de tous les bureaux</p>
+                        <h2 className="text-2xl font-bold">Supervision Motos Volées</h2>
+                        <p className="text-muted-foreground">Vue centralisée de tous les bureaux</p>
                     </div>
                 </div>
                 <Button variant="outline" onClick={loadData}>
@@ -324,19 +324,19 @@ export default function PDGStolenVehiclesSupervision() {
                             <ShieldAlert className="w-8 h-8 text-red-600" />
                             <div>
                                 <p className="text-2xl font-bold text-red-700">{stats.totalStolen}</p>
-                                <p className="text-sm text-red-600">Motos volÃ©es</p>
+                                <p className="text-sm text-red-600">Motos volées</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+                <Card className="border-green-200 bg-green-50">
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
-                            <ShieldCheck className="w-8 h-8 text-primary-orange-600" />
+                            <ShieldCheck className="w-8 h-8 text-green-600" />
                             <div>
-                                <p className="text-2xl font-bold text-primary-orange-700">{stats.totalRecovered}</p>
-                                <p className="text-sm text-primary-orange-600">RetrouvÃ©es</p>
+                                <p className="text-2xl font-bold text-green-700">{stats.totalRecovered}</p>
+                                <p className="text-sm text-green-600">Retrouvées</p>
                             </div>
                         </div>
                     </CardContent>
@@ -372,9 +372,9 @@ export default function PDGStolenVehiclesSupervision() {
                 <Alert className="border-red-500 bg-red-50">
                     <AlertTriangle className="w-5 h-5 text-red-600" />
                     <AlertDescription className="text-red-800">
-                        <strong>ðŸš¨ {fraudAlerts.length} alerte(s) de fraude non rÃ©solue(s)</strong>
+                        <strong>🚨 {fraudAlerts.length} alerte(s) de fraude non résolue(s)</strong>
                         <p className="text-sm mt-1">
-                            Des activitÃ©s suspectes ont Ã©tÃ© dÃ©tectÃ©es sur des vÃ©hicules volÃ©s.
+                            Des activités suspectes ont été détectées sur des véhicules volés.
                         </p>
                     </AlertDescription>
                 </Alert>
@@ -385,7 +385,7 @@ export default function PDGStolenVehiclesSupervision() {
                 <TabsList className="grid grid-cols-3 w-full max-w-md">
                     <TabsTrigger value="stolen" className="flex items-center gap-2">
                         <ShieldAlert className="w-4 h-4" />
-                        VolÃ©es ({stats.totalStolen})
+                        Volées ({stats.totalStolen})
                     </TabsTrigger>
                     <TabsTrigger value="alerts" className="flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4" />
@@ -397,14 +397,14 @@ export default function PDGStolenVehiclesSupervision() {
                     </TabsTrigger>
                 </TabsList>
 
-                {/* Tab: Motos volÃ©es */}
+                {/* Tab: Motos volées */}
                 <TabsContent value="stolen">
                     <Card className="border-red-200">
                         <CardHeader className="bg-red-50">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="flex items-center gap-2 text-red-800">
                                     <ShieldAlert className="w-5 h-5" />
-                                    Motos dÃ©clarÃ©es volÃ©es - Tous bureaux
+                                    Motos déclarées volées - Tous bureaux
                                 </CardTitle>
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -420,8 +420,8 @@ export default function PDGStolenVehiclesSupervision() {
                         <CardContent className="p-0">
                             {filteredVehicles.length === 0 ? (
                                 <div className="p-8 text-center text-muted-foreground">
-                                    <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-primary-orange-500" />
-                                    <p>Aucune moto dÃ©clarÃ©e volÃ©e</p>
+                                    <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-green-500" />
+                                    <p>Aucune moto déclarée volée</p>
                                 </div>
                             ) : (
                                 <ScrollArea className="h-[500px]">
@@ -430,10 +430,10 @@ export default function PDGStolenVehiclesSupervision() {
                                             <TableRow>
                                                 <TableHead>Bureau</TableHead>
                                                 <TableHead>Plaque</TableHead>
-                                                <TableHead>ChÃ¢ssis</TableHead>
-                                                <TableHead>VÃ©hicule</TableHead>
-                                                <TableHead>PropriÃ©taire</TableHead>
-                                                <TableHead>Date dÃ©claration</TableHead>
+                                                <TableHead>Châssis</TableHead>
+                                                <TableHead>Véhicule</TableHead>
+                                                <TableHead>Propriétaire</TableHead>
+                                                <TableHead>Date déclaration</TableHead>
                                                 <TableHead>Localisation</TableHead>
                                                 <TableHead>Actions</TableHead>
                                             </TableRow>
@@ -506,7 +506,7 @@ export default function PDGStolenVehiclesSupervision() {
                         <CardContent className="p-0">
                             {fraudAlerts.length === 0 ? (
                                 <div className="p-8 text-center text-muted-foreground">
-                                    <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-primary-orange-500" />
+                                    <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-green-500" />
                                     <p>Aucune alerte de fraude active</p>
                                 </div>
                             ) : (
@@ -538,13 +538,13 @@ export default function PDGStolenVehiclesSupervision() {
                     </Card>
                 </TabsContent>
 
-                {/* Tab: Journal de sÃ©curitÃ© */}
+                {/* Tab: Journal de sécurité */}
                 <TabsContent value="logs">
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <History className="w-5 h-5" />
-                                Journal de sÃ©curitÃ© global
+                                Journal de sécurité global
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">

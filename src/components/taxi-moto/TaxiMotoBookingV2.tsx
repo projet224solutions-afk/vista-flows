@@ -1,6 +1,6 @@
 /**
- * COMPOSANT DE RÃ‰SERVATION TAXI-MOTO ULTRA PROFESSIONNEL V2
- * Interface avec GPS ultra-prÃ©cis et gÃ©ocodage Google Maps
+ * COMPOSANT DE RÉSERVATION TAXI-MOTO ULTRA PROFESSIONNEL V2
+ * Interface avec GPS ultra-précis et géocodage Google Maps
  * 224Solutions - Taxi-Moto System
  */
 
@@ -63,14 +63,14 @@ export default function TaxiMotoBooking({
 }: TaxiMotoBookingProps) {
     const { user } = useAuth();
 
-    // Ã‰tats du formulaire - GPS ultra-prÃ©cis
+    // États du formulaire - GPS ultra-précis
     const [pickupAddress, setPickupAddress] = useState<ValidatedAddress | null>(null);
     const [destinationAddress, setDestinationAddress] = useState<ValidatedAddress | null>(null);
     const [selectedVehicleType, setSelectedVehicleType] = useState<'moto_economique' | 'moto_rapide' | 'moto_premium'>('moto_rapide');
     const [scheduledTime, setScheduledTime] = useState('');
     const [isScheduled, setIsScheduled] = useState(false);
 
-    // Ã‰tats de calcul
+    // États de calcul
     const [routeInfo, setRouteInfo] = useState<{
         distance: number;
         duration: number;
@@ -86,12 +86,12 @@ export default function TaxiMotoBooking({
     } | null>(null);
     const [priceComparison, setPriceComparison] = useState<unknown[]>([]);
 
-    // Ã‰tats de chargement
+    // États de chargement
     const [loadingRoute, setLoadingRoute] = useState(false);
     const [loadingPrice, setLoadingPrice] = useState(false);
     const [bookingInProgress, setBookingInProgress] = useState(false);
 
-    // Ã‰tat pour l'Ã©tape de paiement
+    // État pour l'étape de paiement
     const [showPaymentStep, setShowPaymentStep] = useState(false);
     const [walletBalance, setWalletBalance] = useState(0);
 
@@ -113,7 +113,7 @@ export default function TaxiMotoBooking({
     }, [user]);
 
     /**
-     * Calcule l'itinÃ©raire et le prix via Google Maps Directions API
+     * Calcule l'itinéraire et le prix via Google Maps Directions API
      */
     const calculateRouteAndPrice = useCallback(async () => {
         if (!pickupAddress || !destinationAddress) return;
@@ -122,7 +122,7 @@ export default function TaxiMotoBooking({
         setLoadingPrice(true);
 
         try {
-            // Calculer l'itinÃ©raire via routes rÃ©elles Google Maps
+            // Calculer l'itinéraire via routes réelles Google Maps
             const route = await precisionGeoService.calculateRoute(
                 { latitude: pickupAddress.latitude, longitude: pickupAddress.longitude },
                 { latitude: destinationAddress.latitude, longitude: destinationAddress.longitude }
@@ -168,8 +168,8 @@ export default function TaxiMotoBooking({
             setPriceComparison([]);
 
         } catch (error) {
-            console.error('Erreur calcul itinÃ©raire/prix:', error);
-            toast.error('Impossible de calculer l\'itinÃ©raire');
+            console.error('Erreur calcul itinéraire/prix:', error);
+            toast.error('Impossible de calculer l\'itinéraire');
             setPriceEstimate(null);
         } finally {
             setLoadingRoute(false);
@@ -186,16 +186,16 @@ export default function TaxiMotoBooking({
     }, [pickupAddress, destinationAddress, calculateRouteAndPrice]);
 
     /**
-     * Ouvre l'Ã©tape de sÃ©lection du mode de paiement
+     * Ouvre l'étape de sélection du mode de paiement
      */
     const handleProceedToPayment = () => {
         if (!user) {
-            toast.error('Veuillez vous connecter pour rÃ©server');
+            toast.error('Veuillez vous connecter pour réserver');
             return;
         }
 
         if (!pickupAddress || !destinationAddress || !priceEstimate) {
-            toast.error('Veuillez complÃ©ter tous les champs avec des adresses validÃ©es');
+            toast.error('Veuillez compléter tous les champs avec des adresses validées');
             return;
         }
 
@@ -203,12 +203,12 @@ export default function TaxiMotoBooking({
     };
 
     /**
-     * Effectue la rÃ©servation aprÃ¨s sÃ©lection du mode de paiement
+     * Effectue la réservation après sélection du mode de paiement
      */
     const handleConfirmBooking = async (paymentMethod: PaymentMethod, phoneNumber?: string) => {
         if (!pickupAddress || !destinationAddress || !priceEstimate) return;
 
-        console.log('[TaxiMotoBooking] Booking avec GPS prÃ©cis:', {
+        console.log('[TaxiMotoBooking] Booking avec GPS précis:', {
             pickup: {
                 address: pickupAddress.formattedAddress,
                 lat: pickupAddress.latitude,
@@ -243,9 +243,9 @@ export default function TaxiMotoBooking({
 
             console.log('[TaxiMotoBooking] Ride created:', ride);
             onRideCreated(ride);
-            toast.success('ðŸš€ RÃ©servation confirmÃ©e ! Recherche d\'un conducteur...');
+            toast.success('🚀 Réservation confirmée ! Recherche d\'un conducteur...');
 
-            // RÃ©initialiser le formulaire
+            // Réinitialiser le formulaire
             setPickupAddress(null);
             setDestinationAddress(null);
             setRouteInfo(null);
@@ -254,13 +254,13 @@ export default function TaxiMotoBooking({
 
         } catch (error) {
             console.error('[TaxiMotoBooking] Booking error:', error);
-            toast.error('Erreur lors de la rÃ©servation');
+            toast.error('Erreur lors de la réservation');
         } finally {
             setBookingInProgress(false);
         }
     };
 
-    // Si l'Ã©tape de paiement est active
+    // Si l'étape de paiement est active
     if (showPaymentStep && priceEstimate) {
         return (
             <PaymentMethodStep
@@ -275,19 +275,19 @@ export default function TaxiMotoBooking({
 
     return (
         <div className="space-y-4">
-            {/* Formulaire de rÃ©servation */}
+            {/* Formulaire de réservation */}
             <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Navigation className="w-5 h-5 text-primary" />
-                        Nouvelle rÃ©servation
+                        Nouvelle réservation
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {/* Point de dÃ©part - GPS Ultra-PrÃ©cis */}
+                    {/* Point de départ - GPS Ultra-Précis */}
                     <GooglePlacesAddressInput
-                        label="Point de dÃ©part"
-                        placeholder="Rechercher votre adresse de dÃ©part..."
+                        label="Point de départ"
+                        placeholder="Rechercher votre adresse de départ..."
                         userLocation={userLocation}
                         showCurrentLocationButton={true}
                         required={true}
@@ -301,7 +301,7 @@ export default function TaxiMotoBooking({
                         }}
                     />
 
-                    {/* Destination - GPS Ultra-PrÃ©cis */}
+                    {/* Destination - GPS Ultra-Précis */}
                     <GooglePlacesAddressInput
                         label="Destination"
                         placeholder="Rechercher votre destination..."
@@ -322,21 +322,21 @@ export default function TaxiMotoBooking({
                     {(pickupAddress || destinationAddress) && (
                         <div className="flex flex-wrap gap-2">
                             {pickupAddress && (
-                                <Badge variant="secondary" className="bg-primary-orange-100 text-primary-orange-800 text-xs">
+                                <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
                                     <CheckCircle className="w-3 h-3 mr-1" />
-                                    DÃ©part validÃ© GPS
+                                    Départ validé GPS
                                 </Badge>
                             )}
                             {destinationAddress && (
                                 <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs">
                                     <CheckCircle className="w-3 h-3 mr-1" />
-                                    Destination validÃ©e GPS
+                                    Destination validée GPS
                                 </Badge>
                             )}
                         </div>
                     )}
 
-                    {/* Options de rÃ©servation */}
+                    {/* Options de réservation */}
                     <div className="flex items-center gap-4">
                         <label className="flex items-center gap-2">
                             <input
@@ -345,7 +345,7 @@ export default function TaxiMotoBooking({
                                 onChange={(e) => setIsScheduled(e.target.checked)}
                                 className="rounded"
                             />
-                            <span className="text-sm">RÃ©servation planifiÃ©e</span>
+                            <span className="text-sm">Réservation planifiée</span>
                         </label>
 
                         {isScheduled && (
@@ -361,7 +361,7 @@ export default function TaxiMotoBooking({
                 </CardContent>
             </Card>
 
-            {/* AperÃ§u de l'itinÃ©raire */}
+            {/* Aperçu de l'itinéraire */}
             {pickupAddress && destinationAddress && (
                 <DestinationPreview
                     pickupAddress={pickupAddress.formattedAddress}
@@ -380,7 +380,7 @@ export default function TaxiMotoBooking({
                 />
             )}
 
-            {/* Informations d'itinÃ©raire Google Maps */}
+            {/* Informations d'itinéraire Google Maps */}
             {routeInfo && (
                 <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardContent className="p-4">
@@ -390,13 +390,13 @@ export default function TaxiMotoBooking({
                                     <div className="text-lg font-bold text-primary">
                                         {routeInfo.distanceText}
                                     </div>
-                                    <div className="text-xs text-muted-foreground">Distance rÃ©elle</div>
+                                    <div className="text-xs text-muted-foreground">Distance réelle</div>
                                 </div>
                                 <div className="text-center">
-                                    <div className="text-lg font-bold text-primary-orange-600">
+                                    <div className="text-lg font-bold text-green-600">
                                         {routeInfo.durationText}
                                     </div>
-                                    <div className="text-xs text-muted-foreground">Temps estimÃ©</div>
+                                    <div className="text-xs text-muted-foreground">Temps estimé</div>
                                 </div>
                             </div>
 
@@ -413,13 +413,13 @@ export default function TaxiMotoBooking({
                 </Card>
             )}
 
-            {/* DÃ©tail du prix */}
+            {/* Détail du prix */}
             {priceEstimate && (
                 <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
-                            <DollarSign className="w-5 h-5 text-primary-orange-600" />
-                            DÃ©tail du prix
+                            <DollarSign className="w-5 h-5 text-green-600" />
+                            Détail du prix
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -432,14 +432,14 @@ export default function TaxiMotoBooking({
                             <span>Inclus</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span>Temps estimÃ© ({routeInfo?.durationText || `${priceEstimate.duration}min`})</span>
+                            <span>Temps estimé ({routeInfo?.durationText || `${priceEstimate.duration}min`})</span>
                             <span>Inclus</span>
                         </div>
 
                         <Separator />
                         <div className="flex justify-between text-lg font-bold">
                             <span>Total</span>
-                            <span className="text-primary-orange-600">
+                            <span className="text-green-600">
                                 {(priceEstimate.totalPrice || 0).toLocaleString()} GNF
                             </span>
                         </div>
@@ -447,7 +447,7 @@ export default function TaxiMotoBooking({
                 </Card>
             )}
 
-            {/* Bouton de rÃ©servation */}
+            {/* Bouton de réservation */}
             <Button
                 onClick={handleProceedToPayment}
                 disabled={!pickupAddress || !destinationAddress || !priceEstimate || bookingInProgress}
@@ -456,7 +456,7 @@ export default function TaxiMotoBooking({
                 {bookingInProgress ? (
                     <>
                         <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        RÃ©servation en cours...
+                        Réservation en cours...
                     </>
                 ) : (
                     <>
@@ -466,11 +466,11 @@ export default function TaxiMotoBooking({
                 )}
             </Button>
 
-            {/* Message si adresses non validÃ©es */}
+            {/* Message si adresses non validées */}
             {(!pickupAddress || !destinationAddress) && (
                 <div className="text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
                     <AlertCircle className="w-4 h-4" />
-                    SÃ©lectionnez des adresses validÃ©es par GPS pour continuer
+                    Sélectionnez des adresses validées par GPS pour continuer
                 </div>
             )}
 
@@ -494,7 +494,7 @@ export default function TaxiMotoBooking({
                                         <div className="font-medium">{driver.name}</div>
                                         <div className="text-sm text-muted-foreground flex items-center gap-2">
                                             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                            {driver.rating} â€¢ {driver.rides} courses
+                                            {driver.rating} • {driver.rides} courses
                                         </div>
                                     </div>
                                 </div>

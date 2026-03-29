@@ -1,6 +1,6 @@
 /**
- * ðŸ“¦ PDG ORDERS MANAGEMENT
- * Gestion centralisÃ©e des commandes
+ * 📦 PDG ORDERS MANAGEMENT
+ * Gestion centralisée des commandes
  */
 
 import { useState, useEffect } from 'react';
@@ -36,7 +36,7 @@ export default function PDGOrders() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error('Vous devez Ãªtre connectÃ©');
+        toast.error('Vous devez être connecté');
         return null;
       }
 
@@ -63,7 +63,7 @@ export default function PDGOrders() {
     try {
       setLoading(true);
 
-      // RÃ©cupÃ©rer le vendor_id si pas dÃ©jÃ  fait
+      // Récupérer le vendor_id si pas déjà fait
       let currentVendorId = vendorId;
       if (!currentVendorId) {
         currentVendorId = await loadVendorProfile();
@@ -111,8 +111,8 @@ export default function PDGOrders() {
     const variants: Record<string, { label: string; className: string }> = {
       pending: { label: 'En attente', className: 'bg-yellow-500' },
       confirmed: { label: 'En cours', className: 'bg-blue-500' },
-      delivered: { label: 'LivrÃ©e', className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' },
-      cancelled: { label: 'AnnulÃ©e', className: 'bg-red-500' }
+      delivered: { label: 'Livrée', className: 'bg-green-500' },
+      cancelled: { label: 'Annulée', className: 'bg-red-500' }
     };
 
     const config = variants[status] || { label: status, className: 'bg-gray-500' };
@@ -148,7 +148,7 @@ export default function PDGOrders() {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">ConfirmÃ©es</CardTitle>
+            <CardTitle className="text-sm">Confirmées</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -160,19 +160,19 @@ export default function PDGOrders() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">TerminÃ©es</CardTitle>
+            <CardTitle className="text-sm">Terminées</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold">{stats.completed}</span>
-              <CheckCircle className="w-5 h-5 text-primary-orange-500" />
+              <CheckCircle className="w-5 h-5 text-green-500" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">AnnulÃ©es</CardTitle>
+            <CardTitle className="text-sm">Annulées</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -188,8 +188,8 @@ export default function PDGOrders() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Commandes rÃ©centes</CardTitle>
-              <CardDescription>Les {orders.length} derniÃ¨res commandes</CardDescription>
+              <CardTitle>Commandes récentes</CardTitle>
+              <CardDescription>Les {orders.length} dernières commandes</CardDescription>
             </div>
             <Button onClick={loadOrders} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />

@@ -1,8 +1,8 @@
 /**
- * Modal de rÃ©servation restaurant professionnel
- * InspirÃ© des systÃ¨mes OpenTable, TheFork, et des restaurants Ã©toilÃ©s Michelin
- * Experience utilisateur premium avec sÃ©lection de date, heure, menu et paiement
- * v2 - Ajout paiement carte bancaire, reÃ§u et suivi statut
+ * Modal de réservation restaurant professionnel
+ * Inspiré des systèmes OpenTable, TheFork, et des restaurants étoilés Michelin
+ * Experience utilisateur premium avec sélection de date, heure, menu et paiement
+ * v2 - Ajout paiement carte bancaire, reçu et suivi statut
  */
 
 import { useState, useEffect } from 'react';
@@ -66,7 +66,7 @@ export function ReservationModal({
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   
-  // Persistance du formulaire de rÃ©servation avec useAppPersistence (supporte serialize/deserialize)
+  // Persistance du formulaire de réservation avec useAppPersistence (supporte serialize/deserialize)
   interface ReservationFormState {
     partySize: number;
     selectedDate: Date | undefined;
@@ -114,7 +114,7 @@ export function ReservationModal({
   const setReservationForm = reservationPersistence.setState;
   const resetReservationForm = reservationPersistence.clear;
   
-  // Persistance du panier de prÃ©commande
+  // Persistance du panier de précommande
   const cartPersistence = useAppPersistence<CartItem[]>({
     key: `reservation_cart_${serviceId}`,
     defaultState: [],
@@ -122,7 +122,7 @@ export function ReservationModal({
     maxAge: 30 * 60 * 1000,
   });
   
-  // Aliases pour compatibilitÃ©
+  // Aliases pour compatibilité
   const partySize = reservationForm.partySize;
   const setPartySize = (v: number) => setReservationForm(prev => ({ ...prev, partySize: v }));
   const selectedDate = reservationForm.selectedDate;
@@ -149,20 +149,20 @@ export function ReservationModal({
   const cart = cartPersistence.state;
   const setCart = cartPersistence.setState;
   
-  // Ã‰tats non persistÃ©s (temporaires)
+  // États non persistés (temporaires)
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [showStripePayment, setShowStripePayment] = useState(false);
   const [confirmationData, setConfirmationData] = useState<any>(null);
   const [showReceiptDownload, setShowReceiptDownload] = useState(false);
 
-  // PrÃ©remplir avec les infos de l'utilisateur connectÃ©
+  // Préremplir avec les infos de l'utilisateur connecté
   useEffect(() => {
     if (user) {
       setCustomerEmail(user.email || '');
     }
   }, [user]);
 
-  // Charger les crÃ©neaux quand la date change
+  // Charger les créneaux quand la date change
   useEffect(() => {
     if (selectedDate && serviceId) {
       loadTimeSlots();
@@ -178,8 +178,8 @@ export function ReservationModal({
       const slots = await checkAvailability(dateStr, partySize);
       setTimeSlots(slots);
     } catch (error) {
-      console.error('Erreur chargement crÃ©neaux:', error);
-      toast.error('Erreur lors du chargement des disponibilitÃ©s');
+      console.error('Erreur chargement créneaux:', error);
+      toast.error('Erreur lors du chargement des disponibilités');
     } finally {
       setLoadingSlots(false);
     }
@@ -230,7 +230,7 @@ export function ReservationModal({
 
     setIsSubmitting(true);
     try {
-      // PrÃ©parer les donnÃ©es de prÃ©commande
+      // Préparer les données de précommande
       const preorderData = wantToPreorder && cart.length > 0 
         ? JSON.stringify(cart.map(c => ({
             item_id: c.menuItem.id,
@@ -242,8 +242,8 @@ export function ReservationModal({
         : null;
 
       const paymentInfo = paymentIntentId 
-        ? `\n\nðŸ’³ Paiement carte effectuÃ© (RÃ©f: ${paymentIntentId.substring(0, 12)})`
-        : (wantToPrepay ? '\n\nðŸ“± Paiement mobile en attente' : '');
+        ? `\n\n💳 Paiement carte effectué (Réf: ${paymentIntentId.substring(0, 12)})`
+        : (wantToPrepay ? '\n\n📱 Paiement mobile en attente' : '');
 
       const reservationData: ReservationFormData = {
         customer_name: customerName,
@@ -254,10 +254,10 @@ export function ReservationModal({
         reservation_time: selectedTime,
         special_requests: specialRequests 
           ? (preorderData 
-            ? `${specialRequests}\n\n--- PrÃ©commande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF${paymentInfo}`
+            ? `${specialRequests}\n\n--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF${paymentInfo}`
             : `${specialRequests}${paymentInfo}`)
           : (preorderData 
-            ? `--- PrÃ©commande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF${paymentInfo}`
+            ? `--- Précommande ---\n${cart.map(c => `${c.quantity}x ${c.menuItem.name}`).join(', ')}\nTotal: ${cartTotal.toLocaleString()} GNF${paymentInfo}`
             : (paymentInfo ? paymentInfo.trim() : undefined)),
       };
 
@@ -273,11 +273,11 @@ export function ReservationModal({
         });
         setShowReceiptDownload(true);
         setStep('confirmation');
-        toast.success('RÃ©servation confirmÃ©e !');
+        toast.success('Réservation confirmée !');
       }
     } catch (error: any) {
-      console.error('Erreur crÃ©ation rÃ©servation:', error);
-      toast.error(error.message || 'Erreur lors de la rÃ©servation');
+      console.error('Erreur création réservation:', error);
+      toast.error(error.message || 'Erreur lors de la réservation');
     } finally {
       setIsSubmitting(false);
     }
@@ -305,42 +305,42 @@ export function ReservationModal({
     onClose();
   };
 
-  // GÃ©nÃ©rer et tÃ©lÃ©charger le reÃ§u
+  // Générer et télécharger le reçu
   const generateReceipt = () => {
     if (!confirmationData) return;
     
     const receiptContent = `
-â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
-â•‘           REÃ‡U DE RÃ‰SERVATION                 â•‘
-â•‘               224Solutions                    â•‘
-â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
-â•‘                                               â•‘
-â•‘  Restaurant: ${restaurantName.substring(0, 30).padEnd(30)}â•‘
-â•‘                                               â•‘
-â•‘  Date: ${format(selectedDate!, 'EEEE d MMMM yyyy', { locale: fr }).substring(0, 35).padEnd(35)}â•‘
-â•‘  Heure: ${selectedTime.padEnd(34)}â•‘
-â•‘  Convives: ${partySize.toString().padEnd(31)}â•‘
-â•‘                                               â•‘
-â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
-â•‘  RÃ©servation au nom de:                       â•‘
-â•‘  ${customerName.substring(0, 43).padEnd(43)}â•‘
-â•‘  Tel: ${(customerPhone || 'Non renseignÃ©').substring(0, 37).padEnd(37)}â•‘
-â•‘  Email: ${(customerEmail || 'Non renseignÃ©').substring(0, 35).padEnd(35)}â•‘
-â•‘                                               â•‘
-${cart.length > 0 ? `â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
-â•‘  PRÃ‰COMMANDE:                                 â•‘
-${cart.map(c => `â•‘  ${c.quantity}x ${c.menuItem.name.substring(0, 25).padEnd(25)} ${(c.menuItem.price * c.quantity).toLocaleString().padStart(10)} GNFâ•‘`).join('\n')}
-â•‘                                               â•‘
-â•‘  TOTAL: ${cartTotal.toLocaleString().padStart(35)} GNFâ•‘
-â•‘                                               â•‘` : ''}
-â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
-â•‘  Statut: EN ATTENTE DE CONFIRMATION           â•‘
-â•‘  RÃ©fÃ©rence: ${confirmationData.id?.substring(0, 8).toUpperCase().padEnd(30) || 'N/A'.padEnd(30)}â•‘
-â•‘  CrÃ©Ã©e le: ${format(new Date(), 'dd/MM/yyyy Ã  HH:mm').padEnd(31)}â•‘
-â•‘                                               â•‘
-â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+╔═══════════════════════════════════════════════╗
+║           REÇU DE RÉSERVATION                 ║
+║               224Solutions                    ║
+╠═══════════════════════════════════════════════╣
+║                                               ║
+║  Restaurant: ${restaurantName.substring(0, 30).padEnd(30)}║
+║                                               ║
+║  Date: ${format(selectedDate!, 'EEEE d MMMM yyyy', { locale: fr }).substring(0, 35).padEnd(35)}║
+║  Heure: ${selectedTime.padEnd(34)}║
+║  Convives: ${partySize.toString().padEnd(31)}║
+║                                               ║
+╠═══════════════════════════════════════════════╣
+║  Réservation au nom de:                       ║
+║  ${customerName.substring(0, 43).padEnd(43)}║
+║  Tel: ${(customerPhone || 'Non renseigné').substring(0, 37).padEnd(37)}║
+║  Email: ${(customerEmail || 'Non renseigné').substring(0, 35).padEnd(35)}║
+║                                               ║
+${cart.length > 0 ? `╠═══════════════════════════════════════════════╣
+║  PRÉCOMMANDE:                                 ║
+${cart.map(c => `║  ${c.quantity}x ${c.menuItem.name.substring(0, 25).padEnd(25)} ${(c.menuItem.price * c.quantity).toLocaleString().padStart(10)} GNF║`).join('\n')}
+║                                               ║
+║  TOTAL: ${cartTotal.toLocaleString().padStart(35)} GNF║
+║                                               ║` : ''}
+╠═══════════════════════════════════════════════╣
+║  Statut: EN ATTENTE DE CONFIRMATION           ║
+║  Référence: ${confirmationData.id?.substring(0, 8).toUpperCase().padEnd(30) || 'N/A'.padEnd(30)}║
+║  Créée le: ${format(new Date(), 'dd/MM/yyyy à HH:mm').padEnd(31)}║
+║                                               ║
+╚═══════════════════════════════════════════════╝
 
-Merci pour votre rÃ©servation !
+Merci pour votre réservation !
 Contact restaurant: ${restaurantPhone || 'Non disponible'}
     `;
 
@@ -354,12 +354,12 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
-    toast.success('ReÃ§u tÃ©lÃ©chargÃ© !');
+    toast.success('Reçu téléchargé !');
   };
 
-  // Callback paiement Stripe rÃ©ussi
+  // Callback paiement Stripe réussi
   const handleStripeSuccess = async (paymentIntentId: string) => {
-    toast.success('Paiement par carte effectuÃ© avec succÃ¨s !');
+    toast.success('Paiement par carte effectué avec succès !');
     setShowStripePayment(false);
     await handleSubmit(paymentIntentId);
   };
@@ -370,7 +370,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
     setShowStripePayment(false);
   };
 
-  // Navigation entre Ã©tapes
+  // Navigation entre étapes
   const goToNextStep = () => {
     switch (step) {
       case 'guests': setStep('datetime'); break;
@@ -396,7 +396,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
     }
   };
 
-  // SÃ©parer les crÃ©neaux midi et soir
+  // Séparer les créneaux midi et soir
   const lunchSlots = timeSlots.filter(s => {
     const hour = parseInt(s.time.split(':')[0]);
     return hour >= 11 && hour < 15;
@@ -417,7 +417,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                 <Users className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold">Combien de convives ?</h3>
-              <p className="text-muted-foreground mt-1">SÃ©lectionnez le nombre de personnes</p>
+              <p className="text-muted-foreground mt-1">Sélectionnez le nombre de personnes</p>
             </div>
 
             <div className="grid grid-cols-4 gap-3">
@@ -459,7 +459,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               <p className="text-muted-foreground">{partySize} {partySize > 1 ? 'personnes' : 'personne'}</p>
             </div>
 
-            {/* SÃ©lection de la date */}
+            {/* Sélection de la date */}
             <div>
               <Label className="text-sm font-medium mb-2 block">Date</Label>
               <Popover>
@@ -474,7 +474,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                     <Calendar className="mr-2 h-4 w-4" />
                     {selectedDate 
                       ? format(selectedDate, 'EEEE d MMMM yyyy', { locale: fr })
-                      : 'SÃ©lectionner une date'
+                      : 'Sélectionner une date'
                     }
                   </Button>
                 </PopoverTrigger>
@@ -494,20 +494,20 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               </Popover>
             </div>
 
-            {/* CrÃ©neaux horaires */}
+            {/* Créneaux horaires */}
             {selectedDate && (
               <div className="space-y-4">
                 {loadingSlots ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-                    <p className="text-muted-foreground mt-2">Recherche des disponibilitÃ©s...</p>
+                    <p className="text-muted-foreground mt-2">Recherche des disponibilités...</p>
                   </div>
                 ) : (
                   <>
                     {lunchSlots.length > 0 && (
                       <div>
                         <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
-                          <span className="text-lg">ðŸŒž</span> Service du midi
+                          <span className="text-lg">🌞</span> Service du midi
                         </Label>
                         <div className="grid grid-cols-4 gap-2">
                           {lunchSlots.map(slot => (
@@ -532,7 +532,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                     {dinnerSlots.length > 0 && (
                       <div>
                         <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
-                          <span className="text-lg">ðŸŒ™</span> Service du soir
+                          <span className="text-lg">🌙</span> Service du soir
                         </Label>
                         <div className="grid grid-cols-4 gap-2">
                           {dinnerSlots.map(slot => (
@@ -582,18 +582,18 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
         return (
           <div className="space-y-4">
             <div className="text-center mb-4">
-              <h3 className="text-xl font-semibold">DÃ©couvrez notre menu</h3>
-              <p className="text-muted-foreground">PrÃ©commandez vos plats prÃ©fÃ©rÃ©s</p>
+              <h3 className="text-xl font-semibold">Découvrez notre menu</h3>
+              <p className="text-muted-foreground">Précommandez vos plats préférés</p>
             </div>
 
-            {/* Toggle prÃ©commande */}
+            {/* Toggle précommande */}
             <Card className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20">
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <UtensilsCrossed className="w-5 h-5 text-orange-600" />
                   <div>
-                    <p className="font-medium">PrÃ©commander des plats</p>
-                    <p className="text-xs text-muted-foreground">Vos plats seront prÃªts Ã  votre arrivÃ©e</p>
+                    <p className="font-medium">Précommander des plats</p>
+                    <p className="text-xs text-muted-foreground">Vos plats seront prêts à votre arrivée</p>
                   </div>
                 </div>
                 <Switch checked={wantToPreorder} onCheckedChange={setWantToPreorder} />
@@ -602,7 +602,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
 
             {wantToPreorder && (
               <>
-                {/* CatÃ©gories */}
+                {/* Catégories */}
                 {categories.length > 0 && (
                   <ScrollArea className="w-full whitespace-nowrap">
                     <div className="flex gap-2 pb-2">
@@ -665,11 +665,11 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                               <div className="flex items-center gap-2">
                                 <span className="font-medium truncate">{item.name}</span>
                                 {item.is_featured && (
-                                  <Badge variant="secondary" className="text-xs">â­</Badge>
+                                  <Badge variant="secondary" className="text-xs">⭐</Badge>
                                 )}
                                 {item.spicy_level && item.spicy_level > 0 && (
                                   <span className="text-red-500">
-                                    {Array(item.spicy_level).fill('ðŸŒ¶ï¸').join('')}
+                                    {Array(item.spicy_level).fill('🌶️').join('')}
                                   </span>
                                 )}
                               </div>
@@ -731,14 +731,14 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   )}
                 </ScrollArea>
 
-                {/* Panier rÃ©capitulatif */}
+                {/* Panier récapitulatif */}
                 {cart.length > 0 && (
                   <Card className="bg-muted/50">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium flex items-center gap-2">
                           <ShoppingCart className="w-4 h-4" />
-                          Votre prÃ©commande
+                          Votre précommande
                         </span>
                         <Badge>{cartItemsCount} article{cartItemsCount > 1 ? 's' : ''}</Badge>
                       </div>
@@ -776,13 +776,13 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
         return (
           <div className="space-y-6">
             <div className="text-center mb-4">
-              <h3 className="text-xl font-semibold">Vos coordonnÃ©es</h3>
+              <h3 className="text-xl font-semibold">Vos coordonnées</h3>
               <p className="text-muted-foreground">
-                {format(selectedDate!, 'EEEE d MMMM', { locale: fr })} Ã  {selectedTime}
+                {format(selectedDate!, 'EEEE d MMMM', { locale: fr })} à {selectedTime}
               </p>
             </div>
 
-            {/* RÃ©capitulatif */}
+            {/* Récapitulatif */}
             <div className="bg-muted/50 rounded-lg p-4 flex items-center gap-4 flex-wrap">
               <Badge variant="secondary" className="h-10 px-4">
                 <Users className="w-4 h-4 mr-2" />
@@ -823,7 +823,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               <div>
                 <Label htmlFor="phone" className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
-                  TÃ©lÃ©phone
+                  Téléphone
                 </Label>
                 <Input
                   id="phone"
@@ -853,26 +853,26 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               <div>
                 <Label htmlFor="requests" className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4" />
-                  Demandes spÃ©ciales (optionnel)
+                  Demandes spéciales (optionnel)
                 </Label>
                 <Textarea
                   id="requests"
                   value={specialRequests}
                   onChange={(e) => setSpecialRequests(e.target.value)}
-                  placeholder="Anniversaire, allergies, prÃ©fÃ©rences de table..."
+                  placeholder="Anniversaire, allergies, préférences de table..."
                   className="mt-1 min-h-[80px]"
                 />
               </div>
 
               {/* Option paiement */}
               {cartTotal > 0 && (
-                <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-900/20 dark:to-primary-orange-900/20">
+                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <CreditCard className="w-5 h-5 text-primary-orange-600" />
+                      <CreditCard className="w-5 h-5 text-green-600" />
                       <div>
                         <p className="font-medium">Payer maintenant</p>
-                        <p className="text-xs text-muted-foreground">Payez votre prÃ©commande en avance</p>
+                        <p className="text-xs text-muted-foreground">Payez votre précommande en avance</p>
                       </div>
                     </div>
                     <Switch checked={wantToPrepay} onCheckedChange={setWantToPrepay} />
@@ -901,7 +901,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                     Passer au paiement
                   </>
                 ) : (
-                  'Confirmer la rÃ©servation'
+                  'Confirmer la réservation'
                 )}
               </Button>
             </div>
@@ -923,7 +923,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                 currency="GNF"
                 sellerId={serviceId}
                 sellerName={restaurantName}
-                orderDescription={`PrÃ©commande restaurant - ${restaurantName}`}
+                orderDescription={`Précommande restaurant - ${restaurantName}`}
                 onSuccess={handleStripeSuccess}
                 onError={handleStripeError}
               />
@@ -942,17 +942,17 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
         return (
           <div className="space-y-6">
             <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-primary-orange-100 dark:bg-primary-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Wallet className="w-8 h-8 text-primary-orange-600" />
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Wallet className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold">Choisissez votre mode de paiement</h3>
-              <p className="text-muted-foreground">Payez votre prÃ©commande en avance</p>
+              <p className="text-muted-foreground">Payez votre précommande en avance</p>
             </div>
 
-            {/* RÃ©capitulatif de la commande */}
+            {/* Récapitulatif de la commande */}
             <Card>
               <CardContent className="p-4 space-y-3">
-                <h4 className="font-medium">RÃ©capitulatif</h4>
+                <h4 className="font-medium">Récapitulatif</h4>
                 {cart.map(c => (
                   <div key={c.menuItem.id} className="flex justify-between text-sm">
                     <span>{c.quantity}x {c.menuItem.name}</span>
@@ -960,13 +960,13 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   </div>
                 ))}
                 <div className="border-t pt-2 flex justify-between font-bold">
-                  <span>Total Ã  payer</span>
+                  <span>Total à payer</span>
                   <span className="text-primary">{cartTotal.toLocaleString()} GNF</span>
                 </div>
               </CardContent>
             </Card>
 
-            {/* SÃ©lection mÃ©thode de paiement */}
+            {/* Sélection méthode de paiement */}
             <RadioGroup 
               value={paymentMethod} 
               onValueChange={(value) => setPaymentMethod(value as 'card' | 'mobile')}
@@ -1060,13 +1060,13 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
       case 'confirmation':
         return (
           <div className="space-y-6 text-center py-4">
-            <div className="w-20 h-20 bg-primary-orange-100 dark:bg-primary-orange-900/30 rounded-full flex items-center justify-center mx-auto">
-              <Check className="w-10 h-10 text-primary-orange-600 dark:text-primary-orange-400" />
+            <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
+              <Check className="w-10 h-10 text-green-600 dark:text-green-400" />
             </div>
 
             <div>
-              <h3 className="text-2xl font-bold text-primary-orange-600 dark:text-primary-orange-400">
-                RÃ©servation confirmÃ©e !
+              <h3 className="text-2xl font-bold text-green-600 dark:text-green-400">
+                Réservation confirmée !
               </h3>
               <p className="text-muted-foreground mt-2">
                 Votre table vous attend chez {restaurantName}
@@ -1080,7 +1080,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                 <div className="text-left">
                   <p className="font-medium text-yellow-800 dark:text-yellow-200">En attente de confirmation</p>
                   <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                    Le restaurant confirmera votre rÃ©servation sous peu. Vous recevrez une notification.
+                    Le restaurant confirmera votre réservation sous peu. Vous recevrez une notification.
                   </p>
                 </div>
               </CardContent>
@@ -1108,7 +1108,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               {confirmationData?.preorder && confirmationData.preorder.length > 0 && (
                 <div className="border-t pt-3 mt-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">PrÃ©commande</span>
+                    <span className="text-muted-foreground">Précommande</span>
                     <span className="font-semibold text-orange-600">
                       {confirmationData.preorderTotal.toLocaleString()} GNF
                     </span>
@@ -1116,9 +1116,9 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   {confirmationData?.paymentIntentId && (
                     <div className="flex justify-between items-center mt-2">
                       <span className="text-muted-foreground">Paiement</span>
-                      <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
+                      <Badge className="bg-green-500">
                         <Check className="w-3 h-3 mr-1" />
-                        Carte payÃ©e
+                        Carte payée
                       </Badge>
                     </div>
                   )}
@@ -1126,25 +1126,25 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               )}
             </div>
 
-            {/* Bouton tÃ©lÃ©charger le reÃ§u */}
+            {/* Bouton télécharger le reçu */}
             <Button 
               variant="outline" 
               className="w-full h-12"
               onClick={generateReceipt}
             >
               <Receipt className="w-4 h-4 mr-2" />
-              TÃ©lÃ©charger le reÃ§u
+              Télécharger le reçu
             </Button>
 
-            {/* Lien pour suivre la rÃ©servation */}
+            {/* Lien pour suivre la réservation */}
             <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <Eye className="w-5 h-5 text-blue-600 flex-shrink-0" />
                   <div className="text-left flex-1">
-                    <p className="font-medium text-blue-800 dark:text-blue-200">Suivez votre rÃ©servation</p>
+                    <p className="font-medium text-blue-800 dark:text-blue-200">Suivez votre réservation</p>
                     <p className="text-xs text-blue-700 dark:text-blue-300">
-                      Consultez vos rÃ©servations dans votre espace client pour voir le statut de confirmation
+                      Consultez vos réservations dans votre espace client pour voir le statut de confirmation
                     </p>
                   </div>
                 </div>
@@ -1161,7 +1161,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
             )}
 
             <Button className="w-full h-12" onClick={handleClose}>
-              TerminÃ©
+              Terminé
             </Button>
           </div>
         );
@@ -1174,7 +1174,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
-            RÃ©server chez {restaurantName}
+            Réserver chez {restaurantName}
           </DialogTitle>
         </DialogHeader>
 

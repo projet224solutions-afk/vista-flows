@@ -65,7 +65,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
   const [creatingCard, setCreatingCard] = useState(false);
   const [userRole, setUserRole] = useState<string>('client');
   
-  // Ã‰tats pour les opÃ©rations wallet
+  // États pour les opérations wallet
   const [depositOpen, setDepositOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -84,12 +84,12 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     }
   }, [user]);
 
-  // DÃ©tecter le rÃ´le rÃ©el de l'utilisateur (agent, vendeur, etc.)
+  // Détecter le rôle réel de l'utilisateur (agent, vendeur, etc.)
   const detectUserRole = async () => {
     if (!user) return;
     
     try {
-      // VÃ©rifier si c'est un agent
+      // Vérifier si c'est un agent
       const { data: agentData } = await supabase
         .from('agents_management')
         .select('agent_code, type_agent')
@@ -101,7 +101,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         return;
       }
 
-      // VÃ©rifier si c'est un vendeur
+      // Vérifier si c'est un vendeur
       const { data: vendorData } = await supabase
         .from('vendors')
         .select('id')
@@ -113,11 +113,11 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         return;
       }
 
-      // Utiliser le rÃ´le du profil ou 'Client' par dÃ©faut
+      // Utiliser le rôle du profil ou 'Client' par défaut
       setUserRole(profile?.role || 'Client');
       setUserRole(profile?.role || 'Client');
     } catch (error) {
-      console.error('Erreur dÃ©tection rÃ´le:', error);
+      console.error('Erreur détection rôle:', error);
       setUserRole(profile?.role || 'Client');
     }
   };
@@ -127,21 +127,21 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
 
     setLoading(true);
     try {
-      // Source unique: profiles.public_id (ID standardisÃ©)
+      // Source unique: profiles.public_id (ID standardisé)
       const { data: profileData } = await supabase
         .from('profiles')
         .select('public_id')
         .eq('id', user.id)
         .single();
 
-      // RÃ©cupÃ©rer le wallet
+      // Récupérer le wallet
       const { data: walletData } = await supabase
         .from('wallets')
         .select('id, balance, currency')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // RÃ©cupÃ©rer la carte virtuelle
+      // Récupérer la carte virtuelle
       const { data: cardData } = await supabase
         .from('virtual_cards')
         .select('id, card_number, expiry_date, status')
@@ -163,13 +163,13 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
 
   const createVirtualCard = async () => {
     if (!user || !userInfo.wallet) {
-      toast.error('Wallet requis pour crÃ©er une carte virtuelle');
+      toast.error('Wallet requis pour créer une carte virtuelle');
       return;
     }
 
     setCreatingCard(true);
     try {
-      // GÃ©nÃ©rer les donnÃ©es de la carte
+      // Générer les données de la carte
       const cardNumber = '2245' + Math.floor(Math.random() * 1000000000000).toString().padStart(12, '0');
       const cvv = Math.floor(Math.random() * 900 + 100).toString();
       const currentDate = new Date();
@@ -196,12 +196,12 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
 
       if (error) throw error;
 
-      toast.success('Carte virtuelle crÃ©Ã©e avec succÃ¨s !');
-      await loadUserInfo(); // Recharger les donnÃ©es
+      toast.success('Carte virtuelle créée avec succès !');
+      await loadUserInfo(); // Recharger les données
 
     } catch (error) {
-      console.error('Erreur crÃ©ation carte virtuelle:', error);
-      toast.error('Erreur lors de la crÃ©ation de la carte virtuelle');
+      console.error('Erreur création carte virtuelle:', error);
+      toast.error('Erreur lors de la création de la carte virtuelle');
     } finally {
       setCreatingCard(false);
     }
@@ -210,7 +210,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
   const copyCardNumber = () => {
     if (userInfo.virtualCard) {
       navigator.clipboard.writeText(userInfo.virtualCard.card_number);
-      toast.success('NumÃ©ro de carte copiÃ© !');
+      toast.success('Numéro de carte copié !');
     }
   };
 
@@ -222,7 +222,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     return cardNumber.replace(/(.{4})(.{8})(.{4})/, '$1 **** **** $3');
   };
 
-  // Fonction pour effectuer un dÃ©pÃ´t
+  // Fonction pour effectuer un dépôt
   const handleDeposit = async () => {
     if (!user?.id || !depositAmount) {
       toast.error('Veuillez entrer un montant');
@@ -236,32 +236,32 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     }
 
     setProcessing(true);
-    console.log('ðŸ”„ DÃ©pÃ´t en cours:', { amount, userId: user.id });
+    console.log('🔄 Dépôt en cours:', { amount, userId: user.id });
     
     try {
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
         body: {
           operation: 'deposit',
           amount: amount,
-          description: 'DÃ©pÃ´t sur le wallet'
+          description: 'Dépôt sur le wallet'
         }
       });
 
-      console.log('âœ… RÃ©ponse dÃ©pÃ´t:', { data, error });
+      console.log('✅ Réponse dépôt:', { data, error });
 
       if (error) {
-        console.error('âŒ Erreur dÃ©pÃ´t:', error);
+        console.error('❌ Erreur dépôt:', error);
         throw error;
       }
 
-      toast.success(`DÃ©pÃ´t de ${formatPrice(amount)} effectuÃ© avec succÃ¨s !`);
+      toast.success(`Dépôt de ${formatPrice(amount)} effectué avec succès !`);
       setDepositAmount('');
       setDepositOpen(false);
       
-      // Recharger les donnÃ©es
+      // Recharger les données
       await loadUserInfo();
       
-      // Mettre Ã  jour le wallet balance localement
+      // Mettre à jour le wallet balance localement
       if (userInfo.wallet) {
         setUserInfo(prev => ({
           ...prev,
@@ -272,8 +272,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         }));
       }
     } catch (error) {
-      console.error('âŒ Erreur dÃ©pÃ´t:', error);
-      toast.error(error.message || 'Erreur lors du dÃ©pÃ´t');
+      console.error('❌ Erreur dépôt:', error);
+      toast.error(error.message || 'Erreur lors du dépôt');
     } finally {
       setProcessing(false);
     }
@@ -298,7 +298,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     }
 
     setProcessing(true);
-    console.log('ðŸ”„ Retrait en cours:', { amount, userId: user.id });
+    console.log('🔄 Retrait en cours:', { amount, userId: user.id });
     
     try {
       const { data, error } = await supabase.functions.invoke('wallet-operations', {
@@ -309,21 +309,21 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         }
       });
 
-      console.log('âœ… RÃ©ponse retrait:', { data, error });
+      console.log('✅ Réponse retrait:', { data, error });
 
       if (error) {
-        console.error('âŒ Erreur retrait:', error);
+        console.error('❌ Erreur retrait:', error);
         throw error;
       }
 
-      toast.success(`Retrait de ${formatPrice(amount)} effectuÃ© avec succÃ¨s !`);
+      toast.success(`Retrait de ${formatPrice(amount)} effectué avec succès !`);
       setWithdrawAmount('');
       setWithdrawOpen(false);
       
-      // Recharger les donnÃ©es
+      // Recharger les données
       await loadUserInfo();
       
-      // Mettre Ã  jour le wallet balance localement
+      // Mettre à jour le wallet balance localement
       if (userInfo.wallet) {
         setUserInfo(prev => ({
           ...prev,
@@ -334,14 +334,14 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
         }));
       }
     } catch (error) {
-      console.error('âŒ Erreur retrait:', error);
+      console.error('❌ Erreur retrait:', error);
       toast.error(error.message || 'Erreur lors du retrait');
     } finally {
       setProcessing(false);
     }
   };
 
-  // Fonction pour prÃ©visualiser un transfert
+  // Fonction pour prévisualiser un transfert
   const handlePreviewTransfer = async () => {
     if (!user?.id || !transferAmount || !recipientId) {
       toast.error('Veuillez remplir tous les champs');
@@ -362,7 +362,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     setProcessing(true);
     
     try {
-      // Appeler la fonction de prÃ©visualisation
+      // Appeler la fonction de prévisualisation
       const { data, error } = await supabase.rpc('preview_wallet_transfer', {
         p_sender_id: user.id,
         p_receiver_id: recipientId,
@@ -382,8 +382,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       setShowTransferPreview(true);
       setTransferOpen(false);
     } catch (error: any) {
-      console.error('âŒ Erreur prÃ©visualisation:', error);
-      toast.error(error.message || 'Erreur lors de la prÃ©visualisation');
+      console.error('❌ Erreur prévisualisation:', error);
+      toast.error(error.message || 'Erreur lors de la prévisualisation');
     } finally {
       setProcessing(false);
     }
@@ -397,7 +397,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     setShowTransferPreview(false);
     
     try {
-      // ExÃ©cuter le transfert avec la fonction RPC
+      // Exécuter le transfert avec la fonction RPC
       const { data, error } = await supabase.rpc('process_wallet_transaction', {
         p_sender_id: user.id,
         p_receiver_id: recipientId,
@@ -409,7 +409,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       if (error) throw error;
 
       toast.success(
-        `âœ… Transfert rÃ©ussi\nðŸ’¸ Frais appliquÃ©s : ${transferPreview.fee_amount.toLocaleString()} GNF\nðŸ’° Montant transfÃ©rÃ© : ${transferPreview.amount.toLocaleString()} GNF`,
+        `✅ Transfert réussi\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${transferPreview.amount.toLocaleString()} GNF`,
         { duration: 5000 }
       );
       
@@ -417,10 +417,10 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       setRecipientId('');
       setTransferPreview(null);
       
-      // Recharger les donnÃ©es
+      // Recharger les données
       await loadUserInfo();
     } catch (error: any) {
-      console.error('âŒ Erreur transfert:', error);
+      console.error('❌ Erreur transfert:', error);
       toast.error(error.message || 'Erreur lors du transfert');
     } finally {
       setProcessing(false);
@@ -466,19 +466,19 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Wallet Info - Toujours affichÃ© */}
+        {/* Wallet Info - Toujours affiché */}
         {showWalletDetails && (
           <div className="bg-white/60 rounded-lg p-4 border border-blue-200">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-primary-orange-600" />
+                <Wallet className="w-5 h-5 text-green-600" />
                 <span className="font-semibold text-gray-800">Wallet</span>
               </div>
-              <Badge variant="outline" className="bg-primary-orange-100 text-primary-orange-700">
-                {userInfo.wallet ? 'Actif' : 'CrÃ©ation...'}
+              <Badge variant="outline" className="bg-green-100 text-green-700">
+                {userInfo.wallet ? 'Actif' : 'Création...'}
               </Badge>
             </div>
-            <p className="text-2xl font-bold text-primary-orange-600 mb-3">
+            <p className="text-2xl font-bold text-green-600 mb-3">
               {userInfo.wallet ? 
                 `${userInfo.wallet.balance.toLocaleString()} ${userInfo.wallet.currency}` : 
                 'Initialisation...'
@@ -486,26 +486,26 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
             </p>
             {!userInfo.wallet && (
               <p className="text-xs text-gray-500 mt-1 mb-3">
-                Wallet en cours de crÃ©ation automatique...
+                Wallet en cours de création automatique...
               </p>
             )}
             
-            {/* Boutons d'opÃ©rations */}
+            {/* Boutons d'opérations */}
             {userInfo.wallet && (
               <div className="grid grid-cols-3 gap-2 mt-3">
-                {/* Bouton DÃ©pÃ´t */}
+                {/* Bouton Dépôt */}
                 <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline" className="flex flex-col h-auto py-2">
-                      <ArrowDownToLine className="w-4 h-4 mb-1 text-primary-orange-600" />
-                      <span className="text-xs">DÃ©pÃ´t</span>
+                      <ArrowDownToLine className="w-4 h-4 mb-1 text-green-600" />
+                      <span className="text-xs">Dépôt</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Effectuer un dÃ©pÃ´t</DialogTitle>
+                      <DialogTitle>Effectuer un dépôt</DialogTitle>
                       <DialogDescription>
-                        Ajoutez des fonds Ã  votre wallet
+                        Ajoutez des fonds à votre wallet
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -522,9 +522,9 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                       <Button 
                         onClick={handleDeposit} 
                         disabled={processing || !depositAmount}
-                        className="w-full bg-primary-orange-600 hover:bg-primary-orange-700"
+                        className="w-full bg-green-600 hover:bg-green-700"
                       >
-                        {processing ? 'Traitement...' : 'Confirmer le dÃ©pÃ´t'}
+                        {processing ? 'Traitement...' : 'Confirmer le dépôt'}
                       </Button>
                     </div>
                   </DialogContent>
@@ -582,7 +582,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                     <DialogHeader>
                       <DialogTitle>Effectuer un transfert</DialogTitle>
                       <DialogDescription>
-                        TransfÃ©rez des fonds Ã  un autre utilisateur
+                        Transférez des fonds à un autre utilisateur
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -623,7 +623,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
           </div>
         )}
 
-        {/* Dialog de confirmation avec prÃ©visualisation des frais */}
+        {/* Dialog de confirmation avec prévisualisation des frais */}
         <AlertDialog open={showTransferPreview} onOpenChange={setShowTransferPreview}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -635,19 +635,19 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                 <div className="space-y-4 mt-4">
                   <div className="p-4 bg-slate-50 rounded-lg space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">ðŸ’° Montant Ã  transfÃ©rer</span>
+                      <span className="text-sm font-medium">💰 Montant à transférer</span>
                       <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} GNF</span>
                     </div>
                     <div className="flex justify-between items-center text-orange-600">
-                      <span className="text-sm font-medium">ðŸ’¸ Frais de transfert ({transferPreview?.fee_percent}%)</span>
+                      <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
                       <span className="text-lg font-bold">{transferPreview?.fee_amount?.toLocaleString()} GNF</span>
                     </div>
                     <div className="border-t pt-3 flex justify-between items-center">
-                      <span className="text-sm font-medium">ðŸ“‰ Total dÃ©bitÃ© de votre compte</span>
+                      <span className="text-sm font-medium">📉 Total débité de votre compte</span>
                       <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} GNF</span>
                     </div>
-                    <div className="flex justify-between items-center text-primary-orange-600">
-                      <span className="text-sm font-medium">ðŸ“ˆ Montant net reÃ§u par le destinataire</span>
+                    <div className="flex justify-between items-center text-green-600">
+                      <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
                       <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} GNF</span>
                     </div>
                   </div>
@@ -656,7 +656,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                     <p className="text-sm text-blue-800">
                       <strong>Solde actuel:</strong> {transferPreview?.current_balance?.toLocaleString()} GNF
                       <br />
-                      <strong>Solde aprÃ¨s transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} GNF
+                      <strong>Solde après transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} GNF
                     </p>
                   </div>
 

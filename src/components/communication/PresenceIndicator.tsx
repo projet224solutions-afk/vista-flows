@@ -1,7 +1,7 @@
 /**
- * Composant d'indicateur de prÃ©sence en ligne - AmÃ©liorÃ©
- * Affiche un point colorÃ© selon le statut de l'utilisateur
- * Avec animations et tooltip dÃ©taillÃ©
+ * Composant d'indicateur de présence en ligne - Amélioré
+ * Affiche un point coloré selon le statut de l'utilisateur
+ * Avec animations et tooltip détaillé
  */
 
 import React from 'react';
@@ -28,8 +28,8 @@ const statusConfig: Record<PresenceStatus, {
   icon?: React.ComponentType<{ className?: string }>;
 }> = {
   online: {
-    color: 'bg-primary-blue-500',
-    bgColor: 'bg-primary-blue-500/20',
+    color: 'bg-emerald-500',
+    bgColor: 'bg-emerald-500/20',
     label: 'En ligne',
     animation: 'animate-pulse',
   },
@@ -46,7 +46,7 @@ const statusConfig: Record<PresenceStatus, {
   busy: {
     color: 'bg-red-500',
     bgColor: 'bg-red-500/20',
-    label: 'OccupÃ©',
+    label: 'Occupé',
   },
   in_call: {
     color: 'bg-violet-500',
@@ -84,7 +84,7 @@ export function PresenceIndicator({
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
     
-    if (diffMins < 1) return 'Ã€ l\'instant';
+    if (diffMins < 1) return 'À l\'instant';
     if (diffMins < 60) return `${diffMins} min`;
     if (diffHours < 24) return `${diffHours}h`;
     if (diffDays < 7) return `${diffDays}j`;
@@ -117,7 +117,7 @@ export function PresenceIndicator({
               {showLabel && (
                 <span className={cn(
                   'text-xs',
-                  status === 'online' ? 'text-primary-blue-700 dark:text-primary-blue-300' :
+                  status === 'online' ? 'text-emerald-700 dark:text-emerald-300' :
                   status === 'away' ? 'text-amber-700 dark:text-amber-300' :
                   status === 'busy' ? 'text-red-700 dark:text-red-300' :
                   status === 'in_call' ? 'text-violet-700 dark:text-violet-300' :
@@ -150,7 +150,7 @@ export function PresenceIndicator({
         )} />
         <span className={cn(
           'text-xs',
-          status === 'online' ? 'text-primary-blue-600 dark:text-primary-blue-400 font-medium' :
+          status === 'online' ? 'text-emerald-600 dark:text-emerald-400 font-medium' :
           'text-muted-foreground'
         )}>
           {showLastSeen && status === 'offline' && lastSeen 
@@ -161,7 +161,7 @@ export function PresenceIndicator({
     );
   }
 
-  // Variante dot par dÃ©faut
+  // Variante dot par défaut
   const indicator = (
     <div className={cn('flex items-center gap-1.5', className)}>
       <span
@@ -199,7 +199,7 @@ export function PresenceIndicator({
 }
 
 /**
- * Badge de prÃ©sence pour les avatars (positionnÃ© en overlay)
+ * Badge de présence pour les avatars (positionné en overlay)
  */
 interface PresenceBadgeProps {
   status: PresenceStatus;
@@ -248,7 +248,7 @@ export function PresenceBadge({
 }
 
 /**
- * Indicateur de frappe ("X est en train d'Ã©crire...")
+ * Indicateur de frappe ("X est en train d'écrire...")
  */
 interface TypingIndicatorProps {
   userNames: string[];
@@ -260,12 +260,12 @@ export function TypingIndicator({ userNames, className }: TypingIndicatorProps) 
 
   const getText = () => {
     if (userNames.length === 1) {
-      return `${userNames[0]} est en train d'Ã©crire`;
+      return `${userNames[0]} est en train d'écrire`;
     }
     if (userNames.length === 2) {
-      return `${userNames[0]} et ${userNames[1]} sont en train d'Ã©crire`;
+      return `${userNames[0]} et ${userNames[1]} sont en train d'écrire`;
     }
-    return `${userNames[0]} et ${userNames.length - 1} autres sont en train d'Ã©crire`;
+    return `${userNames[0]} et ${userNames.length - 1} autres sont en train d'écrire`;
   };
 
   return (
@@ -281,7 +281,7 @@ export function TypingIndicator({ userNames, className }: TypingIndicatorProps) 
 }
 
 /**
- * Badge de statut de message (envoyÃ©, livrÃ©, lu)
+ * Badge de statut de message (envoyé, livré, lu)
  */
 interface MessageStatusBadgeProps {
   status: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
@@ -341,10 +341,10 @@ export function MessageStatusBadge({ status, readAt, className }: MessageStatusB
         </TooltipTrigger>
         <TooltipContent side="bottom" className="text-xs">
           {status === 'sending' && 'Envoi en cours...'}
-          {status === 'sent' && 'EnvoyÃ©'}
-          {status === 'delivered' && 'LivrÃ©'}
+          {status === 'sent' && 'Envoyé'}
+          {status === 'delivered' && 'Livré'}
           {status === 'read' && (readAt ? `Lu le ${new Date(readAt).toLocaleString('fr-FR')}` : 'Lu')}
-          {status === 'failed' && 'Ã‰chec de l\'envoi'}
+          {status === 'failed' && 'Échec de l\'envoi'}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

@@ -1,6 +1,6 @@
 /**
- * ðŸ“Š ANALYTIQUES API - GRAPHIQUES EN TEMPS RÃ‰EL
- * Affiche les statistiques dÃ©taillÃ©es d'utilisation des API
+ * 📊 ANALYTIQUES API - GRAPHIQUES EN TEMPS RÉEL
+ * Affiche les statistiques détaillées d'utilisation des API
  */
 
 import { useState, useEffect } from 'react';
@@ -65,7 +65,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
       : '0'
   };
 
-  // DonnÃ©es pour graphique temporel (derniers 30 jours)
+  // Données pour graphique temporel (derniers 30 jours)
   const getLast30Days = () => {
     const days = [];
     for (let i = 29; i >= 0; i--) {
@@ -97,7 +97,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
     };
   });
 
-  // RÃ©partition par API
+  // Répartition par API
   const apiUsageData = apis.map(api => {
     const apiLogs = allLogs.filter(log => log.api_connection_id === api.id);
     return {
@@ -127,7 +127,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
 
   // Distribution des codes de statut
   const statusDistribution = [
-    { name: '2xx SuccÃ¨s', value: allLogs.filter(log => log.status_code && log.status_code >= 200 && log.status_code < 300).length, color: '#10B981' },
+    { name: '2xx Succès', value: allLogs.filter(log => log.status_code && log.status_code >= 200 && log.status_code < 300).length, color: '#10B981' },
     { name: '4xx Client', value: allLogs.filter(log => log.status_code && log.status_code >= 400 && log.status_code < 500).length, color: '#F59E0B' },
     { name: '5xx Serveur', value: allLogs.filter(log => log.status_code && log.status_code >= 500).length, color: '#EF4444' }
   ].filter(item => item.value > 0);
@@ -151,7 +151,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total RequÃªtes</p>
+                <p className="text-sm text-muted-foreground">Total Requêtes</p>
                 <p className="text-2xl font-bold">{stats.totalRequests.toLocaleString()}</p>
               </div>
               <Activity className="h-8 w-8 text-primary" />
@@ -163,10 +163,10 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Taux de succÃ¨s</p>
-                <p className="text-2xl font-bold text-primary-orange-600">{stats.successRate}%</p>
+                <p className="text-sm text-muted-foreground">Taux de succès</p>
+                <p className="text-2xl font-bold text-green-600">{stats.successRate}%</p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-primary-orange-600" />
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -208,7 +208,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
         </Card>
       </div>
 
-      {/* Graphiques dÃ©taillÃ©s */}
+      {/* Graphiques détaillés */}
       <Tabs defaultValue="timeline" className="space-y-4">
         <TabsList>
           <TabsTrigger value="timeline">Chronologie</TabsTrigger>
@@ -221,8 +221,8 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
         <TabsContent value="timeline" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>ActivitÃ© sur 30 jours</CardTitle>
-              <CardDescription>Ã‰volution des requÃªtes et tokens consommÃ©s</CardDescription>
+              <CardTitle>Activité sur 30 jours</CardTitle>
+              <CardDescription>Évolution des requêtes et tokens consommés</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
@@ -251,7 +251,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Temps de rÃ©ponse et erreurs</CardTitle>
+              <CardTitle>Temps de réponse et erreurs</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -284,7 +284,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="requests" fill="#3B82F6" name="RequÃªtes" />
+                  <Bar dataKey="requests" fill="#3B82F6" name="Requêtes" />
                   <Bar dataKey="tokens" fill="#10B981" name="Tokens" />
                 </BarChart>
               </ResponsiveContainer>
@@ -305,7 +305,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
                   <PolarGrid />
                   <PolarAngleAxis dataKey="api" />
                   <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                  <Radar name="FiabilitÃ©" dataKey="fiabilite" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
+                  <Radar name="Fiabilité" dataKey="fiabilite" stroke="#10B981" fill="#10B981" fillOpacity={0.6} />
                   <Radar name="Vitesse" dataKey="vitesse" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} />
                   <Radar name="Utilisation" dataKey="utilisation" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.6} />
                   <Legend />

@@ -1,6 +1,6 @@
 /**
  * CONNECTOR MANAGER COMPONENT
- * Interface admin pour gÃ©rer les connecteurs dropshipping
+ * Interface admin pour gérer les connecteurs dropshipping
  * 
  * @module ConnectorManager
  * @version 1.0.0
@@ -77,26 +77,26 @@ function ConnectorCard({
 }: ConnectorCardProps) {
   const getRegionIcon = () => {
     switch (connector.region) {
-      case 'CHINA': return 'ðŸ‡¨ðŸ‡³';
-      case 'LOCAL': return 'ðŸŒ';
-      case 'GLOBAL': return 'ðŸŒ';
+      case 'CHINA': return '🇨🇳';
+      case 'LOCAL': return '🌍';
+      case 'GLOBAL': return '🌐';
       default: return <Globe className="w-4 h-4" />;
     }
   };
   
   const getStatusBadge = () => {
     if (isActive) {
-      return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">Actif</Badge>;
+      return <Badge className="bg-green-500">Actif</Badge>;
     }
     switch (connector.status) {
       case 'stable': return <Badge variant="outline">Disponible</Badge>;
       case 'beta': return <Badge variant="secondary">Beta</Badge>;
-      case 'deprecated': return <Badge variant="destructive">ObsolÃ¨te</Badge>;
+      case 'deprecated': return <Badge variant="destructive">Obsolète</Badge>;
     }
   };
   
   return (
-    <Card className={`transition-all ${isActive ? 'ring-2 ring-primary-orange-500' : ''}`}>
+    <Card className={`transition-all ${isActive ? 'ring-2 ring-green-500' : ''}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -133,7 +133,7 @@ function ConnectorCard({
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : isActive ? (
-                <><PowerOff className="w-4 h-4 mr-1" /> DÃ©sactiver</>
+                <><PowerOff className="w-4 h-4 mr-1" /> Désactiver</>
               ) : (
                 <><Power className="w-4 h-4 mr-1" /> Activer</>
               )}
@@ -164,7 +164,7 @@ function ConnectorCard({
           <Alert className="mt-3">
             <Info className="w-4 h-4" />
             <AlertDescription className="text-xs">
-              Ce connecteur nÃ©cessite une clÃ© API
+              Ce connecteur nécessite une clé API
             </AlertDescription>
           </Alert>
         )}
@@ -198,7 +198,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
   
   const [activatingConnector, setActivatingConnector] = useState<ConnectorType | null>(null);
   
-  // Grouper les connecteurs par rÃ©gion
+  // Grouper les connecteurs par région
   const chinaConnectors = availableConnectors.filter(c => c.region === 'CHINA');
   const otherConnectors = availableConnectors.filter(c => c.region !== 'CHINA');
   
@@ -234,7 +234,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
   
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -251,12 +251,12 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
         </Badge>
       </div>
       
-      {/* RÃ©sumÃ© des connecteurs actifs */}
+      {/* Résumé des connecteurs actifs */}
       {activeConnectors.length > 0 && (
-        <Alert className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
-          <Check className="w-4 h-4 text-primary-orange-600" />
-          <AlertTitle className="text-primary-orange-800">Connecteurs actifs</AlertTitle>
-          <AlertDescription className="text-primary-orange-700">
+        <Alert className="bg-green-50 border-green-200">
+          <Check className="w-4 h-4 text-green-600" />
+          <AlertTitle className="text-green-800">Connecteurs actifs</AlertTitle>
+          <AlertDescription className="text-green-700">
             {activeConnectors.map(c => {
               const info = availableConnectors.find(a => a.type === c);
               return info?.name;
@@ -265,7 +265,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
         </Alert>
       )}
       
-      {/* Tabs par rÃ©gion */}
+      {/* Tabs par région */}
       <Tabs defaultValue="china" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="china" className="flex items-center gap-2">
@@ -320,17 +320,17 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
           <DialogHeader>
             <DialogTitle>Configurer {configDialog.connector}</DialogTitle>
             <DialogDescription>
-              Configurez les paramÃ¨tres du connecteur
+              Configurez les paramètres du connecteur
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="apiKey">ClÃ© API</Label>
+              <Label htmlFor="apiKey">Clé API</Label>
               <Input
                 id="apiKey"
                 type="password"
-                placeholder="Entrez votre clÃ© API"
+                placeholder="Entrez votre clé API"
                 value={config.apiKey || ''}
                 onChange={(e) => setConfig(prev => ({ ...prev, apiKey: e.target.value }))}
               />

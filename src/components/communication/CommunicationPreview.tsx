@@ -1,6 +1,6 @@
 /**
- * ðŸ‘ï¸ APERÃ‡U COMMUNICATION - 224SOLUTIONS
- * Composant d'aperÃ§u pour corriger les problÃ¨mes d'affichage
+ * 👁️ APERÇU COMMUNICATION - 224SOLUTIONS
+ * Composant d'aperçu pour corriger les problèmes d'affichage
  */
 
 import React from 'react';
@@ -23,7 +23,7 @@ interface CommunicationPreviewProps {
 }
 
 export default function CommunicationPreview({ className }: CommunicationPreviewProps) {
-  // DonnÃ©es d'aperÃ§u
+  // Données d'aperçu
   const previewStats = {
     totalMessages: 1247,
     totalCalls: 89,
@@ -36,7 +36,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
       id: '1',
       sender: 'Jean Dupont',
       role: 'Vendeur',
-      message: 'Bonjour, avez-vous reÃ§u ma commande ?',
+      message: 'Bonjour, avez-vous reçu ma commande ?',
       time: '10:30',
       unread: true
     },
@@ -98,8 +98,8 @@ export default function CommunicationPreview({ className }: CommunicationPreview
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary-orange-100 rounded-lg">
-                <Phone className="w-5 h-5 text-primary-orange-600" />
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Phone className="w-5 h-5 text-green-600" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Appels</p>
@@ -139,12 +139,12 @@ export default function CommunicationPreview({ className }: CommunicationPreview
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Messages rÃ©cents */}
+        {/* Messages récents */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <MessageSquare className="w-5 h-5" />
-              <span>Messages rÃ©cents</span>
+              <span>Messages récents</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -181,12 +181,12 @@ export default function CommunicationPreview({ className }: CommunicationPreview
           </CardContent>
         </Card>
 
-        {/* Appels rÃ©cents */}
+        {/* Appels récents */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Phone className="w-5 h-5" />
-              <span>Appels rÃ©cents</span>
+              <span>Appels récents</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -194,11 +194,11 @@ export default function CommunicationPreview({ className }: CommunicationPreview
               {recentCalls.map((call) => (
                 <div key={call.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-primary-orange-100 rounded-lg">
+                    <div className="p-2 bg-green-100 rounded-lg">
                       {call.type === 'video' ? (
-                        <Video className="w-4 h-4 text-primary-orange-600" />
+                        <Video className="w-4 h-4 text-green-600" />
                       ) : (
-                        <Phone className="w-4 h-4 text-primary-orange-600" />
+                        <Phone className="w-4 h-4 text-green-600" />
                       )}
                     </div>
                     <div>
@@ -215,7 +215,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
                     </div>
                   </div>
                   <Badge variant="secondary" className="text-xs">
-                    {call.status === 'completed' ? 'TerminÃ©' : 'ManquÃ©'}
+                    {call.status === 'completed' ? 'Terminé' : 'Manqué'}
                   </Badge>
                 </div>
               ))}
@@ -224,37 +224,37 @@ export default function CommunicationPreview({ className }: CommunicationPreview
         </Card>
       </div>
 
-      {/* FonctionnalitÃ©s disponibles */}
+      {/* Fonctionnalités disponibles */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <TrendingUp className="w-5 h-5" />
-            <span>FonctionnalitÃ©s de Communication</span>
+            <span>Fonctionnalités de Communication</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 border rounded-lg text-center">
               <MessageSquare className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-              <h3 className="font-medium text-sm">Chat Temps RÃ©el</h3>
+              <h3 className="font-medium text-sm">Chat Temps Réel</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Messages, fichiers, localisation
               </p>
             </div>
             
             <div className="p-4 border rounded-lg text-center">
-              <Phone className="w-8 h-8 text-primary-orange-500 mx-auto mb-2" />
+              <Phone className="w-8 h-8 text-green-500 mx-auto mb-2" />
               <h3 className="font-medium text-sm">Appels Audio</h3>
               <p className="text-xs text-muted-foreground mt-1">
-                QualitÃ© HD, contrÃ´les avancÃ©s
+                Qualité HD, contrôles avancés
               </p>
             </div>
             
             <div className="p-4 border rounded-lg text-center">
               <Video className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-              <h3 className="font-medium text-sm">Appels VidÃ©o</h3>
+              <h3 className="font-medium text-sm">Appels Vidéo</h3>
               <p className="text-xs text-muted-foreground mt-1">
-                1:1 et confÃ©rences
+                1:1 et conférences
               </p>
             </div>
             
@@ -269,29 +269,29 @@ export default function CommunicationPreview({ className }: CommunicationPreview
         </CardContent>
       </Card>
 
-      {/* Statut du systÃ¨me */}
+      {/* Statut du système */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-muted-foreground">SystÃ¨me actif</span>
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-muted-foreground">Système actif</span>
               </div>
               
               <div className="flex items-center space-x-2">
                 <Bell className="w-4 h-4 text-blue-500" />
-                <span className="text-sm text-muted-foreground">Notifications activÃ©es</span>
+                <span className="text-sm text-muted-foreground">Notifications activées</span>
               </div>
               
               <div className="flex items-center space-x-2">
                 <Activity className="w-4 h-4 text-purple-500" />
-                <span className="text-sm text-muted-foreground">Temps rÃ©el</span>
+                <span className="text-sm text-muted-foreground">Temps réel</span>
               </div>
             </div>
             
-            <Badge variant="secondary" className="bg-primary-orange-100 text-primary-orange-800">
-              OpÃ©rationnel
+            <Badge variant="secondary" className="bg-green-100 text-green-800">
+              Opérationnel
             </Badge>
           </div>
         </CardContent>

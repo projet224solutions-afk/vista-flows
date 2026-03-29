@@ -8,13 +8,13 @@ interface DriverKYCStatusProps {
 
 export function DriverKYCStatus({ isKycValid, onOpenKyc }: DriverKYCStatusProps) {
   if (isKycValid) {
-    return <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white">KYC vÃ©rifiÃ©</Badge>;
+    return <Badge variant="default" className="bg-green-500 text-white">KYC vérifié</Badge>;
   }
   return (
     <div className="flex items-center gap-2">
       <Badge variant="destructive">KYC requis</Badge>
       {onOpenKyc && (
-        <Button size="sm" variant="outline" onClick={onOpenKyc}>ComplÃ©ter le KYC</Button>
+        <Button size="sm" variant="outline" onClick={onOpenKyc}>Compléter le KYC</Button>
       )}
     </div>
   );

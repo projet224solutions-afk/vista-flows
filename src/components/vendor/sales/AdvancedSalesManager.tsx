@@ -1,6 +1,6 @@
 /**
- * GESTIONNAIRE VENTES AVANCÃ‰ES
- * Ventes groupÃ©es, retours, Ã  crÃ©dit, promotions
+ * GESTIONNAIRE VENTES AVANCÉES
+ * Ventes groupées, retours, à crédit, promotions
  */
 
 import { useState, useEffect } from 'react';
@@ -20,7 +20,7 @@ import {
   Package, Users, Calendar, Search, Banknote, CheckCircle, Eye, Check
 } from 'lucide-react';
 
-// Type produit pour la sÃ©lection
+// Type produit pour la sélection
 interface Product {
   id: string;
   name: string;
@@ -29,7 +29,7 @@ interface Product {
   category_id?: string;
 }
 
-// Type catÃ©gorie
+// Type catégorie
 interface Category {
   id: string;
   name: string;
@@ -92,7 +92,7 @@ export default function AdvancedSalesManager() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('credit');
   
-  // Ã‰tats pour chaque section
+  // États pour chaque section
   const [creditSales, setCreditSales] = useState<CreditSale[]>([]);
   const [saleReturns, setSaleReturns] = useState<SaleReturn[]>([]);
   const [groupedSales, setGroupedSales] = useState<GroupedSale[]>([]);
@@ -106,7 +106,7 @@ export default function AdvancedSalesManager() {
   const [selectedCreditForPayment, setSelectedCreditForPayment] = useState<CreditSale | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   
-  // Dialog pour voir les dÃ©tails des produits d'une vente Ã  crÃ©dit
+  // Dialog pour voir les détails des produits d'une vente à crédit
   const [isCreditDetailsOpen, setIsCreditDetailsOpen] = useState(false);
   const [selectedCreditForDetails, setSelectedCreditForDetails] = useState<CreditSale | null>(null);
 
@@ -119,10 +119,10 @@ export default function AdvancedSalesManager() {
     selected_category: ''
   });
   
-  // Produits sÃ©lectionnÃ©s pour crÃ©dit (avec quantitÃ©)
+  // Produits sélectionnés pour crédit (avec quantité)
   const [creditSelectedProducts, setCreditSelectedProducts] = useState<{id: string; name: string; price: number; quantity: number; images?: string[]}[]>([]);
   
-  // Recherche produit pour crÃ©dits
+  // Recherche produit pour crédits
   const [creditProductSearch, setCreditProductSearch] = useState('');
 
   const [newReturn, setNewReturn] = useState({
@@ -148,18 +148,18 @@ export default function AdvancedSalesManager() {
     selected_categories: [] as string[]
   });
 
-  // Ã‰tat pour les produits et catÃ©gories
+  // État pour les produits et catégories
   const [vendorProducts, setVendorProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [productSearchTerm, setProductSearchTerm] = useState('');
 
-  // Chargement des donnÃ©es
+  // Chargement des données
   const loadData = async () => {
     if (!vendorId) return;
     setLoading(true);
     
     try {
-      // Ventes Ã  crÃ©dit
+      // Ventes à crédit
       const { data: creditData } = await supabase
         .from('vendor_credit_sales')
         .select('*')
@@ -194,7 +194,7 @@ export default function AdvancedSalesManager() {
         created_at: r.created_at
       })));
 
-      // Ventes groupÃ©es
+      // Ventes groupées
       const { data: groupedData } = await supabase
         .from('grouped_sales')
         .select('*')
@@ -233,7 +233,7 @@ export default function AdvancedSalesManager() {
           : []
       })));
 
-      // Produits du vendeur - chercher par vendor_id OU user_id pour compatibilitÃ©
+      // Produits du vendeur - chercher par vendor_id OU user_id pour compatibilité
       const { data: productsData, error: productsError } = await supabase
         .from('products')
         .select('id, name, price, images, category_id')
@@ -241,7 +241,7 @@ export default function AdvancedSalesManager() {
         .eq('is_active', true)
         .order('name');
       
-      console.log('[AdvancedSalesManager] Produits chargÃ©s:', productsData?.length || 0, 'pour vendorId:', vendorId);
+      console.log('[AdvancedSalesManager] Produits chargés:', productsData?.length || 0, 'pour vendorId:', vendorId);
       
       if (productsError) {
         console.error('[AdvancedSalesManager] Erreur chargement produits:', productsError);
@@ -249,7 +249,7 @@ export default function AdvancedSalesManager() {
       
       setVendorProducts(productsData || []);
 
-      // CatÃ©gories actives
+      // Catégories actives
       const { data: categoriesData } = await supabase
         .from('categories')
         .select('id, name')
@@ -269,7 +269,7 @@ export default function AdvancedSalesManager() {
     loadData();
   }, [vendorId]);
 
-  // CrÃ©er une vente Ã  crÃ©dit
+  // Créer une vente à crédit
   const createCreditSale = async () => {
     if (!vendorId || !newCredit.customer_name || !newCredit.due_date) {
       toast({ title: 'Champs requis manquants', variant: 'destructive' });
@@ -277,16 +277,16 @@ export default function AdvancedSalesManager() {
     }
     
     if (creditSelectedProducts.length === 0) {
-      toast({ title: 'Veuillez sÃ©lectionner au moins un produit', variant: 'destructive' });
+      toast({ title: 'Veuillez sélectionner au moins un produit', variant: 'destructive' });
       return;
     }
 
     try {
-      // Calculer le total Ã  partir des produits sÃ©lectionnÃ©s
+      // Calculer le total à partir des produits sélectionnés
       const calculatedTotal = creditSelectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
       const orderNum = `CR-${Date.now().toString(36).toUpperCase()}`;
       
-      // PrÃ©parer les items pour sauvegarde
+      // Préparer les items pour sauvegarde
       const itemsToSave = creditSelectedProducts.map(p => ({
         id: p.id,
         name: p.name,
@@ -312,7 +312,7 @@ export default function AdvancedSalesManager() {
 
       if (error) throw error;
 
-      toast({ title: 'âœ… Vente Ã  crÃ©dit crÃ©Ã©e' });
+      toast({ title: '✅ Vente à crédit créée' });
       setIsNewCreditOpen(false);
       setNewCredit({ customer_name: '', total: '', due_date: '', notes: '', selected_category: '' });
       setCreditSelectedProducts([]);
@@ -322,7 +322,7 @@ export default function AdvancedSalesManager() {
     }
   };
 
-  // CrÃ©er un retour
+  // Créer un retour
   const createReturn = async () => {
     if (!vendorId || !newReturn.return_reason || !newReturn.refund_amount || !newReturn.unit_price) {
       toast({ title: 'Champs requis manquants', variant: 'destructive' });
@@ -343,7 +343,7 @@ export default function AdvancedSalesManager() {
 
       if (error) throw error;
 
-      toast({ title: 'âœ… Retour enregistrÃ©' });
+      toast({ title: '✅ Retour enregistré' });
       setIsNewReturnOpen(false);
       setNewReturn({ order_id: '', return_reason: '', refund_amount: '', quantity_returned: '1', unit_price: '', selected_category: '', selected_product: '' });
       loadData();
@@ -352,7 +352,7 @@ export default function AdvancedSalesManager() {
     }
   };
 
-  // CrÃ©er une promotion
+  // Créer une promotion
   const createPromo = async () => {
     if (!vendorId || !newPromo.name || !newPromo.discount_value) {
       toast({ title: 'Champs requis manquants', variant: 'destructive' });
@@ -376,7 +376,7 @@ export default function AdvancedSalesManager() {
 
       if (error) throw error;
 
-      toast({ title: 'âœ… Promotion crÃ©Ã©e' });
+      toast({ title: '✅ Promotion créée' });
       setIsNewPromoOpen(false);
       setNewPromo({ 
         name: '', 
@@ -394,7 +394,7 @@ export default function AdvancedSalesManager() {
     }
   };
 
-  // Encaisser un paiement sur une vente Ã  crÃ©dit
+  // Encaisser un paiement sur une vente à crédit
   const collectCreditPayment = async () => {
     if (!selectedCreditForPayment || !paymentAmount) {
       toast({ title: 'Montant requis', variant: 'destructive' });
@@ -408,7 +408,7 @@ export default function AdvancedSalesManager() {
     }
 
     if (amount > selectedCreditForPayment.remaining_amount) {
-      toast({ title: 'Le montant dÃ©passe le reste Ã  payer', variant: 'destructive' });
+      toast({ title: 'Le montant dépasse le reste à payer', variant: 'destructive' });
       return;
     }
 
@@ -429,8 +429,8 @@ export default function AdvancedSalesManager() {
       if (error) throw error;
 
       toast({ 
-        title: newStatus === 'paid' ? 'âœ… CrÃ©dit soldÃ© !' : 'âœ… Paiement enregistrÃ©',
-        description: `${amount.toLocaleString()} GNF encaissÃ©s`
+        title: newStatus === 'paid' ? '✅ Crédit soldé !' : '✅ Paiement enregistré',
+        description: `${amount.toLocaleString()} GNF encaissés`
       });
       setIsCollectPaymentOpen(false);
       setSelectedCreditForPayment(null);
@@ -448,7 +448,7 @@ export default function AdvancedSalesManager() {
     setIsCollectPaymentOpen(true);
   };
 
-  // Toggle sÃ©lection produit pour promo
+  // Toggle sélection produit pour promo
   const toggleProductSelection = (productId: string) => {
     setNewPromo(prev => ({
       ...prev,
@@ -458,7 +458,7 @@ export default function AdvancedSalesManager() {
     }));
   };
 
-  // Toggle sÃ©lection catÃ©gorie pour promo
+  // Toggle sélection catégorie pour promo
   const toggleCategorySelection = (categoryId: string) => {
     setNewPromo(prev => ({
       ...prev,
@@ -468,8 +468,8 @@ export default function AdvancedSalesManager() {
     }));
   };
 
-  // Filtrer les produits (catÃ©gories sÃ©lectionnÃ©es + recherche)
-  // RÃ¨gle demandÃ©e : si une catÃ©gorie est sÃ©lectionnÃ©e, n'afficher QUE les produits de cette/ces catÃ©gorie(s)
+  // Filtrer les produits (catégories sélectionnées + recherche)
+  // Règle demandée : si une catégorie est sélectionnée, n'afficher QUE les produits de cette/ces catégorie(s)
   const filteredProducts = vendorProducts.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(productSearchTerm.toLowerCase());
     const matchesSelectedCategories =
@@ -479,7 +479,7 @@ export default function AdvancedSalesManager() {
     return matchesSearch && matchesSelectedCategories;
   });
   
-  // Produits dans les catÃ©gories sÃ©lectionnÃ©es (pour mise en Ã©vidence)
+  // Produits dans les catégories sélectionnées (pour mise en évidence)
   const productsInSelectedCategories = newPromo.selected_categories.length > 0
     ? vendorProducts.filter(p => p.category_id && newPromo.selected_categories.includes(p.category_id))
     : [];
@@ -500,10 +500,10 @@ export default function AdvancedSalesManager() {
         <div className="min-w-0">
           <h2 className="text-base sm:text-xl font-bold flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
-            <span className="truncate">Ventes AvancÃ©es</span>
+            <span className="truncate">Ventes Avancées</span>
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-            GÃ©rez vos ventes Ã  crÃ©dit, retours et promotions
+            Gérez vos ventes à crédit, retours et promotions
           </p>
         </div>
       </div>
@@ -515,7 +515,7 @@ export default function AdvancedSalesManager() {
             <div className="flex items-center gap-1.5 sm:gap-2">
               <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-muted-foreground">CrÃ©ances</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Créances</p>
                 <p className="text-sm sm:text-lg font-bold text-orange-600 truncate">{totalCredit.toLocaleString()}</p>
               </div>
             </div>
@@ -537,7 +537,7 @@ export default function AdvancedSalesManager() {
             <div className="flex items-center gap-1.5 sm:gap-2">
               <Package className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-muted-foreground">GroupÃ©es</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Groupées</p>
                 <p className="text-sm sm:text-lg font-bold">{groupedSales.length}</p>
               </div>
             </div>
@@ -546,10 +546,10 @@ export default function AdvancedSalesManager() {
         <Card>
           <CardContent className="p-2 sm:p-4">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-primary-orange-600 flex-shrink-0" />
+              <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs text-muted-foreground">Promos</p>
-                <p className="text-sm sm:text-lg font-bold text-primary-orange-600">{activePromos}</p>
+                <p className="text-sm sm:text-lg font-bold text-green-600">{activePromos}</p>
               </div>
             </div>
           </CardContent>
@@ -562,7 +562,7 @@ export default function AdvancedSalesManager() {
           <TabsList className="grid grid-cols-4 w-full min-w-[280px]">
             <TabsTrigger value="credit" className="text-[10px] sm:text-sm px-1 sm:px-3">
               <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-              <span className="hidden sm:inline">CrÃ©dit</span>
+              <span className="hidden sm:inline">Crédit</span>
             </TabsTrigger>
             <TabsTrigger value="returns" className="text-[10px] sm:text-sm px-1 sm:px-3">
               <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
@@ -570,7 +570,7 @@ export default function AdvancedSalesManager() {
             </TabsTrigger>
             <TabsTrigger value="grouped" className="text-[10px] sm:text-sm px-1 sm:px-3">
               <Package className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-              <span className="hidden sm:inline">GroupÃ©es</span>
+              <span className="hidden sm:inline">Groupées</span>
             </TabsTrigger>
             <TabsTrigger value="promos" className="text-[10px] sm:text-sm px-1 sm:px-3">
               <Percent className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
@@ -579,10 +579,10 @@ export default function AdvancedSalesManager() {
           </TabsList>
         </div>
 
-        {/* VENTES Ã€ CRÃ‰DIT */}
+        {/* VENTES À CRÉDIT */}
         <TabsContent value="credit" className="mt-3 sm:mt-4">
           <div className="flex justify-between items-center mb-3 sm:mb-4">
-            <h3 className="font-semibold text-sm sm:text-base">Ventes Ã  crÃ©dit</h3>
+            <h3 className="font-semibold text-sm sm:text-base">Ventes à crédit</h3>
             <Dialog open={isNewCreditOpen} onOpenChange={setIsNewCreditOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="h-8 text-xs sm:text-sm">
@@ -593,13 +593,13 @@ export default function AdvancedSalesManager() {
               </DialogTrigger>
               <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
                 <DialogHeader className="flex-shrink-0">
-                  <DialogTitle className="text-base sm:text-lg">Nouvelle vente Ã  crÃ©dit</DialogTitle>
+                  <DialogTitle className="text-base sm:text-lg">Nouvelle vente à crédit</DialogTitle>
                 </DialogHeader>
 
                 <ScrollArea className="flex-1 pr-4">
                   <div className="pb-4">
                     <div className="grid gap-4 lg:grid-cols-3">
-                      {/* COL 1 â€” Client & DÃ©tails */}
+                      {/* COL 1 — Client & Détails */}
                       <div className="space-y-4 lg:col-span-1">
                         <div className="rounded-lg border bg-muted/30 p-3">
                           <p className="text-xs text-muted-foreground mb-2">Informations client</p>
@@ -624,7 +624,7 @@ export default function AdvancedSalesManager() {
                         </div>
 
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">DÃ©tails du crÃ©dit</p>
+                          <p className="text-xs text-muted-foreground mb-2">Détails du crédit</p>
                           <div className="space-y-3">
                             <div>
                               <label className="text-sm font-medium">Montant (GNF) *</label>
@@ -636,7 +636,7 @@ export default function AdvancedSalesManager() {
                               />
                             </div>
                             <div>
-                              <label className="text-sm font-medium">Date d'Ã©chÃ©ance *</label>
+                              <label className="text-sm font-medium">Date d'échéance *</label>
                               <Input
                                 type="date"
                                 value={newCredit.due_date}
@@ -647,11 +647,11 @@ export default function AdvancedSalesManager() {
                         </div>
                       </div>
 
-                      {/* COL 2-3 â€” SÃ©lection CatÃ©gorie & Produit */}
+                      {/* COL 2-3 — Sélection Catégorie & Produit */}
                       <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
-                        {/* CatÃ©gories */}
+                        {/* Catégories */}
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">CatÃ©gorie (optionnel)</p>
+                          <p className="text-xs text-muted-foreground mb-2">Catégorie (optionnel)</p>
                           <ScrollArea className="h-56">
                             <div className="space-y-1">
                               {categories.map((cat) => (
@@ -680,22 +680,22 @@ export default function AdvancedSalesManager() {
                                 </div>
                               ))}
                               {categories.length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-4">Aucune catÃ©gorie</p>
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucune catégorie</p>
                               )}
                             </div>
                           </ScrollArea>
                         </div>
 
-                        {/* Produits sÃ©lectionnÃ©s */}
+                        {/* Produits sélectionnés */}
                         <div className="rounded-lg border bg-muted/30 p-3">
                           <div className="flex items-center justify-between mb-2">
-                            <p className="text-xs text-muted-foreground">Produits sÃ©lectionnÃ©s *</p>
+                            <p className="text-xs text-muted-foreground">Produits sélectionnés *</p>
                             {creditSelectedProducts.length > 0 && (
                               <Badge variant="secondary">{creditSelectedProducts.length} produit(s)</Badge>
                             )}
                           </div>
                           
-                          {/* Liste des produits sÃ©lectionnÃ©s */}
+                          {/* Liste des produits sélectionnés */}
                           {creditSelectedProducts.length > 0 && (
                             <div className="space-y-2 mb-3 p-2 bg-primary/5 rounded-lg border border-primary/20">
                               {creditSelectedProducts.map((sp) => (
@@ -745,7 +745,7 @@ export default function AdvancedSalesManager() {
                                         setCreditSelectedProducts(prev => prev.filter(p => p.id !== sp.id));
                                       }}
                                     >
-                                      Ã—
+                                      ×
                                     </Button>
                                   </div>
                                 </div>
@@ -831,7 +831,7 @@ export default function AdvancedSalesManager() {
                               const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
                               return matchesSearch && matchesCategory;
                             }).length === 0 && (
-                              <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvÃ©</p>
+                              <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvé</p>
                             )}
                           </ScrollArea>
                         </div>
@@ -842,7 +842,7 @@ export default function AdvancedSalesManager() {
 
                 <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
                   <Button variant="outline" onClick={() => setIsNewCreditOpen(false)}>Annuler</Button>
-                  <Button onClick={createCreditSale}>CrÃ©er</Button>
+                  <Button onClick={createCreditSale}>Créer</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -863,12 +863,12 @@ export default function AdvancedSalesManager() {
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-sm sm:text-base truncate">{sale.customer_name}</p>
                           <p className="text-xs sm:text-sm text-muted-foreground">
-                            Ã‰ch: {new Date(sale.due_date).toLocaleDateString('fr-FR')}
+                            Éch: {new Date(sale.due_date).toLocaleDateString('fr-FR')}
                           </p>
                         </div>
                         {/* Badge mobile only - inline with name */}
                         <Badge variant={sale.status === 'paid' ? 'default' : 'secondary'} className="sm:hidden text-[10px] h-5">
-                          {sale.status === 'paid' ? 'PayÃ©' : sale.status === 'partial' ? 'Part.' : 'Att.'}
+                          {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Part.' : 'Att.'}
                         </Badge>
                       </div>
                       
@@ -880,7 +880,7 @@ export default function AdvancedSalesManager() {
                             sur {sale.total.toLocaleString()}
                           </p>
                           <Badge variant={sale.status === 'paid' ? 'default' : 'secondary'} className="hidden sm:inline-flex">
-                            {sale.status === 'paid' ? 'PayÃ©' : sale.status === 'partial' ? 'Partiel' : 'En attente'}
+                            {sale.status === 'paid' ? 'Payé' : sale.status === 'partial' ? 'Partiel' : 'En attente'}
                           </Badge>
                         </div>
                         
@@ -908,14 +908,14 @@ export default function AdvancedSalesManager() {
                           )}
                           {sale.status === 'paid' && (
                             <div className="p-1.5 sm:p-2">
-                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary-orange-600" />
+                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                             </div>
                           )}
                         </div>
                       </div>
                     </div>
                     
-                    {/* Liste des produits vendus Ã  crÃ©dit */}
+                    {/* Liste des produits vendus à crédit */}
                     {sale.items && sale.items.length > 0 && (
                       <div className="border-t pt-3">
                         <p className="text-xs font-medium text-muted-foreground mb-2">Produits vendus:</p>
@@ -955,7 +955,7 @@ export default function AdvancedSalesManager() {
               <Card>
                 <CardContent className="p-8 text-center">
                   <CreditCard className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Aucune vente Ã  crÃ©dit</p>
+                  <p className="text-muted-foreground">Aucune vente à crédit</p>
                 </CardContent>
               </Card>
             )}
@@ -977,22 +977,22 @@ export default function AdvancedSalesManager() {
                     <p className="font-semibold text-lg">{selectedCreditForPayment.customer_name}</p>
                     <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Total crÃ©dit:</span>
+                        <span className="text-muted-foreground">Total crédit:</span>
                         <p className="font-medium">{selectedCreditForPayment.total.toLocaleString()} GNF</p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">DÃ©jÃ  payÃ©:</span>
-                        <p className="font-medium text-primary-orange-600">{selectedCreditForPayment.paid_amount.toLocaleString()} GNF</p>
+                        <span className="text-muted-foreground">Déjà payé:</span>
+                        <p className="font-medium text-green-600">{selectedCreditForPayment.paid_amount.toLocaleString()} GNF</p>
                       </div>
                       <div className="col-span-2">
-                        <span className="text-muted-foreground">Reste Ã  payer:</span>
+                        <span className="text-muted-foreground">Reste à payer:</span>
                         <p className="font-bold text-orange-600 text-lg">{selectedCreditForPayment.remaining_amount.toLocaleString()} GNF</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium">Montant Ã  encaisser (GNF) *</label>
+                    <label className="text-sm font-medium">Montant à encaisser (GNF) *</label>
                     <Input
                       type="number"
                       placeholder="0"
@@ -1013,7 +1013,7 @@ export default function AdvancedSalesManager() {
                         size="sm"
                         onClick={() => setPaymentAmount(Math.round(selectedCreditForPayment.remaining_amount / 2).toString())}
                       >
-                        MoitiÃ©
+                        Moitié
                       </Button>
                     </div>
                   </div>
@@ -1032,13 +1032,13 @@ export default function AdvancedSalesManager() {
             </DialogContent>
           </Dialog>
 
-          {/* Dialog de dÃ©tails des produits vendus Ã  crÃ©dit */}
+          {/* Dialog de détails des produits vendus à crédit */}
           <Dialog open={isCreditDetailsOpen} onOpenChange={setIsCreditDetailsOpen}>
             <DialogContent className="w-[95vw] sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col p-3 sm:p-6">
               <DialogHeader className="flex-shrink-0">
                 <DialogTitle className="flex items-center gap-2 text-sm sm:text-base">
                   <Package className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                  DÃ©tails vente Ã  crÃ©dit
+                  Détails vente à crédit
                 </DialogTitle>
               </DialogHeader>
               
@@ -1054,11 +1054,11 @@ export default function AdvancedSalesManager() {
                         <p className="font-semibold text-sm sm:text-lg truncate">{selectedCreditForDetails.customer_name}</p>
                         {selectedCreditForDetails.customer_phone && (
                           <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
-                            ðŸ“ž {selectedCreditForDetails.customer_phone}
+                            📞 {selectedCreditForDetails.customer_phone}
                           </p>
                         )}
                         <p className="text-xs sm:text-sm text-muted-foreground">
-                          Ã‰ch: {new Date(selectedCreditForDetails.due_date).toLocaleDateString('fr-FR')}
+                          Éch: {new Date(selectedCreditForDetails.due_date).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
                     </div>
@@ -1069,8 +1069,8 @@ export default function AdvancedSalesManager() {
                         <p className="font-bold text-xs sm:text-sm">{selectedCreditForDetails.total.toLocaleString()}</p>
                       </div>
                       <div className="bg-background/50 rounded p-1.5 sm:p-2">
-                        <span className="text-muted-foreground text-[10px] sm:text-xs">PayÃ©</span>
-                        <p className="font-medium text-primary-orange-600 text-xs sm:text-sm">{selectedCreditForDetails.paid_amount.toLocaleString()}</p>
+                        <span className="text-muted-foreground text-[10px] sm:text-xs">Payé</span>
+                        <p className="font-medium text-green-600 text-xs sm:text-sm">{selectedCreditForDetails.paid_amount.toLocaleString()}</p>
                       </div>
                       <div className="bg-background/50 rounded p-1.5 sm:p-2">
                         <span className="text-muted-foreground text-[10px] sm:text-xs">Reste</span>
@@ -1115,7 +1115,7 @@ export default function AdvancedSalesManager() {
                                   Prix unitaire: {item.price.toLocaleString()} GNF
                                 </p>
                                 <p className="text-sm">
-                                  QuantitÃ©: <span className="font-semibold">{item.quantity}</span>
+                                  Quantité: <span className="font-semibold">{item.quantity}</span>
                                 </p>
                               </div>
                               <div className="text-right flex-shrink-0">
@@ -1128,10 +1128,10 @@ export default function AdvancedSalesManager() {
                         ) : (
                           <div className="text-center py-8">
                             <Package className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-50" />
-                            <p className="text-muted-foreground font-medium">Aucun produit enregistrÃ©</p>
+                            <p className="text-muted-foreground font-medium">Aucun produit enregistré</p>
                             <p className="text-xs text-muted-foreground mt-2 max-w-[250px] mx-auto">
-                              Cette vente a Ã©tÃ© crÃ©Ã©e avant l'ajout de cette fonctionnalitÃ©. 
-                              Les nouvelles ventes Ã  crÃ©dit afficheront les produits sÃ©lectionnÃ©s.
+                              Cette vente a été créée avant l'ajout de cette fonctionnalité. 
+                              Les nouvelles ventes à crédit afficheront les produits sélectionnés.
                             </p>
                           </div>
                         )}
@@ -1170,13 +1170,13 @@ export default function AdvancedSalesManager() {
                 <ScrollArea className="flex-1 pr-4">
                   <div className="pb-4">
                     <div className="grid gap-4 lg:grid-cols-3">
-                      {/* COL 1 â€” Contexte & Raison */}
+                      {/* COL 1 — Contexte & Raison */}
                       <div className="space-y-4 lg:col-span-1">
                         <div className="rounded-lg border bg-muted/30 p-3">
                           <p className="text-xs text-muted-foreground mb-2">Contexte</p>
                           <div className="space-y-3">
                             <div>
-                              <label className="text-sm font-medium">NÂ° Commande (optionnel)</label>
+                              <label className="text-sm font-medium">N° Commande (optionnel)</label>
                               <Input
                                 placeholder="ORD-XXXXX"
                                 value={newReturn.order_id}
@@ -1186,7 +1186,7 @@ export default function AdvancedSalesManager() {
                             <div>
                               <label className="text-sm font-medium">Raison du retour *</label>
                               <Input
-                                placeholder="Produit dÃ©fectueux, mauvaise taille..."
+                                placeholder="Produit défectueux, mauvaise taille..."
                                 value={newReturn.return_reason}
                                 onChange={(e) => setNewReturn({ ...newReturn, return_reason: e.target.value })}
                               />
@@ -1199,7 +1199,7 @@ export default function AdvancedSalesManager() {
                           <div className="space-y-3">
                             <div className="grid gap-3 grid-cols-2">
                               <div>
-                                <label className="text-sm font-medium">QuantitÃ© *</label>
+                                <label className="text-sm font-medium">Quantité *</label>
                                 <Input
                                   type="number"
                                   placeholder="1"
@@ -1230,11 +1230,11 @@ export default function AdvancedSalesManager() {
                         </div>
                       </div>
 
-                      {/* COL 2-3 â€” SÃ©lection CatÃ©gorie & Produit */}
+                      {/* COL 2-3 — Sélection Catégorie & Produit */}
                       <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
-                        {/* CatÃ©gories */}
+                        {/* Catégories */}
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">CatÃ©gorie (optionnel)</p>
+                          <p className="text-xs text-muted-foreground mb-2">Catégorie (optionnel)</p>
                           <ScrollArea className="h-56">
                             <div className="space-y-1">
                               {categories.map((cat) => (
@@ -1265,7 +1265,7 @@ export default function AdvancedSalesManager() {
                                 </div>
                               ))}
                               {categories.length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-4">Aucune catÃ©gorie</p>
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucune catégorie</p>
                               )}
                             </div>
                           </ScrollArea>
@@ -1273,7 +1273,7 @@ export default function AdvancedSalesManager() {
 
                         {/* Produits */}
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">Produit concernÃ© *</p>
+                          <p className="text-xs text-muted-foreground mb-2">Produit concerné *</p>
                           <div className="relative mb-2">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -1337,7 +1337,7 @@ export default function AdvancedSalesManager() {
                                 const matchesCategory = !newReturn.selected_category || p.category_id === newReturn.selected_category;
                                 return matchesSearch && matchesCategory;
                               }).length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvÃ©</p>
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvé</p>
                               )}
                             </div>
                           </ScrollArea>
@@ -1383,17 +1383,17 @@ export default function AdvancedSalesManager() {
               <Card>
                 <CardContent className="p-6 sm:p-8 text-center">
                   <RotateCcw className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-muted-foreground/50" />
-                  <p className="text-sm sm:text-base text-muted-foreground">Aucun retour enregistrÃ©</p>
+                  <p className="text-sm sm:text-base text-muted-foreground">Aucun retour enregistré</p>
                 </CardContent>
               </Card>
             )}
           </div>
         </TabsContent>
 
-        {/* VENTES GROUPÃ‰ES */}
+        {/* VENTES GROUPÉES */}
         <TabsContent value="grouped" className="mt-3 sm:mt-4">
           <div className="flex justify-between items-center mb-3 sm:mb-4">
-            <h3 className="font-semibold text-sm sm:text-base">Ventes groupÃ©es</h3>
+            <h3 className="font-semibold text-sm sm:text-base">Ventes groupées</h3>
           </div>
           
           <div className="space-y-2 sm:space-y-3">
@@ -1415,7 +1415,7 @@ export default function AdvancedSalesManager() {
                     <div className="text-right flex-shrink-0">
                       <p className="font-bold text-sm sm:text-base">{gs.total.toLocaleString()}</p>
                       {gs.discount_value > 0 && (
-                        <p className="text-[10px] sm:text-xs text-primary-orange-600">-{gs.discount_value}%</p>
+                        <p className="text-[10px] sm:text-xs text-green-600">-{gs.discount_value}%</p>
                       )}
                     </div>
                   </div>
@@ -1426,8 +1426,8 @@ export default function AdvancedSalesManager() {
               <Card>
                 <CardContent className="p-6 sm:p-8 text-center">
                   <Package className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-muted-foreground/50" />
-                  <p className="text-sm sm:text-base text-muted-foreground">Aucune vente groupÃ©e</p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">CrÃ©Ã©es depuis le POS</p>
+                  <p className="text-sm sm:text-base text-muted-foreground">Aucune vente groupée</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Créées depuis le POS</p>
                 </CardContent>
               </Card>
             )}
@@ -1448,17 +1448,17 @@ export default function AdvancedSalesManager() {
               </DialogTrigger>
               <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
                 <DialogHeader className="flex-shrink-0">
-                  <DialogTitle className="text-base sm:text-lg">CrÃ©er une promotion</DialogTitle>
+                  <DialogTitle className="text-base sm:text-lg">Créer une promotion</DialogTitle>
                 </DialogHeader>
                 <ScrollArea className="flex-1 pr-4">
                 <div className="pb-4">
                   <div className="grid gap-4 lg:grid-cols-3">
-                    {/* COL 1 â€” Infos promotion */}
+                    {/* COL 1 — Infos promotion */}
                     <div className="space-y-4 lg:col-span-1">
                       <div>
                         <label className="text-sm font-medium">Nom de la promo *</label>
                         <Input
-                          placeholder="Ex: Soldes d'Ã©tÃ©"
+                          placeholder="Ex: Soldes d'été"
                           value={newPromo.name}
                           onChange={(e) => setNewPromo({ ...newPromo, name: e.target.value })}
                         />
@@ -1491,7 +1491,7 @@ export default function AdvancedSalesManager() {
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label className="text-sm font-medium">Date dÃ©but</label>
+                          <label className="text-sm font-medium">Date début</label>
                           <Input
                             type="date"
                             value={newPromo.start_date}
@@ -1509,23 +1509,23 @@ export default function AdvancedSalesManager() {
                       </div>
                     </div>
 
-                    {/* COL 2â€“3 â€” SÃ©lection (catÃ©gories + produits) */}
+                    {/* COL 2–3 — Sélection (catégories + produits) */}
                     <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
-                      {/* 1. SÃ‰LECTION DE CATÃ‰GORIES */}
+                      {/* 1. SÉLECTION DE CATÉGORIES */}
                       <div className="bg-muted/30 p-3 rounded-lg border">
                         <label className="text-sm font-medium flex items-center gap-2">
-                          ðŸ·ï¸ CatÃ©gories concernÃ©es
+                          🏷️ Catégories concernées
                         </label>
                         <p className="text-xs text-muted-foreground mb-2">
                           {newPromo.selected_categories.length === 0
-                            ? 'Toutes les catÃ©gories (aucune sÃ©lection)'
-                            : `${newPromo.selected_categories.length} catÃ©gorie(s) sÃ©lectionnÃ©e(s) - Les produits ci-dessous seront filtrÃ©s`}
+                            ? 'Toutes les catégories (aucune sélection)'
+                            : `${newPromo.selected_categories.length} catégorie(s) sélectionnée(s) - Les produits ci-dessous seront filtrés`}
                         </p>
 
                         <div className="h-56 border rounded-md p-2 bg-background overflow-y-auto">
                           {categories.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-4">
-                              Aucune catÃ©gorie disponible
+                              Aucune catégorie disponible
                             </p>
                           ) : (
                             <div className="space-y-2">
@@ -1564,27 +1564,27 @@ export default function AdvancedSalesManager() {
                               setNewPromo({ ...newPromo, selected_categories: [], selected_products: [] });
                             }}
                           >
-                            Tout dÃ©sÃ©lectionner
+                            Tout désélectionner
                           </Button>
                         )}
                       </div>
 
-                      {/* 2. SÃ‰LECTION DE PRODUITS */}
+                      {/* 2. SÉLECTION DE PRODUITS */}
                       <div>
                         <label className="text-sm font-medium flex items-center gap-2">
-                          ðŸ“¦ Produits Ã  promouvoir
+                          📦 Produits à promouvoir
                         </label>
                         <p className="text-xs text-muted-foreground mb-2">
                           {newPromo.selected_categories.length > 0 && productsInSelectedCategories.length > 0 && (
                             <span className="text-primary font-medium">
-                              {productsInSelectedCategories.length} produit(s) dans les catÃ©gories sÃ©lectionnÃ©es â€¢
+                              {productsInSelectedCategories.length} produit(s) dans les catégories sélectionnées •
                             </span>
                           )}
                           {newPromo.selected_products.length === 0
                             ? (newPromo.selected_categories.length > 0
-                                ? ' Produits de la/les catÃ©gorie(s) sÃ©lectionnÃ©e(s) (aucune sÃ©lection)'
-                                : ' Tous les produits (aucune sÃ©lection)')
-                            : ` ${newPromo.selected_products.length} produit(s) sÃ©lectionnÃ©(s)`}
+                                ? ' Produits de la/les catégorie(s) sélectionnée(s) (aucune sélection)'
+                                : ' Tous les produits (aucune sélection)')
+                            : ` ${newPromo.selected_products.length} produit(s) sélectionné(s)`}
                         </p>
 
                         {/* Recherche */}
@@ -1607,9 +1607,9 @@ export default function AdvancedSalesManager() {
                           ) : filteredProducts.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-4">
                               {productSearchTerm
-                                ? `Aucun rÃ©sultat pour "${productSearchTerm}"`
+                                ? `Aucun résultat pour "${productSearchTerm}"`
                                 : newPromo.selected_categories.length > 0
-                                  ? 'Aucun produit dans la/les catÃ©gorie(s) sÃ©lectionnÃ©e(s)'
+                                  ? 'Aucun produit dans la/les catégorie(s) sélectionnée(s)'
                                   : 'Aucun produit disponible'}
                             </p>
                           ) : (
@@ -1659,7 +1659,7 @@ export default function AdvancedSalesManager() {
                                       </div>
                                     </div>
                                     {isSelected && (
-                                      <Badge variant="default" className="text-xs">âœ“</Badge>
+                                      <Badge variant="default" className="text-xs">✓</Badge>
                                     )}
                                   </div>
                                 );
@@ -1676,7 +1676,7 @@ export default function AdvancedSalesManager() {
                             className="mt-2"
                             onClick={() => setNewPromo({ ...newPromo, selected_products: [] })}
                           >
-                            Tout dÃ©sÃ©lectionner les produits
+                            Tout désélectionner les produits
                           </Button>
                         )}
                       </div>
@@ -1686,7 +1686,7 @@ export default function AdvancedSalesManager() {
                 </ScrollArea>
                 <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
                   <Button variant="outline" onClick={() => setIsNewPromoOpen(false)}>Annuler</Button>
-                  <Button onClick={createPromo}>CrÃ©er</Button>
+                  <Button onClick={createPromo}>Créer</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -1707,8 +1707,8 @@ export default function AdvancedSalesManager() {
                   <CardContent className="p-2.5 sm:p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
                       <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${promo.is_active ? 'bg-primary-orange-100 dark:bg-primary-orange-900/30' : 'bg-muted'}`}>
-                          <Percent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${promo.is_active ? 'text-primary-orange-600' : 'text-muted-foreground'}`} />
+                        <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${promo.is_active ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
+                          <Percent className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${promo.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1723,13 +1723,13 @@ export default function AdvancedSalesManager() {
                               : 'Sans limite'
                             }
                           </p>
-                          {/* Tags produits/catÃ©gories - hidden on mobile for space */}
+                          {/* Tags produits/catégories - hidden on mobile for space */}
                           <div className="hidden sm:flex flex-wrap gap-1 mt-1">
                             {linkedProducts.length > 0 ? (
                               <>
                                 {linkedProducts.slice(0, 2).map(p => (
                                   <Badge key={p.id} variant="outline" className="text-xs">
-                                    ðŸ“¦ {p.name}
+                                    📦 {p.name}
                                   </Badge>
                                 ))}
                                 {linkedProducts.length > 2 && (
@@ -1744,7 +1744,7 @@ export default function AdvancedSalesManager() {
                               <>
                                 {linkedCategories.slice(0, 2).map(c => (
                                   <Badge key={c.id} variant="secondary" className="text-xs">
-                                    ðŸ·ï¸ {c.name}
+                                    🏷️ {c.name}
                                   </Badge>
                                 ))}
                                 {linkedCategories.length > 2 && (
@@ -1765,12 +1765,12 @@ export default function AdvancedSalesManager() {
                           <div className="flex sm:hidden flex-wrap gap-1 mt-1">
                             {linkedProducts.length > 0 && (
                               <Badge variant="outline" className="text-[10px] h-4">
-                                ðŸ“¦ {linkedProducts.length}
+                                📦 {linkedProducts.length}
                               </Badge>
                             )}
                             {linkedCategories.length > 0 && (
                               <Badge variant="secondary" className="text-[10px] h-4">
-                                ðŸ·ï¸ {linkedCategories.length}
+                                🏷️ {linkedCategories.length}
                               </Badge>
                             )}
                             {linkedProducts.length === 0 && linkedCategories.length === 0 && (
@@ -1780,7 +1780,7 @@ export default function AdvancedSalesManager() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:items-end gap-1">
-                        <p className="font-bold text-sm sm:text-base text-primary-orange-600">
+                        <p className="font-bold text-sm sm:text-base text-green-600">
                           -{promo.discount_value}{promo.discount_type === 'percentage' ? '%' : ' GNF'}
                         </p>
                         <Badge variant={promo.is_active ? 'default' : 'secondary'} className="hidden sm:inline-flex">

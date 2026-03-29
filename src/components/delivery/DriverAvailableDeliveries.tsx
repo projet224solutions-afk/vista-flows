@@ -1,6 +1,6 @@
 /**
  * LIVRAISONS DISPONIBLES POUR LE LIVREUR
- * Affiche les offres avec les prix calculÃ©s selon la configuration du vendeur
+ * Affiche les offres avec les prix calculés selon la configuration du vendeur
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -48,7 +48,7 @@ interface AvailableDelivery {
   package_description?: string;
   payment_method?: string;
   created_at: string;
-  // DonnÃ©es de tarification
+  // Données de tarification
   base_price?: number;
   price_per_km?: number;
   distance_price?: number;
@@ -88,7 +88,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
         d.status === 'pending' && !d.driver_id && d.vendor_name
       );
 
-      // RÃ©cupÃ©rer les configurations de prix des vendeurs
+      // Récupérer les configurations de prix des vendeurs
       const vendorIds = [...new Set(validDeliveries.filter(d => d.vendor_id).map(d => d.vendor_id))];
       let vendorPricing: Record<string, { base_price: number; price_per_km: number }> = {};
 
@@ -108,7 +108,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
         }
       }
 
-      // Enrichir avec les donnÃ©es de tarification
+      // Enrichir avec les données de tarification
       const enrichedDeliveries = validDeliveries.map(d => {
         const pricing = d.vendor_id ? vendorPricing[d.vendor_id] : null;
         const distanceKm = d.distance_km || d.distance_vendor_to_client || 5;
@@ -138,7 +138,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
 
     setAcceptingId(delivery.id);
     try {
-      // VÃ©rifier disponibilitÃ©
+      // Vérifier disponibilité
       const { data: check, error: checkError } = await supabase
         .from('deliveries')
         .select('status, driver_id')
@@ -166,7 +166,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
 
       if (error) throw error;
 
-      toast.success('Livraison acceptÃ©e !');
+      toast.success('Livraison acceptée !');
       onAccept(delivery);
       setDeliveries(prev => prev.filter(d => d.id !== delivery.id));
     } catch (error) {
@@ -180,7 +180,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
   const handleRefuse = (deliveryId: string) => {
     // Masquer localement (le livreur peut l'ignorer)
     setDeliveries(prev => prev.filter(d => d.id !== deliveryId));
-    toast.info('Livraison ignorÃ©e');
+    toast.info('Livraison ignorée');
   };
 
   // Charger au montage et s'abonner aux nouvelles livraisons
@@ -235,7 +235,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
             Actualiser
           </Button>
           <p className="text-xs text-muted-foreground mt-2">
-            DerniÃ¨re mise Ã  jour: {lastRefresh.toLocaleTimeString('fr-FR')}
+            Dernière mise à jour: {lastRefresh.toLocaleTimeString('fr-FR')}
           </p>
         </CardContent>
       </Card>
@@ -259,7 +259,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
       {deliveries.map((delivery) => (
         <Card 
           key={delivery.id} 
-          className="border-2 border-orange-200 hover:border-orange-400 transition-colors bg-gradient-to-br from-orange-50/50 to-primary-orange-50/50 dark:from-orange-950/20 dark:to-primary-orange-950/20"
+          className="border-2 border-orange-200 hover:border-orange-400 transition-colors bg-gradient-to-br from-orange-50/50 to-green-50/50 dark:from-orange-950/20 dark:to-green-950/20"
         >
           <CardContent className="pt-4 space-y-4">
             {/* Vendeur */}
@@ -286,27 +286,27 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
                   {(delivery.distance_to_vendor || 2).toFixed(1)} km
                 </p>
               </div>
-              <div className="text-center p-2 bg-primary-orange-100/50 dark:bg-primary-orange-900/20 rounded">
-                <Navigation className="h-4 w-4 mx-auto text-primary-orange-600 mb-1" />
+              <div className="text-center p-2 bg-green-100/50 dark:bg-green-900/20 rounded">
+                <Navigation className="h-4 w-4 mx-auto text-green-600 mb-1" />
                 <p className="text-xs text-muted-foreground">Vers client</p>
-                <p className="font-bold text-sm text-primary-orange-700 dark:text-primary-orange-400">
+                <p className="font-bold text-sm text-green-700 dark:text-green-400">
                   {(delivery.distance_vendor_to_client || delivery.distance_km || 5).toFixed(1)} km
                 </p>
               </div>
               <div className="text-center p-2 bg-blue-100/50 dark:bg-blue-900/20 rounded">
                 <Clock className="h-4 w-4 mx-auto text-blue-600 mb-1" />
-                <p className="text-xs text-muted-foreground">Temps estimÃ©</p>
+                <p className="text-xs text-muted-foreground">Temps estimé</p>
                 <p className="font-bold text-sm text-blue-700 dark:text-blue-400">
                   ~{delivery.estimated_time_minutes || 15} min
                 </p>
               </div>
             </div>
 
-            {/* DÃ©tail tarification vendeur */}
-            <div className="p-3 bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/20 dark:to-primary-orange-950/20 rounded-lg border border-primary-orange-200/50">
+            {/* Détail tarification vendeur */}
+            <div className="p-3 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 rounded-lg border border-green-200/50">
               <div className="flex items-center gap-2 mb-2">
-                <Calculator className="h-4 w-4 text-primary-orange-600" />
-                <span className="text-xs font-medium text-primary-orange-700 dark:text-primary-orange-400">Tarification vendeur</span>
+                <Calculator className="h-4 w-4 text-green-600" />
+                <span className="text-xs font-medium text-green-700 dark:text-green-400">Tarification vendeur</span>
               </div>
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between">
@@ -315,19 +315,19 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
-                    Distance Ã— {(delivery.price_per_km || 1000).toLocaleString()} GNF/km
+                    Distance × {(delivery.price_per_km || 1000).toLocaleString()} GNF/km
                   </span>
                   <span>{formatCurrency(delivery.distance_price || 0)}</span>
                 </div>
-                <div className="flex justify-between pt-1 border-t border-primary-orange-200/50 font-medium">
+                <div className="flex justify-between pt-1 border-t border-green-200/50 font-medium">
                   <span>Total livraison</span>
-                  <span className="text-primary-orange-700 dark:text-primary-orange-400">{formatCurrency(delivery.delivery_fee)}</span>
+                  <span className="text-green-700 dark:text-green-400">{formatCurrency(delivery.delivery_fee)}</span>
                 </div>
               </div>
             </div>
 
             {/* Vos gains */}
-            <div className="flex items-center justify-between p-2 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-lg text-white">
+            <div className="flex items-center justify-between p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
                 <div>
@@ -343,7 +343,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
                 }
               >
                 <CreditCard className="h-3 w-3 mr-1" />
-                {delivery.payment_method === 'cod' ? 'COD' : 'PrÃ©payÃ©'}
+                {delivery.payment_method === 'cod' ? 'COD' : 'Prépayé'}
               </Badge>
             </div>
 
@@ -353,9 +353,9 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
               <span>{delivery.package_type || delivery.package_description || 'Colis standard'}</span>
             </div>
 
-            {/* Note sÃ©curitÃ© */}
+            {/* Note sécurité */}
             <p className="text-xs text-center text-muted-foreground">
-              ðŸ”’ L'adresse du client sera rÃ©vÃ©lÃ©e aprÃ¨s acceptation
+              🔒 L'adresse du client sera révélée après acceptation
             </p>
 
             {/* Actions */}
@@ -372,7 +372,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
               </Button>
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 hover:from-primary-blue-600 hover:to-primary-orange-600"
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                 onClick={() => handleAccept(delivery)}
                 disabled={acceptingId === delivery.id}
               >

@@ -1,7 +1,7 @@
 /**
  * Dashboard Bureau Syndicat pour gestion alertes SOS
- * Affichage temps rÃ©el des alertes d'urgence avec Supabase Realtime
- * Inclut lecteur de mÃ©dias SOS
+ * Affichage temps réel des alertes d'urgence avec Supabase Realtime
+ * Inclut lecteur de médias SOS
  */
 
 import { useState, useEffect } from 'react';
@@ -22,7 +22,7 @@ interface BureauSyndicatSOSDashboardProps {
 export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashboardProps) {
   const [sosAlerts, setSosAlerts] = useState<SOSAlert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [autoRefresh] = useState(true); // Toujours actif pour sÃ©curitÃ© - pas de toggle
+  const [autoRefresh] = useState(true); // Toujours actif pour sécurité - pas de toggle
 
   // Charger les alertes depuis Supabase
   const loadSOSAlerts = async () => {
@@ -30,7 +30,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
       // Charger TOUTES les alertes SOS actives (sans filtrer par bureau_id)
       const alerts = await taxiMotoSOSService.getActiveSOSAlerts();
       setSosAlerts(alerts);
-      console.log('ðŸ“¢ Alertes SOS chargÃ©es:', alerts.length, alerts);
+      console.log('📢 Alertes SOS chargées:', alerts.length, alerts);
     } catch (error) {
       console.error('Erreur chargement SOS:', error);
       toast.error('Erreur de chargement des alertes');
@@ -39,11 +39,11 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     }
   };
 
-  // Charger au montage et rafraÃ®chir pÃ©riodiquement
+  // Charger au montage et rafraîchir périodiquement
   useEffect(() => {
     loadSOSAlerts();
     
-    // RafraÃ®chissement automatique toutes les 5 secondes
+    // Rafraîchissement automatique toutes les 5 secondes
     const interval = setInterval(() => {
       if (autoRefresh) {
         loadSOSAlerts();
@@ -53,9 +53,9 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     return () => clearInterval(interval);
   }, [bureauId, autoRefresh]);
 
-  // Ã‰couter les nouvelles alertes SOS en temps rÃ©el via Supabase
+  // Écouter les nouvelles alertes SOS en temps réel via Supabase
   useEffect(() => {
-    console.log('ðŸ”” Configuration Realtime SOS...');
+    console.log('🔔 Configuration Realtime SOS...');
     
     const channel = supabase
       .channel('sos-alerts-realtime-' + Date.now())
@@ -67,17 +67,17 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           table: 'sos_alerts'
         },
         (payload) => {
-          console.log('ðŸš¨ NOUVELLE ALERTE SOS REÃ‡UE EN TEMPS RÃ‰EL:', payload);
+          console.log('🚨 NOUVELLE ALERTE SOS REÇUE EN TEMPS RÉEL:', payload);
           
           // Notification sonore et visuelle IMPORTANTE
-          toast.error('ðŸš¨ ALERTE SOS D\'URGENCE!', {
-            description: `${payload.new.driver_name || 'Un conducteur'} a besoin d'aide immÃ©diate!`,
+          toast.error('🚨 ALERTE SOS D\'URGENCE!', {
+            description: `${payload.new.driver_name || 'Un conducteur'} a besoin d'aide immédiate!`,
             duration: 30000,
             action: {
-              label: 'ðŸ§­ Localiser',
+              label: '🧭 Localiser',
               onClick: () => {
                 if (payload.new.latitude && payload.new.longitude) {
-                  window.open(`https://www.google.com/maps?q=${payload.new.latitude},${payload.new.longitude}`, '_blank', 'noopener,noreferrer');
+                  window.open(`https://www.google.com/maps?q=${payload.new.latitude},${payload.new.longitude}`, '_blank');
                 }
                 loadSOSAlerts();
               }
@@ -87,7 +87,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           // Jouer un son d'alerte fort
           playAlertSound();
 
-          // Recharger les alertes immÃ©diatement
+          // Recharger les alertes immédiatement
           loadSOSAlerts();
         }
       )
@@ -99,19 +99,19 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           table: 'sos_alerts'
         },
         (payload) => {
-          console.log('ðŸ“ Alerte SOS mise Ã  jour:', payload);
+          console.log('📝 Alerte SOS mise à jour:', payload);
           loadSOSAlerts();
         }
       )
       .subscribe((status) => {
-        console.log('ðŸ”” Realtime subscription status:', status);
+        console.log('🔔 Realtime subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('âœ… ConnectÃ© au temps rÃ©el SOS!');
+          console.log('✅ Connecté au temps réel SOS!');
         }
       });
 
     return () => {
-      console.log('ðŸ”• DÃ©connexion temps rÃ©el SOS');
+      console.log('🔕 Déconnexion temps réel SOS');
       supabase.removeChannel(channel);
     };
   }, []);
@@ -147,7 +147,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
   };
 
   const handleOpenMap = (lat: number, lng: number) => {
-    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
   };
 
   const handleNavigateToDriver = (lat: number, lng: number, driverName: string) => {
@@ -159,21 +159,21 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           const destination = `${lat},${lng}`;
           // Ouvrir Google Maps avec la navigation turn-by-turn
           const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving&dir_action=navigate`;
-          window.open(url, '_blank', 'noopener,noreferrer');
-          toast.success(`Navigation vers ${driverName} dÃ©marrÃ©e!`);
+          window.open(url, '_blank');
+          toast.success(`Navigation vers ${driverName} démarrée!`);
         },
         (error) => {
           console.error('Erreur GPS:', error);
           // Fallback: navigation sans position d'origine
           const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving&dir_action=navigate`;
-          window.open(url, '_blank', 'noopener,noreferrer');
+          window.open(url, '_blank');
         },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     } else {
       // Fallback: navigation simple
       const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.open(url, '_blank');
     }
   };
 
@@ -181,7 +181,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     const success = await taxiMotoSOSService.updateSOSStatus(sosId, 'EN_INTERVENTION');
     if (success) {
       loadSOSAlerts();
-      toast.success('Intervention dÃ©marrÃ©e');
+      toast.success('Intervention démarrée');
     }
   };
 
@@ -189,7 +189,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     const success = await taxiMotoSOSService.updateSOSStatus(sosId, 'RESOLU', bureauId);
     if (success) {
       loadSOSAlerts();
-      toast.success('SOS rÃ©solu avec succÃ¨s');
+      toast.success('SOS résolu avec succès');
     }
   };
 
@@ -198,21 +198,21 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     if (['DANGER', 'active', 'pending'].includes(status)) {
       return (
         <Badge className="bg-red-600 text-white animate-pulse">
-          ðŸš¨ DANGER ACTIF
+          🚨 DANGER ACTIF
         </Badge>
       );
     }
     if (['EN_INTERVENTION', 'in_progress'].includes(status)) {
       return (
         <Badge className="bg-orange-500 text-white">
-          ðŸš‘ EN INTERVENTION
+          🚑 EN INTERVENTION
         </Badge>
       );
     }
     if (['RESOLU', 'resolved'].includes(status)) {
       return (
-        <Badge className="bg-primary-orange-600 text-white">
-          âœ… RÃ‰SOLU
+        <Badge className="bg-green-600 text-white">
+          ✅ RÉSOLU
         </Badge>
       );
     }
@@ -225,7 +225,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     const diffMs = now.getTime() - then.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     
-    if (diffMins < 1) return 'Ã€ l\'instant';
+    if (diffMins < 1) return 'À l\'instant';
     if (diffMins === 1) return 'Il y a 1 min';
     if (diffMins < 60) return `Il y a ${diffMins} min`;
     
@@ -249,7 +249,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
 
   return (
     <div className="space-y-6 p-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-foreground flex items-center gap-3">
@@ -257,20 +257,20 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
             Alertes SOS
           </h2>
           <p className="text-muted-foreground mt-1">
-            Gestion des alertes d'urgence en temps rÃ©el
+            Gestion des alertes d'urgence en temps réel
           </p>
         </div>
         
         <div className="flex items-center gap-3">
           <Badge variant={autoRefresh ? 'default' : 'outline'} className="h-8">
-            {autoRefresh ? 'ðŸŸ¢ Temps rÃ©el actif' : 'â¸ï¸ Pause'}
+            {autoRefresh ? '🟢 Temps réel actif' : '⏸️ Pause'}
           </Badge>
           <Button
             variant="outline"
             size="sm"
             onClick={loadSOSAlerts}
           >
-            ðŸ”„ Actualiser
+            🔄 Actualiser
           </Button>
         </div>
       </div>
@@ -299,12 +299,12 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           </CardContent>
         </Card>
 
-        <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20">
+        <Card className="border-green-200 bg-green-50 dark:bg-green-950/20">
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Statut Realtime</div>
-              <div className="text-2xl font-bold text-primary-orange-600 mt-1">
-                ðŸŸ¢ CONNECTÃ‰
+              <div className="text-2xl font-bold text-green-600 mt-1">
+                🟢 CONNECTÉ
               </div>
             </div>
           </CardContent>
@@ -316,9 +316,9 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
         <Card>
           <CardContent className="py-12">
             <div className="text-center text-muted-foreground">
-              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-primary-orange-500" />
+              <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-500" />
               <p className="text-lg font-medium">Aucune alerte SOS active</p>
-              <p className="text-sm mt-2">Tous les conducteurs sont en sÃ©curitÃ©</p>
+              <p className="text-sm mt-2">Tous les conducteurs sont en sécurité</p>
             </div>
           </CardContent>
         </Card>
@@ -345,21 +345,21 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                 {/* Informations */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium">ðŸ“ž TÃ©lÃ©phone:</span>
-                    <p className="text-foreground">{sos.driver_phone || 'Non renseignÃ©'}</p>
+                    <span className="font-medium">📞 Téléphone:</span>
+                    <p className="text-foreground">{sos.driver_phone || 'Non renseigné'}</p>
                   </div>
                   <div>
-                    <span className="font-medium">â±ï¸ DÃ©clenchÃ©:</span>
+                    <span className="font-medium">⏱️ Déclenché:</span>
                     <p className="text-foreground">{formatTimeSince(sos.triggered_at)}</p>
                   </div>
                   <div>
-                    <span className="font-medium">ðŸ“ Position:</span>
+                    <span className="font-medium">📍 Position:</span>
                     <p className="text-foreground font-mono text-xs">
                       {sos.latitude?.toFixed(6) || 0}, {sos.longitude?.toFixed(6) || 0}
                     </p>
                   </div>
                   <div>
-                    <span className="font-medium">ðŸŽ¯ PrÃ©cision:</span>
+                    <span className="font-medium">🎯 Précision:</span>
                     <p className="text-foreground">
                       {sos.accuracy ? `${Math.round(sos.accuracy)}m` : 'N/A'}
                     </p>
@@ -369,7 +369,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                 {/* Historique GPS */}
                 {sos.gps_history && sos.gps_history.length > 0 && (
                   <div className="bg-muted/50 p-3 rounded-lg">
-                    <p className="font-medium text-sm mb-2">ðŸ“ Historique GPS ({sos.gps_history.length} points):</p>
+                    <p className="font-medium text-sm mb-2">📍 Historique GPS ({sos.gps_history.length} points):</p>
                     <div className="flex flex-wrap gap-2">
                       {sos.gps_history.slice(0, 5).map((point, idx) => (
                         <Badge key={idx} variant="outline" className="text-xs">
@@ -416,7 +416,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                     className="flex-1 min-w-[160px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg"
                   >
                     <Navigation className="w-4 h-4 mr-2 animate-pulse" />
-                    ðŸ§­ Naviguer GPS
+                    🧭 Naviguer GPS
                   </Button>
 
                   {['DANGER', 'active', 'pending'].includes(sos.status) && (
@@ -436,10 +436,10 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                       variant="default"
                       size="sm"
                       onClick={() => handleResolveSOS(sos.id)}
-                      className="flex-1 min-w-[140px] bg-primary-orange-600 hover:bg-primary-orange-700"
+                      className="flex-1 min-w-[140px] bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
-                      RÃ©soudre
+                      Résoudre
                     </Button>
                   )}
                 </div>
@@ -449,7 +449,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
         </div>
       )}
 
-      {/* Section MÃ©dias SOS reÃ§us */}
+      {/* Section Médias SOS reçus */}
       <div className="mt-8">
         <SOSMediaPlayer />
       </div>

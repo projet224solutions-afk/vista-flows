@@ -15,8 +15,8 @@ interface AgentWalletManagementProps {
 
 /**
  * Composant de gestion du wallet agent
- * RÃ©utilise UniversalWalletDashboard pour Ã©viter la duplication de code
- * Le systÃ¨me de dÃ©pÃ´t/retrait est identique Ã  celui des vendeurs/clients
+ * Réutilise UniversalWalletDashboard pour éviter la duplication de code
+ * Le système de dépôt/retrait est identique à celui des vendeurs/clients
  */
 export default function AgentWalletManagement({ 
   agentId, 
@@ -28,7 +28,7 @@ export default function AgentWalletManagement({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // RÃ©cupÃ©rer le user_id de l'agent depuis agents_management
+  // Récupérer le user_id de l'agent depuis agents_management
   const loadAgentData = useCallback(async () => {
     if (!agentId) {
       setError('ID agent manquant');
@@ -40,9 +40,9 @@ export default function AgentWalletManagement({
       setLoading(true);
       setError(null);
 
-      console.log('ðŸ” Chargement donnÃ©es agent:', agentId);
+      console.log('🔍 Chargement données agent:', agentId);
 
-      // RÃ©cupÃ©rer le user_id de l'agent
+      // Récupérer le user_id de l'agent
       const { data: agentData, error: agentError } = await supabase
         .from('agents_management')
         .select('user_id, name, agent_code')
@@ -50,19 +50,19 @@ export default function AgentWalletManagement({
         .single();
 
       if (agentError || !agentData?.user_id) {
-        console.error('âŒ Agent non trouvÃ© ou sans user_id:', agentError);
-        setError('Agent non trouvÃ© ou non liÃ© Ã  un compte utilisateur');
+        console.error('❌ Agent non trouvé ou sans user_id:', agentError);
+        setError('Agent non trouvé ou non lié à un compte utilisateur');
         setLoading(false);
         return;
       }
 
       const userId = agentData.user_id;
-      console.log('âœ… Agent trouvÃ©:', agentData.name, '| user_id:', userId);
+      console.log('✅ Agent trouvé:', agentData.name, '| user_id:', userId);
       
       setAgentUserId(userId);
       setAgentUserCode(agentData.agent_code || agentCode || null);
 
-      // VÃ©rifier/crÃ©er le wallet si nÃ©cessaire
+      // Vérifier/créer le wallet si nécessaire
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
         .select('id')
@@ -70,19 +70,19 @@ export default function AgentWalletManagement({
         .maybeSingle();
 
       if (!walletData && !walletError) {
-        // CrÃ©er le wallet automatiquement via RPC
-        console.log('ðŸ’¡ Initialisation du wallet pour agent userId:', userId);
+        // Créer le wallet automatiquement via RPC
+        console.log('💡 Initialisation du wallet pour agent userId:', userId);
         const { error: initError } = await supabase
           .rpc('initialize_user_wallet', { p_user_id: userId });
         
         if (initError) {
-          console.warn('âš ï¸ Initialisation wallet Ã©chouÃ©e:', initError);
+          console.warn('⚠️ Initialisation wallet échouée:', initError);
         }
       }
 
       setLoading(false);
     } catch (err: any) {
-      console.error('âŒ Erreur chargement agent:', err);
+      console.error('❌ Erreur chargement agent:', err);
       setError(err?.message || 'Erreur inconnue');
       setLoading(false);
     }
@@ -92,13 +92,13 @@ export default function AgentWalletManagement({
     loadAgentData();
   }, [loadAgentData]);
 
-  // Synchroniser agent_wallets quand le wallet principal est mis Ã  jour
+  // Synchroniser agent_wallets quand le wallet principal est mis à jour
   useEffect(() => {
     if (!agentUserId || !agentId) return;
 
     const handleWalletUpdate = async () => {
       try {
-        // RÃ©cupÃ©rer le solde actuel du wallet principal
+        // Récupérer le solde actuel du wallet principal
         const { data: walletData } = await supabase
           .from('wallets')
           .select('balance')
@@ -118,7 +118,7 @@ export default function AgentWalletManagement({
             }, { onConflict: 'agent_id' });
         }
       } catch (err) {
-        console.warn('âš ï¸ Sync agent_wallets Ã©chouÃ©e:', err);
+        console.warn('⚠️ Sync agent_wallets échouée:', err);
       }
     };
 
@@ -156,7 +156,7 @@ export default function AgentWalletManagement({
               </div>
               <Button onClick={loadAgentData} variant="default">
                 <RefreshCw className="w-4 h-4 mr-2" />
-                RÃ©essayer
+                Réessayer
               </Button>
             </div>
           </CardContent>
@@ -169,14 +169,14 @@ export default function AgentWalletManagement({
 
   return (
     <div className="space-y-4">
-      {/* En-tÃªte Agent */}
-      <Card className="bg-gradient-to-r from-primary-blue-500/10 to-primary-orange-500/10 border-primary-orange-200">
+      {/* En-tête Agent */}
+      <Card className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-200">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Shield className="w-5 h-5 text-primary-blue-600" />
+            <Shield className="w-5 h-5 text-emerald-600" />
             <span>Portefeuille Agent</span>
             {agentUserCode && (
-              <Badge variant="outline" className="ml-auto bg-primary-blue-50 text-primary-blue-700 border-primary-orange-300">
+              <Badge variant="outline" className="ml-auto bg-emerald-50 text-emerald-700 border-emerald-300">
                 {agentUserCode}
               </Badge>
             )}
@@ -184,12 +184,12 @@ export default function AgentWalletManagement({
         </CardHeader>
         <CardContent className="pt-0">
           <p className="text-sm text-muted-foreground">
-            GÃ©rez vos fonds avec les mÃªmes outils que les vendeurs et clients.
+            Gérez vos fonds avec les mêmes outils que les vendeurs et clients.
           </p>
         </CardContent>
       </Card>
 
-      {/* Utilisation du dashboard wallet universel - mÃªme systÃ¨me que vendeur/client */}
+      {/* Utilisation du dashboard wallet universel - même système que vendeur/client */}
       <UniversalWalletDashboard
         userId={agentUserId}
         userCode={agentUserCode || agentCode}

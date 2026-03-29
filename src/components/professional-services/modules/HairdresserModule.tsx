@@ -1,7 +1,7 @@
 /**
  * MODULE COIFFEUR / SALON
- * InspirÃ© de Booksy, Treatwell, StyleSeat
- * RÃ©servations, services, stylistes, programme fidÃ©litÃ©
+ * Inspiré de Booksy, Treatwell, StyleSeat
+ * Réservations, services, stylistes, programme fidélité
  */
 
 import { useState } from 'react';
@@ -49,7 +49,7 @@ interface Appointment {
   time: string;
   duration: number;
   totalPrice: number;
-  status: 'confirmÃ©' | 'en_attente' | 'en_cours' | 'terminÃ©' | 'annulÃ©';
+  status: 'confirmé' | 'en_attente' | 'en_cours' | 'terminé' | 'annulé';
   notes?: string;
 }
 
@@ -92,7 +92,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
   const [showNewServiceDialog, setShowNewServiceDialog] = useState(false);
 
-  // DonnÃ©es simulÃ©es
+  // Données simulées
   const [appointments] = useState<Appointment[]>([
     {
       id: '1',
@@ -104,7 +104,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
       time: '09:00',
       duration: 60,
       totalPrice: 150000,
-      status: 'confirmÃ©'
+      status: 'confirmé'
     },
     {
       id: '2',
@@ -128,7 +128,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
       time: '11:30',
       duration: 45,
       totalPrice: 80000,
-      status: 'confirmÃ©'
+      status: 'confirmé'
     },
     {
       id: '4',
@@ -188,16 +188,16 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
   ]);
 
   const [services] = useState<Service[]>([
-    { id: '1', name: 'Coupe femme', category: 'coupe', duration: 45, price: 100000, description: 'Coupe personnalisÃ©e avec shampoing', popular: true },
+    { id: '1', name: 'Coupe femme', category: 'coupe', duration: 45, price: 100000, description: 'Coupe personnalisée avec shampoing', popular: true },
     { id: '2', name: 'Coupe homme', category: 'coupe', duration: 30, price: 50000, description: 'Coupe tendance ou classique', popular: true },
-    { id: '3', name: 'Coloration complÃ¨te', category: 'coloration', duration: 90, price: 200000, description: 'Coloration professionnelle', popular: true },
-    { id: '4', name: 'MÃ¨ches / Balayage', category: 'coloration', duration: 120, price: 300000, description: 'Effet naturel et lumineux', popular: false },
-    { id: '5', name: 'Brushing', category: 'coiffure', duration: 30, price: 50000, description: 'Mise en forme au sÃ©choir', popular: true },
-    { id: '6', name: 'Chignon mariage', category: 'coiffure', duration: 90, price: 250000, description: 'Coiffure Ã©vÃ©nement spÃ©cial', popular: false },
+    { id: '3', name: 'Coloration complète', category: 'coloration', duration: 90, price: 200000, description: 'Coloration professionnelle', popular: true },
+    { id: '4', name: 'Mèches / Balayage', category: 'coloration', duration: 120, price: 300000, description: 'Effet naturel et lumineux', popular: false },
+    { id: '5', name: 'Brushing', category: 'coiffure', duration: 30, price: 50000, description: 'Mise en forme au séchoir', popular: true },
+    { id: '6', name: 'Chignon mariage', category: 'coiffure', duration: 90, price: 250000, description: 'Coiffure événement spécial', popular: false },
     { id: '7', name: 'Tresses africaines', category: 'coiffure', duration: 180, price: 200000, description: 'Tresses traditionnelles', popular: true },
-    { id: '8', name: 'Soin KÃ©ratine', category: 'soin', duration: 120, price: 350000, description: 'Lissage et soin profond', popular: false },
+    { id: '8', name: 'Soin Kératine', category: 'soin', duration: 120, price: 350000, description: 'Lissage et soin profond', popular: false },
     { id: '9', name: 'Taille barbe', category: 'barbe', duration: 20, price: 30000, description: 'Taille et entretien', popular: true },
-    { id: '10', name: 'Coupe enfant', category: 'enfant', duration: 25, price: 35000, description: 'Coupe adaptÃ©e aux enfants', popular: false }
+    { id: '10', name: 'Coupe enfant', category: 'enfant', duration: 25, price: 35000, description: 'Coupe adaptée aux enfants', popular: false }
   ]);
 
   const [loyaltyClients] = useState<LoyaltyClient[]>([
@@ -210,11 +210,11 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
 
   const getStatusBadge = (status: Appointment['status']) => {
     const styles = {
-      confirmÃ©: 'bg-primary-orange-100 text-primary-orange-800',
+      confirmé: 'bg-green-100 text-green-800',
       en_attente: 'bg-yellow-100 text-yellow-800',
       en_cours: 'bg-blue-100 text-blue-800',
-      terminÃ©: 'bg-gray-100 text-gray-800',
-      annulÃ©: 'bg-red-100 text-red-800'
+      terminé: 'bg-gray-100 text-gray-800',
+      annulé: 'bg-red-100 text-red-800'
     };
     return <Badge className={styles[status]}>{status.replace('_', ' ')}</Badge>;
   };
@@ -234,20 +234,20 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
       coupe: 'bg-blue-100 text-blue-800',
       coloration: 'bg-purple-100 text-purple-800',
       coiffure: 'bg-pink-100 text-pink-800',
-      soin: 'bg-primary-orange-100 text-primary-orange-800',
+      soin: 'bg-green-100 text-green-800',
       barbe: 'bg-orange-100 text-orange-800',
-      enfant: 'bg-primary-blue-100 text-primary-blue-800'
+      enfant: 'bg-cyan-100 text-cyan-800'
     };
     return <Badge className={colors[category]}>{category}</Badge>;
   };
 
   const handleAddAppointment = () => {
-    toast.success('Rendez-vous confirmÃ© !');
+    toast.success('Rendez-vous confirmé !');
     setShowNewAppointmentDialog(false);
   };
 
   const handleAddService = () => {
-    toast.success('Service ajoutÃ© au catalogue');
+    toast.success('Service ajouté au catalogue');
     setShowNewServiceDialog(false);
   };
 
@@ -259,7 +259,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl">
@@ -287,7 +287,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                 <Input placeholder="Nom complet" />
               </div>
               <div className="space-y-2">
-                <Label>TÃ©lÃ©phone</Label>
+                <Label>Téléphone</Label>
                 <Input placeholder="+224 6XX XX XX XX" />
               </div>
               <div className="space-y-2">
@@ -306,7 +306,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
               <div className="space-y-2">
                 <Label>Services</Label>
                 <Select>
-                  <SelectTrigger><SelectValue placeholder="SÃ©lectionner les services" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner les services" /></SelectTrigger>
                   <SelectContent>
                     {services.map(s => (
                       <SelectItem key={s.id} value={s.id}>
@@ -346,7 +346,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
             <p className="text-3xl font-bold mt-1">{todayAppointments}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
+        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <TrendingUp className="h-4 w-4" />
@@ -379,9 +379,9 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="agenda">Agenda</TabsTrigger>
-          <TabsTrigger value="equipe">Ã‰quipe</TabsTrigger>
+          <TabsTrigger value="equipe">Équipe</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="fidelite">FidÃ©litÃ©</TabsTrigger>
+          <TabsTrigger value="fidelite">Fidélité</TabsTrigger>
         </TabsList>
 
         {/* Agenda */}
@@ -408,16 +408,16 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                           {apt.clientPhone}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm text-primary">âœ‚ï¸ {apt.stylist}</span>
-                          <span className="text-sm text-muted-foreground">â€¢</span>
+                          <span className="text-sm text-primary">✂️ {apt.stylist}</span>
+                          <span className="text-sm text-muted-foreground">•</span>
                           <span className="text-sm text-muted-foreground">{apt.services.join(', ')}</span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-primary">{formatPrice(apt.totalPrice)}</p>
-                      {apt.status === 'confirmÃ©' && (
-                        <Button size="sm" className="mt-2">DÃ©marrer</Button>
+                      {apt.status === 'confirmé' && (
+                        <Button size="sm" className="mt-2">Démarrer</Button>
                       )}
                       {apt.status === 'en_cours' && (
                         <Button size="sm" variant="outline" className="mt-2">Terminer</Button>
@@ -430,9 +430,9 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
           </div>
         </TabsContent>
 
-        {/* Ã‰quipe */}
+        {/* Équipe */}
         <TabsContent value="equipe" className="space-y-4">
-          <h3 className="font-semibold">Notre Ã©quipe</h3>
+          <h3 className="font-semibold">Notre équipe</h3>
           <div className="grid gap-4 md:grid-cols-2">
             {stylists.map((stylist) => (
               <Card key={stylist.id} className={!stylist.available ? 'opacity-60' : ''}>
@@ -494,7 +494,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>CatÃ©gorie</Label>
+                      <Label>Catégorie</Label>
                       <Select>
                         <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
                         <SelectContent>
@@ -508,7 +508,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>DurÃ©e (min)</Label>
+                      <Label>Durée (min)</Label>
                       <Input type="number" placeholder="45" />
                     </div>
                   </div>
@@ -541,7 +541,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium">{service.name}</h4>
                         {getCategoryBadge(service.category)}
-                        {service.popular && <Badge variant="outline" className="text-yellow-600 border-yellow-600">â­ Populaire</Badge>}
+                        {service.popular && <Badge variant="outline" className="text-yellow-600 border-yellow-600">⭐ Populaire</Badge>}
                       </div>
                       <p className="text-sm text-muted-foreground">{service.description}</p>
                     </div>
@@ -559,15 +559,15 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
           </div>
         </TabsContent>
 
-        {/* Programme fidÃ©litÃ© */}
+        {/* Programme fidélité */}
         <TabsContent value="fidelite" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Programme FidÃ©litÃ©</h3>
+            <h3 className="font-semibold">Programme Fidélité</h3>
             <div className="flex gap-2">
-              <Badge variant="outline" className="text-amber-700">ðŸ¥‰ Bronze: 0-1000 pts</Badge>
-              <Badge variant="outline" className="text-gray-500">ðŸ¥ˆ Silver: 1000-2000 pts</Badge>
-              <Badge variant="outline" className="text-yellow-600">ðŸ¥‡ Gold: 2000-3000 pts</Badge>
-              <Badge variant="outline" className="bg-gradient-to-r from-gray-300 to-gray-400 text-white">ðŸ’Ž Platinum: 3000+ pts</Badge>
+              <Badge variant="outline" className="text-amber-700">🥉 Bronze: 0-1000 pts</Badge>
+              <Badge variant="outline" className="text-gray-500">🥈 Silver: 1000-2000 pts</Badge>
+              <Badge variant="outline" className="text-yellow-600">🥇 Gold: 2000-3000 pts</Badge>
+              <Badge variant="outline" className="bg-gradient-to-r from-gray-300 to-gray-400 text-white">💎 Platinum: 3000+ pts</Badge>
             </div>
           </div>
 
@@ -576,9 +576,9 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
               <div className="flex items-center gap-4">
                 <Gift className="h-8 w-8 text-pink-500" />
                 <div>
-                  <h4 className="font-semibold">Comment Ã§a marche ?</h4>
+                  <h4 className="font-semibold">Comment ça marche ?</h4>
                   <p className="text-sm text-muted-foreground">
-                    1 000 GNF dÃ©pensÃ© = 1 point â€¢ 100 points = 10 000 GNF de rÃ©duction
+                    1 000 GNF dépensé = 1 point • 100 points = 10 000 GNF de réduction
                   </p>
                 </div>
               </div>
@@ -603,7 +603,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                         </div>
                         <p className="text-sm text-muted-foreground">{client.phone}</p>
                         <p className="text-xs text-muted-foreground">
-                          {client.visits} visites â€¢ PrÃ©fÃ©rÃ©: {client.favoriteService}
+                          {client.visits} visites • Préféré: {client.favoriteService}
                         </p>
                       </div>
                     </div>
@@ -617,7 +617,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                   </div>
                   <div className="mt-3">
                     <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>Progression vers {client.tier === 'platinum' ? 'max' : 'niveau supÃ©rieur'}</span>
+                      <span>Progression vers {client.tier === 'platinum' ? 'max' : 'niveau supérieur'}</span>
                       <span>{client.points} / {client.tier === 'bronze' ? 1000 : client.tier === 'silver' ? 2000 : client.tier === 'gold' ? 3000 : 5000}</span>
                     </div>
                     <Progress 

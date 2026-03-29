@@ -94,10 +94,10 @@ export default function VendorReportsManager() {
       const totalSales = ordersData?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0;
       const totalOrders = ordersData?.length || 0;
 
-      // DÃ©penses - skip if table doesn't exist
+      // Dépenses - skip if table doesn't exist
       const totalExpenses = 0;
 
-      // Ventes Ã  crÃ©dit
+      // Ventes à crédit
       const { data: creditData } = await supabase
         .from('vendor_credit_sales')
         .select('remaining_amount')
@@ -138,7 +138,7 @@ export default function VendorReportsManager() {
         .sort((a, b) => b.sales - a.sales)
         .slice(0, 5);
 
-      // DonnÃ©es pour le graphique
+      // Données pour le graphique
       const chartDataMap = new Map();
       ordersData?.forEach(order => {
         const date = new Date(order.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
@@ -173,24 +173,24 @@ export default function VendorReportsManager() {
   const exportReport = () => {
     const { start, end } = getDateRange();
     const reportContent = `
-RAPPORT DE SYNTHÃˆSE
+RAPPORT DE SYNTHÈSE
 ===================
-PÃ©riode: ${start.toLocaleDateString('fr-FR')} - ${end.toLocaleDateString('fr-FR')}
+Période: ${start.toLocaleDateString('fr-FR')} - ${end.toLocaleDateString('fr-FR')}
 
-RÃ‰SUMÃ‰ FINANCIER
+RÉSUMÉ FINANCIER
 ----------------
 Ventes totales: ${reportData.sales.toLocaleString('fr-FR')} GNF
 Nombre de commandes: ${reportData.orders}
-DÃ©penses: ${reportData.expenses.toLocaleString('fr-FR')} GNF
+Dépenses: ${reportData.expenses.toLocaleString('fr-FR')} GNF
 Retours/Remboursements: ${reportData.returns.toLocaleString('fr-FR')} GNF
-CrÃ©ances en cours: ${reportData.creditSales.toLocaleString('fr-FR')} GNF
-BÃ©nÃ©fice net: ${reportData.profit.toLocaleString('fr-FR')} GNF
+Créances en cours: ${reportData.creditSales.toLocaleString('fr-FR')} GNF
+Bénéfice net: ${reportData.profit.toLocaleString('fr-FR')} GNF
 
 TOP 5 PRODUITS
 --------------
 ${topProducts.map((p, i) => `${i + 1}. ${p.name}: ${p.sales} ventes`).join('\n')}
 
-GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
+Généré le: ${new Date().toLocaleString('fr-FR')}
     `;
 
     const blob = new Blob([reportContent], { type: 'text/plain' });
@@ -200,15 +200,15 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
     a.download = `rapport_${period}_${new Date().toISOString().split('T')[0]}.txt`;
     a.click();
 
-    toast({ title: 'âœ… Rapport exportÃ©' });
+    toast({ title: '✅ Rapport exporté' });
   };
 
   const periodLabels = {
     today: "Aujourd'hui",
     week: '7 derniers jours',
     month: '30 derniers jours',
-    year: 'Cette annÃ©e',
-    custom: 'PersonnalisÃ©'
+    year: 'Cette année',
+    custom: 'Personnalisé'
   };
 
   return (
@@ -218,10 +218,10 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
             <BarChart3 className="w-6 h-6" />
-            Rapports de SynthÃ¨se
+            Rapports de Synthèse
           </h2>
           <p className="text-sm text-muted-foreground">
-            Analysez vos performances par pÃ©riode
+            Analysez vos performances par période
           </p>
         </div>
         <Button onClick={exportReport} variant="outline">
@@ -230,7 +230,7 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
         </Button>
       </div>
 
-      {/* SÃ©lection pÃ©riode */}
+      {/* Sélection période */}
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-2">
@@ -248,7 +248,7 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
           {period === 'custom' && (
             <div className="flex gap-4 mt-4">
               <div className="flex-1">
-                <label className="text-sm font-medium">Date dÃ©but</label>
+                <label className="text-sm font-medium">Date début</label>
                 <Input
                   type="date"
                   value={customRange.start}
@@ -273,10 +273,10 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary-orange-600" />
+              <DollarSign className="w-5 h-5 text-green-600" />
               <div>
                 <p className="text-xs text-muted-foreground">Ventes</p>
-                <p className="text-lg font-bold text-primary-orange-600">{reportData.sales.toLocaleString()}</p>
+                <p className="text-lg font-bold text-green-600">{reportData.sales.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
@@ -297,7 +297,7 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
             <div className="flex items-center gap-2">
               <TrendingDown className="w-5 h-5 text-red-600" />
               <div>
-                <p className="text-xs text-muted-foreground">DÃ©penses</p>
+                <p className="text-xs text-muted-foreground">Dépenses</p>
                 <p className="text-lg font-bold text-red-600">{reportData.expenses.toLocaleString()}</p>
               </div>
             </div>
@@ -308,7 +308,7 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
             <div className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-orange-600" />
               <div>
-                <p className="text-xs text-muted-foreground">CrÃ©ances</p>
+                <p className="text-xs text-muted-foreground">Créances</p>
                 <p className="text-lg font-bold text-orange-600">{reportData.creditSales.toLocaleString()}</p>
               </div>
             </div>
@@ -325,13 +325,13 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
             </div>
           </CardContent>
         </Card>
-        <Card className={reportData.profit >= 0 ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950' : 'bg-red-50 dark:bg-red-950'}>
+        <Card className={reportData.profit >= 0 ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950'}>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className={`w-5 h-5 ${reportData.profit >= 0 ? 'text-primary-orange-600' : 'text-red-600'}`} />
+              <TrendingUp className={`w-5 h-5 ${reportData.profit >= 0 ? 'text-green-600' : 'text-red-600'}`} />
               <div>
-                <p className="text-xs text-muted-foreground">BÃ©nÃ©fice net</p>
-                <p className={`text-lg font-bold ${reportData.profit >= 0 ? 'text-primary-orange-600' : 'text-red-600'}`}>
+                <p className="text-xs text-muted-foreground">Bénéfice net</p>
+                <p className={`text-lg font-bold ${reportData.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {reportData.profit.toLocaleString()}
                 </p>
               </div>
@@ -342,10 +342,10 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
 
       {/* Graphiques */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Ã‰volution des ventes */}
+        {/* Évolution des ventes */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Ã‰volution des ventes</CardTitle>
+            <CardTitle className="text-lg">Évolution des ventes</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -386,7 +386,7 @@ GÃ©nÃ©rÃ© le: ${new Date().toLocaleString('fr-FR')}
               ))}
               {topProducts.length === 0 && (
                 <p className="text-center text-muted-foreground py-8">
-                  Aucune donnÃ©e disponible
+                  Aucune donnée disponible
                 </p>
               )}
             </div>

@@ -1,7 +1,7 @@
 /**
  * MODULE VTC PROFESSIONNEL
- * InspirÃ© de: Uber, Bolt, Yango
- * Gestion complÃ¨te des courses VTC avec rÃ©servation instantanÃ©e et planifiÃ©e
+ * Inspiré de: Uber, Bolt, Yango
+ * Gestion complète des courses VTC avec réservation instantanée et planifiée
  */
 
 import { useState, useEffect } from 'react';
@@ -53,26 +53,26 @@ interface Ride {
 const VEHICLE_TYPES: VehicleType[] = [
   {
     id: 'economy',
-    name: 'Ã‰conomique',
-    icon: 'ðŸš—',
+    name: 'Économique',
+    icon: '🚗',
     capacity: 4,
     basePrice: 5000,
     pricePerKm: 500,
-    description: 'VÃ©hicule standard confortable'
+    description: 'Véhicule standard confortable'
   },
   {
     id: 'comfort',
     name: 'Confort',
-    icon: 'ðŸš™',
+    icon: '🚙',
     capacity: 4,
     basePrice: 8000,
     pricePerKm: 800,
-    description: 'VÃ©hicule haut de gamme climatisÃ©'
+    description: 'Véhicule haut de gamme climatisé'
   },
   {
     id: 'van',
     name: 'Van (6 places)',
-    icon: 'ðŸš',
+    icon: '🚐',
     capacity: 6,
     basePrice: 12000,
     pricePerKm: 1200,
@@ -81,11 +81,11 @@ const VEHICLE_TYPES: VehicleType[] = [
   {
     id: 'premium',
     name: 'Premium',
-    icon: 'ðŸš˜',
+    icon: '🚘',
     capacity: 4,
     basePrice: 15000,
     pricePerKm: 1500,
-    description: 'VÃ©hicule de luxe avec chauffeur professionnel'
+    description: 'Véhicule de luxe avec chauffeur professionnel'
   }
 ];
 
@@ -119,11 +119,11 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
   const loadRides = async () => {
     try {
       // Simuler le chargement des courses
-      // TODO: IntÃ©grer avec la table vtc_rides
+      // TODO: Intégrer avec la table vtc_rides
       setRides([
         {
           id: '1',
-          pickup: 'AÃ©roport de Conakry',
+          pickup: 'Aéroport de Conakry',
           destination: 'Kaloum Centre',
           vehicleType: 'comfort',
           status: 'pending',
@@ -166,8 +166,8 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
 
     setLoading(true);
     try {
-      // TODO: CrÃ©er la course dans la base de donnÃ©es
-      toast.success('Course crÃ©Ã©e avec succÃ¨s !');
+      // TODO: Créer la course dans la base de données
+      toast.success('Course créée avec succès !');
       setNewRide({
         pickup: '',
         destination: '',
@@ -179,7 +179,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
       });
       loadRides();
     } catch (error) {
-      toast.error('Erreur lors de la crÃ©ation de la course');
+      toast.error('Erreur lors de la création de la course');
     } finally {
       setLoading(false);
     }
@@ -189,7 +189,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
     switch (status) {
       case 'pending': return 'bg-yellow-500';
       case 'accepted': return 'bg-blue-500';
-      case 'in_progress': return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
+      case 'in_progress': return 'bg-green-500';
       case 'completed': return 'bg-gray-500';
       case 'cancelled': return 'bg-red-500';
       default: return 'bg-gray-500';
@@ -199,10 +199,10 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
   const getStatusLabel = (status: Ride['status']) => {
     switch (status) {
       case 'pending': return 'En attente';
-      case 'accepted': return 'AcceptÃ©e';
+      case 'accepted': return 'Acceptée';
       case 'in_progress': return 'En cours';
-      case 'completed': return 'TerminÃ©e';
-      case 'cancelled': return 'AnnulÃ©e';
+      case 'completed': return 'Terminée';
+      case 'cancelled': return 'Annulée';
       default: return status;
     }
   };
@@ -240,11 +240,11 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Courses Actives</CardTitle>
-            <Activity className="h-4 w-4 text-primary-orange-500" />
+            <Activity className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeRides}</div>
-            <p className="text-xs text-muted-foreground">En temps rÃ©el</p>
+            <p className="text-xs text-muted-foreground">En temps réel</p>
           </CardContent>
         </Card>
 
@@ -276,8 +276,8 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
           <TabsTrigger value="rides">Courses</TabsTrigger>
-          <TabsTrigger value="vehicles">VÃ©hicules</TabsTrigger>
-          <TabsTrigger value="settings">ParamÃ¨tres</TabsTrigger>
+          <TabsTrigger value="vehicles">Véhicules</TabsTrigger>
+          <TabsTrigger value="settings">Paramètres</TabsTrigger>
         </TabsList>
 
         {/* Dashboard Tab */}
@@ -285,17 +285,17 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
           <Card>
             <CardHeader>
               <CardTitle>Nouvelle Course</CardTitle>
-              <CardDescription>CrÃ©er une rÃ©servation instantanÃ©e ou planifiÃ©e</CardDescription>
+              <CardDescription>Créer une réservation instantanée ou planifiée</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="pickup">Point de dÃ©part *</Label>
+                  <Label htmlFor="pickup">Point de départ *</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="pickup"
-                      placeholder="Ex: AÃ©roport de Conakry"
+                      placeholder="Ex: Aéroport de Conakry"
                       value={newRide.pickup}
                       onChange={(e) => setNewRide({ ...newRide, pickup: e.target.value })}
                       className="pl-10"
@@ -328,7 +328,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="customerPhone">TÃ©lÃ©phone *</Label>
+                  <Label htmlFor="customerPhone">Téléphone *</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -342,7 +342,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="vehicleType">Type de vÃ©hicule</Label>
+                  <Label htmlFor="vehicleType">Type de véhicule</Label>
                   <Select value={newRide.vehicleType} onValueChange={(value) => setNewRide({ ...newRide, vehicleType: value })}>
                     <SelectTrigger>
                       <SelectValue />
@@ -358,7 +358,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="scheduledTime">Heure planifiÃ©e (optionnel)</Label>
+                  <Label htmlFor="scheduledTime">Heure planifiée (optionnel)</Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -376,7 +376,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
                 <Label htmlFor="notes">Notes / Instructions</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Informations complÃ©mentaires..."
+                  placeholder="Informations complémentaires..."
                   value={newRide.notes}
                   onChange={(e) => setNewRide({ ...newRide, notes: e.target.value })}
                   rows={3}
@@ -384,15 +384,15 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
               </div>
 
               <Button onClick={handleCreateRide} disabled={loading} className="w-full" size="lg">
-                {loading ? 'CrÃ©ation...' : 'CrÃ©er la course'}
+                {loading ? 'Création...' : 'Créer la course'}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Types de vÃ©hicules */}
+          {/* Types de véhicules */}
           <Card>
             <CardHeader>
-              <CardTitle>Tarifs par Type de VÃ©hicule</CardTitle>
+              <CardTitle>Tarifs par Type de Véhicule</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -423,13 +423,13 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
           <Card>
             <CardHeader>
               <CardTitle>Historique des Courses</CardTitle>
-              <CardDescription>Liste de toutes vos courses rÃ©centes</CardDescription>
+              <CardDescription>Liste de toutes vos courses récentes</CardDescription>
             </CardHeader>
             <CardContent>
               {rides.length === 0 ? (
                 <div className="text-center py-12">
                   <Car className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Aucune course enregistrÃ©e</p>
+                  <p className="text-muted-foreground">Aucune course enregistrée</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -448,7 +448,7 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
                             </div>
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-primary-orange-500" />
+                                <MapPin className="w-4 h-4 text-green-500" />
                                 <span className="font-medium">{ride.pickup}</span>
                               </div>
                               <div className="flex items-center gap-2">
@@ -482,20 +482,20 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Module de gestion de flotte disponible. Ajoutez vos vÃ©hicules, chauffeurs et suivez leur disponibilitÃ© en temps rÃ©el.
+              Module de gestion de flotte disponible. Ajoutez vos véhicules, chauffeurs et suivez leur disponibilité en temps réel.
             </AlertDescription>
           </Alert>
           
           <Card>
             <CardHeader>
               <CardTitle>Ma Flotte</CardTitle>
-              <CardDescription>GÃ©rez vos vÃ©hicules et chauffeurs</CardDescription>
+              <CardDescription>Gérez vos véhicules et chauffeurs</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12">
                 <Car className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">Aucun vÃ©hicule enregistrÃ©</p>
-                <Button>Ajouter un vÃ©hicule</Button>
+                <p className="text-muted-foreground mb-4">Aucun véhicule enregistré</p>
+                <Button>Ajouter un véhicule</Button>
               </div>
             </CardContent>
           </Card>
@@ -505,14 +505,14 @@ export function VTCModule({ serviceId, businessName }: VTCModuleProps) {
         <TabsContent value="settings" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>ParamÃ¨tres du Service</CardTitle>
+              <CardTitle>Paramètres du Service</CardTitle>
               <CardDescription>Configurez vos tarifs et zones de couverture</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Alert>
                 <Settings className="h-4 w-4" />
                 <AlertDescription>
-                  Les paramÃ¨tres avancÃ©s seront disponibles prochainement: zones de couverture, tarifs dynamiques, commissions chauffeurs.
+                  Les paramètres avancés seront disponibles prochainement: zones de couverture, tarifs dynamiques, commissions chauffeurs.
                 </AlertDescription>
               </Alert>
             </CardContent>

@@ -70,13 +70,13 @@ export default function PaymentPage() {
         const data = await response.json();
         setPaymentDetails(data.payment);
       } else {
-        throw new Error('Lien de paiement non trouvÃ©');
+        throw new Error('Lien de paiement non trouvé');
       }
     } catch (error) {
       console.error('Erreur chargement paiement:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de charger les dÃ©tails du paiement",
+        description: "Impossible de charger les détails du paiement",
         variant: "destructive"
       });
       navigate('/');
@@ -89,7 +89,7 @@ export default function PaymentPage() {
     if (!paymentMethod) {
       toast({
         title: "Erreur",
-        description: "Veuillez sÃ©lectionner un moyen de paiement",
+        description: "Veuillez sélectionner un moyen de paiement",
         variant: "destructive"
       });
       return;
@@ -124,8 +124,8 @@ export default function PaymentPage() {
       if (response.ok) {
         const data = await response.json();
         toast({
-          title: "Paiement rÃ©ussi !",
-          description: "Votre paiement a Ã©tÃ© traitÃ© avec succÃ¨s",
+          title: "Paiement réussi !",
+          description: "Votre paiement a été traité avec succès",
         });
         
         // Rediriger vers une page de confirmation
@@ -153,7 +153,7 @@ export default function PaymentPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'success':
-        return 'bg-primary-orange-100 text-primary-orange-800';
+        return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'failed':
@@ -170,7 +170,7 @@ export default function PaymentPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Chargement des dÃ©tails du paiement...</p>
+          <p className="text-gray-600">Chargement des détails du paiement...</p>
         </div>
       </div>
     );
@@ -182,13 +182,13 @@ export default function PaymentPage() {
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-            <h2 className="text-xl font-semibold mb-2">Lien de paiement non trouvÃ©</h2>
+            <h2 className="text-xl font-semibold mb-2">Lien de paiement non trouvé</h2>
             <p className="text-gray-600 mb-4">
-              Ce lien de paiement n'existe pas ou a Ã©tÃ© supprimÃ©.
+              Ce lien de paiement n'existe pas ou a été supprimé.
             </p>
             <Button onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour Ã  l'accueil
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -202,13 +202,13 @@ export default function PaymentPage() {
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <Clock className="w-12 h-12 mx-auto mb-4 text-gray-500" />
-            <h2 className="text-xl font-semibold mb-2">Lien expirÃ©</h2>
+            <h2 className="text-xl font-semibold mb-2">Lien expiré</h2>
             <p className="text-gray-600 mb-4">
-              Ce lien de paiement a expirÃ©. Veuillez contacter le vendeur pour un nouveau lien.
+              Ce lien de paiement a expiré. Veuillez contacter le vendeur pour un nouveau lien.
             </p>
             <Button onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour Ã  l'accueil
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -218,17 +218,17 @@ export default function PaymentPage() {
 
   if (paymentDetails.status === 'success') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
-            <CheckCircle className="w-12 h-12 mx-auto mb-4 text-primary-orange-500" />
-            <h2 className="text-xl font-semibold mb-2">Paiement confirmÃ© !</h2>
+            <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
+            <h2 className="text-xl font-semibold mb-2">Paiement confirmé !</h2>
             <p className="text-gray-600 mb-4">
-              Votre paiement de {formatCurrency(paymentDetails.total, paymentDetails.devise)} a Ã©tÃ© traitÃ© avec succÃ¨s.
+              Votre paiement de {formatCurrency(paymentDetails.total, paymentDetails.devise)} a été traité avec succès.
             </p>
             <Button onClick={() => navigate('/')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour Ã  l'accueil
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -239,7 +239,7 @@ export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
       <div className="max-w-2xl mx-auto px-4">
-        {/* En-tÃªte */}
+        {/* En-tête */}
         <div className="mb-8">
           <Button
             variant="ghost"
@@ -254,17 +254,17 @@ export default function PaymentPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               224SOLUTIONS
             </h1>
-            <p className="text-gray-600">Paiement sÃ©curisÃ©</p>
+            <p className="text-gray-600">Paiement sécurisé</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* DÃ©tails du paiement */}
+          {/* Détails du paiement */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
-                DÃ©tails du paiement
+                Détails du paiement
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -291,7 +291,7 @@ export default function PaymentPage() {
                   <span>{formatCurrency(paymentDetails.montant, paymentDetails.devise)}</span>
                 </div>
                 {(paymentDetails as any).remise > 0 && (
-                  <div className="flex justify-between text-sm text-primary-orange-600">
+                  <div className="flex justify-between text-sm text-green-600">
                     <span>Remise :</span>
                     <span>
                       -{(paymentDetails as any).remise}
@@ -304,7 +304,7 @@ export default function PaymentPage() {
                   <span>{formatCurrency(paymentDetails.frais, paymentDetails.devise)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                  <span>Total Ã  payer :</span>
+                  <span>Total à payer :</span>
                   <span className="text-blue-600">
                     {formatCurrency(paymentDetails.total, paymentDetails.devise)}
                   </span>
@@ -313,7 +313,7 @@ export default function PaymentPage() {
               
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Calendar className="w-4 h-4" />
-                <span>CrÃ©Ã© le {new Date(paymentDetails.created_at).toLocaleDateString('fr-FR')}</span>
+                <span>Créé le {new Date(paymentDetails.created_at).toLocaleDateString('fr-FR')}</span>
               </div>
               
               <Badge className={getStatusColor(paymentDetails.status)}>
@@ -357,7 +357,7 @@ export default function PaymentPage() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="phone">TÃ©lÃ©phone</Label>
+                  <Label htmlFor="phone">Téléphone</Label>
                   <Input
                     id="phone"
                     value={clientInfo.phone}
@@ -367,7 +367,7 @@ export default function PaymentPage() {
                 </div>
               </div>
 
-              {/* MÃ©thode de paiement */}
+              {/* Méthode de paiement */}
               <div>
                 <Label htmlFor="payment-method">Moyen de paiement *</Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -397,12 +397,12 @@ export default function PaymentPage() {
                 </Select>
               </div>
 
-              {/* SÃ©curitÃ© */}
-              <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
-                <Shield className="w-5 h-5 text-primary-orange-600" />
+              {/* Sécurité */}
+              <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                <Shield className="w-5 h-5 text-green-600" />
                 <div className="text-sm">
-                  <p className="font-semibold text-primary-orange-800">Paiement sÃ©curisÃ©</p>
-                  <p className="text-primary-orange-600">Vos donnÃ©es sont protÃ©gÃ©es par SSL</p>
+                  <p className="font-semibold text-green-800">Paiement sécurisé</p>
+                  <p className="text-green-600">Vos données sont protégées par SSL</p>
                 </div>
               </div>
 

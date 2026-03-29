@@ -62,9 +62,9 @@ export function ChinaProductImport() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500"><CheckCircle2 className="h-3 w-3 mr-1" /> TerminÃ©</Badge>;
+        return <Badge variant="default" className="bg-green-500"><CheckCircle2 className="h-3 w-3 mr-1" /> Terminé</Badge>;
       case 'failed':
-        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" /> Ã‰chec</Badge>;
+        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" /> Échec</Badge>;
       case 'processing':
         return <Badge variant="secondary"><Loader2 className="h-3 w-3 mr-1 animate-spin" /> En cours</Badge>;
       default:
@@ -132,7 +132,7 @@ export function ChinaProductImport() {
           {imports.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>Aucun import effectuÃ©</p>
+              <p>Aucun import effectué</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -150,7 +150,7 @@ export function ChinaProductImport() {
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{new Date(imp.created_at).toLocaleString('fr-FR')}</span>
                         {imp.extracted_data?.price && (
-                          <span>â€¢ {imp.extracted_data.price} {imp.extracted_data.currency}</span>
+                          <span>• {imp.extracted_data.price} {imp.extracted_data.currency}</span>
                         )}
                       </div>
                     </div>
@@ -164,14 +164,14 @@ export function ChinaProductImport() {
                         size="sm" 
                         onClick={() => setSelectedImport(imp)}
                       >
-                        CrÃ©er produit
+                        Créer produit
                       </Button>
                     )}
 
                     {imp.product_id && (
-                      <Badge variant="outline" className="text-primary-orange-600">
+                      <Badge variant="outline" className="text-green-600">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Produit crÃ©Ã©
+                        Produit créé
                       </Badge>
                     )}
 
@@ -191,11 +191,11 @@ export function ChinaProductImport() {
         </CardContent>
       </Card>
 
-      {/* Dialog crÃ©ation produit */}
+      {/* Dialog création produit */}
       <Dialog open={!!selectedImport} onOpenChange={() => setSelectedImport(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>CrÃ©er le Produit</DialogTitle>
+            <DialogTitle>Créer le Produit</DialogTitle>
           </DialogHeader>
 
           {selectedImport && (
@@ -207,7 +207,7 @@ export function ChinaProductImport() {
                 </p>
                 {selectedImport.extracted_data?.moq && (
                   <p className="text-sm text-muted-foreground">
-                    MOQ: {selectedImport.extracted_data.moq} unitÃ©s
+                    MOQ: {selectedImport.extracted_data.moq} unités
                   </p>
                 )}
               </div>
@@ -222,14 +222,14 @@ export function ChinaProductImport() {
                   onChange={(e) => setSellingPrice(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  DÃ©finissez votre prix de vente en Francs GuinÃ©ens
+                  Définissez votre prix de vente en Francs Guinéens
                 </p>
               </div>
 
               {sellingPrice && selectedImport.extracted_data?.price && (
-                <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-lg">
-                  <p className="text-sm font-medium text-primary-orange-700 dark:text-primary-orange-300">
-                    Marge estimÃ©e calculÃ©e automatiquement aprÃ¨s crÃ©ation
+                <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                  <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                    Marge estimée calculée automatiquement après création
                   </p>
                 </div>
               )}
@@ -242,7 +242,7 @@ export function ChinaProductImport() {
             </Button>
             <Button onClick={handleCreateProduct} disabled={!sellingPrice || loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              CrÃ©er le produit
+              Créer le produit
             </Button>
           </DialogFooter>
         </DialogContent>

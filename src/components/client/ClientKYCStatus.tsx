@@ -1,7 +1,7 @@
 /**
  * COMPOSANT CLIENT KYC STATUS - 224SOLUTIONS
- * Badge de statut de vÃ©rification KYC pour les clients
- * 4 Ã©tats: pending, verified, rejected, incomplete
+ * Badge de statut de vérification KYC pour les clients
+ * 4 états: pending, verified, rejected, incomplete
  */
 
 import React from 'react';
@@ -30,19 +30,19 @@ export function ClientKYCStatus({
     icon: React.ReactNode;
   }> = {
     verified: {
-      label: 'Client VÃ©rifiÃ©',
+      label: 'Client Vérifié',
       variant: 'default',
-      className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600 text-white',
+      className: 'bg-green-500 hover:bg-green-600 text-white',
       icon: <CheckCircle className="w-3 h-3 mr-1" />
     },
     pending: {
-      label: 'VÃ©rification en cours',
+      label: 'Vérification en cours',
       variant: 'secondary',
       className: 'bg-orange-500 hover:bg-orange-600 text-white',
       icon: <Clock className="w-3 h-3 mr-1" />
     },
     rejected: {
-      label: 'VÃ©rification refusÃ©e',
+      label: 'Vérification refusée',
       variant: 'destructive',
       className: 'bg-red-500 hover:bg-red-600 text-white',
       icon: <XCircle className="w-3 h-3 mr-1" />
@@ -68,7 +68,7 @@ export function ClientKYCStatus({
   );
 }
 
-// Variante compacte pour les espaces rÃ©duits
+// Variante compacte pour les espaces réduits
 export function ClientKYCStatusCompact({ 
   kyc_status = 'incomplete', 
   className = '' 
@@ -76,7 +76,7 @@ export function ClientKYCStatusCompact({
   const status = kyc_status || 'incomplete';
 
   const iconMap: Record<ClientKYCStatus, React.ReactNode> = {
-    verified: <CheckCircle className="w-4 h-4 text-primary-orange-500" />,
+    verified: <CheckCircle className="w-4 h-4 text-green-500" />,
     pending: <Clock className="w-4 h-4 text-orange-500" />,
     rejected: <XCircle className="w-4 h-4 text-red-500" />,
     incomplete: <AlertCircle className="w-4 h-4 text-gray-500" />

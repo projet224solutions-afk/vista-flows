@@ -1,7 +1,7 @@
 /**
  * ADD SERVICE MODAL
- * Permet au vendeur de crÃ©er un nouveau service professionnel
- * Ex: Restaurant, Boutique en ligne, Salon de beautÃ©, etc.
+ * Permet au vendeur de créer un nouveau service professionnel
+ * Ex: Restaurant, Boutique en ligne, Salon de beauté, etc.
  */
 
 import { useState, useEffect } from 'react';
@@ -48,9 +48,9 @@ interface AddServiceModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Mapping des icÃ´nes - 18 services synchronisÃ©s avec Auth.tsx et service_types DB
+// Mapping des icônes - 18 services synchronisés avec Auth.tsx et service_types DB
 const SERVICE_ICONS: Record<string, React.ElementType> = {
-  // Services de ProximitÃ© Populaires
+  // Services de Proximité Populaires
   restaurant: Utensils,
   beaute: Scissors,
   vtc: Car,
@@ -75,25 +75,25 @@ const SERVICE_ICONS: Record<string, React.ElementType> = {
   default: Store
 };
 
-// SchÃ©ma de validation Zod
+// Schéma de validation Zod
 const serviceFormSchema = z.object({
   businessName: z
     .string()
-    .min(3, 'Le nom doit contenir au moins 3 caractÃ¨res')
-    .max(100, 'Le nom ne peut pas dÃ©passer 100 caractÃ¨res')
+    .min(3, 'Le nom doit contenir au moins 3 caractères')
+    .max(100, 'Le nom ne peut pas dépasser 100 caractères')
     .regex(
-      /^[a-zA-Z0-9\sÃ€-Ã¿\-'&.]+$/,
-      'Le nom contient des caractÃ¨res non autorisÃ©s'
+      /^[a-zA-Z0-9\sÀ-ÿ\-'&.]+$/,
+      'Le nom contient des caractères non autorisés'
     )
     .transform(val => val.trim()),
   description: z
     .string()
-    .max(500, 'La description ne peut pas dÃ©passer 500 caractÃ¨res')
+    .max(500, 'La description ne peut pas dépasser 500 caractères')
     .optional()
     .or(z.literal('')),
   address: z
     .string()
-    .max(200, 'L\'adresse ne peut pas dÃ©passer 200 caractÃ¨res')
+    .max(200, 'L\'adresse ne peut pas dépasser 200 caractères')
     .optional()
     .or(z.literal(''))
 });
@@ -140,7 +140,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
   // Fonction pour obtenir la position GPS
   const getGpsLocation = async () => {
     if (!navigator.geolocation) {
-      setGpsError('La gÃ©olocalisation n\'est pas supportÃ©e par votre navigateur');
+      setGpsError('La géolocalisation n\'est pas supportée par votre navigateur');
       return;
     }
 
@@ -152,22 +152,22 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
         setLatitude(position.coords.latitude);
         setLongitude(position.coords.longitude);
         setGpsLoading(false);
-        toast.success('Position GPS capturÃ©e avec succÃ¨s');
+        toast.success('Position GPS capturée avec succès');
       },
       (error) => {
         setGpsLoading(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            setGpsError('Vous avez refusÃ© l\'accÃ¨s Ã  votre position');
+            setGpsError('Vous avez refusé l\'accès à votre position');
             break;
           case error.POSITION_UNAVAILABLE:
             setGpsError('Position non disponible');
             break;
           case error.TIMEOUT:
-            setGpsError('DÃ©lai d\'attente dÃ©passÃ©');
+            setGpsError('Délai d\'attente dépassé');
             break;
           default:
-            setGpsError('Erreur lors de la rÃ©cupÃ©ration de la position');
+            setGpsError('Erreur lors de la récupération de la position');
         }
       },
       {
@@ -210,7 +210,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
   const handleCreate = async () => {
     if (!user?.id || !selectedType) {
-      toast.error('Session expirÃ©e, veuillez vous reconnecter');
+      toast.error('Session expirée, veuillez vous reconnecter');
       return;
     }
 
@@ -226,7 +226,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
       
       setCreating(true);
 
-      // CrÃ©er le nouveau service professionnel avec donnÃ©es validÃ©es
+      // Créer le nouveau service professionnel avec données validées
       const { data, error } = await supabase
         .from('professional_services')
         .insert({
@@ -247,7 +247,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
       if (error) throw error;
 
-      toast.success('Service crÃ©Ã© avec succÃ¨s !');
+      toast.success('Service créé avec succès !');
       onOpenChange(false);
       
       // Rediriger vers la page vendeur pour voir le nouveau service
@@ -264,10 +264,10 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
         const firstError = error.issues[0];
         toast.error(firstError.message);
       } else if (error.code === '23505') {
-        toast.error('Vous avez dÃ©jÃ  un service de ce type actif');
+        toast.error('Vous avez déjà un service de ce type actif');
       } else {
         console.error('Error creating service:', error);
-        toast.error('Erreur lors de la crÃ©ation du service');
+        toast.error('Erreur lors de la création du service');
       }
     } finally {
       setCreating(false);
@@ -278,34 +278,34 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
     return SERVICE_ICONS[code] || SERVICE_ICONS.default;
   };
 
-  // Services IDENTIQUES Ã  Auth.tsx - Synchronisation complÃ¨te
+  // Services IDENTIQUES à Auth.tsx - Synchronisation complète
   const DISPLAY_SERVICES = {
-    // Services de ProximitÃ© Populaires (6) - Identique Ã  Auth.tsx
+    // Services de Proximité Populaires (6) - Identique à Auth.tsx
     proximity: [
-      { code: 'restaurant', name: 'Restaurant', icon: 'ðŸ½ï¸', desc: 'Cuisine & plats' },
-      { code: 'beaute', name: 'BeautÃ© & Coiffure', icon: 'ðŸ’‡', desc: 'Soins & styling' },
-      { code: 'vtc', name: 'Transport VTC', icon: 'ðŸš—', desc: 'VÃ©hicules privÃ©s' },
-      { code: 'reparation', name: 'RÃ©paration', icon: 'ðŸ”§', desc: 'Ã‰lectro & mÃ©canique' },
-      { code: 'menage', name: 'Nettoyage', icon: 'âœ¨', desc: 'MÃ©nage & pressing' },
-      { code: 'informatique', name: 'Informatique', icon: 'ðŸ’»', desc: 'Tech & dÃ©pannage' },
+      { code: 'restaurant', name: 'Restaurant', icon: '🍽️', desc: 'Cuisine & plats' },
+      { code: 'beaute', name: 'Beauté & Coiffure', icon: '💇', desc: 'Soins & styling' },
+      { code: 'vtc', name: 'Transport VTC', icon: '🚗', desc: 'Véhicules privés' },
+      { code: 'reparation', name: 'Réparation', icon: '🔧', desc: 'Électro & mécanique' },
+      { code: 'menage', name: 'Nettoyage', icon: '✨', desc: 'Ménage & pressing' },
+      { code: 'informatique', name: 'Informatique', icon: '💻', desc: 'Tech & dépannage' },
     ],
-    // Services Professionnels (8) - Identique Ã  Auth.tsx
+    // Services Professionnels (8) - Identique à Auth.tsx
     professional: [
-      { code: 'sport', name: 'Sport & Fitness', icon: 'ðŸ‹ï¸', desc: 'Coaching' },
-      { code: 'location', name: 'Immobilier', icon: 'ðŸ¢', desc: 'Location & vente' },
-      { code: 'media', name: 'Photo & VidÃ©o', icon: 'ðŸ“¸', desc: 'Ã‰vÃ©nements' },
-      { code: 'construction', name: 'Construction & BTP', icon: 'ðŸ—ï¸', desc: 'BÃ¢timent' },
-      { code: 'agriculture', name: 'Agriculture', icon: 'ðŸŒ¾', desc: 'Produits locaux' },
-      { code: 'freelance', name: 'Administratif', icon: 'ðŸ’¼', desc: 'SecrÃ©tariat' },
-      { code: 'sante', name: 'SantÃ© & Bien-Ãªtre', icon: 'ðŸ’Š', desc: 'Pharmacie & soins' },
-      { code: 'maison', name: 'Maison & DÃ©co', icon: 'ðŸ ', desc: 'IntÃ©rieur' },
+      { code: 'sport', name: 'Sport & Fitness', icon: '🏋️', desc: 'Coaching' },
+      { code: 'location', name: 'Immobilier', icon: '🏢', desc: 'Location & vente' },
+      { code: 'media', name: 'Photo & Vidéo', icon: '📸', desc: 'Événements' },
+      { code: 'construction', name: 'Construction & BTP', icon: '🏗️', desc: 'Bâtiment' },
+      { code: 'agriculture', name: 'Agriculture', icon: '🌾', desc: 'Produits locaux' },
+      { code: 'freelance', name: 'Administratif', icon: '💼', desc: 'Secrétariat' },
+      { code: 'sante', name: 'Santé & Bien-être', icon: '💊', desc: 'Pharmacie & soins' },
+      { code: 'maison', name: 'Maison & Déco', icon: '🏠', desc: 'Intérieur' },
     ],
-    // Autres Services (4) - Identique Ã  Auth.tsx
+    // Autres Services (4) - Identique à Auth.tsx
     other: [
-      { code: 'education', name: 'Formation', icon: 'ðŸŽ“', desc: 'Cours & coaching' },
-      { code: 'livraison', name: 'Livraison', icon: 'ðŸšš', desc: 'Coursier & colis' },
-      { code: 'voyage', name: 'Voyage', icon: 'âœˆï¸', desc: 'Tourisme & voyages' },
-      { code: 'ecommerce', name: 'Boutique', icon: 'ðŸª', desc: 'E-commerce' },
+      { code: 'education', name: 'Formation', icon: '🎓', desc: 'Cours & coaching' },
+      { code: 'livraison', name: 'Livraison', icon: '🚚', desc: 'Coursier & colis' },
+      { code: 'voyage', name: 'Voyage', icon: '✈️', desc: 'Tourisme & voyages' },
+      { code: 'ecommerce', name: 'Boutique', icon: '🏪', desc: 'E-commerce' },
     ]
   };
 
@@ -333,20 +333,20 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
   const renderServiceTypeGrid = () => (
     <ScrollArea className="h-[500px] pr-4">
       <div className="space-y-6">
-        {/* Section: Services de ProximitÃ© Populaires - Identique Ã  Auth.tsx */}
+        {/* Section: Services de Proximité Populaires - Identique à Auth.tsx */}
         <div>
           <h4 className="text-sm font-semibold text-primary mb-3 flex items-center justify-center gap-2">
             <span className="w-8 h-0.5 bg-primary rounded"></span>
-            Services de ProximitÃ© Populaires
+            Services de Proximité Populaires
             <span className="w-8 h-0.5 bg-primary rounded"></span>
           </h4>
-          {/* PremiÃ¨re ligne - 4 boutons */}
+          {/* Première ligne - 4 boutons */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
             {DISPLAY_SERVICES.proximity.slice(0, 4).map(s => 
               renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
             )}
           </div>
-          {/* DeuxiÃ¨me ligne - 2 boutons centrÃ©s */}
+          {/* Deuxième ligne - 2 boutons centrés */}
           <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
             {DISPLAY_SERVICES.proximity.slice(4).map(s => 
               renderDisplayServiceCard(s, 'from-white to-slate-50', 'border-slate-200 hover:border-primary')
@@ -354,7 +354,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
           </div>
         </div>
 
-        {/* Section: Services Professionnels - Identique Ã  Auth.tsx */}
+        {/* Section: Services Professionnels - Identique à Auth.tsx */}
         <div>
           <h4 className="text-sm font-semibold text-violet-600 mb-3 flex items-center justify-center gap-2">
             <span className="w-8 h-0.5 bg-violet-500 rounded"></span>
@@ -368,16 +368,16 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
           </div>
         </div>
 
-        {/* Section: Autres Services - Identique Ã  Auth.tsx */}
+        {/* Section: Autres Services - Identique à Auth.tsx */}
         <div>
-          <h4 className="text-sm font-semibold text-primary-blue-600 mb-3 flex items-center justify-center gap-2">
-            <span className="w-8 h-0.5 bg-primary-blue-500 rounded"></span>
+          <h4 className="text-sm font-semibold text-cyan-600 mb-3 flex items-center justify-center gap-2">
+            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
             Autres Services
-            <span className="w-8 h-0.5 bg-primary-blue-500 rounded"></span>
+            <span className="w-8 h-0.5 bg-cyan-500 rounded"></span>
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {DISPLAY_SERVICES.other.map(s => 
-              renderDisplayServiceCard(s, 'from-primary-blue-50 to-white', 'border-primary-blue-200 hover:border-primary-blue-500')
+              renderDisplayServiceCard(s, 'from-cyan-50 to-white', 'border-cyan-200 hover:border-cyan-500')
             )}
           </div>
         </div>
@@ -399,7 +399,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             <h4 className="font-semibold text-foreground">{selectedType?.name}</h4>
             <p className="text-xs text-muted-foreground">{selectedType?.category}</p>
           </div>
-          <CheckCircle className="w-5 h-5 text-primary-orange-500 ml-auto" />
+          <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
         </div>
 
         {/* Form fields */}
@@ -419,7 +419,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             <Label htmlFor="description">Description (optionnel)</Label>
             <Textarea
               id="description"
-              placeholder="DÃ©crivez votre activitÃ©..."
+              placeholder="Décrivez votre activité..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -430,7 +430,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             <Label htmlFor="address">Adresse (optionnel)</Label>
             <Input
               id="address"
-              placeholder="Ex: Kaloum, Conakry, GuinÃ©e"
+              placeholder="Ex: Kaloum, Conakry, Guinée"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
             />
@@ -438,7 +438,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
           {/* GPS Location */}
           <div className="space-y-2">
-            <Label>Position GPS (recommandÃ©)</Label>
+            <Label>Position GPS (recommandé)</Label>
             <div className="flex items-center gap-3">
               <Button 
                 type="button"
@@ -455,9 +455,9 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
                 {gpsLoading ? 'Localisation...' : 'Localiser mon service'}
               </Button>
               {latitude && longitude && (
-                <div className="flex items-center gap-2 text-sm text-primary-orange-600">
+                <div className="flex items-center gap-2 text-sm text-green-600">
                   <MapPin className="w-4 h-4" />
-                  <span>Position enregistrÃ©e</span>
+                  <span>Position enregistrée</span>
                 </div>
               )}
             </div>
@@ -466,7 +466,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             )}
             {latitude && longitude && (
               <p className="text-xs text-muted-foreground">
-                CoordonnÃ©es: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                Coordonnées: {latitude.toFixed(6)}, {longitude.toFixed(6)}
               </p>
             )}
           </div>
@@ -477,10 +477,10 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
           <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
           <div className="text-sm">
             <p className="font-medium text-blue-800 dark:text-blue-200">
-              Bon Ã  savoir
+              Bon à savoir
             </p>
             <p className="text-blue-700 dark:text-blue-300 text-xs mt-1">
-              Vous pourrez personnaliser votre service avec des produits, menus, et horaires aprÃ¨s la crÃ©ation.
+              Vous pourrez personnaliser votre service avec des produits, menus, et horaires après la création.
             </p>
           </div>
         </div>
@@ -507,7 +507,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             ) : (
               <Plus className="w-4 h-4" />
             )}
-            CrÃ©er le service
+            Créer le service
           </Button>
         </div>
       </div>
@@ -526,7 +526,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
           </DialogTitle>
           <DialogDescription className="text-base">
             {step === 'select' 
-              ? 'Choisissez le type de service que vous souhaitez crÃ©er parmi nos catÃ©gories'
+              ? 'Choisissez le type de service que vous souhaitez créer parmi nos catégories'
               : `Configurez votre ${selectedType?.name || 'service'}`
             }
           </DialogDescription>

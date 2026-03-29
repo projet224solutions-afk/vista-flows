@@ -48,7 +48,7 @@ export default function PDGUsers() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Charger les profils avec leur public_id standardisÃ©
+      // Charger les profils avec leur public_id standardisé
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role, is_active, status, public_id, created_at')
@@ -58,15 +58,15 @@ export default function PDGUsers() {
       setUsers(profiles || []);
 
       // Charger les services pour chaque vendeur
-      // NOTE: On utilise profiles.public_id comme source unique de vÃ©ritÃ© pour les IDs
-      // Plus besoin de charger vendors.vendor_code car il est dÃ©synchronisÃ©
+      // NOTE: On utilise profiles.public_id comme source unique de vérité pour les IDs
+      // Plus besoin de charger vendors.vendor_code car il est désynchronisé
       const vendorIds = profiles?.filter(p => p.role === 'vendeur').map(p => p.id) || [];
       if (vendorIds.length > 0) {
         // On utilise directement profiles.public_id, plus besoin de vendorCodes
-        // Le code est gardÃ© pour compatibilitÃ© mais on prÃ©fÃ¨re public_id
+        // Le code est gardé pour compatibilité mais on préfère public_id
         const codesMap: Record<string, string> = {};
         profiles?.filter(p => p.role === 'vendeur').forEach(profile => {
-          // PrioritÃ© Ã  public_id (source unique de vÃ©ritÃ©)
+          // Priorité à public_id (source unique de vérité)
           if (profile.public_id) {
             codesMap[profile.id] = profile.public_id;
           }
@@ -145,7 +145,7 @@ export default function PDGUsers() {
         target_id: userId
       });
 
-      toast.success(currentStatus ? 'Utilisateur suspendu' : 'Utilisateur activÃ©');
+      toast.success(currentStatus ? 'Utilisateur suspendu' : 'Utilisateur activé');
       loadUsers();
     } catch (error) {
       toast.error('Erreur lors de la modification du statut');
@@ -157,7 +157,7 @@ export default function PDGUsers() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        toast.error('Session expirÃ©e, veuillez vous reconnecter');
+        toast.error('Session expirée, veuillez vous reconnecter');
         return;
       }
 
@@ -174,10 +174,10 @@ export default function PDGUsers() {
       }
 
       if (!data?.success) {
-        throw new Error(data?.error || 'Ã‰chec de la suppression');
+        throw new Error(data?.error || 'Échec de la suppression');
       }
 
-      toast.success(`Utilisateur ${userEmail} supprimÃ© avec succÃ¨s`);
+      toast.success(`Utilisateur ${userEmail} supprimé avec succès`);
       loadUsers();
     } catch (error: any) {
       console.error('Erreur suppression utilisateur:', error);
@@ -199,7 +199,7 @@ export default function PDGUsers() {
     const colors = {
       admin: 'bg-red-500/10 text-red-500 border-red-500/20',
       vendeur: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-      client: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500 border-primary-orange-500/20',
+      client: 'bg-green-500/10 text-green-500 border-green-500/20',
       livreur: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
       taxi: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
       transitaire: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
@@ -284,10 +284,10 @@ export default function PDGUsers() {
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-48 bg-background">
-                <SelectValue placeholder="Filtrer par rÃ´le" />
+                <SelectValue placeholder="Filtrer par rôle" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les rÃ´les</SelectItem>
+                <SelectItem value="all">Tous les rôles</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="vendeur">Vendeur</SelectItem>
                 <SelectItem value="client">Client</SelectItem>
@@ -317,7 +317,7 @@ export default function PDGUsers() {
                       <Shield className="w-7 h-7 text-primary-foreground" />
                     </div>
                     {user.is_active && (
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full border-2 border-card" />
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-card" />
                     )}
                   </div>
                   <div className="flex-1">
@@ -348,7 +348,7 @@ export default function PDGUsers() {
                       <Badge variant="outline" className={getRoleBadge(user.role)}>
                         {user.role}
                       </Badge>
-                      <Badge variant="outline" className={user.is_active ? 'border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
+                      <Badge variant="outline" className={user.is_active ? 'border-green-500/50 bg-green-500/10 text-green-500' : 'border-red-500/50 bg-red-500/10 text-red-500'}>
                         {user.is_active ? 'Actif' : 'Suspendu'}
                       </Badge>
                     </div>
@@ -379,7 +379,7 @@ export default function PDGUsers() {
                     variant="outline"
                     size="sm"
                     onClick={() => toggleUserStatus(user.id, user.is_active)}
-                    className={user.is_active ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-primary-orange-500/50 hover:bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 hover:text-primary-orange-500'}
+                    className={user.is_active ? 'border-red-500/50 hover:bg-red-500/10 hover:text-red-500' : 'border-green-500/50 hover:bg-green-500/10 hover:text-green-500'}
                   >
                     {user.is_active ? (
                       <>
@@ -409,8 +409,8 @@ export default function PDGUsers() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                         <AlertDialogDescription>
-                          ÃŠtes-vous sÃ»r de vouloir supprimer l'utilisateur <strong>{user.email}</strong> ?
-                          Cette action est irrÃ©versible et supprimera toutes les donnÃ©es associÃ©es.
+                          Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{user.email}</strong> ?
+                          Cette action est irréversible et supprimera toutes les données associées.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -419,7 +419,7 @@ export default function PDGUsers() {
                           onClick={() => deleteUser(user.id, user.email)}
                           className="bg-red-500 hover:bg-red-600"
                         >
-                          Supprimer dÃ©finitivement
+                          Supprimer définitivement
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -427,7 +427,7 @@ export default function PDGUsers() {
                 </div>
               </div>
 
-              {/* Section des services (affichÃ©e si Ã©tendue) */}
+              {/* Section des services (affichée si étendue) */}
               {user.role === 'vendeur' && expandedUsers.has(user.id) && userServices[user.id] && (
                 <div className="mt-4 pt-4 border-t border-border/40">
                   <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -448,7 +448,7 @@ export default function PDGUsers() {
                                 variant="outline" 
                                 className={
                                   service.status === 'active' 
-                                    ? 'border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500 text-xs' 
+                                    ? 'border-green-500/50 bg-green-500/10 text-green-500 text-xs' 
                                     : service.status === 'pending'
                                     ? 'border-yellow-500/50 bg-yellow-500/10 text-yellow-500 text-xs'
                                     : 'border-red-500/50 bg-red-500/10 text-red-500 text-xs'
@@ -470,21 +470,21 @@ export default function PDGUsers() {
                               </div>
                               {service.phone && (
                                 <div className="flex items-center gap-1">
-                                  <span>ðŸ“ž {service.phone}</span>
+                                  <span>📞 {service.phone}</span>
                                 </div>
                               )}
                               {service.address && (
                                 <div className="col-span-2 flex items-center gap-1">
-                                  <span>ðŸ“ {service.address}</span>
+                                  <span>📍 {service.address}</span>
                                 </div>
                               )}
                               {service.rating > 0 && (
                                 <div className="flex items-center gap-1">
-                                  <span>â­ {service.rating.toFixed(1)} ({service.total_reviews || 0} avis)</span>
+                                  <span>⭐ {service.rating.toFixed(1)} ({service.total_reviews || 0} avis)</span>
                                 </div>
                               )}
                               <div className="flex items-center gap-1">
-                                <span>ðŸ“… CrÃ©Ã© le {new Date(service.created_at).toLocaleDateString('fr-FR')}</span>
+                                <span>📅 Créé le {new Date(service.created_at).toLocaleDateString('fr-FR')}</span>
                               </div>
                             </div>
                           </div>
@@ -495,7 +495,7 @@ export default function PDGUsers() {
                             onClick={() => {
                               // Copier l'ID du service
                               navigator.clipboard.writeText(service.id);
-                              toast.success('ID du service copiÃ©');
+                              toast.success('ID du service copié');
                             }}
                             className="ml-2"
                           >
@@ -515,7 +515,7 @@ export default function PDGUsers() {
       {filteredUsers.length === 0 && (
         <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
           <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground">Aucun utilisateur trouvÃ©</p>
+            <p className="text-muted-foreground">Aucun utilisateur trouvé</p>
           </CardContent>
         </Card>
       )}

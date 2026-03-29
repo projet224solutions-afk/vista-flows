@@ -62,7 +62,7 @@ export function TaxiMotoAdminPanel() {
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-3xl font-bold">ðŸï¸ Admin Taxi Moto</h1>
+      <h1 className="text-3xl font-bold">🏍️ Admin Taxi Moto</h1>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -82,7 +82,7 @@ export function TaxiMotoAdminPanel() {
               <p className="text-sm text-muted-foreground">Chauffeurs en ligne</p>
               <p className="text-2xl font-bold">{stats.onlineDrivers}/{stats.totalDrivers}</p>
             </div>
-            <Users className="w-6 h-6 text-primary-orange-500" />
+            <Users className="w-6 h-6 text-green-500" />
           </div>
         </Card>
 
@@ -131,15 +131,15 @@ export function TaxiMotoAdminPanel() {
         </Card>
       )}
 
-      {/* Courses rÃ©centes */}
+      {/* Courses récentes */}
       <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Courses rÃ©centes</h2>
+        <h2 className="text-xl font-semibold mb-4">Courses récentes</h2>
         <div className="space-y-2">
           {recentRides.map((ride) => (
             <div key={ride.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">
               <div>
                 <p className="font-medium">{ride.pickup_address}</p>
-                <p className="text-sm text-muted-foreground">â†’ {ride.dropoff_address}</p>
+                <p className="text-sm text-muted-foreground">→ {ride.dropoff_address}</p>
               </div>
               <div className="text-right">
                 <Badge>{ride.status}</Badge>

@@ -1,6 +1,6 @@
 /**
- * TIMELINE DE SUIVI D'EXPÃ‰DITION
- * Affiche visuellement les Ã©tapes de livraison avec animation
+ * TIMELINE DE SUIVI D'EXPÉDITION
+ * Affiche visuellement les étapes de livraison avec animation
  */
 
 import { CheckCircle, Circle, Package, Truck, MapPin, CheckCheck } from 'lucide-react';
@@ -27,7 +27,7 @@ interface ShipmentTimelineProps {
 const SHIPMENT_STEPS: TimelineStep[] = [
   {
     status: 'created',
-    label: 'Commande crÃ©Ã©e',
+    label: 'Commande créée',
     icon: <Package className="h-5 w-5" />,
   },
   {
@@ -42,7 +42,7 @@ const SHIPMENT_STEPS: TimelineStep[] = [
   },
   {
     status: 'delivered',
-    label: 'LivrÃ©',
+    label: 'Livré',
     icon: <CheckCheck className="h-5 w-5" />,
   },
 ];
@@ -78,7 +78,7 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
                 <div
                   className={cn(
                     "absolute left-5 top-11 w-0.5 h-full -ml-px transition-all duration-500",
-                    status === 'completed' ? "bg-gradient-to-b from-primary-blue-500 to-primary-orange-400" :
+                    status === 'completed' ? "bg-gradient-to-b from-green-500 to-green-400" :
                     status === 'current' ? "bg-gradient-to-b from-orange-500 to-gray-200" :
                     status === 'cancelled' ? "bg-red-200" :
                     "bg-gray-200"
@@ -86,13 +86,13 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
                 />
               )}
 
-              {/* Ã‰tape */}
+              {/* Étape */}
               <div className="flex items-start gap-4 relative">
-                {/* IcÃ´ne */}
+                {/* Icône */}
                 <div
                   className={cn(
                     "relative z-10 flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-500",
-                    status === 'completed' ? "bg-primary-orange-100 border-primary-orange-500 text-primary-orange-600 shadow-lg shadow-primary-orange-200" :
+                    status === 'completed' ? "bg-green-100 border-green-500 text-green-600 shadow-lg shadow-green-200" :
                     status === 'current' ? "bg-orange-100 border-orange-500 text-orange-600 animate-pulse shadow-lg shadow-orange-200" :
                     status === 'cancelled' ? "bg-red-100 border-red-300 text-red-400" :
                     "bg-gray-50 border-gray-200 text-gray-400"
@@ -112,7 +112,7 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
                   <div
                     className={cn(
                       "font-medium transition-colors duration-300",
-                      status === 'completed' ? "text-primary-orange-900" :
+                      status === 'completed' ? "text-green-900" :
                       status === 'current' ? "text-orange-900" :
                       status === 'cancelled' ? "text-red-400" :
                       "text-gray-400"
@@ -121,7 +121,7 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
                     {step.label}
                   </div>
 
-                  {/* DÃ©tails du tracking */}
+                  {/* Détails du tracking */}
                   {trackingEntry && (
                     <div className="mt-2 space-y-1">
                       <p className="text-sm text-muted-foreground">
@@ -164,9 +164,9 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
       {/* Message d'annulation */}
       {isCancelled && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg animate-in fade-in slide-in-from-bottom duration-300">
-          <p className="text-sm font-medium text-red-900">ExpÃ©dition annulÃ©e</p>
+          <p className="text-sm font-medium text-red-900">Expédition annulée</p>
           <p className="text-xs text-red-600 mt-1">
-            Cette expÃ©dition a Ã©tÃ© annulÃ©e et ne sera pas livrÃ©e.
+            Cette expédition a été annulée et ne sera pas livrée.
           </p>
         </div>
       )}

@@ -37,7 +37,7 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
         setVendorCustomId(userIdData.custom_id);
       }
     } catch (error) {
-      console.error('Erreur rÃ©cupÃ©ration custom_id vendeur:', error);
+      console.error('Erreur récupération custom_id vendeur:', error);
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
 
   const generateLink = () => {
     if (!effectiveShopId) {
-      console.warn('shopId non disponible pour gÃ©nÃ©rer le lien d\'affiliation');
+      console.warn('shopId non disponible pour générer le lien d\'affiliation');
       return;
     }
     const base = typeof window !== 'undefined' ? window.location.origin : '';
@@ -77,7 +77,7 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
         {!effectiveShopId && (
           <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20 mb-4">
             <p className="text-sm text-orange-600">
-              âš ï¸ Identifiant vendeur non disponible. Assurez-vous d'avoir complÃ©tÃ© votre profil vendeur.
+              ⚠️ Identifiant vendeur non disponible. Assurez-vous d'avoir complété votre profil vendeur.
             </p>
           </div>
         )}
@@ -97,18 +97,18 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
               className="max-w-[200px]"
             />
             <Button onClick={generateLink} disabled={!effectiveShopId}>
-              GÃ©nÃ©rer le lien d'affiliation
+              Générer le lien d'affiliation
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Commission que vous offrez aux affiliÃ©s sur chaque vente
+            Commission que vous offrez aux affiliés sur chaque vente
           </p>
         </div>
 
         {link && (
-          <div className="p-4 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border border-primary-orange-500/20">
-            <p className="text-sm font-medium text-primary-orange-700 mb-2">
-              âœ… Lien d'affiliation gÃ©nÃ©rÃ© avec succÃ¨s !
+          <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+            <p className="text-sm font-medium text-green-700 mb-2">
+              ✅ Lien d'affiliation généré avec succès !
             </p>
             <div className="flex items-center gap-2">
               <Input 
@@ -122,13 +122,13 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(link);
-                    toast.success("Lien copiÃ© avec succÃ¨s !", {
-                      description: "Le lien d'affiliation a Ã©tÃ© copiÃ© dans le presse-papiers"
+                    toast.success("Lien copié avec succès !", {
+                      description: "Le lien d'affiliation a été copié dans le presse-papiers"
                     });
                   } catch (error) {
                     console.error('Erreur copie:', error);
                     toast.error("Erreur lors de la copie", {
-                      description: "Impossible de copier le lien. Veuillez rÃ©essayer."
+                      description: "Impossible de copier le lien. Veuillez réessayer."
                     });
                   }
                 }}
@@ -142,19 +142,19 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
               rel="noreferrer"
               className="text-xs text-blue-600 hover:underline mt-2 inline-block"
             >
-              Tester le lien â†’
+              Tester le lien →
             </a>
           </div>
         )}
 
         {effectiveShopId && (
           <div className="p-4 rounded-lg bg-muted/50 border border-border">
-            <h3 className="text-sm font-semibold mb-2">ðŸ’¡ Comment Ã§a marche ?</h3>
+            <h3 className="text-sm font-semibold mb-2">💡 Comment ça marche ?</h3>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>DÃ©finissez le pourcentage de commission pour vos affiliÃ©s</li>
-              <li>GÃ©nÃ©rez et partagez votre lien d'affiliation unique</li>
-              <li>Suivez les ventes gÃ©nÃ©rÃ©es par vos affiliÃ©s</li>
-              <li>GÃ©rez automatiquement les commissions via le systÃ¨me</li>
+              <li>Définissez le pourcentage de commission pour vos affiliés</li>
+              <li>Générez et partagez votre lien d'affiliation unique</li>
+              <li>Suivez les ventes générées par vos affiliés</li>
+              <li>Gérez automatiquement les commissions via le système</li>
             </ul>
           </div>
         )}

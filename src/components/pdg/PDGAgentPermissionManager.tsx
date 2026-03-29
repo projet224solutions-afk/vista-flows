@@ -87,7 +87,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
 
   const handleRevokePermission = async (permissionKey: string) => {
     if (!selectedAgent) return;
-    const success = await revokePermission(selectedAgent, permissionKey, 'RÃ©vocation manuelle');
+    const success = await revokePermission(selectedAgent, permissionKey, 'Révocation manuelle');
     if (success) {
       await loadPermissions();
     }
@@ -95,7 +95,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
 
   const getRiskColor = (risk: string) => {
     switch(risk) {
-      case 'low': return 'bg-primary-orange-100 text-primary-orange-800';
+      case 'low': return 'bg-green-100 text-green-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'high': return 'bg-orange-100 text-orange-800';
       case 'critical': return 'bg-red-100 text-red-800';
@@ -115,9 +115,9 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* SÃ©lection de l'agent */}
+          {/* Sélection de l'agent */}
           <div className="space-y-2">
-            <Label>SÃ©lectionner un agent</Label>
+            <Label>Sélectionner un agent</Label>
             <Select value={selectedAgent} onValueChange={setSelectedAgent}>
               <SelectTrigger>
                 <SelectValue placeholder="Choisir un agent" />
@@ -138,7 +138,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-base font-semibold">
-                    Permissions accordÃ©es ({agentPermissions.length})
+                    Permissions accordées ({agentPermissions.length})
                   </Label>
                   <Button 
                     onClick={() => setShowDialog(true)}
@@ -182,7 +182,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
                 ) : (
                   <Alert>
                     <AlertDescription>
-                      Aucune permission accordÃ©e. Cliquez sur "Ajouter permission" pour en ajouter.
+                      Aucune permission accordée. Cliquez sur "Ajouter permission" pour en ajouter.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -193,7 +193,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Attention: Cet agent a accÃ¨s Ã  des permissions critiques. Assurez-vous que c'est intentionnel.
+                    Attention: Cet agent a accès à des permissions critiques. Assurez-vous que c'est intentionnel.
                   </AlertDescription>
                 </Alert>
               )}
@@ -208,7 +208,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
           <DialogHeader>
             <DialogTitle>Ajouter permissions</DialogTitle>
             <DialogDescription>
-              SÃ©lectionnez les permissions Ã  accorder Ã  cet agent
+              Sélectionnez les permissions à accorder à cet agent
             </DialogDescription>
           </DialogHeader>
 
@@ -245,7 +245,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
                               {permKey.startsWith('manage_') && (
                                 <Badge variant="outline" className="text-xs">
                                   <Lock className="h-3 w-3 mr-1" />
-                                  Ã‰criture
+                                  Écriture
                                 </Badge>
                               )}
                               <Badge 

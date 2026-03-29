@@ -129,12 +129,12 @@ export const MLFraudDashboard: React.FC = () => {
       // Distribution des risques
       setRiskDistribution([
         { name: 'Critique', value: critical, color: RISK_COLORS.critical },
-        { name: 'Ã‰levÃ©', value: high, color: RISK_COLORS.high },
+        { name: 'Élevé', value: high, color: RISK_COLORS.high },
         { name: 'Moyen', value: medium, color: RISK_COLORS.medium },
         { name: 'Faible', value: low, color: RISK_COLORS.low }
       ]);
 
-      // DonnÃ©es de tendance (grouper par jour)
+      // Données de tendance (grouper par jour)
       const grouped: Record<string, { scores: number[]; count: number }> = {};
       analyses.forEach(a => {
         const date = new Date(a.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
@@ -158,7 +158,7 @@ export const MLFraudDashboard: React.FC = () => {
 
     } catch (error) {
       console.error('Error loading ML fraud dashboard:', error);
-      toast.error('Erreur lors du chargement des donnÃ©es');
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -194,7 +194,7 @@ export const MLFraudDashboard: React.FC = () => {
             ML Fraud Detection Dashboard
           </h2>
           <p className="text-muted-foreground">
-            Analyse comportementale prÃ©dictive des transactions
+            Analyse comportementale prédictive des transactions
           </p>
         </div>
         <Button onClick={loadDashboardData} disabled={loading} variant="outline">
@@ -240,8 +240,8 @@ export const MLFraudDashboard: React.FC = () => {
                 <p className="text-sm text-muted-foreground">Confiance ML</p>
                 <p className="text-3xl font-bold">{stats.avgConfidence}%</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 rounded-full">
-                <Target className="h-6 w-6 text-primary-orange-500" />
+              <div className="p-3 bg-green-500/10 rounded-full">
+                <Target className="h-6 w-6 text-green-500" />
               </div>
             </div>
             <Progress value={stats.avgConfidence} className="mt-2" />
@@ -252,7 +252,7 @@ export const MLFraudDashboard: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Transactions BloquÃ©es</p>
+                <p className="text-sm text-muted-foreground">Transactions Bloquées</p>
                 <p className="text-3xl font-bold text-orange-500">{stats.blockedTransactions}</p>
               </div>
               <div className="p-3 bg-orange-500/10 rounded-full">
@@ -270,7 +270,7 @@ export const MLFraudDashboard: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Ã‰volution des Scores de Risque
+              Évolution des Scores de Risque
             </CardTitle>
             <CardDescription>Score moyen par jour (7 derniers jours)</CardDescription>
           </CardHeader>
@@ -303,7 +303,7 @@ export const MLFraudDashboard: React.FC = () => {
               <Zap className="h-5 w-5" />
               Distribution des Niveaux de Risque
             </CardTitle>
-            <CardDescription>RÃ©partition des analyses par niveau</CardDescription>
+            <CardDescription>Répartition des analyses par niveau</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -334,9 +334,9 @@ export const MLFraudDashboard: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Analyses RÃ©centes
+            Analyses Récentes
           </CardTitle>
-          <CardDescription>10 derniÃ¨res analyses ML effectuÃ©es</CardDescription>
+          <CardDescription>10 dernières analyses ML effectuées</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -346,7 +346,7 @@ export const MLFraudDashboard: React.FC = () => {
           ) : recentAnalyses.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucune analyse ML enregistrÃ©e</p>
+              <p>Aucune analyse ML enregistrée</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -357,7 +357,7 @@ export const MLFraudDashboard: React.FC = () => {
                     <th className="text-left py-3 px-2">Score</th>
                     <th className="text-left py-3 px-2">Niveau</th>
                     <th className="text-left py-3 px-2">Confiance</th>
-                    <th className="text-left py-3 px-2">ModÃ¨le</th>
+                    <th className="text-left py-3 px-2">Modèle</th>
                     <th className="text-left py-3 px-2">Flags</th>
                   </tr>
                 </thead>
@@ -386,7 +386,7 @@ export const MLFraudDashboard: React.FC = () => {
                       </td>
                       <td className="py-3 px-2">
                         <span className={`font-medium ${
-                          analysis.ml_confidence >= 80 ? 'text-primary-orange-600' :
+                          analysis.ml_confidence >= 80 ? 'text-green-600' :
                           analysis.ml_confidence >= 60 ? 'text-yellow-600' : 'text-red-600'
                         }`}>
                           {analysis.ml_confidence}%
@@ -426,15 +426,15 @@ export const MLFraudDashboard: React.FC = () => {
               <Brain className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">ModÃ¨le ML Actif</h3>
+              <h3 className="font-semibold text-lg">Modèle ML Actif</h3>
               <p className="text-sm text-muted-foreground">
-                <span className="font-mono">lovable-gemini-2.5-flash-v1</span> â€¢ 
-                Analyse comportementale prÃ©dictive avec extraction de features en temps rÃ©el
+                <span className="font-mono">lovable-gemini-2.5-flash-v1</span> • 
+                Analyse comportementale prédictive avec extraction de features en temps réel
               </p>
               <div className="flex gap-4 mt-2 text-sm">
                 <span className="flex items-center gap-1">
-                  <Target className="h-4 w-4 text-primary-orange-500" />
-                  PrÃ©cision: {stats.mlAccuracy}%
+                  <Target className="h-4 w-4 text-green-500" />
+                  Précision: {stats.mlAccuracy}%
                 </span>
                 <span className="flex items-center gap-1">
                   <Zap className="h-4 w-4 text-yellow-500" />

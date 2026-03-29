@@ -1,6 +1,6 @@
 /**
  * Historique des Lots de Tickets de Transport
- * TraÃ§abilitÃ© complÃ¨te des gÃ©nÃ©rations
+ * Traçabilité complète des générations
  */
 
 import { useState, useEffect } from 'react';
@@ -85,7 +85,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
       if (error) throw error;
 
       setBatches(prev => prev.filter(b => b.id !== batchId));
-      toast.success('Lot supprimÃ© avec succÃ¨s');
+      toast.success('Lot supprimé avec succès');
     } catch (error: any) {
       console.error('Erreur suppression lot:', error);
       toast.error('Erreur lors de la suppression du lot');
@@ -107,7 +107,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
       if (error) throw error;
 
       setBatches([]);
-      toast.success('Tout l\'historique a Ã©tÃ© supprimÃ©');
+      toast.success('Tout l\'historique a été supprimé');
     } catch (error: any) {
       console.error('Erreur suppression historique:', error);
       toast.error('Erreur lors de la suppression de l\'historique');
@@ -134,7 +134,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
     hebdomadaire: 'Hebdomadaire',
     mensuel: 'Mensuel',
     cotisation: 'Cotisation',
-    special: 'SpÃ©cial',
+    special: 'Spécial',
   };
 
   if (loading) {
@@ -149,9 +149,9 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
     return (
       <div className="text-center py-12">
         <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-        <p className="text-gray-500">Aucun lot de tickets gÃ©nÃ©rÃ©</p>
+        <p className="text-gray-500">Aucun lot de tickets généré</p>
         <p className="text-sm text-gray-400 mt-2">
-          Utilisez le formulaire pour gÃ©nÃ©rer votre premier lot
+          Utilisez le formulaire pour générer votre premier lot
         </p>
       </div>
     );
@@ -162,7 +162,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
       <div className="flex items-center justify-between">
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <p className="text-sm text-amber-800">
-            <strong>{batches.length}</strong> lot(s) de tickets gÃ©nÃ©rÃ©s au total â€¢ 
+            <strong>{batches.length}</strong> lot(s) de tickets générés au total • 
             <strong> {batches.reduce((acc, b) => acc + b.tickets_count, 0)}</strong> tickets
           </p>
         </div>
@@ -183,8 +183,8 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
               <AlertDialogDescription>
-                ÃŠtes-vous sÃ»r de vouloir supprimer tout l'historique des tickets ?
-                Cette action est irrÃ©versible et supprimera <strong>{batches.length} lot(s)</strong> contenant 
+                Êtes-vous sûr de vouloir supprimer tout l'historique des tickets ?
+                Cette action est irréversible et supprimera <strong>{batches.length} lot(s)</strong> contenant 
                 <strong> {batches.reduce((acc, b) => acc + b.tickets_count, 0)} tickets</strong>.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -208,12 +208,12 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>NÂ° Lot</TableHead>
+            <TableHead>N° Lot</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Commune</TableHead>
             <TableHead>Montant</TableHead>
             <TableHead>Tickets</TableHead>
-            <TableHead>Date crÃ©ation</TableHead>
+            <TableHead>Date création</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -234,9 +234,9 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
               </TableCell>
               <TableCell>
                 <span className="text-sm">
-                  {batch.start_number} â†’ {batch.end_number}
+                  {batch.start_number} → {batch.end_number}
                 </span>
-                <Badge className="ml-2 bg-primary-orange-100 text-primary-orange-800">
+                <Badge className="ml-2 bg-green-100 text-green-800">
                   {batch.tickets_count}
                 </Badge>
               </TableCell>
@@ -275,7 +275,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
                         <AlertDialogTitle>Supprimer ce lot ?</AlertDialogTitle>
                         <AlertDialogDescription>
                           Voulez-vous supprimer le lot <strong>{batch.batch_number}</strong> ?
-                          Cette action est irrÃ©versible.
+                          Cette action est irréversible.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -296,7 +296,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
         </TableBody>
       </Table>
 
-      {/* Dialog de prÃ©visualisation */}
+      {/* Dialog de prévisualisation */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-auto">
           <DialogHeader>

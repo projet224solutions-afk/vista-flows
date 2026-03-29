@@ -1,6 +1,6 @@
 /**
  * COMPOSANT RECOMMANDATIONS ML - 224SOLUTIONS
- * Affiche les produits recommandÃ©s basÃ©s sur l'IA
+ * Affiche les produits recommandés basés sur l'IA
  */
 
 import React, { memo } from 'react';
@@ -36,7 +36,7 @@ interface MLRecommendationsProps {
   onProductClick?: (productId: string) => void;
 }
 
-// IcÃ´nes et labels pour les raisons de recommandation
+// Icônes et labels pour les raisons de recommandation
 const REASON_CONFIG = {
   similar_users: {
     icon: Users,
@@ -51,7 +51,7 @@ const REASON_CONFIG = {
   trending: {
     icon: TrendingUp,
     label: 'Tendance',
-    color: 'bg-primary-orange-100 text-primary-orange-800'
+    color: 'bg-green-100 text-green-800'
   },
   viewed_together: {
     icon: Eye,
@@ -60,7 +60,7 @@ const REASON_CONFIG = {
   },
   bought_together: {
     icon: ShoppingCart,
-    label: 'Souvent achetÃ©s ensemble',
+    label: 'Souvent achetés ensemble',
     color: 'bg-pink-100 text-pink-800'
   },
   personalized: {
@@ -70,7 +70,7 @@ const REASON_CONFIG = {
   }
 };
 
-// Composant carte produit recommandÃ©
+// Composant carte produit recommandé
 const RecommendationCard = memo(({
   recommendation,
   showReason,
@@ -162,8 +162,8 @@ const RecommendationSkeleton = () => (
 
 // Composant principal
 export function MLRecommendations({
-  title = 'RecommandÃ© pour vous',
-  subtitle = 'BasÃ© sur vos prÃ©fÃ©rences',
+  title = 'Recommandé pour vous',
+  subtitle = 'Basé sur vos préférences',
   limit = 12,
   showReason = true,
   variant = 'horizontal',
@@ -187,7 +187,7 @@ export function MLRecommendations({
   const [productRecs, setProductRecs] = React.useState<ProductRecommendation[]>([]);
   const [productRecsLoading, setProductRecsLoading] = React.useState(false);
 
-  // Charger les recommandations pour un produit spÃ©cifique
+  // Charger les recommandations pour un produit spécifique
   React.useEffect(() => {
     if (productId) {
       setProductRecsLoading(true);
@@ -216,13 +216,13 @@ export function MLRecommendations({
       image: rec.product_image,
       vendor_id: rec.vendor_id
     });
-    toast.success('Produit ajoutÃ© au panier', {
+    toast.success('Produit ajouté au panier', {
       description: rec.product_name
     });
   };
 
   if (error && !isLoading && displayRecs.length === 0) {
-    return null; // Ne pas afficher en cas d'erreur sans donnÃ©es
+    return null; // Ne pas afficher en cas d'erreur sans données
   }
 
   return (
@@ -322,7 +322,7 @@ export function ProductRecommendations({
     <MLRecommendations
       productId={productId}
       title={title}
-      subtitle="Produits frÃ©quemment achetÃ©s ensemble"
+      subtitle="Produits fréquemment achetés ensemble"
       {...props}
     />
   );

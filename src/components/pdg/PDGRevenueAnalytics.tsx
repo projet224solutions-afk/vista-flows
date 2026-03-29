@@ -23,10 +23,10 @@ export default function PDGRevenueAnalytics() {
   });
   const { toast } = useToast();
 
-  // Charger les donnÃ©es
+  // Charger les données
   const loadData = async () => {
     setLoading(true);
-    console.log('ðŸ”„ [PDGRevenueAnalytics] Chargement des donnÃ©es...');
+    console.log('🔄 [PDGRevenueAnalytics] Chargement des données...');
 
     const [statsData, revenuesData, settingsData] = await Promise.all([
       PdgRevenueService.getRevenueStats(dateRange.start, dateRange.end),
@@ -39,7 +39,7 @@ export default function PDGRevenueAnalytics() {
     setSettings(settingsData);
     setLoading(false);
 
-    console.log('âœ… [PDGRevenueAnalytics] DonnÃ©es chargÃ©es:', {
+    console.log('✅ [PDGRevenueAnalytics] Données chargées:', {
       stats: statsData,
       revenues: revenuesData.length,
       settings: settingsData.length,
@@ -49,11 +49,11 @@ export default function PDGRevenueAnalytics() {
   useEffect(() => {
     loadData();
 
-    // Ã‰couter les changements en temps rÃ©el
+    // Écouter les changements en temps réel
     const revenueChannel = supabase
       .channel('pdg_revenue_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'revenus_pdg' }, () => {
-        console.log('ðŸ”” [PDGRevenueAnalytics] Nouveau revenu dÃ©tectÃ©, rechargement...');
+        console.log('🔔 [PDGRevenueAnalytics] Nouveau revenu détecté, rechargement...');
         loadData();
       })
       .subscribe();
@@ -63,13 +63,13 @@ export default function PDGRevenueAnalytics() {
     };
   }, [dateRange]);
 
-  // Calculer les donnÃ©es pour les graphiques
+  // Calculer les données pour les graphiques
   const pieData = [
     { name: 'Frais Wallet', value: Number(stats?.wallet_fees_revenue || 0), color: '#8B5CF6' },
     { name: 'Commissions Achats', value: Number(stats?.purchase_fees_revenue || 0), color: '#EC4899' },
   ];
 
-  // DonnÃ©es temporelles (groupÃ©es par jour)
+  // Données temporelles (groupées par jour)
   const timelineData = revenues.reduce((acc: any[], rev) => {
     const date = format(new Date(rev.created_at), 'dd MMM', { locale: fr });
     const existing = acc.find(item => item.date === date);
@@ -99,7 +99,7 @@ export default function PDGRevenueAnalytics() {
     return ((lastWeek - previousWeek) / previousWeek) * 100;
   };
 
-  // Mettre Ã  jour un paramÃ¨tre
+  // Mettre à jour un paramètre
   const handleUpdateSetting = async (key: string, newValue: number) => {
     const user = await supabase.auth.getUser();
     if (!user.data.user) return;
@@ -111,10 +111,10 @@ export default function PDGRevenueAnalytics() {
     );
 
     if (success) {
-      toast({ title: 'âœ… ParamÃ¨tre mis Ã  jour', description: 'Les nouveaux taux ont Ã©tÃ© enregistrÃ©s.' });
+      toast({ title: '✅ Paramètre mis à jour', description: 'Les nouveaux taux ont été enregistrés.' });
       loadData();
     } else {
-      toast({ title: 'âŒ Erreur', description: 'Impossible de mettre Ã  jour le paramÃ¨tre.', variant: 'destructive' });
+      toast({ title: '❌ Erreur', description: 'Impossible de mettre à jour le paramètre.', variant: 'destructive' });
     }
   };
 
@@ -152,12 +152,12 @@ export default function PDGRevenueAnalytics() {
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte avec actions */}
+      {/* En-tête avec actions */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">ðŸ’¼ Analyse des Revenus PDG</h2>
+          <h2 className="text-3xl font-bold tracking-tight">💼 Analyse des Revenus PDG</h2>
           <p className="text-muted-foreground mt-1">
-            Suivi et diffÃ©renciation des sources de revenus de la plateforme
+            Suivi et différenciation des sources de revenus de la plateforme
           </p>
         </div>
         <div className="flex gap-2">
@@ -222,7 +222,7 @@ export default function PDGRevenueAnalytics() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Croissance</CardTitle>
-            <TrendingUp className="h-4 w-4 text-primary-orange-500" />
+            <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -235,11 +235,11 @@ export default function PDGRevenueAnalytics() {
         </Card>
       </div>
 
-      {/* Graphiques et donnÃ©es */}
+      {/* Graphiques et données */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-          <TabsTrigger value="details">Historique dÃ©taillÃ©</TabsTrigger>
+          <TabsTrigger value="details">Historique détaillé</TabsTrigger>
           <TabsTrigger value="settings">Configuration</TabsTrigger>
         </TabsList>
 
@@ -249,7 +249,7 @@ export default function PDGRevenueAnalytics() {
             {/* Graphique en camembert */}
             <Card>
               <CardHeader>
-                <CardTitle>RÃ©partition des Revenus</CardTitle>
+                <CardTitle>Répartition des Revenus</CardTitle>
                 <CardDescription>Distribution par source de revenu</CardDescription>
               </CardHeader>
               <CardContent>
@@ -278,7 +278,7 @@ export default function PDGRevenueAnalytics() {
             {/* Graphique temporel */}
             <Card>
               <CardHeader>
-                <CardTitle>Ã‰volution Temporelle</CardTitle>
+                <CardTitle>Évolution Temporelle</CardTitle>
                 <CardDescription>Revenus sur les 30 derniers jours</CardDescription>
               </CardHeader>
               <CardContent>
@@ -298,17 +298,17 @@ export default function PDGRevenueAnalytics() {
             </Card>
           </div>
 
-          {/* Informations supplÃ©mentaires */}
+          {/* Informations supplémentaires */}
           <Card>
             <CardHeader>
-              <CardTitle>ðŸ’¡ MÃ©canismes de Commission</CardTitle>
+              <CardTitle>💡 Mécanismes de Commission</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
                 <div>
-                  <p className="font-medium">ðŸ”¹ Frais Wallet</p>
+                  <p className="font-medium">🔹 Frais Wallet</p>
                   <p className="text-sm text-muted-foreground">
-                    PrÃ©levÃ©s sur les transferts, retraits et recharges entre wallets
+                    Prélevés sur les transferts, retraits et recharges entre wallets
                   </p>
                 </div>
                 <span className="text-xl font-bold text-purple-600">
@@ -317,9 +317,9 @@ export default function PDGRevenueAnalytics() {
               </div>
               <div className="flex items-center justify-between p-3 bg-pink-50 dark:bg-pink-950 rounded-lg">
                 <div>
-                  <p className="font-medium">ðŸ”¹ Commissions Achats</p>
+                  <p className="font-medium">🔹 Commissions Achats</p>
                   <p className="text-sm text-muted-foreground">
-                    PrÃ©levÃ©es sur les paiements d'achats de produits ou services
+                    Prélevées sur les paiements d'achats de produits ou services
                   </p>
                 </div>
                 <span className="text-xl font-bold text-pink-600">
@@ -330,12 +330,12 @@ export default function PDGRevenueAnalytics() {
           </Card>
         </TabsContent>
 
-        {/* Historique dÃ©taillÃ© */}
+        {/* Historique détaillé */}
         <TabsContent value="details">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des Transactions GÃ©nÃ©ratrices</CardTitle>
-              <CardDescription>Liste complÃ¨te des revenus enregistrÃ©s</CardDescription>
+              <CardTitle>Historique des Transactions Génératrices</CardTitle>
+              <CardDescription>Liste complète des revenus enregistrés</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -357,12 +357,12 @@ export default function PDGRevenueAnalytics() {
                             : 'Commission Achat'}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(rev.created_at), 'dd MMM yyyy Ã  HH:mm', { locale: fr })}
+                          {format(new Date(rev.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-primary-orange-600">
+                      <p className="font-bold text-green-600">
                         {PdgRevenueService.formatAmount(Number(rev.amount))}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -379,7 +379,7 @@ export default function PDGRevenueAnalytics() {
         {/* Configuration */}
         <TabsContent value="settings">
           <div className="space-y-6">
-            {/* AperÃ§u des taux actuels */}
+            {/* Aperçu des taux actuels */}
             <div className="grid gap-4 md:grid-cols-3">
               {settings.map((setting) => {
                 const value = setting.setting_value?.value || 0;
@@ -401,8 +401,8 @@ export default function PDGRevenueAnalytics() {
                   },
                   deposit_fee_percentage: { 
                     icon: <ArrowDownToLine className="h-5 w-5" />, 
-                    color: 'text-primary-orange-600', 
-                    bg: 'bg-primary-orange-100 dark:bg-primary-orange-900/30' 
+                    color: 'text-green-600', 
+                    bg: 'bg-green-100 dark:bg-green-900/30' 
                   },
                   withdrawal_fee_percentage: { 
                     icon: <ArrowUpFromLine className="h-5 w-5" />, 
@@ -434,7 +434,7 @@ export default function PDGRevenueAnalytics() {
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Mis Ã  jour le {format(new Date(setting.updated_at), 'dd MMM yyyy', { locale: fr })}
+                        Mis à jour le {format(new Date(setting.updated_at), 'dd MMM yyyy', { locale: fr })}
                       </p>
                     </CardContent>
                   </Card>
@@ -450,7 +450,7 @@ export default function PDGRevenueAnalytics() {
                   Modifier les Taux de Commission
                 </CardTitle>
                 <CardDescription>
-                  Ajustez les pourcentages prÃ©levÃ©s sur chaque type de transaction
+                  Ajustez les pourcentages prélevés sur chaque type de transaction
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -459,43 +459,43 @@ export default function PDGRevenueAnalytics() {
                     const currentValue = setting.setting_value?.value || 0;
                     const settingLabels: Record<string, { title: string; desc: string; min: number; max: number; example: number }> = {
                       wallet_transaction_fee_percentage: {
-                        title: 'ðŸ’³ Frais Wallet',
-                        desc: 'AppliquÃ© sur transferts, retraits et recharges',
+                        title: '💳 Frais Wallet',
+                        desc: 'Appliqué sur transferts, retraits et recharges',
                         min: 0,
                         max: 10,
                         example: 100000
                       },
                       purchase_commission_percentage: {
-                        title: 'ðŸ›’ Commission Achats',
-                        desc: 'PrÃ©levÃ© sur les paiements de commandes',
+                        title: '🛒 Commission Achats',
+                        desc: 'Prélevé sur les paiements de commandes',
                         min: 0,
                         max: 30,
                         example: 500000
                       },
                       service_commissions: {
-                        title: 'âš™ï¸ Commission Services',
-                        desc: 'AppliquÃ© sur les services professionnels',
+                        title: '⚙️ Commission Services',
+                        desc: 'Appliqué sur les services professionnels',
                         min: 0,
                         max: 20,
                         example: 200000
                       },
                       deposit_fee_percentage: {
-                        title: 'â¬‡ï¸ Frais de DÃ©pÃ´t',
-                        desc: 'PrÃ©levÃ© lors des rechargements (PayPal, carte, etc.)',
+                        title: '⬇️ Frais de Dépôt',
+                        desc: 'Prélevé lors des rechargements (PayPal, carte, etc.)',
                         min: 0,
                         max: 10,
                         example: 100000
                       },
                       withdrawal_fee_percentage: {
-                        title: 'â¬†ï¸ Frais de Retrait',
-                        desc: 'PrÃ©levÃ© lors des demandes de retrait',
+                        title: '⬆️ Frais de Retrait',
+                        desc: 'Prélevé lors des demandes de retrait',
                         min: 0,
                         max: 10,
                         example: 100000
                       },
                       international_transfer_fee_percentage: {
-                        title: 'ðŸŒ Frais Transfert International',
-                        desc: 'Marge appliquÃ©e sur le taux de change pour les transferts internationaux',
+                        title: '🌍 Frais Transfert International',
+                        desc: 'Marge appliquée sur le taux de change pour les transferts internationaux',
                         min: 0,
                         max: 10,
                         example: 500000
@@ -531,15 +531,15 @@ export default function PDGRevenueAnalytics() {
                           </div>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <span>Min: {labelConfig.min}%</span>
-                            <span>â€¢</span>
+                            <span>•</span>
                             <span>Max: {labelConfig.max}%</span>
                           </div>
                         </div>
 
-                        {/* Exemple de calcul en temps rÃ©el */}
+                        {/* Exemple de calcul en temps réel */}
                         <div className="p-3 bg-background rounded-lg border">
                           <p className="text-xs text-muted-foreground mb-1">Exemple sur {PdgRevenueService.formatAmount(labelConfig.example)}:</p>
-                          <p className="font-semibold text-primary-orange-600">
+                          <p className="font-semibold text-green-600">
                             Revenu PDG: {PdgRevenueService.formatAmount(labelConfig.example * currentValue / 100)}
                           </p>
                         </div>
@@ -551,8 +551,8 @@ export default function PDGRevenueAnalytics() {
                             const newValue = parseFloat(input.value);
                             if (newValue < labelConfig.min || newValue > labelConfig.max) {
                               toast({
-                                title: 'âŒ Valeur invalide',
-                                description: `Le taux doit Ãªtre entre ${labelConfig.min}% et ${labelConfig.max}%`,
+                                title: '❌ Valeur invalide',
+                                description: `Le taux doit être entre ${labelConfig.min}% et ${labelConfig.max}%`,
                                 variant: 'destructive'
                               });
                               return;
@@ -574,13 +574,13 @@ export default function PDGRevenueAnalytics() {
             <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
               <CardContent className="pt-6">
                 <div className="flex gap-4">
-                  <div className="text-2xl">ðŸ’¡</div>
+                  <div className="text-2xl">💡</div>
                   <div>
                     <p className="font-medium text-amber-800 dark:text-amber-200">Important</p>
                     <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                      Les modifications de taux s'appliquent immÃ©diatement Ã  toutes les nouvelles transactions. 
+                      Les modifications de taux s'appliquent immédiatement à toutes les nouvelles transactions. 
                       Les transactions en cours conservent leur taux d'origine. L'historique des modifications 
-                      est conservÃ© pour audit.
+                      est conservé pour audit.
                     </p>
                   </div>
                 </div>

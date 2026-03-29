@@ -1,6 +1,6 @@
 /**
  * PAGE DE DEMANDE DE LIVRAISON
- * Interface client pour crÃ©er une nouvelle livraison
+ * Interface client pour créer une nouvelle livraison
  */
 
 import { useState } from 'react';
@@ -13,13 +13,13 @@ export default function DeliveryRequest() {
   const navigate = useNavigate();
 
   const handleDeliveryCreated = (deliveryId: string) => {
-    // Rediriger vers le tracking aprÃ¨s crÃ©ation
+    // Rediriger vers le tracking après création
     navigate(`/tracking?id=${deliveryId}`);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-500/5 via-background to-primary-orange-600/5">
-      {/* En-tÃªte */}
+    <div className="min-h-screen bg-gradient-to-br from-orange-500/5 via-background to-green-600/5">
+      {/* En-tête */}
       <div className="bg-card border-b sticky top-0 z-10">
         <div className="container max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
@@ -31,7 +31,7 @@ export default function DeliveryRequest() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-primary-orange-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
                 Nouvelle Livraison
               </h1>
               <p className="text-sm text-muted-foreground">

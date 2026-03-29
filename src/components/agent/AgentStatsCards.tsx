@@ -34,12 +34,12 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
 
   const statCards: StatCard[] = [
     {
-      title: 'Utilisateurs CrÃ©Ã©s',
+      title: 'Utilisateurs Créés',
       value: stats.totalUsersCreated,
       subtitle: `+${stats.usersThisMonth} ce mois`,
       icon: <Users className="w-5 h-5" />,
       trend: stats.usersThisMonth > 0 ? { value: stats.usersThisMonth, positive: true } : undefined,
-      gradient: 'from-blue-500 to-primary-blue-500',
+      gradient: 'from-blue-500 to-cyan-500',
       iconBg: 'bg-blue-500/10',
       textColor: 'text-blue-600'
     },
@@ -48,9 +48,9 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
       value: formatAmount(walletBalance),
       subtitle: currency,
       icon: <Wallet className="w-5 h-5" />,
-      gradient: 'from-primary-blue-500 to-primary-orange-500',
-      iconBg: 'bg-primary-blue-500/10',
-      textColor: 'text-primary-blue-600'
+      gradient: 'from-emerald-500 to-teal-500',
+      iconBg: 'bg-emerald-500/10',
+      textColor: 'text-emerald-600'
     },
     {
       title: 'Taux Commission',
@@ -82,7 +82,7 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
     {
       title: 'Objectif Mensuel',
       value: stats.usersThisMonth,
-      subtitle: 'Utilisateurs crÃ©Ã©s',
+      subtitle: 'Utilisateurs créés',
       icon: <Target className="w-5 h-5" />,
       gradient: 'from-slate-600 to-slate-700',
       iconBg: 'bg-slate-500/10',
@@ -108,7 +108,7 @@ export function AgentStatsCards({ stats, commissionRate, walletBalance = 0, curr
                 </span>
               </div>
               {stat.trend && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary-blue-50 text-primary-blue-600">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-600">
                   <ArrowUpRight className="w-3 h-3" />
                   <span className="text-xs font-semibold">+{stat.trend.value}</span>
                 </div>

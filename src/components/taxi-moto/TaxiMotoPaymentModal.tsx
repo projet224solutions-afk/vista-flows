@@ -75,14 +75,14 @@ export default function TaxiMotoPaymentModal({
     {
       id: 'wallet' as PaymentMethod,
       name: 'Wallet 224Solutions',
-      description: 'Paiement instantanÃ© depuis votre wallet',
+      description: 'Paiement instantané depuis votre wallet',
       icon: Wallet,
       color: 'text-primary'
     },
     {
       id: 'card' as PaymentMethod,
       name: 'Carte bancaire (Stripe)',
-      description: 'Visa, Mastercard - Paiement sÃ©curisÃ©',
+      description: 'Visa, Mastercard - Paiement sécurisé',
       icon: CreditCard,
       color: 'text-blue-600'
     },
@@ -95,15 +95,15 @@ export default function TaxiMotoPaymentModal({
     },
     {
       id: 'cash' as PaymentMethod,
-      name: 'EspÃ¨ces',
+      name: 'Espèces',
       description: 'Paiement en liquide au conducteur',
       icon: Banknote,
-      color: 'text-primary-orange-600'
+      color: 'text-green-600'
     }
   ];
 
   const handlePayment = async () => {
-    // Si carte bancaire sÃ©lectionnÃ©e, ouvrir le modal Stripe
+    // Si carte bancaire sélectionnée, ouvrir le modal Stripe
     if (paymentMethod === 'card') {
       setShowStripeModal(true);
       return;
@@ -120,7 +120,7 @@ export default function TaxiMotoPaymentModal({
         paymentMethod
       });
 
-      // VÃ©rifier le solde pour wallet
+      // Vérifier le solde pour wallet
       if (paymentMethod === 'wallet') {
         if (walletBalance !== null && walletBalance < amount) {
           toast.error('Solde insuffisant', {
@@ -133,14 +133,14 @@ export default function TaxiMotoPaymentModal({
 
       // Validation des champs requis
       if (paymentMethod === 'orange_money' && (!phoneNumber || phoneNumber.length < 8)) {
-        toast.error('NumÃ©ro de tÃ©lÃ©phone requis', {
-          description: 'Veuillez entrer votre numÃ©ro Mobile Money'
+        toast.error('Numéro de téléphone requis', {
+          description: 'Veuillez entrer votre numéro Mobile Money'
         });
         setProcessing(false);
         return;
       }
 
-      // CrÃ©er l'escrow pour sÃ©curiser le paiement
+      // Créer l'escrow pour sécuriser le paiement
       const escrowResult = await UniversalEscrowService.createEscrow({
         buyer_id: customerId,
         seller_id: driverId,
@@ -163,23 +163,23 @@ export default function TaxiMotoPaymentModal({
       });
 
       if (!escrowResult.success) {
-        throw new Error(escrowResult.error || 'Ã‰chec de la crÃ©ation de l\'escrow');
+        throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
       }
 
-      console.log('[TaxiPayment] âœ… Escrow created:', escrowResult.escrow_id);
+      console.log('[TaxiPayment] ✅ Escrow created:', escrowResult.escrow_id);
 
-      // Messages selon la mÃ©thode
+      // Messages selon la méthode
       if (paymentMethod === 'wallet') {
-        toast.success('Paiement sÃ©curisÃ© effectuÃ© !', {
-          description: `${amount.toLocaleString()} GNF bloquÃ©s en escrow - Seront transfÃ©rÃ©s au chauffeur Ã  la fin de la course`
+        toast.success('Paiement sécurisé effectué !', {
+          description: `${amount.toLocaleString()} GNF bloqués en escrow - Seront transférés au chauffeur à la fin de la course`
         });
       } else if (paymentMethod === 'cash') {
-        toast.success('Course confirmÃ©e !', {
-          description: 'Vous paierez en espÃ¨ces au chauffeur'
+        toast.success('Course confirmée !', {
+          description: 'Vous paierez en espèces au chauffeur'
         });
       } else if (paymentMethod === 'orange_money') {
-        toast.success('Paiement Mobile Money initiÃ© !', {
-          description: `Confirmez sur votre tÃ©lÃ©phone ${phoneNumber}`
+        toast.success('Paiement Mobile Money initié !', {
+          description: `Confirmez sur votre téléphone ${phoneNumber}`
         });
       }
 
@@ -189,7 +189,7 @@ export default function TaxiMotoPaymentModal({
     } catch (error) {
       console.error('[TaxiPayment] Error:', error);
       toast.error('Erreur de paiement', {
-        description: error instanceof Error ? error.message : 'Veuillez rÃ©essayer'
+        description: error instanceof Error ? error.message : 'Veuillez réessayer'
       });
     } finally {
       setProcessing(false);
@@ -199,7 +199,7 @@ export default function TaxiMotoPaymentModal({
   const handleStripeSuccess = async (paymentIntentId: string) => {
     console.log('[TaxiPayment] Stripe payment success:', paymentIntentId);
     
-    // CrÃ©er l'escrow aprÃ¨s paiement Stripe rÃ©ussi
+    // Créer l'escrow après paiement Stripe réussi
     try {
       const escrowResult = await UniversalEscrowService.createEscrow({
         buyer_id: customerId,
@@ -221,8 +221,8 @@ export default function TaxiMotoPaymentModal({
       });
 
       if (escrowResult.success) {
-        toast.success('Paiement par carte rÃ©ussi !', {
-          description: `${amount.toLocaleString()} GNF payÃ©s par carte`
+        toast.success('Paiement par carte réussi !', {
+          description: `${amount.toLocaleString()} GNF payés par carte`
         });
       }
     } catch (error) {
@@ -241,7 +241,7 @@ export default function TaxiMotoPaymentModal({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
-              Paiement SÃ©curisÃ© (Escrow)
+              Paiement Sécurisé (Escrow)
             </DialogTitle>
             <DialogDescription>
               <div className="space-y-2">
@@ -258,7 +258,7 @@ export default function TaxiMotoPaymentModal({
                   <Alert>
                     <Shield className="h-4 w-4" />
                     <AlertDescription className="text-xs">
-                      Vos fonds sont protÃ©gÃ©s par notre systÃ¨me Escrow jusqu'Ã  la fin de la course
+                      Vos fonds sont protégés par notre système Escrow jusqu'à la fin de la course
                     </AlertDescription>
                   </Alert>
                 )}
@@ -286,10 +286,10 @@ export default function TaxiMotoPaymentModal({
               })}
             </RadioGroup>
 
-            {/* Champs spÃ©cifiques selon la mÃ©thode */}
+            {/* Champs spécifiques selon la méthode */}
             {paymentMethod === 'orange_money' && (
               <div className="space-y-2 mt-3">
-                <Label htmlFor="phone">NumÃ©ro de tÃ©lÃ©phone</Label>
+                <Label htmlFor="phone">Numéro de téléphone</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -308,7 +308,7 @@ export default function TaxiMotoPaymentModal({
               <Alert className="bg-blue-50 border-blue-200">
                 <CreditCard className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-sm text-blue-700">
-                  Vous serez redirigÃ© vers le formulaire de paiement Stripe sÃ©curisÃ©
+                  Vous serez redirigé vers le formulaire de paiement Stripe sécurisé
                 </AlertDescription>
               </Alert>
             )}
@@ -334,11 +334,11 @@ export default function TaxiMotoPaymentModal({
               {processing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  SÃ©curisation...
+                  Sécurisation...
                 </>
               ) : (
                 paymentMethod === 'card' ? 'Payer par carte' :
-                paymentMethod === 'wallet' ? 'Payer en sÃ©curitÃ©' : 
+                paymentMethod === 'wallet' ? 'Payer en sécurité' : 
                 paymentMethod === 'orange_money' ? 'Payer par Mobile Money' :
                 'Confirmer la course'
               )}

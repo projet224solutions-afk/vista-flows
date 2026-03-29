@@ -1,5 +1,5 @@
 /**
- * Composant de challenge de sÃ©curitÃ© (alternative lÃ©gÃ¨re au CAPTCHA)
+ * Composant de challenge de sécurité (alternative légère au CAPTCHA)
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -36,7 +36,7 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
   const generateChallenge = useCallback((): Challenge => {
     const challenges: Challenge[] = [];
 
-    // Challenges mathÃ©matiques
+    // Challenges mathématiques
     const num1 = Math.floor(Math.random() * (difficulty === 'easy' ? 10 : difficulty === 'medium' ? 20 : 50));
     const num2 = Math.floor(Math.random() * (difficulty === 'easy' ? 10 : difficulty === 'medium' ? 20 : 50));
     const operators = ['+', '-', '*'];
@@ -58,10 +58,10 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
 
     // Challenges texte
     const textChallenges = [
-      { q: 'Ã‰crivez "sÃ©curitÃ©" sans accents', a: 'securite' },
+      { q: 'Écrivez "sécurité" sans accents', a: 'securite' },
       { q: 'Combien de lettres dans "protection" ?', a: '10' },
-      { q: 'Quelle est la premiÃ¨re lettre de "GuinÃ©e" ?', a: 'g' },
-      { q: 'Ã‰crivez le chiffre 5 en lettres', a: 'cinq' },
+      { q: 'Quelle est la première lettre de "Guinée" ?', a: 'g' },
+      { q: 'Écrivez le chiffre 5 en lettres', a: 'cinq' },
     ];
     
     const textChallenge = textChallenges[Math.floor(Math.random() * textChallenges.length)];
@@ -83,7 +83,7 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
 
     setIsVerifying(true);
     
-    // Petit dÃ©lai pour Ã©viter le brute force
+    // Petit délai pour éviter le brute force
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const isCorrect = userAnswer.toLowerCase().trim() === challenge.answer.toLowerCase();
@@ -114,10 +114,10 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
 
   if (status === 'success') {
     return (
-      <Card className="w-full max-w-md mx-auto border-primary-orange-500 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+      <Card className="w-full max-w-md mx-auto border-green-500 bg-green-50">
         <CardContent className="flex flex-col items-center justify-center py-8">
-          <CheckCircle className="w-16 h-16 text-primary-orange-500 mb-4" />
-          <p className="text-primary-orange-700 font-semibold">VÃ©rification rÃ©ussie !</p>
+          <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
+          <p className="text-green-700 font-semibold">Vérification réussie !</p>
         </CardContent>
       </Card>
     );
@@ -128,8 +128,8 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
       <Card className="w-full max-w-md mx-auto border-red-500 bg-red-50">
         <CardContent className="flex flex-col items-center justify-center py-8">
           <XCircle className="w-16 h-16 text-red-500 mb-4" />
-          <p className="text-red-700 font-semibold">Trop de tentatives Ã©chouÃ©es</p>
-          <p className="text-red-600 text-sm mt-2">Veuillez rÃ©essayer plus tard</p>
+          <p className="text-red-700 font-semibold">Trop de tentatives échouées</p>
+          <p className="text-red-600 text-sm mt-2">Veuillez réessayer plus tard</p>
         </CardContent>
       </Card>
     );
@@ -139,7 +139,7 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="flex flex-row items-center gap-2">
         <Shield className="w-5 h-5 text-blue-500" />
-        <CardTitle className="text-lg">VÃ©rification de sÃ©curitÃ©</CardTitle>
+        <CardTitle className="text-lg">Vérification de sécurité</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="bg-slate-100 p-4 rounded-lg">
@@ -151,7 +151,7 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
             type="text"
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}
-            placeholder="Votre rÃ©ponse"
+            placeholder="Votre réponse"
             onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
             disabled={isVerifying}
             className="flex-1"
@@ -175,7 +175,7 @@ export const SecurityChallenge: React.FC<SecurityChallengeProps> = ({
             onClick={handleVerify}
             disabled={!userAnswer.trim() || isVerifying}
           >
-            {isVerifying ? 'VÃ©rification...' : 'VÃ©rifier'}
+            {isVerifying ? 'Vérification...' : 'Vérifier'}
           </Button>
         </div>
       </CardContent>

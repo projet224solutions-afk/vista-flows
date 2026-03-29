@@ -1,6 +1,6 @@
 /**
  * GESTION DE LA CAISSE SYNDICALE ULTRA PROFESSIONNELLE
- * Interface complÃ¨te pour la gestion des cotisations et de la trÃ©sorerie
+ * Interface complète pour la gestion des cotisations et de la trésorerie
  * 224Solutions - Bureau Syndicat System
  */
 
@@ -29,8 +29,8 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                     <CardContent className="p-6 text-center">
-                        <DollarSign className="w-8 h-8 mx-auto mb-2 text-primary-orange-600" />
-                        <div className="text-2xl font-bold text-primary-orange-600">
+                        <DollarSign className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                        <div className="text-2xl font-bold text-green-600">
                             {fc(treasuryData.balance, 'GNF')}
                         </div>
                         <div className="text-sm text-muted-foreground">Solde de Caisse</div>
@@ -53,7 +53,7 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                         <div className="text-2xl font-bold text-red-600">
                             {fc(treasuryData.monthlyExpenses, 'GNF')}
                         </div>
-                        <div className="text-sm text-muted-foreground">DÃ©penses ce mois</div>
+                        <div className="text-sm text-muted-foreground">Dépenses ce mois</div>
                     </CardContent>
                 </Card>
 
@@ -76,10 +76,10 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                     <div className="text-center py-8">
                         <DollarSign className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                         <h3 className="text-lg font-semibold mb-2">
-                            Module de TrÃ©sorerie
+                            Module de Trésorerie
                         </h3>
                         <p className="text-muted-foreground mb-4">
-                            Gestion complÃ¨te des cotisations, paiements et budget syndical
+                            Gestion complète des cotisations, paiements et budget syndical
                         </p>
                         <div className="space-y-2">
                             <Badge variant="outline">Cotisations automatiques</Badge>

@@ -1,5 +1,5 @@
 /**
- * ðŸ“Š PAGE: MIGRATION DES IDs VERS LE SYSTÃˆME STANDARDISÃ‰
+ * 📊 PAGE: MIGRATION DES IDs VERS LE SYSTÈME STANDARDISÉ
  * Interface d'administration pour migrer les anciens IDs
  */
 
@@ -57,7 +57,7 @@ export default function MigrateIds() {
 
     try {
       toast.info('Migration en cours...', {
-        description: 'RÃ©organisation des IDs vers le format standardisÃ©'
+        description: 'Réorganisation des IDs vers le format standardisé'
       });
 
       const { data, error } = await supabase
@@ -67,14 +67,14 @@ export default function MigrateIds() {
 
       setResults(data || []);
 
-      toast.success(`Migration terminÃ©e!`, {
-        description: `${data?.length || 0} IDs migrÃ©s avec succÃ¨s`
+      toast.success(`Migration terminée!`, {
+        description: `${data?.length || 0} IDs migrés avec succès`
       });
 
       // Recharger les stats
       await loadStats();
     } catch (err: any) {
-      toast.error('Ã‰chec migration', {
+      toast.error('Échec migration', {
         description: err.message
       });
     } finally {
@@ -88,7 +88,7 @@ export default function MigrateIds() {
         <div>
           <h1 className="text-3xl font-bold">Migration des IDs</h1>
           <p className="text-muted-foreground mt-2">
-            SystÃ¨me d'identifiants standardisÃ©s 224SOLUTIONS (AAA0001)
+            Système d'identifiants standardisés 224SOLUTIONS (AAA0001)
           </p>
         </div>
         <Button onClick={loadStats} variant="outline" disabled={loading}>
@@ -105,8 +105,8 @@ export default function MigrateIds() {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Important</AlertTitle>
         <AlertDescription>
-          Cette opÃ©ration va rÃ©organiser tous les IDs existants selon le nouveau format standardisÃ©.
-          Les anciens IDs seront conservÃ©s dans une table de mapping pour rÃ©fÃ©rence.
+          Cette opération va réorganiser tous les IDs existants selon le nouveau format standardisé.
+          Les anciens IDs seront conservés dans une table de mapping pour référence.
         </AlertDescription>
       </Alert>
 
@@ -119,7 +119,7 @@ export default function MigrateIds() {
               Compteurs actuels
             </CardTitle>
             <CardDescription>
-              Ã‰tat des compteurs par prÃ©fixe
+              État des compteurs par préfixe
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -151,7 +151,7 @@ export default function MigrateIds() {
         <CardHeader>
           <CardTitle>Lancer la migration</CardTitle>
           <CardDescription>
-            RÃ©organise tous les IDs existants vers le format standardisÃ© AAA0001
+            Réorganise tous les IDs existants vers le format standardisé AAA0001
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -169,23 +169,23 @@ export default function MigrateIds() {
             ) : (
               <>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                DÃ©marrer la migration
+                Démarrer la migration
               </>
             )}
           </Button>
         </CardContent>
       </Card>
 
-      {/* RÃ©sultats de la migration */}
+      {/* Résultats de la migration */}
       {results.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-primary-orange-500" />
-              RÃ©sultats de la migration
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              Résultats de la migration
             </CardTitle>
             <CardDescription>
-              {results.length} IDs migrÃ©s avec succÃ¨s
+              {results.length} IDs migrés avec succès
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -201,12 +201,12 @@ export default function MigrateIds() {
                       <span className="font-mono text-sm text-muted-foreground line-through">
                         {result.old_id}
                       </span>
-                      <span className="text-muted-foreground">â†’</span>
+                      <span className="text-muted-foreground">→</span>
                       <span className="font-mono text-sm font-semibold text-primary">
                         {result.new_id}
                       </span>
                     </div>
-                    <Badge variant="default" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
+                    <Badge variant="default" className="bg-green-500">
                       {result.status}
                     </Badge>
                   </div>

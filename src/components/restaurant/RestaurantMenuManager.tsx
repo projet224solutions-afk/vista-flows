@@ -1,6 +1,6 @@
 /**
  * Composant de gestion du menu restaurant
- * CatÃ©gories et plats avec CRUD complet
+ * Catégories et plats avec CRUD complet
  */
 
 import { useState } from 'react';
@@ -32,18 +32,18 @@ interface RestaurantMenuManagerProps {
 // formatCurrency is now handled via useFormatCurrency hook inside the component
 
 const DIETARY_TAGS = [
-  { value: 'vegetarien', label: 'VÃ©gÃ©tarien', icon: 'ðŸ¥¬' },
-  { value: 'vegan', label: 'VÃ©gan', icon: 'ðŸŒ±' },
-  { value: 'halal', label: 'Halal', icon: 'ðŸ•Œ' },
-  { value: 'casher', label: 'Casher', icon: 'âœ¡ï¸' },
-  { value: 'sans_gluten', label: 'Sans gluten', icon: 'ðŸŒ¾' },
-  { value: 'bio', label: 'Bio', icon: 'ðŸŒ¿' },
+  { value: 'vegetarien', label: 'Végétarien', icon: '🥬' },
+  { value: 'vegan', label: 'Végan', icon: '🌱' },
+  { value: 'halal', label: 'Halal', icon: '🕌' },
+  { value: 'casher', label: 'Casher', icon: '✡️' },
+  { value: 'sans_gluten', label: 'Sans gluten', icon: '🌾' },
+  { value: 'bio', label: 'Bio', icon: '🌿' },
 ];
 
 const ALLERGENS = [
-  'Gluten', 'Lactose', 'Å’ufs', 'Poisson', 'CrustacÃ©s', 
-  'Arachides', 'Soja', 'Fruits Ã  coque', 'CÃ©leri', 'Moutarde',
-  'SÃ©same', 'Sulfites', 'Lupin', 'Mollusques'
+  'Gluten', 'Lactose', 'Œufs', 'Poisson', 'Crustacés', 
+  'Arachides', 'Soja', 'Fruits à coque', 'Céleri', 'Moutarde',
+  'Sésame', 'Sulfites', 'Lupin', 'Mollusques'
 ];
 
 export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps) {
@@ -72,7 +72,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
   const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Ã‰tats du formulaire plat
+  // États du formulaire plat
   const [itemForm, setItemForm] = useState({
     name: '',
     description: '',
@@ -85,11 +85,11 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     image_url: '',
   });
 
-  // Ã‰tats du formulaire catÃ©gorie
+  // États du formulaire catégorie
   const [categoryForm, setCategoryForm] = useState({
     name: '',
     description: '',
-    icon: 'ðŸ½ï¸',
+    icon: '🍽️',
   });
 
   const resetItemForm = () => {
@@ -111,7 +111,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     setCategoryForm({
       name: '',
       description: '',
-      icon: 'ðŸ½ï¸',
+      icon: '🍽️',
     });
     setEditingCategory(null);
   };
@@ -135,7 +135,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
           dietary_tags: itemForm.dietary_tags,
           image_url: itemForm.image_url || null,
         });
-        toast.success('Plat mis Ã  jour');
+        toast.success('Plat mis à jour');
       } else {
         await createMenuItem({
           name: itemForm.name,
@@ -148,7 +148,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
           dietary_tags: itemForm.dietary_tags,
           image_url: itemForm.image_url || undefined,
         });
-        toast.success('Plat ajoutÃ©');
+        toast.success('Plat ajouté');
       }
       setShowItemDialog(false);
       resetItemForm();
@@ -166,10 +166,10 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     try {
       if (editingCategory) {
         await updateCategory(editingCategory.id, categoryForm);
-        toast.success('CatÃ©gorie mise Ã  jour');
+        toast.success('Catégorie mise à jour');
       } else {
         await createCategory(categoryForm);
-        toast.success('CatÃ©gorie ajoutÃ©e');
+        toast.success('Catégorie ajoutée');
       }
       setShowCategoryDialog(false);
       resetCategoryForm();
@@ -198,7 +198,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     if (!file) return;
     
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("L'image ne doit pas dÃ©passer 5MB");
+      toast.error("L'image ne doit pas dépasser 5MB");
       return;
     }
     
@@ -227,7 +227,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
         .getPublicUrl(filePath);
 
       setItemForm(prev => ({ ...prev, image_url: publicUrl }));
-      toast.success('Image uploadÃ©e !');
+      toast.success('Image uploadée !');
     } catch (err: any) {
       console.error('Upload error:', err);
       toast.error("Erreur lors de l'upload");
@@ -241,7 +241,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     setCategoryForm({
       name: cat.name,
       description: cat.description || '',
-      icon: cat.icon || 'ðŸ½ï¸',
+      icon: cat.icon || '🍽️',
     });
     setShowCategoryDialog(true);
   };
@@ -250,17 +250,17 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     if (!confirm('Supprimer ce plat ?')) return;
     try {
       await deleteMenuItem(id);
-      toast.success('Plat supprimÃ©');
+      toast.success('Plat supprimé');
     } catch (err: any) {
       toast.error(err.message);
     }
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (!confirm('Supprimer cette catÃ©gorie ?')) return;
+    if (!confirm('Supprimer cette catégorie ?')) return;
     try {
       await deleteCategory(id);
-      toast.success('CatÃ©gorie supprimÃ©e');
+      toast.success('Catégorie supprimée');
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -306,13 +306,13 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
             <DialogTrigger asChild>
               <Button variant="outline" onClick={resetCategoryForm}>
                 <Tag className="w-4 h-4 mr-2" />
-                CatÃ©gorie
+                Catégorie
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {editingCategory ? 'Modifier la catÃ©gorie' : 'Nouvelle catÃ©gorie'}
+                  {editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -321,15 +321,15 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   <Input
                     value={categoryForm.name}
                     onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Ex: EntrÃ©es, Plats principaux..."
+                    placeholder="Ex: Entrées, Plats principaux..."
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>IcÃ´ne (emoji)</Label>
+                  <Label>Icône (emoji)</Label>
                   <Input
                     value={categoryForm.icon}
                     onChange={(e) => setCategoryForm(prev => ({ ...prev, icon: e.target.value }))}
-                    placeholder="ðŸ½ï¸"
+                    placeholder="🍽️"
                   />
                 </div>
                 <div className="space-y-2">
@@ -345,7 +345,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   Annuler
                 </Button>
                 <Button onClick={handleSaveCategory}>
-                  {editingCategory ? 'Mettre Ã  jour' : 'CrÃ©er'}
+                  {editingCategory ? 'Mettre à jour' : 'Créer'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -384,7 +384,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>CatÃ©gorie</Label>
+                    <Label>Catégorie</Label>
                     <Select
                       value={itemForm.category_id}
                       onValueChange={(v) => setItemForm(prev => ({ ...prev, category_id: v }))}
@@ -408,7 +408,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   <Textarea
                     value={itemForm.description}
                     onChange={(e) => setItemForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="DÃ©crivez le plat..."
+                    placeholder="Décrivez le plat..."
                     rows={2}
                   />
                 </div>
@@ -461,7 +461,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Temps de prÃ©paration (min)</Label>
+                    <Label>Temps de préparation (min)</Label>
                     <Input
                       type="number"
                       value={itemForm.preparation_time}
@@ -469,7 +469,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Niveau Ã©picÃ© (0-3)</Label>
+                    <Label>Niveau épicé (0-3)</Label>
                     <Select
                       value={itemForm.spicy_level}
                       onValueChange={(v) => setItemForm(prev => ({ ...prev, spicy_level: v }))}
@@ -478,10 +478,10 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="0">Non Ã©picÃ©</SelectItem>
-                        <SelectItem value="1">ðŸŒ¶ï¸ LÃ©ger</SelectItem>
-                        <SelectItem value="2">ðŸŒ¶ï¸ðŸŒ¶ï¸ Moyen</SelectItem>
-                        <SelectItem value="3">ðŸŒ¶ï¸ðŸŒ¶ï¸ðŸŒ¶ï¸ Fort</SelectItem>
+                        <SelectItem value="0">Non épicé</SelectItem>
+                        <SelectItem value="1">🌶️ Léger</SelectItem>
+                        <SelectItem value="2">🌶️🌶️ Moyen</SelectItem>
+                        <SelectItem value="3">🌶️🌶️🌶️ Fort</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -526,7 +526,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   Annuler
                 </Button>
                 <Button onClick={handleSaveItem}>
-                  {editingItem ? 'Mettre Ã  jour' : 'CrÃ©er'}
+                  {editingItem ? 'Mettre à jour' : 'Créer'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -534,7 +534,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
         </div>
       </div>
 
-      {/* Filtres par catÃ©gorie */}
+      {/* Filtres par catégorie */}
       {categories.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <Badge
@@ -576,7 +576,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
             <UtensilsCrossed className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
               {searchQuery || selectedCategory
-                ? 'Aucun plat trouvÃ© avec ces filtres'
+                ? 'Aucun plat trouvé avec ces filtres'
                 : 'Ajoutez votre premier plat au menu'}
             </p>
             {!searchQuery && !selectedCategory && (
@@ -630,7 +630,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   <div className="flex flex-wrap gap-1 mb-3">
                     {item.spicy_level > 0 && (
                       <Badge variant="outline" className="text-xs">
-                        {'ðŸŒ¶ï¸'.repeat(item.spicy_level)}
+                        {'🌶️'.repeat(item.spicy_level)}
                       </Badge>
                     )}
                     <Badge variant="outline" className="text-xs">
@@ -655,8 +655,8 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                     >
                       {item.is_available ? (
                         <>
-                          <Eye className="w-4 h-4 mr-1 text-primary-orange-600" />
-                          <span className="text-primary-orange-600">Disponible</span>
+                          <Eye className="w-4 h-4 mr-1 text-green-600" />
+                          <span className="text-green-600">Disponible</span>
                         </>
                       ) : (
                         <>

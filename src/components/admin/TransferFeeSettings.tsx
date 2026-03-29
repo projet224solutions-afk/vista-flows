@@ -39,7 +39,7 @@ export default function TransferFeeSettings() {
 
   const fetchFeesStats = async () => {
     try {
-      // Calculer le total des frais collectÃ©s depuis les mÃ©tadonnÃ©es
+      // Calculer le total des frais collectés depuis les métadonnées
       const { data, error } = await supabase
         .from('enhanced_transactions' as any)
         .select('metadata')
@@ -74,7 +74,7 @@ export default function TransferFeeSettings() {
     const fee = parseFloat(newFee);
     
     if (isNaN(fee) || fee < 0 || fee > 100) {
-      toast.error('Taux invalide. Doit Ãªtre entre 0 et 100%');
+      toast.error('Taux invalide. Doit être entre 0 et 100%');
       return;
     }
 
@@ -92,14 +92,14 @@ export default function TransferFeeSettings() {
       if (error) throw error;
 
       setCurrentFee(fee);
-      toast.success(`âœ… Taux de commission mis Ã  jour : ${fee}%`);
+      toast.success(`✅ Taux de commission mis à jour : ${fee}%`);
       
       // Recharger pour confirmation
       await fetchCurrentFee();
       await fetchFeesStats();
     } catch (e: any) {
-      console.error('Erreur lors de la mise Ã  jour:', e);
-      toast.error(e?.message || 'Erreur lors de la mise Ã  jour du taux');
+      console.error('Erreur lors de la mise à jour:', e);
+      toast.error(e?.message || 'Erreur lors de la mise à jour du taux');
     } finally {
       setSaving(false);
     }
@@ -117,21 +117,21 @@ export default function TransferFeeSettings() {
           Configuration des Frais de Transfert Wallet
         </CardTitle>
         <CardDescription>
-          GÃ©rer le taux de commission appliquÃ© sur les transferts entre wallets
+          Gérer le taux de commission appliqué sur les transferts entre wallets
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Statistiques des frais collectÃ©s */}
+        {/* Statistiques des frais collectés */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 rounded-lg border border-primary-orange-200">
+          <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingUp className="w-4 h-4 text-primary-orange-600" />
-              <p className="text-sm text-primary-orange-700 font-medium">Total Frais CollectÃ©s</p>
+              <TrendingUp className="w-4 h-4 text-green-600" />
+              <p className="text-sm text-green-700 font-medium">Total Frais Collectés</p>
             </div>
-            <p className="text-2xl font-bold text-primary-orange-900">
+            <p className="text-2xl font-bold text-green-900">
               {formatPrice(totalFees)}
             </p>
-            <p className="text-xs text-primary-orange-600 mt-1">{transactionsCount} transactions</p>
+            <p className="text-xs text-green-600 mt-1">{transactionsCount} transactions</p>
           </div>
           
           <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
@@ -178,12 +178,12 @@ export default function TransferFeeSettings() {
                   {saving ? (
                     <>
                       <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Mise Ã  jour...
+                      Mise à jour...
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      Mettre Ã  jour
+                      Mettre à jour
                     </>
                   )}
                 </Button>
@@ -191,57 +191,57 @@ export default function TransferFeeSettings() {
               <p className="text-sm text-muted-foreground">
                 Exemple : Pour un transfert de 10 000 GNF avec {parseFloat(newFee || "1.5")}% de frais :
                 <br />
-                â€¢ Frais : {Math.round(10000 * parseFloat(newFee || "1.5") / 100).toLocaleString()} GNF
+                • Frais : {Math.round(10000 * parseFloat(newFee || "1.5") / 100).toLocaleString()} GNF
                 <br />
-                â€¢ Total dÃ©bitÃ© : {Math.round(10000 + (10000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF
+                • Total débité : {Math.round(10000 + (10000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF
                 <br />
-                â€¢ Montant reÃ§u : 10 000 GNF
+                • Montant reçu : 10 000 GNF
               </p>
             </div>
           </div>
 
-          {/* Exemples de calcul plus dÃ©taillÃ©s */}
+          {/* Exemples de calcul plus détaillés */}
           <div className="p-4 bg-slate-50 rounded-lg border space-y-3">
-            <h4 className="font-medium mb-2">ðŸ“Š Exemples de calcul avec {parseFloat(newFee || "1.5")}%</h4>
+            <h4 className="font-medium mb-2">📊 Exemples de calcul avec {parseFloat(newFee || "1.5")}%</h4>
             <div className="grid gap-2 text-sm">
               <div className="flex justify-between items-center p-2 bg-white rounded">
                 <span className="text-muted-foreground">Transfert de 10,000 GNF</span>
                 <div className="text-right">
                   <p className="font-semibold">Frais: {Math.round(10000 * parseFloat(newFee || "1.5") / 100).toLocaleString()} GNF</p>
-                  <p className="text-xs text-orange-600">Total dÃ©bitÃ©: {(10000 + Math.round(10000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF</p>
+                  <p className="text-xs text-orange-600">Total débité: {(10000 + Math.round(10000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF</p>
                 </div>
               </div>
               <div className="flex justify-between items-center p-2 bg-white rounded">
                 <span className="text-muted-foreground">Transfert de 100,000 GNF</span>
                 <div className="text-right">
                   <p className="font-semibold">Frais: {Math.round(100000 * parseFloat(newFee || "1.5") / 100).toLocaleString()} GNF</p>
-                  <p className="text-xs text-orange-600">Total dÃ©bitÃ©: {(100000 + Math.round(100000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF</p>
+                  <p className="text-xs text-orange-600">Total débité: {(100000 + Math.round(100000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF</p>
                 </div>
               </div>
               <div className="flex justify-between items-center p-2 bg-white rounded">
                 <span className="text-muted-foreground">Transfert de 1,000,000 GNF</span>
                 <div className="text-right">
                   <p className="font-semibold">Frais: {Math.round(1000000 * parseFloat(newFee || "1.5") / 100).toLocaleString()} GNF</p>
-                  <p className="text-xs text-orange-600">Total dÃ©bitÃ©: {(1000000 + Math.round(1000000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF</p>
+                  <p className="text-xs text-orange-600">Total débité: {(1000000 + Math.round(1000000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h4 className="font-medium text-blue-900 mb-2">ðŸ’¡ Fonctionnement du systÃ¨me</h4>
+            <h4 className="font-medium text-blue-900 mb-2">💡 Fonctionnement du système</h4>
             <ul className="text-sm space-y-1 text-blue-800 list-disc list-inside">
-              <li>Les frais sont calculÃ©s automatiquement lors de chaque transfert</li>
-              <li>L'expÃ©diteur paie le montant + les frais</li>
-              <li>Le destinataire reÃ§oit le montant net (sans frais)</li>
-              <li>Les frais sont crÃ©ditÃ©s au compte PDG</li>
-              <li>Une prÃ©visualisation est affichÃ©e avant chaque transfert</li>
+              <li>Les frais sont calculés automatiquement lors de chaque transfert</li>
+              <li>L'expéditeur paie le montant + les frais</li>
+              <li>Le destinataire reçoit le montant net (sans frais)</li>
+              <li>Les frais sont crédités au compte PDG</li>
+              <li>Une prévisualisation est affichée avant chaque transfert</li>
             </ul>
           </div>
 
           <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
             <p className="text-sm text-orange-800">
-              âš ï¸ <strong>Attention :</strong> Les modifications prennent effet immÃ©diatement pour toutes les nouvelles transactions.
+              ⚠️ <strong>Attention :</strong> Les modifications prennent effet immédiatement pour toutes les nouvelles transactions.
             </p>
           </div>
         </div>

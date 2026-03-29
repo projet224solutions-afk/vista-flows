@@ -260,7 +260,7 @@ const ClientPasswordChange: React.FC = () => {
             {formData.confirmPassword && (
               <p className={`text-xs flex items-center gap-1 ${
                 formData.newPassword === formData.confirmPassword 
-                  ? 'text-primary-orange-600' 
+                  ? 'text-green-600' 
                   : 'text-destructive'
               }`}>
                 {formData.newPassword === formData.confirmPassword ? (

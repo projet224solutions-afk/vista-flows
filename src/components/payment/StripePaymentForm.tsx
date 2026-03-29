@@ -1,6 +1,6 @@
 /**
  * STRIPE PAYMENT FORM
- * Formulaire de paiement Stripe personnalisÃ© avec Elements
+ * Formulaire de paiement Stripe personnalisé avec Elements
  * 224SOLUTIONS
  */
 
@@ -45,7 +45,7 @@ export function StripePaymentForm({
     e.preventDefault();
 
     if (!stripe || !elements) {
-      setErrorMessage('Stripe n\'est pas encore chargÃ©. Veuillez rÃ©essayer.');
+      setErrorMessage('Stripe n\'est pas encore chargé. Veuillez réessayer.');
       return;
     }
 
@@ -59,7 +59,7 @@ export function StripePaymentForm({
         confirmParams: {
           return_url: `${window.location.origin}/payment/success`,
         },
-        redirect: 'if_required', // Ne redirige que si 3D Secure nÃ©cessaire
+        redirect: 'if_required', // Ne redirige que si 3D Secure nécessaire
       });
 
       if (error) {
@@ -69,9 +69,9 @@ export function StripePaymentForm({
         onError(message);
         toast.error(message);
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // Paiement rÃ©ussi
+        // Paiement réussi
         setSucceeded(true);
-        toast.success('Paiement rÃ©ussi !');
+        toast.success('Paiement réussi !');
         onSuccess(paymentIntent.id);
       } else if (paymentIntent && paymentIntent.status === 'processing') {
         // Paiement en cours (3D Secure, etc.)
@@ -96,17 +96,17 @@ export function StripePaymentForm({
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="rounded-full bg-primary-orange-100 p-3">
-                <CheckCircle2 className="w-12 h-12 text-primary-orange-600" />
+              <div className="rounded-full bg-green-100 p-3">
+                <CheckCircle2 className="w-12 h-12 text-green-600" />
               </div>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-primary-orange-600">Paiement rÃ©ussi !</h3>
+              <h3 className="text-xl font-semibold text-green-600">Paiement réussi !</h3>
               <p className="text-muted-foreground mt-2">
-                Votre paiement de <strong>{formatAmount(amount, currency)}</strong> a Ã©tÃ© traitÃ© avec succÃ¨s.
+                Votre paiement de <strong>{formatAmount(amount, currency)}</strong> a été traité avec succès.
               </p>
               <p className="text-sm text-muted-foreground mt-1 animate-pulse">
-                Redirection vers vos achatsâ€¦
+                Redirection vers vos achats…
               </p>
             </div>
           </div>
@@ -120,10 +120,10 @@ export function StripePaymentForm({
       <CardHeader>
         <div className="flex items-center gap-2">
           <Shield className="w-6 h-6 text-primary" />
-          <CardTitle>Paiement sÃ©curisÃ©</CardTitle>
+          <CardTitle>Paiement sécurisé</CardTitle>
         </div>
         <CardDescription>
-          Paiement Ã  <strong>{sellerName}</strong>
+          Paiement à <strong>{sellerName}</strong>
           {orderDescription && <span className="block mt-1">{orderDescription}</span>}
         </CardDescription>
       </CardHeader>
@@ -133,7 +133,7 @@ export function StripePaymentForm({
           {/* Montant */}
           <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Montant Ã  payer</span>
+              <span className="text-sm text-muted-foreground">Montant à payer</span>
               <span className="text-2xl font-bold text-primary">
                 {formatAmount(amount, currency)}
               </span>
@@ -162,13 +162,13 @@ export function StripePaymentForm({
             </Alert>
           )}
 
-          {/* SÃ©curitÃ© */}
+          {/* Sécurité */}
           <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
             <Shield className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="font-medium">Paiement 100% sÃ©curisÃ©</p>
+              <p className="font-medium">Paiement 100% sécurisé</p>
               <p className="mt-1">
-                Vos informations bancaires sont protÃ©gÃ©es par Stripe et ne sont jamais stockÃ©es sur nos serveurs.
+                Vos informations bancaires sont protégées par Stripe et ne sont jamais stockées sur nos serveurs.
                 Compatible 3D Secure.
               </p>
             </div>
@@ -194,9 +194,9 @@ export function StripePaymentForm({
             )}
           </Button>
 
-          {/* Logos cartes acceptÃ©es */}
+          {/* Logos cartes acceptées */}
           <div className="flex items-center justify-center gap-3 pt-2">
-            <span className="text-xs text-muted-foreground">Cartes acceptÃ©es:</span>
+            <span className="text-xs text-muted-foreground">Cartes acceptées:</span>
             <div className="flex gap-2">
               <div className="w-10 h-6 bg-gradient-to-r from-primary to-secondary rounded flex items-center justify-center text-white text-[8px] font-bold">
                 VISA

@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import useOfflineMode from '@/hooks/useOfflineMode';
 
 /**
- * BanniÃ¨re de statut offline (fixÃ©e en haut)
+ * Bannière de statut offline (fixée en haut)
  */
 export function OfflineBanner() {
   const { 
@@ -37,7 +37,7 @@ export function OfflineBanner() {
       <div className={cn(
         'px-4 py-3 flex items-center justify-between',
         isOnline 
-          ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white' 
+          ? 'bg-green-500 text-white' 
           : 'bg-amber-500 text-white'
       )}>
         <div className="flex items-center gap-3">
@@ -48,7 +48,7 @@ export function OfflineBanner() {
           )}
           <span className="font-medium">
             {isOnline 
-              ? 'Connexion rÃ©tablie' 
+              ? 'Connexion rétablie' 
               : 'Mode hors ligne'}
           </span>
           {!isOnline && queueStatus.pending > 0 && (
@@ -81,7 +81,7 @@ export function OfflineBanner() {
             onClick={dismissOfflineBanner}
             className="text-white hover:bg-white/20"
           >
-            âœ•
+            ✕
           </Button>
         </div>
       </div>
@@ -121,7 +121,7 @@ export function SyncIndicator() {
 }
 
 /**
- * Widget de statut dÃ©taillÃ©
+ * Widget de statut détaillé
  */
 export function OfflineStatusWidget() {
   const {
@@ -147,11 +147,11 @@ export function OfflineStatusWidget() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             {isOnline ? (
-              <Wifi className="h-5 w-5 text-primary-orange-500" />
+              <Wifi className="h-5 w-5 text-green-500" />
             ) : (
               <WifiOff className="h-5 w-5 text-amber-500" />
             )}
-            Ã‰tat de la connexion
+            État de la connexion
           </CardTitle>
           <Badge variant={isOnline ? 'default' : 'secondary'}>
             {isOnline ? 'En ligne' : 'Hors ligne'}
@@ -159,10 +159,10 @@ export function OfflineStatusWidget() {
         </div>
         <CardDescription>
           {offlineStatus.wasOffline 
-            ? 'Connexion rÃ©tablie aprÃ¨s une interruption'
+            ? 'Connexion rétablie après une interruption'
             : isOnline 
-              ? 'Toutes vos donnÃ©es sont synchronisÃ©es'
-              : 'Vos actions seront synchronisÃ©es plus tard'}
+              ? 'Toutes vos données sont synchronisées'
+              : 'Vos actions seront synchronisées plus tard'}
         </CardDescription>
       </CardHeader>
 
@@ -178,17 +178,17 @@ export function OfflineStatusWidget() {
           </div>
           <div className="space-y-1">
             <div className="flex items-center justify-center">
-              <CheckCircle className="h-4 w-4 text-primary-orange-500" />
+              <CheckCircle className="h-4 w-4 text-green-500" />
             </div>
             <p className="text-2xl font-bold">{queueStatus.completed}</p>
-            <p className="text-xs text-muted-foreground">SynchronisÃ©s</p>
+            <p className="text-xs text-muted-foreground">Synchronisés</p>
           </div>
           <div className="space-y-1">
             <div className="flex items-center justify-center">
               <AlertCircle className="h-4 w-4 text-red-500" />
             </div>
             <p className="text-2xl font-bold">{queueStatus.failed}</p>
-            <p className="text-xs text-muted-foreground">Ã‰chouÃ©s</p>
+            <p className="text-xs text-muted-foreground">Échoués</p>
           </div>
         </div>
 
@@ -208,15 +208,15 @@ export function OfflineStatusWidget() {
           <div className="flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
             <AlertCircle className="h-4 w-4 text-amber-500" />
             <span className="text-sm text-amber-700 dark:text-amber-300">
-              {syncStatus.conflicts} conflit{syncStatus.conflicts > 1 ? 's' : ''} Ã  rÃ©soudre
+              {syncStatus.conflicts} conflit{syncStatus.conflicts > 1 ? 's' : ''} à résoudre
             </span>
           </div>
         )}
 
-        {/* DerniÃ¨re sync */}
+        {/* Dernière sync */}
         {syncStatus.lastSync && (
           <p className="text-xs text-muted-foreground">
-            DerniÃ¨re synchronisation: {formatRelativeTime(syncStatus.lastSync)}
+            Dernière synchronisation: {formatRelativeTime(syncStatus.lastSync)}
           </p>
         )}
 
@@ -244,7 +244,7 @@ export function OfflineStatusWidget() {
               onClick={retryFailedOperations}
               disabled={!isOnline}
             >
-              RÃ©essayer
+              Réessayer
             </Button>
           )}
         </div>
@@ -256,7 +256,7 @@ export function OfflineStatusWidget() {
             className="w-full text-red-500 hover:text-red-600"
             onClick={clearFailedOperations}
           >
-            Supprimer les Ã©checs
+            Supprimer les échecs
           </Button>
         )}
       </CardContent>
@@ -287,7 +287,7 @@ export function OfflineStatusBadge({
       <div className={cn(
         'rounded-full',
         sizeClasses[size],
-        isOnline ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-amber-500',
+        isOnline ? 'bg-green-500' : 'bg-amber-500',
         !isOnline && 'animate-pulse'
       )} />
       {showLabel && (
@@ -300,7 +300,7 @@ export function OfflineStatusBadge({
           {isOnline 
             ? queueStatus.pending > 0 
               ? `${queueStatus.pending} en attente`
-              : 'SynchronisÃ©' 
+              : 'Synchronisé' 
             : 'Hors ligne'}
         </span>
       )}
@@ -313,13 +313,13 @@ function formatRelativeTime(date: Date): string {
   const now = new Date();
   const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (diff < 60) return 'Ã€ l\'instant';
+  if (diff < 60) return 'À l\'instant';
   if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`;
   if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)} h`;
   return date.toLocaleDateString('fr-FR');
 }
 
-// Exports groupÃ©s
+// Exports groupés
 export const OfflineComponents = {
   Banner: OfflineBanner,
   Indicator: SyncIndicator,

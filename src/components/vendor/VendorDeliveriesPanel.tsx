@@ -102,7 +102,7 @@ export function VendorDeliveriesPanel() {
       case 'assigned': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
       case 'picked_up': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400';
       case 'in_transit': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
-      case 'delivered': return 'bg-primary-orange-100 text-primary-blue-900 dark:bg-primary-orange-900/30 dark:text-primary-orange-400';
+      case 'delivered': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
       case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
     }
@@ -209,7 +209,7 @@ export function VendorDeliveriesPanel() {
               </div>
 
               <div className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 text-primary-orange-600 flex-shrink-0 mt-0.5" />
+                <MapPin className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium">Livraison</p>
                   <p className="text-muted-foreground">{deliveryAddr}</p>
@@ -247,7 +247,7 @@ export function VendorDeliveriesPanel() {
                 className="mt-2"
                 onClick={() => setSelectedDelivery(delivery)}
               >
-                <CheckCircle className="h-4 w-4 mr-2 text-primary-orange-600" />
+                <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
                 Voir détails de confirmation
               </Button>
             )}
@@ -321,14 +321,14 @@ export function VendorDeliveriesPanel() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 dark:from-primary-blue-950/30 dark:to-primary-orange-900/20 border-primary-orange-200 dark:border-primary-orange-800">
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950/30 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
           <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
-                <p className="text-[10px] md:text-xs text-primary-orange-600 dark:text-primary-orange-400 font-medium">Livrées</p>
-                <p className="text-xl md:text-2xl font-bold text-primary-orange-700 dark:text-primary-orange-300">{stats.completed}</p>
+                <p className="text-[10px] md:text-xs text-green-600 dark:text-green-400 font-medium">Livrées</p>
+                <p className="text-xl md:text-2xl font-bold text-green-700 dark:text-green-300">{stats.completed}</p>
               </div>
-              <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-primary-orange-500/50 flex-shrink-0" />
+              <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-green-500/50 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
@@ -348,14 +348,14 @@ export function VendorDeliveriesPanel() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-blue-100 dark:from-primary-blue-950/30 dark:to-primary-blue-900/20 border-primary-blue-200 dark:border-primary-blue-800">
+        <Card className="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-950/30 dark:to-teal-900/20 border-teal-200 dark:border-teal-800">
           <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
-                <p className="text-[10px] md:text-xs text-primary-blue-600 dark:text-primary-blue-400 font-medium">Taux réussite</p>
-                <p className="text-xl md:text-2xl font-bold text-primary-blue-700 dark:text-primary-blue-300">{stats.successRate}%</p>
+                <p className="text-[10px] md:text-xs text-teal-600 dark:text-teal-400 font-medium">Taux réussite</p>
+                <p className="text-xl md:text-2xl font-bold text-teal-700 dark:text-teal-300">{stats.successRate}%</p>
               </div>
-              <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-primary-blue-500/50 flex-shrink-0" />
+              <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-teal-500/50 flex-shrink-0" />
             </div>
           </CardContent>
         </Card>
@@ -373,7 +373,7 @@ export function VendorDeliveriesPanel() {
             <List className="h-3.5 w-3.5 md:h-4 md:w-4" />
             <span className="hidden sm:inline">En cours</span> ({pendingDeliveries.length})
           </TabsTrigger>
-          <TabsTrigger value="delivered" className="flex-shrink-0 gap-1.5 px-2 md:px-4 text-xs md:text-sm data-[state=active]:bg-primary-orange-100 data-[state=active]:text-primary-blue-900">
+          <TabsTrigger value="delivered" className="flex-shrink-0 gap-1.5 px-2 md:px-4 text-xs md:text-sm data-[state=active]:bg-green-100 data-[state=active]:text-green-700">
             <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
             <span className="hidden sm:inline">Livrées</span> ({completedDeliveries.length})
           </TabsTrigger>
@@ -435,7 +435,7 @@ export function VendorDeliveriesPanel() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-primary-orange-600" />
+                  <CheckCircle className="h-5 w-5 text-green-600" />
                   Récemment livrées
                 </CardTitle>
               </CardHeader>
@@ -450,7 +450,7 @@ export function VendorDeliveriesPanel() {
                     {completedDeliveries.slice(0, 5).map((delivery) => (
                       <div 
                         key={delivery.id} 
-                        className="flex items-center justify-between p-3 bg-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg cursor-pointer hover:bg-primary-orange-100 dark:hover:bg-primary-orange-950/30 transition-colors"
+                        className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/20 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors"
                         onClick={() => setSelectedDelivery(delivery)}
                       >
                         <div className="flex-1 min-w-0">
@@ -461,7 +461,7 @@ export function VendorDeliveriesPanel() {
                               : '-'}
                           </p>
                         </div>
-                        <span className="text-sm font-medium text-primary-orange-600">
+                        <span className="text-sm font-medium text-green-600">
                           {delivery.delivery_fee?.toLocaleString()} GNF
                         </span>
                       </div>
@@ -519,7 +519,7 @@ export function VendorDeliveriesPanel() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-primary-orange-600" />
+                <CheckCircle className="h-5 w-5 text-green-600" />
                 Livraisons complétées
               </CardTitle>
               <CardDescription>
@@ -551,7 +551,7 @@ export function VendorDeliveriesPanel() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-primary-orange-600" />
+              <CheckCircle className="h-5 w-5 text-green-600" />
               Détails de la livraison
             </DialogTitle>
           </DialogHeader>
@@ -567,8 +567,8 @@ export function VendorDeliveriesPanel() {
               </div>
 
               {/* Date de confirmation */}
-              <div className="flex items-center gap-3 p-3 bg-primary-orange-50 dark:bg-primary-orange-950/30 rounded-lg">
-                <Clock className="h-5 w-5 text-primary-orange-600" />
+              <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                <Clock className="h-5 w-5 text-green-600" />
                 <div>
                   <p className="text-sm font-medium">Livré le</p>
                   <p className="text-sm text-muted-foreground">

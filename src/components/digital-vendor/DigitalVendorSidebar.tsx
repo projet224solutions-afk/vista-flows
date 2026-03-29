@@ -91,7 +91,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
           {!collapsed && (
             <div className="px-4 py-3 mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-vendeur-primary to-vendeur-secondary rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-lg flex items-center justify-center">
                   <Laptop className="w-4 h-4 text-white" />
                 </div>
                 <div>

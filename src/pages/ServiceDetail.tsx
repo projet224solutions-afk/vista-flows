@@ -112,7 +112,7 @@ function computeIsOpen(hours: OpeningHours | undefined): boolean | null {
 
   if (typeof todayHours === 'string') {
     const lower = todayHours.toLowerCase().trim();
-    if (lower === 'fermÃ©' || lower === 'closed') return false;
+    if (lower === 'fermé' || lower === 'closed') return false;
     // Try to parse "HH:MM - HH:MM"
     const match = lower.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
     if (match) {
@@ -338,7 +338,7 @@ export default function ServiceDetailPage() {
         const client = clientsMap[review.client_id];
         return {
           id: review.id,
-          user_name: client?.full_name || 'Client vÃ©rifiÃ©',
+          user_name: client?.full_name || 'Client vérifié',
           user_avatar: client?.avatar_url,
           rating: review.rating,
           comment: review.comment,
@@ -394,7 +394,7 @@ export default function ServiceDetailPage() {
     if (!file || !id) return;
     
     if (!file.type.startsWith('image/')) {
-      toast.error('Seules les images sont autorisÃ©es');
+      toast.error('Seules les images sont autorisées');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -427,7 +427,7 @@ export default function ServiceDetailPage() {
 
       if (dbError) throw dbError;
 
-      toast.success('Image ajoutÃ©e Ã  la galerie !');
+      toast.success('Image ajoutée à la galerie !');
       loadGalleryImages();
     } catch (err: any) {
       console.error('Erreur upload galerie:', err);
@@ -445,7 +445,7 @@ export default function ServiceDetailPage() {
         .delete()
         .eq('id', imageId);
       if (error) throw error;
-      toast.success('Image supprimÃ©e');
+      toast.success('Image supprimée');
       setGalleryImages(prev => prev.filter(img => img.id !== imageId));
     } catch {
       toast.error('Erreur lors de la suppression');
@@ -462,7 +462,7 @@ export default function ServiceDetailPage() {
         return;
       }
       if (service.vendor_user_id === user.id) {
-        toast.error("Vous ne pouvez pas vous contacter vous-mÃªme");
+        toast.error("Vous ne pouvez pas vous contacter vous-même");
         return;
       }
       navigate(`/communication/direct/${service.vendor_user_id}`);
@@ -482,7 +482,7 @@ export default function ServiceDetailPage() {
       return;
     }
     if (service.vendor_user_id === user.id) {
-      toast.error("Vous ne pouvez pas vous contacter vous-mÃªme");
+      toast.error("Vous ne pouvez pas vous contacter vous-même");
       return;
     }
     navigate(`/communication/direct/${service.vendor_user_id}`);
@@ -491,10 +491,10 @@ export default function ServiceDetailPage() {
   const handleLocateRestaurant = () => {
     if (service?.has_real_coordinates && service.latitude && service.longitude) {
       const url = `https://www.google.com/maps/dir/?api=1&destination=${service.latitude},${service.longitude}&travelmode=driving`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.open(url, '_blank');
     } else if (service?.address) {
       const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(service.address)}&travelmode=driving`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.open(url, '_blank');
     } else {
       toast.error('Position du service non disponible');
     }
@@ -502,14 +502,14 @@ export default function ServiceDetailPage() {
 
   const handleReservation = () => {
     if (!user) {
-      toast.error('Veuillez vous connecter pour rÃ©server');
+      toast.error('Veuillez vous connecter pour réserver');
       navigate('/auth');
       return;
     }
     if (isRestaurant) {
       setIsReservationModalOpen(true);
     } else {
-      toast.info('Contactez le prestataire pour rÃ©server');
+      toast.info('Contactez le prestataire pour réserver');
     }
   };
 
@@ -529,7 +529,7 @@ export default function ServiceDetailPage() {
         });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        toast.success('Lien copiÃ© dans le presse-papier');
+        toast.success('Lien copié dans le presse-papier');
       }
     } catch (error) {
       console.error('Erreur partage:', error);
@@ -544,11 +544,11 @@ export default function ServiceDetailPage() {
       if (isFavorite) {
         newFavs = favs.filter(f => f !== id);
         setIsFavorite(false);
-        toast.success('RetirÃ© des favoris');
+        toast.success('Retiré des favoris');
       } else {
         newFavs = [...favs, id];
         setIsFavorite(true);
-        toast.success('AjoutÃ© aux favoris');
+        toast.success('Ajouté aux favoris');
       }
       localStorage.setItem('service_favorites', JSON.stringify(newFavs));
     } catch {
@@ -559,12 +559,12 @@ export default function ServiceDetailPage() {
   const openInMaps = () => {
     if (service?.has_real_coordinates && service.latitude && service.longitude) {
       const url = `https://www.google.com/maps/place/${service.latitude},${service.longitude}/@${service.latitude},${service.longitude},17z`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.open(url, '_blank');
     } else if (service?.address) {
       const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.address)}`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.open(url, '_blank');
     } else {
-      toast.error('CoordonnÃ©es non disponibles');
+      toast.error('Coordonnées non disponibles');
     }
   };
 
@@ -575,7 +575,7 @@ export default function ServiceDetailPage() {
       return;
     }
     if (!reviewComment.trim()) {
-      toast.error('Veuillez Ã©crire un commentaire');
+      toast.error('Veuillez écrire un commentaire');
       return;
     }
     setSubmittingReview(true);
@@ -605,14 +605,14 @@ export default function ServiceDetailPage() {
     if (service?.is_open === true) {
       return (
         <Badge className="text-sm px-4 py-2 font-semibold shadow-lg backdrop-blur-sm border-0 bg-primary text-primary-foreground">
-          âœ… Ouvert
+          ✅ Ouvert
         </Badge>
       );
     }
     if (service?.is_open === false) {
       return (
         <Badge className="text-sm px-4 py-2 font-semibold shadow-lg backdrop-blur-sm border-0 bg-destructive text-destructive-foreground">
-          ðŸ”´ FermÃ©
+          🔴 Fermé
         </Badge>
       );
     }
@@ -635,7 +635,7 @@ export default function ServiceDetailPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground mb-4">Service non trouvÃ©</p>
+          <p className="text-muted-foreground mb-4">Service non trouvé</p>
           <Button onClick={() => navigate('/services-proximite')}>
             Retour aux services
           </Button>
@@ -646,18 +646,18 @@ export default function ServiceDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* â•â•â• Hero Image â•â•â• */}
+      {/* ═══ Hero Image ═══ */}
       <div className="relative h-72 md:h-[420px] bg-muted overflow-hidden">
         {service.image_url ? (
           <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-primary/10 flex items-center justify-center">
             <span className="text-7xl opacity-60">
-              {service.category === 'restaurant' ? 'ðŸ½ï¸' :
-               service.category === 'sante' ? 'ðŸ¥' :
-               service.category === 'education' ? 'ðŸ“š' :
-               service.category === 'beaute' ? 'ðŸ’‡' :
-               service.category === 'commerce' ? 'ðŸ›ï¸' : 'ðŸ”§'}
+              {service.category === 'restaurant' ? '🍽️' :
+               service.category === 'sante' ? '🏥' :
+               service.category === 'education' ? '📚' :
+               service.category === 'beaute' ? '💇' :
+               service.category === 'commerce' ? '🛍️' : '🔧'}
             </span>
           </div>
         )}
@@ -704,7 +704,7 @@ export default function ServiceDetailPage() {
         </div>
       </div>
 
-      {/* â•â•â• Main Content â•â•â• */}
+      {/* ═══ Main Content ═══ */}
       <div className="max-w-3xl mx-auto px-4 relative">
         <Card className="relative -mt-16 z-20 border-0 shadow-xl rounded-2xl overflow-hidden">
           <CardContent className="p-5 md:p-8">
@@ -729,14 +729,14 @@ export default function ServiceDetailPage() {
                 <Badge variant="outline" className="flex items-center gap-1.5 text-sm font-medium px-3 py-1 rounded-full border-primary/30">
                   <Navigation className="w-3.5 h-3.5 text-primary" />
                   {formatDistance(distance)}
-                  {usingRealLocation && <span className="text-primary-orange-500 text-xs">â—</span>}
+                  {usingRealLocation && <span className="text-green-500 text-xs">●</span>}
                 </Badge>
               )}
 
               {/* No coordinates message */}
               {!service.has_real_coordinates && (
                 <Badge variant="secondary" className="text-xs">
-                  ðŸ“ Position non renseignÃ©e
+                  📍 Position non renseignée
                 </Badge>
               )}
             </div>
@@ -749,7 +749,7 @@ export default function ServiceDetailPage() {
               {service.description}
             </p>
 
-            {/* â•â•â• Action Buttons â•â•â• */}
+            {/* ═══ Action Buttons ═══ */}
             <div className="flex flex-wrap gap-3">
               {service.phone && (
                 <Button onClick={handleContact} className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-primary hover:bg-primary/90">
@@ -763,7 +763,7 @@ export default function ServiceDetailPage() {
               </Button>
               <Button onClick={handleReservation} variant="outline" className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5">
                 <Calendar className="w-4 h-4 mr-2" />
-                RÃ©server
+                Réserver
               </Button>
               {isRestaurant && (
                 <Button onClick={handleOrderFromRestaurant} className="flex-1 min-w-[100px] h-12 rounded-xl font-semibold text-sm bg-accent text-accent-foreground hover:bg-accent/90">
@@ -778,14 +778,14 @@ export default function ServiceDetailPage() {
               <div className="mt-4">
                 <Button onClick={handleLocateRestaurant} variant="outline" className="w-full h-11 rounded-xl font-semibold text-sm border-primary/30 text-primary hover:bg-primary/5 gap-2">
                   <LocateFixed className="w-4 h-4" />
-                  ðŸ“ Localiser sur la carte
+                  📍 Localiser sur la carte
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* â•â•â• Tabs Section â•â•â• */}
+        {/* ═══ Tabs Section ═══ */}
         <Tabs defaultValue="info" className="mt-6 mb-6">
           <TabsList className="w-full rounded-xl h-12 bg-muted/60 p-1">
             <TabsTrigger value="info" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold">
@@ -799,7 +799,7 @@ export default function ServiceDetailPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* â”€â”€â”€ Informations â”€â”€â”€ */}
+          {/* ─── Informations ─── */}
           <TabsContent value="info">
             <Card className="rounded-2xl border-0 shadow-md">
               <CardContent className="p-5 md:p-6 space-y-5">
@@ -824,7 +824,7 @@ export default function ServiceDetailPage() {
                       <Phone className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-foreground">TÃ©lÃ©phone</p>
+                      <p className="font-semibold text-foreground">Téléphone</p>
                       <a href={`tel:${service.phone}`} className="text-primary hover:underline text-sm mt-0.5 inline-block">
                         {service.phone}
                       </a>
@@ -848,7 +848,7 @@ export default function ServiceDetailPage() {
 
                 {service.features && service.features.length > 0 && (
                   <div>
-                    <p className="font-semibold text-foreground mb-2">CaractÃ©ristiques</p>
+                    <p className="font-semibold text-foreground mb-2">Caractéristiques</p>
                     <div className="flex flex-wrap gap-2">
                       {service.features.map((feature, index) => (
                         <Badge key={index} variant="outline" className="rounded-full">{feature}</Badge>
@@ -860,7 +860,7 @@ export default function ServiceDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* â”€â”€â”€ Horaires â”€â”€â”€ */}
+          {/* ─── Horaires ─── */}
           <TabsContent value="hours">
             <Card className="rounded-2xl border-0 shadow-md">
               <CardContent className="p-5 md:p-6">
@@ -880,15 +880,15 @@ export default function ServiceDetailPage() {
                       } else if (typeof hours === 'object' && hours !== null) {
                         const hoursObj = hours as { open?: string; close?: string; closed?: boolean };
                         if (hoursObj.closed) {
-                          hoursDisplay = 'FermÃ©';
+                          hoursDisplay = 'Fermé';
                         } else {
                           hoursDisplay = `${hoursObj.open || '08:00'} - ${hoursObj.close || '18:00'}`;
                         }
                       } else {
-                        hoursDisplay = 'Non dÃ©fini';
+                        hoursDisplay = 'Non défini';
                       }
 
-                      const isClosed = hoursDisplay.toLowerCase() === 'fermÃ©';
+                      const isClosed = hoursDisplay.toLowerCase() === 'fermé';
 
                       return (
                         <div key={day} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
@@ -903,15 +903,15 @@ export default function ServiceDetailPage() {
                 ) : (
                   <div className="text-center py-8">
                     <Clock className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground">Horaires non renseignÃ©s</p>
-                    <p className="text-sm text-muted-foreground/70 mt-1">Contactez le prestataire pour connaÃ®tre ses horaires</p>
+                    <p className="text-muted-foreground">Horaires non renseignés</p>
+                    <p className="text-sm text-muted-foreground/70 mt-1">Contactez le prestataire pour connaître ses horaires</p>
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* â”€â”€â”€ Avis â”€â”€â”€ */}
+          {/* ─── Avis ─── */}
           <TabsContent value="reviews">
             <Card className="rounded-2xl border-0 shadow-md">
               <CardContent className="p-5 md:p-6">
@@ -927,7 +927,7 @@ export default function ServiceDetailPage() {
                       }
                       setShowReviewForm(true);
                     }}>
-                      Soyez le premier Ã  donner votre avis
+                      Soyez le premier à donner votre avis
                     </Button>
                   </div>
                 ) : (
@@ -952,7 +952,7 @@ export default function ServiceDetailPage() {
                           ))}
                         </div>
                         <Textarea
-                          placeholder="DÃ©crivez votre expÃ©rience..."
+                          placeholder="Décrivez votre expérience..."
                           value={reviewComment}
                           onChange={(e) => setReviewComment(e.target.value)}
                           rows={3}
@@ -1004,7 +1004,7 @@ export default function ServiceDetailPage() {
           </TabsContent>
         </Tabs>
 
-        {/* â•â•â• Gallery â•â•â• */}
+        {/* ═══ Gallery ═══ */}
         {(galleryImages.length > 0 || isOwner) && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
@@ -1055,7 +1055,7 @@ export default function ServiceDetailPage() {
           </div>
         )}
 
-        {/* â•â•â• Restaurant Menu Section â•â•â• */}
+        {/* ═══ Restaurant Menu Section ═══ */}
         {isRestaurant && menuItems.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
@@ -1082,7 +1082,7 @@ export default function ServiceDetailPage() {
                       {item.image_url ? (
                         <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl bg-primary/5">ðŸ½ï¸</div>
+                        <div className="w-full h-full flex items-center justify-center text-3xl bg-primary/5">🍽️</div>
                       )}
                     </div>
                     <CardContent className="p-3 flex-1 flex flex-col justify-between">
@@ -1090,7 +1090,7 @@ export default function ServiceDetailPage() {
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <h3 className="font-semibold text-foreground line-clamp-1 text-sm">{item.name}</h3>
                           {item.is_featured && (
-                            <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5">â­</Badge>
+                            <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5">⭐</Badge>
                           )}
                         </div>
                         {item.description && (
@@ -1136,7 +1136,7 @@ export default function ServiceDetailPage() {
         )}
       </div>
 
-      {/* Modal de rÃ©servation restaurant */}
+      {/* Modal de réservation restaurant */}
       {isRestaurant && service && (
         <ReservationModal
           isOpen={isReservationModalOpen}

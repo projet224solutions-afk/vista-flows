@@ -60,7 +60,7 @@ export function EnhancedWalletCard({
       );
     }
     return (
-      <Badge variant="default" className="gap-1 bg-gradient-to-r from-primary-blue-600 to-primary-orange-600">
+      <Badge variant="default" className="gap-1 bg-green-600">
         <CheckCircle className="w-3 h-3" />
         {t('wallet.active')}
       </Badge>

@@ -15,6 +15,9 @@ export const useTranslation = () => {
     isRTL,
     userCountry,
     supportedLanguages,
+    // Alias pour compatibilité
+    currentLanguage: language,
+    changeLanguage: setLanguage,
   };
 };
 

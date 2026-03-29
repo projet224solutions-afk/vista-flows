@@ -35,7 +35,7 @@ interface AccountTransaction {
 }
 
 const accountTypeConfig = {
-  cash: { icon: Banknote, label: 'Caisse', color: 'bg-primary-orange-100 text-primary-orange-800' },
+  cash: { icon: Banknote, label: 'Caisse', color: 'bg-green-100 text-green-800' },
   orange_money: { icon: Smartphone, label: 'Orange Money', color: 'bg-orange-100 text-orange-800' },
   mtn_money: { icon: Smartphone, label: 'MTN Money', color: 'bg-yellow-100 text-yellow-800' },
   bank: { icon: Building, label: 'Banque', color: 'bg-blue-100 text-blue-800' },
@@ -123,7 +123,7 @@ export default function CollectionAccountsManager() {
 
       if (error) throw error;
 
-      toast({ title: 'âœ… Compte crÃ©Ã© avec succÃ¨s' });
+      toast({ title: '✅ Compte créé avec succès' });
       setIsCreateOpen(false);
       setNewAccount({ account_name: '', account_type: 'cash', account_number: '', is_default: false });
       loadAccounts();
@@ -155,7 +155,7 @@ export default function CollectionAccountsManager() {
     }
 
     try {
-      // CrÃ©er la transaction
+      // Créer la transaction
       const { error: txError } = await supabase
         .from('vendor_account_transactions')
         .insert([{
@@ -169,7 +169,7 @@ export default function CollectionAccountsManager() {
 
       if (txError) throw txError;
 
-      // Mettre Ã  jour le solde du compte
+      // Mettre à jour le solde du compte
       const { error: updateError } = await supabase
         .from('vendor_collection_accounts')
         .update({ balance: balanceAfter })
@@ -177,7 +177,7 @@ export default function CollectionAccountsManager() {
 
       if (updateError) throw updateError;
 
-      toast({ title: 'âœ… Transaction enregistrÃ©e' });
+      toast({ title: '✅ Transaction enregistrée' });
       setIsTransactionOpen(false);
       setNewTransaction({ type: 'deposit', amount: '', description: '' });
       loadAccounts();
@@ -203,7 +203,7 @@ export default function CollectionAccountsManager() {
             Comptes d'Encaissement
           </h2>
           <p className="text-sm text-muted-foreground">
-            GÃ©rez vos diffÃ©rentes caisses et comptes
+            Gérez vos différentes caisses et comptes
           </p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -215,7 +215,7 @@ export default function CollectionAccountsManager() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>CrÃ©er un compte d'encaissement</DialogTitle>
+              <DialogTitle>Créer un compte d'encaissement</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -241,7 +241,7 @@ export default function CollectionAccountsManager() {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium">NumÃ©ro de compte (optionnel)</label>
+                <label className="text-sm font-medium">Numéro de compte (optionnel)</label>
                 <Input
                   placeholder="Ex: 620XXXXXX"
                   value={newAccount.account_number}
@@ -250,7 +250,7 @@ export default function CollectionAccountsManager() {
               </div>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Annuler</Button>
-                <Button onClick={createAccount}>CrÃ©er</Button>
+                <Button onClick={createAccount}>Créer</Button>
               </div>
             </div>
           </DialogContent>
@@ -292,7 +292,7 @@ export default function CollectionAccountsManager() {
                     </div>
                   </div>
                   {account.is_default && (
-                    <Badge className="bg-primary/10 text-primary text-xs">Par dÃ©faut</Badge>
+                    <Badge className="bg-primary/10 text-primary text-xs">Par défaut</Badge>
                   )}
                 </div>
 
@@ -312,8 +312,8 @@ export default function CollectionAccountsManager() {
                       loadTransactions(account.id);
                     }}
                   >
-                    <ArrowDownLeft className="w-3 h-3 mr-1 text-primary-orange-600" />
-                    EntrÃ©e
+                    <ArrowDownLeft className="w-3 h-3 mr-1 text-green-600" />
+                    Entrée
                   </Button>
                   <Button
                     size="sm"
@@ -341,7 +341,7 @@ export default function CollectionAccountsManager() {
               <Wallet className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
               <p className="text-muted-foreground">Aucun compte d'encaissement</p>
               <Button className="mt-4" onClick={() => setIsCreateOpen(true)}>
-                CrÃ©er mon premier compte
+                Créer mon premier compte
               </Button>
             </CardContent>
           </Card>
@@ -353,7 +353,7 @@ export default function CollectionAccountsManager() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {newTransaction.type === 'deposit' ? 'Enregistrer une entrÃ©e' : 'Enregistrer une sortie'}
+              {newTransaction.type === 'deposit' ? 'Enregistrer une entrée' : 'Enregistrer une sortie'}
             </DialogTitle>
           </DialogHeader>
           
@@ -372,7 +372,7 @@ export default function CollectionAccountsManager() {
                   className="flex-1"
                 >
                   <ArrowDownLeft className="w-4 h-4 mr-2" />
-                  EntrÃ©e
+                  Entrée
                 </Button>
                 <Button
                   variant={newTransaction.type === 'withdrawal' ? 'default' : 'outline'}
@@ -412,16 +412,16 @@ export default function CollectionAccountsManager() {
                 </Button>
               </div>
 
-              {/* Historique rÃ©cent */}
+              {/* Historique récent */}
               {transactions.length > 0 && (
                 <div className="border-t pt-4">
-                  <p className="text-sm font-medium mb-2">Historique rÃ©cent</p>
+                  <p className="text-sm font-medium mb-2">Historique récent</p>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {transactions.slice(0, 5).map((tx) => (
                       <div key={tx.id} className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded">
                         <div className="flex items-center gap-2">
                           {tx.transaction_type === 'deposit' ? (
-                            <TrendingUp className="w-3 h-3 text-primary-orange-600" />
+                            <TrendingUp className="w-3 h-3 text-green-600" />
                           ) : (
                             <TrendingDown className="w-3 h-3 text-red-600" />
                           )}
@@ -429,7 +429,7 @@ export default function CollectionAccountsManager() {
                             {tx.description || tx.transaction_type}
                           </span>
                         </div>
-                        <span className={tx.transaction_type === 'deposit' ? 'text-primary-orange-600' : 'text-red-600'}>
+                        <span className={tx.transaction_type === 'deposit' ? 'text-green-600' : 'text-red-600'}>
                           {tx.transaction_type === 'deposit' ? '+' : '-'}{tx.amount.toLocaleString()}
                         </span>
                       </div>

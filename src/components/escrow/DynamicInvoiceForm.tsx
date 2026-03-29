@@ -158,9 +158,9 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
     if (createdInvoice) {
         return (
             <div className="max-w-2xl mx-auto p-6 space-y-6">
-                <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+                <Card className="border-green-200 bg-green-50">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-primary-blue-900">
+                        <CardTitle className="flex items-center gap-2 text-green-800">
                             <Shield className="w-5 h-5" />
                             Facture créée avec succès !
                         </CardTitle>
@@ -267,7 +267,7 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
                         {/* Montant */}
                         <div className="space-y-2">
                             <Label htmlFor="amount" className="flex items-center gap-2">
-                                <DollarSign className="w-4 h-4 text-primary-orange-600" />
+                                <DollarSign className="w-4 h-4 text-green-600" />
                                 Montant du trajet (GNF) *
                             </Label>
                             <Input
@@ -402,7 +402,7 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
                                         </div>
                                         <div className="border-t pt-2 flex justify-between font-semibold">
                                             <span>Total client paiera:</span>
-                                            <span className="text-primary-orange-600">{totalAmount} GNF</span>
+                                            <span className="text-green-600">{totalAmount} GNF</span>
                                         </div>
                                         <div className="flex justify-between text-xs text-gray-600">
                                             <span>Vous recevrez:</span>

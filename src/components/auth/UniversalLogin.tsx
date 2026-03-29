@@ -1,11 +1,11 @@
 /**
  * Composant de Connexion Universelle Intelligente
  * Support: Agent, Bureau Syndicat, Travailleur
- * Identifiant flexible: Email, TÃ©lÃ©phone, ID unique
+ * Identifiant flexible: Email, Téléphone, ID unique
  *
- * CORRECTIONS DE SÃ‰CURITÃ‰:
+ * CORRECTIONS DE SÉCURITÉ:
  * - Utilisation de SecureStorage au lieu de localStorage
- * - Sessions chiffrÃ©es avec AES-GCM
+ * - Sessions chiffrées avec AES-GCM
  * - Protection contre XSS
  */
 
@@ -21,7 +21,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { SecureStorage } from '@/lib/secureStorage';
-import { useTranslation } from '@/hooks/useTranslation';
 
 type UserType = 'agent' | 'bureau' | 'worker';
 
@@ -32,7 +31,6 @@ interface UniversalLoginProps {
 
 export default function UniversalLogin({ defaultType, onSuccess }: UniversalLoginProps) {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const [userType, setUserType] = useState<UserType>(defaultType || 'agent');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -41,7 +39,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
   const [showPassword, setShowPassword] = useState(false);
   const [identifierType, setIdentifierType] = useState<'email' | 'phone' | 'id' | null>(null);
 
-  // DÃ©tection automatique du type d'identifiant
+  // Détection automatique du type d'identifiant
   const detectIdentifierType = (value: string): 'email' | 'phone' | 'id' => {
     if (value.includes('@')) return 'email';
     const cleanValue = value.replace(/\s+/g, '');
@@ -65,12 +63,12 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
 
     try {
       if (!identifier || !password) {
-        throw new Error(t('auth.universal.errors.fillAllFields'));
+        throw new Error('Veuillez remplir tous les champs');
       }
 
-      console.log('ðŸ” Tentative de connexion:', { userType, identifier, identifierType });
+      console.log('🔐 Tentative de connexion:', { userType, identifier, identifierType });
 
-      // Appel Ã  l'Edge Function de connexion universelle
+      // Appel à l'Edge Function de connexion universelle
       const { data, error: fnError } = await supabase.functions.invoke('universal-login', {
         body: {
           identifier: identifier.trim(),
@@ -80,16 +78,16 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
       });
 
       if (fnError) throw fnError;
-      if (!data?.success) throw new Error(data?.error || t('auth.universal.errors.connection'));
+      if (!data?.success) throw new Error(data?.error || 'Erreur de connexion');
 
-      console.log('âœ… Connexion rÃ©ussie:', data.session.role);
+      console.log('✅ Connexion réussie:', data.session.role);
 
-      // Stocker la session de maniÃ¨re sÃ©curisÃ©e (chiffrÃ©e avec AES-GCM)
+      // Stocker la session de manière sécurisée (chiffrée avec AES-GCM)
       await SecureStorage.setItem(`${userType}_session`, data.session);
 
-      toast.success(t('auth.universal.toast.success'));
+      toast.success('Connexion réussie !');
       
-      // Redirection selon le rÃ´le
+      // Redirection selon le rôle
       if (data.session.role === 'agent') {
         navigate('/agent-dashboard');
       } else if (data.session.role === 'bureau') {
@@ -101,10 +99,10 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
       if (onSuccess) onSuccess();
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t('auth.universal.errors.connection');
+      const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
       setError(errorMessage);
       toast.error(errorMessage);
-      console.error('âŒ Erreur connexion:', err);
+      console.error('❌ Erreur connexion:', err);
     } finally {
       setLoading(false);
     }
@@ -113,24 +111,24 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
   const userTypes = [
     { 
       value: 'agent' as UserType, 
-      label: t('auth.universal.accountType.agent'), 
+      label: 'Agent', 
       icon: UserCheck,
       color: 'bg-blue-500',
-      description: t('auth.universal.accountType.agentDesc')
+      description: 'Accès agent principal ou sous-agent'
     },
     { 
       value: 'bureau' as UserType, 
-      label: t('auth.universal.accountType.bureau'), 
+      label: 'Bureau Syndicat', 
       icon: Building2,
-      color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
-      description: t('auth.universal.accountType.bureauDesc')
+      color: 'bg-green-500',
+      description: 'Accès bureau syndical'
     },
     { 
       value: 'worker' as UserType, 
-      label: t('auth.universal.accountType.worker'), 
+      label: 'Travailleur', 
       icon: Users,
       color: 'bg-orange-500',
-      description: t('auth.universal.accountType.workerDesc')
+      description: 'Accès membre travailleur'
     }
   ];
 
@@ -151,17 +149,17 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
             </div>
           </div>
           <CardTitle className="text-3xl font-bold text-center">
-            {t('auth.universal.title')}
+            Connexion Intelligente
           </CardTitle>
           <CardDescription className="text-center text-base">
-            {t('auth.universal.description')}
+            Système universel avec identifiant flexible
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* SÃ©lection du type d'utilisateur */}
+          {/* Sélection du type d'utilisateur */}
           <div className="space-y-3">
-            <Label className="text-sm font-semibold">{t('auth.universal.accountType.label')}</Label>
+            <Label className="text-sm font-semibold">Type de compte</Label>
             <div className="grid grid-cols-1 gap-2">
               {userTypes.map((type) => {
                 const Icon = type.icon;
@@ -184,7 +182,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
                       <div className="text-xs text-muted-foreground">{type.description}</div>
                     </div>
                     {isSelected && (
-                      <Badge variant="default" className="ml-auto">{t('auth.universal.selected')}</Badge>
+                      <Badge variant="default" className="ml-auto">Sélectionné</Badge>
                     )}
                   </button>
                 );
@@ -197,14 +195,14 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
             {/* Identifiant flexible */}
             <div className="space-y-2">
               <Label htmlFor="identifier" className="flex items-center gap-2">
-                <span>{t('auth.universal.identifier.label')}</span>
+                <span>Identifiant</span>
                 {identifierType && (
                   <Badge variant="outline" className="text-xs">
                     {getIdentifierIcon()}
                     <span className="ml-1">
-                      {identifierType === 'email' && t('auth.universal.identifier.email')}
-                      {identifierType === 'phone' && t('auth.universal.identifier.phone')}
-                      {identifierType === 'id' && t('auth.universal.identifier.id')}
+                      {identifierType === 'email' && 'Email'}
+                      {identifierType === 'phone' && 'Téléphone'}
+                      {identifierType === 'id' && 'ID Unique'}
                     </span>
                   </Badge>
                 )}
@@ -212,7 +210,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
               <Input
                 id="identifier"
                 type="text"
-                placeholder={t('auth.universal.identifier.placeholder')}
+                placeholder="Email, Téléphone ou ID"
                 value={identifier}
                 onChange={(e) => handleIdentifierChange(e.target.value)}
                 disabled={loading}
@@ -220,18 +218,18 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
               />
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                {t('auth.universal.identifier.hint')}
+                Entrez votre email, numéro de téléphone ou identifiant unique
               </p>
             </div>
 
             {/* Mot de passe */}
             <div className="space-y-2">
-              <Label htmlFor="password">{t('auth.universal.password.label')}</Label>
+              <Label htmlFor="password">Mot de passe</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder={t('auth.universal.password.placeholder')}
+                  placeholder="Votre mot de passe"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
@@ -264,28 +262,28 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  {t('auth.universal.loggingIn')}
+                  Connexion en cours...
                 </>
               ) : (
                 <>
                   <Lock className="mr-2 h-5 w-5" />
-                  {t('auth.universal.loginAction')}
+                  Se connecter
                 </>
               )}
             </Button>
           </form>
 
-          {/* Information systÃ¨me */}
+          {/* Information système */}
           <div className="pt-4 border-t">
             <div className="bg-primary/5 rounded-lg p-4 space-y-2">
               <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                 <UserCheck className="h-4 w-4" />
-                {t('auth.universal.info.title')}
+                Connexion intelligente activée
               </div>
               <ul className="text-xs text-muted-foreground space-y-1 ml-6">
-                <li>{t('auth.universal.info.item1')}</li>
-                <li>{t('auth.universal.info.item2')}</li>
-                <li>{t('auth.universal.info.item3')}</li>
+                <li>✓ Détection automatique du type d'identifiant</li>
+                <li>✓ Sécurité renforcée avec rate-limiting</li>
+                <li>✓ Support multi-plateforme</li>
               </ul>
             </div>
           </div>
@@ -298,7 +296,7 @@ export default function UniversalLogin({ defaultType, onSuccess }: UniversalLogi
               onClick={() => navigate('/')}
               className="text-muted-foreground"
             >
-              {t('auth.universal.backHome')}
+              ← Retour à l'accueil
             </Button>
           </div>
         </CardContent>

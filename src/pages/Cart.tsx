@@ -33,7 +33,7 @@ export default function Cart() {
 
   const handleAffiliateClick = (item: typeof cartItems[0]) => {
     if (item.affiliate_url) {
-      window.open(item.affiliate_url, '_blank', 'noopener,noreferrer');
+      window.open(item.affiliate_url, '_blank');
       toast.success('Redirection vers le partenaire...');
       // Optionnel: retirer du panier après redirection
       removeFromCart(item.id);

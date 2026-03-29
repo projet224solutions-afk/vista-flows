@@ -558,7 +558,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
         <Button
           onClick={handleSubmit}
           disabled={loading || !formData.airlineName || !formData.affiliateUrl}
-          className="w-full bg-gradient-to-r from-blue-500 to-primary-blue-500 text-white"
+          className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
           size="lg"
         >
           {loading ? (

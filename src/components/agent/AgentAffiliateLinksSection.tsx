@@ -54,7 +54,7 @@ interface Stats {
 
 interface AgentAffiliateLinksSectionProps {
   agentId: string;
-  agentToken?: string; // Token d'accÃ¨s de l'agent (pour auth via X-Agent-Token)
+  agentToken?: string; // Token d'accès de l'agent (pour auth via X-Agent-Token)
 }
 
 export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffiliateLinksSectionProps) {
@@ -64,7 +64,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
   const [creating, setCreating] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   
-  // Formulaire de crÃ©ation
+  // Formulaire de création
   const [newLink, setNewLink] = useState({
     name: '',
     target_role: 'all',
@@ -72,11 +72,11 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
     expires_days: ''
   });
 
-  // RÃ©cupÃ©rer le token depuis l'URL si non fourni en props
+  // Récupérer le token depuis l'URL si non fourni en props
   const getAgentToken = (): string | null => {
     if (agentToken) return agentToken;
     
-    // Essayer de rÃ©cupÃ©rer depuis l'URL
+    // Essayer de récupérer depuis l'URL
     const pathParts = window.location.pathname.split('/');
     const agentIndex = pathParts.indexOf('agent');
     if (agentIndex !== -1 && pathParts[agentIndex + 1]) {
@@ -94,7 +94,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
   const invokeWithAgentAuth = async (action: string, body?: any) => {
     const token = getAgentToken();
 
-    // PrÃ©parer les headers
+    // Préparer les headers
     const headers: Record<string, string> = {};
     if (token) {
       headers['X-Agent-Token'] = token;
@@ -118,7 +118,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
       // Charger les liens
       const linksResponse = await invokeWithAgentAuth('list');
       if (linksResponse.data?.links) {
-        // GÃ©nÃ©rer les URLs cÃ´tÃ© client pour s'assurer qu'elles correspondent au domaine actuel
+        // Générer les URLs côté client pour s'assurer qu'elles correspondent au domaine actuel
         const baseUrl = window.location.origin;
         const linksWithCorrectUrls = linksResponse.data.links.map((link: AffiliateLink) => ({
           ...link,
@@ -136,7 +136,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
         setStats(statsResponse.data.stats);
       }
     } catch (error) {
-      console.error('Erreur chargement donnÃ©es:', error);
+      console.error('Erreur chargement données:', error);
     } finally {
       setLoading(false);
     }
@@ -164,7 +164,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
 
       if (response.error) throw response.error;
 
-      toast.success('Lien crÃ©Ã© avec succÃ¨s !', {
+      toast.success('Lien créé avec succès !', {
         description: 'Copiez le lien et partagez-le avec vos prospects'
       });
 
@@ -172,7 +172,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
       setNewLink({ name: '', target_role: 'all', commission_override: '', expires_days: '' });
       loadData();
     } catch (error: any) {
-      toast.error('Erreur lors de la crÃ©ation', { description: error.message });
+      toast.error('Erreur lors de la création', { description: error.message });
     } finally {
       setCreating(false);
     }
@@ -196,17 +196,17 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
       document.body.removeChild(textArea);
       
       if (successful) {
-        toast.success('Lien copiÃ© !', { description: url });
+        toast.success('Lien copié !', { description: url });
         return;
       }
     } catch (err) {
       document.body.removeChild(textArea);
     }
 
-    // Si execCommand Ã©choue, essayer l'API moderne
+    // Si execCommand échoue, essayer l'API moderne
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(url)
-        .then(() => toast.success('Lien copiÃ© !', { description: url }))
+        .then(() => toast.success('Lien copié !', { description: url }))
         .catch(() => {
           toast.info('Copiez ce lien:', {
             description: url,
@@ -234,7 +234,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
     try {
       await invokeWithAgentAuth('update', { link_id: linkId, is_active: !isActive });
       loadData();
-      toast.success(isActive ? 'Lien dÃ©sactivÃ©' : 'Lien activÃ©');
+      toast.success(isActive ? 'Lien désactivé' : 'Lien activé');
     } catch (error: any) {
       toast.error('Erreur', { description: error.message });
     }
@@ -289,10 +289,10 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary-orange-500" />
+              <Users className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">{stats?.affiliated_users || 0}</p>
-                <p className="text-xs text-muted-foreground">AffiliÃ©s</p>
+                <p className="text-xs text-muted-foreground">Affiliés</p>
               </div>
             </div>
           </CardContent>
@@ -328,14 +328,14 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
               </p>
             </div>
             <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-              <p className="text-sm text-blue-600 font-medium">ValidÃ©es</p>
+              <p className="text-sm text-blue-600 font-medium">Validées</p>
               <p className="text-2xl font-bold text-blue-700">
                 {(stats?.commissions?.validated || 0).toLocaleString()} GNF
               </p>
             </div>
-            <div className="p-4 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border border-primary-orange-500/20">
-              <p className="text-sm text-primary-orange-600 font-medium">PayÃ©es</p>
-              <p className="text-2xl font-bold text-primary-orange-700">
+            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+              <p className="text-sm text-green-600 font-medium">Payées</p>
+              <p className="text-2xl font-bold text-green-700">
                 {(stats?.commissions?.paid || 0).toLocaleString()} GNF
               </p>
             </div>
@@ -353,7 +353,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
                 Mes liens d'affiliation
               </CardTitle>
               <CardDescription>
-                GÃ©nÃ©rez des liens uniques pour recruter des utilisateurs
+                Générez des liens uniques pour recruter des utilisateurs
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -369,7 +369,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>CrÃ©er un lien d'affiliation</DialogTitle>
+                    <DialogTitle>Créer un lien d'affiliation</DialogTitle>
                     <DialogDescription>
                       Personnalisez votre lien pour suivre vos campagnes
                     </DialogDescription>
@@ -404,10 +404,10 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
                     </div>
 
                     <div>
-                      <Label>Commission spÃ©cifique (% - optionnel)</Label>
+                      <Label>Commission spécifique (% - optionnel)</Label>
                       <Input
                         type="number"
-                        placeholder="Laisser vide pour utiliser le taux par dÃ©faut"
+                        placeholder="Laisser vide pour utiliser le taux par défaut"
                         value={newLink.commission_override}
                         onChange={(e) => setNewLink({ ...newLink, commission_override: e.target.value })}
                         min="0"
@@ -433,7 +433,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
                     </Button>
                     <Button onClick={createLink} disabled={creating}>
                       {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                      CrÃ©er le lien
+                      Créer le lien
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -446,7 +446,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
             <div className="text-center py-12 text-muted-foreground">
               <Link2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
               <p>Aucun lien d'affiliation</p>
-              <p className="text-sm">CrÃ©ez votre premier lien pour commencer Ã  recruter</p>
+              <p className="text-sm">Créez votre premier lien pour commencer à recruter</p>
             </div>
           ) : (
             <div className="space-y-4">

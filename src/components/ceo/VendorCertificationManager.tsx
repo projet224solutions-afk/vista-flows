@@ -1,7 +1,7 @@
 /**
  * VENDOR CERTIFICATION MANAGER
- * Interface PDG pour gÃ©rer les certifications vendeurs
- * AccÃ¨s: CEO et SUPER_ADMIN uniquement
+ * Interface PDG pour gérer les certifications vendeurs
+ * Accès: CEO et SUPER_ADMIN uniquement
  * 224SOLUTIONS
  */
 
@@ -101,7 +101,7 @@ export function VendorCertificationManager() {
         console.log('Could not fetch certifications (RLS may restrict access):', certError);
       }
 
-      // Mapper les rÃ©sultats
+      // Mapper les résultats
       const vendorsWithCerts: VendorWithCertification[] = (vendorsData || []).map(vendor => {
         const cert = certificationsMap[vendor.id];
         return {
@@ -203,7 +203,7 @@ export function VendorCertificationManager() {
 
     } catch (error: any) {
       console.error('Error updating certification:', error);
-      toast.error(error.message || 'Erreur lors de la mise Ã  jour');
+      toast.error(error.message || 'Erreur lors de la mise à jour');
     } finally {
       setSubmitting(false);
     }
@@ -242,7 +242,7 @@ export function VendorCertificationManager() {
           Certification Vendeurs
         </h1>
         <p className="text-muted-foreground mt-2">
-          GÃ©rer les certifications des vendeurs de la marketplace
+          Gérer les certifications des vendeurs de la marketplace
         </p>
       </div>
 
@@ -265,11 +265,11 @@ export function VendorCertificationManager() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              CertifiÃ©s
+              Certifiés
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2 text-primary-orange-600">
+            <div className="text-2xl font-bold flex items-center gap-2 text-green-600">
               <CheckCircle2 className="w-5 h-5" />
               {stats.certified}
             </div>
@@ -293,7 +293,7 @@ export function VendorCertificationManager() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Non certifiÃ©s
+              Non certifiés
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -333,7 +333,7 @@ export function VendorCertificationManager() {
                 onClick={() => setStatusFilter('CERTIFIE')}
                 size="sm"
               >
-                CertifiÃ©s
+                Certifiés
               </Button>
               <Button
                 variant={statusFilter === 'SUSPENDU' ? 'default' : 'outline'}
@@ -352,7 +352,7 @@ export function VendorCertificationManager() {
         <CardHeader>
           <CardTitle>Vendeurs ({filteredVendors.length})</CardTitle>
           <CardDescription>
-            GÃ©rer les certifications individuellement
+            Gérer les certifications individuellement
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -450,7 +450,7 @@ export function VendorCertificationManager() {
             {filteredVendors.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun vendeur trouvÃ©</p>
+                <p>Aucun vendeur trouvé</p>
               </div>
             )}
           </div>
@@ -479,7 +479,7 @@ export function VendorCertificationManager() {
                   id="rejection_reason"
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Expliquez pourquoi la certification est rejetÃ©e..."
+                  placeholder="Expliquez pourquoi la certification est rejetée..."
                   rows={3}
                 />
               </div>
@@ -491,7 +491,7 @@ export function VendorCertificationManager() {
                 id="internal_notes"
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
-                placeholder="Notes internes pour l'Ã©quipe admin..."
+                placeholder="Notes internes pour l'équipe admin..."
                 rows={3}
               />
             </div>
@@ -510,7 +510,7 @@ export function VendorCertificationManager() {
               disabled={submitting || (dialogAction === 'REJECT' && !rejectionReason)}
               className={
                 dialogAction === 'CERTIFY' 
-                  ? 'bg-primary-orange-600 hover:bg-primary-orange-700'
+                  ? 'bg-green-600 hover:bg-green-700'
                   : dialogAction === 'SUSPEND'
                   ? 'bg-red-600 hover:bg-red-700'
                   : ''

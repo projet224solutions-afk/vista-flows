@@ -22,7 +22,7 @@ export function VendorAnalyticsDashboard() {
       value: `${analytics.today.totalSales.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} GNF`,
       subtitle: `POS: ${analytics.today.posOrders} • En ligne: ${analytics.today.onlineOrders}`,
       icon: TrendingUp,
-      color: 'text-primary-orange-600'
+      color: 'text-green-600'
     },
     {
       title: "Ventes POS",
@@ -34,7 +34,7 @@ export function VendorAnalyticsDashboard() {
       title: "Commandes en ligne",
       value: analytics.today.onlineOrders,
       icon: Globe,
-      color: 'text-primary-blue-600'
+      color: 'text-cyan-600'
     },
     {
       title: "Taux de Conversion",

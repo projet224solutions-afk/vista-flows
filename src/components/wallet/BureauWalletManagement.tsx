@@ -444,9 +444,9 @@ export default function BureauWalletManagement({
               {transactions.slice(0, 10).map((tx) => (
                 <div key={tx.id} className="flex items-center justify-between py-2 border-b last:border-0">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${tx.type === 'credit' ? 'bg-primary-orange-100' : 'bg-red-100'}`}>
+                    <div className={`p-2 rounded-full ${tx.type === 'credit' ? 'bg-green-100' : 'bg-red-100'}`}>
                       {tx.type === 'credit' ? (
-                        <ArrowDownCircle className="w-4 h-4 text-primary-orange-600" />
+                        <ArrowDownCircle className="w-4 h-4 text-green-600" />
                       ) : (
                         <ArrowUpCircle className="w-4 h-4 text-red-600" />
                       )}
@@ -459,7 +459,7 @@ export default function BureauWalletManagement({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-bold ${tx.type === 'credit' ? 'text-primary-orange-600' : 'text-red-600'}`}>
+                    <p className={`font-bold ${tx.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
                       {tx.type === 'credit' ? '+' : '-'}
                       {tx.amount.toLocaleString()} {wallet?.currency || 'GNF'}
                     </p>

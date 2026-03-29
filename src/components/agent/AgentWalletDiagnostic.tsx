@@ -30,7 +30,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
     try {
       setDiagnosticStatus(prev => ({ ...prev, checking: true }));
 
-      // VÃ©rifier si l'agent existe
+      // Vérifier si l'agent existe
       const { error: agentError } = await supabase
         .from('agents_management')
         .select('id, agent_code')
@@ -47,7 +47,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
         return;
       }
 
-      // VÃ©rifier si le wallet existe
+      // Vérifier si le wallet existe
       const { data: wallet, error: walletError } = await supabase
         .from('agent_wallets')
         .select('id, balance, currency')
@@ -82,9 +82,9 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
   const fixWallet = async () => {
     try {
       setFixing(true);
-      toast.info('Tentative de crÃ©ation du wallet...');
+      toast.info('Tentative de création du wallet...');
 
-      // CrÃ©er le wallet manuellement
+      // Créer le wallet manuellement
       const { data, error } = await supabase
         .from('agent_wallets')
         .insert({
@@ -98,18 +98,18 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
 
       if (error) {
         if (error.code === '23505') {
-          // Le wallet existe dÃ©jÃ , juste recharger
-          toast.info('Le wallet existe dÃ©jÃ , rechargement...');
+          // Le wallet existe déjà, juste recharger
+          toast.info('Le wallet existe déjà, rechargement...');
           await runDiagnostic();
           return;
         }
         throw error;
       }
 
-      toast.success('âœ… Wallet crÃ©Ã© avec succÃ¨s !');
+      toast.success('✅ Wallet créé avec succès !');
       await runDiagnostic();
     } catch (error: any) {
-      console.error('Erreur crÃ©ation wallet:', error);
+      console.error('Erreur création wallet:', error);
       toast.error(`Erreur: ${error.message}`);
     } finally {
       setFixing(false);
@@ -134,7 +134,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
         {diagnosticStatus.checking ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <RefreshCw className="w-4 h-4 animate-spin" />
-            VÃ©rification en cours...
+            Vérification en cours...
           </div>
         ) : (
           <>
@@ -142,13 +142,13 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
               <div className="flex items-center gap-2">
                 {diagnosticStatus.agentExists ? (
                   <>
-                    <CheckCircle className="w-4 h-4 text-primary-orange-600" />
-                    <span>Agent trouvÃ© âœ“</span>
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span>Agent trouvé ✓</span>
                   </>
                 ) : (
                   <>
                     <AlertCircle className="w-4 h-4 text-red-600" />
-                    <span>Agent introuvable âœ—</span>
+                    <span>Agent introuvable ✗</span>
                   </>
                 )}
               </div>
@@ -156,13 +156,13 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
               <div className="flex items-center gap-2">
                 {diagnosticStatus.walletExists ? (
                   <>
-                    <CheckCircle className="w-4 h-4 text-primary-orange-600" />
-                    <span>Wallet trouvÃ© âœ“ (Balance: {diagnosticStatus.balance} GNF)</span>
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span>Wallet trouvé ✓ (Balance: {diagnosticStatus.balance} GNF)</span>
                   </>
                 ) : (
                   <>
                     <AlertCircle className="w-4 h-4 text-red-600" />
-                    <span className="font-medium">Wallet manquant âœ—</span>
+                    <span className="font-medium">Wallet manquant ✗</span>
                   </>
                 )}
               </div>
@@ -176,7 +176,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
                 disabled={diagnosticStatus.checking}
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                RevÃ©rifier
+                Revérifier
               </Button>
 
               {!diagnosticStatus.walletExists && diagnosticStatus.agentExists && (
@@ -186,14 +186,14 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
                   disabled={fixing}
                   className="bg-orange-600 hover:bg-orange-700"
                 >
-                  {fixing ? 'CrÃ©ation...' : 'CrÃ©er le Wallet'}
+                  {fixing ? 'Création...' : 'Créer le Wallet'}
                 </Button>
               )}
             </div>
 
             {!diagnosticStatus.walletExists && (
               <p className="text-xs text-red-600 mt-2">
-                âš ï¸ Le wallet n'existe pas. Cliquez sur "CrÃ©er le Wallet" pour le crÃ©er avec un solde initial de 10,000 GNF.
+                ⚠️ Le wallet n'existe pas. Cliquez sur "Créer le Wallet" pour le créer avec un solde initial de 10,000 GNF.
               </p>
             )}
           </>

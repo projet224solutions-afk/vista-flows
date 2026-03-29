@@ -1,6 +1,6 @@
 /**
  * USER TRACKER - 224SOLUTIONS
- * Composant pour tracker la position d'un utilisateur en temps rÃ©el
+ * Composant pour tracker la position d'un utilisateur en temps réel
  */
 
 import { useState, useEffect } from 'react';
@@ -32,7 +32,7 @@ export function UserTracker() {
   const [isTracking, setIsTracking] = useState(false);
 
   /**
-   * Rechercher et charger les donnÃ©es d'un utilisateur
+   * Rechercher et charger les données d'un utilisateur
    */
   const trackUser = async () => {
     if (!userId.trim()) {
@@ -42,9 +42,9 @@ export function UserTracker() {
 
     setLoading(true);
     try {
-      console.log('ðŸ” Recherche utilisateur:', userId);
+      console.log('🔍 Recherche utilisateur:', userId);
 
-      // 1. VÃ©rifier si c'est un chauffeur taxi
+      // 1. Vérifier si c'est un chauffeur taxi
       const { data: driverData, error: driverError } = await supabase
         .from('taxi_drivers')
         .select('*')
@@ -52,7 +52,7 @@ export function UserTracker() {
         .maybeSingle();
 
       if (driverData) {
-        console.log('âœ… Chauffeur trouvÃ©:', driverData);
+        console.log('✅ Chauffeur trouvé:', driverData);
         
         // Charger le profil pour le nom
         const { data: profile } = await supabase
@@ -75,11 +75,11 @@ export function UserTracker() {
         });
 
         setIsTracking(true);
-        toast.success('ðŸŽ¯ Utilisateur trouvÃ© - Tracking actif');
+        toast.success('🎯 Utilisateur trouvé - Tracking actif');
         return;
       }
 
-      // 2. Sinon chercher dans les profils gÃ©nÃ©raux
+      // 2. Sinon chercher dans les profils généraux
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -87,7 +87,7 @@ export function UserTracker() {
         .single();
 
       if (profileData) {
-        console.log('âœ… Utilisateur trouvÃ©:', profileData);
+        console.log('✅ Utilisateur trouvé:', profileData);
         setTrackedUser({
           id: userId,
           firstName: profileData.first_name,
@@ -95,16 +95,16 @@ export function UserTracker() {
           phone: profileData.phone
         });
         setIsTracking(true);
-        toast.success('ðŸ‘¤ Utilisateur trouvÃ©');
+        toast.success('👤 Utilisateur trouvé');
         return;
       }
 
-      // Aucun utilisateur trouvÃ©
-      toast.error('âŒ Utilisateur introuvable');
-      console.error('Utilisateur non trouvÃ©');
+      // Aucun utilisateur trouvé
+      toast.error('❌ Utilisateur introuvable');
+      console.error('Utilisateur non trouvé');
 
     } catch (error) {
-      console.error('âŒ Erreur lors du tracking:', error);
+      console.error('❌ Erreur lors du tracking:', error);
       toast.error('Erreur lors de la recherche');
     } finally {
       setLoading(false);
@@ -112,22 +112,22 @@ export function UserTracker() {
   };
 
   /**
-   * ArrÃªter le tracking
+   * Arrêter le tracking
    */
   const stopTracking = () => {
     setTrackedUser(null);
     setIsTracking(false);
     setUserId('');
-    toast.info('â¸ï¸ Tracking arrÃªtÃ©');
+    toast.info('⏸️ Tracking arrêté');
   };
 
   /**
-   * S'abonner aux mises Ã  jour en temps rÃ©el
+   * S'abonner aux mises à jour en temps réel
    */
   useEffect(() => {
     if (!trackedUser?.id || !isTracking) return;
 
-    console.log('ðŸ“¡ DÃ©marrage du tracking temps rÃ©el pour:', trackedUser.id);
+    console.log('📡 Démarrage du tracking temps réel pour:', trackedUser.id);
 
     // S'abonner aux changements du conducteur
     const channel = supabase
@@ -141,7 +141,7 @@ export function UserTracker() {
           filter: `user_id=eq.${trackedUser.id}`
         },
         (payload) => {
-          console.log('ðŸ“ Position mise Ã  jour:', payload.new);
+          console.log('📍 Position mise à jour:', payload.new);
           const updated = payload.new as any;
           setTrackedUser(prev => prev ? {
             ...prev,
@@ -151,7 +151,7 @@ export function UserTracker() {
             isOnline: updated.is_online,
             status: updated.status
           } : null);
-          toast.success('ðŸ“ Position mise Ã  jour');
+          toast.success('📍 Position mise à jour');
         }
       )
       .subscribe();
@@ -171,11 +171,11 @@ export function UserTracker() {
     }
 
     const url = `https://www.google.com/maps/dir/?api=1&destination=${trackedUser.lastLat},${trackedUser.lastLng}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(url, '_blank');
   };
 
   /**
-   * Formater la date de derniÃ¨re vue
+   * Formater la date de dernière vue
    */
   const formatLastSeen = (dateString?: string) => {
     if (!dateString) return 'Jamais';
@@ -184,7 +184,7 @@ export function UserTracker() {
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
 
-    if (diffMins < 1) return 'Ã€ l\'instant';
+    if (diffMins < 1) return 'À l\'instant';
     if (diffMins < 60) return `Il y a ${diffMins} min`;
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `Il y a ${diffHours}h`;
@@ -215,15 +215,15 @@ export function UserTracker() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              ðŸ’¡ Entrez l'ID d'un utilisateur pour voir sa position en temps rÃ©el
+              💡 Entrez l'ID d'un utilisateur pour voir sa position en temps réel
             </p>
           </div>
         )}
 
-        {/* Informations de l'utilisateur trackÃ© */}
+        {/* Informations de l'utilisateur tracké */}
         {trackedUser && isTracking && (
           <div className="space-y-3">
-            {/* En-tÃªte avec nom et badges */}
+            {/* En-tête avec nom et badges */}
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
@@ -238,19 +238,19 @@ export function UserTracker() {
                 <div className="flex gap-2 flex-wrap">
                   {trackedUser.isOnline !== undefined && (
                     <Badge variant={trackedUser.isOnline ? "default" : "secondary"}>
-                      {trackedUser.isOnline ? 'ðŸŸ¢ En ligne' : 'ðŸ”´ Hors ligne'}
+                      {trackedUser.isOnline ? '🟢 En ligne' : '🔴 Hors ligne'}
                     </Badge>
                   )}
                   {trackedUser.status && (
                     <Badge variant="outline">
-                      {trackedUser.status === 'available' && 'âœ… Disponible'}
-                      {trackedUser.status === 'on_trip' && 'ðŸš— En course'}
-                      {trackedUser.status === 'offline' && 'â¸ï¸ Hors ligne'}
+                      {trackedUser.status === 'available' && '✅ Disponible'}
+                      {trackedUser.status === 'on_trip' && '🚗 En course'}
+                      {trackedUser.status === 'offline' && '⏸️ Hors ligne'}
                     </Badge>
                   )}
                   {trackedUser.vehicleType && (
                     <Badge variant="outline">
-                      ðŸï¸ {trackedUser.vehicleType}
+                      🏍️ {trackedUser.vehicleType}
                     </Badge>
                   )}
                 </div>
@@ -268,25 +268,25 @@ export function UserTracker() {
             {/* Contact */}
             {trackedUser.phone && (
               <div className="flex items-center gap-2 text-sm bg-muted/50 p-2 rounded">
-                <span className="text-muted-foreground">ðŸ“±</span>
+                <span className="text-muted-foreground">📱</span>
                 <span className="font-medium">{trackedUser.phone}</span>
               </div>
             )}
 
             {/* Position GPS */}
             {trackedUser.lastLat && trackedUser.lastLng ? (
-              <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg p-3 space-y-2">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-primary-orange-900">
-                    ðŸ“ Position GPS
+                  <span className="text-sm font-medium text-green-900">
+                    📍 Position GPS
                   </span>
-                  <div className="flex items-center gap-1 text-xs text-primary-orange-700">
+                  <div className="flex items-center gap-1 text-xs text-green-700">
                     <Clock className="w-3 h-3" />
                     {formatLastSeen(trackedUser.lastSeen)}
                   </div>
                 </div>
                 
-                <div className="text-xs font-mono text-primary-orange-800 bg-white/50 p-2 rounded border border-primary-orange-100">
+                <div className="text-xs font-mono text-green-800 bg-white/50 p-2 rounded border border-green-100">
                   Lat: {trackedUser.lastLat.toFixed(6)}<br />
                   Lng: {trackedUser.lastLng.toFixed(6)}
                 </div>
@@ -303,10 +303,10 @@ export function UserTracker() {
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
                 <p className="text-sm text-yellow-800">
-                  âš ï¸ Position GPS non disponible
+                  ⚠️ Position GPS non disponible
                 </p>
                 <p className="text-xs text-yellow-600 mt-1">
-                  L'utilisateur n'a pas encore partagÃ© sa position
+                  L'utilisateur n'a pas encore partagé sa position
                 </p>
               </div>
             )}
@@ -315,7 +315,7 @@ export function UserTracker() {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
               <p className="text-xs text-blue-800 font-medium flex items-center justify-center gap-2">
                 <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>
-                Tracking en temps rÃ©el actif
+                Tracking en temps réel actif
               </p>
             </div>
           </div>

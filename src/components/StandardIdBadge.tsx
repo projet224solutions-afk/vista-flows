@@ -1,5 +1,5 @@
 /**
- * ðŸ†” COMPOSANT: BADGE ID STANDARDISÃ‰
+ * 🆔 COMPOSANT: BADGE ID STANDARDISÉ
  * Affiche un ID au format AAA0001 avec style et copyable
  */
 
@@ -19,7 +19,7 @@ interface StandardIdBadgeProps {
 }
 
 /**
- * Badge pour afficher les IDs standardisÃ©s 224SOLUTIONS
+ * Badge pour afficher les IDs standardisés 224SOLUTIONS
  */
 export function StandardIdBadge({
   standardId,
@@ -39,13 +39,13 @@ export function StandardIdBadge({
     try {
       await navigator.clipboard.writeText(formattedId);
       setCopied(true);
-      toast.success('ID copiÃ©', {
+      toast.success('ID copié', {
         description: formattedId
       });
 
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast.error('Ã‰chec copie ID');
+      toast.error('Échec copie ID');
     }
   };
 
@@ -64,7 +64,7 @@ export function StandardIdBadge({
     lg: 'text-base px-3 py-1.5'
   };
 
-  // DÃ©terminer le format d'affichage
+  // Déterminer le format d'affichage
   const is224Format = formattedId.startsWith('224-');
   
   return (
@@ -74,7 +74,7 @@ export function StandardIdBadge({
         'font-mono font-semibold tracking-wider',
         sizeClasses[size],
         copyable && 'cursor-pointer hover:opacity-80 transition-opacity',
-        is224Format && 'bg-gradient-to-r from-orange-500/10 to-primary-orange-600/10 border-orange-500/30',
+        is224Format && 'bg-gradient-to-r from-orange-500/10 to-green-600/10 border-orange-500/30',
         className
       )}
       onClick={handleCopy}
@@ -96,7 +96,7 @@ export function StandardIdBadge({
       )}
       {copyable && (
         copied ? (
-          <Check className="w-3 h-3 ml-1.5 text-primary-orange-500" />
+          <Check className="w-3 h-3 ml-1.5 text-green-500" />
         ) : (
           <Copy className="w-3 h-3 ml-1.5 opacity-50" />
         )

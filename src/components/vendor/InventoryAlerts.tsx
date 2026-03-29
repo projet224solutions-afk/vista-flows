@@ -26,14 +26,14 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
 
   if (alerts.length === 0) {
     return (
-      <Card className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+      <Card className="border-green-200 bg-green-50">
         <CardContent className="p-6 text-center">
-          <CheckCircle className="w-12 h-12 text-primary-orange-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-primary-orange-800 mb-2">
+          <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-green-800 mb-2">
             Aucune alerte active
           </h3>
-          <p className="text-primary-orange-600">
-            Tous vos produits sont en bon Ã©tat de stock ðŸŽ‰
+          <p className="text-green-600">
+            Tous vos produits sont en bon état de stock 🎉
           </p>
         </CardContent>
       </Card>
@@ -105,7 +105,7 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
                     className="whitespace-nowrap"
                   >
                     <CheckCircle className="w-4 h-4 mr-1" />
-                    RÃ©soudre
+                    Résoudre
                   </Button>
                 </div>
               </div>

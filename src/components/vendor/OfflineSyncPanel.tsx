@@ -48,7 +48,7 @@ export default function OfflineSyncPanel() {
     const [syncHistory, setSyncHistory] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
 
-    // Mettre Ã  jour l'historique
+    // Mettre à jour l'historique
     const updateHistory = async () => {
         const history = await getSyncHistory();
         setSyncHistory(history);
@@ -56,11 +56,11 @@ export default function OfflineSyncPanel() {
 
     useEffect(() => {
         updateHistory();
-        const interval = setInterval(updateHistory, 10000); // Mise Ã  jour toutes les 10s
+        const interval = setInterval(updateHistory, 10000); // Mise à jour toutes les 10s
         return () => clearInterval(interval);
     }, []);
 
-    // Gestionnaire de synchronisation forcÃ©e
+    // Gestionnaire de synchronisation forcée
     const handleForceSync = async () => {
         await forceSync();
         await updateHistory();
@@ -69,10 +69,10 @@ export default function OfflineSyncPanel() {
     // Gestionnaire de nettoyage des erreurs
     const handleClearErrors = () => {
         clearSyncErrors();
-        toast.success('âœ… Erreurs effacÃ©es');
+        toast.success('✅ Erreurs effacées');
     };
 
-    // IcÃ´ne de statut de connexion
+    // Icône de statut de connexion
     const getConnectionIcon = () => {
         if (isSyncing) {
             return <RefreshCw className="w-4 h-4 animate-spin" />;
@@ -86,7 +86,7 @@ export default function OfflineSyncPanel() {
         if (!isOnline) return "bg-red-500";
         if (hasFailedEvents) return "bg-orange-500";
         if (hasPendingEvents) return "bg-yellow-500";
-        return "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500";
+        return "bg-green-500";
     };
 
     // Texte du statut
@@ -95,10 +95,10 @@ export default function OfflineSyncPanel() {
         if (!isOnline) return "Hors ligne";
         if (hasFailedEvents) return "Erreurs de sync";
         if (hasPendingEvents) return "En attente";
-        return "SynchronisÃ©";
+        return "Synchronisé";
     };
 
-    // IcÃ´ne par type d'Ã©vÃ©nement
+    // Icône par type d'événement
     const getEventIcon = (type) => {
         switch (type) {
             case 'sale': return <Receipt className="w-4 h-4" />;
@@ -113,7 +113,7 @@ export default function OfflineSyncPanel() {
     // Couleur par statut
     const getStatusBadgeColor = (status) => {
         switch (status) {
-            case 'synced': return 'bg-primary-orange-100 text-primary-orange-800';
+            case 'synced': return 'bg-green-100 text-green-800';
             case 'pending': return 'bg-yellow-100 text-yellow-800';
             case 'failed': return 'bg-red-100 text-red-800';
             default: return 'bg-gray-100 text-gray-800';
@@ -144,7 +144,7 @@ export default function OfflineSyncPanel() {
 
                     {/* Onglet Statut */}
                     <TabsContent value="status" className="space-y-4">
-                        {/* Statistiques gÃ©nÃ©rales */}
+                        {/* Statistiques générales */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
                                 <div className="text-2xl font-bold text-blue-600">{syncStats.total}</div>
@@ -155,12 +155,12 @@ export default function OfflineSyncPanel() {
                                 <div className="text-sm text-gray-600">En attente</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                                <div className="text-2xl font-bold text-primary-orange-600">{syncStats.synced}</div>
-                                <div className="text-sm text-gray-600">SynchronisÃ©s</div>
+                                <div className="text-2xl font-bold text-green-600">{syncStats.synced}</div>
+                                <div className="text-sm text-gray-600">Synchronisés</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
                                 <div className="text-2xl font-bold text-red-600">{syncStats.failed}</div>
-                                <div className="text-sm text-gray-600">Ã‰chouÃ©s</div>
+                                <div className="text-sm text-gray-600">Échoués</div>
                             </div>
                         </div>
 
@@ -178,14 +178,14 @@ export default function OfflineSyncPanel() {
                             </div>
                         )}
 
-                        {/* DerniÃ¨re synchronisation */}
+                        {/* Dernière synchronisation */}
                         {lastSyncTime && (
-                            <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
-                                <div className="flex items-center gap-2 text-primary-orange-800">
+                            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                                <div className="flex items-center gap-2 text-green-800">
                                     <CheckCircle className="w-4 h-4" />
-                                    <span className="font-medium">DerniÃ¨re synchronisation</span>
+                                    <span className="font-medium">Dernière synchronisation</span>
                                 </div>
-                                <div className="text-sm text-primary-orange-600 mt-1">
+                                <div className="text-sm text-green-600 mt-1">
                                     {new Date(lastSyncTime).toLocaleString()}
                                 </div>
                             </div>
@@ -206,7 +206,7 @@ export default function OfflineSyncPanel() {
                                 </div>
                                 <div className="text-sm text-red-600 mt-2">
                                     {syncErrors.slice(0, 3).map((error, index) => (
-                                        <div key={index}>â€¢ {error}</div>
+                                        <div key={index}>• {error}</div>
                                     ))}
                                     {syncErrors.length > 3 && (
                                         <div>... et {syncErrors.length - 3} autres erreurs</div>
@@ -219,7 +219,7 @@ export default function OfflineSyncPanel() {
                     {/* Onglet Historique */}
                     <TabsContent value="history" className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <h3 className="font-semibold text-gray-800">Historique des Ã©vÃ©nements</h3>
+                            <h3 className="font-semibold text-gray-800">Historique des événements</h3>
                             <Button
                                 size="sm"
                                 variant="outline"
@@ -234,7 +234,7 @@ export default function OfflineSyncPanel() {
                             <div className="space-y-2 max-h-64 overflow-y-auto">
                                 {syncHistory.length === 0 ? (
                                     <div className="text-center py-4 text-gray-500">
-                                        Aucun Ã©vÃ©nement dans l'historique
+                                        Aucun événement dans l'historique
                                     </div>
                                 ) : (
                                     syncHistory.slice(0, 20).map((event) => (
@@ -263,7 +263,7 @@ export default function OfflineSyncPanel() {
                     {/* Onglet Actions */}
                     <TabsContent value="actions" className="space-y-4">
                         <div className="space-y-3">
-                            {/* Bouton de synchronisation forcÃ©e */}
+                            {/* Bouton de synchronisation forcée */}
                             <Button
                                 onClick={handleForceSync}
                                 disabled={!isOnline || isSyncing}
@@ -288,8 +288,8 @@ export default function OfflineSyncPanel() {
                                 <div className="flex items-center gap-2 mb-2">
                                     {isOnline ? (
                                         <>
-                                            <Wifi className="w-4 h-4 text-primary-orange-600" />
-                                            <span className="font-medium text-primary-orange-800">Connexion active</span>
+                                            <Wifi className="w-4 h-4 text-green-600" />
+                                            <span className="font-medium text-green-800">Connexion active</span>
                                         </>
                                     ) : (
                                         <>
@@ -300,8 +300,8 @@ export default function OfflineSyncPanel() {
                                 </div>
                                 <div className="text-sm text-gray-600">
                                     {isOnline
-                                        ? "Vos donnÃ©es se synchronisent automatiquement"
-                                        : "Vos donnÃ©es seront synchronisÃ©es Ã  la reconnexion"
+                                        ? "Vos données se synchronisent automatiquement"
+                                        : "Vos données seront synchronisées à la reconnexion"
                                     }
                                 </div>
                             </div>
@@ -309,7 +309,7 @@ export default function OfflineSyncPanel() {
                             {/* Statistiques par type */}
                             {Object.keys(syncStats.by_type).length > 0 && (
                                 <div className="space-y-2">
-                                    <h4 className="font-medium text-gray-800">Par type d'Ã©vÃ©nement</h4>
+                                    <h4 className="font-medium text-gray-800">Par type d'événement</h4>
                                     {Object.entries(syncStats.by_type).map(([type, stats]) => (
                                         <div key={type} className="flex items-center justify-between p-2 bg-white rounded border">
                                             <div className="flex items-center gap-2">
@@ -318,7 +318,7 @@ export default function OfflineSyncPanel() {
                                             </div>
                                             <div className="flex gap-2 text-sm">
                                                 <span className="text-yellow-600">{(stats as unknown)?.pending || 0}</span>
-                                                <span className="text-primary-orange-600">{(stats as unknown)?.synced || 0}</span>
+                                                <span className="text-green-600">{(stats as unknown)?.synced || 0}</span>
                                                 <span className="text-red-600">{(stats as unknown)?.failed || 0}</span>
                                             </div>
                                         </div>

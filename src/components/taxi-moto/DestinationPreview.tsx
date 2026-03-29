@@ -1,6 +1,6 @@
 /**
- * COMPOSANT D'APERÃ‡U DE DESTINATION
- * Affiche les dÃ©tails complets de la destination sÃ©lectionnÃ©e
+ * COMPOSANT D'APERÇU DE DESTINATION
+ * Affiche les détails complets de la destination sélectionnée
  * 224Solutions - Taxi-Moto System
  */
 
@@ -40,10 +40,10 @@ export default function DestinationPreview({
     const openInGoogleMaps = () => {
         if (pickupCoords && destinationCoords) {
             const url = `https://www.google.com/maps/dir/${pickupCoords.latitude},${pickupCoords.longitude}/${destinationCoords.latitude},${destinationCoords.longitude}`;
-            window.open(url, '_blank', 'noopener,noreferrer');
+            window.open(url, '_blank');
         } else if (destinationCoords) {
             const url = `https://www.google.com/maps/search/?api=1&query=${destinationCoords.latitude},${destinationCoords.longitude}`;
-            window.open(url, '_blank', 'noopener,noreferrer');
+            window.open(url, '_blank');
         }
     };
 
@@ -63,12 +63,12 @@ export default function DestinationPreview({
     return (
         <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-0 shadow-lg overflow-hidden">
             <CardContent className="p-0">
-                {/* En-tÃªte avec trajet */}
+                {/* En-tête avec trajet */}
                 <div className="bg-white/80 backdrop-blur-sm p-4 border-b border-gray-100">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold text-gray-800 flex items-center gap-2">
                             <Route className="w-5 h-5 text-blue-600" />
-                            AperÃ§u du trajet
+                            Aperçu du trajet
                         </h3>
                         {onClear && (
                             <Button
@@ -82,15 +82,15 @@ export default function DestinationPreview({
                         )}
                     </div>
 
-                    {/* ItinÃ©raire visuel */}
+                    {/* Itinéraire visuel */}
                     <div className="space-y-3">
-                        {/* Point de dÃ©part */}
+                        {/* Point de départ */}
                         <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-orange-100 flex items-center justify-center">
-                                <Navigation2 className="w-4 h-4 text-primary-orange-600" />
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                                <Navigation2 className="w-4 h-4 text-green-600" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide">DÃ©part</p>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">Départ</p>
                                 <p className="font-medium text-gray-900 truncate">
                                     {pickupParsed.main}
                                 </p>
@@ -104,12 +104,12 @@ export default function DestinationPreview({
 
                         {/* Ligne de connexion */}
                         <div className="flex items-center gap-3 pl-4">
-                            <div className="w-0.5 h-8 bg-gradient-to-b from-primary-blue-400 to-red-400 rounded-full ml-3"></div>
+                            <div className="w-0.5 h-8 bg-gradient-to-b from-green-400 to-red-400 rounded-full ml-3"></div>
                             {routeInfo && (
                                 <div className="flex items-center gap-2 text-sm text-gray-500">
                                     <ArrowRight className="w-4 h-4" />
                                     <span>{routeInfo.distance} km</span>
-                                    <span>â€¢</span>
+                                    <span>•</span>
                                     <Clock className="w-3 h-3" />
                                     <span>~{routeInfo.duration} min</span>
                                 </div>
@@ -136,13 +136,13 @@ export default function DestinationPreview({
                     </div>
                 </div>
 
-                {/* DÃ©tails GPS et actions */}
+                {/* Détails GPS et actions */}
                 <div className="p-4 space-y-3">
-                    {/* CoordonnÃ©es GPS */}
+                    {/* Coordonnées GPS */}
                     <div className="grid grid-cols-2 gap-3">
                         {pickupCoords && (
                             <div className="bg-white/60 rounded-lg p-2">
-                                <p className="text-xs text-gray-500 mb-1">GPS DÃ©part</p>
+                                <p className="text-xs text-gray-500 mb-1">GPS Départ</p>
                                 <p className="text-xs font-mono text-gray-700">
                                     {pickupCoords.latitude.toFixed(6)},
                                     <br />
@@ -171,10 +171,10 @@ export default function DestinationPreview({
                         Voir sur Google Maps
                     </Button>
 
-                    {/* Badge de prÃ©cision */}
+                    {/* Badge de précision */}
                     <div className="flex items-center justify-center gap-2">
                         <Badge variant="secondary" className="text-xs">
-                            âœ“ CoordonnÃ©es vÃ©rifiÃ©es
+                            ✓ Coordonnées vérifiées
                         </Badge>
                     </div>
                 </div>

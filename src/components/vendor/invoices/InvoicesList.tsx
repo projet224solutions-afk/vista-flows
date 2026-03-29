@@ -58,8 +58,8 @@ export default function InvoicesList() {
   const getStatusBadge = (status: string) => {
     const config = {
       pending: { label: 'En attente', variant: 'secondary' as const, icon: Clock },
-      paid: { label: 'PayÃ©e', variant: 'default' as const, icon: CheckCircle },
-      cancelled: { label: 'AnnulÃ©e', variant: 'destructive' as const, icon: XCircle },
+      paid: { label: 'Payée', variant: 'default' as const, icon: CheckCircle },
+      cancelled: { label: 'Annulée', variant: 'destructive' as const, icon: XCircle },
       overdue: { label: 'En retard', variant: 'destructive' as const, icon: Clock }
     };
     
@@ -85,11 +85,11 @@ export default function InvoicesList() {
 
       if (error) throw error;
       
-      toast.success('Facture marquÃ©e comme payÃ©e');
+      toast.success('Facture marquée comme payée');
       loadInvoices();
     } catch (error: any) {
       console.error('Erreur:', error);
-      toast.error('Erreur lors de la mise Ã  jour');
+      toast.error('Erreur lors de la mise à jour');
     }
   };
 
@@ -116,7 +116,7 @@ export default function InvoicesList() {
         {invoices.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Aucune facture crÃ©Ã©e</p>
+            <p>Aucune facture créée</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -141,11 +141,11 @@ export default function InvoicesList() {
                       {(invoice.total || 0).toLocaleString()} GNF
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Ã‰chÃ©ance: {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
+                      Échéance: {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
                     </p>
                     {invoice.paid_at && (
-                      <p className="text-xs text-primary-orange-600">
-                        PayÃ©e le {new Date(invoice.paid_at).toLocaleDateString('fr-FR')}
+                      <p className="text-xs text-green-600">
+                        Payée le {new Date(invoice.paid_at).toLocaleDateString('fr-FR')}
                       </p>
                     )}
                   </div>
@@ -157,7 +157,7 @@ export default function InvoicesList() {
                     size="sm"
                     onClick={async () => {
                       if (!invoice.pdf_url) {
-                        // GÃ©nÃ©rer le PDF si non disponible
+                        // Générer le PDF si non disponible
                         try {
                           const { data, error } = await supabase.functions.invoke('generate-invoice-pdf', {
                             body: {
@@ -169,16 +169,16 @@ export default function InvoicesList() {
 
                           if (error) throw error;
                           
-                          toast.success('PDF gÃ©nÃ©rÃ© avec succÃ¨s');
+                          toast.success('PDF généré avec succès');
                           loadInvoices();
                         } catch (error: any) {
-                          console.error('Erreur gÃ©nÃ©ration PDF:', error);
-                          toast.error('Erreur lors de la gÃ©nÃ©ration du PDF');
+                          console.error('Erreur génération PDF:', error);
+                          toast.error('Erreur lors de la génération du PDF');
                         }
                         return;
                       }
 
-                      // TÃ©lÃ©charger le PDF
+                      // Télécharger le PDF
                       try {
                         const response = await fetch(invoice.pdf_url);
                         if (!response.ok) {
@@ -193,20 +193,20 @@ export default function InvoicesList() {
                         link.click();
                         document.body.removeChild(link);
                         window.URL.revokeObjectURL(url);
-                        toast.success('TÃ©lÃ©chargement dÃ©marrÃ©');
+                        toast.success('Téléchargement démarré');
                       } catch (error) {
-                        console.error('Erreur tÃ©lÃ©chargement:', error);
+                        console.error('Erreur téléchargement:', error);
                         const opened = window.open(invoice.pdf_url, '_blank', 'noopener,noreferrer');
                         if (opened) {
                           toast.success('PDF ouvert dans un nouvel onglet');
                         } else {
-                          toast.error("TÃ©lÃ©chargement bloquÃ©: autorisez les popups puis rÃ©essayez.");
+                          toast.error("Téléchargement bloqué: autorisez les popups puis réessayez.");
                         }
                       }
                     }}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    {invoice.pdf_url ? 'TÃ©lÃ©charger PDF' : 'GÃ©nÃ©rer PDF'}
+                    {invoice.pdf_url ? 'Télécharger PDF' : 'Générer PDF'}
                   </Button>
                   {invoice.status === 'pending' && (
                     <Button
@@ -215,14 +215,14 @@ export default function InvoicesList() {
                       onClick={() => markAsPaid(invoice.id)}
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
-                      Marquer comme payÃ©e
+                      Marquer comme payée
                     </Button>
                   )}
                 </div>
 
                 <div className="mt-3 pt-3 border-t">
                   <p className="text-xs text-muted-foreground">
-                    CrÃ©Ã©e le {new Date(invoice.created_at).toLocaleDateString('fr-FR')} Ã {' '}
+                    Créée le {new Date(invoice.created_at).toLocaleDateString('fr-FR')} à{' '}
                     {new Date(invoice.created_at).toLocaleTimeString('fr-FR')}
                   </p>
                 </div>

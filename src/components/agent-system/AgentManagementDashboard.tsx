@@ -94,7 +94,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
 
   const getStatusBadge = (isActive: boolean) => {
     return isActive ? (
-      <Badge className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 hover:from-primary-orange-600 hover:to-primary-blue-600">
+      <Badge className="bg-green-500 hover:bg-green-600">
         <CheckCircle className="w-3 h-3 mr-1" />
         Actif
       </Badge>
@@ -135,7 +135,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
               <div>
                 <p className="text-sm text-muted-foreground">Agents Totaux</p>
                 <p className="text-2xl font-bold text-blue-600">{overview.totalAgents}</p>
-                <p className="text-xs text-primary-orange-600">
+                <p className="text-xs text-green-600">
                   {overview.activeAgents} actifs
                 </p>
               </div>
@@ -144,17 +144,17 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-primary-orange-500">
+        <Card className="border-l-4 border-l-green-500">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Sous-Agents</p>
-                <p className="text-2xl font-bold text-primary-orange-600">{overview.totalSubAgents}</p>
+                <p className="text-2xl font-bold text-green-600">{overview.totalSubAgents}</p>
                 <p className="text-xs text-muted-foreground">
                   Créés par agents
                 </p>
               </div>
-              <UserPlus className="w-8 h-8 text-primary-orange-500" />
+              <UserPlus className="w-8 h-8 text-green-500" />
             </div>
           </CardContent>
         </Card>
@@ -307,7 +307,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-primary-orange-600">
+                        <p className="font-bold text-green-600">
                           {formatCurrency(agent.total_commissions_earned)}
                         </p>
                         <p className="text-sm text-muted-foreground">commissions</p>
@@ -332,7 +332,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full">
                         <div 
-                          className="h-full bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-full"
+                          className="h-full bg-green-500 rounded-full"
                           style={{ width: `${(overview.activeAgents / overview.totalAgents) * 100}%` }}
                         />
                       </div>
@@ -461,7 +461,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                       </TableCell>
                       <TableCell>
                         <div className="text-center">
-                          <p className="font-bold text-primary-orange-600">
+                          <p className="font-bold text-green-600">
                             {formatCurrency(agent.total_commissions_earned)}
                           </p>
                           <p className="text-xs text-muted-foreground">gagnées</p>
@@ -539,7 +539,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                               : setting.description || 'Configuration'}
                           </h4>
                           {setting.setting_key === 'base_user_commission' && (
-                            <Badge className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-500">Actif</Badge>
+                            <Badge className="bg-green-500">Actif</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mb-3">
@@ -589,10 +589,10 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     {/* Statistiques d'impact */}
                     {setting.setting_key === 'base_user_commission' && (
                       <div className="grid grid-cols-3 gap-4">
-                        <Card className="border-primary-orange-200">
+                        <Card className="border-green-200">
                           <CardContent className="p-4">
                             <p className="text-sm text-muted-foreground">Taux Actuel</p>
-                            <p className="text-2xl font-bold text-primary-orange-600">
+                            <p className="text-2xl font-bold text-green-600">
                               {((setting.setting_value || 0) * 100).toFixed(1)}%
                             </p>
                           </CardContent>

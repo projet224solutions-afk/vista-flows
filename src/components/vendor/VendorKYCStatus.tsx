@@ -20,7 +20,7 @@ export function VendorKYCStatus({ kycStatus, className = "" }: VendorKYCStatusPr
     return (
       <Badge 
         variant="default" 
-        className={`bg-primary-orange-100 text-primary-blue-900 border-primary-orange-300 gap-1 ${className}`}
+        className={`bg-green-100 text-green-800 border-green-300 gap-1 ${className}`}
       >
         <ShieldCheck className="w-3 h-3" />
         KYC Vérifié

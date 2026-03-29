@@ -1,5 +1,5 @@
 /**
- * HISTORIQUE DÃ‰TAILLÃ‰ DES GAINS CHAUFFEUR
+ * HISTORIQUE DÉTAILLÉ DES GAINS CHAUFFEUR
  * Affichage complet avec graphiques et statistiques
  */
 
@@ -33,7 +33,7 @@ interface DriverEarningsHistoryProps {
 }
 
 export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: DriverEarningsHistoryProps) {
-  // Calculer les statistiques par pÃ©riode
+  // Calculer les statistiques par période
   const stats = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -84,11 +84,11 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
 
   return (
     <div className="space-y-4">
-      {/* Statistiques par pÃ©riode */}
+      {/* Statistiques par période */}
       <div className="grid grid-cols-3 gap-4">
         <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-primary-orange-600">
+            <div className="text-2xl font-bold text-green-600">
               {todayEarnings.toLocaleString()}
             </div>
             <div className="text-xs text-gray-600">GNF Aujourd'hui</div>
@@ -128,7 +128,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            Ã‰volution 7 derniers jours
+            Évolution 7 derniers jours
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -138,7 +138,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
                 <span className="text-xs text-gray-600 w-16">{date}</span>
                 <div className="flex-1 bg-gray-100 rounded-full h-8 relative overflow-hidden">
                   <div 
-                    className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-600 h-full rounded-full flex items-center justify-end px-2"
+                    className="bg-gradient-to-r from-green-500 to-green-600 h-full rounded-full flex items-center justify-end px-2"
                     style={{ width: `${Math.min((data.earnings / (stats.week.earnings / 7)) * 100, 100)}%` }}
                   >
                     <span className="text-xs font-bold text-white">{data.rides}</span>
@@ -165,7 +165,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
           {rides.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Aucune course terminÃ©e</p>
+              <p>Aucune course terminée</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
@@ -186,13 +186,13 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
                           </Badge>
                           <span className="text-xs text-gray-500">
                             {rideDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-                            {' Ã  '}
+                            {' à '}
                             {rideDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <div className="text-xs text-gray-600 space-y-1">
                           <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full flex-shrink-0"></div>
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0"></div>
                             <span className="truncate">{ride.pickup_address}</span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -202,7 +202,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
                         </div>
                       </div>
                       <div className="text-right ml-2">
-                        <div className="text-lg font-bold text-primary-orange-600">
+                        <div className="text-lg font-bold text-green-600">
                           +{earnings.toLocaleString()}
                         </div>
                         <div className="text-xs text-gray-500">GNF</div>
@@ -213,12 +213,12 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
                         <MapPin className="w-3 h-3" />
                         <span>{(ride.distance_km || 0).toFixed(1)} km</span>
                       </div>
-                      <span>â€¢</span>
+                      <span>•</span>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         <span>{duration} min</span>
                       </div>
-                      <span>â€¢</span>
+                      <span>•</span>
                       <span className="font-medium">
                         {duration > 0 ? Math.round((ride.distance_km || 0) / duration * 60) : 0} km/h
                       </span>

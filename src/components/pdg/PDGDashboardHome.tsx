@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
- * ðŸŽ¨ DASHBOARD PDG - VUE D'ENSEMBLE
- * KPIs et statistiques RÃ‰ELLES en temps rÃ©el depuis Supabase
+ * 🎨 DASHBOARD PDG - VUE D'ENSEMBLE
+ * KPIs et statistiques RÉELLES en temps réel depuis Supabase
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,7 +61,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
             </div>
             <Button onClick={stats.refresh} variant="outline" size="sm" className="ml-auto">
               <RefreshCw className="w-4 h-4 mr-2" />
-              RÃ©essayer
+              Réessayer
             </Button>
           </div>
         </CardContent>
@@ -76,7 +76,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       change: `${(stats.revenueGrowth || 0) >= 0 ? '+' : ''}${stats.revenueGrowth || 0}%`,
       trend: (stats.revenueGrowth || 0) >= 0 ? 'up' : 'down',
       icon: DollarSign,
-      color: 'text-primary-orange-600 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/20',
+      color: 'text-green-600 bg-green-500/10 border-green-500/20',
       description: 'vs mois dernier'
     },
     {
@@ -94,7 +94,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       change: '+0%',
       trend: 'up',
       icon: UserCheck,
-      color: 'text-primary-orange-600 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/20',
+      color: 'text-green-600 bg-green-500/10 border-green-500/20',
       description: `${stats.totalAgents || 0} agents au total`
     },
     {
@@ -128,7 +128,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
     },
     { 
       type: 'error', 
-      message: `${stats.criticalAlerts || 0} alerte(s) API critique(s) nÃ©cessitent votre attention`,
+      message: `${stats.criticalAlerts || 0} alerte(s) API critique(s) nécessitent votre attention`,
       icon: AlertCircle,
       color: 'text-red-600 bg-red-500/10 border-red-500/20',
       action: 'security',
@@ -138,7 +138,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       type: 'success', 
       message: `${stats.activeVendors || 0} vendeurs actifs sur ${stats.totalVendors || 0}`,
       icon: CheckCircle,
-      color: 'text-primary-orange-600 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/20',
+      color: 'text-green-600 bg-green-500/10 border-green-500/20',
       action: 'vendors',
       show: true
     },
@@ -183,7 +183,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                     variant="secondary" 
                     className={cn(
                       "gap-0.5 sm:gap-1 text-[10px] sm:text-xs w-fit",
-                      kpi.trend === 'up' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
+                      kpi.trend === 'up' ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'
                     )}
                   >
                     <TrendIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -230,7 +230,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
               <Zap className="w-5 h-5 text-primary" />
               Alertes & Notifications
             </CardTitle>
-            <CardDescription>Ã‰vÃ©nements importants nÃ©cessitant votre attention</CardDescription>
+            <CardDescription>Événements importants nécessitant votre attention</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {alerts.map((alert, index) => {
@@ -256,14 +256,14 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {/* Stats DÃ©taillÃ©es */}
+        {/* Stats Détaillées */}
         <Card className="border border-border/40 bg-card/50 backdrop-blur-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="w-5 h-5 text-primary" />
-                  Statistiques DÃ©taillÃ©es
+                  Statistiques Détaillées
                 </CardTitle>
                 <CardDescription>Vue d'ensemble de la plateforme</CardDescription>
               </div>
@@ -304,7 +304,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       <Card className="border border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>Actions Rapides</CardTitle>
-          <CardDescription>AccÃ¨s rapide aux fonctionnalitÃ©s principales</CardDescription>
+          <CardDescription>Accès rapide aux fonctionnalités principales</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
@@ -327,15 +327,15 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
               },
               {
                 label: 'Finances',
-                labelFull: 'GÃ©rer Finances',
+                labelFull: 'Gérer Finances',
                 icon: DollarSign,
-                color: 'from-primary-blue-500 to-primary-orange-600',
+                color: 'from-green-500 to-green-600',
                 action: 'finance',
                 count: stats.totalRevenue || '0 GNF',
               },
               {
-                label: 'SÃ©curitÃ©',
-                labelFull: 'VÃ©rifier SÃ©curitÃ©',
+                label: 'Sécurité',
+                labelFull: 'Vérifier Sécurité',
                 icon: AlertCircle,
                 color: 'from-red-500 to-red-600',
                 action: 'security',
@@ -383,44 +383,44 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Gestion des Agents */}
         <Card 
-          className="border-2 border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950 dark:to-primary-orange-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
           onClick={() => onNavigate?.('agents')}
         >
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-primary-orange-600 text-white group-hover:scale-110 transition-transform">
+                <div className="p-2 rounded-lg bg-green-600 text-white group-hover:scale-110 transition-transform">
                   <UserCheck className="w-5 h-5" />
                 </div>
                 Gestion des Agents
               </CardTitle>
-              <Badge variant="secondary" className="bg-primary-orange-600 text-white">
-                OpÃ©rationnel
+              <Badge variant="secondary" className="bg-green-600 text-white">
+                Opérationnel
               </Badge>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              GÃ©rez votre rÃ©seau d'agents commerciaux avec permissions, commissions et suivi des performances en temps rÃ©el
+              Gérez votre réseau d'agents commerciaux avec permissions, commissions et suivi des performances en temps réel
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Total Agents</p>
-                <p className="text-lg font-bold text-primary-orange-600">{stats.totalAgents || 0}</p>
+                <p className="text-lg font-bold text-green-600">{stats.totalAgents || 0}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Actifs</p>
-                <p className="text-lg font-bold text-primary-orange-600">{stats.activeAgents || 0}</p>
+                <p className="text-lg font-bold text-green-600">{stats.activeAgents || 0}</p>
               </div>
             </div>
             <Button 
-              className="w-full mt-4 bg-primary-orange-600 hover:bg-primary-orange-700 group-hover:scale-105 transition-transform"
+              className="w-full mt-4 bg-green-600 hover:bg-green-700 group-hover:scale-105 transition-transform"
               onClick={(e) => {
                 e.stopPropagation();
                 onNavigate?.('agents');
               }}
             >
-              AccÃ©der Ã  la gestion
+              Accéder à la gestion
             </Button>
           </CardContent>
         </Card>
@@ -439,17 +439,17 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 Surveillance Logique
               </CardTitle>
               <Badge variant="secondary" className="bg-purple-600 text-white">
-                SÃ©curitÃ©
+                Sécurité
               </Badge>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Monitez 120 rÃ¨gles mÃ©tier en temps rÃ©el, dÃ©tectez les anomalies au sein d'une minute et appliquez les corrections automatiquement
+              Monitez 120 règles métier en temps réel, détectez les anomalies au sein d'une minute et appliquez les corrections automatiquement
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
-                <p className="text-xs text-muted-foreground">DÃ©tection</p>
+                <p className="text-xs text-muted-foreground">Détection</p>
                 <p className="text-lg font-bold text-purple-600">1 min</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
@@ -464,7 +464,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 onNavigate?.('debug');
               }}
             >
-              AccÃ©der Ã  la surveillance
+              Accéder à la surveillance
             </Button>
           </CardContent>
         </Card>
@@ -483,13 +483,13 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 Bureaux Syndicaux
               </CardTitle>
               <Badge variant="secondary" className="bg-blue-600 text-white">
-                OpÃ©rationnel
+                Opérationnel
               </Badge>
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Administrez les bureaux syndicaux de taxi-motos avec accÃ¨s sÃ©curisÃ©, gestion des membres et cotisations
+              Administrez les bureaux syndicaux de taxi-motos avec accès sécurisé, gestion des membres et cotisations
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
@@ -497,7 +497,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 <p className="text-lg font-bold text-blue-600">{stats.totalBureaus || 0}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
-                <p className="text-xs text-muted-foreground">ValidÃ©s</p>
+                <p className="text-xs text-muted-foreground">Validés</p>
                 <p className="text-lg font-bold text-blue-600">{stats.validatedBureaus || 0}</p>
               </div>
             </div>
@@ -508,7 +508,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 onNavigate?.('syndicat');
               }}
             >
-              AccÃ©der Ã  la gestion
+              Accéder à la gestion
             </Button>
           </CardContent>
         </Card>

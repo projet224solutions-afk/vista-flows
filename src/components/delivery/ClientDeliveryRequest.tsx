@@ -1,6 +1,6 @@
 /**
- * FORMULAIRE DE COMMANDE DE LIVRAISON - CÃ”TÃ‰ CLIENT
- * Saisie ID vendeur â†’ rÃ©cupÃ©ration auto des infos â†’ calcul prix â†’ confirmation
+ * FORMULAIRE DE COMMANDE DE LIVRAISON - CÔTÉ CLIENT
+ * Saisie ID vendeur → récupération auto des infos → calcul prix → confirmation
  */
 
 import { useState, useEffect } from 'react';
@@ -104,7 +104,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
         .single();
 
       if (error || !data) {
-        toast.error('Vendeur introuvable. VÃ©rifiez l\'ID.');
+        toast.error('Vendeur introuvable. Vérifiez l\'ID.');
         return;
       }
 
@@ -113,13 +113,13 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
       setVendorInfo({
         id: vendorData.id,
         business_name: vendorData.business_name || 'Vendeur',
-        address: vendorData.address || 'Adresse non renseignÃ©e',
+        address: vendorData.address || 'Adresse non renseignée',
         phone: vendorData.phone || '',
         latitude: 9.6412,
         longitude: -13.5784
       });
 
-      toast.success('Vendeur trouvÃ© !');
+      toast.success('Vendeur trouvé !');
       setStep('details');
     } catch (error) {
       console.error('Error looking up vendor:', error);
@@ -129,7 +129,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
     }
   };
 
-  // GÃ©olocalisation client
+  // Géolocalisation client
   const locateClient = async () => {
     setLocatingClient(true);
     try {
@@ -167,16 +167,16 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
         setDeliveryAddress(data.results[0].formatted_address);
       }
 
-      toast.success('Position GPS dÃ©tectÃ©e');
+      toast.success('Position GPS détectée');
     } catch (error) {
       console.error('Geolocation error:', error);
-      toast.error('Impossible de dÃ©tecter votre position');
+      toast.error('Impossible de détecter votre position');
     } finally {
       setLocatingClient(false);
     }
   };
 
-  // Calculer le prix estimÃ©
+  // Calculer le prix estimé
   const calculatePrice = async () => {
     if (!vendorInfo || !clientCoords) {
       toast.error('Informations manquantes pour le calcul');
@@ -185,7 +185,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
 
     setCalculatingPrice(true);
     try {
-      // Position fictive du livreur (sera calculÃ©e au moment de l'assignation)
+      // Position fictive du livreur (sera calculée au moment de l'assignation)
       const driverLocation = { lat: vendorInfo.latitude, lng: vendorInfo.longitude };
 
       const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
@@ -236,7 +236,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
   // Soumettre la commande
   const submitOrder = async () => {
     if (!vendorInfo || !clientCoords || !priceEstimate || !user) {
-      toast.error('Informations incomplÃ¨tes');
+      toast.error('Informations incomplètes');
       return;
     }
 
@@ -274,11 +274,11 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
 
       if (error) throw error;
 
-      toast.success('ðŸŽ‰ Commande crÃ©Ã©e ! Un livreur sera assignÃ© bientÃ´t.');
+      toast.success('🎉 Commande créée ! Un livreur sera assigné bientôt.');
       onDeliveryCreated?.(data.id);
     } catch (error) {
       console.error('Error creating delivery:', error);
-      toast.error('Erreur lors de la crÃ©ation de la commande');
+      toast.error('Erreur lors de la création de la commande');
     } finally {
       setSubmitting(false);
     }
@@ -288,7 +288,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
 
   return (
     <div className="space-y-4 max-w-lg mx-auto">
-      {/* Ã‰tape 1: Recherche vendeur */}
+      {/* Étape 1: Recherche vendeur */}
       {step === 'vendor' && (
         <Card>
           <CardHeader>
@@ -332,14 +332,14 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
         </Card>
       )}
 
-      {/* Ã‰tape 2: DÃ©tails livraison */}
+      {/* Étape 2: Détails livraison */}
       {step === 'details' && vendorInfo && (
         <div className="space-y-4">
-          {/* Vendeur confirmÃ© */}
-          <Card className="border-primary-orange-500">
+          {/* Vendeur confirmé */}
+          <Card className="border-green-500">
             <CardContent className="pt-4">
               <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-6 w-6 text-primary-orange-600" />
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
                 <div>
                   <p className="font-semibold">{vendorInfo.business_name}</p>
                   <p className="text-sm text-muted-foreground">{vendorInfo.address}</p>
@@ -357,7 +357,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary-orange-600" />
+                <MapPin className="h-4 w-4 text-green-600" />
                 Adresse de livraison
               </CardTitle>
             </CardHeader>
@@ -382,20 +382,20 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                 </Button>
               </div>
               {clientCoords && (
-                <p className="text-xs text-primary-orange-600 flex items-center gap-1">
+                <p className="text-xs text-green-600 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
-                  Position GPS enregistrÃ©e
+                  Position GPS enregistrée
                 </p>
               )}
             </CardContent>
           </Card>
 
-          {/* DÃ©tails du colis */}
+          {/* Détails du colis */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Package className="h-4 w-4 text-orange-600" />
-                DÃ©tails du colis
+                Détails du colis
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -445,7 +445,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
               <div className="space-y-2">
                 <Label>Description (optionnel)</Label>
                 <Textarea
-                  placeholder="DÃ©crivez le contenu..."
+                  placeholder="Décrivez le contenu..."
                   value={packageDescription}
                   onChange={(e) => setPackageDescription(e.target.value)}
                   rows={2}
@@ -467,25 +467,25 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="prepaid" id="prepaid" />
                   <Label htmlFor="prepaid" className="flex items-center gap-2 cursor-pointer">
-                    <CreditCard className="h-4 w-4 text-primary-orange-600" />
-                    PrÃ©payÃ© (paiement maintenant)
+                    <CreditCard className="h-4 w-4 text-green-600" />
+                    Prépayé (paiement maintenant)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="cod" id="cod" />
                   <Label htmlFor="cod" className="flex items-center gap-2 cursor-pointer">
                     <Banknote className="h-4 w-4 text-yellow-600" />
-                    Paiement Ã  la livraison (COD)
+                    Paiement à la livraison (COD)
                   </Label>
                 </div>
               </RadioGroup>
             </CardContent>
           </Card>
 
-          {/* Instructions spÃ©ciales */}
+          {/* Instructions spéciales */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Instructions spÃ©ciales</CardTitle>
+              <CardTitle className="text-base">Instructions spéciales</CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea
@@ -519,12 +519,12 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
         </div>
       )}
 
-      {/* Ã‰tape 3: Confirmation */}
+      {/* Étape 3: Confirmation */}
       {step === 'confirm' && vendorInfo && priceEstimate && (
         <div className="space-y-4">
-          <Card className="border-2 border-primary-orange-500 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/20 dark:to-primary-orange-950/20">
+          <Card className="border-2 border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
             <CardHeader>
-              <CardTitle className="text-center">RÃ©capitulatif de la commande</CardTitle>
+              <CardTitle className="text-center">Récapitulatif de la commande</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Trajet */}
@@ -535,11 +535,11 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                 </div>
                 <div className="ml-6 border-l-2 border-dashed border-muted-foreground/30 pl-4 py-2">
                   <p className="text-sm text-muted-foreground">
-                    {priceEstimate.distanceVendorToClient} km â€¢ ~{priceEstimate.durationVendorToClient} min
+                    {priceEstimate.distanceVendorToClient} km • ~{priceEstimate.durationVendorToClient} min
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary-orange-600" />
+                  <MapPin className="h-4 w-4 text-green-600" />
                   <span className="font-medium">{deliveryAddress}</span>
                 </div>
               </div>
@@ -551,7 +551,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                   <p className="font-bold">{priceEstimate.totalDistance} km</p>
                 </div>
                 <div className="p-2 bg-white/80 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Temps estimÃ©</p>
+                  <p className="text-xs text-muted-foreground">Temps estimé</p>
                   <p className="font-bold">{priceEstimate.totalDuration} min</p>
                 </div>
               </div>
@@ -560,12 +560,12 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
               <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                 <span className="text-muted-foreground">Mode de paiement</span>
                 <Badge variant={paymentMethod === 'cod' ? 'secondary' : 'default'}>
-                  {paymentMethod === 'cod' ? 'Ã€ la livraison' : 'PrÃ©payÃ©'}
+                  {paymentMethod === 'cod' ? 'À la livraison' : 'Prépayé'}
                 </Badge>
               </div>
 
               {/* Prix total */}
-              <div className="p-4 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-lg text-white text-center">
+              <div className="p-4 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white text-center">
                 <p className="text-sm opacity-90">Prix total</p>
                 <p className="text-3xl font-bold">{formatCurrency(priceEstimate.estimatedPrice)}</p>
               </div>
@@ -578,7 +578,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                 <Button
                   onClick={submitOrder}
                   disabled={submitting}
-                  className="bg-gradient-to-r from-orange-500 to-primary-orange-500"
+                  className="bg-gradient-to-r from-orange-500 to-green-500"
                 >
                   {submitting ? (
                     <>

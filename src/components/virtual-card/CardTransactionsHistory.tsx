@@ -134,7 +134,7 @@ export function CardTransactionsHistory({ cardId, className }: CardTransactionsH
                       className={cn(
                         "text-[10px] px-1.5",
                         tx.status === 'completed' 
-                          ? "text-primary-orange-400 border-primary-orange-400/30" 
+                          ? "text-green-400 border-green-400/30" 
                           : "text-yellow-400 border-yellow-400/30"
                       )}
                     >

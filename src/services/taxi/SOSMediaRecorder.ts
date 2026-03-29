@@ -333,14 +333,10 @@ export class SOSMediaRecorder {
       box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
       animation: pulse 2s infinite;
     `;
-
-    const dot = document.createElement('span');
-    dot.style.cssText = 'width: 12px; height: 12px; background: white; border-radius: 50%; animation: blink 1s infinite;';
-
-    const label = document.createElement('span');
-    label.textContent = 'ENREGISTREMENT EN COURS';
-
-    indicator.append(dot, label);
+    indicator.innerHTML = `
+      <span style="width: 12px; height: 12px; background: white; border-radius: 50%; animation: blink 1s infinite;"></span>
+      ENREGISTREMENT EN COURS
+    `;
 
     // Ajouter animations CSS
     const style = document.createElement('style');

@@ -25,13 +25,13 @@ export function PDGPermissionsAnalyzer() {
     const results: Record<string, AnalysisResult[]> = {};
 
     try {
-      // 1. VÃ©rifier les tables principales
+      // 1. Vérifier les tables principales
       results['Tables'] = await checkTables();
       
-      // 2. VÃ©rifier les agents
+      // 2. Vérifier les agents
       results['Agents'] = await checkAgents();
       
-      // 3. VÃ©rifier les permissions
+      // 3. Vérifier les permissions
       results['Permissions'] = await checkPermissions();
       
       setAnalysis(results);
@@ -63,19 +63,19 @@ export function PDGPermissionsAnalyzer() {
         } else if (error) {
           results.push({
             status: 'warning',
-            message: `Erreur accÃ¨s '${table}': ${error.message}`,
+            message: `Erreur accès '${table}': ${error.message}`,
             severity: 'high'
           });
         } else {
           results.push({
             status: 'ok',
-            message: `Table '${table}' prÃ©sente et accessible`
+            message: `Table '${table}' présente et accessible`
           });
         }
       } catch (err) {
         results.push({
           status: 'error',
-          message: `Erreur vÃ©rification table '${table}'`,
+          message: `Erreur vérification table '${table}'`,
           severity: 'high'
         });
       }
@@ -95,16 +95,16 @@ export function PDGPermissionsAnalyzer() {
       if (error) {
         results.push({
           status: 'error',
-          message: 'Erreur accÃ¨s table agents',
+          message: 'Erreur accès table agents',
           severity: 'high'
         });
       } else {
         results.push({
           status: 'ok',
-          message: `${count || 0} agents trouvÃ©s`
+          message: `${count || 0} agents trouvés`
         });
 
-        // VÃ©rifier les agents inactifs
+        // Vérifier les agents inactifs
         const inactive = data?.filter(a => !a.is_active) || [];
         if (inactive.length > 0) {
           results.push({
@@ -117,7 +117,7 @@ export function PDGPermissionsAnalyzer() {
     } catch (err) {
       results.push({
         status: 'error',
-        message: 'Erreur vÃ©rification agents',
+        message: 'Erreur vérification agents',
         severity: 'high'
       });
     }
@@ -136,7 +136,7 @@ export function PDGPermissionsAnalyzer() {
       if (error) {
         results.push({
           status: 'error',
-          message: 'Erreur accÃ¨s permissions agents',
+          message: 'Erreur accès permissions agents',
           severity: 'high'
         });
       } else {
@@ -149,7 +149,7 @@ export function PDGPermissionsAnalyzer() {
         // Compter les permissions par type
         const byType: Record<string, number> = {};
         for (const perm of activePerms) {
-          const type = perm.permission_key?.startsWith('manage_') ? 'Ã‰criture' : 'Lecture';
+          const type = perm.permission_key?.startsWith('manage_') ? 'Écriture' : 'Lecture';
           byType[type] = (byType[type] || 0) + 1;
         }
 
@@ -163,7 +163,7 @@ export function PDGPermissionsAnalyzer() {
     } catch (err) {
       results.push({
         status: 'error',
-        message: 'Erreur vÃ©rification permissions',
+        message: 'Erreur vérification permissions',
         severity: 'high'
       });
     }
@@ -183,7 +183,7 @@ export function PDGPermissionsAnalyzer() {
 
   const getStatusIcon = (status: string) => {
     switch(status) {
-      case 'ok': return <CheckCircle2 className="h-4 w-4 text-primary-orange-500" />;
+      case 'ok': return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
       case 'error': return <AlertTriangle className="h-4 w-4 text-red-500" />;
       default: return <Info className="h-4 w-4 text-blue-500" />;
@@ -212,7 +212,7 @@ export function PDGPermissionsAnalyzer() {
             <div>
               <CardTitle>Analyseur de Permissions PDG</CardTitle>
               <CardDescription>
-                VÃ©rifie l'intÃ©gritÃ© du systÃ¨me de permissions agents
+                Vérifie l'intégrité du système de permissions agents
               </CardDescription>
             </div>
             <Button 
@@ -228,7 +228,7 @@ export function PDGPermissionsAnalyzer() {
         <CardContent>
           {Object.keys(analysis).length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              Cliquez sur "Analyser" pour dÃ©marrer
+              Cliquez sur "Analyser" pour démarrer
             </div>
           ) : (
             <Tabs defaultValue={Object.keys(analysis)[0]}>

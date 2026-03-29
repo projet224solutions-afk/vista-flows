@@ -45,16 +45,16 @@ export function TrafficAnalyticsSection() {
       <Card>
         <CardContent className="p-6 text-center">
           <Eye className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Aucune donnÃ©e de trafic disponible</p>
+          <p className="text-muted-foreground">Aucune donnée de trafic disponible</p>
           <p className="text-sm text-muted-foreground mt-2">
-            Les statistiques apparaÃ®tront ici une fois que les visiteurs commenceront Ã  consulter vos produits.
+            Les statistiques apparaîtront ici une fois que les visiteurs commenceront à consulter vos produits.
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  // PrÃ©parer les donnÃ©es pour les graphiques
+  // Préparer les données pour les graphiques
   const deviceData = Object.entries(stats.deviceBreakdown).map(([name, value]) => ({
     name: name === 'mobile' ? 'Mobile' : name === 'desktop' ? 'Desktop' : name === 'tablet' ? 'Tablette' : name,
     value
@@ -105,8 +105,8 @@ export function TrafficAnalyticsSection() {
         <Card>
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-orange-100 rounded-lg">
-                <Users className="w-5 h-5 text-primary-orange-600" />
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Users className="w-5 h-5 text-green-600" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Visiteurs uniques</p>
@@ -160,7 +160,7 @@ export function TrafficAnalyticsSection() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
-              Ã‰volution du trafic (7 derniers jours)
+              Évolution du trafic (7 derniers jours)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -199,7 +199,7 @@ export function TrafficAnalyticsSection() {
         </Card>
       )}
 
-      {/* RÃ©partition par appareil et pays */}
+      {/* Répartition par appareil et pays */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Appareils */}
         {deviceData.length > 0 && (
@@ -207,7 +207,7 @@ export function TrafficAnalyticsSection() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Smartphone className="w-5 h-5" />
-                RÃ©partition par appareil
+                Répartition par appareil
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -285,14 +285,14 @@ export function TrafficAnalyticsSection() {
         )}
       </div>
 
-      {/* Message si pas de donnÃ©es dÃ©taillÃ©es */}
+      {/* Message si pas de données détaillées */}
       {stats.totalProductViews === 0 && stats.totalShopVisits === 0 && (
         <Card className="bg-muted/50">
           <CardContent className="p-6 text-center">
             <Eye className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-lg font-medium">Pas encore de donnÃ©es de trafic</p>
+            <p className="text-lg font-medium">Pas encore de données de trafic</p>
             <p className="text-sm text-muted-foreground mt-2">
-              Les statistiques de vues et visites apparaÃ®tront ici une fois que les visiteurs commenceront Ã  consulter votre boutique et vos produits.
+              Les statistiques de vues et visites apparaîtront ici une fois que les visiteurs commenceront à consulter votre boutique et vos produits.
             </p>
           </CardContent>
         </Card>

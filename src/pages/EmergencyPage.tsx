@@ -1,6 +1,6 @@
 /**
- * EMERGENCY PAGE - Page dÃ©diÃ©e aux urgences
- * 224Solutions - Page complÃ¨te de gestion des alertes
+ * EMERGENCY PAGE - Page dédiée aux urgences
+ * 224Solutions - Page complète de gestion des alertes
  */
 
 import React, { useState } from 'react';
@@ -22,7 +22,7 @@ export const EmergencyPage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // DÃ©terminer le rÃ´le et le bureau
+  // Déterminer le rôle et le bureau
   const userRole = (user?.role as 'admin' | 'syndicat' | 'pdg') || 'syndicat';
   const bureauId = userRole === 'syndicat' ? (user as any)?.bureau_id : undefined;
 
@@ -30,19 +30,19 @@ export const EmergencyPage: React.FC = () => {
   const { alerts, count: alertCount } = useActiveEmergencyAlerts(bureauId);
   const { stats, activeAlerts } = useEmergencyStats(bureauId);
 
-  // VÃ©rifier les permissions
+  // Vérifier les permissions
   if (!user || !['admin', 'syndicat', 'pdg'].includes(user.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="max-w-md">
           <CardContent className="py-12 text-center">
             <AlertTriangle className="h-16 w-16 text-red-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">AccÃ¨s RefusÃ©</h2>
+            <h2 className="text-2xl font-bold mb-2">Accès Refusé</h2>
             <p className="text-muted-foreground mb-6">
-              Seuls les administrateurs et les bureaux syndicats peuvent accÃ©der au systÃ¨me d'urgence.
+              Seuls les administrateurs et les bureaux syndicats peuvent accéder au système d'urgence.
             </p>
             <Button onClick={() => navigate('/')}>
-              Retour Ã  l'Accueil
+              Retour à l'Accueil
             </Button>
           </CardContent>
         </Card>
@@ -69,13 +69,13 @@ export const EmergencyPage: React.FC = () => {
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
                   <AlertTriangle className={activeAlerts > 0 ? 'h-6 w-6 text-red-600 animate-pulse' : 'h-6 w-6'} />
-                  SystÃ¨me d'Urgence SOS
+                  Système d'Urgence SOS
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {userRole === 'admin' ? 'Vue Globale' : 'Bureau Syndicat'}
                   {activeAlerts > 0 && (
                     <span className="ml-2 text-red-600 font-semibold animate-pulse">
-                      â€¢ {activeAlerts} alerte(s) active(s)
+                      • {activeAlerts} alerte(s) active(s)
                     </span>
                   )}
                 </p>
@@ -85,12 +85,12 @@ export const EmergencyPage: React.FC = () => {
             <div className="flex items-center gap-3">
               {activeAlerts > 0 && (
                 <div className="bg-red-100 text-red-800 px-4 py-2 rounded-full font-bold text-sm animate-pulse">
-                  ðŸš¨ {activeAlerts} URGENCE(S)
+                  🚨 {activeAlerts} URGENCE(S)
                 </div>
               )}
               
               <div className="text-right">
-                <p className="text-xs text-muted-foreground">ConnectÃ© en tant que</p>
+                <p className="text-xs text-muted-foreground">Connecté en tant que</p>
                 <p className="text-sm font-medium">{(user as any)?.full_name || user?.email}</p>
               </div>
             </div>
@@ -116,7 +116,7 @@ export const EmergencyPage: React.FC = () => {
             </TabsTrigger>
             <TabsTrigger value="settings">
               <Settings className="h-4 w-4 mr-2" />
-              ParamÃ¨tres
+              Paramètres
             </TabsTrigger>
           </TabsList>
 
@@ -141,7 +141,7 @@ export const EmergencyPage: React.FC = () => {
                 <CardHeader>
                   <CardTitle>Analyse des Urgences</CardTitle>
                   <CardDescription>
-                    DonnÃ©es des 30 derniers jours
+                    Données des 30 derniers jours
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -151,8 +151,8 @@ export const EmergencyPage: React.FC = () => {
                       <span className="text-2xl font-bold">{stats?.total_alerts || 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Taux de RÃ©solution</span>
-                      <span className="text-2xl font-bold text-primary-orange-600">
+                      <span className="text-sm text-muted-foreground">Taux de Résolution</span>
+                      <span className="text-2xl font-bold text-green-600">
                         {stats?.total_alerts
                           ? Math.round(((stats.resolved_alerts || 0) / stats.total_alerts) * 100)
                           : 0}%
@@ -177,12 +177,12 @@ export const EmergencyPage: React.FC = () => {
               <CardHeader>
                 <CardTitle>Historique des Alertes</CardTitle>
                 <CardDescription>
-                  Toutes les alertes (actives, rÃ©solues, fausses alertes)
+                  Toutes les alertes (actives, résolues, fausses alertes)
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-center text-muted-foreground py-12">
-                  FonctionnalitÃ© en cours de dÃ©veloppement
+                  Fonctionnalité en cours de développement
                 </p>
               </CardContent>
             </Card>
@@ -191,9 +191,9 @@ export const EmergencyPage: React.FC = () => {
           <TabsContent value="settings">
             <Card>
               <CardHeader>
-                <CardTitle>ParamÃ¨tres d'Urgence</CardTitle>
+                <CardTitle>Paramètres d'Urgence</CardTitle>
                 <CardDescription>
-                  Configuration du systÃ¨me d'alerte
+                  Configuration du système d'alerte
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -224,14 +224,14 @@ export const EmergencyPage: React.FC = () => {
                     </label>
                     <label className="flex items-center gap-2">
                       <input type="checkbox" defaultChecked />
-                      <span className="text-sm">RafraÃ®chissement automatique (30 secondes)</span>
+                      <span className="text-sm">Rafraîchissement automatique (30 secondes)</span>
                     </label>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t">
                   <p className="text-sm text-muted-foreground">
-                    â„¹ï¸ Les paramÃ¨tres sont enregistrÃ©s automatiquement
+                    ℹ️ Les paramètres sont enregistrés automatiquement
                   </p>
                 </div>
               </CardContent>
@@ -244,7 +244,7 @@ export const EmergencyPage: React.FC = () => {
 };
 
 /**
- * Page de dÃ©tail d'une alerte spÃ©cifique
+ * Page de détail d'une alerte spécifique
  */
 export const EmergencyAlertDetailPage: React.FC = () => {
   const { alertId } = useParams<{ alertId: string }>();

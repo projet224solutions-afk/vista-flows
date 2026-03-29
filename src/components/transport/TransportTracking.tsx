@@ -1,5 +1,5 @@
 /**
- * ðŸšš SUIVI DE TRANSPORT EN TEMPS RÃ‰EL
+ * 🚚 SUIVI DE TRANSPORT EN TEMPS RÉEL
  * Interface de suivi pour client et transporteur
  */
 
@@ -84,7 +84,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
         timestamp: position.timestamp
       });
 
-      // DÃ©marrer le suivi de position
+      // Démarrer le suivi de position
       const watchId = navigator.geolocation.watchPosition(
         (newPosition) => {
           setCurrentPosition({
@@ -95,19 +95,19 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
           updateProgress();
         },
         (error) => {
-          console.error('Erreur gÃ©olocalisation:', error);
+          console.error('Erreur géolocalisation:', error);
         }
       );
 
-      // Mettre Ã  jour la position toutes les 5 secondes
+      // Mettre à jour la position toutes les 5 secondes
       trackingInterval.current = setInterval(() => {
         updateProgress();
       }, 5000);
 
       return watchId;
     } catch (error) {
-      console.error('Erreur dÃ©marrage suivi:', error);
-      setError('Impossible de dÃ©marrer le suivi');
+      console.error('Erreur démarrage suivi:', error);
+      setError('Impossible de démarrer le suivi');
     }
   };
 
@@ -144,7 +144,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
       
       setProgress(progressPercent);
       
-      // Estimer l'arrivÃ©e
+      // Estimer l'arrivée
       const remainingDistance = currentDistance / 1000; // en km
       const estimatedMinutes = Math.ceil(remainingDistance * 2); // 2 min par km
       setEstimatedArrival(estimatedMinutes);
@@ -157,9 +157,9 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
     try {
       setIsLoading(true);
       await transportService.markAsPickedUp(request.id);
-      await loadRequest(); // Recharger les donnÃ©es
+      await loadRequest(); // Recharger les données
     } catch (error) {
-      console.error('Erreur marquage rÃ©cupÃ©rÃ©:', error);
+      console.error('Erreur marquage récupéré:', error);
       setError('Erreur lors du marquage');
     } finally {
       setIsLoading(false);
@@ -190,7 +190,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
         onComplete();
       }
     } catch (error) {
-      console.error('Erreur marquage livrÃ©:', error);
+      console.error('Erreur marquage livré:', error);
       setError('Erreur lors de la livraison');
     } finally {
       setIsLoading(false);
@@ -205,8 +205,8 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
       
       await transportService.openDispute(
         request.id,
-        'ProblÃ¨me de livraison',
-        'Le transporteur n\'a pas respectÃ© les conditions',
+        'Problème de livraison',
+        'Le transporteur n\'a pas respecté les conditions',
         {
           photos: proofPhoto ? [proofPhoto] : [],
           messages: ['Litige ouvert par le client'],
@@ -236,7 +236,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
       case 'pending': return 'text-yellow-600 bg-yellow-100';
       case 'accepted': return 'text-blue-600 bg-blue-100';
       case 'picked_up': return 'text-purple-600 bg-purple-100';
-      case 'delivered': return 'text-primary-orange-600 bg-primary-orange-100';
+      case 'delivered': return 'text-green-600 bg-green-100';
       case 'cancelled': return 'text-red-600 bg-red-100';
       case 'disputed': return 'text-orange-600 bg-orange-100';
       default: return 'text-gray-600 bg-gray-100';
@@ -246,10 +246,10 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return 'En attente';
-      case 'accepted': return 'AcceptÃ©e';
-      case 'picked_up': return 'RÃ©cupÃ©rÃ©';
-      case 'delivered': return 'LivrÃ©';
-      case 'cancelled': return 'AnnulÃ©e';
+      case 'accepted': return 'Acceptée';
+      case 'picked_up': return 'Récupéré';
+      case 'delivered': return 'Livré';
+      case 'cancelled': return 'Annulée';
       case 'disputed': return 'En litige';
       default: return 'Inconnu';
     }
@@ -271,7 +271,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
       <div className={`bg-white rounded-lg shadow-lg p-6 ${className}`}>
         <div className="text-center text-gray-500">
           <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-          <p>Demande de transport non trouvÃ©e</p>
+          <p>Demande de transport non trouvée</p>
         </div>
       </div>
     );
@@ -279,7 +279,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
 
   return (
     <div className={`bg-white rounded-lg shadow-lg ${className}`}>
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div>
@@ -299,17 +299,17 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
           <div className="p-4 bg-blue-50 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <MapPin className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">DÃ©part</span>
+              <span className="text-sm font-medium text-blue-800">Départ</span>
             </div>
             <p className="text-sm text-blue-700">{request.pickupAddress}</p>
           </div>
           
-          <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
+          <div className="p-4 bg-green-50 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <MapPin className="w-4 h-4 text-primary-orange-600" />
-              <span className="text-sm font-medium text-primary-orange-800">Destination</span>
+              <MapPin className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-green-800">Destination</span>
             </div>
-            <p className="text-sm text-primary-orange-700">{request.deliveryAddress}</p>
+            <p className="text-sm text-green-700">{request.deliveryAddress}</p>
           </div>
         </div>
 
@@ -325,11 +325,11 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
               <div className="flex-1">
                 <h4 className="font-medium text-gray-900">{transportUser.name}</h4>
                 <p className="text-sm text-gray-600">
-                  {transportUser.vehicleType} â€¢ {transportUser.vehicleInfo.model}
+                  {transportUser.vehicleType} • {transportUser.vehicleInfo.model}
                 </p>
                 <div className="flex items-center gap-4 mt-1">
                   <span className="text-xs text-gray-500">
-                    â­ {transportUser.rating}/5
+                    ⭐ {transportUser.rating}/5
                   </span>
                   <span className="text-xs text-gray-500">
                     {transportUser.totalTrips} courses
@@ -340,7 +340,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
                 <button className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors">
                   <Phone className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-primary-orange-600 hover:bg-primary-orange-100 rounded-lg transition-colors">
+                <button className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors">
                   <MessageSquare className="w-4 h-4" />
                 </button>
               </div>
@@ -363,21 +363,21 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
           {estimatedArrival > 0 && (
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Clock className="w-4 h-4" />
-              <span>ArrivÃ©e estimÃ©e: {estimatedArrival} min</span>
+              <span>Arrivée estimée: {estimatedArrival} min</span>
             </div>
           )}
         </div>
 
         {/* Prix */}
-        <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
+        <div className="p-4 bg-green-50 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-primary-orange-800">Prix de la course</p>
-              <p className="text-xs text-primary-orange-600">Frais 1% inclus</p>
+              <p className="text-sm font-medium text-green-800">Prix de la course</p>
+              <p className="text-xs text-green-600">Frais 1% inclus</p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-primary-orange-600">{request.totalPrice} GNF</p>
-              <p className="text-xs text-primary-orange-500">Net: {request.price} GNF</p>
+              <p className="text-lg font-bold text-green-600">{request.totalPrice} GNF</p>
+              <p className="text-xs text-green-500">Net: {request.price} GNF</p>
             </div>
           </div>
         </div>
@@ -391,7 +391,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
                 disabled={isLoading}
                 className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
-                {isLoading ? 'Marquage...' : 'Marquer comme rÃ©cupÃ©rÃ©'}
+                {isLoading ? 'Marquage...' : 'Marquer comme récupéré'}
               </button>
             )}
             
@@ -399,7 +399,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
               <div className="space-y-2">
                 <button
                   onClick={() => setShowProofModal(true)}
-                  className="w-full bg-primary-orange-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-orange-700 transition-colors"
+                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
                 >
                   <Camera className="w-4 h-4 inline mr-2" />
                   Prendre une photo de livraison
@@ -409,7 +409,7 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
                   disabled={isLoading || !proofPhoto}
                   className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors"
                 >
-                  {isLoading ? 'Livraison...' : 'Marquer comme livrÃ©'}
+                  {isLoading ? 'Livraison...' : 'Marquer comme livré'}
                 </button>
               </div>
             )}
@@ -419,13 +419,13 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
         {userType === 'client' && (
           <div className="space-y-3">
             {request.status === 'delivered' && (
-              <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-primary-orange-600" />
-                  <span className="text-sm font-medium text-primary-orange-800">Livraison confirmÃ©e</span>
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-medium text-green-800">Livraison confirmée</span>
                 </div>
-                <p className="text-xs text-primary-orange-600 mt-1">
-                  Paiement libÃ©rÃ© au transporteur
+                <p className="text-xs text-green-600 mt-1">
+                  Paiement libéré au transporteur
                 </p>
               </div>
             )}
@@ -434,17 +434,17 @@ const TransportTracking: React.FC<TransportTrackingProps> = ({
               <div className="flex gap-2">
                 <button
                   onClick={handleMarkAsDelivered}
-                  className="flex-1 bg-primary-orange-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-orange-700 transition-colors"
+                  className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
                 >
                   <CheckCircle className="w-4 h-4 inline mr-2" />
-                  Course terminÃ©e
+                  Course terminée
                 </button>
                 <button
                   onClick={handleOpenDispute}
                   className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors"
                 >
                   <AlertTriangle className="w-4 h-4 inline mr-2" />
-                  Signaler un problÃ¨me
+                  Signaler un problème
                 </button>
               </div>
             )}

@@ -487,7 +487,7 @@ export default function WalletDashboard() {
                       <span className="text-sm font-medium">📉 {t('wallet.totalDeducted')}</span>
                       <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
-                    <div className="flex justify-between items-center text-primary-orange-600">
+                    <div className="flex justify-between items-center text-green-600">
                       <span className="text-sm font-medium">📈 {t('wallet.recipientWillReceive')}</span>
                       <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} {wallet?.currency || 'GNF'}</span>
                     </div>
@@ -521,7 +521,7 @@ export default function WalletDashboard() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-primary-orange-600" />
+                <Smartphone className="w-5 h-5 text-green-600" />
                 {t('wallet.mobileMoneyRecharge')}
               </AlertDialogTitle>
               <AlertDialogDescription>

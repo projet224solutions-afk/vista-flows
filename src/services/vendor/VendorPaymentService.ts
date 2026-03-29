@@ -266,7 +266,7 @@ export class VendorPaymentService {
       }
 
       // TODO: Intégrer Stripe SDK
-      console.log('[Card] Processing card payment request');
+      console.log('[Card] Processing card payment with token:', cardToken.substring(0, 10) + '...');
 
       // Mettre à jour le statut
       const { error: updateError } = await supabase

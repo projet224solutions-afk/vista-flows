@@ -1,6 +1,6 @@
 /**
- * ðŸ“Š ANALYSE DE PROFIT MENSUEL - 224SOLUTIONS
- * Calcul du profit basÃ© sur les ventes, achats et coÃ»ts fixes (loyer, abonnement)
+ * 📊 ANALYSE DE PROFIT MENSUEL - 224SOLUTIONS
+ * Calcul du profit basé sur les ventes, achats et coûts fixes (loyer, abonnement)
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -84,7 +84,7 @@ const COST_TYPE_LABELS: Record<string, { label: string; icon: React.ReactNode; c
   loyer: { label: 'Loyer', icon: <Home className="w-4 h-4" />, color: '#EF4444' },
   abonnement: { label: 'Abonnement', icon: <CreditCard className="w-4 h-4" />, color: '#8B5CF6' },
   salaires: { label: 'Salaires', icon: <Users className="w-4 h-4" />, color: '#3B82F6' },
-  electricite: { label: 'Ã‰lectricitÃ©', icon: <Zap className="w-4 h-4" />, color: '#F59E0B' },
+  electricite: { label: 'Électricité', icon: <Zap className="w-4 h-4" />, color: '#F59E0B' },
   internet: { label: 'Internet', icon: <Wifi className="w-4 h-4" />, color: '#06B6D4' },
   assurance: { label: 'Assurance', icon: <Shield className="w-4 h-4" />, color: '#10B981' },
   autre: { label: 'Autre', icon: <HelpCircle className="w-4 h-4" />, color: '#6B7280' }
@@ -104,7 +104,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     amount: ''
   });
 
-  // RÃ©cupÃ©rer les coÃ»ts fixes (utilise userId car vendor_fixed_costs rÃ©fÃ©rence auth.users)
+  // Récupérer les coûts fixes (utilise userId car vendor_fixed_costs référence auth.users)
   const { data: fixedCosts = [], isLoading: loadingCosts } = useQuery({
     queryKey: ['vendor-fixed-costs', userId],
     queryFn: async () => {
@@ -121,7 +121,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     enabled: !!userId
   });
 
-  // RÃ©cupÃ©rer les ventes du mois (orders - utilise vendorId car orders rÃ©fÃ©rence vendors)
+  // Récupérer les ventes du mois (orders - utilise vendorId car orders référence vendors)
   const { data: monthlySales = 0, isLoading: loadingSales } = useQuery({
     queryKey: ['vendor-monthly-sales', vendorId],
     queryFn: async () => {
@@ -143,7 +143,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     enabled: !!vendorId
   });
 
-  // RÃ©cupÃ©rer les achats du mois (stock_purchases - utilise vendorId)
+  // Récupérer les achats du mois (stock_purchases - utilise vendorId)
   const { data: monthlyPurchases = 0, isLoading: loadingPurchases } = useQuery({
     queryKey: ['vendor-monthly-purchases', vendorId],
     queryFn: async () => {
@@ -165,7 +165,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     enabled: !!vendorId
   });
 
-  // Mutation pour ajouter un coÃ»t fixe (utilise userId)
+  // Mutation pour ajouter un coût fixe (utilise userId)
   const addCostMutation = useMutation({
     mutationFn: async (data: { cost_type: string; label: string; amount: number }) => {
       const { error } = await supabase
@@ -181,16 +181,16 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendor-fixed-costs', userId] });
-      toast({ title: 'CoÃ»t fixe ajoutÃ© avec succÃ¨s' });
+      toast({ title: 'Coût fixe ajouté avec succès' });
       setIsAddDialogOpen(false);
       resetForm();
     },
     onError: () => {
-      toast({ title: 'Erreur', description: 'Impossible d\'ajouter le coÃ»t fixe', variant: 'destructive' });
+      toast({ title: 'Erreur', description: 'Impossible d\'ajouter le coût fixe', variant: 'destructive' });
     }
   });
 
-  // Mutation pour mettre Ã  jour un coÃ»t fixe
+  // Mutation pour mettre à jour un coût fixe
   const updateCostMutation = useMutation({
     mutationFn: async (data: { id: string; cost_type: string; label: string; amount: number }) => {
       const { error } = await supabase
@@ -205,16 +205,16 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendor-fixed-costs', userId] });
-      toast({ title: 'CoÃ»t fixe mis Ã  jour' });
+      toast({ title: 'Coût fixe mis à jour' });
       setEditingCost(null);
       resetForm();
     },
     onError: () => {
-      toast({ title: 'Erreur', description: 'Impossible de mettre Ã  jour', variant: 'destructive' });
+      toast({ title: 'Erreur', description: 'Impossible de mettre à jour', variant: 'destructive' });
     }
   });
 
-  // Mutation pour supprimer un coÃ»t fixe
+  // Mutation pour supprimer un coût fixe
   const deleteCostMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -225,7 +225,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendor-fixed-costs', userId] });
-      toast({ title: 'CoÃ»t fixe supprimÃ©' });
+      toast({ title: 'Coût fixe supprimé' });
     },
     onError: () => {
       toast({ title: 'Erreur', description: 'Impossible de supprimer', variant: 'destructive' });
@@ -292,7 +292,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     return (netProfit / monthlySales) * 100;
   }, [netProfit, monthlySales]);
 
-  // DonnÃ©es pour le graphique en secteurs
+  // Données pour le graphique en secteurs
   const pieData = useMemo(() => {
     const costsByType: Record<string, number> = {};
     fixedCosts.forEach(cost => {
@@ -320,7 +320,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Analyse de Profit Mensuel</h3>
@@ -336,18 +336,18 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="w-4 h-4 mr-2" />
-              Ajouter un coÃ»t fixe
+              Ajouter un coût fixe
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingCost ? 'Modifier le coÃ»t fixe' : 'Ajouter un coÃ»t fixe mensuel'}
+                {editingCost ? 'Modifier le coût fixe' : 'Ajouter un coût fixe mensuel'}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div>
-                <Label>Type de coÃ»t</Label>
+                <Label>Type de coût</Label>
                 <Select
                   value={formData.cost_type}
                   onValueChange={(value: FixedCost['cost_type']) => 
@@ -370,7 +370,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
                 </Select>
               </div>
               <div>
-                <Label>LibellÃ©</Label>
+                <Label>Libellé</Label>
                 <Input
                   placeholder="Ex: Loyer boutique"
                   value={formData.label}
@@ -394,14 +394,14 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
                 {(addCostMutation.isPending || updateCostMutation.isPending) && (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 )}
-                {editingCost ? 'Mettre Ã  jour' : 'Ajouter'}
+                {editingCost ? 'Mettre à jour' : 'Ajouter'}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* RÃ©sumÃ© principal */}
+      {/* Résumé principal */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Chiffre d'affaires */}
         <Card>
@@ -409,16 +409,16 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Ventes du mois</p>
-                <p className="text-xl font-bold text-primary-orange-600">{formatCurrency(monthlySales)}</p>
+                <p className="text-xl font-bold text-green-600">{formatCurrency(monthlySales)}</p>
               </div>
-              <div className="p-2 bg-primary-orange-100 rounded-full">
-                <TrendingUp className="w-5 h-5 text-primary-orange-600" />
+              <div className="p-2 bg-green-100 rounded-full">
+                <TrendingUp className="w-5 h-5 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* CoÃ»t des achats */}
+        {/* Coût des achats */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -433,12 +433,12 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
           </CardContent>
         </Card>
 
-        {/* CoÃ»ts fixes */}
+        {/* Coûts fixes */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">CoÃ»ts fixes</p>
+                <p className="text-sm text-muted-foreground">Coûts fixes</p>
                 <p className="text-xl font-bold text-orange-600">{formatCurrency(totalFixedCosts)}</p>
               </div>
               <div className="p-2 bg-orange-100 rounded-full">
@@ -449,21 +449,21 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
         </Card>
 
         {/* Profit net */}
-        <Card className={netProfit >= 0 ? 'border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50' : 'border-red-200 bg-red-50/50'}>
+        <Card className={netProfit >= 0 ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Profit net</p>
-                <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-primary-orange-600' : 'text-red-600'}`}>
+                <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {formatCurrency(netProfit)}
                 </p>
-                <p className={`text-xs ${netProfit >= 0 ? 'text-primary-orange-500' : 'text-red-500'}`}>
+                <p className={`text-xs ${netProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                   Marge: {profitMargin.toFixed(1)}%
                 </p>
               </div>
-              <div className={`p-2 rounded-full ${netProfit >= 0 ? 'bg-primary-orange-100' : 'bg-red-100'}`}>
+              <div className={`p-2 rounded-full ${netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
                 {netProfit >= 0 ? (
-                  <CheckCircle className="w-5 h-5 text-primary-orange-600" />
+                  <CheckCircle className="w-5 h-5 text-green-600" />
                 ) : (
                   <AlertTriangle className="w-5 h-5 text-red-600" />
                 )}
@@ -473,43 +473,43 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
         </Card>
       </div>
 
-      {/* DÃ©tail du calcul */}
+      {/* Détail du calcul */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Calculator className="w-4 h-4" />
-            DÃ©tail du calcul
+            Détail du calcul
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex justify-between items-center py-2">
               <span className="text-muted-foreground">Chiffre d'affaires (ventes)</span>
-              <span className="font-medium text-primary-orange-600">+ {formatCurrency(monthlySales)}</span>
+              <span className="font-medium text-green-600">+ {formatCurrency(monthlySales)}</span>
             </div>
             <Separator />
             <div className="flex justify-between items-center py-2">
-              <span className="text-muted-foreground">CoÃ»t des achats (stock)</span>
+              <span className="text-muted-foreground">Coût des achats (stock)</span>
               <span className="font-medium text-red-600">- {formatCurrency(monthlyPurchases)}</span>
             </div>
             <Separator />
             <div className="flex justify-between items-center py-2 bg-muted/50 rounded px-2">
               <span className="font-medium">Marge brute</span>
-              <span className={`font-bold ${grossProfit >= 0 ? 'text-primary-orange-600' : 'text-red-600'}`}>
+              <span className={`font-bold ${grossProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(grossProfit)}
               </span>
             </div>
             <Separator />
             <div className="flex justify-between items-center py-2">
-              <span className="text-muted-foreground">Total coÃ»ts fixes</span>
+              <span className="text-muted-foreground">Total coûts fixes</span>
               <span className="font-medium text-red-600">- {formatCurrency(totalFixedCosts)}</span>
             </div>
             <Separator />
             <div className={`flex justify-between items-center py-3 rounded px-2 ${
-              netProfit >= 0 ? 'bg-primary-orange-100' : 'bg-red-100'
+              netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'
             }`}>
               <span className="font-bold">Profit net mensuel</span>
-              <span className={`font-bold text-lg ${netProfit >= 0 ? 'text-primary-orange-700' : 'text-red-700'}`}>
+              <span className={`font-bold text-lg ${netProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                 {formatCurrency(netProfit)}
               </span>
             </div>
@@ -517,18 +517,18 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
         </CardContent>
       </Card>
 
-      {/* Grille: CoÃ»ts fixes + Graphique */}
+      {/* Grille: Coûts fixes + Graphique */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Liste des coÃ»ts fixes */}
+        {/* Liste des coûts fixes */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">CoÃ»ts fixes mensuels</CardTitle>
+            <CardTitle className="text-base">Coûts fixes mensuels</CardTitle>
           </CardHeader>
           <CardContent>
             {fixedCosts.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Home className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Aucun coÃ»t fixe configurÃ©</p>
+                <p>Aucun coût fixe configuré</p>
                 <p className="text-sm">Ajoutez votre loyer, abonnement, etc.</p>
               </div>
             ) : (
@@ -582,15 +582,15 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
           </CardContent>
         </Card>
 
-        {/* Graphique rÃ©partition */}
+        {/* Graphique répartition */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">RÃ©partition des coÃ»ts fixes</CardTitle>
+            <CardTitle className="text-base">Répartition des coûts fixes</CardTitle>
           </CardHeader>
           <CardContent>
             {pieData.length === 0 ? (
               <div className="flex items-center justify-center h-[250px] text-muted-foreground">
-                Aucune donnÃ©e disponible
+                Aucune donnée disponible
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
@@ -618,15 +618,15 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
         </Card>
       </div>
 
-      {/* Alerte si profit nÃ©gatif */}
+      {/* Alerte si profit négatif */}
       {netProfit < 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="w-4 h-4" />
           <AlertDescription>
-            <strong>Attention !</strong> Votre profit net est nÃ©gatif ce mois-ci. 
-            Vos dÃ©penses ({formatCurrency(monthlyPurchases + totalFixedCosts)}) dÃ©passent 
+            <strong>Attention !</strong> Votre profit net est négatif ce mois-ci. 
+            Vos dépenses ({formatCurrency(monthlyPurchases + totalFixedCosts)}) dépassent 
             vos ventes ({formatCurrency(monthlySales)}). 
-            ConsidÃ©rez rÃ©duire vos coÃ»ts fixes ou augmenter vos ventes.
+            Considérez réduire vos coûts fixes ou augmenter vos ventes.
           </AlertDescription>
         </Alert>
       )}

@@ -97,8 +97,8 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
       if (error) throw error;
 
       toast({
-        title: actionType === 'approve' ? 'âœ… Service approuvÃ©' : 'âŒ Service rejetÃ©',
-        description: `${actionService.business_name} a Ã©tÃ© ${actionType === 'approve' ? 'activÃ©' : 'rejetÃ©'}`,
+        title: actionType === 'approve' ? '✅ Service approuvé' : '❌ Service rejeté',
+        description: `${actionService.business_name} a été ${actionType === 'approve' ? 'activé' : 'rejeté'}`,
       });
 
       setActionService(null);
@@ -130,7 +130,7 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
           </div>
           <div>
             <h3 className="font-semibold">Services en attente de validation</h3>
-            <p className="text-sm text-muted-foreground">{filtered.length} service(s) Ã  valider</p>
+            <p className="text-sm text-muted-foreground">{filtered.length} service(s) à valider</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={fetchPendingServices}>
@@ -141,8 +141,8 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
-            <CheckCircle className="w-12 h-12 text-primary-orange-500 mx-auto mb-4" />
-            <h3 className="font-semibold text-lg mb-1">Tout est Ã  jour !</h3>
+            <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+            <h3 className="font-semibold text-lg mb-1">Tout est à jour !</h3>
             <p className="text-muted-foreground">Aucun service en attente de validation</p>
           </CardContent>
         </Card>
@@ -156,7 +156,7 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
                     <div className="flex items-center gap-2 mb-2">
                       <h4 className="font-semibold text-lg">{service.business_name}</h4>
                       <Badge variant="outline" className="text-xs">
-                        {service.service_type?.name || 'Non dÃ©fini'}
+                        {service.service_type?.name || 'Non défini'}
                       </Badge>
                       <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 gap-1">
                         <Clock className="w-3 h-3" />En attente
@@ -187,7 +187,7 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
                   <div className="flex gap-2 shrink-0">
                     <Button 
                       size="sm" 
-                      className="bg-primary-orange-600 hover:bg-primary-orange-700 text-white gap-1"
+                      className="bg-green-600 hover:bg-green-700 text-white gap-1"
                       onClick={() => { setActionService(service); setActionType('approve'); }}
                     >
                       <CheckCircle className="w-4 h-4" />Approuver
@@ -213,10 +213,10 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {actionType === 'approve' ? 'âœ… Approuver le service' : 'âŒ Rejeter le service'}
+              {actionType === 'approve' ? '✅ Approuver le service' : '❌ Rejeter le service'}
             </DialogTitle>
             <DialogDescription>
-              {actionService?.business_name} â€” {actionService?.service_type?.name}
+              {actionService?.business_name} — {actionService?.service_type?.name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">

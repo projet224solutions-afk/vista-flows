@@ -47,10 +47,10 @@ interface Provider {
 }
 
 const statusConfig: Record<string, { label: string; icon: any; className: string }> = {
-  active: { label: 'Actif', icon: CheckCircle, className: 'bg-primary-orange-100 text-primary-orange-800 dark:bg-primary-orange-900/30 dark:text-primary-orange-400' },
+  active: { label: 'Actif', icon: CheckCircle, className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
   pending: { label: 'En attente', icon: Clock, className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' },
   suspended: { label: 'Suspendu', icon: AlertTriangle, className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
-  rejected: { label: 'RejetÃ©', icon: XCircle, className: 'bg-destructive/10 text-destructive' },
+  rejected: { label: 'Rejeté', icon: XCircle, className: 'bg-destructive/10 text-destructive' },
 };
 
 export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGServiceProvidersListProps) {
@@ -71,7 +71,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      // Filtrer les boutiques/digital - ne garder que les services de proximitÃ©
+      // Filtrer les boutiques/digital - ne garder que les services de proximité
       const EXCLUDED_CODES = ['ecommerce', 'dropshipping', 'digital_livre', 'digital_logiciel'];
       const filtered = (data || []).filter(
         (p: any) => !p.service_type || !EXCLUDED_CODES.includes(p.service_type.code)
@@ -143,8 +143,8 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
         </Card>
         <Card className="border-border/50">
           <CardContent className="p-4 text-center">
-            <CheckCircle className="w-5 h-5 text-primary-orange-500 mx-auto mb-1" />
-            <div className="text-2xl font-bold text-primary-orange-600">{stats.active}</div>
+            <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
+            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
             <p className="text-xs text-muted-foreground">Actifs</p>
           </CardContent>
         </Card>
@@ -178,7 +178,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
             <div>
               <CardTitle className="text-lg">
                 {activeServiceTab !== 'all' 
-                  ? `Prestataires â€” ${serviceTypes.find(s => s.id === activeServiceTab)?.name}` 
+                  ? `Prestataires — ${serviceTypes.find(s => s.id === activeServiceTab)?.name}` 
                   : 'Tous les Prestataires'}
               </CardTitle>
               <CardDescription>{filtered.length} prestataire(s)</CardDescription>
@@ -219,7 +219,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
                   <TableRow>
                     <TableCell colSpan={activeServiceTab === 'all' ? 8 : 7} className="text-center py-12 text-muted-foreground">
                       <Store className="w-8 h-8 opacity-30 mx-auto mb-2" />
-                      Aucun prestataire trouvÃ©
+                      Aucun prestataire trouvé
                     </TableCell>
                   </TableRow>
                 ) : (

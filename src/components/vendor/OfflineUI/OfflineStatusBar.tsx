@@ -1,6 +1,6 @@
 /**
  * Offline Status Bar - Barre de statut mode offline
- * 224SOLUTIONS - Mode Offline AvancÃ©
+ * 224SOLUTIONS - Mode Offline Avancé
  *
  * Affiche le statut online/offline et les informations de sync
  */
@@ -25,12 +25,12 @@ export function OfflineStatusBar({
 }: OfflineStatusBarProps) {
   const { isOnline, wasOffline, lastOnline, offlineDuration } = useOnlineStatus();
 
-  // Afficher briÃ¨vement la notification de reconnexion
+  // Afficher brièvement la notification de reconnexion
   if (isOnline && wasOffline) {
     return (
       <div
         className={cn(
-          'bg-gradient-to-r from-primary-blue-500 to-primary-orange-600 text-white',
+          'bg-gradient-to-r from-green-500 to-emerald-600 text-white',
           'py-2 px-4 rounded-lg shadow-lg',
           'animate-in slide-in-from-top duration-300',
           className
@@ -40,7 +40,7 @@ export function OfflineStatusBar({
           <div className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5" />
             <div>
-              <p className="font-semibold text-sm">Connexion rÃ©tablie</p>
+              <p className="font-semibold text-sm">Connexion rétablie</p>
               {offlineDuration > 0 && (
                 <p className="text-xs opacity-90">
                   Hors ligne pendant {formatDuration(offlineDuration)}
@@ -79,7 +79,7 @@ export function OfflineStatusBar({
               <p className="font-semibold text-sm">Mode hors ligne</p>
               {showDetails && (
                 <p className="text-xs opacity-90">
-                  FonctionnalitÃ©s limitÃ©es - Vos donnÃ©es seront synchronisÃ©es automatiquement
+                  Fonctionnalités limitées - Vos données seront synchronisées automatiquement
                 </p>
               )}
             </div>
@@ -109,14 +109,14 @@ export function OfflineStatusBar({
     >
       <div className="flex items-center justify-between gap-4 text-xs">
         <div className="flex items-center gap-2">
-          <Wifi className="w-4 h-4 text-primary-orange-500" />
+          <Wifi className="w-4 h-4 text-green-500" />
           <span>En ligne</span>
         </div>
 
         {lastSyncTime && (
           <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
             <CheckCircle className="w-3 h-3" />
-            <span>DerniÃ¨re sync: {formatSyncTime(lastSyncTime)}</span>
+            <span>Dernière sync: {formatSyncTime(lastSyncTime)}</span>
           </div>
         )}
       </div>
@@ -135,7 +135,7 @@ export function OfflineStatusBadge({ className }: { className?: string }) {
       className={cn(
         'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium',
         isOnline
-          ? 'bg-primary-orange-100 text-primary-orange-700 dark:bg-primary-orange-900/30 dark:text-primary-orange-400'
+          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
           : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
         className
       )}
@@ -185,7 +185,7 @@ export function SyncIndicator({
 }
 
 /**
- * Formater la durÃ©e en texte lisible
+ * Formater la durée en texte lisible
  */
 function formatDuration(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
@@ -203,7 +203,7 @@ function formatSyncTime(date: Date): string {
   const diffMs = now.getTime() - date.getTime();
   const diffMinutes = Math.floor(diffMs / 60000);
 
-  if (diffMinutes < 1) return 'Ã  l\'instant';
+  if (diffMinutes < 1) return 'à l\'instant';
   if (diffMinutes < 60) return `il y a ${diffMinutes}min`;
 
   const diffHours = Math.floor(diffMinutes / 60);

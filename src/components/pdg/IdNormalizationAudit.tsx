@@ -1,7 +1,7 @@
 /**
- * ðŸ“Š ID NORMALIZATION AUDIT - PDG ONLY
+ * 📊 ID NORMALIZATION AUDIT - PDG ONLY
  * Suivi des corrections automatiques d'ID lors des inscriptions
- * Avec recherche avancÃ©e et validation de format
+ * Avec recherche avancée et validation de format
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -81,13 +81,13 @@ const SEARCH_ID_REGEX = /^[A-Z]{3}\d{3,}$/; // Plus permissif pour la recherche
 const VALID_PREFIXES = ['VND', 'CLT', 'AGT', 'DRV', 'BUR', 'BST', 'ADM', 'PDG', 'TAX', 'LIV', 'TRS', 'SAG', 'VAG', 'WRK', 'MBR', 'USR'];
 
 const REASONS_MAP: Record<string, { label: string; color: string }> = {
-  'duplicate_detected': { label: 'Doublon dÃ©tectÃ©', color: '#EF4444' },
+  'duplicate_detected': { label: 'Doublon détecté', color: '#EF4444' },
   'format_invalid': { label: 'Format invalide', color: '#F59E0B' },
-  'sequence_gap': { label: 'Gap de sÃ©quence', color: '#3B82F6' },
-  'counter_mismatch': { label: 'Compteur dÃ©synchronisÃ©', color: '#8B5CF6' },
+  'sequence_gap': { label: 'Gap de séquence', color: '#3B82F6' },
+  'counter_mismatch': { label: 'Compteur désynchronisé', color: '#8B5CF6' },
   'manual_override': { label: 'Correction manuelle', color: '#10B981' },
-  'collision_resolved': { label: 'Collision rÃ©solue', color: '#EC4899' },
-  'prefix_mismatch': { label: 'PrÃ©fixe incorrect', color: '#F97316' },
+  'collision_resolved': { label: 'Collision résolue', color: '#EC4899' },
+  'prefix_mismatch': { label: 'Préfixe incorrect', color: '#F97316' },
   'migration_fix': { label: 'Correction migration', color: '#06B6D4' },
 };
 
@@ -153,15 +153,15 @@ export default function IdNormalizationAudit() {
   // Validate ID format for search (more permissive)
   const validateSearchId = (id: string): { valid: boolean; error?: string; isStandard?: boolean } => {
     if (!id || id.trim().length < 3) {
-      return { valid: false, error: 'Veuillez entrer au moins 3 caractÃ¨res' };
+      return { valid: false, error: 'Veuillez entrer au moins 3 caractères' };
     }
 
     const upperCaseId = id.toUpperCase().trim();
 
-    // VÃ©rifier si c'est un format standard
+    // Vérifier si c'est un format standard
     const isStandardFormat = ID_FORMAT_REGEX.test(upperCaseId);
     
-    // Accepter n'importe quel format alphanumÃ©rique pour la recherche
+    // Accepter n'importe quel format alphanumérique pour la recherche
     if (!/^[A-Z0-9]{3,}$/i.test(upperCaseId)) {
       return { 
         valid: false, 
@@ -321,7 +321,7 @@ export default function IdNormalizationAudit() {
           normalization_history: mappedLogs,
           profile: profileData
         });
-        toast.success(`ID trouvÃ©: ${userIdData.custom_id}`);
+        toast.success(`ID trouvé: ${userIdData.custom_id}`);
       } else if (mappedLogs.length > 0) {
         // ID found only in normalization logs (might have been corrected)
         const latestLog = mappedLogs[0];
@@ -334,20 +334,20 @@ export default function IdNormalizationAudit() {
           created_at: latestLog.created_at,
           normalization_history: mappedLogs
         });
-        toast.success(`ID trouvÃ© dans les logs de normalisation`);
+        toast.success(`ID trouvé dans les logs de normalisation`);
       } else {
         setSearchResult({
           found: false,
           id: normalizedId,
           table: 'none'
         });
-        toast.info(`Aucun ID trouvÃ© pour "${normalizedId}"`);
+        toast.info(`Aucun ID trouvé pour "${normalizedId}"`);
       }
 
     } catch (error: any) {
       console.error('Erreur recherche ID:', error);
       toast.error('Erreur lors de la recherche');
-      setSearchError('Erreur lors de la recherche dans la base de donnÃ©es');
+      setSearchError('Erreur lors de la recherche dans la base de données');
     } finally {
       setSearching(false);
     }
@@ -356,20 +356,20 @@ export default function IdNormalizationAudit() {
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id);
     setCopiedId(id);
-    toast.success(`ID copiÃ©: ${id}`);
+    toast.success(`ID copié: ${id}`);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
   // Map profile role to RoleType for ID generation
-  // CORRIGÃ‰: Support complet de tous les rÃ´les du systÃ¨me 224Solutions
+  // CORRIGÉ: Support complet de tous les rôles du système 224Solutions
   const mapRoleToRoleType = (role: string | undefined | null): RoleType | null => {
     if (!role) return null;
 
     // Convert to string and normalize - support for various formats
     const roleStr = String(role).toLowerCase().trim();
-    console.log('ðŸ” Mapping role:', role, 'â†’', roleStr);
+    console.log('🔍 Mapping role:', role, '→', roleStr);
 
-    // Mapping complet de tous les rÃ´les vers RoleType
+    // Mapping complet de tous les rôles vers RoleType
     const mapping: Record<string, RoleType> = {
       // Vendeurs
       'vendor': 'vendor',
@@ -432,18 +432,18 @@ export default function IdNormalizationAudit() {
 
     const result = mapping[roleStr] || null;
     
-    // Si pas de correspondance directe, essayer une dÃ©tection partielle
+    // Si pas de correspondance directe, essayer une détection partielle
     if (!result) {
-      // VÃ©rifier si le rÃ´le contient un prÃ©fixe connu
+      // Vérifier si le rôle contient un préfixe connu
       for (const [key, value] of Object.entries(mapping)) {
         if (roleStr.includes(key) || key.includes(roleStr)) {
-          console.log('ðŸ” Partial match found:', key, 'â†’', value);
+          console.log('🔍 Partial match found:', key, '→', value);
           return value;
         }
       }
     }
     
-    console.log('ðŸ” Mapped result:', result);
+    console.log('🔍 Mapped result:', result);
     return result;
   };
 
@@ -453,7 +453,7 @@ export default function IdNormalizationAudit() {
     const roleType = mapRoleToRoleType(role);
 
     if (!roleType) {
-      toast.error(`Impossible de corriger: rÃ´le "${role}" non reconnu`);
+      toast.error(`Impossible de corriger: rôle "${role}" non reconnu`);
       return;
     }
 
@@ -471,26 +471,26 @@ export default function IdNormalizationAudit() {
         attempt++;
         newId = await generateUniqueId(roleType);
 
-        console.log(`ðŸ”„ Correction ID (tentative ${attempt}/${maxAttempts}): ${originalId} â†’ ${newId} (${roleType})`);
+        console.log(`🔄 Correction ID (tentative ${attempt}/${maxAttempts}): ${originalId} → ${newId} (${roleType})`);
 
-        // 1. Mettre Ã  jour user_ids.custom_id
+        // 1. Mettre à jour user_ids.custom_id
         const { error: updateError } = await supabase
           .from('user_ids')
           .update({ custom_id: newId })
           .eq('id', item.id);
 
         if (!updateError) {
-          // 2. CRITIQUE: Synchroniser profiles.public_id pour Ã©viter les dÃ©synchronisations
+          // 2. CRITIQUE: Synchroniser profiles.public_id pour éviter les désynchronisations
           const { error: profileError } = await supabase
             .from('profiles')
             .update({ public_id: newId })
             .eq('id', item.user_id);
 
           if (profileError) {
-            console.error('âš ï¸ Erreur sync profiles.public_id:', profileError);
-            // Continuer quand mÃªme, l'ID principal est corrigÃ©
+            console.error('⚠️ Erreur sync profiles.public_id:', profileError);
+            // Continuer quand même, l'ID principal est corrigé
           } else {
-            console.log(`âœ… profiles.public_id synchronisÃ©: ${newId}`);
+            console.log(`✅ profiles.public_id synchronisé: ${newId}`);
           }
 
           // 3. Log the normalization (best effort)
@@ -520,7 +520,7 @@ export default function IdNormalizationAudit() {
             console.error('Erreur log normalisation:', logError);
           }
 
-          toast.success(`ID corrigÃ©: ${originalId} â†’ ${newId}`);
+          toast.success(`ID corrigé: ${originalId} → ${newId}`);
 
           // Force refresh the lists with a small delay to ensure DB is updated
           setTimeout(async () => {
@@ -542,11 +542,11 @@ export default function IdNormalizationAudit() {
           throw updateError;
         }
 
-        console.warn(`âš ï¸ Conflit d'unicitÃ© sur ${newId}, nouvelle tentative...`, updateError);
+        console.warn(`⚠️ Conflit d'unicité sur ${newId}, nouvelle tentative...`, updateError);
         await new Promise((resolve) => setTimeout(resolve, 150));
       }
 
-      throw new Error(`Impossible de corriger: conflit d'unicitÃ© aprÃ¨s ${maxAttempts} tentatives`);
+      throw new Error(`Impossible de corriger: conflit d'unicité après ${maxAttempts} tentatives`);
 
     } catch (error: any) {
       console.error('Erreur correction ID:', error);
@@ -559,7 +559,7 @@ export default function IdNormalizationAudit() {
   // Correct all non-standard IDs - one by one to avoid conflicts
   const handleCorrectAllIds = async () => {
     if (nonStandardUsers.length === 0) {
-      toast.info('Aucun ID Ã  corriger');
+      toast.info('Aucun ID à corriger');
       return;
     }
 
@@ -569,7 +569,7 @@ export default function IdNormalizationAudit() {
     });
 
     if (toCorrect.length === 0) {
-      toast.error('Aucun ID ne peut Ãªtre corrigÃ© (rÃ´les non reconnus)');
+      toast.error('Aucun ID ne peut être corrigé (rôles non reconnus)');
       return;
     }
 
@@ -593,7 +593,7 @@ export default function IdNormalizationAudit() {
           attempt++;
           const newId = await generateUniqueId(roleType);
 
-          // 1. Mettre Ã  jour user_ids.custom_id
+          // 1. Mettre à jour user_ids.custom_id
           const { error: updateError } = await supabase
             .from('user_ids')
             .update({ custom_id: newId })
@@ -607,7 +607,7 @@ export default function IdNormalizationAudit() {
               .eq('id', item.user_id);
 
             if (profileError) {
-              console.error(`âš ï¸ Erreur sync profiles.public_id pour ${item.user_id}:`, profileError);
+              console.error(`⚠️ Erreur sync profiles.public_id pour ${item.user_id}:`, profileError);
             }
 
             // 3. Log the normalization (best effort)
@@ -648,12 +648,12 @@ export default function IdNormalizationAudit() {
           }
 
           lastError = updateError;
-          console.warn(`âš ï¸ Conflit d'unicitÃ© (bulk) sur tentative ${attempt}/${maxAttempts}`, updateError);
+          console.warn(`⚠️ Conflit d'unicité (bulk) sur tentative ${attempt}/${maxAttempts}`, updateError);
           await new Promise((resolve) => setTimeout(resolve, 150));
         }
 
         if (!updated) {
-          throw lastError || new Error(`Conflit d'unicitÃ© aprÃ¨s ${maxAttempts} tentatives`);
+          throw lastError || new Error(`Conflit d'unicité après ${maxAttempts} tentatives`);
         }
 
         // Small delay between corrections to reduce contention
@@ -669,7 +669,7 @@ export default function IdNormalizationAudit() {
     setCorrectingAll(false);
 
     if (successCount > 0) {
-      toast.success(`${successCount} ID(s) corrigÃ©(s) avec succÃ¨s`);
+      toast.success(`${successCount} ID(s) corrigé(s) avec succès`);
     }
     if (errorCount > 0) {
       toast.error(`${errorCount} erreur(s): ${errors.slice(0, 2).join(', ')}`);
@@ -797,7 +797,7 @@ export default function IdNormalizationAudit() {
     loadLogs();
     loadAllUserIds();
     loadNonStandardUsers();
-    toast.success('DonnÃ©es actualisÃ©es');
+    toast.success('Données actualisées');
   };
 
   const getRoleBadge = (role: string) => {
@@ -805,12 +805,12 @@ export default function IdNormalizationAudit() {
     const colors: Record<string, string> = {
       'vendor': 'bg-blue-500',
       'vendeur': 'bg-blue-500',
-      'client': 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+      'client': 'bg-green-500',
       'agent': 'bg-yellow-500',
       'driver': 'bg-purple-500',
       'chauffeur': 'bg-purple-500',
       'taxi': 'bg-indigo-500',
-      'livreur': 'bg-primary-orange-500',
+      'livreur': 'bg-teal-500',
       'bureau': 'bg-pink-500',
       'syndicat': 'bg-pink-500',
       'pdg': 'bg-red-500',
@@ -820,7 +820,7 @@ export default function IdNormalizationAudit() {
       'worker': 'bg-lime-500',
     };
     
-    // Trouver le label Ã  afficher
+    // Trouver le label à afficher
     const roleLabels: Record<string, string> = {
       'vendor': 'VND',
       'vendeur': 'VND',
@@ -898,7 +898,7 @@ export default function IdNormalizationAudit() {
             <div className="flex flex-wrap gap-2 mt-2">
               {VALID_PREFIXES.map(prefix => (
                 <Badge key={prefix} variant="secondary" className="font-mono">
-                  {prefix} â†’ {PREFIX_TO_ROLE[prefix] || prefix}
+                  {prefix} → {PREFIX_TO_ROLE[prefix] || prefix}
                 </Badge>
               ))}
             </div>
@@ -928,8 +928,8 @@ export default function IdNormalizationAudit() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-primary-orange-500" />
+              <div className="p-2 bg-green-500/10 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-green-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.standardFormatCount || 0}</p>
@@ -980,12 +980,12 @@ export default function IdNormalizationAudit() {
             </TabsTrigger>
             <TabsTrigger value="reorganize" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
               <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">RÃ©organiser</span>
-              <span className="sm:hidden">RÃ©org</span>
+              <span className="hidden sm:inline">Réorganiser</span>
+              <span className="sm:hidden">Réorg</span>
             </TabsTrigger>
             <TabsTrigger value="activity" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
               <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">ActivitÃ©</span>
+              <span className="hidden sm:inline">Activité</span>
               <span className="sm:hidden">Act</span>
             </TabsTrigger>
             <TabsTrigger value="wallet-audit" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
@@ -1048,8 +1048,8 @@ export default function IdNormalizationAudit() {
                 </div>
               ) : nonStandardUsers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <CheckCircle className="w-12 h-12 text-primary-orange-500 mb-4" />
-                  <h4 className="font-semibold text-primary-orange-700 dark:text-primary-orange-400">Parfait !</h4>
+                  <CheckCircle className="w-12 h-12 text-green-500 mb-4" />
+                  <h4 className="font-semibold text-green-700 dark:text-green-400">Parfait !</h4>
                   <p className="text-sm text-muted-foreground mt-1">
                     Tous les utilisateurs ont des IDs au format standard
                   </p>
@@ -1060,11 +1060,11 @@ export default function IdNormalizationAudit() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-32">ID Actuel</TableHead>
-                        <TableHead>ProblÃ¨me</TableHead>
+                        <TableHead>Problème</TableHead>
                         <TableHead>Utilisateur</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>RÃ´le</TableHead>
-                        <TableHead>Date crÃ©ation</TableHead>
+                        <TableHead>Rôle</TableHead>
+                        <TableHead>Date création</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1076,11 +1076,11 @@ export default function IdNormalizationAudit() {
                         
                         let problem = '';
                         if (!isValidPrefix && !hasCorrectLength) {
-                          problem = 'PrÃ©fixe invalide + longueur incorrecte';
+                          problem = 'Préfixe invalide + longueur incorrecte';
                         } else if (!isValidPrefix) {
-                          problem = `PrÃ©fixe "${prefix}" non reconnu`;
+                          problem = `Préfixe "${prefix}" non reconnu`;
                         } else if (!hasCorrectLength) {
-                          problem = 'Longueur incorrecte (< 7 caractÃ¨res)';
+                          problem = 'Longueur incorrecte (< 7 caractères)';
                         } else if (!ID_FORMAT_REGEX.test(item.custom_id)) {
                           problem = 'Format incorrect';
                         }
@@ -1099,7 +1099,7 @@ export default function IdNormalizationAudit() {
                                   onClick={() => handleCopyId(item.custom_id)}
                                 >
                                   {copiedId === item.custom_id ? (
-                                    <Check className="w-3 h-3 text-primary-orange-500" />
+                                    <Check className="w-3 h-3 text-green-500" />
                                   ) : (
                                     <Copy className="w-3 h-3" />
                                   )}
@@ -1119,7 +1119,7 @@ export default function IdNormalizationAudit() {
                             </TableCell>
                             <TableCell>
                               {item.profile?.role ? getRoleBadge(item.profile.role) : (
-                                <Badge variant="outline" className="text-gray-500">Non dÃ©fini</Badge>
+                                <Badge variant="outline" className="text-gray-500">Non défini</Badge>
                               )}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
@@ -1132,8 +1132,8 @@ export default function IdNormalizationAudit() {
                                   size="sm"
                                   onClick={() => handleCorrectId(item)}
                                   disabled={correctingId === item.id || !item.profile?.role}
-                                  className="gap-1 text-xs border-primary-orange-500 text-primary-orange-600 hover:bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 hover:text-primary-orange-700"
-                                  title={!item.profile?.role ? 'RÃ´le non dÃ©fini - impossible de corriger' : 'Corriger cet ID'}
+                                  className="gap-1 text-xs border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
+                                  title={!item.profile?.role ? 'Rôle non défini - impossible de corriger' : 'Corriger cet ID'}
                                 >
                                   {correctingId === item.id ? (
                                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -1150,7 +1150,7 @@ export default function IdNormalizationAudit() {
                                   }}
                                 >
                                   <Eye className="w-3 h-3 mr-1" />
-                                  DÃ©tails
+                                  Détails
                                 </Button>
                               </div>
                             </TableCell>
@@ -1209,13 +1209,13 @@ export default function IdNormalizationAudit() {
                 Rechercher & Suivre un ID
               </CardTitle>
               <CardDescription>
-                Entrez un ID au format standard pour vÃ©rifier son existence et son historique
+                Entrez un ID au format standard pour vérifier son existence et son historique
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="search-id">ID Ã  rechercher</Label>
+                  <Label htmlFor="search-id">ID à rechercher</Label>
                   <Input
                     id="search-id"
                     placeholder="Ex: VND0001, CLT0123, AGT0045..."
@@ -1254,19 +1254,19 @@ export default function IdNormalizationAudit() {
               {searchResult && (
                 <div className="mt-6">
                   {searchResult.found ? (
-                    <Card className="border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
+                    <Card className="border-green-500/50 bg-green-500/5">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 rounded-full">
-                              <CheckCircle className="w-6 h-6 text-primary-orange-500" />
+                            <div className="p-2 bg-green-500/20 rounded-full">
+                              <CheckCircle className="w-6 h-6 text-green-500" />
                             </div>
                             <div>
-                              <h4 className="font-semibold text-primary-orange-700 dark:text-primary-orange-400">
-                                ID TrouvÃ©
+                              <h4 className="font-semibold text-green-700 dark:text-green-400">
+                                ID Trouvé
                               </h4>
                               <div className="flex items-center gap-2 mt-1">
-                                <code className="text-lg font-bold bg-primary-orange-100 dark:bg-primary-orange-900/50 px-2 py-1 rounded">
+                                <code className="text-lg font-bold bg-green-100 dark:bg-green-900/50 px-2 py-1 rounded">
                                   {searchResult.id}
                                 </code>
                                 <Button
@@ -1276,7 +1276,7 @@ export default function IdNormalizationAudit() {
                                   onClick={() => handleCopyId(searchResult.id)}
                                 >
                                   {copiedId === searchResult.id ? (
-                                    <Check className="w-4 h-4 text-primary-orange-500" />
+                                    <Check className="w-4 h-4 text-green-500" />
                                   ) : (
                                     <Copy className="w-4 h-4" />
                                   )}
@@ -1302,7 +1302,7 @@ export default function IdNormalizationAudit() {
                           )}
                           {searchResult.created_at && (
                             <div>
-                              <p className="text-xs text-muted-foreground">Date crÃ©ation</p>
+                              <p className="text-xs text-muted-foreground">Date création</p>
                               <p className="font-medium">
                                 {format(new Date(searchResult.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
                               </p>
@@ -1330,8 +1330,8 @@ export default function IdNormalizationAudit() {
                                     <code className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-xs line-through">
                                       {log.original_id}
                                     </code>
-                                    <span>â†’</span>
-                                    <code className="bg-primary-orange-100 text-primary-orange-700 px-1.5 py-0.5 rounded text-xs font-bold">
+                                    <span>→</span>
+                                    <code className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-xs font-bold">
                                       {log.corrected_id}
                                     </code>
                                     {getReasonBadge(log.reason)}
@@ -1352,10 +1352,10 @@ export default function IdNormalizationAudit() {
                           </div>
                           <div>
                             <h4 className="font-semibold text-red-700 dark:text-red-400">
-                              ID Non TrouvÃ©
+                              ID Non Trouvé
                             </h4>
                             <p className="text-sm text-muted-foreground">
-                              L'ID <code className="font-bold">{searchResult.id}</code> n'existe pas dans le systÃ¨me
+                              L'ID <code className="font-bold">{searchResult.id}</code> n'existe pas dans le système
                             </p>
                           </div>
                         </div>
@@ -1369,7 +1369,7 @@ export default function IdNormalizationAudit() {
               {searchResult?.found && searchResult.profile && (
                 <Card className="mt-4 border-primary/20">
                   <CardContent className="p-4">
-                    <h5 className="font-semibold mb-2 text-sm">DÃ©tails du profil</h5>
+                    <h5 className="font-semibold mb-2 text-sm">Détails du profil</h5>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       {searchResult.profile.full_name && (
                         <div>
@@ -1393,16 +1393,16 @@ export default function IdNormalizationAudit() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Hash className="w-4 h-4" />
-                    IDs rÃ©cents ({allUserIds.length})
+                    IDs récents ({allUserIds.length})
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Derniers IDs enregistrÃ©s dans le systÃ¨me
+                    Derniers IDs enregistrés dans le système
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {allUserIds.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      Aucun ID enregistrÃ©
+                      Aucun ID enregistré
                     </p>
                   ) : (
                     <ScrollArea className="h-64">
@@ -1423,7 +1423,7 @@ export default function IdNormalizationAudit() {
                               </TableCell>
                               <TableCell>
                                 {isStandardFormat(item.custom_id) ? (
-                                  <Badge variant="outline" className="text-primary-orange-600 border-primary-orange-600">
+                                  <Badge variant="outline" className="text-green-600 border-green-600">
                                     Standard
                                   </Badge>
                                 ) : (
@@ -1479,10 +1479,10 @@ export default function IdNormalizationAudit() {
                   onValueChange={(v) => setFilters(f => ({ ...f, roleType: v }))}
                 >
                   <SelectTrigger className="w-full sm:w-40">
-                    <SelectValue placeholder="RÃ´le" />
+                    <SelectValue placeholder="Rôle" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tous les rÃ´les</SelectItem>
+                    <SelectItem value="all">Tous les rôles</SelectItem>
                     <SelectItem value="vendor">Vendeur (VND)</SelectItem>
                     <SelectItem value="client">Client (CLT)</SelectItem>
                     <SelectItem value="agent">Agent (AGT)</SelectItem>
@@ -1521,9 +1521,9 @@ export default function IdNormalizationAudit() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date</TableHead>
-                      <TableHead>RÃ´le</TableHead>
+                      <TableHead>Rôle</TableHead>
                       <TableHead>ID Original</TableHead>
-                      <TableHead>ID CorrigÃ©</TableHead>
+                      <TableHead>ID Corrigé</TableHead>
                       <TableHead>Raison</TableHead>
                       <TableHead>Provider</TableHead>
                     </TableRow>
@@ -1538,7 +1538,7 @@ export default function IdNormalizationAudit() {
                     ) : logs.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          Aucun log de normalisation trouvÃ©
+                          Aucun log de normalisation trouvé
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -1559,7 +1559,7 @@ export default function IdNormalizationAudit() {
                             </code>
                           </TableCell>
                           <TableCell>
-                            <code className="text-xs bg-primary-orange-100 text-primary-orange-700 px-2 py-1 rounded font-bold dark:bg-primary-orange-900/50 dark:text-primary-orange-400">
+                            <code className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-bold dark:bg-green-900/50 dark:text-green-400">
                               {log.corrected_id}
                             </code>
                           </TableCell>
@@ -1609,7 +1609,7 @@ export default function IdNormalizationAudit() {
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Tendances journaliÃ¨res */}
+            {/* Tendances journalières */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Tendances (7 derniers jours)</CardTitle>
@@ -1636,10 +1636,10 @@ export default function IdNormalizationAudit() {
               </CardContent>
             </Card>
 
-            {/* RÃ©partition par rÃ´le */}
+            {/* Répartition par rôle */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">RÃ©partition par rÃ´le</CardTitle>
+                <CardTitle className="text-lg">Répartition par rôle</CardTitle>
                 <CardDescription>Distribution des corrections</CardDescription>
               </CardHeader>
               <CardContent>
@@ -1667,11 +1667,11 @@ export default function IdNormalizationAudit() {
               </CardContent>
             </Card>
 
-            {/* RÃ©partition par raison */}
+            {/* Répartition par raison */}
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-lg">RÃ©partition par raison</CardTitle>
-                <CardDescription>Types de corrections effectuÃ©es</CardDescription>
+                <CardTitle className="text-lg">Répartition par raison</CardTitle>
+                <CardDescription>Types de corrections effectuées</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64">

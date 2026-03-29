@@ -1,5 +1,5 @@
 /**
- * Dialog de vÃ©rification des produits manquants avant validation d'achat
+ * Dialog de vérification des produits manquants avant validation d'achat
  */
 
 import { useState } from 'react';
@@ -107,7 +107,7 @@ export function MissingProductsVerificationDialog({
   const getReasonLabel = (reason: string) => {
     switch (reason) {
       case 'supplier_error': return 'Erreur fournisseur';
-      case 'shipping_loss': return 'Perte en expÃ©dition';
+      case 'shipping_loss': return 'Perte en expédition';
       case 'other': return 'Autre';
       default: return reason;
     }
@@ -138,16 +138,16 @@ export function MissingProductsVerificationDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Package className="h-5 w-5 text-primary" />
-            VÃ©rification des produits - {purchaseNumber}
+            Vérification des produits - {purchaseNumber}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Question 1: VÃ©rification */}
+          {/* Question 1: Vérification */}
           <Card className="border-2 border-primary/20">
             <CardContent className="p-4">
               <Label className="text-base font-semibold mb-3 block">
-                Avez-vous vÃ©rifiÃ© les produits reÃ§us de votre fournisseur ?
+                Avez-vous vérifié les produits reçus de votre fournisseur ?
               </Label>
               <RadioGroup
                 value={hasVerified || ''}
@@ -163,8 +163,8 @@ export function MissingProductsVerificationDialog({
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="yes" id="verified-yes" />
                   <Label htmlFor="verified-yes" className="flex items-center gap-2 cursor-pointer">
-                    <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
-                    Oui, j'ai vÃ©rifiÃ©
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    Oui, j'ai vérifié
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -184,7 +184,7 @@ export function MissingProductsVerificationDialog({
                 <p className="text-sm text-orange-800 dark:text-orange-200 flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span>
-                    Veuillez d'abord vÃ©rifier tous les produits reÃ§us avant de valider cet achat. 
+                    Veuillez d'abord vérifier tous les produits reçus avant de valider cet achat. 
                     Cela vous permettra de signaler tout produit manquant.
                   </span>
                 </p>
@@ -207,7 +207,7 @@ export function MissingProductsVerificationDialog({
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="no" id="missing-no" />
                     <Label htmlFor="missing-no" className="flex items-center gap-2 cursor-pointer">
-                      <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
                       Non, tout est complet
                     </Label>
                   </div>
@@ -235,13 +235,13 @@ export function MissingProductsVerificationDialog({
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label className="text-xs">Fournisseur concernÃ© *</Label>
+                      <Label className="text-xs">Fournisseur concerné *</Label>
                       <Select
                         value={currentEntry.supplier_id}
                         onValueChange={(v) => setCurrentEntry({ ...currentEntry, supplier_id: v })}
                       >
                         <SelectTrigger className="h-9">
-                          <SelectValue placeholder="SÃ©lectionner..." />
+                          <SelectValue placeholder="Sélectionner..." />
                         </SelectTrigger>
                         <SelectContent>
                           {suppliers.map((s) => (
@@ -257,13 +257,13 @@ export function MissingProductsVerificationDialog({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs">CatÃ©gorie du produit *</Label>
+                      <Label className="text-xs">Catégorie du produit *</Label>
                       <Select
                         value={currentEntry.category_id}
                         onValueChange={(v) => setCurrentEntry({ ...currentEntry, category_id: v })}
                       >
                         <SelectTrigger className="h-9">
-                          <SelectValue placeholder="SÃ©lectionner..." />
+                          <SelectValue placeholder="Sélectionner..." />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((c) => (
@@ -314,7 +314,7 @@ export function MissingProductsVerificationDialog({
                           <SelectItem value="shipping_loss">
                             <span className="flex items-center gap-2">
                               <Truck className="h-3 w-3" />
-                              Perte en expÃ©dition
+                              Perte en expédition
                             </span>
                           </SelectItem>
                           <SelectItem value="other">Autre</SelectItem>
@@ -328,7 +328,7 @@ export function MissingProductsVerificationDialog({
                     <Textarea
                       value={currentEntry.notes}
                       onChange={(e) => setCurrentEntry({ ...currentEntry, notes: e.target.value })}
-                      placeholder="DÃ©tails supplÃ©mentaires..."
+                      placeholder="Détails supplémentaires..."
                       rows={2}
                       className="text-sm"
                     />
@@ -347,11 +347,11 @@ export function MissingProductsVerificationDialog({
                 </CardContent>
               </Card>
 
-              {/* Liste des produits manquants signalÃ©s */}
+              {/* Liste des produits manquants signalés */}
               {missingEntries.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">
-                    Produits manquants signalÃ©s ({missingEntries.length})
+                    Produits manquants signalés ({missingEntries.length})
                   </Label>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {missingEntries.map((entry, index) => (
@@ -362,7 +362,7 @@ export function MissingProductsVerificationDialog({
                               <Badge variant="outline" className="text-xs">
                                 {entry.category_name}
                               </Badge>
-                              <span className="text-xs text-muted-foreground">â€¢</span>
+                              <span className="text-xs text-muted-foreground">•</span>
                               <span className="text-sm font-medium text-destructive">
                                 {entry.missing_count} manquant(s)
                               </span>
@@ -377,7 +377,7 @@ export function MissingProductsVerificationDialog({
                             onClick={() => handleRemoveEntry(index)}
                             className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                           >
-                            Ã—
+                            ×
                           </Button>
                         </CardContent>
                       </Card>
@@ -388,13 +388,13 @@ export function MissingProductsVerificationDialog({
             </div>
           )}
 
-          {/* RÃ©sumÃ© avant confirmation */}
+          {/* Résumé avant confirmation */}
           {hasVerified === 'yes' && hasMissing === 'no' && (
-            <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 border-primary-orange-200 dark:border-primary-orange-800">
+            <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
               <CardContent className="p-4">
-                <p className="text-sm text-primary-orange-800 dark:text-primary-orange-200 flex items-center gap-2">
+                <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4" />
-                  <span>Parfait ! Tous les produits ont Ã©tÃ© vÃ©rifiÃ©s et sont complets.</span>
+                  <span>Parfait ! Tous les produits ont été vérifiés et sont complets.</span>
                 </p>
               </CardContent>
             </Card>
@@ -411,7 +411,7 @@ export function MissingProductsVerificationDialog({
           <Button
             onClick={handleConfirm}
             disabled={!canProceed}
-            className="bg-primary-orange-600 hover:bg-primary-orange-700 gap-2"
+            className="bg-green-600 hover:bg-green-700 gap-2"
           >
             <CheckCircle2 className="h-4 w-4" />
             Continuer la validation

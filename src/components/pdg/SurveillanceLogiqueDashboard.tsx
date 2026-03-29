@@ -91,15 +91,15 @@ export default function SurveillanceLogiqueDashboard() {
     return () => clearInterval(interval);
   }, [autoRefresh, loadAnomalies]);
 
-  // VÃ©rifier les permissions
+  // Vérifier les permissions
   if (!isPDG) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-red-50">
         <Alert variant="destructive" className="max-w-md">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>AccÃ¨s RefusÃ©</AlertTitle>
+          <AlertTitle>Accès Refusé</AlertTitle>
           <AlertDescription>
-            Seul le PDG peut accÃ©der au systÃ¨me de surveillance logique.
+            Seul le PDG peut accéder au système de surveillance logique.
           </AlertDescription>
         </Alert>
       </div>
@@ -113,11 +113,11 @@ export default function SurveillanceLogiqueDashboard() {
         anomalyId,
         'AUTO',
         { corrected: true },
-        'Auto-correction appliquÃ©e'
+        'Auto-correction appliquée'
       );
 
       if (correctionId) {
-        toast.success('âœ… Correction auto appliquÃ©e');
+        toast.success('✅ Correction auto appliquée');
         setShowCorrectionModal(false);
         setSelectedAnomaly(null);
       }
@@ -142,7 +142,7 @@ export default function SurveillanceLogiqueDashboard() {
       );
 
       if (correctionId) {
-        toast.success('âœ… Correction manuelle appliquÃ©e');
+        toast.success('✅ Correction manuelle appliquée');
         setShowCorrectionModal(false);
         setSelectedAnomaly(null);
         setCorrectionReason('');
@@ -171,7 +171,7 @@ export default function SurveillanceLogiqueDashboard() {
       link.download = `surveillance-analysis-${new Date().toISOString()}.json`;
       link.click();
 
-      toast.success('ðŸ“Š Analyse exportÃ©e');
+      toast.success('📊 Analyse exportée');
     } catch (error) {
       toast.error('Erreur export');
     }
@@ -186,7 +186,7 @@ export default function SurveillanceLogiqueDashboard() {
       case 'MEDIUM':
         return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       case 'LOW':
-        return 'bg-primary-orange-100 text-primary-orange-800 border-primary-orange-300';
+        return 'bg-green-100 text-green-800 border-green-300';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -209,15 +209,15 @@ export default function SurveillanceLogiqueDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
-            ðŸŽ¯ Surveillance Logique Globale
+            🎯 Surveillance Logique Globale
           </h1>
           <p className="text-slate-600 mt-1">
-            Monitoring temps rÃ©el de 100% des fonctionnalitÃ©s du systÃ¨me
+            Monitoring temps réel de 100% des fonctionnalités du système
           </p>
         </div>
         <div className="flex items-center gap-3">
           {isConnected && (
-            <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 flex items-center gap-1">
+            <Badge className="bg-green-500 flex items-center gap-1">
               <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
               En ligne
             </Badge>
@@ -236,19 +236,19 @@ export default function SurveillanceLogiqueDashboard() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               {systemHealth.overall_status === 'OK' ? (
-                <CheckCircle2 className="w-5 h-5 text-primary-orange-600" />
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
               ) : systemHealth.overall_status === 'CRITICAL' ? (
                 <AlertTriangle className="w-5 h-5 text-red-600" />
               ) : (
                 <AlertCircle className="w-5 h-5 text-orange-600" />
               )}
-              SantÃ© du SystÃ¨me
+              Santé du Système
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-5 gap-4">
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-600 font-medium">RÃ¨gles actives</p>
+                <p className="text-sm text-blue-600 font-medium">Règles actives</p>
                 <p className="text-2xl font-bold text-blue-900">
                   {systemHealth.total_rules}
                 </p>
@@ -260,20 +260,20 @@ export default function SurveillanceLogiqueDashboard() {
                 </p>
               </div>
               <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                <p className="text-sm text-red-600 font-medium">ðŸš¨ CRITIQUES</p>
+                <p className="text-sm text-red-600 font-medium">🚨 CRITIQUES</p>
                 <p className="text-2xl font-bold text-red-900">
                   {systemHealth.critical_anomalies}
                 </p>
               </div>
               <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                <p className="text-sm text-yellow-600 font-medium">24h derniÃ¨res</p>
+                <p className="text-sm text-yellow-600 font-medium">24h dernières</p>
                 <p className="text-2xl font-bold text-yellow-900">
                   {systemHealth.recent_anomalies_24h}
                 </p>
               </div>
-              <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
-                <p className="text-sm text-primary-orange-600 font-medium">Taux rÃ©solution</p>
-                <p className="text-2xl font-bold text-primary-orange-900">
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-green-600 font-medium">Taux résolution</p>
+                <p className="text-2xl font-bold text-green-900">
                   {systemHealth.resolution_rate.toFixed(1)}%
                 </p>
               </div>
@@ -284,14 +284,14 @@ export default function SurveillanceLogiqueDashboard() {
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3">
-        {/* Bouton Test SystÃ¨me - Ultra Professionnel */}
+        {/* Bouton Test Système - Ultra Professionnel */}
         <Button
           onClick={() => setShowSystemTest(true)}
           className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg shadow-indigo-500/40 border-0"
         >
           <Shield className="w-4 h-4 mr-2" />
           <Play className="w-3 h-3 mr-1" />
-          Tester le SystÃ¨me
+          Tester le Système
         </Button>
 
         <Button
@@ -300,7 +300,7 @@ export default function SurveillanceLogiqueDashboard() {
           className="bg-blue-600 hover:bg-blue-700"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
-          {loading ? 'DÃ©tection...' : 'DÃ©tecter anomalies'}
+          {loading ? 'Détection...' : 'Détecter anomalies'}
         </Button>
         <Button
           onClick={exportAnalysis}
@@ -313,14 +313,14 @@ export default function SurveillanceLogiqueDashboard() {
         <Button
           onClick={() => setAutoRefresh(!autoRefresh)}
           variant={autoRefresh ? 'default' : 'outline'}
-          className={autoRefresh ? 'bg-primary-orange-600 hover:bg-primary-orange-700' : ''}
+          className={autoRefresh ? 'bg-green-600 hover:bg-green-700' : ''}
         >
           <Zap className="w-4 h-4 mr-2" />
           {autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
         </Button>
       </div>
 
-      {/* Modal Test SystÃ¨me */}
+      {/* Modal Test Système */}
       <SystemTestDemo open={showSystemTest} onOpenChange={setShowSystemTest} />
 
       {/* Tabs */}
@@ -336,7 +336,7 @@ export default function SurveillanceLogiqueDashboard() {
           </TabsTrigger>
           <TabsTrigger value="details" className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4" />
-            DÃ©tails ({stats.unresolved})
+            Détails ({stats.unresolved})
           </TabsTrigger>
           <TabsTrigger value="audit" className="flex items-center gap-2">
             <LogOut className="w-4 h-4" />
@@ -383,12 +383,12 @@ export default function SurveillanceLogiqueDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
+            <Card className="bg-green-50 border-green-200">
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <CheckCircle2 className="w-8 h-8 text-primary-orange-600 mx-auto mb-2" />
-                  <p className="text-sm text-primary-orange-600 font-medium">RESOLUES</p>
-                  <p className="text-3xl font-bold text-primary-orange-900">{stats.resolved}</p>
+                  <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                  <p className="text-sm text-green-600 font-medium">RESOLUES</p>
+                  <p className="text-3xl font-bold text-green-900">{stats.resolved}</p>
                 </div>
               </CardContent>
             </Card>
@@ -397,10 +397,10 @@ export default function SurveillanceLogiqueDashboard() {
           {stats.critical > 0 && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Anomalies critiques dÃ©tectÃ©es!</AlertTitle>
+              <AlertTitle>Anomalies critiques détectées!</AlertTitle>
               <AlertDescription>
-                {stats.critical} anomalie(s) critique(s) nÃ©cessitent une attention
-                immÃ©diate.
+                {stats.critical} anomalie(s) critique(s) nécessitent une attention
+                immédiate.
               </AlertDescription>
             </Alert>
           )}
@@ -446,7 +446,7 @@ export default function SurveillanceLogiqueDashboard() {
                           </Button>
                         )}
                         {anomaly.resolved_at && (
-                          <Badge className="bg-primary-orange-600">âœ“ RÃ©solue</Badge>
+                          <Badge className="bg-green-600">✓ Résolue</Badge>
                         )}
                       </div>
                     </div>
@@ -457,7 +457,7 @@ export default function SurveillanceLogiqueDashboard() {
           ))}
         </TabsContent>
 
-        {/* DÃ©tails */}
+        {/* Détails */}
         <TabsContent value="details" className="space-y-4">
           {anomalies
             .filter((a) => !a.resolved_at)
@@ -489,7 +489,7 @@ export default function SurveillanceLogiqueDashboard() {
                     </div>
                     <div className="p-3 bg-red-50 rounded-lg border border-red-200">
                       <p className="text-sm font-medium text-red-900 mb-2">
-                        Valeur rÃ©elle
+                        Valeur réelle
                       </p>
                       <pre className="text-xs text-red-800 overflow-auto bg-red-100 p-2 rounded">
                         {JSON.stringify(anomaly.actual_value, null, 2)}
@@ -502,7 +502,7 @@ export default function SurveillanceLogiqueDashboard() {
                       onClick={() =>
                         handleApplyAutoCorrection(anomaly.id)
                       }
-                      className="bg-primary-orange-600 hover:bg-primary-orange-700"
+                      className="bg-green-600 hover:bg-green-700"
                       disabled={isApplying}
                     >
                       <Zap className="w-4 h-4 mr-2" />
@@ -519,7 +519,7 @@ export default function SurveillanceLogiqueDashboard() {
                       }}
                       variant="outline"
                     >
-                      âš™ï¸ Correction manuelle
+                      ⚙️ Correction manuelle
                     </Button>
                   </div>
                 </CardContent>
@@ -536,7 +536,7 @@ export default function SurveillanceLogiqueDashboard() {
             <CardContent>
               <div className="text-center text-slate-600 py-8">
                 <LogOut className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Historique audit sera affichÃ© ici</p>
+                <p>Historique audit sera affiché ici</p>
               </div>
             </CardContent>
           </Card>
@@ -559,7 +559,7 @@ export default function SurveillanceLogiqueDashboard() {
               <Input
                 value={correctionReason}
                 onChange={(e) => setCorrectionReason(e.target.value)}
-                placeholder="Expliquez pourquoi cette correction est nÃ©cessaire"
+                placeholder="Expliquez pourquoi cette correction est nécessaire"
                 className="w-full"
               />
             </div>

@@ -93,7 +93,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
 
   const getPaymentMethodLabel = (method: string) => {
     const labels: Record<string, string> = {
-      cash: 'EspÃ¨ces',
+      cash: 'Espèces',
       wallet: 'Wallet',
       mobile_money: 'Mobile Money',
       card: 'Carte Bancaire'
@@ -104,9 +104,9 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
       in_progress: { label: 'En cours', variant: 'default' },
-      paid: { label: 'PayÃ©e', variant: 'secondary' },
+      paid: { label: 'Payée', variant: 'secondary' },
       overdue: { label: 'En retard', variant: 'destructive' },
-      cancelled: { label: 'AnnulÃ©e', variant: 'outline' }
+      cancelled: { label: 'Annulée', variant: 'outline' }
     };
 
     const config = variants[status] || variants.in_progress;
@@ -117,9 +117,9 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="pb-2">
-          <DialogTitle className="text-base sm:text-lg">DÃ©tails de la dette</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg">Détails de la dette</DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
-            Informations complÃ¨tes sur la dette et l'historique des paiements
+            Informations complètes sur la dette et l'historique des paiements
           </DialogDescription>
         </DialogHeader>
 
@@ -133,7 +133,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
                 <p className="font-medium text-sm">{debt.customer_name}</p>
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">TÃ©lÃ©phone:</span>
+                <span className="text-xs text-muted-foreground">Téléphone:</span>
                 <p className="font-medium text-sm">{debt.customer_phone}</p>
               </div>
               <div>
@@ -141,7 +141,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
                 <div className="mt-1">{getStatusBadge(debt.status)}</div>
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">Date de crÃ©ation:</span>
+                <span className="text-xs text-muted-foreground">Date de création:</span>
                 <p className="font-medium text-xs sm:text-sm">{formatDate(debt.created_at)}</p>
               </div>
             </div>
@@ -153,17 +153,17 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
             )}
           </div>
 
-          {/* Informations financiÃ¨res */}
+          {/* Informations financières */}
           <div className="border rounded-lg p-3 sm:p-4 space-y-3">
-            <h3 className="font-semibold text-sm sm:text-lg mb-2 sm:mb-3">Informations FinanciÃ¨res</h3>
+            <h3 className="font-semibold text-sm sm:text-lg mb-2 sm:mb-3">Informations Financières</h3>
             <div className="grid grid-cols-2 gap-2 sm:gap-4">
               <div className="text-center p-2 sm:p-3 bg-muted rounded-lg">
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant Total</p>
                 <p className="text-sm sm:text-lg font-bold break-all">{formatAmount(debt.total_amount)}</p>
               </div>
-              <div className="text-center p-2 sm:p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/30 rounded-lg">
-                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant PayÃ©</p>
-                <p className="text-sm sm:text-lg font-bold text-primary-orange-600 dark:text-primary-orange-400 break-all">{formatAmount(debt.paid_amount)}</p>
+              <div className="text-center p-2 sm:p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant Payé</p>
+                <p className="text-sm sm:text-lg font-bold text-green-600 dark:text-green-400 break-all">{formatAmount(debt.paid_amount)}</p>
               </div>
               <div className="text-center p-2 sm:p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Restant</p>
@@ -185,7 +185,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 transition-all duration-300"
+                  className="h-full bg-green-500 transition-all duration-300"
                   style={{ width: `${(debt.paid_amount / debt.total_amount) * 100}%` }}
                 />
               </div>
@@ -210,7 +210,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
               </div>
             ) : payments.length === 0 ? (
               <div className="text-center py-4 text-muted-foreground text-sm">
-                Aucun paiement enregistrÃ©
+                Aucun paiement enregistré
               </div>
             ) : (
               <div className="space-y-2">
@@ -219,7 +219,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-muted-foreground">{formatDate(payment.created_at)}</p>
-                        <p className="font-semibold text-sm text-primary-orange-600 mt-0.5">
+                        <p className="font-semibold text-sm text-green-600 mt-0.5">
                           {formatAmount(payment.amount)}
                         </p>
                         {payment.comment && (

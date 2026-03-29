@@ -33,21 +33,21 @@ const PAYMENT_METHODS = [
   { 
     id: 'OM' as PaymentMethod, 
     name: 'Orange Money', 
-    icon: 'ðŸŠ',
+    icon: '🍊',
     color: 'border-orange-500 bg-orange-50 dark:bg-orange-950/30',
     activeColor: 'ring-2 ring-orange-500 border-orange-500'
   },
   { 
     id: 'MOMO' as PaymentMethod, 
     name: 'MTN Mobile Money', 
-    icon: 'ðŸ’›',
+    icon: '💛',
     color: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
     activeColor: 'ring-2 ring-yellow-500 border-yellow-500'
   },
   { 
     id: 'KULU' as PaymentMethod, 
     name: 'Kulu', 
-    icon: 'ðŸ’³',
+    icon: '💳',
     color: 'border-blue-500 bg-blue-50 dark:bg-blue-950/30',
     activeColor: 'ring-2 ring-blue-500 border-blue-500'
   },
@@ -89,7 +89,7 @@ export function DjomyPaymentForm({
     e.preventDefault();
 
     if (!validatePhone(phoneNumber)) {
-      toast.error('NumÃ©ro de tÃ©lÃ©phone invalide');
+      toast.error('Numéro de téléphone invalide');
       return;
     }
 
@@ -116,11 +116,11 @@ export function DjomyPaymentForm({
       if (data?.success) {
         setStatus({
           status: 'success',
-          message: 'Paiement initiÃ© ! Validez sur votre tÃ©lÃ©phone.',
+          message: 'Paiement initié ! Validez sur votre téléphone.',
           transactionId: data.transactionId,
         });
         
-        toast.success('Paiement initiÃ© avec succÃ¨s');
+        toast.success('Paiement initié avec succès');
         onSuccess?.(data.transactionId);
       } else {
         throw new Error(data?.error || 'Erreur inconnue');
@@ -143,29 +143,29 @@ export function DjomyPaymentForm({
       <Card className={cn('max-w-md mx-auto', className)}>
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-primary-orange-100 dark:bg-primary-orange-900/30 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-8 h-8 text-primary-orange-600 dark:text-primary-orange-400" />
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-primary-orange-600 dark:text-primary-orange-400">
-                Paiement initiÃ© !
+              <h3 className="text-lg font-semibold text-green-600 dark:text-green-400">
+                Paiement initié !
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Veuillez valider le paiement sur votre tÃ©lÃ©phone
+                Veuillez valider le paiement sur votre téléphone
               </p>
             </div>
             <div className="bg-muted rounded-lg p-4 space-y-2">
               <p className="text-sm"><strong>Montant :</strong> {formatAmount(amount)}</p>
-              <p className="text-sm"><strong>MÃ©thode :</strong> {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}</p>
+              <p className="text-sm"><strong>Méthode :</strong> {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}</p>
               {status.transactionId && (
                 <p className="text-xs text-muted-foreground font-mono">
-                  RÃ©f: {status.transactionId.slice(0, 8)}...
+                  Réf: {status.transactionId.slice(0, 8)}...
                 </p>
               )}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <AlertCircle className="w-4 h-4" />
-              <span>Vous recevrez une notification une fois le paiement confirmÃ©</span>
+              <span>Vous recevrez une notification une fois le paiement confirmé</span>
             </div>
           </div>
         </CardContent>
@@ -183,14 +183,14 @@ export function DjomyPaymentForm({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">
-                Ã‰chec du paiement
+                Échec du paiement
               </h3>
               <p className="text-sm text-muted-foreground mt-1">
                 {status.message}
               </p>
             </div>
             <Button onClick={() => setStatus({ status: 'idle' })} variant="outline" className="w-full">
-              RÃ©essayer
+              Réessayer
             </Button>
           </div>
         </CardContent>
@@ -204,7 +204,7 @@ export function DjomyPaymentForm({
         <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
           <CreditCard className="w-6 h-6 text-primary" />
         </div>
-        <CardTitle>Paiement sÃ©curisÃ©</CardTitle>
+        <CardTitle>Paiement sécurisé</CardTitle>
         <CardDescription>
           Payez {formatAmount(amount)} via Mobile Money
         </CardDescription>
@@ -214,7 +214,7 @@ export function DjomyPaymentForm({
         <CardContent className="space-y-6">
           {/* Payment Method Selection */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">MÃ©thode de paiement</Label>
+            <Label className="text-sm font-medium">Méthode de paiement</Label>
             <RadioGroup
               value={paymentMethod}
               onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
@@ -247,7 +247,7 @@ export function DjomyPaymentForm({
           <div className="space-y-2">
             <Label htmlFor="phone" className="text-sm font-medium">
               <Smartphone className="w-4 h-4 inline-block mr-1" />
-              NumÃ©ro de tÃ©lÃ©phone
+              Numéro de téléphone
             </Label>
             <Input
               id="phone"
@@ -259,7 +259,7 @@ export function DjomyPaymentForm({
               required
             />
             <p className="text-xs text-muted-foreground">
-              Le numÃ©ro associÃ© Ã  votre compte {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}
+              Le numéro associé à votre compte {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}
             </p>
           </div>
 
@@ -321,7 +321,7 @@ export function DjomyPaymentForm({
           )}
 
           <p className="text-xs text-center text-muted-foreground">
-            ðŸ”’ Paiement sÃ©curisÃ© via ChapChapPay - 224Solutions
+            🔒 Paiement sécurisé via ChapChapPay - 224Solutions
           </p>
         </CardFooter>
       </form>

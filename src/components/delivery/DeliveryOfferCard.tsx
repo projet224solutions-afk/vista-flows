@@ -1,8 +1,8 @@
 /**
  * CARTE D'OFFRE DE LIVRAISON
- * Affiche tous les dÃ©tails AVANT acceptation par le livreur
- * Adresse client cachÃ©e pour sÃ©curitÃ©
- * Prix basÃ© sur la configuration du vendeur
+ * Affiche tous les détails AVANT acceptation par le livreur
+ * Adresse client cachée pour sécurité
+ * Prix basé sur la configuration du vendeur
  */
 
 import { useState, useEffect } from 'react';
@@ -44,7 +44,7 @@ export interface DeliveryOffer {
   packageDescription?: string;
   estimatedTime: number; // minutes
   expiresAt: string;
-  // Nouveaux champs pour le dÃ©tail du prix
+  // Nouveaux champs pour le détail du prix
   basePrice?: number;
   pricePerKm?: number;
   distancePrice?: number;
@@ -100,7 +100,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
   const driverEarning = Math.round(offer.estimatedEarnings * 0.985);
 
   return (
-    <Card className="border-2 border-orange-500 shadow-lg bg-gradient-to-br from-orange-50 to-primary-orange-50 dark:from-orange-950/20 dark:to-primary-orange-950/20">
+    <Card className="border-2 border-orange-500 shadow-lg bg-gradient-to-br from-orange-50 to-green-50 dark:from-orange-950/20 dark:to-green-950/20">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -143,15 +143,15 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
         <div className="grid grid-cols-3 gap-2">
           <div className="text-center p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
             <MapPin className="h-4 w-4 mx-auto text-orange-600 mb-1" />
-            <p className="text-xs text-muted-foreground">Vous â†’ Vendeur</p>
+            <p className="text-xs text-muted-foreground">Vous → Vendeur</p>
             <p className="font-bold text-orange-700 dark:text-orange-300">
               {offer.distanceToVendor.toFixed(1)} km
             </p>
           </div>
-          <div className="text-center p-2 bg-primary-orange-100 dark:bg-primary-orange-900/30 rounded-lg">
-            <Navigation className="h-4 w-4 mx-auto text-primary-orange-600 mb-1" />
-            <p className="text-xs text-muted-foreground">Vendeur â†’ Client</p>
-            <p className="font-bold text-primary-orange-700 dark:text-primary-orange-300">
+          <div className="text-center p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+            <Navigation className="h-4 w-4 mx-auto text-green-600 mb-1" />
+            <p className="text-xs text-muted-foreground">Vendeur → Client</p>
+            <p className="font-bold text-green-700 dark:text-green-300">
               {offer.distanceVendorToClient.toFixed(1)} km
             </p>
           </div>
@@ -164,11 +164,11 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
           </div>
         </div>
 
-        {/* DÃ©tail du prix - Configuration vendeur */}
-        <div className="p-3 bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/30 dark:to-primary-orange-950/30 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
+        {/* Détail du prix - Configuration vendeur */}
+        <div className="p-3 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
           <div className="flex items-center gap-2 mb-2">
-            <Calculator className="h-4 w-4 text-primary-orange-600" />
-            <span className="text-sm font-medium text-primary-orange-800 dark:text-primary-orange-300">
+            <Calculator className="h-4 w-4 text-green-600" />
+            <span className="text-sm font-medium text-green-800 dark:text-green-300">
               Tarification vendeur
             </span>
           </div>
@@ -181,25 +181,25 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
-                  Distance ({offer.distanceVendorToClient.toFixed(1)} km Ã— {offer.pricePerKm?.toLocaleString() || '1 000'} GNF/km)
+                  Distance ({offer.distanceVendorToClient.toFixed(1)} km × {offer.pricePerKm?.toLocaleString() || '1 000'} GNF/km)
                 </span>
                 <span className="font-medium">{formatCurrency(offer.distancePrice)}</span>
               </div>
-              <div className="flex justify-between pt-1 border-t border-primary-orange-200 dark:border-primary-orange-700">
+              <div className="flex justify-between pt-1 border-t border-green-200 dark:border-green-700">
                 <span className="font-medium">Total livraison</span>
-                <span className="font-bold text-primary-orange-700 dark:text-primary-orange-400">{formatCurrency(offer.estimatedEarnings)}</span>
+                <span className="font-bold text-green-700 dark:text-green-400">{formatCurrency(offer.estimatedEarnings)}</span>
               </div>
             </div>
           ) : (
             <div className="text-center">
-              <p className="text-xs text-muted-foreground">Prix calculÃ© par le vendeur</p>
-              <p className="font-bold text-xl text-primary-orange-700 dark:text-primary-orange-400">{formatCurrency(offer.estimatedEarnings)}</p>
+              <p className="text-xs text-muted-foreground">Prix calculé par le vendeur</p>
+              <p className="font-bold text-xl text-green-700 dark:text-green-400">{formatCurrency(offer.estimatedEarnings)}</p>
             </div>
           )}
         </div>
 
         {/* Vos gains */}
-        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-lg text-white">
+        <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg text-white">
           <div className="flex items-center gap-2">
             <DollarSign className="h-6 w-6" />
             <div>
@@ -211,15 +211,15 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
             variant="secondary" 
             className={offer.paymentMethod === 'cod' 
               ? 'bg-yellow-100 text-yellow-800' 
-              : 'bg-primary-orange-100 text-primary-orange-800'
+              : 'bg-green-100 text-green-800'
             }
           >
             <CreditCard className="h-3 w-3 mr-1" />
-            {offer.paymentMethod === 'cod' ? 'Paiement Ã  la livraison' : 'PrÃ©payÃ©'}
+            {offer.paymentMethod === 'cod' ? 'Paiement à la livraison' : 'Prépayé'}
           </Badge>
         </div>
 
-        {/* DÃ©tails colis */}
+        {/* Détails colis */}
         <div className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
           <Package className="h-5 w-5 text-muted-foreground" />
           <div>
@@ -234,9 +234,9 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
           </Badge>
         </div>
 
-        {/* Note sÃ©curitÃ© */}
+        {/* Note sécurité */}
         <p className="text-xs text-center text-muted-foreground italic">
-          ðŸ”’ L'adresse du client sera rÃ©vÃ©lÃ©e aprÃ¨s acceptation
+          🔒 L'adresse du client sera révélée après acceptation
         </p>
 
         {/* Boutons */}
@@ -257,7 +257,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
             )}
           </Button>
           <Button
-            className="bg-primary-blue-600 hover:bg-primary-blue-700 shadow-lg shadow-primary-orange-600/40"
+            className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
             onClick={handleAccept}
             disabled={loading !== null || timeLeft === 0}
           >

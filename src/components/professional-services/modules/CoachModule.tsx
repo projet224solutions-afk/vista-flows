@@ -43,7 +43,7 @@ interface Client {
   email: string;
   age: number;
   goal: string;
-  level: 'dÃ©butant' | 'intermÃ©diaire' | 'avancÃ©';
+  level: 'débutant' | 'intermédiaire' | 'avancé';
   program: string;
   sessionsCompleted: number;
   totalSessions: number;
@@ -58,7 +58,7 @@ interface Program {
   description: string;
   duration: string;
   sessionsPerWeek: number;
-  level: 'dÃ©butant' | 'intermÃ©diaire' | 'avancÃ©';
+  level: 'débutant' | 'intermédiaire' | 'avancé';
   price: number;
   clientsEnrolled: number;
   exercises: string[];
@@ -73,7 +73,7 @@ interface Session {
   time: string;
   duration: number;
   location: string;
-  status: 'planifiÃ©e' | 'en_cours' | 'terminÃ©e' | 'annulÃ©e';
+  status: 'planifiée' | 'en_cours' | 'terminée' | 'annulée';
   notes?: string;
 }
 
@@ -83,7 +83,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showNewProgramDialog, setShowNewProgramDialog] = useState(false);
 
-  // DonnÃ©es simulÃ©es
+  // Données simulées
   const [clients] = useState<Client[]>([
     {
       id: '1',
@@ -92,7 +92,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       email: 'mamadou@email.com',
       age: 28,
       goal: 'Prise de masse',
-      level: 'intermÃ©diaire',
+      level: 'intermédiaire',
       program: 'Musculation intensive',
       sessionsCompleted: 12,
       totalSessions: 24,
@@ -107,7 +107,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       email: 'fatou@email.com',
       age: 32,
       goal: 'Perte de poids',
-      level: 'dÃ©butant',
+      level: 'débutant',
       program: 'Cardio & Fitness',
       sessionsCompleted: 8,
       totalSessions: 16,
@@ -121,9 +121,9 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       phone: '+224 622 00 00 00',
       email: 'ibrahim@email.com',
       age: 25,
-      goal: 'PrÃ©paration compÃ©tition',
-      level: 'avancÃ©',
-      program: 'Performance athlÃ©tique',
+      goal: 'Préparation compétition',
+      level: 'avancé',
+      program: 'Performance athlétique',
       sessionsCompleted: 20,
       totalSessions: 30,
       progress: 67,
@@ -135,13 +135,13 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
     {
       id: '1',
       name: 'Musculation intensive',
-      description: 'Programme pour dÃ©velopper la masse musculaire',
+      description: 'Programme pour développer la masse musculaire',
       duration: '3 mois',
       sessionsPerWeek: 4,
-      level: 'intermÃ©diaire',
+      level: 'intermédiaire',
       price: 500000,
       clientsEnrolled: 5,
-      exercises: ['Squats', 'DÃ©veloppÃ© couchÃ©', 'SoulevÃ© de terre', 'Rowing']
+      exercises: ['Squats', 'Développé couché', 'Soulevé de terre', 'Rowing']
     },
     {
       id: '2',
@@ -149,21 +149,21 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       description: 'Programme de remise en forme et perte de poids',
       duration: '2 mois',
       sessionsPerWeek: 3,
-      level: 'dÃ©butant',
+      level: 'débutant',
       price: 400000,
       clientsEnrolled: 8,
-      exercises: ['Course', 'HIIT', 'Corde Ã  sauter', 'Burpees']
+      exercises: ['Course', 'HIIT', 'Corde à sauter', 'Burpees']
     },
     {
       id: '3',
-      name: 'Performance athlÃ©tique',
-      description: 'PrÃ©paration pour compÃ©titions sportives',
+      name: 'Performance athlétique',
+      description: 'Préparation pour compétitions sportives',
       duration: '4 mois',
       sessionsPerWeek: 5,
-      level: 'avancÃ©',
+      level: 'avancé',
       price: 800000,
       clientsEnrolled: 3,
-      exercises: ['Sprints', 'PliomÃ©trie', 'Force explosive', 'Endurance']
+      exercises: ['Sprints', 'Pliométrie', 'Force explosive', 'Endurance']
     }
   ]);
 
@@ -177,7 +177,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       time: '08:00',
       duration: 90,
       location: 'Salle de sport Kaloum',
-      status: 'planifiÃ©e'
+      status: 'planifiée'
     },
     {
       id: '2',
@@ -188,60 +188,60 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       time: '10:00',
       duration: 60,
       location: 'Parc Sandervalia',
-      status: 'planifiÃ©e'
+      status: 'planifiée'
     },
     {
       id: '3',
       clientId: '3',
       clientName: 'Ibrahim Camara',
-      programName: 'Performance athlÃ©tique',
+      programName: 'Performance athlétique',
       date: new Date().toISOString().split('T')[0],
       time: '17:00',
       duration: 120,
       location: 'Stade 28 Septembre',
-      status: 'planifiÃ©e'
+      status: 'planifiée'
     }
   ]);
 
   const formatPrice = useFormatCurrency();
 
-  const getLevelBadge = (level: 'dÃ©butant' | 'intermÃ©diaire' | 'avancÃ©') => {
+  const getLevelBadge = (level: 'débutant' | 'intermédiaire' | 'avancé') => {
     const styles = {
-      dÃ©butant: 'bg-primary-orange-100 text-primary-orange-800',
-      intermÃ©diaire: 'bg-yellow-100 text-yellow-800',
-      avancÃ©: 'bg-red-100 text-red-800'
+      débutant: 'bg-green-100 text-green-800',
+      intermédiaire: 'bg-yellow-100 text-yellow-800',
+      avancé: 'bg-red-100 text-red-800'
     };
     return <Badge className={styles[level]}>{level}</Badge>;
   };
 
   const getSessionStatusBadge = (status: Session['status']) => {
     const styles = {
-      planifiÃ©e: 'bg-blue-100 text-blue-800',
+      planifiée: 'bg-blue-100 text-blue-800',
       en_cours: 'bg-yellow-100 text-yellow-800',
-      terminÃ©e: 'bg-primary-orange-100 text-primary-orange-800',
-      annulÃ©e: 'bg-red-100 text-red-800'
+      terminée: 'bg-green-100 text-green-800',
+      annulée: 'bg-red-100 text-red-800'
     };
     const labels = {
-      planifiÃ©e: 'PlanifiÃ©e',
+      planifiée: 'Planifiée',
       en_cours: 'En cours',
-      terminÃ©e: 'TerminÃ©e',
-      annulÃ©e: 'AnnulÃ©e'
+      terminée: 'Terminée',
+      annulée: 'Annulée'
     };
     return <Badge className={styles[status]}>{labels[status]}</Badge>;
   };
 
   const handleAddClient = () => {
-    toast.success('Client ajoutÃ© avec succÃ¨s');
+    toast.success('Client ajouté avec succès');
     setShowNewClientDialog(false);
   };
 
   const handleAddSession = () => {
-    toast.success('SÃ©ance planifiÃ©e avec succÃ¨s');
+    toast.success('Séance planifiée avec succès');
     setShowNewSessionDialog(false);
   };
 
   const handleAddProgram = () => {
-    toast.success('Programme crÃ©Ã© avec succÃ¨s');
+    toast.success('Programme créé avec succès');
     setShowNewProgramDialog(false);
   };
 
@@ -253,7 +253,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-primary/10 rounded-xl">
@@ -280,8 +280,8 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary-orange-500" />
-              <span className="text-sm text-muted-foreground">SÃ©ances aujourd'hui</span>
+              <Calendar className="h-4 w-4 text-green-500" />
+              <span className="text-sm text-muted-foreground">Séances aujourd'hui</span>
             </div>
             <p className="text-2xl font-bold mt-1">{todaySessions}</p>
           </CardContent>
@@ -310,7 +310,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="clients">Clients</TabsTrigger>
-          <TabsTrigger value="seances">SÃ©ances</TabsTrigger>
+          <TabsTrigger value="seances">Séances</TabsTrigger>
           <TabsTrigger value="programmes">Programmes</TabsTrigger>
         </TabsList>
 
@@ -332,15 +332,15 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
                     <Label>Nom complet</Label>
-                    <Input placeholder="Nom et prÃ©nom" />
+                    <Input placeholder="Nom et prénom" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>TÃ©lÃ©phone</Label>
+                      <Label>Téléphone</Label>
                       <Input placeholder="+224 6XX XX XX XX" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Ã‚ge</Label>
+                      <Label>Âge</Label>
                       <Input type="number" placeholder="25" />
                     </div>
                   </div>
@@ -353,13 +353,13 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                       <Label>Objectif</Label>
                       <Select>
                         <SelectTrigger>
-                          <SelectValue placeholder="SÃ©lectionner" />
+                          <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="prise_masse">Prise de masse</SelectItem>
                           <SelectItem value="perte_poids">Perte de poids</SelectItem>
                           <SelectItem value="endurance">Endurance</SelectItem>
-                          <SelectItem value="competition">PrÃ©paration compÃ©tition</SelectItem>
+                          <SelectItem value="competition">Préparation compétition</SelectItem>
                           <SelectItem value="remise_forme">Remise en forme</SelectItem>
                         </SelectContent>
                       </Select>
@@ -368,12 +368,12 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                       <Label>Niveau</Label>
                       <Select>
                         <SelectTrigger>
-                          <SelectValue placeholder="SÃ©lectionner" />
+                          <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="dÃ©butant">DÃ©butant</SelectItem>
-                          <SelectItem value="intermÃ©diaire">IntermÃ©diaire</SelectItem>
-                          <SelectItem value="avancÃ©">AvancÃ©</SelectItem>
+                          <SelectItem value="débutant">Débutant</SelectItem>
+                          <SelectItem value="intermédiaire">Intermédiaire</SelectItem>
+                          <SelectItem value="avancé">Avancé</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -430,7 +430,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-sm mb-1">
                       <span className="text-muted-foreground">Progression</span>
-                      <span className="font-medium">{client.sessionsCompleted}/{client.totalSessions} sÃ©ances</span>
+                      <span className="font-medium">{client.sessionsCompleted}/{client.totalSessions} séances</span>
                     </div>
                     <Progress value={client.progress} className="h-2" />
                   </div>
@@ -440,27 +440,27 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
           </div>
         </TabsContent>
 
-        {/* Onglet SÃ©ances */}
+        {/* Onglet Séances */}
         <TabsContent value="seances" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Planning des sÃ©ances</h3>
+            <h3 className="font-semibold">Planning des séances</h3>
             <Dialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Nouvelle sÃ©ance
+                  Nouvelle séance
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Planifier une sÃ©ance</DialogTitle>
+                  <DialogTitle>Planifier une séance</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
                     <Label>Client</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="SÃ©lectionner un client" />
+                        <SelectValue placeholder="Sélectionner un client" />
                       </SelectTrigger>
                       <SelectContent>
                         {clients.map((c) => (
@@ -481,17 +481,17 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>DurÃ©e (minutes)</Label>
+                      <Label>Durée (minutes)</Label>
                       <Input type="number" placeholder="60" />
                     </div>
                     <div className="space-y-2">
                       <Label>Lieu</Label>
-                      <Input placeholder="Lieu de la sÃ©ance" />
+                      <Input placeholder="Lieu de la séance" />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Notes</Label>
-                    <Textarea placeholder="Notes pour la sÃ©ance..." />
+                    <Textarea placeholder="Notes pour la séance..." />
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -557,7 +557,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>CrÃ©er un programme</DialogTitle>
+                  <DialogTitle>Créer un programme</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
@@ -566,15 +566,15 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                   </div>
                   <div className="space-y-2">
                     <Label>Description</Label>
-                    <Textarea placeholder="DÃ©crivez le programme..." />
+                    <Textarea placeholder="Décrivez le programme..." />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>DurÃ©e</Label>
+                      <Label>Durée</Label>
                       <Input placeholder="Ex: 3 mois" />
                     </div>
                     <div className="space-y-2">
-                      <Label>SÃ©ances/semaine</Label>
+                      <Label>Séances/semaine</Label>
                       <Input type="number" placeholder="4" />
                     </div>
                     <div className="space-y-2">
@@ -584,9 +584,9 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                           <SelectValue placeholder="Niveau" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="dÃ©butant">DÃ©butant</SelectItem>
-                          <SelectItem value="intermÃ©diaire">IntermÃ©diaire</SelectItem>
-                          <SelectItem value="avancÃ©">AvancÃ©</SelectItem>
+                          <SelectItem value="débutant">Débutant</SelectItem>
+                          <SelectItem value="intermédiaire">Intermédiaire</SelectItem>
+                          <SelectItem value="avancé">Avancé</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -601,7 +601,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                     Annuler
                   </Button>
                   <Button onClick={handleAddProgram}>
-                    CrÃ©er
+                    Créer
                   </Button>
                 </div>
               </DialogContent>
@@ -621,11 +621,11 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                   <p className="text-sm text-muted-foreground mb-3">{program.description}</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">DurÃ©e</span>
+                      <span className="text-muted-foreground">Durée</span>
                       <span className="font-medium">{program.duration}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">SÃ©ances/semaine</span>
+                      <span className="text-muted-foreground">Séances/semaine</span>
                       <span className="font-medium">{program.sessionsPerWeek}</span>
                     </div>
                     <div className="flex justify-between">

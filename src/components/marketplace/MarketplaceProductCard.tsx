@@ -3,11 +3,11 @@
  * 224Solutions - Design Professionnel E-Commerce
  * 
  * Features:
- * - Images grandes et haute qualitÃ©
- * - Avis clients (Ã©toiles + nombre)
+ * - Images grandes et haute qualité
+ * - Avis clients (étoiles + nombre)
  * - Informations vendeur
  * - Design moderne avec coins arrondis et ombres
- * - Lazy loading optimisÃ©
+ * - Lazy loading optimisé
  * - Responsive premium
  * - Conversion de devise automatique
  * - Interface traduite
@@ -59,7 +59,7 @@ export function MarketplaceProductCard({
   title,
   price,
   originalPrice,
-  currency = 'GNF', // Devise par dÃ©faut
+  currency = 'GNF', // Devise par défaut
   vendor,
   vendorId,
   vendorPublicId,
@@ -98,7 +98,7 @@ export function MarketplaceProductCard({
     return convert(value, currency).formatted;
   };
   
-  // Prix original formatÃ© (pour tooltip)
+  // Prix original formaté (pour tooltip)
   const getOriginalPrice = (value: number) => formatCurrencyLib(value, currency);
 
   // Render stars pour les avis
@@ -137,7 +137,7 @@ export function MarketplaceProductCard({
       className="marketplace-card group overflow-hidden cursor-pointer" 
       onClick={handleCardClick}
     >
-      {/* Image Container - Format CarrÃ© Grande avec Carousel */}
+      {/* Image Container - Format Carré Grande avec Carousel */}
       <div className="relative">
         <ProductImageCarousel 
           images={images}
@@ -149,7 +149,7 @@ export function MarketplaceProductCard({
         {isPremium && (
           <div className="marketplace-card-badge">
              <Badge className="bg-primary text-primary-foreground text-[10px] font-semibold shadow-lg px-2 py-0.5">
-               â˜… Premium
+               ★ Premium
              </Badge>
           </div>
         )}
@@ -200,7 +200,7 @@ export function MarketplaceProductCard({
             {vendorPublicId && (
               <span className="text-primary font-semibold">{vendorPublicId}</span>
             )}
-            {vendorPublicId && <span className="text-muted-foreground">â€¢</span>}
+            {vendorPublicId && <span className="text-muted-foreground">•</span>}
             {vendor}
             {isCertified && (
               <CertifiedIcon status="CERTIFIE" className="w-3.5 h-3.5" />
@@ -254,7 +254,7 @@ export function MarketplaceProductCard({
           {stock !== undefined && (
             <span className={cn(
               "text-[10px] font-semibold",
-              stock === 0 ? "text-destructive" : "text-primary-orange-600"
+              stock === 0 ? "text-destructive" : "text-green-600"
             )}>
               {stock === 0 
                 ? (t('marketplace.outOfStock') || 'Rupture de stock') 

@@ -1,6 +1,6 @@
 /**
- * LISTE DES UTILISATEURS CRÃ‰Ã‰S PAR L'AGENT
- * Affiche les utilisateurs que l'agent a crÃ©Ã©s avec leurs informations
+ * LISTE DES UTILISATEURS CRÉÉS PAR L'AGENT
+ * Affiche les utilisateurs que l'agent a créés avec leurs informations
  */
 
 import { useEffect, useState } from 'react';
@@ -47,7 +47,7 @@ interface AgentCreatedUsersListProps {
 
 const roleConfig: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
   client: { label: 'Client', icon: <User className="w-3 h-3" />, color: 'bg-blue-100 text-blue-700' },
-  vendeur: { label: 'Vendeur', icon: <ShoppingBag className="w-3 h-3" />, color: 'bg-primary-blue-100 text-primary-blue-700' },
+  vendeur: { label: 'Vendeur', icon: <ShoppingBag className="w-3 h-3" />, color: 'bg-emerald-100 text-emerald-700' },
   livreur: { label: 'Livreur', icon: <Truck className="w-3 h-3" />, color: 'bg-amber-100 text-amber-700' },
   taxi: { label: 'Taxi', icon: <Car className="w-3 h-3" />, color: 'bg-purple-100 text-purple-700' },
   syndicat: { label: 'Syndicat', icon: <Building2 className="w-3 h-3" />, color: 'bg-rose-100 text-rose-700' },
@@ -63,7 +63,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
     try {
       setLoading(true);
       
-      // Appeler l'edge function pour rÃ©cupÃ©rer les utilisateurs
+      // Appeler l'edge function pour récupérer les utilisateurs
       const { data, error } = await supabase.functions.invoke('get-agent-users', {
         body: {}
       });
@@ -92,7 +92,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
     setIsRefreshing(true);
     await loadUsers();
     setIsRefreshing(false);
-    toast.success('Liste actualisÃ©e');
+    toast.success('Liste actualisée');
   };
 
   useEffect(() => {
@@ -182,7 +182,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
-            placeholder="Rechercher par nom, email, tÃ©lÃ©phone..."
+            placeholder="Rechercher par nom, email, téléphone..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -194,12 +194,12 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
           <div className="text-center py-12">
             <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-slate-600 mb-2">
-              {searchQuery ? 'Aucun rÃ©sultat' : 'Aucun utilisateur crÃ©Ã©'}
+              {searchQuery ? 'Aucun résultat' : 'Aucun utilisateur créé'}
             </h3>
             <p className="text-slate-500 text-sm">
               {searchQuery 
-                ? 'Aucun utilisateur ne correspond Ã  votre recherche' 
-                : 'Commencez Ã  crÃ©er des utilisateurs pour les voir ici'}
+                ? 'Aucun utilisateur ne correspond à votre recherche' 
+                : 'Commencez à créer des utilisateurs pour les voir ici'}
             </p>
           </div>
         ) : (
@@ -229,7 +229,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
                           </Badge>
                         )}
                         {user.is_active ? (
-                          <Badge variant="outline" className="bg-primary-blue-50 text-primary-blue-700 border-primary-orange-200 text-xs">
+                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
                             <UserCheck className="w-3 h-3 mr-1" />
                             Actif
                           </Badge>

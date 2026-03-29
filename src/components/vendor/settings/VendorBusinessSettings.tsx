@@ -44,8 +44,8 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
         setIsActive(data.is_active ?? false);
       }
     } catch (error) {
-      console.error('Erreur chargement donnÃ©es:', error);
-      toast.error('Erreur lors du chargement des donnÃ©es');
+      console.error('Erreur chargement données:', error);
+      toast.error('Erreur lors du chargement des données');
     }
   };
 
@@ -53,11 +53,11 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        toast.error('Veuillez sÃ©lectionner une image');
+        toast.error('Veuillez sélectionner une image');
         return;
       }
       if (file.size > 2 * 1024 * 1024) {
-        toast.error('L\'image ne doit pas dÃ©passer 2 MB');
+        toast.error('L\'image ne doit pas dépasser 2 MB');
         return;
       }
 
@@ -95,7 +95,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
       return publicUrlData.publicUrl;
     } catch (error) {
       console.error('Erreur upload logo:', error);
-      toast.error('Erreur lors du tÃ©lÃ©chargement du logo');
+      toast.error('Erreur lors du téléchargement du logo');
       return logoUrl;
     } finally {
       setUploading(false);
@@ -113,7 +113,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
       if (error) throw error;
 
       setIsActive(checked);
-      toast.success(checked ? 'Boutique activÃ©e avec succÃ¨s !' : 'Boutique dÃ©sactivÃ©e');
+      toast.success(checked ? 'Boutique activée avec succès !' : 'Boutique désactivée');
     } catch (error) {
       console.error('Erreur activation:', error);
       toast.error('Erreur lors de la modification du statut');
@@ -144,10 +144,10 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
 
       setLogoUrl(newLogoUrl);
       setLogoFile(null);
-      toast.success('Informations mises Ã  jour avec succÃ¨s');
+      toast.success('Informations mises à jour avec succès');
     } catch (error) {
-      console.error('Erreur mise Ã  jour:', error);
-      toast.error('Erreur lors de la mise Ã  jour');
+      console.error('Erreur mise à jour:', error);
+      toast.error('Erreur lors de la mise à jour');
     } finally {
       setLoading(false);
     }
@@ -161,7 +161,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Boutique inactive</AlertTitle>
           <AlertDescription>
-            Votre boutique n'est pas visible par les clients. Activez-la pour commencer Ã  vendre.
+            Votre boutique n'est pas visible par les clients. Activez-la pour commencer à vendre.
           </AlertDescription>
         </Alert>
       )}
@@ -170,14 +170,14 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {isActive ? (
-              <CheckCircle2 className="w-5 h-5 text-primary-orange-500" />
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
             ) : (
               <AlertTriangle className="w-5 h-5 text-destructive" />
             )}
             Statut de la boutique
           </CardTitle>
           <CardDescription>
-            Activez ou dÃ©sactivez votre boutique selon votre disponibilitÃ©
+            Activez ou désactivez votre boutique selon votre disponibilité
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -208,7 +208,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
             Informations de l'entreprise
           </CardTitle>
           <CardDescription>
-            Personnalisez le nom et le logo de votre entreprise qui apparaÃ®tront sur vos devis et factures
+            Personnalisez le nom et le logo de votre entreprise qui apparaîtront sur vos devis et factures
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -246,7 +246,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
                     className="cursor-pointer"
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Format: PNG, JPG, SVG â€¢ Taille max: 2 MB â€¢ RecommandÃ©: 500x500px
+                    Format: PNG, JPG, SVG • Taille max: 2 MB • Recommandé: 500x500px
                   </p>
                 </div>
               </div>
@@ -260,7 +260,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
               {uploading ? (
                 <>
                   <Upload className="w-4 h-4 mr-2 animate-spin" />
-                  TÃ©lÃ©chargement du logo...
+                  Téléchargement du logo...
                 </>
               ) : loading ? (
                 <>

@@ -36,19 +36,19 @@ export function BureauStatsCards({
       value: workersCount,
       subtitle: 'Membres actifs',
       icon: <Building2 className="w-6 h-6 text-white" />,
-      gradient: 'from-primary-blue-500 to-primary-orange-600'
+      gradient: 'from-emerald-500 to-emerald-600'
     },
     {
-      title: 'AdhÃ©rents',
+      title: 'Adhérents',
       value: membersCount,
       subtitle: 'Total membres',
       icon: <Users className="w-6 h-6 text-white" />,
       gradient: 'from-blue-500 to-blue-600'
     },
     {
-      title: 'VÃ©hicules',
+      title: 'Véhicules',
       value: motosCount,
-      subtitle: 'EnregistrÃ©s',
+      subtitle: 'Enregistrés',
       icon: <Bike className="w-6 h-6 text-white" />,
       gradient: 'from-purple-500 to-purple-600'
     },
@@ -71,7 +71,7 @@ export function BureauStatsCards({
       value: '100%',
       subtitle: 'Objectif atteint',
       icon: <TrendingUp className="w-6 h-6 text-white" />,
-      gradient: 'from-primary-blue-500 to-primary-orange-500'
+      gradient: 'from-cyan-500 to-teal-500'
     }
   ];
 

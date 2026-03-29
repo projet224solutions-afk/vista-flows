@@ -1,5 +1,5 @@
 /**
- * Page de dÃ©tail d'un produit numÃ©rique
+ * Page de détail d'un produit numérique
  */
 
 import { useEffect, useState } from "react";
@@ -62,7 +62,7 @@ export default function DigitalProductDetail() {
   // Utiliser l'ID depuis les params ou depuis le query string
   const productId = id || searchParams.get('id');
 
-  // VÃ©rifier si l'utilisateur actuel est le vendeur du produit
+  // Vérifier si l'utilisateur actuel est le vendeur du produit
   const isVendorOwner = user?.id && product?.merchant_id === user.id;
 
   useEffect(() => {
@@ -112,11 +112,11 @@ export default function DigitalProductDetail() {
         sessionStorage.setItem(viewKey, 'true');
       }
     } catch (error) {
-      console.error('Erreur incrÃ©mentation vues:', error);
+      console.error('Erreur incrémentation vues:', error);
     }
   };
 
-  // formatPrice conservÃ© pour les cas simples sans conversion
+  // formatPrice conservé pour les cas simples sans conversion
   const formatPriceSimple = (price: number, currency: string = 'GNF') => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -135,9 +135,9 @@ export default function DigitalProductDetail() {
       return;
     }
 
-    // Pour les produits affiliÃ©s, rediriger vers le lien
+    // Pour les produits affiliés, rediriger vers le lien
     if (product.product_mode === 'affiliate' && product.affiliate_url) {
-      window.open(product.affiliate_url, '_blank', 'noopener,noreferrer');
+      window.open(product.affiliate_url, '_blank');
       return;
     }
 
@@ -174,12 +174,12 @@ export default function DigitalProductDetail() {
         .insert({
           sender_id: user.id,
           recipient_id: product.vendor_id,
-          content: `Bonjour, je suis intÃ©ressÃ© par votre produit numÃ©rique "${product.title}".`,
+          content: `Bonjour, je suis intéressé par votre produit numérique "${product.title}".`,
           type: 'text'
         });
 
       if (error) throw error;
-      toast.success('Message envoyÃ© au vendeur');
+      toast.success('Message envoyé au vendeur');
       navigate(`/messages?recipientId=${product.vendor_id}`);
     } catch (error) {
       console.error('Erreur envoi message:', error);
@@ -203,8 +203,8 @@ export default function DigitalProductDetail() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="p-8 text-center max-w-md">
           <h2 className="text-xl font-bold mb-4">Produit introuvable</h2>
-          <p className="text-muted-foreground mb-6">Ce produit numÃ©rique n'existe pas ou a Ã©tÃ© supprimÃ©.</p>
-          <Button onClick={() => navigate('/digital-products')}>Retour aux produits numÃ©riques</Button>
+          <p className="text-muted-foreground mb-6">Ce produit numérique n'existe pas ou a été supprimé.</p>
+          <Button onClick={() => navigate('/digital-products')}>Retour aux produits numériques</Button>
         </Card>
       </div>
     );
@@ -224,10 +224,10 @@ export default function DigitalProductDetail() {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-bold text-foreground flex-1">Produit numÃ©rique</h1>
+          <h1 className="text-xl font-bold text-foreground flex-1">Produit numérique</h1>
           <ShareButton
             title={product.title}
-            text={`DÃ©couvrez ${product.title} sur 224 Solutions`}
+            text={`Découvrez ${product.title} sur 224 Solutions`}
             url={`${window.location.origin}/digital-product/${product.id}`}
             resourceType="digital_product"
             resourceId={product.id}
@@ -334,7 +334,7 @@ export default function DigitalProductDetail() {
                     )}
                   </>
                 ) : (
-                  <span className="text-3xl font-bold text-primary-orange-600">Gratuit</span>
+                  <span className="text-3xl font-bold text-green-600">Gratuit</span>
                 )}
               </div>
 
@@ -344,15 +344,15 @@ export default function DigitalProductDetail() {
                   {product.pricing_type === 'subscription' ? (
                     <Badge className="bg-primary/10 text-primary border-primary/20">
                       <RefreshCw className="w-3 h-3 mr-1" />
-                      Abonnement {product.subscription_interval === 'yearly' ? 'annuel' : product.subscription_interval === 'lifetime' ? 'Ã  vie' : 'mensuel'}
+                      Abonnement {product.subscription_interval === 'yearly' ? 'annuel' : product.subscription_interval === 'lifetime' ? 'à vie' : 'mensuel'}
                     </Badge>
                   ) : product.pricing_type === 'pay_what_you_want' ? (
                     <Badge variant="secondary">
                       Prix libre
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">
-                      Achat unique â€” AccÃ¨s permanent
+                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                      Achat unique — Accès permanent
                     </Badge>
                   )}
                 </div>
@@ -401,7 +401,7 @@ export default function DigitalProductDetail() {
                 ) : (
                   <>
                     <Download className="w-4 h-4 mr-2" />
-                    TÃ©lÃ©charger
+                    Télécharger
                   </>
                 )}
               </Button>
@@ -447,15 +447,15 @@ export default function DigitalProductDetail() {
               <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
                 <Shield className="w-8 h-8 text-primary" />
                 <div>
-                  <p className="font-medium text-sm">Paiement sÃ©curisÃ©</p>
-                  <p className="text-xs text-muted-foreground">100% protÃ©gÃ©</p>
+                  <p className="font-medium text-sm">Paiement sécurisé</p>
+                  <p className="text-xs text-muted-foreground">100% protégé</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
                 <Download className="w-8 h-8 text-primary" />
                 <div>
-                  <p className="font-medium text-sm">AccÃ¨s immÃ©diat</p>
-                  <p className="text-xs text-muted-foreground">TÃ©lÃ©chargement direct</p>
+                  <p className="font-medium text-sm">Accès immédiat</p>
+                  <p className="text-xs text-muted-foreground">Téléchargement direct</p>
                 </div>
               </div>
             </div>

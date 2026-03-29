@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * Confirmation de rÃ©ception d'un transfert
+ * Confirmation de réception d'un transfert
  * 224SOLUTIONS - Gestion des pertes et manquants
  */
 
@@ -52,9 +52,9 @@ interface TransferReceptionProps {
 }
 
 const LOSS_REASONS = [
-  { value: 'damaged', label: 'EndommagÃ©' },
+  { value: 'damaged', label: 'Endommagé' },
   { value: 'missing', label: 'Manquant' },
-  { value: 'expired', label: 'ExpirÃ©' },
+  { value: 'expired', label: 'Expiré' },
   { value: 'theft', label: 'Vol' },
   { value: 'wrong_item', label: 'Mauvais article' },
   { value: 'other', label: 'Autre' },
@@ -65,14 +65,14 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // PrÃ©parer les items Ã  partir du transfert
+  // Préparer les items à partir du transfert
   const [receptionItems, setReceptionItems] = useState<ReceptionItem[]>(() => 
     (transfer.items || []).map(item => ({
       product_id: item.product_id,
       product_name: item.product?.name || 'Produit',
       product_image: item.product?.images?.[0],
       quantity_sent: item.quantity_sent,
-      quantity_received: item.quantity_sent, // Par dÃ©faut, tout reÃ§u
+      quantity_received: item.quantity_sent, // Par défaut, tout reçu
       quantity_missing: 0,
       loss_reason: undefined,
       notes: undefined
@@ -87,10 +87,10 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
     return { sent, received, missing };
   }, [receptionItems]);
 
-  // VÃ©rifier si tout est reÃ§u
+  // Vérifier si tout est reçu
   const isComplete = totals.missing === 0;
 
-  // Mettre Ã  jour la quantitÃ© reÃ§ue
+  // Mettre à jour la quantité reçue
   const updateQuantityReceived = (productId: string, value: number) => {
     setReceptionItems(prev => prev.map(item => {
       if (item.product_id === productId) {
@@ -105,7 +105,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
     }));
   };
 
-  // Mettre Ã  jour la raison de perte
+  // Mettre à jour la raison de perte
   const updateLossReason = (productId: string, reason: string) => {
     setReceptionItems(prev => prev.map(item => {
       if (item.product_id === productId) {
@@ -115,7 +115,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
     }));
   };
 
-  // Mettre Ã  jour les notes
+  // Mettre à jour les notes
   const updateNotes = (productId: string, notes: string) => {
     setReceptionItems(prev => prev.map(item => {
       if (item.product_id === productId) {
@@ -125,7 +125,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
     }));
   };
 
-  // Tout reÃ§u
+  // Tout reçu
   const markAllReceived = () => {
     setReceptionItems(prev => prev.map(item => ({
       ...item,
@@ -138,7 +138,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
 
   // Soumettre la confirmation
   const handleSubmit = async () => {
-    // VÃ©rifier que les items avec pertes ont une raison
+    // Vérifier que les items avec pertes ont une raison
     const missingReason = receptionItems.find(
       i => i.quantity_missing > 0 && !i.loss_reason
     );
@@ -174,7 +174,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <Card className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border-blue-200">
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -184,7 +184,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
             <div>
               <CardTitle className="text-xl">{transfer.transfer_number}</CardTitle>
               <CardDescription>
-                InitiÃ© le {format(new Date(transfer.initiated_at), 'dd MMM yyyy Ã  HH:mm', { locale: fr })}
+                Initié le {format(new Date(transfer.initiated_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
               </CardDescription>
             </div>
           </div>
@@ -195,10 +195,10 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
             <div className="flex-1 text-center">
               <div className={cn(
                 "inline-flex p-2 rounded-lg mb-1",
-                transfer.from_location?.is_pos_enabled ? "bg-primary-orange-100" : "bg-blue-100"
+                transfer.from_location?.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
               )}>
                 {transfer.from_location?.is_pos_enabled ? (
-                  <Store className="w-5 h-5 text-primary-orange-600" />
+                  <Store className="w-5 h-5 text-green-600" />
                 ) : (
                   <Warehouse className="w-5 h-5 text-blue-600" />
                 )}
@@ -209,10 +209,10 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
             <div className="flex-1 text-center">
               <div className={cn(
                 "inline-flex p-2 rounded-lg mb-1",
-                transfer.to_location?.is_pos_enabled ? "bg-primary-orange-100" : "bg-blue-100"
+                transfer.to_location?.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
               )}>
                 {transfer.to_location?.is_pos_enabled ? (
-                  <Store className="w-5 h-5 text-primary-orange-600" />
+                  <Store className="w-5 h-5 text-green-600" />
                 ) : (
                   <Warehouse className="w-5 h-5 text-blue-600" />
                 )}
@@ -228,20 +228,20 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
         <Card>
           <CardContent className="pt-4 text-center">
             <p className="text-3xl font-bold">{totals.sent}</p>
-            <p className="text-sm text-muted-foreground">EnvoyÃ©(s)</p>
+            <p className="text-sm text-muted-foreground">Envoyé(s)</p>
           </CardContent>
         </Card>
         <Card className={cn(
-          isComplete && "border-primary-orange-300 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950/20"
+          isComplete && "border-green-300 bg-green-50/50 dark:bg-green-950/20"
         )}>
           <CardContent className="pt-4 text-center">
             <p className={cn(
               "text-3xl font-bold",
-              isComplete ? "text-primary-orange-600" : "text-primary"
+              isComplete ? "text-green-600" : "text-primary"
             )}>
               {totals.received}
             </p>
-            <p className="text-sm text-muted-foreground">ReÃ§u(s)</p>
+            <p className="text-sm text-muted-foreground">Reçu(s)</p>
           </CardContent>
         </Card>
         <Card className={cn(
@@ -259,12 +259,12 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
         </Card>
       </div>
 
-      {/* Bouton tout reÃ§u */}
+      {/* Bouton tout reçu */}
       {!isComplete && (
         <div className="flex justify-center">
           <Button variant="outline" onClick={markAllReceived}>
             <CheckCircle2 className="w-4 h-4 mr-2" />
-            Marquer tout comme reÃ§u
+            Marquer tout comme reçu
           </Button>
         </div>
       )}
@@ -272,9 +272,9 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
       {/* Liste des items */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">VÃ©rification des articles</CardTitle>
+          <CardTitle className="text-lg">Vérification des articles</CardTitle>
           <CardDescription>
-            Indiquez la quantitÃ© rÃ©ellement reÃ§ue pour chaque article
+            Indiquez la quantité réellement reçue pour chaque article
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -302,14 +302,14 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
                     <div>
                       <p className="font-medium">{item.product_name}</p>
                       <p className="text-sm text-muted-foreground">
-                        EnvoyÃ©: <strong>{item.quantity_sent}</strong>
+                        Envoyé: <strong>{item.quantity_sent}</strong>
                       </p>
                     </div>
                   </div>
 
-                  {/* QuantitÃ© reÃ§ue */}
+                  {/* Quantité reçue */}
                   <div className="md:w-1/3">
-                    <Label className="text-sm">QuantitÃ© reÃ§ue</Label>
+                    <Label className="text-sm">Quantité reçue</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Input
                         type="number"
@@ -322,7 +322,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
                       <span className="text-sm text-muted-foreground">/ {item.quantity_sent}</span>
                       
                       {item.quantity_received === item.quantity_sent ? (
-                        <Badge className="bg-primary-orange-100 text-primary-blue-900">
+                        <Badge className="bg-green-100 text-green-700">
                           <CheckCircle2 className="w-3 h-3 mr-1" />
                           Complet
                         </Badge>
@@ -344,7 +344,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
                         onValueChange={(v) => updateLossReason(item.product_id, v)}
                       >
                         <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="SÃ©lectionner..." />
+                          <SelectValue placeholder="Sélectionner..." />
                         </SelectTrigger>
                         <SelectContent>
                           {LOSS_REASONS.map(reason => (
@@ -363,7 +363,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
                   <div className="mt-3 pl-15 md:pl-0 md:ml-[33.33%]">
                     <Label className="text-sm">Notes (optionnel)</Label>
                     <Textarea
-                      placeholder="DÃ©tails sur les manquants..."
+                      placeholder="Détails sur les manquants..."
                       value={item.notes || ''}
                       onChange={(e) => updateNotes(item.product_id, e.target.value)}
                       rows={2}
@@ -381,20 +381,20 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
       {totals.missing > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Pertes dÃ©tectÃ©es</AlertTitle>
+          <AlertTitle>Pertes détectées</AlertTitle>
           <AlertDescription>
-            {totals.missing} unitÃ©(s) seront enregistrÃ©es comme pertes dans le systÃ¨me.
-            Un rapport sera gÃ©nÃ©rÃ© pour suivi.
+            {totals.missing} unité(s) seront enregistrées comme pertes dans le système.
+            Un rapport sera généré pour suivi.
           </AlertDescription>
         </Alert>
       )}
 
       {isComplete && (
-        <Alert className="border-primary-orange-300 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950/20">
-          <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
-          <AlertTitle className="text-primary-blue-900 dark:text-primary-orange-200">RÃ©ception complÃ¨te</AlertTitle>
-          <AlertDescription className="text-primary-blue-800 dark:text-primary-orange-300">
-            Tous les articles ont Ã©tÃ© reÃ§us en totalitÃ©.
+        <Alert className="border-green-300 bg-green-50 dark:bg-green-950/20">
+          <CheckCircle2 className="h-4 w-4 text-green-600" />
+          <AlertTitle className="text-green-800 dark:text-green-200">Réception complète</AlertTitle>
+          <AlertDescription className="text-green-700 dark:text-green-300">
+            Tous les articles ont été reçus en totalité.
           </AlertDescription>
         </Alert>
       )}
@@ -409,7 +409,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
           disabled={isSubmitting}
           className={cn(
             isComplete 
-              ? "bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-orange-600 hover:to-primary-blue-600" 
+              ? "bg-green-600 hover:bg-green-700" 
               : "bg-amber-600 hover:bg-amber-700"
           )}
         >
@@ -421,7 +421,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
           ) : (
             <>
               <CheckCircle2 className="w-4 h-4 mr-2" />
-              {isComplete ? 'Confirmer rÃ©ception complÃ¨te' : 'Confirmer avec manquants'}
+              {isComplete ? 'Confirmer réception complète' : 'Confirmer avec manquants'}
             </>
           )}
         </Button>

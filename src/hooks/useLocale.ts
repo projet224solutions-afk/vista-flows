@@ -6,13 +6,12 @@
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useGeoDetection } from '@/hooks/useGeoDetection';
-import type { TranslationParams } from '@/i18n/types';
 
 interface UseLocaleResult {
   // Langue
   language: string;
   setLanguage: (lang: string) => void;
-  t: (key: string, params?: TranslationParams) => string;
+  t: (key: string) => string;
   isRTL: boolean;
   
   // Devise

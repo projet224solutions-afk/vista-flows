@@ -1,5 +1,5 @@
 /**
- * Composant pour afficher et gÃ©rer les rÃ©ponses IA proposÃ©es aux avis
+ * Composant pour afficher et gérer les réponses IA proposées aux avis
  */
 
 import { useState } from 'react';
@@ -52,7 +52,7 @@ export default function AIReviewResponseCard({
 
       if (error) throw error;
 
-      toast.success(publish ? 'RÃ©ponse publiÃ©e avec succÃ¨s' : 'RÃ©ponse approuvÃ©e');
+      toast.success(publish ? 'Réponse publiée avec succès' : 'Réponse approuvée');
       onStatusChange();
     } catch (error) {
       console.error('Error approving response:', error);
@@ -75,7 +75,7 @@ export default function AIReviewResponseCard({
 
       if (error) throw error;
 
-      toast.success('RÃ©ponse rejetÃ©e');
+      toast.success('Réponse rejetée');
       onStatusChange();
     } catch (error) {
       console.error('Error rejecting response:', error);
@@ -89,17 +89,17 @@ export default function AIReviewResponseCard({
     if (!aiSentiment) return null;
     
     const sentimentConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      positive: { label: 'ðŸ˜Š Positif', variant: 'default' },
-      neutral: { label: 'ðŸ˜ Neutre', variant: 'secondary' },
-      negative: { label: 'ðŸ˜Ÿ NÃ©gatif', variant: 'outline' },
-      critical: { label: 'ðŸ˜  Critique', variant: 'destructive' }
+      positive: { label: '😊 Positif', variant: 'default' },
+      neutral: { label: '😐 Neutre', variant: 'secondary' },
+      negative: { label: '😟 Négatif', variant: 'outline' },
+      critical: { label: '😠 Critique', variant: 'destructive' }
     };
 
     const config = sentimentConfig[aiSentiment] || sentimentConfig.neutral;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  // Si rejetÃ© ou dÃ©jÃ  publiÃ©, ne pas afficher
+  // Si rejeté ou déjà publié, ne pas afficher
   if (aiResponseStatus === 'rejected' || aiResponseStatus === 'published') {
     return null;
   }
@@ -113,7 +113,7 @@ export default function AIReviewResponseCard({
             <Bot className="w-4 h-4 text-primary" />
           </div>
           <span className="text-sm font-semibold text-primary">
-            ðŸ’¡ RÃ©ponse IA proposÃ©e
+            💡 Réponse IA proposée
           </span>
           <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
             <Clock className="w-3 h-3 mr-1" />
@@ -129,7 +129,7 @@ export default function AIReviewResponseCard({
           value={response}
           onChange={(e) => setResponse(e.target.value)}
           className="min-h-[100px] mb-3"
-          placeholder="Modifier la rÃ©ponse..."
+          placeholder="Modifier la réponse..."
         />
       ) : (
         <div className="p-3 bg-background rounded-md mb-3 text-sm text-foreground">
@@ -141,7 +141,7 @@ export default function AIReviewResponseCard({
       {aiAnalyzedAt && (
         <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
           <Zap className="w-3 h-3" />
-          AnalysÃ© le {new Date(aiAnalyzedAt).toLocaleDateString('fr-FR', {
+          Analysé le {new Date(aiAnalyzedAt).toLocaleDateString('fr-FR', {
             day: 'numeric',
             month: 'long',
             hour: '2-digit',
@@ -158,7 +158,7 @@ export default function AIReviewResponseCard({
               size="sm"
               onClick={() => handleApprove(true)}
               disabled={isSubmitting}
-              className="bg-primary-orange-600 hover:bg-primary-orange-700"
+              className="bg-green-600 hover:bg-green-700"
             >
               <Check className="w-4 h-4 mr-1" />
               Valider & Publier

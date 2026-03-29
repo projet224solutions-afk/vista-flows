@@ -1,6 +1,6 @@
 /**
- * Suivi des rÃ©servations restaurant pour les clients
- * Permet de voir le statut, tÃ©lÃ©charger le reÃ§u et suivre la confirmation
+ * Suivi des réservations restaurant pour les clients
+ * Permet de voir le statut, télécharger le reçu et suivre la confirmation
  */
 
 import { useState, useEffect } from 'react';
@@ -50,37 +50,37 @@ const statusConfig = {
     label: 'En attente',
     icon: Timer,
     color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30',
-    description: 'Votre rÃ©servation est en attente de confirmation par le restaurant'
+    description: 'Votre réservation est en attente de confirmation par le restaurant'
   },
   confirmed: {
-    label: 'ConfirmÃ©e',
+    label: 'Confirmée',
     icon: CheckCircle2,
-    color: 'text-primary-orange-600 bg-primary-orange-100 dark:bg-primary-orange-900/30',
-    description: 'Le restaurant a confirmÃ© votre rÃ©servation'
+    color: 'text-green-600 bg-green-100 dark:bg-green-900/30',
+    description: 'Le restaurant a confirmé votre réservation'
   },
   seated: {
-    label: 'InstallÃ©',
+    label: 'Installé',
     icon: Armchair,
     color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30',
-    description: 'Vous Ãªtes installÃ© Ã  votre table'
+    description: 'Vous êtes installé à votre table'
   },
   completed: {
-    label: 'TerminÃ©e',
+    label: 'Terminée',
     icon: Check,
     color: 'text-gray-600 bg-gray-100 dark:bg-gray-800',
     description: 'Merci pour votre visite !'
   },
   cancelled: {
-    label: 'AnnulÃ©e',
+    label: 'Annulée',
     icon: XCircle,
     color: 'text-red-600 bg-red-100 dark:bg-red-900/30',
-    description: 'Cette rÃ©servation a Ã©tÃ© annulÃ©e'
+    description: 'Cette réservation a été annulée'
   },
   no_show: {
     label: 'Absent',
     icon: X,
     color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30',
-    description: 'Vous ne vous Ãªtes pas prÃ©sentÃ©'
+    description: 'Vous ne vous êtes pas présenté'
   }
 };
 
@@ -131,8 +131,8 @@ export function CustomerReservationTracker({
 
       setReservations(formattedReservations);
     } catch (err: any) {
-      console.error('Erreur chargement rÃ©servations:', err);
-      toast.error('Erreur lors du chargement des rÃ©servations');
+      console.error('Erreur chargement réservations:', err);
+      toast.error('Erreur lors du chargement des réservations');
     } finally {
       setLoading(false);
     }
@@ -142,39 +142,39 @@ export function CustomerReservationTracker({
     setRefreshing(true);
     await loadReservations();
     setRefreshing(false);
-    toast.success('Statut mis Ã  jour');
+    toast.success('Statut mis à jour');
   };
 
   const generateReceipt = (reservation: Reservation) => {
-    // GÃ©nÃ©rer un reÃ§u simple en texte/HTML
+    // Générer un reçu simple en texte/HTML
     const receiptContent = `
-â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
-â•‘          REÃ‡U DE RÃ‰SERVATION          â•‘
-â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
-â•‘                                       â•‘
-â•‘  Restaurant: ${reservation.restaurant_name?.padEnd(22)}â•‘
-â•‘  Date: ${format(new Date(reservation.reservation_date), 'dd MMMM yyyy', { locale: fr }).padEnd(28)}â•‘
-â•‘  Heure: ${reservation.reservation_time.padEnd(27)}â•‘
-â•‘  Convives: ${reservation.party_size.toString().padEnd(24)}â•‘
-â•‘  Table: ${(reservation.table_number || 'Ã€ dÃ©finir').padEnd(27)}â•‘
-â•‘                                       â•‘
-â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
-â•‘  RÃ©servation au nom de:               â•‘
-â•‘  ${reservation.customer_name.padEnd(36)}â•‘
-â•‘                                       â•‘
-â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
-â•‘  Statut: ${statusConfig[reservation.status].label.padEnd(26)}â•‘
-â•‘                                       â•‘
-â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
-â•‘  RÃ©fÃ©rence: ${reservation.id.substring(0, 8).toUpperCase().padEnd(23)}â•‘
-â•‘  CrÃ©Ã©e le: ${format(new Date(reservation.created_at), 'dd/MM/yyyy HH:mm').padEnd(24)}â•‘
-â•‘                                       â•‘
-â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+╔═══════════════════════════════════════╗
+║          REÇU DE RÉSERVATION          ║
+╠═══════════════════════════════════════╣
+║                                       ║
+║  Restaurant: ${reservation.restaurant_name?.padEnd(22)}║
+║  Date: ${format(new Date(reservation.reservation_date), 'dd MMMM yyyy', { locale: fr }).padEnd(28)}║
+║  Heure: ${reservation.reservation_time.padEnd(27)}║
+║  Convives: ${reservation.party_size.toString().padEnd(24)}║
+║  Table: ${(reservation.table_number || 'À définir').padEnd(27)}║
+║                                       ║
+╠═══════════════════════════════════════╣
+║  Réservation au nom de:               ║
+║  ${reservation.customer_name.padEnd(36)}║
+║                                       ║
+╠═══════════════════════════════════════╣
+║  Statut: ${statusConfig[reservation.status].label.padEnd(26)}║
+║                                       ║
+╠═══════════════════════════════════════╣
+║  Référence: ${reservation.id.substring(0, 8).toUpperCase().padEnd(23)}║
+║  Créée le: ${format(new Date(reservation.created_at), 'dd/MM/yyyy HH:mm').padEnd(24)}║
+║                                       ║
+╚═══════════════════════════════════════╝
 
-Merci d'avoir rÃ©servÃ© avec 224Solutions !
+Merci d'avoir réservé avec 224Solutions !
     `;
 
-    // CrÃ©er un blob et tÃ©lÃ©charger
+    // Créer un blob et télécharger
     const blob = new Blob([receiptContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -185,13 +185,13 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
-    toast.success('ReÃ§u tÃ©lÃ©chargÃ© !');
+    toast.success('Reçu téléchargé !');
   };
 
   useEffect(() => {
     loadReservations();
     
-    // Ã‰couter les changements en temps rÃ©el
+    // Écouter les changements en temps réel
     const channel = supabase
       .channel('reservation-updates')
       .on(
@@ -203,9 +203,9 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
           filter: reservationId ? `id=eq.${reservationId}` : undefined
         },
         (payload) => {
-          console.log('RÃ©servation mise Ã  jour:', payload);
+          console.log('Réservation mise à jour:', payload);
           loadReservations();
-          toast.info('Statut de votre rÃ©servation mis Ã  jour !');
+          toast.info('Statut de votre réservation mis à jour !');
         }
       )
       .subscribe();
@@ -221,7 +221,7 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-            <p className="text-muted-foreground">Chargement de vos rÃ©servations...</p>
+            <p className="text-muted-foreground">Chargement de vos réservations...</p>
           </div>
         </CardContent>
       </Card>
@@ -234,7 +234,7 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Calendar className="h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground">Aucune rÃ©servation trouvÃ©e</p>
+            <p className="text-muted-foreground">Aucune réservation trouvée</p>
           </div>
         </CardContent>
       </Card>
@@ -244,7 +244,7 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Mes rÃ©servations</h2>
+        <h2 className="text-lg font-semibold">Mes réservations</h2>
         <Button
           variant="outline"
           size="sm"
@@ -266,7 +266,7 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
             key={reservation.id}
             className={cn(
               "transition-all",
-              reservation.status === 'confirmed' && "ring-2 ring-primary-orange-500/50",
+              reservation.status === 'confirmed' && "ring-2 ring-green-500/50",
               reservation.status === 'seated' && "ring-2 ring-blue-500/50"
             )}
           >
@@ -275,7 +275,7 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
                 <div>
                   <CardTitle className="text-lg">{reservation.restaurant_name}</CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    RÃ©f: #{reservation.id.substring(0, 8).toUpperCase()}
+                    Réf: #{reservation.id.substring(0, 8).toUpperCase()}
                   </p>
                 </div>
                 <Badge className={cn("gap-1", status.color)}>
@@ -313,13 +313,13 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
                 </div>
               </div>
 
-              {/* Table assignÃ©e */}
+              {/* Table assignée */}
               {reservation.table_number && (
                 <div className="bg-muted/50 rounded-lg p-3 flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-primary" />
                   <div>
                     <p className="text-sm font-medium">Table {reservation.table_number}</p>
-                    <p className="text-xs text-muted-foreground">Votre table est prÃªte !</p>
+                    <p className="text-xs text-muted-foreground">Votre table est prête !</p>
                   </div>
                 </div>
               )}
@@ -341,7 +341,7 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
                   onClick={() => generateReceipt(reservation)}
                 >
                   <Receipt className="w-4 h-4 mr-2" />
-                  TÃ©lÃ©charger le reÃ§u
+                  Télécharger le reçu
                 </Button>
 
                 {!isPast && reservation.status !== 'cancelled' && (
@@ -349,7 +349,7 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      // TODO: ImplÃ©menter l'annulation
+                      // TODO: Implémenter l'annulation
                       toast.info('Veuillez contacter le restaurant pour annuler');
                     }}
                   >
@@ -359,12 +359,12 @@ Merci d'avoir rÃ©servÃ© avec 224Solutions !
                 )}
               </div>
 
-              {/* Demandes spÃ©ciales */}
+              {/* Demandes spéciales */}
               {reservation.special_requests && (
                 <>
                   <Separator />
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Demandes spÃ©ciales</p>
+                    <p className="text-xs text-muted-foreground mb-1">Demandes spéciales</p>
                     <p className="text-sm">{reservation.special_requests}</p>
                   </div>
                 </>

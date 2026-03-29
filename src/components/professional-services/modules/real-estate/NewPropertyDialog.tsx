@@ -18,7 +18,7 @@ interface NewPropertyDialogProps {
 
 const AMENITIES_OPTIONS = [
   'Parking', 'Piscine', 'Jardin', 'Balcon', 'Terrasse', 'Ascenseur',
-  'Climatisation', 'MeublÃ©', 'Gardien', 'CamÃ©ras', 'Groupe Ã©lectrogÃ¨ne', 'Eau courante'
+  'Climatisation', 'Meublé', 'Gardien', 'Caméras', 'Groupe électrogène', 'Eau courante'
 ];
 
 export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewPropertyDialogProps) {
@@ -103,7 +103,7 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
-      toast.error('GÃ©olocalisation non supportÃ©e');
+      toast.error('Géolocalisation non supportée');
       return;
     }
     setGeoLoading(true);
@@ -111,11 +111,11 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
       (pos) => {
         setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setGeoLoading(false);
-        toast.success('Position rÃ©cupÃ©rÃ©e !');
+        toast.success('Position récupérée !');
       },
       () => {
         setGeoLoading(false);
-        toast.error('Impossible de rÃ©cupÃ©rer la position');
+        toast.error('Impossible de récupérer la position');
       },
       { enableHighAccuracy: true, timeout: 15000 }
     );
@@ -139,7 +139,7 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
       // Upload photos after property creation
       if (photos.length > 0) {
         await uploadPhotosForProperty(result.id);
-        toast.success(`${photos.length} photo(s) ajoutÃ©e(s)`);
+        toast.success(`${photos.length} photo(s) ajoutée(s)`);
       }
       photoPreviews.forEach(url => URL.revokeObjectURL(url));
       setForm({
@@ -158,7 +158,7 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>ðŸ“ Publier un bien immobilier</DialogTitle>
+          <DialogTitle>📝 Publier un bien immobilier</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
@@ -167,24 +167,24 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
             <div className="space-y-2">
               <Label>Type d'offre *</Label>
               <Select value={form.offer_type} onValueChange={v => updateField('offer_type', v)}>
-                <SelectTrigger><SelectValue placeholder="SÃ©lectionner" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="vente">ðŸ”‘ Vente</SelectItem>
-                  <SelectItem value="location">ðŸ“‹ Location</SelectItem>
+                  <SelectItem value="vente">🔑 Vente</SelectItem>
+                  <SelectItem value="location">📋 Location</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Type de bien *</Label>
               <Select value={form.property_type} onValueChange={v => updateField('property_type', v)}>
-                <SelectTrigger><SelectValue placeholder="SÃ©lectionner" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="appartement">ðŸ¢ Appartement</SelectItem>
-                  <SelectItem value="maison">ðŸ  Maison</SelectItem>
-                  <SelectItem value="villa">ðŸ¡ Villa</SelectItem>
-                  <SelectItem value="terrain">ðŸŒ Terrain</SelectItem>
-                  <SelectItem value="bureau">ðŸ¬ Bureau</SelectItem>
-                  <SelectItem value="boutique">ðŸª Boutique</SelectItem>
+                  <SelectItem value="appartement">🏢 Appartement</SelectItem>
+                  <SelectItem value="maison">🏠 Maison</SelectItem>
+                  <SelectItem value="villa">🏡 Villa</SelectItem>
+                  <SelectItem value="terrain">🌍 Terrain</SelectItem>
+                  <SelectItem value="bureau">🏬 Bureau</SelectItem>
+                  <SelectItem value="boutique">🏪 Boutique</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -194,20 +194,20 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
           <div className="space-y-2">
             <Label>Titre de l'annonce *</Label>
             <Input 
-              placeholder="Ex: Appartement 3 piÃ¨ces vue mer - Kaloum" 
+              placeholder="Ex: Appartement 3 pièces vue mer - Kaloum" 
               value={form.title}
               onChange={e => updateField('title', e.target.value)}
             />
           </div>
 
-          {/* Prix, Surface, PiÃ¨ces, SdB */}
+          {/* Prix, Surface, Pièces, SdB */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="space-y-2">
               <Label>Prix (GNF) *</Label>
               <Input type="number" placeholder="0" value={form.price} onChange={e => updateField('price', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Surface (mÂ²)</Label>
+              <Label>Surface (m²)</Label>
               <Input type="number" placeholder="0" value={form.surface} onChange={e => updateField('surface', e.target.value)} />
             </div>
             <div className="space-y-2">
@@ -231,21 +231,21 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
               <Input placeholder="Kaloum" value={form.neighborhood} onChange={e => updateField('neighborhood', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Adresse complÃ¨te</Label>
-              <Input placeholder="Rue, numÃ©ro..." value={form.address} onChange={e => updateField('address', e.target.value)} />
+              <Label>Adresse complète</Label>
+              <Input placeholder="Rue, numéro..." value={form.address} onChange={e => updateField('address', e.target.value)} />
             </div>
           </div>
 
           {/* GPS */}
           <div className="rounded-lg border border-border bg-muted/30 p-3 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">ðŸ“ Position GPS</p>
+              <p className="text-sm font-medium">📍 Position GPS</p>
               <p className="text-xs text-muted-foreground">
                 {coords ? `Lat: ${coords.lat.toFixed(5)}, Lng: ${coords.lng.toFixed(5)}` : 'Pour afficher sur la carte'}
               </p>
             </div>
             <Button type="button" variant={coords ? 'outline' : 'default'} size="sm" onClick={handleGetLocation} disabled={geoLoading}>
-              {geoLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : coords ? <CheckCircle2 className="h-4 w-4 mr-1 text-primary-orange-500" /> : <MapPin className="h-4 w-4 mr-1" />}
+              {geoLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : coords ? <CheckCircle2 className="h-4 w-4 mr-1 text-green-500" /> : <MapPin className="h-4 w-4 mr-1" />}
               {coords ? 'Repositionner' : 'Localiser'}
             </Button>
           </div>
@@ -254,16 +254,16 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
           <div className="space-y-2">
             <Label>Description</Label>
             <Textarea 
-              placeholder="DÃ©crivez le bien en dÃ©tail : Ã©tat, proximitÃ©, avantages..."
+              placeholder="Décrivez le bien en détail : état, proximité, avantages..."
               rows={4}
               value={form.description}
               onChange={e => updateField('description', e.target.value)}
             />
           </div>
 
-          {/* Ã‰quipements */}
+          {/* Équipements */}
           <div className="space-y-2">
-            <Label>Ã‰quipements & commoditÃ©s</Label>
+            <Label>Équipements & commodités</Label>
             <div className="flex flex-wrap gap-2">
               {AMENITIES_OPTIONS.map(amenity => (
                 <button
@@ -284,7 +284,7 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
 
           {/* Photos */}
           <div className="space-y-2">
-            <Label>ðŸ“¸ Photos du bien</Label>
+            <Label>📸 Photos du bien</Label>
             <div className="flex flex-wrap gap-2">
               {photoPreviews.map((url, i) => (
                 <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border group">
@@ -320,7 +320,7 @@ export function NewPropertyDialog({ open, onClose, onSubmit, saving }: NewProper
               className="hidden"
               onChange={handlePhotosSelected}
             />
-            <p className="text-xs text-muted-foreground">Max 5MB par photo. La premiÃ¨re sera la couverture.</p>
+            <p className="text-xs text-muted-foreground">Max 5MB par photo. La première sera la couverture.</p>
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 /**
- * ðŸšš TABLEAU DE BORD TRANSPORT
- * Interface complÃ¨te pour gestion des transports
+ * 🚚 TABLEAU DE BORD TRANSPORT
+ * Interface complète pour gestion des transports
  */
 
 import React, { useState, useEffect } from 'react';
@@ -77,7 +77,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
         }
       }
     } catch (error) {
-      console.error('Erreur chargement donnÃ©es:', error);
+      console.error('Erreur chargement données:', error);
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +98,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
       case 'pending': return 'text-yellow-600 bg-yellow-100';
       case 'accepted': return 'text-blue-600 bg-blue-100';
       case 'picked_up': return 'text-purple-600 bg-purple-100';
-      case 'delivered': return 'text-primary-orange-600 bg-primary-orange-100';
+      case 'delivered': return 'text-green-600 bg-green-100';
       case 'cancelled': return 'text-red-600 bg-red-100';
       case 'disputed': return 'text-orange-600 bg-orange-100';
       default: return 'text-gray-600 bg-gray-100';
@@ -108,10 +108,10 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return 'En attente';
-      case 'accepted': return 'AcceptÃ©e';
-      case 'picked_up': return 'RÃ©cupÃ©rÃ©';
-      case 'delivered': return 'LivrÃ©';
-      case 'cancelled': return 'AnnulÃ©e';
+      case 'accepted': return 'Acceptée';
+      case 'picked_up': return 'Récupéré';
+      case 'delivered': return 'Livré';
+      case 'cancelled': return 'Annulée';
       case 'disputed': return 'En litige';
       default: return 'Inconnu';
     }
@@ -126,7 +126,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
 
   return (
     <div className={`bg-white rounded-lg shadow-lg ${className}`}>
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -141,7 +141,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
               </h2>
               <p className="text-sm text-gray-600">
                 {userType === 'client' && 'Demandez et suivez vos transports'}
-                {userType === 'transport' && 'GÃ©rez vos courses et clients'}
+                {userType === 'transport' && 'Gérez vos courses et clients'}
                 {userType === 'admin' && 'Supervisez tous les transports'}
               </p>
             </div>
@@ -177,12 +177,12 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
             <p className="text-2xl font-bold text-yellow-600">{stats.activeRequests}</p>
           </div>
           
-          <div className="p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
+          <div className="p-4 bg-green-50 rounded-lg">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-primary-orange-600" />
-              <span className="text-sm font-medium text-primary-orange-800">TerminÃ©es</span>
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <span className="text-sm font-medium text-green-800">Terminées</span>
             </div>
-            <p className="text-2xl font-bold text-primary-orange-600">{stats.completedRequests}</p>
+            <p className="text-2xl font-bold text-green-600">{stats.completedRequests}</p>
           </div>
           
           <div className="p-4 bg-purple-50 rounded-lg">
@@ -253,7 +253,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                     onClick={() => setShowRequestForm(true)}
                     className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    CrÃ©er une demande
+                    Créer une demande
                   </button>
                 )}
               </div>
@@ -282,7 +282,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                             <span className="text-sm text-gray-700">{request.pickupAddress}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-primary-orange-600" />
+                            <MapPin className="w-4 h-4 text-green-600" />
                             <span className="text-sm text-gray-700">{request.deliveryAddress}</span>
                           </div>
                         </div>
@@ -296,7 +296,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                               {request.estimatedTime} min
                             </span>
                           </div>
-                          <span className="text-lg font-bold text-primary-orange-600">
+                          <span className="text-lg font-bold text-green-600">
                             {request.totalPrice} GNF
                           </span>
                         </div>
@@ -318,7 +318,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
             {transportUsers.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500">Aucun transporteur enregistrÃ©</p>
+                <p className="text-gray-500">Aucun transporteur enregistré</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -333,18 +333,18 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900">{user.name}</h4>
                         <p className="text-sm text-gray-600">
-                          {user.vehicleType} â€¢ {user.vehicleInfo.model}
+                          {user.vehicleType} • {user.vehicleInfo.model}
                         </p>
                       </div>
                       <div className={`w-3 h-3 rounded-full ${
-                        user.isOnline ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-gray-400'
+                        user.isOnline ? 'bg-green-500' : 'bg-gray-400'
                       }`}></div>
                     </div>
                     
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Note</span>
-                        <span className="font-medium">â­ {user.rating}/5</span>
+                        <span className="font-medium">⭐ {user.rating}/5</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Courses</span>
@@ -352,7 +352,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Gains</span>
-                        <span className="font-medium text-primary-orange-600">{user.earnings} GNF</span>
+                        <span className="font-medium text-green-600">{user.earnings} GNF</span>
                       </div>
                     </div>
                     
@@ -361,7 +361,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                         <Phone className="w-4 h-4 inline mr-1" />
                         Appeler
                       </button>
-                      <button className="flex-1 bg-primary-orange-100 text-primary-orange-600 py-2 px-3 rounded-lg text-sm hover:bg-primary-orange-100 transition-colors">
+                      <button className="flex-1 bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm hover:bg-green-200 transition-colors">
                         <MessageSquare className="w-4 h-4 inline mr-1" />
                         Message
                       </button>
@@ -380,7 +380,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                 <h3 className="text-lg font-semibold text-blue-800 mb-4">Performance</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-blue-600">Taux de rÃ©ussite</span>
+                    <span className="text-blue-600">Taux de réussite</span>
                     <span className="font-bold text-blue-800">95%</span>
                   </div>
                   <div className="flex justify-between">
@@ -394,33 +394,33 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                 </div>
               </div>
               
-              <div className="p-6 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
-                <h3 className="text-lg font-semibold text-primary-orange-800 mb-4">Revenus</h3>
+              <div className="p-6 bg-green-50 rounded-lg">
+                <h3 className="text-lg font-semibold text-green-800 mb-4">Revenus</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-primary-orange-600">Aujourd'hui</span>
-                    <span className="font-bold text-primary-orange-800">45,000 GNF</span>
+                    <span className="text-green-600">Aujourd'hui</span>
+                    <span className="font-bold text-green-800">45,000 GNF</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-primary-orange-600">Cette semaine</span>
-                    <span className="font-bold text-primary-orange-800">320,000 GNF</span>
+                    <span className="text-green-600">Cette semaine</span>
+                    <span className="font-bold text-green-800">320,000 GNF</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-primary-orange-600">Ce mois</span>
-                    <span className="font-bold text-primary-orange-800">1,250,000 GNF</span>
+                    <span className="text-green-600">Ce mois</span>
+                    <span className="font-bold text-green-800">1,250,000 GNF</span>
                   </div>
                 </div>
               </div>
               
               <div className="p-6 bg-purple-50 rounded-lg">
-                <h3 className="text-lg font-semibold text-purple-800 mb-4">SÃ©curitÃ©</h3>
+                <h3 className="text-lg font-semibold text-purple-800 mb-4">Sécurité</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-purple-600">Litiges</span>
                     <span className="font-bold text-purple-800">2</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-purple-600">RÃ©solus</span>
+                    <span className="text-purple-600">Résolus</span>
                     <span className="font-bold text-purple-800">1</span>
                   </div>
                   <div className="flex justify-between">
@@ -434,7 +434,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
         )}
       </div>
 
-      {/* Modal de crÃ©ation de demande */}
+      {/* Modal de création de demande */}
       {showRequestForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -456,7 +456,7 @@ const TransportDashboard: React.FC<TransportDashboardProps> = ({
                 onClick={() => setSelectedRequest(null)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                âœ•
+                ✕
               </button>
             </div>
             <TransportTracking

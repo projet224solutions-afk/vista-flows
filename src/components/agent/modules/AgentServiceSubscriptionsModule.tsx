@@ -76,7 +76,7 @@ export function AgentServiceSubscriptionsModule({
     switch (status) {
       case 'active':
         return (
-          <Badge className="bg-primary-orange-100 text-primary-blue-900 flex items-center gap-1">
+          <Badge className="bg-emerald-100 text-emerald-700 flex items-center gap-1">
             <CheckCircle className="w-3 h-3" />
             Actif
           </Badge>
@@ -160,16 +160,16 @@ export function AgentServiceSubscriptionsModule({
             </CardContent>
           </Card>
           
-          <Card className="border-0 shadow-md bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+          <Card className="border-0 shadow-md bg-gradient-to-br from-emerald-50 to-green-50">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-600">Revenus Mensuels</p>
-                  <p className="text-2xl font-bold text-primary-orange-700">
+                  <p className="text-2xl font-bold text-emerald-700">
                     {ServiceSubscriptionService.formatAmount(stats.monthly_revenue || 0)}
                   </p>
                 </div>
-                <DollarSign className="w-8 h-8 text-primary-orange-400" />
+                <DollarSign className="w-8 h-8 text-emerald-400" />
               </div>
             </CardContent>
           </Card>
@@ -333,7 +333,7 @@ export function AgentServiceSubscriptionsModule({
                         <ul className="space-y-1">
                           {plan.features.slice(0, 4).map((feature, idx) => (
                             <li key={idx} className="flex items-center gap-2 text-sm text-slate-600">
-                              <CheckCircle className="w-3 h-3 text-primary-orange-500" />
+                              <CheckCircle className="w-3 h-3 text-emerald-500" />
                               {feature}
                             </li>
                           ))}

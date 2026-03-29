@@ -47,7 +47,7 @@ interface TicketMessage {
 const priorityConfig = {
   low: { label: 'Faible', color: 'bg-gray-500' },
   normal: { label: 'Normal', color: 'bg-blue-500' },
-  high: { label: 'Ã‰levÃ©e', color: 'bg-orange-500' },
+  high: { label: 'Élevée', color: 'bg-orange-500' },
   urgent: { label: 'Urgent', color: 'bg-red-500' },
   critical: { label: 'Critique', color: 'bg-red-700' }
 };
@@ -56,8 +56,8 @@ const statusConfig = {
   open: { label: 'Ouvert', color: 'bg-blue-500' },
   in_progress: { label: 'En cours', color: 'bg-yellow-500' },
   waiting_response: { label: 'En attente', color: 'bg-purple-500' },
-  resolved: { label: 'RÃ©solu', color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' },
-  closed: { label: 'FermÃ©', color: 'bg-gray-500' }
+  resolved: { label: 'Résolu', color: 'bg-green-500' },
+  closed: { label: 'Fermé', color: 'bg-gray-500' }
 };
 
 export function SupportTicketSystem() {
@@ -135,7 +135,7 @@ export function SupportTicketSystem() {
     }
 
     try {
-      // DÃ©terminer la prioritÃ© selon le plan
+      // Déterminer la priorité selon le plan
       let priority = 'normal';
       const planName = subscription.plan_name?.toLowerCase();
       
@@ -159,17 +159,17 @@ export function SupportTicketSystem() {
       if (error) throw error;
 
       toast({
-        title: 'Ticket crÃ©Ã©',
-        description: 'Votre ticket de support a Ã©tÃ© crÃ©Ã© avec succÃ¨s'
+        title: 'Ticket créé',
+        description: 'Votre ticket de support a été créé avec succès'
       });
 
       setNewTicket({ category: 'technical', subject: '', description: '' });
       loadTickets();
     } catch (error) {
-      console.error('Erreur crÃ©ation ticket:', error);
+      console.error('Erreur création ticket:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de crÃ©er le ticket',
+        description: 'Impossible de créer le ticket',
         variant: 'destructive'
       });
     }
@@ -238,8 +238,8 @@ export function SupportTicketSystem() {
           <h2 className="text-2xl font-bold">Support {subscription?.plan_name ? `- Plan ${subscription.plan_name}` : ''}</h2>
           <p className="text-muted-foreground">
             {subscription?.plan_name === 'business' || subscription?.plan_name === 'premium' 
-              ? 'ðŸš€ Support prioritaire activÃ© - RÃ©ponse garantie sous 2h'
-              : 'Support standard - RÃ©ponse sous 24h'}
+              ? '🚀 Support prioritaire activé - Réponse garantie sous 2h'
+              : 'Support standard - Réponse sous 24h'}
           </p>
         </div>
 
@@ -252,11 +252,11 @@ export function SupportTicketSystem() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>CrÃ©er un ticket de support</DialogTitle>
+              <DialogTitle>Créer un ticket de support</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">CatÃ©gorie</label>
+                <label className="text-sm font-medium">Catégorie</label>
                 <Select
                   value={newTicket.category}
                   onValueChange={(value) => setNewTicket({ ...newTicket, category: value })}
@@ -267,7 +267,7 @@ export function SupportTicketSystem() {
                   <SelectContent>
                     <SelectItem value="technical">Technique</SelectItem>
                     <SelectItem value="billing">Facturation</SelectItem>
-                    <SelectItem value="feature_request">Demande de fonctionnalitÃ©</SelectItem>
+                    <SelectItem value="feature_request">Demande de fonctionnalité</SelectItem>
                     <SelectItem value="bug_report">Signaler un bug</SelectItem>
                     <SelectItem value="account">Compte</SelectItem>
                     <SelectItem value="other">Autre</SelectItem>
@@ -280,7 +280,7 @@ export function SupportTicketSystem() {
                 <Input
                   value={newTicket.subject}
                   onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                  placeholder="RÃ©sumÃ© du problÃ¨me"
+                  placeholder="Résumé du problème"
                 />
               </div>
 
@@ -289,13 +289,13 @@ export function SupportTicketSystem() {
                 <Textarea
                   value={newTicket.description}
                   onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                  placeholder="DÃ©crivez votre problÃ¨me en dÃ©tail"
+                  placeholder="Décrivez votre problème en détail"
                   rows={6}
                 />
               </div>
 
               <Button onClick={createTicket} className="w-full">
-                CrÃ©er le ticket
+                Créer le ticket
               </Button>
             </div>
           </DialogContent>
@@ -329,7 +329,7 @@ export function SupportTicketSystem() {
                         <span className="text-sm font-normal text-muted-foreground">#{ticket.ticket_number}</span>
                       </CardTitle>
                       <CardDescription>
-                        CrÃ©Ã© {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: fr })}
+                        Créé {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: fr })}
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
@@ -343,7 +343,7 @@ export function SupportTicketSystem() {
                   {ticket.first_response_at && (
                     <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                       <Clock className="w-3 h-3" />
-                      PremiÃ¨re rÃ©ponse: {ticket.response_time_minutes} min
+                      Première réponse: {ticket.response_time_minutes} min
                     </div>
                   )}
                 </CardContent>
@@ -367,10 +367,10 @@ export function SupportTicketSystem() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Tickets rÃ©solus</CardTitle>
+                <CardTitle className="text-sm">Tickets résolus</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-primary-orange-600">
+                <div className="text-3xl font-bold text-green-600">
                   {tickets.filter(t => t.status === 'resolved' || t.status === 'closed').length}
                 </div>
               </CardContent>
@@ -378,7 +378,7 @@ export function SupportTicketSystem() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Temps de rÃ©ponse moyen</CardTitle>
+                <CardTitle className="text-sm">Temps de réponse moyen</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">

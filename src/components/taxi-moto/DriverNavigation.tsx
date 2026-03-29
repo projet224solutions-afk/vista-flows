@@ -1,6 +1,6 @@
 /**
- * NAVIGATION CONDUCTEUR - Composant avec connexion temps rÃ©el
- * GÃ¨re la navigation GPS et les mises Ã  jour de statut de course
+ * NAVIGATION CONDUCTEUR - Composant avec connexion temps réel
+ * Gère la navigation GPS et les mises à jour de statut de course
  */
 
 import { useEffect, useState } from 'react';
@@ -51,7 +51,7 @@ export function DriverNavigation({
   const [distanceToDestination, setDistanceToDestination] = useState(0);
   const [timeToDestination, setTimeToDestination] = useState(0);
 
-  // Charger la course active depuis la base de donnÃ©es
+  // Charger la course active depuis la base de données
   const loadActiveRide = async () => {
     if (!driverId) return;
     
@@ -91,7 +91,7 @@ export function DriverNavigation({
           customerPhone = customerProfile.phone || customerPhone;
         }
         
-        // Note par dÃ©faut pour Ã©viter les problÃ¨mes de types
+        // Note par défaut pour éviter les problèmes de types
         customerRating = 4.5;
       } catch (e) {
         console.error('Error loading customer info:', e);
@@ -147,8 +147,8 @@ export function DriverNavigation({
             { latitude: destination.latitude, longitude: destination.longitude }
           );
           
-          setDistanceToDestination(routeInfo.distance * 1000); // convertir km en mÃ¨tres
-          setTimeToDestination(routeInfo.duration); // dÃ©jÃ  en minutes
+          setDistanceToDestination(routeInfo.distance * 1000); // convertir km en mètres
+          setTimeToDestination(routeInfo.duration); // déjà en minutes
           
           if (frontendStatus === 'accepted' || frontendStatus === 'arriving') {
             setNextInstruction(`Direction: ${activeRideData.pickup.address}`);
@@ -169,9 +169,9 @@ export function DriverNavigation({
         }
       }
 
-      console.log('âœ… Active ride loaded:', activeRideData);
+      console.log('✅ Active ride loaded:', activeRideData);
     } catch (error) {
-      console.error('âŒ Error loading active ride:', error);
+      console.error('❌ Error loading active ride:', error);
       toast.error('Erreur de chargement de la course');
     } finally {
       setLoading(false);
@@ -179,7 +179,7 @@ export function DriverNavigation({
   };
 
 
-  // Mettre Ã  jour le statut de la course
+  // Mettre à jour le statut de la course
   const updateRideStatus = async (newStatus: string) => {
     if (!activeRide) return;
 
@@ -195,11 +195,11 @@ export function DriverNavigation({
 
       if (error) throw error;
 
-      toast.success('âœ… Statut mis Ã  jour');
+      toast.success('✅ Statut mis à jour');
       await loadActiveRide();
     } catch (error) {
-      console.error('âŒ Error updating ride status:', error);
-      toast.error('Erreur de mise Ã  jour du statut');
+      console.error('❌ Error updating ride status:', error);
+      toast.error('Erreur de mise à jour du statut');
     } finally {
       setLoading(false);
     }
@@ -210,7 +210,7 @@ export function DriverNavigation({
     loadActiveRide();
   }, [driverId]);
 
-  // S'abonner aux changements en temps rÃ©el
+  // S'abonner aux changements en temps réel
   useEffect(() => {
     if (!driverId) return;
 
@@ -225,7 +225,7 @@ export function DriverNavigation({
           filter: `driver_id=eq.${driverId}`
         },
         () => {
-          console.log('ðŸ”„ Ride updated, refreshing navigation...');
+          console.log('🔄 Ride updated, refreshing navigation...');
           loadActiveRide();
         }
       )
@@ -283,7 +283,7 @@ export function DriverNavigation({
             Acceptez une course pour commencer la navigation
           </p>
           <Button onClick={loadActiveRide} variant="outline">
-            ðŸ”„ Actualiser
+            🔄 Actualiser
           </Button>
         </CardContent>
       </Card>
@@ -312,9 +312,9 @@ export function DriverNavigation({
             <div className="flex-1">
               <h3 className="text-lg font-semibold mb-2 text-blue-900">{nextInstruction}</h3>
               <div className="flex items-center gap-4 text-sm text-gray-700">
-                <span className="font-medium">ðŸ“ {(distanceToDestination / 1000).toFixed(1)} km</span>
-                <span>â€¢</span>
-                <span className="font-medium">â±ï¸ {Math.ceil(timeToDestination / 60)} min</span>
+                <span className="font-medium">📏 {(distanceToDestination / 1000).toFixed(1)} km</span>
+                <span>•</span>
+                <span className="font-medium">⏱️ {Math.ceil(timeToDestination / 60)} min</span>
               </div>
               
               {/* Bouton pour ouvrir Google Maps */}
@@ -323,9 +323,9 @@ export function DriverNavigation({
                   const destination = activeRide.status === 'picked_up' || activeRide.status === 'in_progress'
                     ? activeRide.destination.coords
                     : activeRide.pickup.coords;
-                  // Ouvrir Google Maps avec les coordonnÃ©es
+                  // Ouvrir Google Maps avec les coordonnées
                   const url = `https://www.google.com/maps/dir/?api=1&destination=${destination.latitude},${destination.longitude}${location ? `&origin=${location.latitude},${location.longitude}` : ''}`;
-                  window.open(url, '_blank', 'noopener,noreferrer');
+                  window.open(url, '_blank');
                 }}
                 className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
                 size="lg"
@@ -346,12 +346,12 @@ export function DriverNavigation({
             <Badge className={`${
               activeRide.status === 'accepted' ? 'bg-yellow-100 text-yellow-800' :
               activeRide.status === 'arriving' ? 'bg-blue-100 text-blue-800' :
-              activeRide.status === 'picked_up' ? 'bg-primary-orange-100 text-primary-orange-800' :
+              activeRide.status === 'picked_up' ? 'bg-green-100 text-green-800' :
               'bg-purple-100 text-purple-800'
             }`}>
-              {activeRide.status === 'accepted' ? 'AcceptÃ©e' :
+              {activeRide.status === 'accepted' ? 'Acceptée' :
                activeRide.status === 'arriving' ? 'En route' :
-               activeRide.status === 'picked_up' ? 'Client Ã  bord' :
+               activeRide.status === 'picked_up' ? 'Client à bord' :
                'En cours'}
             </Badge>
           </CardTitle>
@@ -371,8 +371,8 @@ export function DriverNavigation({
           </div>
 
           <div className="space-y-2 mb-4">
-            <div className="flex items-center gap-2 text-sm bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 p-3 rounded">
-              <MapPin className="w-4 h-4 text-primary-orange-600" />
+            <div className="flex items-center gap-2 text-sm bg-green-50 p-3 rounded">
+              <MapPin className="w-4 h-4 text-green-600" />
               <span className="font-medium">{activeRide.pickup.address}</span>
             </div>
             <div className="flex items-center gap-2 text-sm bg-red-50 p-3 rounded">
@@ -389,7 +389,7 @@ export function DriverNavigation({
               disabled={loading}
             >
               <CheckCircle className="w-4 h-4 mr-2" />
-              Je suis arrivÃ© au point de dÃ©part
+              Je suis arrivé au point de départ
             </Button>
           )}
 
@@ -401,19 +401,19 @@ export function DriverNavigation({
               disabled={loading}
             >
               <Car className="w-4 h-4 mr-2" />
-              Client Ã  bord - DÃ©marrer la course
+              Client à bord - Démarrer la course
             </Button>
           )}
 
           {activeRide.status === 'picked_up' && (
             <Button
               onClick={() => updateRideStatus('completed')}
-              className="w-full bg-primary-orange-600 hover:bg-primary-orange-700"
+              className="w-full bg-green-600 hover:bg-green-700"
               size="lg"
               disabled={loading}
             >
               <CheckCircle className="w-4 h-4 mr-2" />
-              ArrivÃ© Ã  destination - Terminer la course
+              Arrivé à destination - Terminer la course
             </Button>
           )}
 
@@ -421,43 +421,43 @@ export function DriverNavigation({
           <Button
             onClick={async () => {
               const confirmed = window.confirm(
-                'âš ï¸ ÃŠtes-vous sÃ»r de vouloir annuler cette course ?\n\n' +
-                'Le client sera notifiÃ© et vous pourriez recevoir une pÃ©nalitÃ©.'
+                '⚠️ Êtes-vous sûr de vouloir annuler cette course ?\n\n' +
+                'Le client sera notifié et vous pourriez recevoir une pénalité.'
               );
               
               if (!confirmed) return;
               
               setLoading(true);
               try {
-                console.log('ðŸš« Annulation de la course:', activeRide.id);
+                console.log('🚫 Annulation de la course:', activeRide.id);
                 
                 const { error } = await supabase
                   .from('taxi_trips')
                   .update({ 
                     status: 'cancelled',
-                    cancel_reason: 'AnnulÃ©e par le conducteur',
+                    cancel_reason: 'Annulée par le conducteur',
                     cancelled_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                   })
                   .eq('id', activeRide.id);
 
                 if (error) {
-                  console.error('âŒ Erreur DB:', error);
+                  console.error('❌ Erreur DB:', error);
                   throw error;
                 }
 
-                console.log('âœ… Course annulÃ©e avec succÃ¨s dans la DB');
+                console.log('✅ Course annulée avec succès dans la DB');
                 
-                toast.success('âœ… Course annulÃ©e avec succÃ¨s');
+                toast.success('✅ Course annulée avec succès');
                 
-                // RÃ©initialiser l'Ã©tat local
+                // Réinitialiser l'état local
                 setActiveRide(null);
                 
-                // Recharger pour vÃ©rifier
+                // Recharger pour vérifier
                 await loadActiveRide();
               } catch (error) {
-                console.error('âŒ Erreur annulation:', error);
-                toast.error('Impossible d\'annuler la course. Veuillez rÃ©essayer.');
+                console.error('❌ Erreur annulation:', error);
+                toast.error('Impossible d\'annuler la course. Veuillez réessayer.');
               } finally {
                 setLoading(false);
               }
@@ -467,7 +467,7 @@ export function DriverNavigation({
             size="lg"
             disabled={loading}
           >
-            âŒ Annuler la course
+            ❌ Annuler la course
           </Button>
         </CardContent>
       </Card>

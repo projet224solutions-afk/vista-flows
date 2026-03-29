@@ -30,7 +30,7 @@ const severityColors: Record<string, string> = {
 };
 
 const statusIcons: Record<string, React.ReactNode> = {
-  healthy: <CheckCircle className="h-4 w-4 text-primary-orange-500" />,
+  healthy: <CheckCircle className="h-4 w-4 text-green-500" />,
   degraded: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
   critical: <XCircle className="h-4 w-4 text-red-500" />,
   unknown: <Clock className="h-4 w-4 text-muted-foreground" />,
@@ -66,21 +66,21 @@ export default function MonitoringDashboard() {
 
   const handleAcknowledge = async (id: string) => {
     const ok = await acknowledgeAlert(id);
-    if (ok) toast.success('Alerte acquittÃ©e');
+    if (ok) toast.success('Alerte acquittée');
   };
 
   const handleResolve = async (id: string) => {
     const ok = await resolveAlert(id);
-    if (ok) toast.success('Alerte rÃ©solue');
+    if (ok) toast.success('Alerte résolue');
   };
 
   const handleForceCheck = async () => {
     toast.info('Health check en cours...');
     await forceHealthCheck();
-    toast.success('Health check terminÃ©');
+    toast.success('Health check terminé');
   };
 
-  const overallBg = stats.overallStatus === 'healthy' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/30'
+  const overallBg = stats.overallStatus === 'healthy' ? 'bg-green-500/10 border-green-500/30'
     : stats.overallStatus === 'degraded' ? 'bg-yellow-500/10 border-yellow-500/30'
     : stats.overallStatus === 'critical' ? 'bg-red-500/10 border-red-500/30'
     : 'bg-muted/10 border-border';
@@ -96,11 +96,11 @@ export default function MonitoringDashboard() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Activity className="h-6 w-6 text-primary" />
-              Monitoring Temps RÃ©el
+              Monitoring Temps Réel
             </h1>
             <p className="text-sm text-muted-foreground">
-              DerniÃ¨re MAJ: {formatDistanceToNow(lastRefresh, { addSuffix: true, locale: fr })}
-              {' Â· '}Realtime actif
+              Dernière MAJ: {formatDistanceToNow(lastRefresh, { addSuffix: true, locale: fr })}
+              {' · '}Realtime actif
             </p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function MonitoringDashboard() {
             <Zap className="h-4 w-4 mr-1" /> Health Check
           </Button>
           <Button variant="outline" size="sm" onClick={refreshData}>
-            <RefreshCw className="h-4 w-4 mr-1" /> RafraÃ®chir
+            <RefreshCw className="h-4 w-4 mr-1" /> Rafraîchir
           </Button>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function MonitoringDashboard() {
         <div className="flex items-center gap-3">
           {statusIcons[stats.overallStatus]}
           <span className="font-semibold text-lg">
-            SystÃ¨me {stats.overallStatus === 'healthy' ? 'OpÃ©rationnel' : stats.overallStatus === 'degraded' ? 'DÃ©gradÃ©' : stats.overallStatus === 'critical' ? 'Critique' : 'Inconnu'}
+            Système {stats.overallStatus === 'healthy' ? 'Opérationnel' : stats.overallStatus === 'degraded' ? 'Dégradé' : stats.overallStatus === 'critical' ? 'Critique' : 'Inconnu'}
           </span>
           <span className="text-sm text-muted-foreground ml-auto">
             {stats.healthyServices}/{stats.totalServices} services OK
@@ -144,12 +144,12 @@ export default function MonitoringDashboard() {
         <Card>
           <CardContent className="pt-4 pb-3 px-4">
             <div className="text-xs text-muted-foreground">Services sains</div>
-            <div className="text-2xl font-bold text-primary-orange-500">{stats.healthyServices}</div>
+            <div className="text-2xl font-bold text-green-500">{stats.healthyServices}</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 px-4">
-            <div className="text-xs text-muted-foreground">Services dÃ©gradÃ©s</div>
+            <div className="text-xs text-muted-foreground">Services dégradés</div>
             <div className="text-2xl font-bold text-yellow-500">{stats.degradedServices + stats.criticalServices}</div>
           </CardContent>
         </Card>
@@ -159,7 +159,7 @@ export default function MonitoringDashboard() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Server className="h-4 w-4" /> SantÃ© des services
+            <Server className="h-4 w-4" /> Santé des services
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -221,10 +221,10 @@ export default function MonitoringDashboard() {
                 Ouvertes ({openAlerts.length})
               </TabsTrigger>
               <TabsTrigger value="acknowledged" className="text-xs">
-                AcquittÃ©es ({acknowledgedAlerts.length})
+                Acquittées ({acknowledgedAlerts.length})
               </TabsTrigger>
               <TabsTrigger value="resolved" className="text-xs">
-                RÃ©solues ({resolvedAlerts.length})
+                Résolues ({resolvedAlerts.length})
               </TabsTrigger>
             </TabsList>
 
@@ -266,7 +266,7 @@ function AlertList({ alerts, onAcknowledge, onResolve, showActions, showResolve 
             <div className="font-medium text-sm">{alert.title}</div>
             <div className="text-xs text-muted-foreground truncate">{alert.message}</div>
             <div className="text-[10px] text-muted-foreground mt-1">
-              {alert.occurrence_count > 1 && `Ã—${alert.occurrence_count} Â· `}
+              {alert.occurrence_count > 1 && `×${alert.occurrence_count} · `}
               {formatDistanceToNow(new Date(alert.last_seen_at), { addSuffix: true, locale: fr })}
             </div>
           </div>
@@ -278,7 +278,7 @@ function AlertList({ alerts, onAcknowledge, onResolve, showActions, showResolve 
             )}
             {(showActions || showResolve) && onResolve && (
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onResolve(alert.id)}>
-                <CheckCheck className="h-3 w-3 mr-1" /> RÃ©soudre
+                <CheckCheck className="h-3 w-3 mr-1" /> Résoudre
               </Button>
             )}
           </div>

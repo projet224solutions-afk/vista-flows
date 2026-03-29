@@ -1,5 +1,5 @@
 /**
- * Sheet affichant les achats non validÃ©s (brouillons)
+ * Sheet affichant les achats non validés (brouillons)
  * Avec boutons de modification et validation
  */
 
@@ -70,14 +70,14 @@ const STATUS_CONFIG = {
     color: 'bg-orange-500/10 text-orange-600 border-orange-500/30',
   },
   document_generated: {
-    label: 'Document gÃ©nÃ©rÃ©',
+    label: 'Document généré',
     icon: FileText,
     color: 'bg-blue-500/10 text-blue-600 border-blue-500/30',
   },
   validated: {
-    label: 'ValidÃ©',
+    label: 'Validé',
     icon: Clock,
-    color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/30',
+    color: 'bg-green-500/10 text-green-600 border-green-500/30',
   },
 };
 
@@ -145,7 +145,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
 
       if (error) throw error;
 
-      toast.success('Achat supprimÃ© avec succÃ¨s');
+      toast.success('Achat supprimé avec succès');
       refetch();
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
     } catch (error: any) {
@@ -160,7 +160,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
   const handleValidatePurchase = async (purchase: Purchase) => {
     setValidatingId(purchase.id);
     try {
-      // 1. RÃ©cupÃ©rer les items de l'achat
+      // 1. Récupérer les items de l'achat
       const { data: items, error: itemsError } = await supabase
         .from('stock_purchase_items')
         .select('id, product_id, supplier_id, product_name, quantity, purchase_price, selling_price, total_purchase')
@@ -168,10 +168,10 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
 
       if (itemsError) throw itemsError;
       if (!items || items.length === 0) {
-        throw new Error('Aucun article trouvÃ© pour cet achat');
+        throw new Error('Aucun article trouvé pour cet achat');
       }
 
-      // 2. Appeler la fonction avec tous les paramÃ¨tres requis
+      // 2. Appeler la fonction avec tous les paramètres requis
       const { data, error } = await supabase.functions.invoke('validate-purchase', {
         body: { 
           purchase_id: purchase.id,
@@ -185,7 +185,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success('Achat validÃ© avec succÃ¨s! Stock mis Ã  jour.');
+      toast.success('Achat validé avec succès! Stock mis à jour.');
       refetch();
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['stock-purchases-validated', vendorId] });
@@ -197,7 +197,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
     }
   };
 
-  // Si l'Ã©diteur est ouvert, on l'affiche en plein Ã©cran
+  // Si l'éditeur est ouvert, on l'affiche en plein écran
   if (isEditorOpen && selectedPurchase) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
@@ -221,12 +221,12 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
             Achats en attente
           </SheetTitle>
           <SheetDescription>
-            Achats non validÃ©s nÃ©cessitant une action
+            Achats non validés nécessitant une action
           </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-4">
-          {/* Stats rÃ©sumÃ© */}
+          {/* Stats résumé */}
           <div className="grid grid-cols-3 gap-2">
             <Card className="bg-orange-500/10 border-orange-500/20">
               <CardContent className="p-3 text-center">
@@ -237,7 +237,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
             <Card className="bg-blue-500/10 border-blue-500/20">
               <CardContent className="p-3 text-center">
                 <p className="text-2xl font-bold text-blue-600">{documentGeneratedCount}</p>
-                <p className="text-xs text-muted-foreground">Docs gÃ©nÃ©rÃ©s</p>
+                <p className="text-xs text-muted-foreground">Docs générés</p>
               </CardContent>
             </Card>
             <Card className="bg-muted/50">
@@ -253,7 +253,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
             <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
               <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
               <p className="text-xs text-amber-700">
-                Ces achats n'ont pas encore Ã©tÃ© validÃ©s. Le stock ne sera mis Ã  jour qu'aprÃ¨s validation.
+                Ces achats n'ont pas encore été validés. Le stock ne sera mis à jour qu'après validation.
               </p>
             </div>
           )}
@@ -266,7 +266,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
               <div className="text-center py-12">
                 <Package className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
                 <p className="text-muted-foreground">Aucun achat en attente</p>
-                <p className="text-xs text-muted-foreground mt-1">Tous vos achats ont Ã©tÃ© validÃ©s</p>
+                <p className="text-xs text-muted-foreground mt-1">Tous vos achats ont été validés</p>
               </div>
             ) : (
               <div className="space-y-3 pr-4">
@@ -344,8 +344,8 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
             <AlertDialogHeader>
               <AlertDialogTitle>Supprimer cet achat ?</AlertDialogTitle>
               <AlertDialogDescription>
-                ÃŠtes-vous sÃ»r de vouloir supprimer l'achat <strong>{purchaseToDelete?.purchase_number}</strong> ?
-                Cette action est irrÃ©versible.
+                Êtes-vous sûr de vouloir supprimer l'achat <strong>{purchaseToDelete?.purchase_number}</strong> ?
+                Cette action est irréversible.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

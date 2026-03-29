@@ -1,6 +1,6 @@
 /**
  * GESTIONNAIRE DE MOYENS DE PAIEMENT CLIENT
- * Affichage et gestion des 5 moyens de paiement configurÃ©s
+ * Affichage et gestion des 5 moyens de paiement configurés
  * 224Solutions - Payment System
  */
 
@@ -30,7 +30,7 @@ interface PaymentMethod {
   id: string;
   type: 'wallet' | 'orange_money' | 'mtn_money' | 'cash' | 'bank_card';
   label: string;
-  details?: string; // NumÃ©ro de tÃ©lÃ©phone masquÃ© ou derniers chiffres carte
+  details?: string; // Numéro de téléphone masqué ou derniers chiffres carte
   is_default: boolean;
   is_active: boolean;
 }
@@ -67,7 +67,7 @@ export function PaymentMethodsManager() {
       if (queryError) {
         console.error('Erreur chargement moyens de paiement:', queryError);
         
-        // Si la table n'existe pas ou problÃ¨me rÃ©seau, utiliser des moyens par dÃ©faut en mÃ©moire
+        // Si la table n'existe pas ou problème réseau, utiliser des moyens par défaut en mémoire
         if (queryError.message.includes('does not exist') || 
             queryError.message.includes('schema cache') ||
             queryError.message.includes('Failed to fetch') ||
@@ -75,7 +75,7 @@ export function PaymentMethodsManager() {
             queryError.code === 'PGRST301' ||
             queryError.code === '42P01') {
           
-          console.log('Table non trouvÃ©e ou erreur rÃ©seau, utilisation des moyens par dÃ©faut en mÃ©moire');
+          console.log('Table non trouvée ou erreur réseau, utilisation des moyens par défaut en mémoire');
           const defaultMethods: PaymentMethod[] = [{
             id: 'wallet-default',
             type: 'wallet',
@@ -85,7 +85,7 @@ export function PaymentMethodsManager() {
           }];
           setPaymentMethods(defaultMethods);
           setLoading(false);
-          toast.info('âš ï¸ Moyens de paiement en mode local. La table doit Ãªtre crÃ©Ã©e dans Supabase.');
+          toast.info('⚠️ Moyens de paiement en mode local. La table doit être créée dans Supabase.');
           return;
         }
         
@@ -104,16 +104,16 @@ export function PaymentMethodsManager() {
         is_active: method.is_active !== false
       }));
 
-      // Si aucun moyen de paiement, crÃ©er le wallet par dÃ©faut
+      // Si aucun moyen de paiement, créer le wallet par défaut
       if (formatted.length === 0) {
-        console.log('Aucun moyen de paiement trouvÃ©, crÃ©ation du wallet par dÃ©faut...');
+        console.log('Aucun moyen de paiement trouvé, création du wallet par défaut...');
         try {
           await createDefaultWallet();
-          // Recharger aprÃ¨s crÃ©ation
+          // Recharger après création
           return loadPaymentMethods();
         } catch (createError) {
-          // Si erreur de crÃ©ation, utiliser le wallet par dÃ©faut en mÃ©moire
-          console.warn('Impossible de crÃ©er le wallet en DB, utilisation en mÃ©moire');
+          // Si erreur de création, utiliser le wallet par défaut en mémoire
+          console.warn('Impossible de créer le wallet en DB, utilisation en mémoire');
           const defaultMethods: PaymentMethod[] = [{
             id: 'wallet-default',
             type: 'wallet',
@@ -130,7 +130,7 @@ export function PaymentMethodsManager() {
     } catch (error: any) {
       console.error('Erreur chargement moyens de paiement:', error);
       
-      // En cas d'erreur rÃ©seau ou autre, utiliser wallet par dÃ©faut en mÃ©moire
+      // En cas d'erreur réseau ou autre, utiliser wallet par défaut en mémoire
       const defaultMethods: PaymentMethod[] = [{
         id: 'wallet-default',
         type: 'wallet',
@@ -139,7 +139,7 @@ export function PaymentMethodsManager() {
         is_active: true
       }];
       setPaymentMethods(defaultMethods);
-      toast.info('âš ï¸ Mode hors ligne: Utilisation du portefeuille par dÃ©faut');
+      toast.info('⚠️ Mode hors ligne: Utilisation du portefeuille par défaut');
     } finally {
       setLoading(false);
     }
@@ -160,12 +160,12 @@ export function PaymentMethodsManager() {
         });
 
       if (error) {
-        console.error('Erreur crÃ©ation wallet par dÃ©faut:', error);
+        console.error('Erreur création wallet par défaut:', error);
       } else {
-        console.log('âœ… Wallet par dÃ©faut crÃ©Ã© avec succÃ¨s');
+        console.log('✅ Wallet par défaut créé avec succès');
       }
     } catch (error) {
-      console.error('Erreur crÃ©ation wallet:', error);
+      console.error('Erreur création wallet:', error);
     }
   };
 
@@ -174,7 +174,7 @@ export function PaymentMethodsManager() {
       case 'wallet': return 'Portefeuille 224Solutions';
       case 'orange_money': return 'Orange Money';
       case 'mtn_money': return 'MTN Mobile Money';
-      case 'cash': return 'EspÃ¨ces';
+      case 'cash': return 'Espèces';
       case 'bank_card': return 'Carte bancaire';
       default: return type;
     }
@@ -196,7 +196,7 @@ export function PaymentMethodsManager() {
       case 'mtn_money':
         return <Smartphone className="h-5 w-5" style={{ color: '#FFCC00' }} />;
       case 'cash':
-        return <Banknote className="h-5 w-5 text-primary-orange-600" />;
+        return <Banknote className="h-5 w-5 text-green-600" />;
       case 'bank_card':
         return <CreditCard className="h-5 w-5 text-blue-600" />;
       default:
@@ -206,24 +206,24 @@ export function PaymentMethodsManager() {
 
   const handleAddMethod = async () => {
     if (!user || !newMethodType) {
-      toast.error('SÃ©lectionnez un type de paiement');
+      toast.error('Sélectionnez un type de paiement');
       return;
     }
 
     // Validation selon le type
     if ((newMethodType === 'orange_money' || newMethodType === 'mtn_money') && !phoneNumber) {
-      toast.error('Entrez un numÃ©ro de tÃ©lÃ©phone');
+      toast.error('Entrez un numéro de téléphone');
       return;
     }
 
     if (newMethodType === 'bank_card' && !cardNumber) {
-      toast.error('Entrez un numÃ©ro de carte');
+      toast.error('Entrez un numéro de carte');
       return;
     }
 
     setSaving(true);
     try {
-      // VÃ©rifier si c'est le premier moyen de paiement (sera par dÃ©faut)
+      // Vérifier si c'est le premier moyen de paiement (sera par défaut)
       const isFirstMethod = paymentMethods.length === 0 || paymentMethods[0].id === 'wallet-default';
 
       const methodData: any = {
@@ -233,13 +233,13 @@ export function PaymentMethodsManager() {
         is_active: true
       };
 
-      // Ajouter les dÃ©tails selon le type
+      // Ajouter les détails selon le type
       if (newMethodType === 'orange_money' || newMethodType === 'mtn_money') {
         methodData.phone_number = phoneNumber;
       }
 
       if (newMethodType === 'bank_card') {
-        // Ne stocker que les 4 derniers chiffres pour la sÃ©curitÃ©
+        // Ne stocker que les 4 derniers chiffres pour la sécurité
         methodData.card_last_four = cardNumber.slice(-4);
       }
 
@@ -248,9 +248,9 @@ export function PaymentMethodsManager() {
         .insert(methodData);
 
       if (error) {
-        // Si la table n'existe pas, ajouter en mÃ©moire seulement
+        // Si la table n'existe pas, ajouter en mémoire seulement
         if (error.message.includes('does not exist') || error.message.includes('schema cache')) {
-          toast.warning('âš ï¸ AjoutÃ© temporairement. La table doit Ãªtre crÃ©Ã©e dans Supabase pour persistance.');
+          toast.warning('⚠️ Ajouté temporairement. La table doit être créée dans Supabase pour persistance.');
           const newMethod: PaymentMethod = {
             id: `temp-${Date.now()}`,
             type: newMethodType as PaymentMethod['type'],
@@ -270,7 +270,7 @@ export function PaymentMethodsManager() {
         throw error;
       }
 
-      toast.success('Moyen de paiement ajoutÃ© avec succÃ¨s!');
+      toast.success('Moyen de paiement ajouté avec succès!');
       setShowAddDialog(false);
       setNewMethodType('');
       setPhoneNumber('');
@@ -288,13 +288,13 @@ export function PaymentMethodsManager() {
     if (!user) return;
 
     try {
-      // Retirer le dÃ©faut de tous les autres
+      // Retirer le défaut de tous les autres
       await (supabase as any)
         .from('user_payment_methods')
         .update({ is_default: false })
         .eq('user_id', user.id);
 
-      // Mettre celui-ci par dÃ©faut
+      // Mettre celui-ci par défaut
       const { error } = await (supabase as any)
         .from('user_payment_methods')
         .update({ is_default: true })
@@ -302,11 +302,11 @@ export function PaymentMethodsManager() {
 
       if (error) throw error;
 
-      toast.success('Moyen de paiement par dÃ©faut modifiÃ©');
+      toast.success('Moyen de paiement par défaut modifié');
       loadPaymentMethods();
     } catch (error) {
-      console.error('Erreur modification dÃ©faut:', error);
-      toast.error('Impossible de modifier le moyen par dÃ©faut');
+      console.error('Erreur modification défaut:', error);
+      toast.error('Impossible de modifier le moyen par défaut');
     }
   };
 
@@ -319,7 +319,7 @@ export function PaymentMethodsManager() {
 
       if (error) throw error;
 
-      toast.success(currentState ? 'Moyen de paiement dÃ©sactivÃ©' : 'Moyen de paiement activÃ©');
+      toast.success(currentState ? 'Moyen de paiement désactivé' : 'Moyen de paiement activé');
       loadPaymentMethods();
     } catch (error) {
       console.error('Erreur toggle actif:', error);
@@ -328,7 +328,7 @@ export function PaymentMethodsManager() {
   };
 
   const handleDelete = async (methodId: string) => {
-    if (!confirm('ÃŠtes-vous sÃ»r de vouloir supprimer ce moyen de paiement ?')) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce moyen de paiement ?')) {
       return;
     }
 
@@ -340,7 +340,7 @@ export function PaymentMethodsManager() {
 
       if (error) throw error;
 
-      toast.success('Moyen de paiement supprimÃ©');
+      toast.success('Moyen de paiement supprimé');
       loadPaymentMethods();
     } catch (error) {
       console.error('Erreur suppression:', error);
@@ -373,10 +373,10 @@ export function PaymentMethodsManager() {
             variant="outline"
             size="sm"
           >
-            RÃ©essayer
+            Réessayer
           </Button>
           <p className="text-xs text-muted-foreground">
-            La table 'user_payment_methods' doit Ãªtre crÃ©Ã©e dans Supabase
+            La table 'user_payment_methods' doit être créée dans Supabase
           </p>
         </div>
       </div>
@@ -391,7 +391,7 @@ export function PaymentMethodsManager() {
           <Wallet className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Aucun moyen de paiement</h3>
           <p className="text-muted-foreground mb-4">
-            Ajoutez vos moyens de paiement prÃ©fÃ©rÃ©s pour des transactions plus rapides
+            Ajoutez vos moyens de paiement préférés pour des transactions plus rapides
           </p>
         </div>
       ) : (
@@ -408,11 +408,11 @@ export function PaymentMethodsManager() {
                         {method.is_default && (
                           <Badge variant="default" className="gap-1">
                             <Check className="h-3 w-3" />
-                            Par dÃ©faut
+                            Par défaut
                           </Badge>
                         )}
                         {!method.is_active && (
-                          <Badge variant="outline">DÃ©sactivÃ©</Badge>
+                          <Badge variant="outline">Désactivé</Badge>
                         )}
                       </div>
                       {method.details && (
@@ -428,14 +428,14 @@ export function PaymentMethodsManager() {
                       onCheckedChange={() => handleToggleActive(method.id, method.is_active)}
                     />
 
-                    {/* DÃ©finir par dÃ©faut */}
+                    {/* Définir par défaut */}
                     {!method.is_default && method.is_active && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleSetDefault(method.id)}
                       >
-                        Par dÃ©faut
+                        Par défaut
                       </Button>
                     )}
 
@@ -467,12 +467,12 @@ export function PaymentMethodsManager() {
           <DialogHeader>
             <DialogTitle>Ajouter un moyen de paiement</DialogTitle>
             <DialogDescription>
-              SÃ©lectionnez le type de paiement et entrez les informations nÃ©cessaires
+              Sélectionnez le type de paiement et entrez les informations nécessaires
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* SÃ©lection du type */}
+            {/* Sélection du type */}
             <div className="space-y-2">
               <Label>Type de paiement</Label>
               <div className="grid grid-cols-1 gap-2">
@@ -506,7 +506,7 @@ export function PaymentMethodsManager() {
                   onClick={() => setNewMethodType('cash')}
                 >
                   <Banknote className="h-4 w-4 mr-2" />
-                  EspÃ¨ces
+                  Espèces
                 </Button>
                 <Button
                   variant={newMethodType === 'bank_card' ? 'default' : 'outline'}
@@ -522,7 +522,7 @@ export function PaymentMethodsManager() {
             {/* Champs conditionnels */}
             {(newMethodType === 'orange_money' || newMethodType === 'mtn_money') && (
               <div className="space-y-2">
-                <Label htmlFor="phone">NumÃ©ro de tÃ©lÃ©phone</Label>
+                <Label htmlFor="phone">Numéro de téléphone</Label>
                 <Input
                   id="phone"
                   placeholder="+224 XXX XX XX XX"
@@ -534,7 +534,7 @@ export function PaymentMethodsManager() {
 
             {newMethodType === 'bank_card' && (
               <div className="space-y-2">
-                <Label htmlFor="card">NumÃ©ro de carte</Label>
+                <Label htmlFor="card">Numéro de carte</Label>
                 <Input
                   id="card"
                   placeholder="1234 5678 9012 3456"
@@ -543,7 +543,7 @@ export function PaymentMethodsManager() {
                   maxLength={19}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Seuls les 4 derniers chiffres seront stockÃ©s pour votre sÃ©curitÃ©
+                  Seuls les 4 derniers chiffres seront stockés pour votre sécurité
                 </p>
               </div>
             )}

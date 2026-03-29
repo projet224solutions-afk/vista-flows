@@ -103,9 +103,9 @@ export function DebtsList({ vendorId }: DebtsListProps) {
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
       in_progress: { label: 'En cours', variant: 'default' },
-      paid: { label: 'PayÃ©e', variant: 'secondary' },
+      paid: { label: 'Payée', variant: 'secondary' },
       overdue: { label: 'En retard', variant: 'destructive' },
-      cancelled: { label: 'AnnulÃ©e', variant: 'outline' }
+      cancelled: { label: 'Annulée', variant: 'outline' }
     };
 
     const config = variants[status] || variants.in_progress;
@@ -117,7 +117,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Non dÃ©finie';
+    if (!dateString) return 'Non définie';
     return new Date(dateString).toLocaleDateString('fr-FR');
   };
 
@@ -128,7 +128,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
   if (debts.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground text-sm">
-        Aucune dette enregistrÃ©e pour le moment
+        Aucune dette enregistrée pour le moment
       </div>
     );
   }
@@ -172,8 +172,8 @@ export function DebtsList({ vendorId }: DebtsListProps) {
                     <p className="text-xs font-semibold">{formatAmount(debt.total_amount)}</p>
                   </div>
                   <div className="text-center border-x border-border">
-                    <p className="text-[10px] text-muted-foreground uppercase">PayÃ©</p>
-                    <p className="text-xs font-semibold text-primary-orange-600">{formatAmount(debt.paid_amount)}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Payé</p>
+                    <p className="text-xs font-semibold text-green-600">{formatAmount(debt.paid_amount)}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-[10px] text-muted-foreground uppercase">Restant</p>
@@ -184,7 +184,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
                 {/* Date limite */}
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
                   <Calendar className="w-3.5 h-3.5" />
-                  <span>Ã‰chÃ©ance: {formatDate(debt.due_date)}</span>
+                  <span>Échéance: {formatDate(debt.due_date)}</span>
                 </div>
 
                 {/* Actions */}
@@ -199,7 +199,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
                     }}
                   >
                     <Eye className="w-3.5 h-3.5 mr-1.5" />
-                    DÃ©tails
+                    Détails
                   </Button>
                   {debt.status === 'in_progress' && (
                     <Button
@@ -255,9 +255,9 @@ export function DebtsList({ vendorId }: DebtsListProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Client</TableHead>
-              <TableHead>TÃ©lÃ©phone</TableHead>
+              <TableHead>Téléphone</TableHead>
               <TableHead>Montant Total</TableHead>
-              <TableHead>PayÃ©</TableHead>
+              <TableHead>Payé</TableHead>
               <TableHead>Restant</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead>Date limite</TableHead>
@@ -270,7 +270,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
                 <TableCell className="font-medium">{debt.customer_name}</TableCell>
                 <TableCell>{debt.customer_phone}</TableCell>
                 <TableCell>{formatAmount(debt.total_amount)}</TableCell>
-                <TableCell className="text-primary-orange-600">{formatAmount(debt.paid_amount)}</TableCell>
+                <TableCell className="text-green-600">{formatAmount(debt.paid_amount)}</TableCell>
                 <TableCell className="text-orange-600 font-medium">
                   {formatAmount(debt.remaining_amount)}
                 </TableCell>
@@ -286,7 +286,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
                     }}
                   >
                     <Eye className="w-4 h-4 mr-1" />
-                    DÃ©tails
+                    Détails
                   </Button>
                   {debt.status === 'in_progress' && (
                     <Button

@@ -1,7 +1,7 @@
 /**
- * ðŸ’³ BOUTON PAIEMENT CHAPCHAPPAY - 224SOLUTIONS
+ * 💳 BOUTON PAIEMENT CHAPCHAPPAY - 224SOLUTIONS
  * Orange Money, MTN MoMo, PayCard via ChapChapPay
- * Supporte E-Commerce, PULL (dÃ©bit client), et vÃ©rification status
+ * Supporte E-Commerce, PULL (débit client), et vérification status
  */
 
 import { useState } from 'react';
@@ -65,7 +65,7 @@ const paymentMethodOptions: PaymentMethodOption[] = [
   {
     id: 'orange_money',
     name: 'Orange Money',
-    description: 'Paiement instantanÃ© via Orange Money',
+    description: 'Paiement instantané via Orange Money',
     icon: <Smartphone className="h-5 w-5 text-orange-500" />,
     iconBg: 'bg-orange-100',
     phonePrefix: '620',
@@ -135,7 +135,7 @@ export function ChapChapPayButton({
 
   const handlePayment = async () => {
     if (requiresPhone && (!phoneNumber || phoneNumber.length < 9)) {
-      toast.error('NumÃ©ro de tÃ©lÃ©phone invalide');
+      toast.error('Numéro de téléphone invalide');
       return;
     }
 
@@ -143,7 +143,7 @@ export function ChapChapPayButton({
     setPaymentStatus('processing');
 
     try {
-      // Mode E-Commerce (redirection) ou PULL (dÃ©bit direct)
+      // Mode E-Commerce (redirection) ou PULL (débit direct)
       const effectiveMode = mode === 'auto' 
         ? (selectedMethod === 'card' ? 'ecommerce' : 'pull')
         : mode;
@@ -162,14 +162,14 @@ export function ChapChapPayButton({
         }, { autoRedirect: true });
 
         if (!result.success) {
-          throw new Error(result.error || 'Ã‰chec initialisation paiement');
+          throw new Error(result.error || 'Échec initialisation paiement');
         }
 
         // Le redirect est automatique
         setPaymentStatus('success');
         
       } else {
-        // PULL: DÃ©bit direct du client
+        // PULL: Débit direct du client
         const result = await initiatePullPayment({
           amount,
           currency,
@@ -182,16 +182,16 @@ export function ChapChapPayButton({
         });
 
         if (!result.success) {
-          throw new Error(result.error || 'Ã‰chec du paiement');
+          throw new Error(result.error || 'Échec du paiement');
         }
 
-        // VÃ©rifier si OTP requis
+        // Vérifier si OTP requis
         if (result.requiresOtp && !requiresOtp) {
           setRequiresOtp(true);
           setCurrentTransactionId(result.transactionId || null);
           setProcessing(false);
           setPaymentStatus('idle');
-          toast.info('Entrez le code OTP reÃ§u par SMS');
+          toast.info('Entrez le code OTP reçu par SMS');
           return;
         }
 
@@ -208,15 +208,15 @@ export function ChapChapPayButton({
 
           if (finalStatus.status === 'completed') {
             setPaymentStatus('success');
-            toast.success('ðŸŽ‰ Paiement rÃ©ussi !');
+            toast.success('🎉 Paiement réussi !');
             onPaymentSuccess?.(result.transactionId, 'SUCCESS');
             setOpen(false);
           } else if (finalStatus.status === 'failed' || finalStatus.status === 'cancelled') {
             setPaymentStatus('failed');
-            toast.error('Paiement Ã©chouÃ©');
-            onPaymentFailed?.(finalStatus.error || 'Paiement refusÃ©');
+            toast.error('Paiement échoué');
+            onPaymentFailed?.(finalStatus.error || 'Paiement refusé');
           } else {
-            // Toujours en attente aprÃ¨s timeout
+            // Toujours en attente après timeout
             toast.info('Paiement en attente de confirmation');
             onPaymentPending?.(result.transactionId);
           }
@@ -232,13 +232,13 @@ export function ChapChapPayButton({
     }
   };
 
-  // Affichage succÃ¨s
+  // Affichage succès
   if (paymentStatus === 'success') {
     return (
-      <div className="p-6 text-center bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
-        <CheckCircle className="h-12 w-12 text-primary-orange-500 mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-primary-orange-700 mb-2">Paiement rÃ©ussi !</h3>
-        <p className="text-sm text-primary-orange-600">
+      <div className="p-6 text-center bg-green-50 rounded-lg border border-green-200">
+        <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+        <h3 className="text-lg font-bold text-green-700 mb-2">Paiement réussi !</h3>
+        <p className="text-sm text-green-600">
           {amount.toLocaleString()} {currency}
         </p>
       </div>
@@ -271,7 +271,7 @@ export function ChapChapPayButton({
             Paiement Mobile Money
           </DialogTitle>
           <DialogDescription>
-            Paiement sÃ©curisÃ© via ChapChapPay
+            Paiement sécurisé via ChapChapPay
           </DialogDescription>
         </DialogHeader>
 
@@ -281,18 +281,18 @@ export function ChapChapPayButton({
             <p className="text-3xl font-bold text-primary">
               {amount.toLocaleString()} {currency}
             </p>
-            <p className="text-sm text-muted-foreground">Montant Ã  payer</p>
+            <p className="text-sm text-muted-foreground">Montant à payer</p>
           </div>
 
           {/* Erreur */}
           {paymentStatus === 'failed' && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>Paiement Ã©chouÃ©. Veuillez rÃ©essayer.</AlertDescription>
+              <AlertDescription>Paiement échoué. Veuillez réessayer.</AlertDescription>
             </Alert>
           )}
 
-          {/* SÃ©lection mÃ©thode */}
+          {/* Sélection méthode */}
           {showMethodSelector && (
             <RadioGroup
               value={selectedMethod}
@@ -337,12 +337,12 @@ export function ChapChapPayButton({
             </RadioGroup>
           )}
 
-          {/* Champ tÃ©lÃ©phone */}
+          {/* Champ téléphone */}
           {requiresPhone && (
             <div className="space-y-2 p-3 bg-muted/50 rounded-lg border">
               <Label htmlFor="ccp-phone" className="flex items-center gap-2 text-sm">
                 <Smartphone className="h-4 w-4" />
-                NumÃ©ro {selectedOption?.name}
+                Numéro {selectedOption?.name}
               </Label>
               <Input
                 id="ccp-phone"
@@ -353,7 +353,7 @@ export function ChapChapPayButton({
                 disabled={processing}
               />
               <p className="text-xs text-muted-foreground">
-                Une demande de confirmation sera envoyÃ©e sur ce numÃ©ro
+                Une demande de confirmation sera envoyée sur ce numéro
               </p>
             </div>
           )}
@@ -363,7 +363,7 @@ export function ChapChapPayButton({
             <div className="space-y-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
               <Label htmlFor="ccp-otp" className="flex items-center gap-2 text-sm text-yellow-800">
                 <Shield className="h-4 w-4" />
-                Code OTP reÃ§u par SMS
+                Code OTP reçu par SMS
               </Label>
               <Input
                 id="ccp-otp"
@@ -383,7 +383,7 @@ export function ChapChapPayButton({
             <Alert>
               <Loader2 className="h-4 w-4 animate-spin" />
               <AlertDescription>
-                VÃ©rification du paiement en cours... Veuillez confirmer sur votre tÃ©lÃ©phone.
+                Vérification du paiement en cours... Veuillez confirmer sur votre téléphone.
               </AlertDescription>
             </Alert>
           )}
@@ -417,10 +417,10 @@ export function ChapChapPayButton({
             </Button>
           </div>
 
-          {/* SÃ©curitÃ© */}
+          {/* Sécurité */}
           <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-1">
             <Shield className="h-3 w-3" />
-            Paiement sÃ©curisÃ© par ChapChapPay
+            Paiement sécurisé par ChapChapPay
           </p>
         </div>
       </DialogContent>

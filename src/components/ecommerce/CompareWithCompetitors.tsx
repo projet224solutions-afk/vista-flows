@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /**
  * Composant de comparaison 224SOLUTIONS vs Concurrents Majeurs
- * Affiche les avantages compÃ©titifs en sÃ©curitÃ© et performance
+ * Affiche les avantages compétitifs en sécurité et performance
  */
 export const CompareWithCompetitors = () => {
   const performanceMetrics = [
@@ -19,9 +19,9 @@ export const CompareWithCompetitors = () => {
   const securityFeatures = [
     { name: 'SSL/TLS Score', us: 'A+', amazon: 'A+', alibaba: 'A+', aliexpress: 'A', jumia: 'A', odoo: 'A' },
     { name: 'RLS (Row Level Security)', us: true, amazon: true, alibaba: false, aliexpress: false, jumia: false, odoo: false },
-    { name: 'DÃ©tection Fraude ML', us: true, amazon: true, alibaba: true, aliexpress: true, jumia: true, odoo: false },
+    { name: 'Détection Fraude ML', us: true, amazon: true, alibaba: true, aliexpress: true, jumia: true, odoo: false },
     { name: 'Chiffrement E2E', us: true, amazon: true, alibaba: false, aliexpress: false, jumia: false, odoo: false },
-    { name: 'Rate Limiting AvancÃ©', us: true, amazon: true, alibaba: true, aliexpress: true, jumia: true, odoo: true },
+    { name: 'Rate Limiting Avancé', us: true, amazon: true, alibaba: true, aliexpress: true, jumia: true, odoo: true },
     { name: 'Audit Trail Complet', us: true, amazon: true, alibaba: true, aliexpress: true, jumia: false, odoo: false },
     { name: 'GDPR Compliance', us: true, amazon: true, alibaba: false, aliexpress: false, jumia: true, odoo: true },
     { name: '2FA/MFA Support', us: true, amazon: true, alibaba: true, aliexpress: true, jumia: true, odoo: true },
@@ -47,7 +47,7 @@ export const CompareWithCompetitors = () => {
   const renderValue = (value: boolean | string) => {
     if (typeof value === 'boolean') {
       return value ? (
-        <CheckCircle2 className="w-4 h-4 mx-auto text-primary-orange-600" />
+        <CheckCircle2 className="w-4 h-4 mx-auto text-green-600" />
       ) : (
         <XCircle className="w-4 h-4 mx-auto text-red-500" />
       );
@@ -63,9 +63,9 @@ export const CompareWithCompetitors = () => {
         <Badge className="bg-gradient-to-r from-primary to-primary-glow text-white">
           Leader Technique 2025
         </Badge>
-        <h2 className="text-3xl font-bold">224SOLUTIONS vs GÃ©ants du E-Commerce</h2>
+        <h2 className="text-3xl font-bold">224SOLUTIONS vs Géants du E-Commerce</h2>
         <p className="text-muted-foreground">
-          Comparaison complÃ¨te : Performance, SÃ©curitÃ© & Mobile
+          Comparaison complète : Performance, Sécurité & Mobile
         </p>
       </div>
 
@@ -73,7 +73,7 @@ export const CompareWithCompetitors = () => {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="security" className="flex items-center gap-1">
             <Shield className="w-4 h-4" />
-            SÃ©curitÃ©
+            Sécurité
           </TabsTrigger>
           <TabsTrigger value="performance" className="flex items-center gap-1">
             <Zap className="w-4 h-4" />
@@ -85,13 +85,13 @@ export const CompareWithCompetitors = () => {
           </TabsTrigger>
         </TabsList>
 
-        {/* Onglet SÃ©curitÃ© */}
+        {/* Onglet Sécurité */}
         <TabsContent value="security">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Lock className="w-5 h-5 text-primary-orange-600" />
-                Comparaison SÃ©curitÃ©
+                <Lock className="w-5 h-5 text-green-600" />
+                Comparaison Sécurité
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -99,7 +99,7 @@ export const CompareWithCompetitors = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2">FonctionnalitÃ©</th>
+                      <th className="text-left p-2">Fonctionnalité</th>
                       {platforms.map((p) => (
                         <th key={p} className={`text-center p-2 ${p === '224SOL' ? 'bg-primary/10 font-bold' : ''}`}>
                           {p}
@@ -132,7 +132,7 @@ export const CompareWithCompetitors = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Server className="w-5 h-5 text-blue-600" />
-                MÃ©triques de Performance
+                Métriques de Performance
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -140,7 +140,7 @@ export const CompareWithCompetitors = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2">MÃ©trique</th>
+                      <th className="text-left p-2">Métrique</th>
                       {platforms.map((p) => (
                         <th key={p} className={`text-center p-2 ${p === '224SOL' ? 'bg-primary/10 font-bold' : ''}`}>
                           {p}
@@ -181,7 +181,7 @@ export const CompareWithCompetitors = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2">CritÃ¨re</th>
+                      <th className="text-left p-2">Critère</th>
                       {platforms.map((p) => (
                         <th key={p} className={`text-center p-2 ${p === '224SOL' ? 'bg-primary/10 font-bold' : ''}`}>
                           {p}
@@ -214,7 +214,7 @@ export const CompareWithCompetitors = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
-            Score Technique Global (SÃ©curitÃ© + Performance)
+            Score Technique Global (Sécurité + Performance)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -230,18 +230,18 @@ export const CompareWithCompetitors = () => {
             ))}
           </div>
           
-          <div className="mt-6 p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-900/20 rounded-lg">
-            <h4 className="font-semibold text-primary-orange-700 dark:text-primary-orange-400 flex items-center gap-2">
+          <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+            <h4 className="font-semibold text-green-700 dark:text-green-400 flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
               Avantages 224SOLUTIONS
             </h4>
-            <ul className="mt-2 space-y-1 text-sm text-primary-orange-600 dark:text-primary-orange-300">
-              <li>â€¢ <strong>3.5x plus rapide</strong> qu'Amazon en chargement</li>
-              <li>â€¢ <strong>PWA Score 98/100</strong> vs 72/100 pour Amazon</li>
-              <li>â€¢ <strong>Chiffrement E2E natif</strong> (non disponible chez Alibaba/AliExpress/Jumia)</li>
-              <li>â€¢ <strong>Mode hors ligne complet</strong> - unique sur le marchÃ©</li>
-              <li>â€¢ <strong>RLS avancÃ©</strong> pour sÃ©curitÃ© donnÃ©es utilisateur</li>
-              <li>â€¢ <strong>OptimisÃ© pour l'Afrique</strong> avec latence minimale</li>
+            <ul className="mt-2 space-y-1 text-sm text-green-600 dark:text-green-300">
+              <li>• <strong>3.5x plus rapide</strong> qu'Amazon en chargement</li>
+              <li>• <strong>PWA Score 98/100</strong> vs 72/100 pour Amazon</li>
+              <li>• <strong>Chiffrement E2E natif</strong> (non disponible chez Alibaba/AliExpress/Jumia)</li>
+              <li>• <strong>Mode hors ligne complet</strong> - unique sur le marché</li>
+              <li>• <strong>RLS avancé</strong> pour sécurité données utilisateur</li>
+              <li>• <strong>Optimisé pour l'Afrique</strong> avec latence minimale</li>
             </ul>
           </div>
         </CardContent>

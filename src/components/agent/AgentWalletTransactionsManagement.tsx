@@ -78,7 +78,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
         setWalletId(wallet.id);
       }
 
-      // ðŸ”’ SÃ‰CURITÃ‰: Charger UNIQUEMENT les transactions liÃ©es au wallet de cet agent
+      // 🔒 SÉCURITÉ: Charger UNIQUEMENT les transactions liées au wallet de cet agent
       if (wallet?.id) {
         const { data: txData, error: txError } = await supabase
           .from('wallet_transactions')
@@ -129,7 +129,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
     try {
       setProcessing(true);
 
-      // Appel Ã  une fonction RPC pour le transfert sÃ©curisÃ©
+      // Appel à une fonction RPC pour le transfert sécurisé
       const { data, error } = await supabase.rpc('agent_wallet_transfer' as any, {
         p_agent_id: agentId,
         p_recipient_id: transferData.recipientId,
@@ -139,7 +139,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
 
       if (error) throw error;
 
-      toast.success('Transfert effectuÃ© avec succÃ¨s');
+      toast.success('Transfert effectué avec succès');
       setIsTransferDialogOpen(false);
       setTransferData({ recipientId: '', amount: '', description: '' });
       loadWalletData();
@@ -157,11 +157,11 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-primary-orange-100 text-primary-orange-700"><CheckCircle className="w-3 h-3 mr-1" />ComplÃ©tÃ©</Badge>;
+        return <Badge className="bg-green-100 text-green-700"><CheckCircle className="w-3 h-3 mr-1" />Complété</Badge>;
       case 'pending':
         return <Badge className="bg-amber-100 text-amber-700"><Clock className="w-3 h-3 mr-1" />En attente</Badge>;
       case 'failed':
-        return <Badge className="bg-red-100 text-red-700"><XCircle className="w-3 h-3 mr-1" />Ã‰chouÃ©</Badge>;
+        return <Badge className="bg-red-100 text-red-700"><XCircle className="w-3 h-3 mr-1" />Échoué</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -171,7 +171,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
     switch (type) {
       case 'deposit':
       case 'credit':
-        return <ArrowDownLeft className="w-5 h-5 text-primary-orange-600" />;
+        return <ArrowDownLeft className="w-5 h-5 text-green-600" />;
       case 'withdrawal':
       case 'debit':
       case 'transfer':
@@ -203,7 +203,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
     <div className="space-y-6">
       {/* Header avec solde */}
       <Card className="border-0 shadow-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-primary-blue-500 to-primary-orange-600 p-6">
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/80 text-sm mb-1">Solde Disponible</p>
@@ -222,7 +222,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                 <DialogTrigger asChild>
                   <Button variant="secondary" size="sm">
                     <Send className="w-4 h-4 mr-2" />
-                    TransfÃ©rer
+                    Transférer
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -316,9 +316,9 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="completed">ComplÃ©tÃ©</SelectItem>
+                <SelectItem value="completed">Complété</SelectItem>
                 <SelectItem value="pending">En attente</SelectItem>
-                <SelectItem value="failed">Ã‰chouÃ©</SelectItem>
+                <SelectItem value="failed">Échoué</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -327,7 +327,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
           {filteredTransactions.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Aucune transaction trouvÃ©e</p>
+              <p>Aucune transaction trouvée</p>
             </div>
           ) : (
             <ScrollArea className="h-[400px]">
@@ -340,7 +340,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         tx.transaction_type === 'deposit' || tx.transaction_type === 'credit'
-                          ? 'bg-primary-orange-100' : 'bg-red-100'
+                          ? 'bg-green-100' : 'bg-red-100'
                       }`}>
                         {getTypeIcon(tx.transaction_type)}
                       </div>
@@ -352,14 +352,14 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                           ID: {tx.transaction_id?.slice(0, 12)}...
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(tx.created_at), 'dd MMM yyyy Ã  HH:mm', { locale: fr })}
+                          {format(new Date(tx.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className={`font-bold ${
                         tx.transaction_type === 'deposit' || tx.transaction_type === 'credit'
-                          ? 'text-primary-orange-600' : 'text-red-600'
+                          ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {tx.transaction_type === 'deposit' || tx.transaction_type === 'credit' ? '+' : '-'}
                         {formatAmount(tx.amount)} {tx.currency || 'GNF'}

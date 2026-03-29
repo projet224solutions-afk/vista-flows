@@ -1,9 +1,9 @@
 /**
- * Offline POS Interface - Interface POS dÃ©diÃ©e au mode hors ligne
- * 224SOLUTIONS - Mode Offline AvancÃ©
+ * Offline POS Interface - Interface POS dédiée au mode hors ligne
+ * 224SOLUTIONS - Mode Offline Avancé
  *
- * Cette interface est affichÃ©e uniquement en mode offline.
- * Elle rÃ©utilise la logique du POS existant mais avec les fonctionnalitÃ©s offline.
+ * Cette interface est affichée uniquement en mode offline.
+ * Elle réutilise la logique du POS existant mais avec les fonctionnalités offline.
  */
 
 import React, { useState } from 'react';
@@ -37,13 +37,13 @@ export function OfflinePOSInterface() {
 
   // Calculer les totaux
   const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
-  const tax = 0; // Ã€ implÃ©menter selon vos rÃ¨gles
+  const tax = 0; // À implémenter selon vos règles
   const discount = cart.reduce((sum, item) => sum + item.discount, 0);
   const total = subtotal + tax - discount;
 
   // Ajouter un produit au panier
   const addToCart = (product: any) => {
-    // VÃ©rifier le stock
+    // Vérifier le stock
     if (!isInStock(product.id, 1)) {
       toast.error('Produit en rupture de stock');
       return;
@@ -52,7 +52,7 @@ export function OfflinePOSInterface() {
     const existingItem = cart.find(item => item.product_id === product.id);
 
     if (existingItem) {
-      // IncrÃ©menter la quantitÃ©
+      // Incrémenter la quantité
       updateQuantity(product.id, existingItem.quantity + 1);
     } else {
       // Ajouter nouveau
@@ -68,14 +68,14 @@ export function OfflinePOSInterface() {
     }
   };
 
-  // Mettre Ã  jour la quantitÃ©
+  // Mettre à jour la quantité
   const updateQuantity = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
       return;
     }
 
-    // VÃ©rifier le stock
+    // Vérifier le stock
     if (!isInStock(productId, newQuantity)) {
       toast.error('Stock insuffisant');
       return;
@@ -107,23 +107,23 @@ export function OfflinePOSInterface() {
     }
 
     if (!user?.id) {
-      toast.error('Utilisateur non identifiÃ©');
+      toast.error('Utilisateur non identifié');
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      // 1. VÃ©rifier la limite journaliÃ¨re
+      // 1. Vérifier la limite journalière
       const limitCheck = await checkDailyLimit(user.id, total);
       if (!limitCheck.allowed) {
-        toast.error(`Limite journaliÃ¨re atteinte!`, {
+        toast.error(`Limite journalière atteinte!`, {
           description: `Restant: ${limitCheck.remaining.toLocaleString()} GNF`
         });
         return;
       }
 
-      // 2. CrÃ©er la vente offline
+      // 2. Créer la vente offline
       const result = await createOfflineSale({
         vendor_id: user.id,
         customer_name: customerName || 'Client',
@@ -141,7 +141,7 @@ export function OfflinePOSInterface() {
         return;
       }
 
-      // 3. DÃ©compter le stock
+      // 3. Décompter le stock
       for (const item of cart) {
         await decrementStockFromSale(
           item.product_id,
@@ -150,25 +150,25 @@ export function OfflinePOSInterface() {
         );
       }
 
-      // 4. SuccÃ¨s
-      toast.success('Vente enregistrÃ©e!', {
-        description: `ReÃ§u NÂ° ${result.sale!.receipt_number}. Synchronisation automatique au retour en ligne.`
+      // 4. Succès
+      toast.success('Vente enregistrée!', {
+        description: `Reçu N° ${result.sale!.receipt_number}. Synchronisation automatique au retour en ligne.`
       });
 
       // Afficher les informations de paiement si USSD ou QR
       if (selectedPayment === 'ussd' && result.sale!.payment_reference) {
-        toast.info('Code USSD gÃ©nÃ©rÃ©', {
+        toast.info('Code USSD généré', {
           description: `${result.sale!.payment_reference}`,
           duration: 10000
         });
       } else if (selectedPayment === 'qr_local' && result.sale!.payment_reference) {
-        toast.info('QR Code gÃ©nÃ©rÃ©', {
-          description: 'Code disponible sur le reÃ§u',
+        toast.info('QR Code généré', {
+          description: 'Code disponible sur le reçu',
           duration: 10000
         });
       }
 
-      // 5. RÃ©initialiser
+      // 5. Réinitialiser
       clearCart();
 
     } catch (error: any) {
@@ -183,10 +183,10 @@ export function OfflinePOSInterface() {
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
-      {/* BanniÃ¨re mode offline */}
+      {/* Bannière mode offline */}
       <div className="mb-4 p-3 bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-700 rounded-lg">
         <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
-          ðŸ”´ Mode Hors Ligne - Limite journaliÃ¨re: 50M GNF - Paiements: Cash, USSD, QR uniquement
+          🔴 Mode Hors Ligne - Limite journalière: 50M GNF - Paiements: Cash, USSD, QR uniquement
         </p>
       </div>
 
@@ -203,7 +203,7 @@ export function OfflinePOSInterface() {
                 onClick={() => addToCart({
                   id: item.product_id,
                   name: item.product_name,
-                  price: 10000, // TODO: RÃ©cupÃ©rer le prix rÃ©el
+                  price: 10000, // TODO: Récupérer le prix réel
                   sku: item.product_sku
                 })}
               >
@@ -277,9 +277,9 @@ export function OfflinePOSInterface() {
               />
             </div>
 
-            {/* MÃ©thodes de paiement */}
+            {/* Méthodes de paiement */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">MÃ©thode de paiement</label>
+              <label className="block text-sm font-medium mb-2">Méthode de paiement</label>
               <div className="space-y-2">
                 <button
                   onClick={() => setSelectedPayment('cash')}
@@ -289,8 +289,8 @@ export function OfflinePOSInterface() {
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
-                  <p className="font-medium">ðŸ’µ EspÃ¨ces (Cash)</p>
-                  <p className="text-xs text-gray-500">Paiement immÃ©diat</p>
+                  <p className="font-medium">💵 Espèces (Cash)</p>
+                  <p className="text-xs text-gray-500">Paiement immédiat</p>
                 </button>
 
                 <button
@@ -301,8 +301,8 @@ export function OfflinePOSInterface() {
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
-                  <p className="font-medium">ðŸ“± USSD</p>
-                  <p className="text-xs text-gray-500">Code gÃ©nÃ©rÃ© localement</p>
+                  <p className="font-medium">📱 USSD</p>
+                  <p className="text-xs text-gray-500">Code généré localement</p>
                 </button>
 
                 <button
@@ -313,8 +313,8 @@ export function OfflinePOSInterface() {
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
-                  <p className="font-medium">ðŸ“² QR Code Local</p>
-                  <p className="text-xs text-gray-500">Paiement diffÃ©rÃ©</p>
+                  <p className="font-medium">📲 QR Code Local</p>
+                  <p className="text-xs text-gray-500">Paiement différé</p>
                 </button>
               </div>
             </div>
@@ -326,7 +326,7 @@ export function OfflinePOSInterface() {
                 <span>{subtotal.toLocaleString()} GNF</span>
               </div>
               {discount > 0 && (
-                <div className="flex justify-between text-sm text-primary-orange-600">
+                <div className="flex justify-between text-sm text-green-600">
                   <span>Remise:</span>
                   <span>-{discount.toLocaleString()} GNF</span>
                 </div>

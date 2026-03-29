@@ -116,8 +116,8 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
       confirmed: { color: 'bg-blue-100 text-blue-700', icon: <CheckCircle className="w-3 h-3" />, label: 'Confirmée' },
       processing: { color: 'bg-indigo-100 text-indigo-700', icon: <Package className="w-3 h-3" />, label: 'En préparation' },
       shipped: { color: 'bg-purple-100 text-purple-700', icon: <Truck className="w-3 h-3" />, label: 'Expédiée' },
-      delivered: { color: 'bg-primary-orange-100 text-primary-blue-900', icon: <CheckCircle className="w-3 h-3" />, label: 'Livrée' },
-      completed: { color: 'bg-primary-orange-100 text-primary-blue-900', icon: <CheckCircle className="w-3 h-3" />, label: 'Terminée' },
+      delivered: { color: 'bg-green-100 text-green-700', icon: <CheckCircle className="w-3 h-3" />, label: 'Livrée' },
+      completed: { color: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle className="w-3 h-3" />, label: 'Terminée' },
       cancelled: { color: 'bg-red-100 text-red-700', icon: <XCircle className="w-3 h-3" />, label: 'Annulée' },
     };
     const config = statusConfig[status] || { color: 'bg-gray-100 text-gray-700', icon: null, label: status };
@@ -194,10 +194,10 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
               <p className="text-xl font-bold text-blue-700">{stats.processing}</p>
               <p className="text-xs text-blue-500">En cours</p>
             </div>
-            <div className="bg-gradient-to-br from-primary-blue-100 to-primary-orange-200 rounded-xl p-4 text-center">
-              <CheckCircle className="w-5 h-5 text-primary-orange-600 mx-auto mb-1" />
-              <p className="text-xl font-bold text-primary-orange-700">{stats.completed}</p>
-              <p className="text-xs text-primary-orange-500">Terminées</p>
+            <div className="bg-gradient-to-br from-green-100 to-emerald-200 rounded-xl p-4 text-center">
+              <CheckCircle className="w-5 h-5 text-green-600 mx-auto mb-1" />
+              <p className="text-xl font-bold text-green-700">{stats.completed}</p>
+              <p className="text-xs text-green-500">Terminées</p>
             </div>
             <div className="bg-gradient-to-br from-purple-100 to-pink-200 rounded-xl p-4 text-center">
               <DollarSign className="w-5 h-5 text-purple-600 mx-auto mb-1" />

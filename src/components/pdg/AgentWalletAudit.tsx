@@ -25,7 +25,7 @@ export function AgentWalletAudit() {
     setLoading(true);
     setError(null);
     try {
-      // RÃ©cupÃ©rer tous les agents via agents_management
+      // Récupérer tous les agents via agents_management
       const { data: agents, error: profErr } = await supabase
         .from('agents_management')
         .select('id, user_id');
@@ -128,7 +128,7 @@ export function AgentWalletAudit() {
         <div className="flex items-center gap-2">
           <Button onClick={load} disabled={loading || fixing} variant="outline" className="gap-2">
             <RefreshCw className={"w-4 h-4 " + (loading ? 'animate-spin' : '')} />
-            RafraÃ®chir
+            Rafraîchir
           </Button>
           <Button onClick={fixDivergences} disabled={fixing || stats.divergents === 0} variant="default" className="gap-2">
             {fixing ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Wrench className="w-4 h-4" />}
@@ -145,7 +145,7 @@ export function AgentWalletAudit() {
           </div>
           <div className="space-y-1">
             <p className="text-muted-foreground">OK</p>
-            <div className="flex items-center gap-2 font-semibold text-primary-orange-600"><CheckCircle className="w-3 h-3" /> {stats.ok}</div>
+            <div className="flex items-center gap-2 font-semibold text-green-600"><CheckCircle className="w-3 h-3" /> {stats.ok}</div>
           </div>
           <div className="space-y-1">
             <p className="text-muted-foreground">Divergents</p>
@@ -176,7 +176,7 @@ export function AgentWalletAudit() {
                   <th className="px-4 py-2">Agent ID</th>
                   <th className="px-4 py-2">Principal</th>
                   <th className="px-4 py-2">Agent</th>
-                  <th className="px-4 py-2">Î”</th>
+                  <th className="px-4 py-2">Δ</th>
                   <th className="px-4 py-2">Devise</th>
                   <th className="px-4 py-2">Statut</th>
                 </tr>
@@ -188,13 +188,13 @@ export function AgentWalletAudit() {
                     : (Math.abs(r.divergence) <= 0 ? 'OK' : 'Divergent');
                   return (
                     <tr key={r.agent_id} className="border-t">
-                      <td className="px-4 py-2 font-mono text-xs">{r.agent_id.substring(0, 10)}â€¦</td>
-                      <td className="px-4 py-2">{r.main_balance !== null ? r.main_balance : 'â€”'}</td>
-                      <td className="px-4 py-2">{r.agent_balance !== null ? r.agent_balance : 'â€”'}</td>
-                      <td className="px-4 py-2">{r.main_balance !== null && r.agent_balance !== null ? r.divergence : 'â€”'}</td>
+                      <td className="px-4 py-2 font-mono text-xs">{r.agent_id.substring(0, 10)}…</td>
+                      <td className="px-4 py-2">{r.main_balance !== null ? r.main_balance : '—'}</td>
+                      <td className="px-4 py-2">{r.agent_balance !== null ? r.agent_balance : '—'}</td>
+                      <td className="px-4 py-2">{r.main_balance !== null && r.agent_balance !== null ? r.divergence : '—'}</td>
                       <td className="px-4 py-2">{r.currency}</td>
                       <td className="px-4 py-2">
-                        {status === 'OK' && <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">OK</Badge>}
+                        {status === 'OK' && <Badge className="bg-green-500/10 text-green-600 border-green-500/20">OK</Badge>}
                         {status === 'Divergent' && <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20">Divergence</Badge>}
                         {status === 'Incomplet' && <Badge className="bg-red-500/10 text-red-600 border-red-500/20">Incomplet</Badge>}
                       </td>
@@ -204,14 +204,14 @@ export function AgentWalletAudit() {
                 {rows.length === 0 && !loading && (
                   <tr>
                     <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
-                      Aucun agent trouvÃ©.
+                      Aucun agent trouvé.
                     </td>
                   </tr>
                 )}
                 {loading && (
                   <tr>
                     <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
-                      Chargementâ€¦
+                      Chargement…
                     </td>
                   </tr>
                 )}

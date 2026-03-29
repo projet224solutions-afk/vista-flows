@@ -1,6 +1,6 @@
 /**
  * SYSTEM CONFIGURATION - 224SOLUTIONS
- * Configuration centralisÃ©e de tous les services externes
+ * Configuration centralisée de tous les services externes
  */
 
 import { useState, useEffect } from 'react';
@@ -43,7 +43,7 @@ export default function SystemConfiguration() {
       icon: Map,
       status: 'testing',
       required: true,
-      description: 'GÃ©olocalisation, Geocoding, Directions',
+      description: 'Géolocalisation, Geocoding, Directions',
       secretName: 'GOOGLE_CLOUD_API_KEY',
       testEndpoint: 'test-google-cloud-api',
       documentation: 'https://console.cloud.google.com'
@@ -53,7 +53,7 @@ export default function SystemConfiguration() {
       icon: Database,
       status: 'testing',
       required: true,
-      description: 'Base de donnÃ©es pour synchronisation offline',
+      description: 'Base de données pour synchronisation offline',
       secretName: 'FIREBASE_WEB_API_KEY',
       documentation: 'https://console.firebase.google.com'
     },
@@ -71,7 +71,7 @@ export default function SystemConfiguration() {
       icon: Brain,
       status: 'testing',
       required: false,
-      description: 'GÃ©nÃ©ration IA de descriptions produits',
+      description: 'Génération IA de descriptions produits',
       secretName: 'OPENAI_API_KEY',
       documentation: 'https://platform.openai.com'
     },
@@ -89,7 +89,7 @@ export default function SystemConfiguration() {
       icon: Video,
       status: 'testing',
       required: false,
-      description: 'Appels vidÃ©o et audio',
+      description: 'Appels vidéo et audio',
       secretName: 'AGORA_APP_ID',
       documentation: 'https://console.agora.io'
     },
@@ -127,7 +127,7 @@ export default function SystemConfiguration() {
       const data = await response.json();
       
       if (data.status === 'success' && data.services) {
-        // Mettre Ã  jour le statut de chaque service depuis l'API
+        // Mettre à jour le statut de chaque service depuis l'API
         setServices(prev => prev.map(service => {
           const apiService = data.services.find((s: any) => s.name === service.name);
           if (apiService) {
@@ -139,17 +139,17 @@ export default function SystemConfiguration() {
           return service;
         }));
 
-        // Test Firestore cÃ´tÃ© client
+        // Test Firestore côté client
         try {
           const { firestore } = await import('@/lib/firebaseClient');
           const { collection, getDocs, limit, query } = await import('firebase/firestore');
           
           if (firestore) {
-            // Essayer d'accÃ©der Ã  Firestore
+            // Essayer d'accéder à Firestore
             const testQuery = query(collection(firestore, 'test'), limit(1));
             await getDocs(testQuery);
             
-            // Mise Ã  jour du statut Firestore
+            // Mise à jour du statut Firestore
             setServices(prev => prev.map(service =>
               service.name === 'Firebase Firestore'
                 ? { ...service, status: 'configured' }
@@ -165,19 +165,19 @@ export default function SystemConfiguration() {
           ));
         }
 
-        // Afficher un message de rÃ©sumÃ©
+        // Afficher un message de résumé
         setTimeout(() => {
           const currentConfigured = services.filter(s => s.status === 'configured').length;
           const currentRequired = services.filter(s => s.required).length;
           const currentRequiredConfigured = services.filter(s => s.required && s.status === 'configured').length;
           
           if (currentRequiredConfigured === currentRequired) {
-            toast.success('Tous les services requis sont configurÃ©s !', {
-              description: `${currentConfigured}/${services.length} services configurÃ©s`
+            toast.success('Tous les services requis sont configurés !', {
+              description: `${currentConfigured}/${services.length} services configurés`
             });
           } else {
-            toast.warning('Configuration incomplÃ¨te', {
-              description: `${currentRequiredConfigured}/${currentRequired} services requis configurÃ©s`
+            toast.warning('Configuration incomplète', {
+              description: `${currentRequiredConfigured}/${currentRequired} services requis configurés`
             });
           }
         }, 500);
@@ -207,7 +207,7 @@ export default function SystemConfiguration() {
   const getStatusIcon = (status: ServiceStatus['status']) => {
     switch (status) {
       case 'configured':
-        return <CheckCircle className="h-5 w-5 text-primary-orange-500" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'not_configured':
         return <XCircle className="h-5 w-5 text-red-500" />;
       case 'testing':
@@ -220,9 +220,9 @@ export default function SystemConfiguration() {
   const getStatusBadge = (status: ServiceStatus['status']) => {
     switch (status) {
       case 'configured':
-        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20">ConfigurÃ©</Badge>;
+        return <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Configuré</Badge>;
       case 'not_configured':
-        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20">Non configurÃ©</Badge>;
+        return <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20">Non configuré</Badge>;
       case 'testing':
         return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">Test en cours</Badge>;
       case 'error':
@@ -237,13 +237,13 @@ export default function SystemConfiguration() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Configuration SystÃ¨me</h2>
+        <h2 className="text-2xl font-bold mb-2">Configuration Système</h2>
         <p className="text-muted-foreground">
-          GÃ©rez la configuration de tous les services externes utilisÃ©s par l'application
+          Gérez la configuration de tous les services externes utilisés par l'application
         </p>
       </div>
 
-      {/* RÃ©sumÃ© */}
+      {/* Résumé */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -253,7 +253,7 @@ export default function SystemConfiguration() {
           <CardContent>
             <div className="text-2xl font-bold">{services.length}</div>
             <p className="text-xs text-muted-foreground">
-              {configuredCount} configurÃ©s
+              {configuredCount} configurés
             </p>
           </CardContent>
         </Card>
@@ -266,7 +266,7 @@ export default function SystemConfiguration() {
           <CardContent>
             <div className="text-2xl font-bold">{requiredConfigured}/{requiredCount}</div>
             <p className="text-xs text-muted-foreground">
-              {requiredConfigured === requiredCount ? 'Tous configurÃ©s âœ“' : 'Configuration incomplÃ¨te'}
+              {requiredConfigured === requiredCount ? 'Tous configurés ✓' : 'Configuration incomplète'}
             </p>
           </CardContent>
         </Card>
@@ -275,19 +275,19 @@ export default function SystemConfiguration() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Statut Global</CardTitle>
             {requiredConfigured === requiredCount ? (
-              <CheckCircle className="h-4 w-4 text-primary-orange-500" />
+              <CheckCircle className="h-4 w-4 text-green-500" />
             ) : (
               <AlertTriangle className="h-4 w-4 text-yellow-500" />
             )}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {requiredConfigured === requiredCount ? 'OpÃ©rationnel' : 'Attention'}
+              {requiredConfigured === requiredCount ? 'Opérationnel' : 'Attention'}
             </div>
             <p className="text-xs text-muted-foreground">
               {requiredConfigured === requiredCount 
                 ? 'Tous les services requis fonctionnent' 
-                : 'Certains services requis ne sont pas configurÃ©s'}
+                : 'Certains services requis ne sont pas configurés'}
             </p>
           </CardContent>
         </Card>
@@ -297,7 +297,7 @@ export default function SystemConfiguration() {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Certains services requis ne sont pas configurÃ©s. L'application peut ne pas fonctionner correctement.
+            Certains services requis ne sont pas configurés. L'application peut ne pas fonctionner correctement.
           </AlertDescription>
         </Alert>
       )}
@@ -357,7 +357,7 @@ export default function SystemConfiguration() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(service.documentation, '_blank', 'noopener,noreferrer')}
+                        onClick={() => window.open(service.documentation, '_blank')}
                       >
                         Documentation
                       </Button>
@@ -381,52 +381,52 @@ export default function SystemConfiguration() {
             <h4 className="font-medium">1. Google Cloud APIs</h4>
             <p className="text-sm text-muted-foreground">
               Activez Geocoding API, Directions API et Maps JavaScript API dans Google Cloud Console.
-              CrÃ©ez une clÃ© API sans restrictions pour les tests.
+              Créez une clé API sans restrictions pour les tests.
             </p>
           </div>
 
           <div className="space-y-2">
             <h4 className="font-medium">2. Firebase Firestore</h4>
             <p className="text-sm text-muted-foreground">
-              CrÃ©ez un projet Firebase, activez Firestore Database. Copiez les clÃ©s de configuration web (apiKey, projectId, etc.) depuis les paramÃ¨tres du projet.
-              Essentiel pour la synchronisation offline et le stockage des donnÃ©es.
+              Créez un projet Firebase, activez Firestore Database. Copiez les clés de configuration web (apiKey, projectId, etc.) depuis les paramètres du projet.
+              Essentiel pour la synchronisation offline et le stockage des données.
             </p>
           </div>
 
           <div className="space-y-2">
             <h4 className="font-medium">3. Assistant IA Gemini</h4>
             <p className="text-sm text-muted-foreground">
-              Le service IA Gemini est automatiquement configurÃ© avec votre workspace. Il fournit l'accÃ¨s Ã  Google Gemini et d'autres modÃ¨les IA pour l'assistant intelligent.
-              Configuration automatique via votre clÃ© API.
+              Le service IA Gemini est automatiquement configuré avec votre workspace. Il fournit l'accès à Google Gemini et d'autres modèles IA pour l'assistant intelligent.
+              Configuration automatique via votre clé API.
             </p>
           </div>
 
           <div className="space-y-2">
             <h4 className="font-medium">4. Stripe</h4>
             <p className="text-sm text-muted-foreground">
-              CrÃ©ez un compte sur stripe.com, rÃ©cupÃ©rez votre clÃ© secrÃ¨te (sk_test_... pour les tests).
-              NÃ©cessaire pour accepter les paiements par carte.
+              Créez un compte sur stripe.com, récupérez votre clé secrète (sk_test_... pour les tests).
+              Nécessaire pour accepter les paiements par carte.
             </p>
           </div>
 
           <div className="space-y-2">
             <h4 className="font-medium">5. OpenAI (Optionnel)</h4>
             <p className="text-sm text-muted-foreground">
-              CrÃ©ez une clÃ© API sur platform.openai.com pour activer la gÃ©nÃ©ration automatique de descriptions produits.
+              Créez une clé API sur platform.openai.com pour activer la génération automatique de descriptions produits.
             </p>
           </div>
 
           <div className="space-y-2">
             <h4 className="font-medium">6. Agora (Optionnel)</h4>
             <p className="text-sm text-muted-foreground">
-              Pour les appels vidÃ©o/audio, crÃ©ez un projet sur console.agora.io et rÃ©cupÃ©rez l'App ID et le Certificate.
+              Pour les appels vidéo/audio, créez un projet sur console.agora.io et récupérez l'App ID et le Certificate.
             </p>
           </div>
 
           <div className="space-y-2">
             <h4 className="font-medium">7. Orange Money (Optionnel)</h4>
             <p className="text-sm text-muted-foreground">
-              Pour les paiements mobile money, inscrivez-vous sur developer.orange.com et demandez un accÃ¨s API.
+              Pour les paiements mobile money, inscrivez-vous sur developer.orange.com et demandez un accès API.
             </p>
           </div>
         </CardContent>

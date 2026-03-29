@@ -1,6 +1,6 @@
 /**
  * Panel de gestion des commandes restaurant
- * Affiche les commandes en temps rÃ©el avec possibilitÃ© de confirmation
+ * Affiche les commandes en temps réel avec possibilité de confirmation
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -44,22 +44,22 @@ interface RestaurantOrder {
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: <Clock className="w-4 h-4" /> },
-  confirmed: { label: 'ConfirmÃ©e', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: <Check className="w-4 h-4" /> },
-  preparing: { label: 'En prÃ©paration', color: 'bg-purple-100 text-purple-800 border-purple-300', icon: <ChefHat className="w-4 h-4" /> },
-  ready: { label: 'PrÃªte', color: 'bg-primary-orange-100 text-primary-orange-800 border-primary-orange-300', icon: <Package className="w-4 h-4" /> },
-  delivered: { label: 'LivrÃ©e', color: 'bg-primary-orange-100 text-primary-orange-800 border-primary-orange-300', icon: <Truck className="w-4 h-4" /> },
-  completed: { label: 'TerminÃ©e', color: 'bg-gray-100 text-gray-800 border-gray-300', icon: <Check className="w-4 h-4" /> },
-  cancelled: { label: 'AnnulÃ©e', color: 'bg-red-100 text-red-800 border-red-300', icon: <XCircle className="w-4 h-4" /> },
+  confirmed: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: <Check className="w-4 h-4" /> },
+  preparing: { label: 'En préparation', color: 'bg-purple-100 text-purple-800 border-purple-300', icon: <ChefHat className="w-4 h-4" /> },
+  ready: { label: 'Prête', color: 'bg-green-100 text-green-800 border-green-300', icon: <Package className="w-4 h-4" /> },
+  delivered: { label: 'Livrée', color: 'bg-teal-100 text-teal-800 border-teal-300', icon: <Truck className="w-4 h-4" /> },
+  completed: { label: 'Terminée', color: 'bg-gray-100 text-gray-800 border-gray-300', icon: <Check className="w-4 h-4" /> },
+  cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800 border-red-300', icon: <XCircle className="w-4 h-4" /> },
 };
 
 const orderTypeLabels: Record<string, { label: string; icon: React.ReactNode }> = {
   dine_in: { label: 'Sur place', icon: <Utensils className="w-4 h-4" /> },
-  takeaway: { label: 'Ã€ emporter', icon: <Package className="w-4 h-4" /> },
+  takeaway: { label: 'À emporter', icon: <Package className="w-4 h-4" /> },
   delivery: { label: 'Livraison', icon: <Truck className="w-4 h-4" /> },
 };
 
 const paymentMethodIcons: Record<string, React.ReactNode> = {
-  cash: <Banknote className="w-4 h-4 text-primary-orange-600" />,
+  cash: <Banknote className="w-4 h-4 text-green-600" />,
   mobile: <Phone className="w-4 h-4 text-orange-500" />,
   card: <CreditCard className="w-4 h-4 text-blue-600" />,
 };
@@ -91,7 +91,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
       if (error) throw error;
       
       setOrders((data as RestaurantOrder[]) || []);
-      console.log('âœ… Commandes restaurant chargÃ©es:', data?.length || 0);
+      console.log('✅ Commandes restaurant chargées:', data?.length || 0);
     } catch (err) {
       console.error('Erreur chargement commandes:', err);
       toast.error('Erreur lors du chargement des commandes');
@@ -106,7 +106,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
     loadOrders();
   }, [loadOrders]);
 
-  // Temps rÃ©el: nouvelles commandes
+  // Temps réel: nouvelles commandes
   useEffect(() => {
     if (!serviceId) return;
 
@@ -121,14 +121,14 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           filter: `professional_service_id=eq.${serviceId}`
         },
         (payload) => {
-          console.log('ðŸ”” Changement commande restaurant:', payload);
+          console.log('🔔 Changement commande restaurant:', payload);
           
           if (payload.eventType === 'INSERT') {
             const newOrder = payload.new as RestaurantOrder;
             setOrders(prev => [newOrder, ...prev]);
             
             // Notification sonore et toast
-            toast.success(`ðŸ”” Nouvelle commande: ${newOrder.order_number}`, {
+            toast.success(`🔔 Nouvelle commande: ${newOrder.order_number}`, {
               description: `${newOrder.customer_name} - ${newOrder.total.toLocaleString()} GNF`
             });
             
@@ -177,8 +177,8 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
         setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
       }
     } catch (err) {
-      console.error('Erreur mise Ã  jour statut:', err);
-      toast.error('Erreur lors de la mise Ã  jour');
+      console.error('Erreur mise à jour statut:', err);
+      toast.error('Erreur lors de la mise à jour');
     }
   };
 
@@ -220,7 +220,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                 <span className="ml-1">{status.label}</span>
               </Badge>
               {order.payment_status === 'paid' && (
-                <Badge className="bg-primary-orange-600">PayÃ©</Badge>
+                <Badge className="bg-green-600">Payé</Badge>
               )}
             </div>
             <span className="text-xs text-muted-foreground">
@@ -236,7 +236,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{order.customer_name}</span>
-              <span>â€¢</span>
+              <span>•</span>
               <span className="flex items-center gap-1">
                 {orderType.icon}
                 {orderType.label}
@@ -260,7 +260,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
             <div className="flex gap-2 pt-2">
               <Button 
                 size="sm" 
-                className="flex-1 bg-primary-orange-600 hover:bg-primary-orange-700"
+                className="flex-1 bg-green-600 hover:bg-green-700"
                 onClick={(e) => {
                   e.stopPropagation();
                   updateOrderStatus(order.id, 'confirmed');
@@ -292,7 +292,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
               }}
             >
               <ChefHat className="w-4 h-4 mr-1" />
-              DÃ©marrer prÃ©paration
+              Démarrer préparation
             </Button>
           )}
 
@@ -306,14 +306,14 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
               }}
             >
               <Package className="w-4 h-4 mr-1" />
-              Marquer prÃªte
+              Marquer prête
             </Button>
           )}
 
           {order.status === 'ready' && (
             <Button 
               size="sm" 
-              className="w-full bg-primary-orange-600 hover:bg-primary-orange-700"
+              className="w-full bg-teal-600 hover:bg-teal-700"
               onClick={(e) => {
                 e.stopPropagation();
                 updateOrderStatus(order.id, order.order_type === 'dine_in' ? 'completed' : 'delivered');
@@ -327,7 +327,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
               ) : (
                 <>
                   <Truck className="w-4 h-4 mr-1" />
-                  LivrÃ©e / RÃ©cupÃ©rÃ©e
+                  Livrée / Récupérée
                 </>
               )}
             </Button>
@@ -382,7 +382,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
             En cours ({activeOrders.length})
           </TabsTrigger>
           <TabsTrigger value="completed">
-            TerminÃ©es
+            Terminées
           </TabsTrigger>
         </TabsList>
 
@@ -390,7 +390,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           {getTabOrders().length === 0 ? (
             <Card className="p-8 text-center text-muted-foreground">
               <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Aucune commande {activeTab === 'pending' ? 'en attente' : activeTab === 'active' ? 'en cours' : 'terminÃ©e'}</p>
+              <p>Aucune commande {activeTab === 'pending' ? 'en attente' : activeTab === 'active' ? 'en cours' : 'terminée'}</p>
             </Card>
           ) : (
             <ScrollArea className="h-[500px]">
@@ -408,7 +408,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="w-5 h-5" />
-              DÃ©tails commande
+              Détails commande
             </DialogTitle>
           </DialogHeader>
           
@@ -420,8 +420,8 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                   {statusConfig[selectedOrder.status]?.icon}
                   <span className="ml-1">{statusConfig[selectedOrder.status]?.label}</span>
                 </Badge>
-                <Badge className={selectedOrder.payment_status === 'paid' ? 'bg-primary-orange-600' : 'bg-yellow-600'}>
-                  {selectedOrder.payment_status === 'paid' ? 'PayÃ©' : 'Ã€ payer'}
+                <Badge className={selectedOrder.payment_status === 'paid' ? 'bg-green-600' : 'bg-yellow-600'}>
+                  {selectedOrder.payment_status === 'paid' ? 'Payé' : 'À payer'}
                 </Badge>
               </div>
 
@@ -429,7 +429,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
               <Card>
                 <CardContent className="p-4 space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">NumÃ©ro</span>
+                    <span className="text-muted-foreground">Numéro</span>
                     <span className="font-bold">{selectedOrder.order_number}</span>
                   </div>
                   <div className="flex justify-between">
@@ -437,7 +437,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                     <span>{selectedOrder.customer_name}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">TÃ©lÃ©phone</span>
+                    <span className="text-muted-foreground">Téléphone</span>
                     <a href={`tel:${selectedOrder.customer_phone}`} className="flex items-center gap-1 text-primary">
                       <Phone className="w-4 h-4" />
                       {selectedOrder.customer_phone}
@@ -469,7 +469,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                     <span className="text-muted-foreground">Paiement</span>
                     <span className="flex items-center gap-1">
                       {paymentMethodIcons[selectedOrder.payment_method]}
-                      {selectedOrder.payment_method === 'cash' ? 'EspÃ¨ces' : 
+                      {selectedOrder.payment_method === 'cash' ? 'Espèces' : 
                        selectedOrder.payment_method === 'mobile' ? 'Mobile Money' : 'Carte'}
                     </span>
                   </div>
@@ -479,7 +479,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
               {/* Items */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Articles commandÃ©s</CardTitle>
+                  <CardTitle className="text-sm">Articles commandés</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {Array.isArray(selectedOrder.items) && selectedOrder.items.map((item: any, i: number) => (

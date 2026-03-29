@@ -1,6 +1,6 @@
 /**
  * PIN Prompt - Interface de saisie du code PIN pour authentification offline
- * 224SOLUTIONS - Mode Offline AvancÃ©
+ * 224SOLUTIONS - Mode Offline Avancé
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -47,7 +47,7 @@ export function PINPrompt({
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // VÃ©rifier la disponibilitÃ© de la biomÃ©trie
+  // Vérifier la disponibilité de la biométrie
   useEffect(() => {
     if (allowBiometric) {
       checkBiometric();
@@ -70,12 +70,12 @@ export function PINPrompt({
     }
   }, [isOpen]);
 
-  // GÃ©rer la saisie
+  // Gérer la saisie
   const handleDigitChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return; // Seulement des chiffres
 
     const newPin = pin.split('');
-    newPin[index] = value.slice(-1); // Prendre seulement le dernier caractÃ¨re
+    newPin[index] = value.slice(-1); // Prendre seulement le dernier caractère
     const updatedPin = newPin.join('');
 
     setPin(updatedPin);
@@ -92,7 +92,7 @@ export function PINPrompt({
     }
   };
 
-  // GÃ©rer le backspace
+  // Gérer le backspace
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
@@ -106,10 +106,10 @@ export function PINPrompt({
       return;
     }
 
-    // VÃ©rifier si l'utilisateur peut s'authentifier
+    // Vérifier si l'utilisateur peut s'authentifier
     const authCheck = canAuthenticate(userId);
     if (!authCheck.allowed) {
-      setError(authCheck.reason || 'Authentification bloquÃ©e');
+      setError(authCheck.reason || 'Authentification bloquée');
       return;
     }
 
@@ -120,17 +120,17 @@ export function PINPrompt({
       const result = await authenticateWithPIN(userId, pinValue);
 
       if (result.success && result.sessionId) {
-        toast.success('Authentification rÃ©ussie');
+        toast.success('Authentification réussie');
         onSuccess(result.sessionId);
         onClose();
       } else {
-        setError(result.error || 'Authentification Ã©chouÃ©e');
+        setError(result.error || 'Authentification échouée');
         setRemainingAttempts(result.attemptsRemaining ?? null);
         setPin('');
         inputRefs.current[0]?.focus();
 
         if (result.lockedUntil) {
-          toast.error(`Compte verrouillÃ© jusqu'Ã  ${result.lockedUntil.toLocaleTimeString()}`);
+          toast.error(`Compte verrouillé jusqu'à ${result.lockedUntil.toLocaleTimeString()}`);
         }
       }
     } catch (error: any) {
@@ -141,7 +141,7 @@ export function PINPrompt({
     }
   };
 
-  // Authentifier avec biomÃ©trie
+  // Authentifier avec biométrie
   const handleBiometric = async () => {
     setIsAuthenticating(true);
     setError(null);
@@ -150,15 +150,15 @@ export function PINPrompt({
       const result = await authenticateWithBiometric(userId);
 
       if (result.success && result.sessionId) {
-        toast.success('Authentification biomÃ©trique rÃ©ussie');
+        toast.success('Authentification biométrique réussie');
         onSuccess(result.sessionId);
         onClose();
       } else {
-        setError(result.error || 'Authentification biomÃ©trique Ã©chouÃ©e');
-        toast.error(result.error || 'Authentification Ã©chouÃ©e');
+        setError(result.error || 'Authentification biométrique échouée');
+        toast.error(result.error || 'Authentification échouée');
       }
     } catch (error: any) {
-      setError(error.message || 'Erreur biomÃ©trique');
+      setError(error.message || 'Erreur biométrique');
     } finally {
       setIsAuthenticating(false);
     }
@@ -240,15 +240,15 @@ export function PINPrompt({
             </div>
           )}
 
-          {/* Message de succÃ¨s (PIN complet) */}
+          {/* Message de succès (PIN complet) */}
           {pin.length === pinLength && !error && !isAuthenticating && (
-            <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-900/20 border border-primary-orange-200 dark:border-primary-orange-800 rounded-lg">
-              <CheckCircle className="w-4 h-4 text-primary-orange-500" />
-              <p className="text-sm text-primary-orange-700 dark:text-primary-orange-400">VÃ©rification en cours...</p>
+            <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+              <p className="text-sm text-green-700 dark:text-green-400">Vérification en cours...</p>
             </div>
           )}
 
-          {/* Bouton biomÃ©trie */}
+          {/* Bouton biométrie */}
           {biometricAvailable && (
             <>
               <div className="relative">
@@ -268,7 +268,7 @@ export function PINPrompt({
                 disabled={isAuthenticating}
               >
                 <Fingerprint className="w-4 h-4 mr-2" />
-                Utiliser la biomÃ©trie
+                Utiliser la biométrie
               </Button>
             </>
           )}
@@ -290,7 +290,7 @@ export function PINPrompt({
               onClick={() => handleSubmit()}
               disabled={pin.length !== pinLength || isAuthenticating}
             >
-              {isAuthenticating ? 'VÃ©rification...' : 'Valider'}
+              {isAuthenticating ? 'Vérification...' : 'Valider'}
             </Button>
           </div>
         </div>

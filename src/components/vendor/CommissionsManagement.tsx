@@ -62,7 +62,7 @@ export default function CommissionsManagement() {
     try {
       setLoading(true);
       
-      // VÃ©rifier si l'utilisateur est PDG
+      // Vérifier si l'utilisateur est PDG
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: pdgData } = await supabase
@@ -73,7 +73,7 @@ export default function CommissionsManagement() {
         
         setIsPDG(!!pdgData);
 
-        // Charger les paramÃ¨tres de commission
+        // Charger les paramètres de commission
         const { data: settingsData, error: settingsError } = await supabase
           .from('commission_settings')
           .select('*')
@@ -110,7 +110,7 @@ export default function CommissionsManagement() {
             .filter(log => new Date(log.created_at) >= thisMonth)
             .reduce((sum, log) => sum + (log.amount || 0), 0);
 
-          // RÃ©cupÃ©rer le taux de commission actuel
+          // Récupérer le taux de commission actuel
           const baseCommissionSetting = (settingsData || []).find(s => s.setting_key === 'base_user_commission');
           const currentRate = baseCommissionSetting ? Number(baseCommissionSetting.setting_value) * 100 : 20;
 
@@ -147,8 +147,8 @@ export default function CommissionsManagement() {
         }
       }
     } catch (error) {
-      console.error('Erreur chargement donnÃ©es commission:', error);
-      toast.error('Erreur lors du chargement des donnÃ©es');
+      console.error('Erreur chargement données commission:', error);
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -169,7 +169,7 @@ export default function CommissionsManagement() {
       
       if (error) throw error;
       
-      toast.success(`Taux mis Ã  jour: ${(newValue * 100).toFixed(1)}%`);
+      toast.success(`Taux mis à jour: ${(newValue * 100).toFixed(1)}%`);
       await loadData();
       setEditedSettings(prev => {
         const updated = { ...prev };
@@ -177,8 +177,8 @@ export default function CommissionsManagement() {
         return updated;
       });
     } catch (error) {
-      console.error('Erreur mise Ã  jour:', error);
-      toast.error('Erreur lors de la mise Ã  jour');
+      console.error('Erreur mise à jour:', error);
+      toast.error('Erreur lors de la mise à jour');
     } finally {
       setSaving(false);
     }
@@ -218,13 +218,13 @@ export default function CommissionsManagement() {
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-l-4 border-l-primary-orange-500">
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total GagnÃ©</CardTitle>
-            <DollarSign className="w-4 h-4 text-primary-orange-600" />
+            <CardTitle className="text-sm font-medium">Total Gagné</CardTitle>
+            <DollarSign className="w-4 h-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary-orange-600">
+            <div className="text-2xl font-bold text-green-600">
               {formatCurrency(stats.totalEarned)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -294,7 +294,7 @@ export default function CommissionsManagement() {
                 Historique des Commissions
               </CardTitle>
               <CardDescription>
-                Liste des commissions reÃ§ues sur les achats de vos clients
+                Liste des commissions reçues sur les achats de vos clients
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -322,7 +322,7 @@ export default function CommissionsManagement() {
                         <TableCell className="text-muted-foreground">
                           {log.description || 'Commission sur achat'}
                         </TableCell>
-                        <TableCell className="text-right font-bold text-primary-orange-600">
+                        <TableCell className="text-right font-bold text-green-600">
                           +{formatCurrency(log.amount)}
                         </TableCell>
                       </TableRow>
@@ -332,9 +332,9 @@ export default function CommissionsManagement() {
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
                   <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune commission enregistrÃ©e</p>
+                  <p>Aucune commission enregistrée</p>
                   <p className="text-sm mt-2">
-                    Les commissions apparaÃ®tront ici lorsque vos clients effectueront des achats
+                    Les commissions apparaîtront ici lorsque vos clients effectueront des achats
                   </p>
                 </div>
               )}
@@ -358,10 +358,10 @@ export default function CommissionsManagement() {
               <CardContent className="space-y-6">
                 <Alert className="border-blue-200 bg-blue-50">
                   <AlertCircle className="h-4 w-4 text-blue-600" />
-                  <AlertTitle className="text-blue-900">Impact en temps rÃ©el</AlertTitle>
+                  <AlertTitle className="text-blue-900">Impact en temps réel</AlertTitle>
                   <AlertDescription className="text-blue-800">
-                    Les modifications s'appliquent immÃ©diatement aux prochaines transactions.
-                    Les commissions existantes ne sont pas affectÃ©es.
+                    Les modifications s'appliquent immédiatement aux prochaines transactions.
+                    Les commissions existantes ne sont pas affectées.
                   </AlertDescription>
                 </Alert>
 
@@ -432,9 +432,9 @@ export default function CommissionsManagement() {
                   })}
                 </div>
 
-                {/* AperÃ§u des calculs */}
+                {/* Aperçu des calculs */}
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
-                  <h5 className="font-medium mb-3">ðŸ“Š Exemple de calcul</h5>
+                  <h5 className="font-medium mb-3">📊 Exemple de calcul</h5>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Achat client</p>
@@ -442,7 +442,7 @@ export default function CommissionsManagement() {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Commission Agent</p>
-                      <p className="font-bold text-primary-orange-600">
+                      <p className="font-bold text-green-600">
                         {formatCurrency(100000 * (Number(settings.find(s => s.setting_key === 'base_user_commission')?.setting_value) || 0.2))}
                       </p>
                     </div>

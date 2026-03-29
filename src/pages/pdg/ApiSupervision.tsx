@@ -1,6 +1,6 @@
 /**
- * ðŸ“Š SUPERVISION DES API - INTERFACE PDG
- * Tableau de bord complet pour surveiller toutes les API connectÃ©es Ã  224SOLUTIONS
+ * 📊 SUPERVISION DES API - INTERFACE PDG
+ * Tableau de bord complet pour surveiller toutes les API connectées à 224SOLUTIONS
  */
 
 import { useState, useEffect } from 'react';
@@ -25,7 +25,7 @@ import ApiAnalytics from '@/components/pdg/ApiAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 
 const STATUS_COLORS = {
-  active: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+  active: 'bg-green-500',
   suspended: 'bg-yellow-500',
   expired: 'bg-red-500',
   error: 'bg-orange-500'
@@ -34,7 +34,7 @@ const STATUS_COLORS = {
 const STATUS_LABELS = {
   active: 'Actif',
   suspended: 'Suspendu',
-  expired: 'ExpirÃ©',
+  expired: 'Expiré',
   error: 'Erreur'
 };
 
@@ -49,11 +49,11 @@ export default function ApiSupervision() {
   const [modalOpen, setModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
 
-  // Charger les donnÃ©es
+  // Charger les données
   const loadData = async () => {
     setLoading(true);
     try {
-      // Synchroniser les API systÃ¨me en premier
+      // Synchroniser les API système en premier
       await syncSystemApis();
       
       const [apisData, alertsData] = await Promise.all([
@@ -64,24 +64,24 @@ export default function ApiSupervision() {
       setApis(apisData || []);
       setAlerts(alertsData || []);
     } catch (error: any) {
-      console.error('âŒ Erreur chargement:', error);
-      toast.error(error?.message || 'Erreur lors du chargement des donnÃ©es');
+      console.error('❌ Erreur chargement:', error);
+      toast.error(error?.message || 'Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
   };
 
-  // Synchroniser les API systÃ¨me automatiquement
+  // Synchroniser les API système automatiquement
   const syncSystemApis = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('sync-system-apis');
       if (error) throw error;
       if (data?.synced?.length > 0) {
-        console.log('âœ… API systÃ¨me synchronisÃ©es:', data.synced);
+        console.log('✅ API système synchronisées:', data.synced);
       }
     } catch (error) {
-      console.error('âš ï¸ Erreur sync API systÃ¨me:', error);
-      // Ne pas bloquer si la synchronisation Ã©choue
+      console.error('⚠️ Erreur sync API système:', error);
+      // Ne pas bloquer si la synchronisation échoue
     }
   };
 
@@ -107,12 +107,12 @@ export default function ApiSupervision() {
     criticalAlerts: alerts.filter(a => a.severity === 'critical').length
   };
 
-  // SÃ©parer les API fonctionnelles et non-fonctionnelles
+  // Séparer les API fonctionnelles et non-fonctionnelles
   const workingApis = apis.filter(a => a.metadata?.is_working === true);
   const brokenApis = apis.filter(a => a.metadata?.is_working === false || a.status === 'error' || a.status === 'expired');
   const notConfiguredApis = apis.filter(a => a.metadata?.key_configured === false);
 
-  // DonnÃ©es pour les graphiques
+  // Données pour les graphiques
   const apiTypeData = [
     { name: 'Paiement', value: apis.filter(a => a.api_type === 'payment').length },
     { name: 'SMS', value: apis.filter(a => a.api_type === 'sms').length },
@@ -125,7 +125,7 @@ export default function ApiSupervision() {
     .filter(a => a.tokens_limit)
     .map(a => ({
       name: a.api_name,
-      utilisÃ©s: a.tokens_used,
+      utilisés: a.tokens_used,
       restants: a.tokens_remaining || 0,
       limite: a.tokens_limit
     }));
@@ -196,9 +196,9 @@ export default function ApiSupervision() {
                 <Activity className="h-10 w-10 text-primary" />
               </div>
               <div className="mt-4 flex gap-2">
-                <span className="text-xs text-primary-orange-600">{stats.active} actives</span>
-                <span className="text-xs text-muted-foreground">â€¢</span>
-                <span className="text-xs text-destructive">{stats.expired} expirÃ©es</span>
+                <span className="text-xs text-green-600">{stats.active} actives</span>
+                <span className="text-xs text-muted-foreground">•</span>
+                <span className="text-xs text-destructive">{stats.expired} expirées</span>
               </div>
             </CardContent>
           </Card>
@@ -207,7 +207,7 @@ export default function ApiSupervision() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Tokens utilisÃ©s</p>
+                  <p className="text-muted-foreground text-sm">Tokens utilisés</p>
                   <p className="text-3xl font-bold mt-1">
                     {stats.totalTokensUsed.toLocaleString()}
                   </p>
@@ -241,12 +241,12 @@ export default function ApiSupervision() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground text-sm">224Guard</p>
-                  <p className="text-lg font-bold text-primary-orange-600 mt-1">Actif</p>
+                  <p className="text-lg font-bold text-green-600 mt-1">Actif</p>
                 </div>
-                <Shield className="h-10 w-10 text-primary-orange-600" />
+                <Shield className="h-10 w-10 text-green-600" />
               </div>
               <p className="text-xs text-muted-foreground mt-4">
-                Surveillance en temps rÃ©el
+                Surveillance en temps réel
               </p>
             </CardContent>
           </Card>
@@ -255,7 +255,7 @@ export default function ApiSupervision() {
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="apis">API connectÃ©es</TabsTrigger>
+            <TabsTrigger value="apis">API connectées</TabsTrigger>
             <TabsTrigger value="alerts">Alertes</TabsTrigger>
             <TabsTrigger value="analytics">Analytiques</TabsTrigger>
           </TabsList>
@@ -263,10 +263,10 @@ export default function ApiSupervision() {
           {/* Vue d'ensemble */}
           <TabsContent value="overview" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* RÃ©partition par type */}
+              {/* Répartition par type */}
               <Card>
                 <CardHeader>
-                  <CardTitle>RÃ©partition des API par type</CardTitle>
+                  <CardTitle>Répartition des API par type</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -304,7 +304,7 @@ export default function ApiSupervision() {
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="utilisÃ©s" fill="#3B82F6" />
+                      <Bar dataKey="utilisés" fill="#3B82F6" />
                       <Bar dataKey="restants" fill="#10B981" />
                     </BarChart>
                   </ResponsiveContainer>
@@ -318,20 +318,20 @@ export default function ApiSupervision() {
             {/* API Fonctionnelles */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <CheckCircle2 className="h-5 w-5 text-primary-orange-600" />
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
                 <h3 className="text-lg font-semibold">API Fonctionnelles ({workingApis.length})</h3>
               </div>
               
               {workingApis.length === 0 ? (
                 <Card>
                   <CardContent className="py-8">
-                    <p className="text-center text-muted-foreground">Aucune API fonctionnelle dÃ©tectÃ©e</p>
+                    <p className="text-center text-muted-foreground">Aucune API fonctionnelle détectée</p>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {workingApis.map((api) => (
-                    <Card key={api.id} className="hover:border-primary-orange-500 transition-colors cursor-pointer border-primary-orange-200" onClick={() => {
+                    <Card key={api.id} className="hover:border-green-500 transition-colors cursor-pointer border-green-200" onClick={() => {
                       setSelectedApi(api);
                       setModalOpen(true);
                     }}>
@@ -343,8 +343,8 @@ export default function ApiSupervision() {
                               {api.api_provider}
                             </CardDescription>
                           </div>
-                          <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white">
-                            âœ“ Actif
+                          <Badge className="bg-green-500 text-white">
+                            ✓ Actif
                           </Badge>
                         </div>
                       </CardHeader>
@@ -358,7 +358,7 @@ export default function ApiSupervision() {
                         
                         {api.metadata?.used_in_functions && api.metadata.used_in_functions.length > 0 && (
                           <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">UtilisÃ©e dans:</p>
+                            <p className="text-xs text-muted-foreground">Utilisée dans:</p>
                             <div className="flex flex-wrap gap-1">
                               {api.metadata.used_in_functions.slice(0, 3).map((func: string) => (
                                 <Badge key={func} variant="outline" className="text-xs">
@@ -377,7 +377,7 @@ export default function ApiSupervision() {
                         {api.last_request_at && (
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
-                            DerniÃ¨re requÃªte: {new Date(api.last_request_at).toLocaleString('fr-FR')}
+                            Dernière requête: {new Date(api.last_request_at).toLocaleString('fr-FR')}
                           </div>
                         )}
                       </CardContent>
@@ -387,22 +387,22 @@ export default function ApiSupervision() {
               )}
             </div>
 
-            {/* SÃ©parateur */}
+            {/* Séparateur */}
             <div className="border-t border-border my-8" />
 
-            {/* API DÃ©faillantes / Non configurÃ©es */}
+            {/* API Défaillantes / Non configurées */}
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <XCircle className="h-5 w-5 text-red-600" />
-                <h3 className="text-lg font-semibold">API DÃ©faillantes ou Non ConfigurÃ©es ({brokenApis.length})</h3>
+                <h3 className="text-lg font-semibold">API Défaillantes ou Non Configurées ({brokenApis.length})</h3>
               </div>
               
               {brokenApis.length === 0 ? (
-                <Card className="border-primary-orange-200">
+                <Card className="border-green-200">
                   <CardContent className="py-8">
                     <div className="text-center">
-                      <CheckCircle2 className="h-12 w-12 text-primary-orange-600 mx-auto mb-3" />
-                      <p className="text-primary-orange-600 font-medium">Toutes les API fonctionnent correctement !</p>
+                      <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
+                      <p className="text-green-600 font-medium">Toutes les API fonctionnent correctement !</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -437,13 +437,13 @@ export default function ApiSupervision() {
                         {/* Raison de l'erreur */}
                         <div className="p-2 bg-red-50 dark:bg-red-950/20 rounded text-xs text-red-600">
                           {api.metadata?.key_configured === false ? (
-                            <span>âš ï¸ ClÃ© API non configurÃ©e dans les variables d'environnement</span>
+                            <span>⚠️ Clé API non configurée dans les variables d'environnement</span>
                           ) : api.status === 'error' ? (
-                            <span>âŒ ClÃ© invalide ou API non accessible</span>
+                            <span>❌ Clé invalide ou API non accessible</span>
                           ) : api.status === 'expired' ? (
-                            <span>â° API expirÃ©e - renouvellement nÃ©cessaire</span>
+                            <span>⏰ API expirée - renouvellement nécessaire</span>
                           ) : (
-                            <span>âš ï¸ Statut inconnu</span>
+                            <span>⚠️ Statut inconnu</span>
                           )}
                         </div>
                         
@@ -499,7 +499,7 @@ export default function ApiSupervision() {
                 <div className="space-y-3">
                   {alerts.length === 0 ? (
                     <div className="text-center py-8">
-                      <CheckCircle2 className="h-12 w-12 text-primary-orange-600 mx-auto mb-3" />
+                      <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-3" />
                       <p className="text-muted-foreground">Aucune alerte active</p>
                     </div>
                   ) : (
@@ -529,7 +529,7 @@ export default function ApiSupervision() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-primary-orange-600 hover:text-primary-orange-500"
+                            className="text-green-600 hover:text-green-500"
                             onClick={async () => {
                               try {
                                 const { data: { user } } = await supabase.auth.getUser();
@@ -538,8 +538,8 @@ export default function ApiSupervision() {
                                   await loadData();
                                 }
                               } catch (error) {
-                                console.error('Erreur rÃ©solution alerte:', error);
-                                toast.error('Erreur lors de la rÃ©solution');
+                                console.error('Erreur résolution alerte:', error);
+                                toast.error('Erreur lors de la résolution');
                               }
                             }}
                           >
@@ -561,14 +561,14 @@ export default function ApiSupervision() {
         </Tabs>
       </div>
 
-      {/* Modal de dÃ©tails d'API */}
+      {/* Modal de détails d'API */}
       <ApiDetailsModal
         api={selectedApi}
         open={modalOpen}
         onClose={() => {
           setModalOpen(false);
           setSelectedApi(null);
-          loadData(); // Recharger les donnÃ©es aprÃ¨s fermeture
+          loadData(); // Recharger les données après fermeture
         }}
       />
 

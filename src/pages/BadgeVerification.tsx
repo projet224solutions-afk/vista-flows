@@ -1,6 +1,6 @@
 /**
- * Page publique de vÃ©rification de badge taxi-moto
- * Affiche toutes les informations du conducteur quand le QR code est scannÃ©
+ * Page publique de vérification de badge taxi-moto
+ * Affiche toutes les informations du conducteur quand le QR code est scanné
  */
 
 import { useEffect, useState } from 'react';
@@ -64,7 +64,7 @@ export default function BadgeVerification() {
       setLoading(true);
       setError(null);
 
-      // Charger les donnÃ©es du vÃ©hicule
+      // Charger les données du véhicule
       const { data: vehicle, error: vehicleError } = await supabase
         .from('vehicles')
         .select('*')
@@ -79,7 +79,7 @@ export default function BadgeVerification() {
           .eq('digital_badge_id', id)
           .single();
 
-        if (badgeError) throw new Error('Badge non trouvÃ©');
+        if (badgeError) throw new Error('Badge non trouvé');
         
         await processVehicleData(vehicleByBadge);
       } else {
@@ -94,14 +94,14 @@ export default function BadgeVerification() {
   };
 
   const processVehicleData = async (vehicle: any) => {
-    let ownerName = 'Non renseignÃ©';
+    let ownerName = 'Non renseigné';
     let ownerPhone = '';
     let ownerEmail = '';
     let bureauName = '';
     let bureauCommune = '';
     let bureauPrefecture = '';
 
-    // Charger les informations du propriÃ©taire
+    // Charger les informations du propriétaire
     if (vehicle.owner_member_id) {
       const { data: worker } = await supabase
         .from('syndicate_workers')
@@ -110,7 +110,7 @@ export default function BadgeVerification() {
         .single();
 
       if (worker) {
-        ownerName = worker.nom || 'Non renseignÃ©';
+        ownerName = worker.nom || 'Non renseigné';
         ownerPhone = worker.telephone || '';
         ownerEmail = worker.email || '';
       }
@@ -145,7 +145,7 @@ export default function BadgeVerification() {
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'active':
-        return { label: 'Actif', color: 'bg-primary-orange-100 text-primary-orange-800', icon: CheckCircle };
+        return { label: 'Actif', color: 'bg-green-100 text-green-800', icon: CheckCircle };
       case 'suspended':
         return { label: 'Suspendu', color: 'bg-red-100 text-red-800', icon: XCircle };
       case 'maintenance':
@@ -160,12 +160,12 @@ export default function BadgeVerification() {
       case 'motorcycle': return 'Moto';
       case 'tricycle': return 'Tricycle';
       case 'car': return 'Voiture';
-      default: return type || 'Non spÃ©cifiÃ©';
+      default: return type || 'Non spécifié';
     }
   };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Non renseignÃ©';
+    if (!dateString) return 'Non renseigné';
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: 'long',
@@ -179,7 +179,7 @@ export default function BadgeVerification() {
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-            <p className="text-gray-600">VÃ©rification du badge en cours...</p>
+            <p className="text-gray-600">Vérification du badge en cours...</p>
           </CardContent>
         </Card>
       </div>
@@ -193,7 +193,7 @@ export default function BadgeVerification() {
           <CardContent className="p-8 text-center">
             <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-red-600 mb-2">Badge Non Valide</h2>
-            <p className="text-gray-600">{error || 'Ce badge n\'existe pas ou a Ã©tÃ© rÃ©voquÃ©.'}</p>
+            <p className="text-gray-600">{error || 'Ce badge n\'existe pas ou a été révoqué.'}</p>
           </CardContent>
         </Card>
       </div>
@@ -203,7 +203,7 @@ export default function BadgeVerification() {
   const statusInfo = getStatusInfo(badgeData.status);
   const StatusIcon = statusInfo.icon;
 
-  // Calculer la date d'expiration (1 an aprÃ¨s la gÃ©nÃ©ration)
+  // Calculer la date d'expiration (1 an après la génération)
   const generatedDate = badgeData.badge_generated_at || badgeData.created_at;
   const expireDate = new Date(generatedDate);
   expireDate.setFullYear(expireDate.getFullYear() + 1);
@@ -212,24 +212,24 @@ export default function BadgeVerification() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
       <div className="max-w-lg mx-auto space-y-4">
-        {/* En-tÃªte */}
+        {/* En-tête */}
         <div className="text-center py-6">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
             <Shield className="w-5 h-5 text-blue-400" />
             <span className="text-white font-semibold">224SOLUTIONS</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">VÃ©rification de Badge</h1>
+          <h1 className="text-2xl font-bold text-white">Vérification de Badge</h1>
           <p className="text-blue-200 text-sm mt-1">Carte Professionnelle de Transport</p>
         </div>
 
         {/* Statut du badge */}
-        <Card className={`border-2 ${badgeData.status === 'active' && !isExpired ? 'border-primary-orange-400' : 'border-red-400'}`}>
+        <Card className={`border-2 ${badgeData.status === 'active' && !isExpired ? 'border-green-400' : 'border-red-400'}`}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${badgeData.status === 'active' && !isExpired ? 'bg-primary-orange-100' : 'bg-red-100'}`}>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${badgeData.status === 'active' && !isExpired ? 'bg-green-100' : 'bg-red-100'}`}>
                   {badgeData.status === 'active' && !isExpired ? (
-                    <CheckCircle className="w-6 h-6 text-primary-orange-600" />
+                    <CheckCircle className="w-6 h-6 text-green-600" />
                   ) : (
                     <XCircle className="w-6 h-6 text-red-600" />
                   )}
@@ -239,21 +239,21 @@ export default function BadgeVerification() {
                     {badgeData.status === 'active' && !isExpired ? 'Badge Valide' : 'Badge Invalide'}
                   </h2>
                   <p className="text-sm text-gray-600">
-                    {isExpired ? 'Badge expirÃ©' : `Statut: ${statusInfo.label}`}
+                    {isExpired ? 'Badge expiré' : `Statut: ${statusInfo.label}`}
                   </p>
                 </div>
               </div>
               {badgeData.verified && (
                 <Badge className="bg-blue-100 text-blue-800">
                   <CheckCircle className="w-3 h-3 mr-1" />
-                  VÃ©rifiÃ©
+                  Vérifié
                 </Badge>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Photo et identitÃ© */}
+        {/* Photo et identité */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-start gap-4">
@@ -272,7 +272,7 @@ export default function BadgeVerification() {
                 )}
               </div>
               
-              {/* Informations identitÃ© */}
+              {/* Informations identité */}
               <div className="flex-1">
                 <h3 className="text-xl font-bold text-slate-800 mb-2">
                   {badgeData.owner_name}
@@ -285,7 +285,7 @@ export default function BadgeVerification() {
                   {badgeData.driver_date_of_birth && (
                     <div className="flex items-center gap-2 text-sm text-slate-600">
                       <Calendar className="w-4 h-4 text-amber-600" />
-                      <span>NÃ©(e) le: {formatDate(badgeData.driver_date_of_birth)}</span>
+                      <span>Né(e) le: {formatDate(badgeData.driver_date_of_birth)}</span>
                     </div>
                   )}
                 </div>
@@ -294,12 +294,12 @@ export default function BadgeVerification() {
           </CardContent>
         </Card>
 
-        {/* Informations vÃ©hicule */}
+        {/* Informations véhicule */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
               <Bike className="w-4 h-4" />
-              INFORMATIONS VÃ‰HICULE
+              INFORMATIONS VÉHICULE
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -309,14 +309,14 @@ export default function BadgeVerification() {
                 <div className="text-lg font-bold text-slate-900">{badgeData.license_plate}</div>
               </div>
               <div className="bg-purple-50 rounded-lg p-3">
-                <div className="text-xs text-purple-600 font-medium mb-1">NÂ° SÃ©rie</div>
+                <div className="text-xs text-purple-600 font-medium mb-1">N° Série</div>
                 <div className="text-lg font-bold text-slate-900">{badgeData.serial_number || 'N/A'}</div>
               </div>
             </div>
             
             {(badgeData.brand || badgeData.model) && (
               <div className="bg-slate-50 rounded-lg p-3">
-                <div className="text-xs text-slate-600 font-medium mb-1">Marque / ModÃ¨le</div>
+                <div className="text-xs text-slate-600 font-medium mb-1">Marque / Modèle</div>
                 <div className="font-semibold text-slate-900">
                   {badgeData.brand} {badgeData.model} {badgeData.year && `(${badgeData.year})`}
                 </div>
@@ -339,29 +339,29 @@ export default function BadgeVerification() {
           <CardContent>
             <div className="bg-slate-50 rounded-lg p-3">
               <div className="font-semibold text-slate-900">
-                {badgeData.bureau_commune || badgeData.bureau_name || 'Non renseignÃ©'}
+                {badgeData.bureau_commune || badgeData.bureau_name || 'Non renseigné'}
               </div>
               {badgeData.bureau_prefecture && (
                 <div className="text-sm text-slate-600">
-                  PrÃ©fecture: {badgeData.bureau_prefecture}
+                  Préfecture: {badgeData.bureau_prefecture}
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Dates de validitÃ© */}
+        {/* Dates de validité */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-slate-600 flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              VALIDITÃ‰ DU BADGE
+              VALIDITÉ DU BADGE
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-3">
-                <div className="text-xs text-primary-orange-600 font-medium mb-1">Ã‰mis le</div>
+              <div className="bg-green-50 rounded-lg p-3">
+                <div className="text-xs text-green-600 font-medium mb-1">Émis le</div>
                 <div className="font-semibold text-slate-900">{formatDate(generatedDate)}</div>
               </div>
               <div className={`rounded-lg p-3 ${isExpired ? 'bg-red-50' : 'bg-amber-50'}`}>
@@ -424,8 +424,8 @@ export default function BadgeVerification() {
 
         {/* Footer */}
         <div className="text-center py-4 text-white/60 text-sm">
-          <p>SystÃ¨me de vÃ©rification sÃ©curisÃ©</p>
-          <p className="text-xs mt-1">224SOLUTIONS â€¢ RÃ©publique de GuinÃ©e</p>
+          <p>Système de vérification sécurisé</p>
+          <p className="text-xs mt-1">224SOLUTIONS • République de Guinée</p>
         </div>
       </div>
     </div>

@@ -23,7 +23,7 @@ import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManage
 import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
 import { useFormPersistence } from "@/hooks/useAppPersistence";
 
-// Mapping pays â†’ devise pour dÃ©river la devise du vendeur
+// Mapping pays → devise pour dériver la devise du vendeur
 const COUNTRY_CURRENCY_MAP: Record<string, string> = {
   FR: 'EUR', DE: 'EUR', IT: 'EUR', ES: 'EUR', PT: 'EUR',
   BE: 'EUR', NL: 'EUR', AT: 'EUR', IE: 'EUR', GR: 'EUR',
@@ -43,14 +43,14 @@ function getVendorCurrency(country?: string | null): string {
   if (COUNTRY_CURRENCY_MAP[upper]) return COUNTRY_CURRENCY_MAP[upper];
   // Try matching country names
   const nameMap: Record<string, string> = {
-    'GUINÃ‰E': 'GNF', 'GUINEA': 'GNF', 'GUINEE': 'GNF',
-    'SÃ‰NÃ‰GAL': 'XOF', 'SENEGAL': 'XOF',
-    'CÃ”TE D\'IVOIRE': 'XOF', 'IVORY COAST': 'XOF',
-    'MALI': 'XOF', 'BURKINA FASO': 'XOF', 'BENIN': 'XOF', 'BÃ‰NIN': 'XOF',
+    'GUINÉE': 'GNF', 'GUINEA': 'GNF', 'GUINEE': 'GNF',
+    'SÉNÉGAL': 'XOF', 'SENEGAL': 'XOF',
+    'CÔTE D\'IVOIRE': 'XOF', 'IVORY COAST': 'XOF',
+    'MALI': 'XOF', 'BURKINA FASO': 'XOF', 'BENIN': 'XOF', 'BÉNIN': 'XOF',
     'TOGO': 'XOF', 'NIGER': 'XOF',
     'CAMEROUN': 'XAF', 'CAMEROON': 'XAF',
     'FRANCE': 'EUR', 'GERMANY': 'EUR', 'ALLEMAGNE': 'EUR',
-    'UNITED STATES': 'USD', 'USA': 'USD', 'Ã‰TATS-UNIS': 'USD',
+    'UNITED STATES': 'USD', 'USA': 'USD', 'ÉTATS-UNIS': 'USD',
     'UNITED KINGDOM': 'GBP', 'ROYAUME-UNI': 'GBP',
     'NIGERIA': 'NGN', 'GHANA': 'GHS', 'KENYA': 'KES',
     'SOUTH AFRICA': 'ZAR', 'AFRIQUE DU SUD': 'ZAR',
@@ -72,10 +72,10 @@ export default function Payment() {
   const [loading, setLoading] = useState(true);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
   
-  // Devise du produit/vendeur (dÃ©rivÃ©e du pays du vendeur)
+  // Devise du produit/vendeur (dérivée du pays du vendeur)
   const [productCurrency, setProductCurrency] = useState<string>('GNF');
   
-  // Ã‰tats pour le paiement
+  // États pour le paiement
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [recipientId, setRecipientId] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -93,7 +93,7 @@ export default function Payment() {
     receiver_id?: string;
   } | null>(null);
   
-  // Persistance des prÃ©fÃ©rences de paiement
+  // Persistance des préférences de paiement
   const { values: paymentPrefs, setValues: setPaymentPrefs, resetForm: resetPaymentPrefs } = useFormPersistence(
     `payment_prefs_${user?.id}`,
     {
@@ -104,7 +104,7 @@ export default function Payment() {
     { enabled: !!user?.id, maxAge: 60 * 60 * 1000 } // 1 heure
   );
   
-  // Aliases pour compatibilitÃ©
+  // Aliases pour compatibilité
   const paymentStep = paymentPrefs.paymentStep;
   const setPaymentStep = (v: 'form' | 'method') => setPaymentPrefs(prev => ({ ...prev, paymentStep: v }));
   const selectedPaymentMethod = paymentPrefs.selectedPaymentMethod;
@@ -112,7 +112,7 @@ export default function Payment() {
   const mobileMoneyPhone = paymentPrefs.mobileMoneyPhone;
   const setMobileMoneyPhone = (v: string) => setPaymentPrefs(prev => ({ ...prev, mobileMoneyPhone: v }));
 
-  // VÃ©rification d'authentification pour les achats
+  // Vérification d'authentification pour les achats
   useEffect(() => {
     const productId = searchParams.get('productId');
     const stateData = location.state as any;
@@ -137,7 +137,7 @@ export default function Payment() {
     }
   }, [user]);
 
-  // Ã‰tat pour stocker les infos produit (un seul produit)
+  // État pour stocker les infos produit (un seul produit)
   const [productPaymentInfo, setProductPaymentInfo] = useState<{
     productId: string;
     productName: string;
@@ -149,7 +149,7 @@ export default function Payment() {
     subscriptionInterval?: 'monthly' | 'yearly' | 'lifetime';
   } | null>(null);
 
-  // Ã‰tat pour stocker les infos du panier (multi-produits)
+  // État pour stocker les infos du panier (multi-produits)
   const [cartPaymentInfo, setCartPaymentInfo] = useState<{
     items: any[];
     totalAmount: number;
@@ -160,11 +160,11 @@ export default function Payment() {
 
   // Charger les informations de paiement de produit ou panier
   const loadProductPaymentInfo = async () => {
-    // VÃ©rifier les query params
+    // Vérifier les query params
     const productId = searchParams.get('productId');
     const quantity = searchParams.get('quantity');
     
-    // VÃ©rifier le state
+    // Vérifier le state
     const stateData = location.state as any;
     
     // CAS 1: Panier multi-produits depuis Cart.tsx
@@ -193,7 +193,7 @@ export default function Payment() {
           return;
         }
 
-        // RÃ©cupÃ©rer le public_id depuis profiles (source de vÃ©ritÃ©)
+        // Récupérer le public_id depuis profiles (source de vérité)
         const { data: vendorProfile, error: profileError } = await supabase
           .from('profiles')
           .select('public_id')
@@ -204,11 +204,11 @@ export default function Payment() {
           console.error('Erreur chargement profil vendeur:', profileError);
         }
 
-        // DÃ©river la devise du vendeur depuis son pays
+        // Dériver la devise du vendeur depuis son pays
         const vendorCurr = getVendorCurrency((vendorInfo as any).country);
         setProductCurrency(vendorCurr);
 
-        // Stocker les infos du panier (produits physiques par dÃ©faut)
+        // Stocker les infos du panier (produits physiques par défaut)
         setCartPaymentInfo({
           items: cartItems,
           totalAmount: totalAmount,
@@ -217,10 +217,10 @@ export default function Payment() {
           productType: 'physical' // Panier = produits physiques
         });
 
-        // PrÃ©-remplir les champs
+        // Pré-remplir les champs
         setPaymentAmount(totalAmount.toString());
 
-        // Utiliser le public_id depuis profiles (source de vÃ©ritÃ© unique - ex: VND0003)
+        // Utiliser le public_id depuis profiles (source de vérité unique - ex: VND0003)
         const vendorCode = vendorProfile?.public_id || `VEN-${vendorInfo.user_id.substring(0, 8).toUpperCase()}`;
 
         setRecipientId(vendorCode);
@@ -228,7 +228,7 @@ export default function Payment() {
         const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
         setPaymentDescription(`Achat panier: ${itemNames}`);
 
-        // Si une mÃ©thode de paiement est prÃ©-sÃ©lectionnÃ©e (depuis ProductPaymentModal)
+        // Si une méthode de paiement est pré-sélectionnée (depuis ProductPaymentModal)
         if (stateData?.paymentMethod) {
           const method = stateData.paymentMethod;
           if (method === 'card' || method === 'orange_money' || method === 'mtn_money') {
@@ -259,7 +259,7 @@ export default function Payment() {
         const isDigital = stateData?.productType === 'digital';
         
         if (isDigital) {
-          // D'abord essayer digital_products (produits numÃ©riques du marketplace)
+          // D'abord essayer digital_products (produits numériques du marketplace)
           const { data: dpProduct, error: dpError } = await supabase
             .from('digital_products')
             .select(`
@@ -283,7 +283,7 @@ export default function Payment() {
             const v = Array.isArray(vRaw) ? vRaw?.[0] : vRaw;
             const vendorUserId = v?.user_id || dpProduct.merchant_id;
             
-            // DÃ©river la devise du vendeur
+            // Dériver la devise du vendeur
             const vendorCurr = getVendorCurrency(v?.country);
             setProductCurrency(dpProduct.currency || vendorCurr);
             
@@ -298,7 +298,7 @@ export default function Payment() {
               subscriptionInterval: (dpProduct as any).subscription_interval || undefined,
             });
             
-            // RÃ©cupÃ©rer le public_id du vendeur
+            // Récupérer le public_id du vendeur
             const { data: vendorProfile } = await supabase
               .from('profiles')
               .select('public_id, custom_id')
@@ -321,7 +321,7 @@ export default function Payment() {
             const intervalLabel = interval === 'yearly' ? '/an' : '/mois';
             setPaymentDescription(isSubscription 
               ? `Abonnement ${intervalLabel}: ${dpProduct.title}` 
-              : `Achat numÃ©rique: ${dpProduct.title} (x${qty})`);
+              : `Achat numérique: ${dpProduct.title} (x${qty})`);
             setPaymentOpen(true);
           } else {
             // Fallback: essayer service_products
@@ -370,12 +370,12 @@ export default function Payment() {
                 vendorCode = `VEN-${proUserId.substring(0, 8).toUpperCase()}`;
               }
               setRecipientId(vendorCode);
-              setPaymentDescription(`Achat numÃ©rique: ${digitalProduct.name} (x${qty})`);
+              setPaymentDescription(`Achat numérique: ${digitalProduct.name} (x${qty})`);
               setPaymentOpen(true);
             }
           }
         } else {
-          // Charger les dÃ©tails du produit physique
+          // Charger les détails du produit physique
           const { data: product, error } = await supabase
             .from('products')
             .select(`
@@ -396,11 +396,11 @@ export default function Payment() {
             const vendorUserId = (product.vendors as any)?.user_id as string;
             const vendorCountry = (product.vendors as any)?.country as string | null;
             
-            // DÃ©river la devise du vendeur depuis son pays
+            // Dériver la devise du vendeur depuis son pays
             const vendorCurr = getVendorCurrency(vendorCountry);
             setProductCurrency(vendorCurr);
 
-            // Stocker les infos produit pour crÃ©er la commande plus tard
+            // Stocker les infos produit pour créer la commande plus tard
             setProductPaymentInfo({
               productId: product.id,
               productName: product.name,
@@ -409,10 +409,10 @@ export default function Payment() {
               vendorUserId,
               productType: 'physical' // Produit physique
             });
-            // PrÃ©-remplir les champs
+            // Pré-remplir les champs
             setPaymentAmount(totalAmount.toString());
 
-            // RÃ©cupÃ©rer le public_id depuis profiles (source de vÃ©ritÃ© unique)
+            // Récupérer le public_id depuis profiles (source de vérité unique)
             const { data: vendorProfile } = await supabase
               .from('profiles')
               .select('public_id')
@@ -495,7 +495,7 @@ export default function Payment() {
         .limit(5);
 
       if (error) throw error;
-      // Transformer le format pour compatibilitÃ©
+      // Transformer le format pour compatibilité
       return data?.map(p => ({
         user_id: p.id,
         custom_id: p.public_id,
@@ -507,7 +507,7 @@ export default function Payment() {
     }
   };
 
-  // Fonction pour prÃ©visualiser un paiement
+  // Fonction pour prévisualiser un paiement
   const handlePreviewPayment = async () => {
     if (!user?.id || !paymentAmount || !recipientId) {
       toast({
@@ -582,11 +582,11 @@ export default function Payment() {
 
       console.log('[Payment] Preview response:', data);
 
-      // La fonction retourne un JSON, donc data est dÃ©jÃ  l'objet complet
+      // La fonction retourne un JSON, donc data est déjà l'objet complet
       const result = data as any;
 
       if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de la prÃ©visualisation');
+        throw new Error(result.error || 'Erreur lors de la prévisualisation');
       }
 
       const previewData = {
@@ -606,23 +606,23 @@ export default function Payment() {
       setShowPaymentPreview(true);
       setPaymentOpen(false);
     } catch (error: any) {
-      console.error('Erreur prÃ©visualisation:', error);
+      console.error('Erreur prévisualisation:', error);
       
-      // DÃ©tecter si c'est une erreur de solde insuffisant
+      // Détecter si c'est une erreur de solde insuffisant
       const errorMessage = error.message || '';
       const isInsufficientBalance = errorMessage.toLowerCase().includes('insuffisant') || 
                                    errorMessage.toLowerCase().includes('insufficient');
       
       if (isInsufficientBalance) {
         toast({
-          title: "ðŸ’³ Solde insuffisant",
+          title: "💳 Solde insuffisant",
           description: "Votre solde est insuffisant pour effectuer cette transaction. Veuillez recharger votre wallet.",
           variant: "destructive"
         });
       } else {
         toast({
           title: "Erreur",
-          description: errorMessage || 'Impossible de prÃ©visualiser le paiement',
+          description: errorMessage || 'Impossible de prévisualiser le paiement',
           variant: "destructive"
         });
       }
@@ -631,13 +631,13 @@ export default function Payment() {
     }
   };
 
-  // Fonction pour paiement Ã  la livraison
+  // Fonction pour paiement à la livraison
   const handleCashOnDeliveryPayment = async (addressData?: any) => {
     if (!user?.id || !paymentAmount) return;
 
     setProcessing(true);
     try {
-      // Si c'est un achat produit ou panier, crÃ©er la commande en mode "cash on delivery"
+      // Si c'est un achat produit ou panier, créer la commande en mode "cash on delivery"
       if (productPaymentInfo || cartPaymentInfo) {
         const vendorId = productPaymentInfo?.vendorId || cartPaymentInfo?.vendorId;
         const items = productPaymentInfo 
@@ -645,14 +645,14 @@ export default function Payment() {
           : cartPaymentInfo?.items.map((item: any) => ({ product_id: item.product_id || item.id, quantity: item.quantity, price: item.price }));
 
         // Utiliser 'cash' comme payment_method (valeur valide de l'enum) avec is_cod dans metadata
-        // RÃ©cupÃ©rer le tÃ©lÃ©phone du profil si l'adresse ne le contient pas
+        // Récupérer le téléphone du profil si l'adresse ne le contient pas
         const { data: profileData } = await supabase
           .from('profiles')
           .select('phone')
           .eq('id', user.id)
           .single();
 
-        // Construire l'adresse de livraison avec les donnÃ©es du formulaire ou valeurs par dÃ©faut
+        // Construire l'adresse de livraison avec les données du formulaire ou valeurs par défaut
         const shippingAddress = addressData ? {
           address: addressData.street,
           neighborhood: addressData.neighborhood || '',
@@ -660,16 +660,16 @@ export default function Payment() {
           landmark: addressData.landmark || '',
           phone: profileData?.phone || 'Non fourni',
           cod_phone: addressData.street || '',
-          country: 'GuinÃ©e',
+          country: 'Guinée',
           instructions: addressData.instructions || '',
           is_cod: true
         } : {
-          address: 'Adresse Ã  confirmer par le client',
+          address: 'Adresse à confirmer par le client',
           city: 'Conakry',
           phone: profileData?.phone || 'Non fourni',
-          country: 'GuinÃ©e',
+          country: 'Guinée',
           is_cod: true,
-          instructions: 'Le client sera contactÃ© pour confirmer l\'adresse exacte'
+          instructions: 'Le client sera contacté pour confirmer l\'adresse exacte'
         };
 
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
@@ -684,8 +684,8 @@ export default function Payment() {
         if (orderError) throw orderError;
 
         toast({
-          title: "âœ… Commande crÃ©Ã©e !",
-          description: "Votre commande sera payÃ©e Ã  la livraison"
+          title: "✅ Commande créée !",
+          description: "Votre commande sera payée à la livraison"
         });
 
         setPaymentOpen(false);
@@ -696,7 +696,7 @@ export default function Payment() {
       } else {
         toast({
           title: "Information",
-          description: "Le paiement Ã  la livraison n'est disponible que pour les achats de produits",
+          description: "Le paiement à la livraison n'est disponible que pour les achats de produits",
           variant: "destructive"
         });
       }
@@ -704,7 +704,7 @@ export default function Payment() {
       console.error('Erreur paiement livraison:', error);
       toast({
         title: "Erreur",
-        description: error.message || "Impossible de crÃ©er la commande",
+        description: error.message || "Impossible de créer la commande",
         variant: "destructive"
       });
     } finally {
@@ -721,7 +721,7 @@ export default function Payment() {
       const provider = method === 'orange_money' ? 'orange' : 'mtn';
       
       toast({
-        title: "ðŸ“± Paiement ChapChapPay",
+        title: "📱 Paiement ChapChapPay",
         description: `Initialisation du paiement ${provider.toUpperCase()}...`
       });
 
@@ -740,8 +740,8 @@ export default function Payment() {
     }
   };
 
-  // Fonction pour paiement par carte â€” dÃ©sormais gÃ©rÃ© par JomyPaymentSelector inline
-  // Cette fonction est conservÃ©e comme fallback si besoin
+  // Fonction pour paiement par carte — désormais géré par JomyPaymentSelector inline
+  // Cette fonction est conservée comme fallback si besoin
   const handleCardPayment = async () => {
     if (!user?.id || !paymentAmount) return;
     // Redirect to the JomyPaymentSelector card flow
@@ -761,14 +761,14 @@ export default function Payment() {
       if (cartPaymentInfo) {
         console.log('[Payment] Creating cart order:', cartPaymentInfo);
 
-        // PrÃ©parer les items pour la commande
+        // Préparer les items pour la commande
         const orderItems = cartPaymentInfo.items.map((item: any) => ({
           product_id: item.product_id || item.id,
           quantity: item.quantity,
           price: item.price
         }));
 
-        // CrÃ©er la commande via la fonction PostgreSQL
+        // Créer la commande via la fonction PostgreSQL
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
           p_user_id: user.id,
           p_vendor_id: cartPaymentInfo.vendorId,
@@ -778,20 +778,20 @@ export default function Payment() {
           p_shipping_address: {
             address: 'Adresse de livraison',
             city: 'Conakry',
-            country: 'GuinÃ©e'
+            country: 'Guinée'
           }
         });
 
         if (orderError || !orderResult || orderResult.length === 0) {
           console.error('[Payment] Cart order creation failed:', orderError);
-          throw new Error(orderError?.message || 'Impossible de crÃ©er la commande');
+          throw new Error(orderError?.message || 'Impossible de créer la commande');
         }
 
         const orderId = orderResult[0].order_id;
         const orderNumber = orderResult[0].order_number;
         console.log('[Payment] Cart order created:', { orderId, orderNumber });
 
-        // CrÃ©er l'escrow pour le panier
+        // Créer l'escrow pour le panier
         const escrowResult = await UniversalEscrowService.createEscrow({
           buyer_id: user.id,
           seller_id: cartPaymentInfo.vendorUserId,
@@ -808,10 +808,10 @@ export default function Payment() {
         });
 
         if (!escrowResult.success) {
-          throw new Error(escrowResult.error || 'Ã‰chec de la crÃ©ation de l\'escrow');
+          throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
         }
 
-        // Mettre Ã  jour la commande avec l'escrow_transaction_id
+        // Mettre à jour la commande avec l'escrow_transaction_id
         await supabase
           .from('orders')
           .update({ 
@@ -821,11 +821,11 @@ export default function Payment() {
           .eq('id', orderId);
 
         toast({
-          title: "âœ… Commande crÃ©Ã©e !",
-          description: `Commande ${orderNumber} - ${cartPaymentInfo.items.length} article(s) - Paiement sÃ©curisÃ©`
+          title: "✅ Commande créée !",
+          description: `Commande ${orderNumber} - ${cartPaymentInfo.items.length} article(s) - Paiement sécurisé`
         });
 
-        // RÃ©initialiser et naviguer vers les commandes
+        // Réinitialiser et naviguer vers les commandes
         setCartPaymentInfo(null);
         navigate('/client');
         return;
@@ -835,13 +835,13 @@ export default function Payment() {
       if (productPaymentInfo) {
         console.log('[Payment] Creating product order:', productPaymentInfo);
 
-        // ====== PRODUIT NUMÃ‰RIQUE ======
+        // ====== PRODUIT NUMÉRIQUE ======
         if (productPaymentInfo.productType === 'digital') {
           const isSubscription = productPaymentInfo.pricingType === 'subscription';
           const billingCycle = productPaymentInfo.subscriptionInterval || 'monthly';
           console.log('[Payment] Digital product payment', { isSubscription, billingCycle });
 
-          // CrÃ©er l'escrow pour le produit numÃ©rique
+          // Créer l'escrow pour le produit numérique
           const escrowResult = await UniversalEscrowService.createEscrow({
             buyer_id: user.id,
             seller_id: productPaymentInfo.vendorUserId,
@@ -855,7 +855,7 @@ export default function Payment() {
               quantity: productPaymentInfo.quantity,
               is_subscription: isSubscription,
               billing_cycle: billingCycle,
-              description: paymentDescription || `Achat numÃ©rique: ${productPaymentInfo.productName}`
+              description: paymentDescription || `Achat numérique: ${productPaymentInfo.productName}`
             },
             escrow_options: {
               auto_release_days: 0,
@@ -864,7 +864,7 @@ export default function Payment() {
           });
 
           if (!escrowResult.success) {
-            throw new Error(escrowResult.error || 'Ã‰chec du paiement');
+            throw new Error(escrowResult.error || 'Échec du paiement');
           }
 
           // Calculer la date d'expiration
@@ -901,7 +901,7 @@ export default function Payment() {
             console.error('[Payment] Error creating purchase record:', purchaseError);
           }
 
-          // Si c'est un abonnement, crÃ©er l'enregistrement dans digital_subscriptions
+          // Si c'est un abonnement, créer l'enregistrement dans digital_subscriptions
           if (isSubscription && billingCycle !== 'lifetime') {
             const { error: subError } = await supabase
               .from('digital_subscriptions')
@@ -927,18 +927,18 @@ export default function Payment() {
             if (subError) {
               console.error('[Payment] Error creating subscription:', subError);
             } else {
-              console.log('[Payment] âœ… Digital subscription created');
+              console.log('[Payment] ✅ Digital subscription created');
             }
           }
 
-          // sales_count est incrÃ©mentÃ© automatiquement par le trigger DB
+          // sales_count est incrémenté automatiquement par le trigger DB
 
           const intervalLabels: Record<string, string> = { monthly: 'mensuel', yearly: 'annuel', lifetime: '' };
           toast({
-            title: isSubscription ? "âœ… Abonnement activÃ© !" : "âœ… Achat rÃ©ussi !",
+            title: isSubscription ? "✅ Abonnement activé !" : "✅ Achat réussi !",
             description: isSubscription 
-              ? `${productPaymentInfo.productName} â€” Abonnement ${intervalLabels[billingCycle]} activÃ©`
-              : `${productPaymentInfo.productName} â€” AccÃ¨s au tÃ©lÃ©chargement accordÃ©`
+              ? `${productPaymentInfo.productName} — Abonnement ${intervalLabels[billingCycle]} activé`
+              : `${productPaymentInfo.productName} — Accès au téléchargement accordé`
           });
 
           setProductPaymentInfo(null);
@@ -947,7 +947,7 @@ export default function Payment() {
         }
 
         // ====== PRODUIT PHYSIQUE ======
-        // CrÃ©er la commande via la fonction PostgreSQL
+        // Créer la commande via la fonction PostgreSQL
         const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
           p_user_id: user.id,
           p_vendor_id: productPaymentInfo.vendorId,
@@ -961,20 +961,20 @@ export default function Payment() {
           p_shipping_address: {
             address: 'Adresse de livraison',
             city: 'Conakry',
-            country: 'GuinÃ©e'
+            country: 'Guinée'
           }
         });
 
         if (orderError || !orderResult || orderResult.length === 0) {
           console.error('[Payment] Order creation failed:', orderError);
-          throw new Error(orderError?.message || 'Impossible de crÃ©er la commande');
+          throw new Error(orderError?.message || 'Impossible de créer la commande');
         }
 
         const orderId = orderResult[0].order_id;
         const orderNumber = orderResult[0].order_number;
         console.log('[Payment] Order created:', { orderId, orderNumber });
 
-        // CrÃ©er l'escrow pour le produit
+        // Créer l'escrow pour le produit
         const escrowResult = await UniversalEscrowService.createEscrow({
           buyer_id: user.id,
           seller_id: productPaymentInfo.vendorUserId,
@@ -992,10 +992,10 @@ export default function Payment() {
         });
 
         if (!escrowResult.success) {
-          throw new Error(escrowResult.error || 'Ã‰chec de la crÃ©ation de l\'escrow');
+          throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
         }
 
-        // Mettre Ã  jour la commande avec l'escrow_transaction_id
+        // Mettre à jour la commande avec l'escrow_transaction_id
         await supabase
           .from('orders')
           .update({ 
@@ -1005,11 +1005,11 @@ export default function Payment() {
           .eq('id', orderId);
 
         toast({
-          title: "âœ… Commande crÃ©Ã©e !",
-          description: `Commande ${orderNumber} - Paiement sÃ©curisÃ© par Escrow`
+          title: "✅ Commande créée !",
+          description: `Commande ${orderNumber} - Paiement sécurisé par Escrow`
         });
 
-        // RÃ©initialiser l'info produit et rediriger
+        // Réinitialiser l'info produit et rediriger
         setProductPaymentInfo(null);
         navigate('/client');
         return;
@@ -1039,12 +1039,12 @@ export default function Payment() {
           });
 
           if (!escrowResult.success) {
-            throw new Error(escrowResult.error || 'Ã‰chec de la crÃ©ation de l\'escrow');
+            throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
           }
 
           toast({
-            title: "Transfert sÃ©curisÃ© effectuÃ©",
-            description: `âœ… Transfert rÃ©ussi via Escrow\nðŸ’¸ Frais appliquÃ©s : ${paymentPreview.fee_amount.toLocaleString()} GNF\nðŸ’° Montant transfÃ©rÃ© : ${paymentPreview.amount.toLocaleString()} GNF`
+            title: "Transfert sécurisé effectué",
+            description: `✅ Transfert réussi via Escrow\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${paymentPreview.amount.toLocaleString()} GNF`
           });
         } else {
           // Transfert direct sans escrow
@@ -1058,8 +1058,8 @@ export default function Payment() {
           if (error) throw error;
 
           toast({
-            title: "Paiement effectuÃ©",
-            description: `âœ… Paiement rÃ©ussi\nðŸ’¸ Frais appliquÃ©s : ${paymentPreview.fee_amount.toLocaleString()} GNF\nðŸ’° Montant payÃ© : ${paymentPreview.amount.toLocaleString()} GNF`
+            title: "Paiement effectué",
+            description: `✅ Paiement réussi\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant payé : ${paymentPreview.amount.toLocaleString()} GNF`
           });
         }
       }
@@ -1072,16 +1072,16 @@ export default function Payment() {
       loadWalletData();
       loadRecentTransactions();
     } catch (error: any) {
-      console.error('âŒ Erreur paiement:', error);
+      console.error('❌ Erreur paiement:', error);
       
-      // DÃ©tecter si c'est une erreur de solde insuffisant
+      // Détecter si c'est une erreur de solde insuffisant
       const errorMessage = error.message || '';
       const isInsufficientBalance = errorMessage.toLowerCase().includes('insuffisant') || 
                                    errorMessage.toLowerCase().includes('insufficient');
       
       if (isInsufficientBalance) {
         toast({
-          title: "ðŸ’³ Solde insuffisant",
+          title: "💳 Solde insuffisant",
           description: "Votre solde est insuffisant pour effectuer cette transaction. Veuillez recharger votre wallet.",
           variant: "destructive"
         });
@@ -1186,10 +1186,10 @@ export default function Payment() {
                               readOnly={searchParams.get('productId') !== null || location.state?.productId}
                               className={searchParams.get('productId') || location.state?.productId ? 'bg-muted cursor-not-allowed font-bold text-primary' : ''}
                             />
-                            {/* Afficher la conversion si la devise du produit diffÃ¨re de celle de l'utilisateur */}
+                            {/* Afficher la conversion si la devise du produit diffère de celle de l'utilisateur */}
                             {paymentAmount && productCurrency !== userCurrency && !converterLoading && (
                               <p className="text-xs text-muted-foreground">
-                                â‰ˆ {convertPrice(parseFloat(paymentAmount) || 0, productCurrency).formatted} dans votre devise
+                                ≈ {convertPrice(parseFloat(paymentAmount) || 0, productCurrency).formatted} dans votre devise
                               </p>
                             )}
                           </div>
@@ -1229,7 +1229,7 @@ export default function Payment() {
                         onPaymentSuccess={async (transactionId) => {
                           console.log('[Payment] Success:', transactionId);
                           
-                          // Pour les produits numÃ©riques, crÃ©er l'enregistrement d'achat
+                          // Pour les produits numériques, créer l'enregistrement d'achat
                           if (productPaymentInfo?.productType === 'digital' && user?.id) {
                             try {
                               const isSubscription = productPaymentInfo.pricingType === 'subscription';
@@ -1247,7 +1247,7 @@ export default function Payment() {
                                 accessExpiresAt = periodEnd.toISOString();
                               }
 
-                              // CrÃ©er l'achat dans digital_product_purchases
+                              // Créer l'achat dans digital_product_purchases
                               const { error: purchaseError } = await supabase
                                 .from('digital_product_purchases')
                                 .insert({
@@ -1266,10 +1266,10 @@ export default function Payment() {
                               if (purchaseError) {
                                 console.error('[Payment] Error creating digital purchase:', purchaseError);
                               } else {
-                                console.log('[Payment] âœ… Digital purchase record created');
+                                console.log('[Payment] ✅ Digital purchase record created');
                               }
 
-                              // Si abonnement, crÃ©er aussi l'enregistrement
+                              // Si abonnement, créer aussi l'enregistrement
                               if (isSubscription && billingCycle !== 'lifetime') {
                                 await supabase
                                   .from('digital_subscriptions')
@@ -1293,7 +1293,7 @@ export default function Payment() {
                                   });
                               }
 
-                              // sales_count est incrÃ©mentÃ© automatiquement par le trigger DB
+                              // sales_count est incrémenté automatiquement par le trigger DB
 
                             } catch (err) {
                               console.error('[Payment] Error in digital purchase flow:', err);
@@ -1301,8 +1301,8 @@ export default function Payment() {
                           }
 
                           toast({
-                            title: "Paiement rÃ©ussi",
-                            description: "Votre paiement a Ã©tÃ© effectuÃ© avec succÃ¨s",
+                            title: "Paiement réussi",
+                            description: "Votre paiement a été effectué avec succès",
                           });
                           setPaymentOpen(false);
                           setPaymentStep('form');
@@ -1342,22 +1342,22 @@ export default function Payment() {
         {/* Statistiques mensuelles */}
         <WalletMonthlyStats />
 
-        {/* Transactions rÃ©centes */}
+        {/* Transactions récentes */}
         <Card className="mt-6 mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Transactions rÃ©centes
+              Transactions récentes
             </CardTitle>
             <CardDescription>
-              Les 5 derniÃ¨res transactions
+              Les 5 dernières transactions
             </CardDescription>
           </CardHeader>
           <CardContent>
             {recentTransactions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Aucune transaction rÃ©cente</p>
+                <p>Aucune transaction récente</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1367,7 +1367,7 @@ export default function Payment() {
                       {getTransactionIcon(tx.type, tx.sender_id)}
                       <div>
                         <p className="font-medium">
-                          {tx.sender_id === user?.id ? 'EnvoyÃ©' : 'ReÃ§u'}
+                          {tx.sender_id === user?.id ? 'Envoyé' : 'Reçu'}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {new Date(tx.created_at).toLocaleDateString('fr-FR')}
@@ -1408,7 +1408,7 @@ export default function Payment() {
               <CardHeader>
                 <CardTitle>Historique des transactions</CardTitle>
                 <CardDescription>
-                  Toutes vos transactions dÃ©taillÃ©es
+                  Toutes vos transactions détaillées
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1425,14 +1425,14 @@ export default function Payment() {
                   Moyens de paiement
                 </CardTitle>
                 <CardDescription>
-                  GÃ©rez vos moyens de paiement pour des transactions plus rapides
+                  Gérez vos moyens de paiement pour des transactions plus rapides
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Gestionnaire des 5 moyens de paiement */}
                 <PaymentMethodsManager />
 
-                {/* SÃ©parateur */}
+                {/* Séparateur */}
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
@@ -1449,7 +1449,7 @@ export default function Payment() {
                   <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
                   <h3 className="text-base font-semibold mb-2">Carte virtuelle 224SOLUTIONS</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    GÃ©rez votre carte virtuelle pour les paiements en ligne
+                    Gérez votre carte virtuelle pour les paiements en ligne
                   </p>
                   <ProfessionalVirtualCard />
                 </div>
@@ -1470,19 +1470,19 @@ export default function Payment() {
                 <div className="space-y-4 pt-4 max-h-[60vh] overflow-y-auto pr-2">
                   <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">ðŸ’° Montant</span>
+                      <span className="text-sm text-muted-foreground">💰 Montant</span>
                       <span className="text-lg font-bold">{paymentPreview?.amount?.toLocaleString()} GNF</span>
                     </div>
                     <div className="flex justify-between items-center border-t pt-2">
-                      <span className="text-sm font-medium">ðŸ’¸ Frais de paiement ({paymentPreview?.fee_percent}%)</span>
+                      <span className="text-sm font-medium">💸 Frais de paiement ({paymentPreview?.fee_percent}%)</span>
                       <span className="text-lg font-bold">{paymentPreview?.fee_amount?.toLocaleString()} GNF</span>
                     </div>
                     <div className="flex justify-between items-center border-t pt-2 bg-red-50 dark:bg-red-950 -mx-4 px-4 py-2 rounded">
-                      <span className="text-sm font-bold">ðŸ’³ Total Ã  dÃ©biter</span>
+                      <span className="text-sm font-bold">💳 Total à débiter</span>
                       <span className="text-xl font-bold text-destructive">{paymentPreview?.total_debit?.toLocaleString()} GNF</span>
                     </div>
-                    <div className="flex justify-between items-center border-t pt-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 -mx-4 px-4 py-2 rounded">
-                      <span className="text-sm font-medium">âœ… Le destinataire recevra</span>
+                    <div className="flex justify-between items-center border-t pt-2 bg-green-50 dark:bg-green-950 -mx-4 px-4 py-2 rounded">
+                      <span className="text-sm font-medium">✅ Le destinataire recevra</span>
                       <span className="text-lg font-bold text-success">{paymentPreview?.amount_received?.toLocaleString()} GNF</span>
                     </div>
                   </div>
@@ -1492,7 +1492,7 @@ export default function Payment() {
                       <strong>Solde actuel:</strong> {paymentPreview?.current_balance?.toLocaleString()} GNF
                     </p>
                     <p>
-                      <strong>Solde aprÃ¨s paiement:</strong> {paymentPreview?.balance_after?.toLocaleString()} GNF
+                      <strong>Solde après paiement:</strong> {paymentPreview?.balance_after?.toLocaleString()} GNF
                     </p>
                   </div>
                   

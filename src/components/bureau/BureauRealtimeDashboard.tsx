@@ -1,5 +1,5 @@
 /**
- * Dashboard de monitoring temps rÃ©el pour les bureaux/syndicats
+ * Dashboard de monitoring temps réel pour les bureaux/syndicats
  */
 
 import { useState, useEffect } from 'react';
@@ -59,7 +59,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
           </div>
           <Button onClick={refresh} variant="outline" className="mt-4">
             <RefreshCw className="h-4 w-4 mr-2" />
-            RÃ©essayer
+            Réessayer
           </Button>
         </CardContent>
       </Card>
@@ -71,13 +71,13 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Monitoring Temps RÃ©el</h2>
+          <h2 className="text-2xl font-bold">Monitoring Temps Réel</h2>
           {bureauName && <p className="text-muted-foreground">{bureauName}</p>}
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Activity className="h-4 w-4 text-primary-orange-500 animate-pulse" />
-            <span>Mise Ã  jour: {formatDistanceToNow(lastUpdate, { addSuffix: true, locale: fr })}</span>
+            <Activity className="h-4 w-4 text-green-500 animate-pulse" />
+            <span>Mise à jour: {formatDistanceToNow(lastUpdate, { addSuffix: true, locale: fr })}</span>
           </div>
           <Button onClick={refresh} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -98,7 +98,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
           title="En Ligne"
           value={stats.online_drivers}
           icon={<Wifi className="h-5 w-5" />}
-          color="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-500"
+          color="bg-green-500/10 text-green-500"
           badge={stats.online_drivers > 0 ? 'live' : undefined}
         />
         <StatCard
@@ -117,7 +117,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
           title="Revenus Aujourd'hui"
           value={formatCurrency(stats.today_earnings)}
           icon={<DollarSign className="h-5 w-5" />}
-          color="bg-primary-blue-500/10 text-primary-blue-500"
+          color="bg-emerald-500/10 text-emerald-500"
           isText
         />
         <StatCard
@@ -135,7 +135,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Wifi className="h-5 w-5 text-primary-orange-500" />
+              <Wifi className="h-5 w-5 text-green-500" />
               Chauffeurs en Ligne ({onlineDrivers.length})
             </CardTitle>
           </CardHeader>
@@ -162,7 +162,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Clock className="h-5 w-5 text-primary" />
-              ActivitÃ© RÃ©cente
+              Activité Récente
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -170,7 +170,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
               {recentActivity.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <Activity className="h-12 w-12 mb-2" />
-                  <p>Aucune activitÃ© rÃ©cente</p>
+                  <p>Aucune activité récente</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -196,7 +196,7 @@ export function BureauRealtimeDashboard({ bureauId, bureauName }: BureauRealtime
                     {stats.active_sos} Alerte(s) SOS Active(s)
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Intervention immÃ©diate requise
+                    Intervention immédiate requise
                   </p>
                 </div>
               </div>
@@ -231,7 +231,7 @@ function StatCard({ title, value, icon, color, badge, urgent, isText }: StatCard
             {icon}
           </div>
           {badge && (
-            <Badge variant="secondary" className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white text-xs">
+            <Badge variant="secondary" className="bg-green-500 text-white text-xs">
               {badge}
             </Badge>
           )}
@@ -245,7 +245,7 @@ function StatCard({ title, value, icon, color, badge, urgent, isText }: StatCard
 
 function DriverCard({ driver }: { driver: OnlineDriver }) {
   const statusColors = {
-    available: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+    available: 'bg-green-500',
     on_trip: 'bg-amber-500',
     offline: 'bg-gray-500'
   };
@@ -297,7 +297,7 @@ function ActivityItem({ activity }: { activity: RecentActivity }) {
   const typeIcons = {
     trip: <Car className="h-4 w-4" />,
     sos: <AlertTriangle className="h-4 w-4 text-red-500" />,
-    driver_online: <Wifi className="h-4 w-4 text-primary-orange-500" />,
+    driver_online: <Wifi className="h-4 w-4 text-green-500" />,
     driver_offline: <WifiOff className="h-4 w-4 text-gray-500" />
   };
 

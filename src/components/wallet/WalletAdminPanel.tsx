@@ -220,8 +220,8 @@ export function WalletAdminPanel() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-primary-orange-100 flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-primary-orange-600" />
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <Activity className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.agent_wallets}</p>
@@ -359,7 +359,7 @@ export function WalletAdminPanel() {
                         Bloqué
                       </Badge>
                     ) : (
-                      <Badge variant="default" className="gap-1 w-full justify-center bg-gradient-to-r from-primary-blue-600 to-primary-orange-600">
+                      <Badge variant="default" className="gap-1 w-full justify-center bg-green-600">
                         Actif
                       </Badge>
                     )}

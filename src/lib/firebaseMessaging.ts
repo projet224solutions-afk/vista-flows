@@ -163,7 +163,7 @@ export async function requestNotificationPermission(): Promise<string | null> {
     });
 
     if (currentToken) {
-      console.log('✅ Token FCM obtenu');
+      console.log('✅ Token FCM obtenu:', currentToken.substring(0, 20) + '...');
       // Sauvegarder le token pour l'utilisateur
       await saveTokenToServer(currentToken);
     }

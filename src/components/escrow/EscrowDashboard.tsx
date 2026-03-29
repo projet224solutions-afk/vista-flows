@@ -19,7 +19,7 @@ export function EscrowDashboard() {
   const [reason, setReason] = useState("");
   const [processing, setProcessing] = useState(false);
 
-  // VÃ©rifier que l'utilisateur est admin
+  // Vérifier que l'utilisateur est admin
   const isAdmin = profile?.role === "admin";
 
   useEffect(() => {
@@ -56,17 +56,17 @@ export function EscrowDashboard() {
       });
 
       if (result.success) {
-        toast.success("âœ… Fonds libÃ©rÃ©s avec succÃ¨s");
+        toast.success("✅ Fonds libérés avec succès");
         setActionType(null);
         setSelectedTransaction(null);
         setNotes("");
         loadTransactions();
       } else {
-        toast.error(result.error || "Erreur lors de la libÃ©ration");
+        toast.error(result.error || "Erreur lors de la libération");
       }
     } catch (error) {
       console.error("Error releasing escrow:", error);
-      toast.error("Erreur lors de la libÃ©ration des fonds");
+      toast.error("Erreur lors de la libération des fonds");
     } finally {
       setProcessing(false);
     }
@@ -83,7 +83,7 @@ export function EscrowDashboard() {
       });
 
       if (result.success) {
-        toast.success("âœ… Remboursement effectuÃ© avec succÃ¨s");
+        toast.success("✅ Remboursement effectué avec succès");
         setActionType(null);
         setSelectedTransaction(null);
         setReason("");
@@ -103,7 +103,7 @@ export function EscrowDashboard() {
     const styles = {
       pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
       held: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-      released: "bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 bg-opacity-10 text-primary-orange-600 border-primary-orange-500/20",
+      released: "bg-green-500/10 text-green-600 border-green-500/20",
       refunded: "bg-red-500/10 text-red-600 border-red-500/20",
     };
 
@@ -116,9 +116,9 @@ export function EscrowDashboard() {
 
     const labels = {
       pending: "En attente",
-      held: "ðŸ”¸ BloquÃ©",
-      released: "ðŸ”¹ LibÃ©rÃ©",
-      refunded: "ðŸ”» RemboursÃ©",
+      held: "🔸 Bloqué",
+      released: "🔹 Libéré",
+      refunded: "🔻 Remboursé",
     };
 
     return (
@@ -134,7 +134,7 @@ export function EscrowDashboard() {
       <Card>
         <CardContent className="p-6">
           <p className="text-muted-foreground">
-            AccÃ¨s rÃ©servÃ© aux administrateurs uniquement.
+            Accès réservé aux administrateurs uniquement.
           </p>
         </CardContent>
       </Card>
@@ -147,10 +147,10 @@ export function EscrowDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="w-5 h-5" />
-            SystÃ¨me Escrow 224SOLUTIONS
+            Système Escrow 224SOLUTIONS
           </CardTitle>
           <CardDescription>
-            GÃ©rez les paiements sÃ©curisÃ©s en attente de validation
+            Gérez les paiements sécurisés en attente de validation
           </CardDescription>
         </CardHeader>
       </Card>
@@ -206,10 +206,10 @@ export function EscrowDashboard() {
                           setSelectedTransaction(transaction);
                           setActionType("release");
                         }}
-                        className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-orange-600 hover:to-primary-blue-600"
+                        className="bg-green-600 hover:bg-green-700"
                       >
                         <Unlock className="w-4 h-4 mr-2" />
-                        LibÃ©rer
+                        Libérer
                       </Button>
                       <Button
                         size="sm"
@@ -231,7 +231,7 @@ export function EscrowDashboard() {
         </div>
       )}
 
-      {/* Dialog pour libÃ©rer les fonds */}
+      {/* Dialog pour libérer les fonds */}
       <Dialog
         open={actionType === "release"}
         onOpenChange={() => {
@@ -242,9 +242,9 @@ export function EscrowDashboard() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>LibÃ©rer les fonds</DialogTitle>
+            <DialogTitle>Libérer les fonds</DialogTitle>
             <DialogDescription>
-              Confirmer la libÃ©ration des fonds au vendeur ?
+              Confirmer la libération des fonds au vendeur ?
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -271,7 +271,7 @@ export function EscrowDashboard() {
             <Button
               onClick={handleRelease}
               disabled={processing}
-              className="bg-primary-orange-600 hover:bg-primary-orange-700"
+              className="bg-green-600 hover:bg-green-700"
             >
               {processing ? "Traitement..." : "Confirmer"}
             </Button>

@@ -1,5 +1,5 @@
 /**
- * Header dÃ©diÃ© pour le vendeur digital
+ * Header dédié pour le vendeur digital
  */
 
 import { memo, Suspense, lazy } from 'react';
@@ -27,7 +27,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
   const navigate = useNavigate();
 
   return (
-    <header className="min-h-14 md:min-h-16 bg-white/95 dark:bg-background/95 backdrop-blur-lg border-b border-vendeur-primary/20 sticky top-0 z-40 shadow-sm px-2 sm:px-3 md:px-6 w-full">
+    <header className="min-h-14 md:min-h-16 bg-white/95 dark:bg-background/95 backdrop-blur-lg border-b border-border/50 sticky top-0 z-40 shadow-sm px-2 sm:px-3 md:px-6 w-full">
       <div className="flex flex-col sm:flex-row sm:items-center w-full min-w-0 gap-2 py-2 md:py-0">
         {/* Brand */}
         <div className="flex items-center gap-2 min-w-0">
@@ -36,7 +36,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
             aria-label="Ouvrir/Fermer le menu"
           />
           <img src="/logo-224solutions.png" alt="224Solutions" className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-contain" />
-          <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-vendeur-primary to-vendeur-secondary bg-clip-text text-transparent whitespace-nowrap">
+          <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-700 bg-clip-text text-transparent whitespace-nowrap">
             Digital Store
           </h1>
         </div>
@@ -45,7 +45,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
         <div className="flex items-center justify-between w-full min-w-0 gap-2">
           <div className="flex items-center gap-1 min-w-0 flex-1">
             <p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1 min-w-0">
-              <span className="w-1.5 h-1.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full animate-pulse flex-shrink-0" />
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse flex-shrink-0" />
               <span className="truncate max-w-[120px] sm:max-w-[200px]">{displayName}</span>
             </p>
           </div>
@@ -60,7 +60,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
               size="icon"
               className="h-8 w-8 md:h-10 md:w-10"
               onClick={() => navigate('/vendeur-digital/settings')}
-              aria-label="ParamÃ¨tres"
+              aria-label="Paramètres"
             >
               <Settings className="w-4 h-4 md:w-5 md:h-5" />
             </Button>
@@ -70,7 +70,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
               size="icon"
               onClick={onSignOut}
               className="h-8 w-8 md:h-10 md:w-10"
-              aria-label="Se dÃ©connecter"
+              aria-label="Se déconnecter"
             >
               <LogOut className="w-4 h-4 md:w-5 md:h-5" />
             </Button>

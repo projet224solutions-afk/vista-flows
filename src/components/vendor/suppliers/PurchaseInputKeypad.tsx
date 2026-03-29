@@ -1,6 +1,6 @@
 /**
- * Composant de saisie avec pavÃ© numÃ©rique pour les achats
- * OptimisÃ© pour mobile avec de grands boutons tactiles
+ * Composant de saisie avec pavé numérique pour les achats
+ * Optimisé pour mobile avec de grands boutons tactiles
  */
 
 import React, { useState, useEffect } from 'react';
@@ -85,28 +85,28 @@ export function PurchaseInputKeypad({
           icon: DollarSign,
           title: 'Prix d\'achat',
           subtitle: `Saisir le prix en ${currency}`,
-          color: 'from-primary-blue-500 to-primary-orange-600',
-          bgColor: 'bg-primary-blue-500/10',
-          borderColor: 'border-primary-orange-500/30',
-          buttonColor: 'bg-primary-blue-600 hover:bg-primary-blue-700',
+          color: 'from-emerald-500 to-emerald-600',
+          bgColor: 'bg-emerald-500/10',
+          borderColor: 'border-emerald-500/30',
+          buttonColor: 'bg-emerald-600 hover:bg-emerald-700',
           suffix: currency
         };
       case 'quantity':
         return {
           icon: Hash,
-          title: 'QuantitÃ© (unitÃ©s)',
-          subtitle: 'Nombre d\'unitÃ©s Ã  acheter',
+          title: 'Quantité (unités)',
+          subtitle: 'Nombre d\'unités à acheter',
           color: 'from-blue-500 to-blue-600',
           bgColor: 'bg-blue-500/10',
           borderColor: 'border-blue-500/30',
           buttonColor: 'bg-blue-600 hover:bg-blue-700',
-          suffix: 'unitÃ©s'
+          suffix: 'unités'
         };
       case 'carton':
         return {
           icon: Package,
-          title: 'QuantitÃ© (cartons)',
-          subtitle: unitsPerCarton ? `${unitsPerCarton} unitÃ©s par carton` : 'Nombre de cartons',
+          title: 'Quantité (cartons)',
+          subtitle: unitsPerCarton ? `${unitsPerCarton} unités par carton` : 'Nombre de cartons',
           color: 'from-purple-500 to-purple-600',
           bgColor: 'bg-purple-500/10',
           borderColor: 'border-purple-500/30',
@@ -149,7 +149,7 @@ export function PurchaseInputKeypad({
             </div>
             {mode === 'carton' && unitsPerCarton && numericValue > 0 && (
               <p className="text-center text-sm text-muted-foreground mt-2">
-                = {numericValue * unitsPerCarton} unitÃ©s au total
+                = {numericValue * unitsPerCarton} unités au total
               </p>
             )}
           </div>
@@ -183,7 +183,7 @@ export function PurchaseInputKeypad({
                 onClick={() => handleInput('.')}
                 className="h-16 md:h-14 text-2xl font-bold bg-card hover:bg-accent hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
               >
-                â€¢
+                •
               </Button>
             ) : (
               <Button
@@ -199,7 +199,7 @@ export function PurchaseInputKeypad({
               onClick={() => handleInput('backspace')}
               className="h-16 md:h-14 text-lg font-bold bg-card hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive hover:scale-[1.02] active:scale-95 transition-all duration-150 shadow-sm rounded-xl border-2"
             >
-              âŒ«
+              ⌫
             </Button>
           </div>
 

@@ -34,12 +34,12 @@ const campaignTypeLabels = {
   email: 'Email',
   sms: 'SMS',
   notification: 'Notification',
-  social: 'RÃ©seaux sociaux'
+  social: 'Réseaux sociaux'
 };
 
 const statusColors = {
   draft: 'bg-gray-100 text-gray-800',
-  active: 'bg-primary-orange-100 text-primary-orange-800',
+  active: 'bg-green-100 text-green-800',
   paused: 'bg-yellow-100 text-yellow-800',
   completed: 'bg-blue-100 text-blue-800'
 };
@@ -48,7 +48,7 @@ const statusLabels = {
   draft: 'Brouillon',
   active: 'Active',
   paused: 'En pause',
-  completed: 'TerminÃ©e'
+  completed: 'Terminée'
 };
 
 export default function MarketingManagement() {
@@ -121,8 +121,8 @@ export default function MarketingManagement() {
       });
       
       toast({
-        title: "Code promo crÃ©Ã©",
-        description: "Le code promotionnel a Ã©tÃ© crÃ©Ã© avec succÃ¨s."
+        title: "Code promo créé",
+        description: "Le code promotionnel a été créé avec succès."
       });
       
       setIsPromoDialogOpen(false);
@@ -166,8 +166,8 @@ export default function MarketingManagement() {
 
       setCampaigns(prev => [data, ...prev]);
       toast({
-        title: "Campagne crÃ©Ã©e",
-        description: "La campagne marketing a Ã©tÃ© crÃ©Ã©e avec succÃ¨s."
+        title: "Campagne créée",
+        description: "La campagne marketing a été créée avec succès."
       });
 
       setIsCampaignDialogOpen(false);
@@ -180,7 +180,7 @@ export default function MarketingManagement() {
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de crÃ©er la campagne.",
+        description: "Impossible de créer la campagne.",
         variant: "destructive"
       });
     }
@@ -189,8 +189,8 @@ export default function MarketingManagement() {
   const copyPromoCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast({
-      title: "Code copiÃ©",
-      description: "Le code promotionnel a Ã©tÃ© copiÃ© dans le presse-papiers."
+      title: "Code copié",
+      description: "Le code promotionnel a été copié dans le presse-papiers."
     });
   };
 
@@ -206,7 +206,7 @@ export default function MarketingManagement() {
   const clickRate = totalSent > 0 ? ((totalClicked / totalSent) * 100).toFixed(1) : '0';
 
   if (promoLoading || campaignsLoading) {
-    return <div className="p-4">Chargement des donnÃ©es marketing...</div>;
+    return <div className="p-4">Chargement des données marketing...</div>;
   }
 
   return (
@@ -232,7 +232,7 @@ export default function MarketingManagement() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
             <div className="min-w-0">
               <h2 className="text-lg sm:text-2xl font-bold">Marketing & Promotions</h2>
-              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">GÃ©rez vos campagnes et codes promo</p>
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">Gérez vos campagnes et codes promo</p>
             </div>
             <div className="flex gap-2">
           <Dialog open={isPromoDialogOpen} onOpenChange={setIsPromoDialogOpen}>
@@ -244,7 +244,7 @@ export default function MarketingManagement() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>CrÃ©er un code promotionnel</DialogTitle>
+                <DialogTitle>Créer un code promotionnel</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreatePromo} className="space-y-4">
                 <div>
@@ -258,7 +258,7 @@ export default function MarketingManagement() {
                       required
                     />
                     <Button type="button" variant="outline" onClick={generateRandomCode}>
-                      GÃ©nÃ©rer
+                      Générer
                     </Button>
                   </div>
                 </div>
@@ -268,7 +268,7 @@ export default function MarketingManagement() {
                     id="description"
                     value={promoForm.description}
                     onChange={(e) => setPromoForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Promotion de fin d'annÃ©e"
+                    placeholder="Promotion de fin d'année"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -332,7 +332,7 @@ export default function MarketingManagement() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button type="submit" className="flex-1">CrÃ©er le code promo</Button>
+                  <Button type="submit" className="flex-1">Créer le code promo</Button>
                   <Button type="button" variant="outline" onClick={() => setIsPromoDialogOpen(false)}>
                     Annuler
                   </Button>
@@ -350,7 +350,7 @@ export default function MarketingManagement() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>CrÃ©er une campagne marketing</DialogTitle>
+                <DialogTitle>Créer une campagne marketing</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreateCampaign} className="space-y-4">
                 <div>
@@ -378,7 +378,7 @@ export default function MarketingManagement() {
                       <SelectItem value="email">Email</SelectItem>
                       <SelectItem value="sms">SMS</SelectItem>
                       <SelectItem value="notification">Notification</SelectItem>
-                      <SelectItem value="social">RÃ©seaux sociaux</SelectItem>
+                      <SelectItem value="social">Réseaux sociaux</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -402,7 +402,7 @@ export default function MarketingManagement() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button type="submit" className="flex-1">CrÃ©er la campagne</Button>
+                  <Button type="submit" className="flex-1">Créer la campagne</Button>
                   <Button type="button" variant="outline" onClick={() => setIsCampaignDialogOpen(false)}>
                     Annuler
                   </Button>
@@ -420,7 +420,7 @@ export default function MarketingManagement() {
             <div className="flex items-center gap-2">
               <Mail className="w-5 h-5 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Messages envoyÃ©s</p>
+                <p className="text-sm text-muted-foreground">Messages envoyés</p>
                 <p className="text-2xl font-bold">{totalSent}</p>
               </div>
             </div>
@@ -429,7 +429,7 @@ export default function MarketingManagement() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <Eye className="w-5 h-5 text-primary-orange-600" />
+              <Eye className="w-5 h-5 text-green-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Taux d'ouverture</p>
                 <p className="text-2xl font-bold">{openRate}%</p>
@@ -495,7 +495,7 @@ export default function MarketingManagement() {
                     <div>
                       <p className="text-muted-foreground">Utilisations</p>
                       <p className="font-medium">
-                        {promo.used_count} / {promo.usage_limit || 'âˆž'}
+                        {promo.used_count} / {promo.usage_limit || '∞'}
                       </p>
                     </div>
                     <div>
@@ -530,7 +530,7 @@ export default function MarketingManagement() {
               <Tag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Aucun code promotionnel</h3>
               <p className="text-muted-foreground">
-                CrÃ©ez votre premier code promotionnel pour attirer plus de clients.
+                Créez votre premier code promotionnel pour attirer plus de clients.
               </p>
             </div>
           )}
@@ -561,7 +561,7 @@ export default function MarketingManagement() {
                   </div>
                   <div className="grid grid-cols-3 gap-4 text-sm mt-2">
                     <div>
-                      <p className="text-muted-foreground">EnvoyÃ©s</p>
+                      <p className="text-muted-foreground">Envoyés</p>
                       <p className="font-medium">{campaign.sent_count}</p>
                     </div>
                     <div>
@@ -576,7 +576,7 @@ export default function MarketingManagement() {
                 </div>
                 <div className="flex gap-2 ml-4">
                   <Button size="sm" variant="outline">
-                    Voir dÃ©tails
+                    Voir détails
                   </Button>
                   {campaign.status === 'draft' && (
                     <Button size="sm">
@@ -598,7 +598,7 @@ export default function MarketingManagement() {
               <Megaphone className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Aucune campagne</h3>
               <p className="text-muted-foreground">
-                CrÃ©ez votre premiÃ¨re campagne marketing pour promouvoir vos produits.
+                Créez votre première campagne marketing pour promouvoir vos produits.
               </p>
             </div>
           )}

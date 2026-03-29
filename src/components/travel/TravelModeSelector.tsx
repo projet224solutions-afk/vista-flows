@@ -1,8 +1,8 @@
 /**
- * SÃ©lecteur de mode pour le module Vol/HÃ´tel
- * Option A: API de rÃ©servation (Amadeus, Booking)
- * Option B: SystÃ¨me d'affiliation avancÃ©
- * Option C: Affiliation simple structurÃ©e
+ * Sélecteur de mode pour le module Vol/Hôtel
+ * Option A: API de réservation (Amadeus, Booking)
+ * Option B: Système d'affiliation avancé
+ * Option C: Affiliation simple structurée
  */
 
 import { useState } from 'react';
@@ -25,43 +25,43 @@ interface TravelModeSelectorProps {
 const modes = [
   {
     id: 'api' as TravelMode,
-    title: 'API de RÃ©servation',
-    description: 'Recherche en temps rÃ©el avec APIs (Amadeus, Booking)',
+    title: 'API de Réservation',
+    description: 'Recherche en temps réel avec APIs (Amadeus, Booking)',
     icon: <Search className="w-6 h-6" />,
-    gradient: 'from-blue-600 to-primary-blue-500',
+    gradient: 'from-blue-600 to-cyan-500',
     features: [
-      'Recherche vols/hÃ´tels en direct',
-      'DisponibilitÃ© temps rÃ©el',
-      'RÃ©servation intÃ©grÃ©e',
+      'Recherche vols/hôtels en direct',
+      'Disponibilité temps réel',
+      'Réservation intégrée',
       'Prix dynamiques'
     ],
-    complexity: 'AvancÃ©',
+    complexity: 'Avancé',
     badge: 'API Keys requis'
   },
   {
     id: 'affiliate' as TravelMode,
-    title: 'Affiliation AvancÃ©e',
-    description: 'SystÃ¨me complet pour affiliÃ©s avec suivi commissions',
+    title: 'Affiliation Avancée',
+    description: 'Système complet pour affiliés avec suivi commissions',
     icon: <Users className="w-6 h-6" />,
     gradient: 'from-purple-600 to-pink-500',
     features: [
-      'Inscription affiliÃ©s',
+      'Inscription affiliés',
       'Catalogue partenaires',
       'Suivi des commissions',
-      'Dashboard affiliÃ©'
+      'Dashboard affilié'
     ],
-    complexity: 'IntermÃ©diaire',
-    badge: 'RecommandÃ©'
+    complexity: 'Intermédiaire',
+    badge: 'Recommandé'
   },
   {
     id: 'simple' as TravelMode,
     title: 'Affiliation Simple',
-    description: 'Structure catÃ©gorisÃ©e avec liens affiliÃ©s',
+    description: 'Structure catégorisée avec liens affiliés',
     icon: <Briefcase className="w-6 h-6" />,
-    gradient: 'from-primary-blue-600 to-primary-orange-500',
+    gradient: 'from-green-600 to-emerald-500',
     features: [
-      'CatÃ©gories structurÃ©es',
-      'Liens affiliÃ©s directs',
+      'Catégories structurées',
+      'Liens affiliés directs',
       'Interface simple',
       'Mise en place rapide'
     ],
@@ -80,7 +80,7 @@ export function TravelModeSelector({ currentMode, onModeSelect }: TravelModeSele
         </div>
         <h2 className="text-xl font-bold text-foreground">Choisissez votre mode</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          SÃ©lectionnez le type de fonctionnement pour Vol/HÃ´tel
+          Sélectionnez le type de fonctionnement pour Vol/Hôtel
         </p>
       </div>
 
@@ -122,7 +122,7 @@ export function TravelModeSelector({ currentMode, onModeSelect }: TravelModeSele
                   <div className="grid grid-cols-2 gap-1.5">
                     {mode.features.map((feature, idx) => (
                       <div key={idx} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Check className="w-3 h-3 text-primary-orange-500 shrink-0" />
+                        <Check className="w-3 h-3 text-green-500 shrink-0" />
                         <span className="truncate">{feature}</span>
                       </div>
                     ))}

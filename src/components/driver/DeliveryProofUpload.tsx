@@ -55,7 +55,7 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
     setUploading(true);
     try {
       onProofUploaded(photoPreview, signature);
-      toast.success('âœ… Preuve enregistrÃ©e avec succÃ¨s !');
+      toast.success('✅ Preuve enregistrée avec succès !');
     } catch (error) {
       console.error('Error uploading proof:', error);
       toast.error('Erreur lors de l\'enregistrement');
@@ -124,13 +124,13 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
         <DialogHeader>
           <DialogTitle>Confirmation de livraison</DialogTitle>
           <DialogDescription>
-            Prenez une photo et rÃ©cupÃ©rez la signature du client
+            Prenez une photo et récupérez la signature du client
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 mt-4">
         {/* Photo de preuve */}
         <div className="space-y-3">
-          <label className="text-sm font-medium">ðŸ“¸ Photo de la livraison</label>
+          <label className="text-sm font-medium">📸 Photo de la livraison</label>
           <input
             ref={fileInputRef}
             type="file"
@@ -173,7 +173,7 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
 
         {/* Signature client */}
         <div className="space-y-3">
-          <label className="text-sm font-medium">âœï¸ Signature du client</label>
+          <label className="text-sm font-medium">✍️ Signature du client</label>
           <div className="border rounded-lg p-2 bg-white">
             <canvas
               ref={canvasRef}
@@ -205,7 +205,7 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
         <Button
           onClick={handleSubmit}
           disabled={uploading || !photoPreview || !signature}
-          className="w-full bg-primary-orange-600 hover:bg-primary-orange-700"
+          className="w-full bg-green-600 hover:bg-green-700"
         >
           {uploading ? (
             <>

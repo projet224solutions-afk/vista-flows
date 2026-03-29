@@ -8,7 +8,7 @@ import { Navigation, Phone, Clock, MapPin, ArrowRight, Maximize2 } from 'lucide-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// ClÃ© Mapbox depuis les variables d'environnement
+// Clé Mapbox depuis les variables d'environnement
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 interface Coordinates {
@@ -67,7 +67,7 @@ export function InteractiveMapNavigation({
       style: 'mapbox://styles/mapbox/streets-v12',
       center: currentLocation 
         ? [currentLocation.longitude, currentLocation.latitude]
-        : [9.5, -13.7], // Conakry par dÃ©faut
+        : [9.5, -13.7], // Conakry par défaut
       zoom: 13,
       pitch: 45
     });
@@ -82,12 +82,12 @@ export function InteractiveMapNavigation({
     };
   }, []);
 
-  // Mettre Ã  jour la position du chauffeur en temps rÃ©el
+  // Mettre à jour la position du chauffeur en temps réel
   useEffect(() => {
     if (!map.current || !currentLocation) return;
 
     if (!driverMarker.current) {
-      // CrÃ©er le marqueur du chauffeur avec une icÃ´ne personnalisÃ©e
+      // Créer le marqueur du chauffeur avec une icône personnalisée
       const el = document.createElement('div');
       el.className = 'driver-marker';
       el.style.width = '40px';
@@ -120,7 +120,7 @@ export function InteractiveMapNavigation({
       ? activeRide.pickup.coords
       : activeRide.destination.coords;
 
-    // Marqueur de dÃ©part (vert)
+    // Marqueur de départ (vert)
     if (!pickupMarker.current && activeRide.pickup) {
       const pickupEl = document.createElement('div');
       pickupEl.style.width = '30px';
@@ -133,7 +133,7 @@ export function InteractiveMapNavigation({
       pickupMarker.current = new mapboxgl.Marker({ element: pickupEl })
         .setLngLat([activeRide.pickup.coords.longitude, activeRide.pickup.coords.latitude])
         .setPopup(
-          new mapboxgl.Popup().setHTML(`<strong>DÃ©part</strong><br/>${activeRide.pickup.address}`)
+          new mapboxgl.Popup().setHTML(`<strong>Départ</strong><br/>${activeRide.pickup.address}`)
         )
         .addTo(map.current);
     }
@@ -151,12 +151,12 @@ export function InteractiveMapNavigation({
       destinationMarker.current = new mapboxgl.Marker({ element: destEl })
         .setLngLat([activeRide.destination.coords.longitude, activeRide.destination.coords.latitude])
         .setPopup(
-          new mapboxgl.Popup().setHTML(`<strong>ArrivÃ©e</strong><br/>${activeRide.destination.address}`)
+          new mapboxgl.Popup().setHTML(`<strong>Arrivée</strong><br/>${activeRide.destination.address}`)
         )
         .addTo(map.current);
     }
 
-    // RÃ©cupÃ©rer la route depuis l'API
+    // Récupérer la route depuis l'API
     fetchRoute(currentLocation, target);
 
     // Nettoyer les marqueurs quand il n'y a plus de course
@@ -170,7 +170,7 @@ export function InteractiveMapNavigation({
     };
   }, [activeRide, currentLocation]);
 
-  // Sauvegarder la position en temps rÃ©el dans la base de donnÃ©es
+  // Sauvegarder la position en temps réel dans la base de données
   useEffect(() => {
     if (!activeRide || !currentLocation) return;
 
@@ -288,7 +288,7 @@ export function InteractiveMapNavigation({
             Aucune course active
           </h3>
           <p className="text-sm text-gray-500">
-            Acceptez une course pour dÃ©marrer la navigation
+            Acceptez une course pour démarrer la navigation
           </p>
         </CardContent>
       </Card>
@@ -296,7 +296,7 @@ export function InteractiveMapNavigation({
   }
 
   const isGoingToPickup = activeRide.status === 'accepted' || activeRide.status === 'arriving';
-  const statusLabel = isGoingToPickup ? "RÃ©cupÃ©ration du client" : "En direction de la destination";
+  const statusLabel = isGoingToPickup ? "Récupération du client" : "En direction de la destination";
 
   return (
     <div className="space-y-4">
@@ -346,7 +346,7 @@ export function InteractiveMapNavigation({
               <div className="bg-white rounded-lg p-3 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Clock className="w-3 h-3 text-gray-600" />
-                  <p className="text-xs text-gray-600">DurÃ©e</p>
+                  <p className="text-xs text-gray-600">Durée</p>
                 </div>
                 <p className="text-2xl font-bold text-blue-600">
                   {routeInfo.duration} <span className="text-sm">min</span>
@@ -357,7 +357,7 @@ export function InteractiveMapNavigation({
         </Card>
       )}
 
-      {/* Informations client et itinÃ©raire */}
+      {/* Informations client et itinéraire */}
       <Card>
         <CardContent className="pt-4 space-y-3">
           {/* Client */}
@@ -378,13 +378,13 @@ export function InteractiveMapNavigation({
             <p className="text-sm text-gray-600">{activeRide.customerPhone}</p>
           </div>
 
-          {/* ItinÃ©raire */}
+          {/* Itinéraire */}
           <div className="space-y-2">
-            <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-3 border border-primary-orange-200">
+            <div className="bg-green-50 rounded-lg p-3 border border-green-200">
               <div className="flex items-start gap-2">
-                <MapPin className="w-5 h-5 text-primary-orange-600 mt-0.5" />
+                <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-primary-orange-800 uppercase">DÃ©part</p>
+                  <p className="text-xs font-semibold text-green-800 uppercase">Départ</p>
                   <p className="text-sm text-gray-900">{activeRide.pickup.address}</p>
                 </div>
               </div>
@@ -398,7 +398,7 @@ export function InteractiveMapNavigation({
               <div className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-red-600 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-red-800 uppercase">ArrivÃ©e</p>
+                  <p className="text-xs font-semibold text-red-800 uppercase">Arrivée</p>
                   <p className="text-sm text-gray-900">{activeRide.destination.address}</p>
                 </div>
               </div>
@@ -409,7 +409,7 @@ export function InteractiveMapNavigation({
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="text-center">
               <p className="text-xs text-gray-600 mb-1">Prix course</p>
-              <p className="text-lg font-bold text-primary-orange-600">
+              <p className="text-lg font-bold text-green-600">
                 {activeRide.estimatedPrice.toLocaleString()} GNF
               </p>
             </div>

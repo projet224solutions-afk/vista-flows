@@ -1,6 +1,6 @@
 /**
  * NOTIFICATIONS DE LIVRAISON POUR LE VENDEUR
- * Affiche les notifications en temps rÃ©el avec les preuves de livraison
+ * Affiche les notifications en temps réel avec les preuves de livraison
  */
 
 import { useState, useEffect } from 'react';
@@ -85,7 +85,7 @@ export function VendorDeliveryNotifications() {
 
       if (error) throw error;
 
-      // Charger les dÃ©tails de livraison pour chaque notification
+      // Charger les détails de livraison pour chaque notification
       const notificationsWithDetails = await Promise.all(
         (data || []).map(async (notif) => {
           if (notif.delivery_id) {
@@ -114,7 +114,7 @@ export function VendorDeliveryNotifications() {
     if (user) {
       loadNotifications();
 
-      // Souscription temps rÃ©el
+      // Souscription temps réel
       const channel = supabase
         .channel('vendor-delivery-notifications')
         .on(
@@ -128,7 +128,7 @@ export function VendorDeliveryNotifications() {
           (payload) => {
             console.log('New delivery notification:', payload);
             loadNotifications();
-            toast.success('ðŸ“¦ Nouvelle notification de livraison !');
+            toast.success('📦 Nouvelle notification de livraison !');
           }
         )
         .subscribe();
@@ -167,7 +167,7 @@ export function VendorDeliveryNotifications() {
 
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
-      toast.success('Toutes les notifications marquÃ©es comme lues');
+      toast.success('Toutes les notifications marquées comme lues');
     } catch (error) {
       console.error('Error marking all as read:', error);
     }
@@ -214,7 +214,7 @@ export function VendorDeliveryNotifications() {
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-orange-600" />
-                Livraisons confirmÃ©es
+                Livraisons confirmées
               </DialogTitle>
               {unreadCount > 0 && (
                 <Button variant="ghost" size="sm" onClick={markAllAsRead}>
@@ -248,7 +248,7 @@ export function VendorDeliveryNotifications() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <CheckCircle2 className="h-4 w-4 text-primary-orange-600 flex-shrink-0" />
+                            <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
                             <span className="font-medium text-sm truncate">
                               {notif.delivery?.customer_name || 'Client'}
                             </span>
@@ -271,7 +271,7 @@ export function VendorDeliveryNotifications() {
                             )}
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-primary-orange-600 text-xs">
+                        <Badge variant="outline" className="text-green-600 text-xs">
                           {formatCurrency(notif.delivery?.delivery_fee || 0)}
                         </Badge>
                       </div>
@@ -284,13 +284,13 @@ export function VendorDeliveryNotifications() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal dÃ©tails de la notification */}
+      {/* Modal détails de la notification */}
       <Dialog open={!!selectedNotification} onOpenChange={() => setSelectedNotification(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-primary-orange-600" />
-              Livraison confirmÃ©e
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              Livraison confirmée
             </DialogTitle>
           </DialogHeader>
           
@@ -313,12 +313,12 @@ export function VendorDeliveryNotifications() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Montant</span>
-                    <span className="font-bold text-primary-orange-600">
+                    <span className="font-bold text-green-600">
                       {formatCurrency(selectedNotification.delivery?.delivery_fee || 0)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">ConfirmÃ© le</span>
+                    <span className="text-sm text-muted-foreground">Confirmé le</span>
                     <span className="text-sm">
                       {selectedNotification.delivery?.completed_at 
                         ? formatDate(selectedNotification.delivery.completed_at)
@@ -344,7 +344,7 @@ export function VendorDeliveryNotifications() {
                     variant="outline" 
                     size="sm" 
                     className="w-full"
-                    onClick={() => window.open(selectedNotification.delivery?.proof_photo_url || '', '_blank', 'noopener,noreferrer')}
+                    onClick={() => window.open(selectedNotification.delivery?.proof_photo_url || '', '_blank')}
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Voir en grand

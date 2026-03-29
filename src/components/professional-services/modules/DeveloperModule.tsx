@@ -1,5 +1,5 @@
 /**
- * MODULE DÃ‰VELOPPEUR WEB
+ * MODULE DÉVELOPPEUR WEB
  * Gestion du portfolio, projets et devis
  */
 
@@ -79,7 +79,7 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
   const [showNewProjectDialog, setShowNewProjectDialog] = useState(false);
   const [showNewQuoteDialog, setShowNewQuoteDialog] = useState(false);
 
-  // DonnÃ©es simulÃ©es
+  // Données simulées
   const [projects] = useState<Project[]>([
     {
       id: '1',
@@ -112,8 +112,8 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
     {
       id: '3',
       name: 'API Paiement Mobile',
-      client: 'FinTech GuinÃ©e',
-      description: 'API RESTful pour intÃ©gration paiement Orange/MTN',
+      client: 'FinTech Guinée',
+      description: 'API RESTful pour intégration paiement Orange/MTN',
       type: 'api',
       technologies: ['Node.js', 'Express', 'MongoDB'],
       status: 'termine',
@@ -129,8 +129,8 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
       id: '1',
       clientName: 'Restaurant Le Jardin',
       clientEmail: 'contact@lejardin.gn',
-      projectType: 'Site vitrine + RÃ©servation',
-      description: 'Site web avec systÃ¨me de rÃ©servation en ligne',
+      projectType: 'Site vitrine + Réservation',
+      description: 'Site web avec système de réservation en ligne',
       estimatedBudget: 5000000,
       status: 'en_attente',
       createdAt: new Date().toISOString(),
@@ -153,7 +153,7 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
     {
       id: '1',
       title: '224Pay - Paiement Mobile',
-      description: 'Application de paiement mobile multi-opÃ©rateurs',
+      description: 'Application de paiement mobile multi-opérateurs',
       category: 'FinTech',
       technologies: ['React Native', 'Node.js', 'MongoDB'],
       liveUrl: 'https://224pay.com',
@@ -161,8 +161,8 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
     },
     {
       id: '2',
-      title: 'GuinÃ©eShop',
-      description: 'Marketplace e-commerce pour artisans guinÃ©ens',
+      title: 'GuinéeShop',
+      description: 'Marketplace e-commerce pour artisans guinéens',
       category: 'E-commerce',
       technologies: ['Next.js', 'Stripe', 'PostgreSQL'],
       liveUrl: 'https://guineeshop.com',
@@ -172,8 +172,8 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
     {
       id: '3',
       title: 'Conakry Events',
-      description: 'Plateforme de gestion d\'Ã©vÃ©nements',
-      category: 'Ã‰vÃ©nementiel',
+      description: 'Plateforme de gestion d\'événements',
+      category: 'Événementiel',
       technologies: ['Vue.js', 'Laravel', 'MySQL'],
       liveUrl: 'https://conakry-events.com',
       featured: false
@@ -185,13 +185,13 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
   const getProjectStatusBadge = (status: Project['status']) => {
     const styles = {
       en_cours: 'bg-blue-100 text-blue-800',
-      termine: 'bg-primary-orange-100 text-primary-orange-800',
+      termine: 'bg-green-100 text-green-800',
       en_attente: 'bg-yellow-100 text-yellow-800',
       maintenance: 'bg-purple-100 text-purple-800'
     };
     const labels = {
       en_cours: 'En cours',
-      termine: 'TerminÃ©',
+      termine: 'Terminé',
       en_attente: 'En attente',
       maintenance: 'Maintenance'
     };
@@ -201,26 +201,26 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
   const getQuoteStatusBadge = (status: Quote['status']) => {
     const styles = {
       en_attente: 'bg-yellow-100 text-yellow-800',
-      accepte: 'bg-primary-orange-100 text-primary-orange-800',
+      accepte: 'bg-green-100 text-green-800',
       refuse: 'bg-red-100 text-red-800',
       expire: 'bg-gray-100 text-gray-800'
     };
     const labels = {
       en_attente: 'En attente',
-      accepte: 'AcceptÃ©',
-      refuse: 'RefusÃ©',
-      expire: 'ExpirÃ©'
+      accepte: 'Accepté',
+      refuse: 'Refusé',
+      expire: 'Expiré'
     };
     return <Badge className={styles[status]}>{labels[status]}</Badge>;
   };
 
   const handleAddProject = () => {
-    toast.success('Projet crÃ©Ã© avec succÃ¨s');
+    toast.success('Projet créé avec succès');
     setShowNewProjectDialog(false);
   };
 
   const handleAddQuote = () => {
-    toast.success('Devis envoyÃ© avec succÃ¨s');
+    toast.success('Devis envoyé avec succès');
     setShowNewQuoteDialog(false);
   };
 
@@ -232,14 +232,14 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-primary/10 rounded-xl">
             <Code className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold">{businessName || 'DÃ©veloppeur Web'}</h2>
+            <h2 className="text-2xl font-bold">{businessName || 'Développeur Web'}</h2>
             <p className="text-muted-foreground">Gestion des projets</p>
           </div>
         </div>
@@ -268,7 +268,7 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-primary-orange-500" />
+              <CheckCircle className="h-4 w-4 text-green-500" />
               <span className="text-sm text-muted-foreground">Revenus</span>
             </div>
             <p className="text-lg font-bold mt-1">{formatPrice(totalRevenue)}</p>
@@ -306,7 +306,7 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>CrÃ©er un projet</DialogTitle>
+                  <DialogTitle>Créer un projet</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
@@ -321,7 +321,7 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
                     <Label>Type de projet</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="SÃ©lectionner" />
+                        <SelectValue placeholder="Sélectionner" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="site_web">Site web</SelectItem>
@@ -352,7 +352,7 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
                     Annuler
                   </Button>
                   <Button onClick={handleAddProject}>
-                    CrÃ©er
+                    Créer
                   </Button>
                 </div>
               </DialogContent>
@@ -375,7 +375,7 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
                     <div className="text-right">
                       <p className="font-bold text-primary">{formatPrice(project.budget)}</p>
                       <p className="text-xs text-muted-foreground">
-                        PayÃ©: {formatPrice(project.paid)}
+                        Payé: {formatPrice(project.paid)}
                       </p>
                     </div>
                   </div>
@@ -413,12 +413,12 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  CrÃ©er un devis
+                  Créer un devis
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>CrÃ©er un devis</DialogTitle>
+                  <DialogTitle>Créer un devis</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
@@ -435,10 +435,10 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
                   </div>
                   <div className="space-y-2">
                     <Label>Description</Label>
-                    <Textarea placeholder="Description dÃ©taillÃ©e..." />
+                    <Textarea placeholder="Description détaillée..." />
                   </div>
                   <div className="space-y-2">
-                    <Label>Budget estimÃ© (GNF)</Label>
+                    <Label>Budget estimé (GNF)</Label>
                     <Input type="number" placeholder="0" />
                   </div>
                 </div>
@@ -469,7 +469,7 @@ export function DeveloperModule({ serviceId, businessName }: DeveloperModuleProp
                         {quote.description}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        ðŸ“§ {quote.clientEmail}
+                        📧 {quote.clientEmail}
                       </p>
                     </div>
                     <div className="text-right">

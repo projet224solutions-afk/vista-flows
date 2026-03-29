@@ -1,6 +1,6 @@
 /**
  * CARTE DE COURSE ACTIVE
- * Affiche les dÃ©tails de la course en cours avec actions
+ * Affiche les détails de la course en cours avec actions
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,24 +51,24 @@ export function ActiveRideCard({
           label: 'En route vers le client',
           color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
           nextAction: 'arriving',
-          nextLabel: 'Je suis arrivÃ©',
-          icon: 'ðŸš•'
+          nextLabel: 'Je suis arrivé',
+          icon: '🚕'
         };
       case 'arriving':
         return {
-          label: 'ArrivÃ© au point de rendez-vous',
+          label: 'Arrivé au point de rendez-vous',
           color: 'bg-blue-100 text-blue-800 border-blue-300',
           nextAction: 'picked_up',
-          nextLabel: 'Client Ã  bord',
-          icon: 'ðŸ™‹'
+          nextLabel: 'Client à bord',
+          icon: '🙋'
         };
       case 'picked_up':
         return {
-          label: 'Client Ã  bord',
-          color: 'bg-primary-orange-100 text-primary-orange-800 border-primary-orange-300',
+          label: 'Client à bord',
+          color: 'bg-green-100 text-green-800 border-green-300',
           nextAction: 'in_progress',
-          nextLabel: 'ArrivÃ© Ã  destination',
-          icon: 'ðŸš—'
+          nextLabel: 'Arrivé à destination',
+          icon: '🚗'
         };
       default:
         return {
@@ -76,7 +76,7 @@ export function ActiveRideCard({
           color: 'bg-purple-100 text-purple-800 border-purple-300',
           nextAction: 'in_progress',
           nextLabel: 'Terminer',
-          icon: 'ðŸ'
+          icon: '🏁'
         };
     }
   };
@@ -117,9 +117,9 @@ export function ActiveRideCard({
               onClick={() => onContactCustomer(ride.customer.phone)}
               size="sm"
               variant="outline"
-              className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 hover:bg-primary-orange-100 border-primary-orange-300"
+              className="bg-green-50 hover:bg-green-100 border-green-300"
             >
-              <Phone className="w-4 h-4 text-primary-orange-600" />
+              <Phone className="w-4 h-4 text-green-600" />
             </Button>
             <Button
               onClick={() => window.open(`sms:${ride.customer.phone}`)}
@@ -132,14 +132,14 @@ export function ActiveRideCard({
           </div>
         </div>
 
-        {/* ItinÃ©raire */}
+        {/* Itinéraire */}
         <div className="space-y-3">
-          <div className="flex items-start gap-3 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border-l-4 border-primary-orange-500">
-            <div className="p-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full mt-1">
+          <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+            <div className="p-2 bg-green-500 rounded-full mt-1">
               <MapPin className="w-4 h-4 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-semibold text-primary-orange-700 uppercase">DÃ©part</p>
+              <p className="text-xs font-semibold text-green-700 uppercase">Départ</p>
               <p className="text-sm font-medium text-gray-900 mt-1">{ride.pickup.address}</p>
             </div>
           </div>
@@ -156,12 +156,12 @@ export function ActiveRideCard({
         </div>
 
         {/* Informations de gain */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
           <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-primary-orange-600" />
-            <span className="text-sm text-gray-600">Gain estimÃ©</span>
+            <DollarSign className="w-5 h-5 text-green-600" />
+            <span className="text-sm text-gray-600">Gain estimé</span>
           </div>
-          <span className="text-2xl font-bold text-primary-orange-600">
+          <span className="text-2xl font-bold text-green-600">
             {(ride?.estimatedEarnings || 0).toLocaleString()} GNF
           </span>
         </div>
@@ -182,7 +182,7 @@ export function ActiveRideCard({
               onClick={() => onUpdateStatus(statusInfo.nextAction as any)}
               className="h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-600/40"
             >
-              âœ… {statusInfo.nextLabel}
+              ✅ {statusInfo.nextLabel}
             </Button>
           </div>
 
@@ -192,7 +192,7 @@ export function ActiveRideCard({
               variant="outline"
               className="w-full h-12 bg-red-50 hover:bg-red-100 border-red-300 text-red-700 font-semibold"
             >
-              âŒ Annuler la course
+              ❌ Annuler la course
             </Button>
           )}
         </div>

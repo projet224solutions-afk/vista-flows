@@ -1,6 +1,6 @@
 /**
  * ACTIONS DE LIVRAISON POUR LE LIVREUR
- * Boutons de mise Ã  jour du statut avec navigation GPS intÃ©grÃ©e
+ * Boutons de mise à jour du statut avec navigation GPS intégrée
  * Capture photo/signature et notification vendeur
  */
 
@@ -57,12 +57,12 @@ interface DriverDeliveryActionsProps {
 
 const statusFlow = [
   { from: 'assigned', to: 'driver_on_way_to_vendor', label: 'En route vers vendeur', icon: Navigation },
-  { from: 'driver_on_way_to_vendor', to: 'driver_arrived_vendor', label: 'ArrivÃ© chez vendeur', icon: Store },
-  { from: 'driver_arrived_vendor', to: 'picked_up', label: 'Colis rÃ©cupÃ©rÃ©', icon: Package },
+  { from: 'driver_on_way_to_vendor', to: 'driver_arrived_vendor', label: 'Arrivé chez vendeur', icon: Store },
+  { from: 'driver_arrived_vendor', to: 'picked_up', label: 'Colis récupéré', icon: Package },
   { from: 'picked_up', to: 'in_transit', label: 'En route vers client', icon: Navigation },
-  { from: 'in_transit', to: 'driver_5min_away', label: 'Ã€ 5 minutes', icon: MapPin },
-  { from: 'driver_5min_away', to: 'driver_arrived', label: 'ArrivÃ©', icon: MapPin },
-  { from: 'driver_arrived', to: 'delivered', label: 'Livraison terminÃ©e', icon: CheckCircle2 }
+  { from: 'in_transit', to: 'driver_5min_away', label: 'À 5 minutes', icon: MapPin },
+  { from: 'driver_5min_away', to: 'driver_arrived', label: 'Arrivé', icon: MapPin },
+  { from: 'driver_arrived', to: 'delivered', label: 'Livraison terminée', icon: CheckCircle2 }
 ];
 
 export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: DriverDeliveryActionsProps) {
@@ -84,7 +84,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
     return statusFlow.find(s => s.from === delivery.status);
   };
 
-  // Mettre Ã  jour le statut
+  // Mettre à jour le statut
   const updateStatus = async (newStatus: string) => {
     setUpdating(true);
     try {
@@ -98,22 +98,22 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
 
       if (error) throw error;
 
-      toast.success('Statut mis Ã  jour');
+      toast.success('Statut mis à jour');
       onStatusUpdate();
 
-      // Si livrÃ©, dÃ©clencher le callback
+      // Si livré, déclencher le callback
       if (newStatus === 'delivered') {
         onComplete();
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      toast.error('Erreur lors de la mise Ã  jour');
+      toast.error('Erreur lors de la mise à jour');
     } finally {
       setUpdating(false);
     }
   };
 
-  // VÃ©rifier le code de retrait
+  // Vérifier le code de retrait
   const verifyPickupCode = () => {
     const expectedCode = delivery.metadata?.pickup_code;
     if (pickupCode.toUpperCase() === expectedCode) {
@@ -127,10 +127,10 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
   // Ouvrir la navigation GPS
   const openNavigation = (lat: number, lng: number, label: string) => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(url, '_blank');
   };
 
-  // Capture photo depuis la camÃ©ra
+  // Capture photo depuis la caméra
   const handlePhotoCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -157,13 +157,13 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
           return;
         }
 
-        // RÃ©cupÃ©rer l'URL publique
+        // Récupérer l'URL publique
         const { data: urlData } = supabase.storage
           .from('documents')
           .getPublicUrl(fileName);
 
         setProofPhoto(urlData.publicUrl);
-        toast.success('ðŸ“· Photo capturÃ©e');
+        toast.success('📷 Photo capturée');
       };
       reader.readAsDataURL(file);
     } catch (error) {
@@ -253,7 +253,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
 
       setClientSignature(urlData.publicUrl);
       setCaptureMode(null);
-      toast.success('âœï¸ Signature enregistrÃ©e');
+      toast.success('✍️ Signature enregistrée');
     } catch (error) {
       console.error('Signature save error:', error);
       toast.error('Erreur lors de l\'enregistrement');
@@ -262,7 +262,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
     }
   };
 
-  // ComplÃ©ter la livraison avec preuve et notifier le vendeur
+  // Compléter la livraison avec preuve et notifier le vendeur
   const completeDelivery = async () => {
     if (!proofPhoto && !clientSignature) {
       toast.error('Veuillez capturer une photo ou signature comme preuve');
@@ -273,7 +273,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
     try {
       const confirmedAt = new Date().toISOString();
 
-      // RÃ©cupÃ©rer les infos du livreur
+      // Récupérer les infos du livreur
       const { data: { user } } = await supabase.auth.getUser();
       let driverName = 'Livreur';
       let driverPhone = '';
@@ -291,7 +291,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
         }
       }
 
-      // Mettre Ã  jour la livraison
+      // Mettre à jour la livraison
       const { error: updateError } = await supabase
         .from('deliveries')
         .update({
@@ -325,7 +325,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
         console.error('Failed to notify vendor:', notifyErr);
       }
 
-      toast.success('âœ… Livraison confirmÃ©e ! Vendeur notifiÃ©.');
+      toast.success('✅ Livraison confirmée ! Vendeur notifié.');
       setShowProofDialog(false);
       onComplete();
 
@@ -347,7 +347,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
 
   return (
     <div className="space-y-4">
-      {/* Input cachÃ© pour la capture photo */}
+      {/* Input caché pour la capture photo */}
       <input
         type="file"
         ref={fileInputRef}
@@ -368,7 +368,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
               </>
             ) : (
               <>
-                <User className="h-5 w-5 text-primary-orange-600" />
+                <User className="h-5 w-5 text-green-600" />
                 Destination client
               </>
             )}
@@ -438,7 +438,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
         </CardContent>
       </Card>
 
-      {/* DÃ©tails colis et paiement */}
+      {/* Détails colis et paiement */}
       <Card>
         <CardContent className="pt-4">
           <div className="flex items-center justify-between">
@@ -456,7 +456,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                   COD: {formatCurrency(delivery.delivery_fee)}
                 </>
               ) : (
-                'PrÃ©payÃ©'
+                'Prépayé'
               )}
             </Badge>
           </div>
@@ -465,14 +465,14 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
 
       {/* Action suivante */}
       {nextAction && (
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/20 dark:to-primary-orange-950/20">
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
           <CardContent className="pt-4">
-            {/* VÃ©rification code au retrait */}
+            {/* Vérification code au retrait */}
             {isAtVendor && delivery.metadata?.pickup_code ? (
               <Dialog open={showCodeDialog} onOpenChange={setShowCodeDialog}>
                 <DialogTrigger asChild>
                   <Button
-                    className="w-full bg-gradient-to-r from-orange-500 to-primary-orange-500"
+                    className="w-full bg-gradient-to-r from-orange-500 to-green-500"
                     size="lg"
                     disabled={updating}
                   >
@@ -507,7 +507,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
               <Dialog open={showProofDialog} onOpenChange={setShowProofDialog}>
                 <DialogTrigger asChild>
                   <Button
-                    className="w-full bg-gradient-to-r from-primary-blue-500 to-primary-orange-500"
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500"
                     size="lg"
                     disabled={updating}
                   >
@@ -532,8 +532,8 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                           <Loader2 className="h-6 w-6 animate-spin" />
                         ) : proofPhoto ? (
                           <div className="flex items-center gap-2">
-                            <ImageIcon className="h-5 w-5 text-primary-orange-600" />
-                            <span className="text-primary-orange-600">Photo capturÃ©e âœ“</span>
+                            <ImageIcon className="h-5 w-5 text-green-600" />
+                            <span className="text-green-600">Photo capturée ✓</span>
                           </div>
                         ) : (
                           <div className="flex flex-col items-center gap-1">
@@ -599,8 +599,8 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                         >
                           {clientSignature ? (
                             <div className="flex items-center gap-2">
-                              <PenTool className="h-5 w-5 text-primary-orange-600" />
-                              <span className="text-primary-orange-600">Signature enregistrÃ©e âœ“</span>
+                              <PenTool className="h-5 w-5 text-green-600" />
+                              <span className="text-green-600">Signature enregistrée ✓</span>
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
@@ -632,7 +632,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                     {/* Bouton confirmation finale */}
                     <Button 
                       onClick={completeDelivery} 
-                      className="w-full bg-primary-orange-600 hover:bg-primary-orange-700"
+                      className="w-full bg-green-600 hover:bg-green-700"
                       disabled={updating || (!proofPhoto && !clientSignature)}
                     >
                       {updating ? (
@@ -643,7 +643,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
                       Confirmer la livraison
                     </Button>
                     <p className="text-xs text-center text-muted-foreground">
-                      Une notification sera envoyÃ©e au vendeur avec les preuves
+                      Une notification sera envoyée au vendeur avec les preuves
                     </p>
                   </div>
                 </DialogContent>
@@ -651,7 +651,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
             ) : (
               // Action standard
               <Button
-                className="w-full bg-gradient-to-r from-orange-500 to-primary-orange-500"
+                className="w-full bg-gradient-to-r from-orange-500 to-green-500"
                 size="lg"
                 onClick={() => updateStatus(nextAction.to)}
                 disabled={updating}
@@ -676,7 +676,7 @@ export function DriverDeliveryActions({ delivery, onStatusUpdate, onComplete }: 
       {/* Bouton d'urgence */}
       <Button variant="outline" className="w-full border-red-300 text-red-600">
         <AlertTriangle className="h-4 w-4 mr-2" />
-        Signaler un problÃ¨me
+        Signaler un problème
       </Button>
     </div>
   );

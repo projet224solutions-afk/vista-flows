@@ -21,15 +21,6 @@ interface ProductBarcodeDisplayProps {
   size?: 'small' | 'medium' | 'large';
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 export function ProductBarcodeDisplay({
   barcode,
   productName,
@@ -127,14 +118,18 @@ export function ProductBarcodeDisplay({
         backgroundColor: '#ffffff',
         scale: 4
       });
-
-      const safeBarcode = escapeHtml(barcode);
-
-      const printHtml = `
+      
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error('Popup bloquée - autorisez les popups');
+        return;
+      }
+      
+      printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Code-barres - ${safeBarcode}</title>
+            <title>Code-barres - ${barcode}</title>
             <style>
               body { 
                 margin: 0; 
@@ -161,17 +156,8 @@ export function ProductBarcodeDisplay({
             </script>
           </body>
         </html>
-      `;
-
-      const blob = new Blob([printHtml], { type: 'text/html' });
-      const printUrl = URL.createObjectURL(blob);
-      const opened = window.open(printUrl, '_blank', 'noopener,noreferrer');
-      if (!opened) {
-        URL.revokeObjectURL(printUrl);
-        toast.error('Popup bloquée - autorisez les popups');
-        return;
-      }
-      setTimeout(() => URL.revokeObjectURL(printUrl), 10000);
+      `);
+      printWindow.document.close();
       
     } catch (error) {
       toast.error('Erreur lors de l\'impression');

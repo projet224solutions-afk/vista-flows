@@ -1,6 +1,6 @@
 /**
  * INTERFACE BUREAU SYNDICAT ULTRA-PROFESSIONNELLE
- * Toutes les fonctionnalitÃ©s intÃ©grÃ©es et opÃ©rationnelles
+ * Toutes les fonctionnalités intégrées et opérationnelles
  * 224Solutions - Syndicate Dashboard Ultra Pro
  */
 
@@ -83,12 +83,12 @@ export default function SyndicatDashboardUltraPro() {
     const navigate = useNavigate();
     useRoleRedirect();
 
-    // Ã‰tats principaux
+    // États principaux
     const [activeTab, setActiveTab] = useState('dashboard');
     const [loading, setLoading] = useState(false);
     const [showDownloadDialog, setShowDownloadDialog] = useState(false);
 
-    // DonnÃ©es du bureau
+    // Données du bureau
     const { members: syndicateMembers, drivers: taxiMotards, stats: syndicateStats, loading: dataLoading, error, refresh, bureauId, bureauName } = useSyndicatUltraProData();
 
     useEffect(() => {
@@ -96,12 +96,12 @@ export default function SyndicatDashboardUltraPro() {
     }, [dataLoading]);
 
     /**
-     * Charge les donnÃ©es du bureau syndicat
+     * Charge les données du bureau syndicat
      */
     const loadSyndicateData = async () => { await refresh(); };
 
     /**
-     * DÃ©connexion
+     * Déconnexion
      */
     const handleSignOut = async () => {
         await signOut();
@@ -120,24 +120,24 @@ export default function SyndicatDashboardUltraPro() {
     };
 
     /**
-     * Obtient la couleur du rÃ´le
+     * Obtient la couleur du rôle
      */
     const getRoleColor = (role: string) => {
         switch (role) {
             case 'president': return 'bg-purple-100 text-purple-800 border-purple-200';
             case 'secretary': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'member': return 'bg-primary-orange-100 text-primary-orange-800 border-primary-orange-200';
+            case 'member': return 'bg-green-100 text-green-800 border-green-200';
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
 
     /**
-     * Obtient le libellÃ© du rÃ´le
+     * Obtient le libellé du rôle
      */
     const getRoleLabel = (role: string) => {
         switch (role) {
-            case 'president': return 'PrÃ©sident';
-            case 'secretary': return 'SecrÃ©taire';
+            case 'president': return 'Président';
+            case 'secretary': return 'Secrétaire';
             case 'member': return 'Membre';
             default: return role;
         }
@@ -183,7 +183,7 @@ export default function SyndicatDashboardUltraPro() {
                                 className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg sm:rounded-xl text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                             >
                                 <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline">TÃ©lÃ©charger</span> App
+                                <span className="hidden sm:inline">Télécharger</span> App
                             </Button>
 
                             <Button
@@ -193,7 +193,7 @@ export default function SyndicatDashboardUltraPro() {
                                 className="border-red-200 text-red-600 hover:bg-red-50 rounded-lg sm:rounded-xl text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                             >
                                 <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline">DÃ©connexion</span>
+                                <span className="hidden sm:inline">Déconnexion</span>
                             </Button>
                         </div>
                     </div>
@@ -202,7 +202,7 @@ export default function SyndicatDashboardUltraPro() {
 
             {/* Contenu principal - Mobile Optimized */}
             <div className="max-w-7xl mx-auto p-3 sm:p-6 pb-20 sm:pb-6">
-                {/* Statistiques en temps rÃ©el - 2x2 grid on mobile */}
+                {/* Statistiques en temps réel - 2x2 grid on mobile */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-8">
                     <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
                         <CardContent className="p-3 sm:p-6">
@@ -217,15 +217,15 @@ export default function SyndicatDashboardUltraPro() {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
                         <CardContent className="p-3 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-primary-orange-100 text-xs sm:text-sm font-medium">Motards</p>
+                                    <p className="text-green-100 text-xs sm:text-sm font-medium">Motards</p>
                                     <p className="text-xl sm:text-3xl font-bold">{syndicateStats.active_taxi_motards}</p>
-                                    <p className="text-primary-orange-100 text-[10px] sm:text-xs">/{syndicateStats.total_taxi_motards}</p>
+                                    <p className="text-green-100 text-[10px] sm:text-xs">/{syndicateStats.total_taxi_motards}</p>
                                 </div>
-                                <Bike className="w-8 h-8 sm:w-12 sm:h-12 text-primary-orange-200" />
+                                <Bike className="w-8 h-8 sm:w-12 sm:h-12 text-green-200" />
                             </div>
                         </CardContent>
                     </Card>
@@ -333,7 +333,7 @@ export default function SyndicatDashboardUltraPro() {
                             <Card className="border-0 shadow-xl rounded-2xl border-red-200">
                                 <CardContent className="p-12 text-center">
                                     <Siren className="w-16 h-16 mx-auto mb-4 text-red-400" />
-                                    <p className="text-gray-600">Chargement du systÃ¨me SOS...</p>
+                                    <p className="text-gray-600">Chargement du système SOS...</p>
                                 </CardContent>
                             </Card>
                         )}
@@ -342,33 +342,33 @@ export default function SyndicatDashboardUltraPro() {
                     {/* Onglet Dashboard */}
                     <TabsContent value="dashboard" className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* ActivitÃ© rÃ©cente */}
+                            {/* Activité récente */}
                             <Card className="border-0 shadow-xl rounded-2xl">
                                 <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-2xl">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Activity className="w-5 h-5" />
-                                        ActivitÃ© RÃ©cente
+                                        Activité Récente
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6">
                                     {syndicateMembers.length === 0 && taxiMotards.length === 0 ? (
                                         <div className="text-center py-8 text-gray-500">
                                             <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                            <p>Aucune activitÃ© rÃ©cente</p>
-                                            <p className="text-sm">Les donnÃ©es apparaÃ®tront ici quand le bureau sera actif</p>
+                                            <p>Aucune activité récente</p>
+                                            <p className="text-sm">Les données apparaîtront ici quand le bureau sera actif</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
                                             {syndicateMembers.slice(0, 2).map((m) => (
-                                                <div key={m.id} className="flex items-center justify-between p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-xl border border-primary-orange-200">
+                                                <div key={m.id} className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
                                                     <div className="flex items-center gap-3">
-                                                        <UserPlus className="w-8 h-8 text-primary-orange-600" />
+                                                        <UserPlus className="w-8 h-8 text-green-600" />
                                                         <div>
                                                             <p className="font-semibold text-gray-800">{m.name}</p>
                                                             <p className="text-sm text-gray-600">{getRoleLabel(m.role)} - {m.badge_number || 'N/A'}</p>
                                                         </div>
                                                     </div>
-                                                    <Badge className={m.status === 'active' ? 'bg-primary-orange-100 text-primary-orange-700' : 'bg-gray-100 text-gray-600'}>
+                                                    <Badge className={m.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
                                                         {m.status === 'active' ? 'Actif' : 'Inactif'}
                                                     </Badge>
                                                 </div>
@@ -392,7 +392,7 @@ export default function SyndicatDashboardUltraPro() {
 
                             {/* Actions rapides */}
                             <Card className="border-0 shadow-xl rounded-2xl">
-                                <CardHeader className="bg-gradient-to-r from-primary-blue-50 to-blue-50 rounded-t-2xl">
+                                <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 rounded-t-2xl">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Star className="w-5 h-5" />
                                         Actions Rapides
@@ -402,10 +402,10 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setActiveTab('taxi-motards')}
                                         variant="outline"
-                                        className="w-full rounded-xl border-primary-orange-200 text-primary-orange-600 hover:bg-gradient-to-br from-primary-blue-50 to-primary-orange-50"
+                                        className="w-full rounded-xl border-green-200 text-green-600 hover:bg-green-50"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
-                                        GÃ©rer les Taxi-Motards
+                                        Gérer les Taxi-Motards
                                     </Button>
 
                                     <Button
@@ -414,7 +414,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
-                                        GÃ©rer les Membres Bureau
+                                        Gérer les Membres Bureau
                                     </Button>
 
                                     <Button
@@ -423,7 +423,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50"
                                     >
                                         <Wallet className="w-4 h-4 mr-2" />
-                                        GÃ©rer la TrÃ©sorerie
+                                        Gérer la Trésorerie
                                     </Button>
 
                                     <Button
@@ -432,7 +432,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-orange-200 text-orange-600 hover:bg-orange-50"
                                     >
                                         <Settings className="w-4 h-4 mr-2" />
-                                        ParamÃ¨tres Bureau
+                                        Paramètres Bureau
                                     </Button>
                                 </CardContent>
                             </Card>
@@ -459,7 +459,7 @@ export default function SyndicatDashboardUltraPro() {
                     {/* Onglet Taxi-Motards */}
                     <TabsContent value="taxi-motards" className="space-y-6">
                         <Card className="border-0 shadow-xl rounded-2xl">
-                            <CardHeader className="bg-gradient-to-r from-primary-blue-50 to-blue-50 rounded-t-2xl">
+                            <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 rounded-t-2xl">
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Bike className="w-5 h-5" />
@@ -468,7 +468,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setActiveTab('members')}
                                         size="sm"
-                                        className="bg-primary-blue-600 hover:bg-primary-blue-700 shadow-lg shadow-primary-orange-600/40"
+                                        className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
                                     >
                                         <UserPlus className="w-4 h-4 mr-2" />
                                         Ajouter
@@ -481,12 +481,12 @@ export default function SyndicatDashboardUltraPro() {
                                         <Card key={taxiMotard.id} className="border border-gray-200 hover:shadow-lg transition-all duration-300">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center gap-4 mb-4">
-                                                    <div className="w-12 h-12 bg-gradient-to-br from-primary-blue-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
                                                         {taxiMotard.name.charAt(0)}
                                                     </div>
                                                     <div className="flex-1">
                                                         <h3 className="font-bold text-gray-800">{taxiMotard.name}</h3>
-                                                        <Badge className="bg-primary-orange-100 text-primary-orange-800 border-primary-orange-200 text-xs">
+                                                        <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
                                                             {taxiMotard.badge_number}
                                                         </Badge>
                                                     </div>
@@ -515,7 +515,7 @@ export default function SyndicatDashboardUltraPro() {
                                                     )}
                                                     <div className="flex items-center gap-2">
                                                         <Wallet className="w-4 h-4 text-gray-400" />
-                                                        <span className="text-primary-orange-600 font-semibold">
+                                                        <span className="text-green-600 font-semibold">
                                                             {taxiMotard.wallet_balance.toLocaleString()} FCFA
                                                         </span>
                                                     </div>
@@ -528,7 +528,7 @@ export default function SyndicatDashboardUltraPro() {
                                                     </Button>
                                                     <Button size="sm" variant="outline" className="flex-1 rounded-lg">
                                                         <Eye className="w-3 h-3 mr-1" />
-                                                        DÃ©tails
+                                                        Détails
                                                     </Button>
                                                 </div>
                                             </CardContent>
@@ -549,15 +549,15 @@ export default function SyndicatDashboardUltraPro() {
                         )}
                     </TabsContent>
 
-                    {/* Onglet Gestion - MAINTENANT OPÃ‰RATIONNEL */}
+                    {/* Onglet Gestion - MAINTENANT OPÉRATIONNEL */}
                     <TabsContent value="gestion" className="space-y-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* ParamÃ¨tres du Bureau */}
+                            {/* Paramètres du Bureau */}
                             <Card className="border-0 shadow-xl rounded-2xl">
                                 <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-2xl">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Settings className="w-5 h-5" />
-                                        ParamÃ¨tres du Bureau
+                                        Paramètres du Bureau
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-4">
@@ -567,7 +567,7 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50"
                                     >
                                         <Shield className="w-4 h-4 mr-2" />
-                                        GÃ©rer les Membres & Permissions
+                                        Gérer les Membres & Permissions
                                     </Button>
 
                                     <Button
@@ -585,23 +585,23 @@ export default function SyndicatDashboardUltraPro() {
                                         className="w-full rounded-xl border-blue-200 text-blue-600 hover:bg-blue-50"
                                     >
                                         <Bell className="w-4 h-4 mr-2" />
-                                        ParamÃ¨tres Notifications
+                                        Paramètres Notifications
                                     </Button>
 
                                     <Button
                                         onClick={() => setShowDownloadDialog(true)}
                                         variant="outline"
-                                        className="w-full rounded-xl border-primary-orange-200 text-primary-orange-600 hover:bg-gradient-to-br from-primary-blue-50 to-primary-orange-50"
+                                        className="w-full rounded-xl border-green-200 text-green-600 hover:bg-green-50"
                                     >
                                         <Download className="w-4 h-4 mr-2" />
-                                        TÃ©lÃ©charger Applications
+                                        Télécharger Applications
                                     </Button>
                                 </CardContent>
                             </Card>
 
                             {/* Outils de Gestion */}
                             <Card className="border-0 shadow-xl rounded-2xl">
-                                <CardHeader className="bg-gradient-to-r from-blue-50 to-primary-orange-50 rounded-t-2xl">
+                                <CardHeader className="bg-gradient-to-r from-blue-50 to-teal-50 rounded-t-2xl">
                                     <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                         <Activity className="w-5 h-5" />
                                         Outils de Gestion
@@ -611,12 +611,12 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => {
                                             loadSyndicateData();
-                                            toast.success('DonnÃ©es synchronisÃ©es !');
+                                            toast.success('Données synchronisées !');
                                         }}
                                         className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-600/40"
                                     >
                                         <RefreshCw className="w-4 h-4 mr-2" />
-                                        Synchroniser les DonnÃ©es
+                                        Synchroniser les Données
                                     </Button>
 
                                     <Button
@@ -631,7 +631,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => setActiveTab('tickets')}
                                         variant="outline"
-                                        className="w-full rounded-xl border-primary-orange-200 text-primary-orange-600 hover:bg-primary-orange-50"
+                                        className="w-full rounded-xl border-teal-200 text-teal-600 hover:bg-teal-50"
                                     >
                                         <Ticket className="w-4 h-4 mr-2" />
                                         Tickets de Transport
@@ -655,21 +655,21 @@ export default function SyndicatDashboardUltraPro() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card className="border-0 shadow-xl rounded-2xl">
                                 <CardHeader>
-                                    <CardTitle className="text-xl font-bold text-gray-800">Statistiques GÃ©nÃ©rales</CardTitle>
+                                    <CardTitle className="text-xl font-bold text-gray-800">Statistiques Générales</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                                            <span className="font-medium text-gray-700">Taux d'activitÃ© membres</span>
+                                            <span className="font-medium text-gray-700">Taux d'activité membres</span>
                                             <span className="font-bold text-blue-600">
                                                 {syndicateStats.total_members > 0 
                                                     ? `${Math.round((syndicateStats.active_members / syndicateStats.total_members) * 100)}%` 
                                                     : '0%'}
                                             </span>
                                         </div>
-                                        <div className="flex justify-between items-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-xl">
+                                        <div className="flex justify-between items-center p-3 bg-green-50 rounded-xl">
                                             <span className="font-medium text-gray-700">Revenus mensuels</span>
-                                            <span className="font-bold text-primary-orange-600">{syndicateStats.monthly_revenue.toLocaleString()} FCFA</span>
+                                            <span className="font-bold text-green-600">{syndicateStats.monthly_revenue.toLocaleString()} FCFA</span>
                                         </div>
                                         <div className="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
                                             <span className="font-medium text-gray-700">Motards actifs</span>
@@ -692,8 +692,8 @@ export default function SyndicatDashboardUltraPro() {
                                 <CardContent>
                                     <div className="text-center py-8">
                                         <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                                        <p className="text-gray-600">Graphiques dÃ©taillÃ©s disponibles</p>
-                                        <p className="text-sm text-gray-500">Analyse des performances en temps rÃ©el</p>
+                                        <p className="text-gray-600">Graphiques détaillés disponibles</p>
+                                        <p className="text-sm text-gray-500">Analyse des performances en temps réel</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -719,12 +719,12 @@ export default function SyndicatDashboardUltraPro() {
                 </Tabs>
             </div>
 
-            {/* Dialog de tÃ©lÃ©chargement */}
+            {/* Dialog de téléchargement */}
             <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
                 <DialogContent className="max-w-6xl rounded-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                            TÃ©lÃ©charger 224Solutions
+                            Télécharger 224Solutions
                         </DialogTitle>
                     </DialogHeader>
                     <AutoDownloadDetector />

@@ -37,7 +37,7 @@ import { AVAILABLE_PERMISSIONS } from '@/hooks/useAgentPermissions';
 import { AgentPermissionsDisplay } from '@/components/agent/AgentPermissionsDisplay';
 import { AgentPermissionsSelector } from '@/components/agent/AgentPermissionsSelector';
 
-// SchÃ©ma de validation pour le sous-agent
+// Schéma de validation pour le sous-agent
 const subAgentSchema = z.object({
   name: z.string().trim().min(2).max(100),
   email: z.string().trim().email().max(255),
@@ -71,7 +71,7 @@ interface SubAgent extends Agent {
 const SECTION_TITLES: Record<string, string> = {
   'overview': 'Tableau de bord',
   'wallet': 'Gestion du Wallet',
-  'create-user': 'CrÃ©er un Utilisateur',
+  'create-user': 'Créer un Utilisateur',
   'sub-agents': 'Gestion des Sous-Agents',
   'users': 'Gestion des Utilisateurs',
   'products': 'Gestion des Produits',
@@ -116,14 +116,14 @@ export default function AgentDashboardPublic() {
     }
   });
 
-  // Hook pour les permissions unifiÃ©es (nouvelle table + legacy)
+  // Hook pour les permissions unifiées (nouvelle table + legacy)
   const { permissions: unifiedPermissions, hasPermission, loading: permissionsLoading } = useAgentPermissionsUnified(agent?.id);
 
   useEffect(() => {
     if (token) {
       loadAgentData();
     } else {
-      toast.error('Token d\'accÃ¨s manquant');
+      toast.error('Token d\'accès manquant');
       navigate('/');
     }
   }, [token]);
@@ -150,7 +150,7 @@ export default function AgentDashboardPublic() {
         },
         (payload) => {
           setAgent(payload.new as Agent);
-          toast.success('DonnÃ©es mises Ã  jour');
+          toast.success('Données mises à jour');
         }
       )
       .subscribe();
@@ -170,7 +170,7 @@ export default function AgentDashboardPublic() {
 
       if (agentError) throw agentError;
       if (!agentData) {
-        toast.error('Agent non trouvÃ©');
+        toast.error('Agent non trouvé');
         navigate('/');
         return;
       }
@@ -266,7 +266,7 @@ export default function AgentDashboardPublic() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success('Sous-agent crÃ©Ã© avec succÃ¨s');
+      toast.success('Sous-agent créé avec succès');
       setIsSubAgentDialogOpen(false);
       setSubAgentFormData({
         name: '', email: '', phone: '', agent_type: '', password: '',
@@ -276,8 +276,8 @@ export default function AgentDashboardPublic() {
       await loadAgentData();
       await loadSubAgents();
     } catch (error: any) {
-      console.error('Erreur crÃ©ation sous-agent:', error);
-      toast.error(error.message || 'Erreur lors de la crÃ©ation');
+      console.error('Erreur création sous-agent:', error);
+      toast.error(error.message || 'Erreur lors de la création');
     } finally {
       setIsSubmitting(false);
     }
@@ -293,7 +293,7 @@ export default function AgentDashboardPublic() {
     }
 
     if (passwordData.newPassword.length < 8) {
-      toast.error('Minimum 8 caractÃ¨res');
+      toast.error('Minimum 8 caractères');
       return;
     }
 
@@ -309,7 +309,7 @@ export default function AgentDashboardPublic() {
 
       if (error) throw error;
       if (data?.success) {
-        toast.success('Mot de passe modifiÃ©');
+        toast.success('Mot de passe modifié');
         setIsPasswordDialogOpen(false);
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
@@ -325,7 +325,7 @@ export default function AgentDashboardPublic() {
   const handleLogout = () => {
     sessionStorage.clear();
     localStorage.removeItem('agent_token');
-    toast.success('DÃ©connexion rÃ©ussie');
+    toast.success('Déconnexion réussie');
     navigate('/login');
   };
 
@@ -338,7 +338,7 @@ export default function AgentDashboardPublic() {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/agent/${subAgent.access_token}`);
       setCopiedId(subAgent.id);
-      toast.success('Lien copiÃ©!');
+      toast.success('Lien copié!');
       setTimeout(() => setCopiedId(null), 3000);
     } catch (error) {
       toast.error('Erreur de copie');
@@ -362,8 +362,8 @@ export default function AgentDashboardPublic() {
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">AccÃ¨s non autorisÃ©</h2>
-            <p className="text-muted-foreground">Token invalide ou expirÃ©</p>
+            <h2 className="text-xl font-bold mb-2">Accès non autorisé</h2>
+            <p className="text-muted-foreground">Token invalide ou expiré</p>
           </CardContent>
         </Card>
       </div>
@@ -421,7 +421,7 @@ export default function AgentDashboardPublic() {
               </CardContent>
             </Card>
 
-            {/* Permissions - nouveau composant avec catÃ©gories */}
+            {/* Permissions - nouveau composant avec catégories */}
             <AgentPermissionsDisplay 
               permissions={unifiedPermissions} 
               loading={permissionsLoading} 
@@ -448,8 +448,8 @@ export default function AgentDashboardPublic() {
       case 'create-user':
         return (
           <Card className="border-0 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 text-white rounded-t-lg">
-              <CardTitle>CrÃ©er un Nouvel Utilisateur</CardTitle>
+            <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+              <CardTitle>Créer un Nouvel Utilisateur</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <CreateUserForm 
@@ -476,7 +476,7 @@ export default function AgentDashboardPublic() {
                 </DialogTrigger>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>CrÃ©er un Sous-Agent</DialogTitle>
+                    <DialogTitle>Créer un Sous-Agent</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleCreateSubAgent} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -502,7 +502,7 @@ export default function AgentDashboardPublic() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>TÃ©lÃ©phone *</Label>
+                        <Label>Téléphone *</Label>
                         <Input
                           required
                           value={subAgentFormData.phone}
@@ -528,7 +528,7 @@ export default function AgentDashboardPublic() {
                           minLength={6}
                           value={subAgentFormData.password}
                           onChange={(e) => setSubAgentFormData({ ...subAgentFormData, password: e.target.value })}
-                          placeholder="Min. 6 caractÃ¨res"
+                          placeholder="Min. 6 caractères"
                         />
                       </div>
                       <div className="space-y-2">
@@ -547,12 +547,12 @@ export default function AgentDashboardPublic() {
                       <Label className="text-base font-semibold mb-3 block">Permissions</Label>
                       <div className="grid grid-cols-2 gap-3">
                         {[
-                          { key: 'create_users', label: 'CrÃ©er utilisateurs' },
+                          { key: 'create_users', label: 'Créer utilisateurs' },
                           { key: 'view_reports', label: 'Voir rapports' },
-                          { key: 'manage_commissions', label: 'GÃ©rer commissions' },
-                          { key: 'manage_users', label: 'GÃ©rer utilisateurs' },
-                          { key: 'manage_products', label: 'GÃ©rer produits' },
-                          { key: 'create_sub_agents', label: 'CrÃ©er sous-agents' }
+                          { key: 'manage_commissions', label: 'Gérer commissions' },
+                          { key: 'manage_users', label: 'Gérer utilisateurs' },
+                          { key: 'manage_products', label: 'Gérer produits' },
+                          { key: 'create_sub_agents', label: 'Créer sous-agents' }
                         ].map(({ key, label }) => {
                           const permKey = key as keyof typeof subAgentFormData.permissions;
                           return (
@@ -574,7 +574,7 @@ export default function AgentDashboardPublic() {
                                 id={`perm-${key}`}
                                 checked={subAgentFormData.permissions[permKey]}
                                 onCheckedChange={(checked) => {
-                                  // EmpÃªcher la propagation et mettre Ã  jour l'Ã©tat
+                                  // Empêcher la propagation et mettre à jour l'état
                                   if (typeof checked === 'boolean') {
                                     setSubAgentFormData(prev => ({
                                       ...prev,
@@ -598,7 +598,7 @@ export default function AgentDashboardPublic() {
                         Annuler
                       </Button>
                       <Button type="submit" disabled={isSubmitting} className="flex-1">
-                        {isSubmitting ? 'CrÃ©ation...' : 'CrÃ©er'}
+                        {isSubmitting ? 'Création...' : 'Créer'}
                       </Button>
                     </div>
                   </form>
@@ -614,10 +614,10 @@ export default function AgentDashboardPublic() {
               <Card className="border-0 shadow-lg">
                 <CardContent className="py-16 text-center">
                   <UserCog className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">Aucun sous-agent crÃ©Ã©</p>
+                  <p className="text-muted-foreground mb-4">Aucun sous-agent créé</p>
                   <Button onClick={() => setIsSubAgentDialogOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
-                    CrÃ©er votre premier sous-agent
+                    Créer votre premier sous-agent
                   </Button>
                 </CardContent>
               </Card>
@@ -650,7 +650,7 @@ export default function AgentDashboardPublic() {
                             onClick={() => copySubAgentLink(subAgent)}
                           >
                             {copiedId === subAgent.id ? (
-                              <><Check className="w-4 h-4 mr-1" /> CopiÃ©!</>
+                              <><Check className="w-4 h-4 mr-1" /> Copié!</>
                             ) : (
                               <><Copy className="w-4 h-4 mr-1" /> Lien</>
                             )}
@@ -681,7 +681,7 @@ export default function AgentDashboardPublic() {
         return hasPermission('manage_products') || agent.permissions.includes('manage_products') ? (
           <ManageProductsSection agentId={agent.id} />
         ) : (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordÃ©e</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
         );
 
       case 'reports':
@@ -695,7 +695,7 @@ export default function AgentDashboardPublic() {
             }}
           />
         ) : (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordÃ©e</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
         );
 
       case 'commissions':
@@ -706,7 +706,7 @@ export default function AgentDashboardPublic() {
             commissionRate={agent.commission_rate}
           />
         ) : (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordÃ©e</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
         );
 
       case 'affiliate':

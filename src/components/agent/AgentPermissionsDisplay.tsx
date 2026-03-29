@@ -1,6 +1,6 @@
 /**
  * Composant d'affichage des permissions d'un agent
- * Affiche TOUTES les permissions groupÃ©es par catÃ©gories avec Ã©tat actif/inactif
+ * Affiche TOUTES les permissions groupées par catégories avec état actif/inactif
  */
 
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +37,7 @@ export function AgentPermissionsDisplay({
   permissions, 
   loading = false, 
   compact = false,
-  showAllPermissions = true, // Par dÃ©faut, affiche toutes les permissions
+  showAllPermissions = true, // Par défaut, affiche toutes les permissions
   className 
 }: AgentPermissionsDisplayProps) {
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
@@ -49,7 +49,7 @@ export function AgentPermissionsDisplay({
       <Card className={cn("border-0 shadow-lg", className)}>
         <CardContent className="py-8 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-sm text-muted-foreground">Chargement des permissionsâ€¦</p>
+          <p className="text-sm text-muted-foreground">Chargement des permissions…</p>
         </CardContent>
       </Card>
     );
@@ -105,7 +105,7 @@ export function AgentPermissionsDisplay({
     );
   }
 
-  // Mode complet: affiche toutes les permissions par catÃ©gorie
+  // Mode complet: affiche toutes les permissions par catégorie
   return (
     <Card className={cn("border-0 shadow-lg", className)}>
       <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
@@ -148,7 +148,7 @@ export function AgentPermissionsDisplay({
                         variant="outline" 
                         className={cn(
                           "text-xs",
-                          activeCount > 0 ? "bg-primary-orange-100 text-primary-orange-700 border-primary-orange-300" : "bg-slate-100 text-slate-500"
+                          activeCount > 0 ? "bg-green-100 text-green-700 border-green-300" : "bg-slate-100 text-slate-500"
                         )}
                       >
                         {activeCount} / {category.permissions.length}
@@ -173,12 +173,12 @@ export function AgentPermissionsDisplay({
                           className={cn(
                             "flex items-center gap-2 p-2 rounded-md text-sm transition-all",
                             isActive 
-                              ? "bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-800 border border-primary-orange-200" 
+                              ? "bg-green-50 text-green-800 border border-green-200" 
                               : "bg-slate-50 text-slate-400 border border-slate-100"
                           )}
                         >
                           {isActive ? (
-                            <Check className="w-4 h-4 text-primary-orange-600 flex-shrink-0" />
+                            <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
                           ) : (
                             <X className="w-4 h-4 text-slate-300 flex-shrink-0" />
                           )}

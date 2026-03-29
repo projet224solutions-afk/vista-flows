@@ -1,6 +1,6 @@
 /**
  * Carte d'abonnement pour les services professionnels
- * Affiche le plan actuel et permet la mise Ã  niveau
+ * Affiche le plan actuel et permet la mise à niveau
  */
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,14 +44,14 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
 
   const handleSubscribe = async (planId: string) => {
     if (!user) {
-      toast.error('Vous devez Ãªtre connectÃ©');
+      toast.error('Vous devez être connecté');
       return;
     }
 
     try {
       setSubscribing(true);
       await subscribe(planId, selectedBilling);
-      toast.success('Abonnement activÃ© avec succÃ¨s !');
+      toast.success('Abonnement activé avec succès !');
       setShowPlans(false);
       await refresh();
     } catch (error: any) {
@@ -92,7 +92,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             {isExpiringSoon && (
               <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">
                 <AlertTriangle className="w-3 h-3 mr-1" />
-                Expire bientÃ´t
+                Expire bientôt
               </Badge>
             )}
             {isActive && !isFree && daysRemaining > 0 && (
@@ -113,7 +113,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
                 Upgrade
               </>
             ) : (
-              'GÃ©rer'
+              'Gérer'
             )}
           </Button>
         </div>
@@ -133,7 +133,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
     );
   }
 
-  // Version complÃ¨te (carte)
+  // Version complète (carte)
   return (
     <>
       <Card className={cn(
@@ -160,9 +160,9 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             <span className="text-muted-foreground">Statut</span>
             <span className={cn(
               "font-medium",
-              isActive || isFree ? "text-primary-blue-600" : "text-destructive"
+              isActive || isFree ? "text-emerald-600" : "text-destructive"
             )}>
-              {isFree ? 'âœ… Actif (Gratuit)' : isActive ? 'âœ… Actif' : isExpired ? 'âŒ ExpirÃ©' : 'â³ En attente'}
+              {isFree ? '✅ Actif (Gratuit)' : isActive ? '✅ Actif' : isExpired ? '❌ Expiré' : '⏳ En attente'}
             </span>
           </div>
 
@@ -187,26 +187,26 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             <p className="text-xs font-medium text-muted-foreground">Limites du plan :</p>
             <div className="grid grid-cols-2 gap-1.5 text-xs">
               <div className="flex items-center gap-1">
-                <Check className="w-3 h-3 text-primary-blue-500" />
-                <span>RÃ©servations: {subscription?.max_bookings ?? '10'}/mois</span>
+                <Check className="w-3 h-3 text-emerald-500" />
+                <span>Réservations: {subscription?.max_bookings ?? '10'}/mois</span>
               </div>
               <div className="flex items-center gap-1">
-                <Check className="w-3 h-3 text-primary-blue-500" />
+                <Check className="w-3 h-3 text-emerald-500" />
                 <span>Produits: {subscription?.max_products ?? '5'}</span>
               </div>
               <div className="flex items-center gap-1">
                 {canAccessFeature('analytics') ? (
-                  <Check className="w-3 h-3 text-primary-blue-500" />
+                  <Check className="w-3 h-3 text-emerald-500" />
                 ) : (
-                  <span className="w-3 h-3 text-muted-foreground">âœ—</span>
+                  <span className="w-3 h-3 text-muted-foreground">✗</span>
                 )}
                 <span>Analytics</span>
               </div>
               <div className="flex items-center gap-1">
                 {canAccessFeature('priority_listing') ? (
-                  <Check className="w-3 h-3 text-primary-blue-500" />
+                  <Check className="w-3 h-3 text-emerald-500" />
                 ) : (
-                  <span className="w-3 h-3 text-muted-foreground">âœ—</span>
+                  <span className="w-3 h-3 text-muted-foreground">✗</span>
                 )}
                 <span>Listing prioritaire</span>
               </div>
@@ -230,10 +230,10 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             {isFree ? (
               <>
                 <Crown className="w-4 h-4 mr-2" />
-                Mettre Ã  niveau
+                Mettre à niveau
               </>
             ) : (
-              'GÃ©rer mon abonnement'
+              'Gérer mon abonnement'
             )}
           </Button>
         </CardContent>
@@ -326,7 +326,7 @@ function PlansDialog({
                   </div>
                 )}
                 {isCurrent && (
-                  <div className="absolute top-0 left-0 bg-primary-blue-500 text-white text-[10px] px-2 py-0.5 rounded-br-lg font-medium">
+                  <div className="absolute top-0 left-0 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-br-lg font-medium">
                     Actuel
                   </div>
                 )}
@@ -352,16 +352,16 @@ function PlansDialog({
                   <ul className="space-y-1">
                     {(plan.features || []).slice(0, 5).map((feature: string, i: number) => (
                       <li key={i} className="flex items-center gap-1.5 text-xs">
-                        <Check className="w-3 h-3 text-primary-blue-500 flex-shrink-0" />
+                        <Check className="w-3 h-3 text-emerald-500 flex-shrink-0" />
                         <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
 
                   <div className="text-[10px] text-muted-foreground space-y-0.5">
-                    <div>ðŸ“… RÃ©servations: {plan.max_bookings_per_month ?? 'âˆž'}/mois</div>
-                    <div>ðŸ“¦ Produits: {plan.max_products ?? 'âˆž'}</div>
-                    <div>ðŸ‘¥ Staff: {plan.max_staff ?? 'âˆž'}</div>
+                    <div>📅 Réservations: {plan.max_bookings_per_month ?? '∞'}/mois</div>
+                    <div>📦 Produits: {plan.max_products ?? '∞'}</div>
+                    <div>👥 Staff: {plan.max_staff ?? '∞'}</div>
                   </div>
 
                   <Button

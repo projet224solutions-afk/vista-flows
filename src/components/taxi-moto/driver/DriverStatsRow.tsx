@@ -1,6 +1,6 @@
 /**
  * STATISTIQUES CONDUCTEUR - ULTRA PROFESSIONNEL
- * Cards Ã©lÃ©gantes optimisÃ©es pour mobile
+ * Cards élégantes optimisées pour mobile
  */
 
 import { Wallet, Car, Star, Clock } from "lucide-react";
@@ -27,8 +27,8 @@ export function DriverStatsRow({
       value: `${(todayEarnings || 0).toLocaleString()}`,
       suffix: "GNF",
       icon: Wallet,
-      iconBg: "bg-primary-blue-500/20",
-      iconColor: "text-primary-blue-400",
+      iconBg: "bg-emerald-500/20",
+      iconColor: "text-emerald-400",
       clickable: true
     },
     {
@@ -42,7 +42,7 @@ export function DriverStatsRow({
     },
     {
       id: 'rating',
-      value: rating > 0 ? rating.toFixed(1) : 'â€”',
+      value: rating > 0 ? rating.toFixed(1) : '—',
       suffix: "NOTE",
       icon: Star,
       iconBg: "bg-amber-500/20",
@@ -90,7 +90,7 @@ export function DriverStatsRow({
                 <stat.icon className={cn("w-3.5 h-3.5", stat.iconColor)} />
               </div>
               
-              {/* Value - optimisÃ© */}
+              {/* Value - optimisé */}
               <div className="flex flex-col w-full">
                 <span className="text-white font-bold text-xs leading-tight truncate">
                   {stat.value}

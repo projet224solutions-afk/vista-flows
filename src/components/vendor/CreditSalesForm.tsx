@@ -49,14 +49,14 @@ interface CreditFormData {
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   partial: 'bg-blue-100 text-blue-800',
-  paid: 'bg-primary-orange-100 text-primary-orange-800',
+  paid: 'bg-green-100 text-green-800',
   overdue: 'bg-red-100 text-red-800'
 };
 
 const statusLabels: Record<string, string> = {
   pending: 'En attente',
-  partial: 'Partiellement payÃ©',
-  paid: 'PayÃ©',
+  partial: 'Partiellement payé',
+  paid: 'Payé',
   overdue: 'En retard'
 };
 
@@ -78,16 +78,16 @@ export default function CreditSalesForm() {
     notes: ''
   });
 
-  // Charger les ventes Ã  crÃ©dit - table n'existe pas encore
+  // Charger les ventes à crédit - table n'existe pas encore
   const loadCreditSales = async () => {
     if (!vendorId) return;
     
     setLoading(true);
     try {
-      // Table vendor_credit_sales n'existe pas encore - utiliser des donnÃ©es mockÃ©es pour l'instant
+      // Table vendor_credit_sales n'existe pas encore - utiliser des données mockées pour l'instant
       setCreditSales([]);
     } catch (error) {
-      console.error('Erreur lors du chargement des ventes Ã  crÃ©dit:', error);
+      console.error('Erreur lors du chargement des ventes à crédit:', error);
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ export default function CreditSalesForm() {
     });
   };
 
-  // Mettre Ã  jour un article
+  // Mettre à jour un article
   const updateItem = (index: number, field: string, value: any) => {
     const newItems = [...formData.items];
     newItems[index] = { ...newItems[index], [field]: value };
@@ -128,7 +128,7 @@ export default function CreditSalesForm() {
     return { subtotal, tax, total };
   };
 
-  // Soumettre la vente Ã  crÃ©dit
+  // Soumettre la vente à crédit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -162,7 +162,7 @@ export default function CreditSalesForm() {
     if (!formData.due_date) {
       toast({
         title: "Erreur",
-        description: "Veuillez sÃ©lectionner une date d'Ã©chÃ©ance",
+        description: "Veuillez sélectionner une date d'échéance",
         variant: "destructive"
       });
       return;
@@ -171,7 +171,7 @@ export default function CreditSalesForm() {
     // Pour l'instant, juste afficher un message - la table n'existe pas encore
     toast({
       title: "Information",
-      description: "La fonctionnalitÃ© de vente Ã  crÃ©dit sera bientÃ´t disponible",
+      description: "La fonctionnalité de vente à crédit sera bientôt disponible",
     });
     
     setIsDialogOpen(false);
@@ -183,13 +183,13 @@ export default function CreditSalesForm() {
 
     toast({
       title: "Information", 
-      description: "La fonctionnalitÃ© de paiement sera bientÃ´t disponible",
+      description: "La fonctionnalité de paiement sera bientôt disponible",
     });
   };
 
   const { subtotal, tax, total } = calculateTotals();
 
-  // Filtrer les ventes Ã  crÃ©dit
+  // Filtrer les ventes à crédit
   const filteredSales = creditSales.filter(sale => {
     const matchesSearch = sale.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          sale.order_number.toLowerCase().includes(searchTerm.toLowerCase());
@@ -213,7 +213,7 @@ export default function CreditSalesForm() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-primary" />
-            <CardTitle className="text-lg sm:text-xl">Ventes Ã  CrÃ©dit</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Ventes à Crédit</CardTitle>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -225,7 +225,7 @@ export default function CreditSalesForm() {
             </DialogTrigger>
             <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>CrÃ©er une vente Ã  crÃ©dit</DialogTitle>
+                <DialogTitle>Créer une vente à crédit</DialogTitle>
               </DialogHeader>
               
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -239,7 +239,7 @@ export default function CreditSalesForm() {
                       onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
                     />
                     <Input
-                      placeholder="TÃ©lÃ©phone (optionnel)"
+                      placeholder="Téléphone (optionnel)"
                       value={formData.customer_phone}
                       onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
                     />
@@ -270,7 +270,7 @@ export default function CreditSalesForm() {
                         />
                         <Input
                           type="number"
-                          placeholder="QtÃ©"
+                          placeholder="Qté"
                           value={item.quantity}
                           onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
                           min="1"
@@ -291,7 +291,7 @@ export default function CreditSalesForm() {
                           onClick={() => removeItem(index)}
                           disabled={formData.items.length === 1}
                         >
-                          âœ•
+                          ✕
                         </Button>
                       </div>
                     ))}
@@ -314,10 +314,10 @@ export default function CreditSalesForm() {
                   </div>
                 </div>
 
-                {/* Date d'Ã©chÃ©ance et notes */}
+                {/* Date d'échéance et notes */}
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Date d'Ã©chÃ©ance</label>
+                    <label className="text-sm font-medium mb-1 block">Date d'échéance</label>
                     <Input
                       type="date"
                       value={formData.due_date}
@@ -338,7 +338,7 @@ export default function CreditSalesForm() {
                   </Button>
                   <Button type="submit" disabled={loading}>
                     {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                    CrÃ©er la vente
+                    Créer la vente
                   </Button>
                 </div>
               </form>
@@ -366,7 +366,7 @@ export default function CreditSalesForm() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher par client ou numÃ©ro..."
+                  placeholder="Rechercher par client ou numéro..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -379,8 +379,8 @@ export default function CreditSalesForm() {
               >
                 <option value="">Tous les statuts</option>
                 <option value="pending">En attente</option>
-                <option value="partial">Partiellement payÃ©</option>
-                <option value="paid">PayÃ©</option>
+                <option value="partial">Partiellement payé</option>
+                <option value="paid">Payé</option>
                 <option value="overdue">En retard</option>
               </select>
             </div>
@@ -393,7 +393,7 @@ export default function CreditSalesForm() {
             ) : filteredSales.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Aucune vente Ã  crÃ©dit trouvÃ©e</p>
+                <p>Aucune vente à crédit trouvée</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -411,10 +411,10 @@ export default function CreditSalesForm() {
                           </div>
                           <p className="text-xs text-muted-foreground">Commande: {sale.order_number}</p>
                           {sale.customer_phone && (
-                            <p className="text-xs text-muted-foreground">TÃ©l: {sale.customer_phone}</p>
+                            <p className="text-xs text-muted-foreground">Tél: {sale.customer_phone}</p>
                           )}
                           <p className="text-xs text-muted-foreground">
-                            Ã‰chÃ©ance: {new Date(sale.due_date).toLocaleDateString('fr-FR')}
+                            Échéance: {new Date(sale.due_date).toLocaleDateString('fr-FR')}
                           </p>
                         </div>
 
@@ -425,11 +425,11 @@ export default function CreditSalesForm() {
                             <span className="font-semibold">${sale.total.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span>PayÃ©:</span>
-                            <span className="text-primary-orange-600">${sale.paid_amount.toFixed(2)}</span>
+                            <span>Payé:</span>
+                            <span className="text-green-600">${sale.paid_amount.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span>DÃ»:</span>
+                            <span>Dû:</span>
                             <span className="text-destructive font-semibold">
                               ${sale.remaining_amount.toFixed(2)}
                             </span>
@@ -468,7 +468,7 @@ export default function CreditSalesForm() {
                             <div className="space-y-4">
                               <div className="bg-muted p-4 rounded-lg">
                                 <div className="flex justify-between text-sm mb-2">
-                                  <span>Montant dÃ»:</span>
+                                  <span>Montant dû:</span>
                                   <span className="font-semibold">${sale.remaining_amount.toFixed(2)}</span>
                                 </div>
                               </div>
@@ -525,8 +525,8 @@ export default function CreditSalesForm() {
               </Card>
               <Card>
                 <CardContent className="pt-6 text-center">
-                  <div className="text-2xl font-bold text-primary-orange-600">{stats.paid}</div>
-                  <p className="text-xs text-muted-foreground mt-1">PayÃ©s</p>
+                  <div className="text-2xl font-bold text-green-600">{stats.paid}</div>
+                  <p className="text-xs text-muted-foreground mt-1">Payés</p>
                 </CardContent>
               </Card>
               <Card>
@@ -538,13 +538,13 @@ export default function CreditSalesForm() {
               <Card>
                 <CardContent className="pt-6 text-center">
                   <div className="text-lg font-bold text-destructive">${stats.receivable.toFixed(2)}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Ã€ recevoir</p>
+                  <p className="text-xs text-muted-foreground mt-1">À recevoir</p>
                 </CardContent>
               </Card>
               <Card className="sm:col-span-3">
                 <CardContent className="pt-6 text-center">
                   <div className="text-3xl font-bold text-primary">${stats.totalAmount.toFixed(2)}</div>
-                  <p className="text-sm text-muted-foreground mt-2">Montant total des ventes Ã  crÃ©dit</p>
+                  <p className="text-sm text-muted-foreground mt-2">Montant total des ventes à crédit</p>
                 </CardContent>
               </Card>
             </div>

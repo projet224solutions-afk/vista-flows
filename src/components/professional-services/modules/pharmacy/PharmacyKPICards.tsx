@@ -1,5 +1,5 @@
 /**
- * KPI Cards pharmacie â€” inspirÃ© Boots/CVS Health dashboard
+ * KPI Cards pharmacie — inspiré Boots/CVS Health dashboard
  */
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,9 +24,9 @@ export function PharmacyKPICards({ stats }: PharmacyKPICardsProps) {
       value: formatCurrency(stats.sales.totalRevenue),
       subtitle: `${formatCurrency(stats.sales.todayRevenue)} aujourd'hui`,
       icon: TrendingUp,
-      accent: 'from-primary-blue-500 to-primary-orange-600',
-      iconBg: 'bg-primary-blue-500/10',
-      iconColor: 'text-primary-blue-600',
+      accent: 'from-emerald-500 to-emerald-600',
+      iconBg: 'bg-emerald-500/10',
+      iconColor: 'text-emerald-600',
     },
     {
       title: 'Commandes',
@@ -64,9 +64,9 @@ export function PharmacyKPICards({ stats }: PharmacyKPICardsProps) {
       value: stats.clients.total.toString(),
       subtitle: 'Fichier patient',
       icon: Users,
-      accent: 'from-primary-blue-500 to-primary-blue-600',
-      iconBg: 'bg-primary-blue-500/10',
-      iconColor: 'text-primary-blue-600',
+      accent: 'from-cyan-500 to-cyan-600',
+      iconBg: 'bg-cyan-500/10',
+      iconColor: 'text-cyan-600',
     },
     {
       title: 'Ordonnances',

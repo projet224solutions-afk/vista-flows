@@ -1,5 +1,5 @@
 /**
- * Panneau latÃ©ral pour afficher les dÃ©tails de santÃ© d'une fonctionnalitÃ©
+ * Panneau latéral pour afficher les détails de santé d'une fonctionnalité
  * avec actions de correction automatique
  */
 
@@ -77,7 +77,7 @@ export default function FeatureDetailSheet({
         );
       default:
         return (
-          <Badge className="bg-primary-blue-500 text-white">
+          <Badge className="bg-emerald-500 text-white">
             <CheckCircle2 className="w-3 h-3 mr-1" />
             OK
           </Badge>
@@ -92,7 +92,7 @@ export default function FeatureDetailSheet({
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-primary-blue-500';
+    if (score >= 80) return 'bg-emerald-500';
     if (score >= 50) return 'bg-orange-500';
     return 'bg-red-500';
   };
@@ -137,10 +137,10 @@ export default function FeatureDetailSheet({
         </SheetHeader>
 
         <div className="py-6 space-y-6">
-          {/* Score de santÃ© */}
+          {/* Score de santé */}
           <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-slate-300 font-medium">Score de SantÃ©</span>
+              <span className="text-slate-300 font-medium">Score de Santé</span>
               <span 
                 className="text-2xl font-bold"
                 style={{ color: score >= 80 ? '#10b981' : score >= 50 ? '#f97316' : '#ef4444' }}
@@ -151,18 +151,18 @@ export default function FeatureDetailSheet({
             <Progress value={score} className={`h-3 ${getScoreColor(score)}`} />
           </div>
 
-          {/* Source de donnÃ©es */}
+          {/* Source de données */}
           <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600 mb-4">
             <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
               <Database className="w-3 h-3" />
-              Source de donnÃ©es
+              Source de données
             </div>
-            <p className="text-xs font-mono text-primary-blue-400">
-              {healthData.dataSource || 'Non dÃ©finie'}
+            <p className="text-xs font-mono text-emerald-400">
+              {healthData.dataSource || 'Non définie'}
             </p>
           </div>
 
-          {/* MÃ©triques */}
+          {/* Métriques */}
           <div className="grid grid-cols-2 gap-3">
             <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
               <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
@@ -190,9 +190,9 @@ export default function FeatureDetailSheet({
             <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
               <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
                 <Activity className="w-4 h-4" />
-                ActivitÃ© rÃ©cente
+                Activité récente
               </div>
-              <p className="text-2xl font-bold text-primary-blue-400">
+              <p className="text-2xl font-bold text-emerald-400">
                 {healthData.recentActivity}%
               </p>
             </div>
@@ -200,7 +200,7 @@ export default function FeatureDetailSheet({
             <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
               <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
                 <Clock className="w-4 h-4" />
-                DerniÃ¨re vÃ©rif.
+                Dernière vérif.
               </div>
               <p className="text-sm font-medium text-slate-300">
                 {new Date(healthData.lastCheck).toLocaleTimeString('fr-FR')}
@@ -214,7 +214,7 @@ export default function FeatureDetailSheet({
               <Button
                 onClick={handleApplyCorrection}
                 disabled={localApplying || isApplying}
-                className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-blue-700 hover:to-primary-orange-700 text-white font-semibold"
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold"
               >
                 {localApplying || isApplying ? (
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -233,7 +233,7 @@ export default function FeatureDetailSheet({
               className="w-full border-slate-600 text-slate-300 hover:bg-slate-800"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              AccÃ©der au module {feature.domain}
+              Accéder au module {feature.domain}
             </Button>
           </div>
 
@@ -245,24 +245,24 @@ export default function FeatureDetailSheet({
                 Recommandations
               </h4>
               <ul className="text-sm text-slate-300 space-y-1">
-                <li>â€¢ VÃ©rifier les logs rÃ©cents du module</li>
-                <li>â€¢ Appliquer les corrections automatiques</li>
-                <li>â€¢ Consulter le tableau de surveillance dÃ©taillÃ©</li>
+                <li>• Vérifier les logs récents du module</li>
+                <li>• Appliquer les corrections automatiques</li>
+                <li>• Consulter le tableau de surveillance détaillé</li>
                 {healthData.status === 'CRITICAL' && (
-                  <li className="text-red-400">â€¢ âš ï¸ Action immÃ©diate requise</li>
+                  <li className="text-red-400">• ⚠️ Action immédiate requise</li>
                 )}
               </ul>
             </div>
           )}
 
           {healthData.status === 'OK' && (
-            <div className="p-4 bg-primary-blue-500/10 border border-primary-orange-500/30 rounded-lg">
-              <h4 className="text-primary-blue-400 font-medium mb-2 flex items-center gap-2">
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+              <h4 className="text-emerald-400 font-medium mb-2 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
-                SystÃ¨me sain
+                Système sain
               </h4>
               <p className="text-sm text-slate-300">
-                Aucune anomalie dÃ©tectÃ©e. Le module {feature.name.toLowerCase()} fonctionne normalement.
+                Aucune anomalie détectée. Le module {feature.name.toLowerCase()} fonctionne normalement.
               </p>
             </div>
           )}

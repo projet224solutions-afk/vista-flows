@@ -3,10 +3,10 @@
  * COMPOSANT: InstallAppButton
  * =====================================================
  *
- * Bouton d'installation PWA avec support iOS amÃ©liorÃ©.
+ * Bouton d'installation PWA avec support iOS amélioré.
  * - Installation directe via beforeinstallprompt (Android/Desktop)
- * - Guide visuel Ã©tape par Ã©tape pour iOS (Safari uniquement)
- * - DÃ©tection des navigateurs intÃ©grÃ©s (WebView)
+ * - Guide visuel étape par étape pour iOS (Safari uniquement)
+ * - Détection des navigateurs intégrés (WebView)
  */
 
 import { useState, useEffect } from 'react';
@@ -49,7 +49,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     const ua = navigator.userAgent;
     const mobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
     const ios = /iPhone|iPad|iPod/i.test(ua);
-    // DÃ©tection Mac (macOS)
+    // Détection Mac (macOS)
     const mac = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua) && !ios;
     const safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
     const inIframe = (() => {
@@ -62,7 +62,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     // WebView / in-app browsers n'autorisent souvent pas l'installation PWA
     const inApp = /(FBAN|FBAV|Instagram|Line|Twitter|WhatsApp|wv)/i.test(ua);
     
-    // VÃ©rifier si dÃ©jÃ  en mode standalone (PWA installÃ©e)
+    // Vérifier si déjà en mode standalone (PWA installée)
     const standalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone === true;
 
@@ -95,10 +95,10 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
   const runInstall = async () => {
     setIsInstalling(true);
     try {
-      // 0) DÃ©jÃ  installÃ©
+      // 0) Déjà installé
       if (isStandalone) {
-        toast.success('Application dÃ©jÃ  installÃ©e !', {
-          description: "224Solutions est dÃ©jÃ  sur votre Ã©cran d'accueil.",
+        toast.success('Application déjà installée !', {
+          description: "224Solutions est déjà sur votre écran d'accueil.",
         });
         setConfirmOpen(false);
         return;
@@ -124,7 +124,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
       if (isInIframe || isInAppBrowser) {
         toast.info('Ouvrir dans le navigateur pour installer', {
           description: isInAppBrowser
-            ? "Ouvrez ce lien dans Chrome/Safari (les navigateurs intÃ©grÃ©s bloquent l'installation)."
+            ? "Ouvrez ce lien dans Chrome/Safari (les navigateurs intégrés bloquent l'installation)."
             : "Ouvrez l'application dans un nouvel onglet pour installer.",
           duration: 7000,
         });
@@ -133,14 +133,14 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         return;
       }
 
-      // 3) En preview Lovable: activer le SW (nÃ©cessaire pour que Chrome propose l'installation)
+      // 3) En preview Lovable: activer le SW (nécessaire pour que Chrome propose l'installation)
       const isLovablePreview = window.location.hostname.includes('lovableproject.com');
       const pwaPreviewEnabled = window.localStorage.getItem('enable_pwa_preview') === '1';
       if (!isInstallable && isLovablePreview && !pwaPreviewEnabled) {
         window.localStorage.setItem('enable_pwa_preview', '1');
         const url = new URL(window.location.href);
         url.searchParams.set('pwa', '1');
-        toast.info("Activation de l'installationâ€¦", {
+        toast.info("Activation de l'installation…", {
           description: "On recharge la page pour activer le mode PWA (une seule fois).",
           duration: 4000,
         });
@@ -152,8 +152,8 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
       if (isInstallable) {
         const success = await promptInstall();
         if (success) {
-          toast.success('Application installÃ©e !', {
-            description: "224Solutions est maintenant sur votre Ã©cran d'accueil.",
+          toast.success('Application installée !', {
+            description: "224Solutions est maintenant sur votre écran d'accueil.",
           });
           setConfirmOpen(false);
           return;
@@ -165,12 +165,12 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
 
       if (isMobile) {
         toast.info('Installation sur Android', {
-          description: "Ouvrez le menu (â‹®) puis 'Installer l'application' ou 'Ajouter Ã  l'Ã©cran d'accueil'.",
+          description: "Ouvrez le menu (⋮) puis 'Installer l'application' ou 'Ajouter à l'écran d'accueil'.",
           duration: 8000,
         });
       } else {
         toast.info('Installation sur ordinateur', {
-          description: "Cliquez sur l'icÃ´ne d'installation dans la barre d'adresse ou le menu du navigateur.",
+          description: "Cliquez sur l'icône d'installation dans la barre d'adresse ou le menu du navigateur.",
           duration: 8000,
         });
       }
@@ -179,21 +179,21 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     }
   };
 
-  // Ne pas afficher tant que la vÃ©rification n'est pas faite
+  // Ne pas afficher tant que la vérification n'est pas faite
   if (!hasChecked) {
     return null;
   }
 
-  // Ne pas afficher si dÃ©jÃ  installÃ© (standalone mode)
+  // Ne pas afficher si déjà installé (standalone mode)
   if (isInstalled || isStandalone) {
     // Pour le variant floating, ne rien afficher du tout
     if (variant === 'floating') {
       return null;
     }
     return (
-      <div className={`flex items-center gap-2 text-primary-orange-600 ${className}`}>
+      <div className={`flex items-center gap-2 text-green-600 ${className}`}>
         <CheckCircle2 className="w-5 h-5" />
-        <span className="text-sm font-medium">Application installÃ©e</span>
+        <span className="text-sm font-medium">Application installée</span>
       </div>
     );
   }
@@ -204,7 +204,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         <span className="flex flex-col gap-2 text-left">
           <span className="font-medium">Important :</span>
           <span>
-            L'installation ne fonctionne pas dans un aperÃ§u/ navigateur intÃ©grÃ©.
+            L'installation ne fonctionne pas dans un aperçu/ navigateur intégré.
           </span>
           <span>
             Appuyez sur <span className="font-semibold">Installer</span> puis ouvrez le lien dans Chrome/Safari.
@@ -214,7 +214,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     }
 
     if (isInstallable) {
-      return "L'installation dÃ©marrera automatiquement aprÃ¨s confirmation.";
+      return "L'installation démarrera automatiquement après confirmation.";
     }
 
     if (isIOS || isMac) {
@@ -229,7 +229,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
           ) : (
             <>
               <span>1. Appuyez sur <Share className="inline w-4 h-4" /> (Partager)</span>
-              <span>2. Faites dÃ©filer et appuyez sur "Sur l'Ã©cran d'accueil"</span>
+              <span>2. Faites défiler et appuyez sur "Sur l'écran d'accueil"</span>
               <span>3. Appuyez sur "Ajouter"</span>
             </>
           )}
@@ -242,12 +242,12 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         <span className="flex flex-col gap-2 text-left">
           <span className="font-medium">Sur Android :</span>
           <span>1. Appuyez sur <MoreVertical className="inline w-4 h-4" /> (menu)</span>
-          <span>2. Appuyez sur "Installer l'application" ou "Ajouter Ã  l'Ã©cran d'accueil"</span>
+          <span>2. Appuyez sur "Installer l'application" ou "Ajouter à l'écran d'accueil"</span>
         </span>
       );
     }
 
-    return "Cliquez sur l'icÃ´ne d'installation dans la barre d'adresse.";
+    return "Cliquez sur l'icône d'installation dans la barre d'adresse.";
   };
 
   const ConfirmDialog = (
@@ -260,7 +260,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3">
-              <p>Installez l'application pour un accÃ¨s rapide depuis votre Ã©cran d'accueil.</p>
+              <p>Installez l'application pour un accès rapide depuis votre écran d'accueil.</p>
               <div className="p-3 bg-muted rounded-lg text-sm">
                 {getInstallInstructions()}
               </div>
@@ -271,7 +271,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
           <AlertDialogCancel disabled={isInstalling}>Annuler</AlertDialogCancel>
           <AlertDialogAction onClick={runInstall} disabled={isInstalling}>
             {isInstalling
-              ? 'Installationâ€¦'
+              ? 'Installation…'
               : isInIframe || isInAppBrowser
                 ? 'Ouvrir pour installer'
                 : isInstallable
@@ -315,7 +315,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     );
   }
 
-  // Bouton par dÃ©faut (carte)
+  // Bouton par défaut (carte)
   return (
     <>
       <div className={`bg-gradient-to-r from-primary to-primary/80 rounded-xl p-4 shadow-lg ${className}`}>
@@ -325,7 +325,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
           </div>
           <div className="flex-1">
             <h3 className="font-bold text-white text-lg">Installer 224Solutions</h3>
-            <p className="text-white/80 text-sm">AccÃ¨s rapide depuis votre Ã©cran d'accueil</p>
+            <p className="text-white/80 text-sm">Accès rapide depuis votre écran d'accueil</p>
           </div>
           <Button onClick={handleInstallClick} variant="secondary" className="gap-2 font-semibold">
             <Download className="w-4 h-4" />
@@ -336,15 +336,15 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         {/* Avantages */}
         <div className="mt-4 grid grid-cols-3 gap-2 text-center text-white/90 text-xs">
           <div className="flex flex-col items-center gap-1">
-            <span className="text-lg">âš¡</span>
+            <span className="text-lg">⚡</span>
             <span>Plus rapide</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <span className="text-lg">ðŸ“´</span>
+            <span className="text-lg">📴</span>
             <span>Hors-ligne</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <span className="text-lg">ðŸ””</span>
+            <span className="text-lg">🔔</span>
             <span>Notifications</span>
           </div>
         </div>

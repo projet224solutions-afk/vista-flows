@@ -1,6 +1,6 @@
 /**
- * Dashboard de sÃ©curitÃ© temps rÃ©el amÃ©liorÃ©
- * Phase 5 du plan de sÃ©curitÃ©
+ * Dashboard de sécurité temps réel amélioré
+ * Phase 5 du plan de sécurité
  */
 
 import React, { useState, useEffect } from 'react';
@@ -85,7 +85,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
 
   const loadSecurityData = async () => {
     try {
-      // Charger les Ã©vÃ©nements de sÃ©curitÃ© rÃ©cents
+      // Charger les événements de sécurité récents
       const { data: securityEvents } = await supabase
         .from('security_events')
         .select('*')
@@ -96,7 +96,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
         setEvents(securityEvents as SecurityEvent[]);
       }
 
-      // Charger les IPs bloquÃ©es
+      // Charger les IPs bloquées
       const { count: blockedCount } = await supabase
         .from('blocked_ips')
         .select('*', { count: 'exact', head: true })
@@ -108,7 +108,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'open');
 
-      // Charger les tentatives d'auth des derniÃ¨res 24h
+      // Charger les tentatives d'auth des dernières 24h
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const { data: authAttempts } = await supabase
         .from('auth_attempts_log')
@@ -128,7 +128,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
       }));
 
     } catch (error) {
-      console.error('Erreur chargement donnÃ©es sÃ©curitÃ©:', error);
+      console.error('Erreur chargement données sécurité:', error);
     } finally {
       setLoading(false);
     }
@@ -143,14 +143,14 @@ export const RealTimeSecurityDashboard: React.FC = () => {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-primary-orange-600';
+    if (score >= 90) return 'text-green-600';
     if (score >= 70) return 'text-yellow-600';
     if (score >= 50) return 'text-orange-600';
     return 'text-red-600';
   };
 
   const getScoreStatus = (score: number) => {
-    if (score >= 90) return { label: 'Excellent', icon: ShieldCheck, color: 'bg-primary-orange-100 text-primary-orange-800' };
+    if (score >= 90) return { label: 'Excellent', icon: ShieldCheck, color: 'bg-green-100 text-green-800' };
     if (score >= 70) return { label: 'Bon', icon: Shield, color: 'bg-yellow-100 text-yellow-800' };
     if (score >= 50) return { label: 'Attention', icon: ShieldAlert, color: 'bg-orange-100 text-orange-800' };
     return { label: 'Critique', icon: XCircle, color: 'bg-red-100 text-red-800' };
@@ -176,9 +176,9 @@ export const RealTimeSecurityDashboard: React.FC = () => {
   ];
 
   const pieData = [
-    { name: 'SuccÃ¨s', value: metrics.successfulLogins24h },
-    { name: 'Ã‰checs', value: metrics.failedLogins24h },
-    { name: 'BloquÃ©s', value: metrics.blockedIPs }
+    { name: 'Succès', value: metrics.successfulLogins24h },
+    { name: 'Échecs', value: metrics.failedLogins24h },
+    { name: 'Bloqués', value: metrics.blockedIPs }
   ];
 
   const status = getScoreStatus(metrics.score);
@@ -201,8 +201,8 @@ export const RealTimeSecurityDashboard: React.FC = () => {
             <Shield className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Centre de SÃ©curitÃ©</h1>
-            <p className="text-muted-foreground">Monitoring et protection en temps rÃ©el</p>
+            <h1 className="text-2xl font-bold">Centre de Sécurité</h1>
+            <p className="text-muted-foreground">Monitoring et protection en temps réel</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -212,7 +212,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
             onClick={() => setIsRealTime(!isRealTime)}
           >
             {isRealTime ? <Activity className="h-4 w-4 mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-            {isRealTime ? 'Temps rÃ©el' : 'PausÃ©'}
+            {isRealTime ? 'Temps réel' : 'Pausé'}
           </Button>
           <Button variant="outline" size="sm" onClick={loadSecurityData}>
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -221,7 +221,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Score de sÃ©curitÃ© global */}
+      {/* Score de sécurité global */}
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
@@ -260,14 +260,14 @@ export const RealTimeSecurityDashboard: React.FC = () => {
                   <Badge className={status.color}>{status.label}</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Score de sÃ©curitÃ© global basÃ© sur {metrics.rlsPolicies} politiques RLS
+                  Score de sécurité global basé sur {metrics.rlsPolicies} politiques RLS
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-4 gap-8">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary-orange-600">{metrics.rlsPolicies}</div>
+                <div className="text-2xl font-bold text-green-600">{metrics.rlsPolicies}</div>
                 <div className="text-xs text-muted-foreground">Politiques RLS</div>
               </div>
               <div className="text-center">
@@ -287,18 +287,18 @@ export const RealTimeSecurityDashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* MÃ©triques clÃ©s */}
+      {/* Métriques clés */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Connexions rÃ©ussies (24h)</p>
-                <p className="text-2xl font-bold text-primary-orange-600">{metrics.successfulLogins24h}</p>
+                <p className="text-sm text-muted-foreground">Connexions réussies (24h)</p>
+                <p className="text-2xl font-bold text-green-600">{metrics.successfulLogins24h}</p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-primary-orange-600" />
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
-            <div className="mt-2 flex items-center text-xs text-primary-orange-600">
+            <div className="mt-2 flex items-center text-xs text-green-600">
               <TrendingUp className="h-3 w-3 mr-1" />
               Authentifications valides
             </div>
@@ -309,7 +309,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Ã‰checs de connexion (24h)</p>
+                <p className="text-sm text-muted-foreground">Échecs de connexion (24h)</p>
                 <p className="text-2xl font-bold text-red-600">{metrics.failedLogins24h}</p>
               </div>
               <XCircle className="h-8 w-8 text-red-600" />
@@ -325,7 +325,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">IPs bloquÃ©es</p>
+                <p className="text-sm text-muted-foreground">IPs bloquées</p>
                 <p className="text-2xl font-bold text-orange-600">{metrics.blockedIPs}</p>
               </div>
               <Ban className="h-8 w-8 text-orange-600" />
@@ -354,7 +354,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Graphiques et Ã©vÃ©nements */}
+      {/* Graphiques et événements */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Graphique des menaces */}
         <Card>
@@ -368,17 +368,17 @@ export const RealTimeSecurityDashboard: React.FC = () => {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Area type="monotone" dataKey="threats" stroke="#ef4444" fill="#fecaca" name="DÃ©tectÃ©es" />
-                <Area type="monotone" dataKey="blocked" stroke="#10b981" fill="#d1fae5" name="BloquÃ©es" />
+                <Area type="monotone" dataKey="threats" stroke="#ef4444" fill="#fecaca" name="Détectées" />
+                <Area type="monotone" dataKey="blocked" stroke="#10b981" fill="#d1fae5" name="Bloquées" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* RÃ©partition des authentifications */}
+        {/* Répartition des authentifications */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">RÃ©partition des authentifications</CardTitle>
+            <CardTitle className="text-lg">Répartition des authentifications</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -405,12 +405,12 @@ export const RealTimeSecurityDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Ã‰vÃ©nements rÃ©cents */}
+      {/* Événements récents */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Ã‰vÃ©nements de sÃ©curitÃ© rÃ©cents</CardTitle>
-            <Badge variant="outline">{events.length} Ã©vÃ©nements</Badge>
+            <CardTitle className="text-lg">Événements de sécurité récents</CardTitle>
+            <Badge variant="outline">{events.length} événements</Badge>
           </div>
         </CardHeader>
         <CardContent>
@@ -420,7 +420,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
                 <Alert>
                   <CheckCircle2 className="h-4 w-4" />
                   <AlertDescription>
-                    Aucun Ã©vÃ©nement de sÃ©curitÃ© rÃ©cent. Votre systÃ¨me est sÃ©curisÃ©.
+                    Aucun événement de sécurité récent. Votre système est sécurisé.
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -453,7 +453,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
       {/* Infrastructure */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Infrastructure de sÃ©curitÃ©</CardTitle>
+          <CardTitle className="text-lg">Infrastructure de sécurité</CardTitle>
           <CardDescription>Composants de protection actifs</CardDescription>
         </CardHeader>
         <CardContent>

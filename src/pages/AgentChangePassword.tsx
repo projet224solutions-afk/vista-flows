@@ -30,18 +30,18 @@ export const AgentChangePassword: React.FC = () => {
     color: string;
   }>({ score: 0, message: '', color: '' });
 
-  // Rediriger si non connectÃ©
+  // Rediriger si non connecté
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/agent/login');
     }
   }, [isAuthenticated, navigate]);
 
-  // VÃ©rifier force du mot de passe (DEBOUNCE + requestIdleCallback)
+  // Vérifier force du mot de passe (DEBOUNCE + requestIdleCallback)
   useEffect(() => {
     const password = formData.newPassword;
 
-    // Reset immÃ©diat
+    // Reset immédiat
     if (!password) {
       setPasswordStrength({ score: 0, message: '', color: '' });
       return;
@@ -55,7 +55,7 @@ export const AgentChangePassword: React.FC = () => {
         // Longueur
         if (password.length >= 8) score++;
         if (password.length >= 12) score++;
-        else messages.push('Au moins 8 caractÃ¨res');
+        else messages.push('Au moins 8 caractères');
 
         // Majuscules
         if (/[A-Z]/.test(password)) score++;
@@ -69,17 +69,17 @@ export const AgentChangePassword: React.FC = () => {
         if (/[0-9]/.test(password)) score++;
         else messages.push('Un chiffre');
 
-        // CaractÃ¨res spÃ©ciaux
+        // Caractères spéciaux
         if (/[^A-Za-z0-9]/.test(password)) score++;
-        else messages.push('Un caractÃ¨re spÃ©cial');
+        else messages.push('Un caractère spécial');
 
         const strength = {
-          0: { message: 'TrÃ¨s faible', color: 'text-destructive' },
+          0: { message: 'Très faible', color: 'text-destructive' },
           1: { message: 'Faible', color: 'text-destructive' },
           2: { message: 'Moyen', color: 'text-muted-foreground' },
           3: { message: 'Bon', color: 'text-primary' },
           4: { message: 'Fort', color: 'text-primary' },
-          5: { message: 'TrÃ¨s fort', color: 'text-primary' },
+          5: { message: 'Très fort', color: 'text-primary' },
           6: { message: 'Excellent', color: 'text-primary' }
         }[Math.min(score, 6)] || { message: '', color: '' };
 
@@ -110,7 +110,7 @@ export const AgentChangePassword: React.FC = () => {
     }
 
     if (formData.newPassword.length < 8) {
-      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractÃ¨res');
+      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractères');
       return;
     }
 
@@ -120,12 +120,12 @@ export const AgentChangePassword: React.FC = () => {
     }
 
     if (formData.currentPassword === formData.newPassword) {
-      toast.error('Le nouveau mot de passe doit Ãªtre diffÃ©rent de l\'ancien');
+      toast.error('Le nouveau mot de passe doit être différent de l\'ancien');
       return;
     }
 
     if (passwordStrength.score < 3) {
-      toast.error('Le mot de passe n\'est pas assez fort. Utilisez majuscules, minuscules, chiffres et caractÃ¨res spÃ©ciaux.');
+      toast.error('Le mot de passe n\'est pas assez fort. Utilisez majuscules, minuscules, chiffres et caractères spéciaux.');
       return;
     }
 
@@ -134,7 +134,7 @@ export const AgentChangePassword: React.FC = () => {
     try {
       const agent = getCurrentAgent();
       if (!agent) {
-        toast.error('Session expirÃ©e');
+        toast.error('Session expirée');
         navigate('/agent/login');
         return;
       }
@@ -159,17 +159,17 @@ export const AgentChangePassword: React.FC = () => {
         return;
       }
 
-      // SuccÃ¨s
-      toast.success('Mot de passe modifiÃ© avec succÃ¨s !');
+      // Succès
+      toast.success('Mot de passe modifié avec succès !');
       
-      // RÃ©initialiser formulaire
+      // Réinitialiser formulaire
       setFormData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       });
 
-      // Rediriger aprÃ¨s 2 secondes
+      // Rediriger après 2 secondes
       setTimeout(() => {
         navigate('/agent');
       }, 2000);
@@ -185,7 +185,7 @@ export const AgentChangePassword: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* En-tÃªte */}
+        {/* En-tête */}
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-4">
             <div className="p-4 bg-primary rounded-2xl shadow-lg">
@@ -200,7 +200,7 @@ export const AgentChangePassword: React.FC = () => {
           <CardHeader>
             <CardTitle>Nouveau mot de passe</CardTitle>
             <CardDescription>
-              Choisissez un mot de passe fort pour protÃ©ger votre compte
+              Choisissez un mot de passe fort pour protéger votre compte
             </CardDescription>
           </CardHeader>
 
@@ -214,7 +214,7 @@ export const AgentChangePassword: React.FC = () => {
                   <Input
                     id="currentPassword"
                     type={showCurrentPassword ? 'text' : 'password'}
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                    placeholder="••••••••"
                     value={formData.currentPassword}
                     onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                     disabled={isLoading}
@@ -240,7 +240,7 @@ export const AgentChangePassword: React.FC = () => {
                   <Input
                     id="newPassword"
                     type={showNewPassword ? 'text' : 'password'}
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                    placeholder="••••••••"
                     value={formData.newPassword}
                     onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                     disabled={isLoading}
@@ -278,7 +278,7 @@ export const AgentChangePassword: React.FC = () => {
                           passwordStrength.score <= 2 ? 'bg-red-600' :
                           passwordStrength.score === 3 ? 'bg-yellow-600' :
                           passwordStrength.score === 4 ? 'bg-blue-600' :
-                          'bg-primary-orange-600'
+                          'bg-green-600'
                         }`}
                         style={{ width: `${(passwordStrength.score / 6) * 100}%` }}
                       />
@@ -295,7 +295,7 @@ export const AgentChangePassword: React.FC = () => {
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                    placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     disabled={isLoading}
@@ -323,11 +323,11 @@ export const AgentChangePassword: React.FC = () => {
                 <AlertDescription className="text-xs text-blue-900">
                   <strong>Exigences du mot de passe:</strong>
                   <ul className="list-disc list-inside mt-1 space-y-0.5">
-                    <li>Au moins 8 caractÃ¨res</li>
+                    <li>Au moins 8 caractères</li>
                     <li>Au moins une majuscule (A-Z)</li>
                     <li>Au moins une minuscule (a-z)</li>
                     <li>Au moins un chiffre (0-9)</li>
-                    <li>Au moins un caractÃ¨re spÃ©cial (!@#$%...)</li>
+                    <li>Au moins un caractère spécial (!@#$%...)</li>
                   </ul>
                 </AlertDescription>
               </Alert>

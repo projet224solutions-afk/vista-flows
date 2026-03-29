@@ -1,6 +1,6 @@
 /**
- * MODULE MODE & VÃŠTEMENTS PROFESSIONNEL
- * InspirÃ© de: Zara, H&M, ASOS
+ * MODULE MODE & VÊTEMENTS PROFESSIONNEL
+ * Inspiré de: Zara, H&M, ASOS
  * E-commerce mode avec gestion des tailles, couleurs et collections
  */
 
@@ -63,7 +63,7 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
       toast.error('Remplissez les champs obligatoires et ajoutez au moins une taille');
       return;
     }
-    toast.success('Produit ajoutÃ© avec succÃ¨s !');
+    toast.success('Produit ajouté avec succès !');
   };
 
   return (
@@ -93,7 +93,7 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Commandes</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-primary-orange-500" />
+            <ShoppingBag className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalOrders}</div>
@@ -135,7 +135,7 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
           <Card>
             <CardHeader>
               <CardTitle>Nouvel Article</CardTitle>
-              <CardDescription>Ajoutez un vÃªtement Ã  votre catalogue</CardDescription>
+              <CardDescription>Ajoutez un vêtement à votre catalogue</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -145,7 +145,7 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>CatÃ©gorie *</Label>
+                  <Label>Catégorie *</Label>
                   <Select value={newProduct.category} onValueChange={(v) => setNewProduct({...newProduct, category: v})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>

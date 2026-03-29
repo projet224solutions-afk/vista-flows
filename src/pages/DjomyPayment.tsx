@@ -42,7 +42,7 @@ export default function DjomyPayment() {
           <h1 className="text-xl font-semibold text-destructive">Montant invalide</h1>
           <p className="text-muted-foreground">Le montant du paiement n'est pas valide.</p>
           <Button onClick={() => navigate('/')} variant="outline">
-            Retour Ã  l'accueil
+            Retour à l'accueil
           </Button>
         </div>
       </div>
@@ -66,9 +66,9 @@ export default function DjomyPayment() {
             <h1 className="font-semibold">Paiement Mobile Money</h1>
             <p className="text-xs text-muted-foreground">224Solutions</p>
           </div>
-          <div className="flex items-center gap-1 text-primary-orange-600 dark:text-primary-orange-400">
+          <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
             <Shield className="w-4 h-4" />
-            <span className="text-xs font-medium">SÃ©curisÃ©</span>
+            <span className="text-xs font-medium">Sécurisé</span>
           </div>
         </div>
       </div>
@@ -89,12 +89,12 @@ export default function DjomyPayment() {
         <div className="mt-8 text-center space-y-2">
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Shield className="w-4 h-4" />
-            <span>Paiement sÃ©curisÃ© 100% local</span>
+            <span>Paiement sécurisé 100% local</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Vos donnÃ©es de paiement ne transitent jamais par nos serveurs.
+            Vos données de paiement ne transitent jamais par nos serveurs.
             <br />
-            Paiement traitÃ© par Djomy.
+            Paiement traité par Djomy.
           </p>
         </div>
       </div>

@@ -20,14 +20,14 @@ export const BureauLogin: React.FC = () => {
     password: ''
   });
 
-  // Rediriger si dÃ©jÃ  connectÃ©
+  // Rediriger si déjà connecté
   useEffect(() => {
     if (isAuthenticated()) {
       navigate('/bureau');
     }
   }, [isAuthenticated, navigate]);
 
-  // Ã‰tape 1: Soumission login
+  // Étape 1: Soumission login
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -38,7 +38,7 @@ export const BureauLogin: React.FC = () => {
     await login(formData.identifier, formData.password);
   };
 
-  // Ã‰tape 2: VÃ©rification OTP
+  // Étape 2: Vérification OTP
   const handleVerifyOTP = async (otp: string) => {
     await verifyOTP(otp);
   };
@@ -54,12 +54,12 @@ export const BureauLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-blue-50 via-white to-primary-orange-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo et titre */}
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-4">
-            <div className="p-4 bg-primary-orange-600 rounded-2xl shadow-lg">
+            <div className="p-4 bg-green-600 rounded-2xl shadow-lg">
               <Building2 className="h-12 w-12 text-white" />
             </div>
           </div>
@@ -68,8 +68,8 @@ export const BureauLogin: React.FC = () => {
         </div>
 
         {!requiresOTP ? (
-          /* ====== Ã‰TAPE 1: LOGIN ====== */
-          <Card className="shadow-xl border-t-4 border-t-primary-orange-600">
+          /* ====== ÉTAPE 1: LOGIN ====== */
+          <Card className="shadow-xl border-t-4 border-t-green-600">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl">{t('auth.bureau.loginTitle')}</CardTitle>
               <CardDescription>
@@ -110,7 +110,7 @@ export const BureauLogin: React.FC = () => {
                     <Input
                       id="password"
                       type="password"
-                      placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                      placeholder="••••••••"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       disabled={isLoading}
@@ -120,10 +120,10 @@ export const BureauLogin: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Infos sÃ©curitÃ© */}
-                <Alert className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
-                  <ShieldCheck className="h-4 w-4 text-primary-orange-600" />
-                  <AlertDescription className="text-sm text-primary-orange-900">
+                {/* Infos sécurité */}
+                <Alert className="bg-green-50 border-green-200">
+                  <ShieldCheck className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-sm text-green-900">
                     {t('auth.agent.securityInfo')}
                   </AlertDescription>
                 </Alert>
@@ -131,7 +131,7 @@ export const BureauLogin: React.FC = () => {
                 {/* Info bureau */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-xs text-blue-900">
-                    ðŸ’¡ {t('auth.bureau.infoNote')}
+                    💡 {t('auth.bureau.infoNote')}
                   </p>
                 </div>
 
@@ -139,7 +139,7 @@ export const BureauLogin: React.FC = () => {
                 <Button
                   type="submit"
                   disabled={isLoading || !formData.identifier || !formData.password}
-                  className="w-full bg-primary-orange-600 hover:bg-primary-orange-700"
+                  className="w-full bg-green-600 hover:bg-green-700"
                   size="lg"
                 >
                   {isLoading ? t('auth.agent.connecting') : t('auth.login')}
@@ -159,7 +159,7 @@ export const BureauLogin: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          /* ====== Ã‰TAPE 2: VÃ‰RIFICATION OTP ====== */
+          /* ====== ÉTAPE 2: VÉRIFICATION OTP ====== */
           <div className="space-y-4">
             <OTPInput
               identifier={identifier}

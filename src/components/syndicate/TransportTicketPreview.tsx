@@ -1,6 +1,6 @@
 /**
- * PrÃ©visualisation et Export PDF des Tickets de Transport
- * Design fidÃ¨le au modÃ¨le officiel guinÃ©en (orientation PAYSAGE)
+ * Prévisualisation et Export PDF des Tickets de Transport
+ * Design fidèle au modèle officiel guinéen (orientation PAYSAGE)
  * 30 tickets par page A4 avec grille 5x6
  */
 
@@ -45,12 +45,12 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
     if (!printRef.current) return;
     
     setIsExporting(true);
-    toast.info('GÃ©nÃ©ration du PDF en cours...');
+    toast.info('Génération du PDF en cours...');
 
     try {
       const element = printRef.current;
       
-      // Configuration haute rÃ©solution
+      // Configuration haute résolution
       const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(element, {
         scale: 2,
@@ -60,7 +60,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
         logging: false,
       });
 
-      // CrÃ©er le PDF en mode paysage A4
+      // Créer le PDF en mode paysage A4
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -79,7 +79,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
       const fileName = `tickets-transport-${batchId?.slice(-8) || 'lot'}-${config.commune.toLowerCase()}.pdf`;
       pdf.save(fileName);
       
-      toast.success('PDF exportÃ© avec succÃ¨s');
+      toast.success('PDF exporté avec succès');
     } catch (error) {
       console.error('Erreur export PDF:', error);
       toast.error('Erreur lors de l\'export PDF');
@@ -94,7 +94,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
     hebdomadaire: 'Ticket hebdomadaire',
     mensuel: 'Ticket mensuel',
     cotisation: 'Ticket de cotisation',
-    special: 'Ticket spÃ©cial',
+    special: 'Ticket spécial',
   };
 
   return (
@@ -116,7 +116,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
         <Button
           onClick={handleExportPDF}
           disabled={isExporting}
-          className="bg-primary-orange-600 hover:bg-primary-orange-700 text-white"
+          className="bg-green-600 hover:bg-green-700 text-white"
         >
           {isExporting ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />

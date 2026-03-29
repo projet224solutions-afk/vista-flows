@@ -1,5 +1,5 @@
 /**
- * Sheet affichant les achats validÃ©s avec statistiques par pÃ©riode
+ * Sheet affichant les achats validés avec statistiques par période
  */
 
 import { useState } from 'react';
@@ -104,7 +104,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
     enabled: isOpen && !!vendorId,
   });
 
-  // Stats par pÃ©riode
+  // Stats par période
   const { data: periodStats } = useQuery({
     queryKey: ['validated-purchases-stats', vendorId],
     queryFn: async () => {
@@ -182,7 +182,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
 
       if (error) throw error;
 
-      toast.success('Achat supprimÃ© avec succÃ¨s');
+      toast.success('Achat supprimé avec succès');
       queryClient.invalidateQueries({ queryKey: ['validated-purchases'] });
       queryClient.invalidateQueries({ queryKey: ['validated-purchases-stats'] });
       queryClient.invalidateQueries({ queryKey: ['stock-purchases'] });
@@ -201,7 +201,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
     today: { label: "Aujourd'hui", icon: Clock },
     week: { label: 'Cette semaine', icon: CalendarDays },
     month: { label: 'Ce mois', icon: Calendar },
-    year: { label: 'Cette annÃ©e', icon: CalendarRange },
+    year: { label: 'Cette année', icon: CalendarRange },
     all: { label: 'Tout', icon: ShoppingCart },
   };
 
@@ -213,25 +213,25 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
         <SheetContent className="w-full sm:max-w-xl">
           <SheetHeader className="pb-4">
             <SheetTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-primary-orange-500" />
-              Achats ValidÃ©s
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              Achats Validés
             </SheetTitle>
           </SheetHeader>
 
           <div className="space-y-4">
-            {/* Tabs de pÃ©riode */}
+            {/* Tabs de période */}
             <Tabs value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
               <TabsList className="grid grid-cols-5 w-full">
                 {Object.entries(periodConfig).map(([key, { label, icon: Icon }]) => (
                   <TabsTrigger key={key} value={key} className="text-xs px-2">
                     <Icon className="h-3 w-3 mr-1 hidden sm:inline" />
-                    {key === 'today' ? 'Jour' : key === 'week' ? 'Sem.' : key === 'month' ? 'Mois' : key === 'year' ? 'AnnÃ©e' : 'Tout'}
+                    {key === 'today' ? 'Jour' : key === 'week' ? 'Sem.' : key === 'month' ? 'Mois' : key === 'year' ? 'Année' : 'Tout'}
                   </TabsTrigger>
                 ))}
               </TabsList>
             </Tabs>
 
-            {/* Stats rÃ©sumÃ© */}
+            {/* Stats résumé */}
             <div className="grid grid-cols-3 gap-2">
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-3 text-center">
@@ -245,10 +245,10 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
                   <p className="text-xs text-muted-foreground">Total investi</p>
                 </CardContent>
               </Card>
-              <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/20">
+              <Card className="bg-green-500/10 border-green-500/20">
                 <CardContent className="p-3 text-center">
-                  <p className="text-lg font-bold text-primary-orange-600">{formatCurrency(currentStats.totalProfit)}</p>
-                  <p className="text-xs text-muted-foreground">Profit estimÃ©</p>
+                  <p className="text-lg font-bold text-green-600">{formatCurrency(currentStats.totalProfit)}</p>
+                  <p className="text-xs text-muted-foreground">Profit estimé</p>
                 </CardContent>
               </Card>
             </div>
@@ -260,7 +260,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
               ) : purchases.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                  <p className="text-muted-foreground">Aucun achat validÃ© pour cette pÃ©riode</p>
+                  <p className="text-muted-foreground">Aucun achat validé pour cette période</p>
                 </div>
               ) : (
                 <div className="space-y-2 pr-4">
@@ -271,12 +271,12 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{purchase.purchase_number}</p>
                             <p className="text-xs text-muted-foreground">
-                              {purchase.validated_at && format(new Date(purchase.validated_at), 'dd MMM yyyy Ã  HH:mm', { locale: fr })}
+                              {purchase.validated_at && format(new Date(purchase.validated_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
                             </p>
                           </div>
                           <div className="text-right mr-3">
                             <p className="font-semibold text-sm">{formatCurrency(purchase.total_purchase_amount)}</p>
-                            <div className="flex items-center gap-1 text-xs text-primary-orange-600">
+                            <div className="flex items-center gap-1 text-xs text-green-600">
                               <TrendingUp className="h-3 w-3" />
                               +{formatCurrency(purchase.estimated_total_profit)}
                             </div>
@@ -287,7 +287,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
-                                title="Voir les dÃ©tails"
+                                title="Voir les détails"
                                 onClick={() => {
                                   onViewPurchase(purchase.id);
                                   onClose();
@@ -323,8 +323,8 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer cet achat ?</AlertDialogTitle>
             <AlertDialogDescription>
-              ÃŠtes-vous sÃ»r de vouloir supprimer l'achat <strong>{deletePurchase?.purchase_number}</strong> ?
-              Cette action est irrÃ©versible et supprimera Ã©galement tous les articles associÃ©s.
+              Êtes-vous sûr de vouloir supprimer l'achat <strong>{deletePurchase?.purchase_number}</strong> ?
+              Cette action est irréversible et supprimera également tous les articles associés.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

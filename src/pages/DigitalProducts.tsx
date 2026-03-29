@@ -1,5 +1,5 @@
 /**
- * Page Produits NumÃ©riques & Marketplace
+ * Page Produits Numériques & Marketplace
  * Modules: Voyage, Logiciel, Formation, Livres, Dropshipping, Produit custom
  */
 
@@ -76,7 +76,7 @@ const productModules: ProductModule[] = [
     icon: <GraduationCap className="w-7 h-7" />,
     titleKey: 'digital.modules.training',
     descriptionKey: 'digital.modules.trainingDesc',
-    gradient: 'from-primary-blue-500 to-primary-orange-500',
+    gradient: 'from-green-500 to-emerald-500',
     category: 'formation'
   },
   {
@@ -133,14 +133,14 @@ export default function DigitalProducts() {
   const isSearching = searchQuery.trim().length > 0;
 
   const handleModuleClick = (module: ProductModule) => {
-    // Afficher directement les produits de la catÃ©gorie
-    // Tous les modules fonctionnent de la mÃªme maniÃ¨re - les utilisateurs publient leurs liens d'affiliation
+    // Afficher directement les produits de la catégorie
+    // Tous les modules fonctionnent de la même manière - les utilisateurs publient leurs liens d'affiliation
     setSelectedModule(module);
     setShowCategoryProducts(true);
   };
 
   const handleBecomeMerchant = () => {
-    // Si pas connectÃ©, rediriger vers auth
+    // Si pas connecté, rediriger vers auth
     if (!user) {
       toast.info(t('digital.loginRequired'));
       navigate('/auth', { state: { redirectTo: '/digital-products' } });
@@ -153,13 +153,13 @@ export default function DigitalProducts() {
       return;
     }
 
-    // Si connectÃ© mais pas marchand, afficher dialog d'activation
+    // Si connecté mais pas marchand, afficher dialog d'activation
     if (!isMerchant) {
       setShowActivationDialog(true);
       return;
     }
 
-    // Si dÃ©jÃ  marchand, rediriger vers la crÃ©ation de produit
+    // Si déjà marchand, rediriger vers la création de produit
     toast.info(t('digital.alreadyMerchant'));
   };
 
@@ -172,7 +172,7 @@ export default function DigitalProducts() {
 
   const handleProductClick = (product: any) => {
     if (product.product_mode === 'affiliate' && product.affiliate_url) {
-      window.open(product.affiliate_url, '_blank', 'noopener,noreferrer');
+      window.open(product.affiliate_url, '_blank');
     } else {
       navigate(`/digital-product/${product.id}`);
     }
@@ -196,7 +196,7 @@ export default function DigitalProducts() {
     return <TravelModule onBack={() => setShowTravelModule(false)} />;
   }
 
-  // Affichage des produits par catÃ©gorie
+  // Affichage des produits par catégorie
   if (showCategoryProducts && selectedModule) {
     return (
       <CategoryProductsList
@@ -253,7 +253,7 @@ export default function DigitalProducts() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Rechercher un produit numÃ©rique..."
+            placeholder="Rechercher un produit numérique..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 h-10 bg-muted/50 border-border"
@@ -261,12 +261,12 @@ export default function DigitalProducts() {
         </div>
         {isSearching && (
           <p className="text-xs text-muted-foreground mt-2">
-            {filteredProducts.length} rÃ©sultat{filteredProducts.length !== 1 ? 's' : ''} pour "{searchQuery}"
+            {filteredProducts.length} résultat{filteredProducts.length !== 1 ? 's' : ''} pour "{searchQuery}"
           </p>
         )}
       </section>
 
-      {/* RÃ©sultats de recherche */}
+      {/* Résultats de recherche */}
       {isSearching ? (
         <section className="px-4 py-4">
           {productsLoading ? (
@@ -279,10 +279,10 @@ export default function DigitalProducts() {
                 <Search className="w-8 h-8 text-muted-foreground" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">
-                Aucun rÃ©sultat pour "{searchQuery}"
+                Aucun résultat pour "{searchQuery}"
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Essayez avec d'autres mots-clÃ©s
+                Essayez avec d'autres mots-clés
               </p>
               <Button variant="outline" onClick={() => setSearchQuery('')}>
                 Effacer la recherche
@@ -318,7 +318,7 @@ export default function DigitalProducts() {
                       {product.product_mode === 'affiliate' && (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
                           <ExternalLink className="w-3 h-3 mr-1" />
-                          AffiliÃ©
+                          Affilié
                         </Badge>
                       )}
                       {product.is_featured && (
@@ -384,7 +384,7 @@ export default function DigitalProducts() {
           )}
 
           {user && isMerchant && (
-            <div className="px-4 py-2.5 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-b border-primary-orange-500/20 text-center text-sm">
+            <div className="px-4 py-2.5 bg-green-500/10 text-green-600 border-b border-green-500/20 text-center text-sm">
               <span className="flex items-center justify-center gap-2">
                 <Store className="w-4 h-4" />
                 {t('digital.merchantActive')}

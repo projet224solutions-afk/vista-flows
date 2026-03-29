@@ -1,6 +1,6 @@
 /**
- * INDICATEUR DE STATUT RÃ‰SEAU - BUREAU SYNDICAT
- * Affiche le statut de connexion et les donnÃ©es en attente
+ * INDICATEUR DE STATUT RÉSEAU - BUREAU SYNDICAT
+ * Affiche le statut de connexion et les données en attente
  * 224SOLUTIONS - Bureau Syndicat
  */
 
@@ -21,7 +21,7 @@ export default function BureauNetworkIndicator({ bureauId }: Props) {
         if (!isOnline) return "bg-red-500";
         if (syncStats.pending > 0) return "bg-yellow-500";
         if (syncStats.failed > 0) return "bg-orange-500";
-        return "bg-gradient-to-br from-primary-blue-500 to-primary-orange-500";
+        return "bg-green-500";
     };
 
     const getStatusText = () => {

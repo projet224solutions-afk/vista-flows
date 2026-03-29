@@ -1,6 +1,6 @@
 /**
- * Section d'affichage des avis clients sur un produit spÃ©cifique
- * RÃ©cupÃ¨re les avis depuis vendor_ratings (avis vendeur liÃ©s aux commandes)
+ * Section d'affichage des avis clients sur un produit spécifique
+ * Récupère les avis depuis vendor_ratings (avis vendeur liés aux commandes)
  */
 
 import { useState, useEffect } from 'react';
@@ -50,7 +50,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
     try {
       setLoading(true);
 
-      // RÃ©cupÃ©rer les avis depuis product_reviews pour ce produit spÃ©cifique
+      // Récupérer les avis depuis product_reviews pour ce produit spécifique
       const { data: reviewsData, error: reviewsError } = await supabase
         .from('product_reviews')
         .select(`
@@ -80,7 +80,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
         return;
       }
 
-      // RÃ©cupÃ©rer les profils des clients
+      // Récupérer les profils des clients
       const userIds = [...new Set(reviewsData.map(r => r.user_id))];
       const { data: profilesData } = await supabase
         .from('profiles')
@@ -162,7 +162,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
         <Star className="w-12 h-12 mx-auto text-muted-foreground mb-2 opacity-50" />
         <p className="text-muted-foreground">Aucun avis pour ce produit</p>
         <p className="text-sm text-muted-foreground mt-2">
-          Soyez le premier Ã  donner votre avis sur ce produit
+          Soyez le premier à donner votre avis sur ce produit
         </p>
       </div>
     );
@@ -170,7 +170,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte avec statistiques */}
+      {/* En-tête avec statistiques */}
       <div>
         <h3 className="text-lg font-semibold mb-4">
           Avis clients {productName ? `sur ${productName}` : ''}
@@ -192,7 +192,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
           <div className="flex-1 space-y-2">
             {[5, 4, 3, 2, 1].map((stars) => (
               <div key={stars} className="flex items-center gap-2">
-                <span className="text-sm w-8">{stars} â˜…</span>
+                <span className="text-sm w-8">{stars} ★</span>
                 <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full bg-yellow-400"
@@ -221,7 +221,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
         {reviews.map((review) => (
           <Card key={review.id} className="border-border/50">
             <CardContent className="p-4">
-              {/* En-tÃªte de l'avis */}
+              {/* En-tête de l'avis */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
@@ -239,9 +239,9 @@ export default function ProductReviewsSection({ productId, productName }: Produc
                         year: 'numeric'
                       })}
                       {review.verified_purchase && (
-                        <Badge variant="secondary" className="text-xs bg-primary-orange-100 text-primary-orange-700 dark:bg-primary-orange-900 dark:text-primary-orange-300">
+                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
                           <CheckCircle className="w-3 h-3 mr-1" />
-                          Achat vÃ©rifiÃ©
+                          Achat vérifié
                         </Badge>
                       )}
                     </div>

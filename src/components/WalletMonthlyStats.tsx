@@ -111,12 +111,12 @@ export default function WalletMonthlyStats() {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Revenus */}
-          <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950 rounded-lg p-4 border border-primary-orange-200">
+          <div className="bg-green-50 dark:bg-green-950 rounded-lg p-4 border border-green-200">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-primary-orange-600" />
-              <span className="text-sm font-medium text-primary-orange-700 dark:text-primary-orange-400">Reçu</span>
+              <TrendingUp className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-400">Reçu</span>
             </div>
-            <p className="text-2xl font-bold text-primary-orange-600">
+            <p className="text-2xl font-bold text-green-600">
               {formatCurrency(stats.totalReceived)}
             </p>
           </div>
@@ -147,19 +147,19 @@ export default function WalletMonthlyStats() {
         {/* Bilan du mois */}
         <div className={`mt-4 rounded-lg p-4 border ${
           stats.netChange >= 0 
-            ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-blue-950 border-primary-orange-200' 
+            ? 'bg-green-50 dark:bg-green-950 border-green-200' 
             : 'bg-red-50 dark:bg-red-950 border-red-200'
         }`}>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Bilan du mois</span>
             <div className="flex items-center gap-2">
               {stats.netChange >= 0 ? (
-                <TrendingUp className="h-5 w-5 text-primary-orange-600" />
+                <TrendingUp className="h-5 w-5 text-green-600" />
               ) : (
                 <TrendingDown className="h-5 w-5 text-red-600" />
               )}
               <span className={`text-xl font-bold ${
-                stats.netChange >= 0 ? 'text-primary-orange-600' : 'text-red-600'
+                stats.netChange >= 0 ? 'text-green-600' : 'text-red-600'
               }`}>
                 {stats.netChange >= 0 ? '+' : ''}{formatCurrency(stats.netChange)}
               </span>

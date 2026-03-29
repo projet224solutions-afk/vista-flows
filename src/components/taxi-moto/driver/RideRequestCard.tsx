@@ -38,7 +38,7 @@ export function RideRequestCard({
         locale: fr 
       });
     } catch {
-      return 'Ã€ l\'instant';
+      return 'À l\'instant';
     }
   })();
 
@@ -48,22 +48,22 @@ export function RideRequestCard({
       "bg-gradient-to-br from-gray-800/90 to-gray-900/90",
       "backdrop-blur-sm",
       "rounded-2xl",
-      "border border-primary-orange-500/20",
+      "border border-emerald-500/20",
       "shadow-xl shadow-black/20",
       "animate-in slide-in-from-bottom-4 fade-in duration-300"
     )}>
       {/* Top accent gradient */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-blue-400 via-primary-blue-500 to-primary-orange-500" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
       
       {/* Glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
       
       {/* Content */}
       <div className="relative p-4 space-y-4">
         {/* Header: Customer & Time */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-blue-400 to-primary-orange-600 flex items-center justify-center shadow-lg shadow-primary-orange-500/20">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
               <User className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -75,9 +75,9 @@ export function RideRequestCard({
           </div>
           
           {/* Earnings badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-blue-500/20 border border-primary-orange-500/30">
-            <Zap className="w-4 h-4 text-primary-blue-400" />
-            <span className="text-primary-blue-400 font-bold text-sm">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30">
+            <Zap className="w-4 h-4 text-emerald-400" />
+            <span className="text-emerald-400 font-bold text-sm">
               {(request.estimatedEarnings || 0).toLocaleString()} GNF
             </span>
           </div>
@@ -87,8 +87,8 @@ export function RideRequestCard({
         <div className="space-y-2">
           {/* Pickup */}
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary-blue-500/20 flex items-center justify-center flex-shrink-0">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary-blue-400" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-gray-500 text-[10px] uppercase tracking-wide mb-0.5">Prise en charge</p>
@@ -99,7 +99,7 @@ export function RideRequestCard({
           {/* Route line */}
           <div className="flex items-center gap-3">
             <div className="w-8 flex justify-center">
-              <div className="w-0.5 h-4 bg-gradient-to-b from-primary-blue-500 to-orange-500 rounded-full" />
+              <div className="w-0.5 h-4 bg-gradient-to-b from-emerald-500 to-orange-500 rounded-full" />
             </div>
           </div>
           
@@ -145,9 +145,9 @@ export function RideRequestCard({
             disabled={isAccepting}
             className={cn(
               "flex-1 h-12 rounded-xl font-semibold",
-              "bg-gradient-to-r from-primary-blue-500 to-primary-orange-600",
-              "hover:from-primary-blue-400 hover:to-primary-orange-500",
-              "text-white shadow-lg shadow-primary-orange-500/30",
+              "bg-gradient-to-r from-emerald-500 to-emerald-600",
+              "hover:from-emerald-400 hover:to-emerald-500",
+              "text-white shadow-lg shadow-emerald-500/30",
               "transition-all",
               "disabled:opacity-70"
             )}

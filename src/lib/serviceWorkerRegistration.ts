@@ -80,24 +80,13 @@ function showUpdateMessage() {
 
   const alertBox = document.createElement("div");
   alertBox.id = "pwa-update-banner";
-
-  const left = document.createElement("div");
-  left.style.cssText = "display:flex;align-items:center;gap:12px";
-
-  const icon = document.createElement("span");
-  icon.textContent = "🔄";
-
-  const text = document.createElement("span");
-  text.textContent = "Nouvelle version disponible";
-
-  left.append(icon, text);
-
-  const updateBtn = document.createElement("button");
-  updateBtn.id = "pwa-update-btn";
-  updateBtn.textContent = "Actualiser";
-  updateBtn.style.cssText = "background:white;color:#023288;border:none;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px";
-
-  alertBox.append(left, updateBtn);
+  alertBox.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px">
+      <span>🔄</span>
+      <span>Nouvelle version disponible</span>
+    </div>
+    <button id="pwa-update-btn" style="background:white;color:#023288;border:none;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px">Actualiser</button>
+  `;
   alertBox.style.cssText = `
     position:fixed;bottom:20px;left:20px;right:20px;max-width:400px;margin:0 auto;
     padding:12px 16px;background:#023288;color:white;border-radius:12px;z-index:99999;

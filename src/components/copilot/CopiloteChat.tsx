@@ -25,31 +25,10 @@ import {
   Clock
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useVendorCopilot } from '@/hooks/useVendorCopilot';
 import ReactMarkdown from 'react-markdown';
-
-const sanitizeMarkdownUrl = (url: string): string => {
-  const trimmed = url.trim();
-
-  if (trimmed.startsWith('/') || trimmed.startsWith('#')) {
-    return trimmed;
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-    const protocol = parsed.protocol.toLowerCase();
-    if (protocol === 'http:' || protocol === 'https:' || protocol === 'mailto:') {
-      return trimmed;
-    }
-  } catch {
-    return '#';
-  }
-
-  return '#';
-};
 
 interface Message {
   id: string;
@@ -78,7 +57,6 @@ const generateSessionId = () => {
 
 export default function CopiloteChat({ className = '', height = '600px', userRole = 'client' }: CopiloteChatProps) {
   const { user } = useAuth();
-  const { t, language } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -131,18 +109,18 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: t('copilot.welcome.vendor'),
+        content: '👋 Bienvenue dans votre espace vendeur ! Je peux analyser vos ventes, optimiser votre inventaire ou répondre à vos questions sur votre boutique. Dites-moi ce que vous souhaitez faire.',
         timestamp: new Date().toISOString(),
       }]);
     } else if (messages.length === 0 && userRole === 'client') {
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: t('copilot.welcome.client'),
+        content: '👋 Bienvenue ! Je suis votre conseiller 224Solutions. Je peux vous aider avec votre compte, vos transactions, vos commandes ou vos achats. Dites-moi ce dont vous avez besoin.',
         timestamp: new Date().toISOString(),
       }]);
     }
-  }, [userRole, useEnterpriseMode, messages.length, t]);
+  }, [userRole, useEnterpriseMode, messages.length]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -237,7 +215,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
         // La synchronisation est gérée par le useEffect
       } catch (err: any) {
         console.error('❌ Erreur Copilote Enterprise:', err);
-        toast.error(err.message || t('copilot.errors.analysisError'));
+        toast.error(err.message || 'Erreur lors de l\'analyse');
       } finally {
         setIsLoading(false);
         setIsTyping(false);
@@ -249,7 +227,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
     const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData.session?.access_token;
     if (!accessToken) {
-      toast.error(t('copilot.errors.loginRequired'));
+      toast.error('Veuillez vous connecter pour utiliser le Copilote');
       return;
     }
 
@@ -324,21 +302,21 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
             errMsg.toLowerCase().includes('vendeur non trouvé')
           ) {
             setVendorAccess({ loading: false, hasVendor: false });
-            throw new Error(t('copilot.errors.vendorNotLinked'));
+            throw new Error("Votre compte n'est pas associé à une boutique (vendeur introuvable). Connectez-vous avec un compte vendeur ou créez votre boutique.");
           }
-          throw new Error(errMsg || t('copilot.errors.unauthorized'));
+          throw new Error(errMsg || 'Non autorisé. Vérifiez que vous êtes connecté et que votre compte est bien un vendeur.');
         }
         if (response.status === 403) {
-          throw new Error(errMsg || t('copilot.errors.forbidden'));
+          throw new Error(errMsg || 'Accès refusé.');
         }
         if (response.status === 429) {
-          throw new Error(errMsg || t('copilot.errors.rateLimited'));
+          throw new Error(errMsg || 'Limite de requêtes atteinte. Veuillez réessayer dans quelques instants.');
         }
         if (response.status === 402) {
-          throw new Error(errMsg || t('copilot.errors.insufficientCredits'));
+          throw new Error(errMsg || 'Crédits insuffisants pour l\'IA.');
         }
 
-        throw new Error(errMsg || t('copilot.errors.communication'));
+        throw new Error(errMsg || 'Erreur de communication avec l\'IA');
       }
 
       // Parser le stream SSE
@@ -423,7 +401,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: error instanceof Error ? error.message : t('copilot.errors.technical'),
+        content: error instanceof Error ? error.message : 'Désolé, je rencontre une difficulté technique. Veuillez réessayer.',
         timestamp: new Date().toISOString()
       };
 
@@ -434,7 +412,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
         }
         return [...prev, errorMessage];
       });
-      toast.error(error instanceof Error ? error.message : t('copilot.errors.communication'));
+      toast.error(error instanceof Error ? error.message : 'Erreur de communication avec le Copilote');
     } finally {
       console.log('🔄 Copilote: Fin du traitement');
       setIsLoading(false);
@@ -463,10 +441,10 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       setSessionId(newSession);
       console.log(`🔄 Nouvelle session créée: ${newSession}`);
       
-      toast.success(t('copilot.toast.historyReset'));
+      toast.success('Conversation réinitialisée');
     } catch (error) {
       console.error('Erreur lors de l\'effacement:', error);
-      toast.error(t('copilot.toast.historyResetError'));
+      toast.error('Erreur lors de l\'effacement de l\'historique');
     }
   };
 
@@ -478,8 +456,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
   };
 
   const formatTime = (timestamp: string) => {
-    const locale = language === 'ar' ? 'ar' : language === 'en' ? 'en-US' : 'fr-FR';
-    return new Date(timestamp).toLocaleTimeString(locale, {
+    return new Date(timestamp).toLocaleTimeString('fr-FR', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -492,16 +469,15 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return t('copilot.dates.today');
+      return 'Aujourd\'hui';
     } else if (date.toDateString() === yesterday.toDateString()) {
-      return t('copilot.dates.yesterday');
+      return 'Hier';
     } else {
-      const locale = language === 'ar' ? 'ar' : language === 'en' ? 'en-US' : 'fr-FR';
-      return date.toLocaleDateString(locale);
+      return date.toLocaleDateString('fr-FR');
     }
   };
 
-  const roleLabel = userRole === 'vendeur' ? t('copilot.role.vendor') : t('copilot.role.client');
+  const roleLabel = userRole === 'vendeur' ? 'Vendeur' : 'Client';
   const roleColor = userRole === 'vendeur' ? 'from-primary to-brand-blue-deep' : 'from-vendeur-secondary to-brand-orange-dark';
 
   return (
@@ -516,7 +492,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                   <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full border-2 border-background"></div>
+              <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background"></div>
             </div>
             <div className="min-w-0 flex-1">
               <CardTitle className="text-sm sm:text-lg flex items-center gap-1 flex-wrap">
@@ -525,7 +501,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                 <Badge variant="outline" className="text-[10px] sm:text-xs flex-shrink-0">{roleLabel}</Badge>
               </CardTitle>
               <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                {t('copilot.subtitle', { role: roleLabel.toLowerCase() })}
+                Assistant IA dédié {roleLabel.toLowerCase()}
               </p>
             </div>
           </div>
@@ -570,13 +546,13 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">{t('copilot.empty.title')}</h3>
+                <h3 className="text-lg font-semibold mb-2">Bienvenue chez Copilote 224</h3>
                 <p className="text-muted-foreground mb-4">
                   {userRole === 'vendeur' 
                     ? useEnterpriseMode 
-                      ? t('copilot.empty.vendorEnterpriseDesc')
-                      : t('copilot.empty.vendorStandardDesc')
-                    : t('copilot.empty.clientDesc')}
+                      ? '🚀 Je suis votre IA ENTERPRISE de 224Solutions. Je peux analyser en profondeur TOUTE votre interface vendeur.'
+                      : 'Je suis votre assistant pour gérer votre boutique, produits et ventes.'
+                    : 'Je suis votre assistant pour vos achats, commandes et wallet.'}
                 </p>
                 <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
                   {userRole === 'vendeur' ? (
@@ -584,38 +560,38 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                       <>
                         <div className="flex items-center space-x-2">
                           <span>📊</span>
-                          <span>{t('copilot.features.vendorEnterprise.analysis')}</span>
+                          <span>Analyse complète de l'interface (produits, ventes, clients, finances...)</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>💡</span>
-                          <span>{t('copilot.features.vendorEnterprise.recommendations')}</span>
+                          <span>Recommandations intelligentes basées sur vos données</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>📈</span>
-                          <span>{t('copilot.features.vendorEnterprise.dashboards')}</span>
+                          <span>Tableaux de bord et insights professionnels</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>🎯</span>
-                          <span>{t('copilot.features.vendorEnterprise.alerts')}</span>
+                          <span>Scores de santé et alertes prioritaires</span>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="flex items-center space-x-2">
                           <span>📦</span>
-                          <span>{t('copilot.features.vendorStandard.products')}</span>
+                          <span>Gestion des produits</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>📊</span>
-                          <span>{t('copilot.features.vendorStandard.sales')}</span>
+                          <span>Analyse des ventes</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>👥</span>
-                          <span>{t('copilot.features.vendorStandard.customers')}</span>
+                          <span>Gestion des clients</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>💰</span>
-                          <span>{t('copilot.features.vendorStandard.finances')}</span>
+                          <span>Finances et paiements</span>
                         </div>
                       </>
                     )
@@ -623,19 +599,19 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                     <>
                       <div className="flex items-center space-x-2">
                         <span>💬</span>
-                        <span>{t('copilot.features.client.chat')}</span>
+                        <span>Chat en temps réel</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <span>💰</span>
-                        <span>{t('copilot.features.client.wallet')}</span>
+                        <span>Gestion de votre wallet</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <span>📦</span>
-                        <span>{t('copilot.features.client.orders')}</span>
+                        <span>Suivi des commandes</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <span>🔧</span>
-                        <span>{t('copilot.features.client.support')}</span>
+                        <span>Aide technique</span>
                       </div>
                     </>
                   )}
@@ -681,27 +657,16 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                         {/* NOUVEAU: Support Markdown pour mode Enterprise */}
                         {!isUser && useEnterpriseMode ? (
                           <div className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm [&_p]:mb-1.5 [&_ul]:my-1 [&_li]:my-0.5 [&_a]:break-all [&_*]:max-w-full overflow-hidden">
-                            <ReactMarkdown
-                              skipHtml
-                              urlTransform={(url) => sanitizeMarkdownUrl(url)}
-                              components={{
-                                a: ({ node: _node, ...props }) => (
-                                  <a
-                                    {...props}
-                                    target="_blank"
-                                    rel="noopener noreferrer nofollow"
-                                  />
-                                ),
-                              }}
-                            >
-                              {message.content}
-                            </ReactMarkdown>
+                            <ReactMarkdown>{message.content}</ReactMarkdown>
                           </div>
                         ) : (
                           <p className="text-xs sm:text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">{message.content}</p>
                         )}
                         <p className="text-[10px] sm:text-xs mt-1 opacity-70">
-                          {formatTime(message.timestamp)}
+                          {new Date(message.timestamp).toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </p>
                       </div>
                     </div>
@@ -720,7 +685,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                   <div className="bg-muted rounded-2xl px-4 py-3">
                     <div className="flex items-center space-x-1">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">{t('copilot.typing')}</span>
+                      <span className="text-sm text-muted-foreground">Copilote 224 réfléchit...</span>
                     </div>
                   </div>
                 </div>
@@ -737,9 +702,9 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       <div className="p-2 sm:p-4">
         {userRole === 'vendeur' && vendorAccess.hasVendor === false && (
           <div className="mb-2 rounded-lg border border-border bg-muted/50 p-2 text-xs sm:text-sm">
-            <div className="font-medium">{t('copilot.vendorAccess.requiredTitle')}</div>
+            <div className="font-medium">Accès vendeur requis</div>
             <div className="text-muted-foreground">
-              {t('copilot.vendorAccess.requiredDescription')}
+              Votre compte n'est pas associé à une boutique.
             </div>
           </div>
         )}
@@ -750,7 +715,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={t('copilot.input.placeholder')}
+            placeholder="Tapez votre message..."
             disabled={
               isLoading ||
               (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
@@ -776,7 +741,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
         </div>
 
         <div className="mt-1.5 text-[10px] sm:text-xs text-muted-foreground text-center hidden sm:block">
-          {t('copilot.input.hint')}
+          Appuyez sur Entrée pour envoyer • Shift+Entrée pour une nouvelle ligne
         </div>
       </div>
     </Card>

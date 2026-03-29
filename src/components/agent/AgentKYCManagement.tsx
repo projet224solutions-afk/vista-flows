@@ -96,7 +96,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
       
       if (error) throw error;
       
-      toast.success(`KYC de ${vendor.business_name} validÃ© avec succÃ¨s`);
+      toast.success(`KYC de ${vendor.business_name} validé avec succès`);
       loadVendors();
       setIsDialogOpen(false);
     } catch (error: any) {
@@ -131,7 +131,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
       
       if (error) throw error;
       
-      toast.success(`KYC de ${vendor.business_name} rejetÃ©`);
+      toast.success(`KYC de ${vendor.business_name} rejeté`);
       loadVendors();
       setIsDialogOpen(false);
       setRejectionReason('');
@@ -146,9 +146,9 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-primary-orange-100 text-primary-orange-700 border-primary-orange-200">VÃ©rifiÃ©</Badge>;
+        return <Badge className="bg-green-100 text-green-700 border-green-200">Vérifié</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-100 text-red-700 border-red-200">RejetÃ©</Badge>;
+        return <Badge className="bg-red-100 text-red-700 border-red-200">Rejeté</Badge>;
       default:
         return <Badge className="bg-amber-100 text-amber-700 border-amber-200">En attente</Badge>;
     }
@@ -190,15 +190,15 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
               <p className="text-2xl font-bold text-amber-700">{stats.pending}</p>
               <p className="text-sm text-amber-600">En attente</p>
             </div>
-            <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-4 text-center">
-              <CheckCircle className="w-6 h-6 text-primary-orange-600 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-primary-orange-700">{stats.verified}</p>
-              <p className="text-sm text-primary-orange-600">VÃ©rifiÃ©s</p>
+            <div className="bg-green-50 rounded-lg p-4 text-center">
+              <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-green-700">{stats.verified}</p>
+              <p className="text-sm text-green-600">Vérifiés</p>
             </div>
             <div className="bg-red-50 rounded-lg p-4 text-center">
               <XCircle className="w-6 h-6 text-red-600 mx-auto mb-2" />
               <p className="text-2xl font-bold text-red-700">{stats.rejected}</p>
-              <p className="text-sm text-red-600">RejetÃ©s</p>
+              <p className="text-sm text-red-600">Rejetés</p>
             </div>
           </div>
 
@@ -206,7 +206,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Rechercher par nom, email ou tÃ©lÃ©phone..."
+              placeholder="Rechercher par nom, email ou téléphone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -220,10 +220,10 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
                 En attente ({stats.pending})
               </TabsTrigger>
               <TabsTrigger value="verified" className="flex-1">
-                VÃ©rifiÃ©s ({stats.verified})
+                Vérifiés ({stats.verified})
               </TabsTrigger>
               <TabsTrigger value="rejected" className="flex-1">
-                RejetÃ©s ({stats.rejected})
+                Rejetés ({stats.rejected})
               </TabsTrigger>
             </TabsList>
 
@@ -235,7 +235,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
               ) : filteredVendors.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucun vendeur dans cette catÃ©gorie</p>
+                  <p>Aucun vendeur dans cette catégorie</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[400px]">
@@ -266,7 +266,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
                             }}
                           >
                             <Eye className="w-4 h-4 mr-1" />
-                            {canManage ? 'GÃ©rer' : 'Voir'}
+                            {canManage ? 'Gérer' : 'Voir'}
                           </Button>
                         </div>
                       </div>
@@ -279,13 +279,13 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
         </CardContent>
       </Card>
 
-      {/* Dialog dÃ©tail */}
+      {/* Dialog détail */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
-              DÃ©tails KYC - {selectedVendor?.business_name}
+              Détails KYC - {selectedVendor?.business_name}
             </DialogTitle>
           </DialogHeader>
           
@@ -305,7 +305,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
                   <p className="font-medium">{selectedVendor.email}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">TÃ©lÃ©phone</p>
+                  <p className="text-sm text-muted-foreground">Téléphone</p>
                   <p className="font-medium">{selectedVendor.phone || 'N/A'}</p>
                 </div>
                 <div className="space-y-1">
@@ -316,7 +316,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
                 </div>
                 {selectedVendor.kyc_verified_at && (
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">VÃ©rifiÃ© le</p>
+                    <p className="text-sm text-muted-foreground">Vérifié le</p>
                     <p className="font-medium">
                       {format(new Date(selectedVendor.kyc_verified_at), 'dd MMM yyyy', { locale: fr })}
                     </p>
@@ -348,7 +348,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
                     <Button
                       onClick={() => handleApprove(selectedVendor)}
                       disabled={processing}
-                      className="bg-primary-orange-600 hover:bg-primary-orange-700"
+                      className="bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Valider KYC

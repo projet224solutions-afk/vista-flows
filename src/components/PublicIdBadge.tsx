@@ -1,5 +1,5 @@
 /**
- * ðŸ”§ COMPOSANT: BADGE D'AFFICHAGE ID PUBLIC
+ * 🔧 COMPOSANT: BADGE D'AFFICHAGE ID PUBLIC
  * Affiche un ID public au format LLLDDDD avec style
  */
 
@@ -42,7 +42,7 @@ export function PublicIdBadge({
     try {
       await navigator.clipboard.writeText(formattedId);
       setCopied(true);
-      toast.success(`ID copiÃ©: ${formattedId}`);
+      toast.success(`ID copié: ${formattedId}`);
       
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
@@ -72,7 +72,7 @@ export function PublicIdBadge({
       <span>{formattedId}</span>
       {copyable && (
         copied ? (
-          <Check className="w-3 h-3 text-primary-orange-600" />
+          <Check className="w-3 h-3 text-green-600" />
         ) : (
           <Copy className="w-3 h-3 opacity-60" />
         )

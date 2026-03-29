@@ -1,7 +1,7 @@
 /**
- * ðŸ“¥ PAGE DE TÃ‰LÃ‰CHARGEMENT / ACCÃˆS PRODUIT NUMÃ‰RIQUE
- * GÃ¨re les achats uniques ET les abonnements actifs
- * InspirÃ© de Gumroad / Teachable / Payhip
+ * 📥 PAGE DE TÉLÉCHARGEMENT / ACCÈS PRODUIT NUMÉRIQUE
+ * Gère les achats uniques ET les abonnements actifs
+ * Inspiré de Gumroad / Teachable / Payhip
  */
 
 import { useEffect, useState } from 'react';
@@ -61,7 +61,7 @@ function getFileIcon(url: string) {
   if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(ext)) return <Music className="w-5 h-5 text-purple-500" />;
   if (['mp4', 'webm', 'avi', 'mov', 'mkv'].includes(ext)) return <Video className="w-5 h-5 text-red-500" />;
   if (['pdf', 'doc', 'docx', 'txt', 'epub'].includes(ext)) return <FileText className="w-5 h-5 text-orange-500" />;
-  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return <Package className="w-5 h-5 text-primary-orange-500" />;
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return <Package className="w-5 h-5 text-green-500" />;
   return <Package className="w-5 h-5 text-muted-foreground" />;
 }
 
@@ -76,7 +76,7 @@ function getFileName(url: string): string {
 }
 
 function getFileSize(url: string): string {
-  // Placeholder â€” in production, store file sizes in DB
+  // Placeholder — in production, store file sizes in DB
   return '';
 }
 
@@ -166,7 +166,7 @@ export default function DigitalPurchaseDownload() {
           setTimeout(() => loadAccessAndProduct(retryCount + 1), 1500);
           return;
         }
-        toast.error('Achat non trouvÃ© ou accÃ¨s non accordÃ©');
+        toast.error('Achat non trouvé ou accès non accordé');
         navigate('/marketplace');
         return;
       }
@@ -212,12 +212,12 @@ export default function DigitalPurchaseDownload() {
 
   const handleDownload = async (fileUrl: string) => {
     if (!access || !access.access_granted) {
-      toast.error('AccÃ¨s non autorisÃ©');
+      toast.error('Accès non autorisé');
       return;
     }
 
     if (access.type === 'purchase' && access.max_downloads && access.download_count >= access.max_downloads) {
-      toast.error(`Limite de tÃ©lÃ©chargement atteinte (${access.max_downloads} max)`);
+      toast.error(`Limite de téléchargement atteinte (${access.max_downloads} max)`);
       return;
     }
 
@@ -233,11 +233,11 @@ export default function DigitalPurchaseDownload() {
         setAccess(prev => prev ? { ...prev, download_count: (prev.download_count || 0) + 1 } : prev);
       }
 
-      window.open(fileUrl, '_blank', 'noopener,noreferrer');
-      toast.success('TÃ©lÃ©chargement lancÃ© !');
+      window.open(fileUrl, '_blank');
+      toast.success('Téléchargement lancé !');
     } catch (error) {
-      console.error('Erreur tÃ©lÃ©chargement:', error);
-      toast.error('Erreur lors du tÃ©lÃ©chargement');
+      console.error('Erreur téléchargement:', error);
+      toast.error('Erreur lors du téléchargement');
     } finally {
       setDownloading(null);
     }
@@ -247,7 +247,7 @@ export default function DigitalPurchaseDownload() {
     const explicitFiles = Array.isArray(product?.file_urls) ? product.file_urls.filter(Boolean) : [];
     if (explicitFiles.length > 0) return explicitFiles;
 
-    // CompatibilitÃ© rÃ©troactive: produits crÃ©Ã©s avec vidÃ©o uniquement
+    // Compatibilité rétroactive: produits créés avec vidéo uniquement
     const fallbackVideoUrl = (product as any)?.video_url;
     return fallbackVideoUrl ? [fallbackVideoUrl] : [];
   })();
@@ -275,9 +275,9 @@ export default function DigitalPurchaseDownload() {
         <Card className="max-w-md w-full">
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
-            <h2 className="text-xl font-semibold mb-2">Achat non trouvÃ©</h2>
+            <h2 className="text-xl font-semibold mb-2">Achat non trouvé</h2>
             <p className="text-muted-foreground mb-4">
-              Vous n'avez pas accÃ¨s Ã  ce produit ou l'achat n'a pas Ã©tÃ© finalisÃ©.
+              Vous n'avez pas accès à ce produit ou l'achat n'a pas été finalisé.
             </p>
             <div className="flex gap-3 justify-center">
               <Button variant="outline" onClick={() => navigate('/marketplace')}>
@@ -311,16 +311,16 @@ export default function DigitalPurchaseDownload() {
 
         {/* Success Banner - animated, auto-hides */}
         {showSuccess && (
-          <Card className="border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5 animate-in fade-in slide-in-from-top-2 duration-500">
+          <Card className="border-green-500/30 bg-green-500/5 animate-in fade-in slide-in-from-top-2 duration-500">
             <CardContent className="p-5 text-center">
-              <CheckCircle className="w-12 h-12 text-primary-orange-500 mx-auto mb-3" />
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
               <h1 className="text-xl font-bold text-foreground mb-1">
-                {isSubscription ? 'Abonnement activÃ© !' : 'Achat rÃ©ussi !'}
+                {isSubscription ? 'Abonnement activé !' : 'Achat réussi !'}
               </h1>
               <p className="text-sm text-muted-foreground">
                 {isSubscription 
                   ? `Votre abonnement ${access.billing_cycle === 'yearly' ? 'annuel' : 'mensuel'} est maintenant actif.`
-                  : <>Votre paiement de <LocalPrice amount={access.amount} currency={product.currency || 'GNF'} /> a Ã©tÃ© confirmÃ©.</>
+                  : <>Votre paiement de <LocalPrice amount={access.amount} currency={product.currency || 'GNF'} /> a été confirmé.</>
                 }
               </p>
             </CardContent>
@@ -332,9 +332,9 @@ export default function DigitalPurchaseDownload() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                isSubscription ? 'bg-primary/10' : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10'
+                isSubscription ? 'bg-primary/10' : 'bg-green-500/10'
               }`}>
-                {isSubscription ? <RefreshCw className="w-5 h-5 text-primary" /> : <Shield className="w-5 h-5 text-primary-orange-500" />}
+                {isSubscription ? <RefreshCw className="w-5 h-5 text-primary" /> : <Shield className="w-5 h-5 text-green-500" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -344,11 +344,11 @@ export default function DigitalPurchaseDownload() {
                   <Badge variant="outline" className={
                     isSubscription 
                       ? 'bg-primary/10 text-primary border-primary/20 text-xs' 
-                      : 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20 text-xs'
+                      : 'bg-green-500/10 text-green-600 border-green-500/20 text-xs'
                   }>
                     {isSubscription 
                       ? (access.billing_cycle === 'yearly' ? 'Annuel' : 'Mensuel')
-                      : 'ComplÃ©tÃ©'
+                      : 'Complété'
                     }
                   </Badge>
                 </div>
@@ -363,7 +363,7 @@ export default function DigitalPurchaseDownload() {
                 ) : access.max_downloads ? (
                   <div className="mt-1">
                     <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>{access.download_count || 0} / {access.max_downloads} tÃ©lÃ©chargements</span>
+                      <span>{access.download_count || 0} / {access.max_downloads} téléchargements</span>
                       <span>{Math.round(downloadProgress)}%</span>
                     </div>
                     <Progress value={downloadProgress} className="h-1.5" />
@@ -371,7 +371,7 @@ export default function DigitalPurchaseDownload() {
                 ) : (
                   <p className="text-xs text-muted-foreground mt-0.5">
                     <Infinity className="w-3 h-3 inline mr-1" />
-                    TÃ©lÃ©chargements illimitÃ©s
+                    Téléchargements illimités
                   </p>
                 )}
               </div>
@@ -421,7 +421,7 @@ export default function DigitalPurchaseDownload() {
               {hasFiles && fileUrls.length > 1 && (
                 <Button size="sm" variant="outline" onClick={handleDownloadAll} className="text-xs">
                   <Download className="w-3 h-3 mr-1" />
-                  Tout tÃ©lÃ©charger
+                  Tout télécharger
                 </Button>
               )}
             </div>
@@ -456,7 +456,7 @@ export default function DigitalPurchaseDownload() {
                     ) : (
                       <>
                         <Download className="w-4 h-4 mr-1" />
-                        TÃ©lÃ©charger
+                        Télécharger
                       </>
                     )}
                   </Button>
@@ -465,10 +465,10 @@ export default function DigitalPurchaseDownload() {
             ) : (
               <div className="text-center py-10 text-muted-foreground">
                 <Clock className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium text-foreground/70">Contenu en prÃ©paration</p>
+                <p className="font-medium text-foreground/70">Contenu en préparation</p>
                 <p className="text-xs mt-1 max-w-xs mx-auto">
-                  Le vendeur n'a pas encore ajoutÃ© les fichiers tÃ©lÃ©chargeables. 
-                  Ils seront disponibles ici dÃ¨s qu'ils seront mis en ligne.
+                  Le vendeur n'a pas encore ajouté les fichiers téléchargeables. 
+                  Ils seront disponibles ici dès qu'ils seront mis en ligne.
                 </p>
                 <Button 
                   variant="ghost" 
@@ -477,7 +477,7 @@ export default function DigitalPurchaseDownload() {
                   onClick={() => loadAccessAndProduct()}
                 >
                   <RefreshCw className="w-3 h-3 mr-1" />
-                  VÃ©rifier Ã  nouveau
+                  Vérifier à nouveau
                 </Button>
               </div>
             )}

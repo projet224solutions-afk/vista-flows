@@ -40,7 +40,7 @@ interface TicketMessage {
 const statusColors = {
   open: 'bg-blue-500',
   in_progress: 'bg-yellow-500',
-  resolved: 'bg-gradient-to-r from-primary-blue-500 to-primary-orange-500',
+  resolved: 'bg-green-500',
   closed: 'bg-gray-500',
 };
 

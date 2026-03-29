@@ -21,7 +21,7 @@ export default function PDGSystemMaintenance() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'operational':
-        return <CheckCircle className="w-5 h-5 text-primary-orange-500" />;
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
       case 'degraded':
         return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
       case 'down':
@@ -34,9 +34,9 @@ export default function PDGSystemMaintenance() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'operational':
-        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">OpÃ©rationnel</Badge>;
+        return <Badge className="bg-green-500">Opérationnel</Badge>;
       case 'degraded':
-        return <Badge className="bg-yellow-500">DÃ©gradÃ©</Badge>;
+        return <Badge className="bg-yellow-500">Dégradé</Badge>;
       case 'down':
         return <Badge className="bg-red-500">Hors ligne</Badge>;
       default:
@@ -46,10 +46,10 @@ export default function PDGSystemMaintenance() {
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold">Maintenance SystÃ¨me</h2>
+          <h2 className="text-3xl font-bold">Maintenance Système</h2>
           <p className="text-muted-foreground mt-1">Surveillance et gestion de l'infrastructure</p>
         </div>
         <Button onClick={checkServicesStatus} disabled={loading}>
@@ -58,7 +58,7 @@ export default function PDGSystemMaintenance() {
         </Button>
       </div>
 
-      {/* Statistiques Base de DonnÃ©es */}
+      {/* Statistiques Base de Données */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -89,7 +89,7 @@ export default function PDGSystemMaintenance() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dbStats.storageUsed}</div>
-            <p className="text-xs text-muted-foreground mt-1">espace utilisÃ©</p>
+            <p className="text-xs text-muted-foreground mt-1">espace utilisé</p>
           </CardContent>
         </Card>
 
@@ -100,7 +100,7 @@ export default function PDGSystemMaintenance() {
           </CardHeader>
           <CardContent>
             <div className="text-sm font-bold">{dbStats.lastBackup || 'Jamais'}</div>
-            <p className="text-xs text-muted-foreground mt-1">sauvegarde systÃ¨me</p>
+            <p className="text-xs text-muted-foreground mt-1">sauvegarde système</p>
           </CardContent>
         </Card>
       </div>
@@ -125,8 +125,8 @@ export default function PDGSystemMaintenance() {
                   <div>
                     <h3 className="font-medium">{service.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Uptime: {service.uptime} â€¢ {service.lastCheck}
-                      {service.responseTime && ` â€¢ ${service.responseTime}ms`}
+                      Uptime: {service.uptime} • {service.lastCheck}
+                      {service.responseTime && ` • ${service.responseTime}ms`}
                     </p>
                   </div>
                 </div>
@@ -136,14 +136,14 @@ export default function PDGSystemMaintenance() {
             {services.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <Server className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun service surveillÃ©</p>
+                <p>Aucun service surveillé</p>
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Audit des IDs SystÃ¨me */}
+      {/* Audit des IDs Système */}
       <IdAuditManager />
 
       {/* Actions de maintenance */}
@@ -152,7 +152,7 @@ export default function PDGSystemMaintenance() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Database className="w-5 h-5" />
-              Base de donnÃ©es
+              Base de données
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -197,7 +197,7 @@ export default function PDGSystemMaintenance() {
               onClick={checkServicesStatus}
               disabled={loading}
             >
-              VÃ©rifier Statut
+              Vérifier Statut
             </Button>
             <Button
               variant="outline"
@@ -205,7 +205,7 @@ export default function PDGSystemMaintenance() {
               onClick={optimizeDatabase}
               disabled={loading}
             >
-              RafraÃ®chir Stats
+              Rafraîchir Stats
             </Button>
             <Button
               variant="outline"
@@ -275,7 +275,7 @@ export default function PDGSystemMaintenance() {
                       <p className="text-xs text-muted-foreground">{log.timestamp}</p>
                     </div>
                   </div>
-                  <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">SuccÃ¨s</Badge>
+                  <Badge className="bg-green-500">Succès</Badge>
                 </div>
               ))}
             </div>

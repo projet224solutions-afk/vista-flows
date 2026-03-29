@@ -108,7 +108,7 @@ export default function ClientManagement() {
 
       const vipClients = processedClients.filter(client => {
         const clientRevenue = client.orders.reduce((sum, order) => sum + order.total_amount, 0);
-        return clientRevenue > 0; // VIP si plus de 0 GNF dÃ©pensÃ©s
+        return clientRevenue > 0; // VIP si plus de 0 GNF dépensés
       }).length;
 
       const activeClients = processedClients.filter(client => {
@@ -133,7 +133,7 @@ export default function ClientManagement() {
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de charger les donnÃ©es clients.",
+        description: "Impossible de charger les données clients.",
         variant: "destructive"
       });
     } finally {
@@ -155,15 +155,15 @@ export default function ClientManagement() {
     switch (type) {
       case 'vip': return 'VIP';
       case 'new': return 'Nouveau';
-      case 'regular': return 'RÃ©gulier';
-      default: return 'RÃ©gulier';
+      case 'regular': return 'Régulier';
+      default: return 'Régulier';
     }
   };
 
   const getClientTypeColor = (type: string) => {
     switch (type) {
       case 'vip': return 'bg-yellow-100 text-yellow-800';
-      case 'new': return 'bg-primary-orange-100 text-primary-orange-800';
+      case 'new': return 'bg-green-100 text-green-800';
       case 'regular': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -189,13 +189,13 @@ export default function ClientManagement() {
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <div className="min-w-0">
           <h2 className="text-lg sm:text-2xl font-bold truncate">Gestion des Clients</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">GÃ©rez vos relations clients</p>
+          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">Gérez vos relations clients</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm" onClick={() => {
             toast({
-              title: "Fonction en dÃ©veloppement",
-              description: "La fonctionnalitÃ© de contact groupÃ© sera bientÃ´t disponible."
+              title: "Fonction en développement",
+              description: "La fonctionnalité de contact groupé sera bientôt disponible."
             });
           }}>
             <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -204,7 +204,7 @@ export default function ClientManagement() {
           <Button variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm" onClick={() => {
             toast({
               title: "Newsletter",
-              description: "La fonctionnalitÃ© newsletter sera bientÃ´t disponible."
+              description: "La fonctionnalité newsletter sera bientôt disponible."
             });
           }}>
             <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -229,10 +229,10 @@ export default function ClientManagement() {
         <Card>
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary-orange-600 shrink-0" />
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">Nouveaux (30j)</p>
-                <p className="text-lg sm:text-2xl font-bold text-primary-orange-600">{stats.newClientsThisMonth}</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-600">{stats.newClientsThisMonth}</p>
               </div>
             </div>
           </CardContent>
@@ -262,7 +262,7 @@ export default function ClientManagement() {
         <Card>
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary-orange-600 shrink-0" />
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">CA total</p>
                 <p className="text-base sm:text-xl font-bold truncate">{stats.totalRevenue.toLocaleString()}</p>
@@ -303,7 +303,7 @@ export default function ClientManagement() {
             >
               <option value="all">Tous les clients</option>
               <option value="vip">Clients VIP</option>
-              <option value="regular">Clients rÃ©guliers</option>
+              <option value="regular">Clients réguliers</option>
               <option value="new">Nouveaux clients</option>
             </select>
             <Filter className="w-4 h-4 text-muted-foreground" />
@@ -369,14 +369,14 @@ export default function ClientManagement() {
                     <span className="font-semibold">{orderCount}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Total dÃ©pensÃ©:</span>
+                    <span className="text-sm text-muted-foreground">Total dépensé:</span>
                     <span className="font-semibold text-vendeur-primary">
                       {clientRevenue.toLocaleString()} GNF
                     </span>
                   </div>
                   {lastOrder && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">DerniÃ¨re commande:</span>
+                      <span className="text-sm text-muted-foreground">Dernière commande:</span>
                       <span className="text-sm">
                         {lastOrder.toLocaleDateString('fr-FR')}
                       </span>
@@ -402,7 +402,7 @@ export default function ClientManagement() {
                     } else {
                       toast({
                         title: "Email non disponible",
-                        description: "L'adresse email de ce client n'est pas renseignÃ©e."
+                        description: "L'adresse email de ce client n'est pas renseignée."
                       });
                     }
                   }}>
@@ -431,10 +431,10 @@ export default function ClientManagement() {
           <CardContent className="p-12">
             <div className="text-center">
               <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucun client trouvÃ©</h3>
+              <h3 className="text-lg font-semibold mb-2">Aucun client trouvé</h3>
               <p className="text-muted-foreground">
                 {searchTerm || clientTypeFilter !== 'all' 
-                  ? 'Aucun client ne correspond aux critÃ¨res de recherche.' 
+                  ? 'Aucun client ne correspond aux critères de recherche.' 
                   : 'Vous n\'avez pas encore de clients.'}
               </p>
             </div>
@@ -442,11 +442,11 @@ export default function ClientManagement() {
         </Card>
       )}
 
-      {/* Dialog des dÃ©tails client */}
+      {/* Dialog des détails client */}
       <Dialog open={showClientDialog} onOpenChange={setShowClientDialog}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Profil client dÃ©taillÃ©</DialogTitle>
+            <DialogTitle>Profil client détaillé</DialogTitle>
           </DialogHeader>
           {selectedClient && (
             <div className="space-y-6">
@@ -459,16 +459,16 @@ export default function ClientManagement() {
                     <p className="font-medium">
                       {selectedClient.profile?.first_name && selectedClient.profile?.last_name 
                         ? `${selectedClient.profile.first_name} ${selectedClient.profile.last_name}`
-                        : 'Non renseignÃ©'}
+                        : 'Non renseigné'}
                     </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Email</label>
-                    <p className="font-medium">{selectedClient.profile?.email || 'Non renseignÃ©'}</p>
+                    <p className="font-medium">{selectedClient.profile?.email || 'Non renseigné'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">TÃ©lÃ©phone</label>
-                    <p className="font-medium">{selectedClient.profile?.phone || 'Non renseignÃ©'}</p>
+                    <label className="text-sm font-medium text-muted-foreground">Téléphone</label>
+                    <p className="font-medium">{selectedClient.profile?.phone || 'Non renseigné'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Membre depuis</label>
@@ -490,10 +490,10 @@ export default function ClientManagement() {
                     <p className="text-sm text-muted-foreground">Commandes</p>
                   </div>
                   <div className="text-center p-4 bg-accent rounded-lg">
-                    <p className="text-2xl font-bold text-primary-orange-600">
+                    <p className="text-2xl font-bold text-green-600">
                       {selectedClient.orders.reduce((sum, order) => sum + order.total_amount, 0).toLocaleString()}
                     </p>
-                    <p className="text-sm text-muted-foreground">GNF dÃ©pensÃ©s</p>
+                    <p className="text-sm text-muted-foreground">GNF dépensés</p>
                   </div>
                   <div className="text-center p-4 bg-accent rounded-lg">
                     <p className="text-2xl font-bold text-blue-600">

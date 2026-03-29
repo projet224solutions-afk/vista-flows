@@ -1,5 +1,5 @@
 /**
- * ðŸ” RECHERCHE ET AFFICHAGE COMPLET DES ACTIVITÃ‰S UTILISATEUR
+ * 🔍 RECHERCHE ET AFFICHAGE COMPLET DES ACTIVITÉS UTILISATEUR
  * Permet au PDG de voir TOUT l'historique d'un utilisateur - CONTENU COMPLET
  */
 
@@ -81,7 +81,7 @@ function StatCard({
       </div>
       {trend && (
         <div>
-          {trend === 'up' && <TrendingUp className="h-4 w-4 text-primary-orange-500" />}
+          {trend === 'up' && <TrendingUp className="h-4 w-4 text-green-500" />}
           {trend === 'down' && <TrendingDown className="h-4 w-4 text-red-500" />}
         </div>
       )}
@@ -114,17 +114,17 @@ function MessageDetailDialog({ message }: { message: MessageActivity }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="h-5 w-5" />
-            Message {message.direction === 'sent' ? 'envoyÃ©' : 'reÃ§u'}
+            Message {message.direction === 'sent' ? 'envoyé' : 'reçu'}
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          {/* MÃ©tadonnÃ©es */}
+          {/* Métadonnées */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-muted-foreground">Direction:</span>
-              <Badge className={`ml-2 ${message.direction === 'sent' ? 'bg-blue-100 text-blue-800' : 'bg-primary-orange-100 text-primary-orange-800'}`}>
-                {message.direction === 'sent' ? 'EnvoyÃ©' : 'ReÃ§u'}
+              <Badge className={`ml-2 ${message.direction === 'sent' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                {message.direction === 'sent' ? 'Envoyé' : 'Reçu'}
               </Badge>
             </div>
             <div>
@@ -137,7 +137,7 @@ function MessageDetailDialog({ message }: { message: MessageActivity }) {
             </div>
             <div>
               <span className="text-muted-foreground">Date:</span>
-              <span className="ml-2">{format(new Date(message.created_at), 'dd MMM yyyy Ã  HH:mm', { locale: fr })}</span>
+              <span className="ml-2">{format(new Date(message.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}</span>
             </div>
           </div>
 
@@ -146,7 +146,7 @@ function MessageDetailDialog({ message }: { message: MessageActivity }) {
           {/* IDs */}
           <div className="grid grid-cols-2 gap-4 text-sm font-mono">
             <div>
-              <span className="text-muted-foreground">ExpÃ©diteur:</span>
+              <span className="text-muted-foreground">Expéditeur:</span>
               <p className="text-xs break-all">{message.sender_id}</p>
             </div>
             <div>
@@ -190,16 +190,16 @@ function MessageDetailDialog({ message }: { message: MessageActivity }) {
           {/* Lu */}
           {message.read_at && (
             <div className="text-sm text-muted-foreground">
-              Lu le: {format(new Date(message.read_at), 'dd MMM yyyy Ã  HH:mm', { locale: fr })}
+              Lu le: {format(new Date(message.read_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
             </div>
           )}
 
-          {/* MÃ©tadonnÃ©es supplÃ©mentaires */}
+          {/* Métadonnées supplémentaires */}
           {message.metadata && Object.keys(message.metadata).length > 0 && (
             <>
               <Separator />
               <details>
-                <summary className="cursor-pointer text-sm text-primary">MÃ©tadonnÃ©es</summary>
+                <summary className="cursor-pointer text-sm text-primary">Métadonnées</summary>
                 <pre className="text-xs bg-muted p-2 rounded mt-2 overflow-auto">
                   {JSON.stringify(message.metadata, null, 2)}
                 </pre>
@@ -212,7 +212,7 @@ function MessageDetailDialog({ message }: { message: MessageActivity }) {
   );
 }
 
-// Composant pour afficher un Ã©vÃ©nement dans la timeline
+// Composant pour afficher un événement dans la timeline
 function TimelineEvent({ 
   icon: Icon, 
   title, 
@@ -227,7 +227,7 @@ function TimelineEvent({
   status?: 'success' | 'warning' | 'error' | 'info';
 }) {
   const statusColors = {
-    success: 'text-primary-orange-500',
+    success: 'text-green-500',
     warning: 'text-yellow-500',
     error: 'text-red-500',
     info: 'text-blue-500'
@@ -267,7 +267,7 @@ export function UserActivitySearch() {
     if (searchId.trim()) {
       setSearchError(null);
       const result = await searchUserById(searchId);
-      // Si pas de rÃ©sultat, vÃ©rifier l'erreur dÃ©taillÃ©e
+      // Si pas de résultat, vérifier l'erreur détaillée
       if (!result && error) {
         try {
           // L'erreur peut contenir des infos JSON
@@ -289,12 +289,12 @@ export function UserActivitySearch() {
     const roleColors: Record<string, string> = {
       vendor: 'bg-purple-100 text-purple-800',
       client: 'bg-blue-100 text-blue-800',
-      driver: 'bg-primary-orange-100 text-primary-orange-800',
+      driver: 'bg-green-100 text-green-800',
       taxi: 'bg-yellow-100 text-yellow-800',
-      livreur: 'bg-primary-orange-100 text-primary-orange-800',
+      livreur: 'bg-teal-100 text-teal-800',
       agent: 'bg-orange-100 text-orange-800',
       pdg: 'bg-red-100 text-red-800',
-      transitaire: 'bg-primary-blue-100 text-primary-blue-800',
+      transitaire: 'bg-cyan-100 text-cyan-800',
       worker: 'bg-indigo-100 text-indigo-800',
       bureau: 'bg-pink-100 text-pink-800'
     };
@@ -303,7 +303,7 @@ export function UserActivitySearch() {
 
   const formatAmount = useFormatCurrency();
 
-  // Liste des prÃ©fixes valides
+  // Liste des préfixes valides
   const validPrefixes = ['VND', 'CLT', 'DRV', 'TAX', 'LIV', 'AGT', 'PDG', 'TRS', 'WRK', 'BST', 'SAG', 'VAG', 'MBR', 'ADM'];
 
   return (
@@ -313,7 +313,7 @@ export function UserActivitySearch() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
-            Recherche d'ActivitÃ© Utilisateur ComplÃ¨te
+            Recherche d'Activité Utilisateur Complète
           </CardTitle>
           <CardDescription>
             Entrez l'ID utilisateur (ex: VND0001, CLT0002, DRV0003, TAX0001, LIV0001) pour voir TOUT son historique complet
@@ -349,9 +349,9 @@ export function UserActivitySearch() {
             )}
           </div>
 
-          {/* PrÃ©fixes valides */}
+          {/* Préfixes valides */}
           <div className="flex flex-wrap gap-1">
-            <span className="text-xs text-muted-foreground mr-2">PrÃ©fixes valides:</span>
+            <span className="text-xs text-muted-foreground mr-2">Préfixes valides:</span>
             {validPrefixes.map(prefix => (
               <Badge key={prefix} variant="outline" className="text-xs font-mono cursor-pointer hover:bg-muted"
                 onClick={() => setSearchId(prefix)}>
@@ -360,7 +360,7 @@ export function UserActivitySearch() {
             ))}
           </div>
 
-          {/* Erreur avec dÃ©tails */}
+          {/* Erreur avec détails */}
           {(error || searchError) && (
             <div className="p-4 border border-destructive/50 bg-destructive/10 rounded-lg space-y-3">
               <div className="flex items-start gap-2">
@@ -372,7 +372,7 @@ export function UserActivitySearch() {
                   
                   {searchError?.searchedId && (
                     <p className="text-sm text-muted-foreground mt-1">
-                      ID recherchÃ©: <code className="font-mono bg-muted px-1 rounded">{searchError.searchedId}</code>
+                      ID recherché: <code className="font-mono bg-muted px-1 rounded">{searchError.searchedId}</code>
                       {searchError.isValidFormat !== undefined && (
                         <Badge className={`ml-2 ${searchError.isValidFormat ? 'bg-primary/20 text-primary' : 'bg-destructive/20 text-destructive'}`}>
                           {searchError.isValidFormat ? 'Format valide' : 'Format invalide'}
@@ -381,31 +381,31 @@ export function UserActivitySearch() {
                     </p>
                   )}
 
-                  {/* Message dÃ©taillÃ© */}
+                  {/* Message détaillé */}
                   {(searchError as any)?.detailedMessage && (
                     <div className="mt-3 p-3 bg-muted/50 rounded text-sm whitespace-pre-line">
                       {(searchError as any).detailedMessage}
                     </div>
                   )}
 
-                  {/* Sources vÃ©rifiÃ©es */}
+                  {/* Sources vérifiées */}
                   {(searchError as any)?.checkedSources && (
                     <div className="mt-2 flex gap-2 flex-wrap">
                       <Badge variant="outline" className="text-xs">
-                        ðŸ—„ï¸ user_ids: {(searchError as any).checkedSources.user_ids}
+                        🗄️ user_ids: {(searchError as any).checkedSources.user_ids}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        ðŸ‘¤ profiles.public_id: {(searchError as any).checkedSources.profiles_public_id}
+                        👤 profiles.public_id: {(searchError as any).checkedSources.profiles_public_id}
                       </Badge>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Suggestions amÃ©liorÃ©es */}
+              {/* Suggestions améliorées */}
               {searchError?.suggestions && searchError.suggestions.length > 0 && (
                 <div className="pt-2 border-t">
-                  <p className="text-sm text-muted-foreground mb-2">IDs similaires trouvÃ©s:</p>
+                  <p className="text-sm text-muted-foreground mb-2">IDs similaires trouvés:</p>
                   <div className="flex flex-wrap gap-2">
                     {searchError.suggestions.map((suggestion: any, index: number) => {
                       const suggestionId = typeof suggestion === 'string' ? suggestion : suggestion.id;
@@ -439,7 +439,7 @@ export function UserActivitySearch() {
               {/* Correspondances multiples */}
               {searchError?.multipleMatches && searchError.multipleMatches.length > 0 && (
                 <div className="pt-2 border-t">
-                  <p className="text-sm text-muted-foreground mb-2">Plusieurs correspondances trouvÃ©es:</p>
+                  <p className="text-sm text-muted-foreground mb-2">Plusieurs correspondances trouvées:</p>
                   <div className="space-y-2">
                     {searchError.multipleMatches.map(match => (
                       <Button
@@ -481,7 +481,7 @@ export function UserActivitySearch() {
                     Ouvrir l'outil de correction ID
                   </Button>
                   <span className="text-xs text-muted-foreground">
-                    Utilisez l'audit de normalisation pour corriger ou crÃ©er cet ID
+                    Utilisez l'audit de normalisation pour corriger ou créer cet ID
                   </span>
                 </div>
               )}
@@ -490,10 +490,10 @@ export function UserActivitySearch() {
         </CardContent>
       </Card>
 
-      {/* RÃ©sultats */}
+      {/* Résultats */}
       {activityData && (
         <>
-          {/* En-tÃªte du profil */}
+          {/* En-tête du profil */}
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
@@ -545,7 +545,7 @@ export function UserActivitySearch() {
                     )}
                   </div>
 
-                  {/* UUID pour recherche avancÃ©e */}
+                  {/* UUID pour recherche avancée */}
                   <p className="text-xs font-mono text-muted-foreground mt-1">
                     UUID: {activityData.userId}
                   </p>
@@ -555,13 +555,13 @@ export function UserActivitySearch() {
                     <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant={(activityData as any).idSourceInfo.found_in_user_ids ? "default" : "secondary"} className="text-xs">
-                          user_ids: {(activityData as any).idSourceInfo.found_in_user_ids ? 'âœ“' : 'âœ—'}
+                          user_ids: {(activityData as any).idSourceInfo.found_in_user_ids ? '✓' : '✗'}
                         </Badge>
                         <Badge variant={(activityData as any).idSourceInfo.found_in_profiles ? "default" : "secondary"} className="text-xs">
-                          profiles: {(activityData as any).idSourceInfo.found_in_profiles ? 'âœ“' : 'âœ—'}
+                          profiles: {(activityData as any).idSourceInfo.found_in_profiles ? '✓' : '✗'}
                         </Badge>
                         {(activityData as any).idSourceInfo.mismatch_detected && (
-                          <Badge variant="destructive" className="text-xs">âš ï¸ MISMATCH</Badge>
+                          <Badge variant="destructive" className="text-xs">⚠️ MISMATCH</Badge>
                         )}
                       </div>
                       {(activityData as any).idSourceInfo.origin_explanation && (
@@ -576,7 +576,7 @@ export function UserActivitySearch() {
                 {/* Stats rapides */}
                 <div className="text-right">
                   <p className="text-2xl font-bold text-primary">{activityData.accountAge}</p>
-                  <p className="text-xs text-muted-foreground">jours d'anciennetÃ©</p>
+                  <p className="text-xs text-muted-foreground">jours d'ancienneté</p>
                 </div>
               </div>
 
@@ -608,7 +608,7 @@ export function UserActivitySearch() {
                   icon={MessageSquare} 
                   label="Messages" 
                   value={activityData.totalMessages}
-                  subValue={`${activityData.messagesSent} env. / ${activityData.messagesReceived} reÃ§us`}
+                  subValue={`${activityData.messagesSent} env. / ${activityData.messagesReceived} reçus`}
                 />
                 <StatCard 
                   icon={Star} 
@@ -627,17 +627,17 @@ export function UserActivitySearch() {
                 />
               </div>
 
-              {/* RÃ©sumÃ© financier */}
+              {/* Résumé financier */}
               <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950 rounded-lg text-center">
-                  <ArrowDownLeft className="h-5 w-5 mx-auto text-primary-orange-600 mb-1" />
-                  <p className="text-lg font-bold text-primary-orange-600">{formatAmount(activityData.totalReceived)}</p>
-                  <p className="text-xs text-muted-foreground">Total reÃ§u</p>
+                <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg text-center">
+                  <ArrowDownLeft className="h-5 w-5 mx-auto text-green-600 mb-1" />
+                  <p className="text-lg font-bold text-green-600">{formatAmount(activityData.totalReceived)}</p>
+                  <p className="text-xs text-muted-foreground">Total reçu</p>
                 </div>
                 <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg text-center">
                   <ArrowUpRight className="h-5 w-5 mx-auto text-red-600 mb-1" />
                   <p className="text-lg font-bold text-red-600">{formatAmount(activityData.totalSpent)}</p>
-                  <p className="text-xs text-muted-foreground">Total dÃ©pensÃ©</p>
+                  <p className="text-xs text-muted-foreground">Total dépensé</p>
                 </div>
                 <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg text-center">
                   <CreditCard className="h-5 w-5 mx-auto text-blue-600 mb-1" />
@@ -648,7 +648,7 @@ export function UserActivitySearch() {
             </CardContent>
           </Card>
 
-          {/* Onglets dÃ©taillÃ©s */}
+          {/* Onglets détaillés */}
           <Tabs defaultValue="messages" className="w-full">
             <TabsList className="grid grid-cols-2 md:grid-cols-7 w-full">
               <TabsTrigger value="messages" className="gap-1">
@@ -665,7 +665,7 @@ export function UserActivitySearch() {
               </TabsTrigger>
               <TabsTrigger value="security" className="gap-1">
                 <Shield className="h-3 w-3" />
-                SÃ©curitÃ©
+                Sécurité
               </TabsTrigger>
               <TabsTrigger value="audit" className="gap-1">
                 <History className="h-3 w-3" />
@@ -690,9 +690,9 @@ export function UserActivitySearch() {
                     Tous les Messages - Contenu Complet
                   </CardTitle>
                   <CardDescription>
-                    {activityData.totalMessages} messages â€¢ 
-                    <Send className="h-3 w-3 inline mx-1" /> {activityData.messagesSent} envoyÃ©s â€¢ 
-                    <Inbox className="h-3 w-3 inline mx-1" /> {activityData.messagesReceived} reÃ§us
+                    {activityData.totalMessages} messages • 
+                    <Send className="h-3 w-3 inline mx-1" /> {activityData.messagesSent} envoyés • 
+                    <Inbox className="h-3 w-3 inline mx-1" /> {activityData.messagesReceived} reçus
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -703,17 +703,17 @@ export function UserActivitySearch() {
                       ) : (
                         activityData.messages.map((msg) => (
                           <div key={msg.id} className={`flex items-start gap-3 p-3 rounded-lg ${
-                            msg.direction === 'sent' ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/30'
+                            msg.direction === 'sent' ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-green-50 dark:bg-green-950/30'
                           }`}>
                             <div className={`p-2 rounded-full ${
-                              msg.direction === 'sent' ? 'bg-blue-100 text-blue-600' : 'bg-primary-orange-100 text-primary-orange-600'
+                              msg.direction === 'sent' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
                             }`}>
                               {msg.direction === 'sent' ? <Send className="h-4 w-4" /> : <Inbox className="h-4 w-4" />}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <Badge variant="outline" className="text-xs">
-                                  {msg.direction === 'sent' ? 'EnvoyÃ©' : 'ReÃ§u'}
+                                  {msg.direction === 'sent' ? 'Envoyé' : 'Reçu'}
                                 </Badge>
                                 <Badge variant="secondary" className="text-xs">
                                   {msg.type}
@@ -723,7 +723,7 @@ export function UserActivitySearch() {
                                 </span>
                               </div>
                               
-                              {/* AperÃ§u du contenu */}
+                              {/* Aperçu du contenu */}
                               <div className="bg-white dark:bg-gray-900 p-2 rounded border">
                                 {msg.type === 'text' ? (
                                   <p className="text-sm whitespace-pre-wrap break-words">
@@ -741,16 +741,16 @@ export function UserActivitySearch() {
                                 )}
                               </div>
 
-                              {/* Destinataire/ExpÃ©diteur */}
+                              {/* Destinataire/Expéditeur */}
                               <p className="text-xs text-muted-foreground mt-1">
                                 {msg.direction === 'sent' 
-                                  ? `â†’ ${msg.recipient_id.slice(0, 8)}...` 
-                                  : `â† ${msg.sender_id.slice(0, 8)}...`
+                                  ? `→ ${msg.recipient_id.slice(0, 8)}...` 
+                                  : `← ${msg.sender_id.slice(0, 8)}...`
                                 }
                               </p>
                             </div>
                             
-                            {/* Bouton voir dÃ©tails */}
+                            {/* Bouton voir détails */}
                             <MessageDetailDialog message={msg} />
                           </div>
                         ))
@@ -767,9 +767,9 @@ export function UserActivitySearch() {
                 <CardHeader>
                   <CardTitle className="text-lg">Historique des Transactions</CardTitle>
                   <CardDescription>
-                    {activityData.totalTransactions} transactions â€¢ 
-                    EnvoyÃ©: {formatAmount(activityData.totalSpent)} â€¢ 
-                    ReÃ§u: {formatAmount(activityData.totalReceived)}
+                    {activityData.totalTransactions} transactions • 
+                    Envoyé: {formatAmount(activityData.totalSpent)} • 
+                    Reçu: {formatAmount(activityData.totalReceived)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -778,7 +778,7 @@ export function UserActivitySearch() {
                       {activityData.transactions.length === 0 ? (
                         <p className="text-center text-muted-foreground py-8">Aucune transaction</p>
                       ) : (
-                        // SÃ©curiser l'affichage: certains backends peuvent renvoyer des doublons (mÃªme id)
+                        // Sécuriser l'affichage: certains backends peuvent renvoyer des doublons (même id)
                         activityData.transactions
                           .filter((tx, idx, arr) => arr.findIndex(t => t.id === tx.id) === idx)
                           .map((tx) => (
@@ -786,7 +786,7 @@ export function UserActivitySearch() {
                             <div className={`p-2 rounded-full ${
                               tx.direction === 'sent' 
                                 ? 'bg-red-100 text-red-600' 
-                                : 'bg-primary-orange-100 text-primary-orange-600'
+                                : 'bg-green-100 text-green-600'
                             }`}>
                               {tx.direction === 'sent' ? (
                                 <TrendingDown className="h-4 w-4" />
@@ -804,7 +804,7 @@ export function UserActivitySearch() {
                               <p className={`font-bold ${
                                 tx.direction === 'sent' 
                                   ? 'text-red-600' 
-                                  : 'text-primary-orange-600'
+                                  : 'text-green-600'
                               }`}>
                                 {tx.direction === 'sent' ? '-' : '+'}
                                 {formatAmount(tx.amount, tx.currency)}
@@ -855,8 +855,8 @@ export function UserActivitySearch() {
                                 )}
                               </div>
                               <p className="text-xs text-muted-foreground">
-                                {format(new Date(order.created_at), 'dd MMM yyyy Ã  HH:mm', { locale: fr })}
-                                {order.source && ` â€¢ Source: ${order.source}`}
+                                {format(new Date(order.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                                {order.source && ` • Source: ${order.source}`}
                               </p>
                             </div>
                             <div className="text-right">
@@ -888,13 +888,13 @@ export function UserActivitySearch() {
               </Card>
             </TabsContent>
 
-            {/* SÃ©curitÃ© */}
+            {/* Sécurité */}
             <TabsContent value="security">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Historique de SÃ©curitÃ©</CardTitle>
+                  <CardTitle className="text-lg">Historique de Sécurité</CardTitle>
                   <CardDescription>
-                    {activityData.totalLogins} connexions rÃ©ussies â€¢ DerniÃ¨re: {
+                    {activityData.totalLogins} connexions réussies • Dernière: {
                       activityData.lastLogin 
                         ? formatDistanceToNow(new Date(activityData.lastLogin), { addSuffix: true, locale: fr })
                         : 'N/A'
@@ -910,7 +910,7 @@ export function UserActivitySearch() {
                         activityData.loginHistory.map((login) => (
                           <div key={login.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
                             <div className={`p-2 rounded-full ${
-                              login.success ? 'bg-primary-orange-100 text-primary-orange-600' : 'bg-red-100 text-red-600'
+                              login.success ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
                             }`}>
                               {login.success ? (
                                 <CheckCircle className="h-4 w-4" />
@@ -920,7 +920,7 @@ export function UserActivitySearch() {
                             </div>
                             <div className="flex-1">
                               <p className="font-medium">
-                                {login.success ? 'Connexion rÃ©ussie' : 'Tentative Ã©chouÃ©e'}
+                                {login.success ? 'Connexion réussie' : 'Tentative échouée'}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 IP: {login.ip_address || 'N/A'}
@@ -947,14 +947,14 @@ export function UserActivitySearch() {
                 <CardHeader>
                   <CardTitle className="text-lg">Journal d'Audit Complet</CardTitle>
                   <CardDescription>
-                    {activityData.totalAuditEvents} Ã©vÃ©nements enregistrÃ©s
+                    {activityData.totalAuditEvents} événements enregistrés
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-[400px]">
                     <div className="space-y-2">
                       {activityData.auditLogs.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8">Aucun Ã©vÃ©nement d'audit</p>
+                        <p className="text-center text-muted-foreground py-8">Aucun événement d'audit</p>
                       ) : (
                         activityData.auditLogs.map((log) => (
                           <div key={log.id} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
@@ -965,13 +965,13 @@ export function UserActivitySearch() {
                               <p className="font-medium">{log.action}</p>
                               {log.target_type && (
                                 <p className="text-xs text-muted-foreground">
-                                  Cible: {log.target_type} â€¢ {log.target_id?.slice(0, 8)}
+                                  Cible: {log.target_type} • {log.target_id?.slice(0, 8)}
                                 </p>
                               )}
                               {log.data_json && (
                                 <details className="mt-1">
                                   <summary className="text-xs text-primary cursor-pointer">
-                                    Voir les donnÃ©es
+                                    Voir les données
                                   </summary>
                                   <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-auto max-h-32">
                                     {JSON.stringify(log.data_json, null, 2)}
@@ -1063,12 +1063,12 @@ export function UserActivitySearch() {
             {/* Autres */}
             <TabsContent value="other">
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Avis donnÃ©s */}
+                {/* Avis donnés */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Star className="h-4 w-4" />
-                      Avis donnÃ©s ({activityData.reviewsGiven?.length || 0})
+                      Avis donnés ({activityData.reviewsGiven?.length || 0})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1191,10 +1191,10 @@ export function UserActivitySearch() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
-                      <p><strong>VÃ©hicule:</strong> {activityData.driverInfo.vehicle_type}</p>
+                      <p><strong>Véhicule:</strong> {activityData.driverInfo.vehicle_type}</p>
                       <p><strong>Licence:</strong> {activityData.driverInfo.license_number}</p>
                       <p><strong>Statut:</strong> {activityData.driverInfo.status}</p>
-                      <p><strong>Note:</strong> {activityData.driverInfo.rating}â˜…</p>
+                      <p><strong>Note:</strong> {activityData.driverInfo.rating}★</p>
                       <p><strong>Total livraisons:</strong> {activityData.driverInfo.total_deliveries}</p>
                     </CardContent>
                   </Card>

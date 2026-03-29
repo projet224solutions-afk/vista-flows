@@ -49,7 +49,7 @@ export default function PDGApiSupervision() {
       // Latence moyenne
       const validLatencies = results.map(r => parseInt(r.latency)).filter(n => !isNaN(n));
       setLatency(validLatencies.length ? Math.round(validLatencies.reduce((a,b)=>a+b,0)/validLatencies.length) : null);
-      // DisponibilitÃ© (simple: % endpoints up)
+      // Disponibilité (simple: % endpoints up)
       setAvailability(Math.round(100 * results.filter(r=>r.status==='operational').length / results.length));
     });
 
@@ -61,7 +61,7 @@ export default function PDGApiSupervision() {
       .gte('created_at', new Date(Date.now() - 24*60*60*1000).toISOString())
       .then(({ data, error }) => {
         if (error) {
-          console.warn('Lecture incidents critiques refusÃ©e:', error);
+          console.warn('Lecture incidents critiques refusée:', error);
           setCriticalEvents([]);
         } else {
           setCriticalEvents(data || []);
@@ -75,7 +75,7 @@ export default function PDGApiSupervision() {
       .eq('status', 'open')
       .then(({ data, error }) => {
         if (error) {
-          console.warn('Lecture incidents ouverts refusÃ©e:', error);
+          console.warn('Lecture incidents ouverts refusée:', error);
           setOpenIncidents([]);
         } else {
           setOpenIncidents(data || []);
@@ -89,7 +89,7 @@ export default function PDGApiSupervision() {
       .eq('status', 'open')
       .then(({ count, error }) => {
         if (error) {
-          console.warn('Lecture security_incidents refusÃ©e:', error);
+          console.warn('Lecture security_incidents refusée:', error);
           setIncidents(0);
         } else {
           setIncidents(count || 0);
@@ -101,7 +101,7 @@ export default function PDGApiSupervision() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold mb-2">Supervision API</h2>
-        <p className="text-muted-foreground">Surveillez les performances et la disponibilitÃ© des API (donnÃ©es rÃ©elles)</p>
+        <p className="text-muted-foreground">Surveillez les performances et la disponibilité des API (données réelles)</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -112,12 +112,12 @@ export default function PDGApiSupervision() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              {status === 'ok' && <CheckCircle className="h-5 w-5 text-primary-orange-500" />} 
+              {status === 'ok' && <CheckCircle className="h-5 w-5 text-green-500" />} 
               {status === 'degraded' && <AlertTriangle className="h-5 w-5 text-orange-500" />} 
               {status === 'down' && <XCircle className="h-5 w-5 text-red-500" />} 
               <span className="text-2xl font-bold">
-                {status === 'ok' && 'OpÃ©rationnel'}
-                {status === 'degraded' && 'DÃ©gradÃ©'}
+                {status === 'ok' && 'Opérationnel'}
+                {status === 'degraded' && 'Dégradé'}
                 {status === 'down' && 'Hors service'}
               </span>
             </div>
@@ -126,7 +126,7 @@ export default function PDGApiSupervision() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Temps de RÃ©ponse</CardTitle>
+            <CardTitle className="text-sm font-medium">Temps de Réponse</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -137,7 +137,7 @@ export default function PDGApiSupervision() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">DisponibilitÃ©</CardTitle>
+            <CardTitle className="text-sm font-medium">Disponibilité</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -153,15 +153,15 @@ export default function PDGApiSupervision() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{incidents !== null ? incidents : '...'}</div>
-            <p className="text-xs text-muted-foreground">DerniÃ¨res 24h</p>
+            <p className="text-xs text-muted-foreground">Dernières 24h</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Endpoints SurveillÃ©s</CardTitle>
-          <CardDescription>Ã‰tat en temps rÃ©el des principaux endpoints</CardDescription>
+          <CardTitle>Endpoints Surveillés</CardTitle>
+          <CardDescription>État en temps réel des principaux endpoints</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -169,7 +169,7 @@ export default function PDGApiSupervision() {
               <div key={endpoint.name} className="flex items-center justify-between p-3 rounded-lg border">
                 <div className="flex items-center gap-3">
                   {endpoint.status === 'operational' ? (
-                    <CheckCircle className="h-5 w-5 text-primary-orange-500" />
+                    <CheckCircle className="h-5 w-5 text-green-500" />
                   ) : (
                     <XCircle className="h-5 w-5 text-red-500" />
                   )}
@@ -178,8 +178,8 @@ export default function PDGApiSupervision() {
                     <p className="text-sm text-muted-foreground">Latence: {endpoint.latency}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className={endpoint.status === 'operational' ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}>
-                  {endpoint.status === 'operational' ? 'OpÃ©rationnel' : 'Hors service'}
+                <Badge variant="outline" className={endpoint.status === 'operational' ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}>
+                  {endpoint.status === 'operational' ? 'Opérationnel' : 'Hors service'}
                 </Badge>
               </div>
             ))}
@@ -190,11 +190,11 @@ export default function PDGApiSupervision() {
       <Card>
         <CardHeader>
           <CardTitle>Incidents critiques (24h)</CardTitle>
-          <CardDescription>Logs d'audit critiques dÃ©tectÃ©s</CardDescription>
+          <CardDescription>Logs d'audit critiques détectés</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {criticalEvents.length === 0 && <div className="text-muted-foreground">Aucun Ã©vÃ©nement critique dÃ©tectÃ©.</div>}
+            {criticalEvents.length === 0 && <div className="text-muted-foreground">Aucun événement critique détecté.</div>}
             {criticalEvents.map((evt, i) => (
               <div key={i} className="p-2 border rounded flex flex-col gap-1">
                 <span className="font-semibold">{evt.event_type}</span>
@@ -209,7 +209,7 @@ export default function PDGApiSupervision() {
       <Card>
         <CardHeader>
           <CardTitle>Incidents ouverts</CardTitle>
-          <CardDescription>RÃ©sumÃ© par sÃ©vÃ©ritÃ©</CardDescription>
+          <CardDescription>Résumé par sévérité</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">

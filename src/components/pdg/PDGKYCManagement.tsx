@@ -1,6 +1,6 @@
 /**
  * GESTION KYC - INTERFACE PDG
- * Permet au PDG d'activer/dÃ©sactiver le KYC pour chaque type d'utilisateur
+ * Permet au PDG d'activer/désactiver le KYC pour chaque type d'utilisateur
  */
 
 import { useState, useEffect } from 'react';
@@ -24,13 +24,13 @@ interface KYCSettings {
 }
 
 const userTypes = [
-  { key: 'vendeur', label: 'Vendeurs', icon: Store, description: 'VÃ©rification des marchands' },
-  { key: 'client', label: 'Clients', icon: Users, description: 'VÃ©rification des acheteurs' },
-  { key: 'livreur', label: 'Livreurs', icon: Truck, description: 'VÃ©rification des chauffeurs livreurs' },
-  { key: 'taxi_moto', label: 'Taxi-Moto', icon: Car, description: 'VÃ©rification des chauffeurs taxi-moto' },
-  { key: 'bureau_syndicat', label: 'Bureaux Syndicaux', icon: Building2, description: 'VÃ©rification des bureaux' },
-  { key: 'transitaire', label: 'Transitaires', icon: Globe, description: 'VÃ©rification des transitaires' },
-  { key: 'agent', label: 'Agents', icon: Users, description: 'VÃ©rification des agents' },
+  { key: 'vendeur', label: 'Vendeurs', icon: Store, description: 'Vérification des marchands' },
+  { key: 'client', label: 'Clients', icon: Users, description: 'Vérification des acheteurs' },
+  { key: 'livreur', label: 'Livreurs', icon: Truck, description: 'Vérification des chauffeurs livreurs' },
+  { key: 'taxi_moto', label: 'Taxi-Moto', icon: Car, description: 'Vérification des chauffeurs taxi-moto' },
+  { key: 'bureau_syndicat', label: 'Bureaux Syndicaux', icon: Building2, description: 'Vérification des bureaux' },
+  { key: 'transitaire', label: 'Transitaires', icon: Globe, description: 'Vérification des transitaires' },
+  { key: 'agent', label: 'Agents', icon: Users, description: 'Vérification des agents' },
 ] as const;
 
 export default function PDGKYCManagement() {
@@ -88,7 +88,7 @@ export default function PDGKYCManagement() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      // VÃ©rifier si le setting existe dÃ©jÃ 
+      // Vérifier si le setting existe déjà
       const { data: existing } = await supabase
         .from('system_settings')
         .select('id')
@@ -115,13 +115,13 @@ export default function PDGKYCManagement() {
           .insert({
             setting_key: 'kyc_settings',
             setting_value: settingsJson,
-            description: 'ParamÃ¨tres KYC par type utilisateur'
+            description: 'Paramètres KYC par type utilisateur'
           });
 
         if (error) throw error;
       }
 
-      toast.success('ParamÃ¨tres KYC enregistrÃ©s');
+      toast.success('Paramètres KYC enregistrés');
     } catch (err: any) {
       console.error('Erreur sauvegarde:', err);
       toast.error(err.message || 'Erreur lors de la sauvegarde');
@@ -153,7 +153,7 @@ export default function PDGKYCManagement() {
               <div>
                 <CardTitle className="text-xl">Gestion KYC</CardTitle>
                 <CardDescription>
-                  Activer ou dÃ©sactiver la vÃ©rification KYC par type d'utilisateur
+                  Activer ou désactiver la vérification KYC par type d'utilisateur
                 </CardDescription>
               </div>
             </div>
@@ -171,7 +171,7 @@ export default function PDGKYCManagement() {
             key={key} 
             className={`transition-all duration-200 ${
               settings[key as keyof KYCSettings] 
-                ? 'border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5' 
+                ? 'border-green-500/50 bg-green-500/5' 
                 : 'border-muted'
             }`}
           >
@@ -180,7 +180,7 @@ export default function PDGKYCManagement() {
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg ${
                     settings[key as keyof KYCSettings]
-                      ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 text-primary-orange-600'
+                      ? 'bg-green-500/20 text-green-600'
                       : 'bg-muted text-muted-foreground'
                   }`}>
                     <Icon className="w-5 h-5" />
@@ -194,7 +194,7 @@ export default function PDGKYCManagement() {
                 </div>
                 <div className="flex items-center gap-2">
                   {settings[key as keyof KYCSettings] && (
-                    <ShieldCheck className="w-4 h-4 text-primary-orange-500" />
+                    <ShieldCheck className="w-4 h-4 text-green-500" />
                   )}
                   <Switch
                     id={key}
@@ -213,7 +213,7 @@ export default function PDGKYCManagement() {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Les modifications seront appliquÃ©es immÃ©diatement aprÃ¨s l'enregistrement.
+              Les modifications seront appliquées immédiatement après l'enregistrement.
             </p>
             <Button onClick={saveSettings} disabled={saving}>
               {saving ? (
@@ -224,7 +224,7 @@ export default function PDGKYCManagement() {
               ) : (
                 <>
                   <ShieldCheck className="w-4 h-4 mr-2" />
-                  Enregistrer les paramÃ¨tres
+                  Enregistrer les paramètres
                 </>
               )}
             </Button>
@@ -235,12 +235,12 @@ export default function PDGKYCManagement() {
       {/* Info */}
       <Card className="bg-muted/50">
         <CardContent className="p-4">
-          <h4 className="font-medium mb-2">Ã€ propos du KYC</h4>
+          <h4 className="font-medium mb-2">À propos du KYC</h4>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>â€¢ Quand le KYC est activÃ©, les utilisateurs doivent vÃ©rifier leur identitÃ©</li>
-            <li>â€¢ Les utilisateurs non vÃ©rifiÃ©s peuvent avoir des restrictions</li>
-            <li>â€¢ Vous pouvez activer/dÃ©sactiver le KYC Ã  tout moment</li>
-            <li>â€¢ Les statuts KYC existants sont conservÃ©s</li>
+            <li>• Quand le KYC est activé, les utilisateurs doivent vérifier leur identité</li>
+            <li>• Les utilisateurs non vérifiés peuvent avoir des restrictions</li>
+            <li>• Vous pouvez activer/désactiver le KYC à tout moment</li>
+            <li>• Les statuts KYC existants sont conservés</li>
           </ul>
         </CardContent>
       </Card>

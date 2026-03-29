@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
  * COMPOSANT HISTORIQUE DES COURSES TAXI-MOTO
- * Affichage de l'historique avec filtres et dÃ©tails
+ * Affichage de l'historique avec filtres et détails
  * 224Solutions - Taxi-Moto System
  */
 
@@ -129,7 +129,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
     };
 
     /**
-     * Filtre les courses selon les critÃ¨res
+     * Filtre les courses selon les critères
      */
     const filterRides = () => {
         let filtered = [...rides];
@@ -192,7 +192,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'completed':
-                return 'bg-primary-orange-100 text-primary-orange-800';
+                return 'bg-green-100 text-green-800';
             case 'cancelled':
                 return 'bg-red-100 text-red-800';
             default:
@@ -201,14 +201,14 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
     };
 
     /**
-     * Obtient le libellÃ© du statut
+     * Obtient le libellé du statut
      */
     const getStatusLabel = (status: string) => {
         switch (status) {
             case 'completed':
-                return 'TerminÃ©e';
+                return 'Terminée';
             case 'cancelled':
-                return 'AnnulÃ©e';
+                return 'Annulée';
             default:
                 return status;
         }
@@ -219,7 +219,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
      */
     const exportHistory = () => {
         const csvContent = [
-            ['Date', 'ID Course', 'DÃ©part', 'ArrivÃ©e', 'Distance', 'DurÃ©e', 'Prix', 'Statut', 'Conducteur', 'Note'],
+            ['Date', 'ID Course', 'Départ', 'Arrivée', 'Distance', 'Durée', 'Prix', 'Statut', 'Conducteur', 'Note'],
             ...filteredRides.map(ride => [
                 formatDate(ride.date),
                 ride.id,
@@ -242,15 +242,15 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
         a.click();
         URL.revokeObjectURL(url);
 
-        toast.success('Historique exportÃ© avec succÃ¨s');
+        toast.success('Historique exporté avec succès');
     };
 
     /**
      * Refait une course
      */
     const rebookRide = (ride: RideHistory) => {
-        toast.info(`Redirection vers la rÃ©servation: ${ride.pickupAddress} â†’ ${ride.destinationAddress}`);
-        // En production: rediriger vers l'onglet rÃ©servation avec les donnÃ©es prÃ©-remplies
+        toast.info(`Redirection vers la réservation: ${ride.pickupAddress} → ${ride.destinationAddress}`);
+        // En production: rediriger vers l'onglet réservation avec les données pré-remplies
     };
 
     if (loading) {
@@ -274,7 +274,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                     <h3 className="text-lg font-semibold text-red-600 mb-2">Erreur de chargement</h3>
                     <p className="text-gray-600 mb-4">{error}</p>
                     <Button onClick={loadRideHistory} variant="outline" size="sm">
-                        RÃ©essayer
+                        Réessayer
                     </Button>
                 </CardContent>
             </Card>
@@ -314,8 +314,8 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                             className="px-3 py-2 border rounded-md text-sm"
                         >
                             <option value="all">Tous les statuts</option>
-                            <option value="completed">TerminÃ©es</option>
-                            <option value="cancelled">AnnulÃ©es</option>
+                            <option value="completed">Terminées</option>
+                            <option value="cancelled">Annulées</option>
                         </select>
 
                         <select
@@ -326,7 +326,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                             <option value="all">Toutes les dates</option>
                             <option value="week">7 derniers jours</option>
                             <option value="month">30 derniers jours</option>
-                            <option value="year">Cette annÃ©e</option>
+                            <option value="year">Cette année</option>
                         </select>
                     </div>
 
@@ -336,16 +336,16 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                             <div className="text-lg font-bold text-blue-600">
                                 {filteredRides.filter(r => r.status === 'completed').length}
                             </div>
-                            <div className="text-xs text-gray-600">TerminÃ©es</div>
+                            <div className="text-xs text-gray-600">Terminées</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-lg font-bold text-primary-orange-600">
+                            <div className="text-lg font-bold text-green-600">
                                 {filteredRides
                                     .filter(r => r.status === 'completed')
                                     .reduce((sum, r) => sum + r.price, 0)
                                     .toLocaleString()} GNF
                             </div>
-                            <div className="text-xs text-gray-600">Total dÃ©pensÃ©</div>
+                            <div className="text-xs text-gray-600">Total dépensé</div>
                         </div>
                         <div className="text-center">
                             <div className="text-lg font-bold text-yellow-600">
@@ -367,12 +367,12 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                     <CardContent className="p-8 text-center">
                         <Clock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                         <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                            Aucune course trouvÃ©e
+                            Aucune course trouvée
                         </h3>
                         <p className="text-gray-600">
                             {searchTerm || statusFilter !== 'all' || dateFilter !== 'all'
-                                ? 'Aucune course ne correspond Ã  vos critÃ¨res de recherche'
-                                : 'Vous n\'avez pas encore effectuÃ© de course'
+                                ? 'Aucune course ne correspond à vos critères de recherche'
+                                : 'Vous n\'avez pas encore effectué de course'
                             }
                         </p>
                     </CardContent>
@@ -394,7 +394,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                                     </div>
 
                                     <div className="text-right">
-                                        <p className="text-lg font-bold text-primary-orange-600">
+                                        <p className="text-lg font-bold text-green-600">
                                             {ride.price.toLocaleString()} GNF
                                         </p>
                                         {ride.rating && (
@@ -409,7 +409,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                                 {/* Trajet */}
                                 <div className="space-y-2 mb-3">
                                     <div className="flex items-center gap-2 text-sm">
-                                        <div className="w-2 h-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-full"></div>
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                         <span className="text-gray-700">{ride.pickupAddress}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
@@ -418,10 +418,10 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                                     </div>
                                 </div>
 
-                                {/* DÃ©tails */}
+                                {/* Détails */}
                                 <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
-                                    <span>{ride.distance}km â€¢ {ride.duration}min</span>
-                                    <span>{ride.driver.name} â€¢ {ride.driver.vehicleType}</span>
+                                    <span>{ride.distance}km • {ride.duration}min</span>
+                                    <span>{ride.driver.name} • {ride.driver.vehicleType}</span>
                                 </div>
 
                                 {/* Actions */}
@@ -437,13 +437,13 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                                             Refaire
                                         </Button>
                                         <Button
-                                            onClick={() => toast.info('FonctionnalitÃ© de reÃ§u bientÃ´t disponible')}
+                                            onClick={() => toast.info('Fonctionnalité de reçu bientôt disponible')}
                                             variant="outline"
                                             size="sm"
                                             className="flex-1 text-xs"
                                         >
                                             <Download className="w-3 h-3 mr-1" />
-                                            ReÃ§u
+                                            Reçu
                                         </Button>
                                     </div>
                                 )}

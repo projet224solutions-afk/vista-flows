@@ -1,6 +1,6 @@
 /**
  * AGENT BANKING MODULE
- * Module SystÃ¨me Bancaire Intelligent - miroir de BankingDashboard
+ * Module Système Bancaire Intelligent - miroir de BankingDashboard
  */
 
 import { useState, useEffect } from 'react';
@@ -137,10 +137,10 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'confirmed': return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">ConfirmÃ©</Badge>;
+      case 'confirmed': return <Badge className="bg-green-500">Confirmé</Badge>;
       case 'pending': return <Badge className="bg-yellow-500">En attente</Badge>;
       case 'quarantined': return <Badge className="bg-orange-500">Quarantaine</Badge>;
-      case 'rejected': return <Badge variant="destructive">RejetÃ©</Badge>;
+      case 'rejected': return <Badge variant="destructive">Rejeté</Badge>;
       default: return <Badge>{status}</Badge>;
     }
   };
@@ -160,9 +160,9 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6" />
-            SystÃ¨me Bancaire Intelligent
+            Système Bancaire Intelligent
           </h1>
-          <p className="text-muted-foreground">Supervision financiÃ¨re en temps rÃ©el</p>
+          <p className="text-muted-foreground">Supervision financière en temps réel</p>
         </div>
         <Button variant="outline" size="sm" onClick={loadDashboard}>
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -177,8 +177,8 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
             <div className="flex items-center gap-3">
               <AlertTriangle className="h-8 w-8 text-red-500" />
               <div>
-                <p className="font-bold text-red-500">SYSTÃˆME EN MODE PANIC</p>
-                <p className="text-sm text-red-600">Toutes les transactions financiÃ¨res sont actuellement gelÃ©es</p>
+                <p className="font-bold text-red-500">SYSTÈME EN MODE PANIC</p>
+                <p className="text-sm text-red-600">Toutes les transactions financières sont actuellement gelées</p>
               </div>
             </div>
           </CardContent>
@@ -209,7 +209,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary-orange-500" />
+              <Activity className="h-4 w-4 text-green-500" />
               Transactions Aujourd'hui
             </CardTitle>
           </CardHeader>
@@ -219,12 +219,12 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
             </div>
             <div className="text-xs text-muted-foreground mt-1">
               <div className="flex items-center gap-1">
-                <CheckCircle className="h-3 w-3 text-primary-orange-500" />
-                {dashboardData?.today_stats?.successful || 0} rÃ©ussies
+                <CheckCircle className="h-3 w-3 text-green-500" />
+                {dashboardData?.today_stats?.successful || 0} réussies
               </div>
               <div className="flex items-center gap-1">
                 <XCircle className="h-3 w-3 text-red-500" />
-                {dashboardData?.today_stats?.failed || 0} Ã©chouÃ©es
+                {dashboardData?.today_stats?.failed || 0} échouées
               </div>
             </div>
           </CardContent>
@@ -281,8 +281,8 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
         <TabsContent value="alerts" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Alertes FinanciÃ¨res</CardTitle>
-              <CardDescription>Notifications de sÃ©curitÃ© et anomalies dÃ©tectÃ©es</CardDescription>
+              <CardTitle>Alertes Financières</CardTitle>
+              <CardDescription>Notifications de sécurité et anomalies détectées</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
@@ -308,9 +308,9 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
                           </div>
                           <div className="flex items-center gap-2">
                             {alert.is_resolved ? (
-                              <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">RÃ©solu</Badge>
+                              <Badge className="bg-green-500">Résolu</Badge>
                             ) : (
-                              <Badge variant="outline">Non rÃ©solu</Badge>
+                              <Badge variant="outline">Non résolu</Badge>
                             )}
                           </div>
                         </div>
@@ -327,12 +327,12 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
           <Card>
             <CardHeader>
               <CardTitle>Ledger Immutable</CardTitle>
-              <CardDescription>Historique des transactions avec hash de vÃ©rification</CardDescription>
+              <CardDescription>Historique des transactions avec hash de vérification</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
                 {ledger.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Aucune entrÃ©e dans le ledger</p>
+                  <p className="text-center text-muted-foreground py-8">Aucune entrée dans le ledger</p>
                 ) : (
                   <div className="space-y-2">
                     {ledger.map((entry) => (
@@ -358,7 +358,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className={`font-bold ${entry.amount >= 0 ? 'text-primary-orange-600' : 'text-red-600'}`}>
+                            <p className={`font-bold ${entry.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                               {entry.amount >= 0 ? '+' : ''}{formatAmount(entry.amount)}
                             </p>
                             {getStatusBadge(entry.validation_status)}

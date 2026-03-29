@@ -1,6 +1,6 @@
 /**
  * Tableau de bord Dropshipping
- * Vue d'ensemble des statistiques et activitÃ©s
+ * Vue d'ensemble des statistiques et activités
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,12 +30,12 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
     const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
       pending: { label: 'En attente', variant: 'secondary' },
       awaiting_supplier: { label: 'Attente fournisseur', variant: 'outline' },
-      ordered_from_supplier: { label: 'CommandÃ©', variant: 'default' },
-      shipped_by_supplier: { label: 'ExpÃ©diÃ©', variant: 'default' },
+      ordered_from_supplier: { label: 'Commandé', variant: 'default' },
+      shipped_by_supplier: { label: 'Expédié', variant: 'default' },
       in_transit: { label: 'En transit', variant: 'default' },
-      delivered_to_customer: { label: 'LivrÃ©', variant: 'default' },
-      completed: { label: 'TerminÃ©', variant: 'default' },
-      cancelled: { label: 'AnnulÃ©', variant: 'destructive' }
+      delivered_to_customer: { label: 'Livré', variant: 'default' },
+      completed: { label: 'Terminé', variant: 'default' },
+      cancelled: { label: 'Annulé', variant: 'destructive' }
     };
     const config = statusConfig[status] || { label: status, variant: 'secondary' as const };
     return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -66,7 +66,7 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
           <CardContent>
             <div className="text-2xl font-bold">{stats?.pendingOrders || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Ã  traiter avec fournisseurs
+              à traiter avec fournisseurs
             </p>
           </CardContent>
         </Card>
@@ -79,7 +79,7 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats?.totalRevenue || 0)}</div>
             <p className="text-xs text-muted-foreground">
-              {stats?.completedOrders || 0} commandes complÃ©tÃ©es
+              {stats?.completedOrders || 0} commandes complétées
             </p>
           </CardContent>
         </Card>
@@ -87,10 +87,10 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Profit Net</CardTitle>
-            <TrendingUp className="h-4 w-4 text-primary-orange-500" />
+            <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary-orange-600">
+            <div className="text-2xl font-bold text-green-600">
               {formatCurrency(stats?.totalProfit || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -100,12 +100,12 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
         </Card>
       </div>
 
-      {/* Commandes rÃ©centes */}
+      {/* Commandes récentes */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Truck className="w-5 h-5" />
-            Commandes Dropshipping RÃ©centes
+            Commandes Dropshipping Récentes
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -114,7 +114,7 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
               <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>Aucune commande dropshipping pour le moment</p>
               <p className="text-sm mt-1">
-                Les commandes de produits dropshipping apparaÃ®tront ici
+                Les commandes de produits dropshipping apparaîtront ici
               </p>
             </div>
           ) : (
@@ -127,7 +127,7 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                       {order.status === 'completed' ? (
-                        <CheckCircle className="w-5 h-5 text-primary-orange-500" />
+                        <CheckCircle className="w-5 h-5 text-green-500" />
                       ) : order.has_issue ? (
                         <AlertTriangle className="w-5 h-5 text-destructive" />
                       ) : (
@@ -137,14 +137,14 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
                     <div>
                       <p className="font-medium">{order.order_reference}</p>
                       <p className="text-sm text-muted-foreground">
-                        {order.quantity} article(s) â€¢ {order.supplier?.name || 'Fournisseur'}
+                        {order.quantity} article(s) • {order.supplier?.name || 'Fournisseur'}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="font-medium">{formatCurrency(order.customer_total)}</p>
-                      <p className="text-xs text-primary-orange-600">
+                      <p className="text-xs text-green-600">
                         Profit: {formatCurrency(order.profit_amount || 0)}
                       </p>
                     </div>
@@ -173,14 +173,14 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 dark:from-primary-blue-950 dark:to-primary-orange-900 border-primary-orange-200">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-primary-orange-600" />
+              <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Commandes RÃ©ussies</p>
+                <p className="text-sm text-muted-foreground">Commandes Réussies</p>
                 <p className="text-2xl font-bold">{stats?.completedOrders || 0}</p>
               </div>
             </div>

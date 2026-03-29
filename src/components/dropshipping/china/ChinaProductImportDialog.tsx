@@ -76,7 +76,7 @@ export function ChinaProductImportDialog({
   onConvert,
   onCalculateCosts
 }: ChinaProductImportDialogProps) {
-  // Ã‰tats
+  // États
   const [currentStep, setCurrentStep] = useState<ImportStep['step']>('url');
   const [loading, setLoading] = useState(false);
   const [url, setUrl] = useState('');
@@ -123,7 +123,7 @@ export function ChinaProductImportDialog({
         setImportedProduct(result);
         setCurrentStep('preview');
         
-        // Calculer les coÃ»ts automatiquement
+        // Calculer les coûts automatiquement
         const costs = await onCalculateCosts(result.id, quantity);
         if (costs) {
           setCostBreakdown(costs);
@@ -165,7 +165,7 @@ export function ChinaProductImportDialog({
       const productId = await onConvert(importedProduct.id, margin);
       
       if (productId) {
-        toast.success('Produit ajoutÃ© Ã  votre catalogue !');
+        toast.success('Produit ajouté à votre catalogue !');
         handleReset();
         onOpenChange(false);
       }
@@ -199,7 +199,7 @@ export function ChinaProductImportDialog({
         </AlertDescription>
       </Alert>
 
-      {/* SÃ©lection plateforme visuelle */}
+      {/* Sélection plateforme visuelle */}
       <div className="grid grid-cols-3 gap-4">
         {(Object.entries(CHINA_PLATFORMS) as [ChinaPlatformType, typeof CHINA_PLATFORMS[ChinaPlatformType]][])
           .filter(([key]) => key !== 'PRIVATE')
@@ -243,9 +243,9 @@ export function ChinaProductImportDialog({
         )}
         {platform && (
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200">
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
               <CheckCircle className="w-3 h-3 mr-1" />
-              {CHINA_PLATFORMS[platform].name} dÃ©tectÃ©
+              {CHINA_PLATFORMS[platform].name} détecté
             </Badge>
           </div>
         )}
@@ -280,7 +280,7 @@ export function ChinaProductImportDialog({
 
     return (
       <div className="space-y-6">
-        {/* AperÃ§u produit */}
+        {/* Aperçu produit */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Images */}
           <div className="space-y-4">
@@ -332,7 +332,7 @@ export function ChinaProductImportDialog({
               <div>
                 <p className="text-sm text-muted-foreground">Prix fournisseur (CNY)</p>
                 <p className="text-xl font-bold text-orange-600">
-                  Â¥{importedProduct.supplier_price_cny?.toFixed(2)}
+                  ¥{importedProduct.supplier_price_cny?.toFixed(2)}
                 </p>
               </div>
               <div>
@@ -343,13 +343,13 @@ export function ChinaProductImportDialog({
               </div>
             </div>
 
-            {/* MOQ et dÃ©lais */}
+            {/* MOQ et délais */}
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <Package className="w-4 h-4 text-muted-foreground" />
                 <div>
                   <p className="text-muted-foreground">MOQ</p>
-                  <p className="font-medium">{importedProduct.moq} unitÃ©s</p>
+                  <p className="font-medium">{importedProduct.moq} unités</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -410,8 +410,8 @@ export function ChinaProductImportDialog({
       <div className="space-y-6">
         <Tabs defaultValue="costs">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="costs">Calcul des coÃ»ts</TabsTrigger>
-            <TabsTrigger value="margin">DÃ©finir la marge</TabsTrigger>
+            <TabsTrigger value="costs">Calcul des coûts</TabsTrigger>
+            <TabsTrigger value="margin">Définir la marge</TabsTrigger>
           </TabsList>
 
           <TabsContent value="costs" className="space-y-4 mt-4">
@@ -419,13 +419,13 @@ export function ChinaProductImportDialog({
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Calculator className="w-4 h-4" />
-                  DÃ©composition des coÃ»ts
+                  Décomposition des coûts
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {/* QuantitÃ© */}
+                {/* Quantité */}
                 <div className="flex items-center justify-between">
-                  <Label>QuantitÃ© simulÃ©e</Label>
+                  <Label>Quantité simulée</Label>
                   <div className="flex items-center gap-2">
                     <Button 
                       variant="outline" 
@@ -450,7 +450,7 @@ export function ChinaProductImportDialog({
 
                 <Separator />
 
-                {/* DÃ©tails coÃ»ts */}
+                {/* Détails coûts */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Prix fournisseur</span>
@@ -469,7 +469,7 @@ export function ChinaProductImportDialog({
                     <span>${costBreakdown.international_shipping_usd?.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Douane estimÃ©e ({costBreakdown.estimated_customs_duty_percent}%)</span>
+                    <span className="text-muted-foreground">Douane estimée ({costBreakdown.estimated_customs_duty_percent}%)</span>
                     <span>${costBreakdown.estimated_customs_duty_amount?.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -480,11 +480,11 @@ export function ChinaProductImportDialog({
                   <Separator />
                   
                   <div className="flex justify-between font-medium">
-                    <span>CoÃ»t total USD</span>
+                    <span>Coût total USD</span>
                     <span>${costBreakdown.total_cost_usd?.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg">
-                    <span>CoÃ»t total {costBreakdown.local_currency}</span>
+                    <span>Coût total {costBreakdown.local_currency}</span>
                     <span>{costBreakdown.total_cost_local?.toLocaleString()} {costBreakdown.local_currency}</span>
                   </div>
                 </div>
@@ -494,7 +494,7 @@ export function ChinaProductImportDialog({
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Les frais de douane sont estimÃ©s. Le montant rÃ©el peut varier selon le pays de destination et la catÃ©gorie du produit.
+                Les frais de douane sont estimés. Le montant réel peut varier selon le pays de destination et la catégorie du produit.
               </AlertDescription>
             </Alert>
           </TabsContent>
@@ -502,12 +502,12 @@ export function ChinaProductImportDialog({
           <TabsContent value="margin" className="space-y-4 mt-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Marge bÃ©nÃ©ficiaire</CardTitle>
+                <CardTitle className="text-sm">Marge bénéficiaire</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <Label>Marge souhaitÃ©e</Label>
+                    <Label>Marge souhaitée</Label>
                     <span className="text-2xl font-bold text-primary">{margin}%</span>
                   </div>
                   <Slider
@@ -529,12 +529,12 @@ export function ChinaProductImportDialog({
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">CoÃ»t de revient</span>
+                    <span className="text-muted-foreground">Coût de revient</span>
                     <span>{costBreakdown?.total_cost_local?.toLocaleString()} GNF</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Marge ({margin}%)</span>
-                    <span className="text-primary-orange-600">
+                    <span className="text-green-600">
                       +{(costBreakdown?.total_cost_local! * (margin / 100))?.toLocaleString()} GNF
                     </span>
                   </div>
@@ -589,10 +589,10 @@ export function ChinaProductImportDialog({
 
     return (
       <div className="space-y-6">
-        <Alert className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
-          <CheckCircle className="h-4 w-4 text-primary-orange-600" />
-          <AlertDescription className="text-primary-orange-800">
-            Votre produit est prÃªt Ã  Ãªtre ajoutÃ© Ã  votre catalogue !
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            Votre produit est prêt à être ajouté à votre catalogue !
           </AlertDescription>
         </Alert>
 
@@ -618,12 +618,12 @@ export function ChinaProductImportDialog({
                 </h3>
                 <div className="flex gap-4 text-sm">
                   <span className="text-muted-foreground">
-                    CoÃ»t: <span className="text-foreground font-medium">
+                    Coût: <span className="text-foreground font-medium">
                       ${costBreakdown.total_cost_usd?.toFixed(2)}
                     </span>
                   </span>
                   <span className="text-muted-foreground">
-                    Marge: <span className="text-primary-orange-600 font-medium">{margin}%</span>
+                    Marge: <span className="text-green-600 font-medium">{margin}%</span>
                   </span>
                 </div>
                 <p className="text-2xl font-bold text-primary">
@@ -634,19 +634,19 @@ export function ChinaProductImportDialog({
           </CardContent>
         </Card>
 
-        {/* RÃ©capitulatif */}
+        {/* Récapitulatif */}
         <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
           <div className="flex justify-between">
             <span>Source</span>
             <span>{platform && CHINA_PLATFORMS[platform].name}</span>
           </div>
           <div className="flex justify-between">
-            <span>DÃ©lai de livraison estimÃ©</span>
+            <span>Délai de livraison estimé</span>
             <span>{(importedProduct.production_time_days || 0) + (importedProduct.shipping_time_days || 0)} jours</span>
           </div>
           <div className="flex justify-between">
-            <span>Profit estimÃ© par unitÃ©</span>
-            <span className="text-primary-orange-600 font-medium">
+            <span>Profit estimé par unité</span>
+            <span className="text-green-600 font-medium">
               {(finalPrice - costBreakdown.total_cost_local)?.toLocaleString()} GNF
             </span>
           </div>
@@ -687,7 +687,7 @@ export function ChinaProductImportDialog({
           </DialogTitle>
           <DialogDescription>
             {currentStep === 'url' && 'Importez un produit depuis Alibaba, AliExpress ou 1688'}
-            {currentStep === 'preview' && 'VÃ©rifiez les informations du produit'}
+            {currentStep === 'preview' && 'Vérifiez les informations du produit'}
             {currentStep === 'pricing' && 'Configurez vos prix et marges'}
             {currentStep === 'confirm' && 'Confirmez l\'ajout au catalogue'}
           </DialogDescription>
@@ -701,7 +701,7 @@ export function ChinaProductImportDialog({
                 currentStep === step 
                   ? 'bg-primary text-primary-foreground' 
                   : index < ['url', 'preview', 'pricing', 'confirm'].indexOf(currentStep)
-                    ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white'
+                    ? 'bg-green-500 text-white'
                     : 'bg-muted text-muted-foreground'
               }`}>
                 {index + 1}
@@ -709,7 +709,7 @@ export function ChinaProductImportDialog({
               {index < 3 && (
                 <div className={`w-8 h-0.5 mx-1 ${
                   index < ['url', 'preview', 'pricing', 'confirm'].indexOf(currentStep)
-                    ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500'
+                    ? 'bg-green-500'
                     : 'bg-muted'
                 }`} />
               )}

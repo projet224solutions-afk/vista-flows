@@ -71,14 +71,14 @@ export function AgentLayout({
     },
     {
       id: 'create-user',
-      label: 'CrÃ©er Utilisateur',
+      label: 'Créer Utilisateur',
       icon: <UserPlus className="w-5 h-5" />
     },
     {
       id: 'sub-agents',
       label: 'Sous-Agents',
       icon: <Users className="w-5 h-5" />,
-      badge: agent.can_create_sub_agent ? undefined : 'DÃ©sactivÃ©'
+      badge: agent.can_create_sub_agent ? undefined : 'Désactivé'
     },
     {
       id: 'reports',
@@ -87,7 +87,7 @@ export function AgentLayout({
     },
     {
       id: 'settings',
-      label: 'ParamÃ¨tres',
+      label: 'Paramètres',
       icon: <Settings className="w-5 h-5" />
     }
   ];
@@ -272,7 +272,7 @@ export function AgentLayout({
               {!sidebarCollapsed && (
                 <div className="flex items-center justify-between px-2 py-1.5 bg-slate-50 rounded-lg">
                   <span className="text-xs text-slate-500">Commission</span>
-                  <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                     {agent.commission_rate}%
                   </Badge>
                 </div>
@@ -286,7 +286,7 @@ export function AgentLayout({
                 onClick={onSignOut}
               >
                 <LogOut className="w-5 h-5" />
-                {!sidebarCollapsed && <span>DÃ©connexion</span>}
+                {!sidebarCollapsed && <span>Déconnexion</span>}
               </Button>
             </div>
           </div>
@@ -314,10 +314,10 @@ export function AgentLayout({
             <Badge variant={agent.is_active ? "default" : "secondary"} className={cn(
               "px-3 py-1",
               agent.is_active 
-                ? "bg-primary-orange-100 text-primary-orange-700 hover:bg-primary-orange-100" 
+                ? "bg-green-100 text-green-700 hover:bg-green-100" 
                 : "bg-slate-100 text-slate-600"
             )}>
-              {agent.is_active ? 'â— Actif' : 'â—‹ Inactif'}
+              {agent.is_active ? '● Actif' : '○ Inactif'}
             </Badge>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-5 h-5" />

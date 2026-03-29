@@ -1,5 +1,5 @@
 /**
- * PARAMÃˆTRES DE TARIFICATION LIVREUR
+ * PARAMÈTRES DE TARIFICATION LIVREUR
  * Permet au livreur de configurer son tarif par km et bonus
  */
 
@@ -109,7 +109,7 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
 
       if (error) throw error;
 
-      toast.success('âœ… Tarification mise Ã  jour');
+      toast.success('✅ Tarification mise à jour');
       onSave?.();
     } catch (error) {
       console.error('Error saving config:', error);
@@ -142,7 +142,7 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-primary-orange-600" />
+            <DollarSign className="h-5 w-5 text-green-600" />
             Configuration des tarifs
           </CardTitle>
         </CardHeader>
@@ -169,7 +169,7 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
           {/* Prix par km */}
           <div className="space-y-4">
             <Label className="flex items-center gap-2">
-              Prix par kilomÃ¨tre: {formatCurrency(config.pricePerKm)}
+              Prix par kilomètre: {formatCurrency(config.pricePerKm)}
             </Label>
             <Slider
               value={[config.pricePerKm]}
@@ -221,7 +221,7 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
 
           {/* Bonus colis fragile */}
           <div className="space-y-2">
-            <Label>SupplÃ©ment colis fragile</Label>
+            <Label>Supplément colis fragile</Label>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
@@ -253,23 +253,23 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <TrendingUp className="h-4 w-4 text-primary-orange-600" />
+            <TrendingUp className="h-4 w-4 text-green-600" />
             Exemples de gains
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg">
+            <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
               <p className="text-xs text-muted-foreground">3 km</p>
-              <p className="font-bold text-primary-orange-600">{formatCurrency(calculateExample(3))}</p>
+              <p className="font-bold text-green-600">{formatCurrency(calculateExample(3))}</p>
             </div>
-            <div className="text-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg">
+            <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
               <p className="text-xs text-muted-foreground">5 km</p>
-              <p className="font-bold text-primary-orange-600">{formatCurrency(calculateExample(5))}</p>
+              <p className="font-bold text-green-600">{formatCurrency(calculateExample(5))}</p>
             </div>
-            <div className="text-center p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg">
+            <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
               <p className="text-xs text-muted-foreground">10 km</p>
-              <p className="font-bold text-primary-orange-600">{formatCurrency(calculateExample(10))}</p>
+              <p className="font-bold text-green-600">{formatCurrency(calculateExample(10))}</p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">

@@ -1,6 +1,6 @@
 /**
- * ðŸŽ¥ COMPOSANT APPEL VIDÃ‰O AGORA - 224SOLUTIONS
- * Interface complÃ¨te pour les appels vidÃ©o avec Agora
+ * 🎥 COMPOSANT APPEL VIDÉO AGORA - 224SOLUTIONS
+ * Interface complète pour les appels vidéo avec Agora
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -54,10 +54,10 @@ export default function AgoraVideoCall({
   useEffect(() => {
     agoraService.setEventCallbacks({
       onUserJoined: (user) => {
-        console.log('ðŸ‘¤ Utilisateur rejoint:', user.uid);
+        console.log('👤 Utilisateur rejoint:', user.uid);
         setRemoteUsers(agoraService.getRemoteUsers());
         
-        // Jouer la vidÃ©o distante si disponible
+        // Jouer la vidéo distante si disponible
         if (user.videoTrack && remoteVideoRef.current) {
           setTimeout(() => {
             agoraService.playRemoteVideo(String(user.uid), remoteVideoRef.current!);
@@ -65,7 +65,7 @@ export default function AgoraVideoCall({
         }
       },
       onUserLeft: (uid) => {
-        console.log('ðŸ‘¤ Utilisateur parti:', uid);
+        console.log('👤 Utilisateur parti:', uid);
         setRemoteUsers(agoraService.getRemoteUsers());
       }
     });
@@ -75,22 +75,22 @@ export default function AgoraVideoCall({
     };
   }, []);
 
-  // DÃ©marrer l'appel automatiquement
+  // Démarrer l'appel automatiquement
   useEffect(() => {
     if (!isIncoming && channel) {
-      console.log('ðŸŽ¥ AgoraVideoCall: DÃ©marrage automatique pour channel:', channel);
+      console.log('🎥 AgoraVideoCall: Démarrage automatique pour channel:', channel);
       handleJoinCall();
     }
   }, [channel, isIncoming]);
 
-  // Gestion de la durÃ©e d'appel
+  // Gestion de la durée d'appel
   useEffect(() => {
     if (callState.isInCall) {
       durationIntervalRef.current = setInterval(() => {
         setCallDuration(prev => prev + 1);
       }, 1000);
       
-      // Jouer la vidÃ©o locale
+      // Jouer la vidéo locale
       if (localVideoRef.current) {
         setTimeout(() => {
           agoraService.playLocalVideo(localVideoRef.current!);
@@ -111,13 +111,13 @@ export default function AgoraVideoCall({
   }, [callState.isInCall]);
 
   const handleJoinCall = useCallback(async () => {
-    console.log('ðŸŽ¥ AgoraVideoCall: handleJoinCall appelÃ©');
+    console.log('🎥 AgoraVideoCall: handleJoinCall appelé');
     setIsConnecting(true);
     try {
       await joinCall(channel, true);
-      console.log('ðŸŽ¥ AgoraVideoCall: Appel rejoint avec succÃ¨s');
+      console.log('🎥 AgoraVideoCall: Appel rejoint avec succès');
     } catch (error) {
-      console.error('ðŸŽ¥ AgoraVideoCall: Erreur rejoindre appel:', error);
+      console.error('🎥 AgoraVideoCall: Erreur rejoindre appel:', error);
     } finally {
       setIsConnecting(false);
     }
@@ -135,7 +135,7 @@ export default function AgoraVideoCall({
   };
 
   const getNetworkQualityColor = (quality: number) => {
-    if (quality >= 4) return 'text-primary-orange-500';
+    if (quality >= 4) return 'text-green-500';
     if (quality >= 2) return 'text-yellow-500';
     return 'text-red-500';
   };
@@ -145,7 +145,7 @@ export default function AgoraVideoCall({
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2">
-            <Phone className="w-6 h-6 text-primary-orange-600" />
+            <Phone className="w-6 h-6 text-green-600" />
             Appel entrant
           </CardTitle>
         </CardHeader>
@@ -158,13 +158,13 @@ export default function AgoraVideoCall({
               </AvatarFallback>
             </Avatar>
             <h3 className="text-xl font-semibold">{callerInfo?.name}</h3>
-            <p className="text-muted-foreground">Appel vidÃ©o</p>
+            <p className="text-muted-foreground">Appel vidéo</p>
           </div>
           
           <div className="flex gap-2 justify-center">
             <Button
               onClick={handleJoinCall}
-              className="bg-primary-orange-600 hover:bg-primary-orange-700"
+              className="bg-green-600 hover:bg-green-700"
               disabled={isConnecting}
             >
               <Phone className="w-4 h-4 mr-2" />
@@ -188,7 +188,7 @@ export default function AgoraVideoCall({
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="p-8 text-center">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p>Connexion Ã  l'appel...</p>
+          <p>Connexion à l'appel...</p>
         </CardContent>
       </Card>
     );
@@ -196,9 +196,9 @@ export default function AgoraVideoCall({
 
   return (
     <div className="w-full h-full bg-black rounded-lg overflow-hidden relative min-h-[400px]">
-      {/* Interface vidÃ©o principale */}
+      {/* Interface vidéo principale */}
       <div className="relative w-full h-full">
-        {/* VidÃ©o distante */}
+        {/* Vidéo distante */}
         <div 
           ref={remoteVideoRef}
           className="w-full h-full bg-gray-900 flex items-center justify-center min-h-[400px]"
@@ -213,13 +213,13 @@ export default function AgoraVideoCall({
               </Avatar>
               <h3 className="text-xl font-semibold">{callerInfo.name}</h3>
               <p className="text-gray-400">
-                {callState.isConnected ? 'En attente de la vidÃ©o...' : 'Connexion en cours...'}
+                {callState.isConnected ? 'En attente de la vidéo...' : 'Connexion en cours...'}
               </p>
             </div>
           )}
         </div>
 
-        {/* VidÃ©o locale (picture-in-picture) */}
+        {/* Vidéo locale (picture-in-picture) */}
         <div 
           ref={localVideoRef}
           className="absolute top-4 right-4 w-32 h-24 bg-gray-800 rounded-lg overflow-hidden border-2 border-white shadow-lg"
@@ -238,13 +238,13 @@ export default function AgoraVideoCall({
           <div className="flex items-center gap-2">
             <Wifi className={`w-4 h-4 ${getNetworkQualityColor(callState.networkQuality)}`} />
             <span className="text-sm">
-              QualitÃ©: {callState.networkQuality >= 4 ? 'Excellente' : 
+              Qualité: {callState.networkQuality >= 4 ? 'Excellente' : 
                        callState.networkQuality >= 2 ? 'Bonne' : 'Faible'}
             </span>
           </div>
         </div>
 
-        {/* ContrÃ´les d'appel */}
+        {/* Contrôles d'appel */}
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
           <div className="flex items-center gap-4 bg-black/50 backdrop-blur-sm rounded-full px-6 py-3">
             {/* Microphone */}
@@ -257,7 +257,7 @@ export default function AgoraVideoCall({
               {callState.isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
             </Button>
 
-            {/* VidÃ©o */}
+            {/* Vidéo */}
             <Button
               onClick={toggleVideo}
               variant={!callState.isVideoEnabled ? "destructive" : "secondary"}
@@ -285,7 +285,7 @@ export default function AgoraVideoCall({
             variant={callState.isConnected ? "default" : "destructive"}
             className="bg-black/50 text-white"
           >
-            {callState.isConnected ? 'ConnectÃ©' : 'DÃ©connectÃ©'}
+            {callState.isConnected ? 'Connecté' : 'Déconnecté'}
           </Badge>
         </div>
       </div>

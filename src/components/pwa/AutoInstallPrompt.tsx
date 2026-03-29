@@ -2,12 +2,12 @@
  * AUTO INSTALL PROMPT - 224SOLUTIONS
  * Prompt d'installation PWA automatique et professionnel
  *
- * FonctionnalitÃ©s:
- * - Priorisation pour les vendeurs (affichage immÃ©diat)
- * - DÃ©tection du mode hors ligne
+ * Fonctionnalités:
+ * - Priorisation pour les vendeurs (affichage immédiat)
+ * - Détection du mode hors ligne
  * - Support du mode POS local pour vendeurs
- * - Interface adaptÃ©e selon le contexte (vendeur/client/offline)
- * - Gestion avancÃ©e du localStorage avec tracking
+ * - Interface adaptée selon le contexte (vendeur/client/offline)
+ * - Gestion avancée du localStorage avec tracking
  * - Support iOS, Android et Desktop
  */
 
@@ -33,28 +33,28 @@ import {
 import IOSInstallGuide from './IOSInstallGuide';
 
 interface AutoInstallPromptProps {
-  /** DÃ©lai avant affichage en ms (dÃ©faut: 3000 pour clients) */
+  /** Délai avant affichage en ms (défaut: 3000 pour clients) */
   delayMs?: number;
   /** Afficher uniquement sur mobile */
   mobileOnly?: boolean;
   /** Afficher pour les vendeurs uniquement */
   vendorOnly?: boolean;
-  /** Callback aprÃ¨s installation */
+  /** Callback après installation */
   onInstalled?: () => void;
-  /** Callback aprÃ¨s fermeture */
+  /** Callback après fermeture */
   onDismissed?: () => void;
 }
 
-// ClÃ© de stockage local
+// Clé de stockage local
 const STORAGE_KEY = 'pwa-auto-install-prompt-v2';
-// DurÃ©e avant rÃ©-affichage aprÃ¨s dismissal
+// Durée avant ré-affichage après dismissal
 const DISMISS_DURATION_DAYS = 7;
-// DurÃ©e rÃ©duite pour vendeurs (rÃ©-afficher plus tÃ´t car critique)
+// Durée réduite pour vendeurs (ré-afficher plus tôt car critique)
 const VENDOR_DISMISS_DURATION_DAYS = 1;
-// ClÃ© pour vÃ©rifier l'initialisation POS
+// Clé pour vérifier l'initialisation POS
 const POS_STORAGE_KEY = '224solutions_pos_state';
 
-// Structure du stockage local amÃ©liorÃ©
+// Structure du stockage local amélioré
 interface StoredPromptData {
   dismissedAt?: string;
   installed: boolean;
@@ -64,14 +64,14 @@ interface StoredPromptData {
   shownCount?: number;
 }
 
-// Lecture sÃ©curisÃ©e du localStorage
+// Lecture sécurisée du localStorage
 function getStoredData(): StoredPromptData | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return null;
     return JSON.parse(stored) as StoredPromptData;
   } catch {
-    // Si erreur de parsing, supprimer la donnÃ©e corrompue
+    // Si erreur de parsing, supprimer la donnée corrompue
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -81,7 +81,7 @@ function getStoredData(): StoredPromptData | null {
   }
 }
 
-// Ã‰criture sÃ©curisÃ©e du localStorage
+// Écriture sécurisée du localStorage
 function setStoredData(data: StoredPromptData): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -92,7 +92,7 @@ function setStoredData(data: StoredPromptData): boolean {
   }
 }
 
-// VÃ©rifier si le POS local est initialisÃ©
+// Vérifier si le POS local est initialisé
 function isPOSInitialized(): boolean {
   try {
     const posData = localStorage.getItem(POS_STORAGE_KEY);
@@ -124,30 +124,29 @@ export function AutoInstallPrompt({
   const [isVisible, setIsVisible] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
-  const [logoLoadFailed, setLogoLoadFailed] = useState(false);
   const [displayContext, setDisplayContext] = useState<'normal' | 'offline' | 'vendor-priority'>('normal');
 
-  // Ref pour Ã©viter les boucles d'affichage
+  // Ref pour éviter les boucles d'affichage
   const hasShownRef = useRef(false);
   const isVendor = profile?.role === 'vendeur';
   const posInitialized = isPOSInitialized();
 
-  // Calculer le dÃ©lai effectif
+  // Calculer le délai effectif
   const getEffectiveDelay = useCallback(() => {
-    // Vendeur: affichage immÃ©diat
+    // Vendeur: affichage immédiat
     if (isVendor) return 0;
-    // Offline: affichage immÃ©diat
+    // Offline: affichage immédiat
     if (isOffline) return 0;
-    // Client: dÃ©lai max 3s
+    // Client: délai max 3s
     return Math.min(delayMs, 3000);
   }, [isVendor, isOffline, delayMs]);
 
-  // VÃ©rifier si on doit afficher le prompt
+  // Vérifier si on doit afficher le prompt
   const shouldShowPrompt = useCallback(() => {
-    // Ã‰viter affichage multiple
+    // Éviter affichage multiple
     if (hasShownRef.current) return false;
 
-    // DÃ©jÃ  installÃ© (PWA dÃ©tectÃ©e)
+    // Déjà installé (PWA détectée)
     if (isInstalled) return false;
 
     // Non installable (sauf iOS qui a toujours des instructions)
@@ -161,22 +160,22 @@ export function AutoInstallPrompt({
       return false;
     }
 
-    // VÃ©rifier le stockage local
+    // Vérifier le stockage local
     const stored = getStoredData();
     if (stored) {
-      // DÃ©jÃ  installÃ© selon notre tracking
+      // Déjà installé selon notre tracking
       if (stored.installed) return false;
 
-      // VÃ©rifier le dÃ©lai de rÃ©-affichage
+      // Vérifier le délai de ré-affichage
       if (stored.dismissedAt) {
         const dismissDate = new Date(stored.dismissedAt);
         const now = new Date();
         const daysSinceDismiss = (now.getTime() - dismissDate.getTime()) / (1000 * 60 * 60 * 24);
 
-        // DÃ©lai diffÃ©rent selon le type d'utilisateur
+        // Délai différent selon le type d'utilisateur
         const dismissDuration = isVendor ? VENDOR_DISMISS_DURATION_DAYS : DISMISS_DURATION_DAYS;
 
-        // Exception: si hors ligne et vendeur, afficher quand mÃªme
+        // Exception: si hors ligne et vendeur, afficher quand même
         if (isOffline && isVendor) {
           return true;
         }
@@ -190,7 +189,7 @@ export function AutoInstallPrompt({
     return true;
   }, [isInstalled, isInstallable, isIOS, mobileOnly, vendorOnly, isVendor, isOffline]);
 
-  // DÃ©terminer le contexte d'affichage
+  // Déterminer le contexte d'affichage
   const determineContext = useCallback(() => {
     if (isOffline) return 'offline';
     if (isVendor) return 'vendor-priority';
@@ -209,7 +208,7 @@ export function AutoInstallPrompt({
       setDisplayContext(context);
       setIsVisible(true);
 
-      // Mettre Ã  jour le compteur d'affichage
+      // Mettre à jour le compteur d'affichage
       const stored = getStoredData() || { installed: false };
       setStoredData({
         ...stored,
@@ -221,11 +220,11 @@ export function AutoInstallPrompt({
     return () => clearTimeout(timer);
   }, [shouldShowPrompt, getEffectiveDelay, determineContext]);
 
-  // Effet pour Ã©couter les changements de connexion
+  // Effet pour écouter les changements de connexion
   useEffect(() => {
     if (isInstalled || hasShownRef.current) return;
 
-    // Si on passe offline et qu'on n'a pas encore affichÃ©
+    // Si on passe offline et qu'on n'a pas encore affiché
     if (isOffline && !isVisible && shouldShowPrompt()) {
       hasShownRef.current = true;
       setDisplayContext('offline');
@@ -233,7 +232,7 @@ export function AutoInstallPrompt({
     }
   }, [isOffline, isInstalled, isVisible, shouldShowPrompt]);
 
-  // GÃ©rer l'installation
+  // Gérer l'installation
   const handleInstall = async () => {
     if (isIOS || (isSafari && /Mac/i.test(navigator.userAgent))) {
       // Sur iOS, masquer le prompt principal et ouvrir directement le guide immersif
@@ -265,7 +264,7 @@ export function AutoInstallPrompt({
     }
   };
 
-  // GÃ©rer la fermeture
+  // Gérer la fermeture
   const handleDismiss = () => {
     const stored = getStoredData() || { installed: false };
     setStoredData({
@@ -280,7 +279,7 @@ export function AutoInstallPrompt({
     onDismissed?.();
   };
 
-  // GÃ©rer la fermeture du guide iOS
+  // Gérer la fermeture du guide iOS
   const handleIOSGuideClose = () => {
     setShowIOSGuide(false);
     const stored = getStoredData() || { installed: false };
@@ -300,12 +299,12 @@ export function AutoInstallPrompt({
       return "Installez l'application pour activer le mode caisse hors ligne.";
     }
     if (displayContext === 'offline') {
-      return "Installez l'application pour continuer Ã  travailler hors connexion.";
+      return "Installez l'application pour continuer à travailler hors connexion.";
     }
     if (isVendor) {
-      return "Installez l'application pour gÃ©rer vos ventes mÃªme sans internet.";
+      return "Installez l'application pour gérer vos ventes même sans internet.";
     }
-    return "Installez l'application pour une meilleure expÃ©rience.";
+    return "Installez l'application pour une meilleure expérience.";
   };
 
   // Titre selon le contexte
@@ -316,7 +315,7 @@ export function AutoInstallPrompt({
 
   // Sous-titre selon le contexte
   const getSubtitle = () => {
-    if (displayContext === 'offline') return "AccÃ¨s hors ligne requis";
+    if (displayContext === 'offline') return "Accès hors ligne requis";
     if (isVendor) return "Application vendeur";
     return "Application gratuite";
   };
@@ -349,7 +348,7 @@ export function AutoInstallPrompt({
                 displayContext === 'offline'
                   ? 'bg-gradient-to-r from-orange-500 via-red-500 to-rose-500'
                   : isVendor
-                    ? 'bg-gradient-to-r from-primary-blue-600 via-primary-orange-600 to-primary-blue-600'
+                    ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600'
                     : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600'
               }`}>
                 <div className="flex items-center justify-between">
@@ -360,16 +359,18 @@ export function AutoInstallPrompt({
                       ) : isVendor ? (
                         <Store className="w-8 h-8" />
                       ) : (
-                        logoLoadFailed ? (
-                          <Smartphone className="w-8 h-8" />
-                        ) : (
-                          <img
-                            src="/icon-192.png?v=3"
-                            alt="224Solutions"
-                            className="w-14 h-14"
-                            onError={() => setLogoLoadFailed(true)}
-                          />
-                        )
+                        <img
+                          src="/icon-192.png?v=3"
+                          alt="224Solutions"
+                          className="w-14 h-14"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.style.display = 'none';
+                            if (img.parentElement) {
+                              img.parentElement.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>';
+                            }
+                          }}
+                        />
                       )}
                     </div>
                     <div>
@@ -378,7 +379,7 @@ export function AutoInstallPrompt({
                         displayContext === 'offline'
                           ? 'text-orange-100'
                           : isVendor
-                            ? 'text-primary-blue-100'
+                            ? 'text-emerald-100'
                             : 'text-blue-100'
                       }`}>
                         {getSubtitle()}
@@ -401,23 +402,23 @@ export function AutoInstallPrompt({
                   {getMainMessage()}
                 </p>
 
-                {/* Alerte POS non initialisÃ© pour vendeurs */}
+                {/* Alerte POS non initialisé pour vendeurs */}
                 {isVendor && !posInitialized && (
                   <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                     <p className="text-sm text-amber-800 dark:text-amber-200 flex items-center gap-2">
                       <Database className="w-4 h-4 flex-shrink-0" />
-                      <span>La base de donnÃ©es locale POS n'est pas encore initialisÃ©e.</span>
+                      <span>La base de données locale POS n'est pas encore initialisée.</span>
                     </p>
                   </div>
                 )}
 
-                {/* Avantages - adaptÃ©s selon le contexte */}
+                {/* Avantages - adaptés selon le contexte */}
                 <div className="grid grid-cols-2 gap-3">
                   {isVendor ? (
                     // Avantages vendeur
                     <>
-                      <div className="flex items-center gap-2 p-3 bg-primary-blue-50 dark:bg-primary-blue-900/30 rounded-lg">
-                        <Store className="w-5 h-5 text-primary-blue-600 dark:text-primary-blue-400" />
+                      <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
+                        <Store className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         <span className="text-sm font-medium">Caisse POS</span>
                       </div>
                       <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
@@ -440,8 +441,8 @@ export function AutoInstallPrompt({
                         <WifiOff className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         <span className="text-sm font-medium">Mode hors ligne</span>
                       </div>
-                      <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-900/30 rounded-lg">
-                        <Zap className="w-5 h-5 text-primary-orange-600 dark:text-primary-orange-400" />
+                      <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                        <Zap className="w-5 h-5 text-green-600 dark:text-green-400" />
                         <span className="text-sm font-medium">Plus rapide</span>
                       </div>
                       <div className="flex items-center gap-2 p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
@@ -450,7 +451,7 @@ export function AutoInstallPrompt({
                       </div>
                       <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
                         <Smartphone className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                        <span className="text-sm font-medium">AccÃ¨s direct</span>
+                        <span className="text-sm font-medium">Accès direct</span>
                       </div>
                     </>
                   )}
@@ -461,7 +462,7 @@ export function AutoInstallPrompt({
                   <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
                     <p className="text-sm text-amber-800 dark:text-amber-200 flex items-center gap-2">
                       <Share className="w-4 h-4" />
-                      Appuyez sur <strong>Partager</strong> puis <strong>"Sur l'Ã©cran d'accueil"</strong>
+                      Appuyez sur <strong>Partager</strong> puis <strong>"Sur l'écran d'accueil"</strong>
                     </p>
                   </div>
                 )}
@@ -473,7 +474,7 @@ export function AutoInstallPrompt({
                     disabled={isInstalling}
                     className={`w-full h-12 text-base font-semibold ${
                       isVendor
-                        ? 'bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-blue-700 hover:to-primary-orange-700'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700'
                         : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
                     }`}
                   >
@@ -509,10 +510,10 @@ export function AutoInstallPrompt({
                   </Button>
                 </div>
 
-                {/* Note de sÃ©curitÃ© - corrigÃ©e */}
+                {/* Note de sécurité - corrigée */}
                 <p className="text-xs text-center text-gray-400 flex items-center justify-center gap-1">
                   <ShieldCheck className="w-3 h-3" />
-                  Installation rapide et sÃ©curisÃ©e pour utilisation hors ligne.
+                  Installation rapide et sécurisée pour utilisation hors ligne.
                 </p>
               </div>
             </motion.div>

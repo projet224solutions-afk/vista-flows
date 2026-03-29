@@ -1,6 +1,6 @@
 /**
- * ðŸ’¬ GESTION DES AVIS CLIENTS AVEC COPILOTE IA
- * Interface vendeur pour voir et rÃ©pondre aux avis avec aide de l'IA
+ * 💬 GESTION DES AVIS CLIENTS AVEC COPILOTE IA
+ * Interface vendeur pour voir et répondre aux avis avec aide de l'IA
  */
 
 import { useState, useEffect } from 'react';
@@ -70,7 +70,7 @@ export default function ReviewsManagement() {
     try {
       setLoading(true);
 
-      // RÃ©cupÃ©rer l'ID du vendeur
+      // Récupérer l'ID du vendeur
       const { data: vendor, error: vendorError } = await supabase
         .from('vendors')
         .select('id')
@@ -84,7 +84,7 @@ export default function ReviewsManagement() {
 
       setVendorId(vendor.id);
 
-      // RÃ©cupÃ©rer les avis des produits du vendeur
+      // Récupérer les avis des produits du vendeur
       const { data: reviewsData, error: reviewsError } = await supabase
         .from('product_reviews')
         .select(`
@@ -100,7 +100,7 @@ export default function ReviewsManagement() {
 
       if (reviewsError) throw reviewsError;
 
-      // Mapper les donnÃ©es pour correspondre au type Review
+      // Mapper les données pour correspondre au type Review
       const mappedReviews: Review[] = (reviewsData || []).map((r: any) => ({
         ...r,
         profiles: { full_name: 'Client' } // Fallback car la relation directe ne fonctionne pas
@@ -125,26 +125,26 @@ export default function ReviewsManagement() {
       const accessToken = sessionData.session?.access_token;
 
       if (!accessToken) {
-        toast.error('Session expirÃ©e');
+        toast.error('Session expirée');
         return;
       }
 
       const functionsBaseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      const prompt = `GÃ©nÃ¨re une rÃ©ponse professionnelle pour cet avis client sur le produit "${review.products?.name || 'Produit'}" :
+      const prompt = `Génère une réponse professionnelle pour cet avis client sur le produit "${review.products?.name || 'Produit'}" :
 
-**Note:** ${review.rating}/5 Ã©toiles
+**Note:** ${review.rating}/5 étoiles
 **Titre:** ${review.title}
 **Commentaire:** ${review.content}
 
-La rÃ©ponse doit :
+La réponse doit :
 - Remercier le client
-- ÃŠtre adaptÃ©e Ã  la note (${review.rating >= 4 ? 'positive' : review.rating === 3 ? 'neutre' : 'nÃ©gative'})
+- Être adaptée à la note (${review.rating >= 4 ? 'positive' : review.rating === 3 ? 'neutre' : 'négative'})
 - Rester concise (2-3 phrases)
-- ÃŠtre en franÃ§ais
+- Être en français
 
-RÃ©ponse:`;
+Réponse:`;
 
       const res = await fetch(`${functionsBaseUrl}/vendor-ai-assistant`, {
         method: 'POST',
@@ -168,7 +168,7 @@ RÃ©ponse:`;
       });
 
       if (!res.ok) {
-        throw new Error('Erreur gÃ©nÃ©ration IA');
+        throw new Error('Erreur génération IA');
       }
 
       const reader = res.body?.getReader();
@@ -211,10 +211,10 @@ RÃ©ponse:`;
         }
       }
 
-      toast.success('RÃ©ponse gÃ©nÃ©rÃ©e par l\'IA !');
+      toast.success('Réponse générée par l\'IA !');
     } catch (error) {
-      console.error('Erreur gÃ©nÃ©ration IA:', error);
-      toast.error('Erreur lors de la gÃ©nÃ©ration de la rÃ©ponse');
+      console.error('Erreur génération IA:', error);
+      toast.error('Erreur lors de la génération de la réponse');
     } finally {
       setGeneratingAI(false);
     }
@@ -222,7 +222,7 @@ RÃ©ponse:`;
 
   const submitResponse = async () => {
     if (!selectedReview || !response.trim()) {
-      toast.error('Veuillez entrer une rÃ©ponse');
+      toast.error('Veuillez entrer une réponse');
       return;
     }
 
@@ -239,12 +239,12 @@ RÃ©ponse:`;
 
       if (error) throw error;
 
-      toast.success('RÃ©ponse publiÃ©e avec succÃ¨s !');
+      toast.success('Réponse publiée avec succès !');
       setResponse('');
       setSelectedReview(null);
       loadVendorAndReviews();
     } catch (error) {
-      console.error('Erreur publication rÃ©ponse:', error);
+      console.error('Erreur publication réponse:', error);
       toast.error('Erreur lors de la publication');
     } finally {
       setSubmitting(false);
@@ -288,7 +288,7 @@ RÃ©ponse:`;
             Gestion des Avis Clients
           </CardTitle>
           <CardDescription>
-            RÃ©pondez aux avis de vos clients avec l'aide de l'IA Copilote
+            Répondez aux avis de vos clients avec l'aide de l'IA Copilote
           </CardDescription>
         </CardHeader>
       </Card>
@@ -306,7 +306,7 @@ RÃ©ponse:`;
                   </TabsTrigger>
                   <TabsTrigger value="answered" className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4" />
-                    RÃ©pondus ({answeredReviews.length})
+                    Répondus ({answeredReviews.length})
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -315,9 +315,9 @@ RÃ©ponse:`;
                 <ScrollArea className="h-[600px]">
                   {pendingReviews.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-12 text-center">
-                      <CheckCircle2 className="h-12 w-12 text-primary-orange-500 mb-4" />
+                      <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
                       <p className="text-muted-foreground">
-                        Tous les avis ont Ã©tÃ© traitÃ©s !
+                        Tous les avis ont été traités !
                       </p>
                     </div>
                   ) : (
@@ -346,7 +346,7 @@ RÃ©ponse:`;
                                 </span>
                                 {review.verified_purchase && (
                                   <Badge variant="secondary" className="text-xs">
-                                    âœ“ Achat vÃ©rifiÃ©
+                                    ✓ Achat vérifié
                                   </Badge>
                                 )}
                               </div>
@@ -357,7 +357,7 @@ RÃ©ponse:`;
                               </p>
                               <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                                 <span>{review.products?.name}</span>
-                                <span>â€¢</span>
+                                <span>•</span>
                                 <span>
                                   {format(new Date(review.created_at), 'dd MMM yyyy', { locale: fr })}
                                 </span>
@@ -377,7 +377,7 @@ RÃ©ponse:`;
                     <div className="flex flex-col items-center justify-center p-12 text-center">
                       <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">
-                        Aucune rÃ©ponse publiÃ©e pour le moment
+                        Aucune réponse publiée pour le moment
                       </p>
                     </div>
                   ) : (
@@ -408,7 +408,7 @@ RÃ©ponse:`;
                             <div className="ml-13 bg-primary/5 rounded-lg p-3 border border-primary/20">
                               <div className="flex items-center gap-2 mb-2">
                                 <Badge variant="default" className="text-xs">
-                                  RÃ©ponse du vendeur
+                                  Réponse du vendeur
                                 </Badge>
                                 <span className="text-xs text-muted-foreground">
                                   {format(new Date(review.vendor_response_at!), 'dd MMM yyyy', { locale: fr })}
@@ -427,12 +427,12 @@ RÃ©ponse:`;
           </CardContent>
         </Card>
 
-        {/* Panneau de rÃ©ponse */}
+        {/* Panneau de réponse */}
         <Card className="lg:col-span-1">
           <CardHeader className="pb-4">
             <CardTitle className="text-base flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-orange-500" />
-              RÃ©pondre avec l'IA
+              Répondre avec l'IA
             </CardTitle>
             <CardDescription className="text-xs">
               Copilote Vendeur
@@ -443,7 +443,7 @@ RÃ©ponse:`;
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-sm text-muted-foreground">
-                  SÃ©lectionnez un avis pour y rÃ©pondre
+                  Sélectionnez un avis pour y répondre
                 </p>
               </div>
             ) : (
@@ -470,7 +470,7 @@ RÃ©ponse:`;
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium">Votre rÃ©ponse</label>
+                    <label className="text-sm font-medium">Votre réponse</label>
                     <Button
                       size="sm"
                       variant="outline"
@@ -481,12 +481,12 @@ RÃ©ponse:`;
                       {generatingAI ? (
                         <>
                           <Loader2 className="h-3 w-3 animate-spin" />
-                          GÃ©nÃ©ration...
+                          Génération...
                         </>
                       ) : (
                         <>
                           <Sparkles className="h-3 w-3 text-orange-500" />
-                          GÃ©nÃ©rer avec l'IA
+                          Générer avec l'IA
                         </>
                       )}
                     </Button>
@@ -495,7 +495,7 @@ RÃ©ponse:`;
                   <Textarea
                     value={response}
                     onChange={(e) => setResponse(e.target.value)}
-                    placeholder="Ã‰crivez votre rÃ©ponse ou utilisez l'IA pour gÃ©nÃ©rer une suggestion..."
+                    placeholder="Écrivez votre réponse ou utilisez l'IA pour générer une suggestion..."
                     rows={6}
                     className="resize-none"
                   />
@@ -513,7 +513,7 @@ RÃ©ponse:`;
                     ) : (
                       <>
                         <Send className="h-4 w-4" />
-                        Publier la rÃ©ponse
+                        Publier la réponse
                       </>
                     )}
                   </Button>

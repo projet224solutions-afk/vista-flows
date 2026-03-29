@@ -82,12 +82,12 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
-                    <Phone className="w-4 h-4 text-primary-orange-600" />
+                  <div className="p-2 bg-green-50 rounded-lg">
+                    <Phone className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide">TÃ©lÃ©phone</p>
-                    <p className="font-medium text-slate-800">{agent.phone || 'Non renseignÃ©'}</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">Téléphone</p>
+                    <p className="font-medium text-slate-800">{agent.phone || 'Non renseigné'}</p>
                   </div>
                 </div>
 
@@ -131,7 +131,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
                         </Badge>
                       ))
                     ) : (
-                      <span className="text-sm text-slate-500">Aucune permission spÃ©cifique</span>
+                      <span className="text-sm text-slate-500">Aucune permission spécifique</span>
                     )}
                   </div>
                 </div>
@@ -142,9 +142,9 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
 
         {/* Performance Card */}
         <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 border-b">
+          <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b">
             <CardTitle className="flex items-center gap-2 text-slate-800">
-              <TrendingUp className="w-5 h-5 text-primary-blue-600" />
+              <TrendingUp className="w-5 h-5 text-emerald-600" />
               Performance
             </CardTitle>
           </CardHeader>
@@ -153,7 +153,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-slate-600">Objectif Mensuel</span>
-                <span className="text-sm font-bold text-primary-blue-600">
+                <span className="text-sm font-bold text-emerald-600">
                   {stats.usersThisMonth}/{monthlyGoal}
                 </span>
               </div>
@@ -199,11 +199,11 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
               <span className="text-sm text-slate-600">Statut</span>
               <Badge 
                 className={agent.is_active 
-                  ? "bg-primary-orange-100 text-primary-orange-700 hover:bg-primary-orange-100" 
+                  ? "bg-green-100 text-green-700 hover:bg-green-100" 
                   : "bg-slate-100 text-slate-600"
                 }
               >
-                {agent.is_active ? 'â— Actif' : 'â—‹ Inactif'}
+                {agent.is_active ? '● Actif' : '○ Inactif'}
               </Badge>
             </div>
           </CardContent>

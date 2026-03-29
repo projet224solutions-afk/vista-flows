@@ -80,7 +80,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
         console.error('Erreur wallet:', walletError);
       }
 
-      // Mapper vers format unifiÃ©
+      // Mapper vers format unifié
       const commissionsList = (commissionsData || []).map((c: any) => ({
         ...c,
         commission_amount: c.amount,
@@ -112,7 +112,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
 
       setCommissions(commissionsList);
 
-      // Utiliser les mÃªmes donnÃ©es comme transactions
+      // Utiliser les mêmes données comme transactions
       const transactions = commissionsList.map((c: any) => ({
         id: c.id,
         amount: c.amount,
@@ -125,8 +125,8 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
       setRecentTransactions(transactions);
 
     } catch (error: any) {
-      console.error('Erreur chargement donnÃ©es financiÃ¨res:', error);
-      toast.error('Erreur lors du chargement des donnÃ©es');
+      console.error('Erreur chargement données financières:', error);
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -137,11 +137,11 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-primary-orange-100 text-primary-orange-700">PayÃ©</Badge>;
+        return <Badge className="bg-green-100 text-green-700">Payé</Badge>;
       case 'pending':
         return <Badge className="bg-amber-100 text-amber-700">En attente</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-700">AnnulÃ©</Badge>;
+        return <Badge className="bg-red-100 text-red-700">Annulé</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -174,7 +174,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
         <CardContent className="p-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 rounded-xl p-4 text-white">
+            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <Wallet className="w-5 h-5" />
                 <span className="text-sm opacity-90">Solde Wallet</span>
@@ -201,10 +201,10 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
               <p className="text-xs opacity-75">GNF</p>
             </div>
 
-            <div className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 rounded-xl p-4 text-white">
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="w-5 h-5" />
-                <span className="text-sm opacity-90">PayÃ©es</span>
+                <span className="text-sm opacity-90">Payées</span>
               </div>
               <p className="text-2xl font-bold">{formatAmount(stats.paidCommissions)}</p>
               <p className="text-xs opacity-75">GNF</p>
@@ -223,8 +223,8 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
               </div>
             </div>
             <div className="bg-muted/30 rounded-lg p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-primary-orange-100 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-primary-orange-600" />
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-green-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{stats.transactionsThisMonth}</p>
@@ -247,13 +247,13 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
             <TabsContent value="overview" className="p-6">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-primary" />
-                DerniÃ¨res Transactions
+                Dernières Transactions
               </h3>
               
               {recentTransactions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune transaction rÃ©cente</p>
+                  <p>Aucune transaction récente</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[300px]">
@@ -265,10 +265,10 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            tx.amount >= 0 ? 'bg-primary-orange-100' : 'bg-red-100'
+                            tx.amount >= 0 ? 'bg-green-100' : 'bg-red-100'
                           }`}>
                             {tx.amount >= 0 ? (
-                              <ArrowDownLeft className="w-5 h-5 text-primary-orange-600" />
+                              <ArrowDownLeft className="w-5 h-5 text-green-600" />
                             ) : (
                               <ArrowUpRight className="w-5 h-5 text-red-600" />
                             )}
@@ -276,12 +276,12 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                           <div>
                             <p className="font-medium text-foreground">{tx.description}</p>
                             <p className="text-xs text-muted-foreground">
-                              {format(new Date(tx.created_at), 'dd MMM yyyy Ã  HH:mm', { locale: fr })}
+                              {format(new Date(tx.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className={`font-bold ${tx.amount >= 0 ? 'text-primary-orange-600' : 'text-red-600'}`}>
+                          <p className={`font-bold ${tx.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {tx.amount >= 0 ? '+' : ''}{formatAmount(tx.amount)} GNF
                           </p>
                           <Badge variant="secondary" className="text-xs">{tx.type}</Badge>
@@ -296,13 +296,13 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
             <TabsContent value="commissions" className="p-6">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                DÃ©tail des Commissions
+                Détail des Commissions
               </h3>
               
               {commissions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune commission enregistrÃ©e</p>
+                  <p>Aucune commission enregistrée</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[300px]">
@@ -324,7 +324,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-primary-orange-600">
+                          <p className="font-bold text-green-600">
                             +{formatAmount(comm.commission_amount)} GNF
                           </p>
                           {getStatusBadge(comm.status)}

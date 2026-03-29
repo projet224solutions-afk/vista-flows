@@ -1,6 +1,6 @@
 /**
- * SUIVI EN TEMPS RÃ‰EL POUR LE CLIENT
- * Affiche la position du livreur et l'itinÃ©raire en temps rÃ©el
+ * SUIVI EN TEMPS RÉEL POUR LE CLIENT
+ * Affiche la position du livreur et l'itinéraire en temps réel
  */
 
 import { useEffect, useState, useRef } from 'react';
@@ -13,7 +13,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { toast } from 'sonner';
 
-// ClÃ© Mapbox depuis les variables d'environnement
+// Clé Mapbox depuis les variables d'environnement
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 interface ClientDeliveryTrackingProps {
@@ -30,7 +30,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
   const driverMarker = useRef<mapboxgl.Marker | null>(null);
   const [hasNotifiedTwoMinutes, setHasNotifiedTwoMinutes] = useState(false);
 
-  // Charger les dÃ©tails de la livraison
+  // Charger les détails de la livraison
   useEffect(() => {
     loadDelivery();
     subscribeToDelivery();
@@ -46,14 +46,14 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
-      center: [-13.7122, 9.5091], // Conakry par dÃ©faut
+      center: [-13.7122, 9.5091], // Conakry par défaut
       zoom: 12
     });
 
     map.current.addControl(new mapboxgl.NavigationControl());
   }, []);
 
-  // Mettre Ã  jour la carte quand on a les donnÃ©es
+  // Mettre à jour la carte quand on a les données
   useEffect(() => {
     if (!map.current || !delivery) return;
 
@@ -67,10 +67,10 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
       .setPopup(new mapboxgl.Popup().setHTML(`<strong>Destination</strong><br/>${deliveryAddr}`))
       .addTo(map.current);
 
-    // Ajouter le marqueur de dÃ©part (pickup)
+    // Ajouter le marqueur de départ (pickup)
     const pickupAddr = typeof delivery.pickup_address === 'string'
       ? delivery.pickup_address
-      : delivery.pickup_address?.address || 'Point de dÃ©part';
+      : delivery.pickup_address?.address || 'Point de départ';
 
     new mapboxgl.Marker({ color: '#f97316' })
       .setLngLat([delivery.pickup_lng || -13.7122, delivery.pickup_lat || 9.5091])
@@ -86,7 +86,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
     }
   }, [delivery]);
 
-  // Mettre Ã  jour la position du livreur
+  // Mettre à jour la position du livreur
   useEffect(() => {
     if (!map.current || !driverPosition) return;
 
@@ -95,11 +95,11 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
     } else {
       driverMarker.current = new mapboxgl.Marker({ color: '#3b82f6' })
         .setLngLat([driverPosition.lng, driverPosition.lat])
-        .setPopup(new mapboxgl.Popup().setHTML('<strong>ðŸš´ Livreur</strong>'))
+        .setPopup(new mapboxgl.Popup().setHTML('<strong>🚴 Livreur</strong>'))
         .addTo(map.current);
     }
 
-    // Calculer la distance et le temps estimÃ©
+    // Calculer la distance et le temps estimé
     if (delivery?.delivery_lat && delivery?.delivery_lng) {
       const dist = calculateDistance(
         driverPosition.lat,
@@ -113,7 +113,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
       const estimatedMinutes = Math.ceil((dist / 30) * 60);
       setEstimatedTime(estimatedMinutes);
 
-      // Notification Ã  2 minutes
+      // Notification à 2 minutes
       if (estimatedMinutes <= 2 && !hasNotifiedTwoMinutes && delivery.status === 'in_transit') {
         sendArrivingSoonNotification(estimatedMinutes);
         setHasNotifiedTwoMinutes(true);
@@ -152,9 +152,9 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
           
           // Notifier le client selon le statut
           if (payload.new.status === 'picked_up' && payload.old?.status !== 'picked_up') {
-            toast.success('ðŸ“¦ Le livreur a rÃ©cupÃ©rÃ© votre colis !');
+            toast.success('📦 Le livreur a récupéré votre colis !');
           } else if (payload.new.status === 'delivered') {
-            toast.success('âœ… Votre colis a Ã©tÃ© livrÃ© !');
+            toast.success('✅ Votre colis a été livré !');
           }
         }
       )
@@ -230,11 +230,11 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
       case 'pending':
         return <Badge variant="secondary">En attente</Badge>;
       case 'picked_up':
-        return <Badge className="bg-blue-500">Colis rÃ©cupÃ©rÃ©</Badge>;
+        return <Badge className="bg-blue-500">Colis récupéré</Badge>;
       case 'in_transit':
         return <Badge className="bg-purple-500">En livraison</Badge>;
       case 'delivered':
-        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">LivrÃ©</Badge>;
+        return <Badge className="bg-green-500">Livré</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -262,7 +262,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Temps estimÃ© */}
+          {/* Temps estimé */}
           {estimatedTime !== null && driverPosition && delivery.status === 'in_transit' && (
             <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
               <div className="flex items-center gap-3">
@@ -271,7 +271,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
                   <p className="font-bold text-2xl text-blue-900">
                     {estimatedTime} min
                   </p>
-                  <p className="text-sm text-blue-700">Temps estimÃ© d'arrivÃ©e</p>
+                  <p className="text-sm text-blue-700">Temps estimé d'arrivée</p>
                   {distance !== null && (
                     <p className="text-xs text-muted-foreground">
                       Distance: {distance.toFixed(1)} km
@@ -310,7 +310,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
               </div>
             </div>
             <div className="flex items-start gap-2">
-              <MapPin className="h-4 w-4 text-primary-orange-600 flex-shrink-0 mt-0.5" />
+              <MapPin className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium">Livraison</p>
                 <p className="text-muted-foreground">

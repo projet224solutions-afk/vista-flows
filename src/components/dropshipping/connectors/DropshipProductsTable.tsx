@@ -1,6 +1,6 @@
 /**
  * DROPSHIP PRODUCTS TABLE
- * Table de gestion des produits dropshipping importÃ©s
+ * Table de gestion des produits dropshipping importés
  * Affiche les produits, leur statut de sync, et les actions disponibles
  * 
  * @module DropshipProductsTable
@@ -105,7 +105,7 @@ function SyncStatusBadge({ status, lastSync }: { status: string; lastSync: strin
   const getStatusConfig = () => {
     switch (status) {
       case 'synced':
-        return { icon: CheckCircle, label: 'SynchronisÃ©', variant: 'default' as const, className: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' };
+        return { icon: CheckCircle, label: 'Synchronisé', variant: 'default' as const, className: 'bg-green-500' };
       case 'pending':
         return { icon: Loader2, label: 'En cours', variant: 'secondary' as const, className: 'animate-spin' };
       case 'error':
@@ -129,9 +129,9 @@ function SyncStatusBadge({ status, lastSync }: { status: string; lastSync: strin
         </TooltipTrigger>
         <TooltipContent>
           {lastSync ? (
-            <p>DerniÃ¨re sync: {formatRelativeTime(lastSync)}</p>
+            <p>Dernière sync: {formatRelativeTime(lastSync)}</p>
           ) : (
-            <p>Jamais synchronisÃ©</p>
+            <p>Jamais synchronisé</p>
           )}
         </TooltipContent>
       </Tooltip>
@@ -143,7 +143,7 @@ function StockStatusBadge({ status, quantity }: { status: string; quantity: numb
   const getConfig = () => {
     switch (status) {
       case 'in_stock':
-        return { label: quantity ? `${quantity} en stock` : 'En stock', className: 'bg-primary-orange-100 text-primary-orange-800' };
+        return { label: quantity ? `${quantity} en stock` : 'En stock', className: 'bg-green-100 text-green-800' };
       case 'low_stock':
         return { label: `${quantity} restants`, className: 'bg-yellow-100 text-yellow-800' };
       case 'out_of_stock':
@@ -175,7 +175,7 @@ function PriceChangeIndicator({ change, pct }: { change: string | null; pct: num
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Prix fournisseur augmentÃ© de {pct?.toFixed(1)}%</p>
+            <p>Prix fournisseur augmenté de {pct?.toFixed(1)}%</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -186,12 +186,12 @@ function PriceChangeIndicator({ change, pct }: { change: string | null; pct: num
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="inline-flex items-center text-primary-orange-500">
+          <span className="inline-flex items-center text-green-500">
             <TrendingDown className="w-4 h-4" />
           </span>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Prix fournisseur diminuÃ© de {Math.abs(pct || 0).toFixed(1)}%</p>
+          <p>Prix fournisseur diminué de {Math.abs(pct || 0).toFixed(1)}%</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -246,7 +246,7 @@ export function DropshipProductsTable({
     return Array.from(unique);
   }, [products]);
   
-  // SÃ©lection
+  // Sélection
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedProducts(new Set(filteredProducts.map(p => p.id)));
@@ -315,7 +315,7 @@ export function DropshipProductsTable({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous</SelectItem>
-              <SelectItem value="published">PubliÃ©s</SelectItem>
+              <SelectItem value="published">Publiés</SelectItem>
               <SelectItem value="draft">Brouillons</SelectItem>
               <SelectItem value="error">Erreurs sync</SelectItem>
               <SelectItem value="out_of_stock">Rupture</SelectItem>
@@ -327,7 +327,7 @@ export function DropshipProductsTable({
         <div className="flex gap-2">
           {selectedProducts.size > 0 && (
             <Button variant="outline" size="sm">
-              {selectedProducts.size} sÃ©lectionnÃ©(s)
+              {selectedProducts.size} sélectionné(s)
             </Button>
           )}
           
@@ -353,9 +353,9 @@ export function DropshipProductsTable({
           <p className="text-sm text-muted-foreground">Total produits</p>
           <p className="text-2xl font-bold">{products.length}</p>
         </div>
-        <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg p-3">
-          <p className="text-sm text-primary-orange-600">PubliÃ©s</p>
-          <p className="text-2xl font-bold text-primary-orange-700">
+        <div className="bg-green-50 rounded-lg p-3">
+          <p className="text-sm text-green-600">Publiés</p>
+          <p className="text-2xl font-bold text-green-700">
             {products.filter(p => p.isPublished).length}
           </p>
         </div>
@@ -387,7 +387,7 @@ export function DropshipProductsTable({
               <TableHead className="w-[60px]">Image</TableHead>
               <TableHead>Produit</TableHead>
               <TableHead>Source</TableHead>
-              <TableHead className="text-right">CoÃ»t</TableHead>
+              <TableHead className="text-right">Coût</TableHead>
               <TableHead className="text-right">Prix vente</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Sync</TableHead>
@@ -409,7 +409,7 @@ export function DropshipProductsTable({
                 <TableCell colSpan={10} className="h-32 text-center">
                   <Package className="w-8 h-8 mx-auto text-muted-foreground" />
                   <p className="text-sm text-muted-foreground mt-2">
-                    Aucun produit trouvÃ©
+                    Aucun produit trouvé
                   </p>
                 </TableCell>
               </TableRow>
@@ -437,7 +437,7 @@ export function DropshipProductsTable({
                     <div className="max-w-[200px]">
                       <p className="font-medium truncate">{product.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {product.totalSold} ventes â€¢ {formatCurrency(product.totalRevenue, 'GNF')}
+                        {product.totalSold} ventes • {formatCurrency(product.totalRevenue, 'GNF')}
                       </p>
                     </div>
                   </TableCell>
@@ -456,7 +456,7 @@ export function DropshipProductsTable({
                   <TableCell className="text-right">
                     <div>
                       <p className="font-medium">{formatCurrency(product.sellingPrice, 'GNF')}</p>
-                      <p className="text-xs text-primary-orange-600">+{product.margin.toFixed(0)}%</p>
+                      <p className="text-xs text-green-600">+{product.margin.toFixed(0)}%</p>
                     </div>
                   </TableCell>
                   
@@ -470,9 +470,9 @@ export function DropshipProductsTable({
                   
                   <TableCell>
                     {product.isPublished ? (
-                      <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
+                      <Badge className="bg-green-500">
                         <Eye className="w-3 h-3 mr-1" />
-                        PubliÃ©
+                        Publié
                       </Badge>
                     ) : (
                       <Badge variant="secondary">
@@ -518,7 +518,7 @@ export function DropshipProductsTable({
                           onClick={() => onTogglePublish(product.id, !product.isPublished)}
                         >
                           {product.isPublished ? (
-                            <><EyeOff className="w-4 h-4 mr-2" /> DÃ©publier</>
+                            <><EyeOff className="w-4 h-4 mr-2" /> Dépublier</>
                           ) : (
                             <><Eye className="w-4 h-4 mr-2" /> Publier</>
                           )}

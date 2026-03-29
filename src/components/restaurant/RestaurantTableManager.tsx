@@ -24,17 +24,17 @@ interface RestaurantTableManagerProps {
 }
 
 const STATUS_CONFIG = {
-  available: { label: 'Libre', color: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500', icon: Check },
-  occupied: { label: 'OccupÃ©e', color: 'bg-red-500', icon: Users },
-  reserved: { label: 'RÃ©servÃ©e', color: 'bg-blue-500', icon: Clock },
+  available: { label: 'Libre', color: 'bg-green-500', icon: Check },
+  occupied: { label: 'Occupée', color: 'bg-red-500', icon: Users },
+  reserved: { label: 'Réservée', color: 'bg-blue-500', icon: Clock },
   cleaning: { label: 'Nettoyage', color: 'bg-yellow-500', icon: Sparkles },
 };
 
 const LOCATIONS = [
-  { value: 'interieur', label: 'ðŸ  IntÃ©rieur' },
-  { value: 'terrasse', label: 'â˜€ï¸ Terrasse' },
-  { value: 'salon_prive', label: 'ðŸšª Salon privÃ©' },
-  { value: 'bar', label: 'ðŸ¸ Bar' },
+  { value: 'interieur', label: '🏠 Intérieur' },
+  { value: 'terrasse', label: '☀️ Terrasse' },
+  { value: 'salon_prive', label: '🚪 Salon privé' },
+  { value: 'bar', label: '🍸 Bar' },
 ];
 
 export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProps) {
@@ -73,7 +73,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
 
   const handleSave = async () => {
     if (!tableForm.table_number) {
-      toast.error('NumÃ©ro de table requis');
+      toast.error('Numéro de table requis');
       return;
     }
 
@@ -85,7 +85,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
           location: tableForm.location,
           shape: tableForm.shape,
         });
-        toast.success('Table mise Ã  jour');
+        toast.success('Table mise à jour');
       } else {
         await createTable({
           table_number: tableForm.table_number,
@@ -93,7 +93,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
           location: tableForm.location,
           shape: tableForm.shape,
         });
-        toast.success('Table ajoutÃ©e');
+        toast.success('Table ajoutée');
       }
       setShowDialog(false);
       resetForm();
@@ -117,7 +117,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
     if (!confirm('Supprimer cette table ?')) return;
     try {
       await deleteTable(id);
-      toast.success('Table supprimÃ©e');
+      toast.success('Table supprimée');
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -126,7 +126,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
   const handleStatusChange = async (id: string, status: RestaurantTable['status']) => {
     try {
       await updateTableStatus(id, status);
-      toast.success('Statut mis Ã  jour');
+      toast.success('Statut mis à jour');
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -153,28 +153,28 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
     <div className="space-y-6">
       {/* Statistiques */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-100 dark:from-primary-blue-900/20 dark:to-primary-orange-800/20 border-primary-orange-200">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-primary-orange-600">{stats.available}</div>
-            <div className="text-sm text-primary-orange-700">Tables libres</div>
+            <div className="text-2xl font-bold text-green-600">{stats.available}</div>
+            <div className="text-sm text-green-700">Tables libres</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-red-600">{stats.occupied}</div>
-            <div className="text-sm text-red-700">OccupÃ©es</div>
+            <div className="text-sm text-red-700">Occupées</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">{stats.reserved}</div>
-            <div className="text-sm text-blue-700">RÃ©servÃ©es</div>
+            <div className="text-sm text-blue-700">Réservées</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold">{stats.occupiedCapacity}/{stats.totalCapacity}</div>
-            <div className="text-sm text-muted-foreground">Couverts occupÃ©s</div>
+            <div className="text-sm text-muted-foreground">Couverts occupés</div>
           </CardContent>
         </Card>
       </div>
@@ -198,7 +198,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>NumÃ©ro de table *</Label>
+                  <Label>Numéro de table *</Label>
                   <Input
                     value={tableForm.table_number}
                     onChange={(e) => setTableForm(prev => ({ ...prev, table_number: e.target.value }))}
@@ -206,7 +206,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>CapacitÃ© (places)</Label>
+                  <Label>Capacité (places)</Label>
                   <Input
                     type="number"
                     value={tableForm.capacity}
@@ -245,9 +245,9 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="rectangle">â—»ï¸ Rectangle</SelectItem>
-                      <SelectItem value="round">â¬¤ Ronde</SelectItem>
-                      <SelectItem value="square">â–ªï¸ CarrÃ©e</SelectItem>
+                      <SelectItem value="rectangle">◻️ Rectangle</SelectItem>
+                      <SelectItem value="round">⬤ Ronde</SelectItem>
+                      <SelectItem value="square">▪️ Carrée</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -258,7 +258,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
                 Annuler
               </Button>
               <Button onClick={handleSave}>
-                {editingTable ? 'Mettre Ã  jour' : 'CrÃ©er'}
+                {editingTable ? 'Mettre à jour' : 'Créer'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -271,7 +271,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
           <CardContent className="py-12 text-center">
             <MapPin className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">
-              Aucune table configurÃ©e
+              Aucune table configurée
             </p>
             <Button onClick={() => setShowDialog(true)}>
               <Plus className="w-4 h-4 mr-2" />
@@ -318,7 +318,7 @@ export function RestaurantTableManager({ serviceId }: RestaurantTableManagerProp
 
                   <div className="flex items-center gap-1 mb-3">
                     <StatusIcon className={`w-3 h-3 ${
-                      table.status === 'available' ? 'text-primary-orange-600' :
+                      table.status === 'available' ? 'text-green-600' :
                       table.status === 'occupied' ? 'text-red-600' :
                       table.status === 'reserved' ? 'text-blue-600' : 'text-yellow-600'
                     }`} />

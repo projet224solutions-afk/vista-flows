@@ -1,8 +1,8 @@
 /**
- * FORMULAIRE DE CRÃ‰ATION D'EXPÃ‰DITION
- * InspirÃ© de JYM Express pour 224SOLUTIONS
+ * FORMULAIRE DE CRÉATION D'EXPÉDITION
+ * Inspiré de JYM Express pour 224SOLUTIONS
  * Avec calcul automatique du prix par GPS
- * ET paiement escrow pour sÃ©curiser les fonds du livreur
+ * ET paiement escrow pour sécuriser les fonds du livreur
  */
 
 import { useState, useEffect } from 'react';
@@ -31,7 +31,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
   const [loading, setLoading] = useState(false);
   const { wallet } = useWallet();
   const [formData, setFormData] = useState({
-    // ExpÃ©diteur
+    // Expéditeur
     senderName: '',
     senderPhone: '',
     senderAddress: '',
@@ -54,7 +54,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
     insuranceAmount: '',
     returnOption: false,
     
-    // MÃ©thode de paiement pour le livreur
+    // Méthode de paiement pour le livreur
     deliveryPaymentMethod: 'wallet' as 'wallet' | 'cash',
   });
 
@@ -63,7 +63,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // RÃ©initialiser le prix si adresse modifiÃ©e
+    // Réinitialiser le prix si adresse modifiée
     if (field === 'senderAddress' || field === 'receiverAddress') {
       reset();
     }
@@ -86,7 +86,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
     
     // Validation
     if (!formData.senderName || !formData.senderPhone || !formData.senderAddress) {
-      toast.error('Veuillez remplir toutes les informations de l\'expÃ©diteur');
+      toast.error('Veuillez remplir toutes les informations de l\'expéditeur');
       return;
     }
     
@@ -102,7 +102,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
     setLoading(true);
     try {
-      // 1. RÃ©cupÃ©rer les infos du vendeur et l'utilisateur courant
+      // 1. Récupérer les infos du vendeur et l'utilisateur courant
       const { data: vendor } = await supabase
         .from('vendors')
         .select('business_name, phone, user_id')
@@ -112,10 +112,10 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
       const { data: authData } = await supabase.auth.getUser();
       const currentUserId = authData?.user?.id;
 
-      // 2. CrÃ©er un customer temporaire si nÃ©cessaire ou utiliser le user courant
+      // 2. Créer un customer temporaire si nécessaire ou utiliser le user courant
       let customerId = currentUserId;
       
-      // VÃ©rifier si un customer existe pour cet utilisateur
+      // Vérifier si un customer existe pour cet utilisateur
       const { data: existingCustomer } = await supabase
         .from('customers')
         .select('id')
@@ -123,7 +123,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
         .maybeSingle();
 
       if (!existingCustomer) {
-        // CrÃ©er un customer temporaire
+        // Créer un customer temporaire
         const { data: newCustomer, error: customerError } = await supabase
           .from('customers')
           .insert({
@@ -144,11 +144,11 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
         customerId = existingCustomer.id;
       }
 
-      // 3. GÃ©nÃ©rer un numÃ©ro de commande unique
+      // 3. Générer un numéro de commande unique
       const orderNumber = `EXP-${Date.now().toString(36).toUpperCase()}`;
       const totalAmount = formData.cashOnDelivery ? parseFloat(formData.codAmount) || 0 : 0;
 
-      // 4. CrÃ©er une commande pour lier la livraison
+      // 4. Créer une commande pour lier la livraison
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -164,14 +164,14 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
             name: formData.receiverName,
             phone: formData.receiverPhone
           },
-          notes: `ExpÃ©dition: ${formData.packageDescription || formData.itemType || 'Colis'}`,
+          notes: `Expédition: ${formData.packageDescription || formData.itemType || 'Colis'}`,
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // 5. CrÃ©er l'expÃ©dition dans la table shipments
+      // 5. Créer l'expédition dans la table shipments
       const { data: shipment, error: shipmentError } = await supabase
         .from('shipments')
         .insert({
@@ -201,8 +201,8 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
       // 6. Calculer le montant de la livraison
       const deliveryFee = priceResult?.totalPrice || 15000;
 
-      // 7. CrÃ©er une livraison correspondante dans la table deliveries pour les livreurs
-      console.log('ðŸ“¦ CrÃ©ation de la livraison pour les livreurs...');
+      // 7. Créer une livraison correspondante dans la table deliveries pour les livreurs
+      console.log('📦 Création de la livraison pour les livreurs...');
       const { data: delivery, error: deliveryError } = await supabase
         .from('deliveries')
         .insert({
@@ -240,29 +240,29 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
         .single();
 
       if (deliveryError) {
-        console.error('âŒ Error creating delivery:', deliveryError);
-        toast.error('ExpÃ©dition crÃ©Ã©e mais erreur pour la livraison: ' + deliveryError.message);
+        console.error('❌ Error creating delivery:', deliveryError);
+        toast.error('Expédition créée mais erreur pour la livraison: ' + deliveryError.message);
       } else {
-        console.log('âœ… Livraison crÃ©Ã©e avec succÃ¨s:', delivery?.id);
+        console.log('✅ Livraison créée avec succès:', delivery?.id);
       }
 
-      // 8. Si paiement par wallet, crÃ©er l'escrow pour bloquer les fonds
+      // 8. Si paiement par wallet, créer l'escrow pour bloquer les fonds
       if (formData.deliveryPaymentMethod === 'wallet' && delivery) {
-        console.log('ðŸ” CrÃ©ation escrow pour livraison:', deliveryFee);
+        console.log('🔐 Création escrow pour livraison:', deliveryFee);
         
-        // VÃ©rifier le solde
+        // Vérifier le solde
         if ((wallet?.balance || 0) < deliveryFee) {
           toast.error('Solde insuffisant pour payer la livraison');
-          // Supprimer la livraison crÃ©Ã©e
+          // Supprimer la livraison créée
           await supabase.from('deliveries').delete().eq('id', delivery.id);
           setLoading(false);
           return;
         }
 
-        // CrÃ©er l'escrow - les fonds sont bloquÃ©s jusqu'Ã  confirmation du livreur
+        // Créer l'escrow - les fonds sont bloqués jusqu'à confirmation du livreur
         const escrowResult = await UniversalEscrowService.createEscrow({
           buyer_id: vendor?.user_id || currentUserId!,
-          seller_id: 'DELIVERY_DRIVER_PLACEHOLDER', // Sera mis Ã  jour quand un livreur accepte
+          seller_id: 'DELIVERY_DRIVER_PLACEHOLDER', // Sera mis à jour quand un livreur accepte
           order_id: order.id,
           amount: deliveryFee,
           currency: 'GNF',
@@ -280,22 +280,22 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
         });
 
         if (!escrowResult.success) {
-          console.error('âŒ Escrow creation failed:', escrowResult.error);
+          console.error('❌ Escrow creation failed:', escrowResult.error);
           toast.error('Erreur lors du blocage des fonds');
           await supabase.from('deliveries').delete().eq('id', delivery.id);
           setLoading(false);
           return;
         }
 
-        console.log('âœ… Escrow crÃ©Ã©:', escrowResult.escrow_id);
-        toast.success('ðŸ’° Fonds bloquÃ©s en escrow - libÃ©rÃ©s Ã  la confirmation du livreur');
+        console.log('✅ Escrow créé:', escrowResult.escrow_id);
+        toast.success('💰 Fonds bloqués en escrow - libérés à la confirmation du livreur');
       }
 
-      toast.success('âœ… ExpÃ©dition crÃ©Ã©e avec succÃ¨s !');
+      toast.success('✅ Expédition créée avec succès !');
       onSuccess(shipment.id, shipment.tracking_number);
     } catch (error) {
       console.error('Error creating shipment:', error);
-      toast.error('Erreur lors de la crÃ©ation de l\'expÃ©dition');
+      toast.error('Erreur lors de la création de l\'expédition');
     } finally {
       setLoading(false);
     }
@@ -303,12 +303,12 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* ExpÃ©diteur */}
+      {/* Expéditeur */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <User className="h-5 w-5 text-orange-600" />
-            Informations de l'expÃ©diteur
+            Informations de l'expéditeur
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -319,12 +319,12 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
                 id="senderName"
                 value={formData.senderName}
                 onChange={(e) => handleInputChange('senderName', e.target.value)}
-                placeholder="Nom de l'expÃ©diteur"
+                placeholder="Nom de l'expéditeur"
                 required
               />
             </div>
             <div>
-              <Label htmlFor="senderPhone">TÃ©lÃ©phone *</Label>
+              <Label htmlFor="senderPhone">Téléphone *</Label>
               <Input
                 id="senderPhone"
                 value={formData.senderPhone}
@@ -335,7 +335,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
             </div>
           </div>
           <div>
-            <Label htmlFor="senderAddress">Adresse complÃ¨te *</Label>
+            <Label htmlFor="senderAddress">Adresse complète *</Label>
             <Textarea
               id="senderAddress"
               value={formData.senderAddress}
@@ -352,7 +352,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <MapPin className="h-5 w-5 text-primary-orange-600" />
+            <MapPin className="h-5 w-5 text-green-600" />
             Informations du destinataire
           </CardTitle>
         </CardHeader>
@@ -369,7 +369,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
               />
             </div>
             <div>
-              <Label htmlFor="receiverPhone">TÃ©lÃ©phone *</Label>
+              <Label htmlFor="receiverPhone">Téléphone *</Label>
               <Input
                 id="receiverPhone"
                 value={formData.receiverPhone}
@@ -380,7 +380,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
             </div>
           </div>
           <div>
-            <Label htmlFor="receiverAddress">Adresse complÃ¨te *</Label>
+            <Label htmlFor="receiverAddress">Adresse complète *</Label>
             <Textarea
               id="receiverAddress"
               value={formData.receiverAddress}
@@ -414,20 +414,20 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
             </Button>
           </div>
 
-          {/* Affichage du prix calculÃ© */}
+          {/* Affichage du prix calculé */}
           {priceResult && (
-            <div className="mt-4 p-4 bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/20 dark:to-primary-orange-950/20 rounded-lg border border-primary-orange-200 dark:border-primary-orange-800">
-              <h4 className="font-semibold text-primary-orange-800 dark:text-primary-orange-300 mb-3 flex items-center gap-2">
+            <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200 dark:border-green-800">
+              <h4 className="font-semibold text-green-800 dark:text-green-300 mb-3 flex items-center gap-2">
                 <Route className="h-4 w-4" />
                 Estimation de livraison
               </h4>
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="p-2 bg-white/60 dark:bg-black/20 rounded">
                   <p className="text-xs text-muted-foreground">Distance</p>
-                  <p className="font-bold text-primary-orange-700 dark:text-primary-orange-400">{priceResult.distance} km</p>
+                  <p className="font-bold text-green-700 dark:text-green-400">{priceResult.distance} km</p>
                 </div>
                 <div className="p-2 bg-white/60 dark:bg-black/20 rounded">
-                  <p className="text-xs text-muted-foreground">Temps estimÃ©</p>
+                  <p className="text-xs text-muted-foreground">Temps estimé</p>
                   <p className="font-bold text-blue-700 dark:text-blue-400 flex items-center justify-center gap-1">
                     <Clock className="h-3 w-3" />
                     {priceResult.estimatedTime} min
@@ -439,19 +439,19 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-center">
-                {formatCurrency(priceResult.basePrice)} (base) + {formatCurrency(priceResult.distancePrice)} ({priceResult.distance} km Ã— prix/km)
+                {formatCurrency(priceResult.basePrice)} (base) + {formatCurrency(priceResult.distancePrice)} ({priceResult.distance} km × prix/km)
               </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* DÃ©tails du colis */}
+      {/* Détails du colis */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Package className="h-5 w-5 text-blue-600" />
-            DÃ©tails du colis
+            Détails du colis
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -470,7 +470,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
               />
             </div>
             <div>
-              <Label htmlFor="piecesCount">Nombre de piÃ¨ces</Label>
+              <Label htmlFor="piecesCount">Nombre de pièces</Label>
               <Input
                 id="piecesCount"
                 type="number"
@@ -486,7 +486,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
                 id="itemType"
                 value={formData.itemType}
                 onChange={(e) => handleInputChange('itemType', e.target.value)}
-                placeholder="Ex: æ—¥ç”¨å“, VÃªtements"
+                placeholder="Ex: 日用品, Vêtements"
               />
             </div>
           </div>
@@ -496,7 +496,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
               id="packageDescription"
               value={formData.packageDescription}
               onChange={(e) => handleInputChange('packageDescription', e.target.value)}
-              placeholder="Description dÃ©taillÃ©e du contenu du colis"
+              placeholder="Description détaillée du contenu du colis"
               rows={2}
             />
           </div>
@@ -506,14 +506,14 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
       {/* Options */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Options d'expÃ©dition</CardTitle>
+          <CardTitle className="text-lg">Options d'expédition</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Contre-remboursement */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div className="flex-1">
               <Label htmlFor="cashOnDelivery" className="font-medium">Contre-remboursement</Label>
-              <p className="text-sm text-muted-foreground">Le destinataire paie Ã  la livraison</p>
+              <p className="text-sm text-muted-foreground">Le destinataire paie à la livraison</p>
             </div>
             <Switch
               id="cashOnDelivery"
@@ -524,7 +524,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           
           {formData.cashOnDelivery && (
             <div className="ml-4">
-              <Label htmlFor="codAmount">Montant Ã  collecter (GNF)</Label>
+              <Label htmlFor="codAmount">Montant à collecter (GNF)</Label>
               <Input
                 id="codAmount"
                 type="number"
@@ -540,7 +540,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div className="flex-1">
               <Label htmlFor="insurance" className="font-medium">Assurance</Label>
-              <p className="text-sm text-muted-foreground">ProtÃ©gez votre envoi contre les dommages</p>
+              <p className="text-sm text-muted-foreground">Protégez votre envoi contre les dommages</p>
             </div>
             <Switch
               id="insurance"
@@ -551,7 +551,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           
           {formData.insurance && (
             <div className="ml-4">
-              <Label htmlFor="insuranceAmount">Valeur dÃ©clarÃ©e (GNF)</Label>
+              <Label htmlFor="insuranceAmount">Valeur déclarée (GNF)</Label>
               <Input
                 id="insuranceAmount"
                 type="number"
@@ -590,7 +590,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           disabled={loading}
           className="bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/40"
         >
-          {loading ? 'CrÃ©ation...' : 'CrÃ©er l\'expÃ©dition'}
+          {loading ? 'Création...' : 'Créer l\'expédition'}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>

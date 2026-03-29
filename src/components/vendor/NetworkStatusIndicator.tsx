@@ -1,5 +1,5 @@
 /**
- * INDICATEUR DE STATUT RÃ‰SEAU COMPACT
+ * INDICATEUR DE STATUT RÉSEAU COMPACT
  * Affiche le statut de connexion et permet la sync manuelle
  * 224SOLUTIONS - Interface Vendeur
  */
@@ -64,10 +64,10 @@ export default function NetworkStatusIndicator() {
             await checkPendingData();
 
             if (result.synced > 0) {
-                toast.success(`${result.synced} vente(s) synchronisÃ©e(s)`);
+                toast.success(`${result.synced} vente(s) synchronisée(s)`);
             }
             if (result.failed > 0) {
-                toast.error(`${result.failed} vente(s) en Ã©chec de sync`);
+                toast.error(`${result.failed} vente(s) en échec de sync`);
             }
         } catch (error) {
             console.error('Erreur sync:', error);
@@ -135,15 +135,15 @@ export default function NetworkStatusIndicator() {
                     <div className="space-y-1 text-xs">
                         <div className="flex items-center gap-2">
                             {isOnline ? (
-                                <Wifi className="w-3 h-3 text-primary-orange-500" />
+                                <Wifi className="w-3 h-3 text-green-500" />
                             ) : (
                                 <WifiOff className="w-3 h-3 text-destructive" />
                             )}
-                            <span className="font-medium">{isOnline ? 'ConnectÃ©' : 'Hors ligne'}</span>
+                            <span className="font-medium">{isOnline ? 'Connecté' : 'Hors ligne'}</span>
                         </div>
                         {pendingSync > 0 && (
                             <p className="text-muted-foreground">
-                                {pendingSync} en attente â€” {isOnline ? 'Cliquez pour synchroniser' : 'Sync Ã  la reconnexion'}
+                                {pendingSync} en attente — {isOnline ? 'Cliquez pour synchroniser' : 'Sync à la reconnexion'}
                             </p>
                         )}
                         {isSyncing && <p className="text-blue-500">Synchronisation...</p>}

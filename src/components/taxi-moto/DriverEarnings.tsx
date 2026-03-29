@@ -78,7 +78,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
     try {
       setLoading(true);
 
-      // RÃ©cupÃ©rer le user_id du driver
+      // Récupérer le user_id du driver
       const { data: driverData } = await supabase
         .from('taxi_drivers')
         .select('user_id')
@@ -89,7 +89,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
         setUserId(driverData.user_id);
       }
 
-      // Charger les courses terminÃ©es du chauffeur
+      // Charger les courses terminées du chauffeur
       const { data: ridesData, error: ridesError } = await supabase
         .from('taxi_trips')
         .select('*')
@@ -176,7 +176,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
     if (driverId) {
       loadEarningsData();
 
-      // S'abonner aux changements en temps rÃ©el
+      // S'abonner aux changements en temps réel
       const channel = supabase
         .channel('driver-earnings')
         .on(
@@ -188,7 +188,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
             filter: `driver_id=eq.${driverId}`,
           },
           () => {
-            console.log('ðŸ’° Earnings updated');
+            console.log('💰 Earnings updated');
             loadEarningsData();
           }
         )
@@ -218,14 +218,14 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
 
       if (error) throw error;
 
-      toast.success('DÃ©pÃ´t effectuÃ© avec succÃ¨s');
+      toast.success('Dépôt effectué avec succès');
       setDepositAmount('');
       setDepositOpen(false);
       reload();
       loadEarningsData();
     } catch (error: any) {
-      console.error('Erreur dÃ©pÃ´t:', error);
-      toast.error(error.message || 'Erreur lors du dÃ©pÃ´t');
+      console.error('Erreur dépôt:', error);
+      toast.error(error.message || 'Erreur lors du dépôt');
     } finally {
       setProcessing(false);
     }
@@ -254,7 +254,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
 
       if (error) throw error;
 
-      toast.success('Retrait effectuÃ© avec succÃ¨s');
+      toast.success('Retrait effectué avec succès');
       setWithdrawAmount('');
       setWithdrawOpen(false);
       reload();
@@ -303,12 +303,12 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                     className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
                   >
                     <ArrowDownCircle className="w-4 h-4 mr-2" />
-                    DÃ©pÃ´t
+                    Dépôt
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Effectuer un dÃ©pÃ´t</DialogTitle>
+                    <DialogTitle>Effectuer un dépôt</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
@@ -334,7 +334,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                       ) : (
                         <>
                           <ArrowDownCircle className="w-4 h-4 mr-2" />
-                          Confirmer le dÃ©pÃ´t
+                          Confirmer le dépôt
                         </>
                       )}
                     </Button>
@@ -418,7 +418,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
       {showTransactions && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Transactions rÃ©centes</CardTitle>
+            <CardTitle className="text-lg">Transactions récentes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -429,7 +429,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                   <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       {tx.transaction_type === 'credit' ? (
-                        <ArrowDownCircle className="w-5 h-5 text-primary-orange-500" />
+                        <ArrowDownCircle className="w-5 h-5 text-green-500" />
                       ) : (
                         <ArrowUpCircle className="w-5 h-5 text-orange-500" />
                       )}
@@ -441,7 +441,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`font-bold ${tx.transaction_type === 'credit' ? 'text-primary-orange-600' : 'text-orange-600'}`}>
+                      <p className={`font-bold ${tx.transaction_type === 'credit' ? 'text-green-600' : 'text-orange-600'}`}>
                         {tx.transaction_type === 'credit' ? '+' : '-'}{(tx.amount || 0).toLocaleString()} {currency || 'GNF'}
                       </p>
                       <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
@@ -495,7 +495,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
           <CardContent className="pt-4">
             <div className="text-center">
               <TrendingUp className="w-5 h-5 mx-auto text-muted-foreground mb-2" />
-              <p className="text-xs text-muted-foreground">AnnÃ©e {new Date().getFullYear()}</p>
+              <p className="text-xs text-muted-foreground">Année {new Date().getFullYear()}</p>
               <p className="text-lg font-bold">{(stats.yearEarnings || 0).toLocaleString()} {currency || 'GNF'}</p>
               <p className="text-xs text-muted-foreground">{stats.yearRides || 0} courses</p>
             </div>
@@ -511,7 +511,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
         <CardContent>
           {rides.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>Aucune course terminÃ©e</p>
+              <p>Aucune course terminée</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -527,16 +527,16 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                         <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
                         <div className="space-y-0.5">
                           <p>{ride.pickup_address}</p>
-                          <p>â†’ {ride.dropoff_address}</p>
+                          <p>→ {ride.dropoff_address}</p>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-primary-orange-600">
+                      <p className="font-bold text-green-600">
                         {(ride.fare || 0).toLocaleString()} {currency || 'GNF'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {ride.status === 'completed' ? 'TerminÃ©e' : 'PayÃ©e'}
+                        {ride.status === 'completed' ? 'Terminée' : 'Payée'}
                       </p>
                     </div>
                   </div>

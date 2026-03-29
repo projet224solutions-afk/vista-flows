@@ -1,6 +1,6 @@
 /**
- * INFORMATIONS VÃ‰HICULE CONDUCTEUR - MOBILE OPTIMISÃ‰
- * Affiche: ID Chauffeur, Plaque d'immatriculation, NumÃ©ro de gilet, NumÃ©ro de sÃ©rie
+ * INFORMATIONS VÉHICULE CONDUCTEUR - MOBILE OPTIMISÉ
+ * Affiche: ID Chauffeur, Plaque d'immatriculation, Numéro de gilet, Numéro de série
  */
 
 import { Car, CreditCard, Hash, User } from "lucide-react";
@@ -21,7 +21,7 @@ export function DriverVehicleInfo({
   serialNumber,
   className
 }: DriverVehicleInfoProps) {
-  // Afficher mÃªme avec juste l'ID du chauffeur
+  // Afficher même avec juste l'ID du chauffeur
   const hasInfo = driverId || vehiclePlate || giletNumber || serialNumber;
   
   if (!hasInfo) {
@@ -29,7 +29,7 @@ export function DriverVehicleInfo({
   }
 
   // Formater l'ID du chauffeur pour l'affichage
-  // - si c'est un UUID, on affiche une version courte (8 premiers caractÃ¨res)
+  // - si c'est un UUID, on affiche une version courte (8 premiers caractères)
   // - sinon (custom_id / public_id), on affiche l'identifiant complet
   const isUuid = (value: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -61,11 +61,11 @@ export function DriverVehicleInfo({
 
         {/* Driver Info - Grid layout for better organization */}
         <div className="grid grid-cols-2 gap-2">
-          {/* ID Chauffeur - Toujours affichÃ© en premier */}
+          {/* ID Chauffeur - Toujours affiché en premier */}
           {displayDriverId && (
-            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-primary-blue-500/10 border border-primary-orange-500/30 col-span-2">
-              <User className="w-3 h-3 text-primary-blue-400" />
-              <span className="text-primary-blue-400 text-[10px] font-medium">ID:</span>
+            <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 col-span-2">
+              <User className="w-3 h-3 text-emerald-400" />
+              <span className="text-emerald-400 text-[10px] font-medium">ID:</span>
               <span
                 className="text-white text-xs font-mono font-bold tracking-wider"
                 title={driverId ?? undefined}
@@ -84,20 +84,20 @@ export function DriverVehicleInfo({
             </div>
           )}
 
-          {/* NumÃ©ro de gilet */}
+          {/* Numéro de gilet */}
           {giletNumber && (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-800/30 border border-gray-700/30">
-              <CreditCard className="w-3 h-3 text-primary-orange-400" />
+              <CreditCard className="w-3 h-3 text-green-400" />
               <span className="text-gray-400 text-[10px]">Gilet:</span>
               <span className="text-white text-[10px] font-mono font-medium">{giletNumber}</span>
             </div>
           )}
 
-          {/* NumÃ©ro de sÃ©rie moto */}
+          {/* Numéro de série moto */}
           {serialNumber && (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-800/30 border border-gray-700/30 col-span-2">
               <Hash className="w-3 h-3 text-purple-400" />
-              <span className="text-gray-400 text-[10px]">SÃ©rie:</span>
+              <span className="text-gray-400 text-[10px]">Série:</span>
               <span className="text-white text-[10px] font-mono font-medium truncate" title={serialNumber}>
                 {serialNumber}
               </span>

@@ -1,7 +1,7 @@
 /**
  * Carte Universelle Marketplace - 224SOLUTIONS
- * Affiche produits e-commerce et produits numÃ©riques (articles des services pro)
- * NOTE: Les services professionnels eux-mÃªmes sont affichÃ©s sur ProximitÃ© uniquement
+ * Affiche produits e-commerce et produits numériques (articles des services pro)
+ * NOTE: Les services professionnels eux-mêmes sont affichés sur Proximité uniquement
  */
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -40,17 +40,17 @@ export function UniversalMarketplaceCard({
   const { t } = useTranslation();
   const { displayCurrency } = useDisplayCurrency();
 
-  // Images par dÃ©faut selon le type
+  // Images par défaut selon le type
   const defaultImage = 
     item.item_type === 'digital_product'
       ? 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400'
       : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400';
 
-  // PrÃ©parer les images (filtrer les vides)
+  // Préparer les images (filtrer les vides)
   const validImages = (item.images || []).filter(img => img && img.trim());
   const displayImages = validImages.length > 0 ? validImages : [defaultImage];
   
-  // RÃ©cupÃ©rer les vidÃ©os promotionnelles
+  // Récupérer les vidéos promotionnelles
   const videos = (item.promotional_videos || []).filter((v: string) => v && v.trim());
 
   // Badge selon le type
@@ -68,13 +68,13 @@ export function UniversalMarketplaceCard({
       return (
         <Badge className="absolute top-2 left-2 bg-purple-500 text-white">
           <Download className="w-3 h-3 mr-1" />
-          {t('marketplace.card.badge.digital') || 'NumÃ©rique'}
+          {t('marketplace.card.badge.digital') || 'Numérique'}
         </Badge>
       );
     }
     // Produit e-commerce
     return item.free_shipping ? (
-      <Badge className="absolute top-2 left-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white">
+      <Badge className="absolute top-2 left-2 bg-green-500 text-white">
         {t('marketplace.card.badge.freeShipping') || 'Livraison gratuite'}
       </Badge>
     ) : null;
@@ -118,7 +118,7 @@ export function UniversalMarketplaceCard({
       )}
       onClick={() => onViewDetails?.(item.id)}
     >
-      {/* Media Carousel - VidÃ©os + Images */}
+      {/* Media Carousel - Vidéos + Images */}
       <div className="relative">
         <MediaAutoCarousel
           videos={videos}
@@ -133,15 +133,15 @@ export function UniversalMarketplaceCard({
         {/* Badge type */}
         {getTypeBadge()}
 
-        {/* Badge SponsorisÃ© */}
+        {/* Badge Sponsorisé */}
         {item.is_sponsored && (
           <Badge className="absolute top-2 right-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 z-20 shadow-lg">
             <Crown className="w-3 h-3 mr-1" />
-            SponsorisÃ©
+            Sponsorisé
           </Badge>
         )}
 
-        {/* Rating badge (si prÃ©sent et pas sponsorisÃ© pour Ã©viter le chevauchement) */}
+        {/* Rating badge (si présent et pas sponsorisé pour éviter le chevauchement) */}
         {item.rating > 0 && !item.is_sponsored && (
           <Badge className="absolute top-2 right-2 bg-white/90 text-gray-900 z-20">
             <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
@@ -149,7 +149,7 @@ export function UniversalMarketplaceCard({
           </Badge>
         )}
 
-        {/* Rating en bas si produit sponsorisÃ© */}
+        {/* Rating en bas si produit sponsorisé */}
         {item.rating > 0 && item.is_sponsored && (
           <Badge className="absolute top-10 right-2 bg-white/90 text-gray-900 z-20">
             <Star className="w-3 h-3 mr-1 fill-yellow-400 text-yellow-400" />
@@ -157,7 +157,7 @@ export function UniversalMarketplaceCard({
           </Badge>
         )}
 
-        {/* Prix barrÃ© (si promotion) */}
+        {/* Prix barré (si promotion) */}
         {item.originalPrice && item.originalPrice > item.price && (
           <Badge className="absolute bottom-10 right-2 bg-red-500 text-white z-20">
             -{Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)}%
@@ -176,7 +176,7 @@ export function UniversalMarketplaceCard({
           {item.name}
         </h3>
 
-        {/* Informations spÃ©cifiques aux produits numÃ©riques */}
+        {/* Informations spécifiques aux produits numériques */}
         {item.item_type === 'digital_product' && (
           <div className="space-y-1 mb-3">
             {item.file_size && (
@@ -241,7 +241,7 @@ export function UniversalMarketplaceCard({
             {item.vendor_public_id && (
               <>
                 <span className="text-primary font-medium">{item.vendor_public_id}</span>
-                <span>â€¢</span>
+                <span>•</span>
               </>
             )}
             {t('marketplace.card.soldBy') || 'Vendu par'} {item.vendor_name}
@@ -251,7 +251,7 @@ export function UniversalMarketplaceCard({
           )}
         </div>
 
-        {/* Bouton d'action - OptimisÃ© mobile */}
+        {/* Bouton d'action - Optimisé mobile */}
         <Button
           onClick={(e) => {
             e.stopPropagation();

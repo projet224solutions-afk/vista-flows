@@ -35,7 +35,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
   const [showActivationDialog, setShowActivationDialog] = useState(false);
 
   const isMerchant = profile?.role === 'vendeur';
-  const gradient = 'from-blue-500 to-primary-blue-500';
+  const gradient = 'from-blue-500 to-cyan-500';
 
   useEffect(() => {
     loadProducts();
@@ -95,7 +95,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
 
   const handleProductClick = (product: any) => {
     if (product.affiliate_url) {
-      window.open(product.affiliate_url, '_blank', 'noopener,noreferrer');
+      window.open(product.affiliate_url, '_blank');
     } else {
       navigate(`/digital-product/${product.id}`);
     }

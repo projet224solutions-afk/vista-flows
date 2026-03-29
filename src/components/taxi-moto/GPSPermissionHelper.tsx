@@ -39,7 +39,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
         setPermissionState('prompt');
       }
     } catch (error) {
-      console.error('Erreur vÃ©rification permission:', error);
+      console.error('Erreur vérification permission:', error);
       setPermissionState('prompt');
     }
   };
@@ -60,7 +60,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
         );
       });
 
-      toast.success('GPS activÃ© avec succÃ¨s !', {
+      toast.success('GPS activé avec succès !', {
         description: `Position: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`
       });
       
@@ -74,20 +74,20 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
 
       switch (error.code) {
         case 1:
-          errorMessage = 'Permission refusÃ©e';
-          errorDetails = 'Vous devez autoriser l\'accÃ¨s Ã  votre position dans les paramÃ¨tres de votre navigateur';
+          errorMessage = 'Permission refusée';
+          errorDetails = 'Vous devez autoriser l\'accès à votre position dans les paramètres de votre navigateur';
           setPermissionState('denied');
           break;
         case 2:
           errorMessage = 'Position indisponible';
-          errorDetails = 'Veuillez activer votre GPS et rÃ©essayer';
+          errorDetails = 'Veuillez activer votre GPS et réessayer';
           break;
         case 3:
-          errorMessage = 'DÃ©lai dÃ©passÃ©';
-          errorDetails = 'La recherche GPS a pris trop de temps. VÃ©rifiez que votre GPS est activÃ©';
+          errorMessage = 'Délai dépassé';
+          errorDetails = 'La recherche GPS a pris trop de temps. Vérifiez que votre GPS est activé';
           break;
         default:
-          errorDetails = 'VÃ©rifiez que le GPS est activÃ© et que vous Ãªtes connectÃ© en HTTPS';
+          errorDetails = 'Vérifiez que le GPS est activé et que vous êtes connecté en HTTPS';
       }
 
       toast.error(errorMessage, { description: errorDetails });
@@ -98,7 +98,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
 
   const openSettings = () => {
     toast.info('Comment activer le GPS', {
-      description: 'Sur Chrome/Safari: ParamÃ¨tres > ConfidentialitÃ© > Localisation. Sur Firefox: PrÃ©fÃ©rences > Vie privÃ©e > Permissions',
+      description: 'Sur Chrome/Safari: Paramètres > Confidentialité > Localisation. Sur Firefox: Préférences > Vie privée > Permissions',
       duration: 10000
     });
   };
@@ -108,7 +108,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
       <Card className="bg-white/95 backdrop-blur-sm">
         <CardContent className="pt-8 pb-8 text-center">
           <Loader2 className="w-12 h-12 mx-auto mb-4 text-blue-500 animate-spin" />
-          <p className="text-gray-600">VÃ©rification du GPS...</p>
+          <p className="text-gray-600">Vérification du GPS...</p>
         </CardContent>
       </Card>
     );
@@ -126,15 +126,15 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
         <CardContent className="space-y-4">
           <Alert className="bg-red-50 border-red-200">
             <AlertDescription>
-              Votre appareil ne supporte pas la gÃ©olocalisation ou celle-ci n'est pas disponible.
+              Votre appareil ne supporte pas la géolocalisation ou celle-ci n'est pas disponible.
             </AlertDescription>
           </Alert>
           <div className="text-sm text-gray-600 space-y-2">
-            <p><strong>VÃ©rifiez que :</strong></p>
+            <p><strong>Vérifiez que :</strong></p>
             <ul className="list-disc list-inside space-y-1">
               <li>Vous utilisez un navigateur moderne (Chrome, Safari, Firefox)</li>
-              <li>Vous Ãªtes connectÃ© en HTTPS (l'icÃ´ne de cadenas est visible)</li>
-              <li>Le GPS de votre appareil est activÃ©</li>
+              <li>Vous êtes connecté en HTTPS (l'icône de cadenas est visible)</li>
+              <li>Le GPS de votre appareil est activé</li>
             </ul>
           </div>
         </CardContent>
@@ -148,22 +148,22 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-orange-600">
             <AlertTriangle className="w-5 h-5" />
-            Permission GPS refusÃ©e
+            Permission GPS refusée
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert className="bg-orange-50 border-orange-200">
             <AlertDescription>
-              Vous avez refusÃ© l'accÃ¨s Ã  votre position. Pour utiliser cette fonctionnalitÃ©, vous devez autoriser l'accÃ¨s au GPS.
+              Vous avez refusé l'accès à votre position. Pour utiliser cette fonctionnalité, vous devez autoriser l'accès au GPS.
             </AlertDescription>
           </Alert>
           
           <div className="bg-blue-50 rounded-lg p-4 text-sm space-y-3">
-            <p className="font-semibold text-blue-900">ðŸ“± Comment autoriser le GPS :</p>
+            <p className="font-semibold text-blue-900">📱 Comment autoriser le GPS :</p>
             <ol className="list-decimal list-inside space-y-2 text-blue-800">
-              <li>Cliquez sur l'icÃ´ne de cadenas ðŸ”’ dans la barre d'adresse</li>
+              <li>Cliquez sur l'icône de cadenas 🔒 dans la barre d'adresse</li>
               <li>Trouvez "Localisation" ou "Position"</li>
-              <li>SÃ©lectionnez "Autoriser"</li>
+              <li>Sélectionnez "Autoriser"</li>
               <li>Rechargez la page</li>
             </ol>
           </div>
@@ -192,13 +192,13 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
   if (permissionState === 'granted') {
     // Afficher un loader pendant que le parent charge la position
     return (
-      <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 border-primary-orange-200">
+      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
         <CardContent className="pt-6 pb-6">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-10 h-10 text-primary-orange-600 animate-spin" />
+            <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
             <div className="text-center">
-              <p className="font-semibold text-primary-orange-900">GPS activÃ©</p>
-              <p className="text-sm text-primary-orange-700">Chargement de la carte...</p>
+              <p className="font-semibold text-green-900">GPS activé</p>
+              <p className="text-sm text-green-700">Chargement de la carte...</p>
             </div>
           </div>
         </CardContent>
@@ -225,12 +225,12 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
         )}
 
         <div className="text-sm text-gray-600 space-y-2">
-          <p>Pour utiliser la navigation, nous avons besoin d'accÃ©der Ã  votre position GPS.</p>
+          <p>Pour utiliser la navigation, nous avons besoin d'accéder à votre position GPS.</p>
           <p className="font-semibold">Assurez-vous que :</p>
           <ul className="list-disc list-inside space-y-1">
-            <li>Le GPS de votre tÃ©lÃ©phone est activÃ©</li>
-            <li>Vous Ãªtes Ã  l'extÃ©rieur ou prÃ¨s d'une fenÃªtre</li>
-            <li>Vous utilisez une connexion HTTPS sÃ©curisÃ©e</li>
+            <li>Le GPS de votre téléphone est activé</li>
+            <li>Vous êtes à l'extérieur ou près d'une fenêtre</li>
+            <li>Vous utilisez une connexion HTTPS sécurisée</li>
           </ul>
         </div>
 
@@ -254,7 +254,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
         </Button>
 
         <p className="text-xs text-center text-gray-500">
-          En cliquant sur "Activer le GPS", votre navigateur vous demandera l'autorisation d'accÃ©der Ã  votre position
+          En cliquant sur "Activer le GPS", votre navigateur vous demandera l'autorisation d'accéder à votre position
         </p>
       </CardContent>
     </Card>

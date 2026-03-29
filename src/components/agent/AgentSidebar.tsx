@@ -1,6 +1,6 @@
 /**
  * SIDEBAR AGENT - 224SOLUTIONS
- * Navigation latÃ©rale professionnelle pour l'interface agent
+ * Navigation latérale professionnelle pour l'interface agent
  */
 
 import { useState } from 'react';
@@ -26,7 +26,7 @@ interface AgentSidebarProps {
   onSectionChange: (section: string) => void;
   onChangePassword: () => void;
   onLogout: () => void;
-  // Nouvelle prop pour les permissions unifiÃ©es
+  // Nouvelle prop pour les permissions unifiées
   unifiedPermissions?: Record<string, boolean>;
 }
 
@@ -49,24 +49,24 @@ export default function AgentSidebar({
 }: AgentSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
-  // Fonction pour vÃ©rifier les permissions (combine les deux sources)
+  // Fonction pour vérifier les permissions (combine les deux sources)
   const hasPermission = (permission: string): boolean => {
-    // VÃ©rifier d'abord les permissions unifiÃ©es (nouvelle table)
+    // Vérifier d'abord les permissions unifiées (nouvelle table)
     if (unifiedPermissions[permission] === true) {
-      console.log(`âœ… Permission accordÃ©e (unifiÃ©): ${permission}`);
+      console.log(`✅ Permission accordée (unifié): ${permission}`);
       return true;
     }
-    // Ensuite vÃ©rifier les permissions legacy (tableau)
+    // Ensuite vérifier les permissions legacy (tableau)
     if (agent.permissions.includes(permission)) {
-      console.log(`âœ… Permission accordÃ©e (legacy): ${permission}`);
+      console.log(`✅ Permission accordée (legacy): ${permission}`);
       return true;
     }
     return false;
   };
 
   // Log des permissions pour debug
-  console.log('ðŸ” Permissions unifiÃ©es:', unifiedPermissions);
-  console.log('ðŸ” Permissions legacy:', agent.permissions);
+  console.log('🔐 Permissions unifiées:', unifiedPermissions);
+  console.log('🔐 Permissions legacy:', agent.permissions);
 
   const navItems: NavItem[] = [
     { 
@@ -79,14 +79,14 @@ export default function AgentSidebar({
       id: 'wallet', 
       label: 'Wallet', 
       icon: Wallet,
-      gradient: 'from-primary-blue-500 to-primary-orange-500'
+      gradient: 'from-emerald-500 to-teal-500'
     },
     { 
       id: 'create-user', 
-      label: 'CrÃ©er Utilisateur', 
+      label: 'Créer Utilisateur', 
       icon: UserPlus,
       permission: 'create_users',
-      gradient: 'from-primary-blue-500 to-lime-500'
+      gradient: 'from-green-500 to-lime-500'
     },
     { 
       id: 'sub-agents', 
@@ -107,7 +107,7 @@ export default function AgentSidebar({
       label: 'Produits', 
       icon: Package,
       permission: 'manage_products',
-      gradient: 'from-primary-blue-500 to-blue-500'
+      gradient: 'from-cyan-500 to-blue-500'
     },
     { 
       id: 'reports', 
@@ -136,14 +136,14 @@ export default function AgentSidebar({
     // Toujours afficher les items sans permission requise
     if (!item.permission) return true;
     
-    // Pour les sous-agents, vÃ©rifier plusieurs permissions
+    // Pour les sous-agents, vérifier plusieurs permissions
     if (item.id === 'sub-agents') {
       return agent.can_create_sub_agent || hasPermission('create_sub_agents') || hasPermission('manage_agents');
     }
     
-    // VÃ©rifier la permission spÃ©cifique
+    // Vérifier la permission spécifique
     const hasPerm = hasPermission(item.permission);
-    console.log(`ðŸ“‹ Item "${item.label}" - permission "${item.permission}": ${hasPerm}`);
+    console.log(`📋 Item "${item.label}" - permission "${item.permission}": ${hasPerm}`);
     return hasPerm;
   });
 
@@ -198,10 +198,10 @@ export default function AgentSidebar({
               variant={agent.is_active ? "default" : "secondary"} 
               className={cn(
                 "mt-3 w-full justify-center",
-                agent.is_active ? "bg-primary-blue-500/20 text-primary-blue-300 border-primary-orange-500/30" : ""
+                agent.is_active ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : ""
               )}
             >
-              {agent.is_active ? 'âœ… Agent Actif' : 'â¸ï¸ Inactif'}
+              {agent.is_active ? '✅ Agent Actif' : '⏸️ Inactif'}
             </Badge>
           )}
         </div>
@@ -266,7 +266,7 @@ export default function AgentSidebar({
             )}
           >
             <LogOut className="w-5 h-5" />
-            {!collapsed && <span className="ml-3">DÃ©connexion</span>}
+            {!collapsed && <span className="ml-3">Déconnexion</span>}
           </Button>
         </div>
 

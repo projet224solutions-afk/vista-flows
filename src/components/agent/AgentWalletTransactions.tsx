@@ -60,13 +60,13 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
         .single();
 
       if (error) {
-        console.error('âŒ Erreur chargement wallet agent:', error);
+        console.error('❌ Erreur chargement wallet agent:', error);
         
         // Si le wallet n'existe pas, essayer de l'initialiser
         if (error.code === 'PGRST116') {
-          console.log('âš ï¸ Wallet agent non trouvÃ©, initialisation...');
-          // Le wallet sera crÃ©Ã© automatiquement par le trigger
-          // RÃ©essayer aprÃ¨s un dÃ©lai
+          console.log('⚠️ Wallet agent non trouvé, initialisation...');
+          // Le wallet sera créé automatiquement par le trigger
+          // Réessayer après un délai
           setTimeout(() => loadWalletData(), 2000);
           return;
         }
@@ -88,7 +88,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
 
     try {
       // Pour l'instant, pas de table de transactions pour les agents
-      // Cette fonctionnalitÃ© sera ajoutÃ©e plus tard
+      // Cette fonctionnalité sera ajoutée plus tard
       console.log('Transactions cleared');
     } catch (error) {
       console.error('Erreur chargement transactions:', error);
@@ -107,7 +107,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
           filter: `agent_id=eq.${agentId}`,
         },
         () => {
-          console.log('ðŸ’° Wallet agent mis Ã  jour');
+          console.log('💰 Wallet agent mis à jour');
           loadWalletData();
         }
       )
@@ -135,7 +135,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
       case 'commission':
       case 'credit':
       case 'deposit':
-        return <TrendingUp className="w-4 h-4 text-primary-orange-500" />;
+        return <TrendingUp className="w-4 h-4 text-green-500" />;
       case 'debit':
       case 'withdrawal':
       case 'transfer_out':
@@ -150,7 +150,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
       case 'commission':
       case 'credit':
       case 'deposit':
-        return 'text-primary-orange-600';
+        return 'text-green-600';
       case 'debit':
       case 'withdrawal':
       case 'transfer_out':
@@ -163,7 +163,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
   const handleRefresh = () => {
     loadWalletData();
     loadTransactions();
-    toast.success('DonnÃ©es actualisÃ©es');
+    toast.success('Données actualisées');
   };
 
   if (loading) {
@@ -188,7 +188,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
             <div className="text-center">
               <h3 className="font-semibold text-blue-900">Initialisation du wallet...</h3>
               <p className="text-sm text-blue-700 mt-1">
-                Votre wallet agent est en cours de crÃ©ation. Veuillez patienter.
+                Votre wallet agent est en cours de création. Veuillez patienter.
               </p>
               <Button 
                 variant="outline" 
@@ -249,14 +249,14 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
         <TabsContent value="transactions" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">DerniÃ¨res transactions</CardTitle>
+              <CardTitle className="text-lg">Dernières transactions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12 text-muted-foreground">
                 <History className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">Historique des transactions Ã  venir</p>
+                <p className="text-lg font-medium mb-2">Historique des transactions à venir</p>
                 <p className="text-sm">
-                  Le systÃ¨me de transactions pour les wallets agents sera bientÃ´t disponible.
+                  Le système de transactions pour les wallets agents sera bientôt disponible.
                 </p>
               </div>
             </CardContent>

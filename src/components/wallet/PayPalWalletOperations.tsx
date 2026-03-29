@@ -53,7 +53,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
 
       // Open PayPal approval in new window
       const approveUrl = `https://www.paypal.com/checkoutnow?token=${data.orderId}`;
-      window.open(approveUrl, "_blank", "width=500,height=700,noopener,noreferrer");
+      window.open(approveUrl, "_blank", "width=500,height=700");
 
       toast.info("Approuvez le paiement dans PayPal", {
         description: "Une fenêtre PayPal s'est ouverte. Validez le paiement puis cliquez sur Confirmer.",
@@ -216,7 +216,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
                 <Button
                   onClick={handleCaptureDeposit}
                   disabled={processing}
-                  className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 hover:from-primary-orange-600 hover:to-primary-blue-600 text-white"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
                   size="lg"
                 >
                   {processing ? (

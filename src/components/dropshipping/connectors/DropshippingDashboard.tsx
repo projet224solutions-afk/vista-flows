@@ -1,7 +1,7 @@
 /**
  * DROPSHIPPING DASHBOARD
  * Dashboard principal pour la gestion du module dropshipping
- * AgrÃ¨ge toutes les fonctionnalitÃ©s: connecteurs, produits, commandes
+ * Agrège toutes les fonctionnalités: connecteurs, produits, commandes
  * 
  * @module DropshippingDashboard
  * @version 1.0.0
@@ -64,7 +64,7 @@ interface DashboardStats {
 const mockProducts: DropshipProduct[] = [
   {
     id: '1',
-    title: 'Ã‰couteurs Bluetooth TWS Pro',
+    title: 'Écouteurs Bluetooth TWS Pro',
     thumbnail: 'https://placehold.co/100x100',
     sourceConnector: 'ALIEXPRESS',
     sourceProductId: '1005004123456',
@@ -86,7 +86,7 @@ const mockProducts: DropshipProduct[] = [
   },
   {
     id: '2',
-    title: 'Montre ConnectÃ©e Sport 2024',
+    title: 'Montre Connectée Sport 2024',
     thumbnail: 'https://placehold.co/100x100',
     sourceConnector: 'ALIBABA',
     sourceProductId: '62845123456',
@@ -108,7 +108,7 @@ const mockProducts: DropshipProduct[] = [
   },
   {
     id: '3',
-    title: 'Support TÃ©lÃ©phone Voiture MagnÃ©tique',
+    title: 'Support Téléphone Voiture Magnétique',
     thumbnail: 'https://placehold.co/100x100',
     sourceConnector: '1688',
     sourceProductId: '678901234567',
@@ -137,7 +137,7 @@ const mockOrders: SupplierOrder[] = [
     customerName: 'Mamadou Diallo',
     supplierOrderId: null,
     connector: 'ALIEXPRESS',
-    productTitle: 'Ã‰couteurs Bluetooth TWS Pro',
+    productTitle: 'Écouteurs Bluetooth TWS Pro',
     productThumbnail: 'https://placehold.co/100x100',
     quantity: 2,
     unitCost: 5.50,
@@ -150,7 +150,7 @@ const mockOrders: SupplierOrder[] = [
       phone: '+224 620 123 456',
       address: 'Quartier Madina, Rue KA-025',
       city: 'Conakry',
-      country: 'GuinÃ©e'
+      country: 'Guinée'
     },
     notes: null,
     createdAt: new Date().toISOString(),
@@ -163,7 +163,7 @@ const mockOrders: SupplierOrder[] = [
     customerName: 'Fatoumata Camara',
     supplierOrderId: 'AE123456789',
     connector: 'ALIEXPRESS',
-    productTitle: 'Montre ConnectÃ©e Sport 2024',
+    productTitle: 'Montre Connectée Sport 2024',
     productThumbnail: 'https://placehold.co/100x100',
     quantity: 1,
     unitCost: 12.80,
@@ -179,9 +179,9 @@ const mockOrders: SupplierOrder[] = [
       events: [
         {
           status: 'in_transit',
-          description: 'Colis arrivÃ© au centre de tri de destination',
+          description: 'Colis arrivé au centre de tri de destination',
           timestamp: new Date(Date.now() - 86400000),
-          location: 'Conakry, GuinÃ©e'
+          location: 'Conakry, Guinée'
         },
         {
           status: 'in_transit',
@@ -191,7 +191,7 @@ const mockOrders: SupplierOrder[] = [
         },
         {
           status: 'shipped',
-          description: 'Colis expÃ©diÃ©',
+          description: 'Colis expédié',
           timestamp: new Date(Date.now() - 432000000),
           location: 'Shenzhen, Chine'
         }
@@ -202,7 +202,7 @@ const mockOrders: SupplierOrder[] = [
       phone: '+224 621 789 012',
       address: 'Immeuble Alpha, Apt 5B, Kaloum',
       city: 'Conakry',
-      country: 'GuinÃ©e'
+      country: 'Guinée'
     },
     notes: 'Client VIP - Livraison prioritaire',
     createdAt: new Date(Date.now() - 604800000).toISOString(),
@@ -288,7 +288,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
   
   return (
     <div className="space-y-6 p-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
@@ -296,7 +296,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
             Dropshipping
           </h1>
           <p className="text-muted-foreground mt-1">
-            GÃ©rez vos produits dropshipping et commandes fournisseurs
+            Gérez vos produits dropshipping et commandes fournisseurs
           </p>
         </div>
         
@@ -319,13 +319,13 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
           <AlertTriangle className="w-4 h-4 text-yellow-600" />
           <AlertTitle className="text-yellow-800">Actions requises</AlertTitle>
           <AlertDescription className="text-yellow-700">
-            Vous avez {stats.pendingOrders} commande(s) en attente Ã  passer auprÃ¨s des fournisseurs.
+            Vous avez {stats.pendingOrders} commande(s) en attente à passer auprès des fournisseurs.
             <Button 
               variant="link" 
               className="text-yellow-800 p-0 h-auto ml-2"
               onClick={() => setActiveTab('orders')}
             >
-              Voir les commandes â†’
+              Voir les commandes →
             </Button>
           </AlertDescription>
         </Alert>
@@ -336,13 +336,13 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
           <AlertTriangle className="w-4 h-4" />
           <AlertTitle>Erreurs de synchronisation</AlertTitle>
           <AlertDescription>
-            {stats.syncErrors} produit(s) n'ont pas pu Ãªtre synchronisÃ©s.
+            {stats.syncErrors} produit(s) n'ont pas pu être synchronisés.
             <Button 
               variant="link" 
               className="text-red-200 p-0 h-auto ml-2"
               onClick={() => setActiveTab('products')}
             >
-              RÃ©soudre â†’
+              Résoudre →
             </Button>
           </AlertDescription>
         </Alert>
@@ -389,7 +389,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                   {formatCurrency(stats.totalRevenue, 'GNF')}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  <TrendingUp className="w-3 h-3 inline mr-1 text-primary-orange-500" />
+                  <TrendingUp className="w-3 h-3 inline mr-1 text-green-500" />
                   +12% vs mois dernier
                 </p>
               </CardContent>
@@ -398,11 +398,11 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Profit estimÃ©
+                  Profit estimé
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary-orange-600">
+                <div className="text-2xl font-bold text-green-600">
                   {formatCurrency(stats.totalProfit, 'GNF')}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -448,7 +448,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
           <div className="grid gap-6 md:grid-cols-2 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Derniers produits importÃ©s</CardTitle>
+                <CardTitle className="text-lg">Derniers produits importés</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -460,11 +460,11 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{product.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {product.sourceConnector} â€¢ {formatCurrency(product.sellingPrice, 'GNF')}
+                          {product.sourceConnector} • {formatCurrency(product.sellingPrice, 'GNF')}
                         </p>
                       </div>
                       <Badge variant={product.isPublished ? 'default' : 'secondary'}>
-                        {product.isPublished ? 'PubliÃ©' : 'Brouillon'}
+                        {product.isPublished ? 'Publié' : 'Brouillon'}
                       </Badge>
                     </div>
                   ))}
@@ -482,7 +482,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
             
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Commandes rÃ©centes</CardTitle>
+                <CardTitle className="text-lg">Commandes récentes</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -494,7 +494,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{order.customerName}</p>
                         <p className="text-xs text-muted-foreground">
-                          #{order.internalOrderId} â€¢ {order.quantity}x {order.productTitle.substring(0, 20)}...
+                          #{order.internalOrderId} • {order.quantity}x {order.productTitle.substring(0, 20)}...
                         </p>
                       </div>
                       <Badge variant={order.status === 'pending' ? 'destructive' : 'outline'}>
@@ -530,7 +530,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
                 p.id === id ? { ...p, isPublished: published } : p
               ));
             }}
-            onViewOnSource={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
+            onViewOnSource={(url) => window.open(url, '_blank')}
           />
         </TabsContent>
         
@@ -559,7 +559,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
         onOpenChange={setImportDialogOpen}
         vendorId={vendorId}
         onProductImported={(product) => {
-          // Ajouter le produit importÃ© Ã  la liste
+          // Ajouter le produit importé à la liste
           console.log('Product imported:', product);
           setActiveTab('products');
         }}

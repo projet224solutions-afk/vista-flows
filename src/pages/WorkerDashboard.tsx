@@ -28,7 +28,7 @@ export default function WorkerDashboard() {
     try {
       setLoading(true);
 
-      // Charger les donnÃ©es du travailleur
+      // Charger les données du travailleur
       const { data: workerData, error: workerError } = await supabase
         .from('syndicate_workers')
         .select('*')
@@ -37,14 +37,14 @@ export default function WorkerDashboard() {
 
       if (workerError) throw workerError;
       if (!workerData) {
-        toast.error('AccÃ¨s non trouvÃ©');
+        toast.error('Accès non trouvé');
         navigate('/');
         return;
       }
 
       setWorker(workerData);
 
-      // Charger les donnÃ©es du bureau
+      // Charger les données du bureau
       const { data: bureauData } = await supabase
         .from('bureaus')
         .select('*')
@@ -53,7 +53,7 @@ export default function WorkerDashboard() {
 
       setBureau(bureauData);
 
-      // Charger les donnÃ©es selon les permissions
+      // Charger les données selon les permissions
       const permissions = workerData.permissions as any;
       const promises = [];
 
@@ -86,7 +86,7 @@ export default function WorkerDashboard() {
 
     } catch (error) {
       console.error('Erreur chargement travailleur:', error);
-      toast.error('Erreur lors du chargement des donnÃ©es');
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -105,10 +105,10 @@ export default function WorkerDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>AccÃ¨s non trouvÃ©</CardTitle>
+            <CardTitle>Accès non trouvé</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Le lien d'accÃ¨s est invalide ou a expirÃ©.</p>
+            <p>Le lien d'accès est invalide ou a expiré.</p>
           </CardContent>
         </Card>
       </div>
@@ -117,7 +117,7 @@ export default function WorkerDashboard() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{worker.nom}</h1>
@@ -153,7 +153,7 @@ export default function WorkerDashboard() {
         {worker.permissions.view_vehicles && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">VÃ©hicules</CardTitle>
+              <CardTitle className="text-sm font-medium">Véhicules</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{motos.length}</div>
@@ -181,7 +181,7 @@ export default function WorkerDashboard() {
           <div className="grid grid-cols-2 gap-4">
             {Object.entries(worker.permissions as any).map(([key, value]) => (
               <div key={key} className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${value ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-gray-300'}`} />
+                <div className={`w-2 h-2 rounded-full ${value ? 'bg-green-500' : 'bg-gray-300'}`} />
                 <span className="text-sm">
                   {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </span>
@@ -221,7 +221,7 @@ export default function WorkerDashboard() {
       {(worker.permissions as any).view_vehicles && (
         <Card>
           <CardHeader>
-            <CardTitle>VÃ©hicules</CardTitle>
+            <CardTitle>Véhicules</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -230,7 +230,7 @@ export default function WorkerDashboard() {
                   <div>
                     <h3 className="font-medium">{moto.serial_number}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {moto.brand} {moto.model} â€¢ {moto.year} â€¢ {moto.color}
+                      {moto.brand} {moto.model} • {moto.year} • {moto.color}
                     </p>
                   </div>
                   <Badge>{moto.status}</Badge>
@@ -238,7 +238,7 @@ export default function WorkerDashboard() {
               ))}
               {motos.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
-                  Aucun vÃ©hicule
+                  Aucun véhicule
                 </div>
               )}
             </div>

@@ -1,6 +1,6 @@
 /**
  * POSCartSection - Section panier du POS avec remises par article
- * Affiche les articles du panier avec possibilitÃ© d'ajouter des remises individuelles
+ * Affiche les articles du panier avec possibilité d'ajouter des remises individuelles
  */
 
 import { useState } from 'react';
@@ -130,7 +130,7 @@ export function POSCartSection({
 
     const finalPrice = unitPrice - discountAmt;
     if (finalPrice < 0) {
-      toast.error('La remise ne peut pas Ãªtre supÃ©rieure au prix');
+      toast.error('La remise ne peut pas être supérieure au prix');
       return;
     }
 
@@ -141,7 +141,7 @@ export function POSCartSection({
     });
 
     setEditingItemId(null);
-    toast.success('Remise appliquÃ©e');
+    toast.success('Remise appliquée');
   };
 
   const removeDiscount = () => {
@@ -152,7 +152,7 @@ export function POSCartSection({
       discountAmount: 0,
     });
     setEditingItemId(null);
-    toast.info('Remise supprimÃ©e');
+    toast.info('Remise supprimée');
   };
 
   // Calculate item financials
@@ -257,7 +257,7 @@ export function POSCartSection({
                       {/* Name + Price */}
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[11px] sm:text-xs truncate">
-                          {item.saleType === 'carton' && 'ðŸ“¦ '}
+                          {item.saleType === 'carton' && '📦 '}
                           {item.name}
                         </p>
                         <div className="flex items-center gap-1">
@@ -276,7 +276,7 @@ export function POSCartSection({
                           )}
                         </div>
                         {/* Profit/Loss indicator */}
-                        <p className={`text-[8px] ${financials.isLoss ? 'text-destructive' : 'text-primary-orange-600'}`}>
+                        <p className={`text-[8px] ${financials.isLoss ? 'text-destructive' : 'text-green-600'}`}>
                           {financials.isLoss 
                             ? `Perte: ${formatCurrency(Math.abs(financials.totalProfit))}`
                             : `Profit: +${formatCurrency(financials.totalProfit)}`
@@ -517,7 +517,7 @@ export function POSCartSection({
                         <div className="flex items-center gap-2 mt-2 p-2 bg-destructive/10 rounded text-destructive">
                           <AlertTriangle className="h-4 w-4" />
                           <span className="text-xs">
-                            Attention: Prix infÃ©rieur au coÃ»t d'achat (
+                            Attention: Prix inférieur au coût d'achat (
                             {formatCurrency(editingItem.costPrice || 0)})
                           </span>
                         </div>

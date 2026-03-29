@@ -53,15 +53,6 @@ interface POSReceiptProps {
   };
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -86,21 +77,22 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
       pdf.addImage(imgData, 'PNG', 5, 5, 70, (canvas.height * 70) / canvas.width);
       pdf.save(`recu-${orderData.orderNumber}.pdf`);
       
-      toast.success('ReÃ§u tÃ©lÃ©chargÃ© avec succÃ¨s');
+      toast.success('Reçu téléchargé avec succès');
     } catch (error) {
-      console.error('Erreur tÃ©lÃ©chargement:', error);
-      toast.error('Erreur lors du tÃ©lÃ©chargement');
+      console.error('Erreur téléchargement:', error);
+      toast.error('Erreur lors du téléchargement');
     }
   };
 
   const printReceipt = () => {
     if (!receiptRef.current) return;
-
-    const safeOrderNumber = escapeHtml(orderData.orderNumber);
-    const printHtml = `
+    
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
         <html>
           <head>
-            <title>ReÃ§u - ${safeOrderNumber}</title>
+            <title>Reçu - ${orderData.orderNumber}</title>
             <style>
               body { font-family: 'Courier New', monospace; font-size: 14px; padding: 10px; max-width: 320px; margin: 0 auto; }
               .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
@@ -111,25 +103,12 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
           </head>
           <body>
             ${receiptRef.current.innerHTML}
-            <script>
-              window.onload = function() {
-                window.print();
-              }
-            </script>
           </body>
         </html>
-      `;
-
-    const blob = new Blob([printHtml], { type: 'text/html' });
-    const printUrl = URL.createObjectURL(blob);
-    const opened = window.open(printUrl, '_blank', 'noopener,noreferrer');
-    if (!opened) {
-      URL.revokeObjectURL(printUrl);
-      toast.error('Popup bloquÃ©e - autorisez les popups');
-      return;
+      `);
+      printWindow.document.close();
+      printWindow.print();
     }
-
-    setTimeout(() => URL.revokeObjectURL(printUrl), 10000);
   };
 
   const getPaymentIcon = () => {
@@ -142,7 +121,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
 
   const getPaymentLabel = () => {
     switch (orderData.paymentMethod) {
-      case 'cash': return 'EspÃ¨ces';
+      case 'cash': return 'Espèces';
       case 'card': return 'Carte bancaire';
       case 'mobile': return 'Paiement mobile';
     }
@@ -152,14 +131,14 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0 mx-2">
         {/* Header avec actions */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 text-white p-3 rounded-t-lg">
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-green-600 to-green-500 text-white p-3 rounded-t-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                 <Check className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold">Paiement rÃ©ussi!</h2>
+                <h2 className="text-base font-bold">Paiement réussi!</h2>
                 <p className="text-xs text-white/80">#{orderData.orderNumber}</p>
               </div>
             </div>
@@ -174,14 +153,14 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
           </div>
         </div>
 
-        {/* ReÃ§u imprimable */}
+        {/* Reçu imprimable */}
         <div className="p-3">
           <div 
             ref={receiptRef} 
             className="bg-white border-2 border-dashed border-border rounded-lg p-3 font-mono text-sm"
             style={{ fontFamily: "'Courier New', monospace" }}
           >
-            {/* En-tÃªte reÃ§u */}
+            {/* En-tête reçu */}
             <div className="text-center border-b border-dashed border-muted-foreground/30 pb-3 mb-3">
               <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl mx-auto mb-2 flex items-center justify-center overflow-hidden">
                 {orderData.logoUrl ? (
@@ -191,16 +170,16 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                 )}
               </div>
               <h3 className="text-lg font-bold text-foreground">{orderData.companyName}</h3>
-              <p className="text-xs text-muted-foreground mt-1">REÃ‡U DE CAISSE</p>
+              <p className="text-xs text-muted-foreground mt-1">REÇU DE CAISSE</p>
               <div className="flex items-center justify-center gap-1 mt-1 text-[10px] text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 <span>{new Date().toLocaleString('fr-FR')}</span>
               </div>
             </div>
 
-            {/* NumÃ©ro de commande */}
+            {/* Numéro de commande */}
             <div className="bg-muted/30 rounded-lg p-2 mb-3 text-center">
-              <p className="text-xs text-muted-foreground">NÂ° Commande</p>
+              <p className="text-xs text-muted-foreground">N° Commande</p>
               <p className="text-lg font-bold text-primary">#{orderData.orderNumber}</p>
             </div>
 
@@ -211,17 +190,17 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                 <div key={`${item.id}-${item.saleType || 'unit'}`} className="flex justify-between items-start py-1">
                   <div className="flex-1">
                     <p className="font-semibold text-foreground text-sm">
-                      {item.saleType === 'carton' && 'ðŸ“¦ '}
+                      {item.saleType === 'carton' && '📦 '}
                       {item.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {item.saleType === 'carton' && item.displayQuantity 
                         ? item.displayQuantity
-                        : `${item.quantity} unitÃ©(s)`
-                      } Ã— {item.price.toLocaleString()} {orderData.currency}
+                        : `${item.quantity} unité(s)`
+                      } × {item.price.toLocaleString()} {orderData.currency}
                     </p>
                     {item.saleType === 'carton' && (
-                      <p className="text-[10px] text-primary-orange-600 font-medium">Vente par carton</p>
+                      <p className="text-[10px] text-green-600 font-medium">Vente par carton</p>
                     )}
                   </div>
                   <p className="font-bold text-foreground text-sm">
@@ -241,12 +220,12 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
-                  TVA ({orderData.taxEnabled ? `${(orderData.taxRate * 100).toFixed(1)}%` : 'dÃ©sactivÃ©e'})
+                  TVA ({orderData.taxEnabled ? `${(orderData.taxRate * 100).toFixed(1)}%` : 'désactivée'})
                 </span>
                 <span className="font-medium">{orderData.tax.toLocaleString()} {orderData.currency}</span>
               </div>
               {orderData.discount > 0 && (
-                <div className="flex justify-between text-sm text-primary-orange-600 font-medium">
+                <div className="flex justify-between text-sm text-green-600 font-medium">
                   <span>Remise ({orderData.discount}%)</span>
                   <span>-{((orderData.subtotal + orderData.tax) * orderData.discount / 100).toLocaleString()} {orderData.currency}</span>
                 </div>
@@ -267,18 +246,18 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                   {getPaymentIcon()}
                   <span className="font-medium text-sm">{getPaymentLabel()}</span>
                 </div>
-                <Badge variant="secondary" className="bg-primary-orange-100 text-primary-orange-700 text-xs">
-                  PayÃ©
+                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                  Payé
                 </Badge>
               </div>
               
               {orderData.paymentMethod === 'cash' && orderData.receivedAmount > 0 && (
                 <div className="mt-2 pt-2 border-t border-muted-foreground/20 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">ReÃ§u</span>
+                    <span className="text-muted-foreground">Reçu</span>
                     <span>{orderData.receivedAmount.toLocaleString()} {orderData.currency}</span>
                   </div>
-                  <div className="flex justify-between font-semibold text-primary-orange-600">
+                  <div className="flex justify-between font-semibold text-green-600">
                     <span>Rendu</span>
                     <span>{orderData.change.toLocaleString()} {orderData.currency}</span>
                   </div>
@@ -297,7 +276,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
             </div>
           </div>
 
-          {/* Actions tÃ©lÃ©chargement/impression - OptimisÃ© mobile */}
+          {/* Actions téléchargement/impression - Optimisé mobile */}
           <div className="grid grid-cols-2 gap-2 mt-3 pb-2">
             <Button
               variant="outline"

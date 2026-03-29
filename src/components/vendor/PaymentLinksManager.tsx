@@ -48,7 +48,7 @@ export default function PaymentLinksManager() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   
-  // Formulaire de crÃ©ation
+  // Formulaire de création
   const [formData, setFormData] = useState<{
     product_id: string;
     produit: string;
@@ -87,14 +87,14 @@ export default function PaymentLinksManager() {
 
   const loadVendorProducts = async () => {
     if (!vendorId) {
-      console.warn('âš ï¸ Pas de vendorId pour charger les produits');
+      console.warn('⚠️ Pas de vendorId pour charger les produits');
       return;
     }
 
     try {
       setLoadingProducts(true);
 
-      // RÃ©cupÃ©rer les produits actifs du vendeur
+      // Récupérer les produits actifs du vendeur
       const { data, error } = await supabase
         .from('products')
         .select('id, name, price, description, images')
@@ -166,17 +166,17 @@ export default function PaymentLinksManager() {
         // Copier le lien automatiquement
         navigator.clipboard.writeText(paymentUrl);
         toast({
-          title: "Lien copiÃ©",
-          description: "Le lien de paiement a Ã©tÃ© copiÃ© dans le presse-papiers",
+          title: "Lien copié",
+          description: "Le lien de paiement a été copié dans le presse-papiers",
         });
 
-        // RÃ©initialiser le formulaire
+        // Réinitialiser le formulaire
         setShowCreateModal(false);
         setSelectedProduct(null);
         setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '', remise: '0', type_remise: 'percentage' });
       }
     } catch (error: any) {
-      console.error('Erreur crÃ©ation lien:', error);
+      console.error('Erreur création lien:', error);
     } finally {
       setCreating(false);
     }
@@ -188,8 +188,8 @@ export default function PaymentLinksManager() {
       const link = `${baseUrl}/payment/${paymentId}`;
       await navigator.clipboard.writeText(link);
       toast({
-        title: "Lien copiÃ©",
-        description: "Le lien de paiement a Ã©tÃ© copiÃ© dans le presse-papiers",
+        title: "Lien copié",
+        description: "Le lien de paiement a été copié dans le presse-papiers",
       });
     } catch (error) {
       toast({
@@ -208,12 +208,12 @@ export default function PaymentLinksManager() {
       if (navigator.share) {
         await navigator.share({
           title: 'Lien de paiement 224SOLUTIONS',
-          text: 'Effectuez votre paiement via ce lien sÃ©curisÃ©',
+          text: 'Effectuez votre paiement via ce lien sécurisé',
           url: link
         });
         toast({
-          title: "Lien partagÃ©",
-          description: "Le lien a Ã©tÃ© partagÃ© avec succÃ¨s",
+          title: "Lien partagé",
+          description: "Le lien a été partagé avec succès",
         });
       } else {
         // Fallback: copier le lien
@@ -260,7 +260,7 @@ export default function PaymentLinksManager() {
       const newRemise = parseFloat(formData.remise);
       let montantApresRemise = newMontant;
       
-      // Calculer le montant aprÃ¨s remise
+      // Calculer le montant après remise
       if (newRemise > 0) {
         if (formData.type_remise === 'percentage') {
           montantApresRemise = newMontant * (1 - newRemise / 100);
@@ -311,8 +311,8 @@ export default function PaymentLinksManager() {
       if (error) throw error;
 
       toast({
-        title: "SuccÃ¨s",
-        description: "Lien de paiement mis Ã  jour",
+        title: "Succès",
+        description: "Lien de paiement mis à jour",
       });
 
       setShowEditModal(false);
@@ -320,10 +320,10 @@ export default function PaymentLinksManager() {
       setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '', remise: '0', type_remise: 'percentage' });
       await loadPaymentLinks(filters);
     } catch (error: any) {
-      console.error('Erreur mise Ã  jour:', error);
+      console.error('Erreur mise à jour:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de mettre Ã  jour le lien",
+        description: "Impossible de mettre à jour le lien",
         variant: "destructive"
       });
     } finally {
@@ -332,7 +332,7 @@ export default function PaymentLinksManager() {
   };
 
   const handleDeleteLink = async (paymentId: string, produit: string) => {
-    if (!confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer le lien pour "${produit}" ?`)) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer le lien pour "${produit}" ?`)) {
       return;
     }
 
@@ -346,7 +346,7 @@ export default function PaymentLinksManager() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="w-4 h-4 text-primary-orange-600" />;
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'pending':
         return <Clock className="w-4 h-4 text-yellow-600" />;
       case 'failed':
@@ -361,7 +361,7 @@ export default function PaymentLinksManager() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'success':
-        return 'bg-primary-orange-100 text-primary-orange-800';
+        return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'failed':
@@ -379,7 +379,7 @@ export default function PaymentLinksManager() {
 
   return (
     <div className="h-full flex flex-col space-y-4 p-4 overflow-hidden">
-      {/* En-tÃªte avec statistiques - Version compacte */}
+      {/* En-tête avec statistiques - Version compacte */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
         <Card>
           <CardContent className="p-3">
@@ -396,10 +396,10 @@ export default function PaymentLinksManager() {
         <Card>
           <CardContent className="p-3">
             <div className="flex items-center gap-3">
-              <CheckCircle className="w-6 h-6 text-primary-orange-600 shrink-0" />
+              <CheckCircle className="w-6 h-6 text-green-600 shrink-0" />
               <div>
-                <p className="text-xs text-muted-foreground">RÃ©ussis</p>
-                <p className="text-xl font-bold text-primary-orange-600">{stats?.successful_payments || 0}</p>
+                <p className="text-xs text-muted-foreground">Réussis</p>
+                <p className="text-xl font-bold text-green-600">{stats?.successful_payments || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -448,9 +448,9 @@ export default function PaymentLinksManager() {
             <SelectContent>
               <SelectItem value="all">Tous</SelectItem>
               <SelectItem value="pending">En attente</SelectItem>
-              <SelectItem value="success">RÃ©ussi</SelectItem>
-              <SelectItem value="failed">Ã‰chouÃ©</SelectItem>
-              <SelectItem value="expired">ExpirÃ©</SelectItem>
+              <SelectItem value="success">Réussi</SelectItem>
+              <SelectItem value="failed">Échoué</SelectItem>
+              <SelectItem value="expired">Expiré</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -462,23 +462,23 @@ export default function PaymentLinksManager() {
           
           <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-primary-orange-600 hover:bg-primary-orange-700">
+              <Button size="sm" className="bg-green-600 hover:bg-green-700">
                 <Plus className="w-4 h-4 mr-1" />
-                CrÃ©er
+                Créer
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
               <DialogHeader>
-                <DialogTitle>CrÃ©er un lien de paiement</DialogTitle>
+                <DialogTitle>Créer un lien de paiement</DialogTitle>
                 <DialogDescription>
-                  SÃ©lectionnez un produit de votre stock pour crÃ©er un lien de paiement
+                  Sélectionnez un produit de votre stock pour créer un lien de paiement
                 </DialogDescription>
               </DialogHeader>
               
               <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
                 <div className="space-y-4 px-1 pr-4 pb-2">
                   <div>
-                    <Label htmlFor="product">SÃ©lectionner un produit *</Label>
+                    <Label htmlFor="product">Sélectionner un produit *</Label>
                     <Select value={formData.product_id} onValueChange={handleProductSelect}>
                       <SelectTrigger>
                         <SelectValue placeholder="Choisir un produit..." />
@@ -580,14 +580,14 @@ export default function PaymentLinksManager() {
                       placeholder="Ex: USR0002"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Laissez vide pour un lien public accessible Ã  tous
+                      Laissez vide pour un lien public accessible à tous
                     </p>
                   </div>
                   
                   {/* Section Remise */}
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between mb-3">
-                      <Label className="text-base font-semibold">Remise (RÃ©duction)</Label>
+                      <Label className="text-base font-semibold">Remise (Réduction)</Label>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
@@ -621,7 +621,7 @@ export default function PaymentLinksManager() {
                   {formData.montant && (
                     <div className="p-3 bg-blue-50 rounded-lg space-y-1">
                       <p className="text-sm text-blue-800">
-                        <strong>RÃ©sumÃ© :</strong>
+                        <strong>Résumé :</strong>
                       </p>
                       {(() => {
                         const montant = parseFloat(formData.montant) || 0;
@@ -643,20 +643,20 @@ export default function PaymentLinksManager() {
                             </p>
                             {remise > 0 && (
                               <>
-                                <p className="text-xs text-primary-orange-700 font-semibold">
+                                <p className="text-xs text-green-700 font-semibold">
                                   Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
                                   {' '}({formatCurrency(montant - montantApresRemise, formData.devise)})
                                 </p>
                                 <p className="text-xs text-blue-700">
-                                  Montant aprÃ¨s remise : {formatCurrency(montantApresRemise, formData.devise)}
+                                  Montant après remise : {formatCurrency(montantApresRemise, formData.devise)}
                                 </p>
                               </>
                             )}
                             <p className="text-sm text-blue-900 font-bold mt-2">
-                              Montant Ã  demander : {formatCurrency(montantApresRemise, formData.devise)}
+                              Montant à demander : {formatCurrency(montantApresRemise, formData.devise)}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              (Les frais de traitement seront ajoutÃ©s pour le client)
+                              (Les frais de traitement seront ajoutés pour le client)
                             </p>
                           </>
                         );
@@ -674,12 +674,12 @@ export default function PaymentLinksManager() {
                   {creating ? (
                     <>
                       <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      CrÃ©ation...
+                      Création...
                     </>
                   ) : (
                     <>
                       <Link className="w-4 h-4 mr-2" />
-                      CrÃ©er le lien
+                      Créer le lien
                     </>
                   )}
                 </Button>
@@ -706,7 +706,7 @@ export default function PaymentLinksManager() {
                 <div className="text-center py-8 text-muted-foreground">
                   <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p className="font-medium">Aucun lien de paiement</p>
-                  <p className="text-sm">CrÃ©ez votre premier lien pour recevoir des paiements</p>
+                  <p className="text-sm">Créez votre premier lien pour recevoir des paiements</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -807,7 +807,7 @@ export default function PaymentLinksManager() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(`/payment/${link.payment_id}`, '_blank', 'noopener,noreferrer')}
+                            onClick={() => window.open(`/payment/${link.payment_id}`, '_blank')}
                             className="h-8 w-8 p-0"
                             title="Ouvrir"
                           >
@@ -893,14 +893,14 @@ export default function PaymentLinksManager() {
                   placeholder="Ex: USR0002"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Laissez vide pour un lien public accessible Ã  tous
+                  Laissez vide pour un lien public accessible à tous
                 </p>
               </div>
               
-              {/* Section Remise dans le modal d'Ã©dition */}
+              {/* Section Remise dans le modal d'édition */}
               <div className="border-t pt-4">
                 <div className="flex items-center justify-between mb-3">
-                  <Label className="text-base font-semibold">Remise (RÃ©duction)</Label>
+                  <Label className="text-base font-semibold">Remise (Réduction)</Label>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
@@ -934,7 +934,7 @@ export default function PaymentLinksManager() {
               {formData.montant && (
                 <div className="p-3 bg-blue-50 rounded-lg space-y-1">
                   <p className="text-sm text-blue-800">
-                    <strong>RÃ©sumÃ© :</strong>
+                    <strong>Résumé :</strong>
                   </p>
                   {(() => {
                     const montant = parseFloat(formData.montant) || 0;
@@ -956,20 +956,20 @@ export default function PaymentLinksManager() {
                         </p>
                         {remise > 0 && (
                           <>
-                            <p className="text-xs text-primary-orange-700 font-semibold">
+                            <p className="text-xs text-green-700 font-semibold">
                               Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
                               {' '}({formatCurrency(montant - montantApresRemise, formData.devise)})
                             </p>
                             <p className="text-xs text-blue-700">
-                              Montant aprÃ¨s remise : {formatCurrency(montantApresRemise, formData.devise)}
+                              Montant après remise : {formatCurrency(montantApresRemise, formData.devise)}
                             </p>
                           </>
                         )}
                         <p className="text-sm text-blue-900 font-bold mt-2">
-                          Montant Ã  demander : {formatCurrency(montantApresRemise, formData.devise)}
+                          Montant à demander : {formatCurrency(montantApresRemise, formData.devise)}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          (Les frais de traitement seront ajoutÃ©s pour le client)
+                          (Les frais de traitement seront ajoutés pour le client)
                         </p>
                       </>
                     );
@@ -987,12 +987,12 @@ export default function PaymentLinksManager() {
               {updating ? (
                 <>
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Mise Ã  jour...
+                  Mise à jour...
                 </>
               ) : (
                 <>
                   <Edit className="w-4 h-4 mr-2" />
-                  Mettre Ã  jour
+                  Mettre à jour
                 </>
               )}
             </Button>

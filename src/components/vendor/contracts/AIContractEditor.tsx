@@ -144,7 +144,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
       if (data.html) {
         const blob = new Blob([data.html], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
-        window.open(url, '_blank', 'noopener,noreferrer');
+        window.open(url, '_blank');
       }
     } catch (error: any) {
       toast({

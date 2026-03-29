@@ -20,7 +20,7 @@ export function VendorSecurityPanel() {
   }
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-primary-orange-600';
+    if (score >= 80) return 'text-green-600';
     if (score >= 50) return 'text-orange-600';
     return 'text-red-600';
   };
@@ -28,7 +28,7 @@ export function VendorSecurityPanel() {
   const getKYCStatusBadge = (status?: string) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-gradient-to-r from-primary-blue-600 to-primary-orange-600"><CheckCircle className="h-3 w-3 mr-1" />Vérifié</Badge>;
+        return <Badge className="bg-green-600"><CheckCircle className="h-3 w-3 mr-1" />Vérifié</Badge>;
       case 'under_review':
         return <Badge variant="secondary"><RefreshCw className="h-3 w-3 mr-1" />En cours</Badge>;
       case 'rejected':
@@ -103,7 +103,7 @@ export function VendorSecurityPanel() {
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <span>Téléphone vérifié</span>
               {kyc.phone_verified ? (
-                <CheckCircle className="h-5 w-5 text-primary-orange-600" />
+                <CheckCircle className="h-5 w-5 text-green-600" />
               ) : (
                 <XCircle className="h-5 w-5 text-red-600" />
               )}

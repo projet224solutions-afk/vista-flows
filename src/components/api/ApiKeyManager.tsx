@@ -8,7 +8,6 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useVendorSubscription } from '@/hooks/useVendorSubscription';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from '@/hooks/useTranslation';
 import { 
   Key, 
   Copy, 
@@ -22,7 +21,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS, ar } from 'date-fns/locale';
+import { fr } from 'date-fns/locale';
 
 interface ApiKey {
   id: string;
@@ -42,21 +41,14 @@ const planLimits = {
   basic: { perMinute: 30, perDay: 5000 },
   pro: { perMinute: 100, perDay: 50000 },
   business: { perMinute: 500, perDay: 200000 },
-  premium: { perMinute: -1, perDay: -1 } // IllimitÃ©
+  premium: { perMinute: -1, perDay: -1 } // Illimité
 };
 
 export function ApiKeyManager() {
   const { user } = useAuth();
   const { subscription } = useVendorSubscription();
   const { toast } = useToast();
-  const { t, language } = useTranslation();
   const [keys, setKeys] = useState<ApiKey[]>([]);
-
-  const getDateLocale = (lang: string) => {
-    if (lang === 'ar') return ar;
-    if (lang === 'en') return enUS;
-    return fr;
-  };
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
@@ -80,7 +72,7 @@ export function ApiKeyManager() {
       if (error) throw error;
       setKeys((data as any) || []);
     } catch (error) {
-      console.error('Erreur chargement clÃ©s:', error);
+      console.error('Erreur chargement clés:', error);
     } finally {
       setLoading(false);
     }
@@ -91,8 +83,8 @@ export function ApiKeyManager() {
 
     if (!newKeyName.trim()) {
       toast({
-        title: t('apiKeys.toast.errorTitle'),
-        description: t('apiKeys.toast.missingName'),
+        title: 'Erreur',
+        description: 'Veuillez entrer un nom pour la clé API',
         variant: 'destructive'
       });
       return;
@@ -103,7 +95,7 @@ export function ApiKeyManager() {
       const planName = subscription.plan_name?.toLowerCase() || 'free';
       const limits = planLimits[planName as keyof typeof planLimits] || planLimits.free;
 
-      // GÃ©nÃ©rer la clÃ© API
+      // Générer la clé API
       const { data: keyData, error: keyError } = await supabase
         .rpc('generate_api_key' as any);
 
@@ -129,14 +121,14 @@ export function ApiKeyManager() {
       loadKeys();
 
       toast({
-        title: t('apiKeys.toast.createdTitle'),
-        description: t('apiKeys.toast.createdDescription')
+        title: 'Clé API créée',
+        description: 'Copiez votre clé maintenant, vous ne pourrez plus la voir'
       });
     } catch (error) {
-      console.error('Erreur crÃ©ation clÃ©:', error);
+      console.error('Erreur création clé:', error);
       toast({
-        title: t('apiKeys.toast.errorTitle'),
-        description: t('apiKeys.toast.createError'),
+        title: 'Erreur',
+        description: 'Impossible de créer la clé API',
         variant: 'destructive'
       });
     } finally {
@@ -154,16 +146,16 @@ export function ApiKeyManager() {
       if (error) throw error;
 
       toast({
-        title: t('apiKeys.toast.deletedTitle'),
-        description: t('apiKeys.toast.deletedDescription')
+        title: 'Clé supprimée',
+        description: 'La clé API a été révoquée'
       });
 
       loadKeys();
     } catch (error) {
-      console.error('Erreur suppression clÃ©:', error);
+      console.error('Erreur suppression clé:', error);
       toast({
-        title: t('apiKeys.toast.errorTitle'),
-        description: t('apiKeys.toast.deleteError'),
+        title: 'Erreur',
+        description: 'Impossible de supprimer la clé',
         variant: 'destructive'
       });
     }
@@ -172,8 +164,8 @@ export function ApiKeyManager() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: t('apiKeys.toast.copiedTitle'),
-      description: t('apiKeys.toast.copiedDescription')
+      title: 'Copié',
+      description: 'La clé a été copiée dans le presse-papier'
     });
   };
 
@@ -188,7 +180,7 @@ export function ApiKeyManager() {
   };
 
   const maskKey = (key: string) => {
-    return key.substring(0, 12) + 'â€¢'.repeat(20);
+    return key.substring(0, 12) + '•'.repeat(20);
   };
 
   if (loading) {
@@ -203,9 +195,9 @@ export function ApiKeyManager() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">{t('apiKeys.title')}</h2>
+          <h2 className="text-2xl font-bold">Gestion des Clés API</h2>
           <p className="text-muted-foreground">
-            {t('apiKeys.description')}
+            Créez et gérez vos clés API pour accéder à 224SOLUTIONS
           </p>
         </div>
 
@@ -213,39 +205,39 @@ export function ApiKeyManager() {
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              {t('apiKeys.newKey')}
+              Nouvelle clé
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{t('apiKeys.dialog.createTitle')}</DialogTitle>
+              <DialogTitle>Créer une clé API</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">{t('apiKeys.dialog.keyNameLabel')}</label>
+                <label className="text-sm font-medium">Nom de la clé</label>
                 <Input
                   value={newKeyName}
                   onChange={(e) => setNewKeyName(e.target.value)}
-                  placeholder={t('apiKeys.dialog.keyNamePlaceholder')}
+                  placeholder="Ex: Production API"
                 />
               </div>
 
               <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                <h4 className="font-medium text-sm">{t('apiKeys.dialog.limitsPlan', { plan: subscription?.plan_name || 'free' })}</h4>
+                <h4 className="font-medium text-sm">Limites - Plan {subscription?.plan_name}</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">{t('apiKeys.dialog.perMinute')}</p>
+                    <p className="text-muted-foreground">Par minute</p>
                     <p className="font-bold">
                       {planLimits[subscription?.plan_name?.toLowerCase() as keyof typeof planLimits]?.perMinute === -1 
-                        ? t('apiKeys.unlimited') 
+                        ? 'Illimité' 
                         : planLimits[subscription?.plan_name?.toLowerCase() as keyof typeof planLimits]?.perMinute || 10}
                     </p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">{t('apiKeys.dialog.perDay')}</p>
+                    <p className="text-muted-foreground">Par jour</p>
                     <p className="font-bold">
                       {planLimits[subscription?.plan_name?.toLowerCase() as keyof typeof planLimits]?.perDay === -1 
-                        ? t('apiKeys.unlimited') 
+                        ? 'Illimité' 
                         : planLimits[subscription?.plan_name?.toLowerCase() as keyof typeof planLimits]?.perDay || 1000}
                     </p>
                   </div>
@@ -256,12 +248,12 @@ export function ApiKeyManager() {
                 {creating ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {t('apiKeys.dialog.creating')}
+                    Création...
                   </>
                 ) : (
                   <>
                     <Key className="w-4 h-4 mr-2" />
-                    {t('apiKeys.dialog.createAction')}
+                    Créer la clé
                   </>
                 )}
               </Button>
@@ -270,7 +262,7 @@ export function ApiKeyManager() {
         </Dialog>
       </div>
 
-      {/* Nouvelle clÃ© crÃ©Ã©e - Ã  copier */}
+      {/* Nouvelle clé créée - à copier */}
       {newKey && (
         <Card className="border-primary">
           <CardContent className="p-6">
@@ -278,10 +270,10 @@ export function ApiKeyManager() {
               <div className="space-y-2 flex-1">
                 <div className="flex items-center gap-2">
                   <Shield className="w-5 h-5 text-primary" />
-                  <h3 className="font-bold">{t('apiKeys.newlyCreatedTitle')}</h3>
+                  <h3 className="font-bold">Votre nouvelle clé API</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {t('apiKeys.newlyCreatedWarning')}
+                  ⚠️ Copiez cette clé maintenant, vous ne pourrez plus la voir
                 </p>
                 <div className="bg-muted p-3 rounded font-mono text-sm break-all">
                   {newKey}
@@ -299,14 +291,14 @@ export function ApiKeyManager() {
         </Card>
       )}
 
-      {/* Liste des clÃ©s */}
+      {/* Liste des clés */}
       <div className="grid gap-4">
         {keys.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
               <Key className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <p className="text-lg text-muted-foreground">
-                {t('apiKeys.empty')}
+                Aucune clé API créée
               </p>
             </CardContent>
           </Card>
@@ -319,9 +311,9 @@ export function ApiKeyManager() {
                     <CardTitle className="text-lg flex items-center gap-2">
                       {key.key_name}
                       {key.is_active ? (
-                        <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">{t('apiKeys.status.active')}</Badge>
+                        <Badge className="bg-green-500">Actif</Badge>
                       ) : (
-                        <Badge variant="secondary">{t('apiKeys.status.inactive')}</Badge>
+                        <Badge variant="secondary">Inactif</Badge>
                       )}
                     </CardTitle>
                     <CardDescription className="font-mono text-xs">
@@ -362,29 +354,29 @@ export function ApiKeyManager() {
                   <div>
                     <p className="text-muted-foreground flex items-center gap-1">
                       <Zap className="w-3 h-3" />
-                      {t('apiKeys.limitPerMinute')}
+                      Limite/min
                     </p>
                     <p className="font-bold">
-                      {key.rate_limit_per_minute === -1 ? t('apiKeys.unlimited') : key.rate_limit_per_minute}
+                      {key.rate_limit_per_minute === -1 ? 'Illimité' : key.rate_limit_per_minute}
                     </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground flex items-center gap-1">
                       <Activity className="w-3 h-3" />
-                      {t('apiKeys.usage')}
+                      Utilisations
                     </p>
                     <p className="font-bold">{key.usage_count}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">{t('apiKeys.plan')}</p>
+                    <p className="text-muted-foreground">Plan</p>
                     <p className="font-bold capitalize">{key.plan_tier}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">{t('apiKeys.lastUsed')}</p>
+                    <p className="text-muted-foreground">Dernière utilisation</p>
                     <p className="font-bold text-xs">
                       {key.last_used_at
-                        ? formatDistanceToNow(new Date(key.last_used_at), { addSuffix: true, locale: getDateLocale(language) })
-                        : t('apiKeys.never')}
+                        ? formatDistanceToNow(new Date(key.last_used_at), { addSuffix: true, locale: fr })
+                        : 'Jamais'}
                     </p>
                   </div>
                 </div>

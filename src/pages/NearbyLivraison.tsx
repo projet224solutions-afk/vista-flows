@@ -1,7 +1,7 @@
 /**
  * NEARBY LIVRAISON PAGE
- * Liste des livreurs disponibles Ã  proximitÃ©
- * 224Solutions - Ultra OptimisÃ© v2
+ * Liste des livreurs disponibles à proximité
+ * 224Solutions - Ultra Optimisé v2
  */
 
 import { useState, useEffect, useCallback, memo, useRef } from 'react';
@@ -45,7 +45,7 @@ const AUTO_REFRESH_INTERVAL = 20000; // 20 secondes
 const MAX_DRIVERS_LIMIT = 100;
 
 // ============================================================================
-// Composant mÃ©moÃ¯sÃ© pour la carte du livreur
+// Composant mémoïsé pour la carte du livreur
 // ============================================================================
 
 interface DriverCardProps {
@@ -85,7 +85,7 @@ const DriverCard = memo(function DriverCard({ driver, onRequestDelivery }: Drive
               )}
             </div>
             <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-              driver.is_online ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500' : 'bg-gray-400'
+              driver.is_online ? 'bg-green-500' : 'bg-gray-400'
             }`} />
           </div>
 
@@ -154,10 +154,10 @@ export default function NearbyLivraison() {
   const [error, setError] = useState<string | null>(null);
   const autoRefreshRef = useRef<NodeJS.Timeout | null>(null);
 
-  // âœ… Utiliser useGeoDistance centralisÃ© (fallback: Coyah)
+  // ✅ Utiliser useGeoDistance centralisé (fallback: Coyah)
   const { userPosition, positionReady, refreshPosition } = useGeoDistance();
 
-  // âœ… Fonction de chargement optimisÃ©e
+  // ✅ Fonction de chargement optimisée
   const loadDrivers = useCallback(async () => {
     if (!positionReady) return;
 
@@ -167,9 +167,9 @@ export default function NearbyLivraison() {
     try {
       const position = { lat: userPosition.latitude, lng: userPosition.longitude };
 
-      // âœ… RequÃªtes parallÃ¨les optimisÃ©es avec limites
+      // ✅ Requêtes parallèles optimisées avec limites
       const [deliveryRes, taxiRes] = await Promise.all([
-        // Delivery drivers - CORRIGÃ‰: ET logique au lieu de OU
+        // Delivery drivers - CORRIGÉ: ET logique au lieu de OU
         supabase
           .from('drivers')
           .select(`
@@ -209,14 +209,14 @@ export default function NearbyLivraison() {
       if (deliveryRes.error) throw new Error(`Erreur drivers: ${deliveryRes.error.message}`);
       if (taxiRes.error) throw new Error(`Erreur taxi: ${taxiRes.error.message}`);
 
-      // âœ… OPTIMISATION: CrÃ©er une seule Map globale de profils
+      // ✅ OPTIMISATION: Créer une seule Map globale de profils
       const deliveryData = (deliveryRes.data || []) as Array<Record<string, unknown>>;
       const taxiData = (taxiRes.data || []) as Array<Record<string, unknown>>;
 
       const deliveryProfileMap = extractProfilesFromJoinedData(deliveryData);
       const taxiProfileMap = extractProfilesFromJoinedData(taxiData);
 
-      // âœ… Traitement des drivers avec la Map globale
+      // ✅ Traitement des drivers avec la Map globale
       const allDrivers: NearbyDriver[] = [];
 
       for (const raw of deliveryData) {
@@ -227,7 +227,7 @@ export default function NearbyLivraison() {
         allDrivers.push(processTaxiDriver(raw, position, taxiProfileMap));
       }
 
-      // âœ… Filtrer par rayon et trier (distance puis rating)
+      // ✅ Filtrer par rayon et trier (distance puis rating)
       const filtered = filterDriversByRadius(allDrivers, RADIUS_KM);
       const sorted = sortDrivers(filtered);
 
@@ -240,14 +240,14 @@ export default function NearbyLivraison() {
     }
   }, [positionReady, userPosition]);
 
-  // âœ… Chargement initial
+  // ✅ Chargement initial
   useEffect(() => {
     if (positionReady) {
       loadDrivers();
     }
   }, [positionReady, loadDrivers]);
 
-  // âœ… Auto-refresh toutes les 20 secondes
+  // ✅ Auto-refresh toutes les 20 secondes
   useEffect(() => {
     if (!positionReady) return;
 
@@ -262,7 +262,7 @@ export default function NearbyLivraison() {
     };
   }, [positionReady, loadDrivers]);
 
-  // Fonction de rafraÃ®chissement manuel
+  // Fonction de rafraîchissement manuel
   const handleRefresh = useCallback(async () => {
     await refreshPosition();
     await loadDrivers();
@@ -273,11 +273,11 @@ export default function NearbyLivraison() {
   }, [navigate]);
 
   // ============================================================================
-  // RENDU SIMPLIFIÃ‰ - Sans useMemo complexe
+  // RENDU SIMPLIFIÉ - Sans useMemo complexe
   // ============================================================================
 
   const renderDriversList = () => {
-    // Ã‰tat de chargement
+    // État de chargement
     if (loading) {
       return (
         <div className="space-y-3">
@@ -299,7 +299,7 @@ export default function NearbyLivraison() {
       );
     }
 
-    // Ã‰tat d'erreur
+    // État d'erreur
     if (error) {
       return (
         <Card className="border-border/50">
@@ -309,7 +309,7 @@ export default function NearbyLivraison() {
             <p className="text-sm text-muted-foreground mb-4">{error}</p>
             <Button variant="outline" onClick={loadDrivers}>
               <RefreshCw className="w-4 h-4 mr-2" />
-              RÃ©essayer
+              Réessayer
             </Button>
           </CardContent>
         </Card>
@@ -324,7 +324,7 @@ export default function NearbyLivraison() {
             <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="font-semibold text-foreground mb-2">Aucun livreur disponible</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              RÃ©essayez dans quelques instants
+              Réessayez dans quelques instants
             </p>
             <Button variant="outline" onClick={loadDrivers}>
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -366,7 +366,7 @@ export default function NearbyLivraison() {
             <div className="flex-1">
               <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
                 <Package className="w-5 h-5 text-orange-500" />
-                Livraison Ã  ProximitÃ©
+                Livraison à Proximité
               </h1>
               <p className="text-xs text-muted-foreground">
                 {drivers.length} livreur{drivers.length !== 1 ? 's' : ''} dans un rayon de {RADIUS_KM} km

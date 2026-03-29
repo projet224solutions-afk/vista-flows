@@ -168,7 +168,7 @@ export function InternationalTransferConfirmation({
 
                 <div className="border-t pt-2 flex justify-between">
                   <span className="text-sm font-medium">✅ Montant reçu par le destinataire</span>
-                  <span className="text-lg font-bold text-primary-orange-600 dark:text-primary-orange-400">
+                  <span className="text-lg font-bold text-green-600 dark:text-green-400">
                     {preview.amount_received.toLocaleString()} {preview.currency_received}
                   </span>
                 </div>

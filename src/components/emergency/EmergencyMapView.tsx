@@ -81,7 +81,7 @@ export const EmergencyMapView: React.FC<EmergencyMapViewProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open(googleMapsUrl, '_blank', 'noopener,noreferrer')}
+              onClick={() => window.open(googleMapsUrl, '_blank')}
             >
               <MapPin className="h-4 w-4 mr-2" />
               Voir sur Maps
@@ -89,7 +89,7 @@ export const EmergencyMapView: React.FC<EmergencyMapViewProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => window.open(googleMapsDirectionsUrl, '_blank', 'noopener,noreferrer')}
+              onClick={() => window.open(googleMapsDirectionsUrl, '_blank')}
             >
               <Navigation className="h-4 w-4 mr-2" />
               Itinéraire

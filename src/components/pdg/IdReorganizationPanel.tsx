@@ -78,13 +78,13 @@ export function IdReorganizationPanel() {
 
   const handleReorganize = async (roleType: RoleType) => {
     setReorganizing(roleType);
-    toast.info(`RÃ©organisation des IDs ${ROLE_LABELS[roleType]}...`);
+    toast.info(`Réorganisation des IDs ${ROLE_LABELS[roleType]}...`);
 
     try {
       const result = await reorganizeIds(roleType);
 
       if (result.success) {
-        toast.success(`${result.reorganized.length} ID(s) rÃ©organisÃ©(s) avec succÃ¨s`);
+        toast.success(`${result.reorganized.length} ID(s) réorganisé(s) avec succès`);
         setLastResults(result.reorganized);
       } else {
         toast.error(`Erreurs: ${result.errors.join(', ')}`);
@@ -100,7 +100,7 @@ export function IdReorganizationPanel() {
 
   const handleReorganizeAll = async () => {
     setReorganizing('all');
-    toast.info('RÃ©organisation de tous les IDs...');
+    toast.info('Réorganisation de tous les IDs...');
 
     try {
       const results = await reorganizeAllIds();
@@ -114,9 +114,9 @@ export function IdReorganizationPanel() {
       }
 
       if (totalErrors === 0) {
-        toast.success(`${totalReorganized} ID(s) rÃ©organisÃ©(s) au total`);
+        toast.success(`${totalReorganized} ID(s) réorganisé(s) au total`);
       } else {
-        toast.warning(`${totalReorganized} rÃ©organisÃ©(s), ${totalErrors} erreur(s)`);
+        toast.warning(`${totalReorganized} réorganisé(s), ${totalErrors} erreur(s)`);
       }
 
       await loadAllStats();
@@ -136,10 +136,10 @@ export function IdReorganizationPanel() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Layers className="h-5 w-5" />
-              RÃ©organisation des IDs
+              Réorganisation des IDs
             </CardTitle>
             <CardDescription>
-              Maintenir une sÃ©quence continue d'IDs sans gaps
+              Maintenir une séquence continue d'IDs sans gaps
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -163,7 +163,7 @@ export function IdReorganizationPanel() {
                 ) : (
                   <TrendingUp className="h-4 w-4 mr-2" />
                 )}
-                Tout rÃ©organiser
+                Tout réorganiser
               </Button>
             )}
           </div>
@@ -172,18 +172,18 @@ export function IdReorganizationPanel() {
       <CardContent>
         {totalGaps === 0 && !loading ? (
           <Alert>
-            <CheckCircle2 className="h-4 w-4 text-primary-orange-500" />
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
             <AlertDescription>
-              Tous les IDs sont correctement sÃ©quencÃ©s. Aucun gap dÃ©tectÃ©.
+              Tous les IDs sont correctement séquencés. Aucun gap détecté.
             </AlertDescription>
           </Alert>
         ) : (
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="mb-4">
               <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-              <TabsTrigger value="details">DÃ©tails par rÃ´le</TabsTrigger>
+              <TabsTrigger value="details">Détails par rôle</TabsTrigger>
               {lastResults.length > 0 && (
-                <TabsTrigger value="history">DerniÃ¨res modifications</TabsTrigger>
+                <TabsTrigger value="history">Dernières modifications</TabsTrigger>
               )}
             </TabsList>
 
@@ -199,7 +199,7 @@ export function IdReorganizationPanel() {
                             {stat.gapCount} gap(s)
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-primary-orange-600 border-primary-orange-600">
+                          <Badge variant="outline" className="text-green-600 border-green-600">
                             <CheckCircle2 className="h-3 w-3 mr-1" />
                             OK
                           </Badge>
@@ -228,7 +228,7 @@ export function IdReorganizationPanel() {
                           ) : (
                             <RefreshCw className="h-4 w-4 mr-2" />
                           )}
-                          RÃ©organiser
+                          Réorganiser
                         </Button>
                       )}
                     </CardContent>
@@ -247,7 +247,7 @@ export function IdReorganizationPanel() {
                     </h3>
                     <div className="pl-6 space-y-1">
                       <p className="text-sm text-muted-foreground">
-                        IDs manquants dans la sÃ©quence:
+                        IDs manquants dans la séquence:
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {stat.gaps.map((gap) => (
@@ -257,16 +257,16 @@ export function IdReorganizationPanel() {
                         ))}
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        La rÃ©organisation dÃ©calera les IDs suivants pour combler ces gaps.
+                        La réorganisation décalera les IDs suivants pour combler ces gaps.
                       </p>
                     </div>
                   </div>
                 ))}
                 {stats.filter(s => s.gapCount > 0).length === 0 && (
                   <Alert>
-                    <CheckCircle2 className="h-4 w-4 text-primary-orange-500" />
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
                     <AlertDescription>
-                      Aucun gap Ã  afficher. Tous les IDs sont sÃ©quentiels.
+                      Aucun gap à afficher. Tous les IDs sont séquentiels.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -286,7 +286,7 @@ export function IdReorganizationPanel() {
                           {result.oldId}
                         </Badge>
                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                        <Badge className="font-mono bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
+                        <Badge className="font-mono bg-green-500">
                           {result.newId}
                         </Badge>
                       </div>

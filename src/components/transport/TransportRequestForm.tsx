@@ -1,6 +1,6 @@
 /**
- * ðŸšš FORMULAIRE DE DEMANDE DE TRANSPORT
- * Interface client pour crÃ©er une demande de transport
+ * 🚚 FORMULAIRE DE DEMANDE DE TRANSPORT
+ * Interface client pour créer une demande de transport
  */
 
 import React, { useState, useEffect } from 'react';
@@ -53,7 +53,7 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
         lng: position.longitude
       });
     } catch (error) {
-      console.error('Erreur gÃ©olocalisation:', error);
+      console.error('Erreur géolocalisation:', error);
     }
   };
 
@@ -107,7 +107,7 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
       const pos2 = { latitude: deliveryPosition.lat, longitude: deliveryPosition.lng, timestamp: Date.now() };
       
       const request = await transportService.createTransportRequest(
-        'current_user_id', // Ã€ remplacer par l'ID utilisateur rÃ©el
+        'current_user_id', // À remplacer par l'ID utilisateur réel
         pickupAddress,
         deliveryAddress,
         pos1,
@@ -115,14 +115,14 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
         notes
       );
 
-      console.log('ðŸšš Demande de transport crÃ©Ã©e:', request);
+      console.log('🚚 Demande de transport créée:', request);
       
       if (onRequestCreated) {
         onRequestCreated(request);
       }
     } catch (error) {
-      console.error('Erreur crÃ©ation demande:', error);
-      setError('Erreur lors de la crÃ©ation de la demande');
+      console.error('Erreur création demande:', error);
+      setError('Erreur lors de la création de la demande');
     } finally {
       setIsLoading(false);
     }
@@ -136,30 +136,30 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Demande de Transport</h3>
-          <p className="text-sm text-gray-600">CrÃ©ez une demande de transport sÃ©curisÃ©e</p>
+          <p className="text-sm text-gray-600">Créez une demande de transport sécurisée</p>
         </div>
       </div>
 
       {/* Statut des transporteurs */}
-      <div className="mb-6 p-4 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
+      <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-primary-orange-600" />
-          <span className="text-sm font-medium text-primary-orange-800">
+          <Users className="w-5 h-5 text-green-600" />
+          <span className="text-sm font-medium text-green-800">
             {availableTransportUsers} transporteur{availableTransportUsers > 1 ? 's' : ''} disponible{availableTransportUsers > 1 ? 's' : ''}
           </span>
         </div>
-        <p className="text-xs text-primary-orange-600 mt-1">
+        <p className="text-xs text-green-600 mt-1">
           Recherche automatique du transporteur le plus proche
         </p>
       </div>
 
       {/* Formulaire */}
       <div className="space-y-4">
-        {/* Adresse de dÃ©part */}
+        {/* Adresse de départ */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <MapPin className="w-4 h-4 inline mr-1" />
-            Adresse de dÃ©part *
+            Adresse de départ *
           </label>
           <div className="flex gap-2">
             <input
@@ -203,7 +203,7 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Instructions spÃ©ciales, description du colis..."
+            placeholder="Instructions spéciales, description du colis..."
             rows={3}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -213,17 +213,17 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
         {(estimatedPrice > 0 || estimatedTime > 0) && (
           <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary-orange-600" />
+              <DollarSign className="w-5 h-5 text-green-600" />
               <div>
-                <p className="text-sm font-medium text-gray-700">Prix estimÃ©</p>
-                <p className="text-lg font-bold text-primary-orange-600">{estimatedPrice} GNF</p>
+                <p className="text-sm font-medium text-gray-700">Prix estimé</p>
+                <p className="text-lg font-bold text-green-600">{estimatedPrice} GNF</p>
                 <p className="text-xs text-gray-500">+ 1% de frais = {Math.round(estimatedPrice * 1.01)} GNF</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-blue-600" />
               <div>
-                <p className="text-sm font-medium text-gray-700">Temps estimÃ©</p>
+                <p className="text-sm font-medium text-gray-700">Temps estimé</p>
                 <p className="text-lg font-bold text-blue-600">{estimatedTime} min</p>
                 <p className="text-xs text-gray-500">Temps de trajet</p>
               </div>
@@ -248,10 +248,10 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
             {isLoading ? (
               <div className="flex items-center justify-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                CrÃ©ation...
+                Création...
               </div>
             ) : (
-              'CrÃ©er la demande'
+              'Créer la demande'
             )}
           </button>
           
@@ -266,17 +266,17 @@ const TransportRequestForm: React.FC<TransportRequestFormProps> = ({
         </div>
       </div>
 
-      {/* Informations de sÃ©curitÃ© */}
+      {/* Informations de sécurité */}
       <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
         <div className="flex items-start gap-3">
           <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-xs font-bold text-blue-600">ðŸ›¡ï¸</span>
+            <span className="text-xs font-bold text-blue-600">🛡️</span>
           </div>
           <div>
-            <h4 className="text-sm font-medium text-blue-800">Paiement sÃ©curisÃ© 224Secure</h4>
+            <h4 className="text-sm font-medium text-blue-800">Paiement sécurisé 224Secure</h4>
             <p className="text-xs text-blue-600 mt-1">
-              Votre paiement est protÃ©gÃ© jusqu'Ã  la livraison confirmÃ©e. 
-              En cas de problÃ¨me, remboursement automatique garanti.
+              Votre paiement est protégé jusqu'à la livraison confirmée. 
+              En cas de problème, remboursement automatique garanti.
             </p>
           </div>
         </div>

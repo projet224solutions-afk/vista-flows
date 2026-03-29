@@ -32,12 +32,12 @@ interface DriverMainDashboardProps {
   hasSubscription: boolean;
 
   /**
-   * ID technique du conducteur (UUID taxi_drivers.id) utilisÃ© pour les opÃ©rations (SOS, DB, etc.)
+   * ID technique du conducteur (UUID taxi_drivers.id) utilisé pour les opérations (SOS, DB, etc.)
    */
   driverId: string | null;
 
   /**
-   * ID â€œmÃ©tierâ€ affichable (ex: custom_id / public_id). Si absent, on retombe sur driverId.
+   * ID “métier” affichable (ex: custom_id / public_id). Si absent, on retombe sur driverId.
    */
   driverDisplayId?: string | null;
 
@@ -98,7 +98,7 @@ export function DriverMainDashboard({
         
         {/* Accent glow when online */}
         {isOnline && (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-primary-blue-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
         )}
       </div>
       
@@ -146,8 +146,8 @@ export function DriverMainDashboard({
               {/* Header with count */}
               <div className="flex items-center justify-between w-full px-1">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-primary-blue-500/20 flex items-center justify-center">
-                    <Car className="w-3.5 h-3.5 text-primary-blue-400" />
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                    <Car className="w-3.5 h-3.5 text-emerald-400" />
                   </div>
                   <div>
                     <h2 className="text-white font-semibold text-xs">
@@ -156,9 +156,9 @@ export function DriverMainDashboard({
                     <p className="text-gray-500 text-[10px]">Nouvelles demandes</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-blue-500/10 border border-primary-orange-500/20">
-                  <Zap className="w-2.5 h-2.5 text-primary-blue-400" />
-                  <span className="text-primary-blue-400 text-[10px] font-medium">En direct</span>
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  <Zap className="w-2.5 h-2.5 text-emerald-400" />
+                  <span className="text-emerald-400 text-[10px] font-medium">En direct</span>
                 </div>
               </div>
               
@@ -211,12 +211,12 @@ export function DriverMainDashboard({
                   "border border-gray-700/50"
                 )}>
                   {/* Subtle animated gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary-blue-500/5 via-transparent to-primary-orange-500/5 animate-pulse" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-emerald-500/5 animate-pulse" />
                   
                   <div className="relative flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-lg bg-primary-blue-500/20 flex items-center justify-center">
-                        <Zap className="w-5 h-5 text-primary-blue-400 animate-pulse" />
+                      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                        <Zap className="w-5 h-5 text-emerald-400 animate-pulse" />
                       </div>
                       <div>
                         <p className="text-white font-medium text-xs">En attente de courses</p>

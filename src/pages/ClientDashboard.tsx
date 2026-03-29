@@ -44,7 +44,7 @@ export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Stats optimisÃ©es avec SQL
+  // Stats optimisées avec SQL
   const { stats: clientStats, loading: statsLoading, refresh: refreshStats } = useClientStats();
 
   // Produits via hook universel
@@ -55,7 +55,7 @@ export default function ClientDashboard() {
     searchQuery
   });
 
-  // DonnÃ©es client: commandes, favoris, contact vendeur
+  // Données client: commandes, favoris, contact vendeur
   const {
     orders,
     favorites,
@@ -64,7 +64,7 @@ export default function ClientDashboard() {
     loadAllData
   } = useClientData();
 
-  // Panier unifiÃ© via CartContext (seule source de vÃ©ritÃ©)
+  // Panier unifié via CartContext (seule source de vérité)
   const { cartItems, addToCart: addToCartContext, removeFromCart, clearCart, getCartTotal, getCartCount } = useCart();
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -87,7 +87,7 @@ export default function ClientDashboard() {
     return new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
   };
 
-  // Charger le customer_id + donnÃ©es client
+  // Charger le customer_id + données client
   useEffect(() => {
     if (!user?.id) return;
 
@@ -110,7 +110,7 @@ export default function ClientDashboard() {
         if (newCustomer) {
           setCustomerId(newCustomer.id);
         } else {
-          console.error('âŒ Ã‰chec crÃ©ation customer:', createError);
+          console.error('❌ Échec création customer:', createError);
         }
       }
     };
@@ -136,7 +136,7 @@ export default function ClientDashboard() {
     loadAllData(user?.id);
     refreshStats();
     setShowPaymentModal(false);
-    toast.success('Paiement rÃ©ussi ! Redirection vers vos achats...', { duration: 2000 });
+    toast.success('Paiement réussi ! Redirection vers vos achats...', { duration: 2000 });
     setTimeout(() => navigate('/my-purchases'), 1500);
   };
 
@@ -145,7 +145,7 @@ export default function ClientDashboard() {
     setShowProductModal(true);
   };
 
-  // Contact vendeur unifiÃ© via edge function
+  // Contact vendeur unifié via edge function
   const handleContactVendor = async (product: any) => {
     const vendorUserId = product.vendor_user_id;
     if (!vendorUserId) {
@@ -288,7 +288,7 @@ export default function ClientDashboard() {
               </TabsTrigger>
               <TabsTrigger value="settings" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Settings className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                {responsive.isMobile ? 'âš™ï¸' : 'ParamÃ¨tres'}
+                {responsive.isMobile ? '⚙️' : 'Paramètres'}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -312,7 +312,7 @@ export default function ClientDashboard() {
               <Card className="shadow-elegant">
                 <CardHeader>
                   <CardTitle className={responsive.isMobile ? 'text-base' : 'text-lg'}>Statistiques</CardTitle>
-                  <CardDescription className="text-xs md:text-sm">Votre activitÃ©</CardDescription>
+                  <CardDescription className="text-xs md:text-sm">Votre activité</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {statsLoading ? (
@@ -343,12 +343,12 @@ export default function ClientDashboard() {
                         <p className="text-[10px] sm:text-xs text-muted-foreground">Favoris</p>
                       </button>
 
-                      <button onClick={() => setStatDetailType('spent')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-primary-orange-400/40 transition-all active:scale-95">
-                        <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-primary-orange-100 dark:bg-primary-orange-900/30 flex items-center justify-center mb-1`}>
-                          <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-primary-orange-600`} />
+                      <button onClick={() => setStatDetailType('spent')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-green-50 dark:bg-green-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-green-400/40 transition-all active:scale-95">
+                        <div className={`${responsive.isMobile ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-1`}>
+                          <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-green-600`} />
                         </div>
                         <p className={`${responsive.isMobile ? 'text-sm' : 'text-base'} font-bold text-foreground truncate max-w-full`}>{formatPrice(clientStats?.total_spent || 0)}</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">Total dÃ©pensÃ©</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Total dépensé</p>
                       </button>
                     </div>
                   )}
@@ -362,7 +362,7 @@ export default function ClientDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Produits populaires</CardTitle>
-                    <CardDescription>DÃ©couvrez nos meilleures ventes</CardDescription>
+                    <CardDescription>Découvrez nos meilleures ventes</CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => navigate('/marketplace')}>
                     Voir tout
@@ -435,7 +435,7 @@ export default function ClientDashboard() {
                           )}
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold truncate">{item.name}</h4>
-                            <p className="text-sm text-muted-foreground">QtÃ©: {item.quantity}</p>
+                            <p className="text-sm text-muted-foreground">Qté: {item.quantity}</p>
                             {item.vendor_name && (
                               <p className="text-xs text-muted-foreground">{item.vendor_name}</p>
                             )}
@@ -468,7 +468,7 @@ export default function ClientDashboard() {
                           onClick={handleCheckout}
                         >
                           <CreditCard className="w-5 h-5 mr-2" />
-                          ProcÃ©der au paiement
+                          Procéder au paiement
                         </Button>
                       </CardContent>
                     </Card>
@@ -483,7 +483,7 @@ export default function ClientDashboard() {
             <Card className="shadow-elegant">
               <CardHeader>
                 <CardTitle>Mes commandes</CardTitle>
-                <CardDescription>Suivez l'Ã©tat de vos commandes et confirmez les livraisons</CardDescription>
+                <CardDescription>Suivez l'état de vos commandes et confirmez les livraisons</CardDescription>
               </CardHeader>
               <CardContent>
                 <ClientOrdersList />
@@ -504,7 +504,7 @@ export default function ClientDashboard() {
             </Card>
           </TabsContent>
 
-          {/* ParamÃ¨tres */}
+          {/* Paramètres */}
           <TabsContent value="settings" className="animate-fade-in">
             <ClientSettings />
           </TabsContent>
@@ -530,7 +530,7 @@ export default function ClientDashboard() {
         />
       )}
 
-      {/* Modal de dÃ©tails du produit */}
+      {/* Modal de détails du produit */}
       <ProductDetailModal
         productId={selectedProductId}
         open={showProductModal}
@@ -540,7 +540,7 @@ export default function ClientDashboard() {
         }}
       />
 
-      {/* Modal dÃ©tail statistiques */}
+      {/* Modal détail statistiques */}
       <ClientStatDetailModal
         open={!!statDetailType}
         onClose={() => setStatDetailType(null)}

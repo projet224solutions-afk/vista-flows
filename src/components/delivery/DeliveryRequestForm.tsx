@@ -1,6 +1,6 @@
 /**
- * ðŸ“ FORMULAIRE DE DEMANDE DE LIVRAISON - 224SOLUTIONS
- * Interface pour crÃ©er une demande de livraison
+ * 📝 FORMULAIRE DE DEMANDE DE LIVRAISON - 224SOLUTIONS
+ * Interface pour créer une demande de livraison
  */
 
 import React, { useState, useEffect } from 'react';
@@ -44,7 +44,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
             const pos = { latitude: loc.latitude, longitude: loc.longitude, timestamp: loc.timestamp };
             setPickupPosition(pos);
         }).catch((error) => {
-            console.error('Erreur gÃ©olocalisation:', error);
+            console.error('Erreur géolocalisation:', error);
         });
     }, []);
 
@@ -86,7 +86,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
             const fees = Math.round(basePrice * 0.01); // 1% de frais
             const totalPrice = basePrice + fees;
 
-            // Calculer le temps estimÃ© (2 minutes par km)
+            // Calculer le temps estimé (2 minutes par km)
             const estimatedTimeMinutes = Math.ceil(distanceKm * 2);
 
             setEstimatedDistance(distance);
@@ -99,7 +99,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
         }
     };
 
-    // Utiliser la position actuelle comme point de dÃ©part
+    // Utiliser la position actuelle comme point de départ
     const useCurrentLocation = async () => {
         try {
             const position = await geolocation.getCurrentLocation();
@@ -114,16 +114,16 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
         }
     };
 
-    // Rechercher l'adresse de dÃ©part
+    // Rechercher l'adresse de départ
     const searchPickupAddress = async () => {
         if (!pickupAddress.trim()) return;
-        // TODO: ImplÃ©menter la recherche d'adresse
+        // TODO: Implémenter la recherche d'adresse
     };
 
     // Rechercher l'adresse de destination
     const searchDeliveryAddress = async () => {
         if (!deliveryAddress.trim()) return;
-        // TODO: ImplÃ©menter la recherche d'adresse
+        // TODO: Implémenter la recherche d'adresse
     };
 
     // Soumettre la demande
@@ -131,17 +131,17 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
         e.preventDefault();
 
         if (!pickupPosition || !deliveryPosition) {
-            alert('Veuillez sÃ©lectionner les adresses de dÃ©part et de destination');
+            alert('Veuillez sélectionner les adresses de départ et de destination');
             return;
         }
 
         setIsSubmitting(true);
         try {
-            // TODO: ImplÃ©menter createDeliveryRequest dans DeliveryService
+            // TODO: Implémenter createDeliveryRequest dans DeliveryService
             console.warn('createDeliveryRequest not implemented yet');
             /*
             const request = await deliveryService.createDeliveryRequest(
-                'current_user', // Ã€ remplacer par l'ID utilisateur rÃ©el
+                'current_user', // À remplacer par l'ID utilisateur réel
                 pickupAddress,
                 deliveryAddress,
                 pickupPosition,
@@ -149,7 +149,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
                 notes
             );
 
-            console.log('ðŸšš Demande de livraison crÃ©Ã©e:', request.id);
+            console.log('🚚 Demande de livraison créée:', request.id);
             */
 
             if (onRequestCreated) {
@@ -157,8 +157,8 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
                 onRequestCreated('temp-id');
             }
         } catch (error) {
-            console.error('Erreur crÃ©ation demande:', error);
-            alert('Erreur lors de la crÃ©ation de la demande');
+            console.error('Erreur création demande:', error);
+            alert('Erreur lors de la création de la demande');
         } finally {
             setIsSubmitting(false);
         }
@@ -175,18 +175,18 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Point de dÃ©part */}
+                        {/* Point de départ */}
                         <div className="space-y-2">
                             <Label htmlFor="pickup-address" className="flex items-center gap-2">
                                 <MapPin className="w-4 h-4 text-blue-600" />
-                                Point de dÃ©part *
+                                Point de départ *
                             </Label>
                             <div className="flex gap-2">
                                 <Input
                                     id="pickup-address"
                                     value={pickupAddress}
                                     onChange={(e) => setPickupAddress(e.target.value)}
-                                    placeholder="Adresse de dÃ©part"
+                                    placeholder="Adresse de départ"
                                     className="flex-1"
                                     required
                                 />
@@ -211,7 +211,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
                         {/* Point de destination */}
                         <div className="space-y-2">
                             <Label htmlFor="delivery-address" className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-primary-orange-600" />
+                                <MapPin className="w-4 h-4 text-green-600" />
                                 Destination *
                             </Label>
                             <div className="flex gap-2">
@@ -241,7 +241,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
                                 id="notes"
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Instructions spÃ©ciales pour le livreur..."
+                                placeholder="Instructions spéciales pour le livreur..."
                                 rows={3}
                             />
                         </div>
@@ -310,7 +310,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
                                         </div>
                                         <div>
                                             <div className="flex items-center justify-center mb-1">
-                                                <DollarSign className="w-4 h-4 text-primary-orange-600 mr-1" />
+                                                <DollarSign className="w-4 h-4 text-green-600 mr-1" />
                                                 <span className="text-sm font-medium text-gray-600">Prix total</span>
                                             </div>
                                             <p className="text-lg font-semibold text-gray-800">
@@ -329,7 +329,7 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
                         {geolocation.error && (
                             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                                 <p className="text-sm text-red-600">
-                                    Erreur gÃ©olocalisation: {geolocation.error}
+                                    Erreur géolocalisation: {geolocation.error}
                                 </p>
                             </div>
                         )}
@@ -353,12 +353,12 @@ const DeliveryRequestForm: React.FC<DeliveryRequestFormProps> = ({
                                 {isSubmitting ? (
                                     <>
                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        CrÃ©ation...
+                                        Création...
                                     </>
                                 ) : (
                                     <>
                                         <Package className="w-4 h-4 mr-2" />
-                                        CrÃ©er la demande
+                                        Créer la demande
                                     </>
                                 )}
                             </Button>

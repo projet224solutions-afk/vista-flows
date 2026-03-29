@@ -1,6 +1,6 @@
 /**
  * PANNEAU DE NAVIGATION COURSE ACTIVE - UBER/BOLT STYLE
- * Interface de navigation optimisÃ©e pour le conducteur
+ * Interface de navigation optimisée pour le conducteur
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -118,7 +118,7 @@ export function ActiveRideNavigationPanel({
     const destination = `${target.latitude},${target.longitude}`;
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
     
-    window.open(mapsUrl, '_blank', 'noopener,noreferrer');
+    window.open(mapsUrl, '_blank');
   };
 
   // Ouvrir Waze
@@ -132,7 +132,7 @@ export function ActiveRideNavigationPanel({
     const target = isGoingToPickup ? activeRide.pickup.coords : activeRide.destination.coords;
 
     const wazeUrl = `https://waze.com/ul?ll=${target.latitude},${target.longitude}&navigate=yes`;
-    window.open(wazeUrl, '_blank', 'noopener,noreferrer');
+    window.open(wazeUrl, '_blank');
   };
 
   if (!activeRide) {
@@ -145,7 +145,7 @@ export function ActiveRideNavigationPanel({
           Aucune course active
         </h3>
         <p className="text-gray-400 text-sm">
-          Acceptez une course pour dÃ©marrer la navigation
+          Acceptez une course pour démarrer la navigation
         </p>
       </div>
     );
@@ -154,7 +154,7 @@ export function ActiveRideNavigationPanel({
   const isGoingToPickup = activeRide.status === 'accepted' || activeRide.status === 'arriving';
   const currentTarget = isGoingToPickup ? 'pickup' : 'destination';
 
-  // DÃ©terminer le statut et les actions
+  // Déterminer le statut et les actions
   const getStatusConfig = () => {
     switch (activeRide.status) {
       case 'accepted':
@@ -162,22 +162,22 @@ export function ActiveRideNavigationPanel({
           label: 'En route vers client',
           color: 'bg-amber-500',
           nextAction: 'arriving',
-          nextLabel: "Je suis arrivÃ©",
+          nextLabel: "Je suis arrivé",
           nextIcon: CheckCircle
         };
       case 'arriving':
         return {
-          label: 'ArrivÃ© au point',
+          label: 'Arrivé au point',
           color: 'bg-blue-500',
           nextAction: 'started',
-          nextLabel: "Client Ã  bord",
+          nextLabel: "Client à bord",
           nextIcon: Car
         };
       case 'picked_up':
       case 'in_progress':
         return {
           label: 'Course en cours',
-          color: 'bg-primary-blue-500',
+          color: 'bg-emerald-500',
           nextAction: 'completed',
           nextLabel: "Terminer course",
           nextIcon: CheckCircle
@@ -209,12 +209,12 @@ export function ActiveRideNavigationPanel({
           <div>
             <p className="text-white font-semibold">{statusConfig.label}</p>
             <p className="text-white/80 text-xs">
-              {isGoingToPickup ? 'Vers point de dÃ©part' : 'Vers destination'}
+              {isGoingToPickup ? 'Vers point de départ' : 'Vers destination'}
             </p>
           </div>
         </div>
         <Badge className="bg-white/20 text-white border-0">
-          {distance.toFixed(1)} km â€¢ {duration} min
+          {distance.toFixed(1)} km • {duration} min
         </Badge>
       </div>
 
@@ -230,7 +230,7 @@ export function ActiveRideNavigationPanel({
         </Button>
         <Button
           onClick={openWaze}
-          className="flex-1 bg-primary-blue-600 hover:bg-primary-blue-700 text-white gap-2"
+          className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white gap-2"
           size="lg"
         >
           <Route className="w-5 h-5" />
@@ -242,7 +242,7 @@ export function ActiveRideNavigationPanel({
       <div className="px-4 grid grid-cols-2 gap-3 py-3">
         <div className="bg-gray-800 rounded-xl p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-1">
-            <Route className="w-4 h-4 text-primary-blue-400" />
+            <Route className="w-4 h-4 text-emerald-400" />
             <span className="text-gray-400 text-xs">Distance</span>
           </div>
           <p className="text-3xl font-bold text-white">
@@ -253,7 +253,7 @@ export function ActiveRideNavigationPanel({
         <div className="bg-gray-800 rounded-xl p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Clock className="w-4 h-4 text-blue-400" />
-            <span className="text-gray-400 text-xs">Temps estimÃ©</span>
+            <span className="text-gray-400 text-xs">Temps estimé</span>
           </div>
           <p className="text-3xl font-bold text-white">
             {duration}
@@ -267,7 +267,7 @@ export function ActiveRideNavigationPanel({
         <div className="bg-gray-800 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-blue-400 to-primary-orange-600 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center">
                 <User className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -277,7 +277,7 @@ export function ActiveRideNavigationPanel({
             </div>
             <Button
               onClick={() => onContactCustomer(activeRide.customerPhone)}
-              className="bg-primary-blue-500 hover:bg-primary-blue-600 text-white rounded-full w-12 h-12"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full w-12 h-12"
               size="icon"
             >
               <Phone className="w-5 h-5" />
@@ -286,35 +286,35 @@ export function ActiveRideNavigationPanel({
         </div>
       </div>
 
-      {/* ItinÃ©raire */}
+      {/* Itinéraire */}
       <div className="px-4 py-2">
         <div className="bg-gray-800 rounded-xl overflow-hidden">
-          {/* Point de dÃ©part */}
+          {/* Point de départ */}
           <div className={cn(
             "p-4 border-l-4 flex items-start gap-3",
-            currentTarget === 'pickup' ? 'border-primary-orange-500 bg-primary-blue-500/10' : 'border-gray-600'
+            currentTarget === 'pickup' ? 'border-emerald-500 bg-emerald-500/10' : 'border-gray-600'
           )}>
             <div className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-              currentTarget === 'pickup' ? 'bg-primary-blue-500' : 'bg-gray-600'
+              currentTarget === 'pickup' ? 'bg-emerald-500' : 'bg-gray-600'
             )}>
               <MapPin className="w-4 h-4 text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <p className={cn(
                 "text-xs font-semibold mb-1",
-                currentTarget === 'pickup' ? 'text-primary-blue-400' : 'text-gray-500'
+                currentTarget === 'pickup' ? 'text-emerald-400' : 'text-gray-500'
               )}>
-                POINT DE DÃ‰PART
+                POINT DE DÉPART
               </p>
               <p className="text-white text-sm truncate">{activeRide.pickup.address}</p>
             </div>
             {currentTarget === 'pickup' && (
-              <Zap className="w-5 h-5 text-primary-blue-400 animate-pulse flex-shrink-0" />
+              <Zap className="w-5 h-5 text-emerald-400 animate-pulse flex-shrink-0" />
             )}
           </div>
 
-          {/* SÃ©parateur */}
+          {/* Séparateur */}
           <div className="px-4 py-1 flex items-center gap-2">
             <div className="flex-1 border-t border-dashed border-gray-700" />
             <ArrowRight className="w-4 h-4 text-gray-500" />
@@ -348,12 +348,12 @@ export function ActiveRideNavigationPanel({
         </div>
       </div>
 
-      {/* Gains estimÃ©s */}
+      {/* Gains estimés */}
       <div className="px-4 py-2">
-        <div className="bg-gradient-to-r from-primary-blue-900/50 to-primary-orange-800/30 rounded-xl p-4 border border-primary-orange-700/50">
+        <div className="bg-gradient-to-r from-emerald-900/50 to-emerald-800/30 rounded-xl p-4 border border-emerald-700/50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-primary-blue-400 text-xs font-medium mb-1">VOS GAINS</p>
+              <p className="text-emerald-400 text-xs font-medium mb-1">VOS GAINS</p>
               <p className="text-2xl font-bold text-white">
                 {activeRide.estimatedEarnings.toLocaleString()} <span className="text-sm text-gray-400">GNF</span>
               </p>
@@ -372,17 +372,17 @@ export function ActiveRideNavigationPanel({
           <Button
             onClick={async () => {
               try {
-                console.log(`[Navigation] Mise Ã  jour statut vers: ${statusConfig.nextAction}`);
+                console.log(`[Navigation] Mise à jour statut vers: ${statusConfig.nextAction}`);
                 await onUpdateStatus(statusConfig.nextAction!);
               } catch (error) {
-                console.error('[Navigation] Erreur mise Ã  jour:', error);
+                console.error('[Navigation] Erreur mise à jour:', error);
               }
             }}
             disabled={isLoading}
             className={cn(
               "w-full h-14 text-lg font-semibold gap-3",
               statusConfig.nextAction === 'completed' 
-                ? 'bg-primary-blue-500 hover:bg-primary-blue-600' 
+                ? 'bg-emerald-500 hover:bg-emerald-600' 
                 : 'bg-blue-600 hover:bg-blue-700'
             )}
           >

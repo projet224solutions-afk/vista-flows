@@ -1,6 +1,6 @@
 /**
- * PARAMÃˆTRES CHAUFFEUR
- * Gestion complÃ¨te du profil et prÃ©fÃ©rences avec connexion base de donnÃ©es
+ * PARAMÈTRES CHAUFFEUR
+ * Gestion complète du profil et préférences avec connexion base de données
  */
 
 import { useState, useEffect } from 'react';
@@ -54,7 +54,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
     minRidePrice: 5000,
   });
 
-  // Charger le profil et les paramÃ¨tres
+  // Charger le profil et les paramètres
   useEffect(() => {
     loadDriverData();
   }, [driverId]);
@@ -63,7 +63,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
     try {
       setLoading(true);
 
-      // Charger les donnÃ©es du chauffeur
+      // Charger les données du chauffeur
       const { data: driverData, error: driverError } = await supabase
         .from('taxi_drivers')
         .select('*')
@@ -103,14 +103,14 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
         kyc_verified: driverData.kyc_verified || false,
       });
 
-      // Charger les paramÃ¨tres depuis localStorage
+      // Charger les paramètres depuis localStorage
       const saved = localStorage.getItem(`driver_settings_${driverId}`);
       if (saved) {
         setSettings({ ...settings, ...JSON.parse(saved) });
       }
     } catch (error) {
       console.error('Error loading driver data:', error);
-      toast.error('Erreur lors du chargement des donnÃ©es');
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -122,7 +122,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
       // Sauvegarder dans localStorage
       localStorage.setItem(`driver_settings_${driverId}`, JSON.stringify(settings));
       
-      // Mettre Ã  jour le profil si modifiÃ©
+      // Mettre à jour le profil si modifié
       if (profile) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -135,7 +135,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
 
         if (profileError) throw profileError;
 
-        // Mettre Ã  jour les infos du vÃ©hicule dans le champ JSON
+        // Mettre à jour les infos du véhicule dans le champ JSON
         const { data: currentDriver } = await supabase
           .from('taxi_drivers')
           .select('vehicle')
@@ -163,7 +163,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
         if (driverError) throw driverError;
       }
 
-      toast.success('âœ… ParamÃ¨tres enregistrÃ©s');
+      toast.success('✅ Paramètres enregistrés');
       loadDriverData();
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -176,11 +176,11 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success('DÃ©connexion rÃ©ussie');
+      toast.success('Déconnexion réussie');
       navigate('/login');
     } catch (error) {
       console.error('Error logging out:', error);
-      toast.error('Erreur lors de la dÃ©connexion');
+      toast.error('Erreur lors de la déconnexion');
     }
   };
 
@@ -190,9 +190,9 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
     'Matam',
     'Ratoma',
     'Matoto',
-    'ColÃ©ah',
+    'Coléah',
     'Hamdallaye',
-    'LandrÃ©ah'
+    'Landréah'
   ];
 
   const toggleZone = (zone: string) => {
@@ -244,14 +244,14 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
                 {profile.first_name} {profile.last_name}
               </h3>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>â­ {profile.rating.toFixed(1)}</span>
-                <span>â€¢</span>
+                <span>⭐ {profile.rating.toFixed(1)}</span>
+                <span>•</span>
                 <span>{profile.total_rides} courses</span>
               </div>
               {profile.kyc_verified && (
-                <div className="flex items-center gap-1 text-primary-orange-600 text-sm mt-1">
+                <div className="flex items-center gap-1 text-green-600 text-sm mt-1">
                   <Shield className="w-4 h-4" />
-                  <span>VÃ©rifiÃ©</span>
+                  <span>Vérifié</span>
                 </div>
               )}
             </div>
@@ -262,7 +262,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
           {/* Informations de contact */}
           <div className="space-y-3">
             <div>
-              <Label htmlFor="first_name" className="text-sm">PrÃ©nom</Label>
+              <Label htmlFor="first_name" className="text-sm">Prénom</Label>
               <Input
                 id="first_name"
                 value={profile.first_name}
@@ -298,7 +298,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
             <div>
               <Label htmlFor="phone" className="text-sm flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                TÃ©lÃ©phone
+                Téléphone
               </Label>
               <Input
                 id="phone"
@@ -312,11 +312,11 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
 
           <Separator />
 
-          {/* Informations du vÃ©hicule */}
+          {/* Informations du véhicule */}
           <div className="space-y-3">
             <h4 className="font-semibold text-sm flex items-center gap-2">
               <Car className="w-4 h-4" />
-              VÃ©hicule
+              Véhicule
             </h4>
 
             <div>
@@ -341,7 +341,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
             </div>
 
             <div>
-              <Label htmlFor="moto_serial_number" className="text-sm">NumÃ©ro de sÃ©rie de la moto</Label>
+              <Label htmlFor="moto_serial_number" className="text-sm">Numéro de série de la moto</Label>
               <Input
                 id="moto_serial_number"
                 value={profile.moto_serial_number || ''}
@@ -352,7 +352,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
             </div>
 
             <div>
-              <Label htmlFor="gilet_number" className="text-sm">NumÃ©ro de gilet</Label>
+              <Label htmlFor="gilet_number" className="text-sm">Numéro de gilet</Label>
               <Input
                 id="gilet_number"
                 value={profile.gilet_number || ''}
@@ -365,12 +365,12 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
         </CardContent>
       </Card>
 
-      {/* ParamÃ¨tres de service */}
+      {/* Paramètres de service */}
       <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <SettingsIcon className="w-5 h-5 text-blue-600" />
-            ParamÃ¨tres de service
+            Paramètres de service
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -441,7 +441,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
 
           {/* Prix minimum */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-sm text-gray-700">Prix minimum acceptÃ©</h3>
+            <h3 className="font-semibold text-sm text-gray-700">Prix minimum accepté</h3>
             <div className="flex items-center gap-4">
               <input
                 type="number"
@@ -459,11 +459,11 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
             </div>
           </div>
 
-          {/* Zones prÃ©fÃ©rÃ©es */}
+          {/* Zones préférées */}
           <div className="space-y-3">
             <h3 className="font-semibold text-sm text-gray-700 flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              Zones de service prÃ©fÃ©rÃ©es
+              Zones de service préférées
             </h3>
             <div className="grid grid-cols-2 gap-2">
               {zones.map(zone => (
@@ -477,7 +477,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
                     : ''
                   }
                 >
-                  {settings.preferredZones.includes(zone) && 'âœ“ '}
+                  {settings.preferredZones.includes(zone) && '✓ '}
                   {zone}
                 </Button>
               ))}
@@ -498,14 +498,14 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Enregistrer les paramÃ¨tres
+                Enregistrer les paramètres
               </>
             )}
           </Button>
         </CardContent>
       </Card>
 
-      {/* DÃ©connexion */}
+      {/* Déconnexion */}
       <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
         <CardContent className="pt-6">
           <Button
@@ -514,7 +514,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
             className="w-full"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            Se dÃ©connecter
+            Se déconnecter
           </Button>
         </CardContent>
       </Card>

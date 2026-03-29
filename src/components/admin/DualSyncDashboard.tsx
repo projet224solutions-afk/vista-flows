@@ -1,6 +1,6 @@
 /**
  * TABLEAU DE BORD SYNCHRONISATION DUAL
- * Interface de gestion Firestore â†” Supabase
+ * Interface de gestion Firestore ↔ Supabase
  * 224SOLUTIONS - Administration
  */
 
@@ -68,7 +68,7 @@ export default function DualSyncDashboard() {
               <Database className="w-3 h-3 mr-1" />
               Firestore
             </Badge>
-            <Badge variant={status.isSupabaseConnected ? "default" : "destructive"} className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500">
+            <Badge variant={status.isSupabaseConnected ? "default" : "destructive"} className="bg-green-500">
               <Cloud className="w-3 h-3 mr-1" />
               Supabase
             </Badge>
@@ -89,58 +89,58 @@ export default function DualSyncDashboard() {
 
           {/* Onglet Statut */}
           <TabsContent value="status" className="space-y-4">
-            {/* Ã‰tat de connexion */}
+            {/* État de connexion */}
             <div className="grid grid-cols-2 gap-4">
-              <Card className={status.isFirestoreConnected ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200' : 'bg-red-50 border-red-200'}>
+              <Card className={status.isFirestoreConnected ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Database className={`w-5 h-5 ${status.isFirestoreConnected ? 'text-primary-orange-600' : 'text-red-600'}`} />
+                      <Database className={`w-5 h-5 ${status.isFirestoreConnected ? 'text-green-600' : 'text-red-600'}`} />
                       <span className="font-medium">Firestore</span>
                     </div>
                     {status.isFirestoreConnected ? (
-                      <CheckCircle className="w-5 h-5 text-primary-orange-600" />
+                      <CheckCircle className="w-5 h-5 text-green-600" />
                     ) : (
                       <AlertTriangle className="w-5 h-5 text-red-600" />
                     )}
                   </div>
                   <p className="text-sm mt-2">
-                    {status.isFirestoreConnected ? 'ConnectÃ©' : 'DÃ©connectÃ©'}
+                    {status.isFirestoreConnected ? 'Connecté' : 'Déconnecté'}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className={status.isSupabaseConnected ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200' : 'bg-red-50 border-red-200'}>
+              <Card className={status.isSupabaseConnected ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Cloud className={`w-5 h-5 ${status.isSupabaseConnected ? 'text-primary-orange-600' : 'text-red-600'}`} />
+                      <Cloud className={`w-5 h-5 ${status.isSupabaseConnected ? 'text-green-600' : 'text-red-600'}`} />
                       <span className="font-medium">Supabase</span>
                     </div>
                     {status.isSupabaseConnected ? (
-                      <CheckCircle className="w-5 h-5 text-primary-orange-600" />
+                      <CheckCircle className="w-5 h-5 text-green-600" />
                     ) : (
                       <AlertTriangle className="w-5 h-5 text-red-600" />
                     )}
                   </div>
                   <p className="text-sm mt-2">
-                    {status.isSupabaseConnected ? 'ConnectÃ©' : 'DÃ©connectÃ©'}
+                    {status.isSupabaseConnected ? 'Connecté' : 'Déconnecté'}
                   </p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Synchronisation temps rÃ©el */}
+            {/* Synchronisation temps réel */}
             <Card className={realtimeEnabled ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium flex items-center gap-2">
                       <RefreshCw className={`w-4 h-4 ${realtimeEnabled ? 'animate-spin text-blue-600' : ''}`} />
-                      Synchronisation en temps rÃ©el
+                      Synchronisation en temps réel
                     </h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      {realtimeEnabled ? 'Actif - Les changements sont synchronisÃ©s automatiquement' : 'Inactif'}
+                      {realtimeEnabled ? 'Actif - Les changements sont synchronisés automatiquement' : 'Inactif'}
                     </p>
                   </div>
                   <Button
@@ -151,7 +151,7 @@ export default function DualSyncDashboard() {
                     {realtimeEnabled ? (
                       <>
                         <Pause className="w-4 h-4 mr-2" />
-                        DÃ©sactiver
+                        Désactiver
                       </>
                     ) : (
                       <>
@@ -164,14 +164,14 @@ export default function DualSyncDashboard() {
               </CardContent>
             </Card>
 
-            {/* DerniÃ¨re synchronisation */}
+            {/* Dernière synchronisation */}
             {status.lastSync && (
-              <div className="p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg border border-primary-orange-200">
-                <div className="flex items-center gap-2 text-primary-orange-800">
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2 text-green-800">
                   <CheckCircle className="w-4 h-4" />
-                  <span className="font-medium">DerniÃ¨re synchronisation</span>
+                  <span className="font-medium">Dernière synchronisation</span>
                 </div>
-                <div className="text-sm text-primary-orange-600 mt-1">
+                <div className="text-sm text-green-600 mt-1">
                   {status.lastSync.toLocaleString('fr-FR')}
                 </div>
               </div>
@@ -187,7 +187,7 @@ export default function DualSyncDashboard() {
                       <strong>{status.syncErrors.length} erreur(s) de synchronisation</strong>
                       <div className="mt-2 space-y-1">
                         {status.syncErrors.slice(0, 3).map((error, i) => (
-                          <div key={i} className="text-sm">â€¢ {error}</div>
+                          <div key={i} className="text-sm">• {error}</div>
                         ))}
                       </div>
                     </div>
@@ -208,10 +208,10 @@ export default function DualSyncDashboard() {
                 <CardContent className="p-4">
                   <h4 className="font-medium mb-3 flex items-center gap-2">
                     <Database className="w-4 h-4 text-orange-600" />
-                    Firestore â†’ Supabase
+                    Firestore → Supabase
                   </h4>
                   <p className="text-sm text-gray-600 mb-3">
-                    Synchronise toutes les donnÃ©es de Firestore vers Supabase
+                    Synchronise toutes les données de Firestore vers Supabase
                   </p>
                   <Button
                     onClick={handleSyncFirestoreToSupabase}
@@ -236,11 +236,11 @@ export default function DualSyncDashboard() {
               <Card>
                 <CardContent className="p-4">
                   <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <Cloud className="w-4 h-4 text-primary-orange-600" />
-                    Supabase â†’ Firestore
+                    <Cloud className="w-4 h-4 text-green-600" />
+                    Supabase → Firestore
                   </h4>
                   <p className="text-sm text-gray-600 mb-3">
-                    Synchronise toutes les donnÃ©es de Supabase vers Firestore
+                    Synchronise toutes les données de Supabase vers Firestore
                   </p>
                   <Button
                     onClick={handleSyncSupabaseToFirestore}
@@ -278,7 +278,7 @@ export default function DualSyncDashboard() {
 
               <Card>
                 <CardContent className="p-4 text-center">
-                  <BarChart3 className="w-8 h-8 mx-auto mb-2 text-primary-orange-600" />
+                  <BarChart3 className="w-8 h-8 mx-auto mb-2 text-green-600" />
                   <div className="text-2xl font-bold">{status.stats.supabase}</div>
                   <div className="text-sm text-gray-600">Supabase</div>
                 </CardContent>
@@ -288,7 +288,7 @@ export default function DualSyncDashboard() {
                 <CardContent className="p-4 text-center">
                   <CheckCircle className="w-8 h-8 mx-auto mb-2 text-blue-600" />
                   <div className="text-2xl font-bold">{status.stats.synced}</div>
-                  <div className="text-sm text-gray-600">SynchronisÃ©s</div>
+                  <div className="text-sm text-gray-600">Synchronisés</div>
                 </CardContent>
               </Card>
 
@@ -296,17 +296,17 @@ export default function DualSyncDashboard() {
                 <CardContent className="p-4 text-center">
                   <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-red-600" />
                   <div className="text-2xl font-bold">{status.stats.failed}</div>
-                  <div className="text-sm text-gray-600">Ã‰checs</div>
+                  <div className="text-sm text-gray-600">Échecs</div>
                 </CardContent>
               </Card>
             </div>
 
             <Alert>
               <AlertDescription>
-                <strong>ðŸ“Š Synchronisation automatique</strong>
+                <strong>📊 Synchronisation automatique</strong>
                 <p className="mt-2 text-sm">
-                  Lorsque la synchronisation en temps rÃ©el est activÃ©e, toutes les modifications
-                  dans Firestore ou Supabase sont automatiquement rÃ©pliquÃ©es dans l'autre base de donnÃ©es.
+                  Lorsque la synchronisation en temps réel est activée, toutes les modifications
+                  dans Firestore ou Supabase sont automatiquement répliquées dans l'autre base de données.
                 </p>
               </AlertDescription>
             </Alert>

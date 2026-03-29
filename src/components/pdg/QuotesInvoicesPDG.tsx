@@ -102,11 +102,11 @@ export default function QuotesInvoicesPDG() {
 
   const downloadPDF = async (pdfUrl: string, ref: string) => {
     try {
-      // RÃ©cupÃ©rer le fichier via fetch pour contourner les bloqueurs
+      // Récupérer le fichier via fetch pour contourner les bloqueurs
       const response = await fetch(pdfUrl);
       const blob = await response.blob();
       
-      // CrÃ©er un lien de tÃ©lÃ©chargement temporaire
+      // Créer un lien de téléchargement temporaire
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -116,19 +116,19 @@ export default function QuotesInvoicesPDG() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast.success('TÃ©lÃ©chargement dÃ©marrÃ©');
+      toast.success('Téléchargement démarré');
     } catch (error) {
-      console.error('Erreur tÃ©lÃ©chargement:', error);
-      toast.error('Erreur lors du tÃ©lÃ©chargement');
+      console.error('Erreur téléchargement:', error);
+      toast.error('Erreur lors du téléchargement');
     }
   };
 
   const getQuoteStatusBadge = (status: string) => {
     const config = {
       pending: { label: 'En attente', variant: 'secondary' as const, icon: Clock },
-      accepted: { label: 'AcceptÃ©', variant: 'default' as const, icon: CheckCircle },
-      rejected: { label: 'RefusÃ©', variant: 'destructive' as const, icon: XCircle },
-      expired: { label: 'ExpirÃ©', variant: 'outline' as const, icon: Clock }
+      accepted: { label: 'Accepté', variant: 'default' as const, icon: CheckCircle },
+      rejected: { label: 'Refusé', variant: 'destructive' as const, icon: XCircle },
+      expired: { label: 'Expiré', variant: 'outline' as const, icon: Clock }
     };
     
     const { label, variant, icon: Icon } = config[status as keyof typeof config] || config.pending;
@@ -144,8 +144,8 @@ export default function QuotesInvoicesPDG() {
   const getInvoiceStatusBadge = (status: string) => {
     const config = {
       pending: { label: 'En attente', variant: 'secondary' as const, icon: Clock },
-      paid: { label: 'PayÃ©e', variant: 'default' as const, icon: CheckCircle },
-      cancelled: { label: 'AnnulÃ©e', variant: 'destructive' as const, icon: XCircle },
+      paid: { label: 'Payée', variant: 'default' as const, icon: CheckCircle },
+      cancelled: { label: 'Annulée', variant: 'destructive' as const, icon: XCircle },
       overdue: { label: 'En retard', variant: 'destructive' as const, icon: Clock }
     };
     
@@ -197,7 +197,7 @@ export default function QuotesInvoicesPDG() {
               ) : quotes.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucun devis trouvÃ©</p>
+                  <p>Aucun devis trouvé</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -239,14 +239,14 @@ export default function QuotesInvoicesPDG() {
                             onClick={() => downloadPDF(quote.pdf_url!, quote.ref)}
                           >
                             <Download className="w-4 h-4 mr-2" />
-                            TÃ©lÃ©charger PDF
+                            Télécharger PDF
                           </Button>
                         )}
                       </div>
 
                       <div className="mt-3 pt-3 border-t">
                         <p className="text-xs text-muted-foreground">
-                          CrÃ©Ã© le {new Date(quote.created_at).toLocaleDateString('fr-FR')} Ã {' '}
+                          Créé le {new Date(quote.created_at).toLocaleDateString('fr-FR')} à{' '}
                           {new Date(quote.created_at).toLocaleTimeString('fr-FR')}
                         </p>
                       </div>
@@ -277,7 +277,7 @@ export default function QuotesInvoicesPDG() {
               ) : invoices.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune facture trouvÃ©e</p>
+                  <p>Aucune facture trouvée</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -306,11 +306,11 @@ export default function QuotesInvoicesPDG() {
                             {invoice.total.toLocaleString()} GNF
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Ã‰chÃ©ance: {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
+                            Échéance: {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
                           </p>
                           {invoice.paid_at && (
-                            <p className="text-xs text-primary-orange-600">
-                              PayÃ©e le {new Date(invoice.paid_at).toLocaleDateString('fr-FR')}
+                            <p className="text-xs text-green-600">
+                              Payée le {new Date(invoice.paid_at).toLocaleDateString('fr-FR')}
                             </p>
                           )}
                         </div>
@@ -324,14 +324,14 @@ export default function QuotesInvoicesPDG() {
                             onClick={() => downloadPDF(invoice.pdf_url!, invoice.ref)}
                           >
                             <Download className="w-4 h-4 mr-2" />
-                            TÃ©lÃ©charger PDF
+                            Télécharger PDF
                           </Button>
                         )}
                       </div>
 
                       <div className="mt-3 pt-3 border-t">
                         <p className="text-xs text-muted-foreground">
-                          CrÃ©Ã©e le {new Date(invoice.created_at).toLocaleDateString('fr-FR')} Ã {' '}
+                          Créée le {new Date(invoice.created_at).toLocaleDateString('fr-FR')} à{' '}
                           {new Date(invoice.created_at).toLocaleTimeString('fr-FR')}
                         </p>
                       </div>

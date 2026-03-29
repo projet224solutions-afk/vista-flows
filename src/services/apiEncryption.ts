@@ -5,16 +5,12 @@
 
 import CryptoJS from 'crypto-js';
 
-function getRuntimeEncryptionKey(): string {
-  const storageKey = '__224_runtime_api_encryption_key';
-  const existing = sessionStorage.getItem(storageKey);
-  if (existing) return existing;
+// Clé de chiffrement principale depuis les secrets Supabase
+const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY;
 
-  const random = new Uint8Array(32);
-  crypto.getRandomValues(random);
-  const generated = Array.from(random, (b) => b.toString(16).padStart(2, '0')).join('');
-  sessionStorage.setItem(storageKey, generated);
-  return generated;
+// Avertissement si la clé est manquante (ne pas bloquer le chargement)
+if (!ENCRYPTION_KEY) {
+  console.warn('⚠️ VITE_ENCRYPTION_KEY manquante - Le chiffrement API sera désactivé');
 }
 
 export interface EncryptedData {
@@ -26,14 +22,20 @@ export interface EncryptedData {
  * Chiffre une clé API avec AES-256-CBC
  */
 export function encryptApiKey(apiKey: string): EncryptedData {
+  if (!ENCRYPTION_KEY) {
+    console.warn('⚠️ Chiffrement désactivé - Clé manquante');
+    // Retourner des données "non chiffrées" mais dans le même format
+    return {
+      encrypted: apiKey,
+      iv: ''
+    };
+  }
   try {
-    const encryptionKey = getRuntimeEncryptionKey();
-
     // Générer un IV aléatoire
     const iv = CryptoJS.lib.WordArray.random(16);
     
     // Chiffrer avec AES-256-CBC
-    const encrypted = CryptoJS.AES.encrypt(apiKey, encryptionKey, {
+    const encrypted = CryptoJS.AES.encrypt(apiKey, ENCRYPTION_KEY, {
       iv: iv,
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7
@@ -53,14 +55,17 @@ export function encryptApiKey(apiKey: string): EncryptedData {
  * Déchiffre une clé API
  */
 export function decryptApiKey(encryptedData: string, iv: string): string {
+  if (!ENCRYPTION_KEY) {
+    console.warn('⚠️ Déchiffrement désactivé - Clé manquante');
+    // Retourner les données telles quelles si non chiffrées
+    return encryptedData;
+  }
   try {
-    const encryptionKey = getRuntimeEncryptionKey();
-
     // Convertir l'IV en WordArray
     const ivWordArray = CryptoJS.enc.Base64.parse(iv);
     
     // Déchiffrer
-    const decrypted = CryptoJS.AES.decrypt(encryptedData, encryptionKey, {
+    const decrypted = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY, {
       iv: ivWordArray,
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7

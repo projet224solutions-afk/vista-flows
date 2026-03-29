@@ -1,7 +1,7 @@
 /**
  * SUPPLIER ORDER PANEL
  * Panel de gestion des commandes fournisseurs dropshipping
- * CrÃ©ation automatique ou manuelle de commandes vers les fournisseurs
+ * Création automatique ou manuelle de commandes vers les fournisseurs
  * 
  * @module SupplierOrderPanel
  * @version 1.0.0
@@ -136,35 +136,35 @@ function getStatusConfig(status: string) {
         icon: Clock, 
         label: 'En attente', 
         color: 'bg-yellow-100 text-yellow-800',
-        description: 'Commande Ã  passer au fournisseur'
+        description: 'Commande à passer au fournisseur'
       };
     case 'ordered':
       return { 
         icon: Package, 
-        label: 'CommandÃ©', 
+        label: 'Commandé', 
         color: 'bg-blue-100 text-blue-800',
-        description: 'En attente d\'expÃ©dition'
+        description: 'En attente d\'expédition'
       };
     case 'shipped':
       return { 
         icon: Truck, 
-        label: 'ExpÃ©diÃ©', 
+        label: 'Expédié', 
         color: 'bg-purple-100 text-purple-800',
         description: 'En cours de livraison'
       };
     case 'delivered':
       return { 
         icon: CheckCircle, 
-        label: 'LivrÃ©', 
-        color: 'bg-primary-orange-100 text-primary-orange-800',
-        description: 'Commande livrÃ©e au client'
+        label: 'Livré', 
+        color: 'bg-green-100 text-green-800',
+        description: 'Commande livrée au client'
       };
     case 'cancelled':
       return { 
         icon: XCircle, 
-        label: 'AnnulÃ©', 
+        label: 'Annulé', 
         color: 'bg-gray-100 text-gray-800',
-        description: 'Commande annulÃ©e'
+        description: 'Commande annulée'
       };
     case 'error':
       return { 
@@ -203,7 +203,7 @@ function TrackingTimeline({ tracking }: { tracking: TrackingInfo }) {
       <div className="text-sm text-muted-foreground">
         <p>Transporteur: {tracking.carrier}</p>
         {tracking.estimatedDelivery && (
-          <p>Livraison estimÃ©e: {formatDate(tracking.estimatedDelivery)}</p>
+          <p>Livraison estimée: {formatDate(tracking.estimatedDelivery)}</p>
         )}
       </div>
       
@@ -216,7 +216,7 @@ function TrackingTimeline({ tracking }: { tracking: TrackingInfo }) {
                 <p className="text-sm font-medium">{event.description}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatRelativeTime(event.timestamp)}
-                  {event.location && ` â€¢ ${event.location}`}
+                  {event.location && ` • ${event.location}`}
                 </p>
               </div>
             </div>
@@ -306,11 +306,11 @@ function OrderCard({
           {/* Infos commande */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-muted-foreground">QuantitÃ©</p>
-              <p className="font-medium">{order.quantity} unitÃ©(s)</p>
+              <p className="text-muted-foreground">Quantité</p>
+              <p className="font-medium">{order.quantity} unité(s)</p>
             </div>
             <div>
-              <p className="text-muted-foreground">CoÃ»t total</p>
+              <p className="text-muted-foreground">Coût total</p>
               <p className="font-medium">{formatCurrency(order.totalCost, order.currency)}</p>
             </div>
           </div>
@@ -403,7 +403,7 @@ function OrderCard({
                 <AccordionTrigger className="text-sm">
                   <span className="flex items-center gap-2">
                     <Truck className="w-4 h-4" />
-                    Suivi expÃ©dition
+                    Suivi expédition
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -415,11 +415,11 @@ function OrderCard({
             )}
           </Accordion>
           
-          {/* NumÃ©ro commande fournisseur */}
+          {/* Numéro commande fournisseur */}
           {order.supplierOrderId && (
             <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-lg p-2">
               <FileText className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">RÃ©f. fournisseur:</span>
+              <span className="text-muted-foreground">Réf. fournisseur:</span>
               <code className="font-mono">{order.supplierOrderId}</code>
               <Button 
                 variant="ghost" 
@@ -559,7 +559,7 @@ export function SupplierOrderPanel({
   
   return (
     <div className="space-y-6">
-      {/* En-tÃªte avec stats */}
+      {/* En-tête avec stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setFilterStatus('pending')}>
           <CardContent className="pt-4">
@@ -567,7 +567,7 @@ export function SupplierOrderPanel({
               <Clock className="w-5 h-5 text-yellow-500" />
               <div>
                 <p className="text-2xl font-bold">{stats.pending}</p>
-                <p className="text-xs text-muted-foreground">Ã€ commander</p>
+                <p className="text-xs text-muted-foreground">À commander</p>
               </div>
             </div>
           </CardContent>
@@ -579,7 +579,7 @@ export function SupplierOrderPanel({
               <Package className="w-5 h-5 text-blue-500" />
               <div>
                 <p className="text-2xl font-bold">{stats.ordered}</p>
-                <p className="text-xs text-muted-foreground">CommandÃ©es</p>
+                <p className="text-xs text-muted-foreground">Commandées</p>
               </div>
             </div>
           </CardContent>
@@ -600,10 +600,10 @@ export function SupplierOrderPanel({
         <Card className="cursor-pointer hover:bg-muted/50" onClick={() => setFilterStatus('delivered')}>
           <CardContent className="pt-4">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-primary-orange-500" />
+              <CheckCircle className="w-5 h-5 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">{stats.delivered}</p>
-                <p className="text-xs text-muted-foreground">LivrÃ©es</p>
+                <p className="text-xs text-muted-foreground">Livrées</p>
               </div>
             </div>
           </CardContent>
@@ -630,8 +630,8 @@ export function SupplierOrderPanel({
             {stats.pending} commande(s) en attente
           </AlertTitle>
           <AlertDescription className="text-yellow-700">
-            CoÃ»t total estimÃ©: {formatCurrency(totalPendingCost, 'USD')}. 
-            Passez ces commandes pour Ã©viter les retards de livraison.
+            Coût total estimé: {formatCurrency(totalPendingCost, 'USD')}. 
+            Passez ces commandes pour éviter les retards de livraison.
           </AlertDescription>
         </Alert>
       )}
@@ -646,16 +646,16 @@ export function SupplierOrderPanel({
           <SelectContent>
             <SelectItem value="all">Toutes ({orders.length})</SelectItem>
             <SelectItem value="pending">En attente ({stats.pending})</SelectItem>
-            <SelectItem value="ordered">CommandÃ©es ({stats.ordered})</SelectItem>
+            <SelectItem value="ordered">Commandées ({stats.ordered})</SelectItem>
             <SelectItem value="shipped">En transit ({stats.shipped})</SelectItem>
-            <SelectItem value="delivered">LivrÃ©es ({stats.delivered})</SelectItem>
+            <SelectItem value="delivered">Livrées ({stats.delivered})</SelectItem>
             <SelectItem value="error">Erreurs ({stats.error})</SelectItem>
           </SelectContent>
         </Select>
         
         {filterStatus !== 'all' && (
           <Button variant="ghost" size="sm" onClick={() => setFilterStatus('all')}>
-            RÃ©initialiser
+            Réinitialiser
           </Button>
         )}
       </div>
@@ -672,7 +672,7 @@ export function SupplierOrderPanel({
             <p className="text-lg font-medium">Aucune commande</p>
             <p className="text-sm text-muted-foreground">
               {filterStatus === 'all' 
-                ? 'Les commandes dropshipping apparaÃ®tront ici'
+                ? 'Les commandes dropshipping apparaîtront ici'
                 : 'Aucune commande avec ce statut'
               }
             </p>

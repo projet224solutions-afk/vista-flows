@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
- * Composant de crÃ©ation de transfert de stock
- * 224SOLUTIONS - SÃ©lection avancÃ©e des produits
+ * Composant de création de transfert de stock
+ * 224SOLUTIONS - Sélection avancée des produits
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -59,15 +59,15 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
 
   const { toast } = useToast();
 
-  // Ã‰tapes du wizard
+  // Étapes du wizard
   const [step, setStep] = useState(1);
   const totalSteps = 3;
 
-  // SÃ©lection des lieux
+  // Sélection des lieux
   const [fromLocationId, setFromLocationId] = useState<string>('');
   const [toLocationId, setToLocationId] = useState<string>('');
 
-  // Stock source et items Ã  transfÃ©rer
+  // Stock source et items à transférer
   const [sourceStock, setSourceStock] = useState<LocationStock[]>([]);
   const [loadingStock, setLoadingStock] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,19 +91,19 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
     [locations, fromLocationId]
   );
 
-  // Lieu source sÃ©lectionnÃ©
+  // Lieu source sélectionné
   const fromLocation = useMemo(() =>
     locations.find(l => l.id === fromLocationId),
     [locations, fromLocationId]
   );
 
-  // Lieu destination sÃ©lectionnÃ©
+  // Lieu destination sélectionné
   const toLocation = useMemo(() =>
     locations.find(l => l.id === toLocationId),
     [locations, toLocationId]
   );
 
-  // Charger le stock quand on sÃ©lectionne un lieu source
+  // Charger le stock quand on sélectionne un lieu source
   useEffect(() => {
     if (fromLocationId) {
       loadSourceStock();
@@ -136,7 +136,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
   const addToTransfer = (stock: LocationStock) => {
     const existing = transferItems.find(i => i.product_id === stock.product_id);
     if (existing) {
-      // IncrÃ©menter la quantitÃ©
+      // Incrémenter la quantité
       updateQuantity(stock.product_id, existing.quantity_to_send + 1);
     } else {
       setTransferItems(prev => [...prev, {
@@ -150,7 +150,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
     }
   };
 
-  // Mettre Ã  jour la quantitÃ© d'un item
+  // Mettre à jour la quantité d'un item
   const updateQuantity = (productId: string, quantity: number) => {
     setTransferItems(prev => prev.map(item => {
       if (item.product_id === productId) {
@@ -166,7 +166,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
     setTransferItems(prev => prev.filter(i => i.product_id !== productId));
   };
 
-  // VÃ©rifier si un produit est dÃ©jÃ  dans le transfert
+  // Vérifier si un produit est déjà dans le transfert
   const isInTransfer = (productId: string) => 
     transferItems.some(i => i.product_id === productId);
 
@@ -178,7 +178,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
     if (!fromLocationId || !toLocationId || transferItems.length === 0) {
       toast({
         title: "Erreur",
-        description: "Veuillez sÃ©lectionner les lieux et ajouter des produits",
+        description: "Veuillez sélectionner les lieux et ajouter des produits",
         variant: "destructive"
       });
       return;
@@ -204,7 +204,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
     }
   };
 
-  // Peut-on passer Ã  l'Ã©tape suivante ?
+  // Peut-on passer à l'étape suivante ?
   const canProceed = () => {
     if (step === 1) return fromLocationId && toLocationId;
     if (step === 2) return transferItems.length > 0;
@@ -216,9 +216,9 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
       {/* Progress */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Ã‰tape {step} sur {totalSteps}</span>
+          <span className="text-muted-foreground">Étape {step} sur {totalSteps}</span>
           <span className="font-medium">
-            {step === 1 && 'SÃ©lection des lieux'}
+            {step === 1 && 'Sélection des lieux'}
             {step === 2 && 'Choix des produits'}
             {step === 3 && 'Confirmation'}
           </span>
@@ -226,11 +226,11 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
         <Progress value={(step / totalSteps) * 100} className="h-2" />
       </div>
 
-      {/* Ã‰tape 1: SÃ©lection des lieux */}
+      {/* Étape 1: Sélection des lieux */}
       {step === 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>SÃ©lectionnez les lieux</CardTitle>
+            <CardTitle>Sélectionnez les lieux</CardTitle>
             <CardDescription>
               Choisissez le lieu source et la destination du transfert
             </CardDescription>
@@ -242,7 +242,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                 <Label className="text-base font-semibold">Lieu source</Label>
                 <Select value={fromLocationId} onValueChange={setFromLocationId}>
                   <SelectTrigger className="h-14">
-                    <SelectValue placeholder="D'oÃ¹ transfÃ©rer ?" />
+                    <SelectValue placeholder="D'où transférer ?" />
                   </SelectTrigger>
                   <SelectContent>
                     {sourceLocations.map(loc => (
@@ -250,10 +250,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "p-1.5 rounded",
-                            loc.is_pos_enabled ? "bg-primary-orange-100" : "bg-blue-100"
+                            loc.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
                           )}>
                             {loc.is_pos_enabled ? (
-                              <Store className="w-4 h-4 text-primary-orange-600" />
+                              <Store className="w-4 h-4 text-green-600" />
                             ) : (
                               <Warehouse className="w-4 h-4 text-blue-600" />
                             )}
@@ -276,10 +276,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "p-2 rounded-lg",
-                          fromLocation.is_pos_enabled ? "bg-primary-orange-100" : "bg-blue-100"
+                          fromLocation.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
                         )}>
                           {fromLocation.is_pos_enabled ? (
-                            <Store className="w-5 h-5 text-primary-orange-600" />
+                            <Store className="w-5 h-5 text-green-600" />
                           ) : (
                             <Warehouse className="w-5 h-5 text-blue-600" />
                           )}
@@ -287,7 +287,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                         <div>
                           <p className="font-semibold">{fromLocation.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {fromLocation.city || fromLocation.address || 'Adresse non dÃ©finie'}
+                            {fromLocation.city || fromLocation.address || 'Adresse non définie'}
                           </p>
                         </div>
                       </div>
@@ -298,7 +298,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                         </div>
                         <div className="p-2 bg-background rounded">
                           <p className="text-lg font-bold">{fromLocation.stats?.total_quantity || 0}</p>
-                          <p className="text-xs text-muted-foreground">UnitÃ©s</p>
+                          <p className="text-xs text-muted-foreground">Unités</p>
                         </div>
                       </div>
                     </CardContent>
@@ -306,7 +306,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                 )}
               </div>
 
-              {/* FlÃ¨che */}
+              {/* Flèche */}
               <div className="hidden md:flex items-center justify-center">
                 <div className="p-4 rounded-full bg-muted">
                   <ArrowRight className="w-8 h-8 text-muted-foreground" />
@@ -318,7 +318,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                 <Label className="text-base font-semibold">Lieu destination</Label>
                 <Select value={toLocationId} onValueChange={setToLocationId}>
                   <SelectTrigger className="h-14">
-                    <SelectValue placeholder="Vers oÃ¹ transfÃ©rer ?" />
+                    <SelectValue placeholder="Vers où transférer ?" />
                   </SelectTrigger>
                   <SelectContent>
                     {destinationLocations.map(loc => (
@@ -326,10 +326,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "p-1.5 rounded",
-                            loc.is_pos_enabled ? "bg-primary-orange-100" : "bg-blue-100"
+                            loc.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
                           )}>
                             {loc.is_pos_enabled ? (
-                              <Store className="w-4 h-4 text-primary-orange-600" />
+                              <Store className="w-4 h-4 text-green-600" />
                             ) : (
                               <Warehouse className="w-4 h-4 text-blue-600" />
                             )}
@@ -352,10 +352,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "p-2 rounded-lg",
-                          toLocation.is_pos_enabled ? "bg-primary-orange-100" : "bg-blue-100"
+                          toLocation.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
                         )}>
                           {toLocation.is_pos_enabled ? (
-                            <Store className="w-5 h-5 text-primary-orange-600" />
+                            <Store className="w-5 h-5 text-green-600" />
                           ) : (
                             <Warehouse className="w-5 h-5 text-blue-600" />
                           )}
@@ -363,7 +363,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                         <div>
                           <p className="font-semibold">{toLocation.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {toLocation.city || toLocation.address || 'Adresse non dÃ©finie'}
+                            {toLocation.city || toLocation.address || 'Adresse non définie'}
                           </p>
                         </div>
                       </div>
@@ -376,7 +376,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
         </Card>
       )}
 
-      {/* Ã‰tape 2: SÃ©lection des produits */}
+      {/* Étape 2: Sélection des produits */}
       {step === 2 && (
         <div className="grid md:grid-cols-2 gap-6">
           {/* Stock disponible */}
@@ -449,7 +449,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                             )}
                           </div>
 
-                          {/* QuantitÃ© disponible */}
+                          {/* Quantité disponible */}
                           <div className="text-right shrink-0">
                             <p className="font-bold">{stock.available_quantity}</p>
                             <p className="text-xs text-muted-foreground">dispo.</p>
@@ -481,9 +481,9 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">Ã€ transfÃ©rer</CardTitle>
+                  <CardTitle className="text-lg">À transférer</CardTitle>
                   <CardDescription>
-                    {transferItems.length} produit(s) â€¢ {totalItems} unitÃ©(s)
+                    {transferItems.length} produit(s) • {totalItems} unité(s)
                   </CardDescription>
                 </div>
                 {transferItems.length > 0 && (
@@ -501,7 +501,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
               {transferItems.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <ArrowRightLeft className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <p>Cliquez sur les produits Ã  transfÃ©rer</p>
+                  <p>Cliquez sur les produits à transférer</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[400px]">
@@ -534,7 +534,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                           </p>
                         </div>
 
-                        {/* ContrÃ´les de quantitÃ© */}
+                        {/* Contrôles de quantité */}
                         <div className="flex items-center gap-1 shrink-0">
                           <Button
                             size="icon"
@@ -582,25 +582,25 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
         </div>
       )}
 
-      {/* Ã‰tape 3: Confirmation */}
+      {/* Étape 3: Confirmation */}
       {step === 3 && (
         <Card>
           <CardHeader>
             <CardTitle>Confirmer le transfert</CardTitle>
             <CardDescription>
-              VÃ©rifiez les dÃ©tails avant de crÃ©er le transfert
+              Vérifiez les détails avant de créer le transfert
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* RÃ©sumÃ© des lieux */}
+            {/* Résumé des lieux */}
             <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
               <div className="flex-1 text-center">
                 <div className={cn(
                   "inline-flex p-3 rounded-lg mb-2",
-                  fromLocation?.is_pos_enabled ? "bg-primary-orange-100" : "bg-blue-100"
+                  fromLocation?.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
                 )}>
                   {fromLocation?.is_pos_enabled ? (
-                    <Store className="w-6 h-6 text-primary-orange-600" />
+                    <Store className="w-6 h-6 text-green-600" />
                   ) : (
                     <Warehouse className="w-6 h-6 text-blue-600" />
                   )}
@@ -616,10 +616,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
               <div className="flex-1 text-center">
                 <div className={cn(
                   "inline-flex p-3 rounded-lg mb-2",
-                  toLocation?.is_pos_enabled ? "bg-primary-orange-100" : "bg-blue-100"
+                  toLocation?.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
                 )}>
                   {toLocation?.is_pos_enabled ? (
-                    <Store className="w-6 h-6 text-primary-orange-600" />
+                    <Store className="w-6 h-6 text-green-600" />
                   ) : (
                     <Warehouse className="w-6 h-6 text-blue-600" />
                   )}
@@ -632,20 +632,20 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
             {/* Liste des items */}
             <div>
               <h4 className="font-semibold mb-3">
-                Produits Ã  transfÃ©rer ({transferItems.length})
+                Produits à transférer ({transferItems.length})
               </h4>
               <div className="space-y-2">
                 {transferItems.map(item => (
                   <div key={item.product_id} className="flex justify-between items-center p-2 bg-muted/50 rounded">
                     <span className="font-medium">{item.product_name}</span>
-                    <Badge variant="secondary">{item.quantity_to_send} unitÃ©(s)</Badge>
+                    <Badge variant="secondary">{item.quantity_to_send} unité(s)</Badge>
                   </div>
                 ))}
               </div>
               <Separator className="my-4" />
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span>{totalItems} unitÃ©(s)</span>
+                <span>{totalItems} unité(s)</span>
               </div>
             </div>
 
@@ -664,8 +664,8 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Le stock sera retirÃ© de la source uniquement aprÃ¨s l'expÃ©dition du transfert.
-                La destination devra confirmer la rÃ©ception pour finaliser le transfert.
+                Le stock sera retiré de la source uniquement après l'expédition du transfert.
+                La destination devra confirmer la réception pour finaliser le transfert.
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -704,12 +704,12 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                CrÃ©ation...
+                Création...
               </>
             ) : (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                CrÃ©er le transfert
+                Créer le transfert
               </>
             )}
           </Button>

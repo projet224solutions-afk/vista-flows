@@ -1,6 +1,6 @@
 /**
- * MODULE SALON DE BEAUTÃ‰ - Interface complÃ¨te
- * Utilise serviceId pour afficher les donnÃ©es spÃ©cifiques au salon
+ * MODULE SALON DE BEAUTÉ - Interface complète
+ * Utilise serviceId pour afficher les données spécifiques au salon
  */
 
 import { useState } from 'react';
@@ -30,16 +30,16 @@ interface BeautyModuleProps {
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   confirmed: 'bg-blue-100 text-blue-800',
-  completed: 'bg-primary-orange-100 text-primary-orange-800',
+  completed: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
   no_show: 'bg-gray-100 text-gray-800',
 };
 
 const statusLabels: Record<string, string> = {
   pending: 'En attente',
-  confirmed: 'ConfirmÃ©',
-  completed: 'TerminÃ©',
-  cancelled: 'AnnulÃ©',
+  confirmed: 'Confirmé',
+  completed: 'Terminé',
+  cancelled: 'Annulé',
   no_show: 'Absent',
 };
 
@@ -81,14 +81,14 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
           <p className="text-destructive">{error}</p>
           <Button onClick={refresh} className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
-            RÃ©essayer
+            Réessayer
           </Button>
         </CardContent>
       </Card>
     );
   }
 
-  // Message d'onboarding si pas de donnÃ©es
+  // Message d'onboarding si pas de données
   if (!stats?.hasData) {
     return (
       <div className="space-y-6">
@@ -96,9 +96,9 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <Crown className="w-7 h-7 text-primary" />
-              {businessName || 'Salon de BeautÃ©'}
+              {businessName || 'Salon de Beauté'}
             </h2>
-            <p className="text-muted-foreground">GÃ©rez votre salon</p>
+            <p className="text-muted-foreground">Gérez votre salon</p>
           </div>
           <Button onClick={refresh} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -113,9 +113,9 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
                 <Crown className="w-6 h-6 text-pink-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2">Bienvenue dans votre espace BeautÃ© !</h3>
+                <h3 className="font-semibold text-lg mb-2">Bienvenue dans votre espace Beauté !</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Configurez vos services, gÃ©rez vos rendez-vous et suivez vos performances.
+                  Configurez vos services, gérez vos rendez-vous et suivez vos performances.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <Button 
@@ -132,7 +132,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
                     onClick={() => navigate('/vendeur/settings')}
                   >
                     <Users className="w-4 h-4" />
-                    GÃ©rer le personnel
+                    Gérer le personnel
                   </Button>
                   <Button 
                     variant="outline" 
@@ -158,9 +158,9 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Crown className="w-7 h-7 text-primary" />
-            {businessName || 'Salon de BeautÃ©'}
+            {businessName || 'Salon de Beauté'}
           </h2>
-          <p className="text-muted-foreground">GÃ©rez vos rendez-vous et services</p>
+          <p className="text-muted-foreground">Gérez vos rendez-vous et services</p>
         </div>
         <Button onClick={refresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -194,7 +194,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.services.total || 0}</div>
-            <span className="text-xs text-primary-orange-600">{stats?.services.active || 0} actifs</span>
+            <span className="text-xs text-green-600">{stats?.services.active || 0} actifs</span>
           </CardContent>
         </Card>
 
@@ -249,7 +249,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <DollarSign className="w-5 h-5" />
-                  RÃ©sumÃ© des revenus
+                  Résumé des revenus
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -277,7 +277,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Calendar className="w-5 h-5" />
-                  Ã‰tat des rendez-vous
+                  État des rendez-vous
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -287,7 +287,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
                     <div className="text-xl font-bold text-pink-600">{stats?.todayAppointments || 0}</div>
                   </div>
                   <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 rounded-lg text-center">
-                    <div className="text-xs font-medium text-purple-700">Ã€ venir</div>
+                    <div className="text-xs font-medium text-purple-700">À venir</div>
                     <div className="text-xl font-bold text-purple-600">{stats?.upcomingAppointments || 0}</div>
                   </div>
                 </div>
@@ -301,19 +301,19 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
                   </div>
                   <div className="flex justify-between items-center p-2 rounded bg-blue-50">
                     <span className="text-sm flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-blue-500" /> ConfirmÃ©s
+                      <CheckCircle className="w-4 h-4 text-blue-500" /> Confirmés
                     </span>
                     <span className="font-semibold text-blue-700">{stats?.appointments.confirmed || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+                  <div className="flex justify-between items-center p-2 rounded bg-green-50">
                     <span className="text-sm flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-primary-orange-500" /> TerminÃ©s
+                      <CheckCircle className="w-4 h-4 text-green-500" /> Terminés
                     </span>
-                    <span className="font-semibold text-primary-orange-700">{stats?.appointments.completed || 0}</span>
+                    <span className="font-semibold text-green-700">{stats?.appointments.completed || 0}</span>
                   </div>
                   <div className="flex justify-between items-center p-2 rounded bg-red-50">
                     <span className="text-sm flex items-center gap-2">
-                      <XCircle className="w-4 h-4 text-red-500" /> AnnulÃ©s
+                      <XCircle className="w-4 h-4 text-red-500" /> Annulés
                     </span>
                     <span className="font-semibold text-red-700">{stats?.appointments.cancelled || 0}</span>
                   </div>
@@ -326,7 +326,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
         <TabsContent value="appointments" className="mt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Rendez-vous rÃ©cents</CardTitle>
+              <CardTitle className="text-lg">Rendez-vous récents</CardTitle>
               <Button variant="outline" size="sm">
                 <Eye className="w-4 h-4 mr-2" />
                 Voir tout
@@ -353,7 +353,7 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
                           </Badge>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {format(new Date(appointment.appointment_date), 'PPP Ã  HH:mm', { locale: fr })}
+                          {format(new Date(appointment.appointment_date), 'PPP à HH:mm', { locale: fr })}
                         </div>
                       </div>
                       <div className="text-right">
@@ -382,8 +382,8 @@ export function BeautyModule({ serviceId, businessName }: BeautyModuleProps) {
             <CardContent className="p-6">
               <div className="text-center py-8 text-muted-foreground">
                 <Crown className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="mb-2">GÃ©rez vos prestations et produits de beautÃ©</p>
-                <p className="text-sm">Les services ajoutÃ©s seront visibles sur le marketplace</p>
+                <p className="mb-2">Gérez vos prestations et produits de beauté</p>
+                <p className="text-sm">Les services ajoutés seront visibles sur le marketplace</p>
                 <Button 
                   variant="outline" 
                   className="mt-4"

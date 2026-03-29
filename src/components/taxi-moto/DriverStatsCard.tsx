@@ -1,6 +1,6 @@
 /**
  * CARTE STATISTIQUES CHAUFFEUR
- * Affiche les statistiques en temps rÃ©el
+ * Affiche les statistiques en temps réel
  */
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,15 +19,15 @@ interface DriverStatsCardProps {
 export function DriverStatsCard({ stats }: DriverStatsCardProps) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      <Card className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
+      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-0 shadow-lg hover:shadow-xl transition-shadow">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-primary-orange-600 rounded-lg">
+            <div className="p-3 bg-green-600 rounded-lg">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
               <p className="text-xs text-gray-600 font-medium">Aujourd'hui</p>
-              <p className="text-2xl font-bold text-primary-orange-700">
+              <p className="text-2xl font-bold text-green-700">
                 {stats.todayEarnings.toLocaleString()}
               </p>
               <p className="text-xs text-gray-500">GNF</p>

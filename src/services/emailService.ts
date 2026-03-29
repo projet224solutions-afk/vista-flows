@@ -4,7 +4,6 @@
  */
 
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 export interface EmailData {
   to: string;
@@ -25,7 +24,7 @@ export interface SyndicateEmailData {
 
 class EmailService {
   private static instance: EmailService;
-  private baseURL = (import.meta.env.VITE_BACKEND_URL as string | undefined)?.replace(/\/$/, '') || '/api';
+  private baseURL = 'http://localhost:3001/api'; // Backend Express
 
   static getInstance(): EmailService {
     if (!EmailService.instance) {
@@ -39,18 +38,12 @@ class EmailService {
    */
   async sendEmail(emailData: EmailData): Promise<boolean> {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      if (session?.access_token) {
-        headers.Authorization = `Bearer ${session.access_token}`;
-      }
-
       const response = await fetch(`${this.baseURL}/email/send`, {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // JWT token
+        },
         body: JSON.stringify(emailData)
       });
 

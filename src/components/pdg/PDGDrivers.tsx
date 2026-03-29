@@ -1,6 +1,6 @@
 /**
- * ðŸš— PDG DRIVERS MANAGEMENT
- * Gestion centralisÃ©e des livreurs
+ * 🚗 PDG DRIVERS MANAGEMENT
+ * Gestion centralisée des livreurs
  */
 
 import { useState, useEffect } from 'react';
@@ -101,7 +101,7 @@ export default function PDGDrivers() {
           <CardContent>
             <div className="flex items-center justify-between">
               <span className="text-2xl font-bold">{stats.online}</span>
-              <Activity className="w-5 h-5 text-primary-orange-500" />
+              <Activity className="w-5 h-5 text-green-500" />
             </div>
           </CardContent>
         </Card>
@@ -120,7 +120,7 @@ export default function PDGDrivers() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">VÃ©rifiÃ©s</CardTitle>
+            <CardTitle className="text-sm">Vérifiés</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -137,7 +137,7 @@ export default function PDGDrivers() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Liste des Livreurs</CardTitle>
-              <CardDescription>{drivers.length} livreurs enregistrÃ©s</CardDescription>
+              <CardDescription>{drivers.length} livreurs enregistrés</CardDescription>
             </div>
             <Button onClick={loadDrivers} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -154,7 +154,7 @@ export default function PDGDrivers() {
                   <div>
                     <p className="font-medium">{driver.license_number}</p>
                     <p className="text-sm text-muted-foreground">
-                      {driver.vehicle_type} â€¢ {driver.total_deliveries} livraisons
+                      {driver.vehicle_type} • {driver.total_deliveries} livraisons
                     </p>
                   </div>
                 </div>
@@ -164,10 +164,10 @@ export default function PDGDrivers() {
                   </Badge>
                   {driver.is_verified && (
                     <Badge variant="outline" className="bg-blue-50">
-                      VÃ©rifiÃ©
+                      Vérifié
                     </Badge>
                   )}
-                  <span className="text-sm">â­ {driver.rating?.toFixed(1) || 'N/A'}</span>
+                  <span className="text-sm">⭐ {driver.rating?.toFixed(1) || 'N/A'}</span>
                   <Button variant="ghost" size="sm">
                     <Eye className="w-4 h-4" />
                   </Button>

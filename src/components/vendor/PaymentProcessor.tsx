@@ -46,7 +46,7 @@ const paymentMethods: PaymentMethod[] = [
     icon: CreditCard,
     available: true,
     fees: '2.9% + 100 GNF',
-    processing_time: 'InstantanÃ©'
+    processing_time: 'Instantané'
   },
   {
     id: 'orange_money',
@@ -73,7 +73,7 @@ const paymentMethods: PaymentMethod[] = [
     icon: Smartphone,
     available: true,
     fees: '1%',
-    processing_time: 'InstantanÃ©'
+    processing_time: 'Instantané'
   },
   {
     id: 'bank_transfer',
@@ -82,7 +82,7 @@ const paymentMethods: PaymentMethod[] = [
     icon: Building,
     available: true,
     fees: '500 GNF',
-    processing_time: '1-3 jours ouvrÃ©s'
+    processing_time: '1-3 jours ouvrés'
   },
   {
     id: 'stripe',
@@ -91,14 +91,14 @@ const paymentMethods: PaymentMethod[] = [
     icon: CreditCard,
     available: true,
     fees: '2.9% + 100 GNF',
-    processing_time: 'InstantanÃ©'
+    processing_time: 'Instantané'
   }
 ];
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
   processing: 'bg-blue-100 text-blue-800',
-  completed: 'bg-primary-orange-100 text-primary-orange-800',
+  completed: 'bg-green-100 text-green-800',
   failed: 'bg-red-100 text-red-800',
   refunded: 'bg-gray-100 text-gray-800'
 };
@@ -106,9 +106,9 @@ const statusColors = {
 const statusLabels = {
   pending: 'En attente',
   processing: 'En cours',
-  completed: 'TerminÃ©',
-  failed: 'Ã‰chec',
-  refunded: 'RemboursÃ©'
+  completed: 'Terminé',
+  failed: 'Échec',
+  refunded: 'Remboursé'
 };
 
 export default function PaymentProcessor() {
@@ -159,7 +159,7 @@ export default function PaymentProcessor() {
         .filter((t: any) => !t.order_id || orderById.has(t.order_id))
         .map((t: any) => ({
           id: t.id,
-          order_id: (t.order_id && orderById.get(t.order_id)) ? orderById.get(t.order_id) : (t.order_id || 'â€”'),
+          order_id: (t.order_id && orderById.get(t.order_id)) ? orderById.get(t.order_id) : (t.order_id || '—'),
           amount: Number(t.amount || 0),
           method: String(t.method || ''),
           status: String(t.status || 'pending') as Transaction['status'],
@@ -226,7 +226,7 @@ export default function PaymentProcessor() {
 
       const newTransaction: Transaction = {
         id: inserted.id,
-        order_id: order?.order_number || inserted.order_id || 'â€”',
+        order_id: order?.order_number || inserted.order_id || '—',
         amount: inserted.amount,
         method: inserted.method,
         status: inserted.status,
@@ -240,7 +240,7 @@ export default function PaymentProcessor() {
 
       setShowPaymentDialog(false);
       setPaymentData({ amount: '', method: '', customer_email: '', notes: '' });
-      toast({ title: "Paiement initiÃ©", description: "Le traitement du paiement a Ã©tÃ© initiÃ©." });
+      toast({ title: "Paiement initié", description: "Le traitement du paiement a été initié." });
     } catch (error) {
       toast({
         title: "Erreur",
@@ -258,7 +258,7 @@ export default function PaymentProcessor() {
         .eq('id', transactionId);
       if (error) throw error;
       setTransactions(prev => prev.map(t => t.id === transactionId ? { ...t, status: 'processing' } : t));
-      toast({ title: "Nouvelle tentative", description: "Une nouvelle tentative de paiement a Ã©tÃ© initiÃ©e." });
+      toast({ title: "Nouvelle tentative", description: "Une nouvelle tentative de paiement a été initiée." });
     } catch (error) {
       toast({
         title: "Erreur",
@@ -276,7 +276,7 @@ export default function PaymentProcessor() {
         .eq('id', transactionId);
       if (error) throw error;
       setTransactions(prev => prev.map(t => t.id === transactionId ? { ...t, status: 'refunded' } : t));
-      toast({ title: "Remboursement effectuÃ©", description: "Le remboursement a Ã©tÃ© traitÃ© avec succÃ¨s." });
+      toast({ title: "Remboursement effectué", description: "Le remboursement a été traité avec succès." });
     } catch (error) {
       toast({
         title: "Erreur",
@@ -318,7 +318,7 @@ export default function PaymentProcessor() {
                 <Label htmlFor="order">Commande</Label>
                 <Input
                   id="order"
-                  placeholder="NumÃ©ro de commande"
+                  placeholder="Numéro de commande"
                   value={selectedOrder}
                   onChange={(e) => setSelectedOrder(e.target.value)}
                 />
@@ -334,10 +334,10 @@ export default function PaymentProcessor() {
                 />
               </div>
               <div>
-                <Label htmlFor="method">MÃ©thode de paiement</Label>
+                <Label htmlFor="method">Méthode de paiement</Label>
                 <Select value={paymentData.method} onValueChange={(value) => setPaymentData(prev => ({ ...prev, method: value }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="SÃ©lectionner une mÃ©thode" />
+                    <SelectValue placeholder="Sélectionner une méthode" />
                   </SelectTrigger>
                   <SelectContent>
                     {paymentMethods.filter(m => m.available).map((method) => (
@@ -396,10 +396,10 @@ export default function PaymentProcessor() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-primary-orange-600" />
+              <CheckCircle className="w-5 h-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">RÃ©ussies</p>
-                <p className="text-2xl font-bold text-primary-orange-600">{completedTransactions}</p>
+                <p className="text-sm text-muted-foreground">Réussies</p>
+                <p className="text-2xl font-bold text-green-600">{completedTransactions}</p>
               </div>
             </div>
           </CardContent>
@@ -407,7 +407,7 @@ export default function PaymentProcessor() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 bg-primary-orange-600 rounded-full" />
+              <div className="w-5 h-5 bg-green-600 rounded-full" />
               <div>
                 <p className="text-sm text-muted-foreground">Montant total</p>
                 <p className="text-2xl font-bold">{totalAmount.toLocaleString()} GNF</p>
@@ -420,7 +420,7 @@ export default function PaymentProcessor() {
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-orange-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Taux de rÃ©ussite</p>
+                <p className="text-sm text-muted-foreground">Taux de réussite</p>
                 <p className="text-2xl font-bold">{successRate.toFixed(1)}%</p>
               </div>
             </div>
@@ -428,10 +428,10 @@ export default function PaymentProcessor() {
         </Card>
       </div>
 
-      {/* MÃ©thodes de paiement disponibles */}
+      {/* Méthodes de paiement disponibles */}
       <Card>
         <CardHeader>
-          <CardTitle>MÃ©thodes de paiement disponibles</CardTitle>
+          <CardTitle>Méthodes de paiement disponibles</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -444,13 +444,13 @@ export default function PaymentProcessor() {
                     <div>
                       <h4 className="font-semibold">{method.name}</h4>
                       <Badge variant={method.available ? "default" : "secondary"}>
-                        {method.available ? "Disponible" : "BientÃ´t"}
+                        {method.available ? "Disponible" : "Bientôt"}
                       </Badge>
                     </div>
                   </div>
                   <div className="space-y-1 text-sm text-muted-foreground">
                     <p>Frais: {method.fees}</p>
-                    <p>DÃ©lai: {method.processing_time}</p>
+                    <p>Délai: {method.processing_time}</p>
                   </div>
                 </div>
               );
@@ -459,10 +459,10 @@ export default function PaymentProcessor() {
         </CardContent>
       </Card>
 
-      {/* Transactions rÃ©centes */}
+      {/* Transactions récentes */}
       <Card>
         <CardHeader>
-          <CardTitle>Transactions rÃ©centes</CardTitle>
+          <CardTitle>Transactions récentes</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -478,7 +478,7 @@ export default function PaymentProcessor() {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span>{transaction.method}</span>
                     <span>{new Date(transaction.created_at).toLocaleString('fr-FR')}</span>
-                    {transaction.reference && <span>RÃ©f: {transaction.reference}</span>}
+                    {transaction.reference && <span>Réf: {transaction.reference}</span>}
                   </div>
                   {transaction.customer_email && (
                     <p className="text-sm text-muted-foreground">{transaction.customer_email}</p>
@@ -505,7 +505,7 @@ export default function PaymentProcessor() {
                   )}
                   <Button size="sm" variant="outline">
                     <Eye className="w-4 h-4 mr-1" />
-                    DÃ©tails
+                    Détails
                   </Button>
                 </div>
               </div>
@@ -517,7 +517,7 @@ export default function PaymentProcessor() {
               <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Aucune transaction</h3>
               <p className="text-muted-foreground">
-                Vous n'avez pas encore traitÃ© de paiements.
+                Vous n'avez pas encore traité de paiements.
               </p>
             </div>
           )}

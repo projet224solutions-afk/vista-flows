@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
  * COMPOSANT DE PAIEMENT TAXI-MOTO ULTRA PROFESSIONNEL
- * Interface de paiement multi-options avec sÃ©curitÃ© avancÃ©e
+ * Interface de paiement multi-options avec sécurité avancée
  * 224Solutions - Taxi-Moto System
  */
 
@@ -67,14 +67,14 @@ export default function TaxiMotoPayment({
     const [paymentStep, setPaymentStep] = useState<'select' | 'details' | 'processing' | 'success' | 'error'>('select');
     const [paymentError, setPaymentError] = useState<string>('');
 
-    // DonnÃ©es spÃ©cifiques aux mÃ©thodes de paiement
+    // Données spécifiques aux méthodes de paiement
     const [mobileMoneyNumber, setMobileMoneyNumber] = useState('');
     const [cardNumber, setCardNumber] = useState('');
     const [cardExpiry, setCardExpiry] = useState('');
     const [cardCvv, setCardCvv] = useState('');
     const [cardName, setCardName] = useState('');
 
-    // Solde wallet 224Solutions (simulÃ©)
+    // Solde wallet 224Solutions (simulé)
     const [walletBalance, setWalletBalance] = useState(0);
 
     const paymentMethods: PaymentMethod[] = [
@@ -86,7 +86,7 @@ export default function TaxiMotoPayment({
             description: 'Orange Money, Free Money, Wave',
             processingFee: 0,
             isAvailable: true,
-            estimatedTime: 'InstantanÃ©'
+            estimatedTime: 'Instantané'
         },
         {
             id: 'card',
@@ -106,17 +106,17 @@ export default function TaxiMotoPayment({
             description: `Solde: ${(walletBalance || 0).toLocaleString()} GNF`,
             processingFee: 0,
             isAvailable: walletBalance >= (paymentDetails?.amount || 0),
-            estimatedTime: 'InstantanÃ©'
+            estimatedTime: 'Instantané'
         },
         {
             id: 'cash',
             type: 'cash',
-            name: 'EspÃ¨ces',
+            name: 'Espèces',
             icon: Banknote,
             description: 'Paiement au conducteur',
             processingFee: 0,
             isAvailable: true,
-            estimatedTime: 'Ã€ la livraison'
+            estimatedTime: 'À la livraison'
         }
     ];
 
@@ -135,16 +135,16 @@ export default function TaxiMotoPayment({
      */
     const processPayment = async () => {
         if (!selectedMethod) {
-            toast.error('Veuillez sÃ©lectionner une mÃ©thode de paiement');
+            toast.error('Veuillez sélectionner une méthode de paiement');
             return;
         }
 
         const method = paymentMethods.find(m => m.id === selectedMethod);
         if (!method) return;
 
-        // Validation des donnÃ©es selon la mÃ©thode
+        // Validation des données selon la méthode
         if (method.type === 'mobile_money' && !mobileMoneyNumber) {
-            toast.error('Veuillez saisir votre numÃ©ro de tÃ©lÃ©phone');
+            toast.error('Veuillez saisir votre numéro de téléphone');
             return;
         }
 
@@ -163,12 +163,12 @@ export default function TaxiMotoPayment({
             // Simuler le traitement du paiement
             await new Promise(resolve => setTimeout(resolve, 3000));
 
-            // Simuler une chance d'Ã©chec pour dÃ©monstration
-            if (Math.random() < 0.1) { // 10% de chance d'Ã©chec
-                throw new Error('Paiement refusÃ© par votre banque');
+            // Simuler une chance d'échec pour démonstration
+            if (Math.random() < 0.1) { // 10% de chance d'échec
+                throw new Error('Paiement refusé par votre banque');
             }
 
-            // SuccÃ¨s du paiement
+            // Succès du paiement
             const paymentData = {
                 paymentId: `PAY-${Date.now()}`,
                 method: method.type,
@@ -181,7 +181,7 @@ export default function TaxiMotoPayment({
 
             setPaymentStep('success');
 
-            // Mettre Ã  jour le solde wallet si utilisÃ©
+            // Mettre à jour le solde wallet si utilisé
             if (method.type === 'wallet_224') {
                 setWalletBalance(prev => prev - calculateTotal(selectedMethod));
             }
@@ -199,22 +199,22 @@ export default function TaxiMotoPayment({
     };
 
     /**
-     * GÃ©nÃ¨re une rÃ©fÃ©rence de paiement
+     * Génère une référence de paiement
      */
     const generatePaymentReference = () => {
         return `224SOL-${Date.now().toString().slice(-8)}`;
     };
 
     /**
-     * TÃ©lÃ©charge le reÃ§u
+     * Télécharge le reçu
      */
     const downloadReceipt = () => {
-        toast.success('ReÃ§u tÃ©lÃ©chargÃ© avec succÃ¨s');
-        // En production: gÃ©nÃ©rer et tÃ©lÃ©charger le PDF du reÃ§u
+        toast.success('Reçu téléchargé avec succès');
+        // En production: générer et télécharger le PDF du reçu
     };
 
     /**
-     * Formate le numÃ©ro de carte
+     * Formate le numéro de carte
      */
     const formatCardNumber = (value: string) => {
         const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
@@ -231,16 +231,16 @@ export default function TaxiMotoPayment({
         }
     };
 
-    // Ã‰tape de sÃ©lection de mÃ©thode
+    // Étape de sélection de méthode
     if (paymentStep === 'select') {
         return (
             <div className="space-y-4">
-                {/* RÃ©sumÃ© du paiement */}
+                {/* Résumé du paiement */}
                 <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Receipt className="w-5 h-5 text-primary-orange-600" />
-                            RÃ©sumÃ© du paiement
+                            <Receipt className="w-5 h-5 text-green-600" />
+                            Résumé du paiement
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -255,17 +255,17 @@ export default function TaxiMotoPayment({
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
                             <span>Total</span>
-                            <span className="text-primary-orange-600">
+                            <span className="text-green-600">
                                 {(paymentDetails?.amount || 0).toLocaleString()} {paymentDetails?.currency || 'GNF'}
                             </span>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* MÃ©thodes de paiement */}
+                {/* Méthodes de paiement */}
                 <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
-                        <CardTitle>Choisissez votre mÃ©thode de paiement</CardTitle>
+                        <CardTitle>Choisissez votre méthode de paiement</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {paymentMethods.map((method) => {
@@ -337,7 +337,7 @@ export default function TaxiMotoPayment({
         );
     }
 
-    // Ã‰tape de saisie des dÃ©tails
+    // Étape de saisie des détails
     if (paymentStep === 'details') {
         const method = paymentMethods.find(m => m.id === selectedMethod);
         if (!method) return null;
@@ -356,7 +356,7 @@ export default function TaxiMotoPayment({
                         {method.type === 'mobile_money' && (
                             <div>
                                 <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                    NumÃ©ro de tÃ©lÃ©phone
+                                    Numéro de téléphone
                                 </label>
                                 <Input
                                     type="tel"
@@ -376,7 +376,7 @@ export default function TaxiMotoPayment({
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                        NumÃ©ro de carte
+                                        Numéro de carte
                                     </label>
                                     <Input
                                         type="text"
@@ -431,48 +431,48 @@ export default function TaxiMotoPayment({
                         {/* Wallet 224Solutions */}
                         {method.type === 'wallet_224' && (
                             <div className="text-center py-4">
-                                <Wallet className="w-16 h-16 mx-auto mb-4 text-primary-orange-600" />
+                                <Wallet className="w-16 h-16 mx-auto mb-4 text-green-600" />
                                 <p className="text-lg font-semibold">
                                     Solde disponible: {(walletBalance || 0).toLocaleString()} GNF
                                 </p>
                                 <p className="text-sm text-gray-600">
-                                    Montant Ã  dÃ©biter: {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF
+                                    Montant à débiter: {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF
                                 </p>
                             </div>
                         )}
 
-                        {/* EspÃ¨ces */}
+                        {/* Espèces */}
                         {method.type === 'cash' && (
                             <div className="text-center py-4">
-                                <Banknote className="w-16 h-16 mx-auto mb-4 text-primary-orange-600" />
-                                <p className="text-lg font-semibold">Paiement en espÃ¨ces</p>
+                                <Banknote className="w-16 h-16 mx-auto mb-4 text-green-600" />
+                                <p className="text-lg font-semibold">Paiement en espèces</p>
                                 <p className="text-sm text-gray-600">
                                     Vous paierez {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF au conducteur
                                 </p>
                                 <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
                                     <p className="text-xs text-yellow-800">
-                                        ðŸ’¡ PrÃ©parez l'appoint pour faciliter la transaction
+                                        💡 Préparez l'appoint pour faciliter la transaction
                                     </p>
                                 </div>
                             </div>
                         )}
 
-                        {/* SÃ©curitÃ© */}
-                        <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 rounded-lg">
-                            <Shield className="w-4 h-4 text-primary-orange-600" />
-                            <p className="text-xs text-primary-orange-800">
-                                Paiement sÃ©curisÃ© par 224Solutions. Vos donnÃ©es sont protÃ©gÃ©es.
+                        {/* Sécurité */}
+                        <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                            <Shield className="w-4 h-4 text-green-600" />
+                            <p className="text-xs text-green-800">
+                                Paiement sécurisé par 224Solutions. Vos données sont protégées.
                             </p>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* RÃ©sumÃ© final */}
+                {/* Résumé final */}
                 <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardContent className="p-4">
                         <div className="flex justify-between items-center">
-                            <span className="font-semibold">Total Ã  payer</span>
-                            <span className="text-xl font-bold text-primary-orange-600">
+                            <span className="font-semibold">Total à payer</span>
+                            <span className="text-xl font-bold text-green-600">
                                 {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF
                             </span>
                         </div>
@@ -501,7 +501,7 @@ export default function TaxiMotoPayment({
         );
     }
 
-    // Ã‰tape de traitement
+    // Étape de traitement
     if (paymentStep === 'processing') {
         return (
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
@@ -513,40 +513,40 @@ export default function TaxiMotoPayment({
                     </p>
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
                         <Shield className="w-4 h-4" />
-                        <span>Transaction sÃ©curisÃ©e</span>
+                        <span>Transaction sécurisée</span>
                     </div>
                 </CardContent>
             </Card>
         );
     }
 
-    // Ã‰tape de succÃ¨s
+    // Étape de succès
     if (paymentStep === 'success') {
         return (
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-8 text-center">
-                    <CheckCircle className="w-16 h-16 mx-auto mb-4 text-primary-orange-600" />
-                    <h3 className="text-xl font-semibold text-primary-orange-800 mb-2">
-                        Paiement rÃ©ussi !
+                    <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-600" />
+                    <h3 className="text-xl font-semibold text-green-800 mb-2">
+                        Paiement réussi !
                     </h3>
                     <p className="text-gray-600 mb-4">
-                        Votre paiement de {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF a Ã©tÃ© traitÃ© avec succÃ¨s.
+                        Votre paiement de {(calculateTotal(selectedMethod) || 0).toLocaleString()} GNF a été traité avec succès.
                     </p>
-                    <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 p-4 rounded-lg mb-4">
-                        <p className="text-sm text-primary-orange-800">
-                            RÃ©fÃ©rence: {generatePaymentReference()}
+                    <div className="bg-green-50 p-4 rounded-lg mb-4">
+                        <p className="text-sm text-green-800">
+                            Référence: {generatePaymentReference()}
                         </p>
                     </div>
                     <Button onClick={downloadReceipt} variant="outline" className="w-full">
                         <Download className="w-4 h-4 mr-2" />
-                        TÃ©lÃ©charger le reÃ§u
+                        Télécharger le reçu
                     </Button>
                 </CardContent>
             </Card>
         );
     }
 
-    // Ã‰tape d'erreur
+    // Étape d'erreur
     if (paymentStep === 'error') {
         return (
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
@@ -562,13 +562,13 @@ export default function TaxiMotoPayment({
                             variant="outline"
                             className="flex-1"
                         >
-                            RÃ©essayer
+                            Réessayer
                         </Button>
                         <Button
                             onClick={() => setPaymentStep('select')}
                             className="flex-1"
                         >
-                            Changer de mÃ©thode
+                            Changer de méthode
                         </Button>
                     </div>
                 </CardContent>

@@ -1,6 +1,6 @@
 /**
- * COMPOSANT TEST SYSTÃˆME - SURVEILLANCE LOGIQUE
- * Test RÃ‰EL connectÃ© aux vraies donnÃ©es Supabase
+ * COMPOSANT TEST SYSTÈME - SURVEILLANCE LOGIQUE
+ * Test RÉEL connecté aux vraies données Supabase
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -57,12 +57,12 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
   const [systemScore, setSystemScore] = useState(0);
   const [testDetails, setTestDetails] = useState<Record<string, { value?: number; message?: string }>>({});
 
-  // DÃ©finir les Ã©tapes de test avec de VRAIES requÃªtes
+  // Définir les étapes de test avec de VRAIES requêtes
   const createTestSteps = useCallback((): TestStep[] => [
     {
       id: 'connection',
-      name: 'Connexion Base de DonnÃ©es',
-      description: 'VÃ©rification de la connexion Supabase',
+      name: 'Connexion Base de Données',
+      description: 'Vérification de la connexion Supabase',
       icon: <Database className="w-5 h-5" />,
       duration: 500,
       status: 'pending',
@@ -74,16 +74,16 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
             .limit(1);
           
           if (error) throw error;
-          return { success: true, message: 'Connexion Ã©tablie' };
+          return { success: true, message: 'Connexion établie' };
         } catch (err) {
-          return { success: false, message: 'Ã‰chec de connexion' };
+          return { success: false, message: 'Échec de connexion' };
         }
       },
     },
     {
       id: 'rules',
-      name: 'Chargement des RÃ¨gles',
-      description: 'RÃ©cupÃ©ration des rÃ¨gles mÃ©tier actives',
+      name: 'Chargement des Règles',
+      description: 'Récupération des règles métier actives',
       icon: <Server className="w-5 h-5" />,
       duration: 600,
       status: 'pending',
@@ -97,20 +97,20 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
           if (error) throw error;
           
           const rulesCount = count || 0;
-          // Warning si moins de 50 rÃ¨gles actives
+          // Warning si moins de 50 règles actives
           if (rulesCount < 50) {
-            return { success: true, value: rulesCount, message: `${rulesCount} rÃ¨gles (recommandÃ©: 50+)` };
+            return { success: true, value: rulesCount, message: `${rulesCount} règles (recommandé: 50+)` };
           }
-          return { success: true, value: rulesCount, message: `${rulesCount} rÃ¨gles actives` };
+          return { success: true, value: rulesCount, message: `${rulesCount} règles actives` };
         } catch (err) {
-          return { success: false, message: 'Erreur chargement rÃ¨gles' };
+          return { success: false, message: 'Erreur chargement règles' };
         }
       },
     },
     {
       id: 'detection',
-      name: 'Moteur de DÃ©tection',
-      description: 'Analyse des anomalies en temps rÃ©el',
+      name: 'Moteur de Détection',
+      description: 'Analyse des anomalies en temps réel',
       icon: <Eye className="w-5 h-5" />,
       duration: 700,
       status: 'pending',
@@ -124,26 +124,26 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
           if (error) throw error;
           
           const anomaliesCount = count || 0;
-          // Warning si anomalies non rÃ©solues
+          // Warning si anomalies non résolues
           if (anomaliesCount > 0) {
-            return { success: true, value: anomaliesCount, message: `${anomaliesCount} anomalie(s) dÃ©tectÃ©e(s)` };
+            return { success: true, value: anomaliesCount, message: `${anomaliesCount} anomalie(s) détectée(s)` };
           }
           return { success: true, value: 0, message: 'Aucune anomalie' };
         } catch (err) {
-          return { success: false, message: 'Erreur moteur dÃ©tection' };
+          return { success: false, message: 'Erreur moteur détection' };
         }
       },
     },
     {
       id: 'ai',
       name: 'Intelligence Artificielle',
-      description: 'DÃ©tection de patterns suspects',
+      description: 'Détection de patterns suspects',
       icon: <Cpu className="w-5 h-5" />,
       duration: 600,
       status: 'pending',
       testFn: async () => {
         try {
-          // VÃ©rifier les documents IA et les logs d'usage
+          // Vérifier les documents IA et les logs d'usage
           const { count: aiDocs, error: aiError } = await supabase
             .from('ai_generated_documents')
             .select('*', { count: 'exact', head: true });
@@ -155,7 +155,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
           if (aiError || apiError) throw aiError || apiError;
           
           const total = (aiDocs || 0) + (apiLogs || 0);
-          return { success: true, value: total, message: `${total} opÃ©ration(s) IA` };
+          return { success: true, value: total, message: `${total} opération(s) IA` };
         } catch (err) {
           return { success: false, message: 'Module IA non disponible' };
         }
@@ -163,8 +163,8 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
     },
     {
       id: 'network',
-      name: 'Surveillance RÃ©seau',
-      description: 'Monitoring des flux en temps rÃ©el',
+      name: 'Surveillance Réseau',
+      description: 'Monitoring des flux en temps réel',
       icon: <Network className="w-5 h-5" />,
       duration: 500,
       status: 'pending',
@@ -184,26 +184,26 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
           }
           return { success: true, value: activeApis, message: `${activeApis} API(s) active(s)` };
         } catch (err) {
-          return { success: false, message: 'Erreur surveillance rÃ©seau' };
+          return { success: false, message: 'Erreur surveillance réseau' };
         }
       },
     },
     {
       id: 'security',
-      name: 'Validation SÃ©curitÃ©',
-      description: 'ContrÃ´le des accÃ¨s et permissions',
+      name: 'Validation Sécurité',
+      description: 'Contrôle des accès et permissions',
       icon: <Lock className="w-5 h-5" />,
       duration: 600,
       status: 'pending',
       testFn: async () => {
         try {
-          // VÃ©rifier les incidents de sÃ©curitÃ© non rÃ©solus
+          // Vérifier les incidents de sécurité non résolus
           const { count: incidents, error: incError } = await supabase
             .from('security_incidents')
             .select('*', { count: 'exact', head: true })
             .is('resolved_at', null);
           
-          // VÃ©rifier les tentatives de connexion Ã©chouÃ©es rÃ©centes
+          // Vérifier les tentatives de connexion échouées récentes
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
           
@@ -218,18 +218,18 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
           const totalIssues = (incidents || 0) + (failedLogins || 0);
           
           if (totalIssues > 5) {
-            return { success: true, value: totalIssues, message: `${totalIssues} alerte(s) sÃ©curitÃ©` };
+            return { success: true, value: totalIssues, message: `${totalIssues} alerte(s) sécurité` };
           }
-          return { success: true, value: totalIssues, message: 'SÃ©curitÃ© validÃ©e' };
+          return { success: true, value: totalIssues, message: 'Sécurité validée' };
         } catch (err) {
-          return { success: false, message: 'Erreur validation sÃ©curitÃ©' };
+          return { success: false, message: 'Erreur validation sécurité' };
         }
       },
     },
     {
       id: 'analytics',
       name: 'Module Analytics',
-      description: 'GÃ©nÃ©ration des mÃ©triques',
+      description: 'Génération des métriques',
       icon: <BarChart3 className="w-5 h-5" />,
       duration: 500,
       status: 'pending',
@@ -246,7 +246,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
           if (error) throw error;
           
           const logsCount = count || 0;
-          return { success: true, value: logsCount, message: `${logsCount} Ã©vÃ©nement(s) 24h` };
+          return { success: true, value: logsCount, message: `${logsCount} événement(s) 24h` };
         } catch (err) {
           return { success: false, message: 'Erreur analytics' };
         }
@@ -261,7 +261,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
       status: 'pending',
       testFn: async () => {
         try {
-          // VÃ©rifier que les rÃ¨gles de surveillance sont actives
+          // Vérifier que les règles de surveillance sont actives
           const { count, error } = await supabase
             .from('logic_rules')
             .select('*', { count: 'exact', head: true })
@@ -272,7 +272,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
           
           const criticalRules = count || 0;
           if (criticalRules > 0) {
-            return { success: true, value: criticalRules, message: `${criticalRules} rÃ¨gle(s) critique(s) actives` };
+            return { success: true, value: criticalRules, message: `${criticalRules} règle(s) critique(s) actives` };
           }
           return { success: true, value: 0, message: 'Protection standard active' };
         } catch (err) {
@@ -282,7 +282,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
     },
   ], []);
 
-  // Initialiser les Ã©tapes
+  // Initialiser les étapes
   useEffect(() => {
     if (open) {
       setSteps(createTestSteps());
@@ -320,13 +320,13 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
         )
       );
 
-      // ExÃ©cuter le vrai test
+      // Exécuter le vrai test
       const result = await testSteps[i].testFn();
       
-      // Petit dÃ©lai pour l'animation
+      // Petit délai pour l'animation
       await new Promise((resolve) => setTimeout(resolve, testSteps[i].duration));
 
-      // DÃ©terminer le statut basÃ© sur le rÃ©sultat rÃ©el
+      // Déterminer le statut basé sur le résultat réel
       let status: 'success' | 'warning' | 'error';
       if (!result.success) {
         status = 'error';
@@ -377,7 +377,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
   const getStatusColor = (status: TestStep['status']) => {
     switch (status) {
       case 'success':
-        return 'text-primary-orange-500';
+        return 'text-green-500';
       case 'warning':
         return 'text-yellow-500';
       case 'error':
@@ -392,7 +392,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
   const getStatusBg = (status: TestStep['status']) => {
     switch (status) {
       case 'success':
-        return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 border-primary-orange-500/30';
+        return 'bg-green-500/10 border-green-500/30';
       case 'warning':
         return 'bg-yellow-500/10 border-yellow-500/30';
       case 'error':
@@ -407,11 +407,11 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
   const getResultStyle = () => {
     if (systemScore >= 80) {
       return {
-        bg: 'from-primary-blue-900/50 to-primary-orange-900/50',
-        border: 'border-primary-orange-500/30',
-        text: 'text-primary-orange-400',
-        textLight: 'text-primary-orange-300',
-        message: 'SystÃ¨me OpÃ©rationnel',
+        bg: 'from-green-900/50 to-emerald-900/50',
+        border: 'border-green-500/30',
+        text: 'text-green-400',
+        textLight: 'text-green-300',
+        message: 'Système Opérationnel',
         submessage: 'Tous les modules fonctionnent correctement',
       };
     } else if (systemScore >= 60) {
@@ -420,8 +420,8 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
         border: 'border-yellow-500/30',
         text: 'text-yellow-400',
         textLight: 'text-yellow-300',
-        message: 'SystÃ¨me Fonctionnel',
-        submessage: 'Certains modules nÃ©cessitent une attention',
+        message: 'Système Fonctionnel',
+        submessage: 'Certains modules nécessitent une attention',
       };
     } else {
       return {
@@ -430,14 +430,14 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
         text: 'text-red-400',
         textLight: 'text-red-300',
         message: 'Attention Requise',
-        submessage: 'Des problÃ¨mes ont Ã©tÃ© dÃ©tectÃ©s',
+        submessage: 'Des problèmes ont été détectés',
       };
     }
   };
 
   const resultStyle = getResultStyle();
 
-  // Calculer les stats rÃ©elles
+  // Calculer les stats réelles
   const rulesValue = testDetails['rules']?.value || 0;
   const successSteps = steps.filter(s => s.status === 'success').length;
   const warningSteps = steps.filter(s => s.status === 'warning').length;
@@ -453,7 +453,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
             >
               <Shield className="w-8 h-8 text-blue-400" />
             </motion.div>
-            Test du SystÃ¨me de Surveillance
+            Test du Système de Surveillance
             {isRunning && (
               <Badge className="bg-blue-600 ml-2 animate-pulse">
                 En cours...
@@ -574,13 +574,13 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
                         {systemScore}%
                       </p>
                       <p className={`text-xs ${resultStyle.textLight}/50 uppercase tracking-wider`}>
-                        Score de santÃ©
+                        Score de santé
                       </p>
                     </motion.div>
                   </div>
                 </div>
 
-                {/* Stats Grid - DonnÃ©es rÃ©elles */}
+                {/* Stats Grid - Données réelles */}
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -588,8 +588,8 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
                   className="grid grid-cols-4 gap-4 mt-6"
                 >
                   {[
-                    { label: 'RÃ¨gles vÃ©rifiÃ©es', value: rulesValue.toString(), icon: <Server className="w-4 h-4" /> },
-                    { label: 'Tests rÃ©ussis', value: `${successSteps}/${steps.length}`, icon: <CheckCircle2 className="w-4 h-4" /> },
+                    { label: 'Règles vérifiées', value: rulesValue.toString(), icon: <Server className="w-4 h-4" /> },
+                    { label: 'Tests réussis', value: `${successSteps}/${steps.length}`, icon: <CheckCircle2 className="w-4 h-4" /> },
                     { label: 'Avertissements', value: warningSteps.toString(), icon: <AlertTriangle className="w-4 h-4" /> },
                     { label: 'Protection', value: systemScore >= 80 ? 'Active' : 'Partielle', icon: <Shield className="w-4 h-4" /> },
                   ].map((stat) => (
@@ -615,7 +615,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
                 className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold h-12"
               >
                 <Play className="w-5 h-5 mr-2" />
-                Lancer le Test SystÃ¨me
+                Lancer le Test Système
               </Button>
             )}
             {showResult && (

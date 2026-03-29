@@ -1,6 +1,6 @@
 /**
- * COMPOSANT DE SUGGESTION D'ADRESSE DÃ‰TAILLÃ‰E
- * Affiche les dÃ©tails complets d'une suggestion d'adresse
+ * COMPOSANT DE SUGGESTION D'ADRESSE DÉTAILLÉE
+ * Affiche les détails complets d'une suggestion d'adresse
  * 224Solutions - Taxi-Moto System
  */
 
@@ -34,16 +34,16 @@ export default function AddressSuggestionItem({
     const mainAddress = addressParts[0] || suggestion.address;
     const secondaryAddress = addressParts.slice(1).join(', ');
     
-    // DÃ©terminer l'icÃ´ne selon le type
+    // Déterminer l'icône selon le type
     const getIcon = () => {
         const addressLower = suggestion.address.toLowerCase();
-        if (addressLower.includes('hÃ´tel') || addressLower.includes('hotel')) {
+        if (addressLower.includes('hôtel') || addressLower.includes('hotel')) {
             return <Building className="w-5 h-5 text-blue-500" />;
         }
-        if (addressLower.includes('marchÃ©') || addressLower.includes('market')) {
-            return <Map className="w-5 h-5 text-primary-orange-500" />;
+        if (addressLower.includes('marché') || addressLower.includes('market')) {
+            return <Map className="w-5 h-5 text-green-500" />;
         }
-        if (addressLower.includes('aÃ©roport') || addressLower.includes('airport')) {
+        if (addressLower.includes('aéroport') || addressLower.includes('airport')) {
             return <Navigation2 className="w-5 h-5 text-purple-500" />;
         }
         return <MapPin className="w-5 h-5 text-red-500" />;
@@ -75,7 +75,7 @@ export default function AddressSuggestionItem({
                 )}
                 <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
-                        ðŸ“ {suggestion.coordinates.latitude.toFixed(4)}, {suggestion.coordinates.longitude.toFixed(4)}
+                        📍 {suggestion.coordinates.latitude.toFixed(4)}, {suggestion.coordinates.longitude.toFixed(4)}
                     </span>
                 </div>
             </div>

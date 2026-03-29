@@ -1,6 +1,6 @@
 /**
  * MODULE STUDIO PHOTO
- * Gestion du portfolio, rÃ©servations et galeries photos
+ * Gestion du portfolio, réservations et galeries photos
  */
 
 import { useState } from 'react';
@@ -75,7 +75,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
   const [showNewGalleryDialog, setShowNewGalleryDialog] = useState(false);
 
-  // DonnÃ©es simulÃ©es
+  // Données simulées
   const [sessions] = useState<PhotoSession[]>([
     {
       id: '1',
@@ -85,7 +85,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
       date: new Date().toISOString().split('T')[0],
       time: '09:00',
       duration: 480,
-      location: 'HÃ´tel Noom, Conakry',
+      location: 'Hôtel Noom, Conakry',
       price: 5000000,
       status: 'confirmee',
       notes: 'Mariage traditionnel + moderne'
@@ -129,7 +129,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
     },
     {
       id: '2',
-      name: 'Collection Mode Ã‰tÃ© 2024',
+      name: 'Collection Mode Été 2024',
       category: 'Mode',
       photoCount: 85,
       views: 890,
@@ -153,19 +153,19 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
     {
       id: '1',
       name: 'Portrait Studio',
-      description: 'SÃ©ance photo portrait professionnelle en studio',
+      description: 'Séance photo portrait professionnelle en studio',
       duration: 60,
       price: 200000,
-      includes: ['20 photos retouchÃ©es', 'Maquillage', '3 tenues'],
+      includes: ['20 photos retouchées', 'Maquillage', '3 tenues'],
       isPopular: true
     },
     {
       id: '2',
       name: 'Mariage Complet',
-      description: 'Couverture complÃ¨te de votre journÃ©e de mariage',
+      description: 'Couverture complète de votre journée de mariage',
       duration: 480,
       price: 5000000,
-      includes: ['500+ photos', 'Album premium', 'VidÃ©o highlights', '2 photographes'],
+      includes: ['500+ photos', 'Album premium', 'Vidéo highlights', '2 photographes'],
       isPopular: true
     },
     {
@@ -179,8 +179,8 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
     },
     {
       id: '4',
-      name: 'Ã‰vÃ©nement',
-      description: 'Couverture photo d\'Ã©vÃ©nements et cÃ©rÃ©monies',
+      name: 'Événement',
+      description: 'Couverture photo d\'événements et cérémonies',
       duration: 240,
       price: 800000,
       includes: ['200+ photos', 'Retouches', 'Livraison rapide'],
@@ -192,38 +192,38 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
 
   const getStatusBadge = (status: PhotoSession['status']) => {
     const styles = {
-      confirmee: 'bg-primary-orange-100 text-primary-orange-800',
+      confirmee: 'bg-green-100 text-green-800',
       en_attente: 'bg-yellow-100 text-yellow-800',
       terminee: 'bg-blue-100 text-blue-800',
       annulee: 'bg-red-100 text-red-800'
     };
     const labels = {
-      confirmee: 'ConfirmÃ©e',
+      confirmee: 'Confirmée',
       en_attente: 'En attente',
-      terminee: 'TerminÃ©e',
-      annulee: 'AnnulÃ©e'
+      terminee: 'Terminée',
+      annulee: 'Annulée'
     };
     return <Badge className={styles[status]}>{labels[status]}</Badge>;
   };
 
   const getSessionTypeLabel = (type: PhotoSession['sessionType']) => {
     const labels = {
-      portrait: 'ðŸ“· Portrait',
-      mariage: 'ðŸ’’ Mariage',
-      evenement: 'ðŸŽ‰ Ã‰vÃ©nement',
-      produit: 'ðŸ“¦ Produit',
-      mode: 'ðŸ‘— Mode'
+      portrait: '📷 Portrait',
+      mariage: '💒 Mariage',
+      evenement: '🎉 Événement',
+      produit: '📦 Produit',
+      mode: '👗 Mode'
     };
     return labels[type];
   };
 
   const handleAddSession = () => {
-    toast.success('RÃ©servation crÃ©Ã©e avec succÃ¨s');
+    toast.success('Réservation créée avec succès');
     setShowNewSessionDialog(false);
   };
 
   const handleAddGallery = () => {
-    toast.success('Galerie crÃ©Ã©e avec succÃ¨s');
+    toast.success('Galerie créée avec succès');
     setShowNewGalleryDialog(false);
   };
 
@@ -235,7 +235,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-primary/10 rounded-xl">
@@ -254,7 +254,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-blue-500" />
-              <span className="text-sm text-muted-foreground">RÃ©servations</span>
+              <span className="text-sm text-muted-foreground">Réservations</span>
             </div>
             <p className="text-2xl font-bold mt-1">{upcomingSessions}</p>
           </CardContent>
@@ -280,7 +280,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-primary-orange-500" />
+              <DollarSign className="h-4 w-4 text-green-500" />
               <span className="text-sm text-muted-foreground">Revenus</span>
             </div>
             <p className="text-lg font-bold mt-1">{formatPrice(monthlyRevenue)}</p>
@@ -291,25 +291,25 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
       {/* Onglets */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="reservations">RÃ©servations</TabsTrigger>
+          <TabsTrigger value="reservations">Réservations</TabsTrigger>
           <TabsTrigger value="galeries">Galeries</TabsTrigger>
           <TabsTrigger value="services">Services</TabsTrigger>
         </TabsList>
 
-        {/* Onglet RÃ©servations */}
+        {/* Onglet Réservations */}
         <TabsContent value="reservations" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">SÃ©ances Ã  venir</h3>
+            <h3 className="font-semibold">Séances à venir</h3>
             <Dialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Nouvelle rÃ©servation
+                  Nouvelle réservation
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>CrÃ©er une rÃ©servation</DialogTitle>
+                  <DialogTitle>Créer une réservation</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
@@ -317,19 +317,19 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
                     <Input placeholder="Nom complet" />
                   </div>
                   <div className="space-y-2">
-                    <Label>TÃ©lÃ©phone</Label>
+                    <Label>Téléphone</Label>
                     <Input placeholder="+224 6XX XX XX XX" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Type de sÃ©ance</Label>
+                    <Label>Type de séance</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="SÃ©lectionner" />
+                        <SelectValue placeholder="Sélectionner" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="portrait">Portrait</SelectItem>
                         <SelectItem value="mariage">Mariage</SelectItem>
-                        <SelectItem value="evenement">Ã‰vÃ©nement</SelectItem>
+                        <SelectItem value="evenement">Événement</SelectItem>
                         <SelectItem value="produit">Produit</SelectItem>
                         <SelectItem value="mode">Mode</SelectItem>
                       </SelectContent>
@@ -355,7 +355,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
                   </div>
                   <div className="space-y-2">
                     <Label>Notes</Label>
-                    <Textarea placeholder="Notes supplÃ©mentaires..." />
+                    <Textarea placeholder="Notes supplémentaires..." />
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -363,7 +363,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
                     Annuler
                   </Button>
                   <Button onClick={handleAddSession}>
-                    RÃ©server
+                    Réserver
                   </Button>
                 </div>
               </DialogContent>
@@ -394,7 +394,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        ðŸ“ {session.location}
+                        📍 {session.location}
                       </p>
                     </div>
                     <div className="text-right">
@@ -425,7 +425,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>CrÃ©er une galerie</DialogTitle>
+                  <DialogTitle>Créer une galerie</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
@@ -433,15 +433,15 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
                     <Input placeholder="Ex: Mariage Diallo-Barry" />
                   </div>
                   <div className="space-y-2">
-                    <Label>CatÃ©gorie</Label>
+                    <Label>Catégorie</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="SÃ©lectionner" />
+                        <SelectValue placeholder="Sélectionner" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="mariages">Mariages</SelectItem>
                         <SelectItem value="portraits">Portraits</SelectItem>
-                        <SelectItem value="evenements">Ã‰vÃ©nements</SelectItem>
+                        <SelectItem value="evenements">Événements</SelectItem>
                         <SelectItem value="mode">Mode</SelectItem>
                         <SelectItem value="corporate">Corporate</SelectItem>
                       </SelectContent>
@@ -457,7 +457,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
                     Annuler
                   </Button>
                   <Button onClick={handleAddGallery}>
-                    CrÃ©er
+                    Créer
                   </Button>
                 </div>
               </DialogContent>
@@ -474,7 +474,7 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold truncate">{gallery.name}</h4>
                     <Badge variant={gallery.isPublic ? 'default' : 'secondary'}>
-                      {gallery.isPublic ? 'Public' : 'PrivÃ©'}
+                      {gallery.isPublic ? 'Public' : 'Privé'}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mb-2">{gallery.category}</p>
@@ -523,14 +523,14 @@ export function PhotoStudioModule({ serviceId, businessName }: PhotoStudioModule
                   <ul className="text-sm space-y-1 mb-4">
                     {service.includes.map((item, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <span className="text-primary-orange-500">âœ“</span>
+                        <span className="text-green-500">✓</span>
                         {item}
                       </li>
                     ))}
                   </ul>
                   <div className="flex items-center justify-between pt-3 border-t">
                     <p className="text-xl font-bold text-primary">{formatPrice(service.price)}</p>
-                    <Button size="sm">RÃ©server</Button>
+                    <Button size="sm">Réserver</Button>
                   </div>
                 </CardContent>
               </Card>

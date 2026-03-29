@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
  * GESTION DES BUREAUX SYNDICAUX - Interface PDG
- * Module simplifiÃ© utilisant les vraies tables Supabase
+ * Module simplifié utilisant les vraies tables Supabase
  */
 
 import { useState, useEffect } from 'react';
@@ -54,7 +54,7 @@ export default function SyndicateBureauManagement() {
       if (bureauxError) throw bureauxError;
       setBureaus((bureauxData as unknown as Bureau[]) || []);
 
-      toast.success('DonnÃ©es chargÃ©es');
+      toast.success('Données chargées');
     } catch (error: unknown) {
       console.error('Erreur chargement:', error);
       toast.error('Erreur de chargement: ' + error.message);
@@ -72,7 +72,7 @@ export default function SyndicateBureauManagement() {
 
       if (error) throw error;
       
-      toast.success('Statut mis Ã  jour');
+      toast.success('Statut mis à jour');
       loadData();
     } catch (error: unknown) {
       toast.error('Erreur: ' + error.message);
@@ -81,7 +81,7 @@ export default function SyndicateBureauManagement() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { label: 'Actif', className: 'bg-primary-orange-100 text-primary-orange-800' },
+      active: { label: 'Actif', className: 'bg-green-100 text-green-800' },
       pending: { label: 'En attente', className: 'bg-yellow-100 text-yellow-800' },
       suspended: { label: 'Suspendu', className: 'bg-red-100 text-red-800' },
     };
@@ -110,7 +110,7 @@ export default function SyndicateBureauManagement() {
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -146,9 +146,9 @@ export default function SyndicateBureauManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Bureaux Actifs</p>
-                <p className="text-2xl font-bold text-primary-orange-600">{stats.activeBureaus}</p>
+                <p className="text-2xl font-bold text-green-600">{stats.activeBureaus}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-primary-orange-500 opacity-20" />
+              <CheckCircle className="w-8 h-8 text-green-500 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -169,7 +169,7 @@ export default function SyndicateBureauManagement() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">VÃ©hicules</p>
+                <p className="text-sm text-muted-foreground">Véhicules</p>
                 <p className="text-2xl font-bold">{stats.totalVehicles}</p>
               </div>
               <Bike className="w-8 h-8 text-orange-500 opacity-20" />
@@ -184,7 +184,7 @@ export default function SyndicateBureauManagement() {
                 <p className="text-sm text-muted-foreground">Cotisations</p>
                 <p className="text-xl font-bold">{formatCurrency(stats.totalCotisations)}</p>
               </div>
-              <DollarSign className="w-8 h-8 text-primary-orange-500 opacity-20" />
+              <DollarSign className="w-8 h-8 text-green-500 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -202,7 +202,7 @@ export default function SyndicateBureauManagement() {
           {bureaus.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Building2 className="w-12 h-12 mx-auto mb-4 opacity-20" />
-              <p>Aucun bureau syndical enregistrÃ©</p>
+              <p>Aucun bureau syndical enregistré</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -211,10 +211,10 @@ export default function SyndicateBureauManagement() {
                   <TableRow>
                     <TableHead>Code Bureau</TableHead>
                     <TableHead>Localisation</TableHead>
-                    <TableHead>PrÃ©sident</TableHead>
+                    <TableHead>Président</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead className="text-center">Membres</TableHead>
-                    <TableHead className="text-center">VÃ©hicules</TableHead>
+                    <TableHead className="text-center">Véhicules</TableHead>
                     <TableHead className="text-right">Cotisations</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Actions</TableHead>

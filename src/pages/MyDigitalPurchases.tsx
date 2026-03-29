@@ -1,5 +1,5 @@
 /**
- * ðŸ“š MES ACHATS NUMÃ‰RIQUES - Vue unifiÃ©e achats + abonnements
+ * 📚 MES ACHATS NUMÉRIQUES - Vue unifiée achats + abonnements
  */
 
 import { useEffect, useState } from 'react';
@@ -173,9 +173,9 @@ export default function MyDigitalPurchases() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-lg font-bold text-foreground">Mes Achats NumÃ©riques</h1>
+            <h1 className="text-lg font-bold text-foreground">Mes Achats Numériques</h1>
             <p className="text-xs text-muted-foreground">
-              {totalPurchases} achat{totalPurchases > 1 ? 's' : ''} Â· {activeSubscriptions} abonnement{activeSubscriptions > 1 ? 's' : ''} actif{activeSubscriptions > 1 ? 's' : ''}
+              {totalPurchases} achat{totalPurchases > 1 ? 's' : ''} · {activeSubscriptions} abonnement{activeSubscriptions > 1 ? 's' : ''} actif{activeSubscriptions > 1 ? 's' : ''}
             </p>
           </div>
           <Button variant="ghost" size="icon" onClick={loadAll} disabled={loading}>
@@ -200,9 +200,9 @@ export default function MyDigitalPurchases() {
             <CardContent className="p-12 text-center">
               <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-lg font-semibold mb-2">Aucun achat</h3>
-              <p className="text-muted-foreground mb-4">Vous n'avez pas encore achetÃ© de produit numÃ©rique.</p>
+              <p className="text-muted-foreground mb-4">Vous n'avez pas encore acheté de produit numérique.</p>
               <Button onClick={() => navigate('/marketplace')}>
-                DÃ©couvrir le marketplace
+                Découvrir le marketplace
               </Button>
             </CardContent>
           </Card>
@@ -240,7 +240,7 @@ function PurchaseCard({
   const totalDays = item.billing_cycle === 'yearly' ? 365 : 30;
   const progressPercent = isSubscription ? Math.min(100, (daysLeft / totalDays) * 100) : 100;
 
-  const cycleLabel: Record<string, string> = { monthly: 'Mensuel', yearly: 'Annuel', lifetime: 'Ã€ vie' };
+  const cycleLabel: Record<string, string> = { monthly: 'Mensuel', yearly: 'Annuel', lifetime: 'À vie' };
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
@@ -271,14 +271,14 @@ function PurchaseCard({
                     variant="outline" 
                     className={
                       isActive 
-                        ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20 shrink-0' 
+                        ? 'bg-green-500/10 text-green-600 border-green-500/20 shrink-0' 
                         : item.status === 'cancelled' 
                           ? 'bg-muted text-muted-foreground border-border shrink-0'
                           : 'bg-amber-500/10 text-amber-600 border-amber-500/20 shrink-0'
                     }
                   >
                     {isActive ? <CheckCircle className="w-3 h-3 mr-1" /> : <AlertTriangle className="w-3 h-3 mr-1" />}
-                    {isActive ? 'Actif' : item.status === 'cancelled' ? 'AnnulÃ©' : 'ExpirÃ©'}
+                    {isActive ? 'Actif' : item.status === 'cancelled' ? 'Annulé' : 'Expiré'}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 shrink-0">
@@ -291,7 +291,7 @@ function PurchaseCard({
               <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
                 <Calendar className="w-3 h-3" />
                 {new Date(item.created_at).toLocaleDateString('fr-FR')}
-                <span className="mx-1">Â·</span>
+                <span className="mx-1">·</span>
                 <LocalPrice amount={item.amount} currency={item.product_currency} className="text-xs font-medium" />
                 {isSubscription && item.billing_cycle && (
                   <span className="text-muted-foreground">/ {cycleLabel[item.billing_cycle]?.toLowerCase()}</span>
@@ -308,7 +308,7 @@ function PurchaseCard({
                     {daysLeft} jour{daysLeft > 1 ? 's' : ''} restant{daysLeft > 1 ? 's' : ''}
                   </span>
                   <span className="text-muted-foreground">
-                    {item.auto_renew ? 'ðŸ”„ Renouvellement auto' : ''}
+                    {item.auto_renew ? '🔄 Renouvellement auto' : ''}
                   </span>
                 </div>
                 <Progress 
@@ -322,7 +322,7 @@ function PurchaseCard({
             {!isSubscription && (
               <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                 <Download className="w-3 h-3" />
-                {item.download_count || 0} tÃ©lÃ©chargement{(item.download_count || 0) > 1 ? 's' : ''}
+                {item.download_count || 0} téléchargement{(item.download_count || 0) > 1 ? 's' : ''}
                 {item.max_downloads && <span> / {item.max_downloads} max</span>}
               </div>
             )}
@@ -335,7 +335,7 @@ function PurchaseCard({
                 onClick={(e) => { e.stopPropagation(); onNavigate(); }}
               >
                 <Download className="w-3 h-3 mr-1" />
-                {isSubscription ? 'AccÃ©der' : 'TÃ©lÃ©charger'}
+                {isSubscription ? 'Accéder' : 'Télécharger'}
               </Button>
               {isSubscription && (
                 <Button 
@@ -344,7 +344,7 @@ function PurchaseCard({
                   className="text-xs h-7"
                   onClick={(e) => { e.stopPropagation(); onManageSub(); }}
                 >
-                  GÃ©rer
+                  Gérer
                 </Button>
               )}
             </div>

@@ -1,7 +1,7 @@
 /**
  * Page de Conversation Directe - Interface Mobile-First
- * Avec prÃ©sence en ligne, indicateur de frappe, horodatage complet
- * Boutons d'appel audio rÃ©ellement branchÃ©s via WebRTC
+ * Avec présence en ligne, indicateur de frappe, horodatage complet
+ * Boutons d'appel audio réellement branchés via WebRTC
  */
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
@@ -87,7 +87,7 @@ export default function DirectConversation() {
   // Set pour anti-doublon realtime
   const messageIdsRef = useRef<Set<string>>(new Set());
 
-  // â”€â”€â”€ Load recipient profile â”€â”€â”€
+  // ─── Load recipient profile ───
   useEffect(() => {
     const loadRecipient = async () => {
       if (!userId) {
@@ -122,7 +122,7 @@ export default function DirectConversation() {
     loadRecipient();
   }, [userId, navigate]);
 
-  // â”€â”€â”€ Stabilized presence check â”€â”€â”€
+  // ─── Stabilized presence check ───
   const applyPresence = useCallback((d: any) => {
     if (!d) return;
     const lastActive = d.last_active || d.last_seen || d.updated_at;
@@ -172,7 +172,7 @@ export default function DirectConversation() {
     };
   }, [userId, applyPresence]);
 
-  // â”€â”€â”€ Typing indicator (broadcast) â”€â”€â”€
+  // ─── Typing indicator (broadcast) ───
   useEffect(() => {
     if (!userId || !user?.id) return;
 
@@ -224,7 +224,7 @@ export default function DirectConversation() {
     });
   }, [userId, user?.id]);
 
-  // â”€â”€â”€ Load messages + realtime avec ANTI-DOUBLON â”€â”€â”€
+  // ─── Load messages + realtime avec ANTI-DOUBLON ───
   useEffect(() => {
     if (!userId || !user?.id) return;
 
@@ -256,7 +256,7 @@ export default function DirectConversation() {
         { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
           const msg = payload.new as Message;
-          // VÃ©rifier que c'est bien cette conversation
+          // Vérifier que c'est bien cette conversation
           const isRelevant = (
             (msg.sender_id === user.id && (payload.new as any).recipient_id === userId) ||
             (msg.sender_id === userId && (payload.new as any).recipient_id === user.id)
@@ -286,7 +286,7 @@ export default function DirectConversation() {
     }
   }, [loading, recipient]);
 
-  // â”€â”€â”€ Handle input change â”€â”€â”€
+  // ─── Handle input change ───
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
     if (e.target.value.trim()) {
@@ -294,7 +294,7 @@ export default function DirectConversation() {
     }
   };
 
-  // â”€â”€â”€ Send message â”€â”€â”€
+  // ─── Send message ───
   const handleSend = async () => {
     if (!newMessage.trim() || !user?.id || !userId) return;
 
@@ -322,7 +322,7 @@ export default function DirectConversation() {
     }
   };
 
-  // â”€â”€â”€ Appel audio â”€â”€â”€
+  // ─── Appel audio ───
   const handleAudioCall = useCallback(async () => {
     if (!recipient || !userId) return;
     await startCall(userId, {
@@ -333,16 +333,16 @@ export default function DirectConversation() {
 
   const isInCall = callState.isInCall || callState.isCalling || callState.isReceivingCall;
 
-  // â”€â”€â”€ Format last seen â”€â”€â”€
+  // ─── Format last seen ───
   const formatLastSeen = (dateStr: string | null): string => {
     if (!dateStr) return "Hors ligne";
     const date = new Date(dateStr);
-    if (isToday(date)) return `Vu Ã  ${format(date, 'HH:mm')}`;
-    if (isYesterday(date)) return `Vu hier Ã  ${format(date, 'HH:mm')}`;
-    return `Vu le ${format(date, 'd MMM Ã  HH:mm', { locale: fr })}`;
+    if (isToday(date)) return `Vu à ${format(date, 'HH:mm')}`;
+    if (isYesterday(date)) return `Vu hier à ${format(date, 'HH:mm')}`;
+    return `Vu le ${format(date, 'd MMM à HH:mm', { locale: fr })}`;
   };
 
-  // â”€â”€â”€ Render â”€â”€â”€
+  // ─── Render ───
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -366,7 +366,7 @@ export default function DirectConversation() {
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col z-[200]">
-      {/* â”€â”€â”€ Header â”€â”€â”€ */}
+      {/* ─── Header ─── */}
       <div className="flex items-center gap-3 p-4 border-b border-border bg-card/95 backdrop-blur-sm shadow-sm">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-10 w-10 rounded-full hover:bg-muted">
           <ArrowLeft className="w-5 h-5" />
@@ -380,7 +380,7 @@ export default function DirectConversation() {
             </AvatarFallback>
           </Avatar>
           {isRecipientOnline && (
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 border-2 border-card" />
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-card" />
           )}
         </div>
 
@@ -391,12 +391,12 @@ export default function DirectConversation() {
           <div className="flex items-center gap-1.5">
             {isRecipientTyping ? (
               <span className="text-xs text-primary font-medium animate-pulse">
-                Ã©crit un message...
+                écrit un message...
               </span>
             ) : isRecipientOnline ? (
               <>
-                <span className="w-2 h-2 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500" />
-                <span className="text-xs text-primary-orange-600 font-medium">En ligne</span>
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-xs text-green-600 font-medium">En ligne</span>
               </>
             ) : (
               <span className="text-xs text-muted-foreground">
@@ -407,7 +407,7 @@ export default function DirectConversation() {
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Bouton d'appel RÃ‰ELLEMENT branchÃ© */}
+          {/* Bouton d'appel RÉELLEMENT branché */}
           <Button 
             variant="ghost" 
             size="icon" 
@@ -421,14 +421,14 @@ export default function DirectConversation() {
           >
             <Phone className="w-5 h-5" />
           </Button>
-          {/* VidÃ©o masquÃ©e - non implÃ©mentÃ©e en WebRTC natif */}
+          {/* Vidéo masquée - non implémentée en WebRTC natif */}
           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-muted">
             <MoreVertical className="w-5 h-5" />
           </Button>
         </div>
       </div>
 
-      {/* â”€â”€â”€ Messages â”€â”€â”€ */}
+      {/* ─── Messages ─── */}
       <ScrollArea className="flex-1 px-4 py-3">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-20">
@@ -502,7 +502,7 @@ export default function DirectConversation() {
         )}
       </ScrollArea>
 
-      {/* â”€â”€â”€ Input bar â”€â”€â”€ */}
+      {/* ─── Input bar ─── */}
       <div className="p-3 border-t border-border bg-card/95 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
           <Button type="button" variant="ghost" size="icon" className="h-11 w-11 flex-shrink-0 rounded-full hover:bg-primary/10 hover:text-primary transition-colors">

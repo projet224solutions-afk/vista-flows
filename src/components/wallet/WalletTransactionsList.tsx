@@ -35,14 +35,14 @@ export function WalletTransactionsList() {
     if (tx.sender_id === user?.id && tx.receiver_id !== user?.id) {
       return <ArrowUpRight className="w-4 h-4 text-red-600" />;
     }
-    return <ArrowDownLeft className="w-4 h-4 text-primary-orange-600" />;
+    return <ArrowDownLeft className="w-4 h-4 text-green-600" />;
   };
 
   const getTransactionColor = (tx: any) => {
     if (tx.sender_id === user?.id && tx.receiver_id !== user?.id) {
       return 'text-red-600';
     }
-    return 'text-primary-orange-600';
+    return 'text-green-600';
   };
 
   const filteredTransactions = transactions.filter(tx => {

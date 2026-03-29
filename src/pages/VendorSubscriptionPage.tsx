@@ -43,7 +43,7 @@ function FeatureRow({ label, icon: Icon, enabled }: { label: string; icon: any; 
       <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
       <span className="flex-1">{label}</span>
       {enabled ? (
-        <CheckCircle2 className="h-4 w-4 text-primary-orange-500 shrink-0" />
+        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
       ) : (
         <XCircle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
       )}
@@ -52,8 +52,8 @@ function FeatureRow({ label, icon: Icon, enabled }: { label: string; icon: any; 
 }
 
 /**
- * GÃ©nÃ¨re une description marketing dynamique Ã  partir des donnÃ©es rÃ©elles du plan.
- * Aucune valeur hardcodÃ©e â€” tout vient de l'objet plan.
+ * Génère une description marketing dynamique à partir des données réelles du plan.
+ * Aucune valeur hardcodée — tout vient de l'objet plan.
  */
 function buildPlanDescription(plan: Plan): string {
   const parts: string[] = [];
@@ -72,7 +72,7 @@ function buildPlanDescription(plan: Plan): string {
 
   // Produits
   if (plan.max_products === null) {
-    parts.push('produits illimitÃ©s');
+    parts.push('produits illimités');
   } else {
     parts.push(`${plan.max_products} produits`);
   }
@@ -124,13 +124,13 @@ function buildPlanDescription(plan: Plan): string {
 
   // Construct sentence
   const toneMap: Record<string, string> = {
-    free: 'IdÃ©al pour dÃ©marrer',
+    free: 'Idéal pour démarrer',
     basic: 'Pour structurer votre boutique',
-    pro: 'Pour accÃ©lÃ©rer votre croissance',
-    business: 'Pour une activitÃ© Ã  grande Ã©chelle',
-    premium: 'Pour une gestion avancÃ©e et complÃ¨te',
+    pro: 'Pour accélérer votre croissance',
+    business: 'Pour une activité à grande échelle',
+    premium: 'Pour une gestion avancée et complète',
   };
-  const tone = toneMap[plan.name] || 'Un plan adaptÃ© Ã  vos besoins';
+  const tone = toneMap[plan.name] || 'Un plan adapté à vos besoins';
 
   return `${tone} avec ${parts.join(', ')}.`;
 }
@@ -205,7 +205,7 @@ export default function VendorSubscriptionPage() {
     try {
       setProcessing(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error('Vous devez Ãªtre connectÃ©'); return; }
+      if (!user) { toast.error('Vous devez être connecté'); return; }
 
       const { data: walletData } = await supabase
         .from('wallets')
@@ -229,11 +229,11 @@ export default function VendorSubscriptionPage() {
 
       if (subscriptionId) {
         const endDate = format(calculateEndDate(billingCycle), 'dd/MM/yyyy', { locale: fr });
-        toast.success(`Abonnement ${selectedPlan.display_name} activÃ© jusqu'au ${endDate}`);
+        toast.success(`Abonnement ${selectedPlan.display_name} activé jusqu'au ${endDate}`);
         setIsDialogOpen(false);
         refresh();
       } else {
-        throw new Error('Ã‰chec de la crÃ©ation');
+        throw new Error('Échec de la création');
       }
     } catch (error: any) {
       console.error('Subscription error:', error);
@@ -264,7 +264,7 @@ export default function VendorSubscriptionPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Abonnement Vendeur</h1>
-            <p className="text-muted-foreground">GÃ©rez votre plan et vos limites</p>
+            <p className="text-muted-foreground">Gérez votre plan et vos limites</p>
           </div>
         </div>
 
@@ -281,16 +281,16 @@ export default function VendorSubscriptionPage() {
                   {!subscription
                     ? 'Vous utilisez actuellement le plan gratuit'
                     : isExpired
-                      ? 'Votre abonnement a expirÃ©'
+                      ? 'Votre abonnement a expiré'
                       : `Plan ${subscription.plan_display_name} actif`}
                 </CardDescription>
               </div>
               {hasAccess && !isExpired ? (
-                <Badge variant="outline" className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200">
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                   <CheckCircle2 className="h-3 w-3 mr-1" /> Actif
                 </Badge>
               ) : isExpired ? (
-                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">ExpirÃ©</Badge>
+                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Expiré</Badge>
               ) : (
                 <Badge variant="outline" className="bg-muted text-muted-foreground">Gratuit</Badge>
               )}
@@ -337,9 +337,9 @@ export default function VendorSubscriptionPage() {
                     <span className="font-medium">
                       {productLimit
                         ? activePlan.max_products === null
-                          ? `${productLimit.current_count} (illimitÃ©)`
+                          ? `${productLimit.current_count} (illimité)`
                           : `${productLimit.current_count} / ${activePlan.max_products}`
-                        : activePlan.max_products === null ? 'IllimitÃ©' : `Max ${activePlan.max_products}`}
+                        : activePlan.max_products === null ? 'Illimité' : `Max ${activePlan.max_products}`}
                     </span>
                   </div>
                   {activePlan.max_products !== null && productLimit && (
@@ -351,8 +351,8 @@ export default function VendorSubscriptionPage() {
                   {activePlan.max_products !== null && productLimit && productLimit.current_count >= activePlan.max_products * 0.8 && (
                     <p className="text-xs text-orange-600">
                       {productLimit.current_count >= activePlan.max_products
-                        ? 'âš ï¸ Limite atteinte â€” mettez Ã  niveau pour ajouter des produits'
-                        : 'âš¡ Proche de la limite'}
+                        ? '⚠️ Limite atteinte — mettez à niveau pour ajouter des produits'
+                        : '⚡ Proche de la limite'}
                     </p>
                   )}
                 </div>
@@ -361,7 +361,7 @@ export default function VendorSubscriptionPage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Images par produit</span>
                   <span className="font-medium">
-                    {activePlan.max_images_per_product === null ? 'IllimitÃ©' : `Max ${activePlan.max_images_per_product}`}
+                    {activePlan.max_images_per_product === null ? 'Illimité' : `Max ${activePlan.max_images_per_product}`}
                   </span>
                 </div>
               </div>
@@ -370,20 +370,20 @@ export default function VendorSubscriptionPage() {
             {/* Current plan features from DB */}
             {activePlan && (
               <div className="p-4 border rounded-xl space-y-3">
-                <h3 className="font-semibold text-sm">FonctionnalitÃ©s incluses</h3>
+                <h3 className="font-semibold text-sm">Fonctionnalités incluses</h3>
                 <div className="grid gap-2">
                   <FeatureRow icon={BarChart3} label="Analytics & statistiques" enabled={activePlan.analytics_access} />
                   <FeatureRow icon={Headphones} label="Support prioritaire" enabled={activePlan.priority_support} />
                   <FeatureRow icon={Star} label="Produits mis en avant" enabled={activePlan.featured_products} />
-                  <FeatureRow icon={Code} label="AccÃ¨s API" enabled={activePlan.api_access} />
-                  <FeatureRow icon={Palette} label="Branding personnalisÃ©" enabled={activePlan.custom_branding} />
+                  <FeatureRow icon={Code} label="Accès API" enabled={activePlan.api_access} />
+                  <FeatureRow icon={Palette} label="Branding personnalisé" enabled={activePlan.custom_branding} />
                 </div>
                 {activePlan.features && activePlan.features.length > 0 && (
                   <div className="pt-2 border-t space-y-1">
                     <p className="text-xs text-muted-foreground font-medium">Autres avantages :</p>
                     {activePlan.features.map((f, i) => (
                       <p key={i} className="text-xs text-muted-foreground flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-primary-orange-500 shrink-0" /> {f}
+                        <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" /> {f}
                       </p>
                     ))}
                   </div>
@@ -398,7 +398,7 @@ export default function VendorSubscriptionPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Choisir un plan</CardTitle>
-              <CardDescription>Comparez les plans et choisissez celui adaptÃ© Ã  votre activitÃ©</CardDescription>
+              <CardDescription>Comparez les plans et choisissez celui adapté à votre activité</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {plans.map((plan) => {
@@ -429,7 +429,7 @@ export default function VendorSubscriptionPage() {
                           )}
                           {isRecommended && !isCurrentPlan && (
                             <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs border-0">
-                              <Crown className="h-3 w-3 mr-1" /> RecommandÃ©
+                              <Crown className="h-3 w-3 mr-1" /> Recommandé
                             </Badge>
                           )}
                           {isPopular && !isCurrentPlan && (
@@ -447,13 +447,13 @@ export default function VendorSubscriptionPage() {
                       )}
                     </div>
 
-                    {/* KEY LIMITS â€” highly visible */}
+                    {/* KEY LIMITS — highly visible */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                       <div className="flex items-center gap-2.5 rounded-lg bg-primary/5 border border-primary/15 px-3 py-2">
                         <Package className="h-5 w-5 text-primary shrink-0" />
                         <div>
                           <p className="text-sm font-bold leading-tight">
-                            {plan.max_products === null ? 'IllimitÃ©' : plan.max_products}
+                            {plan.max_products === null ? 'Illimité' : plan.max_products}
                           </p>
                           <p className="text-[11px] text-muted-foreground leading-tight">
                             {plan.max_products === null ? 'produits' : plan.max_products === 1 ? 'produit max' : 'produits max'}
@@ -464,7 +464,7 @@ export default function VendorSubscriptionPage() {
                         <ImageIcon className="h-5 w-5 text-primary shrink-0" />
                         <div>
                           <p className="text-sm font-bold leading-tight">
-                            {plan.max_images_per_product === null ? 'IllimitÃ©' : plan.max_images_per_product}
+                            {plan.max_images_per_product === null ? 'Illimité' : plan.max_images_per_product}
                           </p>
                           <p className="text-[11px] text-muted-foreground leading-tight">
                             {plan.max_images_per_product === null ? 'images / produit' : plan.max_images_per_product === 1 ? 'image / produit' : 'images / produit'}
@@ -477,12 +477,12 @@ export default function VendorSubscriptionPage() {
                     <div className="mb-3">
                       <p className="text-sm font-semibold">
                         {plan.name === 'free'
-                          ? 'Gratuit â€” aucun paiement requis'
+                          ? 'Gratuit — aucun paiement requis'
                           : `${SubscriptionService.formatAmount(plan.monthly_price_gnf)} GNF/mois`}
                       </p>
                       {savingsPercent > 0 && (
-                        <p className="text-xs text-primary-orange-600 font-medium">
-                          Ã‰conomisez {savingsPercent}% en annuel
+                        <p className="text-xs text-green-600 font-medium">
+                          Économisez {savingsPercent}% en annuel
                         </p>
                       )}
                     </div>
@@ -490,24 +490,24 @@ export default function VendorSubscriptionPage() {
                     {/* Features grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
                       <div className="flex items-center gap-1.5">
-                        {plan.analytics_access ? <CheckCircle2 className="h-3.5 w-3.5 text-primary-orange-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                        {plan.analytics_access ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
                         <span className={!plan.analytics_access ? 'text-muted-foreground/60' : ''}>Analytics</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {plan.priority_support ? <CheckCircle2 className="h-3.5 w-3.5 text-primary-orange-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                        {plan.priority_support ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
                         <span className={!plan.priority_support ? 'text-muted-foreground/60' : ''}>Support prioritaire</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {plan.featured_products ? <CheckCircle2 className="h-3.5 w-3.5 text-primary-orange-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                        {plan.featured_products ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
                         <span className={!plan.featured_products ? 'text-muted-foreground/60' : ''}>Mise en avant</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {plan.api_access ? <CheckCircle2 className="h-3.5 w-3.5 text-primary-orange-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
-                        <span className={!plan.api_access ? 'text-muted-foreground/60' : ''}>AccÃ¨s API</span>
+                        {plan.api_access ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                        <span className={!plan.api_access ? 'text-muted-foreground/60' : ''}>Accès API</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        {plan.custom_branding ? <CheckCircle2 className="h-3.5 w-3.5 text-primary-orange-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
-                        <span className={!plan.custom_branding ? 'text-muted-foreground/60' : ''}>Branding personnalisÃ©</span>
+                        {plan.custom_branding ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                        <span className={!plan.custom_branding ? 'text-muted-foreground/60' : ''}>Branding personnalisé</span>
                       </div>
                     </div>
 
@@ -516,7 +516,7 @@ export default function VendorSubscriptionPage() {
                       <div className="mt-2 pt-2 border-t border-border/50">
                         {plan.features.map((f, i) => (
                           <p key={i} className="text-xs text-muted-foreground flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3 text-primary-orange-500 shrink-0" /> {f}
+                            <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" /> {f}
                           </p>
                         ))}
                       </div>
@@ -564,7 +564,7 @@ export default function VendorSubscriptionPage() {
                   }`}
                 >
                   {selectedPlan && (
-                    <div className="absolute -top-2 -right-2 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                    <div className="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                       -{getYearlySavingsPercent(selectedPlan)}%
                     </div>
                   )}
@@ -578,8 +578,8 @@ export default function VendorSubscriptionPage() {
                 </button>
               </div>
               {billingCycle === 'yearly' && selectedPlan && (
-                <p className="text-xs text-primary-orange-600 font-medium">
-                  Ã‰conomisez {SubscriptionService.formatAmount(calculateYearlySavings(selectedPlan))} par an !
+                <p className="text-xs text-green-600 font-medium">
+                  Économisez {SubscriptionService.formatAmount(calculateYearlySavings(selectedPlan))} par an !
                 </p>
               )}
             </div>
@@ -600,7 +600,7 @@ export default function VendorSubscriptionPage() {
                 <Wallet className="w-4 h-4 text-primary" />
                 <span className="font-medium">Paiement par Wallet</span>
               </div>
-              <p className="text-xs text-muted-foreground">Le montant sera dÃ©bitÃ© de votre wallet</p>
+              <p className="text-xs text-muted-foreground">Le montant sera débité de votre wallet</p>
             </div>
           </div>
 

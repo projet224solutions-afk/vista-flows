@@ -1,6 +1,6 @@
 /**
- * MODULE RESTAURANT - Interface complÃ¨te
- * Utilise serviceId pour afficher les donnÃ©es spÃ©cifiques au restaurant
+ * MODULE RESTAURANT - Interface complète
+ * Utilise serviceId pour afficher les données spécifiques au restaurant
  */
 
 import { useState } from 'react';
@@ -32,24 +32,24 @@ interface RestaurantModuleProps {
   businessName?: string;
 }
 
-// formatCurrency importÃ© depuis @/lib/formatters
+// formatCurrency importé depuis @/lib/formatters
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   preparing: 'bg-blue-100 text-blue-800',
-  ready: 'bg-primary-blue-100 text-primary-blue-800',
-  delivered: 'bg-primary-orange-100 text-primary-orange-800',
-  completed: 'bg-primary-orange-100 text-primary-orange-800',
+  ready: 'bg-cyan-100 text-cyan-800',
+  delivered: 'bg-green-100 text-green-800',
+  completed: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
 };
 
 const statusLabels: Record<string, string> = {
   pending: 'En attente',
-  preparing: 'En prÃ©paration',
-  ready: 'PrÃªte',
-  delivered: 'LivrÃ©e',
-  completed: 'TerminÃ©e',
-  cancelled: 'AnnulÃ©e',
+  preparing: 'En préparation',
+  ready: 'Prête',
+  delivered: 'Livrée',
+  completed: 'Terminée',
+  cancelled: 'Annulée',
 };
 
 const orderTypeIcons: Record<string, React.ReactNode> = {
@@ -66,8 +66,8 @@ const orderTypeLabels: Record<string, string> = {
   sur_place: 'Sur place',
   delivery: 'Livraison',
   livraison: 'Livraison',
-  takeaway: 'Ã€ emporter',
-  emporter: 'Ã€ emporter',
+  takeaway: 'À emporter',
+  emporter: 'À emporter',
 };
 
 export function RestaurantModule({ serviceId, businessName }: RestaurantModuleProps) {
@@ -107,7 +107,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
           <p className="text-destructive">{error}</p>
           <Button onClick={refresh} className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
-            RÃ©essayer
+            Réessayer
           </Button>
         </CardContent>
       </Card>
@@ -125,7 +125,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
           <div className="flex-1">
             <h3 className="font-semibold text-lg mb-2">Bienvenue dans votre espace Restaurant !</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Configurez votre menu, gÃ©rez vos commandes et suivez vos performances en temps rÃ©el.
+              Configurez votre menu, gérez vos commandes et suivez vos performances en temps réel.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Button 
@@ -142,7 +142,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
                 onClick={() => setActiveTab('tables')}
               >
                 <LayoutGrid className="w-4 h-4" />
-                GÃ©rer les tables
+                Gérer les tables
               </Button>
               <Button 
                 variant="outline" 
@@ -168,7 +168,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
             <UtensilsCrossed className="w-7 h-7 text-primary" />
             {businessName || 'Restaurant'}
           </h2>
-          <p className="text-muted-foreground">GÃ©rez vos commandes et votre menu</p>
+          <p className="text-muted-foreground">Gérez vos commandes et votre menu</p>
         </div>
         <Button onClick={refresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -203,13 +203,13 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.menuItems.total || 0}</div>
-            <span className="text-xs text-primary-orange-600">{stats?.menuItems.active || 0} plats actifs</span>
+            <span className="text-xs text-green-600">{stats?.menuItems.active || 0} plats actifs</span>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-transparent hover:border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">RÃ©servations</CardTitle>
+            <CardTitle className="text-sm font-medium">Réservations</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -240,7 +240,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
           <TabsList className="inline-flex w-max sm:w-auto sm:grid sm:grid-cols-7 gap-0.5">
             <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
               <DollarSign className="w-3.5 h-3.5 hidden sm:block" />
-              AperÃ§u
+              Aperçu
             </TabsTrigger>
             <TabsTrigger value="pos" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1 bg-primary/10 font-semibold">
               <ShoppingCart className="w-3.5 h-3.5 hidden sm:block" />
@@ -248,7 +248,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
             </TabsTrigger>
             <TabsTrigger value="reservations" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
               <CalendarCheck className="w-3.5 h-3.5 hidden sm:block" />
-              RÃ©serv.
+              Réserv.
             </TabsTrigger>
             <TabsTrigger value="orders" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
               <ShoppingBag className="w-3.5 h-3.5 hidden sm:block" />
@@ -279,7 +279,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <DollarSign className="w-5 h-5" />
-                  RÃ©sumÃ© des ventes
+                  Résumé des ventes
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -302,7 +302,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
                   </div>
                   <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg text-center">
                     <ShoppingBag className="w-4 h-4 text-purple-600 mx-auto mb-1" />
-                    <div className="text-xs font-medium text-purple-700">Ã€ emporter</div>
+                    <div className="text-xs font-medium text-purple-700">À emporter</div>
                     <div className="text-lg font-bold text-purple-600">{formatCurrency(stats?.salesTakeaway.totalRevenue || 0)}</div>
                   </div>
                 </div>
@@ -340,7 +340,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
                   </div>
                   <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 rounded-lg text-center">
                     <ShoppingBag className="w-4 h-4 text-purple-600 mx-auto mb-1" />
-                    <div className="text-xs font-medium text-purple-700">Ã€ emporter</div>
+                    <div className="text-xs font-medium text-purple-700">À emporter</div>
                     <div className="text-xl font-bold text-purple-600">{stats?.ordersTakeaway.total || 0}</div>
                   </div>
                 </div>
@@ -355,21 +355,21 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
                   </div>
                   <div className="flex justify-between items-center p-2 rounded bg-blue-50">
                     <span className="text-sm flex items-center gap-2">
-                      <UtensilsCrossed className="w-4 h-4 text-blue-500" /> En prÃ©paration
+                      <UtensilsCrossed className="w-4 h-4 text-blue-500" /> En préparation
                     </span>
                     <span className="font-semibold text-blue-700">{stats?.orders.preparing || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded bg-primary-blue-50">
+                  <div className="flex justify-between items-center p-2 rounded bg-cyan-50">
                     <span className="text-sm flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-primary-blue-500" /> PrÃªtes
+                      <CheckCircle className="w-4 h-4 text-cyan-500" /> Prêtes
                     </span>
-                    <span className="font-semibold text-primary-blue-700">{stats?.orders.ready || 0}</span>
+                    <span className="font-semibold text-cyan-700">{stats?.orders.ready || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 rounded bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
+                  <div className="flex justify-between items-center p-2 rounded bg-green-50">
                     <span className="text-sm flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-primary-orange-500" /> TerminÃ©es
+                      <CheckCircle className="w-4 h-4 text-green-500" /> Terminées
                     </span>
-                    <span className="font-semibold text-primary-orange-700">{stats?.orders.delivered || 0}</span>
+                    <span className="font-semibold text-green-700">{stats?.orders.delivered || 0}</span>
                   </div>
                 </div>
               </CardContent>

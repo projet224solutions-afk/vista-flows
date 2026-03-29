@@ -1,6 +1,6 @@
 /**
- * PANEL SYNCHRONISATION TEMPS RÃ‰EL PDG
- * Affichage des mises Ã  jour en temps rÃ©el
+ * PANEL SYNCHRONISATION TEMPS RÉEL PDG
+ * Affichage des mises à jour en temps réel
  * 224Solutions - Bureau Syndicat System
  */
 
@@ -46,7 +46,7 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
     const getUpdateIcon = (updateType: string) => {
         switch (updateType) {
             case 'member_added':
-                return <Users className="w-4 h-4 text-primary-orange-600" />;
+                return <Users className="w-4 h-4 text-green-600" />;
             case 'revenue_update':
                 return <DollarSign className="w-4 h-4 text-blue-600" />;
             case 'sos_alert':
@@ -61,7 +61,7 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
     const getUpdateColor = (updateType: string) => {
         switch (updateType) {
             case 'member_added':
-                return 'bg-primary-orange-100 text-primary-orange-800';
+                return 'bg-green-100 text-green-800';
             case 'revenue_update':
                 return 'bg-blue-100 text-blue-800';
             case 'sos_alert':
@@ -78,37 +78,37 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
             case 'member_added':
                 return 'Nouveau membre';
             case 'revenue_update':
-                return 'Revenu mis Ã  jour';
+                return 'Revenu mis à jour';
             case 'sos_alert':
                 return 'Alerte SOS';
             case 'status_change':
-                return 'Statut changÃ©';
+                return 'Statut changé';
             default:
-                return 'Mise Ã  jour';
+                return 'Mise à jour';
         }
     };
 
     return (
         <div className={`space-y-4 ${className}`}>
-            {/* Statistiques en temps rÃ©el */}
+            {/* Statistiques en temps réel */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Activity className="w-5 h-5" />
-                        Synchronisation Temps RÃ©el
+                        Synchronisation Temps Réel
                         <Badge
                             variant={isConnected ? "default" : "destructive"}
-                            className={isConnected ? "bg-primary-orange-100 text-primary-orange-800" : "bg-red-100 text-red-800"}
+                            className={isConnected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
                         >
                             {isConnected ? (
                                 <>
                                     <Wifi className="w-3 h-3 mr-1" />
-                                    ConnectÃ©
+                                    Connecté
                                 </>
                             ) : (
                                 <>
                                     <WifiOff className="w-3 h-3 mr-1" />
-                                    DÃ©connectÃ©
+                                    Déconnecté
                                 </>
                             )}
                         </Badge>
@@ -121,7 +121,7 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
                             <div className="text-sm text-gray-600">Total Bureaux</div>
                         </div>
                         <div className="text-center">
-                            <div className="text-2xl font-bold text-primary-orange-600">{stats.activeBureaus}</div>
+                            <div className="text-2xl font-bold text-green-600">{stats.activeBureaus}</div>
                             <div className="text-sm text-gray-600">Bureaux Actifs</div>
                         </div>
                         <div className="text-center">
@@ -137,7 +137,7 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
                     <div className="flex items-center justify-between mt-4 pt-4 border-t">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Clock className="w-4 h-4" />
-                            DerniÃ¨re sync: {formatDistanceToNow(lastSyncTime, {
+                            Dernière sync: {formatDistanceToNow(lastSyncTime, {
                                 addSuffix: true,
                                 locale: fr
                             })}
@@ -157,25 +157,25 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
                                 size="sm"
                                 variant="outline"
                             >
-                                {showDetails ? 'Masquer' : 'DÃ©tails'}
+                                {showDetails ? 'Masquer' : 'Détails'}
                             </Button>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* DÃ©tails des mises Ã  jour */}
+            {/* Détails des mises à jour */}
             {showDetails && (
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center justify-between">
                             <span className="flex items-center gap-2">
                                 <Activity className="w-5 h-5" />
-                                Mises Ã  jour rÃ©centes
+                                Mises à jour récentes
                             </span>
                             <div className="flex gap-2">
                                 <Badge variant="outline">
-                                    {updates.length} mise{updates.length > 1 ? 's' : ''} Ã  jour
+                                    {updates.length} mise{updates.length > 1 ? 's' : ''} à jour
                                 </Badge>
                                 {updates.length > 0 && (
                                     <Button
@@ -195,8 +195,8 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
                         {updates.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                                 <Activity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                <p>Aucune mise Ã  jour rÃ©cente</p>
-                                <p className="text-sm">Les mises Ã  jour apparaÃ®tront ici en temps rÃ©el</p>
+                                <p>Aucune mise à jour récente</p>
+                                <p className="text-sm">Les mises à jour apparaîtront ici en temps réel</p>
                             </div>
                         ) : (
                             <ScrollArea className="h-64">
@@ -226,7 +226,7 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
                                                     <AlertTriangle className="w-5 h-5 text-red-500" />
                                                 )}
                                                 {update.updateType === 'member_added' && (
-                                                    <CheckCircle className="w-5 h-5 text-primary-orange-500" />
+                                                    <CheckCircle className="w-5 h-5 text-green-500" />
                                                 )}
                                                 {update.updateType === 'status_change' && (
                                                     <Building2 className="w-5 h-5 text-purple-500" />

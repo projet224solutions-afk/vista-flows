@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * Gestion Multi-EntrepÃ´ts & Multi-POS
+ * Gestion Multi-Entrepôts & Multi-POS
  * 224SOLUTIONS - Interface vendeur professionnelle
  */
 
@@ -68,7 +68,7 @@ function LocationStatsCard({ stats }: { stats: any }) {
       </div>
       <div className="text-center p-2 bg-muted/50 rounded-lg">
         <p className="text-2xl font-bold">{stats.total_quantity || 0}</p>
-        <p className="text-xs text-muted-foreground">UnitÃ©s</p>
+        <p className="text-xs text-muted-foreground">Unités</p>
       </div>
       <div className="text-center p-2 bg-muted/50 rounded-lg">
         <p className="text-2xl font-bold text-amber-600">{stats.low_stock_count || 0}</p>
@@ -82,7 +82,7 @@ function LocationStatsCard({ stats }: { stats: any }) {
   );
 }
 
-// Carte d'un lieu (entrepÃ´t ou POS)
+// Carte d'un lieu (entrepôt ou POS)
 function LocationCard({ 
   location, 
   onEdit, 
@@ -103,7 +103,7 @@ function LocationCard({
   return (
     <Card className={cn(
       "relative overflow-hidden transition-all hover:shadow-lg",
-      isPos && "border-primary-orange-500/50 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/30 dark:bg-primary-orange-950/20",
+      isPos && "border-green-500/50 bg-green-50/30 dark:bg-green-950/20",
       location.is_default && "ring-2 ring-primary"
     )}>
       {/* Badge type */}
@@ -111,11 +111,11 @@ function LocationCard({
         {location.is_default && (
           <Badge variant="default" className="bg-primary">
             <Star className="w-3 h-3 mr-1" />
-            Par dÃ©faut
+            Par défaut
           </Badge>
         )}
         <Badge variant={isPos ? "default" : "secondary"} className={cn(
-          isPos && "bg-primary-orange-600"
+          isPos && "bg-green-600"
         )}>
           {isPos ? (
             <>
@@ -125,7 +125,7 @@ function LocationCard({
           ) : (
             <>
               <Warehouse className="w-3 h-3 mr-1" />
-              EntrepÃ´t
+              Entrepôt
             </>
           )}
         </Badge>
@@ -135,10 +135,10 @@ function LocationCard({
         <div className="flex items-start gap-3">
           <div className={cn(
             "p-3 rounded-xl",
-            isPos ? "bg-primary-orange-100 dark:bg-primary-orange-900/50" : "bg-blue-100 dark:bg-blue-900/50"
+            isPos ? "bg-green-100 dark:bg-green-900/50" : "bg-blue-100 dark:bg-blue-900/50"
           )}>
             {isPos ? (
-              <Store className={cn("w-6 h-6", isPos ? "text-primary-orange-600" : "text-blue-600")} />
+              <Store className={cn("w-6 h-6", isPos ? "text-green-600" : "text-blue-600")} />
             ) : (
               <Warehouse className="w-6 h-6 text-blue-600" />
             )}
@@ -169,7 +169,7 @@ function LocationCard({
             <User className="w-4 h-4 shrink-0" />
             <span>{location.manager_name}</span>
             {location.manager_phone && (
-              <span className="text-xs">â€¢ {location.manager_phone}</span>
+              <span className="text-xs">• {location.manager_phone}</span>
             )}
           </div>
         )}
@@ -183,7 +183,7 @@ function LocationCard({
             {location.stats?.pending_transfers_in > 0 && (
               <Badge variant="outline" className="text-blue-600">
                 <Truck className="w-3 h-3 mr-1" />
-                {location.stats.pending_transfers_in} entrÃ©e(s)
+                {location.stats.pending_transfers_in} entrée(s)
               </Badge>
             )}
             {location.stats?.pending_transfers_out > 0 && (
@@ -213,11 +213,11 @@ function LocationCard({
           onClick={onTogglePOS}
           className={cn(
             "flex-1",
-            isPos ? "bg-primary-orange-100 text-primary-orange-700 hover:bg-primary-orange-100" : ""
+            isPos ? "bg-green-100 text-green-700 hover:bg-green-200" : ""
           )}
         >
           <Store className="w-4 h-4 mr-1" />
-          {isPos ? 'DÃ©sactiver POS' : 'Activer POS'}
+          {isPos ? 'Désactiver POS' : 'Activer POS'}
         </Button>
 
         <Button variant="ghost" size="icon" onClick={onEdit}>
@@ -239,10 +239,10 @@ function TransferStatusBadge({ status }: { status: string }) {
   const config = {
     pending: { label: 'En attente', color: 'bg-gray-100 text-gray-700', icon: Clock },
     in_transit: { label: 'En transit', color: 'bg-blue-100 text-blue-700', icon: Truck },
-    delivered: { label: 'LivrÃ©', color: 'bg-purple-100 text-purple-700', icon: Package },
-    completed: { label: 'ComplÃ©tÃ©', color: 'bg-primary-orange-100 text-primary-orange-700', icon: CheckCircle2 },
+    delivered: { label: 'Livré', color: 'bg-purple-100 text-purple-700', icon: Package },
+    completed: { label: 'Complété', color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
     partial: { label: 'Partiel', color: 'bg-amber-100 text-amber-700', icon: AlertTriangle },
-    cancelled: { label: 'AnnulÃ©', color: 'bg-red-100 text-red-700', icon: XCircle },
+    cancelled: { label: 'Annulé', color: 'bg-red-100 text-red-700', icon: XCircle },
   }[status] || { label: status, color: 'bg-gray-100 text-gray-700', icon: Clock };
 
   const Icon = config.icon;
@@ -320,7 +320,7 @@ export default function MultiWarehouseManagement() {
     setShowStockDialog(true);
   };
 
-  // CrÃ©er un nouveau lieu
+  // Créer un nouveau lieu
   const handleCreateLocation = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await createLocation(newLocation);
@@ -343,7 +343,7 @@ export default function MultiWarehouseManagement() {
     await togglePOS(location.id, !location.is_pos_enabled);
   };
 
-  // CrÃ©er un transfert
+  // Créer un transfert
   const handleCreateTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (transferForm.items.length === 0) {
@@ -366,18 +366,18 @@ export default function MultiWarehouseManagement() {
     }
   };
 
-  // ExpÃ©dier un transfert
+  // Expédier un transfert
   const handleShipTransfer = async (transfer: StockTransfer) => {
-    if (window.confirm(`ExpÃ©dier le transfert ${transfer.transfer_number} ?\n\nLe stock sera immÃ©diatement retirÃ© de l'entrepÃ´t source.`)) {
+    if (window.confirm(`Expédier le transfert ${transfer.transfer_number} ?\n\nLe stock sera immédiatement retiré de l'entrepôt source.`)) {
       await shipTransfer(transfer.id);
     }
   };
 
-  // Confirmer rÃ©ception
+  // Confirmer réception
   const handleConfirmReception = async () => {
     if (!selectedTransfer) return;
     
-    // Pour simplifier, on confirme tout comme reÃ§u
+    // Pour simplifier, on confirme tout comme reçu
     const items = selectedTransfer.items?.map(item => ({
       product_id: item.product_id,
       quantity_received: item.quantity_sent,
@@ -396,14 +396,14 @@ export default function MultiWarehouseManagement() {
     return (
       <div className="flex flex-col items-center justify-center p-12 space-y-4">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-muted-foreground">Chargement du systÃ¨me multi-entrepÃ´ts...</p>
+        <p className="text-muted-foreground">Chargement du système multi-entrepôts...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-3">
@@ -413,7 +413,7 @@ export default function MultiWarehouseManagement() {
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">Gestion Multi-Sites</h1>
               <p className="text-muted-foreground">
-                {locations.length} lieu(x) â€¢ {posLocations.length} POS actif(s)
+                {locations.length} lieu(x) • {posLocations.length} POS actif(s)
               </p>
             </div>
           </div>
@@ -449,7 +449,7 @@ export default function MultiWarehouseManagement() {
           <Truck className="h-4 w-4 text-blue-600" />
           <AlertTitle className="text-blue-800 dark:text-blue-200">Transferts en attente</AlertTitle>
           <AlertDescription className="text-blue-700 dark:text-blue-300">
-            {pendingTransfers.length} transfert(s) en attente d'expÃ©dition
+            {pendingTransfers.length} transfert(s) en attente d'expédition
           </AlertDescription>
         </Alert>
       )}
@@ -459,7 +459,7 @@ export default function MultiWarehouseManagement() {
           <Truck className="h-4 w-4 text-amber-600" />
           <AlertTitle className="text-amber-800 dark:text-amber-200">Transferts en transit</AlertTitle>
           <AlertDescription className="text-amber-700 dark:text-amber-300">
-            {inTransitTransfers.length} transfert(s) en cours de livraison - Ã€ confirmer Ã  la rÃ©ception
+            {inTransitTransfers.length} transfert(s) en cours de livraison - À confirmer à la réception
           </AlertDescription>
         </Alert>
       )}
@@ -494,13 +494,13 @@ export default function MultiWarehouseManagement() {
           {locations.length === 0 ? (
             <Card className="p-12 text-center">
               <Warehouse className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Aucun lieu configurÃ©</h3>
+              <h3 className="text-xl font-semibold mb-2">Aucun lieu configuré</h3>
               <p className="text-muted-foreground mb-4">
-                CrÃ©ez votre premier entrepÃ´t ou point de vente pour commencer
+                Créez votre premier entrepôt ou point de vente pour commencer
               </p>
               <Button onClick={() => setShowCreateDialog(true)}>
                 <Plus className="w-4 h-4 mr-2" />
-                CrÃ©er un lieu
+                Créer un lieu
               </Button>
             </Card>
           ) : (
@@ -544,7 +544,7 @@ export default function MultiWarehouseManagement() {
                 <div>
                   <CardTitle>Historique des transferts</CardTitle>
                   <CardDescription>
-                    GÃ©rez les mouvements de stock entre vos diffÃ©rents lieux
+                    Gérez les mouvements de stock entre vos différents lieux
                   </CardDescription>
                 </div>
                 <Button onClick={() => setShowTransferDialog(true)}>
@@ -557,7 +557,7 @@ export default function MultiWarehouseManagement() {
               {transfers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <ArrowRightLeft className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Aucun transfert effectuÃ©</p>
+                  <p>Aucun transfert effectué</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -571,7 +571,7 @@ export default function MultiWarehouseManagement() {
                           <div>
                             <p className="font-semibold">{transfer.transfer_number}</p>
                             <p className="text-sm text-muted-foreground">
-                              {transfer.from_location?.name} â†’ {transfer.to_location?.name}
+                              {transfer.from_location?.name} → {transfer.to_location?.name}
                             </p>
                           </div>
                         </div>
@@ -594,7 +594,7 @@ export default function MultiWarehouseManagement() {
                                 onClick={() => handleShipTransfer(transfer)}
                               >
                                 <Truck className="w-4 h-4 mr-1" />
-                                ExpÃ©dier
+                                Expédier
                               </Button>
                               <Button 
                                 size="sm" 
@@ -614,19 +614,19 @@ export default function MultiWarehouseManagement() {
                               }}
                             >
                               <CheckCircle2 className="w-4 h-4 mr-1" />
-                              Confirmer rÃ©ception
+                              Confirmer réception
                             </Button>
                           )}
                         </div>
                       </div>
 
-                      {/* DÃ©tails des items */}
+                      {/* Détails des items */}
                       {transfer.items && transfer.items.length > 0 && (
                         <div className="mt-3 pt-3 border-t">
                           <div className="flex flex-wrap gap-2">
                             {transfer.items.slice(0, 3).map((item) => (
                               <Badge key={item.id} variant="outline">
-                                {item.product?.name || 'Produit'} Ã— {item.quantity_sent}
+                                {item.product?.name || 'Produit'} × {item.quantity_sent}
                               </Badge>
                             ))}
                             {transfer.items.length > 3 && (
@@ -650,33 +650,33 @@ export default function MultiWarehouseManagement() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Store className="w-5 h-5 text-primary-orange-600" />
+                <Store className="w-5 h-5 text-green-600" />
                 Points de vente actifs
               </CardTitle>
               <CardDescription>
-                Les lieux avec POS activÃ© peuvent effectuer des ventes directes
+                Les lieux avec POS activé peuvent effectuer des ventes directes
               </CardDescription>
             </CardHeader>
             <CardContent>
               {posLocations.length === 0 ? (
                 <div className="text-center py-8">
                   <Store className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                  <p className="text-muted-foreground mb-4">Aucun point de vente activÃ©</p>
+                  <p className="text-muted-foreground mb-4">Aucun point de vente activé</p>
                   <p className="text-sm text-muted-foreground">
-                    Activez le POS sur un entrepÃ´t pour commencer Ã  vendre
+                    Activez le POS sur un entrepôt pour commencer à vendre
                   </p>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
                   {posLocations.map((location) => (
-                    <Card key={location.id} className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50 dark:bg-primary-orange-950/20">
+                    <Card key={location.id} className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
                       <CardContent className="pt-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <Store className="w-5 h-5 text-primary-orange-600" />
+                            <Store className="w-5 h-5 text-green-600" />
                             <span className="font-semibold">{location.name}</span>
                           </div>
-                          <Badge className="bg-primary-orange-600">Actif</Badge>
+                          <Badge className="bg-green-600">Actif</Badge>
                         </div>
                         <div className="text-sm text-muted-foreground space-y-1">
                           {location.address && (
@@ -713,7 +713,7 @@ export default function MultiWarehouseManagement() {
                     Registre des pertes
                   </CardTitle>
                   <CardDescription>
-                    Historique des produits manquants et endommagÃ©s
+                    Historique des produits manquants et endommagés
                   </CardDescription>
                 </div>
                 <div className="text-right">
@@ -727,18 +727,18 @@ export default function MultiWarehouseManagement() {
             <CardContent>
               {losses.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-primary-orange-500" />
-                  <p>Aucune perte enregistrÃ©e</p>
+                  <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
+                  <p>Aucune perte enregistrée</p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>RÃ©fÃ©rence</TableHead>
+                      <TableHead>Référence</TableHead>
                       <TableHead>Produit</TableHead>
                       <TableHead>Lieu</TableHead>
                       <TableHead>Type</TableHead>
-                      <TableHead>QuantitÃ©</TableHead>
+                      <TableHead>Quantité</TableHead>
                       <TableHead>Valeur</TableHead>
                       <TableHead>Date</TableHead>
                     </TableRow>
@@ -769,7 +769,7 @@ export default function MultiWarehouseManagement() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialog: CrÃ©er/Modifier un lieu */}
+      {/* Dialog: Créer/Modifier un lieu */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -789,7 +789,7 @@ export default function MultiWarehouseManagement() {
             <DialogDescription>
               {selectedLocation 
                 ? "Modifiez les informations de ce lieu"
-                : "CrÃ©ez un nouvel entrepÃ´t ou point de vente"
+                : "Créez un nouvel entrepôt ou point de vente"
               }
             </DialogDescription>
           </DialogHeader>
@@ -800,7 +800,7 @@ export default function MultiWarehouseManagement() {
                 <Label htmlFor="name">Nom du lieu *</Label>
                 <Input
                   id="name"
-                  placeholder="Ex: EntrepÃ´t Principal"
+                  placeholder="Ex: Entrepôt Principal"
                   value={newLocation.name}
                   onChange={(e) => setNewLocation(prev => ({ ...prev, name: e.target.value }))}
                   required
@@ -830,7 +830,7 @@ export default function MultiWarehouseManagement() {
                     <SelectItem value="warehouse">
                       <span className="flex items-center gap-2">
                         <Warehouse className="w-4 h-4" />
-                        EntrepÃ´t
+                        Entrepôt
                       </span>
                     </SelectItem>
                     <SelectItem value="pos">
@@ -847,7 +847,7 @@ export default function MultiWarehouseManagement() {
                 <Label htmlFor="address">Adresse</Label>
                 <Input
                   id="address"
-                  placeholder="Adresse complÃ¨te"
+                  placeholder="Adresse complète"
                   value={newLocation.address}
                   onChange={(e) => setNewLocation(prev => ({ ...prev, address: e.target.value }))}
                 />
@@ -874,7 +874,7 @@ export default function MultiWarehouseManagement() {
               </div>
 
               <div className="col-span-2">
-                <Label htmlFor="manager_phone">TÃ©lÃ©phone responsable</Label>
+                <Label htmlFor="manager_phone">Téléphone responsable</Label>
                 <Input
                   id="manager_phone"
                   placeholder="+224 XXX XXX XXX"
@@ -901,23 +901,23 @@ export default function MultiWarehouseManagement() {
                 Annuler
               </Button>
               <Button type="submit">
-                {selectedLocation ? 'Enregistrer' : 'CrÃ©er'}
+                {selectedLocation ? 'Enregistrer' : 'Créer'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: CrÃ©er un transfert */}
+      {/* Dialog: Créer un transfert */}
       <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ArrowRightLeft className="w-5 h-5" />
-              CrÃ©er un transfert de stock
+              Créer un transfert de stock
             </DialogTitle>
             <DialogDescription>
-              TransfÃ©rez des produits entre vos diffÃ©rents lieux
+              Transférez des produits entre vos différents lieux
             </DialogDescription>
           </DialogHeader>
 
@@ -930,7 +930,7 @@ export default function MultiWarehouseManagement() {
                   onValueChange={(v) => setTransferForm(prev => ({ ...prev, from_location_id: v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="SÃ©lectionner..." />
+                    <SelectValue placeholder="Sélectionner..." />
                   </SelectTrigger>
                   <SelectContent>
                     {locations.filter(l => l.id !== transferForm.to_location_id).map((loc) => (
@@ -952,7 +952,7 @@ export default function MultiWarehouseManagement() {
                   onValueChange={(v) => setTransferForm(prev => ({ ...prev, to_location_id: v }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="SÃ©lectionner..." />
+                    <SelectValue placeholder="Sélectionner..." />
                   </SelectTrigger>
                   <SelectContent>
                     {locations.filter(l => l.id !== transferForm.from_location_id).map((loc) => (
@@ -980,7 +980,7 @@ export default function MultiWarehouseManagement() {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                SÃ©lectionnez les produits Ã  transfÃ©rer depuis la vue stock du lieu source
+                Sélectionnez les produits à transférer depuis la vue stock du lieu source
               </AlertDescription>
             </Alert>
 
@@ -989,7 +989,7 @@ export default function MultiWarehouseManagement() {
                 Annuler
               </Button>
               <Button type="submit" disabled={!transferForm.from_location_id || !transferForm.to_location_id}>
-                CrÃ©er le transfert
+                Créer le transfert
               </Button>
             </DialogFooter>
           </form>
@@ -1019,7 +1019,7 @@ export default function MultiWarehouseManagement() {
                     <TableHead>Produit</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead className="text-right">Stock</TableHead>
-                    <TableHead className="text-right">RÃ©servÃ©</TableHead>
+                    <TableHead className="text-right">Réservé</TableHead>
                     <TableHead className="text-right">Disponible</TableHead>
                     <TableHead className="text-right">Min</TableHead>
                     <TableHead>Statut</TableHead>
@@ -1047,7 +1047,7 @@ export default function MultiWarehouseManagement() {
                       <TableCell className="text-right text-muted-foreground">
                         {stock.reserved_quantity || 0}
                       </TableCell>
-                      <TableCell className="text-right font-medium text-primary-orange-600">
+                      <TableCell className="text-right font-medium text-green-600">
                         {stock.available_quantity}
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
@@ -1061,7 +1061,7 @@ export default function MultiWarehouseManagement() {
                             Stock bas
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-primary-orange-600 border-primary-orange-300">
+                          <Badge variant="outline" className="text-green-600 border-green-300">
                             OK
                           </Badge>
                         )}
@@ -1075,25 +1075,25 @@ export default function MultiWarehouseManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Confirmer rÃ©ception */}
+      {/* Dialog: Confirmer réception */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmer la rÃ©ception</DialogTitle>
+            <DialogTitle>Confirmer la réception</DialogTitle>
             <DialogDescription>
               Transfert {selectedTransfer?.transfer_number}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            <p>Confirmez-vous avoir reÃ§u tous les articles de ce transfert ?</p>
+            <p>Confirmez-vous avoir reçu tous les articles de ce transfert ?</p>
             
             {selectedTransfer?.items && (
               <div className="space-y-2">
                 {selectedTransfer.items.map((item) => (
                   <div key={item.id} className="flex justify-between items-center p-2 bg-muted rounded">
                     <span>{item.product?.name}</span>
-                    <Badge>{item.quantity_sent} unitÃ©(s)</Badge>
+                    <Badge>{item.quantity_sent} unité(s)</Badge>
                   </div>
                 ))}
               </div>
@@ -1104,9 +1104,9 @@ export default function MultiWarehouseManagement() {
             <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
               Annuler
             </Button>
-            <Button onClick={handleConfirmReception} className="bg-primary-orange-600 hover:bg-primary-orange-700">
+            <Button onClick={handleConfirmReception} className="bg-green-600 hover:bg-green-700">
               <CheckCircle2 className="w-4 h-4 mr-2" />
-              Tout reÃ§u
+              Tout reçu
             </Button>
           </DialogFooter>
         </DialogContent>

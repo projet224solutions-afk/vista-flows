@@ -89,7 +89,7 @@ export default function BureauDashboard() {
 
       if (bureauError) throw bureauError;
       if (!bureauData) {
-        toast.error('Bureau non trouvÃ©');
+        toast.error('Bureau non trouvé');
         navigate('/');
         return;
       }
@@ -109,12 +109,12 @@ export default function BureauDashboard() {
       setWalletBalance(walletRes.data?.balance || 0);
     } catch (error: any) {
       console.error('Erreur chargement bureau:', error);
-      const errorMessage = error.message || 'Impossible de charger les donnÃ©es du bureau';
+      const errorMessage = error.message || 'Impossible de charger les données du bureau';
       captureError('member_error', errorMessage, error);
       toast.error(errorMessage, {
-        description: 'VÃ©rifiez votre connexion internet et rÃ©essayez',
+        description: 'Vérifiez votre connexion internet et réessayez',
         action: {
-          label: 'RÃ©essayer',
+          label: 'Réessayer',
           onClick: () => loadBureauData()
         }
       });
@@ -151,11 +151,11 @@ export default function BureauDashboard() {
       return;
     }
     
-    // Validation tÃ©lÃ©phone (GuinÃ©e: +224XXXXXXXXX ou 9 chiffres)
+    // Validation téléphone (Guinée: +224XXXXXXXXX ou 9 chiffres)
     if (workerForm.telephone) {
       const phoneRegex = /^(\+224)?[0-9]{9}$/;
       if (!phoneRegex.test(workerForm.telephone.replace(/\s/g, ''))) {
-        toast.error('Format tÃ©lÃ©phone invalide (9 chiffres)');
+        toast.error('Format téléphone invalide (9 chiffres)');
         return;
       }
     }
@@ -191,7 +191,7 @@ export default function BureauDashboard() {
       
       setIsWorkerDialogOpen(false);
     } catch (error: any) {
-      console.error('âŒ Erreur ajout membre du bureau:', error);
+      console.error('❌ Erreur ajout membre du bureau:', error);
       captureError('worker_error', error.message || 'Erreur lors de l\'ajout du membre du bureau', error);
       toast.error(error.message || 'Erreur lors de l\'ajout du membre du bureau');
     } finally {
@@ -199,7 +199,7 @@ export default function BureauDashboard() {
     }
   };
 
-  // Ajouter un adhÃ©rent avec email/password
+  // Ajouter un adhérent avec email/password
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -210,11 +210,11 @@ export default function BureauDashboard() {
       return;
     }
     
-    // Validation tÃ©lÃ©phone si fourni
+    // Validation téléphone si fourni
     if (memberForm.phone) {
       const phoneRegex = /^(\+224)?[0-9]{9}$/;
       if (!phoneRegex.test(memberForm.phone.replace(/\s/g, ''))) {
-        toast.error('Format tÃ©lÃ©phone invalide (9 chiffres)');
+        toast.error('Format téléphone invalide (9 chiffres)');
         return;
       }
     }
@@ -225,7 +225,7 @@ export default function BureauDashboard() {
     }
 
     if (memberForm.password.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractÃ¨res');
+      toast.error('Le mot de passe doit contenir au moins 8 caractères');
       return;
     }
     
@@ -256,11 +256,11 @@ export default function BureauDashboard() {
       if (error) throw error;
 
       if (!data.success) {
-        toast.error(data.error || 'Erreur lors de la crÃ©ation');
+        toast.error(data.error || 'Erreur lors de la création');
         return;
       }
 
-      toast.success('AdhÃ©rent crÃ©Ã© avec succÃ¨s');
+      toast.success('Adhérent créé avec succès');
       setMemberForm({
         full_name: '',
         email: '',
@@ -272,8 +272,8 @@ export default function BureauDashboard() {
       setIsMemberDialogOpen(false);
       loadBureauData();
     } catch (error: any) {
-      console.error('âŒ Erreur crÃ©ation adhÃ©rent:', error);
-      toast.error(error.message || 'Erreur lors de la crÃ©ation de l\'adhÃ©rent');
+      console.error('❌ Erreur création adhérent:', error);
+      toast.error(error.message || 'Erreur lors de la création de l\'adhérent');
     } finally {
       setIsSubmittingMember(false);
     }
@@ -283,9 +283,9 @@ export default function BureauDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-primary-blue-50 to-primary-orange-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-orange-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
           <p className="text-slate-600">{t('bureau.loadingInterface')}</p>
         </div>
       </div>
@@ -294,7 +294,7 @@ export default function BureauDashboard() {
 
   if (!bureau) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-primary-blue-50 to-primary-orange-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
         <Card className="max-w-md border-0 shadow-xl">
           <CardHeader>
             <CardTitle className="text-center">{t('bureau.notFound')}</CardTitle>
@@ -375,22 +375,22 @@ export default function BureauDashboard() {
       case 'workers':
         return (
           <Card className="border-0 shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 border-b">
+            <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50 border-b">
               <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary-blue-600" />
+                <Users className="w-5 h-5 text-emerald-600" />
                 Gestion des Membres du Bureau
               </CardTitle>
               <div className="flex gap-2">
                 <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="border-primary-orange-300 text-primary-blue-700 hover:bg-primary-blue-50">
+                    <Button variant="outline" className="border-emerald-300 text-emerald-700 hover:bg-emerald-50">
                       <UserPlus className="w-4 h-4 mr-2" />
-                      Ajouter un AdhÃ©rent
+                      Ajouter un Adhérent
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md">
                     <DialogHeader>
-                      <DialogTitle>Ajouter un adhÃ©rent</DialogTitle>
+                      <DialogTitle>Ajouter un adhérent</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleAddMember} className="space-y-4">
                       <div className="space-y-2">
@@ -402,11 +402,11 @@ export default function BureauDashboard() {
                         <Input id="member_email" type="email" required value={memberForm.email} onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="member_phone">TÃ©lÃ©phone</Label>
+                        <Label htmlFor="member_phone">Téléphone</Label>
                         <Input id="member_phone" type="tel" value={memberForm.phone} onChange={(e) => setMemberForm({ ...memberForm, phone: e.target.value })} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="member_password">Mot de passe * (min. 8 caractÃ¨res)</Label>
+                        <Label htmlFor="member_password">Mot de passe * (min. 8 caractères)</Label>
                         <div className="relative">
                           <Input id="member_password" type={showMemberPassword ? 'text' : 'password'} required minLength={8} value={memberForm.password} onChange={(e) => setMemberForm({ ...memberForm, password: e.target.value })} />
                           <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" onClick={() => setShowMemberPassword(!showMemberPassword)}>
@@ -420,8 +420,8 @@ export default function BureauDashboard() {
                       </div>
                       <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="outline" onClick={() => setIsMemberDialogOpen(false)} disabled={isSubmittingMember}>Annuler</Button>
-                        <Button type="submit" disabled={isSubmittingMember} className="bg-primary-blue-600 hover:bg-primary-blue-700 shadow-lg shadow-primary-orange-600/40">
-                          {isSubmittingMember ? 'CrÃ©ation...' : 'CrÃ©er l\'adhÃ©rent'}
+                        <Button type="submit" disabled={isSubmittingMember} className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40">
+                          {isSubmittingMember ? 'Création...' : 'Créer l\'adhérent'}
                         </Button>
                       </div>
                     </form>
@@ -429,7 +429,7 @@ export default function BureauDashboard() {
                 </Dialog>
                 <Dialog open={isWorkerDialogOpen} onOpenChange={setIsWorkerDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-primary-blue-600 hover:bg-primary-blue-700 shadow-lg shadow-primary-orange-600/40">
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40">
                       <Plus className="w-4 h-4 mr-2" />
                       Ajouter un Membre Bureau
                     </Button>
@@ -460,7 +460,7 @@ export default function BureauDashboard() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="telephone">TÃ©lÃ©phone</Label>
+                        <Label htmlFor="telephone">Téléphone</Label>
                         <Input
                           id="telephone"
                           type="tel"
@@ -470,15 +470,15 @@ export default function BureauDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="access_level">Niveau d'accÃ¨s</Label>
+                      <Label htmlFor="access_level">Niveau d'accès</Label>
                       <Select value={workerForm.access_level} onValueChange={(val) => setWorkerForm({ ...workerForm, access_level: val })}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="limited">LimitÃ©</SelectItem>
+                          <SelectItem value="limited">Limité</SelectItem>
                           <SelectItem value="standard">Standard</SelectItem>
-                          <SelectItem value="advanced">AvancÃ©</SelectItem>
+                          <SelectItem value="advanced">Avancé</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -506,7 +506,7 @@ export default function BureauDashboard() {
                       <Button type="button" variant="outline" onClick={() => setIsWorkerDialogOpen(false)} disabled={isSubmittingWorker}>
                         Annuler
                       </Button>
-                      <Button type="submit" disabled={isSubmittingWorker} className="bg-primary-blue-600 hover:bg-primary-blue-700 shadow-lg shadow-primary-orange-600/40">
+                      <Button type="submit" disabled={isSubmittingWorker} className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40">
                         {isSubmittingWorker ? 'Ajout en cours...' : 'Ajouter'}
                       </Button>
                     </div>
@@ -522,16 +522,16 @@ export default function BureauDashboard() {
                     <div>
                       <h3 className="font-medium text-slate-800">{worker.nom}</h3>
                       <p className="text-sm text-slate-500">{worker.email}</p>
-                      <p className="text-xs text-slate-400">AccÃ¨s: {worker.access_level}</p>
+                      <p className="text-xs text-slate-400">Accès: {worker.access_level}</p>
                     </div>
-                    <Badge className={worker.is_active ? "bg-primary-blue-100 text-primary-blue-700" : "bg-slate-100 text-slate-600"}>
-                      {worker.is_active ? 'â— Actif' : 'â—‹ Inactif'}
+                    <Badge className={worker.is_active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}>
+                      {worker.is_active ? '● Actif' : '○ Inactif'}
                     </Badge>
                   </div>
                 ))}
                 {workers.length === 0 && (
                   <div className="text-center py-12 text-slate-500">
-                    Aucun membre du bureau ajoutÃ©
+                    Aucun membre du bureau ajouté
                   </div>
                 )}
               </div>
@@ -633,10 +633,10 @@ export default function BureauDashboard() {
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-slate-500 uppercase">Statut</p>
-                    <Badge className="bg-primary-blue-100 text-primary-blue-700">{bureau?.status}</Badge>
+                    <Badge className="bg-emerald-100 text-emerald-700">{bureau?.status}</Badge>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500 uppercase">PrÃ©fecture</p>
+                    <p className="text-xs text-slate-500 uppercase">Préfecture</p>
                     <p className="font-semibold text-slate-800">{bureau?.prefecture}</p>
                   </div>
                   <div className="space-y-1">
@@ -644,7 +644,7 @@ export default function BureauDashboard() {
                     <p className="font-semibold text-slate-800">{bureau?.commune}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500 uppercase">PrÃ©sident</p>
+                    <p className="text-xs text-slate-500 uppercase">Président</p>
                     <p className="font-semibold text-slate-800">{bureau?.president_name}</p>
                   </div>
                   <div className="space-y-1">
@@ -655,20 +655,20 @@ export default function BureauDashboard() {
               </CardContent>
             </Card>
 
-            {/* Token d'accÃ¨s */}
+            {/* Token d'accès */}
             <Card className="border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 border-b">
                 <CardTitle className="flex items-center gap-2">
                   <Lock className="w-5 h-5 text-amber-600" />
-                  AccÃ¨s & SÃ©curitÃ©
+                  Accès & Sécurité
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 <div>
-                  <Label className="text-sm text-slate-500">Token d'accÃ¨s permanent</Label>
+                  <Label className="text-sm text-slate-500">Token d'accès permanent</Label>
                   <div className="flex gap-2 mt-2">
                     <Input 
-                      value={showToken ? (bureau?.access_token || '') : 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢'} 
+                      value={showToken ? (bureau?.access_token || '') : '••••••••••••••••••••••••'} 
                       readOnly 
                       className="font-mono text-xs" 
                     />
@@ -684,7 +684,7 @@ export default function BureauDashboard() {
                       variant="outline" 
                       onClick={() => {
                         navigator.clipboard.writeText(bureau?.access_token || '');
-                        toast.success('Token copiÃ© !');
+                        toast.success('Token copié !');
                       }}
                     >
                       <Copy className="w-4 h-4" />
@@ -692,7 +692,7 @@ export default function BureauDashboard() {
                   </div>
                   <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
-                    Ne partagez jamais ce token. Il donne un accÃ¨s complet Ã  votre bureau.
+                    Ne partagez jamais ce token. Il donne un accès complet à votre bureau.
                   </p>
                 </div>
               </CardContent>
@@ -723,18 +723,18 @@ export default function BureauDashboard() {
               </Card>
 
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 border-b">
+                <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b">
                   <CardTitle className="flex items-center gap-2 text-base">
-                    <Lock className="w-5 h-5 text-primary-orange-600" />
+                    <Lock className="w-5 h-5 text-green-600" />
                     Modifier le mot de passe
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
                   <p className="text-sm text-slate-500">
-                    Changez votre mot de passe pour sÃ©curiser votre compte
+                    Changez votre mot de passe pour sécuriser votre compte
                   </p>
                   <Button 
-                    className="w-full bg-gradient-to-r from-primary-blue-600 to-primary-orange-600"
+                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-600"
                     onClick={() => setShowPasswordDialog(true)}
                   >
                     Changer le mot de passe

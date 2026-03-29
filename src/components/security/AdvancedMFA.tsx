@@ -1,5 +1,5 @@
 /**
- * MFA AVANCÃ‰
+ * MFA AVANCÉ
  * Support YubiKey, FIDO2, authenticator apps
  */
 
@@ -25,7 +25,7 @@ interface MFAMethod {
 const mfaMethods: MFAMethod[] = [
   {
     id: 'yubikey',
-    name: 'YubiKey / ClÃ© matÃ©rielle',
+    name: 'YubiKey / Clé matérielle',
     type: 'yubikey',
     icon: Usb,
     enabled: true,
@@ -52,7 +52,7 @@ const mfaMethods: MFAMethod[] = [
   },
   {
     id: 'sms',
-    name: 'SMS (Non recommandÃ©)',
+    name: 'SMS (Non recommandé)',
     type: 'sms',
     icon: Smartphone,
     enabled: false,
@@ -66,7 +66,7 @@ export function AdvancedMFA() {
   const [mfaMethods, setMfaMethods] = useState<MFAMethod[]>([
     {
       id: 'yubikey',
-      name: 'YubiKey / ClÃ© matÃ©rielle',
+      name: 'YubiKey / Clé matérielle',
       type: 'yubikey',
       icon: Usb,
       enabled: true,
@@ -93,7 +93,7 @@ export function AdvancedMFA() {
     },
     {
       id: 'sms',
-      name: 'SMS (Non recommandÃ©)',
+      name: 'SMS (Non recommandé)',
       type: 'sms',
       icon: Smartphone,
       enabled: false,
@@ -105,11 +105,11 @@ export function AdvancedMFA() {
   const getSecurityBadge = (security: string) => {
     switch (security) {
       case 'high':
-        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 text-white">Haute sÃ©curitÃ©</Badge>;
+        return <Badge className="bg-green-500 text-white">Haute sécurité</Badge>;
       case 'medium':
-        return <Badge className="bg-yellow-500 text-white">SÃ©curitÃ© moyenne</Badge>;
+        return <Badge className="bg-yellow-500 text-white">Sécurité moyenne</Badge>;
       case 'low':
-        return <Badge className="bg-red-500 text-white">SÃ©curitÃ© faible</Badge>;
+        return <Badge className="bg-red-500 text-white">Sécurité faible</Badge>;
     }
   };
 
@@ -117,7 +117,7 @@ export function AdvancedMFA() {
     const method = mfaMethods.find(m => m.id === methodId);
     if (!method) return;
 
-    // Mettre Ã  jour l'Ã©tat local
+    // Mettre à jour l'état local
     const updatedMethods = mfaMethods.map(m => 
       m.id === methodId ? { ...m, enabled: !m.enabled } : m
     );
@@ -125,10 +125,10 @@ export function AdvancedMFA() {
 
     toast.success(
       method.enabled 
-        ? `${method.name} dÃ©sactivÃ©` 
-        : `${method.name} activÃ© avec succÃ¨s`,
+        ? `${method.name} désactivé` 
+        : `${method.name} activé avec succès`,
       {
-        description: 'Configuration MFA mise Ã  jour'
+        description: 'Configuration MFA mise à jour'
       }
     );
   };
@@ -138,7 +138,7 @@ export function AdvancedMFA() {
     if (!method) return;
 
     toast.info(`Configuration de ${method.name}`, {
-      description: 'FonctionnalitÃ© en cours de dÃ©veloppement'
+      description: 'Fonctionnalité en cours de développement'
     });
   };
 
@@ -147,10 +147,10 @@ export function AdvancedMFA() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-primary" />
-          Authentification Multi-Facteurs AvancÃ©e
+          Authentification Multi-Facteurs Avancée
         </CardTitle>
         <CardDescription>
-          Protection renforcÃ©e avec YubiKey et FIDO2
+          Protection renforcée avec YubiKey et FIDO2
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -172,16 +172,16 @@ export function AdvancedMFA() {
                     </div>
                     {getSecurityBadge(method.security)}
                     <p className="text-sm text-muted-foreground mt-2">
-                      {method.type === 'yubikey' && 'ClÃ© de sÃ©curitÃ© matÃ©rielle USB/NFC'}
-                      {method.type === 'webauthn' && 'Authentification biomÃ©trique ou PIN'}
-                      {method.type === 'totp' && 'Code Ã  6 chiffres gÃ©nÃ©rÃ© par application'}
-                      {method.type === 'sms' && 'Code envoyÃ© par SMS (vulnÃ©rable)'}
+                      {method.type === 'yubikey' && 'Clé de sécurité matérielle USB/NFC'}
+                      {method.type === 'webauthn' && 'Authentification biométrique ou PIN'}
+                      {method.type === 'totp' && 'Code à 6 chiffres généré par application'}
+                      {method.type === 'sms' && 'Code envoyé par SMS (vulnérable)'}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {method.enabled && (
-                    <CheckCircle2 className="w-5 h-5 text-primary-orange-500" />
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
                   )}
                   <Button 
                     variant={method.enabled ? "outline" : "default"}
@@ -196,7 +196,7 @@ export function AdvancedMFA() {
                       size="sm"
                       onClick={() => handleToggleMFA(method.id)}
                     >
-                      DÃ©sactiver
+                      Désactiver
                     </Button>
                   )}
                 </div>
@@ -206,9 +206,9 @@ export function AdvancedMFA() {
         })}
 
         <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-          <p className="text-sm font-medium mb-2">ðŸ’¡ Recommandation</p>
+          <p className="text-sm font-medium mb-2">💡 Recommandation</p>
           <p className="text-sm text-muted-foreground">
-            Pour une sÃ©curitÃ© maximale, utilisez une YubiKey ou une clÃ© FIDO2 comme mÃ©thode primaire. 
+            Pour une sécurité maximale, utilisez une YubiKey ou une clé FIDO2 comme méthode primaire. 
             Conservez l'authenticator app comme backup.
           </p>
         </div>

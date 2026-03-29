@@ -1,7 +1,7 @@
 /**
- * TABLEAU DE BORD CONFORMITÃ‰
+ * TABLEAU DE BORD CONFORMITÉ
  * ISO 27001, PCI-DSS, SOC 2, GDPR
- * Certifications de sÃ©curitÃ© entreprise
+ * Certifications de sécurité entreprise
  */
 
 import { useState, useEffect } from 'react';
@@ -63,7 +63,7 @@ export function ComplianceDashboard() {
       if (auditRes.data) setAudits(auditRes.data);
     } catch (error) {
       console.error('Error loading compliance data:', error);
-      toast.error('Erreur chargement donnÃ©es conformitÃ©');
+      toast.error('Erreur chargement données conformité');
     } finally {
       setLoading(false);
     }
@@ -75,19 +75,19 @@ export function ComplianceDashboard() {
 
   const handleRefresh = () => {
     loadData();
-    toast.success('DonnÃ©es de conformitÃ© actualisÃ©es');
+    toast.success('Données de conformité actualisées');
   };
 
   const getStatusBadge = (status: Certification['status']) => {
     switch (status) {
       case 'certified':
-        return <Badge className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-500"><CheckCircle className="w-3 h-3 mr-1" />CertifiÃ©</Badge>;
+        return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" />Certifié</Badge>;
       case 'in_progress':
         return <Badge className="bg-blue-500"><Clock className="w-3 h-3 mr-1" />En cours</Badge>;
       case 'planned':
-        return <Badge variant="outline"><Calendar className="w-3 h-3 mr-1" />PlanifiÃ©</Badge>;
+        return <Badge variant="outline"><Calendar className="w-3 h-3 mr-1" />Planifié</Badge>;
       case 'expired':
-        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />ExpirÃ©</Badge>;
+        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />Expiré</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -95,11 +95,11 @@ export function ComplianceDashboard() {
 
   const getCertIcon = (type: string) => {
     switch (type) {
-      case 'iso27001': return 'ðŸ”';
-      case 'pci_dss': return 'ðŸ’³';
-      case 'soc2': return 'ðŸ›¡ï¸';
-      case 'gdpr': return 'ðŸ‡ªðŸ‡º';
-      default: return 'ðŸ“‹';
+      case 'iso27001': return '🔐';
+      case 'pci_dss': return '💳';
+      case 'soc2': return '🛡️';
+      case 'gdpr': return '🇪🇺';
+      default: return '📋';
     }
   };
 
@@ -118,10 +118,10 @@ export function ComplianceDashboard() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Award className="w-6 h-6 text-primary" />
-                Certifications de ConformitÃ©
+                Certifications de Conformité
               </CardTitle>
               <CardDescription>
-                Normes ISO 27001, PCI-DSS, SOC 2, GDPR - Standards de sÃ©curitÃ© internationaux
+                Normes ISO 27001, PCI-DSS, SOC 2, GDPR - Standards de sécurité internationaux
               </CardDescription>
             </div>
             <Button 
@@ -138,10 +138,10 @@ export function ComplianceDashboard() {
           <div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
             <div className="flex items-center gap-2 mb-2">
               <Shield className="w-5 h-5 text-blue-600" />
-              <span className="font-semibold">Programme de ConformitÃ© Actif</span>
+              <span className="font-semibold">Programme de Conformité Actif</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {certifiedCount} certifications actives â€¢ {inProgressCount} en cours â€¢ 
+              {certifiedCount} certifications actives • {inProgressCount} en cours • 
               Progression globale: {avgProgress.toFixed(0)}%
             </p>
             <Progress value={avgProgress} className="h-2 mt-2" />
@@ -149,15 +149,15 @@ export function ComplianceDashboard() {
         </CardContent>
       </Card>
 
-      {/* MÃ©triques */}
+      {/* Métriques */}
       <ResponsiveGrid mobileCols={2} tabletCols={4} desktopCols={4} gap="md">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-8 h-8 text-primary-orange-500" />
+              <CheckCircle className="w-8 h-8 text-green-500" />
               <div>
                 <div className="text-2xl font-bold">{certifiedCount}</div>
-                <div className="text-xs text-muted-foreground">CertifiÃ©es</div>
+                <div className="text-xs text-muted-foreground">Certifiées</div>
               </div>
             </div>
           </CardContent>
@@ -202,10 +202,10 @@ export function ComplianceDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5" />
-            Ã‰tat des Certifications
+            État des Certifications
           </CardTitle>
           <CardDescription>
-            ConformitÃ© aux normes internationales de sÃ©curitÃ© de l'information
+            Conformité aux normes internationales de sécurité de l'information
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -249,7 +249,7 @@ export function ComplianceDashboard() {
                   )}
                   {cert.valid_from && (
                     <div className="flex items-center gap-1">
-                      <CheckCircle className="w-4 h-4 text-primary-orange-500" />
+                      <CheckCircle className="w-4 h-4 text-green-500" />
                       <span>Obtenue le {new Date(cert.valid_from).toLocaleDateString('fr-FR')}</span>
                     </div>
                   )}
@@ -273,7 +273,7 @@ export function ComplianceDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileCheck className="w-5 h-5" />
-              Audits de ConformitÃ©
+              Audits de Conformité
             </CardTitle>
             <CardDescription>
               Historique et planification des audits
@@ -287,21 +287,21 @@ export function ComplianceDashboard() {
                     <div>
                       <h4 className="font-medium">{audit.audit_type}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {audit.auditor_company && `${audit.auditor_company} â€¢ `}
+                        {audit.auditor_company && `${audit.auditor_company} • `}
                         {audit.scheduled_date && new Date(audit.scheduled_date).toLocaleDateString('fr-FR')}
                       </p>
                     </div>
                     <Badge variant={audit.status === 'completed' ? 'default' : 'outline'}>
-                      {audit.status === 'completed' ? 'TerminÃ©' : 
-                       audit.status === 'scheduled' ? 'PlanifiÃ©' : 
+                      {audit.status === 'completed' ? 'Terminé' : 
+                       audit.status === 'scheduled' ? 'Planifié' : 
                        audit.status === 'in_progress' ? 'En cours' : audit.status}
                     </Badge>
                   </div>
                   {audit.overall_score && (
                     <div className="mt-2 text-sm">
-                      Score: <span className="font-medium text-primary-orange-600">{audit.overall_score}%</span>
+                      Score: <span className="font-medium text-green-600">{audit.overall_score}%</span>
                       {audit.non_conformities > 0 && (
-                        <span className="ml-2 text-red-500">â€¢ {audit.non_conformities} non-conformitÃ©s</span>
+                        <span className="ml-2 text-red-500">• {audit.non_conformities} non-conformités</span>
                       )}
                     </div>
                   )}
@@ -318,7 +318,7 @@ export function ComplianceDashboard() {
           <div className="flex flex-wrap gap-2">
             <Button variant="outline">
               <FileCheck className="w-4 h-4 mr-2" />
-              TÃ©lÃ©charger les rapports
+              Télécharger les rapports
             </Button>
             <Button variant="outline">
               <Calendar className="w-4 h-4 mr-2" />

@@ -94,7 +94,7 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
       if (affiliateCode) {
         url += `?ref=${affiliateCode}`;
       }
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.open(url, '_blank');
     }
   };
 
@@ -105,9 +105,9 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
       if (affiliateCode) {
         url += `&ref=${affiliateCode}`;
       }
-      window.open(url, '_blank', 'noopener,noreferrer');
+      window.open(url, '_blank');
     } else if (airline?.website_url) {
-      window.open(airline.website_url, '_blank', 'noopener,noreferrer');
+      window.open(airline.website_url, '_blank');
     }
     toast.info('Redirection vers le site partenaire...');
   };

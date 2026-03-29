@@ -1,6 +1,6 @@
 /**
- * SUIVI DÃ‰TAILLÃ‰ D'UNE EXPÃ‰DITION
- * Vue complÃ¨te avec timeline et mises Ã  jour en temps rÃ©el
+ * SUIVI DÉTAILLÉ D'UNE EXPÉDITION
+ * Vue complète avec timeline et mises à jour en temps réel
  */
 
 import { useEffect, useState } from 'react';
@@ -58,7 +58,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
   useEffect(() => {
     loadShipmentData();
     
-    // Configuration du temps rÃ©el pour les mises Ã  jour de statut
+    // Configuration du temps réel pour les mises à jour de statut
     const channel = supabase
       .channel('shipment-updates')
       .on(
@@ -73,7 +73,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
           console.log('Shipment updated:', payload);
           if (payload.new) {
             setShipment(payload.new as any);
-            toast.success('ðŸ“¦ Statut mis Ã  jour en temps rÃ©el');
+            toast.success('📦 Statut mis à jour en temps réel');
           }
         }
       )
@@ -89,7 +89,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
           console.log('New tracking event:', payload);
           if (payload.new) {
             setTrackingHistory(prev => [payload.new as any, ...prev]);
-            toast.info('ðŸ—ºï¸ Nouvelle mise Ã  jour de position');
+            toast.info('🗺️ Nouvelle mise à jour de position');
           }
         }
       )
@@ -104,7 +104,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
     try {
       setLoading(true);
 
-      // Charger les dÃ©tails de l'expÃ©dition
+      // Charger les détails de l'expédition
       const { data: shipmentData, error: shipmentError } = await supabase
         .from('shipments')
         .select('*')
@@ -125,7 +125,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
       setTrackingHistory(trackingData as any || []);
     } catch (error) {
       console.error('Error loading shipment:', error);
-      toast.error('Erreur lors du chargement des donnÃ©es');
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -135,13 +135,13 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
     setRefreshing(true);
     await loadShipmentData();
     setRefreshing(false);
-    toast.success('DonnÃ©es actualisÃ©es');
+    toast.success('Données actualisées');
   };
 
   const copyTrackingNumber = () => {
     if (shipment) {
       navigator.clipboard.writeText(shipment.tracking_number);
-      toast.success('NumÃ©ro de suivi copiÃ©');
+      toast.success('Numéro de suivi copié');
     }
   };
 
@@ -150,7 +150,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
       case 'created': return 'bg-blue-100 text-blue-800';
       case 'picked_up': return 'bg-purple-100 text-purple-800';
       case 'in_transit': return 'bg-orange-100 text-orange-800';
-      case 'delivered': return 'bg-primary-orange-100 text-primary-orange-800';
+      case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -158,11 +158,11 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'created': return 'CrÃ©Ã©e';
+      case 'created': return 'Créée';
       case 'picked_up': return 'Pris en charge';
       case 'in_transit': return 'En transit';
-      case 'delivered': return 'LivrÃ©';
-      case 'cancelled': return 'AnnulÃ©';
+      case 'delivered': return 'Livré';
+      case 'cancelled': return 'Annulé';
       default: return status;
     }
   };
@@ -204,7 +204,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
             <div className="space-y-1">
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-orange-600" />
-                Suivi d'expÃ©dition
+                Suivi d'expédition
               </CardTitle>
               <div className="flex items-center gap-2">
                 <code className="text-lg font-mono font-bold text-orange-900">
@@ -227,11 +227,11 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* ExpÃ©diteur */}
+            {/* Expéditeur */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <User className="h-4 w-4" />
-                ExpÃ©diteur
+                Expéditeur
               </div>
               <div className="space-y-1">
                 <p className="font-medium">{shipment.sender_name}</p>
@@ -266,7 +266,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
             </div>
           </div>
 
-          {/* DÃ©tails du colis */}
+          {/* Détails du colis */}
           <div className="mt-6 pt-6 border-t">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
@@ -274,15 +274,15 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
                 <p className="font-medium">{shipment.weight} kg</p>
               </div>
               <div>
-                <p className="text-muted-foreground">PiÃ¨ces</p>
+                <p className="text-muted-foreground">Pièces</p>
                 <p className="font-medium">{shipment.pieces_count}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">CrÃ©Ã© le</p>
+                <p className="text-muted-foreground">Créé le</p>
                 <p className="font-medium">{format(new Date(shipment.created_at), 'dd/MM/yyyy')}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Mis Ã  jour</p>
+                <p className="text-muted-foreground">Mis à jour</p>
                 <p className="font-medium">{format(new Date(shipment.updated_at), 'HH:mm')}</p>
               </div>
             </div>
@@ -297,7 +297,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
             <MapPin className="h-5 w-5 text-orange-600" />
             Historique de livraison
             <Badge variant="outline" className="ml-auto">
-              Mise Ã  jour en temps rÃ©el
+              Mise à jour en temps réel
             </Badge>
           </CardTitle>
         </CardHeader>
@@ -312,7 +312,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
   );
 }
 
-// Utilitaire cn dÃ©jÃ  importÃ© dans le projet
+// Utilitaire cn déjà importé dans le projet
 function cn(...classes: any[]) {
   return classes.filter(Boolean).join(' ');
 }

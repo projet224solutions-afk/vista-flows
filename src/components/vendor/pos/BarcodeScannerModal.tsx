@@ -109,7 +109,7 @@ export function BarcodeScannerModal({
         setFoundProduct(product);
         setVerificationState('found');
         
-        // VÃ©rifier si le produit a une image pour la vÃ©rification visuelle
+        // Vérifier si le produit a une image pour la vérification visuelle
         if (product.images && product.images.length > 0) {
           setVerificationState('verifying');
         } else {
@@ -117,8 +117,8 @@ export function BarcodeScannerModal({
           setVerificationState('confirmed');
         }
       } else {
-        toast.error('Produit non trouvÃ©', {
-          description: `Aucun produit avec le code-barres "${barcode}" n'a Ã©tÃ© trouvÃ©.`
+        toast.error('Produit non trouvé', {
+          description: `Aucun produit avec le code-barres "${barcode}" n'a été trouvé.`
         });
         setVerificationState('idle');
       }
@@ -130,13 +130,13 @@ export function BarcodeScannerModal({
   // Confirmation visuelle du produit
   const confirmVisualMatch = () => {
     setVerificationState('confirmed');
-    toast.success('Produit vÃ©rifiÃ© visuellement');
+    toast.success('Produit vérifié visuellement');
   };
 
   const reportVisualMismatch = () => {
     setVerificationState('mismatch');
-    toast.warning('Discordance visuelle dÃ©tectÃ©e', {
-      description: 'Veuillez vÃ©rifier le produit manuellement.'
+    toast.warning('Discordance visuelle détectée', {
+      description: 'Veuillez vérifier le produit manuellement.'
     });
   };
 
@@ -150,13 +150,13 @@ export function BarcodeScannerModal({
       onAddToCart(foundProduct, quantity);
     }
 
-    toast.success(`${foundProduct.name} ajoutÃ© au panier`, {
+    toast.success(`${foundProduct.name} ajouté au panier`, {
       description: saleType === 'carton' 
         ? `${quantity} carton(s)` 
-        : `${quantity} unitÃ©(s)`
+        : `${quantity} unité(s)`
     });
 
-    // RÃ©initialiser pour un nouveau scan
+    // Réinitialiser pour un nouveau scan
     setFoundProduct(null);
     setVerificationState('idle');
     setQuantity(1);
@@ -186,17 +186,17 @@ export function BarcodeScannerModal({
         videoRef.current.play();
       }
       
-      // Ã‰viter les toasts dupliquÃ©s
+      // Éviter les toasts dupliqués
       if (!cameraToastShown) {
         setCameraToastShown(true);
-        toast.info('CamÃ©ra activÃ©e', {
+        toast.info('Caméra activée', {
           description: 'Pointez vers le code-barres du produit',
-          id: 'camera-activated' // ID unique pour Ã©viter les doublons
+          id: 'camera-activated' // ID unique pour éviter les doublons
         });
       }
     } catch (error) {
-      console.error('Erreur accÃ¨s camÃ©ra:', error);
-      toast.error('Impossible d\'accÃ©der Ã  la camÃ©ra');
+      console.error('Erreur accès caméra:', error);
+      toast.error('Impossible d\'accéder à la caméra');
       setScanMode('select');
     }
   };
@@ -259,7 +259,7 @@ export function BarcodeScannerModal({
         {scanMode === 'select' && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Choisissez votre mÃ©thode de scan :
+              Choisissez votre méthode de scan :
             </p>
             
             <div className="grid grid-cols-1 gap-3">
@@ -282,8 +282,8 @@ export function BarcodeScannerModal({
               >
                 <Camera className="h-8 w-8 text-primary" />
                 <div className="text-center">
-                  <div className="font-semibold">CamÃ©ra tÃ©lÃ©phone / tablette</div>
-                  <div className="text-xs text-muted-foreground">Scan avec la camÃ©ra</div>
+                  <div className="font-semibold">Caméra téléphone / tablette</div>
+                  <div className="text-xs text-muted-foreground">Scan avec la caméra</div>
                 </div>
               </Button>
             </div>
@@ -299,7 +299,7 @@ export function BarcodeScannerModal({
                 size="sm" 
                 onClick={() => setScanMode('select')}
               >
-                â† Retour
+                ← Retour
               </Button>
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Usb className="h-3 w-3" />
@@ -326,7 +326,7 @@ export function BarcodeScannerModal({
                 
                 <Input
                   ref={externalInputRef}
-                  placeholder="Le code-barres apparaÃ®tra ici..."
+                  placeholder="Le code-barres apparaîtra ici..."
                   value={barcodeInput}
                   onChange={(e) => setBarcodeInput(e.target.value)}
                   className="text-center font-mono text-lg"
@@ -354,11 +354,11 @@ export function BarcodeScannerModal({
                 size="sm" 
                 onClick={() => setScanMode('select')}
               >
-                â† Retour
+                ← Retour
               </Button>
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Camera className="h-3 w-3" />
-                Mode camÃ©ra
+                Mode caméra
               </Badge>
             </div>
 
@@ -372,7 +372,7 @@ export function BarcodeScannerModal({
                 />
                 <canvas ref={canvasRef} className="hidden" />
                 
-                {/* Overlay de visÃ©e */}
+                {/* Overlay de visée */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-3/4 h-1/3 border-2 border-primary rounded-lg relative">
                     <div className="absolute -top-1 -left-1 w-4 h-4 border-t-4 border-l-4 border-primary rounded-tl" />
@@ -414,7 +414,7 @@ export function BarcodeScannerModal({
             <div className="flex items-center gap-2 mb-4">
               <Badge variant="outline" className="flex items-center gap-1 bg-amber-50 text-amber-700 border-amber-300">
                 <Eye className="h-3 w-3" />
-                VÃ©rification visuelle requise
+                Vérification visuelle requise
               </Badge>
             </div>
 
@@ -443,10 +443,10 @@ export function BarcodeScannerModal({
                       <span className="text-xl font-bold text-primary">
                         {foundProduct.price.toLocaleString()} GNF
                       </span>
-                      <span className="text-xs text-muted-foreground">/unitÃ©</span>
+                      <span className="text-xs text-muted-foreground">/unité</span>
                     </div>
                     <Badge variant="secondary" className="mt-2">
-                      Stock: {foundProduct.stock} unitÃ©s
+                      Stock: {foundProduct.stock} unités
                     </Badge>
                   </div>
                 </div>
@@ -456,7 +456,7 @@ export function BarcodeScannerModal({
                 <div className="text-center">
                   <p className="text-sm font-medium text-amber-700 mb-3">
                     <AlertTriangle className="inline h-4 w-4 mr-1" />
-                    Le produit scannÃ© correspond-il Ã  l'image ci-dessus ?
+                    Le produit scanné correspond-il à l'image ci-dessus ?
                   </p>
                   
                   <div className="flex gap-3 justify-center">
@@ -466,10 +466,10 @@ export function BarcodeScannerModal({
                       onClick={reportVisualMismatch}
                     >
                       <X className="h-4 w-4 mr-2" />
-                      Non, diffÃ©rent
+                      Non, différent
                     </Button>
                     <Button
-                      className="bg-primary-orange-600 hover:bg-primary-orange-700"
+                      className="bg-green-600 hover:bg-green-700"
                       onClick={confirmVisualMatch}
                     >
                       <Check className="h-4 w-4 mr-2" />
@@ -492,11 +492,11 @@ export function BarcodeScannerModal({
                     <AlertTriangle className="h-8 w-8 text-red-600" />
                   </div>
                   <h3 className="font-semibold text-red-700 mb-2">
-                    Discordance dÃ©tectÃ©e
+                    Discordance détectée
                   </h3>
                   <p className="text-sm text-red-600 mb-4">
-                    Le produit physique ne correspond pas Ã  l'image enregistrÃ©e.
-                    Veuillez vÃ©rifier manuellement ou rescanner.
+                    Le produit physique ne correspond pas à l'image enregistrée.
+                    Veuillez vérifier manuellement ou rescanner.
                   </p>
                   
                   <div className="flex gap-3 justify-center">
@@ -517,7 +517,7 @@ export function BarcodeScannerModal({
                       variant="secondary"
                       onClick={confirmVisualMatch}
                     >
-                      Confirmer malgrÃ© tout
+                      Confirmer malgré tout
                     </Button>
                   </div>
                 </div>
@@ -530,13 +530,13 @@ export function BarcodeScannerModal({
         {foundProduct && verificationState === 'confirmed' && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <Badge variant="outline" className="flex items-center gap-1 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-300">
+              <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 border-green-300">
                 <Check className="h-3 w-3" />
-                Produit vÃ©rifiÃ©
+                Produit vérifié
               </Badge>
             </div>
 
-            <Card className="border-2 border-primary-orange-300 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50/50">
+            <Card className="border-2 border-green-300 bg-green-50/50">
               <CardContent className="p-4">
                 <div className="flex gap-4 mb-4">
                   {/* Image produit */}
@@ -578,7 +578,7 @@ export function BarcodeScannerModal({
                       }}
                     >
                       <Package className="h-4 w-4 mr-2" />
-                      UnitÃ©
+                      Unité
                       <span className="ml-2 text-xs opacity-75">
                         {foundProduct.price.toLocaleString()} GNF
                       </span>
@@ -593,7 +593,7 @@ export function BarcodeScannerModal({
                           setQuantity(1);
                         }}
                       >
-                        ðŸ“¦ Carton
+                        📦 Carton
                         <span className="ml-2 text-xs opacity-75">
                           {(foundProduct.price_carton || foundProduct.price * (foundProduct.units_per_carton || 1)).toLocaleString()} GNF
                         </span>
@@ -603,16 +603,16 @@ export function BarcodeScannerModal({
                   
                   {saleType === 'carton' && foundProduct.units_per_carton && (
                     <p className="text-xs text-muted-foreground text-center">
-                      1 carton = {foundProduct.units_per_carton} unitÃ©s
+                      1 carton = {foundProduct.units_per_carton} unités
                     </p>
                   )}
                 </div>
 
                 <Separator className="my-4" />
 
-                {/* QuantitÃ© */}
+                {/* Quantité */}
                 <div className="space-y-3">
-                  <label className="text-sm font-medium">QuantitÃ© :</label>
+                  <label className="text-sm font-medium">Quantité :</label>
                   <div className="flex items-center justify-center gap-4">
                     <Button
                       variant="outline"
@@ -685,7 +685,7 @@ export function BarcodeScannerModal({
                     </Button>
                     
                     <Button
-                      className="flex-1 bg-primary-orange-600 hover:bg-primary-orange-700"
+                      className="flex-1 bg-green-600 hover:bg-green-700"
                       onClick={handleAddToCart}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />

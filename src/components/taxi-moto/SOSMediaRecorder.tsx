@@ -1,5 +1,5 @@
 /**
- * Composant d'enregistrement audio/vidÃ©o pour les alertes SOS
+ * Composant d'enregistrement audio/vidéo pour les alertes SOS
  * Permet au conducteur d'enregistrer et envoyer des preuves au bureau syndicat
  */
 
@@ -68,7 +68,7 @@ export function SOSMediaRecorder({
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
 
-      // Afficher le flux vidÃ©o en direct
+      // Afficher le flux vidéo en direct
       if (type === 'video' && videoPreviewRef.current) {
         videoPreviewRef.current.srcObject = stream;
         videoPreviewRef.current.play();
@@ -94,7 +94,7 @@ export function SOSMediaRecorder({
         setRecordedBlob(blob);
         setRecordingState('stopped');
 
-        // ArrÃªter le stream
+        // Arrêter le stream
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
         }
@@ -111,15 +111,15 @@ export function SOSMediaRecorder({
       mediaRecorder.start(1000); // Collecter toutes les secondes
       setRecordingState('recording');
 
-      // Timer pour la durÃ©e
+      // Timer pour la durée
       timerRef.current = setInterval(() => {
         setRecordingDuration(prev => prev + 1);
       }, 1000);
 
-      toast.success(`Enregistrement ${type === 'video' ? 'vidÃ©o' : 'audio'} dÃ©marrÃ©`);
+      toast.success(`Enregistrement ${type === 'video' ? 'vidéo' : 'audio'} démarré`);
     } catch (error) {
-      console.error('Erreur dÃ©marrage enregistrement:', error);
-      toast.error('Impossible d\'accÃ©der Ã  la camÃ©ra/micro');
+      console.error('Erreur démarrage enregistrement:', error);
+      toast.error('Impossible d\'accéder à la caméra/micro');
       setRecordingState('idle');
       setRecordingType(null);
     }
@@ -154,7 +154,7 @@ export function SOSMediaRecorder({
 
   const sendRecording = useCallback(async () => {
     if (!recordedBlob || !sosAlertId) {
-      toast.error('Aucun enregistrement Ã  envoyer');
+      toast.error('Aucun enregistrement à envoyer');
       return;
     }
 
@@ -183,7 +183,7 @@ export function SOSMediaRecorder({
         .from('documents')
         .getPublicUrl(filePath);
 
-      // Enregistrer dans la base de donnÃ©es via RPC ou insert brut
+      // Enregistrer dans la base de données via RPC ou insert brut
       const { error: insertError } = await (supabase as any)
         .from('sos_media')
         .insert({
@@ -203,13 +203,13 @@ export function SOSMediaRecorder({
       }
 
       setRecordingState('sent');
-      toast.success('ðŸŽ¥ Enregistrement envoyÃ© au Bureau Syndicat!', {
+      toast.success('🎥 Enregistrement envoyé au Bureau Syndicat!', {
         description: 'Le bureau peut maintenant visualiser votre preuve'
       });
 
       onMediaSent?.();
 
-      // Reset aprÃ¨s 3 secondes
+      // Reset après 3 secondes
       setTimeout(() => {
         cancelRecording();
       }, 3000);
@@ -248,11 +248,11 @@ export function SOSMediaRecorder({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Ã‰tat idle - Boutons de dÃ©marrage */}
+        {/* État idle - Boutons de démarrage */}
         {recordingState === 'idle' && (
           <div className="space-y-3">
             <p className="text-sm text-gray-600 text-center">
-              Capturez une preuve audio ou vidÃ©o de la situation
+              Capturez une preuve audio ou vidéo de la situation
             </p>
             <div className="grid grid-cols-2 gap-3">
               <Button
@@ -261,8 +261,8 @@ export function SOSMediaRecorder({
               >
                 <div className="flex flex-col items-center gap-2">
                   <Video className="w-7 h-7 group-hover:scale-110 transition-transform" />
-                  <span className="text-sm font-bold">VidÃ©o</span>
-                  <span className="text-[10px] opacity-80">RecommandÃ©</span>
+                  <span className="text-sm font-bold">Vidéo</span>
+                  <span className="text-[10px] opacity-80">Recommandé</span>
                 </div>
               </Button>
               <Button
@@ -278,20 +278,20 @@ export function SOSMediaRecorder({
             </div>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-xs text-blue-800 flex items-start gap-2">
-                <span className="text-blue-600 flex-shrink-0">ðŸ’¡</span>
+                <span className="text-blue-600 flex-shrink-0">💡</span>
                 <span>
-                  L'enregistrement sera envoyÃ© au Bureau Syndicat en temps rÃ©el.
-                  DÃ©crivez clairement la situation.
+                  L'enregistrement sera envoyé au Bureau Syndicat en temps réel.
+                  Décrivez clairement la situation.
                 </span>
               </p>
             </div>
           </div>
         )}
 
-        {/* Ã‰tat recording - En cours d'enregistrement */}
+        {/* État recording - En cours d'enregistrement */}
         {recordingState === 'recording' && (
           <div className="space-y-4">
-            {/* Preview vidÃ©o en direct */}
+            {/* Preview vidéo en direct */}
             {recordingType === 'video' && (
               <div className="relative rounded-xl overflow-hidden bg-black aspect-video shadow-2xl ring-4 ring-red-500/50 animate-pulse">
                 <video
@@ -307,7 +307,7 @@ export function SOSMediaRecorder({
                   </Badge>
                 </div>
                 <div className="absolute bottom-3 left-3 right-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
-                  <p className="text-white text-xs">ðŸ“¹ Filmez la situation actuelle</p>
+                  <p className="text-white text-xs">📹 Filmez la situation actuelle</p>
                 </div>
               </div>
             )}
@@ -321,11 +321,11 @@ export function SOSMediaRecorder({
                   <div className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full animate-pulse shadow-lg" />
                 </div>
                 <p className="text-orange-800 font-bold text-lg">Enregistrement audio</p>
-                <p className="text-orange-600 text-sm mt-1">Parlez clairement et dÃ©crivez la situation</p>
+                <p className="text-orange-600 text-sm mt-1">Parlez clairement et décrivez la situation</p>
               </div>
             )}
 
-            {/* Timer et contrÃ´les */}
+            {/* Timer et contrôles */}
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
@@ -349,24 +349,24 @@ export function SOSMediaRecorder({
                   size="sm"
                 >
                   <Square className="w-4 h-4 mr-1" />
-                  ArrÃªter
+                  Arrêter
                 </Button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Ã‰tat stopped - Preview et envoi */}
+        {/* État stopped - Preview et envoi */}
         {recordingState === 'stopped' && (
           <div className="space-y-4">
-            <div className="bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded-lg p-3">
-              <p className="text-sm text-primary-orange-800 font-medium flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-primary-orange-600" />
-                Enregistrement terminÃ© ! VÃ©rifiez avant d'envoyer.
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-sm text-green-800 font-medium flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                Enregistrement terminé ! Vérifiez avant d'envoyer.
               </p>
             </div>
 
-            {/* Preview vidÃ©o */}
+            {/* Preview vidéo */}
             {recordingType === 'video' && (
               <div className="relative rounded-xl overflow-hidden bg-black aspect-video shadow-xl">
                 <video
@@ -390,9 +390,9 @@ export function SOSMediaRecorder({
                 </Button>
                 <div className="absolute bottom-3 left-3 right-3 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center justify-between">
                   <span className="text-white text-sm font-medium">
-                    DurÃ©e: {formatDuration(recordingDuration)}
+                    Durée: {formatDuration(recordingDuration)}
                   </span>
-                  <Badge className="bg-white/20 text-white">PrÃ©visualisation</Badge>
+                  <Badge className="bg-white/20 text-white">Prévisualisation</Badge>
                 </div>
               </div>
             )}
@@ -406,7 +406,7 @@ export function SOSMediaRecorder({
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-orange-900">Enregistrement audio</p>
-                    <p className="text-sm text-orange-600">DurÃ©e: {formatDuration(recordingDuration)}</p>
+                    <p className="text-sm text-orange-600">Durée: {formatDuration(recordingDuration)}</p>
                   </div>
                 </div>
                 <audio
@@ -430,7 +430,7 @@ export function SOSMediaRecorder({
               </Button>
               <Button
                 onClick={sendRecording}
-                className="flex-1 bg-gradient-to-r from-primary-blue-600 to-primary-orange-700 hover:from-primary-blue-700 hover:to-primary-orange-800 text-white font-bold shadow-lg hover:shadow-xl transition-all"
+                className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold shadow-lg hover:shadow-xl transition-all"
               >
                 <Send className="w-4 h-4 mr-2" />
                 Envoyer au Bureau
@@ -439,7 +439,7 @@ export function SOSMediaRecorder({
           </div>
         )}
 
-        {/* Ã‰tat uploading */}
+        {/* État uploading */}
         {recordingState === 'uploading' && (
           <div className="flex flex-col items-center justify-center py-10 space-y-4">
             <div className="relative">
@@ -449,7 +449,7 @@ export function SOSMediaRecorder({
             <div className="text-center space-y-1">
               <p className="text-lg font-bold text-blue-900">Envoi en cours...</p>
               <p className="text-sm text-blue-600">
-                Transmission sÃ©curisÃ©e vers le Bureau Syndicat
+                Transmission sécurisée vers le Bureau Syndicat
               </p>
             </div>
             <div className="w-full max-w-xs bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -458,21 +458,21 @@ export function SOSMediaRecorder({
           </div>
         )}
 
-        {/* Ã‰tat sent */}
+        {/* État sent */}
         {recordingState === 'sent' && (
           <div className="flex flex-col items-center justify-center py-10 space-y-4">
             <div className="relative">
-              <CheckCircle className="w-16 h-16 text-primary-orange-600" />
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/20 rounded-full animate-ping" />
+              <CheckCircle className="w-16 h-16 text-green-600" />
+              <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
             </div>
             <div className="text-center space-y-2">
-              <p className="text-xl font-bold text-primary-orange-800">EnvoyÃ© avec succÃ¨s!</p>
-              <p className="text-sm text-primary-orange-600">
-                Le Bureau Syndicat a reÃ§u votre enregistrement
+              <p className="text-xl font-bold text-green-800">Envoyé avec succès!</p>
+              <p className="text-sm text-green-600">
+                Le Bureau Syndicat a reçu votre enregistrement
               </p>
             </div>
-            <Badge className="bg-primary-orange-100 text-primary-orange-800 border-2 border-primary-orange-300 px-4 py-2">
-              âœ“ Preuve enregistrÃ©e
+            <Badge className="bg-green-100 text-green-800 border-2 border-green-300 px-4 py-2">
+              ✓ Preuve enregistrée
             </Badge>
           </div>
         )}

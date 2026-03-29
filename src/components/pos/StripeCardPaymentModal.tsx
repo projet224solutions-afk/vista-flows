@@ -1,10 +1,10 @@
 /**
  * STRIPE CARD PAYMENT MODAL - Modal de paiement carte POS
- * Utilise Stripe Elements pour un paiement sÃ©curisÃ©
+ * Utilise Stripe Elements pour un paiement sécurisé
  *
  * LOGIQUE MARKETPLACE:
  * - Le client paye (montant produit + commission)
- * - Le vendeur reÃ§oit le montant produit (net vendeur)
+ * - Le vendeur reçoit le montant produit (net vendeur)
  */
 
 import React, { useEffect, useState } from 'react';
@@ -42,37 +42,37 @@ interface StripeCardPaymentModalProps {
   onError: (error: string) => void;
 }
 
-// ClÃ© publique Stripe (variable d'environnement obligatoire)
+// Clé publique Stripe (variable d'environnement obligatoire)
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 // Charger Stripe une seule fois
 let stripePromise: Promise<Stripe | null> | null = null;
 
 /**
- * VÃ©rifie si l'app est en mode hors ligne
+ * Vérifie si l'app est en mode hors ligne
  */
 const isOffline = (): boolean => {
   return typeof navigator !== 'undefined' && !navigator.onLine;
 };
 
 const getStripe = async (): Promise<Stripe | null> => {
-  // VÃ©rifier mode offline avant de charger Stripe
+  // Vérifier mode offline avant de charger Stripe
   if (isOffline()) {
-    console.warn('âš ï¸ Mode hors ligne dÃ©tectÃ©, Stripe non disponible');
+    console.warn('⚠️ Mode hors ligne détecté, Stripe non disponible');
     return null;
   }
 
   if (!STRIPE_PUBLISHABLE_KEY) {
-    console.error('âŒ [STRIPE LOAD FAIL] VITE_STRIPE_PUBLISHABLE_KEY is not set');
+    console.error('❌ [STRIPE LOAD FAIL] VITE_STRIPE_PUBLISHABLE_KEY is not set');
     return null;
   }
   
   if (!stripePromise) {
-    console.log('ðŸ”„ [STRIPE LOAD START]');
+    console.log('🔄 [STRIPE LOAD START]');
     try {
       stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
     } catch (error) {
-      console.error('âŒ [STRIPE LOAD FAIL]', error);
+      console.error('❌ [STRIPE LOAD FAIL]', error);
       stripePromise = null;
       return null;
     }
@@ -115,7 +115,7 @@ function PaymentForm({
     e.preventDefault();
 
     if (!stripe || !elements) {
-      setError("Stripe n'est pas chargÃ©. Veuillez rafraÃ®chir la page.");
+      setError("Stripe n'est pas chargé. Veuillez rafraîchir la page.");
       return;
     }
 
@@ -134,14 +134,14 @@ function PaymentForm({
       if (confirmError) {
         setError(confirmError.message || 'Erreur de paiement');
         onError(confirmError.message || 'Erreur de paiement');
-        toast.error('Paiement refusÃ©', {
+        toast.error('Paiement refusé', {
           description: confirmError.message,
         });
       } else if (paymentIntent) {
         if (paymentIntent.status === 'succeeded') {
           setSucceeded(true);
-          toast.success('Paiement acceptÃ©!', {
-            description: `${formatAmount(totalAmount)} encaissÃ©`,
+          toast.success('Paiement accepté!', {
+            description: `${formatAmount(totalAmount)} encaissé`,
           });
           onSuccess(paymentIntent.id);
         } else if (paymentIntent.status === 'processing') {
@@ -163,14 +163,14 @@ function PaymentForm({
     return (
       <div className="text-center space-y-4 py-8">
         <div className="flex justify-center">
-          <div className="rounded-full bg-primary-orange-100 p-4">
-            <CheckCircle2 className="w-16 h-16 text-primary-orange-600" />
+          <div className="rounded-full bg-green-100 p-4">
+            <CheckCircle2 className="w-16 h-16 text-green-600" />
           </div>
         </div>
         <div>
-          <h3 className="text-2xl font-bold text-primary-orange-600">Paiement rÃ©ussi!</h3>
+          <h3 className="text-2xl font-bold text-green-600">Paiement réussi!</h3>
           <p className="text-muted-foreground mt-2">
-            <strong>{formatAmount(totalAmount)}</strong> encaissÃ©
+            <strong>{formatAmount(totalAmount)}</strong> encaissé
           </p>
           <p className="text-sm text-muted-foreground mt-1">
             Montant net vendeur: <strong>{formatAmount(sellerNetAmount)}</strong>
@@ -199,11 +199,11 @@ function PaymentForm({
               </div>
             </div>
             <div className="flex justify-between text-lg font-bold">
-              <span>Total Ã  payer</span>
+              <span>Total à payer</span>
               <span className="text-primary">{formatAmount(totalAmount)}</span>
             </div>
             <div className="text-xs text-muted-foreground pt-1">
-              âœ… Le vendeur recevra {formatAmount(sellerNetAmount)} net
+              ✅ Le vendeur recevra {formatAmount(sellerNetAmount)} net
             </div>
           </div>
         </CardContent>
@@ -214,7 +214,7 @@ function PaymentForm({
         <div>
           <p className="font-medium text-blue-700 dark:text-blue-300">Logique Marketplace</p>
           <p className="mt-1">
-            Le client paye le total (produit + commission). Le vendeur reÃ§oit le montant produit sur son wallet interne aprÃ¨s confirmation.
+            Le client paye le total (produit + commission). Le vendeur reçoit le montant produit sur son wallet interne après confirmation.
           </p>
         </div>
       </div>
@@ -242,8 +242,8 @@ function PaymentForm({
       <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
         <Shield className="w-4 h-4 mt-0.5" />
         <div>
-          <p className="font-medium">Paiement 100% sÃ©curisÃ©</p>
-          <p className="mt-1">Cryptage SSL. Compatible 3D Secure. DonnÃ©es protÃ©gÃ©es par Stripe.</p>
+          <p className="font-medium">Paiement 100% sécurisé</p>
+          <p className="mt-1">Cryptage SSL. Compatible 3D Secure. Données protégées par Stripe.</p>
         </div>
       </div>
 
@@ -267,7 +267,7 @@ function PaymentForm({
       </div>
 
       <div className="flex items-center justify-center gap-3 pt-2">
-        <span className="text-xs text-muted-foreground">Cartes acceptÃ©es:</span>
+        <span className="text-xs text-muted-foreground">Cartes acceptées:</span>
         <div className="flex gap-2">
           <div className="w-10 h-6 bg-gradient-to-r from-blue-600 to-blue-400 rounded flex items-center justify-center text-white text-[8px] font-bold">
             VISA
@@ -309,7 +309,7 @@ export function StripeCardPaymentModal({
     totalAmount: amount,
   });
 
-  // âœ… Charger Stripe UNE SEULE FOIS au montage
+  // ✅ Charger Stripe UNE SEULE FOIS au montage
   useEffect(() => {
     const loadStripeInstance = async () => {
       if (isOffline()) return;
@@ -321,11 +321,11 @@ export function StripeCardPaymentModal({
     loadStripeInstance();
   }, []);
 
-  // âœ… Initialiser le paiement seulement quand le modal s'ouvre avec un nouveau orderId
+  // ✅ Initialiser le paiement seulement quand le modal s'ouvre avec un nouveau orderId
   useEffect(() => {
     if (!isOpen || !orderId) return;
     
-    // Ã‰viter la rÃ©initialisation si on a dÃ©jÃ  un clientSecret pour cette commande
+    // Éviter la réinitialisation si on a déjà un clientSecret pour cette commande
     if (clientSecret) return;
 
     const initPayment = async () => {
@@ -333,15 +333,15 @@ export function StripeCardPaymentModal({
       setError(null);
 
       try {
-        // VÃ©rifier mode offline d'abord
+        // Vérifier mode offline d'abord
         if (isOffline()) {
-          throw new Error('Mode hors ligne - paiement indisponible. Veuillez vous reconnecter Ã  Internet.');
+          throw new Error('Mode hors ligne - paiement indisponible. Veuillez vous reconnecter à Internet.');
         }
         
         if (!stripe) {
           const stripeInstance = await getStripe();
           if (!stripeInstance) {
-            throw new Error('Impossible de charger Stripe. VÃ©rifiez votre connexion Internet.');
+            throw new Error('Impossible de charger Stripe. Vérifiez votre connexion Internet.');
           }
           setStripe(stripeInstance);
         }
@@ -358,7 +358,7 @@ export function StripeCardPaymentModal({
         });
 
         if (fnError || !data?.success) {
-          throw new Error(data?.error || fnError?.message || 'Erreur crÃ©ation paiement');
+          throw new Error(data?.error || fnError?.message || 'Erreur création paiement');
         }
 
         setClientSecret(data.clientSecret);
@@ -371,7 +371,7 @@ export function StripeCardPaymentModal({
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Erreur inconnue';
-        console.error('âŒ Payment init error:', message);
+        console.error('❌ Payment init error:', message);
         setError(message);
         onError(message);
       } finally {
@@ -397,7 +397,7 @@ export function StripeCardPaymentModal({
             <Shield className="w-5 h-5 text-primary" />
             <DialogTitle>Paiement par carte</DialogTitle>
           </div>
-          <DialogDescription>Paiement sÃ©curisÃ© via Stripe</DialogDescription>
+          <DialogDescription>Paiement sécurisé via Stripe</DialogDescription>
         </DialogHeader>
 
         {loading && (

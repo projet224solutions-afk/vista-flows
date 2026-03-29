@@ -12,18 +12,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Smartphone, Monitor, Tablet, Download, CheckCircle,
   Crown, Shield, Zap, ArrowRight, ExternalLink,
-  Mail, Phone, User, Calendar, Sparkles
+  Mail, Phone, User, Calendar
 } from "lucide-react";
 import { useUserActivation } from "@/hooks/useAgentSystem";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useTranslation } from '@/hooks/useTranslation';
 
 export default function UserActivationPage() {
   const { invitationToken } = useParams<{ invitationToken: string }>();
   const navigate = useNavigate();
   const { activateUser, loading, error } = useUserActivation();
-  const { t } = useTranslation();
   
   const [selectedDevice, setSelectedDevice] = useState<'mobile' | 'pc' | 'tablet' | null>(null);
   const [activationResult, setActivationResult] = useState<unknown>(null);
@@ -50,7 +48,7 @@ export default function UserActivationPage() {
 
   const handleActivation = async () => {
     if (!invitationToken || !selectedDevice) {
-      toast.error(t('activation.toast.missingInfo'));
+      toast.error("Informations d'activation manquantes");
       return;
     }
 
@@ -79,10 +77,10 @@ export default function UserActivationPage() {
 
   const getDeviceLabel = (device: string) => {
     switch (device) {
-      case 'mobile': return t('activation.device.mobile');
-      case 'tablet': return t('activation.device.tablet');
-      case 'pc': return t('activation.device.pc');
-      default: return t('activation.device.desktop');
+      case 'mobile': return 'Mobile / Smartphone';
+      case 'tablet': return 'Tablette';
+      case 'pc': return 'Ordinateur / PC';
+      default: return 'Ordinateur';
     }
   };
 
@@ -92,15 +90,15 @@ export default function UserActivationPage() {
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center">
             <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-red-600 mb-2">{t('activation.invalid.title')}</h2>
+            <h2 className="text-xl font-bold text-red-600 mb-2">Lien Invalide</h2>
             <p className="text-muted-foreground">
-              {t('activation.invalid.description')}
+              Ce lien d'invitation n'est pas valide ou a expiré.
             </p>
             <Button 
               className="mt-4" 
               onClick={() => navigate('/')}
             >
-              {t('activation.invalid.backHome')}
+              Retour à l'accueil
             </Button>
           </CardContent>
         </Card>
@@ -110,28 +108,29 @@ export default function UserActivationPage() {
 
   if (isActivated && activationResult) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-blue-50 via-white to-primary-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-lg">
           <CardHeader className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10 text-white" />
             </div>
-            <CardTitle className="text-2xl bg-gradient-to-r from-primary-blue-600 to-primary-orange-600 bg-clip-text text-transparent">
-              {t('activation.success.title')}
+            <CardTitle className="text-2xl text-green-600">
+              🎉 Activation Réussie !
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <Alert className="border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
-              <Sparkles className="h-4 w-4 text-primary-orange-600" />
-              <AlertDescription className="text-primary-blue-900">
-                {t('activation.success.description')}
+            <Alert className="border-green-200 bg-green-50">
+              <Sparkles className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Votre compte 224Solutions a été activé avec succès ! 
+                Bienvenue dans notre écosystème digital.
               </AlertDescription>
             </Alert>
 
             <div className="text-center space-y-4">
-              <h3 className="text-lg font-semibold">{t('activation.success.downloadTitle')}</h3>
+              <h3 className="text-lg font-semibold">Téléchargez l'Application</h3>
               <p className="text-muted-foreground">
-                {t('activation.success.downloadDescription')}
+                Pour une expérience optimale, téléchargez notre application :
               </p>
               
               <div className="flex justify-center">
@@ -145,26 +144,26 @@ export default function UserActivationPage() {
                 <Button 
                   size="lg"
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  onClick={() => window.open(activationResult.downloadUrl, '_blank', 'noopener,noreferrer')}
+                  onClick={() => window.open(activationResult.downloadUrl, '_blank')}
                 >
                   <Download className="w-5 h-5 mr-2" />
-                  {t('activation.success.downloadNow')}
+                  Télécharger Maintenant
                   <ExternalLink className="w-4 h-4 ml-2" />
                 </Button>
               )}
 
               <div className="text-sm text-muted-foreground">
-                {t('activation.success.redirectInSeconds', { seconds: 5 })}
+                Redirection automatique dans 5 secondes...
               </div>
             </div>
 
             <div className="border-t pt-4">
-              <h4 className="font-medium mb-2">{t('activation.success.nextStepsTitle')}</h4>
+              <h4 className="font-medium mb-2">Prochaines étapes :</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>{t('activation.success.step1')}</li>
-                <li>{t('activation.success.step2')}</li>
-                <li>{t('activation.success.step3')}</li>
-                <li>{t('activation.success.step4')}</li>
+                <li>• Téléchargez et installez l'application</li>
+                <li>• Connectez-vous avec vos identifiants</li>
+                <li>• Explorez toutes les fonctionnalités</li>
+                <li>• Contactez votre agent pour toute question</li>
               </ul>
             </div>
           </CardContent>
@@ -181,10 +180,10 @@ export default function UserActivationPage() {
             <Crown className="w-10 h-10 text-white" />
           </div>
           <CardTitle className="text-3xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            {t('activation.welcome.title')}
+            Bienvenue chez 224Solutions
           </CardTitle>
           <p className="text-muted-foreground mt-2">
-            {t('activation.welcome.description')}
+            Activez votre compte pour accéder à notre écosystème digital complet
           </p>
         </CardHeader>
 
@@ -192,20 +191,21 @@ export default function UserActivationPage() {
           <Alert className="border-blue-200 bg-blue-50">
             <Shield className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
-              {t('activation.invited.description')}
+              Vous avez été invité par un agent certifié 224Solutions. 
+              Votre compte sera automatiquement lié à votre parrain.
             </AlertDescription>
           </Alert>
 
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Monitor className="w-5 h-5" />
-              {t('activation.selectDevice')}
+              Sélectionnez votre appareil
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[
-                { type: 'mobile', label: t('activation.device.mobile'), desc: 'iOS & Android' },
-                { type: 'tablet', label: t('activation.device.tablet'), desc: 'iPad & Android' },
-                { type: 'pc', label: t('activation.device.desktop'), desc: 'Windows & Mac' }
+                { type: 'mobile', label: 'Mobile / Smartphone', desc: 'iOS & Android' },
+                { type: 'tablet', label: 'Tablette', desc: 'iPad & Android' },
+                { type: 'pc', label: 'Ordinateur', desc: 'Windows & Mac' }
               ].map((device) => (
                 <Card 
                   key={device.type}
@@ -238,24 +238,24 @@ export default function UserActivationPage() {
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg">
             <h4 className="font-semibold mb-3 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-500" />
-              {t('activation.benefits.title')}
+              Ce que vous obtenez :
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-primary-orange-500" />
-                <span>{t('activation.benefits.item1')}</span>
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Accès complet à la plateforme</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-primary-orange-500" />
-                <span>{t('activation.benefits.item2')}</span>
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Support de votre agent</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-primary-orange-500" />
-                <span>{t('activation.benefits.item3')}</span>
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Commissions automatiques</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-primary-orange-500" />
-                <span>{t('activation.benefits.item4')}</span>
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span>Outils professionnels</span>
               </div>
             </div>
           </div>
@@ -276,11 +276,11 @@ export default function UserActivationPage() {
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  {t('activation.button.loading')}
+                  Activation en cours...
                 </>
               ) : (
                 <>
-                  {t('activation.button.activate')}
+                  Activer mon compte
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </>
               )}
@@ -288,10 +288,10 @@ export default function UserActivationPage() {
           </div>
 
           <div className="text-center text-sm text-muted-foreground">
-            {t('activation.legal.prefix')}{' '}
-            <a href="#" className="text-blue-600 hover:underline">{t('activation.legal.terms')}</a>
-            {' '}{t('activation.legal.and')}{' '}
-            <a href="#" className="text-blue-600 hover:underline">{t('activation.legal.privacy')}</a>.
+            En activant votre compte, vous acceptez nos{' '}
+            <a href="#" className="text-blue-600 hover:underline">conditions d'utilisation</a>
+            {' '}et notre{' '}
+            <a href="#" className="text-blue-600 hover:underline">politique de confidentialité</a>.
           </div>
         </CardContent>
       </Card>

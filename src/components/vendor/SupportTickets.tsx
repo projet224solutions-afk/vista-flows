@@ -39,7 +39,7 @@ const statusColors = {
   open: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
   in_progress: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
   waiting_response: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
-  resolved: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-600 border-primary-orange-500/20',
+  resolved: 'bg-green-500/10 text-green-600 border-green-500/20',
   closed: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
 };
 
@@ -62,8 +62,8 @@ const statusLabels = {
   open: 'Ouvert',
   in_progress: 'En cours',
   waiting_response: 'En attente',
-  resolved: 'RÃ©solu',
-  closed: 'FermÃ©',
+  resolved: 'Résolu',
+  closed: 'Fermé',
 };
 
 const priorityLabels = {
@@ -137,7 +137,7 @@ export default function SupportTickets() {
 
       if (error) throw error;
 
-      toast.success('Ticket crÃ©Ã© avec succÃ¨s');
+      toast.success('Ticket créé avec succès');
       setIsCreateDialogOpen(false);
       setNewTicket({
         subject: '',
@@ -147,8 +147,8 @@ export default function SupportTickets() {
       });
       loadTickets();
     } catch (error: any) {
-      console.error('Erreur crÃ©ation ticket:', error);
-      toast.error('Erreur lors de la crÃ©ation du ticket');
+      console.error('Erreur création ticket:', error);
+      toast.error('Erreur lors de la création du ticket');
     }
   };
 
@@ -184,7 +184,7 @@ export default function SupportTickets() {
 
       setNewMessage('');
       loadMessages(selectedTicket.id);
-      toast.success('Message envoyÃ©');
+      toast.success('Message envoyé');
     } catch (error: any) {
       console.error('Erreur envoi message:', error);
       toast.error('Erreur lors de l\'envoi du message');
@@ -236,9 +236,9 @@ export default function SupportTickets() {
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>CrÃ©er un nouveau ticket</DialogTitle>
+                  <DialogTitle>Créer un nouveau ticket</DialogTitle>
                   <DialogDescription>
-                    DÃ©crivez votre problÃ¨me ou votre demande
+                    Décrivez votre problème ou votre demande
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -248,11 +248,11 @@ export default function SupportTickets() {
                       id="subject"
                       value={newTicket.subject}
                       onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                      placeholder="RÃ©sumÃ© du problÃ¨me"
+                      placeholder="Résumé du problème"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="category">CatÃ©gorie</Label>
+                    <Label htmlFor="category">Catégorie</Label>
                     <Select value={newTicket.category} onValueChange={(value) => setNewTicket({ ...newTicket, category: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -265,7 +265,7 @@ export default function SupportTickets() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="priority">PrioritÃ©</Label>
+                    <Label htmlFor="priority">Priorité</Label>
                     <Select value={newTicket.priority} onValueChange={(value) => setNewTicket({ ...newTicket, priority: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -283,7 +283,7 @@ export default function SupportTickets() {
                       id="description"
                       value={newTicket.description}
                       onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                      placeholder="DÃ©crivez votre problÃ¨me en dÃ©tail"
+                      placeholder="Décrivez votre problème en détail"
                       rows={6}
                     />
                   </div>
@@ -292,7 +292,7 @@ export default function SupportTickets() {
                       Annuler
                     </Button>
                     <Button onClick={createTicket}>
-                      CrÃ©er le ticket
+                      Créer le ticket
                     </Button>
                   </div>
                 </div>
@@ -305,7 +305,7 @@ export default function SupportTickets() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par sujet ou numÃ©ro..."
+                placeholder="Rechercher par sujet ou numéro..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -335,13 +335,13 @@ export default function SupportTickets() {
             <h3 className="text-lg font-medium mb-2">Aucun ticket</h3>
             <p className="text-muted-foreground text-center mb-4">
               {searchTerm || statusFilter !== 'all' 
-                ? 'Aucun ticket ne correspond Ã  vos critÃ¨res'
-                : 'Vous n\'avez pas encore crÃ©Ã© de ticket de support'
+                ? 'Aucun ticket ne correspond à vos critères'
+                : 'Vous n\'avez pas encore créé de ticket de support'
               }
             </p>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              CrÃ©er un ticket
+              Créer un ticket
             </Button>
           </CardContent>
         </Card>
@@ -371,7 +371,7 @@ export default function SupportTickets() {
                     <span className="font-mono">{ticket.ticket_number}</span>
                     <span>{categoryLabels[ticket.category as keyof typeof categoryLabels]}</span>
                   </div>
-                  <span>{format(new Date(ticket.created_at), 'dd MMM yyyy Ã  HH:mm', { locale: fr })}</span>
+                  <span>{format(new Date(ticket.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}</span>
                 </div>
               </CardContent>
             </Card>
@@ -418,7 +418,7 @@ export default function SupportTickets() {
                     >
                       <p className="text-sm">{message.message}</p>
                       <p className="text-xs opacity-70 mt-1">
-                        {format(new Date(message.created_at), 'dd MMM Ã  HH:mm', { locale: fr })}
+                        {format(new Date(message.created_at), 'dd MMM à HH:mm', { locale: fr })}
                       </p>
                     </div>
                   </div>

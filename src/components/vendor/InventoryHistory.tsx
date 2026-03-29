@@ -30,7 +30,7 @@ export default function InventoryHistory({ history }: InventoryHistoryProps) {
   const getMovementColor = (type: string) => {
     switch (type) {
       case 'sale': return 'text-red-600 bg-red-50';
-      case 'purchase': return 'text-primary-orange-600 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50';
+      case 'purchase': return 'text-green-600 bg-green-50';
       case 'return': return 'text-blue-600 bg-blue-50';
       case 'transfer': return 'text-purple-600 bg-purple-50';
       case 'loss': return 'text-gray-600 bg-gray-50';
@@ -55,9 +55,9 @@ export default function InventoryHistory({ history }: InventoryHistoryProps) {
       <Card>
         <CardContent className="p-8 text-center">
           <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Aucun mouvement enregistrÃ©</h3>
+          <h3 className="text-lg font-semibold mb-2">Aucun mouvement enregistré</h3>
           <p className="text-muted-foreground">
-            Les mouvements de stock apparaÃ®tront ici
+            Les mouvements de stock apparaîtront ici
           </p>
         </CardContent>
       </Card>
@@ -93,7 +93,7 @@ export default function InventoryHistory({ history }: InventoryHistoryProps) {
 
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span>
-                      {item.previous_quantity} â†’ {item.new_quantity} unitÃ©s
+                      {item.previous_quantity} → {item.new_quantity} unités
                     </span>
                     {item.warehouse && (
                       <span className="flex items-center gap-1">
@@ -120,7 +120,7 @@ export default function InventoryHistory({ history }: InventoryHistoryProps) {
 
               <div className="flex items-center gap-2">
                 {item.quantity_change > 0 ? (
-                  <div className="flex items-center gap-1 text-primary-orange-600">
+                  <div className="flex items-center gap-1 text-green-600">
                     <ArrowUp className="w-4 h-4" />
                     <span className="font-semibold">+{item.quantity_change}</span>
                   </div>

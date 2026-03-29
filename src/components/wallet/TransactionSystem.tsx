@@ -79,7 +79,7 @@ export const TransactionSystem = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-primary-orange-100 text-primary-blue-900"><CheckCircle className="w-3 h-3 mr-1" />Terminé</Badge>;
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Terminé</Badge>;
       case 'pending':
         return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />En cours</Badge>;
       case 'failed':
@@ -360,7 +360,7 @@ export const TransactionSystem = () => {
                           {transaction.sender_id === user?.id ? (
                             <Badge variant="outline" className="text-red-600">Envoyé</Badge>
                           ) : (
-                            <Badge variant="outline" className="text-primary-orange-600">Reçu</Badge>
+                            <Badge variant="outline" className="text-green-600">Reçu</Badge>
                           )}
                         </TableCell>
                         <TableCell>

@@ -1,6 +1,6 @@
 /**
- * GESTIONNAIRE PAIEMENTS Ã‰CHELONNÃ‰S
- * CrÃ©er et suivre les plans de paiement en plusieurs fois
+ * GESTIONNAIRE PAIEMENTS ÉCHELONNÉS
+ * Créer et suivre les plans de paiement en plusieurs fois
  */
 
 import { useState, useEffect } from 'react';
@@ -131,7 +131,7 @@ export default function InstallmentPlansManager() {
     const installmentAmount = Math.ceil(totalAmount / numInstallments);
 
     try {
-      // CrÃ©er le plan
+      // Créer le plan
       const { data: planData, error: planError } = await supabase
         .from('installment_plans')
         .insert([{
@@ -149,7 +149,7 @@ export default function InstallmentPlansManager() {
 
       if (planError) throw planError;
 
-      // CrÃ©er les Ã©chÃ©ances
+      // Créer les échéances
       const installments = [];
       const firstDate = new Date(newPlan.start_date);
       
@@ -174,7 +174,7 @@ export default function InstallmentPlansManager() {
 
       if (installmentsError) throw installmentsError;
 
-      toast({ title: 'âœ… Plan de paiement crÃ©Ã©' });
+      toast({ title: '✅ Plan de paiement créé' });
       setIsCreateOpen(false);
       setNewPlan({ customer_name: '', total_amount: '', number_of_installments: '3', start_date: '' });
       loadData();
@@ -185,7 +185,7 @@ export default function InstallmentPlansManager() {
 
   const markAsPaid = async (paymentId: string, planId: string, amountDue: number) => {
     try {
-      // Marquer le paiement comme payÃ©
+      // Marquer le paiement comme payé
       const { error: payError } = await supabase
         .from('installment_payments')
         .update({ 
@@ -197,7 +197,7 @@ export default function InstallmentPlansManager() {
 
       if (payError) throw payError;
 
-      // Mettre Ã  jour le plan
+      // Mettre à jour le plan
       const plan = plans.find(p => p.id === planId);
       if (plan) {
         const newRemaining = Math.max(0, plan.remaining_amount - amountDue);
@@ -212,7 +212,7 @@ export default function InstallmentPlansManager() {
           .eq('id', planId);
       }
 
-      toast({ title: 'âœ… Paiement enregistrÃ©' });
+      toast({ title: '✅ Paiement enregistré' });
       loadData();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
@@ -238,10 +238,10 @@ export default function InstallmentPlansManager() {
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Calendar className="w-6 h-6" />
-            Paiements Ã‰chelonnÃ©s
+            Paiements Échelonnés
           </h2>
           <p className="text-sm text-muted-foreground">
-            GÃ©rez les paiements en plusieurs fois
+            Gérez les paiements en plusieurs fois
           </p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -253,7 +253,7 @@ export default function InstallmentPlansManager() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>CrÃ©er un plan de paiement</DialogTitle>
+              <DialogTitle>Créer un plan de paiement</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -274,7 +274,7 @@ export default function InstallmentPlansManager() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Nombre d'Ã©chÃ©ances</label>
+                <label className="text-sm font-medium">Nombre d'échéances</label>
                 <select
                   className="w-full px-3 py-2 border rounded-md bg-background"
                   value={newPlan.number_of_installments}
@@ -288,7 +288,7 @@ export default function InstallmentPlansManager() {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium">Date premiÃ¨re Ã©chÃ©ance *</label>
+                <label className="text-sm font-medium">Date première échéance *</label>
                 <Input
                   type="date"
                   value={newPlan.start_date}
@@ -309,7 +309,7 @@ export default function InstallmentPlansManager() {
 
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Annuler</Button>
-                <Button onClick={createPlan}>CrÃ©er</Button>
+                <Button onClick={createPlan}>Créer</Button>
               </div>
             </div>
           </DialogContent>
@@ -332,10 +332,10 @@ export default function InstallmentPlansManager() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary-orange-600" />
+              <DollarSign className="w-5 h-5 text-green-600" />
               <div>
-                <p className="text-xs text-muted-foreground">ReÃ§u</p>
-                <p className="text-lg font-bold text-primary-orange-600">{totalReceived.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Reçu</p>
+                <p className="text-lg font-bold text-green-600">{totalReceived.toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
@@ -375,14 +375,14 @@ export default function InstallmentPlansManager() {
           return (
             <Card key={plan.id}>
               <CardContent className="p-4">
-                {/* En-tÃªte du plan */}
+                {/* En-tête du plan */}
                 <div 
                   className="flex items-center justify-between cursor-pointer"
                   onClick={() => setExpandedPlan(isExpanded ? null : plan.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${plan.status === 'completed' ? 'bg-primary-orange-100 dark:bg-primary-orange-900/30' : 'bg-primary/10'}`}>
-                      <User className={`w-4 h-4 ${plan.status === 'completed' ? 'text-primary-orange-600' : 'text-primary'}`} />
+                    <div className={`p-2 rounded-lg ${plan.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30' : 'bg-primary/10'}`}>
+                      <User className={`w-4 h-4 ${plan.status === 'completed' ? 'text-green-600' : 'text-primary'}`} />
                     </div>
                     <div>
                       <p className="font-semibold">{plan.customer_name}</p>
@@ -399,7 +399,7 @@ export default function InstallmentPlansManager() {
                       </p>
                     </div>
                     <Badge variant={plan.status === 'completed' ? 'default' : 'secondary'}>
-                      {plan.status === 'completed' ? 'TerminÃ©' : 'Actif'}
+                      {plan.status === 'completed' ? 'Terminé' : 'Actif'}
                     </Badge>
                     {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                   </div>
@@ -410,7 +410,7 @@ export default function InstallmentPlansManager() {
                   <Progress value={progress} className="h-2" />
                 </div>
 
-                {/* DÃ©tails des Ã©chÃ©ances */}
+                {/* Détails des échéances */}
                 {isExpanded && (
                   <div className="mt-4 pt-4 border-t space-y-2">
                     {planPayments.map((payment) => {
@@ -421,7 +421,7 @@ export default function InstallmentPlansManager() {
                           key={payment.id}
                           className={`flex items-center justify-between p-3 rounded-lg ${
                             payment.status === 'paid' 
-                              ? 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 dark:bg-primary-orange-900/20' 
+                              ? 'bg-green-50 dark:bg-green-900/20' 
                               : isOverdue 
                                 ? 'bg-destructive/10' 
                                 : 'bg-muted/50'
@@ -429,17 +429,17 @@ export default function InstallmentPlansManager() {
                         >
                           <div className="flex items-center gap-3">
                             {payment.status === 'paid' ? (
-                              <CheckCircle2 className="w-5 h-5 text-primary-orange-600" />
+                              <CheckCircle2 className="w-5 h-5 text-green-600" />
                             ) : isOverdue ? (
                               <AlertCircle className="w-5 h-5 text-destructive" />
                             ) : (
                               <Clock className="w-5 h-5 text-muted-foreground" />
                             )}
                             <div>
-                              <p className="font-medium">Ã‰chÃ©ance {payment.installment_number}</p>
+                              <p className="font-medium">Échéance {payment.installment_number}</p>
                               <p className="text-xs text-muted-foreground">
                                 {new Date(payment.due_date).toLocaleDateString('fr-FR')}
-                                {payment.payment_date && ` - PayÃ© le ${new Date(payment.payment_date).toLocaleDateString('fr-FR')}`}
+                                {payment.payment_date && ` - Payé le ${new Date(payment.payment_date).toLocaleDateString('fr-FR')}`}
                               </p>
                             </div>
                           </div>
@@ -453,7 +453,7 @@ export default function InstallmentPlansManager() {
                                   markAsPaid(payment.id, plan.id, payment.amount_due);
                                 }}
                               >
-                                Marquer payÃ©
+                                Marquer payé
                               </Button>
                             )}
                           </div>
@@ -473,7 +473,7 @@ export default function InstallmentPlansManager() {
               <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
               <p className="text-muted-foreground">Aucun plan de paiement</p>
               <Button className="mt-4" onClick={() => setIsCreateOpen(true)}>
-                CrÃ©er mon premier plan
+                Créer mon premier plan
               </Button>
             </CardContent>
           </Card>

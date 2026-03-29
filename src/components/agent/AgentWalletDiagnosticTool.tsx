@@ -26,14 +26,14 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
     const diagnosticResults: DiagnosticResult[] = [];
 
     try {
-      // Test 1: VÃ©rifier la connexion Supabase
+      // Test 1: Vérifier la connexion Supabase
       diagnosticResults.push({
         test: 'Connexion Supabase',
         status: 'success',
-        message: 'Client Supabase initialisÃ©'
+        message: 'Client Supabase initialisé'
       });
 
-      // Test 2: VÃ©rifier que l'agentId est valide
+      // Test 2: Vérifier que l'agentId est valide
       if (!agentId || agentId === '') {
         diagnosticResults.push({
           test: 'Agent ID',
@@ -49,7 +49,7 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
         });
       }
 
-      // Test 3: VÃ©rifier que l'agent existe dans agents_management
+      // Test 3: Vérifier que l'agent existe dans agents_management
       const { data: agentData, error: agentError } = await supabase
         .from('agents_management')
         .select('id, agent_code, name, is_active')
@@ -67,12 +67,12 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
         diagnosticResults.push({
           test: 'Agent dans agents_management',
           status: 'success',
-          message: `Agent trouvÃ©: ${agentData.agent_code} - ${agentData.name}`,
+          message: `Agent trouvé: ${agentData.agent_code} - ${agentData.name}`,
           details: agentData
         });
       }
 
-      // Test 4: VÃ©rifier si le wallet existe
+      // Test 4: Vérifier si le wallet existe
       const { data: walletData, error: walletError } = await supabase
         .from('agent_wallets')
         .select('*')
@@ -90,50 +90,50 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
         diagnosticResults.push({
           test: 'Wallet existant',
           status: 'success',
-          message: `Wallet trouvÃ© - Solde: ${walletData.balance} ${walletData.currency}`,
+          message: `Wallet trouvé - Solde: ${walletData.balance} ${walletData.currency}`,
           details: walletData
         });
       } else {
         diagnosticResults.push({
           test: 'Wallet existant',
           status: 'warning',
-          message: 'Aucun wallet trouvÃ© - Doit Ãªtre crÃ©Ã©',
+          message: 'Aucun wallet trouvé - Doit être créé',
           details: null
         });
 
-        // Test 5: Essayer de crÃ©er le wallet via RPC
+        // Test 5: Essayer de créer le wallet via RPC
         try {
           const { data: newWallet, error: createError }: any = await supabase
             .rpc('create_agent_wallet' as any, { p_agent_id: agentId });
 
           if (createError) {
             diagnosticResults.push({
-              test: 'CrÃ©ation du wallet (RPC)',
+              test: 'Création du wallet (RPC)',
               status: 'error',
-              message: `Impossible de crÃ©er le wallet: ${createError.message}`,
+              message: `Impossible de créer le wallet: ${createError.message}`,
               details: createError
             });
 
-            // VÃ©rifier les permissions RLS
+            // Vérifier les permissions RLS
             if (createError.code === '42501' || createError.message.includes('permission')) {
               diagnosticResults.push({
                 test: 'Permissions RLS',
                 status: 'error',
                 message: 'Erreur de permissions - RLS bloque l\'insertion',
-                details: 'VÃ©rifiez les politiques Row Level Security sur agent_wallets'
+                details: 'Vérifiez les politiques Row Level Security sur agent_wallets'
               });
             }
           } else if (newWallet && Array.isArray(newWallet) && newWallet.length > 0) {
             diagnosticResults.push({
-              test: 'CrÃ©ation du wallet (RPC)',
+              test: 'Création du wallet (RPC)',
               status: 'success',
-              message: `Wallet crÃ©Ã© avec succÃ¨s via RPC!`,
+              message: `Wallet créé avec succès via RPC!`,
               details: newWallet[0]
             });
           }
         } catch (rpcError: any) {
           diagnosticResults.push({
-            test: 'CrÃ©ation du wallet (RPC)',
+            test: 'Création du wallet (RPC)',
             status: 'error',
             message: `Erreur lors de l'appel RPC: ${rpcError.message}`,
             details: rpcError
@@ -141,7 +141,7 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
         }
       }
 
-      // Test 6: VÃ©rifier les permissions de lecture
+      // Test 6: Vérifier les permissions de lecture
       const { count, error: countError } = await supabase
         .from('agent_wallets')
         .select('*', { count: 'exact', head: true })
@@ -158,14 +158,14 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
         diagnosticResults.push({
           test: 'Permissions de lecture',
           status: 'success',
-          message: `Permissions OK - ${count} wallet(s) trouvÃ©(s)`,
+          message: `Permissions OK - ${count} wallet(s) trouvé(s)`,
           details: { count }
         });
       }
 
     } catch (error: any) {
       diagnosticResults.push({
-        test: 'Test gÃ©nÃ©ral',
+        test: 'Test général',
         status: 'error',
         message: `Erreur inattendue: ${error.message}`,
         details: error
@@ -175,13 +175,13 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
     setResults(diagnosticResults);
     setLoading(false);
 
-    // RÃ©sumÃ© dans la console
-    console.log('ðŸ” DIAGNOSTIC WALLET AGENT - RÃ©sultats:');
+    // Résumé dans la console
+    console.log('🔍 DIAGNOSTIC WALLET AGENT - Résultats:');
     diagnosticResults.forEach(result => {
-      const icon = result.status === 'success' ? 'âœ…' : result.status === 'error' ? 'âŒ' : 'âš ï¸';
+      const icon = result.status === 'success' ? '✅' : result.status === 'error' ? '❌' : '⚠️';
       console.log(`${icon} ${result.test}: ${result.message}`);
       if (result.details) {
-        console.log('   DÃ©tails:', result.details);
+        console.log('   Détails:', result.details);
       }
     });
   };
@@ -189,7 +189,7 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-primary-orange-500" />;
+        return <CheckCircle className="w-5 h-5 text-green-500" />;
       case 'error':
         return <XCircle className="w-5 h-5 text-red-500" />;
       case 'warning':
@@ -202,7 +202,7 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'success':
-        return 'bg-primary-orange-100 text-primary-orange-800 border-primary-orange-300';
+        return 'bg-green-100 text-green-800 border-green-300';
       case 'error':
         return 'bg-red-100 text-red-800 border-red-300';
       case 'warning':
@@ -216,7 +216,7 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>ðŸ”§ Diagnostic Wallet Agent</span>
+          <span>🔧 Diagnostic Wallet Agent</span>
           <Badge variant="outline">ID: {agentId.slice(0, 8)}...</Badge>
         </CardTitle>
       </CardHeader>
@@ -243,7 +243,7 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
 
         {results.length > 0 && (
           <div className="space-y-2">
-            <h3 className="font-semibold text-sm mb-2">RÃ©sultats:</h3>
+            <h3 className="font-semibold text-sm mb-2">Résultats:</h3>
             {results.map((result, index) => (
               <div
                 key={index}
@@ -257,7 +257,7 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
                     {result.details && (
                       <details className="mt-2">
                         <summary className="text-xs cursor-pointer hover:underline">
-                          Voir les dÃ©tails
+                          Voir les détails
                         </summary>
                         <pre className="text-xs mt-1 p-2 bg-black/5 rounded overflow-auto max-h-40">
                           {JSON.stringify(result.details, null, 2)}
@@ -273,8 +273,8 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
 
         {results.length > 0 && (
           <div className="text-xs text-muted-foreground mt-4 p-3 bg-muted rounded">
-            <p className="font-semibold mb-1">ðŸ’¡ Astuce:</p>
-            <p>Ouvrez la console (F12) pour voir les dÃ©tails complets du diagnostic.</p>
+            <p className="font-semibold mb-1">💡 Astuce:</p>
+            <p>Ouvrez la console (F12) pour voir les détails complets du diagnostic.</p>
           </div>
         )}
       </CardContent>

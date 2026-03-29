@@ -53,7 +53,7 @@ export function BureauIdDisplay({
       >
         {bureauCode}
       </span>
-      {copied && <Check className="w-3 h-3 text-primary-orange-600" />}
+      {copied && <Check className="w-3 h-3 text-green-600" />}
     </div>
   );
 }

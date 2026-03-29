@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useTranslation } from '@/hooks/useTranslation';
 import { 
   ArrowUpDown, 
   ArrowUp, 
@@ -38,7 +37,6 @@ export const WalletTransactionHistory = ({
   className = '', 
   limit = 50 
 }: WalletTransactionHistoryProps) => {
-  const { t, language } = useTranslation();
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +66,7 @@ export const WalletTransactionHistory = ({
 
       if (walletError) {
         console.error('Erreur récupération wallet:', walletError);
-        setError(t('wallet.history.loadWalletError'));
+        setError('Impossible de charger votre portefeuille');
         return;
       }
 
@@ -85,7 +83,7 @@ export const WalletTransactionHistory = ({
 
         if (transactionsError) {
           console.error('Erreur récupération transactions:', transactionsError);
-          setError(`${t('wallet.history.loadHistoryError')}: ${transactionsError.message}`);
+          setError(`Impossible de charger l'historique: ${transactionsError.message}`);
         } else if (transactionsData) {
           const txArray = (transactionsData || []) as Array<{ id: string | number; amount: number; sender_id: string; receiver_id: string; method: string; created_at: string; status: string }>;
           // Collecter tous les IDs uniques d'un coup (1 requête au lieu de 2 par transaction)
@@ -110,8 +108,8 @@ export const WalletTransactionHistory = ({
             status: tx.status,
             sender_custom_id: profilesMap[tx.sender_id]?.public_id || tx.sender_id?.slice(0, 8),
             receiver_custom_id: profilesMap[tx.receiver_id]?.public_id || tx.receiver_id?.slice(0, 8),
-            sender_name: profilesMap[tx.sender_id]?.full_name || t('wallet.history.userFallback'),
-            receiver_name: profilesMap[tx.receiver_id]?.full_name || t('wallet.history.userFallback')
+            sender_name: profilesMap[tx.sender_id]?.full_name || 'Utilisateur',
+            receiver_name: profilesMap[tx.receiver_id]?.full_name || 'Utilisateur'
           }));
           setTransactions(enrichedTransactions);
         }
@@ -119,7 +117,7 @@ export const WalletTransactionHistory = ({
 
     } catch (error: any) {
       console.error('Erreur chargement transactions:', error);
-      setError(error?.message || t('wallet.history.unexpectedError'));
+      setError(error?.message || 'Une erreur inattendue s\'est produite');
     } finally {
       setLoading(false);
     }
@@ -131,21 +129,21 @@ export const WalletTransactionHistory = ({
     
     // Déterminer si c'est un crédit ou débit basé sur sender_id
     const isCredit = transaction.receiver_id === user?.id;
-    if (isCredit) return <ArrowUp className="w-4 h-4 text-primary-orange-500" />;
+    if (isCredit) return <ArrowUp className="w-4 h-4 text-green-500" />;
     return <ArrowDown className="w-4 h-4 text-red-500" />;
   };
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      completed: 'bg-primary-orange-100 text-primary-orange-700',
+      completed: 'bg-green-100 text-green-700',
       pending: 'bg-orange-100 text-orange-700',
       failed: 'bg-red-100 text-red-700'
     };
 
     const labels = {
-      completed: t('wallet.history.status.completed'),
-      pending: t('wallet.history.status.pending'),
-      failed: t('wallet.history.status.failed')
+      completed: 'Terminé',
+      pending: 'En cours',
+      failed: 'Échoué'
     };
 
     return (
@@ -163,7 +161,7 @@ export const WalletTransactionHistory = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString(language, {
+    return date.toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -191,12 +189,12 @@ export const WalletTransactionHistory = ({
     : transactions.slice(0, INITIAL_DISPLAY_COUNT);
 
   return (
-    <Card className={`${className} border-2 border-primary-orange-100 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50`}>
+    <Card className={`${className} border-2 border-green-100 bg-gradient-to-br from-green-50 to-emerald-50`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <History className="w-5 h-5 text-primary-orange-600" />
-            {t('wallet.history.title')}
+            <History className="w-5 h-5 text-green-600" />
+            Historique des transactions
           </CardTitle>
           <Button
             size="sm"
@@ -213,7 +211,7 @@ export const WalletTransactionHistory = ({
         {error ? (
           <div className="text-center py-8">
             <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-            <p className="text-red-600 font-semibold mb-2">{t('wallet.history.loadErrorTitle')}</p>
+            <p className="text-red-600 font-semibold mb-2">Erreur de chargement</p>
             <p className="text-sm text-gray-600 mb-4">
               {error}
             </p>
@@ -224,15 +222,15 @@ export const WalletTransactionHistory = ({
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              {t('wallet.history.retry')}
+              Réessayer
             </Button>
           </div>
         ) : transactions.length === 0 ? (
           <div className="text-center py-8">
             <ArrowUpDown className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600 mb-2">{t('wallet.history.emptyTitle')}</p>
+            <p className="text-gray-600 mb-2">Aucune transaction</p>
             <p className="text-sm text-gray-500">
-              {t('wallet.history.emptyDescription')}
+              Vos transactions apparaîtront ici
             </p>
           </div>
         ) : (
@@ -240,17 +238,17 @@ export const WalletTransactionHistory = ({
             {displayedTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-primary-orange-200 hover:bg-white/80 transition-colors"
+                className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-green-200 hover:bg-white/80 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   {getTransactionIcon(transaction, transaction.status)}
                   <div>
                     <p className="font-medium text-gray-800">
-                      {transaction.receiver_id === user?.id ? t('wallet.history.receivedFrom') : t('wallet.history.sentTo')}{' '}
+                      {transaction.receiver_id === user?.id ? 'Reçu de' : 'Envoyé à'}{' '}
                       <span className="text-foreground">
                         {transaction.receiver_id === user?.id 
-                          ? (transaction.sender_name || t('wallet.history.userFallback'))
-                          : (transaction.receiver_name || t('wallet.history.userFallback'))}
+                          ? (transaction.sender_name || 'Utilisateur')
+                          : (transaction.receiver_name || 'Utilisateur')}
                       </span>
                       {' '}
                       <span className="font-mono text-xs text-muted-foreground">
@@ -260,7 +258,7 @@ export const WalletTransactionHistory = ({
                       </span>
                     </p>
                     <p className="text-xs text-gray-500">
-                      {t('wallet.history.methodLabel', { method: transaction.method })} • {formatDate(transaction.created_at)}
+                      {transaction.method} • {formatDate(transaction.created_at)}
                     </p>
                   </div>
                 </div>
@@ -268,7 +266,7 @@ export const WalletTransactionHistory = ({
                 <div className="text-right">
                   <p className={`font-bold ${
                     transaction.receiver_id === user?.id
-                      ? 'text-primary-orange-600' 
+                      ? 'text-green-600' 
                       : 'text-red-600'
                   }`}>
                     {formatAmount(transaction.amount, transaction)}
@@ -285,9 +283,7 @@ export const WalletTransactionHistory = ({
                   size="sm"
                   onClick={() => setShowAll(!showAll)}
                 >
-                  {showAll
-                    ? t('wallet.history.showLess')
-                    : t('wallet.history.showAll', { count: transactions.length })}
+                  {showAll ? 'Voir moins' : `Voir tout (${transactions.length} transactions)`}
                 </Button>
               </div>
             )}

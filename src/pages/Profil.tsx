@@ -60,12 +60,12 @@ const userTypes = {
   },
   admin: {
     label: "PDG",
-    description: "PrÃ©sident Directeur GÃ©nÃ©ral",
+    description: "Président Directeur Général",
     color: "bg-primary"
   },
   pdg: {
     label: "PDG",
-    description: "PrÃ©sident Directeur GÃ©nÃ©ral",
+    description: "Président Directeur Général",
     color: "bg-primary"
   },
   vendor_agent: {
@@ -90,8 +90,8 @@ const menuItems = [
   },
   {
     id: 'settings',
-    title: 'ParamÃ¨tres',
-    description: 'GÃ©rer mon compte',
+    title: 'Paramètres',
+    description: 'Gérer mon compte',
     icon: Settings
   }
 ];
@@ -121,7 +121,7 @@ export default function Profil() {
     const fetchAddress = async () => {
       if (!user?.id) return;
       try {
-        // D'abord l'adresse par dÃ©faut
+        // D'abord l'adresse par défaut
         const { data } = await supabase
           .from('user_addresses')
           .select('street, city, country')
@@ -132,7 +132,7 @@ export default function Profil() {
         if (data) {
           setUserAddress(data);
         } else {
-          // Fallback: premiÃ¨re adresse
+          // Fallback: première adresse
           const { data: anyAddr } = await supabase
             .from('user_addresses')
             .select('street, city, country')
@@ -149,7 +149,7 @@ export default function Profil() {
     fetchAddress();
   }, [user?.id]);
 
-  // RÃ©cupÃ©rer le type d'agent dynamiquement si l'utilisateur est un agent
+  // Récupérer le type d'agent dynamiquement si l'utilisateur est un agent
   useEffect(() => {
     const fetchAgentType = async () => {
       if (profile?.role === 'agent' && user?.id) {
@@ -171,7 +171,7 @@ export default function Profil() {
             });
           }
         } catch (err) {
-          console.error('Erreur rÃ©cupÃ©ration type agent:', err);
+          console.error('Erreur récupération type agent:', err);
         }
       }
     };
@@ -278,16 +278,16 @@ export default function Profil() {
 
     setSaving(true);
     try {
-      // Mise Ã  jour de l'email
+      // Mise à jour de l'email
       if (editEmail !== user.email) {
         const { error: emailError } = await supabase.auth.updateUser({
           email: editEmail
         });
         if (emailError) throw emailError;
-        toast.success('Email mis Ã  jour. VÃ©rifiez votre boÃ®te mail pour confirmer.');
+        toast.success('Email mis à jour. Vérifiez votre boîte mail pour confirmer.');
       }
 
-      // Mise Ã  jour du tÃ©lÃ©phone dans le profil
+      // Mise à jour du téléphone dans le profil
       if (editPhone !== profile?.phone) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -295,14 +295,14 @@ export default function Profil() {
           .eq('id', user.id);
 
         if (profileError) throw profileError;
-        toast.success('NumÃ©ro de tÃ©lÃ©phone mis Ã  jour');
+        toast.success('Numéro de téléphone mis à jour');
       }
 
       setEditMode(false);
       window.location.reload();
     } catch (error: any) {
       console.error('Error updating settings:', error);
-      toast.error(error?.message || 'Erreur lors de la mise Ã  jour');
+      toast.error(error?.message || 'Erreur lors de la mise à jour');
     } finally {
       setSaving(false);
     }
@@ -339,7 +339,7 @@ export default function Profil() {
       setActivities(
         (data || []).map((a: any) => ({
           id: a.id,
-          title: a.action || 'ActivitÃ©',
+          title: a.action || 'Activité',
           description: a.target_type || '',
           timestamp: a.created_at
         }))
@@ -357,19 +357,19 @@ export default function Profil() {
       const file = input.files?.[0];
       if (!file || !user) return;
       try {
-        // Upload vers GCS via le hook unifiÃ©
+        // Upload vers GCS via le hook unifié
         const result = await uploadFile(file, {
           folder: 'avatars',
           subfolder: user.id,
         });
 
         if (!result.success || !result.publicUrl) {
-          throw new Error(result.error || 'Ã‰chec de l\'upload');
+          throw new Error(result.error || 'Échec de l\'upload');
         }
 
         const { error: updErr } = await supabase.from('profiles').update({ avatar_url: result.publicUrl }).eq('id', user.id);
         if (updErr) throw updErr;
-        toast.success('Avatar mis Ã  jour');
+        toast.success('Avatar mis à jour');
         window.location.reload();
       } catch (e: any) {
         toast.error(e?.message || 'Erreur upload avatar');
@@ -384,9 +384,9 @@ export default function Profil() {
   };
 
   const handleGoBack = async () => {
-    // Rediriger selon le rÃ´le de l'utilisateur
+    // Rediriger selon le rôle de l'utilisateur
     if (profile?.role === 'vendor_agent') {
-      // RÃ©cupÃ©rer le token d'accÃ¨s et rediriger vers l'interface agent
+      // Récupérer le token d'accès et rediriger vers l'interface agent
       const { data: vendorAgent } = await supabase
         .from('vendor_agents')
         .select('access_token')
@@ -427,7 +427,7 @@ export default function Profil() {
               <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <h2 className="text-xl font-semibold mb-2">Connectez-vous</h2>
               <p className="text-muted-foreground mb-6">
-                Vous devez vous connecter pour accÃ©der Ã  votre profil
+                Vous devez vous connecter pour accéder à votre profil
               </p>
               <Button
                 onClick={() => navigate('/auth')}
@@ -533,7 +533,7 @@ export default function Profil() {
                   className="shrink-0 h-8 text-xs sm:text-sm"
                   onClick={() => {
                     navigator.clipboard.writeText(user.id);
-                    toast.success("ID copiÃ© dans le presse-papiers");
+                    toast.success("ID copié dans le presse-papiers");
                   }}
                 >
                   Copier
@@ -543,7 +543,7 @@ export default function Profil() {
                 {user.id}
               </div>
               <p className="text-[10px] sm:text-xs text-muted-foreground">
-                ðŸ’¡ Partagez cet ID pour permettre Ã  d'autres utilisateurs de vous contacter directement
+                💡 Partagez cet ID pour permettre à d'autres utilisateurs de vous contacter directement
               </p>
             </div>
           </CardContent>
@@ -585,7 +585,7 @@ export default function Profil() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : orders.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Aucune commande trouvÃ©e</p>
+            <p className="text-center text-muted-foreground py-8">Aucune commande trouvée</p>
           ) : (
             <div className="space-y-3">
               {orders.map((order) => (
@@ -605,7 +605,7 @@ export default function Profil() {
                     </p>
                     {order.delivery_address && (
                       <p className="text-sm text-muted-foreground mt-1">
-                        ðŸ“ {order.delivery_address}
+                        📍 {order.delivery_address}
                         {order.delivery_city ? `, ${order.delivery_city}` : ''}
                       </p>
                     )}
@@ -628,7 +628,7 @@ export default function Profil() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : transactions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Aucune transaction trouvÃ©e</p>
+            <p className="text-center text-muted-foreground py-8">Aucune transaction trouvée</p>
           ) : (
             <div className="space-y-3">
               {transactions.map((tx) => (
@@ -645,7 +645,7 @@ export default function Profil() {
                         )}
                       </div>
                       <div className="text-right">
-                        <p className={`text-lg font-bold ${tx.amount > 0 ? 'text-primary-orange-500' : 'text-red-500'}`}>
+                        <p className={`text-lg font-bold ${tx.amount > 0 ? 'text-green-500' : 'text-red-500'}`}>
                           {tx.amount > 0 ? '+' : ''}{tx.amount ? tx.amount.toLocaleString() : '0'} {tx.currency || 'GNF'}
                         </p>
                         <Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>
@@ -670,7 +670,7 @@ export default function Profil() {
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>ParamÃ¨tres du Compte</DialogTitle>
+            <DialogTitle>Paramètres du Compte</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -688,7 +688,7 @@ export default function Profil() {
               )}
             </div>
             <div>
-              <Label htmlFor="phone" className="text-sm font-medium">TÃ©lÃ©phone</Label>
+              <Label htmlFor="phone" className="text-sm font-medium">Téléphone</Label>
               {editMode ? (
                 <Input
                   id="phone"
@@ -699,15 +699,15 @@ export default function Profil() {
                   className="mt-1"
                 />
               ) : (
-                <p className="text-muted-foreground mt-1">{profile?.phone || 'Non renseignÃ©'}</p>
+                <p className="text-muted-foreground mt-1">{profile?.phone || 'Non renseigné'}</p>
               )}
             </div>
             <div>
-              <label className="text-sm font-medium">RÃ´le</label>
+              <label className="text-sm font-medium">Rôle</label>
               <p className="text-muted-foreground mt-1">{profile?.role || 'client'}</p>
             </div>
 
-            {/* SÃ©lecteur de langue */}
+            {/* Sélecteur de langue */}
             <div className="pt-2 border-t border-border">
               <LanguageSelector variant="default" />
             </div>
@@ -746,12 +746,12 @@ export default function Profil() {
       <section className="px-4 py-6">
         <Card>
           <CardHeader>
-            <CardTitle>ActivitÃ© rÃ©cente</CardTitle>
+            <CardTitle>Activité récente</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {activities.length === 0 && (
-                <div className="text-sm text-muted-foreground">Aucune activitÃ© rÃ©cente.</div>
+                <div className="text-sm text-muted-foreground">Aucune activité récente.</div>
               )}
               {activities.map((activity) => (
                 <div key={activity.id} className="flex items-start gap-3 p-3 bg-accent rounded-lg">
@@ -781,7 +781,7 @@ export default function Profil() {
           onClick={handleSignOut}
         >
           <LogOut className="w-4 h-4 mr-2" />
-          Se dÃ©connecter
+          Se déconnecter
         </Button>
       </section>
 

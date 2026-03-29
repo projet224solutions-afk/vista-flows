@@ -53,8 +53,8 @@ export class NavigationService {
   private isNavigating = false;
   private offRouteThreshold = 50; // mètres
 
-  // API key lue uniquement depuis l'environnement (jamais hardcodée)
-  private OPENROUTE_API_KEY = import.meta.env.VITE_OPENROUTESERVICE_API_KEY || '';
+  // API Keys (utiliser variables d'environnement)
+  private OPENROUTE_API_KEY = '5b3ce3597851110001cf6248c91c2b7c56204073ba73c50fcb6e7f47'; // Clé publique exemple
   
   private constructor() {}
 
@@ -133,11 +133,6 @@ export class NavigationService {
     console.log(`🗺️ [NavigationService] Géocodage adresse: "${address}"`);
 
     try {
-      if (!this.OPENROUTE_API_KEY) {
-        console.warn('⚠️ [NavigationService] VITE_OPENROUTESERVICE_API_KEY manquante, fallback local activé');
-        return this.getGuineaLocationCoordinates(address);
-      }
-
       // Utiliser OpenRouteService Geocoding
       const response = await fetch(
         `https://api.openrouteservice.org/geocode/search?` +
@@ -265,11 +260,6 @@ export class NavigationService {
     });
 
     try {
-      if (!this.OPENROUTE_API_KEY) {
-        console.warn('⚠️ [NavigationService] VITE_OPENROUTESERVICE_API_KEY manquante, itinéraire fallback activé');
-        return this.createSimpleFallbackRoute(start, end);
-      }
-
       const body = {
         coordinates: [
           [start.longitude, start.latitude],

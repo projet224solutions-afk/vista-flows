@@ -14,10 +14,6 @@ import jwksClient from 'jwks-rsa';
 const REGION = process.env.AWS_COGNITO_REGION;
 const USER_POOL_ID = process.env.AWS_COGNITO_USER_POOL_ID;
 const JWKS_URI = `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}/.well-known/jwks.json`;
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
 
 // Cache JWKS
 const client = jwksClient({
@@ -43,10 +39,6 @@ export const handler = async (event) => {
   const { routeKey, body, headers } = event;
   const parsedBody = body ? JSON.parse(body) : {};
 
-  if (routeKey === 'OPTIONS /{proxy+}' || routeKey?.startsWith('OPTIONS ')) {
-    return response(204, null, headers);
-  }
-
   try {
     switch (routeKey) {
       case 'POST /auth/validate-token':
@@ -59,11 +51,11 @@ export const handler = async (event) => {
         return await getProfile(headers);
 
       default:
-        return response(404, { error: 'Route not found' }, headers);
+        return response(404, { error: 'Route not found' });
     }
   } catch (error) {
     console.error('Lambda error:', error);
-    return response(500, { error: 'Internal server error' }, headers);
+    return response(500, { error: 'Internal server error' });
   }
 };
 
@@ -72,13 +64,13 @@ export const handler = async (event) => {
  */
 async function validateToken(headers) {
   const token = extractToken(headers);
-  if (!token) return response(401, { error: 'Token requis' }, headers);
+  if (!token) return response(401, { error: 'Token requis' });
 
   try {
     const user = await verifyCognitoJWT(token);
-    return response(200, { valid: true, user }, headers);
+    return response(200, { valid: true, user });
   } catch (error) {
-    return response(401, { valid: false, error: error.message }, headers);
+    return response(401, { valid: false, error: error.message });
   }
 }
 
@@ -87,7 +79,7 @@ async function validateToken(headers) {
  */
 async function syncProfile(headers, body) {
   const token = extractToken(headers);
-  if (!token) return response(401, { error: 'Token requis' }, headers);
+  if (!token) return response(401, { error: 'Token requis' });
 
   try {
     const user = await verifyCognitoJWT(token);
@@ -103,9 +95,9 @@ async function syncProfile(headers, body) {
         email: user.email,
         role: user.role,
       },
-    }, headers);
+    });
   } catch (error) {
-    return response(403, { error: 'Token invalide' }, headers);
+    return response(403, { error: 'Token invalide' });
   }
 }
 
@@ -114,7 +106,7 @@ async function syncProfile(headers, body) {
  */
 async function getProfile(headers) {
   const token = extractToken(headers);
-  if (!token) return response(401, { error: 'Token requis' }, headers);
+  if (!token) return response(401, { error: 'Token requis' });
 
   try {
     const user = await verifyCognitoJWT(token);
@@ -127,9 +119,9 @@ async function getProfile(headers) {
         email: user.email,
         role: user.role,
       },
-    }, headers);
+    });
   } catch (error) {
-    return response(403, { error: 'Token invalide' }, headers);
+    return response(403, { error: 'Token invalide' });
   }
 }
 
@@ -167,41 +159,15 @@ function extractToken(headers) {
 /**
  * Helper réponse Lambda
  */
-function resolveAllowedOrigin(headers) {
-  const requestOrigin = headers?.origin || headers?.Origin;
-
-  if (!requestOrigin) {
-    return ALLOWED_ORIGINS[0] || 'https://224solution.net';
-  }
-
-  if (ALLOWED_ORIGINS.length === 0) {
-    const fallbackOrigins = [
-      'https://224solution.net',
-      'https://www.224solution.net',
-      'http://localhost:5173',
-      'https://localhost:5173',
-    ];
-    return fallbackOrigins.includes(requestOrigin) ? requestOrigin : 'https://224solution.net';
-  }
-
-  return ALLOWED_ORIGINS.includes(requestOrigin)
-    ? requestOrigin
-    : ALLOWED_ORIGINS[0];
-}
-
-function response(statusCode, body, requestHeaders = {}) {
-  const allowedOrigin = resolveAllowedOrigin(requestHeaders);
-
+function response(statusCode, body) {
   return {
     statusCode,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': allowedOrigin,
-      'Vary': 'Origin',
+      'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'authorization, content-type',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Credentials': 'true',
     },
-    body: body === null ? '' : JSON.stringify(body),
+    body: JSON.stringify(body),
   };
 }

@@ -4,31 +4,31 @@ import { Shield, Lock, AlertTriangle, CheckCircle2, XCircle, Award, TrendingUp }
 import { Progress } from '@/components/ui/progress';
 
 /**
- * Panneau de Comparaison SÃ©curitÃ© & FiabilitÃ©
+ * Panneau de Comparaison Sécurité & Fiabilité
  * 224SOLUTIONS vs Amazon vs Alibaba vs Odoo
  */
 export const SecurityComparisonPanel = () => {
   const securityCategories = [
     {
-      category: 'Protection des DonnÃ©es',
+      category: 'Protection des Données',
       icon: Lock,
       items: [
         { 
           name: 'Row Level Security (RLS)', 
-          us: { score: 100, note: 'ActivÃ© sur toutes les tables' },
+          us: { score: 100, note: 'Activé sur toutes les tables' },
           amazon: { score: 100, note: 'Complet' },
           alibaba: { score: 60, note: 'Partiel' },
-          odoo: { score: 40, note: 'LimitÃ©' }
+          odoo: { score: 40, note: 'Limité' }
         },
         { 
           name: 'Chiffrement E2E', 
-          us: { score: 90, note: 'DonnÃ©es sensibles' },
+          us: { score: 90, note: 'Données sensibles' },
           amazon: { score: 100, note: 'Total' },
           alibaba: { score: 70, note: 'Partiel' },
           odoo: { score: 50, note: 'Basique' }
         },
         { 
-          name: 'Isolation DonnÃ©es Multi-Tenant', 
+          name: 'Isolation Données Multi-Tenant', 
           us: { score: 100, note: 'Complet avec RLS' },
           amazon: { score: 100, note: 'Complet' },
           alibaba: { score: 80, note: 'Bon' },
@@ -37,12 +37,12 @@ export const SecurityComparisonPanel = () => {
       ]
     },
     {
-      category: 'DÃ©tection & PrÃ©vention Fraude',
+      category: 'Détection & Prévention Fraude',
       icon: AlertTriangle,
       items: [
         { 
           name: 'ML Fraud Detection', 
-          us: { score: 85, note: 'Temps rÃ©el, 6 critÃ¨res' },
+          us: { score: 85, note: 'Temps réel, 6 critères' },
           amazon: { score: 100, note: 'Advanced ML' },
           alibaba: { score: 70, note: 'Basique' },
           odoo: { score: 0, note: 'Non disponible' }
@@ -56,8 +56,8 @@ export const SecurityComparisonPanel = () => {
         },
         { 
           name: 'Blocage IP Automatique', 
-          us: { score: 90, note: 'IntÃ©grÃ© avec ML' },
-          amazon: { score: 95, note: 'AvancÃ©' },
+          us: { score: 90, note: 'Intégré avec ML' },
+          amazon: { score: 95, note: 'Avancé' },
           alibaba: { score: 80, note: 'Standard' },
           odoo: { score: 40, note: 'Manuel' }
         },
@@ -71,41 +71,41 @@ export const SecurityComparisonPanel = () => {
       ]
     },
     {
-      category: 'ConformitÃ© & Audit',
+      category: 'Conformité & Audit',
       icon: Award,
       items: [
         { 
           name: 'GDPR Compliance', 
           us: { score: 80, note: 'En cours certification' },
-          amazon: { score: 100, note: 'CertifiÃ©' },
+          amazon: { score: 100, note: 'Certifié' },
           alibaba: { score: 60, note: 'Partiel' },
           odoo: { score: 70, note: 'Standard' }
         },
         { 
           name: 'PCI DSS', 
           us: { score: 75, note: 'Level 2 en cours' },
-          amazon: { score: 100, note: 'Level 1 certifiÃ©' },
-          alibaba: { score: 80, note: 'CertifiÃ©' },
-          odoo: { score: 50, note: 'Non certifiÃ©' }
+          amazon: { score: 100, note: 'Level 1 certifié' },
+          alibaba: { score: 80, note: 'Certifié' },
+          odoo: { score: 50, note: 'Non certifié' }
         },
         { 
           name: 'Audit Logs Complets', 
-          us: { score: 95, note: 'Tous Ã©vÃ©nements tracÃ©s' },
+          us: { score: 95, note: 'Tous événements tracés' },
           amazon: { score: 100, note: 'CloudTrail' },
           alibaba: { score: 85, note: 'Standard' },
-          odoo: { score: 60, note: 'LimitÃ©' }
+          odoo: { score: 60, note: 'Limité' }
         },
         { 
           name: 'ISO 27001', 
           us: { score: 0, note: 'Roadmap 6 mois' },
-          amazon: { score: 100, note: 'CertifiÃ©' },
-          alibaba: { score: 90, note: 'CertifiÃ©' },
-          odoo: { score: 50, note: 'Partenaires certifiÃ©s' }
+          amazon: { score: 100, note: 'Certifié' },
+          alibaba: { score: 90, note: 'Certifié' },
+          odoo: { score: 50, note: 'Partenaires certifiés' }
         }
       ]
     },
     {
-      category: 'FiabilitÃ© & DisponibilitÃ©',
+      category: 'Fiabilité & Disponibilité',
       icon: TrendingUp,
       items: [
         { 
@@ -125,9 +125,9 @@ export const SecurityComparisonPanel = () => {
         { 
           name: 'Disaster Recovery', 
           us: { score: 85, note: 'Multi-AZ Supabase' },
-          amazon: { score: 100, note: 'Multi-rÃ©gion' },
-          alibaba: { score: 90, note: 'Multi-rÃ©gion' },
-          odoo: { score: 70, note: 'Selon hÃ©bergement' }
+          amazon: { score: 100, note: 'Multi-région' },
+          alibaba: { score: 90, note: 'Multi-région' },
+          odoo: { score: 70, note: 'Selon hébergement' }
         },
         { 
           name: 'CDN Global', 
@@ -147,11 +147,11 @@ export const SecurityComparisonPanel = () => {
           us: { score: 90, note: 'Supabase + Cloudflare' },
           amazon: { score: 100, note: 'AWS Shield' },
           alibaba: { score: 95, note: 'Anti-DDoS Pro' },
-          odoo: { score: 70, note: 'Selon hÃ©bergement' }
+          odoo: { score: 70, note: 'Selon hébergement' }
         },
         { 
           name: 'WAF (Web Application Firewall)', 
-          us: { score: 85, note: 'Supabase intÃ©grÃ©' },
+          us: { score: 85, note: 'Supabase intégré' },
           amazon: { score: 100, note: 'AWS WAF' },
           alibaba: { score: 90, note: 'Alibaba Cloud WAF' },
           odoo: { score: 60, note: 'Optionnel' }
@@ -161,7 +161,7 @@ export const SecurityComparisonPanel = () => {
           us: { score: 100, note: 'Zod + Parameterized' },
           amazon: { score: 100, note: 'Multi-niveaux' },
           alibaba: { score: 95, note: 'Standard' },
-          odoo: { score: 85, note: 'ORM protÃ©gÃ©' }
+          odoo: { score: 85, note: 'ORM protégé' }
         },
         { 
           name: 'XSS Protection', 
@@ -198,11 +198,11 @@ export const SecurityComparisonPanel = () => {
       {/* Header */}
       <div className="text-center space-y-2">
         <Badge variant="default" className="bg-gradient-to-r from-primary to-primary-glow">
-          Analyse SÃ©curitÃ© & FiabilitÃ© 2025
+          Analyse Sécurité & Fiabilité 2025
         </Badge>
-        <h2 className="text-3xl font-bold">Comparaison SÃ©curitÃ© E-Commerce</h2>
+        <h2 className="text-3xl font-bold">Comparaison Sécurité E-Commerce</h2>
         <p className="text-muted-foreground">
-          Benchmark dÃ©taillÃ© : 224SOLUTIONS vs GÃ©ants Mondiaux
+          Benchmark détaillé : 224SOLUTIONS vs Géants Mondiaux
         </p>
       </div>
 
@@ -211,7 +211,7 @@ export const SecurityComparisonPanel = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="w-5 h-5 text-primary" />
-            Scores Globaux SÃ©curitÃ© & FiabilitÃ©
+            Scores Globaux Sécurité & Fiabilité
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -252,7 +252,7 @@ export const SecurityComparisonPanel = () => {
         </CardContent>
       </Card>
 
-      {/* CatÃ©gories dÃ©taillÃ©es */}
+      {/* Catégories détaillées */}
       <div className="space-y-6">
         {securityCategories.map((category) => {
           const Icon = category.icon;
@@ -319,7 +319,7 @@ export const SecurityComparisonPanel = () => {
         })}
       </div>
 
-      {/* Notes DÃ©taillÃ©es par Plateforme */}
+      {/* Notes Détaillées par Plateforme */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Amazon - Leader Mondial */}
         <Card className="border-2 border-yellow-500/50 bg-gradient-to-br from-yellow-500/5 to-orange-500/5">
@@ -330,35 +330,35 @@ export const SecurityComparisonPanel = () => {
                 <span>Amazon</span>
               </div>
               <Badge className="bg-yellow-500 text-black">
-                ðŸ¥‡ 1er - {overallScores.amazon}/100
+                🥇 1er - {overallScores.amazon}/100
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <p className="font-semibold text-sm mb-2">ðŸ† MEILLEURE APPLICATION - LEADER MONDIAL</p>
+              <p className="font-semibold text-sm mb-2">🏆 MEILLEURE APPLICATION - LEADER MONDIAL</p>
               <p className="text-sm text-muted-foreground">
-                Amazon est le <strong>standard de rÃ©fÃ©rence absolu</strong> en matiÃ¨re de sÃ©curitÃ© et fiabilitÃ© e-commerce.
+                Amazon est le <strong>standard de référence absolu</strong> en matière de sécurité et fiabilité e-commerce.
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-primary-orange-600">âœ… Forces :</p>
+              <p className="text-sm font-medium text-green-600">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>â€¢ Infrastructure AWS niveau enterprise (99.99% uptime)</li>
-                <li>â€¢ ML avancÃ© pour dÃ©tection fraude en temps rÃ©el</li>
-                <li>â€¢ Certifications complÃ¨tes (PCI DSS Level 1, ISO 27001)</li>
-                <li>â€¢ Protection DDoS/WAF multi-niveaux</li>
-                <li>â€¢ Chiffrement E2E sur toutes les donnÃ©es</li>
-                <li>â€¢ Budget sÃ©curitÃ© illimitÃ©, Ã©quipes dÃ©diÃ©es 24/7</li>
+                <li>• Infrastructure AWS niveau enterprise (99.99% uptime)</li>
+                <li>• ML avancé pour détection fraude en temps réel</li>
+                <li>• Certifications complètes (PCI DSS Level 1, ISO 27001)</li>
+                <li>• Protection DDoS/WAF multi-niveaux</li>
+                <li>• Chiffrement E2E sur toutes les données</li>
+                <li>• Budget sécurité illimité, équipes dédiées 24/7</li>
               </ul>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-red-600">âŒ Limites :</p>
+              <p className="text-sm font-medium text-red-600">❌ Limites :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>â€¢ Pas de wallet intÃ©grÃ© natif</li>
-                <li>â€¢ Pas de cartes virtuelles</li>
-                <li>â€¢ Pas de systÃ¨me escrow pour vendeurs tiers</li>
-                <li>â€¢ ComplexitÃ© d'intÃ©gration Ã©levÃ©e</li>
+                <li>• Pas de wallet intégré natif</li>
+                <li>• Pas de cartes virtuelles</li>
+                <li>• Pas de système escrow pour vendeurs tiers</li>
+                <li>• Complexité d'intégration élevée</li>
               </ul>
             </div>
             <div className="pt-2 border-t">
@@ -377,37 +377,37 @@ export const SecurityComparisonPanel = () => {
                 <span>224SOLUTIONS</span>
               </div>
               <Badge className="bg-primary">
-                ðŸ¥ˆ 2e - {overallScores.us}/100
+                🥈 2e - {overallScores.us}/100
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <p className="font-semibold text-sm mb-2">ðŸš€ MEILLEURE INNOVATION - LEADER AFRICAIN</p>
+              <p className="font-semibold text-sm mb-2">🚀 MEILLEURE INNOVATION - LEADER AFRICAIN</p>
               <p className="text-sm text-muted-foreground">
-                224SOLUTIONS combine <strong>sÃ©curitÃ© enterprise</strong> avec des <strong>innovations uniques</strong> adaptÃ©es au marchÃ© africain.
+                224SOLUTIONS combine <strong>sécurité enterprise</strong> avec des <strong>innovations uniques</strong> adaptées au marché africain.
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-primary-orange-600">âœ… Forces :</p>
+              <p className="text-sm font-medium text-green-600">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>â€¢ RLS activÃ© sur 100% des tables (niveau Amazon)</li>
-                <li>â€¢ ML fraud detection temps rÃ©el (6 critÃ¨res)</li>
-                <li>â€¢ Wallet + Cartes virtuelles intÃ©grÃ©s (unique!)</li>
-                <li>â€¢ Escrow sÃ©curisÃ© natif pour vendeurs</li>
-                <li>â€¢ PWA Score 98/100 (meilleur que tous)</li>
-                <li>â€¢ Rate limiting DB + client-side</li>
-                <li>â€¢ OptimisÃ© mobile-first Afrique (connexion lente)</li>
-                <li>â€¢ Audit logs complets sur tous Ã©vÃ©nements</li>
+                <li>• RLS activé sur 100% des tables (niveau Amazon)</li>
+                <li>• ML fraud detection temps réel (6 critères)</li>
+                <li>• Wallet + Cartes virtuelles intégrés (unique!)</li>
+                <li>• Escrow sécurisé natif pour vendeurs</li>
+                <li>• PWA Score 98/100 (meilleur que tous)</li>
+                <li>• Rate limiting DB + client-side</li>
+                <li>• Optimisé mobile-first Afrique (connexion lente)</li>
+                <li>• Audit logs complets sur tous événements</li>
               </ul>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-orange-600">âš ï¸ Ã€ amÃ©liorer :</p>
+              <p className="text-sm font-medium text-orange-600">⚠️ À améliorer :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>â€¢ Certifications PCI DSS/ISO en cours (vs dÃ©jÃ  obtenues)</li>
-                <li>â€¢ Budget sÃ©curitÃ© limitÃ© vs gÃ©ants</li>
-                <li>â€¢ Chiffrement E2E partiel (vs complet Amazon)</li>
-                <li>â€¢ Multi-rÃ©gion Ã  dÃ©velopper</li>
+                <li>• Certifications PCI DSS/ISO en cours (vs déjà obtenues)</li>
+                <li>• Budget sécurité limité vs géants</li>
+                <li>• Chiffrement E2E partiel (vs complet Amazon)</li>
+                <li>• Multi-région à développer</li>
               </ul>
             </div>
             <div className="pt-2 border-t">
@@ -426,35 +426,35 @@ export const SecurityComparisonPanel = () => {
                 <span>Alibaba</span>
               </div>
               <Badge variant="secondary">
-                ðŸ¥‰ 3e - {overallScores.alibaba}/100
+                🥉 3e - {overallScores.alibaba}/100
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <p className="font-semibold text-sm mb-2">ðŸ“¦ VOLUME MASSIF - SÃ‰CURITÃ‰ MOYENNE</p>
+              <p className="font-semibold text-sm mb-2">📦 VOLUME MASSIF - SÉCURITÉ MOYENNE</p>
               <p className="text-sm text-muted-foreground">
-                Alibaba excelle en <strong>volume</strong> mais prÃ©sente des <strong>failles sÃ©curitÃ©</strong> importantes.
+                Alibaba excelle en <strong>volume</strong> mais présente des <strong>failles sécurité</strong> importantes.
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-primary-orange-600">âœ… Forces :</p>
+              <p className="text-sm font-medium text-green-600">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>â€¢ Infrastructure cloud Alibaba solide</li>
-                <li>â€¢ CDN global performant</li>
-                <li>â€¢ Escrow partiel pour B2B</li>
-                <li>â€¢ Protection DDoS avancÃ©e</li>
+                <li>• Infrastructure cloud Alibaba solide</li>
+                <li>• CDN global performant</li>
+                <li>• Escrow partiel pour B2B</li>
+                <li>• Protection DDoS avancée</li>
               </ul>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-red-600">âŒ Faiblesses :</p>
+              <p className="text-sm font-medium text-red-600">❌ Faiblesses :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>â€¢ RLS partiel seulement (60%)</li>
-                <li>â€¢ DÃ©tection fraude basique</li>
-                <li>â€¢ Chiffrement incomplet</li>
-                <li>â€¢ ConformitÃ© GDPR limitÃ©e</li>
-                <li>â€¢ Audit logs partiels</li>
-                <li>â€¢ Nombreux vendeurs frauduleux signalÃ©s</li>
+                <li>• RLS partiel seulement (60%)</li>
+                <li>• Détection fraude basique</li>
+                <li>• Chiffrement incomplet</li>
+                <li>• Conformité GDPR limitée</li>
+                <li>• Audit logs partiels</li>
+                <li>• Nombreux vendeurs frauduleux signalés</li>
               </ul>
             </div>
             <div className="pt-2 border-t">
@@ -479,30 +479,30 @@ export const SecurityComparisonPanel = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <p className="font-semibold text-sm mb-2">ðŸ¢ ERP COMPLET - E-COMMERCE FAIBLE</p>
+              <p className="font-semibold text-sm mb-2">🏢 ERP COMPLET - E-COMMERCE FAIBLE</p>
               <p className="text-sm text-muted-foreground">
-                Odoo est un <strong>excellent ERP</strong> mais <strong>inadaptÃ©</strong> pour e-commerce sÃ©curisÃ© Ã  grande Ã©chelle.
+                Odoo est un <strong>excellent ERP</strong> mais <strong>inadapté</strong> pour e-commerce sécurisé à grande échelle.
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-primary-orange-600">âœ… Forces :</p>
+              <p className="text-sm font-medium text-green-600">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>â€¢ Suite ERP complÃ¨te intÃ©grÃ©e</li>
-                <li>â€¢ Gestion comptabilitÃ©/stock</li>
-                <li>â€¢ Backup automatique disponible</li>
-                <li>â€¢ ORM protÃ¨ge contre SQL injection</li>
+                <li>• Suite ERP complète intégrée</li>
+                <li>• Gestion comptabilité/stock</li>
+                <li>• Backup automatique disponible</li>
+                <li>• ORM protège contre SQL injection</li>
               </ul>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-red-600">âŒ Faiblesses Critiques :</p>
+              <p className="text-sm font-medium text-red-600">❌ Faiblesses Critiques :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>â€¢ Aucune dÃ©tection fraude ML</li>
-                <li>â€¢ RLS trÃ¨s limitÃ© (40%)</li>
-                <li>â€¢ Performance e-commerce mÃ©diocre</li>
-                <li>â€¢ PWA quasi inexistant</li>
-                <li>â€¢ Pas de certifications PCI DSS/ISO</li>
-                <li>â€¢ Rate limiting partiel</li>
-                <li>â€¢ SÃ©curitÃ© dÃ©pend de l'hÃ©bergement choisi</li>
+                <li>• Aucune détection fraude ML</li>
+                <li>• RLS très limité (40%)</li>
+                <li>• Performance e-commerce médiocre</li>
+                <li>• PWA quasi inexistant</li>
+                <li>• Pas de certifications PCI DSS/ISO</li>
+                <li>• Rate limiting partiel</li>
+                <li>• Sécurité dépend de l'hébergement choisi</li>
               </ul>
             </div>
             <div className="pt-2 border-t">
@@ -519,34 +519,34 @@ export const SecurityComparisonPanel = () => {
           <div className="space-y-6">
             <div className="flex items-center gap-3 justify-center">
               <Award className="w-8 h-8 text-yellow-500" />
-              <h3 className="text-2xl font-bold">ðŸ† VERDICT FINAL</h3>
+              <h3 className="text-2xl font-bold">🏆 VERDICT FINAL</h3>
             </div>
             
             {/* Classement */}
             <div className="space-y-3">
               <div className="text-center space-y-2">
-                <h4 className="text-lg font-bold">Classement SÃ©curitÃ© & FiabilitÃ©</h4>
+                <h4 className="text-lg font-bold">Classement Sécurité & Fiabilité</h4>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
                   <div className="p-4 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-lg border-2 border-yellow-500">
-                    <div className="text-3xl mb-1">ðŸ¥‡</div>
+                    <div className="text-3xl mb-1">🥇</div>
                     <div className="text-xl font-bold">Amazon</div>
                     <div className="text-2xl font-bold text-yellow-600">9.4/10</div>
                     <p className="text-xs text-muted-foreground mt-1">Leader Mondial</p>
                   </div>
                   <div className="p-4 bg-gradient-to-br from-primary/20 to-primary-glow/20 rounded-lg border-2 border-primary">
-                    <div className="text-3xl mb-1">ðŸ¥ˆ</div>
+                    <div className="text-3xl mb-1">🥈</div>
                     <div className="text-xl font-bold">224SOLUTIONS</div>
                     <div className="text-2xl font-bold text-primary">8.5/10</div>
                     <p className="text-xs text-muted-foreground mt-1">Leader Africain</p>
                   </div>
                   <div className="p-4 bg-secondary rounded-lg border-2 border-border">
-                    <div className="text-3xl mb-1">ðŸ¥‰</div>
+                    <div className="text-3xl mb-1">🥉</div>
                     <div className="text-xl font-bold">Alibaba</div>
                     <div className="text-2xl font-bold">8.1/10</div>
                     <p className="text-xs text-muted-foreground mt-1">Challenger</p>
                   </div>
                   <div className="p-4 bg-secondary rounded-lg border-2 border-border">
-                    <div className="text-3xl mb-1">4ï¸âƒ£</div>
+                    <div className="text-3xl mb-1">4️⃣</div>
                     <div className="text-xl font-bold">Odoo</div>
                     <div className="text-2xl font-bold">6.3/10</div>
                     <p className="text-xs text-muted-foreground mt-1">ERP Focus</p>
@@ -555,7 +555,7 @@ export const SecurityComparisonPanel = () => {
               </div>
             </div>
 
-            {/* Analyse DÃ©taillÃ©e */}
+            {/* Analyse Détaillée */}
             <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
               <div className="space-y-2">
                 <h5 className="font-bold text-sm flex items-center gap-2">
@@ -563,12 +563,12 @@ export const SecurityComparisonPanel = () => {
                   Pourquoi Amazon est 1er ?
                 </h5>
                 <ul className="text-xs space-y-1 text-muted-foreground">
-                  <li>âœ“ Infrastructure AWS inÃ©galÃ©e (milliards investis)</li>
-                  <li>âœ“ ML fraud detection le plus avancÃ© du marchÃ©</li>
-                  <li>âœ“ Toutes certifications obtenues (PCI DSS L1, ISO 27001)</li>
-                  <li>âœ“ Ã‰quipes sÃ©curitÃ© 24/7 dans le monde entier</li>
-                  <li>âœ“ 99.99% uptime garanti avec compensation financiÃ¨re</li>
-                  <li>âœ“ Budget R&D sÃ©curitÃ© illimitÃ©</li>
+                  <li>✓ Infrastructure AWS inégalée (milliards investis)</li>
+                  <li>✓ ML fraud detection le plus avancé du marché</li>
+                  <li>✓ Toutes certifications obtenues (PCI DSS L1, ISO 27001)</li>
+                  <li>✓ Équipes sécurité 24/7 dans le monde entier</li>
+                  <li>✓ 99.99% uptime garanti avec compensation financière</li>
+                  <li>✓ Budget R&D sécurité illimité</li>
                 </ul>
               </div>
               <div className="space-y-2">
@@ -577,12 +577,12 @@ export const SecurityComparisonPanel = () => {
                   Pourquoi 224SOLUTIONS est 2e ?
                 </h5>
                 <ul className="text-xs space-y-1 text-muted-foreground">
-                  <li>âœ“ SÃ©curitÃ© comparable Amazon pour fraction du coÃ»t</li>
-                  <li>âœ“ Innovations uniques (Wallet, Cartes, Escrow)</li>
-                  <li>âœ“ PWA meilleur que tous (98/100 vs 75 Amazon)</li>
-                  <li>âœ“ OptimisÃ© marchÃ©s Ã©mergents (connexion lente)</li>
-                  <li>âœ“ RLS 100% activÃ© (niveau enterprise)</li>
-                  <li>âœ“ AgilitÃ© startup vs bureaucratie gÃ©ants</li>
+                  <li>✓ Sécurité comparable Amazon pour fraction du coût</li>
+                  <li>✓ Innovations uniques (Wallet, Cartes, Escrow)</li>
+                  <li>✓ PWA meilleur que tous (98/100 vs 75 Amazon)</li>
+                  <li>✓ Optimisé marchés émergents (connexion lente)</li>
+                  <li>✓ RLS 100% activé (niveau enterprise)</li>
+                  <li>✓ Agilité startup vs bureaucratie géants</li>
                 </ul>
               </div>
             </div>
@@ -590,34 +590,34 @@ export const SecurityComparisonPanel = () => {
             {/* Conclusion */}
             <div className="pt-4 border-t space-y-3 text-center">
               <p className="text-sm font-semibold">
-                ðŸŽ¯ <span className="text-primary">224SOLUTIONS</span> atteint <span className="text-primary">90% du niveau Amazon</span> 
-                pour la sÃ©curitÃ© & fiabilitÃ©
+                🎯 <span className="text-primary">224SOLUTIONS</span> atteint <span className="text-primary">90% du niveau Amazon</span> 
+                pour la sécurité & fiabilité
               </p>
               <p className="text-sm text-muted-foreground">
-                Avec un score de <strong>8.5/10</strong>, 224SOLUTIONS se positionne comme la <strong className="text-primary">meilleure alternative</strong> Ã  Amazon 
-                pour le marchÃ© africain, combinant sÃ©curitÃ© enterprise et innovations uniques.
+                Avec un score de <strong>8.5/10</strong>, 224SOLUTIONS se positionne comme la <strong className="text-primary">meilleure alternative</strong> à Amazon 
+                pour le marché africain, combinant sécurité enterprise et innovations uniques.
               </p>
               <p className="text-sm text-muted-foreground">
                 Amazon reste le <strong>leader mondial absolu</strong> (9.4/10), mais 224SOLUTIONS offre un 
-                <strong className="text-primary"> meilleur rapport innovation/sÃ©curitÃ©/coÃ»t</strong> pour l'Afrique.
+                <strong className="text-primary"> meilleur rapport innovation/sécurité/coût</strong> pour l'Afrique.
               </p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-2 pt-4">
               <Badge className="bg-yellow-500 text-black">
-                ðŸ¥‡ Amazon: Leader Absolu
+                🥇 Amazon: Leader Absolu
               </Badge>
               <Badge className="bg-primary">
-                ðŸ¥ˆ 224SOL: Meilleure Innovation
+                🥈 224SOL: Meilleure Innovation
               </Badge>
               <Badge variant="outline">
-                âš¡ 90% niveau Amazon
+                ⚡ 90% niveau Amazon
               </Badge>
               <Badge variant="outline">
-                ðŸŒ #1 en Afrique
+                🌍 #1 en Afrique
               </Badge>
               <Badge variant="outline">
-                ðŸš€ PrÃªt Expansion Mondiale
+                🚀 Prêt Expansion Mondiale
               </Badge>
             </div>
           </div>

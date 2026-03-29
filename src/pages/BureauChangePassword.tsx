@@ -30,10 +30,10 @@ const BureauChangePassword = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Charger les donnÃ©es du bureau (depuis MFA ou token)
+  // Charger les données du bureau (depuis MFA ou token)
   useEffect(() => {
     const loadBureauData = async () => {
-      // VÃ©rifier d'abord si on a une session MFA
+      // Vérifier d'abord si on a une session MFA
       if (bureauAuth?.bureau) {
         setBureauData(bureauAuth.bureau);
         setLoading(false);
@@ -61,15 +61,15 @@ const BureauChangePassword = () => {
         }
       }
 
-      // Aucune session trouvÃ©e
-      toast.error('Session expirÃ©e. Veuillez vous reconnecter.');
+      // Aucune session trouvée
+      toast.error('Session expirée. Veuillez vous reconnecter.');
       navigate('/bureau/login');
     };
 
     loadBureauData();
   }, [bureauAuth, navigate]);
 
-  // Handlers optimisÃ©s - state local uniquement, pas de validation lourde
+  // Handlers optimisés - state local uniquement, pas de validation lourde
   const handlePasswordChange = useCallback((field: keyof typeof formData) => (value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
@@ -88,7 +88,7 @@ const BureauChangePassword = () => {
     }
 
     if (formData.newPassword.length < 8) {
-      toast.error("Le nouveau mot de passe doit contenir au moins 8 caractÃ¨res");
+      toast.error("Le nouveau mot de passe doit contenir au moins 8 caractères");
       return;
     }
 
@@ -103,7 +103,7 @@ const BureauChangePassword = () => {
     }
 
     if (formData.currentPassword === formData.newPassword) {
-      toast.error("Le nouveau mot de passe doit Ãªtre diffÃ©rent de l'ancien");
+      toast.error("Le nouveau mot de passe doit être différent de l'ancien");
       return;
     }
 
@@ -125,14 +125,14 @@ const BureauChangePassword = () => {
       }
 
       if (data && data.success) {
-        toast.success("Mot de passe modifiÃ© avec succÃ¨s !");
+        toast.success("Mot de passe modifié avec succès !");
         setFormData({
           currentPassword: "",
           newPassword: "",
           confirmPassword: ""
         });
         
-        // Rediriger selon le mode d'accÃ¨s
+        // Rediriger selon le mode d'accès
         setTimeout(() => {
           const returnToken = localStorage.getItem('bureau_return_token');
           if (returnToken) {
@@ -156,7 +156,7 @@ const BureauChangePassword = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-orange-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -166,41 +166,41 @@ const BureauChangePassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-blue-50 via-white to-primary-orange-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-700 p-4 rounded-2xl shadow-xl">
+            <div className="bg-gradient-to-br from-green-500 to-green-700 p-4 rounded-2xl shadow-xl">
               <Shield className="h-12 w-12 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-blue-600 to-primary-orange-800 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent">
             Modifier votre mot de passe
           </h1>
           <p className="text-gray-600 mt-2">Bureau Syndicat - {bureauData.president_name || bureauData.bureau_code}</p>
         </div>
 
-        <Card className="shadow-xl border-primary-orange-100">
+        <Card className="shadow-xl border-green-100">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center text-gray-900">
               Changement de mot de passe
             </CardTitle>
             <CardDescription className="text-center">
-              SÃ©curisez votre compte avec un nouveau mot de passe
+              Sécurisez votre compte avec un nouveau mot de passe
             </CardDescription>
           </CardHeader>
 
           <CardContent>
-            <Alert className="mb-6 border-primary-orange-200 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50">
-              <AlertCircle className="h-4 w-4 text-primary-orange-600" />
-              <AlertDescription className="text-primary-orange-800">
+            <Alert className="mb-6 border-green-200 bg-green-50">
+              <AlertCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
                 <strong>Exigences du mot de passe :</strong>
                 <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
-                  <li>Au moins 8 caractÃ¨res</li>
+                  <li>Au moins 8 caractères</li>
                   <li>Au moins une lettre majuscule</li>
                   <li>Au moins une lettre minuscule</li>
                   <li>Au moins un chiffre</li>
-                  <li>Au moins un caractÃ¨re spÃ©cial (!@#$%^&*)</li>
+                  <li>Au moins un caractère spécial (!@#$%^&*)</li>
                 </ul>
               </AlertDescription>
             </Alert>
@@ -209,7 +209,7 @@ const BureauChangePassword = () => {
               {/* Mot de passe actuel */}
               <div className="space-y-2">
                 <Label htmlFor="currentPassword" className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-primary-orange-600" />
+                  <Lock className="h-4 w-4 text-green-600" />
                   Mot de passe actuel
                 </Label>
                 <OptimizedPasswordInput
@@ -217,7 +217,7 @@ const BureauChangePassword = () => {
                   name="currentPassword"
                   value={formData.currentPassword}
                   onChange={handlePasswordChange('currentPassword')}
-                  className="border-primary-orange-200 focus:border-primary-orange-500"
+                  className="border-green-200 focus:border-green-500"
                   required
                 />
               </div>
@@ -225,7 +225,7 @@ const BureauChangePassword = () => {
               {/* Nouveau mot de passe */}
               <div className="space-y-2">
                 <Label htmlFor="newPassword" className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-primary-orange-600" />
+                  <Lock className="h-4 w-4 text-green-600" />
                   Nouveau mot de passe
                 </Label>
                 <OptimizedPasswordInput
@@ -233,7 +233,7 @@ const BureauChangePassword = () => {
                   name="newPassword"
                   value={formData.newPassword}
                   onChange={handlePasswordChange('newPassword')}
-                  className="border-primary-orange-200 focus:border-primary-orange-500"
+                  className="border-green-200 focus:border-green-500"
                   required
                   showStrengthIndicator
                   onStrengthChange={handleStrengthChange}
@@ -243,7 +243,7 @@ const BureauChangePassword = () => {
               {/* Confirmer le nouveau mot de passe */}
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-primary-orange-600" />
+                  <Lock className="h-4 w-4 text-green-600" />
                   Confirmer le nouveau mot de passe
                 </Label>
                 <OptimizedPasswordInput
@@ -251,7 +251,7 @@ const BureauChangePassword = () => {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handlePasswordChange('confirmPassword')}
-                  className="border-primary-orange-200 focus:border-primary-orange-500"
+                  className="border-green-200 focus:border-green-500"
                   required
                 />
                 
@@ -259,7 +259,7 @@ const BureauChangePassword = () => {
                 {formData.confirmPassword && (
                   <div className="text-sm">
                     {formData.newPassword === formData.confirmPassword ? (
-                      <span className="text-primary-orange-600 flex items-center gap-1">
+                      <span className="text-green-600 flex items-center gap-1">
                         <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -289,7 +289,7 @@ const BureauChangePassword = () => {
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 bg-primary-blue-600 hover:bg-primary-blue-700 shadow-lg shadow-primary-orange-600/40"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/40"
                   disabled={isLoading || passwordStrength.score < 3 || formData.newPassword !== formData.confirmPassword}
                 >
                   {isLoading ? "Modification..." : "Modifier le mot de passe"}

@@ -1,6 +1,6 @@
 /**
- * GESTIONNAIRE PRINCIPAL DES EXPÃ‰DITIONS
- * Interface principale pour crÃ©er et gÃ©rer les expÃ©ditions
+ * GESTIONNAIRE PRINCIPAL DES EXPÉDITIONS
+ * Interface principale pour créer et gérer les expéditions
  */
 
 import { useState, useEffect } from 'react';
@@ -41,7 +41,7 @@ export function ShipmentManager() {
     if (!vendorId || vendorLoading) return;
     loadShipments();
 
-    // Ã‰coute des mises Ã  jour en temps rÃ©el pour toutes les expÃ©ditions du vendeur
+    // Écoute des mises à jour en temps réel pour toutes les expéditions du vendeur
     const channel = supabase
       .channel('vendor-shipments')
       .on(
@@ -67,14 +67,14 @@ export function ShipmentManager() {
 
   const loadShipments = async () => {
     if (!vendorId) {
-      console.warn('âš ï¸ Pas de vendorId pour charger les expÃ©ditions');
+      console.warn('⚠️ Pas de vendorId pour charger les expéditions');
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      // Charger les expÃ©ditions
+      // Charger les expéditions
       const { data: shipmentsData, error } = await supabase
         .from('shipments')
         .select('*')
@@ -118,7 +118,7 @@ export function ShipmentManager() {
       case 'created': return 'bg-blue-100 text-blue-800';
       case 'picked_up': return 'bg-purple-100 text-purple-800';
       case 'in_transit': return 'bg-orange-100 text-orange-800';
-      case 'delivered': return 'bg-primary-orange-100 text-primary-orange-800';
+      case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -126,11 +126,11 @@ export function ShipmentManager() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'created': return 'CrÃ©Ã©e';
+      case 'created': return 'Créée';
       case 'picked_up': return 'Pris en charge';
       case 'in_transit': return 'En transit';
-      case 'delivered': return 'LivrÃ©';
-      case 'cancelled': return 'AnnulÃ©';
+      case 'delivered': return 'Livré';
+      case 'cancelled': return 'Annulé';
       default: return status;
     }
   };
@@ -157,14 +157,14 @@ export function ShipmentManager() {
     );
   }
 
-  // Mode crÃ©ation
+  // Mode création
   if (viewMode === 'create') {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Nouvelle expÃ©dition</h2>
+          <h2 className="text-2xl font-bold">Nouvelle expédition</h2>
           <Button variant="outline" onClick={handleBackToList}>
-            Retour Ã  la liste
+            Retour à la liste
           </Button>
         </div>
         <ShipmentForm
@@ -176,7 +176,7 @@ export function ShipmentManager() {
     );
   }
 
-  // Mode succÃ¨s
+  // Mode succès
   if (viewMode === 'success') {
     return (
       <div className="space-y-4">
@@ -188,14 +188,14 @@ export function ShipmentManager() {
         />
         <div className="text-center">
           <Button variant="outline" onClick={handleBackToList}>
-            Retour Ã  la liste des expÃ©ditions
+            Retour à la liste des expéditions
           </Button>
         </div>
       </div>
     );
   }
 
-  // Mode suivi dÃ©taillÃ©
+  // Mode suivi détaillé
   if (viewMode === 'track') {
     return (
       <ShipmentTracker
@@ -217,7 +217,7 @@ export function ShipmentManager() {
                 <Package className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total expÃ©ditions</p>
+                <p className="text-sm text-muted-foreground">Total expéditions</p>
                 <p className="text-2xl font-bold">{shipments.length}</p>
               </div>
             </div>
@@ -243,11 +243,11 @@ export function ShipmentManager() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-orange-100 rounded-lg flex items-center justify-center">
-                <Package className="h-5 w-5 text-primary-orange-600" />
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Package className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">LivrÃ©es</p>
+                <p className="text-sm text-muted-foreground">Livrées</p>
                 <p className="text-2xl font-bold">
                   {shipments.filter(s => s.status === 'delivered').length}
                 </p>
@@ -257,17 +257,17 @@ export function ShipmentManager() {
         </Card>
       </div>
 
-      {/* Liste des expÃ©ditions */}
+      {/* Liste des expéditions */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5 text-orange-600" />
-                Mes expÃ©ditions
+                Mes expéditions
               </CardTitle>
               <CardDescription>
-                GÃ©rez toutes vos expÃ©ditions logistiques
+                Gérez toutes vos expéditions logistiques
               </CardDescription>
             </div>
             <Button
@@ -275,7 +275,7 @@ export function ShipmentManager() {
               className="bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/40"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Nouvelle expÃ©dition
+              Nouvelle expédition
             </Button>
           </div>
         </CardHeader>
@@ -284,13 +284,13 @@ export function ShipmentManager() {
             {shipments.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-30" />
-                <p className="text-muted-foreground mb-4">Aucune expÃ©dition crÃ©Ã©e</p>
+                <p className="text-muted-foreground mb-4">Aucune expédition créée</p>
                 <Button
                   onClick={handleNewShipment}
                   className="bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/40"
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  CrÃ©er votre premiÃ¨re expÃ©dition
+                  Créer votre première expédition
                 </Button>
               </div>
             ) : (
@@ -311,7 +311,7 @@ export function ShipmentManager() {
                       </div>
                       
                       <div className="flex items-start gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-primary-orange-600 flex-shrink-0 mt-0.5" />
+                        <MapPin className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="font-medium">{shipment.receiver_name}</p>
                           <p className="text-muted-foreground">{shipment.receiver_address}</p>

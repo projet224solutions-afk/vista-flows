@@ -275,12 +275,12 @@ export function SecureTransferDialog({
 
         {step === 'success' && (
           <div className="py-8 text-center space-y-4">
-            <div className="mx-auto w-16 h-16 bg-primary-orange-100 rounded-full flex items-center justify-center">
-              <CheckCircle2 className="h-8 w-8 text-primary-orange-600" />
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
             
             <div>
-              <h3 className="text-lg font-semibold text-primary-orange-600">Transfert réussi!</h3>
+              <h3 className="text-lg font-semibold text-green-600">Transfert réussi!</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 Votre transfert a été effectué avec succès
               </p>

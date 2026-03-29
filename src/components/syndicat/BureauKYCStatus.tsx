@@ -1,6 +1,6 @@
 /**
  * Badge de statut KYC pour les Bureaux Syndicats
- * Affiche le statut de vÃ©rification du bureau
+ * Affiche le statut de vérification du bureau
  */
 
 import { Badge } from '@/components/ui/badge';
@@ -18,15 +18,15 @@ export function BureauKYCStatus({ status, bureauId, className }: BureauKYCStatus
   const navigate = useNavigate();
 
   const handleVerifyClick = () => {
-    // Ne rien faire pour l'instant, la vÃ©rification KYC se fait dans l'onglet Settings du dashboard
+    // Ne rien faire pour l'instant, la vérification KYC se fait dans l'onglet Settings du dashboard
     // Le badge est informatif uniquement
   };
 
   if (status === 'verified') {
     return (
-      <Badge className={`bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 hover:bg-primary-orange-600 text-white gap-1 ${className}`}>
+      <Badge className={`bg-green-500 hover:bg-green-600 text-white gap-1 ${className}`}>
         <ShieldCheck className="w-3 h-3" />
-        Bureau vÃ©rifiÃ©
+        Bureau vérifié
       </Badge>
     );
   }
@@ -35,7 +35,7 @@ export function BureauKYCStatus({ status, bureauId, className }: BureauKYCStatus
     return (
       <Badge className={`bg-yellow-500 hover:bg-yellow-600 text-white gap-1 ${className}`}>
         <Shield className="w-3 h-3" />
-        VÃ©rification en cours...
+        Vérification en cours...
       </Badge>
     );
   }
@@ -45,7 +45,7 @@ export function BureauKYCStatus({ status, bureauId, className }: BureauKYCStatus
       <div className={`flex items-center gap-2 ${className}`}>
         <Badge className="bg-red-500 hover:bg-red-600 text-white gap-1">
           <ShieldAlert className="w-3 h-3" />
-          VÃ©rification rejetÃ©e
+          Vérification rejetée
         </Badge>
         <Button
           size="sm"
@@ -53,7 +53,7 @@ export function BureauKYCStatus({ status, bureauId, className }: BureauKYCStatus
           onClick={handleVerifyClick}
           className="text-xs h-7"
         >
-          RÃ©essayer
+          Réessayer
         </Button>
       </div>
     );
@@ -64,7 +64,7 @@ export function BureauKYCStatus({ status, bureauId, className }: BureauKYCStatus
     <div className={`flex items-center gap-2 ${className}`}>
       <Badge variant="destructive" className="gap-1">
         <ShieldAlert className="w-3 h-3" />
-        Bureau non vÃ©rifiÃ©
+        Bureau non vérifié
       </Badge>
       <Button
         size="sm"
@@ -72,7 +72,7 @@ export function BureauKYCStatus({ status, bureauId, className }: BureauKYCStatus
         onClick={handleVerifyClick}
         className="text-xs h-7"
       >
-        VÃ©rifier maintenant
+        Vérifier maintenant
       </Button>
     </div>
   );

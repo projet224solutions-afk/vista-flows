@@ -1,6 +1,6 @@
 /**
- * ðŸ†” INDICATEUR SYSTÃˆME D'IDs
- * Widget visible montrant le systÃ¨me d'IDs standardisÃ©s
+ * 🆔 INDICATEUR SYSTÈME D'IDs
+ * Widget visible montrant le système d'IDs standardisés
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,12 +47,12 @@ export function IdSystemIndicator() {
               <Hash className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-sm">SystÃ¨me d'ID</CardTitle>
+              <CardTitle className="text-sm">Système d'ID</CardTitle>
               <CardDescription className="text-xs">224SOLUTIONS</CardDescription>
             </div>
           </div>
           {isStandardized && (
-            <CheckCircle className="w-5 h-5 text-primary-orange-500" />
+            <CheckCircle className="w-5 h-5 text-green-500" />
           )}
         </div>
       </CardHeader>
@@ -68,7 +68,7 @@ export function IdSystemIndicator() {
               showIcon={true}
             />
           ) : (
-            <Badge variant="outline">En cours de gÃ©nÃ©ration...</Badge>
+            <Badge variant="outline">En cours de génération...</Badge>
           )}
         </div>
 
@@ -88,8 +88,8 @@ export function IdSystemIndicator() {
           <div className="flex items-center gap-1">
             {isStandardized ? (
               <>
-                <div className="w-2 h-2 rounded-full bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 animate-pulse" />
-                <span className="text-xs font-medium text-primary-orange-600">Actif</span>
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs font-medium text-green-600">Actif</span>
               </>
             ) : (
               <>

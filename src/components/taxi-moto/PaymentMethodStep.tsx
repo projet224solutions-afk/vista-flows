@@ -45,7 +45,7 @@ export const paymentMethods: PaymentMethodOption[] = [
         name: 'Wallet 224Solutions',
         icon: Wallet,
         description: 'Payez avec votre portefeuille',
-        color: 'bg-primary-blue-500'
+        color: 'bg-emerald-500'
     },
     {
         id: 'card',
@@ -164,7 +164,7 @@ export default function PaymentMethodStep({
                                                         Solde: {walletBalance.toLocaleString()} GNF
                                                     </span>
                                                     {isWalletSufficient ? (
-                                                        <Badge variant="default" className="bg-primary-blue-500 text-xs">
+                                                        <Badge variant="default" className="bg-emerald-500 text-xs">
                                                             Suffisant
                                                         </Badge>
                                                     ) : (

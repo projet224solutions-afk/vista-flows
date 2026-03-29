@@ -217,7 +217,7 @@ export default function VendorDigitalProducts() {
         </Card>
         <Card>
           <CardContent className="p-3 sm:pt-4">
-            <div className="text-lg sm:text-2xl font-bold text-primary-orange-600">
+            <div className="text-lg sm:text-2xl font-bold text-green-600">
               {products.filter(p => p.status === 'published').length}
             </div>
             <p className="text-xs text-muted-foreground truncate">Publiés</p>
@@ -318,7 +318,7 @@ export default function VendorDigitalProducts() {
                           )}
                         </div>
                       ) : (
-                        <span className="font-bold text-base sm:text-lg text-primary-orange-600">Gratuit</span>
+                        <span className="font-bold text-base sm:text-lg text-green-600">Gratuit</span>
                       )}
                     </div>
                     {product.product_mode === 'affiliate' && product.commission_rate > 0 && (

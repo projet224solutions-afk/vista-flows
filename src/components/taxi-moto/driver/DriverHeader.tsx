@@ -1,7 +1,7 @@
 /**
  * HEADER CONDUCTEUR TAXI-MOTO - ULTRA PROFESSIONNEL
- * Design Ã©lÃ©gant, moderne avec glassmorphism
- * OptimisÃ© pour mobile
+ * Design élégant, moderne avec glassmorphism
+ * Optimisé pour mobile
  */
 
 import { Bell, LogOut, Wifi, WifiOff, MapPin, Home } from "lucide-react";
@@ -40,7 +40,7 @@ export function DriverHeader({
   return (
     <header className="relative bg-gradient-to-r from-gray-900 via-gray-900 to-gray-800 text-white sticky top-0 z-40 w-full overflow-hidden">
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary-blue-500/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent pointer-events-none" />
       
       <div className="relative px-3 py-2.5 safe-area-inset-top w-full">
         <div className="flex items-center justify-between gap-2 w-full">
@@ -61,17 +61,17 @@ export function DriverHeader({
             <div className="relative shrink-0">
               <div className={cn(
                 "w-10 h-10 rounded-full flex items-center justify-center text-base font-bold",
-                "bg-gradient-to-br from-primary-blue-400 via-primary-blue-500 to-primary-orange-600",
-                "shadow-lg shadow-primary-orange-500/30",
+                "bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600",
+                "shadow-lg shadow-emerald-500/30",
                 "ring-2 ring-offset-1 ring-offset-gray-900",
-                isOnline ? "ring-primary-blue-400" : "ring-gray-600"
+                isOnline ? "ring-emerald-400" : "ring-gray-600"
               )}>
                 {firstName?.charAt(0)?.toUpperCase() || 'C'}
               </div>
               {/* Online indicator */}
               <span className={cn(
                 "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-gray-900",
-                isOnline ? "bg-primary-blue-400 animate-pulse" : "bg-gray-500"
+                isOnline ? "bg-emerald-400 animate-pulse" : "bg-gray-500"
               )} />
             </div>
           </div>
@@ -119,12 +119,12 @@ export function DriverHeader({
         
         {/* Ligne de statut sous le header - plus compact */}
         <div className="flex items-center justify-between mt-2 gap-2">
-          {/* Status badges Ã  gauche */}
+          {/* Status badges à gauche */}
           <div className="flex items-center gap-1.5 flex-wrap">
             <div className={cn(
               "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium",
               isOnline 
-                ? "bg-primary-blue-500/20 text-primary-blue-400 border border-primary-orange-500/30" 
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
                 : "bg-gray-800 text-gray-400 border border-gray-700"
             )}>
               {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
@@ -143,7 +143,7 @@ export function DriverHeader({
       
       {/* Bottom border glow when online */}
       {isOnline && (
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-blue-500/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
       )}
     </header>
   );

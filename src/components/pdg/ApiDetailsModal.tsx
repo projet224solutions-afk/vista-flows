@@ -1,6 +1,6 @@
 /**
- * ðŸ’¼ MODAL DÃ‰TAILS API - 224SOLUTIONS
- * Affiche les informations complÃ¨tes d'une API avec logs et graphiques
+ * 💼 MODAL DÉTAILS API - 224SOLUTIONS
+ * Affiche les informations complètes d'une API avec logs et graphiques
  */
 
 import { useState, useEffect } from 'react';
@@ -56,7 +56,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
     setAnalyzing(true);
     try {
       await ApiMonitoringService.detect224GuardAnomalies(api.id);
-      toast.success('âœ… Analyse 224Guard terminÃ©e');
+      toast.success('✅ Analyse 224Guard terminée');
     } catch (error) {
       toast.error('Erreur lors de l\'analyse');
     }
@@ -75,7 +75,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
 
   if (!api) return null;
 
-  // DonnÃ©es pour le graphique d'utilisation
+  // Données pour le graphique d'utilisation
   const usageData = logs.slice(0, 20).reverse().map((log, index) => ({
     time: new Date(log.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
     tokens: log.tokens_consumed,
@@ -83,7 +83,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
   }));
 
   const statusColor = {
-    active: 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500',
+    active: 'bg-green-500',
     suspended: 'bg-yellow-500',
     expired: 'bg-red-500',
     error: 'bg-orange-500'
@@ -100,7 +100,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
                 {api.api_name}
               </DialogTitle>
               <DialogDescription className="text-slate-400 mt-1">
-                {api.api_provider} â€¢ {api.api_type}
+                {api.api_provider} • {api.api_type}
               </DialogDescription>
             </div>
             <Badge className={`${statusColor} text-white`}>
@@ -113,7 +113,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
           <TabsList className="bg-slate-800 border-slate-700">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="logs">Logs</TabsTrigger>
-            <TabsTrigger value="security">SÃ©curitÃ©</TabsTrigger>
+            <TabsTrigger value="security">Sécurité</TabsTrigger>
           </TabsList>
 
           {/* Vue d'ensemble */}
@@ -121,7 +121,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
             <div className="grid grid-cols-2 gap-4">
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle className="text-white text-sm">ClÃ© API</CardTitle>
+                  <CardTitle className="text-white text-sm">Clé API</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <code className="text-slate-300 text-sm font-mono">
@@ -135,7 +135,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
                   <CardTitle className="text-white text-sm">URL de base</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-slate-300 text-sm">{api.base_url || 'Non spÃ©cifiÃ©e'}</p>
+                  <p className="text-slate-300 text-sm">{api.base_url || 'Non spécifiée'}</p>
                 </CardContent>
               </Card>
             </div>
@@ -149,7 +149,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">UtilisÃ©s</span>
+                      <span className="text-slate-400">Utilisés</span>
                       <span className="text-white font-bold">{api.tokens_used.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -158,7 +158,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-400">Restants</span>
-                      <span className="text-primary-orange-500 font-bold">
+                      <span className="text-green-500 font-bold">
                         {(api.tokens_remaining || 0).toLocaleString()}
                       </span>
                     </div>
@@ -176,7 +176,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
             {/* Graphique d'utilisation */}
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white">ActivitÃ© rÃ©cente</CardTitle>
+                <CardTitle className="text-white">Activité récente</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
@@ -229,7 +229,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge className={log.status_code && log.status_code < 400 ? 'bg-primary-orange-600' : 'bg-red-600'}>
+                            <Badge className={log.status_code && log.status_code < 400 ? 'bg-green-600' : 'bg-red-600'}>
                               {log.status_code || 'N/A'}
                             </Badge>
                             <span className="text-white font-mono text-sm">{log.method}</span>
@@ -254,27 +254,27 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
             </div>
           </TabsContent>
 
-          {/* SÃ©curitÃ© */}
+          {/* Sécurité */}
           <TabsContent value="security" className="space-y-4">
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary-orange-500" />
-                  Ã‰tat de sÃ©curitÃ©
+                  <Shield className="h-5 w-5 text-green-500" />
+                  État de sécurité
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
                   <span className="text-slate-300">Chiffrement AES-256</span>
-                  <CheckCircle2 className="h-5 w-5 text-primary-orange-500" />
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
                   <span className="text-slate-300">Monitoring 224Guard</span>
-                  <CheckCircle2 className="h-5 w-5 text-primary-orange-500" />
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
-                  <span className="text-slate-300">Logs activÃ©s</span>
-                  <CheckCircle2 className="h-5 w-5 text-primary-orange-500" />
+                  <span className="text-slate-300">Logs activés</span>
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
                 </div>
                 {api.expires_at && (
                   <div className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
@@ -289,7 +289,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
 
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white">MÃ©tadonnÃ©es</CardTitle>
+                <CardTitle className="text-white">Métadonnées</CardTitle>
               </CardHeader>
               <CardContent>
                 <pre className="text-slate-300 text-xs bg-slate-700 p-3 rounded overflow-x-auto">

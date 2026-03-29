@@ -140,7 +140,7 @@ export default function AlertsDashboard() {
 
       if (error) throw error;
 
-      toast.success('Alerte acquittÃ©e');
+      toast.success('Alerte acquittée');
       loadAlerts();
     } catch (error) {
       console.error('Error acknowledging alert:', error);
@@ -163,11 +163,11 @@ export default function AlertsDashboard() {
 
       if (error) throw error;
 
-      toast.success('Alerte rÃ©solue');
+      toast.success('Alerte résolue');
       loadAlerts();
     } catch (error) {
       console.error('Error resolving alert:', error);
-      toast.error('Erreur lors de la rÃ©solution');
+      toast.error('Erreur lors de la résolution');
     }
   };
 
@@ -207,7 +207,7 @@ export default function AlertsDashboard() {
       case 'acknowledged':
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'resolved':
-        return <CheckCircle2 className="h-4 w-4 text-primary-orange-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       default:
         return <AlertTriangle className="h-4 w-4" />;
     }
@@ -231,7 +231,7 @@ export default function AlertsDashboard() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">AcquittÃ©es</CardTitle>
+            <CardTitle className="text-sm font-medium">Acquittées</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -243,12 +243,12 @@ export default function AlertsDashboard() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">RÃ©solues</CardTitle>
+            <CardTitle className="text-sm font-medium">Résolues</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-primary-orange-500">{stats.resolved}</div>
-              <CheckCircle2 className="h-5 w-5 text-primary-orange-500" />
+              <div className="text-2xl font-bold text-green-500">{stats.resolved}</div>
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
           </CardContent>
         </Card>
@@ -271,8 +271,8 @@ export default function AlertsDashboard() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Alertes SystÃ¨me</CardTitle>
-              <CardDescription>Surveillance et gestion en temps rÃ©el</CardDescription>
+              <CardTitle>Alertes Système</CardTitle>
+              <CardDescription>Surveillance et gestion en temps réel</CardDescription>
             </div>
             <Button
               variant="outline"
@@ -306,14 +306,14 @@ export default function AlertsDashboard() {
               size="sm"
               onClick={() => setFilter('acknowledged')}
             >
-              AcquittÃ©es
+              Acquittées
             </Button>
             <Button
               variant={filter === 'resolved' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setFilter('resolved')}
             >
-              RÃ©solues
+              Résolues
             </Button>
           </div>
 
@@ -321,9 +321,9 @@ export default function AlertsDashboard() {
             <div className="space-y-3">
               {alerts.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
-                  <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-primary-orange-500" />
+                  <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
                   <p className="text-lg font-semibold">Aucune alerte</p>
-                  <p className="text-sm">Tous les systÃ¨mes fonctionnent normalement</p>
+                  <p className="text-sm">Tous les systèmes fonctionnent normalement</p>
                 </div>
               ) : (
                 alerts.map((alert) => (
@@ -360,7 +360,7 @@ export default function AlertsDashboard() {
                         {alert.suggested_fix && (
                           <div className="p-3 bg-muted/50 rounded-lg">
                             <p className="text-xs font-semibold text-primary mb-1">
-                              ðŸ’¡ Correction suggÃ©rÃ©e:
+                              💡 Correction suggérée:
                             </p>
                             <p className="text-xs text-muted-foreground">{alert.suggested_fix}</p>
                           </div>
@@ -368,20 +368,20 @@ export default function AlertsDashboard() {
 
                         {/* Metadata */}
                         {alert.metadata?.autoFix && (
-                          <div className="flex items-center gap-2 text-xs text-primary-orange-600">
+                          <div className="flex items-center gap-2 text-xs text-green-600">
                             <Zap className="h-3 w-3" />
-                            <span>Auto-fix appliquÃ© automatiquement</span>
+                            <span>Auto-fix appliqué automatiquement</span>
                           </div>
                         )}
 
                         {/* Timestamps */}
                         <div className="text-xs text-muted-foreground">
-                          <p>CrÃ©Ã©e: {new Date(alert.created_at).toLocaleString()}</p>
+                          <p>Créée: {new Date(alert.created_at).toLocaleString()}</p>
                           {alert.acknowledged_at && (
-                            <p>AcquittÃ©e: {new Date(alert.acknowledged_at).toLocaleString()}</p>
+                            <p>Acquittée: {new Date(alert.acknowledged_at).toLocaleString()}</p>
                           )}
                           {alert.resolved_at && (
-                            <p>RÃ©solue: {new Date(alert.resolved_at).toLocaleString()}</p>
+                            <p>Résolue: {new Date(alert.resolved_at).toLocaleString()}</p>
                           )}
                         </div>
 
@@ -402,7 +402,7 @@ export default function AlertsDashboard() {
                               onClick={() => handleResolve(alert.id)}
                             >
                               <CheckCircle2 className="h-3 w-3 mr-1" />
-                              RÃ©soudre
+                              Résoudre
                             </Button>
                           </div>
                         )}
@@ -413,7 +413,7 @@ export default function AlertsDashboard() {
                             onClick={() => handleResolve(alert.id)}
                           >
                             <CheckCircle2 className="h-3 w-3 mr-1" />
-                            RÃ©soudre
+                            Résoudre
                           </Button>
                         )}
                       </div>

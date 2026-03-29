@@ -1,6 +1,6 @@
 /**
- * ðŸ”„ RESTAURATION UTILISATEURS SUPPRIMÃ‰S
- * Workflow: Recherche par ID/Email â†’ Affichage profil â†’ Restauration
+ * 🔄 RESTAURATION UTILISATEURS SUPPRIMÉS
+ * Workflow: Recherche par ID/Email → Affichage profil → Restauration
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -79,16 +79,16 @@ interface DataStatus {
 }
 
 interface UserDataAnalysis {
-  // DonnÃ©es de base
+  // Données de base
   profile: DataStatus;
   wallet: DataStatus;
   user_ids: DataStatus;
-  // RÃ´les spÃ©cifiques
+  // Rôles spécifiques
   agent: DataStatus;
   vendor: DataStatus;
   taxi_driver: DataStatus;
   livreur: DataStatus;
-  // ActivitÃ©
+  // Activité
   orders: DataStatus;
   transactions: DataStatus;
   notifications: DataStatus;
@@ -135,7 +135,7 @@ interface ActiveProfile {
   archived_data?: DeletedUser | null;
 }
 
-// Composant pour afficher le statut d'une donnÃ©e
+// Composant pour afficher le statut d'une donnée
 function DataStatusBadge({ 
   status, 
   label, 
@@ -153,7 +153,7 @@ function DataStatusBadge({
   }
 
   const bgClass = status.exists 
-    ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-700' 
+    ? 'bg-green-500/10 text-green-700' 
     : 'bg-muted text-muted-foreground';
 
   return (
@@ -184,7 +184,7 @@ export default function DeletedUsersRestore() {
   const [showRestored, setShowRestored] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  // Charger les utilisateurs supprimÃ©s au montage
+  // Charger les utilisateurs supprimés au montage
   useEffect(() => {
     fetchAllDeletedUsers();
   }, [showRestored]);
@@ -247,13 +247,13 @@ export default function DeletedUsersRestore() {
       const totalFound = (data.total_active || 0) + (data.total_archived || 0);
       
       if (totalFound === 0) {
-        toast.info('Aucun utilisateur trouvÃ© avec ces critÃ¨res');
+        toast.info('Aucun utilisateur trouvé avec ces critères');
       } else {
         if (data.total_active > 0) {
-          toast.success(`${data.total_active} profil(s) actif(s) trouvÃ©(s)`);
+          toast.success(`${data.total_active} profil(s) actif(s) trouvé(s)`);
         }
         if (data.total_archived > 0) {
-          toast.info(`${data.total_archived} donnÃ©e(s) archivÃ©e(s) trouvÃ©e(s)`);
+          toast.info(`${data.total_archived} donnée(s) archivée(s) trouvée(s)`);
         }
       }
     } catch (error: unknown) {
@@ -287,10 +287,10 @@ export default function DeletedUsersRestore() {
         throw new Error(data?.error || 'Erreur lors de la restauration');
       }
 
-      toast.success(`âœ… Utilisateur ${selectedUser.public_id || selectedUser.email} restaurÃ©!`);
+      toast.success(`✅ Utilisateur ${selectedUser.public_id || selectedUser.email} restauré!`);
 
       if (data?.data?.new_user_created) {
-        toast.info("Un nouveau compte a Ã©tÃ© crÃ©Ã©. L'utilisateur devra rÃ©initialiser son mot de passe.", {
+        toast.info("Un nouveau compte a été créé. L'utilisateur devra réinitialiser son mot de passe.", {
           duration: 6000,
         });
       }
@@ -300,7 +300,7 @@ export default function DeletedUsersRestore() {
       setRestoreNotes('');
       setSelectedUser(null);
       
-      // RafraÃ®chir la liste
+      // Rafraîchir la liste
       if (searched && searchQuery) {
         handleSearch();
       } else {
@@ -323,7 +323,7 @@ export default function DeletedUsersRestore() {
       case 'vendor':
         return 'bg-blue-500';
       case 'client':
-        return 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500';
+        return 'bg-green-500';
       case 'driver':
       case 'taxi':
       case 'livreur':
@@ -341,7 +341,7 @@ export default function DeletedUsersRestore() {
     const now = new Date();
     const daysLeft = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (daysLeft <= 0) return { status: 'expired', text: 'ExpirÃ©', color: 'text-red-500' };
+    if (daysLeft <= 0) return { status: 'expired', text: 'Expiré', color: 'text-red-500' };
     if (daysLeft <= 7) return { status: 'warning', text: `${daysLeft}j restants`, color: 'text-orange-500' };
     return { status: 'ok', text: `${daysLeft}j restants`, color: 'text-muted-foreground' };
   };
@@ -366,7 +366,7 @@ export default function DeletedUsersRestore() {
             Restauration Utilisateurs
           </CardTitle>
           <CardDescription>
-            Recherchez un utilisateur supprimÃ© par son ID (USR0001) ou email pour le restaurer
+            Recherchez un utilisateur supprimé par son ID (USR0001) ou email pour le restaurer
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -374,7 +374,7 @@ export default function DeletedUsersRestore() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par ID (USR0001), email ou tÃ©lÃ©phone..."
+                placeholder="Rechercher par ID (USR0001), email ou téléphone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -391,7 +391,7 @@ export default function DeletedUsersRestore() {
                 onClick={() => setShowRestored(!showRestored)}
                 size="sm"
               >
-                {showRestored ? 'Masquer restaurÃ©s' : 'Voir restaurÃ©s'}
+                {showRestored ? 'Masquer restaurés' : 'Voir restaurés'}
               </Button>
               <Button variant="outline" onClick={fetchAllDeletedUsers} size="sm" disabled={loading}>
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -409,7 +409,7 @@ export default function DeletedUsersRestore() {
               <UserX className="h-5 w-5 text-red-500" />
               <div>
                 <p className="text-2xl font-bold">{deletedUsers.filter(u => !u.is_restored).length}</p>
-                <p className="text-xs text-muted-foreground">Ã€ restaurer</p>
+                <p className="text-xs text-muted-foreground">À restaurer</p>
               </div>
             </div>
           </CardContent>
@@ -417,10 +417,10 @@ export default function DeletedUsersRestore() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-primary-orange-500" />
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-2xl font-bold">{deletedUsers.filter(u => u.is_restored).length}</p>
-                <p className="text-xs text-muted-foreground">RestaurÃ©s</p>
+                <p className="text-xs text-muted-foreground">Restaurés</p>
               </div>
             </div>
           </CardContent>
@@ -436,7 +436,7 @@ export default function DeletedUsersRestore() {
                     return exp?.status === 'warning' && !u.is_restored;
                   }).length}
                 </p>
-                <p className="text-xs text-muted-foreground">Expirent bientÃ´t</p>
+                <p className="text-xs text-muted-foreground">Expirent bientôt</p>
               </div>
             </div>
           </CardContent>
@@ -454,16 +454,16 @@ export default function DeletedUsersRestore() {
         </Card>
       </div>
 
-      {/* RÃ©sultats de recherche - Profils actifs avec analyse complÃ¨te */}
+      {/* Résultats de recherche - Profils actifs avec analyse complète */}
       {searched && activeProfiles.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
-              Profils utilisateurs trouvÃ©s ({activeProfiles.length})
+              Profils utilisateurs trouvés ({activeProfiles.length})
             </CardTitle>
             <CardDescription>
-              Analyse complÃ¨te des donnÃ©es pour chaque utilisateur
+              Analyse complète des données pour chaque utilisateur
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -473,7 +473,7 @@ export default function DeletedUsersRestore() {
                   key={profile.id}
                   className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
-                  {/* En-tÃªte du profil */}
+                  {/* En-tête du profil */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -518,23 +518,23 @@ export default function DeletedUsersRestore() {
                       }}
                     >
                       <Eye className="h-4 w-4 mr-1" />
-                      DÃ©tails complets
+                      Détails complets
                     </Button>
                   </div>
 
-                  {/* Analyse des donnÃ©es */}
+                  {/* Analyse des données */}
                   {profile.data_analysis && (
                     <div className="mt-3 p-3 bg-muted/30 rounded-lg">
-                      {/* En-tÃªte avec rÃ©sumÃ© */}
+                      {/* En-tête avec résumé */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <Database className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">Analyse complÃ¨te ({profile.data_analysis.summary?.total_tables_checked || 0} tables)</span>
+                          <span className="text-sm font-medium">Analyse complète ({profile.data_analysis.summary?.total_tables_checked || 0} tables)</span>
                         </div>
                         <div className="flex items-center gap-2">
                           {profile.data_analysis.summary && (
                             <>
-                              <Badge className="bg-primary-orange-600/20 text-primary-orange-700 text-xs">
+                              <Badge className="bg-green-600/20 text-green-700 text-xs">
                                 {profile.data_analysis.summary.existing_count} existant(s)
                               </Badge>
                               {profile.data_analysis.summary.missing_count > 0 && (
@@ -544,7 +544,7 @@ export default function DeletedUsersRestore() {
                               )}
                               {profile.data_analysis.summary.deleted_count > 0 && (
                                 <Badge variant="destructive" className="text-xs">
-                                  {profile.data_analysis.summary.deleted_count} supprimÃ©(s)
+                                  {profile.data_analysis.summary.deleted_count} supprimé(s)
                                 </Badge>
                               )}
                             </>
@@ -552,16 +552,16 @@ export default function DeletedUsersRestore() {
                         </div>
                       </div>
                       
-                      {/* DonnÃ©es existantes */}
+                      {/* Données existantes */}
                       {profile.data_analysis.existing_data && profile.data_analysis.existing_data.length > 0 && (
                         <div className="mb-3">
-                          <p className="text-xs font-medium text-primary-orange-700 mb-2 flex items-center gap-1">
+                          <p className="text-xs font-medium text-green-700 mb-2 flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" />
-                            DonnÃ©es existantes:
+                            Données existantes:
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {profile.data_analysis.existing_data.map((item, idx) => (
-                              <span key={idx} className="text-xs bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10 text-primary-orange-700 px-2 py-0.5 rounded">
+                              <span key={idx} className="text-xs bg-green-500/10 text-green-700 px-2 py-0.5 rounded">
                                 {item}
                               </span>
                             ))}
@@ -621,7 +621,7 @@ export default function DeletedUsersRestore() {
                           label={`Convos (${profile.data_analysis.analysis.conversations?.count || 0})`} 
                           showIfZero
                         />
-                        {/* RÃ´les spÃ©cifiques */}
+                        {/* Rôles spécifiques */}
                         {profile.data_analysis.analysis.agent.exists && (
                           <DataStatusBadge 
                             status={profile.data_analysis.analysis.agent} 
@@ -665,27 +665,27 @@ export default function DeletedUsersRestore() {
                         {profile.data_analysis.analysis.archived.exists && (
                           <div className="flex items-center gap-2 p-2 rounded text-xs bg-orange-500/10 text-orange-700 col-span-2">
                             <AlertTriangle className="h-3 w-3" />
-                            <span>DonnÃ©es supprimÃ©es archivÃ©es</span>
+                            <span>Données supprimées archivées</span>
                           </div>
                         )}
                       </div>
 
-                      {/* Message sur les donnÃ©es manquantes */}
+                      {/* Message sur les données manquantes */}
                       {profile.data_analysis.missing_data.length > 0 && (
                         <div className="mt-3 p-2 border border-orange-500/30 rounded bg-orange-500/5">
                           <p className="text-xs text-orange-700 flex items-center gap-1">
                             <AlertTriangle className="h-3 w-3" />
-                            DonnÃ©es manquantes: {profile.data_analysis.missing_data.join(', ')}
+                            Données manquantes: {profile.data_analysis.missing_data.join(', ')}
                           </p>
                         </div>
                       )}
 
-                      {/* DonnÃ©es supprimÃ©es */}
+                      {/* Données supprimées */}
                       {profile.data_analysis.deleted_data && profile.data_analysis.deleted_data.length > 0 && (
                         <div className="mt-3 p-2 border border-red-500/30 rounded bg-red-500/5">
                           <p className="text-xs text-red-700 flex items-center gap-1 mb-1">
                             <XCircle className="h-3 w-3" />
-                            DonnÃ©es supprimÃ©es (restaurables):
+                            Données supprimées (restaurables):
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {profile.data_analysis.deleted_data.map((item, idx) => (
@@ -704,10 +704,10 @@ export default function DeletedUsersRestore() {
                             <div>
                               <p className="text-sm font-medium text-primary flex items-center gap-1">
                                 <RotateCcw className="h-4 w-4" />
-                                DonnÃ©es archivÃ©es disponibles
+                                Données archivées disponibles
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
-                                SupprimÃ© le {format(new Date(profile.archived_data.deleted_at), 'dd/MM/yyyy', { locale: fr })}
+                                Supprimé le {format(new Date(profile.archived_data.deleted_at), 'dd/MM/yyyy', { locale: fr })}
                               </p>
                             </div>
                             <Button
@@ -726,10 +726,10 @@ export default function DeletedUsersRestore() {
 
                       {/* Message si tout est OK */}
                       {!profile.data_analysis.has_issues && profile.data_analysis.existing_data && profile.data_analysis.existing_data.length > 0 && (
-                        <div className="mt-3 p-2 border border-primary-orange-500/30 rounded bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
-                          <p className="text-xs text-primary-orange-700 flex items-center gap-1">
+                        <div className="mt-3 p-2 border border-green-500/30 rounded bg-green-500/5">
+                          <p className="text-xs text-green-700 flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" />
-                            Toutes les donnÃ©es essentielles sont intactes. Aucune restauration nÃ©cessaire.
+                            Toutes les données essentielles sont intactes. Aucune restauration nécessaire.
                           </p>
                         </div>
                       )}
@@ -742,12 +742,12 @@ export default function DeletedUsersRestore() {
                       {profile.has_archived_data ? (
                         <div className="flex items-center gap-2 text-orange-600">
                           <AlertTriangle className="h-4 w-4" />
-                          <span className="text-sm">DonnÃ©es archivÃ©es disponibles pour restauration</span>
+                          <span className="text-sm">Données archivées disponibles pour restauration</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 text-primary-orange-600">
+                        <div className="flex items-center gap-2 text-green-600">
                           <CheckCircle2 className="h-4 w-4" />
-                          <span className="text-sm">Aucune donnÃ©e supprimÃ©e dÃ©tectÃ©e</span>
+                          <span className="text-sm">Aucune donnée supprimée détectée</span>
                         </div>
                       )}
                     </div>
@@ -759,15 +759,15 @@ export default function DeletedUsersRestore() {
         </Card>
       )}
 
-      {/* Liste des donnÃ©es archivÃ©es */}
+      {/* Liste des données archivées */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            {searched ? 'DonnÃ©es archivÃ©es Ã  restaurer' : 'Utilisateurs supprimÃ©s'} ({deletedUsers.length})
+            {searched ? 'Données archivées à restaurer' : 'Utilisateurs supprimés'} ({deletedUsers.length})
           </CardTitle>
           {searched && deletedUsers.length === 0 && activeProfiles.length > 0 && (
-            <CardDescription className="text-primary-orange-600">
-              âœ“ Aucune donnÃ©e de cet utilisateur n'a Ã©tÃ© supprimÃ©e
+            <CardDescription className="text-green-600">
+              ✓ Aucune donnée de cet utilisateur n'a été supprimée
             </CardDescription>
           )}
         </CardHeader>
@@ -781,16 +781,16 @@ export default function DeletedUsersRestore() {
               <UserX className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p className="font-medium">
                 {searched && activeProfiles.length > 0 
-                  ? "Aucune donnÃ©e supprimÃ©e pour cet utilisateur"
-                  : "Aucun utilisateur supprimÃ© trouvÃ©"
+                  ? "Aucune donnée supprimée pour cet utilisateur"
+                  : "Aucun utilisateur supprimé trouvé"
                 }
               </p>
               <p className="text-xs mt-2 max-w-md mx-auto">
                 {searched 
                   ? activeProfiles.length > 0 
-                    ? "Toutes les donnÃ©es de cet utilisateur sont intactes. Aucune restauration n'est nÃ©cessaire."
-                    : "Aucun rÃ©sultat pour votre recherche. Essayez avec un ID complet (USR0001) ou un email."
-                  : "Les utilisateurs supprimÃ©s via l'application sont archivÃ©s pendant 30 jours pour restauration."
+                    ? "Toutes les données de cet utilisateur sont intactes. Aucune restauration n'est nécessaire."
+                    : "Aucun résultat pour votre recherche. Essayez avec un ID complet (USR0001) ou un email."
+                  : "Les utilisateurs supprimés via l'application sont archivés pendant 30 jours pour restauration."
                 }
               </p>
             </div>
@@ -800,9 +800,9 @@ export default function DeletedUsersRestore() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Utilisateur</TableHead>
-                    <TableHead>RÃ´le</TableHead>
+                    <TableHead>Rôle</TableHead>
                     <TableHead>ID Public</TableHead>
-                    <TableHead>SupprimÃ©</TableHead>
+                    <TableHead>Supprimé</TableHead>
                     <TableHead>Expiration</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -848,8 +848,8 @@ export default function DeletedUsersRestore() {
                         </TableCell>
                         <TableCell>
                           {user.is_restored ? (
-                            <Badge variant="outline" className="text-primary-orange-600 border-primary-orange-600">
-                              âœ“ RestaurÃ©
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                              ✓ Restauré
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-orange-600 border-orange-600">
@@ -888,16 +888,16 @@ export default function DeletedUsersRestore() {
         </CardContent>
       </Card>
 
-      {/* Dialog Profil actif avec analyse complÃ¨te */}
+      {/* Dialog Profil actif avec analyse complète */}
       <Dialog open={profileDetailsOpen} onOpenChange={setProfileDetailsOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
-              Analyse complÃ¨te du profil
+              Analyse complète du profil
             </DialogTitle>
             <DialogDescription>
-              Ã‰tat dÃ©taillÃ© des donnÃ©es de l'utilisateur dans la base de donnÃ©es
+              État détaillé des données de l'utilisateur dans la base de données
             </DialogDescription>
           </DialogHeader>
           
@@ -919,17 +919,17 @@ export default function DeletedUsersRestore() {
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                     <Mail className="h-3 w-3" /> Email
                   </label>
-                  <p className="text-sm">{selectedProfile.email || 'Non renseignÃ©'}</p>
+                  <p className="text-sm">{selectedProfile.email || 'Non renseigné'}</p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <Phone className="h-3 w-3" /> TÃ©lÃ©phone
+                    <Phone className="h-3 w-3" /> Téléphone
                   </label>
-                  <p className="text-sm">{selectedProfile.phone || 'Non renseignÃ©'}</p>
+                  <p className="text-sm">{selectedProfile.phone || 'Non renseigné'}</p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <Shield className="h-3 w-3" /> RÃ´le
+                    <Shield className="h-3 w-3" /> Rôle
                   </label>
                   <Badge className={`${getRoleBadgeColor(selectedProfile.role)} text-white`}>
                     {selectedProfile.role || 'Inconnu'}
@@ -943,24 +943,24 @@ export default function DeletedUsersRestore() {
                 </div>
               </div>
 
-              {/* Analyse dÃ©taillÃ©e des donnÃ©es */}
+              {/* Analyse détaillée des données */}
               {selectedProfile.data_analysis && (
                 <div className="space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
                     <Database className="h-4 w-4" />
-                    Ã‰tat des donnÃ©es dans la base
+                    État des données dans la base
                   </h4>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {/* Profil */}
                     <div className={`p-3 rounded-lg border ${
                       selectedProfile.data_analysis.analysis.profile.exists 
-                        ? 'border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5' 
+                        ? 'border-green-500/30 bg-green-500/5' 
                         : 'border-red-500/30 bg-red-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
                         {selectedProfile.data_analysis.analysis.profile.exists ? (
-                          <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
                         ) : (
                           <XCircle className="h-4 w-4 text-red-600" />
                         )}
@@ -968,7 +968,7 @@ export default function DeletedUsersRestore() {
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         {selectedProfile.data_analysis.analysis.profile.exists 
-                          ? 'PrÃ©sent dans la table profiles' 
+                          ? 'Présent dans la table profiles' 
                           : 'Absent de la table profiles'}
                       </p>
                     </div>
@@ -976,12 +976,12 @@ export default function DeletedUsersRestore() {
                     {/* Wallet */}
                     <div className={`p-3 rounded-lg border ${
                       selectedProfile.data_analysis.analysis.wallet.exists 
-                        ? 'border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5' 
+                        ? 'border-green-500/30 bg-green-500/5' 
                         : 'border-orange-500/30 bg-orange-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
                         {selectedProfile.data_analysis.analysis.wallet.exists ? (
-                          <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
                         ) : (
                           <XCircle className="h-4 w-4 text-orange-600" />
                         )}
@@ -990,20 +990,20 @@ export default function DeletedUsersRestore() {
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         {selectedProfile.data_analysis.analysis.wallet.exists 
-                          ? 'Wallet actif trouvÃ©' 
-                          : 'Aucun wallet trouvÃ©'}
+                          ? 'Wallet actif trouvé' 
+                          : 'Aucun wallet trouvé'}
                       </p>
                     </div>
 
                     {/* User IDs */}
                     <div className={`p-3 rounded-lg border ${
                       selectedProfile.data_analysis.analysis.user_ids.exists 
-                        ? 'border-primary-orange-500/30 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5' 
+                        ? 'border-green-500/30 bg-green-500/5' 
                         : 'border-orange-500/30 bg-orange-500/5'
                     }`}>
                       <div className="flex items-center gap-2">
                         {selectedProfile.data_analysis.analysis.user_ids.exists ? (
-                          <CheckCircle2 className="h-4 w-4 text-primary-orange-600" />
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
                         ) : (
                           <XCircle className="h-4 w-4 text-orange-600" />
                         )}
@@ -1011,7 +1011,7 @@ export default function DeletedUsersRestore() {
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         {selectedProfile.data_analysis.analysis.user_ids.exists 
-                          ? 'ID synchronisÃ© dans user_ids' 
+                          ? 'ID synchronisé dans user_ids' 
                           : 'Absent de la table user_ids'}
                       </p>
                     </div>
@@ -1027,7 +1027,7 @@ export default function DeletedUsersRestore() {
                         <span className="font-medium">Commandes</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {selectedProfile.data_analysis.analysis.orders.count || 0} commande(s) trouvÃ©e(s)
+                        {selectedProfile.data_analysis.analysis.orders.count || 0} commande(s) trouvée(s)
                       </p>
                     </div>
 
@@ -1042,7 +1042,7 @@ export default function DeletedUsersRestore() {
                         <span className="font-medium">Transactions</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {selectedProfile.data_analysis.analysis.transactions.count || 0} transaction(s) trouvÃ©e(s)
+                        {selectedProfile.data_analysis.analysis.transactions.count || 0} transaction(s) trouvée(s)
                       </p>
                     </div>
 
@@ -1054,7 +1054,7 @@ export default function DeletedUsersRestore() {
                           <span className="font-medium">Compte Agent</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Agent actif dans le systÃ¨me
+                          Agent actif dans le système
                         </p>
                       </div>
                     )}
@@ -1067,21 +1067,21 @@ export default function DeletedUsersRestore() {
                           <span className="font-medium">Boutique Vendeur</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Boutique associÃ©e trouvÃ©e
+                          Boutique associée trouvée
                         </p>
                       </div>
                     )}
                   </div>
 
-                  {/* DonnÃ©es archivÃ©es */}
+                  {/* Données archivées */}
                   {selectedProfile.data_analysis.analysis.archived.exists && (
                     <div className="p-4 border border-orange-500/30 rounded-lg bg-orange-500/5">
                       <div className="flex items-center gap-2 text-orange-600 font-medium">
                         <AlertTriangle className="h-4 w-4" />
-                        DonnÃ©es archivÃ©es dÃ©tectÃ©es
+                        Données archivées détectées
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Des donnÃ©es de cet utilisateur ont Ã©tÃ© prÃ©cÃ©demment supprimÃ©es et sont disponibles pour restauration.
+                        Des données de cet utilisateur ont été précédemment supprimées et sont disponibles pour restauration.
                       </p>
                       {selectedProfile.archived_data && (
                         <Button
@@ -1094,18 +1094,18 @@ export default function DeletedUsersRestore() {
                           }}
                         >
                           <RotateCcw className="h-4 w-4 mr-1" />
-                          Restaurer les donnÃ©es archivÃ©es
+                          Restaurer les données archivées
                         </Button>
                       )}
                     </div>
                   )}
 
-                  {/* DonnÃ©es manquantes */}
+                  {/* Données manquantes */}
                   {selectedProfile.data_analysis.missing_data.length > 0 && (
                     <div className="p-4 border border-red-500/30 rounded-lg bg-red-500/5">
                       <div className="flex items-center gap-2 text-red-600 font-medium">
                         <XCircle className="h-4 w-4" />
-                        DonnÃ©es manquantes dÃ©tectÃ©es
+                        Données manquantes détectées
                       </div>
                       <ul className="text-sm text-muted-foreground mt-2 space-y-1">
                         {selectedProfile.data_analysis.missing_data.map((item, idx) => (
@@ -1120,13 +1120,13 @@ export default function DeletedUsersRestore() {
 
                   {/* Tout OK */}
                   {!selectedProfile.data_analysis.has_issues && (
-                    <div className="p-4 border border-primary-orange-500/30 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
-                      <div className="flex items-center gap-2 text-primary-orange-600 font-medium">
+                    <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
+                      <div className="flex items-center gap-2 text-green-600 font-medium">
                         <CheckCircle2 className="h-4 w-4" />
-                        Toutes les donnÃ©es sont intactes
+                        Toutes les données sont intactes
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Aucune donnÃ©e supprimÃ©e ni manquante dÃ©tectÃ©e pour cet utilisateur.
+                        Aucune donnée supprimée ni manquante détectée pour cet utilisateur.
                       </p>
                     </div>
                   )}
@@ -1140,20 +1140,20 @@ export default function DeletedUsersRestore() {
                     <div className="p-4 border border-orange-500/30 rounded-lg bg-orange-500/5">
                       <div className="flex items-center gap-2 text-orange-600 font-medium">
                         <AlertTriangle className="h-4 w-4" />
-                        Des donnÃ©es archivÃ©es existent
+                        Des données archivées existent
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Certaines donnÃ©es de cet utilisateur ont Ã©tÃ© supprimÃ©es et sont disponibles pour restauration.
+                        Certaines données de cet utilisateur ont été supprimées et sont disponibles pour restauration.
                       </p>
                     </div>
                   ) : (
-                    <div className="p-4 border border-primary-orange-500/30 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
-                      <div className="flex items-center gap-2 text-primary-orange-600 font-medium">
+                    <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
+                      <div className="flex items-center gap-2 text-green-600 font-medium">
                         <CheckCircle2 className="h-4 w-4" />
-                        Aucune donnÃ©e supprimÃ©e
+                        Aucune donnée supprimée
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Toutes les donnÃ©es de cet utilisateur sont intactes.
+                        Toutes les données de cet utilisateur sont intactes.
                       </p>
                     </div>
                   )}
@@ -1170,16 +1170,16 @@ export default function DeletedUsersRestore() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog DÃ©tails de l'utilisateur */}
+      {/* Dialog Détails de l'utilisateur */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Profil utilisateur supprimÃ©
+              Profil utilisateur supprimé
             </DialogTitle>
             <DialogDescription>
-              DonnÃ©es archivÃ©es avant suppression - VÃ©rifiez les informations avant restauration
+              Données archivées avant suppression - Vérifiez les informations avant restauration
             </DialogDescription>
           </DialogHeader>
           
@@ -1189,7 +1189,7 @@ export default function DeletedUsersRestore() {
               <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Nom complet</label>
-                  <p className="font-medium text-lg">{selectedUser.full_name || 'Non renseignÃ©'}</p>
+                  <p className="font-medium text-lg">{selectedUser.full_name || 'Non renseigné'}</p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">ID Public</label>
@@ -1201,17 +1201,17 @@ export default function DeletedUsersRestore() {
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                     <Mail className="h-3 w-3" /> Email
                   </label>
-                  <p>{selectedUser.email || 'Non renseignÃ©'}</p>
+                  <p>{selectedUser.email || 'Non renseigné'}</p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <Phone className="h-3 w-3" /> TÃ©lÃ©phone
+                    <Phone className="h-3 w-3" /> Téléphone
                   </label>
-                  <p>{selectedUser.phone || 'Non renseignÃ©'}</p>
+                  <p>{selectedUser.phone || 'Non renseigné'}</p>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <Shield className="h-3 w-3" /> RÃ´le
+                    <Shield className="h-3 w-3" /> Rôle
                   </label>
                   <Badge className={`${getRoleBadgeColor(selectedUser.role)} text-white`}>
                     {selectedUser.role || 'Inconnu'}
@@ -1219,7 +1219,7 @@ export default function DeletedUsersRestore() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3 w-3" /> CrÃ©Ã© le
+                    <Calendar className="h-3 w-3" /> Créé le
                   </label>
                   <p>
                     {selectedUser.original_created_at 
@@ -1230,12 +1230,12 @@ export default function DeletedUsersRestore() {
                 </div>
               </div>
 
-              {/* DonnÃ©es du wallet */}
+              {/* Données du wallet */}
               {selectedUser.wallet_data && (
                 <div className="p-4 border rounded-lg">
                   <h4 className="font-medium flex items-center gap-2 mb-3">
                     <Wallet className="h-4 w-4" />
-                    DonnÃ©es du portefeuille
+                    Données du portefeuille
                   </h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -1261,18 +1261,18 @@ export default function DeletedUsersRestore() {
                 <h4 className="font-medium text-destructive mb-3">Informations de suppression</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-muted-foreground">SupprimÃ© le:</span>
+                    <span className="text-muted-foreground">Supprimé le:</span>
                     <span className="ml-2">
-                      {format(new Date(selectedUser.deleted_at), 'dd/MM/yyyy Ã  HH:mm', { locale: fr })}
+                      {format(new Date(selectedUser.deleted_at), 'dd/MM/yyyy à HH:mm', { locale: fr })}
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">MÃ©thode:</span>
+                    <span className="text-muted-foreground">Méthode:</span>
                     <span className="ml-2">{selectedUser.deletion_method || 'N/A'}</span>
                   </div>
                   <div className="col-span-2">
                     <span className="text-muted-foreground">Raison:</span>
-                    <span className="ml-2">{selectedUser.deletion_reason || 'Non spÃ©cifiÃ©e'}</span>
+                    <span className="ml-2">{selectedUser.deletion_reason || 'Non spécifiée'}</span>
                   </div>
                   {selectedUser.expires_at && (
                     <div className="col-span-2">
@@ -1288,17 +1288,17 @@ export default function DeletedUsersRestore() {
 
               {/* Statut de restauration */}
               {selectedUser.is_restored && (
-                <div className="p-4 border border-primary-orange-500/30 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5">
-                  <h4 className="font-medium text-primary-orange-600 mb-3 flex items-center gap-2">
+                <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5">
+                  <h4 className="font-medium text-green-600 mb-3 flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4" />
-                    RestaurÃ© avec succÃ¨s
+                    Restauré avec succès
                   </h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-muted-foreground">RestaurÃ© le:</span>
+                      <span className="text-muted-foreground">Restauré le:</span>
                       <span className="ml-2">
                         {selectedUser.restored_at 
-                          ? format(new Date(selectedUser.restored_at), 'dd/MM/yyyy Ã  HH:mm', { locale: fr })
+                          ? format(new Date(selectedUser.restored_at), 'dd/MM/yyyy à HH:mm', { locale: fr })
                           : 'N/A'
                         }
                       </span>
@@ -1348,12 +1348,12 @@ export default function DeletedUsersRestore() {
                 </p>
                 
                 <div className="p-3 bg-muted rounded-lg text-sm">
-                  <p className="font-medium mb-2">Ce qui sera restaurÃ©:</p>
+                  <p className="font-medium mb-2">Ce qui sera restauré:</p>
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                    <li>Profil utilisateur (nom, email, tÃ©lÃ©phone)</li>
+                    <li>Profil utilisateur (nom, email, téléphone)</li>
                     <li>Identifiant public ({selectedUser?.public_id})</li>
                     {selectedUser?.wallet_data && <li>Portefeuille et solde</li>}
-                    <li>Compte d'authentification (mot de passe Ã  rÃ©initialiser)</li>
+                    <li>Compte d'authentification (mot de passe à réinitialiser)</li>
                   </ul>
                 </div>
 

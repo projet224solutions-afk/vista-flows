@@ -25,7 +25,7 @@ import { useAgentStats } from '@/hooks/useAgentStats';
 import { AgentCreatedUsersList } from '@/components/agent/AgentCreatedUsersList';
 import { AgentOrdersTracking } from '@/components/agent/AgentOrdersTracking';
 import MyPurchasesOrdersList from '@/components/shared/MyPurchasesOrdersList';
-// Modules opÃ©rationnels complets
+// Modules opérationnels complets
 import { AgentKYCManagement } from '@/components/agent/AgentKYCManagement';
 import { AgentFullFinanceModule } from '@/components/agent/modules/AgentFullFinanceModule';
 import { AgentWalletTransactionsManagement } from '@/components/agent/AgentWalletTransactionsManagement';
@@ -47,7 +47,7 @@ export default function AgentDashboard() {
   const [walletBalance, setWalletBalance] = useState(0);
   const { stats, refetch: refetchStats } = useAgentStats(agent?.id);
   
-  // Hook pour les permissions unifiÃ©es (table agent_permissions + legacy JSON)
+  // Hook pour les permissions unifiées (table agent_permissions + legacy JSON)
   const { permissions: unifiedPermissions, loading: permissionsLoading } = useAgentPermissionsUnified(agent?.id);
   
   // Password change state
@@ -79,7 +79,7 @@ export default function AgentDashboard() {
     if (agent?.id) {
       loadWalletBalance();
       
-      // Abonnement temps rÃ©el pour les changements de wallet
+      // Abonnement temps réel pour les changements de wallet
       const channel = supabase
         .channel(`agent-wallet-dashboard-${agent.id}`)
         .on(
@@ -91,7 +91,7 @@ export default function AgentDashboard() {
             filter: `agent_id=eq.${agent.id}`,
           },
           (payload) => {
-            console.log('ðŸ’° Wallet agent mis Ã  jour (dashboard):', payload);
+            console.log('💰 Wallet agent mis à jour (dashboard):', payload);
             if (payload.new && typeof (payload.new as any).balance === 'number') {
               setWalletBalance((payload.new as any).balance);
             } else {
@@ -107,10 +107,10 @@ export default function AgentDashboard() {
     }
   }, [agent?.id]);
 
-  // Ã‰couter l'Ã©vÃ©nement personnalisÃ© de mise Ã  jour wallet
+  // Écouter l'événement personnalisé de mise à jour wallet
   useEffect(() => {
     const handleWalletUpdate = () => {
-      console.log('ðŸ“¢ Event wallet-updated reÃ§u (dashboard)');
+      console.log('📢 Event wallet-updated reçu (dashboard)');
       loadWalletBalance();
     };
 
@@ -131,7 +131,7 @@ export default function AgentDashboard() {
       setPdgUserId(user?.id || null);
     } catch (error: any) {
       console.error('Erreur chargement agent:', error);
-      toast.error('Erreur lors du chargement des donnÃ©es');
+      toast.error('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ export default function AgentDashboard() {
     if (!agent?.id) return;
     
     try {
-      console.log('ðŸ”„ Chargement solde wallet dashboard pour agent:', agent.id);
+      console.log('🔄 Chargement solde wallet dashboard pour agent:', agent.id);
       const { data, error } = await supabase
         .from('agent_wallets')
         .select('balance')
@@ -149,7 +149,7 @@ export default function AgentDashboard() {
         .single();
       
       if (!error && data) {
-        console.log('âœ… Solde wallet dashboard:', data.balance);
+        console.log('✅ Solde wallet dashboard:', data.balance);
         setWalletBalance(data.balance || 0);
       }
     } catch (error) {
@@ -166,7 +166,7 @@ export default function AgentDashboard() {
     e.preventDefault();
     
     if (!agent) {
-      toast.error('Agent non trouvÃ©');
+      toast.error('Agent non trouvé');
       return;
     }
 
@@ -176,7 +176,7 @@ export default function AgentDashboard() {
     }
 
     if (passwordData.newPassword.length < 8) {
-      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractÃ¨res');
+      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractères');
       return;
     }
 
@@ -194,7 +194,7 @@ export default function AgentDashboard() {
       if (error) throw error;
 
       if (data?.success) {
-        toast.success('Mot de passe modifiÃ© avec succÃ¨s');
+        toast.success('Mot de passe modifié avec succès');
         setIsPasswordDialogOpen(false);
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
@@ -212,7 +212,7 @@ export default function AgentDashboard() {
     e.preventDefault();
     
     if (!agent) {
-      toast.error('Agent non trouvÃ©');
+      toast.error('Agent non trouvé');
       return;
     }
 
@@ -242,7 +242,7 @@ export default function AgentDashboard() {
       if (error) throw error;
 
       if (data?.success) {
-        toast.success('Email modifiÃ© avec succÃ¨s');
+        toast.success('Email modifié avec succès');
         setIsEmailDialogOpen(false);
         setEmailData({ newEmail: '', currentPassword: '' });
         // Reload agent data to reflect new email
@@ -311,7 +311,7 @@ export default function AgentDashboard() {
           />
         );
       
-      // --- Modules opÃ©rationnels complets ---
+      // --- Modules opérationnels complets ---
       case 'finance':
         return <AgentFullFinanceModule agentId={agent.id} canManage={unifiedPermissions.manage_finance === true} />;
       
@@ -335,7 +335,7 @@ export default function AgentDashboard() {
       
       case 'service-subscriptions':
         return <AgentServiceSubscriptionsModule agentId={agent.id} canManage={unifiedPermissions.manage_service_subscriptions === true} />;
-      // --- Fin modules opÃ©rationnels ---
+      // --- Fin modules opérationnels ---
       
       case 'create-user':
         return (
@@ -351,7 +351,7 @@ export default function AgentDashboard() {
                 onUserCreated={() => {
                   loadAgentData();
                   refetchStats();
-                  setActiveTab('my-users'); // Aller vers la liste aprÃ¨s crÃ©ation
+                  setActiveTab('my-users'); // Aller vers la liste après création
                   toast.success(t('agent.userCreatedSuccess'));
                 }}
               />
@@ -366,7 +366,7 @@ export default function AgentDashboard() {
         return <AgentOrdersTracking agentId={agent.id} />;
       
       case 'my-purchases':
-        return <MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectuÃ© d'achats sur le marketplace" />;
+        return <MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" />;
       
       case 'sub-agents':
         return <AgentSubAgentsManagement agentId={agent.id} />;
@@ -390,7 +390,7 @@ export default function AgentDashboard() {
       case 'settings':
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Permissions accordÃ©es - affichage par catÃ©gorie avec le nouveau composant */}
+            {/* Permissions accordées - affichage par catégorie avec le nouveau composant */}
             <div className="md:col-span-2">
               <AgentPermissionsDisplay 
                 permissions={unifiedPermissions} 
@@ -445,7 +445,7 @@ export default function AgentDashboard() {
                           required
                           value={emailData.currentPassword}
                           onChange={(e) => setEmailData({ ...emailData, currentPassword: e.target.value })}
-                          placeholder="Pour confirmer votre identitÃ©"
+                          placeholder="Pour confirmer votre identité"
                         />
                       </div>
                       <div className="flex gap-3 pt-2">
@@ -475,13 +475,13 @@ export default function AgentDashboard() {
             <Card className="border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
                 <CardTitle className="flex items-center gap-2 text-slate-800">
-                  <Lock className="w-5 h-5 text-primary-orange-600" />
+                  <Lock className="w-5 h-5 text-green-600" />
                   Mot de passe
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 <p className="text-sm text-slate-500">
-                  Changez votre mot de passe pour sÃ©curiser votre compte agent.
+                  Changez votre mot de passe pour sécuriser votre compte agent.
                 </p>
                 <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
                   <DialogTrigger asChild>
@@ -518,7 +518,7 @@ export default function AgentDashboard() {
                           minLength={8}
                           value={passwordData.newPassword}
                           onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                          placeholder="Minimum 8 caractÃ¨res"
+                          placeholder="Minimum 8 caractères"
                         />
                       </div>
                       <div className="space-y-2">

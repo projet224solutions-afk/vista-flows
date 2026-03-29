@@ -159,7 +159,7 @@ class ChapChapPayService {
     const result = await this.createEcommercePayment(request);
     
     if (result.success && result.paymentUrl) {
-      window.open(result.paymentUrl, "_blank", "noopener,noreferrer");
+      window.open(result.paymentUrl, "_blank");
       return true;
     }
     

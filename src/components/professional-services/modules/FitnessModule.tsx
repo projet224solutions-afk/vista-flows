@@ -1,6 +1,6 @@
 /**
  * MODULE GYM/FITNESS
- * InspirÃ© de ClassPass, Mindbody, Gympass
+ * Inspiré de ClassPass, Mindbody, Gympass
  * Gestion abonnements, cours, planning, suivi membres
  */
 
@@ -66,7 +66,7 @@ interface FitnessClass {
   maxParticipants: number;
   enrolled: number;
   room: string;
-  level: 'dÃ©butant' | 'intermÃ©diaire' | 'avancÃ©';
+  level: 'débutant' | 'intermédiaire' | 'avancé';
   calories: number;
 }
 
@@ -95,7 +95,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
   const [showNewClassDialog, setShowNewClassDialog] = useState(false);
   const [selectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // DonnÃ©es simulÃ©es
+  // Données simulées
   const [members] = useState<Member[]>([
     {
       id: '1',
@@ -121,7 +121,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
       endDate: '2024-05-01',
       checkIns: 28,
       lastVisit: new Date(Date.now() - 86400000).toISOString(),
-      goals: ['Cardio', 'FlexibilitÃ©']
+      goals: ['Cardio', 'Flexibilité']
     },
     {
       id: '3',
@@ -134,7 +134,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
       endDate: '2024-06-01',
       checkIns: 156,
       lastVisit: new Date().toISOString(),
-      goals: ['CompÃ©tition', 'Force']
+      goals: ['Compétition', 'Force']
     }
   ]);
 
@@ -142,7 +142,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
     {
       id: '1',
       name: 'Power Yoga',
-      instructor: 'AÃ¯cha Sow',
+      instructor: 'Aïcha Sow',
       category: 'yoga',
       date: selectedDate,
       time: '07:00',
@@ -150,7 +150,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
       maxParticipants: 20,
       enrolled: 15,
       room: 'Studio A',
-      level: 'intermÃ©diaire',
+      level: 'intermédiaire',
       calories: 300
     },
     {
@@ -164,7 +164,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
       maxParticipants: 25,
       enrolled: 22,
       room: 'Salle principale',
-      level: 'avancÃ©',
+      level: 'avancé',
       calories: 500
     },
     {
@@ -178,7 +178,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
       maxParticipants: 15,
       enrolled: 12,
       room: 'Box CrossFit',
-      level: 'dÃ©butant',
+      level: 'débutant',
       calories: 450
     },
     {
@@ -192,7 +192,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
       maxParticipants: 20,
       enrolled: 18,
       room: 'Ring',
-      level: 'intermÃ©diaire',
+      level: 'intermédiaire',
       calories: 600
     },
     {
@@ -206,7 +206,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
       maxParticipants: 30,
       enrolled: 28,
       room: 'Studio B',
-      level: 'dÃ©butant',
+      level: 'débutant',
       calories: 400
     }
   ]);
@@ -215,40 +215,40 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
     {
       id: '1',
       name: 'Basic',
-      description: 'AccÃ¨s salle de musculation',
+      description: 'Accès salle de musculation',
       price: 150000,
       duration: 'mensuel',
-      features: ['AccÃ¨s Ã©quipements', 'Vestiaires', 'WiFi'],
+      features: ['Accès équipements', 'Vestiaires', 'WiFi'],
       activeMembers: 45,
       color: 'bg-gray-500'
     },
     {
       id: '2',
       name: 'Standard',
-      description: 'AccÃ¨s complet + cours collectifs',
+      description: 'Accès complet + cours collectifs',
       price: 250000,
       duration: 'mensuel',
-      features: ['Tout Basic', 'Cours collectifs illimitÃ©s', 'Sauna'],
+      features: ['Tout Basic', 'Cours collectifs illimités', 'Sauna'],
       activeMembers: 78,
       color: 'bg-blue-500'
     },
     {
       id: '3',
       name: 'Premium',
-      description: 'AccÃ¨s VIP avec coach personnel',
+      description: 'Accès VIP avec coach personnel',
       price: 400000,
       duration: 'mensuel',
-      features: ['Tout Standard', '4 sÃ©ances coaching/mois', 'Nutrition', 'Serviettes'],
+      features: ['Tout Standard', '4 séances coaching/mois', 'Nutrition', 'Serviettes'],
       activeMembers: 32,
       color: 'bg-purple-500'
     },
     {
       id: '4',
       name: 'VIP Annuel',
-      description: 'AccÃ¨s illimitÃ© premium toute l\'annÃ©e',
+      description: 'Accès illimité premium toute l\'année',
       price: 4000000,
       duration: 'annuel',
-      features: ['Tout Premium', 'Coaching illimitÃ©', 'InvitÃ©s gratuits', 'Parking'],
+      features: ['Tout Premium', 'Coaching illimité', 'Invités gratuits', 'Parking'],
       activeMembers: 15,
       color: 'bg-yellow-500'
     }
@@ -258,13 +258,13 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
 
   const getMembershipBadge = (status: Member['membershipStatus']) => {
     const styles = {
-      actif: 'bg-primary-orange-100 text-primary-orange-800',
+      actif: 'bg-green-100 text-green-800',
       expire: 'bg-red-100 text-red-800',
       suspendu: 'bg-yellow-100 text-yellow-800'
     };
     const labels = {
       actif: 'Actif',
-      expire: 'ExpirÃ©',
+      expire: 'Expiré',
       suspendu: 'Suspendu'
     };
     return <Badge className={styles[status]}>{labels[status]}</Badge>;
@@ -274,7 +274,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
     const styles = {
       cardio: 'bg-red-100 text-red-800',
       musculation: 'bg-blue-100 text-blue-800',
-      yoga: 'bg-primary-orange-100 text-primary-orange-800',
+      yoga: 'bg-green-100 text-green-800',
       crossfit: 'bg-orange-100 text-orange-800',
       danse: 'bg-pink-100 text-pink-800',
       boxe: 'bg-purple-100 text-purple-800'
@@ -284,27 +284,27 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
 
   const getLevelBadge = (level: FitnessClass['level']) => {
     const styles = {
-      dÃ©butant: 'bg-primary-orange-100 text-primary-orange-800',
-      intermÃ©diaire: 'bg-yellow-100 text-yellow-800',
-      avancÃ©: 'bg-red-100 text-red-800'
+      débutant: 'bg-green-100 text-green-800',
+      intermédiaire: 'bg-yellow-100 text-yellow-800',
+      avancé: 'bg-red-100 text-red-800'
     };
     return <Badge variant="outline" className={styles[level]}>{level}</Badge>;
   };
 
   const handleAddMember = () => {
-    toast.success('Membre inscrit avec succÃ¨s');
+    toast.success('Membre inscrit avec succès');
     setShowNewMemberDialog(false);
   };
 
   const handleAddClass = () => {
-    toast.success('Cours ajoutÃ© au planning');
+    toast.success('Cours ajouté au planning');
     setShowNewClassDialog(false);
   };
 
   // Statistiques
   const totalMembers = members.length;
   const activeMembers = members.filter(m => m.membershipStatus === 'actif').length;
-  const todayCheckIns = 23; // SimulÃ©
+  const todayCheckIns = 23; // Simulé
   const todayClasses = classes.length;
   const monthlyRevenue = subscriptions.reduce((acc, s) => {
     const multiplier = s.duration === 'annuel' ? 1/12 : s.duration === 'trimestriel' ? 1/3 : 1;
@@ -313,7 +313,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl">
@@ -325,14 +325,14 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast.success('Check-in rapide activÃ©')}>
+          <Button variant="outline" onClick={() => toast.success('Check-in rapide activé')}>
             <CheckCircle className="h-4 w-4 mr-2" />
             Check-in
           </Button>
         </div>
       </div>
 
-      {/* Statistiques temps rÃ©el */}
+      {/* Statistiques temps réel */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
           <CardContent className="p-4">
@@ -343,7 +343,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
             <p className="text-3xl font-bold mt-1">{activeMembers}</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <CheckCircle className="h-4 w-4" />
@@ -374,12 +374,12 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <Flame className="h-4 w-4" />
-              <span className="text-sm">Calories brÃ»lÃ©es</span>
+              <span className="text-sm">Calories brûlées</span>
             </div>
             <p className="text-3xl font-bold mt-1">45K</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-primary-blue-500 to-primary-orange-600 text-white">
+        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <TrendingUp className="h-4 w-4" />
@@ -421,7 +421,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>CatÃ©gorie</Label>
+                      <Label>Catégorie</Label>
                       <Select>
                         <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
                         <SelectContent>
@@ -439,9 +439,9 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
                       <Select>
                         <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="dÃ©butant">DÃ©butant</SelectItem>
-                          <SelectItem value="intermÃ©diaire">IntermÃ©diaire</SelectItem>
-                          <SelectItem value="avancÃ©">AvancÃ©</SelectItem>
+                          <SelectItem value="débutant">Débutant</SelectItem>
+                          <SelectItem value="intermédiaire">Intermédiaire</SelectItem>
+                          <SelectItem value="avancé">Avancé</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -460,7 +460,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
                       <Input type="time" />
                     </div>
                     <div className="space-y-2">
-                      <Label>DurÃ©e (min)</Label>
+                      <Label>Durée (min)</Label>
                       <Input type="number" placeholder="60" />
                     </div>
                   </div>
@@ -500,7 +500,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
                           {getLevelBadge(fitnessClass.level)}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          ðŸ‘¤ {fitnessClass.instructor} â€¢ ðŸ“ {fitnessClass.room}
+                          👤 {fitnessClass.instructor} • 📍 {fitnessClass.room}
                         </p>
                         <div className="flex items-center gap-4 mt-2">
                           <div className="flex items-center gap-1 text-sm">
@@ -557,11 +557,11 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
                     <Label>Nom complet</Label>
-                    <Input placeholder="Nom et prÃ©nom" />
+                    <Input placeholder="Nom et prénom" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>TÃ©lÃ©phone</Label>
+                      <Label>Téléphone</Label>
                       <Input placeholder="+224 6XX XX XX XX" />
                     </div>
                     <div className="space-y-2">
@@ -610,10 +610,10 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
                           </Badge>
                           {getMembershipBadge(member.membershipStatus)}
                         </div>
-                        <p className="text-sm text-muted-foreground">{member.phone} â€¢ {member.email}</p>
+                        <p className="text-sm text-muted-foreground">{member.phone} • {member.email}</p>
                         <div className="flex items-center gap-3 mt-1 text-sm">
                           <span className="flex items-center gap-1">
-                            <CheckCircle className="h-3 w-3 text-primary-orange-500" />
+                            <CheckCircle className="h-3 w-3 text-green-500" />
                             {member.checkIns} check-ins
                           </span>
                           <span className="flex items-center gap-1">
@@ -649,7 +649,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
                 <div className={`h-20 bg-gradient-to-br ${
                   category === 'Cardio' ? 'from-red-500 to-red-600' :
                   category === 'Musculation' ? 'from-blue-500 to-blue-600' :
-                  category === 'Yoga' ? 'from-primary-blue-500 to-primary-orange-600' :
+                  category === 'Yoga' ? 'from-green-500 to-green-600' :
                   category === 'CrossFit' ? 'from-orange-500 to-orange-600' :
                   category === 'Danse' ? 'from-pink-500 to-pink-600' :
                   'from-purple-500 to-purple-600'
@@ -689,7 +689,7 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
                   <ul className="space-y-2 mb-4">
                     {sub.features.map((feature, i) => (
                       <li key={i} className="text-sm flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-primary-orange-500" />
+                        <CheckCircle className="h-4 w-4 text-green-500" />
                         {feature}
                       </li>
                     ))}

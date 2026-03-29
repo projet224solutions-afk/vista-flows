@@ -55,9 +55,9 @@ export default function DetailedTransactionsList() {
   const fetchDetailedTransactions = async () => {
     try {
       setLoading(true);
-      console.log('ðŸ”„ [DetailedTransactions] Chargement des transactions dÃ©taillÃ©es...');
+      console.log('🔄 [DetailedTransactions] Chargement des transactions détaillées...');
       
-      // RÃ©cupÃ©rer toutes les transactions
+      // Récupérer toutes les transactions
       const { data: transactionsData, error } = await supabase
         .from('wallet_transactions')
         .select('*')
@@ -67,49 +67,49 @@ export default function DetailedTransactionsList() {
 
       if (error) throw error;
 
-      console.log('ðŸ“¦ [DetailedTransactions] Transactions brutes:', transactionsData);
+      console.log('📦 [DetailedTransactions] Transactions brutes:', transactionsData);
 
-      // RÃ©cupÃ©rer les wallet IDs uniques
+      // Récupérer les wallet IDs uniques
       const walletIds = new Set<number>();
       transactionsData?.forEach((t: any) => {
         if (t.sender_wallet_id) walletIds.add(t.sender_wallet_id);
         if (t.receiver_wallet_id) walletIds.add(t.receiver_wallet_id);
       });
 
-      // RÃ©cupÃ©rer les wallets avec leurs user_ids
+      // Récupérer les wallets avec leurs user_ids
       const { data: walletsData, error: walletsError } = await supabase
         .from('wallets')
         .select('id, user_id')
         .in('id', Array.from(walletIds));
 
       if (walletsError) {
-        console.error('âš ï¸ Erreur chargement wallets:', walletsError);
+        console.error('⚠️ Erreur chargement wallets:', walletsError);
       }
 
-      console.log('ðŸ’¼ [DetailedTransactions] Wallets:', walletsData);
+      console.log('💼 [DetailedTransactions] Wallets:', walletsData);
 
-      // CrÃ©er une map des wallets
+      // Créer une map des wallets
       const walletsMap = new Map(walletsData?.map(w => [w.id, w.user_id]) || []);
 
-      // RÃ©cupÃ©rer les user IDs uniques
+      // Récupérer les user IDs uniques
       const userIds = new Set<string>();
       walletsData?.forEach((w: any) => {
         if (w.user_id) userIds.add(w.user_id);
       });
 
-      // RÃ©cupÃ©rer les informations des utilisateurs
+      // Récupérer les informations des utilisateurs
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email')
         .in('id', Array.from(userIds));
 
       if (usersError) {
-        console.error('âš ï¸ Erreur chargement utilisateurs:', usersError);
+        console.error('⚠️ Erreur chargement utilisateurs:', usersError);
       }
 
-      console.log('ðŸ‘¥ [DetailedTransactions] Utilisateurs:', usersData);
+      console.log('👥 [DetailedTransactions] Utilisateurs:', usersData);
 
-      // Mapper les donnÃ©es
+      // Mapper les données
       const usersMap = new Map(usersData?.map(u => [u.id, u]) || []);
       
       const enrichedTransactions: DetailedTransaction[] = (transactionsData || []).map((t: any) => {
@@ -138,10 +138,10 @@ export default function DetailedTransactionsList() {
         };
       });
 
-      console.log('âœ… [DetailedTransactions] Transactions enrichies:', enrichedTransactions);
+      console.log('✅ [DetailedTransactions] Transactions enrichies:', enrichedTransactions);
       setTransactions(enrichedTransactions);
     } catch (error: any) {
-      console.error('âŒ [DetailedTransactions] Erreur:', error);
+      console.error('❌ [DetailedTransactions] Erreur:', error);
       toast.error('Erreur lors du chargement des transactions');
     } finally {
       setLoading(false);
@@ -152,14 +152,14 @@ export default function DetailedTransactionsList() {
     setRefreshing(true);
     await fetchDetailedTransactions();
     setRefreshing(false);
-    toast.success('Transactions actualisÃ©es');
+    toast.success('Transactions actualisées');
   };
 
   useEffect(() => {
     fetchDetailedTransactions();
 
-    // Temps rÃ©el
-    console.log('ðŸ“¡ [DetailedTransactions] Abonnement temps rÃ©el activÃ©');
+    // Temps réel
+    console.log('📡 [DetailedTransactions] Abonnement temps réel activé');
     const channel = supabase
       .channel('detailed-transactions-updates')
       .on(
@@ -170,24 +170,24 @@ export default function DetailedTransactionsList() {
           table: 'wallet_transactions',
         },
         (payload) => {
-          console.log('ðŸ’° [DetailedTransactions] Transaction dÃ©tectÃ©e:', payload);
+          console.log('💰 [DetailedTransactions] Transaction détectée:', payload);
           setTimeout(() => fetchDetailedTransactions(), 1000);
         }
       )
       .subscribe();
 
     return () => {
-      console.log('ðŸ”Œ [DetailedTransactions] DÃ©connexion temps rÃ©el');
+      console.log('🔌 [DetailedTransactions] Déconnexion temps réel');
       channel.unsubscribe();
     };
   }, []);
 
   const getTransactionTypeLabel = (type: string) => {
     const labels: { [key: string]: string } = {
-      'deposit': 'DÃ©pÃ´t',
+      'deposit': 'Dépôt',
       'withdraw': 'Retrait',
       'transfer': 'Transfert',
-      'credit': 'CrÃ©dit',
+      'credit': 'Crédit',
       'marketplace': 'E-Commerce',
       'taxi': 'Taxi-Moto',
       'delivery': 'Livraison',
@@ -240,10 +240,10 @@ export default function DetailedTransactionsList() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-primary" />
-                Transactions DÃ©taillÃ©es de la Plateforme
+                Transactions Détaillées de la Plateforme
               </CardTitle>
               <CardDescription>
-                Toutes les transactions avec dÃ©tails complets et revenus de la plateforme
+                Toutes les transactions avec détails complets et revenus de la plateforme
               </CardDescription>
             </div>
             <Button 
@@ -269,7 +269,7 @@ export default function DetailedTransactionsList() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg bg-gradient-to-br from-primary-blue-500/10 to-transparent border border-primary-orange-500/20">
+            <div className="p-4 rounded-lg bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20">
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <DollarSign className="w-4 h-4" />
                 Total Transactions
@@ -301,7 +301,7 @@ export default function DetailedTransactionsList() {
         <div className="space-y-3">
           {filteredTransactions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Aucune transaction trouvÃ©e
+              Aucune transaction trouvée
             </div>
           ) : (
             filteredTransactions.map((transaction) => (
@@ -316,11 +316,11 @@ export default function DetailedTransactionsList() {
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                         transaction.amount > 0 
-                          ? 'bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/10' 
+                          ? 'bg-green-500/10' 
                           : 'bg-red-500/10'
                       }`}>
                         {transaction.amount > 0 ? (
-                          <ArrowDownLeft className="w-5 h-5 text-primary-orange-500" />
+                          <ArrowDownLeft className="w-5 h-5 text-green-500" />
                         ) : (
                           <ArrowUpRight className="w-5 h-5 text-red-500" />
                         )}
@@ -344,15 +344,15 @@ export default function DetailedTransactionsList() {
                         <div className="flex items-start gap-2 p-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
                           <User className="w-4 h-4 text-orange-500 mt-0.5" />
                           <div className="flex-1 min-w-0">
-                            <div className="text-xs text-muted-foreground">ExpÃ©diteur</div>
+                            <div className="text-xs text-muted-foreground">Expéditeur</div>
                             <div className="font-medium truncate">{transaction.sender_info.name}</div>
                             <div className="text-xs text-muted-foreground truncate">{transaction.sender_info.email}</div>
                           </div>
                         </div>
                       )}
                       {transaction.receiver_info && (
-                        <div className="flex items-start gap-2 p-3 rounded-lg bg-gradient-to-br from-primary-blue-500 to-primary-orange-500/5 border border-primary-orange-500/10">
-                          <User className="w-4 h-4 text-primary-orange-500 mt-0.5" />
+                        <div className="flex items-start gap-2 p-3 rounded-lg bg-green-500/5 border border-green-500/10">
+                          <User className="w-4 h-4 text-green-500 mt-0.5" />
                           <div className="flex-1 min-w-0">
                             <div className="text-xs text-muted-foreground">Destinataire</div>
                             <div className="font-medium truncate">{transaction.receiver_info.name}</div>
@@ -362,11 +362,11 @@ export default function DetailedTransactionsList() {
                       )}
                     </div>
 
-                    {/* Infos supplÃ©mentaires */}
+                    {/* Infos supplémentaires */}
                     <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {format(new Date(transaction.created_at), 'dd MMM yyyy Ã  HH:mm', { locale: fr })}
+                        {format(new Date(transaction.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
                       </div>
                       {getPaymentMethodLabel(transaction.metadata) && (
                         <div className="flex items-center gap-1">
@@ -392,7 +392,7 @@ export default function DetailedTransactionsList() {
                     <div>
                       <div className="text-sm text-muted-foreground">Montant</div>
                       <div className={`text-2xl font-bold ${
-                        transaction.amount > 0 ? 'text-primary-orange-500' : 'text-red-500'
+                        transaction.amount > 0 ? 'text-green-500' : 'text-red-500'
                       }`}>
                         {transaction.amount > 0 ? '+' : ''}{formatAmount(transaction.amount)}
                       </div>

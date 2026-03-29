@@ -21,7 +21,7 @@ export default function PDGReportsAnalytics() {
 
   return (
     <div className="space-y-6">
-      {/* En-tÃªte */}
+      {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">Rapports & Analytiques</h2>
@@ -61,18 +61,18 @@ export default function PDGReportsAnalytics() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Revenu Total</CardTitle>
-            <TrendingUp className="w-4 h-4 text-primary-orange-500" />
+            <TrendingUp className="w-4 h-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{fc(stats.totalRevenue, 'GNF')}</div>
             <div className="flex items-center gap-1 mt-1">
               {stats.revenueGrowth >= 0 ? (
-                <ArrowUpRight className="w-4 h-4 text-primary-orange-500" />
+                <ArrowUpRight className="w-4 h-4 text-green-500" />
               ) : (
                 <ArrowDownRight className="w-4 h-4 text-red-500" />
               )}
-              <p className={`text-xs ${stats.revenueGrowth >= 0 ? 'text-primary-orange-500' : 'text-red-500'}`}>
-                {Math.abs(stats.revenueGrowth).toFixed(1)}% vs pÃ©riode prÃ©cÃ©dente
+              <p className={`text-xs ${stats.revenueGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {Math.abs(stats.revenueGrowth).toFixed(1)}% vs période précédente
               </p>
             </div>
           </CardContent>
@@ -87,12 +87,12 @@ export default function PDGReportsAnalytics() {
             <div className="text-2xl font-bold">{stats.totalTransactions.toLocaleString()}</div>
             <div className="flex items-center gap-1 mt-1">
               {stats.transactionsGrowth >= 0 ? (
-                <ArrowUpRight className="w-4 h-4 text-primary-orange-500" />
+                <ArrowUpRight className="w-4 h-4 text-green-500" />
               ) : (
                 <ArrowDownRight className="w-4 h-4 text-red-500" />
               )}
-              <p className={`text-xs ${stats.transactionsGrowth >= 0 ? 'text-primary-orange-500' : 'text-red-500'}`}>
-                {Math.abs(stats.transactionsGrowth).toFixed(1)}% vs pÃ©riode prÃ©cÃ©dente
+              <p className={`text-xs ${stats.transactionsGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {Math.abs(stats.transactionsGrowth).toFixed(1)}% vs période précédente
               </p>
             </div>
           </CardContent>
@@ -107,12 +107,12 @@ export default function PDGReportsAnalytics() {
             <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
             <div className="flex items-center gap-1 mt-1">
               {stats.usersGrowth >= 0 ? (
-                <ArrowUpRight className="w-4 h-4 text-primary-orange-500" />
+                <ArrowUpRight className="w-4 h-4 text-green-500" />
               ) : (
                 <ArrowDownRight className="w-4 h-4 text-red-500" />
               )}
-              <p className={`text-xs ${stats.usersGrowth >= 0 ? 'text-primary-orange-500' : 'text-red-500'}`}>
-                {Math.abs(stats.usersGrowth).toFixed(1)}% vs pÃ©riode prÃ©cÃ©dente
+              <p className={`text-xs ${stats.usersGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {Math.abs(stats.usersGrowth).toFixed(1)}% vs période précédente
               </p>
             </div>
           </CardContent>
@@ -136,7 +136,7 @@ export default function PDGReportsAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Ã‰volution du Revenu</CardTitle>
+            <CardTitle>Évolution du Revenu</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -197,7 +197,7 @@ export default function PDGReportsAnalytics() {
               ))}
               {topProducts.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  Aucun produit vendu sur cette pÃ©riode
+                  Aucun produit vendu sur cette période
                 </div>
               )}
             </div>
@@ -228,7 +228,7 @@ export default function PDGReportsAnalytics() {
               ))}
               {topVendors.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  Aucune vente sur cette pÃ©riode
+                  Aucune vente sur cette période
                 </div>
               )}
             </div>

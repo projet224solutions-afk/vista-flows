@@ -1,6 +1,6 @@
 /**
- * DÃ‰TECTEUR AUTOMATIQUE DE TÃ‰LÃ‰CHARGEMENT
- * DÃ©tecte l'OS de l'utilisateur et propose la version appropriÃ©e
+ * DÉTECTEUR AUTOMATIQUE DE TÉLÉCHARGEMENT
+ * Détecte l'OS de l'utilisateur et propose la version appropriée
  * 224Solutions - Auto Download System
  */
 
@@ -57,7 +57,7 @@ export default function AutoDownloadDetector() {
         detectDevice();
         setupDownloadOptions();
         
-        // Ã‰couter les changements de connexion
+        // Écouter les changements de connexion
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);
         
@@ -71,7 +71,7 @@ export default function AutoDownloadDetector() {
     }, []);
 
     /**
-     * DÃ©tecte les informations de l'appareil
+     * Détecte les informations de l'appareil
      */
     const detectDevice = () => {
         const userAgent = navigator.userAgent.toLowerCase();
@@ -80,7 +80,7 @@ export default function AutoDownloadDetector() {
         let os = 'unknown';
         let browser = 'unknown';
         
-        // DÃ©tection de l'OS
+        // Détection de l'OS
         if (userAgent.includes('android')) {
             os = 'android';
         } else if (userAgent.includes('iphone') || userAgent.includes('ipad')) {
@@ -93,7 +93,7 @@ export default function AutoDownloadDetector() {
             os = 'linux';
         }
         
-        // DÃ©tection du navigateur
+        // Détection du navigateur
         if (userAgent.includes('chrome')) {
             browser = 'chrome';
         } else if (userAgent.includes('firefox')) {
@@ -104,7 +104,7 @@ export default function AutoDownloadDetector() {
             browser = 'edge';
         }
         
-        // DÃ©tection du type d'appareil
+        // Détection du type d'appareil
         const isMobile = /android|iphone|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
         const isTablet = /ipad|android(?!.*mobile)|tablet/i.test(userAgent);
         const isDesktop = !isMobile && !isTablet;
@@ -118,30 +118,30 @@ export default function AutoDownloadDetector() {
         };
         
         setDeviceInfo(info);
-        console.log('ðŸ“± Appareil dÃ©tectÃ©:', info);
+        console.log('📱 Appareil détecté:', info);
     };
 
     /**
-     * Configure les options de tÃ©lÃ©chargement
+     * Configure les options de téléchargement
      */
     const setupDownloadOptions = () => {
         const downloads: DownloadOption[] = [
             {
                 platform: 'android',
                 name: 'Android APK',
-                icon: <Smartphone className="w-6 h-6 text-primary-orange-600" />,
-                description: 'Application native Android avec toutes les fonctionnalitÃ©s',
+                icon: <Smartphone className="w-6 h-6 text-green-600" />,
+                description: 'Application native Android avec toutes les fonctionnalités',
                 fileSize: '25 MB',
                 downloadUrl: 'https://github.com/projet224solutions-afk/vista-flows/releases/latest/download/224solutions-android.apk',
                 installInstructions: [
-                    'TÃ©lÃ©chargez le fichier APK',
-                    'Activez "Sources inconnues" dans ParamÃ¨tres > SÃ©curitÃ©',
-                    'Ouvrez le fichier APK tÃ©lÃ©chargÃ©',
+                    'Téléchargez le fichier APK',
+                    'Activez "Sources inconnues" dans Paramètres > Sécurité',
+                    'Ouvrez le fichier APK téléchargé',
                     'Suivez les instructions d\'installation',
                     'Lancez l\'application 224Solutions'
                 ],
                 requirements: [
-                    'Android 7.0 ou supÃ©rieur',
+                    'Android 7.0 ou supérieur',
                     '100 MB d\'espace libre',
                     'Connexion Internet pour la synchronisation'
                 ],
@@ -149,7 +149,7 @@ export default function AutoDownloadDetector() {
                     'Interface native Android',
                     'Notifications push',
                     'Mode hors ligne',
-                    'Authentification biomÃ©trique',
+                    'Authentification biométrique',
                     'Synchronisation automatique'
                 ]
             },
@@ -157,21 +157,21 @@ export default function AutoDownloadDetector() {
                 platform: 'ios',
                 name: 'iOS IPA',
                 icon: <Apple className="w-6 h-6 text-blue-600" />,
-                description: 'Application native iOS optimisÃ©e pour iPhone et iPad',
+                description: 'Application native iOS optimisée pour iPhone et iPad',
                 fileSize: '30 MB',
                 downloadUrl: 'https://testflight.apple.com/join/224solutions',
                 installInstructions: [
                     'Installez TestFlight depuis l\'App Store',
                     'Cliquez sur le lien d\'invitation',
                     'Acceptez l\'invitation dans TestFlight',
-                    'TÃ©lÃ©chargez et installez l\'app',
-                    'Lancez 224Solutions depuis l\'Ã©cran d\'accueil'
+                    'Téléchargez et installez l\'app',
+                    'Lancez 224Solutions depuis l\'écran d\'accueil'
                 ],
                 requirements: [
-                    'iOS 13.0 ou supÃ©rieur',
+                    'iOS 13.0 ou supérieur',
                     '150 MB d\'espace libre',
                     'Compte Apple ID',
-                    'TestFlight installÃ©'
+                    'TestFlight installé'
                 ],
                 features: [
                     'Interface native iOS',
@@ -186,18 +186,18 @@ export default function AutoDownloadDetector() {
                 platform: 'windows',
                 name: 'Windows EXE',
                 icon: <Monitor className="w-6 h-6 text-blue-500" />,
-                description: 'Application desktop Windows avec interface complÃ¨te',
+                description: 'Application desktop Windows avec interface complète',
                 fileSize: '85 MB',
                 downloadUrl: 'https://github.com/projet224solutions-afk/vista-flows/releases/latest/download/224solutions-windows.exe',
                 installInstructions: [
-                    'TÃ©lÃ©chargez le fichier .exe',
-                    'ExÃ©cutez l\'installateur en tant qu\'administrateur',
+                    'Téléchargez le fichier .exe',
+                    'Exécutez l\'installateur en tant qu\'administrateur',
                     'Suivez l\'assistant d\'installation',
-                    'CrÃ©ez un raccourci sur le bureau',
+                    'Créez un raccourci sur le bureau',
                     'Lancez 224Solutions'
                 ],
                 requirements: [
-                    'Windows 10 ou supÃ©rieur',
+                    'Windows 10 ou supérieur',
                     '200 MB d\'espace libre',
                     '4 GB de RAM minimum',
                     'Connexion Internet'
@@ -205,28 +205,28 @@ export default function AutoDownloadDetector() {
                 features: [
                     'Interface desktop native',
                     'Raccourcis clavier',
-                    'Notifications systÃ¨me',
-                    'Multi-fenÃªtres',
-                    'Impression intÃ©grÃ©e',
-                    'Export de donnÃ©es'
+                    'Notifications système',
+                    'Multi-fenêtres',
+                    'Impression intégrée',
+                    'Export de données'
                 ]
             },
             {
                 platform: 'macos',
                 name: 'macOS DMG',
                 icon: <Apple className="w-6 h-6 text-gray-600" />,
-                description: 'Application macOS optimisÃ©e pour Mac',
+                description: 'Application macOS optimisée pour Mac',
                 fileSize: '90 MB',
                 downloadUrl: 'https://github.com/projet224solutions-afk/vista-flows/releases/latest/download/224solutions-macos.dmg',
                 installInstructions: [
-                    'TÃ©lÃ©chargez le fichier .dmg',
+                    'Téléchargez le fichier .dmg',
                     'Montez l\'image disque',
                     'Glissez 224Solutions vers Applications',
                     'Lancez depuis le Launchpad',
-                    'Autorisez l\'app dans PrÃ©fÃ©rences SystÃ¨me si nÃ©cessaire'
+                    'Autorisez l\'app dans Préférences Système si nécessaire'
                 ],
                 requirements: [
-                    'macOS 11.0 ou supÃ©rieur',
+                    'macOS 11.0 ou supérieur',
                     '200 MB d\'espace libre',
                     '4 GB de RAM minimum',
                     'Connexion Internet'
@@ -234,7 +234,7 @@ export default function AutoDownloadDetector() {
                 features: [
                     'Interface native macOS',
                     'Touch Bar support',
-                    'Notifications systÃ¨me',
+                    'Notifications système',
                     'Spotlight integration',
                     'iCloud sync',
                     'Dark mode'
@@ -244,27 +244,27 @@ export default function AutoDownloadDetector() {
                 platform: 'web',
                 name: 'Application Web',
                 icon: <Globe className="w-6 h-6 text-purple-600" />,
-                description: 'AccÃ¨s direct via navigateur, aucune installation requise',
+                description: 'Accès direct via navigateur, aucune installation requise',
                 fileSize: 'Streaming',
                 downloadUrl: window.location.origin,
                 installInstructions: [
                     'Ouvrez votre navigateur web',
                     'Visitez 224solution.net',
-                    'Connectez-vous Ã  votre compte',
-                    'Ajoutez Ã  l\'Ã©cran d\'accueil (optionnel)',
+                    'Connectez-vous à votre compte',
+                    'Ajoutez à l\'écran d\'accueil (optionnel)',
                     'Utilisez directement en ligne'
                 ],
                 requirements: [
                     'Navigateur moderne (Chrome, Firefox, Safari, Edge)',
                     'Connexion Internet stable',
-                    'JavaScript activÃ©'
+                    'JavaScript activé'
                 ],
                 features: [
-                    'AccÃ¨s instantanÃ©',
-                    'Toujours Ã  jour',
+                    'Accès instantané',
+                    'Toujours à jour',
                     'Multi-plateforme',
                     'Aucune installation',
-                    'Synchronisation temps rÃ©el',
+                    'Synchronisation temps réel',
                     'PWA compatible'
                 ]
             }
@@ -280,27 +280,27 @@ export default function AutoDownloadDetector() {
     };
 
     /**
-     * Lance le tÃ©lÃ©chargement
+     * Lance le téléchargement
      */
     const startDownload = (download: DownloadOption) => {
         if (!isOnline && download.platform !== 'web') {
             toast.error('Connexion Internet requise', {
-                description: 'Veuillez vous connecter Ã  Internet pour tÃ©lÃ©charger'
+                description: 'Veuillez vous connecter à Internet pour télécharger'
             });
             return;
         }
 
-        toast.info(`ðŸš€ TÃ©lÃ©chargement en cours...`, {
+        toast.info(`🚀 Téléchargement en cours...`, {
             description: `${download.name} - ${download.fileSize}`,
             duration: 5000
         });
 
-        // Ouvrir le lien de tÃ©lÃ©chargement
-        window.open(download.downloadUrl, '_blank', 'noopener,noreferrer');
+        // Ouvrir le lien de téléchargement
+        window.open(download.downloadUrl, '_blank');
 
         // Afficher les instructions
         setTimeout(() => {
-            toast.success('ðŸ“¥ TÃ©lÃ©chargement dÃ©marrÃ© !', {
+            toast.success('📥 Téléchargement démarré !', {
                 description: 'Consultez les instructions d\'installation ci-dessous',
                 duration: 10000
             });
@@ -308,7 +308,7 @@ export default function AutoDownloadDetector() {
     };
 
     /**
-     * GÃ©nÃ¨re un QR Code pour le tÃ©lÃ©chargement mobile
+     * Génère un QR Code pour le téléchargement mobile
      */
     const generateQRCode = (url: string) => {
         // En production, utiliser une vraie librairie QR Code
@@ -320,7 +320,7 @@ export default function AutoDownloadDetector() {
             <Card className="border-0 shadow-xl rounded-2xl">
                 <CardContent className="p-8 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">DÃ©tection de votre appareil...</p>
+                    <p className="text-gray-600">Détection de votre appareil...</p>
                 </CardContent>
             </Card>
         );
@@ -332,11 +332,11 @@ export default function AutoDownloadDetector() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     {isOnline ? (
-                        <Wifi className="w-5 h-5 text-primary-orange-600" />
+                        <Wifi className="w-5 h-5 text-green-600" />
                     ) : (
                         <WifiOff className="w-5 h-5 text-red-600" />
                     )}
-                    <span className={`text-sm font-medium ${isOnline ? 'text-primary-orange-600' : 'text-red-600'}`}>
+                    <span className={`text-sm font-medium ${isOnline ? 'text-green-600' : 'text-red-600'}`}>
                         {isOnline ? 'En ligne' : 'Hors ligne'}
                     </span>
                 </div>
@@ -352,7 +352,7 @@ export default function AutoDownloadDetector() {
                     <CardHeader>
                         <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-3">
                             <Zap className="w-6 h-6 text-yellow-500" />
-                            RecommandÃ© pour votre appareil
+                            Recommandé pour votre appareil
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -368,19 +368,19 @@ export default function AutoDownloadDetector() {
                                     {recommendedDownload.description}
                                 </p>
                                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                                    <span>ðŸ“¦ {recommendedDownload.fileSize}</span>
-                                    <span>ðŸ“± {deviceInfo.isMobile ? 'Mobile' : deviceInfo.isTablet ? 'Tablette' : 'Desktop'}</span>
-                                    <span>ðŸŒ {deviceInfo.os}</span>
+                                    <span>📦 {recommendedDownload.fileSize}</span>
+                                    <span>📱 {deviceInfo.isMobile ? 'Mobile' : deviceInfo.isTablet ? 'Tablette' : 'Desktop'}</span>
+                                    <span>🌐 {deviceInfo.os}</span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* FonctionnalitÃ©s */}
+                            {/* Fonctionnalités */}
                             <div>
                                 <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                                    <CheckCircle className="w-4 h-4 text-primary-orange-600" />
-                                    FonctionnalitÃ©s
+                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                    Fonctionnalités
                                 </h4>
                                 <ul className="space-y-2">
                                     {recommendedDownload.features.slice(0, 4).map((feature, index) => (
@@ -392,11 +392,11 @@ export default function AutoDownloadDetector() {
                                 </ul>
                             </div>
 
-                            {/* PrÃ©requis */}
+                            {/* Prérequis */}
                             <div>
                                 <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-orange-600" />
-                                    PrÃ©requis
+                                    Prérequis
                                 </h4>
                                 <ul className="space-y-2">
                                     {recommendedDownload.requirements.map((req, index) => (
@@ -420,7 +420,7 @@ export default function AutoDownloadDetector() {
                                         alt="QR Code"
                                         className="w-24 h-24 mx-auto rounded-lg shadow-md"
                                     />
-                                    <p className="text-xs text-gray-500 mt-2">Scannez pour tÃ©lÃ©charger</p>
+                                    <p className="text-xs text-gray-500 mt-2">Scannez pour télécharger</p>
                                 </div>
                             )}
                         </div>
@@ -432,7 +432,7 @@ export default function AutoDownloadDetector() {
                                 disabled={!isOnline && recommendedDownload.platform !== 'web'}
                             >
                                 <Download className="w-5 h-5 mr-2" />
-                                TÃ©lÃ©charger Maintenant
+                                Télécharger Maintenant
                             </Button>
                             
                             <Dialog>
@@ -494,7 +494,7 @@ export default function AutoDownloadDetector() {
                                         </div>
                                         <p className="text-sm text-gray-600 mb-4">{download.description}</p>
                                         <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
-                                            <span>ðŸ“¦ {download.fileSize}</span>
+                                            <span>📦 {download.fileSize}</span>
                                             <Badge className="bg-gray-100 text-gray-700 text-xs">
                                                 {download.platform}
                                             </Badge>
@@ -506,7 +506,7 @@ export default function AutoDownloadDetector() {
                                             disabled={!isOnline && download.platform !== 'web'}
                                         >
                                             <Download className="w-4 h-4 mr-2" />
-                                            TÃ©lÃ©charger
+                                            Télécharger
                                         </Button>
                                     </CardContent>
                                 </Card>

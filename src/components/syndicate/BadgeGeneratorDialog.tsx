@@ -34,15 +34,6 @@ interface BadgeGeneratorDialogProps {
   bureauPhone?: string;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 export default function BadgeGeneratorDialog({
   open,
   onOpenChange,
@@ -157,14 +148,19 @@ export default function BadgeGeneratorDialog({
   const handlePrint = () => {
     if (!badgeRef.current) return;
 
-    const badgeHtml = badgeRef.current.outerHTML;
-    const safeMemberName = escapeHtml(vehicleData.member_name);
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Impossible d\'ouvrir la fenêtre d\'impression');
+      return;
+    }
 
-    const printHtml = `
+    const badgeHtml = badgeRef.current.outerHTML;
+    
+    printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Badge ${safeMemberName}</title>
+          <title>Badge ${vehicleData.member_name}</title>
           <style>
             @media print {
               body {
@@ -185,28 +181,16 @@ export default function BadgeGeneratorDialog({
         </head>
         <body>
           ${badgeHtml}
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-              }, 300);
-            };
-          <\/script>
         </body>
       </html>
-    `;
+    `);
 
-    const blob = new Blob([printHtml], { type: 'text/html' });
-    const printUrl = URL.createObjectURL(blob);
-    const opened = window.open(printUrl, '_blank', 'noopener,noreferrer');
-    if (!opened) {
-      URL.revokeObjectURL(printUrl);
-      toast.error('Impossible d\'ouvrir la fenêtre d\'impression');
-      return;
-    }
-
-    setTimeout(() => URL.revokeObjectURL(printUrl), 10000);
-    toast.success('Badge envoyé à l\'imprimante');
+    printWindow.document.close();
+    
+    setTimeout(() => {
+      printWindow.print();
+      toast.success('Badge envoyé à l\'imprimante');
+    }, 500);
   };
 
   return (

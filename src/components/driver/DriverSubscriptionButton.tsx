@@ -58,17 +58,17 @@ export function DriverSubscriptionButton() {
           size="sm" 
           className={`gap-1 text-xs h-8 ${
             isActive 
-              ? 'border-primary-orange-300 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 hover:bg-primary-orange-100' 
+              ? 'border-green-300 bg-green-50 hover:bg-green-100' 
               : isExpired
               ? 'border-red-300 bg-red-50 hover:bg-red-100'
               : 'border-gray-300'
           }`}
         >
           <Calendar className={`w-3 h-3 ${
-            isActive ? 'text-primary-orange-600' : isExpired ? 'text-red-600' : 'text-gray-600'
+            isActive ? 'text-green-600' : isExpired ? 'text-red-600' : 'text-gray-600'
           }`} />
           <span className="hidden sm:inline">
-            {isActive ? `${daysRemaining}j restant${daysRemaining > 1 ? 's' : ''}` : isExpired ? 'ExpirÃ©' : 'Abonnement'}
+            {isActive ? `${daysRemaining}j restant${daysRemaining > 1 ? 's' : ''}` : isExpired ? 'Expiré' : 'Abonnement'}
           </span>
         </Button>
       </PopoverTrigger>
@@ -81,7 +81,7 @@ export function DriverSubscriptionButton() {
           
           <div className="space-y-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">DÃ©but:</span>
+              <span className="text-muted-foreground">Début:</span>
               <span className="font-medium">{formatDate(subscription.start_date)}</span>
             </div>
             <div className="flex justify-between">
@@ -92,19 +92,19 @@ export function DriverSubscriptionButton() {
 
           {daysRemaining > 0 && (
             <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs text-center text-blue-800 font-medium">
-              â³ {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''}
+              ⏳ {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''}
             </div>
           )}
 
           {isExpired && (
             <div className="p-2 bg-red-50 border border-red-200 rounded text-xs text-center text-red-800 font-bold">
-              âš ï¸ Abonnement expirÃ©
+              ⚠️ Abonnement expiré
             </div>
           )}
 
           {isActive && (
-            <div className="p-2 bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border border-primary-orange-200 rounded text-xs text-center text-primary-orange-800 font-bold">
-              âœ… Abonnement actif
+            <div className="p-2 bg-green-50 border border-green-200 rounded text-xs text-center text-green-800 font-bold">
+              ✅ Abonnement actif
             </div>
           )}
 
@@ -113,7 +113,7 @@ export function DriverSubscriptionButton() {
             className="w-full text-xs h-8"
             onClick={() => navigate('/driver-subscription')}
           >
-            GÃ©rer mon abonnement
+            Gérer mon abonnement
           </Button>
         </div>
       </PopoverContent>

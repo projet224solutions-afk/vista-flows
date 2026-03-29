@@ -54,10 +54,10 @@ interface Order {
 
 const orderSteps = [
   { key: 'pending', label: 'En attente', icon: Clock },
-  { key: 'confirmed', label: 'ConfirmÃ©e', icon: CheckCircle },
-  { key: 'preparing', label: 'En prÃ©paration', icon: Package },
-  { key: 'shipped', label: 'ExpÃ©diÃ©e', icon: Truck },
-  { key: 'delivered', label: 'LivrÃ©e', icon: CheckCircle },
+  { key: 'confirmed', label: 'Confirmée', icon: CheckCircle },
+  { key: 'preparing', label: 'En préparation', icon: Package },
+  { key: 'shipped', label: 'Expédiée', icon: Truck },
+  { key: 'delivered', label: 'Livrée', icon: CheckCircle },
 ];
 
 const statusColors: Record<string, string> = {
@@ -68,22 +68,22 @@ const statusColors: Record<string, string> = {
   ready: 'bg-indigo-100 text-indigo-800 border-indigo-300',
   shipped: 'bg-orange-100 text-orange-800 border-orange-300',
   in_transit: 'bg-orange-100 text-orange-800 border-orange-300',
-  delivered: 'bg-primary-orange-100 text-primary-orange-800 border-primary-orange-300',
-  completed: 'bg-primary-blue-100 text-primary-blue-800 border-primary-orange-300',
+  delivered: 'bg-green-100 text-green-800 border-green-300',
+  completed: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   cancelled: 'bg-red-100 text-red-800 border-red-300'
 };
 
 const statusLabels: Record<string, string> = {
   pending: 'En attente',
-  confirmed: 'ConfirmÃ©e',
-  processing: 'En prÃ©paration',
-  preparing: 'En prÃ©paration',
-  ready: 'PrÃªte',
-  shipped: 'ExpÃ©diÃ©e',
+  confirmed: 'Confirmée',
+  processing: 'En préparation',
+  preparing: 'En préparation',
+  ready: 'Prête',
+  shipped: 'Expédiée',
   in_transit: 'En transit',
-  delivered: 'LivrÃ©e',
-  completed: 'TerminÃ©e',
-  cancelled: 'AnnulÃ©e'
+  delivered: 'Livrée',
+  completed: 'Terminée',
+  cancelled: 'Annulée'
 };
 
 const statusIcons: Record<string, React.ReactNode> = {
@@ -102,34 +102,34 @@ const statusIcons: Record<string, React.ReactNode> = {
 const escrowStatusColors: Record<string, string> = {
   pending: 'bg-blue-100 text-blue-800 border-blue-300',
   held: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  released: 'bg-primary-orange-100 text-primary-orange-800 border-primary-orange-300',
+  released: 'bg-green-100 text-green-800 border-green-300',
   refunded: 'bg-red-100 text-red-800 border-red-300',
   disputed: 'bg-orange-100 text-orange-800 border-orange-300'
 };
 
 const escrowStatusLabels: Record<string, string> = {
-  pending: 'Fonds sÃ©curisÃ©s',
+  pending: 'Fonds sécurisés',
   held: 'En attente',
-  released: 'Fonds libÃ©rÃ©s',
-  refunded: 'RemboursÃ©',
+  released: 'Fonds libérés',
+  refunded: 'Remboursé',
   disputed: 'Litige'
 };
 
 const paymentStatusColors: Record<string, string> = {
   pending: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  paid: 'bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 text-primary-orange-700 border-primary-orange-200',
+  paid: 'bg-green-50 text-green-700 border-green-200',
   failed: 'bg-red-50 text-red-700 border-red-200',
   refunded: 'bg-gray-50 text-gray-700 border-gray-200'
 };
 
 const paymentStatusLabels: Record<string, string> = {
   pending: 'En attente',
-  paid: 'PayÃ©',
-  failed: 'Ã‰chouÃ©',
-  refunded: 'RemboursÃ©'
+  paid: 'Payé',
+  failed: 'Échoué',
+  refunded: 'Remboursé'
 };
 
-// Composant de suivi visuel des Ã©tapes
+// Composant de suivi visuel des étapes
 function OrderProgressTracker({ currentStatus }: { currentStatus: string }) {
   const getStepIndex = (status: string) => {
     const statusMap: Record<string, number> = {
@@ -154,7 +154,7 @@ function OrderProgressTracker({ currentStatus }: { currentStatus: string }) {
     return (
       <div className="flex items-center justify-center p-4 bg-red-50 rounded-xl border border-red-200">
         <XCircle className="w-6 h-6 text-red-500 mr-2" />
-        <span className="font-medium text-red-700">Commande annulÃ©e</span>
+        <span className="font-medium text-red-700">Commande annulée</span>
       </div>
     );
   }
@@ -165,7 +165,7 @@ function OrderProgressTracker({ currentStatus }: { currentStatus: string }) {
         {/* Ligne de progression */}
         <div className="absolute top-5 left-0 right-0 h-1 bg-slate-200 rounded-full mx-8" />
         <div 
-          className="absolute top-5 left-0 h-1 bg-gradient-to-r from-blue-500 to-primary-orange-500 rounded-full mx-8 transition-all duration-500"
+          className="absolute top-5 left-0 h-1 bg-gradient-to-r from-blue-500 to-green-500 rounded-full mx-8 transition-all duration-500"
           style={{ width: `calc(${(currentStep / (orderSteps.length - 1)) * 100}% - 4rem)` }}
         />
 
@@ -180,7 +180,7 @@ function OrderProgressTracker({ currentStatus }: { currentStatus: string }) {
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
                   isCompleted
-                    ? "bg-gradient-to-br from-blue-500 to-primary-orange-500 text-white shadow-lg"
+                    ? "bg-gradient-to-br from-blue-500 to-green-500 text-white shadow-lg"
                     : "bg-slate-100 text-slate-400 border-2 border-slate-200",
                   isCurrent && "ring-4 ring-blue-100 scale-110"
                 )}
@@ -215,7 +215,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
   useEffect(() => {
     loadOrders();
     
-    // Ã‰coute en temps rÃ©el
+    // Écoute en temps réel
     const ordersChannel = supabase
       .channel('agent-orders-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
@@ -239,7 +239,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
   const loadOrders = async () => {
     setLoading(true);
     try {
-      // 1. RÃ©cupÃ©rer les utilisateurs crÃ©Ã©s par cet agent
+      // 1. Récupérer les utilisateurs créés par cet agent
       const { data: createdUsers, error: usersError } = await supabase
         .from('agent_created_users')
         .select('user_id')
@@ -255,7 +255,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
 
       const userIds = createdUsers.map(u => u.user_id);
 
-      // 2. RÃ©cupÃ©rer les customers liÃ©s Ã  ces user_ids
+      // 2. Récupérer les customers liés à ces user_ids
       const { data: customers, error: customersError } = await supabase
         .from('customers')
         .select('id, user_id')
@@ -272,7 +272,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
       const customerIds = customers.map(c => c.id);
       const customerUserMap = new Map(customers.map(c => [c.id, c.user_id]));
 
-      // 3. RÃ©cupÃ©rer les commandes de ces customers
+      // 3. Récupérer les commandes de ces customers
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -294,7 +294,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
 
       if (ordersError) throw ordersError;
 
-      // 4. RÃ©cupÃ©rer les profils des utilisateurs
+      // 4. Récupérer les profils des utilisateurs
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email, phone, public_id')
@@ -302,7 +302,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
 
       if (profilesError) throw profilesError;
 
-      // 5. RÃ©cupÃ©rer les noms des vendeurs
+      // 5. Récupérer les noms des vendeurs
       const vendorIds = [...new Set(ordersData?.map(o => o.vendor_id).filter(Boolean))];
       let vendorNames: Record<string, string> = {};
       
@@ -317,7 +317,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
         }
       }
 
-      // 6. RÃ©cupÃ©rer les escrows pour toutes les commandes
+      // 6. Récupérer les escrows pour toutes les commandes
       const orderIds = ordersData?.map(o => o.id) || [];
       let escrowMap: Record<string, EscrowInfo> = {};
       
@@ -339,7 +339,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
         }
       }
 
-      // 7. Mapper les donnÃ©es
+      // 7. Mapper les données
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
       const mappedOrders: Order[] = (ordersData || []).map(order => {
@@ -398,8 +398,8 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
       if (error) throw error;
       setOrderDetails(data);
     } catch (error) {
-      console.error('Erreur chargement dÃ©tails:', error);
-      toast.error('Erreur lors du chargement des dÃ©tails');
+      console.error('Erreur chargement détails:', error);
+      toast.error('Erreur lors du chargement des détails');
     } finally {
       setLoadingDetails(false);
     }
@@ -503,28 +503,28 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-primary-blue-50 to-primary-orange-100">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-green-50 to-green-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-primary-orange-600 font-medium">LivrÃ©es</p>
-                <p className="text-2xl font-bold text-primary-orange-900">{stats.completed}</p>
+                <p className="text-xs text-green-600 font-medium">Livrées</p>
+                <p className="text-2xl font-bold text-green-900">{stats.completed}</p>
               </div>
-              <div className="p-3 bg-gradient-to-br from-primary-blue-500 to-primary-orange-500 rounded-xl">
+              <div className="p-3 bg-green-500 rounded-xl">
                 <CheckCircle className="w-5 h-5 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-primary-blue-50 to-primary-blue-100">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-cyan-50 to-cyan-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-primary-blue-600 font-medium">Escrow actif</p>
-                <p className="text-2xl font-bold text-primary-blue-900">{stats.escrowPending}</p>
+                <p className="text-xs text-cyan-600 font-medium">Escrow actif</p>
+                <p className="text-2xl font-bold text-cyan-900">{stats.escrowPending}</p>
               </div>
-              <div className="p-3 bg-primary-blue-500 rounded-xl">
+              <div className="p-3 bg-cyan-500 rounded-xl">
                 <Shield className="w-5 h-5 text-white" />
               </div>
             </div>
@@ -533,14 +533,14 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
       </div>
 
       {/* Revenue Card */}
-      <Card className="border-0 shadow-lg bg-gradient-to-r from-primary-blue-500 to-primary-orange-500 text-white">
+      <Card className="border-0 shadow-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-primary-blue-100 text-sm">Revenus gÃ©nÃ©rÃ©s par mes utilisateurs</p>
+              <p className="text-emerald-100 text-sm">Revenus générés par mes utilisateurs</p>
               <p className="text-3xl font-bold">{formatCurrency(stats.totalRevenue)}</p>
             </div>
-            <TrendingUp className="w-12 h-12 text-primary-blue-200" />
+            <TrendingUp className="w-12 h-12 text-emerald-200" />
           </div>
         </CardContent>
       </Card>
@@ -569,7 +569,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
-                placeholder="Rechercher par nÂ° commande, client, ID..."
+                placeholder="Rechercher par n° commande, client, ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -583,13 +583,13 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
               <SelectContent>
                 <SelectItem value="all">Tous les statuts</SelectItem>
                 <SelectItem value="pending">En attente</SelectItem>
-                <SelectItem value="confirmed">ConfirmÃ©e</SelectItem>
-                <SelectItem value="preparing">En prÃ©paration</SelectItem>
-                <SelectItem value="shipped">ExpÃ©diÃ©e</SelectItem>
+                <SelectItem value="confirmed">Confirmée</SelectItem>
+                <SelectItem value="preparing">En préparation</SelectItem>
+                <SelectItem value="shipped">Expédiée</SelectItem>
                 <SelectItem value="in_transit">En transit</SelectItem>
-                <SelectItem value="delivered">LivrÃ©e</SelectItem>
-                <SelectItem value="completed">TerminÃ©e</SelectItem>
-                <SelectItem value="cancelled">AnnulÃ©e</SelectItem>
+                <SelectItem value="delivered">Livrée</SelectItem>
+                <SelectItem value="completed">Terminée</SelectItem>
+                <SelectItem value="cancelled">Annulée</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -598,8 +598,8 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
           {filteredOrders.length === 0 ? (
             <div className="text-center py-12 text-slate-500">
               <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-              <p className="text-lg font-medium">Aucune commande trouvÃ©e</p>
-              <p className="text-sm">Les commandes de vos utilisateurs apparaÃ®tront ici</p>
+              <p className="text-lg font-medium">Aucune commande trouvée</p>
+              <p className="text-sm">Les commandes de vos utilisateurs apparaîtront ici</p>
             </div>
           ) : (
             <ScrollArea className="h-[500px]">
@@ -629,7 +629,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                               </span>
                               {order.vendor_name && (
                                 <span className="text-xs text-slate-500">
-                                  â€¢ {order.vendor_name}
+                                  • {order.vendor_name}
                                 </span>
                               )}
                             </div>
@@ -678,14 +678,14 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                         )}
                       </div>
 
-                      {/* Escrow Info avec Ã©tapes claires */}
+                      {/* Escrow Info avec étapes claires */}
                       {order.escrow && (
                         <div className={cn(
                           "p-3 mt-4 rounded-lg border",
                           order.escrow.status === 'pending' || order.escrow.status === 'held'
                             ? "bg-blue-50 border-blue-200"
                             : order.escrow.status === 'released'
-                            ? "bg-gradient-to-br from-primary-blue-50 to-primary-orange-50 border-primary-orange-200"
+                            ? "bg-green-50 border-green-200"
                             : order.escrow.status === 'refunded'
                             ? "bg-red-50 border-red-200"
                             : "bg-gray-50 border-gray-200"
@@ -696,7 +696,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                               order.escrow.status === 'pending' || order.escrow.status === 'held'
                                 ? "text-blue-600"
                                 : order.escrow.status === 'released'
-                                ? "text-primary-orange-600"
+                                ? "text-green-600"
                                 : "text-gray-600"
                             )} />
                             <div className="flex-1">
@@ -705,28 +705,28 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                                 order.escrow.status === 'pending' || order.escrow.status === 'held'
                                   ? "text-blue-800"
                                   : order.escrow.status === 'released'
-                                  ? "text-primary-orange-800"
+                                  ? "text-green-800"
                                   : "text-gray-800"
                               )}>
-                                {order.escrow.status === 'pending' && "ðŸ”’ Fonds sÃ©curisÃ©s - En attente de livraison"}
-                                {order.escrow.status === 'held' && "ðŸ”’ Fonds bloquÃ©s - Le vendeur prÃ©pare la commande"}
-                                {order.escrow.status === 'released' && "âœ… Paiement libÃ©rÃ© au vendeur"}
-                                {order.escrow.status === 'refunded' && "â†©ï¸ Remboursement effectuÃ©"}
+                                {order.escrow.status === 'pending' && "🔒 Fonds sécurisés - En attente de livraison"}
+                                {order.escrow.status === 'held' && "🔒 Fonds bloqués - Le vendeur prépare la commande"}
+                                {order.escrow.status === 'released' && "✅ Paiement libéré au vendeur"}
+                                {order.escrow.status === 'refunded' && "↩️ Remboursement effectué"}
                               </p>
                               <p className={cn(
                                 "text-xs mt-1",
                                 order.escrow.status === 'pending' || order.escrow.status === 'held'
                                   ? "text-blue-700"
                                   : order.escrow.status === 'released'
-                                  ? "text-primary-orange-700"
+                                  ? "text-green-700"
                                   : "text-gray-700"
                               )}>
-                                {formatCurrency(order.escrow.amount)} â€¢ 
+                                {formatCurrency(order.escrow.amount)} • 
                                 {order.escrow.status === 'pending' || order.escrow.status === 'held'
-                                  ? " Le client doit confirmer la rÃ©ception pour libÃ©rer les fonds"
+                                  ? " Le client doit confirmer la réception pour libérer les fonds"
                                   : order.escrow.status === 'released'
-                                  ? " Le client a confirmÃ© la rÃ©ception"
-                                  : " Transaction terminÃ©e"
+                                  ? " Le client a confirmé la réception"
+                                  : " Transaction terminée"
                                 }
                               </p>
                             </div>
@@ -737,7 +737,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
                             <div className="mt-3 p-2 bg-white/60 rounded-md">
                               <p className="text-xs text-slate-600 flex items-center gap-1">
                                 <AlertCircle className="w-3 h-3" />
-                                Workflow: Vendeur confirme â†’ PrÃ©pare â†’ ExpÃ©die â†’ Client confirme rÃ©ception â†’ Fonds libÃ©rÃ©s
+                                Workflow: Vendeur confirme → Prépare → Expédie → Client confirme réception → Fonds libérés
                               </p>
                             </div>
                           )}
@@ -758,7 +758,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="w-5 h-5 text-blue-600" />
-              DÃ©tails de la commande #{selectedOrder?.order_number}
+              Détails de la commande #{selectedOrder?.order_number}
             </DialogTitle>
           </DialogHeader>
 
@@ -813,12 +813,12 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
               <div className="p-4 rounded-xl border">
                 <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600" />
-                  Client (crÃ©Ã© par vous)
+                  Client (créé par vous)
                 </h4>
                 <div className="space-y-1 text-sm">
                   <p><strong>Nom:</strong> {selectedOrder?.customer_name}</p>
                   <p><strong>Email:</strong> {selectedOrder?.customer_email || '-'}</p>
-                  <p><strong>TÃ©lÃ©phone:</strong> {selectedOrder?.customer_phone || '-'}</p>
+                  <p><strong>Téléphone:</strong> {selectedOrder?.customer_phone || '-'}</p>
                   {selectedOrder?.customer_public_id && (
                     <p><strong>ID:</strong> {selectedOrder.customer_public_id}</p>
                   )}
@@ -829,7 +829,7 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
               {orderDetails.shipping_address && (
                 <div className="p-4 rounded-xl border">
                   <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-primary-orange-600" />
+                    <MapPin className="w-4 h-4 text-green-600" />
                     Adresse de livraison
                   </h4>
                   <p className="text-sm text-slate-600">
@@ -885,10 +885,10 @@ export function AgentOrdersTracking({ agentId }: AgentOrdersTrackingProps) {
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  CrÃ©Ã©e le {formatDate(orderDetails.created_at)}
+                  Créée le {formatDate(orderDetails.created_at)}
                 </span>
                 <span>
-                  Mise Ã  jour le {formatDate(orderDetails.updated_at)}
+                  Mise à jour le {formatDate(orderDetails.updated_at)}
                 </span>
               </div>
             </div>

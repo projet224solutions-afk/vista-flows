@@ -1,6 +1,6 @@
 /**
  * CARTE D'ESTIMATION DE PRIX - Type Uber
- * Affichage dÃ©taillÃ© du prix de livraison
+ * Affichage détaillé du prix de livraison
  */
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,7 +17,7 @@ interface PriceEstimatorCardProps {
 export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProps) {
   if (loading) {
     return (
-      <Card className="bg-gradient-to-br from-orange-500/10 to-primary-orange-600/10 border-orange-500/20">
+      <Card className="bg-gradient-to-br from-orange-500/10 to-green-600/10 border-orange-500/20">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-3">
             <div className="h-6 bg-muted rounded w-1/2" />
@@ -31,13 +31,13 @@ export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProp
   if (!estimate) return null;
 
   return (
-    <Card className="bg-gradient-to-br from-orange-500/10 to-primary-orange-600/10 border-orange-500/20">
+    <Card className="bg-gradient-to-br from-orange-500/10 to-green-600/10 border-orange-500/20">
       <CardContent className="p-6 space-y-4">
         {/* Prix total */}
         <div className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <DollarSign className="h-6 w-6 text-orange-600" />
-            <span className="text-sm font-medium text-muted-foreground">Prix estimÃ©</span>
+            <span className="text-sm font-medium text-muted-foreground">Prix estimé</span>
           </div>
           <div className="text-4xl font-bold text-orange-600">
             {estimate.totalPrice.toLocaleString()} GNF
@@ -50,7 +50,7 @@ export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProp
 
         <Separator />
 
-        {/* DÃ©tails du prix */}
+        {/* Détails du prix */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Prix de base</span>
@@ -83,7 +83,7 @@ export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProp
         <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
           <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
           <p>
-            Le prix final peut varier lÃ©gÃ¨rement en fonction des conditions de circulation et de la disponibilitÃ©.
+            Le prix final peut varier légèrement en fonction des conditions de circulation et de la disponibilité.
           </p>
         </div>
       </CardContent>

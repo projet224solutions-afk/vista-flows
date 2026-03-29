@@ -1,6 +1,6 @@
 /**
  * NOTIFICATION DE NOUVELLE COURSE
- * Notification animÃ©e avec son pour les demandes de course
+ * Notification animée avec son pour les demandes de course
  */
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,7 +40,7 @@ export function RideRequestNotification({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   useEffect(() => {
-    // Jouer le son uniquement pour la premiÃ¨re notification
+    // Jouer le son uniquement pour la première notification
     if (index === 0) {
       try {
         audioRef.current = new Audio('/notification.mp3');
@@ -58,7 +58,7 @@ export function RideRequestNotification({
     };
   }, [index]);
 
-  // Calculer le temps Ã©coulÃ© depuis la demande
+  // Calculer le temps écoulé depuis la demande
   const timeAgo = Math.floor((Date.now() - new Date(request.requestTime).getTime()) / 1000);
   const timeDisplay = timeAgo < 60 ? `${timeAgo}s` : `${Math.floor(timeAgo / 60)}min`;
 
@@ -68,7 +68,7 @@ export function RideRequestNotification({
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-lg">ðŸš— Nouvelle course!</h3>
+              <h3 className="font-bold text-lg">🚗 Nouvelle course!</h3>
               <Badge variant="destructive" className="animate-pulse">
                 {timeDisplay}
               </Badge>
@@ -76,7 +76,7 @@ export function RideRequestNotification({
             <p className="text-sm text-gray-700 font-medium">{request.customerName}</p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-primary-orange-600">
+            <div className="text-2xl font-bold text-green-600">
               +{request.estimatedEarnings.toLocaleString()}
             </div>
             <div className="text-xs font-medium text-gray-600">GNF</div>
@@ -85,16 +85,16 @@ export function RideRequestNotification({
 
         <div className="space-y-2 mb-3">
           <div className="flex items-start gap-2 bg-white/70 p-2 rounded">
-            <MapPin className="w-4 h-4 text-primary-orange-600 flex-shrink-0 mt-0.5" />
+            <MapPin className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-700">DÃ©part</p>
+              <p className="text-xs font-medium text-gray-700">Départ</p>
               <p className="text-sm font-semibold truncate">{request.pickupAddress}</p>
             </div>
           </div>
           <div className="flex items-start gap-2 bg-white/70 p-2 rounded">
             <MapPin className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-700">ArrivÃ©e</p>
+              <p className="text-xs font-medium text-gray-700">Arrivée</p>
               <p className="text-sm font-semibold truncate">{request.destinationAddress}</p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export function RideRequestNotification({
         <div className="flex items-center justify-between bg-white/70 p-2 rounded mb-3">
           <div className="flex items-center gap-3 text-sm font-medium text-gray-700">
             <span>{request.distance.toFixed(1)} km</span>
-            <span>â€¢</span>
+            <span>•</span>
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               <span>{request.estimatedDuration} min</span>
@@ -118,7 +118,7 @@ export function RideRequestNotification({
         <div className="flex gap-3">
           <Button
             onClick={() => {
-              console.log('ðŸš« Bouton REFUSER cliquÃ© pour la course:', request.id);
+              console.log('🚫 Bouton REFUSER cliqué pour la course:', request.id);
               onDecline();
             }}
             variant="outline"
@@ -126,16 +126,16 @@ export function RideRequestNotification({
             disabled={isAccepting}
             className="flex-1 border-2 border-red-500 text-red-600 hover:bg-red-50 hover:border-red-600 font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="text-xl mr-1">âŒ</span> Refuser
+            <span className="text-xl mr-1">❌</span> Refuser
           </Button>
           <Button
             onClick={() => {
-              console.log('âœ… Bouton ACCEPTER cliquÃ© pour la course:', request.id);
+              console.log('✅ Bouton ACCEPTER cliqué pour la course:', request.id);
               onAccept();
             }}
             size="lg"
             disabled={isAccepting}
-            className="flex-1 bg-gradient-to-r from-primary-blue-600 to-primary-orange-700 hover:from-primary-blue-700 hover:to-primary-orange-800 text-white shadow-lg font-bold text-base animate-pulse hover:animate-none transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg font-bold text-base animate-pulse hover:animate-none transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAccepting ? (
               <>
@@ -144,7 +144,7 @@ export function RideRequestNotification({
               </>
             ) : (
               <>
-                <span className="text-xl mr-1">âœ…</span> Accepter
+                <span className="text-xl mr-1">✅</span> Accepter
               </>
             )}
           </Button>

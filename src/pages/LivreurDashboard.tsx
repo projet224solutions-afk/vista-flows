@@ -1,7 +1,7 @@
 /**
- * LIVREUR - INTERFACE COMPLÃˆTE RESPONSIVE
+ * LIVREUR - INTERFACE COMPLÈTE RESPONSIVE
  * 224Solutions Delivery System  
- * Toutes les fonctionnalitÃ©s du Taxi-Moto intÃ©grÃ©es + Responsive
+ * Toutes les fonctionnalités du Taxi-Moto intégrées + Responsive
  */
 
 import { useState, useEffect, lazy, Suspense } from 'react';
@@ -58,10 +58,10 @@ export default function LivreurDashboard() {
   const [showChat, setShowChat] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Gestion des erreurs centralisÃ©e
+  // Gestion des erreurs centralisée
   const { error, captureError, clearError } = useLivreurErrorBoundary();
 
-  // VÃ©rification subscription et KYC
+  // Vérification subscription et KYC
   const { hasAccess, subscription, loading: subscriptionLoading, isExpired } = useDriverSubscription();
 
   // Hook pour le profil et statut du driver
@@ -84,7 +84,7 @@ export default function LivreurDashboard() {
     loadCurrentDelivery
   } = useDelivery();
 
-  // Hook pour les actions de livraison (logique mÃ©tier extraite)
+  // Hook pour les actions de livraison (logique métier extraite)
   const {
     acceptDelivery,
     startDelivery,
@@ -101,11 +101,11 @@ export default function LivreurDashboard() {
       }
     },
     onDeliveryCompleted: () => {
-      console.log('ðŸ“¥ [LivreurDashboard] onDeliveryCompleted callback triggered');
+      console.log('📥 [LivreurDashboard] onDeliveryCompleted callback triggered');
       setShowProofUpload(false);
-      // setCurrentDelivery(null); // CommentÃ© car setCurrentDelivery n'existe pas
+      // setCurrentDelivery(null); // Commenté car setCurrentDelivery n'existe pas
       
-      // Recharger toutes les donnÃ©es
+      // Recharger toutes les données
       loadCurrentDelivery();
       loadDeliveryHistory();
       
@@ -114,7 +114,7 @@ export default function LivreurDashboard() {
         findNearbyDeliveries(location.latitude, location.longitude, 10);
       }
       
-      // Basculer vers l'historique aprÃ¨s un court dÃ©lai
+      // Basculer vers l'historique après un court délai
       setTimeout(() => {
         setActiveTab('history');
       }, 1000);
@@ -158,11 +158,11 @@ export default function LivreurDashboard() {
   useEffect(() => {
     getCurrentLocation().catch(err => {
       console.error('[LivreurDashboard] GPS error:', err);
-      captureError('gps', 'Impossible d\'accÃ©der Ã  votre position GPS', err);
+      captureError('gps', 'Impossible d\'accéder à votre position GPS', err);
     });
   }, [getCurrentLocation, captureError]);
 
-  // Mettre Ã  jour la position du driver toutes les 30 secondes si en ligne
+  // Mettre à jour la position du driver toutes les 30 secondes si en ligne
   useEffect(() => {
     if (!driver?.is_online || !location) return;
 
@@ -179,26 +179,26 @@ export default function LivreurDashboard() {
       if (location) {
         findNearbyDeliveries(location.latitude, location.longitude, 10);
       } else {
-        // Charger toutes les livraisons mÃªme sans GPS
+        // Charger toutes les livraisons même sans GPS
         findNearbyDeliveries(0, 0, 99999);
       }
     }
   }, [activeTab, location, currentDelivery, currentRide, findNearbyDeliveries]);
 
-  // Charger les livraisons Ã  proximitÃ© quand la position change OU au montage
+  // Charger les livraisons à proximité quand la position change OU au montage
   useEffect(() => {
     // Charger sans filtrage GPS au montage si pas de location
     if (!currentDelivery && !currentRide) {
       if (location) {
         findNearbyDeliveries(location.latitude, location.longitude, 10);
       } else {
-        // Charger toutes les livraisons mÃªme sans GPS
+        // Charger toutes les livraisons même sans GPS
         findNearbyDeliveries(0, 0, 99999);
       }
     }
   }, [location, currentDelivery, currentRide, findNearbyDeliveries]);
 
-  // S'abonner au tracking en temps rÃ©el pour livraison ou course
+  // S'abonner au tracking en temps réel pour livraison ou course
   useEffect(() => {
     if (currentDelivery) {
       const unsubscribe = subscribeToTracking(currentDelivery.id);
@@ -250,14 +250,14 @@ export default function LivreurDashboard() {
   };
 
   /**
-   * DÃ©marrer une livraison
+   * Démarrer une livraison
    */
   const handleStartDelivery = async () => {
     if (!currentDelivery) return;
     try {
       await startDelivery(currentDelivery.id);
     } catch (error) {
-      captureError('network', 'Impossible de dÃ©marrer la livraison', error);
+      captureError('network', 'Impossible de démarrer la livraison', error);
     }
   };
 
@@ -286,11 +286,11 @@ export default function LivreurDashboard() {
   };
 
   /**
-   * Signaler un problÃ¨me
+   * Signaler un problème
    */
   const handleReportProblem = () => {
     if (!currentDelivery) return;
-    reportProblem(currentDelivery.id, 'ProblÃ¨me signalÃ© par le livreur');
+    reportProblem(currentDelivery.id, 'Problème signalé par le livreur');
   };
 
   /**
@@ -323,12 +323,12 @@ export default function LivreurDashboard() {
       </div>
     }>
     <>
-      {/* BanniÃ¨re d'abonnement */}
+      {/* Bannière d'abonnement */}
       <DriverSubscriptionBanner />
       
       <DriverLayout currentPage="dashboard">
-    <div className="p-responsive bg-gradient-to-br from-orange-500/5 via-background to-primary-orange-600/5">
-      {/* Listener temps rÃ©el pour nouvelles livraisons */}
+    <div className="p-responsive bg-gradient-to-br from-orange-500/5 via-background to-green-600/5">
+      {/* Listener temps réel pour nouvelles livraisons */}
       <NearbyDeliveriesListener 
         enabled={!currentDelivery && !currentRide}
         onNewDelivery={() => {
@@ -377,12 +377,12 @@ export default function LivreurDashboard() {
           </div>
         )}
 
-        {/* En-tÃªte avec informations utilisateur - Responsive */}
+        {/* En-tête avec informations utilisateur - Responsive */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-2 flex-wrap">
-              <h1 className={`font-bold bg-gradient-to-r from-orange-600 to-primary-orange-600 bg-clip-text text-transparent ${isMobile ? 'text-xl' : 'text-3xl'}`}>
-                ðŸš´ {t('delivery.dashboard')}
+              <h1 className={`font-bold bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent ${isMobile ? 'text-xl' : 'text-3xl'}`}>
+                🚴 {t('delivery.dashboard')}
               </h1>
             </div>
             <p className="text-sm md:text-base text-muted-foreground">
@@ -397,7 +397,7 @@ export default function LivreurDashboard() {
                 className="mt-2 gap-1"
                 style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))' }}
               >
-                âš¡ {currentDelivery ? t('delivery.inProgressDelivery') : t('taxi.dashboard')}
+                ⚡ {currentDelivery ? t('delivery.inProgressDelivery') : t('taxi.dashboard')}
               </Badge>
             )}
           </div>
@@ -420,45 +420,45 @@ export default function LivreurDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className={`grid bg-card/80 backdrop-blur mb-6 ${isMobile ? 'grid-cols-4' : 'grid-cols-5'} border border-orange-500/20`}>
             <TabsTrigger value="missions" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
-              ðŸ“¦ {isMobile ? 'Missions' : 'Missions disponibles'}
+              📦 {isMobile ? 'Missions' : 'Missions disponibles'}
               {nearbyDeliveries.length > 0 && (
                 <Badge variant="secondary" className="ml-1 text-xs bg-white text-orange-600">{nearbyDeliveries.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="active" disabled={!currentDelivery && !currentRide} className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary-blue-600 data-[state=active]:to-primary-orange-700 data-[state=active]:text-white">
-              ðŸšš {isMobile ? 'Active' : 'En cours'}
-              {(currentDelivery || currentRide) && <Badge variant="default" className="ml-1 text-xs bg-white text-primary-orange-600">1</Badge>}
+            <TabsTrigger value="active" disabled={!currentDelivery && !currentRide} className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-green-700 data-[state=active]:text-white">
+              🚚 {isMobile ? 'Active' : 'En cours'}
+              {(currentDelivery || currentRide) && <Badge variant="default" className="ml-1 text-xs bg-white text-green-600">1</Badge>}
             </TabsTrigger>
             <TabsTrigger value="history" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-blue-700 data-[state=active]:text-white">
-              ðŸ“‹ {isMobile ? 'Historique' : 'Historique'}
+              📋 {isMobile ? 'Historique' : 'Historique'}
               {(deliveryHistory.length + rideHistory.length) > 0 && (
                 <Badge variant="outline" className="ml-1 text-xs">{deliveryHistory.length + rideHistory.length}</Badge>
               )}
             </TabsTrigger>
             {!isMobile && (
-              <TabsTrigger value="my-purchases" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary-blue-600 data-[state=active]:to-primary-orange-700 data-[state=active]:text-white">
-                ðŸ›’ Mes Achats
+              <TabsTrigger value="my-purchases" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-emerald-700 data-[state=active]:text-white">
+                🛒 Mes Achats
               </TabsTrigger>
             )}
             <TabsTrigger value="wallet" className="text-xs md:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-purple-700 data-[state=active]:text-white">
-              ðŸ’° {isMobile ? 'Wallet' : 'Portefeuille'}
+              💰 {isMobile ? 'Wallet' : 'Portefeuille'}
             </TabsTrigger>
           </TabsList>
 
-          {/* ðŸ“¦ Liste des livraisons disponibles */}
+          {/* 📦 Liste des livraisons disponibles */}
           <TabsContent value="missions" className="space-y-3">
-            {/* Panneau des colis Ã  proximitÃ© */}
+            {/* Panneau des colis à proximité */}
             <NearbyDeliveriesPanel />
 
-            {/* Alerte GPS si non activÃ© */}
+            {/* Alerte GPS si non activé */}
             {!location && (
               <Card className="p-4 bg-yellow-500/10 border-yellow-500/30">
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="h-5 w-5 text-yellow-600" />
                   <div>
-                    <p className="font-medium text-yellow-700">GPS dÃ©sactivÃ©</p>
+                    <p className="font-medium text-yellow-700">GPS désactivé</p>
                     <p className="text-sm text-yellow-600">
-                      Activez le GPS pour voir les missions Ã  proximitÃ© et filtrer par distance
+                      Activez le GPS pour voir les missions à proximité et filtrer par distance
                     </p>
                   </div>
                 </div>
@@ -467,10 +467,10 @@ export default function LivreurDashboard() {
 
           </TabsContent>
 
-          {/* ðŸšš Livraison en cours */}
+          {/* 🚚 Livraison en cours */}
           <TabsContent value="active">
             {currentDelivery ? (
-              <Card className="shadow-lg border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-primary-orange-600/5">
+              <Card className="shadow-lg border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-green-600/5">
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     <div>
@@ -479,7 +479,7 @@ export default function LivreurDashboard() {
                           variant="default"
                           style={{ background: 'linear-gradient(135deg, hsl(25 98% 55%), hsl(145 65% 35%))' }}
                         >
-                          âš¡ Livraison en cours
+                          ⚡ Livraison en cours
                         </Badge>
                         <Badge variant="outline" className="border-orange-500">{currentDelivery.status}</Badge>
                       </div>
@@ -499,7 +499,7 @@ export default function LivreurDashboard() {
                           </div>
                         </div>
                         <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                          <MapPin className="h-5 w-5 flex-shrink-0 text-primary-orange-500 mt-0.5" />
+                          <MapPin className="h-5 w-5 flex-shrink-0 text-green-500 mt-0.5" />
                           <div className="flex-1">
                             <p className="font-medium">Destination</p>
                             <p className="text-sm text-muted-foreground mt-1">
@@ -512,9 +512,9 @@ export default function LivreurDashboard() {
                       </div>
                     </div>
                     
-                    <div className="p-5 bg-gradient-to-r from-orange-500/20 to-primary-orange-600/20 rounded-xl border border-orange-500/30">
-                      <p className="text-sm text-muted-foreground mb-2 font-medium">ðŸ’° Votre rÃ©munÃ©ration</p>
-                      <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-primary-orange-600 bg-clip-text text-transparent">
+                    <div className="p-5 bg-gradient-to-r from-orange-500/20 to-green-600/20 rounded-xl border border-orange-500/30">
+                      <p className="text-sm text-muted-foreground mb-2 font-medium">💰 Votre rémunération</p>
+                      <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-green-600 bg-clip-text text-transparent">
                         {(currentDelivery.delivery_fee || 0).toLocaleString()} GNF
                       </p>
                     </div>
@@ -526,13 +526,13 @@ export default function LivreurDashboard() {
                           Tracking GPS
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {trackingPoints.length} points enregistrÃ©s
+                          {trackingPoints.length} points enregistrés
                         </p>
                       </div>
                     )}
 
                     <div className="flex flex-col gap-2 pt-2">
-                      {/* Composant de Navigation GPS avec donnÃ©es rÃ©elles */}
+                      {/* Composant de Navigation GPS avec données réelles */}
                       <DeliveryGPSNavigation 
                         activeDelivery={currentDelivery as any}
                         currentLocation={location ? { latitude: location.latitude, longitude: location.longitude } : null}
@@ -548,7 +548,7 @@ export default function LivreurDashboard() {
                           style={{ background: 'linear-gradient(135deg, hsl(220 97% 27%), hsl(220 96% 32%))' }}
                         >
                           <Truck className="w-5 h-5 mr-2" /> 
-                          ðŸš€ DÃ©marrer la livraison
+                          🚀 Démarrer la livraison
                         </Button>
                       )}
                       
@@ -572,7 +572,7 @@ export default function LivreurDashboard() {
                         </Button>
                       </div>
 
-                      {/* Bouton de paiement - 5 mÃ©thodes disponibles */}
+                      {/* Bouton de paiement - 5 méthodes disponibles */}
                       {currentDelivery.status === 'delivered' && (currentDelivery as any).payment_status !== 'paid' && (
                         <Button 
                           onClick={handleProcessPayment} 
@@ -581,7 +581,7 @@ export default function LivreurDashboard() {
                           style={{ background: 'linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%))' }}
                         >
                           <Wallet className="w-5 h-5 mr-2" /> 
-                          ðŸ’³ Traiter le paiement
+                          💳 Traiter le paiement
                         </Button>
                       )}
                       
@@ -592,7 +592,7 @@ export default function LivreurDashboard() {
                         className="w-full border-red-500 text-red-600 hover:bg-red-50"
                       >
                         <AlertTriangle className="w-4 h-4 mr-2" /> 
-                        Signaler un problÃ¨me
+                        Signaler un problème
                       </Button>
                     </div>
                   </div>
@@ -615,7 +615,7 @@ export default function LivreurDashboard() {
                         <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                           <MapPin className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
                           <div className="flex-1">
-                            <p className="font-medium">Point de dÃ©part</p>
+                            <p className="font-medium">Point de départ</p>
                             <p className="text-sm text-muted-foreground mt-1">
                               {typeof currentRide.pickup_address === 'string' 
                                 ? currentRide.pickup_address 
@@ -624,7 +624,7 @@ export default function LivreurDashboard() {
                           </div>
                         </div>
                         <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                          <MapPin className="h-5 w-5 flex-shrink-0 text-primary-orange-500 mt-0.5" />
+                          <MapPin className="h-5 w-5 flex-shrink-0 text-green-500 mt-0.5" />
                           <div className="flex-1">
                             <p className="font-medium">Destination</p>
                             <p className="text-sm text-muted-foreground mt-1">
@@ -652,14 +652,14 @@ export default function LivreurDashboard() {
                           className="w-full bg-blue-600 hover:bg-blue-700"
                         >
                           <CheckCircle className="w-4 h-4 mr-2" /> 
-                          Client rÃ©cupÃ©rÃ©
+                          Client récupéré
                         </Button>
                       )}
                       {(currentRide.status === 'picked_up' || currentRide.status === 'in_transit') && (
                         <Button 
                           onClick={() => completeRideFn(currentRide.id)} 
                           disabled={loading}
-                          className="w-full bg-primary-orange-600 hover:bg-primary-orange-700"
+                          className="w-full bg-green-600 hover:bg-green-700"
                         >
                           <CheckCircle className="w-4 h-4 mr-2" /> 
                           Terminer la course
@@ -668,9 +668,9 @@ export default function LivreurDashboard() {
                       <Button 
                         onClick={(e) => {
                           e.preventDefault();
-                          const problem = prompt("DÃ©crivez le problÃ¨me:");
+                          const problem = prompt("Décrivez le problème:");
                           if (problem && currentRide) {
-                            toast.info('ProblÃ¨me signalÃ© pour la course #' + currentRide.id.slice(0, 8));
+                            toast.info('Problème signalé pour la course #' + currentRide.id.slice(0, 8));
                             // TODO: Implement ride problem reporting via TaxiMotoService
                           }
                         }} 
@@ -679,7 +679,7 @@ export default function LivreurDashboard() {
                         className="w-full"
                       >
                         <AlertTriangle className="w-4 h-4 mr-2" /> 
-                        Signaler un problÃ¨me
+                        Signaler un problème
                       </Button>
                     </div>
                   </div>
@@ -696,27 +696,27 @@ export default function LivreurDashboard() {
             )}
           </TabsContent>
 
-          {/* ðŸ“‹ Historique unifiÃ© */}
+          {/* 📋 Historique unifié */}
           <TabsContent value="history" className="space-y-3">
             {deliveryHistory.length === 0 && rideHistory.length === 0 ? (
               <Card className="p-8">
                 <div className="text-center text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p className="font-medium">Aucun historique</p>
-                  <p className="text-sm mt-1">Vos livraisons et courses terminÃ©es apparaÃ®tront ici</p>
+                  <p className="text-sm mt-1">Vos livraisons et courses terminées apparaîtront ici</p>
                 </div>
               </Card>
             ) : (
               <>
-                {/* Livraisons terminÃ©es */}
+                {/* Livraisons terminées */}
                 {deliveryHistory.map((delivery) => {
                   const getStatusLabel = (status: string) => {
                     switch(status) {
-                      case 'delivered': return 'LivrÃ©e';
-                      case 'cancelled': return 'AnnulÃ©e';
+                      case 'delivered': return 'Livrée';
+                      case 'cancelled': return 'Annulée';
                       case 'pending': return 'En attente';
-                      case 'assigned': return 'AssignÃ©e';
-                      case 'picked_up': return 'RÃ©cupÃ©rÃ©e';
+                      case 'assigned': return 'Assignée';
+                      case 'picked_up': return 'Récupérée';
                       case 'in_transit': return 'En transit';
                       default: return status;
                     }
@@ -742,12 +742,12 @@ export default function LivreurDashboard() {
                             </div>
                             {(delivery as any).vendor_name && (
                               <p className="text-sm text-foreground">
-                                ðŸª {(delivery as any).vendor_name}
+                                🏪 {(delivery as any).vendor_name}
                               </p>
                             )}
                             {(delivery as any).customer_name && (
                               <p className="text-sm text-muted-foreground">
-                                ðŸ‘¤ {(delivery as any).customer_name}
+                                👤 {(delivery as any).customer_name}
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground">
@@ -776,12 +776,12 @@ export default function LivreurDashboard() {
                   );
                 })}
                 
-                {/* Courses taxi terminÃ©es */}
+                {/* Courses taxi terminées */}
                 {rideHistory.map((ride) => {
                   const getRideStatusLabel = (status: string) => {
                     switch(status) {
-                      case 'completed': return 'TerminÃ©e';
-                      case 'cancelled': return 'AnnulÃ©e';
+                      case 'completed': return 'Terminée';
+                      case 'cancelled': return 'Annulée';
                       default: return status;
                     }
                   };
@@ -826,7 +826,7 @@ export default function LivreurDashboard() {
             )}
           </TabsContent>
 
-          {/* ðŸ’° Portefeuille */}
+          {/* 💰 Portefeuille */}
           <TabsContent value="wallet">
             <div className="space-y-4">
               <WalletBalanceWidget />
@@ -849,7 +849,7 @@ export default function LivreurDashboard() {
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                      <span className="text-sm font-medium">Livraisons terminÃ©es</span>
+                      <span className="text-sm font-medium">Livraisons terminées</span>
                       <Badge variant="outline">
                         {deliveryHistory.filter(d => d.status === 'delivered').length}
                       </Badge>
@@ -857,7 +857,7 @@ export default function LivreurDashboard() {
                     <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
                       <span className="text-sm font-medium">Statut GPS</span>
                       <Badge variant={location ? 'default' : 'secondary'}>
-                        {location ? 'âœ“ Actif' : 'Inactif'}
+                        {location ? '✓ Actif' : 'Inactif'}
                       </Badge>
                     </div>
                   </div>
@@ -866,7 +866,7 @@ export default function LivreurDashboard() {
             </div>
           </TabsContent>
 
-          {/* ðŸ›’ Mes Achats */}
+          {/* 🛒 Mes Achats */}
           <TabsContent value="my-purchases">
             <MyPurchasesOrdersList title="Mes Achats Personnels" />
           </TabsContent>
@@ -910,7 +910,7 @@ export default function LivreurDashboard() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-1">Montant Ã  encaisser</p>
+                <p className="text-sm text-muted-foreground mb-1">Montant à encaisser</p>
                 <p className="text-3xl font-bold text-primary">
                   {currentDelivery 
                     ? (currentDelivery.delivery_fee || 0).toLocaleString() 
@@ -925,12 +925,12 @@ export default function LivreurDashboard() {
                       processDeliveryPayment(currentDelivery.id, 'cash');
                     }
                     setShowPaymentModal(false);
-                    toast.success('Paiement en espÃ¨ces enregistrÃ©');
+                    toast.success('Paiement en espèces enregistré');
                   }}
                   className="w-full"
                   variant="outline"
                 >
-                  ðŸ’µ Paiement en espÃ¨ces
+                  💵 Paiement en espèces
                 </Button>
                 <Button 
                   onClick={() => {
@@ -938,12 +938,12 @@ export default function LivreurDashboard() {
                       processDeliveryPayment(currentDelivery.id, 'mobile_money');
                     }
                     setShowPaymentModal(false);
-                    toast.success('Paiement mobile money enregistrÃ©');
+                    toast.success('Paiement mobile money enregistré');
                   }}
                   className="w-full"
                   variant="outline"
                 >
-                  ðŸ“± Mobile Money
+                  📱 Mobile Money
                 </Button>
                 <Button 
                   onClick={() => {
@@ -951,12 +951,12 @@ export default function LivreurDashboard() {
                       processDeliveryPayment(currentDelivery.id, 'wallet');
                     }
                     setShowPaymentModal(false);
-                    toast.success('Paiement wallet enregistrÃ©');
+                    toast.success('Paiement wallet enregistré');
                   }}
                   className="w-full"
                   variant="outline"
                 >
-                  ðŸ’° Wallet 224Solutions
+                  💰 Wallet 224Solutions
                 </Button>
               </div>
               <Button onClick={() => setShowPaymentModal(false)} variant="ghost" className="w-full">
