@@ -102,7 +102,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
     <TooltipProvider>
       <div className="space-y-6">
         {/* Welcome */}
-        <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/30 dark:to-primary-orange-950/30 border-primary-blue-200/50">
+        <Card className="bg-gradient-to-r from-primary-blue-50 to-primary-orange-50 dark:from-primary-blue-950/30 dark:to-primary-orange-950/30 border-primary-blue-200/50 shadow-sm">
           <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
@@ -126,7 +126,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </Card>
 
         {/* Revenue Stats - with breakdown */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 [&>*]:shadow-sm [&>*]:transition-shadow [&>*]:hover:shadow-md [&>*]:border-primary-blue-100/70">
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-1">
@@ -205,7 +205,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </div>
 
         {/* Secondary stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 [&>*]:shadow-sm [&>*]:transition-shadow [&>*]:hover:shadow-md [&>*]:border-primary-orange-100/70">
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-1">
@@ -293,7 +293,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                   return (
                     <div
                       key={product.id}
-                      className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                      className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-gradient-to-r hover:from-primary-blue-50/70 hover:to-primary-orange-50/70 transition-colors cursor-pointer"
                       onClick={() => navigate(`/digital-product/${product.id}`)}
                     >
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -311,7 +311,9 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                       </div>
                       <Badge
                         variant={product.status === 'published' ? 'default' : 'secondary'}
-                        className="text-[10px] flex-shrink-0"
+                        className={product.status === 'published'
+                          ? 'text-[10px] flex-shrink-0 bg-gradient-to-r from-primary-blue-600 to-primary-orange-500 text-white border-0'
+                          : 'text-[10px] flex-shrink-0'}
                       >
                         {product.status === 'published' ? 'PubliÃ©' : product.status === 'draft' ? 'Brouillon' :
                          product.status === 'rejected' ? 'RejetÃ©' : product.status === 'archived' ? 'ArchivÃ©' : product.status}
@@ -331,7 +333,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vendeur-digital/add-product')}>
+              <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:border-primary-blue-300 hover:bg-primary-blue-50/40" onClick={() => navigate('/vendeur-digital/add-product')}>
                 <Plus className="w-5 h-5 text-primary-blue-600" />
                 <span className="text-xs">Ajouter un produit</span>
               </Button>

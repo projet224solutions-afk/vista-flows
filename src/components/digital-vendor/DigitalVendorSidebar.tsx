@@ -83,10 +83,10 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
   return (
     <Sidebar className={cn(
       collapsed ? "w-12" : "w-52",
-      "border-r border-border/40 shadow-lg"
+      "border-r border-primary-blue-200/40 shadow-lg"
     )} collapsible="icon">
       <ScrollArea className="h-full pr-4 overflow-visible">
-        <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2 pr-3 pb-96">
+        <SidebarContent className="bg-gradient-to-b from-primary-blue-50/25 via-background to-primary-orange-50/15 py-2 pr-3 pb-96">
           {/* Logo / Brand */}
           {!collapsed && (
             <div className="px-4 py-3 mb-2">
@@ -129,18 +129,18 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
                           }}
                           className={cn(
                             "group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none",
-                            "hover:bg-primary/10 hover:text-primary",
-                            active && "bg-primary/15 text-primary font-medium shadow-sm",
+                            "hover:bg-primary-blue-50 hover:text-primary-blue-700",
+                            active && "bg-gradient-to-r from-primary-blue-100/90 to-primary-orange-100/70 text-primary-blue-800 font-semibold shadow-sm",
                             collapsed && "justify-center px-1"
                           )}
                         >
                           <div className={cn(
                             "flex items-center justify-center rounded-md w-5 h-5 transition-all flex-shrink-0",
-                            active && "bg-primary/10"
+                            active && "bg-primary-blue-100"
                           )}>
                             <item.icon className={cn(
                               "w-3.5 h-3.5 transition-colors",
-                              active ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                              active ? "text-primary-blue-700" : "text-muted-foreground group-hover:text-primary-blue-700"
                             )} />
                           </div>
 
@@ -148,7 +148,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
                             <>
                               <span className="flex-1 text-left leading-tight">{item.title}</span>
                               {item.badge && (
-                                <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 min-w-[24px] flex items-center justify-center flex-shrink-0">
+                                <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 min-w-[24px] flex items-center justify-center flex-shrink-0 bg-primary-orange-100 text-primary-orange-700 border border-primary-orange-200">
                                   {item.badge}
                                 </Badge>
                               )}
@@ -170,7 +170,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
                 role="button"
                 tabIndex={0}
                 onClick={() => navigate('/home')}
-                className="flex items-center gap-2 px-2 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-lg hover:bg-muted/50"
+                className="flex items-center gap-2 px-2 py-2 text-xs text-muted-foreground hover:text-primary-blue-700 transition-colors cursor-pointer rounded-lg hover:bg-gradient-to-r hover:from-primary-blue-50 hover:to-primary-orange-50"
               >
                 <Home className="w-3.5 h-3.5" />
                 <span>Retour à l'accueil</span>

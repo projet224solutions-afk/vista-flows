@@ -58,7 +58,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 md:h-10 md:w-10"
+              className="h-8 w-8 md:h-10 md:w-10 hover:bg-primary-blue-50 hover:text-primary-blue-700"
               onClick={() => navigate('/vendeur-digital/settings')}
               aria-label="ParamÃ¨tres"
             >
@@ -69,7 +69,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
               variant="ghost"
               size="icon"
               onClick={onSignOut}
-              className="h-8 w-8 md:h-10 md:w-10"
+              className="h-8 w-8 md:h-10 md:w-10 hover:bg-primary-orange-50 hover:text-primary-orange-700"
               aria-label="Se dÃ©connecter"
             >
               <LogOut className="w-4 h-4 md:w-5 md:h-5" />

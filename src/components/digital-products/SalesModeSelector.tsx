@@ -131,10 +131,10 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
               transition={{ delay: index * 0.1 }}
               className={cn(
                 'relative text-left rounded-2xl border-2 p-4 transition-all duration-300 h-full',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                isSelected 
-                  ? 'border-primary shadow-xl shadow-primary/10 bg-gradient-to-b from-primary/5 to-background' 
-                  : 'border-border bg-card hover:border-muted-foreground/30 hover:shadow-lg',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-orange-400',
+                isSelected
+                  ? 'border-primary-blue-300 shadow-xl shadow-primary-blue-500/15 bg-gradient-to-b from-primary-blue-50/60 to-primary-orange-50/40'
+                  : 'border-border bg-card hover:border-primary-orange-200/70 hover:shadow-lg',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -154,11 +154,11 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
               {/* Indicateur de sÃ©lection */}
               <div className={cn(
                 'absolute top-3 left-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
-                isSelected 
-                  ? 'border-primary bg-primary' 
+                isSelected
+                  ? 'border-primary-blue-500 bg-gradient-to-r from-primary-blue-600 to-primary-orange-500'
                   : 'border-muted-foreground/30'
               )}>
-                {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                {isSelected && <Check className="w-3 h-3 text-white" />}
               </div>
 
               {/* Contenu principal */}
