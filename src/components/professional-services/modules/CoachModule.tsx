@@ -205,27 +205,27 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
 
   const formatPrice = useFormatCurrency();
 
-  const getLevelBadge = (level: 'dÃ©butant' | 'intermÃ©diaire' | 'avancÃ©') => {
+  const getLevelBadge = (level: 'debutant' | 'intermediaire' | 'avance') => {
     const styles = {
-      dÃ©butant: 'bg-primary-orange-100 text-primary-orange-800',
-      intermÃ©diaire: 'bg-yellow-100 text-yellow-800',
-      avancÃ©: 'bg-red-100 text-red-800'
+      debutant: 'bg-primary-orange-100 text-primary-orange-800',
+      intermediaire: 'bg-yellow-100 text-yellow-800',
+      avance: 'bg-red-100 text-red-800'
     };
     return <Badge className={styles[level]}>{level}</Badge>;
   };
 
   const getSessionStatusBadge = (status: Session['status']) => {
     const styles = {
-      planifiÃ©e: 'bg-blue-100 text-blue-800',
+      planifiee: 'bg-blue-100 text-blue-800',
       en_cours: 'bg-yellow-100 text-yellow-800',
-      terminÃ©e: 'bg-primary-orange-100 text-primary-orange-800',
-      annulÃ©e: 'bg-red-100 text-red-800'
+      terminee: 'bg-primary-orange-100 text-primary-orange-800',
+      annulee: 'bg-red-100 text-red-800'
     };
     const labels = {
-      planifiÃ©e: 'PlanifiÃ©e',
+      planifiee: 'Planifi\u00e9e',
       en_cours: 'En cours',
-      terminÃ©e: 'TerminÃ©e',
-      annulÃ©e: 'AnnulÃ©e'
+      terminee: 'Termin\u00e9e',
+      annulee: 'Annul\u00e9e'
     };
     return <Badge className={styles[status]}>{labels[status]}</Badge>;
   };

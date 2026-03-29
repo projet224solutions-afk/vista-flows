@@ -125,7 +125,7 @@ export default function ApiSupervision() {
     .filter(a => a.tokens_limit)
     .map(a => ({
       name: a.api_name,
-      utilisÃ©s: a.tokens_used,
+      utilises: a.tokens_used,
       restants: a.tokens_remaining || 0,
       limite: a.tokens_limit
     }));

@@ -284,9 +284,9 @@ export function FitnessModule({ serviceId, businessName }: FitnessModuleProps) {
 
   const getLevelBadge = (level: FitnessClass['level']) => {
     const styles = {
-      dÃ©butant: 'bg-primary-orange-100 text-primary-orange-800',
-      intermÃ©diaire: 'bg-yellow-100 text-yellow-800',
-      avancÃ©: 'bg-red-100 text-red-800'
+      debutant: 'bg-primary-orange-100 text-primary-orange-800',
+      intermediaire: 'bg-yellow-100 text-yellow-800',
+      avance: 'bg-red-100 text-red-800'
     };
     return <Badge variant="outline" className={styles[level]}>{level}</Badge>;
   };
