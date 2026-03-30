@@ -44,6 +44,7 @@ interface ProductModule {
   descriptionKey: string;
   gradient: string;
   iconColor: string;
+  coverImage: string;
   category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai' | 'physique_affilie';
 }
 
@@ -55,6 +56,7 @@ const productModules: ProductModule[] = [
     descriptionKey: 'digital.modules.dropshippingDesc',
     gradient: 'bg-[#1f2a44]',
     iconColor: 'text-[#2f4a83]',
+    coverImage: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&w=1200&q=80',
     category: 'dropshipping'
   },
   {
@@ -64,6 +66,7 @@ const productModules: ProductModule[] = [
     descriptionKey: 'digital.modules.flightDesc',
     gradient: 'bg-[#0d3b8f]',
     iconColor: 'text-[#1f61d5]',
+    coverImage: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80',
     category: 'voyage'
   },
   {
@@ -73,6 +76,7 @@ const productModules: ProductModule[] = [
     descriptionKey: 'digital.modules.softwareDesc',
     gradient: 'bg-[#2a2f78]',
     iconColor: 'text-[#4f5bd5]',
+    coverImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
     category: 'logiciel'
   },
   {
@@ -82,6 +86,7 @@ const productModules: ProductModule[] = [
     descriptionKey: 'digital.modules.trainingDesc',
     gradient: 'bg-[#135d3b]',
     iconColor: 'text-[#22c55e]',
+    coverImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80',
     category: 'formation'
   },
   {
@@ -91,6 +96,7 @@ const productModules: ProductModule[] = [
     descriptionKey: 'digital.modules.booksDesc',
     gradient: 'bg-[#6a4a12]',
     iconColor: 'text-[#f59e0b]',
+    coverImage: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80',
     category: 'livre'
   },
   {
@@ -100,6 +106,7 @@ const productModules: ProductModule[] = [
     descriptionKey: 'digital.modules.aiDesc',
     gradient: 'bg-[#3c2b7a]',
     iconColor: 'text-[#8b5cf6]',
+    coverImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80',
     category: 'ai'
   },
   {
@@ -109,6 +116,7 @@ const productModules: ProductModule[] = [
     descriptionKey: 'digital.modules.physicalAffiliateDesc',
     gradient: 'bg-[#8a2f0a]',
     iconColor: 'text-[#fb923c]',
+    coverImage: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1200&q=80',
     category: 'physique_affilie'
   }
 ];
@@ -456,15 +464,28 @@ export default function DigitalProducts() {
                   )}
                   onClick={() => handleModuleClick(module)}
                 >
-                  <CardContent className="p-5">
-                    <div className="text-center">
-                      <div className={cn(
-                        'mx-auto mb-3 flex h-10 w-10 items-center justify-center transition-transform duration-300 group-hover:scale-110',
-                        module.iconColor
-                      )}>
-                        <div className="[&_svg]:h-7 [&_svg]:w-7 [&_svg]:stroke-[2.2]">{module.icon}</div>
-                      </div>
+                  <CardContent className="p-0">
+                    <div className="relative h-36 w-full overflow-hidden">
+                      <img
+                        src={module.coverImage}
+                        alt={t(module.titleKey)}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,27,51,0.10)_0%,rgba(11,27,51,0.72)_100%)]" />
 
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+                        <div className={cn(
+                          'flex h-12 w-12 items-center justify-center rounded-2xl bg-white/95 shadow-[0_10px_22px_rgba(11,27,51,0.26)]',
+                          module.iconColor
+                        )}>
+                          <div className="[&_svg]:h-8 [&_svg]:w-8 [&_svg]:stroke-[2.1]">{module.icon}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-5">
+                    <div className="text-center">
                       <h3 className="text-base font-semibold tracking-tight text-[#0b1b33]">
                         {t(module.titleKey)}
                       </h3>
@@ -474,6 +495,7 @@ export default function DigitalProducts() {
                       <span className="mt-3 inline-flex items-center rounded-full border border-[#d9e6fb] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#04439e]">
                         Ouvrir le module
                       </span>
+                    </div>
                     </div>
                   </CardContent>
                 </Card>
