@@ -13918,68 +13918,131 @@ export type Database = {
         Row: {
           client_id: string | null
           created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
           description: string | null
           devise: string
           expires_at: string
           frais: number
+          gross_amount: number | null
           id: string
+          is_single_use: boolean | null
+          link_type: string
           metadata: Json | null
           montant: number
+          net_amount: number | null
+          order_id: string | null
+          owner_type: string
+          owner_user_id: string | null
           paid_at: string | null
           payment_id: string
           payment_method: string | null
+          payment_type: string | null
+          platform_fee: number | null
+          product_id: string | null
           produit: string
+          reference: string | null
           remise: number | null
+          service_id: string | null
           status: string
+          title: string | null
+          token: string | null
           total: number
           transaction_id: string | null
           type_remise: string | null
           updated_at: string
+          use_count: number | null
           vendeur_id: string
+          viewed_at: string | null
+          wallet_credit_status: string | null
+          wallet_transaction_id: string | null
         }
         Insert: {
           client_id?: string | null
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           description?: string | null
           devise?: string
           expires_at: string
           frais?: number
+          gross_amount?: number | null
           id?: string
+          is_single_use?: boolean | null
+          link_type?: string
           metadata?: Json | null
           montant: number
+          net_amount?: number | null
+          order_id?: string | null
+          owner_type?: string
+          owner_user_id?: string | null
           paid_at?: string | null
           payment_id: string
           payment_method?: string | null
+          payment_type?: string | null
+          platform_fee?: number | null
+          product_id?: string | null
           produit: string
+          reference?: string | null
           remise?: number | null
+          service_id?: string | null
           status?: string
+          title?: string | null
+          token?: string | null
           total: number
           transaction_id?: string | null
           type_remise?: string | null
           updated_at?: string
+          use_count?: number | null
           vendeur_id: string
+          viewed_at?: string | null
+          wallet_credit_status?: string | null
+          wallet_transaction_id?: string | null
         }
         Update: {
           client_id?: string | null
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           description?: string | null
           devise?: string
           expires_at?: string
           frais?: number
+          gross_amount?: number | null
           id?: string
+          is_single_use?: boolean | null
+          link_type?: string
           metadata?: Json | null
           montant?: number
+          net_amount?: number | null
+          order_id?: string | null
+          owner_type?: string
+          owner_user_id?: string | null
           paid_at?: string | null
           payment_id?: string
           payment_method?: string | null
+          payment_type?: string | null
+          platform_fee?: number | null
+          product_id?: string | null
           produit?: string
+          reference?: string | null
           remise?: number | null
+          service_id?: string | null
           status?: string
+          title?: string | null
+          token?: string | null
           total?: number
           transaction_id?: string | null
           type_remise?: string | null
           updated_at?: string
+          use_count?: number | null
           vendeur_id?: string
+          viewed_at?: string | null
+          wallet_credit_status?: string | null
+          wallet_transaction_id?: string | null
         }
         Relationships: [
           {
