@@ -59,6 +59,9 @@ const DigitalVendorRoutes = memo(function DigitalVendorRoutes({ vendorId }: Digi
         {/* Statistiques */}
         <Route path="analytics" element={<VendorAnalyticsDashboard />} />
 
+        {/* Liens de paiement */}
+        <Route path="payment-links" element={<PaymentLinksManager />} />
+
         {/* Finance */}
         <Route path="wallet" element={<UniversalWalletTransactions />} />
 
