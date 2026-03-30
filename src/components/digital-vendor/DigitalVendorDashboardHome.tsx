@@ -364,7 +364,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                           <span>{product.price > 0 ? `${fmtNum(product.price)} ${product.currency}` : 'Gratuit'}</span>
                         </div>
                         <p className="mt-2 text-xs text-white/38">
-                          Mis à jour {formatDistanceToNow(new Date(product.updated_at || product.created_at), { addSuffix: true, locale: fr })}
+                          Mis à jour {formatDistanceToNow(new Date((product as any).updated_at || product.created_at), { addSuffix: true, locale: fr })}
                         </p>
                       </div>
 
