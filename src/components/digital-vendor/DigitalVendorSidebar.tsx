@@ -71,7 +71,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
       items: [
         { title: "Liens de paiement", icon: Link, path: "payment-links" },
         { title: "Portefeuille", icon: Wallet, path: "wallet" },
-        { title: "Liens de paiement", icon: DollarSign, path: "liens-de-paiement" },
+        
         { title: "Mes Achats", icon: ShoppingBag, path: "my-purchases" },
       ]
     },
