@@ -88,19 +88,17 @@ export default function PaymentLinkPage() {
   const resolveLink = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('resolve-payment-link', {
-        body: { token },
-      });
+      const result = await resolvePaymentLink(token!);
 
-      if (error || !data?.success) {
-        toast({ title: "Erreur", description: data?.error || "Lien introuvable", variant: "destructive" });
+      if (!result.success) {
+        toast({ title: "Erreur", description: result.error || "Lien introuvable", variant: "destructive" });
         return;
       }
 
-      setLinkData(data.link);
-      setOwnerInfo(data.owner);
-      setProductInfo(data.product);
-      setServiceInfo(data.service);
+      setLinkData(result.data?.link || null);
+      setOwnerInfo(result.data?.owner || null);
+      setProductInfo(result.data?.product || null);
+      setServiceInfo(result.data?.service || null);
     } catch (err) {
       console.error('Resolve error:', err);
       toast({ title: "Erreur", description: "Impossible de charger le lien", variant: "destructive" });
