@@ -385,17 +385,17 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               <CardTitle className="text-base sm:text-xl font-semibold text-white">Vue business</CardTitle>
               <CardDescription className="text-xs sm:text-sm text-white/55">Lecture rapide de l'état de votre activité digitale.</CardDescription>
             </CardHeader>
-            <CardContent className="grid min-w-0 grid-cols-2 gap-2.5 px-4 pb-4 sm:grid-cols-1 sm:gap-3 sm:px-6 sm:pb-6">
+            <CardContent className="grid min-w-0 grid-cols-1 gap-2.5 px-4 pb-4 min-[400px]:grid-cols-2 sm:grid-cols-1 sm:gap-3 sm:px-6 sm:pb-6">
               {secondaryMetrics.map((metric) => {
                 const Icon = metric.icon;
 
                 return (
                   <div key={metric.label} className="min-w-0 rounded-[18px] border border-white/12 bg-white/10 p-3 sm:rounded-[22px] sm:p-4">
                     <div className="flex items-start justify-between gap-2 sm:gap-3">
-                      <div className="min-w-0">
-                        <p className="break-words text-[9px] font-semibold uppercase tracking-[0.12em] text-white/50 sm:text-[11px] sm:tracking-[0.18em]">{metric.label}</p>
-                        <p className="mt-1.5 break-words text-lg font-semibold text-white sm:text-2xl">{metric.value}</p>
-                        <p className="mt-1 break-words text-[11px] leading-tight text-white/50 sm:text-sm">{metric.note}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[9px] font-semibold uppercase tracking-[0.08em] text-white/50 min-[400px]:text-[8px] sm:text-[11px] sm:tracking-[0.18em]">{metric.label}</p>
+                        <p className="mt-1.5 text-lg font-semibold text-white sm:text-2xl">{metric.value}</p>
+                        <p className="mt-1 truncate text-[10px] leading-tight text-white/50 sm:text-sm">{metric.note}</p>
                       </div>
                       <div className="flex h-8 w-8 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-white/15 flex-shrink-0">
                         <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
@@ -412,7 +412,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               <CardTitle className="text-base sm:text-xl font-semibold text-white">Actions prioritaires</CardTitle>
               <CardDescription className="text-xs sm:text-sm text-white/50">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
             </CardHeader>
-            <CardContent className="grid min-w-0 grid-cols-2 gap-2.5 px-4 pb-4 sm:gap-3 sm:px-6 sm:pb-6">
+            <CardContent className="grid min-w-0 grid-cols-1 gap-2.5 px-4 pb-4 min-[400px]:grid-cols-2 sm:gap-3 sm:px-6 sm:pb-6">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 const primary = action.variant === 'primary';
