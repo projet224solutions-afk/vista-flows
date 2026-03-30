@@ -54,7 +54,7 @@ const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label:
 };
 
 interface Product { id: string; name: string; price: number; description?: string; images?: string[] }
-interface Service { id: string; service_name: string; description?: string; category?: string }
+interface Service { id: string; business_name: string; description?: string; category?: string }
 
 const initialForm = {
   linkType: 'payment' as LinkType,
