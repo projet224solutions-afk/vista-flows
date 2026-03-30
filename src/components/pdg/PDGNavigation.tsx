@@ -56,7 +56,7 @@ const categories: NavCategory[] = [
       { value: 'transfer-fees', label: 'Frais de Transfert', icon: Percent, permission: 'view_transfer_fees' },
       { value: 'kyc', label: 'Gestion KYC', icon: Shield, permission: 'view_kyc' },
       { value: 'service-subscriptions', label: 'Abonnements Services', icon: Sparkles, badge: true, permission: 'view_service_subscriptions' },
-      { value: 'wallet-api', label: 'API 224Wallet', icon: Key, badge: true, permission: 'view_service_subscriptions' },
+      { value: 'wallet-api', label: 'API 224Wallet', icon: Key, badge: true, permission: 'view_api' },
     ]
   },
   {
@@ -76,7 +76,7 @@ const categories: NavCategory[] = [
       { value: 'drivers', label: 'Livreurs', icon: Bike, permission: 'view_drivers' },
       { value: 'quotes-invoices', label: 'Devis & Factures', icon: FileText, permission: 'view_quotes_invoices' },
       { value: 'communication', label: 'Communication', icon: MessageSquare, permission: 'access_communication' },
-      { value: 'broadcast-center', label: '📢 Diffusion Globale', icon: Megaphone, badge: true, permission: 'manage_broadcasts' },
+      { value: 'broadcast-center', label: '📢 Diffusion Globale', icon: Megaphone, badge: true, permission: 'view_broadcasts' },
       { value: 'agent-wallet-audit', label: 'Audit Wallet Agents', icon: Shield, permission: 'view_agent_wallet_audit' },
     ]
   },

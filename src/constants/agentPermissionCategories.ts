@@ -127,6 +127,8 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       'manage_quotes_invoices',
       'access_communication',
       'manage_communication',
+      'view_broadcasts',
+      'manage_broadcasts',
       'view_agent_wallet_audit',
       'manage_agent_wallet_audit',
       'manage_deliveries',
