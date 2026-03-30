@@ -4,21 +4,48 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
 
+export type LinkType = 'payment' | 'invoice' | 'checkout' | 'service';
+export type OwnerType = 'vendor' | 'provider' | 'agent';
+
 export interface PaymentLink {
   id: string;
   payment_id: string;
+  token: string;
+  link_type: LinkType;
   vendeur_id: string;
+  owner_type: OwnerType;
+  owner_user_id?: string;
   client_id?: string;
+  product_id?: string;
+  service_id?: string;
+  order_id?: string;
+  title?: string;
   produit: string;
   description?: string;
+  reference?: string;
   montant: number;
+  gross_amount?: number;
+  platform_fee?: number;
+  net_amount?: number;
   remise?: number;
   type_remise?: 'percentage' | 'fixed';
   frais: number;
   total: number;
   devise: string;
   status: 'pending' | 'success' | 'failed' | 'expired' | 'cancelled';
+  payment_type?: string;
+  is_single_use?: boolean;
+  use_count?: number;
   expires_at: string;
+  paid_at?: string;
+  viewed_at?: string;
+  payment_method?: string;
+  transaction_id?: string;
+  wallet_credit_status?: string;
+  wallet_transaction_id?: string;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
   created_at: string;
   client?: {
     name: string;
@@ -38,13 +65,23 @@ export interface PaymentStats {
 }
 
 export interface CreatePaymentLinkData {
+  linkType?: LinkType;
+  ownerType?: OwnerType;
   produit: string;
+  title?: string;
   description?: string;
   montant: number;
   devise: string;
   client_id?: string;
   remise?: number;
   type_remise?: 'percentage' | 'fixed';
+  reference?: string;
+  product_id?: string;
+  service_id?: string;
+  order_id?: string;
+  payment_type?: string;
+  is_single_use?: boolean;
+  expires_days?: number;
 }
 
 export function usePaymentLinks() {
@@ -54,101 +91,100 @@ export function usePaymentLinks() {
   const [stats, setStats] = useState<PaymentStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [vendorId, setVendorId] = useState<string | null>(null);
+  const [ownerType, setOwnerType] = useState<OwnerType>('vendor');
 
-  // Charger l'ID du vendeur
   useEffect(() => {
-    loadVendorId();
+    loadOwnerInfo();
   }, [user?.id]);
 
-  // Charger les payment links quand le vendorId est disponible
   useEffect(() => {
-    if (vendorId) {
+    if (user?.id) {
       loadPaymentLinks();
     }
-  }, [vendorId]);
+  }, [user?.id, vendorId]);
 
-  const loadVendorId = async () => {
+  const loadOwnerInfo = async () => {
     if (!user?.id) return;
 
-    try {
-      const { data: vendor } = await supabase
-        .from('vendors')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+    // Check vendor first
+    const { data: vendor } = await supabase
+      .from('vendors')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-      if (vendor) {
-        setVendorId(vendor.id);
-      }
-    } catch (error) {
-      console.error('Erreur chargement vendor ID:', error);
+    if (vendor) {
+      setVendorId(vendor.id);
+      setOwnerType('vendor');
+      return;
+    }
+
+    // Check if prestataire (has professional_services)
+    const { data: service } = await supabase
+      .from('professional_services')
+      .select('id')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (service) {
+      setOwnerType('provider');
     }
   };
 
   const loadPaymentLinks = async (filters?: { status?: string; search?: string }) => {
-    if (!vendorId) return;
+    if (!user?.id) return;
 
     try {
       setLoading(true);
 
-      // Utiliser DataManager pour la requête avec cache et realtime
-      const queryConfig: any = {
-        table: 'payment_links',
-        select: `
+      // Use owner_user_id for universal access (vendors + providers)
+      let query = supabase
+        .from('payment_links')
+        .select(`
           *,
           client:profiles!payment_links_client_id_fkey(
-            id,
-            public_id,
-            first_name,
-            last_name,
-            email
+            id, public_id, first_name, last_name, email
           )
-        `,
-        filters: {
-          vendeur_id: vendorId
-        },
-        orderBy: { column: 'created_at', ascending: false },
-        realtime: true // Active les mises à jour en temps réel
-      };
+        `)
+        .eq('owner_user_id', user.id)
+        .order('created_at', { ascending: false });
 
-      // Ajouter le filtre de statut si fourni
       if (filters?.status && filters.status !== 'all') {
-        queryConfig.filters.status = filters.status;
+        query = query.eq('status', filters.status);
       }
 
-      const links = await dataManager.query<any[]>(queryConfig);
+      const { data: links, error } = await query;
 
-      if (links) {
-        // Filtrer par recherche côté client si nécessaire
-        let filteredLinks = links;
-        if (filters?.search) {
-          const searchLower = filters.search.toLowerCase();
-          filteredLinks = links.filter((link: any) =>
-            link.produit?.toLowerCase().includes(searchLower) ||
-            link.description?.toLowerCase().includes(searchLower) ||
-            link.payment_id?.toLowerCase().includes(searchLower)
-          );
-        }
-
-        // Formater les données
-        const formattedLinks: PaymentLink[] = filteredLinks.map((link: any) => ({
-          ...link,
-          client: link.client ? {
-            name: `${link.client.first_name || ''} ${link.client.last_name || ''}`.trim(),
-            email: link.client.email
-          } : undefined
-        }));
-
-        setPaymentLinks(formattedLinks);
-        calculateStats(formattedLinks);
+      if (error) {
+        console.error('Error loading payment links:', error);
+        return;
       }
+
+      let filteredLinks = links || [];
+      if (filters?.search) {
+        const searchLower = filters.search.toLowerCase();
+        filteredLinks = filteredLinks.filter((link: any) =>
+          link.produit?.toLowerCase().includes(searchLower) ||
+          link.title?.toLowerCase().includes(searchLower) ||
+          link.description?.toLowerCase().includes(searchLower) ||
+          link.reference?.toLowerCase().includes(searchLower) ||
+          link.payment_id?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      const formattedLinks: PaymentLink[] = filteredLinks.map((link: any) => ({
+        ...link,
+        client: link.client ? {
+          name: `${link.client.first_name || ''} ${link.client.last_name || ''}`.trim(),
+          email: link.client.email,
+        } : undefined,
+      }));
+
+      setPaymentLinks(formattedLinks);
+      calculateStats(formattedLinks);
     } catch (error) {
-      console.error('Erreur chargement payment links:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les liens de paiement",
-        variant: "destructive"
-      });
+      console.error('Error loading payment links:', error);
     } finally {
       setLoading(false);
     }
@@ -156,7 +192,7 @@ export function usePaymentLinks() {
 
   const calculateStats = (links: PaymentLink[]) => {
     const successfulLinks = links.filter(l => l.status === 'success');
-    const totalRevenue = successfulLinks.reduce((sum, l) => sum + (l.montant || 0), 0); // Utiliser montant sans frais
+    const totalRevenue = successfulLinks.reduce((sum, l) => sum + (l.net_amount || l.montant || 0), 0);
 
     setStats({
       total_links: links.length,
@@ -165,207 +201,136 @@ export function usePaymentLinks() {
       expired_payments: links.filter(l => l.status === 'expired').length,
       failed_payments: links.filter(l => l.status === 'failed').length,
       total_revenue: totalRevenue,
-      total_fees: successfulLinks.reduce((sum, l) => sum + (l.frais || 0), 0),
-      avg_payment_amount: successfulLinks.length > 0 ? totalRevenue / successfulLinks.length : 0
+      total_fees: successfulLinks.reduce((sum, l) => sum + (l.platform_fee || l.frais || 0), 0),
+      avg_payment_amount: successfulLinks.length > 0 ? totalRevenue / successfulLinks.length : 0,
     });
   };
 
   const createPaymentLink = async (data: CreatePaymentLinkData): Promise<string | null> => {
-    if (!vendorId) {
-      toast({
-        title: "Erreur",
-        description: "Vendeur non trouvé",
-        variant: "destructive"
-      });
+    if (!user?.id) {
+      toast({ title: "Erreur", description: "Connexion requise", variant: "destructive" });
       return null;
     }
 
     try {
-      // Calculer le montant après remise
       let montantFinal = data.montant;
       const remise = data.remise || 0;
-      
+
       if (remise > 0) {
-        if (data.type_remise === 'percentage') {
-          montantFinal = data.montant * (1 - remise / 100);
-        } else {
-          montantFinal = data.montant - remise;
-        }
+        montantFinal = data.type_remise === 'percentage'
+          ? data.montant * (1 - remise / 100)
+          : data.montant - remise;
       }
-      
-      const frais = montantFinal * 0.01; // 1% de frais
+
+      const frais = montantFinal * 0.01;
       const total = montantFinal + frais;
 
-      // Générer un ID de paiement unique au format simple
       const timestamp = Date.now();
       const randomPart = Math.random().toString(36).substring(2, 9).toUpperCase();
       const paymentId = `PAY-${timestamp}-${randomPart}`;
 
-      // Si un client_id est fourni, trouver l'UUID correspondant
+      // Resolve client UUID if provided
       let clientUuid: string | null = null;
       if (data.client_id) {
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
           .select('id')
           .eq('public_id', data.client_id)
           .single();
-
-        if (profileError || !profile) {
-          toast({
-            title: "Erreur",
-            description: "ID client introuvable",
-            variant: "destructive"
-          });
-          return null;
-        }
-        clientUuid = profile.id;
+        if (profile) clientUuid = profile.id;
       }
 
-      // Créer le lien directement dans Supabase
+      const expireDays = data.expires_days || 7;
+
       const { data: newLink, error } = await supabase
         .from('payment_links')
         .insert({
           payment_id: paymentId,
-          vendeur_id: vendorId,
+          link_type: data.linkType || 'payment',
+          owner_type: ownerType,
+          owner_user_id: user.id,
+          vendeur_id: vendorId || '00000000-0000-0000-0000-000000000000',
           client_id: clientUuid,
+          product_id: data.product_id || null,
+          service_id: data.service_id || null,
+          order_id: data.order_id || null,
+          title: data.title || data.produit,
           produit: data.produit,
           description: data.description || null,
+          reference: data.reference || null,
           montant: data.montant,
+          gross_amount: montantFinal,
+          net_amount: montantFinal,
           remise: remise,
           type_remise: data.type_remise || 'percentage',
           frais: frais,
           total: total,
           devise: data.devise,
+          payment_type: data.payment_type || 'full',
+          is_single_use: data.is_single_use !== false,
           status: 'pending',
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          expires_at: new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000).toISOString(),
         })
-        .select()
+        .select('token, payment_id')
         .single();
 
-      if (error) {
-        console.error('Erreur création payment link:', error);
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       if (newLink) {
-        // Si un client est spécifié, envoyer une notification
-        if (clientUuid) {
-          try {
-            await supabase
-              .from('notifications')
-              .insert({
-                user_id: clientUuid,
-                type: 'payment_link',
-                title: 'Nouveau lien de paiement',
-                message: `Vous avez reçu un lien de paiement pour ${data.produit}. Montant: ${data.montant} ${data.devise}`,
-                data: {
-                  payment_id: paymentId,
-                  payment_link: `${window.location.origin}/payment/${paymentId}`
-                },
-                is_read: false
-              });
-          } catch (notifError) {
-            console.error('Erreur envoi notification:', notifError);
-          }
-        }
-
         toast({
-          title: "Succès",
-          description: clientUuid 
-            ? "Lien créé et envoyé au client !" 
-            : "Lien de paiement créé avec succès !",
+          title: "Lien créé !",
+          description: "Le lien de paiement a été créé avec succès",
         });
-
-        // Recharger les liens
         await loadPaymentLinks();
-
-        return paymentId;
+        return newLink.token || newLink.payment_id;
       }
 
       return null;
     } catch (error: any) {
-      console.error('Erreur création payment link:', error);
-      toast({
-        title: "Erreur",
-        description: error.message || "Impossible de créer le lien de paiement",
-        variant: "destructive"
-      });
+      console.error('Create payment link error:', error);
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
       return null;
     }
   };
 
   const updatePaymentLinkStatus = async (paymentId: string, status: PaymentLink['status']) => {
     try {
-      await dataManager.mutate({
-        table: 'payment_links',
-        operation: 'update',
-        data: { status },
-        filters: { payment_id: paymentId }
-      });
+      const { error } = await supabase
+        .from('payment_links')
+        .update({ status })
+        .eq('payment_id', paymentId);
 
-      toast({
-        title: "Succès",
-        description: "Statut mis à jour",
-      });
-
+      if (error) throw error;
+      toast({ title: "Succès", description: "Statut mis à jour" });
       await loadPaymentLinks();
     } catch (error: any) {
-      console.error('Erreur mise à jour statut:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le statut",
-        variant: "destructive"
-      });
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
     }
   };
 
   const deletePaymentLink = async (paymentId: string) => {
     try {
-      // Vérifier d'abord que le lien appartient au vendeur
-      const { data: linkToDelete, error: fetchError } = await supabase
-        .from('payment_links')
-        .select('id, payment_id, vendeur_id')
-        .eq('payment_id', paymentId)
-        .eq('vendeur_id', vendorId)
-        .single();
-
-      if (fetchError) {
-        console.error('Erreur récupération lien:', fetchError);
-        throw new Error('Lien de paiement introuvable');
-      }
-
-      if (!linkToDelete) {
-        throw new Error('Vous n\'êtes pas autorisé à supprimer ce lien');
-      }
-
-      // Supprimer le lien
-      const { error: deleteError } = await supabase
+      const { error } = await supabase
         .from('payment_links')
         .delete()
         .eq('payment_id', paymentId)
-        .eq('vendeur_id', vendorId);
+        .eq('owner_user_id', user?.id);
 
-      if (deleteError) {
-        console.error('Erreur suppression:', deleteError);
-        throw new Error(deleteError.message);
-      }
-
-      toast({
-        title: "Succès",
-        description: "Lien de paiement supprimé",
-      });
-
+      if (error) throw error;
+      toast({ title: "Succès", description: "Lien supprimé" });
       await loadPaymentLinks();
       return true;
     } catch (error: any) {
-      console.error('Erreur suppression payment link:', error);
-      toast({
-        title: "Erreur",
-        description: error.message || "Impossible de supprimer le lien",
-        variant: "destructive"
-      });
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
       return false;
     }
+  };
+
+  const getPaymentUrl = (link: PaymentLink) => {
+    if (link.token) {
+      return `${window.location.origin}/pay/${link.token}`;
+    }
+    return `${window.location.origin}/payment/${link.payment_id}`;
   };
 
   return {
@@ -373,9 +338,11 @@ export function usePaymentLinks() {
     stats,
     loading,
     vendorId,
+    ownerType,
     loadPaymentLinks,
     createPaymentLink,
     updatePaymentLinkStatus,
-    deletePaymentLink
+    deletePaymentLink,
+    getPaymentUrl,
   };
 }
