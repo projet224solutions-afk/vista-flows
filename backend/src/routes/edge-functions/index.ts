@@ -22,6 +22,8 @@ import authRoutes from "./auth.routes.js";
 import paymentsRoutes from "./payments.routes.js";
 import usersRoutes from "./users.routes.js";
 import aiRoutes from "./ai.routes.js";
+import filesRoutes from "./files.routes.js";
+import webhooksRoutes from "./webhooks.routes.js";
 // Import others as they are created
 // ... and so on
 
@@ -35,8 +37,8 @@ router.use("/auth", authRoutes);
 router.use("/payments", paymentsRoutes);
 router.use("/users", usersRoutes);
 router.use("/ai", aiRoutes);
-// router.use("/files", filesRoutes);
-// router.use("/webhooks", webhooksRoutes);
+router.use("/files", filesRoutes);
+router.use("/webhooks", webhooksRoutes);
 // router.use("/products", productsRoutes);
 // router.use("/orders", ordersRoutes);
 // router.use("/analytics", analyticsRoutes);
@@ -53,6 +55,8 @@ router.get("/health", (req, res) => {
       "payments (45/45)",
       "users (8/28)",
       "ai (5/14)",
+      "files (3/13)",
+      "webhooks (6/9)",
       // ... others
     ],
   });
