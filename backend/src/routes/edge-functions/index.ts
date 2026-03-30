@@ -20,8 +20,8 @@ import { Router } from "express";
 // Import sub-routers
 import authRoutes from "./auth.routes.js";
 import paymentsRoutes from "./payments.routes.js";
+import usersRoutes from "./users.routes.js";
 // Import others as they are created
-// import usersRoutes from "./users.routes.js";
 // import aiRoutes from "./ai.routes.js";
 // ... and so on
 
@@ -33,7 +33,7 @@ const router = Router();
  */
 router.use("/auth", authRoutes);
 router.use("/payments", paymentsRoutes);
-// router.use("/users", usersRoutes);
+router.use("/users", usersRoutes);
 // router.use("/ai", aiRoutes);
 // router.use("/files", filesRoutes);
 // router.use("/webhooks", webhooksRoutes);
@@ -51,7 +51,7 @@ router.get("/health", (req, res) => {
     migrated_categories: [
       "auth (13/13)",
       "payments (45/45)",
-      // "users (0/28)",
+      "users (8/28)",
       // "ai (0/14)",
       // ... others
     ],
