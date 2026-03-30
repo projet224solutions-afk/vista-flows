@@ -1,6 +1,6 @@
 /**
  * 💳 PROCESS PAYMENT LINK - Traitement d'un paiement via lien
- * Gère: wallet 224SOLUTIONS, carte bancaire (Stripe), Orange Money (ChapChapPay)
+ * Gère: wallet 224SOLUTIONS, carte bancaire (Stripe 2 étapes), Orange Money (ChapChapPay)
  * Crédite automatiquement le wallet du vendeur/prestataire après paiement confirmé
  * 224SOLUTIONS
  */
@@ -45,15 +45,16 @@ serve(async (req) => {
       if (user) userId = user.id;
     }
 
+    const body = await req.json();
     const {
       token,
       paymentMethod, // 'wallet' | 'card' | 'orange_money' | 'mtn_momo'
       customerName,
       customerEmail,
       customerPhone,
-      // For wallet payment
       walletPin,
-    } = await req.json();
+      paymentIntentId, // Present in card step 2 (finalization)
+    } = body;
 
     if (!token || !paymentMethod) {
       return new Response(
@@ -76,10 +77,21 @@ serve(async (req) => {
       );
     }
 
-    // Validate status
-    if (link.status !== 'pending') {
+    // For card finalization (step 2), link may already have transaction_id but status is still pending
+    const isCardFinalization = paymentMethod === 'card' && !!paymentIntentId;
+
+    // Validate status (allow pending for normal flow, or pending for card finalization)
+    if (!isCardFinalization && link.status !== 'pending') {
       return new Response(
         JSON.stringify({ success: false, error: `Ce lien est déjà ${link.status === 'paid' || link.status === 'success' ? 'payé' : link.status}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // For card finalization, also reject if already success
+    if (isCardFinalization && (link.status === 'success' || link.status === 'paid')) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Ce lien est déjà payé' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -227,7 +239,7 @@ serve(async (req) => {
       );
     }
 
-    // ──────── CARD PAYMENT (Stripe) ────────
+    // ──────── CARD PAYMENT (Stripe) — 2 STEPS ────────
     if (paymentMethod === 'card') {
       const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
       if (!stripeKey) {
@@ -239,6 +251,122 @@ serve(async (req) => {
 
       const { default: Stripe } = await import("https://esm.sh/stripe@14.10.0?target=deno");
       const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16', httpClient: Stripe.createFetchHttpClient() });
+
+      // ── STEP 2: Finalization (paymentIntentId provided) ──
+      if (paymentIntentId) {
+        logStep("Card finalization step 2", { paymentIntentId });
+
+        // Retrieve the PaymentIntent
+        let paymentIntent;
+        try {
+          paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        } catch (retrieveErr: any) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'PaymentIntent introuvable: ' + (retrieveErr.message || '') }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Verify metadata matches this link (anti-fraud)
+        if (
+          paymentIntent.metadata?.payment_link_id !== link.id ||
+          paymentIntent.metadata?.payment_link_token !== token
+        ) {
+          logStep("Metadata mismatch — rejecting", {
+            expected_link_id: link.id,
+            got_link_id: paymentIntent.metadata?.payment_link_id,
+          });
+          return new Response(
+            JSON.stringify({ success: false, error: 'Ce paiement ne correspond pas à ce lien' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Verify payment succeeded
+        if (paymentIntent.status !== 'succeeded') {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Le paiement n'est pas confirmé (statut: ${paymentIntent.status})`,
+              paymentIntentStatus: paymentIntent.status,
+            }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Credit seller wallet
+        let walletTxId: string | null = null;
+        if (ownerUserId) {
+          const { data: sellerWallet } = await supabaseAdmin
+            .from('wallets')
+            .select('id, balance')
+            .eq('user_id', ownerUserId)
+            .maybeSingle();
+
+          if (sellerWallet) {
+            await supabaseAdmin
+              .from('wallets')
+              .update({ balance: sellerWallet.balance + netAmount })
+              .eq('id', sellerWallet.id);
+
+            const txId = `PLK-CARD-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+            walletTxId = txId;
+
+            await supabaseAdmin.from('wallet_transactions').insert({
+              transaction_id: txId,
+              receiver_wallet_id: sellerWallet.id,
+              receiver_user_id: ownerUserId,
+              sender_user_id: userId || null,
+              amount: payAmount,
+              fee: platformFee,
+              net_amount: netAmount,
+              currency: link.devise || 'GNF',
+              transaction_type: 'payment' as any,
+              status: 'completed' as any,
+              description: `Paiement carte lien: ${link.title || link.produit}`,
+              reference_id: link.payment_id,
+              metadata: {
+                payment_link_id: link.id,
+                link_type: link.link_type,
+                commission_rate: commissionRate,
+                stripe_payment_intent_id: paymentIntentId,
+                customer_name: customerName || '',
+                customer_email: customerEmail || '',
+              },
+            });
+
+            logStep("Card payment — seller credited", { txId, netAmount, platformFee });
+          }
+        }
+
+        // Update link to success
+        await supabaseAdmin.from('payment_links').update({
+          status: 'success',
+          paid_at: new Date().toISOString(),
+          transaction_id: paymentIntentId,
+          use_count: (link.use_count || 0) + 1,
+          platform_fee: platformFee,
+          net_amount: netAmount,
+          gross_amount: payAmount,
+          wallet_credit_status: ownerUserId ? 'credited' : 'pending_settlement',
+          wallet_transaction_id: walletTxId,
+        }).eq('id', link.id);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            confirmed: true,
+            paymentIntentId,
+            amount: payAmount,
+            platformFee,
+            netAmount,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // ── STEP 1: Create PaymentIntent (no paymentIntentId) ──
+      logStep("Card init step 1 — creating PaymentIntent");
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(payAmount),
@@ -256,7 +384,7 @@ serve(async (req) => {
         },
       });
 
-      // Update link with pending card payment
+      // Update link with pending card payment (do NOT set status to 'success')
       await supabaseAdmin.from('payment_links').update({
         payment_method: 'card',
         transaction_id: paymentIntent.id,
