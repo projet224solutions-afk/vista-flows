@@ -562,19 +562,38 @@ export default function ClientDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <HandCoins className="w-5 h-5 text-client-primary" />
-                  {t('client.affiliateSpaceTitle')}
+                  {isAffiliateEnabled ? t('client.affiliateSpaceTitle') : 'Devenir Affilié'}
                 </CardTitle>
                 <CardDescription>
-                  {t('client.affiliateSpaceDesc')}
+                  {isAffiliateEnabled 
+                    ? t('client.affiliateSpaceDesc')
+                    : 'Activez le module affiliation pour gagner des commissions en recommandant nos services.'
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button onClick={() => navigate('/affiliate/activation')} className="bg-client-primary hover:bg-client-primary/90">
-                  {t('client.affiliateBecome')}
-                </Button>
-                <Button variant="outline" onClick={() => navigate('/affiliate/dashboard')}>
-                  {t('client.affiliateOpenSpace')}
-                </Button>
+                {isAffiliateEnabled ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      ✅ Module affilié actif — accédez à votre espace pour gérer vos liens et suivre vos gains.
+                    </p>
+                    <Button onClick={() => navigate('/affiliate/dashboard')} className="bg-client-primary hover:bg-client-primary/90">
+                      {t('client.affiliateOpenSpace')}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <p>🎯 Partagez vos liens de parrainage et gagnez des commissions sur chaque transaction.</p>
+                      <p>💰 Vos gains sont crédités directement sur votre wallet.</p>
+                      <p>🔒 Votre compte client reste intact — aucune modification de vos données.</p>
+                    </div>
+                    <Button onClick={() => navigate('/affiliate/activation')} className="bg-client-primary hover:bg-client-primary/90">
+                      <HandCoins className="w-4 h-4 mr-2" />
+                      Activer l'affiliation gratuitement
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
