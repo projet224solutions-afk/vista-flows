@@ -128,7 +128,7 @@ export default function PaymentLinksManager() {
   const handleServiceSelect = (serviceId: string) => {
     const s = services.find(x => x.id === serviceId);
     if (s) {
-      setFormData(f => ({ ...f, service_id: s.id, produit: s.service_name, title: s.service_name, description: s.description || '' }));
+      setFormData(f => ({ ...f, service_id: s.id, produit: s.business_name, title: s.business_name, description: s.description || '' }));
     }
   };
 
