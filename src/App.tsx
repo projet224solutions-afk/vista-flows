@@ -110,6 +110,8 @@ const Wallet = lazyWithRetry(() => import("./pages/Wallet"));
 const SubscriptionsPage = lazyWithRetry(() => import("./pages/SubscriptionsPage"));
 const AffiliateRedirect = lazyWithRetry(() => import("./pages/AffiliateRedirect"));
 const AgentAffiliateRedirect = lazyWithRetry(() => import("./pages/AgentAffiliateRedirect"));
+const AffiliateActivationPage = lazyWithRetry(() => import("./pages/AffiliateActivationPage"));
+const AffiliateDashboardPage = lazyWithRetry(() => import("./pages/AffiliateDashboardPage"));
 const DeliveryRequest = lazyWithRetry(() => import("./pages/DeliveryRequest"));
 const DeliveryClient = lazyWithRetry(() => import("./pages/DeliveryClient"));
 const BugBounty = lazyWithRetry(() => import("./pages/BugBounty"));
@@ -403,6 +405,22 @@ function App() {
               {/* Affiliate Routes - Agent (redirection vers page de connexion) */}
               <Route path="/register" element={<AgentAffiliateRedirect />} />
               <Route path="/r/:token" element={<AgentAffiliateRedirect />} />
+              <Route
+                path="/affiliate/activation"
+                element={
+                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}>
+                    <AffiliateActivationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/affiliate/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}>
+                    <AffiliateDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Dashboard Routes */}
               <Route

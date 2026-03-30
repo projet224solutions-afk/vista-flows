@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ShoppingBag, Heart, Package, Search, CreditCard,
-  LogOut, Home, ShoppingCart, TrendingUp, Bot, User, Settings, Trash2, History
+  LogOut, Home, ShoppingCart, TrendingUp, Bot, User, Settings, Trash2, History, HandCoins
 } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -270,7 +270,7 @@ export default function ClientDashboard() {
       <main className={`container ${responsive.isMobile ? 'px-3 py-4' : 'px-4 py-6'}`}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
-            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-6 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
+            <TabsList className={`${responsive.isMobile ? 'inline-flex w-max' : 'grid w-full grid-cols-7 lg:w-auto lg:inline-grid'} bg-muted/50 min-w-full md:min-w-0`}>
               <TabsTrigger value="overview" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Home className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 {responsive.isMobile ? 'Vue' : "Vue d'ensemble"}
@@ -290,6 +290,10 @@ export default function ClientDashboard() {
               <TabsTrigger value="copilot" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Bot className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
                 {responsive.isMobile ? 'IA' : 'Assistant IA'}
+              </TabsTrigger>
+              <TabsTrigger value="affiliate" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
+                <HandCoins className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
+                {responsive.isMobile ? 'Affil' : 'Affiliation'}
               </TabsTrigger>
               <TabsTrigger value="settings" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Settings className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
@@ -360,6 +364,23 @@ export default function ClientDashboard() {
                 </CardContent>
               </Card>
             </ResponsiveGrid>
+
+            <Card className="shadow-elegant border-client-primary/20 bg-gradient-to-br from-client-primary/10 to-background">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <HandCoins className="w-5 h-5 text-client-primary" />
+                  Gagner avec l'affiliation
+                </CardTitle>
+                <CardDescription>
+                  Activez votre module affilié sans perdre vos fonctionnalités client.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={() => navigate('/affiliate/activation')} className="bg-client-primary hover:bg-client-primary/90">
+                  Activer l'affiliation
+                </Button>
+              </CardContent>
+            </Card>
 
             {/* Produits populaires */}
             <Card className="shadow-elegant">
@@ -520,6 +541,28 @@ export default function ClientDashboard() {
               </CardHeader>
               <CardContent>
                 <CopiloteChat />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="affiliate" className="animate-fade-in">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <HandCoins className="w-5 h-5 text-client-primary" />
+                  Espace Affiliation
+                </CardTitle>
+                <CardDescription>
+                  Devenez affilié, promouvez des offres et suivez vos commissions sans changer de compte.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button onClick={() => navigate('/affiliate/activation')} className="bg-client-primary hover:bg-client-primary/90">
+                  Devenir affilié
+                </Button>
+                <Button variant="outline" onClick={() => navigate('/affiliate/dashboard')}>
+                  Ouvrir mon espace affilié
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
