@@ -328,25 +328,21 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       doc.text(purchase.purchase_number, 105, 28, { align: 'center' });
       doc.text(`Date: ${new Date(purchase.created_at).toLocaleDateString('fr-FR')}`, 105, 35, { align: 'center' });
       
-      // Summary boxes
+      // Summary box - only purchase total (no profit for supplier document)
       doc.setFillColor(248, 250, 252);
-      doc.rect(14, 45, 55, 25, 'F');
-      doc.rect(77, 45, 55, 25, 'F');
-      doc.rect(140, 45, 55, 25, 'F');
+      doc.rect(14, 45, 85, 25, 'F');
+      doc.rect(110, 45, 85, 25, 'F');
       
       doc.setFontSize(9);
       doc.setTextColor(100);
-      doc.text('TOTAL ACHAT', 41.5, 52, { align: 'center' });
-      doc.text('TOTAL VENTE ESTIMÉ', 104.5, 52, { align: 'center' });
-      doc.text('PROFIT ESTIMÉ', 167.5, 52, { align: 'center' });
+      doc.text('TOTAL ACHAT', 56.5, 52, { align: 'center' });
+      doc.text('ARTICLES', 152.5, 52, { align: 'center' });
       
       doc.setFontSize(12);
-      doc.setTextColor(220, 38, 38);
-      doc.text(formatCurrency(totalPurchase), 41.5, 62, { align: 'center' });
+      doc.setTextColor(30, 64, 175);
+      doc.text(formatCurrency(totalPurchase), 56.5, 62, { align: 'center' });
       doc.setTextColor(51);
-      doc.text(formatCurrency(totalSelling), 104.5, 62, { align: 'center' });
-      doc.setTextColor(22, 163, 74);
-      doc.text(`+${formatCurrency(totalProfit)}`, 167.5, 62, { align: 'center' });
+      doc.text(`${items.length} produit(s) / ${items.reduce((s, i) => s + i.quantity, 0)} unité(s)`, 152.5, 62, { align: 'center' });
       
       // Table header
       let yPos = 80;
@@ -355,12 +351,11 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       doc.setFontSize(9);
       doc.setTextColor(255);
       doc.text('Produit', 16, yPos + 5.5);
-      doc.text('Qté', 90, yPos + 5.5);
-      doc.text('Prix Achat', 110, yPos + 5.5);
-      doc.text('Prix Vente', 140, yPos + 5.5);
-      doc.text('Profit', 175, yPos + 5.5);
+      doc.text('Qté', 100, yPos + 5.5);
+      doc.text('Prix Unitaire', 130, yPos + 5.5);
+      doc.text('Total', 170, yPos + 5.5);
       
-      // Table rows
+      // Table rows (no profit/selling price - supplier document)
       yPos += 8;
       doc.setTextColor(51);
       items.forEach((item, idx) => {
@@ -369,13 +364,10 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
           doc.rect(14, yPos, 182, 8, 'F');
         }
         doc.setFontSize(9);
-        doc.text(item.product_name.substring(0, 25), 16, yPos + 5.5);
-        doc.text(item.quantity.toString(), 90, yPos + 5.5);
-        doc.text(formatCurrency(item.purchase_price), 110, yPos + 5.5);
-        doc.text(formatCurrency(item.selling_price), 140, yPos + 5.5);
-        doc.setTextColor(22, 163, 74);
-        doc.text(`+${formatCurrency(item.total_profit)}`, 175, yPos + 5.5);
-        doc.setTextColor(51);
+        doc.text(item.product_name.substring(0, 35), 16, yPos + 5.5);
+        doc.text(item.quantity.toString(), 100, yPos + 5.5);
+        doc.text(formatCurrency(item.purchase_price), 130, yPos + 5.5);
+        doc.text(formatCurrency(item.total_purchase), 170, yPos + 5.5);
         yPos += 8;
       });
       
