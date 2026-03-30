@@ -384,7 +384,7 @@ export default function DigitalProducts() {
           )}
 
           {user && isMerchant && (
-            <div className="px-4 py-2.5 bg-green-500/10 text-green-600 border-b border-green-500/20 text-center text-sm">
+            <div className="px-4 py-2.5 bg-[#04439e]/12 text-[#04439e] border-b border-[#04439e]/25 text-center text-sm">
               <span className="flex items-center justify-center gap-2">
                 <Store className="w-4 h-4" />
                 {t('digital.merchantActive')}
