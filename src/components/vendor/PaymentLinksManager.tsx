@@ -316,7 +316,7 @@ export default function PaymentLinksManager() {
                             <SelectItem key={s.id} value={s.id}>
                               <div className="flex items-center gap-2">
                                 <Wrench className="w-3.5 h-3.5" />
-                                {s.service_name}
+                                {s.business_name}
                               </div>
                             </SelectItem>
                           ))}
