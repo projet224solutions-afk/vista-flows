@@ -1,6 +1,6 @@
 import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key, Wallet } from 'lucide-react';
+import { Store, Settings, DollarSign, TrendingUp, Users, ShoppingBag, Key, Wallet, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,6 +17,7 @@ import CommunicationWidget from '@/components/communication/CommunicationWidget'
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 const WalletApiPanel = lazy(() => import('@/components/professional-services/modules/WalletApiPanel'));
 const ServiceWalletWidget = lazy(() => import('@/components/professional-services/ServiceWalletWidget'));
+const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
 
 // Types de services qui ont leur propre module complet
 function isFullModuleService(service: ProfessionalService): boolean {
@@ -117,6 +118,23 @@ export default function ServiceDashboard() {
             <Suspense fallback={<div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
               <ServiceWalletWidget businessName={service.business_name} />
             </Suspense>
+          </div>
+
+          {/* Liens de paiement prestataire */}
+          <div className="mt-6">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Liens de paiement
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 sm:p-2">
+                <Suspense fallback={<div className="flex items-center justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                  <PaymentLinksManager />
+                </Suspense>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Bouton Mes Achats */}
@@ -260,6 +278,10 @@ export default function ServiceDashboard() {
               </TabsTrigger>
               <TabsTrigger value="products" className="text-xs sm:text-sm px-2.5 sm:px-3">Produits</TabsTrigger>
               <TabsTrigger value="bookings" className="text-xs sm:text-sm px-2.5 sm:px-3">Réservations</TabsTrigger>
+              <TabsTrigger value="payment-links" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
+                <CreditCard className="w-3.5 h-3.5" />
+                Paiements
+              </TabsTrigger>
               <TabsTrigger value="my-purchases" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
                 <ShoppingBag className="w-3.5 h-3.5" />
                 Achats
@@ -323,6 +345,12 @@ export default function ServiceDashboard() {
 
           <TabsContent value="bookings">
             <BookingManagement serviceId={service.id} />
+          </TabsContent>
+
+          <TabsContent value="payment-links">
+            <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <PaymentLinksManager />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="my-purchases">
