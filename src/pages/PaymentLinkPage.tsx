@@ -121,20 +121,23 @@ export default function PaymentLinkPage() {
     try {
       setProcessing(true);
 
-      const { data, error } = await supabase.functions.invoke('process-payment-link', {
-        body: {
-          token,
-          paymentMethod,
-          customerName: customerInfo.name,
-          customerEmail: customerInfo.email,
-          customerPhone: customerInfo.phone,
-        },
-      });
+      const result = await processPaymentLink(
+        token!,
+        paymentMethod,
+        {
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone,
+          user_id: user?.id,
+        }
+      );
 
-      if (error || !data?.success) {
-        toast({ title: "Erreur", description: data?.error || "Paiement échoué", variant: "destructive" });
+      if (!result.success) {
+        toast({ title: "Erreur", description: result.error || "Paiement échoué", variant: "destructive" });
         return;
       }
+
+      const data = result.data;
 
       if (paymentMethod === 'wallet') {
         setPaymentSuccess(true);
