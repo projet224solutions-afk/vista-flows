@@ -39,7 +39,7 @@ const salesModes = {
     title: 'Vente Directe',
     subtitle: 'Vendez vos propres produits',
     icon: Store,
-    color: 'emerald',
+    color: 'blue',
     badgeText: 'Recommandé',
     badgeVariant: 'secondary' as const,
     description: 'Créez et vendez vos propres produits numériques',
@@ -57,7 +57,7 @@ const salesModes = {
     title: 'Affiliation',
     subtitle: 'Promouvez des partenaires',
     icon: Link2,
-    color: 'violet',
+    color: 'orange',
     badgeText: 'Commission élevée',
     badgeVariant: 'default' as const,
     description: 'Gagnez des commissions sur les ventes',
@@ -101,14 +101,14 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-primary/10 to-accent/10 rounded-full border border-primary/20">
-          <Crown className="w-4 h-4 text-primary" />
-          <span className="text-sm font-semibold text-primary">Modèle de vente</span>
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#dbe6fb] bg-white px-4 py-1.5 shadow-sm">
+          <Crown className="w-4 h-4 text-[#04439e]" />
+          <span className="text-sm font-semibold text-[#04439e]">Modèle de vente</span>
         </div>
-        <h2 className="text-xl font-bold text-foreground">
+        <h2 className="text-xl font-semibold text-[#0b1b33]">
           Choisissez votre stratégie
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-slate-500">
           Sélectionnez le mode qui correspond à vos objectifs
         </p>
       </div>
@@ -133,8 +133,8 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 'relative text-left rounded-2xl border-2 p-4 transition-all duration-300 h-full',
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
                 isSelected 
-                  ? 'border-primary shadow-xl shadow-primary/10 bg-gradient-to-b from-primary/5 to-background' 
-                  : 'border-border bg-card hover:border-muted-foreground/30 hover:shadow-lg',
+                  ? 'border-[#cfe0fb] shadow-[0_20px_42px_rgba(4,67,158,0.10)] bg-[linear-gradient(180deg,rgba(4,67,158,0.05),#ffffff)]' 
+                  : 'border-[#e8eef8] bg-white hover:border-[#cfe0fb] hover:shadow-[0_16px_34px_rgba(4,67,158,0.08)]',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -144,7 +144,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                   variant={mode.badgeVariant}
                   className={cn(
                     'text-[10px] font-medium',
-                    mode.color === 'violet' && 'bg-gradient-to-r from-violet-500 to-purple-600 text-white border-0'
+                    mode.color === 'orange' && 'bg-[#ff4000] text-white border-0'
                   )}
                 >
                   {mode.badgeText}
@@ -155,8 +155,8 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
               <div className={cn(
                 'absolute top-3 left-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
                 isSelected 
-                  ? 'border-primary bg-primary' 
-                  : 'border-muted-foreground/30'
+                  ? 'border-[#04439e] bg-[#04439e]' 
+                  : 'border-slate-300'
               )}>
                 {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
               </div>
@@ -166,9 +166,9 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 {/* Icône */}
                 <div className={cn(
                   'w-12 h-12 rounded-xl flex items-center justify-center mx-auto',
-                  mode.color === 'emerald' 
-                    ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
-                    : 'bg-gradient-to-br from-violet-500 to-purple-600',
+                  mode.color === 'blue' 
+                    ? 'bg-[linear-gradient(135deg,#04439e_0%,#0d5ed2_100%)]' 
+                    : 'bg-[linear-gradient(135deg,#ff4000_0%,#ff6a33_100%)]',
                   'text-white shadow-lg'
                 )}>
                   <Icon className="w-6 h-6" />
@@ -176,16 +176,16 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
 
                 {/* Titre */}
                 <div className="text-center">
-                  <h3 className="font-bold text-foreground text-base">{mode.title}</h3>
-                  <p className="text-xs text-muted-foreground">{mode.subtitle}</p>
+                  <h3 className="font-semibold text-[#0b1b33] text-base">{mode.title}</h3>
+                  <p className="text-xs text-slate-500">{mode.subtitle}</p>
                 </div>
 
                 {/* Highlight */}
                 <div className={cn(
                   'text-center py-2 px-3 rounded-lg text-xs font-medium',
-                  mode.color === 'emerald' 
-                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
-                    : 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                  mode.color === 'blue' 
+                    ? 'bg-[#04439e]/10 text-[#04439e]' 
+                    : 'bg-[#ff4000]/10 text-[#ff4000]'
                 )}>
                   {mode.highlight}
                 </div>
@@ -199,7 +199,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                         key={idx} 
                         className="flex items-center gap-2 text-xs text-muted-foreground"
                       >
-                        <FeatureIcon className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <FeatureIcon className="w-3.5 h-3.5 text-[#04439e] shrink-0" />
                         <span>{feature.text}</span>
                       </div>
                     );
@@ -209,15 +209,15 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 {/* Commission info pour affiliation */}
                 {mode.commissionInfo && (
                   <div className="bg-muted/50 rounded-lg p-2 space-y-1">
-                    <p className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
+                    <p className="text-[10px] font-medium text-slate-500 flex items-center gap-1">
                       <BarChart3 className="w-3 h-3" />
                       Commissions typiques
                     </p>
                     <div className="grid grid-cols-2 gap-1">
                       {mode.commissionInfo.ranges.map((item, idx) => (
                         <div key={idx} className="flex justify-between text-[10px]">
-                          <span className="text-muted-foreground">{item.platform}</span>
-                          <span className="font-semibold text-primary">{item.rate}</span>
+                          <span className="text-slate-500">{item.platform}</span>
+                          <span className="font-semibold text-[#04439e]">{item.rate}</span>
                         </div>
                       ))}
                     </div>
@@ -227,7 +227,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 {/* Call to action */}
                 <div className={cn(
                   'flex items-center justify-center gap-1 pt-2 text-xs font-medium transition-colors',
-                  isSelected ? 'text-primary' : 'text-muted-foreground'
+                  isSelected ? 'text-[#04439e]' : 'text-slate-500'
                 )}>
                   <span>{isSelected ? 'Sélectionné' : 'Sélectionner'}</span>
                   <ChevronRight className="w-3.5 h-3.5" />

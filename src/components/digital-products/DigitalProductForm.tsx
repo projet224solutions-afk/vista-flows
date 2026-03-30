@@ -1022,74 +1022,84 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
   };
 
   return (
-    <div className="min-h-screen bg-background pb-[calc(10rem+env(safe-area-inset-bottom))]">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(4,67,158,0.10),_transparent_25%),linear-gradient(180deg,_#ffffff_0%,_#f8fbff_60%,_#ffffff_100%)] pb-[calc(10rem+env(safe-area-inset-bottom))]">
       {/* Header */}
-      <header className="bg-card/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
-        <div className="px-4 py-3">
+      <header className="sticky top-0 z-40 border-b border-[#dce7fb] bg-white/92 backdrop-blur-xl shadow-[0_10px_30px_rgba(4,67,158,0.06)]">
+        <div className="px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
               size="icon"
               onClick={handleBack}
-              className="shrink-0"
+              className="h-11 w-11 shrink-0 rounded-2xl border border-[#dbe6fb] bg-white text-[#04439e] hover:bg-[#f5f9ff]"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{config.icon}</span>
-                <h1 className="text-lg font-bold text-foreground">{config.title}</h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#04439e]/10 text-lg">{config.icon}</span>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-lg font-semibold text-[#0b1b33] sm:text-2xl">{config.title}</h1>
+                    <Badge className="border-0 bg-[#ff4000]/12 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#ff4000] shadow-none">
+                      {isEdit ? 'Édition' : 'Création'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-500">{config.description}</p>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">{config.description}</p>
             </div>
           </div>
         </div>
 
         {/* Progress Steps */}
-        <div className="px-4 pb-3">
-          <div className="flex items-center gap-1">
+        <div className="px-4 pb-4 sm:px-6">
+          <div className="grid gap-3 md:grid-cols-5">
             {steps.map((step, idx) => (
-              <div key={step.id} className="flex items-center flex-1">
-                <div
-                  className={cn(
-                    'flex-1 h-1.5 rounded-full transition-all',
-                    idx <= currentStepIndex ? 'bg-primary' : 'bg-muted'
-                  )}
-                />
-                {idx < steps.length - 1 && (
-                  <ChevronRight className="w-3 h-3 text-muted-foreground mx-0.5 shrink-0" />
-                )}
+              <div key={step.id} className={cn(
+                'rounded-2xl border px-3 py-3 transition-all',
+                idx === currentStepIndex
+                  ? 'border-[#cfe0fb] bg-[#f5f9ff] shadow-[0_12px_28px_rgba(4,67,158,0.06)]'
+                  : idx < currentStepIndex
+                    ? 'border-[#ffe0d6] bg-[#fff5f1]'
+                    : 'border-[#edf2fb] bg-white'
+              )}>
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold',
+                    idx === currentStepIndex
+                      ? 'bg-[#04439e] text-white'
+                      : idx < currentStepIndex
+                        ? 'bg-[#ff4000] text-white'
+                        : 'bg-[#eef3fd] text-[#6f89b7]'
+                  )}>
+                    {idx + 1}
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6f89b7]">Étape {idx + 1}</p>
+                    <p className={cn('text-sm font-medium', idx <= currentStepIndex ? 'text-[#0b1b33]' : 'text-slate-500')}>
+                      {step.label}
+                    </p>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-          <div className="flex justify-between mt-1.5">
-            {steps.map((step, idx) => (
-              <span
-                key={step.id}
-                className={cn(
-                  'text-[10px]',
-                  idx <= currentStepIndex ? 'text-primary font-medium' : 'text-muted-foreground'
-                )}
-              >
-                {step.label}
-              </span>
             ))}
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <div className="px-4 py-4 space-y-4">
+      <div className="mx-auto max-w-5xl px-4 py-6 space-y-5 sm:px-6">
         {renderStepContent()}
       </div>
 
       {/* Footer Actions (placé au-dessus du QuickFooter global) */}
-      <div className="fixed left-0 right-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] bg-card border-t border-border p-4 z-[90]">
+      <div className="fixed left-0 right-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] border-t border-[#dce7fb] bg-white/95 p-4 backdrop-blur-xl z-[90]">
         {currentStep === 'review' ? (
           <Button
             onClick={handleSubmit}
             disabled={loading || uploadingVideo}
-            className="w-full h-12"
+            className="w-full h-12 rounded-2xl bg-[#ff4000] text-sm font-semibold text-white shadow-[0_16px_32px_rgba(255,64,0,0.22)] hover:bg-[#e53900]"
           >
             {loading || uploadingVideo ? (
               <>
@@ -1108,7 +1118,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
             <Button
               variant="outline"
               onClick={handleBack}
-              className="flex-1"
+              className="h-12 flex-1 rounded-2xl border-[#d7e3f9] bg-white font-semibold text-[#04439e] hover:bg-[#f7fbff]"
             >
               Retour
             </Button>
@@ -1116,7 +1126,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
               onClick={() => {
                 if (validateStep()) handleNext();
               }}
-              className="flex-1"
+              className="h-12 flex-1 rounded-2xl bg-[#04439e] font-semibold text-white shadow-[0_16px_32px_rgba(4,67,158,0.20)] hover:bg-[#03347a]"
             >
               Continuer
               <ChevronRight className="w-4 h-4 ml-1" />

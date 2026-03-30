@@ -84,7 +84,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
   return (
     <div className="space-y-4">
       {/* Type de tarification */}
-      <Card>
+      <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-primary" />
@@ -105,15 +105,15 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
                   className={cn(
                     'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all',
                     data.pricingType === type.id
-                      ? 'border-primary bg-primary/5 shadow-sm'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-[#cfe0fb] bg-[#f5f9ff] shadow-sm'
+                      : 'border-[#e8eef8] hover:border-[#cfe0fb]'
                   )}
                 >
                   <div className={cn(
                     'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
                     data.pricingType === type.id
-                      ? 'bg-primary text-white'
-                      : 'bg-muted text-muted-foreground'
+                        ? 'bg-[#04439e] text-white'
+                        : 'bg-[#f3f7ff] text-slate-500'
                   )}>
                     <Icon className="w-5 h-5" />
                   </div>
@@ -134,7 +134,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
       </Card>
 
       {/* Prix */}
-      <Card>
+      <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Package className="w-4 h-4 text-primary" />
@@ -195,8 +195,8 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
                         className={cn(
                           'p-2 rounded-lg border cursor-pointer text-center transition-all text-xs',
                           data.subscriptionInterval === interval
-                            ? 'border-primary bg-primary/5 font-medium'
-                            : 'border-border hover:border-primary/50'
+                            ? 'border-[#cfe0fb] bg-[#f5f9ff] font-medium text-[#04439e]'
+                            : 'border-[#e8eef8] hover:border-[#cfe0fb]'
                         )}
                       >
                         {interval === 'monthly' && 'Mensuel'}
@@ -254,8 +254,8 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
 
           {/* Réduction affichée */}
           {data.originalPrice && parseFloat(data.originalPrice) > parseFloat(data.price) && (
-            <div className="flex items-center gap-2 p-2 bg-green-500/10 rounded-lg">
-              <Badge variant="secondary" className="bg-green-500/20 text-green-600">
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-[#fff4ef]">
+              <Badge variant="secondary" className="border-0 bg-[#ff4000]/12 text-[#ff4000]">
                 -{Math.round((1 - parseFloat(data.price) / parseFloat(data.originalPrice)) * 100)}%
               </Badge>
               <span className="text-xs text-muted-foreground">
@@ -267,7 +267,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
       </Card>
 
       {/* Options de livraison */}
-      <Card>
+      <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Zap className="w-4 h-4 text-primary" />
@@ -325,7 +325,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
       </Card>
 
       {/* Politique de remboursement */}
-      <Card>
+      <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Shield className="w-4 h-4 text-primary" />
@@ -370,7 +370,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
       </Card>
 
       {/* Quantité limitée */}
-      <Card>
+      <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Lock className="w-4 h-4 text-primary" />
@@ -411,8 +411,8 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
       </Card>
 
       {/* Info */}
-      <Alert className="bg-primary/5 border-primary/20">
-        <Shield className="w-4 h-4 text-primary" />
+      <Alert className="border-[#dbe6fb] bg-[#f7fbff]">
+        <Shield className="w-4 h-4 text-[#04439e]" />
         <AlertDescription className="text-xs text-muted-foreground">
           <strong className="text-foreground">Protection vendeur :</strong> Tous les paiements sont sécurisés. 
           Vous recevez vos fonds après validation de la livraison.

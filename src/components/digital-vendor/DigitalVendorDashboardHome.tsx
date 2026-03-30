@@ -8,13 +8,12 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Laptop, Plus, Eye, TrendingUp, DollarSign,
   Link, Package, FileText, BookOpen, Plane, Box, ShoppingCart,
-  Users, Download, Info, BarChart3
+  Users, Download, BarChart3
 } from 'lucide-react';
-import { useMerchantDigitalProducts, DigitalProduct } from '@/hooks/useDigitalProducts';
+import { useMerchantDigitalProducts } from '@/hooks/useDigitalProducts';
 import { SectionLoader } from '@/components/ui/GlobalLoader';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -57,11 +56,14 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
   const affiliateCount = products.filter(p => p.product_mode === 'affiliate').length;
   const directCount = products.filter(p => p.product_mode === 'direct').length;
   const totalViews = products.reduce((sum, p) => sum + (p.views_count || 0), 0);
+  const fmtNum = (n: number) => n.toLocaleString('fr-FR');
 
   useEffect(() => {
     if (!user?.id) return;
+
     const loadStats = async () => {
       setStatsLoading(true);
+
       try {
         const [purchasesRes, subscriptionsRes] = await Promise.all([
           supabase
@@ -94,228 +96,264 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         setStatsLoading(false);
       }
     };
+
     loadStats();
   }, [user?.id]);
 
-  const fmtNum = (n: number) => n.toLocaleString('fr-FR');
+  const primaryMetrics = [
+    {
+      label: 'Ventes confirmées',
+      value: statsLoading ? '...' : fmtNum(stats.totalSales),
+      note: 'transactions finalisées',
+      icon: ShoppingCart,
+      tone: 'text-[#04439e]',
+      iconBg: 'bg-[#04439e]/10',
+    },
+    {
+      label: 'Chiffre d\'affaires brut',
+      value: statsLoading ? '...' : `${fmtNum(stats.grossRevenue)} GNF`,
+      note: 'avant commissions',
+      icon: DollarSign,
+      tone: 'text-[#ff4000]',
+      iconBg: 'bg-[#ff4000]/10',
+    },
+    {
+      label: 'Revenu net',
+      value: statsLoading ? '...' : `${fmtNum(stats.netRevenue)} GNF`,
+      note: stats.totalCommissions > 0 ? `-${fmtNum(stats.totalCommissions)} GNF de commissions` : 'aucune commission déduite',
+      icon: TrendingUp,
+      tone: 'text-emerald-600',
+      iconBg: 'bg-emerald-500/10',
+    },
+    {
+      label: 'Abonnés actifs',
+      value: statsLoading ? '...' : fmtNum(stats.activeSubscribers),
+      note: stats.subscriptionRevenue > 0 ? `${fmtNum(stats.subscriptionRevenue)} GNF par période` : 'aucun abonnement actif',
+      icon: Users,
+      tone: 'text-[#04439e]',
+      iconBg: 'bg-[#04439e]/10',
+    },
+  ] as const;
+
+  const secondaryMetrics = [
+    {
+      label: 'Catalogue digital',
+      value: fmtNum(products.length),
+      note: `${directCount} directs • ${affiliateCount} affiliés`,
+      icon: Package,
+    },
+    {
+      label: 'Produits publiés',
+      value: fmtNum(publishedCount),
+      note: draftCount > 0 ? `${draftCount} brouillon${draftCount > 1 ? 's' : ''}` : 'aucun brouillon',
+      icon: BarChart3,
+    },
+    {
+      label: 'Téléchargements',
+      value: statsLoading ? '...' : fmtNum(stats.totalDownloads),
+      note: 'livraisons déjà consommées',
+      icon: Download,
+    },
+    {
+      label: 'Visibilité totale',
+      value: fmtNum(totalViews),
+      note: stats.totalSales > 0 ? `conversion ${((stats.totalSales / Math.max(totalViews, 1)) * 100).toFixed(1)}%` : 'conversion à construire',
+      icon: Eye,
+    },
+  ] as const;
+
+  const quickActions = [
+    {
+      label: 'Créer un produit',
+      description: 'Lancer une nouvelle offre digitale',
+      icon: Plus,
+      onClick: () => navigate('/vendeur-digital/add-product'),
+      variant: 'primary' as const,
+    },
+    {
+      label: 'Gérer le catalogue',
+      description: 'Modifier, republier ou archiver',
+      icon: Laptop,
+      onClick: () => navigate('/vendeur-digital/products'),
+      variant: 'secondary' as const,
+    },
+    {
+      label: 'Programme affiliation',
+      description: 'Piloter les offres partenaires',
+      icon: Link,
+      onClick: () => navigate('/vendeur-digital/affiliate'),
+      variant: 'secondary' as const,
+    },
+    {
+      label: 'Portefeuille vendeur',
+      description: 'Suivre les mouvements financiers',
+      icon: DollarSign,
+      onClick: () => navigate('/vendeur-digital/wallet'),
+      variant: 'secondary' as const,
+    },
+  ];
 
   return (
-    <TooltipProvider>
-      <div className="space-y-6">
-        {/* Welcome */}
-        <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border-purple-200/50">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
-                  <Laptop className="w-5 h-5 text-purple-600" />
-                  Espace Vendeur Digital
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Gérez vos produits numériques et programmes d'affiliation
-                </p>
+    <div className="space-y-8">
+      <Card className="overflow-hidden border-[#dce7fb] bg-[linear-gradient(135deg,rgba(4,67,158,0.08),rgba(255,255,255,0.98)_38%,rgba(255,64,0,0.06)_100%)] shadow-[0_28px_65px_rgba(4,67,158,0.08)]">
+        <CardContent className="p-5 sm:p-7 lg:p-8">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div className="max-w-3xl">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Badge className="border-0 bg-[#04439e]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#04439e] shadow-none">
+                  Cockpit vendeur digital
+                </Badge>
+                <Badge className="border-0 bg-[#ff4000]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff4000] shadow-none">
+                  Marketplace premium
+                </Badge>
               </div>
-              <Button
-                onClick={() => navigate('/vendeur-digital/add-product')}
-                className="bg-purple-600 hover:bg-purple-700 gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Nouveau produit
-              </Button>
+              <h2 className="text-xl font-semibold leading-tight text-[#0b1b33] sm:text-3xl lg:text-[2.3rem]">
+                Pilotez vos produits numériques comme un vrai business international.
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                Suivez vos revenus, vos produits publiés, vos performances commerciales et les actions à fort impact sans quitter votre espace vendeur digital.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Button
+                  onClick={() => navigate('/vendeur-digital/add-product')}
+                  className="h-11 rounded-2xl bg-[#ff4000] px-5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(255,64,0,0.26)] hover:bg-[#e53900]"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nouveau produit
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/vendeur-digital/products')}
+                  className="h-11 rounded-2xl border-[#d7e3f9] bg-white px-5 text-sm font-semibold text-[#04439e] hover:bg-[#f7fbff]"
+                >
+                  <Laptop className="mr-2 h-4 w-4" />
+                  Voir le catalogue
+                </Button>
+              </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Revenue Stats - with breakdown */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <ShoppingCart className="w-4 h-4 text-green-600" />
-                <span className="text-xs text-muted-foreground">Ventes</span>
+            <div className="grid w-full gap-3 sm:grid-cols-3 xl:max-w-[540px]">
+              <div className="rounded-[24px] border border-white/70 bg-white/90 p-3.5 sm:p-4 shadow-[0_18px_40px_rgba(4,67,158,0.08)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">Produits publiés</p>
+                <p className="mt-2 text-3xl font-semibold text-[#04439e]">{publishedCount}</p>
+                <p className="mt-2 text-xs text-slate-500">sur {products.length} produits au catalogue</p>
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-green-600">
-                {statsLoading ? '...' : stats.totalSales}
+              <div className="rounded-[24px] border border-white/70 bg-white/90 p-3.5 sm:p-4 shadow-[0_18px_40px_rgba(4,67,158,0.08)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">Mode dominant</p>
+                <p className="mt-2 text-xl font-semibold text-[#0b1b33]">{directCount >= affiliateCount ? 'Vente directe' : 'Affiliation'}</p>
+                <p className="mt-2 text-xs text-slate-500">{directCount} directs • {affiliateCount} affiliés</p>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-1">achats confirmés</p>
-            </CardContent>
-          </Card>
+              <div className="rounded-[24px] border border-white/70 bg-white/90 p-3.5 sm:p-4 shadow-[0_18px_40px_rgba(4,67,158,0.08)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">Signal prioritaire</p>
+                <p className="mt-2 text-xl font-semibold text-[#0b1b33]">{publishedCount === 0 ? 'Publier un produit' : totalViews === 0 ? 'Booster la visibilité' : 'Optimiser la conversion'}</p>
+                <p className="mt-2 text-xs text-slate-500">prochaine action business recommandée</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <DollarSign className="w-4 h-4 text-orange-600" />
-                <span className="text-xs text-muted-foreground">CA brut</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-3 h-3 text-muted-foreground/50 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs max-w-[200px]">Montant total des ventes avant déduction des commissions d'affiliation</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold text-orange-600">
-                {statsLoading ? '...' : fmtNum(stats.grossRevenue)}
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-1">GNF total</p>
-            </CardContent>
-          </Card>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {primaryMetrics.map((metric) => {
+          const Icon = metric.icon;
 
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingUp className="w-4 h-4 text-emerald-600" />
-                <span className="text-xs text-muted-foreground">Revenu net</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-3 h-3 text-muted-foreground/50 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs max-w-[200px]">CA brut − commissions affiliés = revenu net perçu</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold text-emerald-600">
-                {statsLoading ? '...' : fmtNum(stats.netRevenue)}
-              </div>
-              {!statsLoading && stats.totalCommissions > 0 && (
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  −{fmtNum(stats.totalCommissions)} GNF commissions
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          return (
+            <Card key={metric.label} className="overflow-hidden rounded-[26px] border-[#dde8fb] bg-white shadow-[0_18px_45px_rgba(4,67,158,0.06)]">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">{metric.label}</p>
+                    <p className={['mt-3 text-2xl font-semibold leading-none sm:text-[2rem]', metric.tone].join(' ')}>{metric.value}</p>
+                    <p className="mt-3 text-sm text-slate-500">{metric.note}</p>
+                  </div>
+                  <div className={['flex h-12 w-12 items-center justify-center rounded-2xl', metric.iconBg].join(' ')}>
+                    <Icon className={['h-5 w-5', metric.tone].join(' ')} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Users className="w-4 h-4 text-purple-600" />
-                <span className="text-xs text-muted-foreground">Abonnés</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-bold text-purple-600">
-                {statsLoading ? '...' : stats.activeSubscribers}
-              </div>
-              {!statsLoading && stats.subscriptionRevenue > 0 && (
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  {fmtNum(stats.subscriptionRevenue)} GNF/période
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Secondary stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Package className="w-4 h-4 text-primary" />
-                <span className="text-xs text-muted-foreground">Produits</span>
-              </div>
-              <div className="text-lg font-bold">{products.length}</div>
-              <div className="flex gap-2 mt-1">
-                <Badge variant="secondary" className="text-[10px]">{directCount} directs</Badge>
-                <Badge variant="outline" className="text-[10px]">{affiliateCount} affil.</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <BarChart3 className="w-4 h-4 text-green-600" />
-                <span className="text-xs text-muted-foreground">Publiés</span>
-              </div>
-              <div className="text-lg font-bold text-green-600">{publishedCount}</div>
-              {draftCount > 0 && (
-                <p className="text-[10px] text-muted-foreground mt-1">{draftCount} brouillon{draftCount > 1 ? 's' : ''}</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Download className="w-4 h-4 text-blue-600" />
-                <span className="text-xs text-muted-foreground">Téléchargements</span>
-              </div>
-              <div className="text-lg font-bold text-blue-600">
-                {statsLoading ? '...' : stats.totalDownloads}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Eye className="w-4 h-4 text-blue-600" />
-                <span className="text-xs text-muted-foreground">Vues totales</span>
-              </div>
-              <div className="text-lg font-bold text-blue-600">{totalViews}</div>
-              {stats.totalSales > 0 && (
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  Conversion : {((stats.totalSales / Math.max(totalViews, 1)) * 100).toFixed(1)}%
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Products */}
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
+        <Card className="rounded-[28px] border-[#dde7fb] bg-white shadow-[0_22px_55px_rgba(4,67,158,0.06)]">
+          <CardHeader className="border-b border-[#eef3fd] pb-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base">Produits récents</CardTitle>
-                <CardDescription className="text-xs">Vos derniers produits numériques</CardDescription>
+                <CardTitle className="text-xl font-semibold text-[#0b1b33]">Produits récents</CardTitle>
+                <CardDescription className="mt-1 text-sm text-slate-500">Vos offres digitales les plus récentes avec leur statut commercial.</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate('/vendeur-digital/products')}>
+              <Button variant="outline" size="sm" onClick={() => navigate('/vendeur-digital/products')} className="rounded-xl border-[#d7e3f9] bg-white font-semibold text-[#04439e] hover:bg-[#f7fbff]">
                 Voir tout
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="pt-5">
             {loading ? (
               <SectionLoader />
             ) : products.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Laptop className="w-12 h-12 text-muted-foreground/30 mb-3" />
-                <p className="text-sm text-muted-foreground mb-3">Aucun produit numérique</p>
-                <Button onClick={() => navigate('/vendeur-digital/add-product')} size="sm" className="gap-2">
+              <div className="flex flex-col items-center justify-center rounded-[24px] border border-dashed border-[#d7e3f9] bg-[#f9fbff] py-12 text-center">
+                <Laptop className="mb-4 h-14 w-14 text-[#04439e]/30" />
+                <p className="text-base font-semibold text-[#0b1b33]">Aucun produit numérique</p>
+                <p className="mb-4 mt-2 max-w-sm text-sm text-slate-500">Commencez à vendre avec une première offre digitale claire, crédible et prête à convertir.</p>
+                <Button onClick={() => navigate('/vendeur-digital/add-product')} size="sm" className="gap-2 rounded-xl bg-[#ff4000] font-semibold text-white hover:bg-[#e53900]">
                   <Plus className="w-4 h-4" />
                   Créer mon premier produit
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 {products.slice(0, 5).map((product) => {
                   const CategoryIcon = categoryIcons[product.category] || Package;
+                  const statusLabel = product.status === 'published'
+                    ? 'Publié'
+                    : product.status === 'draft'
+                      ? 'Brouillon'
+                      : product.status === 'rejected'
+                        ? 'Rejeté'
+                        : product.status === 'archived'
+                          ? 'Archivé'
+                          : product.status;
+                  const statusClass = product.status === 'published'
+                    ? 'bg-[#04439e] text-white'
+                    : product.status === 'draft'
+                      ? 'bg-[#fff1ec] text-[#ff4000]'
+                      : product.status === 'rejected'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-slate-100 text-slate-600';
+
                   return (
                     <div
                       key={product.id}
-                      className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
                       onClick={() => navigate(`/digital-product/${product.id}`)}
+                      className="flex cursor-pointer items-center gap-3 sm:gap-4 rounded-[22px] border border-[#edf3fd] bg-[#fbfdff] p-3.5 sm:p-4 transition-all hover:-translate-y-0.5 hover:border-[#d5e3fb] hover:bg-white hover:shadow-[0_16px_36px_rgba(4,67,158,0.07)]"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <CategoryIcon className="w-5 h-5 text-primary" />
+                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,rgba(4,67,158,0.12),rgba(4,67,158,0.04))]">
+                        <CategoryIcon className="h-6 w-6 text-[#04439e]" />
                       </div>
+
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{product.title}</p>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                          <span>{product.product_mode === 'affiliate' ? 'Affiliation' : 'Direct'}</span>
-                          <span>•</span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-semibold text-[#0b1b33] sm:text-base">{product.title}</p>
+                          <Badge className="border-0 bg-[#eaf1fd] text-[11px] font-semibold text-[#04439e] shadow-none">
+                            {product.product_mode === 'affiliate' ? 'Affiliation' : 'Vente directe'}
+                          </Badge>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                           <span>{product.sales_count || 0} ventes</span>
                           <span>•</span>
                           <span>{product.views_count || 0} vues</span>
+                          <span>•</span>
+                          <span>{product.price > 0 ? `${fmtNum(product.price)} ${product.currency}` : 'Gratuit'}</span>
                         </div>
+                        <p className="mt-2 text-xs text-slate-400">
+                          Mis à jour {formatDistanceToNow(new Date(product.updated_at || product.created_at), { addSuffix: true, locale: fr })}
+                        </p>
                       </div>
-                      <Badge
-                        variant={product.status === 'published' ? 'default' : 'secondary'}
-                        className="text-[10px] flex-shrink-0"
-                      >
-                        {product.status === 'published' ? 'Publié' : product.status === 'draft' ? 'Brouillon' :
-                         product.status === 'rejected' ? 'Rejeté' : product.status === 'archived' ? 'Archivé' : product.status}
+
+                      <Badge className={['hidden sm:inline-flex flex-shrink-0 border-0 text-[11px] font-semibold shadow-none', statusClass].join(' ')}>
+                        {statusLabel}
                       </Badge>
                     </div>
                   );
@@ -325,40 +363,78 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Actions rapides</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vendeur-digital/add-product')}>
-                <Plus className="w-5 h-5 text-purple-600" />
-                <span className="text-xs">Ajouter un produit</span>
-              </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vendeur-digital/products')}>
-                <Laptop className="w-5 h-5 text-blue-600" />
-                <span className="text-xs">Mes produits</span>
-              </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vendeur-digital/affiliate')}>
-                <Link className="w-5 h-5 text-green-600" />
-                <span className="text-xs">Affiliation</span>
-              </Button>
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2" onClick={() => navigate('/vendeur-digital/wallet')}>
-                <DollarSign className="w-5 h-5 text-orange-600" />
-                <span className="text-xs">Portefeuille</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Card className="rounded-[28px] border-[#dde7fb] bg-white shadow-[0_22px_55px_rgba(4,67,158,0.06)]">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold text-[#0b1b33]">Vue business</CardTitle>
+              <CardDescription className="text-sm text-slate-500">Lecture rapide de l'état de votre activité digitale.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {secondaryMetrics.map((metric) => {
+                const Icon = metric.icon;
 
-        <RecentlyViewedProducts
-          title="Produits consultes recemment"
-          subtitle="Historique de navigation de vos dernieres consultations"
-          maxItems={6}
-        />
+                return (
+                  <div key={metric.label} className="rounded-[22px] border border-[#edf3fd] bg-[#fbfdff] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">{metric.label}</p>
+                        <p className="mt-2 text-2xl font-semibold text-[#0b1b33]">{metric.value}</p>
+                        <p className="mt-2 text-sm text-slate-500">{metric.note}</p>
+                      </div>
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f0f5fe]">
+                        <Icon className="h-5 w-5 text-[#04439e]" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[28px] border-[#dde7fb] bg-white shadow-[0_22px_55px_rgba(4,67,158,0.06)]">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold text-[#0b1b33]">Actions prioritaires</CardTitle>
+              <CardDescription className="text-sm text-slate-500">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                const primary = action.variant === 'primary';
+
+                return (
+                  <button
+                    key={action.label}
+                    type="button"
+                    onClick={action.onClick}
+                    className={[
+                      'group rounded-[22px] border p-4 text-left transition-all',
+                      primary
+                        ? 'border-[#ffcfbf] bg-[linear-gradient(135deg,rgba(255,64,0,0.12),rgba(255,255,255,1))] hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(255,64,0,0.12)]'
+                        : 'border-[#edf3fd] bg-[#fbfdff] hover:-translate-y-0.5 hover:border-[#d5e3fb] hover:bg-white hover:shadow-[0_16px_36px_rgba(4,67,158,0.07)]'
+                    ].join(' ')}
+                  >
+                    <div className={[
+                      'flex h-11 w-11 items-center justify-center rounded-2xl',
+                      primary ? 'bg-[#ff4000] text-white shadow-[0_12px_28px_rgba(255,64,0,0.22)]' : 'bg-[#eef4ff] text-[#04439e]'
+                    ].join(' ')}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <p className="mt-4 text-sm font-semibold text-[#0b1b33]">{action.label}</p>
+                    <p className="mt-1 text-sm text-slate-500">{action.description}</p>
+                  </button>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </TooltipProvider>
+
+      <RecentlyViewedProducts
+        title="Produits consultes recemment"
+        subtitle="Historique de navigation de vos dernieres consultations"
+        maxItems={6}
+      />
+    </div>
   );
 });
 

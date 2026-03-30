@@ -109,18 +109,20 @@ export default function DigitalVendorDashboard() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen w-full flex bg-gradient-to-br from-purple-50/30 via-white to-indigo-50/30 dark:from-background dark:via-background dark:to-background overflow-x-hidden">
+      <div className="min-h-screen w-full flex overflow-x-hidden bg-[radial-gradient(circle_at_top_left,_rgba(4,67,158,0.12),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(255,64,0,0.08),_transparent_24%),linear-gradient(180deg,_#ffffff_0%,_#f8fbff_52%,_#ffffff_100%)] dark:bg-background">
         <DigitalVendorSidebar />
 
         <div className="flex-1 flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">
           <DigitalVendorHeader displayName={displayName} onSignOut={handleSignOut} />
 
           <main
-            className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-auto overflow-y-auto pt-4 pb-24 md:pb-8 w-full max-w-full"
+            className="flex-1 overflow-x-auto overflow-y-auto px-3 pb-24 pt-5 sm:px-5 md:px-8 md:pb-10 md:pt-7 w-full max-w-full"
             role="main"
             aria-label="Dashboard vendeur digital"
           >
-            <DigitalVendorRoutes vendorId={vendorId} />
+            <div className="mx-auto w-full max-w-[1600px]">
+              <DigitalVendorRoutes vendorId={vendorId} />
+            </div>
           </main>
         </div>
       </div>

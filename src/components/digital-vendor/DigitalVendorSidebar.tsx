@@ -83,40 +83,56 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
 
   return (
     <Sidebar className={cn(
-      collapsed ? "w-12" : "w-52",
-      "border-r border-border/40 shadow-lg"
+      collapsed ? "w-[78px]" : "w-[290px]",
+      "border-r border-[#d9e5fb] bg-white/92 shadow-[0_20px_60px_rgba(4,67,158,0.08)] backdrop-blur-xl"
     )} collapsible="icon">
-      <ScrollArea className="h-full pr-4 overflow-visible">
-        <SidebarContent className="bg-gradient-to-b from-background via-background to-muted/20 py-2 pr-3 pb-96">
+      <ScrollArea className="h-full overflow-visible">
+        <SidebarContent className="bg-[linear-gradient(180deg,_rgba(4,67,158,0.05)_0%,_rgba(255,255,255,0.98)_18%,_rgba(255,255,255,1)_100%)] py-4 pr-0 pb-28">
           {/* Logo / Brand */}
-          {!collapsed && (
-            <div className="px-4 py-3 mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-lg flex items-center justify-center">
-                  <Laptop className="w-4 h-4 text-white" />
+          <div className={cn("px-3", collapsed ? "mb-3" : "mb-5")}>
+            <div className={cn(
+              "rounded-[24px] border border-[#d6e2f7] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.08)]",
+              collapsed ? "px-2 py-3" : "px-4 py-4"
+            )}>
+              <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-3")}>
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#04439e_0%,#0d5ed2_100%)] shadow-[0_10px_24px_rgba(4,67,158,0.28)]">
+                  <Laptop className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <h2 className="text-sm font-bold text-foreground">Digital Store</h2>
-                  <p className="text-[10px] text-muted-foreground">{publishedCount} produit{publishedCount !== 1 ? 's' : ''} publié{publishedCount !== 1 ? 's' : ''}</p>
-                </div>
+                {!collapsed && (
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-sm font-semibold tracking-[0.02em] text-[#0b1b33]">224Solutions Digital</h2>
+                    <p className="mt-1 text-xs text-slate-500">{publishedCount} produit{publishedCount !== 1 ? 's' : ''} publié{publishedCount !== 1 ? 's' : ''}</p>
+                  </div>
+                )}
               </div>
+              {!collapsed && (
+                <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl bg-[#f6f9ff] px-3 py-2.5">
+                  <div>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#6f89b7]">Catalogue actif</p>
+                    <p className="text-sm font-semibold text-[#04439e]">{products.length} références digitales</p>
+                  </div>
+                  <Badge className="border-0 bg-[#ff4000]/12 px-2.5 py-1 text-[11px] font-semibold text-[#ff4000] shadow-none">
+                    {affiliateCount} affiliés
+                  </Badge>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {menuSections.map((section, sectionIndex) => (
-            <SidebarGroup key={section.label} className="py-1">
+            <SidebarGroup key={section.label} className="py-1.5 px-2">
               {!collapsed && (
-                <SidebarGroupLabel className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest px-4 py-1.5 mb-1">
+                <SidebarGroupLabel className="px-4 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#6f89b7]">
                   {section.label}
                 </SidebarGroupLabel>
               )}
 
               {collapsed && sectionIndex > 0 && (
-                <div className="h-px bg-border/50 mx-2 my-2" />
+                <div className="mx-3 my-3 h-px bg-[#dce7fb]" />
               )}
 
               <SidebarGroupContent>
-                <SidebarMenu className="space-y-0.5 px-2">
+                <SidebarMenu className="space-y-1 px-1">
                   {section.items.map((item) => {
                     const active = isActive(item.path);
                     return (
@@ -129,19 +145,19 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
                             if (e.key === 'Enter' || e.key === ' ') handleNavigation(item.path);
                           }}
                           className={cn(
-                            "group relative flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 cursor-pointer select-none",
-                            "hover:bg-primary/10 hover:text-primary",
-                            active && "bg-primary/15 text-primary font-medium shadow-sm",
-                            collapsed && "justify-center px-1"
+                            "group relative flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-all duration-200 cursor-pointer select-none",
+                            "text-slate-600 hover:bg-[#f3f7ff] hover:text-[#04439e]",
+                            active && "bg-[linear-gradient(135deg,rgba(4,67,158,0.12),rgba(4,67,158,0.04))] text-[#04439e] font-semibold shadow-[inset_0_0_0_1px_rgba(4,67,158,0.14)]",
+                            collapsed && "justify-center px-2"
                           )}
                         >
                           <div className={cn(
-                            "flex items-center justify-center rounded-md w-5 h-5 transition-all flex-shrink-0",
-                            active && "bg-primary/10"
+                            "flex items-center justify-center rounded-xl w-9 h-9 transition-all flex-shrink-0",
+                            active ? "bg-[#04439e] text-white shadow-[0_10px_24px_rgba(4,67,158,0.20)]" : "bg-[#f5f8fe] text-[#6d7f9d] group-hover:bg-white"
                           )}>
                             <item.icon className={cn(
-                              "w-3.5 h-3.5 transition-colors",
-                              active ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                              "w-4 h-4 transition-colors",
+                              active ? "text-white" : "text-current"
                             )} />
                           </div>
 
@@ -149,7 +165,10 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
                             <>
                               <span className="flex-1 text-left leading-tight">{item.title}</span>
                               {item.badge && (
-                                <Badge variant="secondary" className="text-[10px] px-2 py-0.5 h-5 min-w-[24px] flex items-center justify-center flex-shrink-0">
+                                <Badge className={cn(
+                                  "h-6 min-w-[30px] flex items-center justify-center rounded-full border-0 px-2.5 py-0.5 text-[11px] font-semibold shadow-none",
+                                  active ? "bg-[#ff4000] text-white" : "bg-[#eaf1fd] text-[#04439e]"
+                                )}>
                                   {item.badge}
                                 </Badge>
                               )}
@@ -166,14 +185,14 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
 
           {/* Bouton retour accueil */}
           {!collapsed && (
-            <div className="px-4 mt-4">
+            <div className="px-3 mt-5">
               <div
                 role="button"
                 tabIndex={0}
                 onClick={() => navigate('/home')}
-                className="flex items-center gap-2 px-2 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-lg hover:bg-muted/50"
+                className="flex items-center gap-2 rounded-2xl border border-[#e4ecfb] bg-[#f8fbff] px-3 py-3 text-sm font-medium text-slate-600 transition-colors cursor-pointer hover:text-[#04439e] hover:bg-white"
               >
-                <Home className="w-3.5 h-3.5" />
+                <Home className="w-4 h-4" />
                 <span>Retour à l'accueil</span>
               </div>
             </div>

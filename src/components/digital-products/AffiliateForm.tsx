@@ -93,7 +93,7 @@ export function AffiliateForm({
   return (
     <div className="space-y-4">
       {/* Sélection du réseau d'affiliation */}
-      <Card>
+      <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Globe className="w-4 h-4 text-primary" />
@@ -135,7 +135,7 @@ export function AffiliateForm({
       </Card>
 
       {/* Lien d'affiliation */}
-      <Card>
+      <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Link2 className="w-4 h-4 text-primary" />
@@ -159,7 +159,7 @@ export function AffiliateForm({
                   placeholder={getUrlPlaceholder()}
                   className={cn(
                     'pr-10',
-                    urlValidationStatus === 'valid' && 'border-green-500 focus-visible:ring-green-500',
+                    urlValidationStatus === 'valid' && 'border-[#04439e] focus-visible:ring-[#04439e]',
                     urlValidationStatus === 'invalid' && 'border-destructive focus-visible:ring-destructive'
                   )}
                 />
@@ -168,7 +168,7 @@ export function AffiliateForm({
                     <RefreshCw className="w-4 h-4 text-muted-foreground animate-spin" />
                   )}
                   {urlValidationStatus === 'valid' && (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    <CheckCircle2 className="w-4 h-4 text-[#04439e]" />
                   )}
                   {urlValidationStatus === 'invalid' && (
                     <AlertCircle className="w-4 h-4 text-destructive" />
@@ -221,7 +221,7 @@ export function AffiliateForm({
       </Card>
 
       {/* Prix affiché au client */}
-      <Card>
+      <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Tag className="w-4 h-4 text-primary" />
@@ -265,7 +265,7 @@ export function AffiliateForm({
       </Card>
 
       {/* Informations sur les commissions */}
-      <Card>
+      <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <Percent className="w-4 h-4 text-primary" />
@@ -287,8 +287,8 @@ export function AffiliateForm({
                   className={cn(
                     'p-2 rounded-lg border cursor-pointer text-center transition-all',
                     data.commissionType === type.id
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                      ? 'border-[#cfe0fb] bg-[#f5f9ff]'
+                      : 'border-[#e8eef8] hover:border-[#cfe0fb]'
                   )}
                 >
                   <span className="text-xs font-medium">{type.label}</span>
@@ -344,7 +344,7 @@ export function AffiliateForm({
 
           {/* Info récurrent */}
           {data.commissionType === 'recurring' && (
-            <Alert>
+            <Alert className="border-[#dbe6fb] bg-[#f7fbff]">
               <TrendingUp className="w-4 h-4" />
               <AlertDescription className="text-xs">
                 Les commissions récurrentes sont versées chaque mois tant que le client reste abonné.
@@ -355,8 +355,8 @@ export function AffiliateForm({
       </Card>
 
       {/* Alerte informative */}
-      <Alert className="bg-primary/5 border-primary/20">
-        <ExternalLink className="w-4 h-4 text-primary" />
+      <Alert className="border-[#ffd9cc] bg-[#fff4ef]">
+        <ExternalLink className="w-4 h-4 text-[#ff4000]" />
         <AlertDescription className="text-xs text-muted-foreground">
           <strong className="text-foreground">Note :</strong> Les visiteurs seront redirigés vers votre lien d'affiliation. 
           Assurez-vous que votre lien est actif et correctement configuré sur la plateforme partenaire.
