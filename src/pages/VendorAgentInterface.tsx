@@ -376,15 +376,15 @@ export default function VendorAgentInterface() {
 
             {/* Mobile Content */}
             {activeTab === 'pos' ? (
-              <div className="flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
                 {renderTabContent()}
               </div>
             ) : (
-              <ScrollArea className="flex-1">
+              <div className="flex-1 overflow-y-auto overscroll-y-contain">
                 <div className="p-3 pb-20">
                   {renderTabContent()}
                 </div>
-              </ScrollArea>
+              </div>
             )}
 
             {/* Mobile Bottom Nav - Hidden when POS is active (POS has its own tabs) */}
@@ -449,11 +449,11 @@ export default function VendorAgentInterface() {
               </header>
 
               {/* Desktop Scrollable Content */}
-              <ScrollArea className="flex-1">
+              <div className="flex-1 overflow-y-auto">
                 <div className="p-6">
                   {renderTabContent()}
                 </div>
-              </ScrollArea>
+              </div>
             </main>
           </div>
         )}

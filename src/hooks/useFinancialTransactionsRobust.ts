@@ -227,26 +227,8 @@ export function useFinancialTransactionsRobust() {
       console.log('💳→📱 Lancement transfert carte vers Orange Money');
 
       // TODO: La Edge Function 'card-to-orange-money' n'est pas encore déployée
-      throw new Error('Le transfert carte → Orange Money est temporairement indisponible');
-
-      if (result?.success) {
-        toast.success(`✅ ${result.message}`);
-        await loadTransactions();
-        
-        // Émettre événement
-        window.dispatchEvent(new Event('wallet-updated'));
-        
-        return { 
-          success: true, 
-          transactionId: result.transactionId,
-          data: result 
-        };
-      } else {
-        const errorMsg = result?.message || 'Échec du transfert';
-        setLastError(errorMsg);
-        toast.error(`❌ ${errorMsg}`);
-        return { success: false, error: errorMsg };
-      }
+      toast.error('Le transfert carte → Orange Money est temporairement indisponible');
+      return { success: false, error: 'Service temporairement indisponible' };
 
     } catch (error: any) {
       console.error('Erreur transfert carte→OM:', error);

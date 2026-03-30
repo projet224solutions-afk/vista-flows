@@ -93,11 +93,11 @@ const showError = (rootElement: HTMLElement, error: unknown) => {
   hideLoader();
   const errorMessage = error instanceof Error ? error.message : 'Unknown error';
   const safeErrorMessage = errorMessage
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
   rootElement.innerHTML = `
     <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: #f8f9fa; font-family: system-ui, -apple-system, sans-serif;">
