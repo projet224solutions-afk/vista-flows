@@ -929,7 +929,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
               isLoading ||
               (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
             }
-            className="flex-1 h-10 sm:h-11 text-sm"
+            className="flex-1 h-24 sm:h-28 text-lg px-4 py-3"
           />
           <input
             ref={fileInputRef}
@@ -946,10 +946,10 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
               isLoading ||
               (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
             }
-            className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg"
+            className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg flex items-center justify-center"
             title="Ajouter une image"
           >
-            <ImagePlus className="h-4 w-4" />
+            <ImagePlus className="h-6 w-6" />
           </Button>
           <Button
             onClick={sendMessage}
@@ -959,12 +959,12 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
               (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
             }
             size="icon"
-            className={`h-10 w-10 sm:h-11 sm:w-11 bg-gradient-to-r ${roleColor} hover:opacity-90 rounded-lg`}
+            className={`h-20 w-20 sm:h-24 sm:w-24 bg-gradient-to-r ${roleColor} hover:opacity-90 rounded-lg flex items-center justify-center`}
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-6 w-6 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-6 w-6" />
             )}
           </Button>
           </div>
