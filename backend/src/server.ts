@@ -161,6 +161,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/pos', posRoutes);
 app.use('/api/affiliate', affiliateRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/payment-links', paymentLinksRoutes);
 
 // ==================== ERROR HANDLING ====================
 
