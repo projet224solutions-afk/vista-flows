@@ -1,12 +1,20 @@
 /**
  * 💳 HOOK: GESTION WALLET COMPLÈTE
  * Hook principal pour toutes les opérations wallet
+ * 
+ * ⚡ Phase 6: Migré depuis Edge Functions (wallet-operations) vers le backend Node.js
+ * Utilise backendFetch → /api/v2/wallet/* au lieu de supabase.functions.invoke('wallet-operations')
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import {
+  depositToWallet,
+  withdrawFromWallet,
+  transferToWallet,
+} from '@/services/walletBackendService';
 
 export interface WalletData {
   id: string;
@@ -87,7 +95,6 @@ export const useWallet = () => {
             const result = initResult as any;
             if (result.success) {
               console.log('✅ Wallet initialisé:', result);
-              // Recharger le wallet
               const { data: newWalletData } = await supabase
                 .from('wallets')
                 .select('*')
@@ -166,7 +173,7 @@ export const useWallet = () => {
     }
   }, [user?.id]);
 
-  // Dépôt
+  // Dépôt — via backend Node.js /api/v2/wallet/deposit
   const deposit = async (amount: number, method: string = 'card', metadata: any = {}) => {
     if (!wallet) {
       toast.error('Wallet non disponible');
@@ -176,23 +183,22 @@ export const useWallet = () => {
     setProcessing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'deposit',
-          amount,
-          description: metadata.description || 'Dépôt sur wallet'
-        }
-      });
+      const result = await depositToWallet(
+        amount,
+        metadata.description || 'Dépôt sur wallet',
+        metadata.reference
+      );
 
-      if (error) throw error;
+      if (!result.success) {
+        toast.error(result.error || 'Erreur lors du dépôt');
+        return false;
+      }
 
       toast.success(`Dépôt de ${amount.toLocaleString()} GNF réussi !`);
       await loadWallet();
       await loadTransactions();
       
-      // Émettre événement
       window.dispatchEvent(new Event('wallet-updated'));
-
       return true;
 
     } catch (error: any) {
@@ -204,7 +210,7 @@ export const useWallet = () => {
     }
   };
 
-  // Retrait
+  // Retrait — via backend Node.js /api/v2/wallet/withdraw
   const withdraw = async (amount: number, method: string = 'card', metadata: any = {}) => {
     if (!wallet) {
       toast.error('Wallet non disponible');
@@ -219,22 +225,21 @@ export const useWallet = () => {
     setProcessing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'withdraw',
-          amount,
-          description: metadata.description || 'Retrait de wallet'
-        }
-      });
+      const result = await withdrawFromWallet(
+        amount,
+        metadata.description || 'Retrait de wallet'
+      );
 
-      if (error) throw error;
+      if (!result.success) {
+        toast.error(result.error || 'Erreur lors du retrait');
+        return false;
+      }
 
       toast.success(`Retrait de ${amount.toLocaleString()} GNF réussi !`);
       await loadWallet();
       await loadTransactions();
       
       window.dispatchEvent(new Event('wallet-updated'));
-
       return true;
 
     } catch (error: any) {
@@ -246,7 +251,7 @@ export const useWallet = () => {
     }
   };
 
-  // Transfert P2P
+  // Transfert P2P — via backend Node.js /api/v2/wallet/transfer
   const transfer = async (
     recipientId: string,
     amount: number,
@@ -271,23 +276,22 @@ export const useWallet = () => {
     setProcessing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'transfer',
-          amount,
-          recipient_id: recipientId,
-          description
-        }
-      });
+      const result = await transferToWallet(
+        recipientId,
+        amount,
+        description || 'Transfert'
+      );
 
-      if (error) throw error;
+      if (!result.success) {
+        toast.error(result.error || 'Erreur lors du transfert');
+        return false;
+      }
 
       toast.success(`Transfert de ${amount.toLocaleString()} GNF réussi !`);
       await loadWallet();
       await loadTransactions();
       
       window.dispatchEvent(new Event('wallet-updated'));
-
       return true;
 
     } catch (error: any) {

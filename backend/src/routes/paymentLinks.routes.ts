@@ -1,0 +1,456 @@
+/**
+ * 🔗 PAYMENT LINKS ROUTES - Backend Node.js centralisé
+ *
+ * Migré depuis les Edge Functions: resolve-payment-link, process-payment-link
+ *
+ * Endpoints:
+ *   - POST /api/payment-links/resolve   — Résolution publique par token
+ *   - POST /api/payment-links/process   — Traitement du paiement (wallet/card/mobile money)
+ *
+ * Tables: payment_links, wallets, wallet_transactions, pdg_settings
+ */
+
+import { Router, Response, Request } from 'express';
+import { optionalJWT } from '../middlewares/auth.middleware.js';
+import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
+import { supabaseAdmin } from '../config/supabase.js';
+import { logger } from '../config/logger.js';
+import { creditWallet } from '../services/wallet.service.js';
+import { triggerAffiliateCommission } from '../services/commission.service.js';
+
+const router = Router();
+
+// ─────────────────────────────────────────────────────────
+// UTILS — Dynamic fee rates from pdg_settings
+// ─────────────────────────────────────────────────────────
+
+const DEFAULT_FEES: Record<string, number> = {
+  commission_achats: 5,
+  commission_services: 0.5,
+};
+
+async function getPdgFeeRate(settingKey: string): Promise<number> {
+  const defaultValue = DEFAULT_FEES[settingKey] ?? 0;
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('pdg_settings')
+      .select('setting_value')
+      .eq('setting_key', settingKey)
+      .maybeSingle();
+
+    if (error || !data) return defaultValue;
+
+    const raw = data.setting_value;
+    const rate = typeof raw === 'object' && raw !== null && 'value' in (raw as any)
+      ? Number((raw as any).value)
+      : Number(raw);
+
+    return isNaN(rate) || rate < 0 ? defaultValue : rate;
+  } catch {
+    return defaultValue;
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// POST /api/payment-links/resolve
+// Résolution publique d'un lien de paiement par token
+// Migré depuis resolve-payment-link Edge Function
+// ─────────────────────────────────────────────────────────
+
+router.post('/resolve', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+
+    if (!token || typeof token !== 'string' || token.length < 10) {
+      res.status(400).json({ success: false, error: 'Token invalide' });
+      return;
+    }
+
+    const { data: link, error } = await supabaseAdmin
+      .from('payment_links')
+      .select(`
+        id, token, payment_id, link_type, title, produit, description,
+        montant, gross_amount, platform_fee, net_amount, frais, total,
+        devise, status, expires_at, created_at, is_single_use, use_count,
+        payment_type, reference, owner_type, owner_user_id, vendeur_id,
+        product_id, service_id, customer_name, customer_email, customer_phone,
+        viewed_at, remise, type_remise
+      `)
+      .eq('token', token)
+      .maybeSingle();
+
+    if (error || !link) {
+      res.status(404).json({ success: false, error: 'Lien de paiement introuvable' });
+      return;
+    }
+
+    // Check expiry
+    if (link.status === 'pending' && link.expires_at && new Date(link.expires_at) < new Date()) {
+      await supabaseAdmin.from('payment_links').update({ status: 'expired' }).eq('id', link.id);
+      link.status = 'expired';
+    }
+
+    // Mark as viewed
+    if (!link.viewed_at && link.status === 'pending') {
+      await supabaseAdmin
+        .from('payment_links')
+        .update({ viewed_at: new Date().toISOString() })
+        .eq('id', link.id);
+    }
+
+    // Owner info
+    let ownerInfo: { name: string; avatar?: string; business_name?: string } = { name: '224SOLUTIONS' };
+
+    if (link.owner_user_id) {
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('first_name, last_name, avatar_url')
+        .eq('id', link.owner_user_id)
+        .maybeSingle();
+
+      if (profile) {
+        ownerInfo.name = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || '224SOLUTIONS';
+        ownerInfo.avatar = profile.avatar_url;
+      }
+    }
+
+    if (link.vendeur_id) {
+      const { data: vendor } = await supabaseAdmin
+        .from('vendors')
+        .select('business_name, logo_url')
+        .eq('id', link.vendeur_id)
+        .maybeSingle();
+
+      if (vendor) {
+        ownerInfo.business_name = vendor.business_name;
+        ownerInfo.avatar = vendor.logo_url || ownerInfo.avatar;
+      }
+    }
+
+    // Product/Service info
+    let productInfo = null;
+    if (link.product_id) {
+      const { data: product } = await supabaseAdmin
+        .from('products')
+        .select('name, description, images, price')
+        .eq('id', link.product_id)
+        .maybeSingle();
+      if (product) productInfo = product;
+    }
+
+    let serviceInfo = null;
+    if (link.service_id) {
+      const { data: service } = await supabaseAdmin
+        .from('professional_services')
+        .select('service_name, description, category')
+        .eq('id', link.service_id)
+        .maybeSingle();
+      if (service) serviceInfo = service;
+    }
+
+    res.json({
+      success: true,
+      link: {
+        id: link.id,
+        token: link.token,
+        linkType: link.link_type,
+        title: link.title || link.produit,
+        description: link.description,
+        amount: link.total || link.montant,
+        grossAmount: link.gross_amount || link.montant,
+        platformFee: link.platform_fee || link.frais,
+        netAmount: link.net_amount,
+        currency: link.devise,
+        status: link.status,
+        expiresAt: link.expires_at,
+        createdAt: link.created_at,
+        isSingleUse: link.is_single_use,
+        paymentType: link.payment_type,
+        reference: link.reference,
+        ownerType: link.owner_type,
+        remise: link.remise,
+        typeRemise: link.type_remise,
+      },
+      owner: ownerInfo,
+      product: productInfo,
+      service: serviceInfo,
+    });
+  } catch (err: any) {
+    logger.error(`[PaymentLinks] Resolve error: ${err.message}`);
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────
+// POST /api/payment-links/process
+// Traitement du paiement via lien unifié
+// Migré depuis process-payment-link Edge Function
+// ─────────────────────────────────────────────────────────
+
+router.post('/process', optionalJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id || null;
+    const {
+      token,
+      paymentMethod,
+      customerName,
+      customerEmail,
+      customerPhone,
+    } = req.body;
+
+    if (!token || !paymentMethod) {
+      res.status(400).json({ success: false, error: 'Token et méthode de paiement requis' });
+      return;
+    }
+
+    // 1. Fetch and validate link
+    const { data: link, error: linkError } = await supabaseAdmin
+      .from('payment_links')
+      .select('*')
+      .eq('token', token)
+      .maybeSingle();
+
+    if (linkError || !link) {
+      res.status(404).json({ success: false, error: 'Lien de paiement introuvable' });
+      return;
+    }
+
+    if (link.status !== 'pending') {
+      res.status(400).json({
+        success: false,
+        error: `Ce lien est déjà ${link.status === 'paid' || link.status === 'success' ? 'payé' : link.status}`
+      });
+      return;
+    }
+
+    if (link.expires_at && new Date(link.expires_at) < new Date()) {
+      await supabaseAdmin.from('payment_links').update({ status: 'expired' }).eq('id', link.id);
+      res.status(400).json({ success: false, error: 'Ce lien de paiement a expiré' });
+      return;
+    }
+
+    if (link.is_single_use && link.use_count > 0) {
+      res.status(400).json({ success: false, error: 'Ce lien a déjà été utilisé' });
+      return;
+    }
+
+    const payAmount = link.total || link.montant;
+    const ownerUserId = link.owner_user_id;
+
+    // Commission rate
+    const feeKey = link.link_type === 'service' ? 'commission_services' : 'commission_achats';
+    const commissionRate = await getPdgFeeRate(feeKey);
+    const platformFee = Math.round(payAmount * (commissionRate / 100));
+    const netAmount = payAmount - platformFee;
+
+    logger.info(`[PaymentLinks] Process: token=${token}, method=${paymentMethod}, amount=${payAmount}, fee=${platformFee}`);
+
+    // ──────── WALLET PAYMENT ────────
+    if (paymentMethod === 'wallet') {
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Connexion requise pour payer avec le wallet' });
+        return;
+      }
+
+      // Buyer wallet
+      const { data: buyerWallet } = await supabaseAdmin
+        .from('wallets')
+        .select('id, balance, currency')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!buyerWallet) {
+        res.status(400).json({ success: false, error: 'Wallet introuvable' });
+        return;
+      }
+
+      if (buyerWallet.balance < payAmount) {
+        res.status(400).json({
+          success: false,
+          error: 'Solde insuffisant',
+          currentBalance: buyerWallet.balance,
+          required: payAmount,
+        });
+        return;
+      }
+
+      // Debit buyer (optimistic lock)
+      const { data: debitResult, error: debitError } = await supabaseAdmin
+        .from('wallets')
+        .update({ balance: buyerWallet.balance - payAmount, updated_at: new Date().toISOString() })
+        .eq('id', buyerWallet.id)
+        .eq('balance', buyerWallet.balance)
+        .select('balance')
+        .single();
+
+      if (debitError || !debitResult) {
+        res.status(409).json({ success: false, error: 'Solde modifié pendant la transaction. Réessayez.' });
+        return;
+      }
+
+      // Credit seller
+      let walletTxId: string | null = null;
+      if (ownerUserId) {
+        const { data: sellerWallet } = await supabaseAdmin
+          .from('wallets')
+          .select('id, balance')
+          .eq('user_id', ownerUserId)
+          .maybeSingle();
+
+        if (sellerWallet) {
+          await supabaseAdmin
+            .from('wallets')
+            .update({ balance: sellerWallet.balance + netAmount, updated_at: new Date().toISOString() })
+            .eq('id', sellerWallet.id);
+
+          const txId = `PLK-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+          walletTxId = txId;
+
+          await supabaseAdmin.from('wallet_transactions').insert({
+            transaction_id: txId,
+            sender_wallet_id: buyerWallet.id,
+            receiver_wallet_id: sellerWallet.id,
+            sender_user_id: userId,
+            receiver_user_id: ownerUserId,
+            amount: payAmount,
+            fee: platformFee,
+            net_amount: netAmount,
+            currency: link.devise || 'GNF',
+            transaction_type: 'payment' as any,
+            status: 'completed' as any,
+            description: `Paiement lien: ${link.title || link.produit}`,
+            reference_id: link.payment_id,
+            metadata: {
+              payment_link_id: link.id,
+              link_type: link.link_type,
+              commission_rate: commissionRate,
+              source: 'backend-node',
+            },
+          });
+        }
+      }
+
+      // Update link
+      await supabaseAdmin.from('payment_links').update({
+        status: 'success',
+        paid_at: new Date().toISOString(),
+        payment_method: 'wallet',
+        transaction_id: walletTxId,
+        customer_name: customerName || null,
+        customer_email: customerEmail || null,
+        customer_phone: customerPhone || null,
+        use_count: (link.use_count || 0) + 1,
+        platform_fee: platformFee,
+        net_amount: netAmount,
+        gross_amount: payAmount,
+        wallet_credit_status: 'credited',
+        wallet_transaction_id: walletTxId,
+      }).eq('id', link.id);
+
+      // Trigger affiliate commissions
+      if (userId) {
+        await triggerAffiliateCommission(userId, payAmount, 'payment_link', walletTxId || link.id);
+      }
+
+      logger.info(`[PaymentLinks] Wallet payment completed: txId=${walletTxId}, net=${netAmount}`);
+
+      res.json({
+        success: true,
+        paymentMethod: 'wallet',
+        transactionId: walletTxId,
+        amount: payAmount,
+        platformFee,
+        netAmount,
+      });
+      return;
+    }
+
+    // ──────── CARD PAYMENT (Stripe) ────────
+    if (paymentMethod === 'card') {
+      const stripeKey = process.env.STRIPE_SECRET_KEY;
+      if (!stripeKey) {
+        res.status(500).json({ success: false, error: 'Paiement par carte non disponible' });
+        return;
+      }
+
+      // Dynamic import of Stripe
+      const { default: Stripe } = await import('stripe');
+      const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' as any });
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(payAmount),
+        currency: (link.devise || 'gnf').toLowerCase(),
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          payment_link_id: link.id,
+          payment_link_token: token,
+          link_type: link.link_type,
+          owner_user_id: ownerUserId || '',
+          platform_fee: platformFee.toString(),
+          net_amount: netAmount.toString(),
+          customer_name: customerName || '',
+          customer_email: customerEmail || '',
+        },
+      });
+
+      await supabaseAdmin.from('payment_links').update({
+        payment_method: 'card',
+        transaction_id: paymentIntent.id,
+        customer_name: customerName || null,
+        customer_email: customerEmail || null,
+        customer_phone: customerPhone || null,
+        platform_fee: platformFee,
+        net_amount: netAmount,
+        gross_amount: payAmount,
+        wallet_credit_status: 'pending_settlement',
+      }).eq('id', link.id);
+
+      res.json({
+        success: true,
+        paymentMethod: 'card',
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+        amount: payAmount,
+      });
+      return;
+    }
+
+    // ──────── MOBILE MONEY ────────
+    if (paymentMethod === 'orange_money' || paymentMethod === 'mtn_momo') {
+      if (!customerPhone) {
+        res.status(400).json({ success: false, error: 'Numéro de téléphone requis pour Mobile Money' });
+        return;
+      }
+
+      await supabaseAdmin.from('payment_links').update({
+        payment_method: paymentMethod,
+        customer_name: customerName || null,
+        customer_email: customerEmail || null,
+        customer_phone: customerPhone,
+        platform_fee: platformFee,
+        net_amount: netAmount,
+        gross_amount: payAmount,
+        wallet_credit_status: 'pending_settlement',
+      }).eq('id', link.id);
+
+      res.json({
+        success: true,
+        paymentMethod,
+        requiresExternalPayment: true,
+        amount: payAmount,
+        currency: link.devise || 'GNF',
+        linkId: link.id,
+        linkToken: token,
+        message: 'Initiez le paiement Mobile Money',
+      });
+      return;
+    }
+
+    res.status(400).json({ success: false, error: 'Méthode de paiement non supportée' });
+  } catch (err: any) {
+    logger.error(`[PaymentLinks] Process error: ${err.message}`);
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
+  }
+});
+
+export default router;

@@ -60,16 +60,15 @@ export class VendorPaymentService {
         };
       }
 
-      // Appeler l'edge function pour le paiement
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'pay',
-          userId: customerId,
-          amount: amount,
-          description: `Paiement commande ${orderId}`,
-          metadata: { orderId }
-        }
-      });
+      // Paiement via backend Node.js
+      const { withdrawFromWallet } = await import('@/services/walletBackendService');
+      const result = await withdrawFromWallet(amount, `Paiement commande ${orderId}`);
+
+      if (!result.success) {
+        return { success: false, error: result.error || 'Erreur lors du paiement' };
+      }
+
+      const data = result;
 
       if (error) throw error;
 

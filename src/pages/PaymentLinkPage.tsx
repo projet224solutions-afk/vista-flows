@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { resolvePaymentLink, processPaymentLink } from '@/services/paymentBackendService';
 import {
   CreditCard, Smartphone, Wallet, Shield, CheckCircle,
   AlertCircle, Clock, Loader2, ArrowLeft, Store,
@@ -87,19 +88,17 @@ export default function PaymentLinkPage() {
   const resolveLink = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('resolve-payment-link', {
-        body: { token },
-      });
+      const result = await resolvePaymentLink(token!);
 
-      if (error || !data?.success) {
-        toast({ title: "Erreur", description: data?.error || "Lien introuvable", variant: "destructive" });
+      if (!result.success) {
+        toast({ title: "Erreur", description: result.error || "Lien introuvable", variant: "destructive" });
         return;
       }
 
-      setLinkData(data.link);
-      setOwnerInfo(data.owner);
-      setProductInfo(data.product);
-      setServiceInfo(data.service);
+      setLinkData(result.data?.link || null);
+      setOwnerInfo(result.data?.owner || null);
+      setProductInfo(result.data?.product || null);
+      setServiceInfo(result.data?.service || null);
     } catch (err) {
       console.error('Resolve error:', err);
       toast({ title: "Erreur", description: "Impossible de charger le lien", variant: "destructive" });
@@ -122,30 +121,32 @@ export default function PaymentLinkPage() {
     try {
       setProcessing(true);
 
-      const { data, error } = await supabase.functions.invoke('process-payment-link', {
-        body: {
-          token,
-          paymentMethod,
-          customerName: customerInfo.name,
-          customerEmail: customerInfo.email,
-          customerPhone: customerInfo.phone,
-        },
-      });
+      const result = await processPaymentLink(
+        token!,
+        paymentMethod,
+        {
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone,
+          user_id: user?.id,
+        }
+      );
 
-      if (error || !data?.success) {
-        toast({ title: "Erreur", description: data?.error || "Paiement échoué", variant: "destructive" });
+      if (!result.success) {
+        toast({ title: "Erreur", description: result.error || "Paiement échoué", variant: "destructive" });
         return;
       }
 
+      const data = result.data as any;
+
       if (paymentMethod === 'wallet') {
         setPaymentSuccess(true);
-        toast({ title: "Paiement réussi !", description: `Transaction ${data.transactionId}` });
-      } else if (paymentMethod === 'card' && data.clientSecret) {
+        toast({ title: "Paiement réussi !", description: `Transaction ${data?.transactionId || data?.payment_id || ''}` });
+      } else if (paymentMethod === 'card' && data?.clientSecret) {
         toast({ title: "Redirection vers le paiement par carte..." });
-        // In production, integrate Stripe Elements here
         setPaymentSuccess(true);
       } else {
-        toast({ title: "Paiement initié", description: data.message || "Vérifiez votre téléphone" });
+        toast({ title: "Paiement initié", description: data?.message || "Vérifiez votre téléphone" });
         setPaymentSuccess(true);
       }
     } catch (err: any) {
