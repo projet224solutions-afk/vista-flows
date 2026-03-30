@@ -70,15 +70,6 @@ export class VendorPaymentService {
 
       const data = result;
 
-      if (error) throw error;
-
-      if (!data?.success) {
-        return {
-          success: false,
-          error: data?.error || 'Erreur lors du paiement'
-        };
-      }
-
       // Mettre à jour le statut de paiement de la commande
       const { error: updateError } = await supabase
         .from('orders')
