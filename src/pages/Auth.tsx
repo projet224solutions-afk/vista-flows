@@ -805,7 +805,7 @@ export default function Auth() {
               custom_id: userCustomId,
               cognito_user_id: undefined,
               business_name: validatedData.role === 'vendeur' ? (formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`) : null,
-              service_type: validatedData.role === 'vendeur' ? selectedServiceType : null
+              service_type: validatedData.role === 'prestataire' ? selectedServiceType : null
             },
             emailRedirectTo: `${window.location.origin}/`
           }
