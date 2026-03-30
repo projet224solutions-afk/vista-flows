@@ -160,12 +160,20 @@ export const useVendorAnalytics = () => {
         .sort((a, b) => b.sales - a.sales)
         .slice(0, 5);
 
-      // Récupérer le nombre de produits actifs
-      const { count: activeProductsCount } = await supabase
+      // Récupérer le nombre de produits actifs (physiques + numériques)
+      const { count: activePhysicalCount } = await supabase
         .from('products')
         .select('id', { count: 'exact', head: true })
         .eq('vendor_id', vendorId)
         .eq('is_active', true);
+
+      const { count: activeDigitalCount } = await supabase
+        .from('digital_products')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendor_id', vendorId)
+        .eq('status', 'published');
+
+      const activeProductsCount = (activePhysicalCount || 0) + (activeDigitalCount || 0);
 
       const todayAnalytics: VendorAnalytics = {
         date: today,
@@ -188,7 +196,7 @@ export const useVendorAnalytics = () => {
         week: weekData,
         month: monthData,
         topProducts,
-        activeProductsCount: activeProductsCount || 0
+        activeProductsCount: activeProductsCount
       });
     } catch (error) {
       console.error('Erreur chargement analytics:', error);
