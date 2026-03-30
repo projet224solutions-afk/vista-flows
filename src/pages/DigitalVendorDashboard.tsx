@@ -144,11 +144,11 @@ export default function DigitalVendorDashboard() {
           <DigitalVendorHeader displayName={displayName} onSignOut={handleSignOut} />
 
           <main
-            className="flex-1 overflow-x-auto overflow-y-auto px-3 pb-24 pt-5 sm:px-5 md:px-8 md:pb-10 md:pt-7 w-full max-w-full"
+            className="flex-1 w-full max-w-full overflow-x-hidden overflow-y-auto overscroll-x-none px-3 pb-24 pt-5 sm:px-5 md:px-8 md:pb-10 md:pt-7"
             role="main"
             aria-label="Dashboard vendeur digital"
           >
-            <div className="mx-auto w-full max-w-[1600px]">
+            <div className="mx-auto w-full max-w-[1600px] min-w-0 overflow-x-hidden">
               <DigitalVendorRoutes vendorId={vendorId} />
             </div>
           </main>

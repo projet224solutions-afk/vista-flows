@@ -210,7 +210,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
   ];
 
   return (
-    <div className="space-y-5 sm:space-y-8">
+    <div className="min-w-0 space-y-5 overflow-x-hidden sm:space-y-8">
       <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#04439e_0%,#0536a8_55%,#0b1b33_100%)] shadow-[0_28px_65px_rgba(4,67,158,0.30)]">
         <CardContent className="p-4 sm:p-7 lg:p-8">
           <div className="flex flex-col gap-4 sm:gap-6 xl:flex-row xl:items-end xl:justify-between">
@@ -292,7 +292,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         })}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr] xl:items-start">
+      <div className="grid min-w-0 gap-4 xl:grid-cols-[1.35fr_0.95fr] xl:items-start">
         <Card className="rounded-[28px] border border-gray-100 bg-white shadow-[0_22px_55px_rgba(0,0,0,0.08)]">
           <CardHeader className="border-b border-gray-100 pb-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -379,23 +379,23 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
-          <Card className="rounded-[28px] border-0 bg-[linear-gradient(135deg,#0536a8_0%,#04439e_100%)] shadow-[0_22px_55px_rgba(4,67,158,0.25)]">
+        <div className="min-w-0 space-y-4">
+          <Card className="overflow-hidden rounded-[28px] border-0 bg-[linear-gradient(135deg,#0536a8_0%,#04439e_100%)] shadow-[0_22px_55px_rgba(4,67,158,0.25)]">
             <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
               <CardTitle className="text-base sm:text-xl font-semibold text-white">Vue business</CardTitle>
               <CardDescription className="text-xs sm:text-sm text-white/55">Lecture rapide de l'état de votre activité digitale.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-1 px-4 sm:px-6 pb-4 sm:pb-6">
+            <CardContent className="grid min-w-0 grid-cols-2 gap-2.5 px-4 pb-4 sm:grid-cols-1 sm:gap-3 sm:px-6 sm:pb-6">
               {secondaryMetrics.map((metric) => {
                 const Icon = metric.icon;
 
                 return (
-                  <div key={metric.label} className="rounded-[18px] sm:rounded-[22px] border border-white/12 bg-white/10 p-3 sm:p-4">
+                  <div key={metric.label} className="min-w-0 rounded-[18px] border border-white/12 bg-white/10 p-3 sm:rounded-[22px] sm:p-4">
                     <div className="flex items-start justify-between gap-2 sm:gap-3">
                       <div className="min-w-0">
-                        <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] sm:tracking-[0.18em] text-white/50">{metric.label}</p>
-                        <p className="mt-1.5 text-xl sm:text-2xl font-semibold text-white">{metric.value}</p>
-                        <p className="mt-1 text-[11px] sm:text-sm text-white/50 leading-tight">{metric.note}</p>
+                        <p className="break-words text-[9px] font-semibold uppercase tracking-[0.12em] text-white/50 sm:text-[11px] sm:tracking-[0.18em]">{metric.label}</p>
+                        <p className="mt-1.5 break-words text-lg font-semibold text-white sm:text-2xl">{metric.value}</p>
+                        <p className="mt-1 break-words text-[11px] leading-tight text-white/50 sm:text-sm">{metric.note}</p>
                       </div>
                       <div className="flex h-8 w-8 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-white/15 flex-shrink-0">
                         <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
@@ -407,12 +407,12 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[28px] border-0 bg-[#0b1b33] shadow-[0_22px_55px_rgba(4,67,158,0.28)]">
+          <Card className="overflow-hidden rounded-[28px] border-0 bg-[#0b1b33] shadow-[0_22px_55px_rgba(4,67,158,0.28)]">
             <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
               <CardTitle className="text-base sm:text-xl font-semibold text-white">Actions prioritaires</CardTitle>
               <CardDescription className="text-xs sm:text-sm text-white/50">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2.5 sm:gap-3 px-4 sm:px-6 pb-4 sm:pb-6">
+            <CardContent className="grid min-w-0 grid-cols-2 gap-2.5 px-4 pb-4 sm:gap-3 sm:px-6 sm:pb-6">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 const primary = action.variant === 'primary';
@@ -423,7 +423,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                     type="button"
                     onClick={action.onClick}
                     className={[
-                      'group rounded-[18px] sm:rounded-[22px] border p-3 sm:p-4 text-left transition-all',
+                      'group min-w-0 overflow-hidden rounded-[18px] border p-3 text-left transition-all sm:rounded-[22px] sm:p-4',
                       primary
                         ? 'border-[#ff4000]/35 bg-[#ff4000]/12 hover:-translate-y-0.5 hover:bg-[#ff4000]/20 hover:shadow-[0_16px_36px_rgba(255,64,0,0.18)]'
                         : 'border-white/12 bg-white/6 hover:-translate-y-0.5 hover:bg-white/12 hover:border-white/22 hover:shadow-[0_16px_36px_rgba(4,67,158,0.15)]'
@@ -435,8 +435,8 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                     ].join(' ')}>
                       <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <p className="mt-2.5 sm:mt-4 text-xs sm:text-sm font-semibold text-white leading-tight">{action.label}</p>
-                    <p className="mt-1 text-[11px] sm:text-sm text-white/50 leading-tight">{action.description}</p>
+                    <p className="mt-2.5 break-words text-xs font-semibold leading-tight text-white sm:mt-4 sm:text-sm">{action.label}</p>
+                    <p className="mt-1 break-words text-[11px] leading-tight text-white/50 sm:text-sm">{action.description}</p>
                   </button>
                 );
               })}
