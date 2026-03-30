@@ -88,21 +88,6 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const quickSuggestions = userRole === 'vendeur'
-    ? [
-        'Analyse ma boutique et donne 3 priorites',
-        'Comment augmenter mes ventes cette semaine ?',
-        'Trouve des opportunites business sur la plateforme',
-        'Donne-moi des actions pour mes produits les moins performants',
-      ]
-    : [
-        'Trouver un produit',
-        'Comment acheter ?',
-        'Comment vendre ici ?',
-        'Quelles opportunites business ?',
-        'Trouver un service proche et fiable',
-      ];
-
   const detectIntent = (text: string): string => {
     const query = text.toLowerCase().trim();
     if (!query) return 'conversation_simple';
@@ -716,7 +701,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       <Separator />
 
       <CardContent className="flex-1 p-0 overflow-hidden min-h-0">
-        <ScrollArea className="h-full px-4 py-6 sm:px-8 sm:py-8">
+        <ScrollArea className="h-full px-5 py-6 sm:px-10 sm:py-8">
           <div className="space-y-6 sm:space-y-8">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
@@ -811,7 +796,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
                   )}
 
                   <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6 sm:mb-8`}>
-                    <div className={`flex items-start gap-3 sm:gap-4 max-w-[85%] sm:max-w-[80%] ${isUser ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-start gap-3 sm:gap-4 max-w-[92%] sm:max-w-[88%] ${isUser ? 'flex-row-reverse' : ''}`}>
                       <Avatar className={`h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 ${isUser ? 'bg-primary' : 'bg-gradient-to-br from-primary to-secondary'}`}>
                         {isUser ? (
                           <AvatarFallback>
@@ -882,7 +867,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
 
       <Separator />
 
-      <div className="px-4 py-6 sm:px-8 sm:py-8 bg-card">
+      <div className="mt-auto sticky bottom-0 px-4 py-4 sm:px-8 sm:py-5 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
         {userRole === 'vendeur' && vendorAccess.hasVendor === false && (
           <div className="mb-4 rounded-lg border border-border bg-muted/50 p-4 text-sm sm:text-base">
             <div className="font-medium">Accès vendeur requis</div>
@@ -946,10 +931,10 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
               isLoading ||
               (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
             }
-            className="h-20 w-20 sm:h-24 sm:w-24 rounded-lg flex items-center justify-center"
+            className="h-12 w-12 sm:h-14 sm:w-14 rounded-lg flex items-center justify-center"
             title="Ajouter une image"
           >
-            <ImagePlus className="h-6 w-6" />
+            <ImagePlus className="h-5 w-5" />
           </Button>
           <Button
             onClick={sendMessage}
@@ -969,21 +954,6 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
           </Button>
           </div>
 
-          <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8">
-            {quickSuggestions.map((suggestion) => (
-              <Button
-                key={suggestion}
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-10 sm:h-12 text-xs sm:text-sm px-4 py-2"
-                onClick={() => setInput(suggestion)}
-                disabled={isLoading}
-              >
-                {suggestion}
-              </Button>
-            ))}
-          </div>
         </div>
 
         <div className="mt-4 text-sm sm:text-base text-muted-foreground text-center hidden sm:block">
