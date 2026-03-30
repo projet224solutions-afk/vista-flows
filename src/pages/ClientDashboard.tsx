@@ -18,6 +18,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useCart } from "@/contexts/CartContext";
 import { useClientStats } from "@/hooks/useClientStats";
+import { useAffiliateModule } from "@/hooks/useAffiliateModule";
 
 // Lazy loading des composants lourds
 const ProductCard = lazy(() => import("@/components/ProductCard"));
@@ -42,6 +43,7 @@ export default function ClientDashboard() {
   const navigate = useNavigate();
   const responsive = useResponsive();
   const { t } = useTranslation();
+  const { isAffiliateEnabled } = useAffiliateModule();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -191,7 +193,14 @@ export default function ClientDashboard() {
                     <UserIdDisplay layout="horizontal" showBadge={true} className="text-xs" />
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground hidden sm:block">Marketplace</p>
+                <div className="hidden sm:flex items-center gap-2">
+                  <p className="text-xs text-muted-foreground">Marketplace</p>
+                  {isAffiliateEnabled && (
+                    <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                      {t('client.affiliateActiveBadge')}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -293,7 +302,7 @@ export default function ClientDashboard() {
               </TabsTrigger>
               <TabsTrigger value="affiliate" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <HandCoins className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
-                {responsive.isMobile ? 'Affil' : 'Affiliation'}
+                {responsive.isMobile ? t('client.tabAffiliateShort') : t('client.tabAffiliate')}
               </TabsTrigger>
               <TabsTrigger value="settings" className={`data-[state=active]:bg-client-primary data-[state=active]:text-white ${responsive.isMobile ? 'text-xs px-3' : ''}`}>
                 <Settings className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} mr-1 md:mr-2`} />
@@ -369,15 +378,18 @@ export default function ClientDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <HandCoins className="w-5 h-5 text-client-primary" />
-                  Gagner avec l'affiliation
+                  {t('client.affiliateEarnTitle')}
                 </CardTitle>
                 <CardDescription>
-                  Activez votre module affilié sans perdre vos fonctionnalités client.
+                  {t('client.affiliateEarnDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button onClick={() => navigate('/affiliate/activation')} className="bg-client-primary hover:bg-client-primary/90">
-                  Activer l'affiliation
+                <Button
+                  onClick={() => navigate(isAffiliateEnabled ? '/affiliate/dashboard' : '/affiliate/activation')}
+                  className="bg-client-primary hover:bg-client-primary/90"
+                >
+                  {isAffiliateEnabled ? t('client.affiliateOpenSpace') : t('client.affiliateActivate')}
                 </Button>
               </CardContent>
             </Card>
@@ -550,18 +562,18 @@ export default function ClientDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <HandCoins className="w-5 h-5 text-client-primary" />
-                  Espace Affiliation
+                  {t('client.affiliateSpaceTitle')}
                 </CardTitle>
                 <CardDescription>
-                  Devenez affilié, promouvez des offres et suivez vos commissions sans changer de compte.
+                  {t('client.affiliateSpaceDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button onClick={() => navigate('/affiliate/activation')} className="bg-client-primary hover:bg-client-primary/90">
-                  Devenir affilié
+                  {t('client.affiliateBecome')}
                 </Button>
                 <Button variant="outline" onClick={() => navigate('/affiliate/dashboard')}>
-                  Ouvrir mon espace affilié
+                  {t('client.affiliateOpenSpace')}
                 </Button>
               </CardContent>
             </Card>

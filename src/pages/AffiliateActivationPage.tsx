@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabaseClient';
 import { useAffiliateModule } from '@/hooks/useAffiliateModule';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 
 interface PlanLite {
@@ -20,12 +21,17 @@ interface PlanLite {
 export default function AffiliateActivationPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const {
     loading,
     hasActiveSubscription,
+    hasEligibleActiveSubscription,
+    requiresDedicatedAffiliatePlan,
+    activeSubscriptionPlanName,
     isAffiliateEnabled,
     activateWithExistingSubscription,
     subscribeAndActivate,
+    isDedicatedAffiliatePlan,
   } = useAffiliateModule();
 
   const [plans, setPlans] = useState<PlanLite[]>([]);
@@ -54,6 +60,8 @@ export default function AffiliateActivationPage() {
   }, []);
 
   const monthlyPlans = useMemo(() => plans.filter((p) => p.name !== 'free'), [plans]);
+  const dedicatedPlans = useMemo(() => monthlyPlans.filter((p) => isDedicatedAffiliatePlan(p)), [isDedicatedAffiliatePlan, monthlyPlans]);
+  const plansToDisplay = dedicatedPlans.length > 0 ? dedicatedPlans : monthlyPlans;
 
   const formatPrice = (amount: number) => `${amount.toLocaleString('fr-FR')} GNF`;
 
@@ -61,10 +69,10 @@ export default function AffiliateActivationPage() {
     setActivating(true);
     try {
       await activateWithExistingSubscription();
-      toast.success('Module affilié activé avec succès');
+      toast.success(t('affiliate.activation.successActivated'));
       navigate('/affiliate/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'Activation impossible');
+      toast.error(error.message || t('affiliate.activation.errorActivationImpossible'));
     } finally {
       setActivating(false);
     }
@@ -72,17 +80,17 @@ export default function AffiliateActivationPage() {
 
   const handleSubscribePlan = async (plan: PlanLite) => {
     if (!user?.id) {
-      toast.error('Veuillez vous connecter');
+      toast.error(t('affiliate.activation.loginRequired'));
       return;
     }
 
     setSubscribingPlanId(plan.id);
     try {
       await subscribeAndActivate(plan.id, 'monthly');
-      toast.success('Abonnement confirmé et module affilié activé');
+      toast.success(t('affiliate.activation.successSubscribed'));
       navigate('/affiliate/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'Souscription impossible');
+      toast.error(error.message || t('affiliate.activation.errorSubscriptionImpossible'));
     } finally {
       setSubscribingPlanId(null);
     }
@@ -96,8 +104,8 @@ export default function AffiliateActivationPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Activer l'affiliation</h1>
-            <p className="text-muted-foreground text-sm">Gardez votre compte client et ajoutez un module de revenus affiliés.</p>
+            <h1 className="text-2xl font-bold">{t('affiliate.activation.title')}</h1>
+            <p className="text-muted-foreground text-sm">{t('affiliate.activation.subtitle')}</p>
           </div>
         </div>
 
@@ -105,41 +113,49 @@ export default function AffiliateActivationPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              Programme d'affiliation
+              {t('affiliate.activation.programTitle')}
             </CardTitle>
             <CardDescription>
-              Fonctionnement: partagez vos liens, générez des ventes, recevez des commissions dans votre wallet.
+              {t('affiliate.activation.programDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600" /> Tableau de bord affilié dédié</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600" /> Produits à promouvoir et liens personnels</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600" /> Statistiques et suivi des commissions</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600" /> Aucune perte de vos données client (wallet, commandes, profil, historique)</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600" /> {t('affiliate.activation.benefit1')}</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600" /> {t('affiliate.activation.benefit2')}</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600" /> {t('affiliate.activation.benefit3')}</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600" /> {t('affiliate.activation.benefit4')}</div>
           </CardContent>
         </Card>
+
+        {requiresDedicatedAffiliatePlan && (
+          <Card className="border-amber-300/40 bg-amber-50/50">
+            <CardContent className="p-4 text-sm text-amber-800">
+              {t('affiliate.activation.dedicatedOnlyNotice')}
+            </CardContent>
+          </Card>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ) : hasActiveSubscription ? (
+        ) : hasActiveSubscription && hasEligibleActiveSubscription ? (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Wallet className="h-5 w-5 text-primary" />
-                Vous avez déjà un abonnement actif
+                {t('affiliate.activation.activeSubTitle')}
               </CardTitle>
               <CardDescription>
-                Vous pouvez activer immédiatement le module affilié sans changer votre rôle client.
+                {t('affiliate.activation.activeSubDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button onClick={handleActivate} disabled={activating} className="w-full sm:w-auto">
                 {activating ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Activation...</>
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('affiliate.activation.activating')}</>
                 ) : (
-                  'Activer maintenant'
+                  t('affiliate.activation.activateNow')
                 )}
               </Button>
             </CardContent>
@@ -149,23 +165,28 @@ export default function AffiliateActivationPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5 text-amber-500" />
-                Condition d'activation: abonnement
+                {t('affiliate.activation.conditionTitle')}
               </CardTitle>
               <CardDescription>
-                Choisissez un abonnement compatible pour débloquer l'espace affilié.
+                {t('affiliate.activation.conditionDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {monthlyPlans.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun plan disponible pour le moment.</p>
+              {hasActiveSubscription && !hasEligibleActiveSubscription && (
+                <p className="text-sm text-amber-700">
+                  {t('affiliate.activation.ineligibleActivePlan').replace('{plan}', activeSubscriptionPlanName || '-')}
+                </p>
+              )}
+              {plansToDisplay.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t('affiliate.activation.noPlans')}</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {monthlyPlans.map((plan) => (
+                  {plansToDisplay.map((plan) => (
                     <Card key={plan.id} className="border-border">
                       <CardContent className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <h3 className="font-semibold">{plan.display_name}</h3>
-                          <Badge variant="outline">Mensuel</Badge>
+                          <Badge variant="outline">{t('affiliate.activation.monthly')}</Badge>
                         </div>
                         <p className="text-xl font-bold text-primary">{formatPrice(plan.monthly_price_gnf)}</p>
                         <Button
@@ -174,9 +195,9 @@ export default function AffiliateActivationPage() {
                           disabled={subscribingPlanId === plan.id}
                         >
                           {subscribingPlanId === plan.id ? (
-                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Traitement...</>
+                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('affiliate.activation.processing')}</>
                           ) : (
-                            'Souscrire et activer'
+                            t('affiliate.activation.subscribeAndActivate')
                           )}
                         </Button>
                       </CardContent>
