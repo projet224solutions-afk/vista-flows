@@ -498,6 +498,10 @@ function App() {
                 element={<PaymentPage />}
               />
               <Route
+                path="/pay/:token"
+                element={<PaymentLinkPage />}
+              />
+              <Route
                 path="/payment"
                 element={<Payment />}
               />
