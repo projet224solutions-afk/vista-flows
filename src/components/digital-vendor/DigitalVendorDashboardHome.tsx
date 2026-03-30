@@ -210,10 +210,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#04439e_0%,#0536a8_55%,#0b1b33_100%)] shadow-[0_28px_65px_rgba(4,67,158,0.30)]">
-        <CardContent className="p-5 sm:p-7 lg:p-8">
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+        <CardContent className="p-4 sm:p-7 lg:p-8">
+          <div className="flex flex-col gap-4 sm:gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-3xl">
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Badge className="border-0 bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-none">
@@ -223,7 +223,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                   Marketplace premium
                 </Badge>
               </div>
-              <h2 className="text-xl font-semibold leading-tight text-white sm:text-3xl lg:text-[2.3rem]">
+              <h2 className="text-base font-semibold leading-tight text-white sm:text-3xl lg:text-[2.3rem]">
                 Pilotez vos produits numériques comme un vrai business international.
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70 sm:text-base">
@@ -248,42 +248,42 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               </div>
             </div>
 
-            <div className="grid w-full gap-3 sm:grid-cols-3 xl:max-w-[540px]">
-              <div className="rounded-[24px] border border-white/15 bg-white/10 p-3.5 sm:p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">Produits publiés</p>
-                <p className="mt-2 text-3xl font-semibold text-white">{publishedCount}</p>
-                <p className="mt-2 text-xs text-white/45">sur {products.length} produits au catalogue</p>
+            <div className="grid w-full grid-cols-3 gap-2 sm:gap-3 xl:max-w-[540px]">
+              <div className="rounded-[18px] sm:rounded-[24px] border border-white/15 bg-white/10 p-2.5 sm:p-4">
+                <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] sm:tracking-[0.18em] text-white/50">Publiés</p>
+                <p className="mt-1.5 text-2xl sm:text-3xl font-semibold text-white">{publishedCount}</p>
+                <p className="mt-1 text-[10px] sm:text-xs text-white/45">sur {products.length}</p>
               </div>
-              <div className="rounded-[24px] border border-white/15 bg-white/10 p-3.5 sm:p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">Mode dominant</p>
-                <p className="mt-2 text-xl font-semibold text-white">{directCount >= affiliateCount ? 'Vente directe' : 'Affiliation'}</p>
-                <p className="mt-2 text-xs text-white/45">{directCount} directs • {affiliateCount} affiliés</p>
+              <div className="rounded-[18px] sm:rounded-[24px] border border-white/15 bg-white/10 p-2.5 sm:p-4">
+                <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] sm:tracking-[0.18em] text-white/50">Mode</p>
+                <p className="mt-1.5 text-sm sm:text-xl font-semibold text-white">{directCount >= affiliateCount ? 'Direct' : 'Affiliation'}</p>
+                <p className="mt-1 text-[10px] sm:text-xs text-white/45">{directCount}d • {affiliateCount}a</p>
               </div>
-              <div className="rounded-[24px] border border-white/15 bg-white/10 p-3.5 sm:p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">Signal prioritaire</p>
-                <p className="mt-2 text-xl font-semibold text-[#ff8050]">{publishedCount === 0 ? 'Publier un produit' : totalViews === 0 ? 'Booster la visibilité' : 'Optimiser la conversion'}</p>
-                <p className="mt-2 text-xs text-white/45">prochaine action business recommandée</p>
+              <div className="rounded-[18px] sm:rounded-[24px] border border-white/15 bg-white/10 p-2.5 sm:p-4">
+                <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] sm:tracking-[0.18em] text-white/50">Signal</p>
+                <p className="mt-1.5 text-sm sm:text-xl font-semibold text-[#ff8050]">{publishedCount === 0 ? 'Publier' : totalViews === 0 ? 'Booster' : 'Convertir'}</p>
+                <p className="mt-1 text-[10px] sm:text-xs text-white/45">priorité recommandée</p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {primaryMetrics.map((metric) => {
           const Icon = metric.icon;
 
           return (
             <Card key={metric.label} className={['overflow-hidden rounded-[26px] border-0 shadow-[0_18px_45px_rgba(4,67,158,0.20)]', metric.cardBg].join(' ')}>
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className={['text-[11px] font-semibold uppercase tracking-[0.18em]', metric.labelTone].join(' ')}>{metric.label}</p>
-                    <p className={['mt-3 text-2xl font-semibold leading-none sm:text-[2rem]', metric.valueTone].join(' ')}>{metric.value}</p>
-                    <p className={['mt-3 text-sm', metric.noteTone].join(' ')}>{metric.note}</p>
+              <CardContent className="p-3.5 sm:p-5">
+                <div className="flex items-start justify-between gap-2 sm:gap-4">
+                  <div className="min-w-0">
+                    <p className={['text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] sm:tracking-[0.18em]', metric.labelTone].join(' ')}>{metric.label}</p>
+                    <p className={['mt-2 text-xl font-semibold leading-none sm:text-[2rem]', metric.valueTone].join(' ')}>{metric.value}</p>
+                    <p className={['mt-2 text-xs sm:text-sm', metric.noteTone].join(' ')}>{metric.note}</p>
                   </div>
-                  <div className={['flex h-12 w-12 items-center justify-center rounded-2xl flex-shrink-0', metric.iconBg].join(' ')}>
-                    <Icon className={['h-5 w-5', metric.iconColor].join(' ')} />
+                  <div className={['flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl flex-shrink-0', metric.iconBg].join(' ')}>
+                    <Icon className={['h-4 w-4 sm:h-5 sm:w-5', metric.iconColor].join(' ')} />
                   </div>
                 </div>
               </CardContent>
@@ -343,9 +343,9 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                     <div
                       key={product.id}
                       onClick={() => navigate(`/digital-product/${product.id}`)}
-                      className="flex cursor-pointer items-center gap-3 sm:gap-4 rounded-[22px] border border-gray-100 bg-gray-50/50 p-3.5 sm:p-4 transition-all hover:-translate-y-0.5 hover:bg-gray-50 hover:border-gray-200 hover:shadow-[0_16px_36px_rgba(0,0,0,0.06)]"
+                      className="flex cursor-pointer items-center gap-3 rounded-[18px] sm:rounded-[22px] border border-gray-100 bg-gray-50/50 p-3 sm:p-4 transition-all hover:-translate-y-0.5 hover:bg-gray-50 hover:border-gray-200 hover:shadow-[0_16px_36px_rgba(0,0,0,0.06)]"
                     >
-                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[18px] bg-[#04439e]/10">
+                      <div className="flex h-11 w-11 sm:h-14 sm:w-14 flex-shrink-0 items-center justify-center rounded-[14px] sm:rounded-[18px] bg-[#04439e]/10">
                         <CategoryIcon className="h-6 w-6 text-[#04439e]" />
                       </div>
 
@@ -368,7 +368,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                         </p>
                       </div>
 
-                      <Badge className={['hidden sm:inline-flex flex-shrink-0 border-0 text-[11px] font-semibold shadow-none', statusClass].join(' ')}>
+                      <Badge className={['inline-flex flex-shrink-0 border-0 text-[10px] sm:text-[11px] font-semibold shadow-none', statusClass].join(' ')}>
                         {statusLabel}
                       </Badge>
                     </div>

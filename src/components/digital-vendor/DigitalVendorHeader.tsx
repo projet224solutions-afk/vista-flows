@@ -28,7 +28,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[linear-gradient(135deg,#04439e_0%,#0536a8_75%,#041f87_100%)] shadow-[0_4px_24px_rgba(4,67,158,0.38)]">
-      <div className="flex w-full min-w-0 flex-col gap-2.5 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3 md:px-8">
+      <div className="flex w-full min-w-0 flex-col gap-2 px-2.5 py-2 sm:gap-3 sm:px-5 sm:py-3 md:px-8">
         {/* Brand */}
         <div className="flex items-center justify-between gap-2.5 min-w-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -36,12 +36,12 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
             className="h-10 w-10 rounded-2xl border border-white/20 bg-white/10 text-white shadow-none hover:bg-white/22 [&_svg]:h-4 [&_svg]:w-4 sm:h-11 sm:w-11 sm:[&_svg]:h-5 sm:[&_svg]:w-5"
             aria-label="Ouvrir/Fermer le menu"
           />
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 shadow-[0_6px_16px_rgba(0,0,0,0.20)] sm:h-12 sm:w-12">
-              <img src="/logo-224solutions.png" alt="224Solutions" className="h-7 w-7 rounded-lg object-contain sm:h-8 sm:w-8" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15 shadow-[0_6px_16px_rgba(0,0,0,0.20)] sm:h-12 sm:w-12">
+              <img src="/logo-224solutions.png" alt="224Solutions" className="h-5 w-5 rounded-md object-contain sm:h-8 sm:w-8" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="whitespace-nowrap text-sm font-semibold tracking-[0.01em] text-white sm:text-base md:text-xl">
+                <h1 className="whitespace-nowrap text-xs font-semibold tracking-[0.01em] text-white sm:text-base md:text-xl">
                   Digital Seller Studio
                 </h1>
                 <span className="hidden rounded-full bg-[#ff4000] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white sm:inline-flex">
