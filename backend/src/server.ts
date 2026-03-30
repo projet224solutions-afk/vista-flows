@@ -35,6 +35,8 @@ import inventoryRoutes from './routes/inventory.routes.js';
 import affiliateRoutes from './routes/affiliate.routes.js';
 import paymentLinksRoutes from './routes/paymentLinks.routes.js';
 import webhookRoutes from './routes/webhooks.routes.js';
+// @ts-ignore
+import migrationsRoutes from './routes/migrations.js';
 
 // Routes legacy JS
 // @ts-ignore
@@ -130,6 +132,9 @@ app.use(requestLogger);
 
 // Health (public)
 app.use('/health', healthRoutes);
+
+// Migrations (admin, applies database changes)
+app.use('/api/migrations', migrationsRoutes);
 
 // Webhooks (public, signature-validated, BEFORE auth middleware)
 app.use('/webhooks', webhookRoutes);

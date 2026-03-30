@@ -21,7 +21,10 @@
     "wallet:test": "node test-wallet.mjs",
     "e2e:wallet": "node scripts/e2e_test_wallet_communication.js",
     "test:load": "k6 run scripts/load-test.js",
-    "test:load:light": "k6 run --vus 100 --duration 1m scripts/load-test.js"
+    "test:load:light": "k6 run --vus 100 --duration 1m scripts/load-test.js",
+    "migrate:type-agent": "tsx scripts/apply-type-agent-migration.ts",
+    "api:migrate": "curl -X POST http://localhost:3001/api/migrations/apply-type-agent",
+    "api:migrate-status": "curl http://localhost:3001/api/migrations/status"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",

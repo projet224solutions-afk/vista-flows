@@ -74,13 +74,8 @@ export async function resolvePostAuthRoute(opts: PostAuthRouteOptions): Promise<
       return vaAny?.access_token ? `/vendor-agent/${vaAny.access_token}` : '/home';
     }
 
-    // vendeur → check business_type for digital
+    // vendeur → use DB as source of truth; local intent is only a fallback
     if (normalizedRole === 'vendeur') {
-      // If vendorShopType is passed directly (from signup form), use it
-      if (vendorShopType === 'digital') {
-        return '/vendeur-digital';
-      }
-      // Otherwise check DB
       const { data: vendor } = await withTimeout(
         supabase
           .from('vendors')
@@ -92,7 +87,17 @@ export async function resolvePostAuthRoute(opts: PostAuthRouteOptions): Promise<
         { data: null, error: null } as any,
       );
 
-      return vendor?.business_type === 'digital' ? '/vendeur-digital' : '/vendeur';
+      // DB wins whenever a vendor row exists.
+      if (vendor?.business_type) {
+        return vendor.business_type === 'digital' ? '/vendeur-digital' : '/vendeur';
+      }
+
+      // Fallback only for fresh signup/oauth intent before vendors row exists.
+      if (vendorShopType === 'digital') {
+        return '/vendeur-digital';
+      }
+
+      return '/vendeur';
     }
 
     // prestataire → lookup professional_service
