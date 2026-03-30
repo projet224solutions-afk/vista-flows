@@ -292,7 +292,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         })}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr] xl:items-start">
         <Card className="rounded-[28px] border border-gray-100 bg-white shadow-[0_22px_55px_rgba(0,0,0,0.08)]">
           <CardHeader className="border-b border-gray-100 pb-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -381,24 +381,24 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
 
         <div className="space-y-4">
           <Card className="rounded-[28px] border-0 bg-[linear-gradient(135deg,#0536a8_0%,#04439e_100%)] shadow-[0_22px_55px_rgba(4,67,158,0.25)]">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold text-white">Vue business</CardTitle>
-              <CardDescription className="text-sm text-white/55">Lecture rapide de l'état de votre activité digitale.</CardDescription>
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardTitle className="text-base sm:text-xl font-semibold text-white">Vue business</CardTitle>
+              <CardDescription className="text-xs sm:text-sm text-white/55">Lecture rapide de l'état de votre activité digitale.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-3">
+            <CardContent className="grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-1 px-4 sm:px-6 pb-4 sm:pb-6">
               {secondaryMetrics.map((metric) => {
                 const Icon = metric.icon;
 
                 return (
-                  <div key={metric.label} className="rounded-[22px] border border-white/12 bg-white/10 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">{metric.label}</p>
-                        <p className="mt-2 text-2xl font-semibold text-white">{metric.value}</p>
-                        <p className="mt-2 text-sm text-white/50">{metric.note}</p>
+                  <div key={metric.label} className="rounded-[18px] sm:rounded-[22px] border border-white/12 bg-white/10 p-3 sm:p-4">
+                    <div className="flex items-start justify-between gap-2 sm:gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] sm:tracking-[0.18em] text-white/50">{metric.label}</p>
+                        <p className="mt-1.5 text-xl sm:text-2xl font-semibold text-white">{metric.value}</p>
+                        <p className="mt-1 text-[11px] sm:text-sm text-white/50 leading-tight">{metric.note}</p>
                       </div>
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
-                        <Icon className="h-5 w-5 text-white" />
+                      <div className="flex h-8 w-8 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-white/15 flex-shrink-0">
+                        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                       </div>
                     </div>
                   </div>
@@ -408,11 +408,11 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
           </Card>
 
           <Card className="rounded-[28px] border-0 bg-[#0b1b33] shadow-[0_22px_55px_rgba(4,67,158,0.28)]">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold text-white">Actions prioritaires</CardTitle>
-              <CardDescription className="text-sm text-white/50">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardTitle className="text-base sm:text-xl font-semibold text-white">Actions prioritaires</CardTitle>
+              <CardDescription className="text-xs sm:text-sm text-white/50">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2">
+            <CardContent className="grid grid-cols-2 gap-2.5 sm:gap-3 px-4 sm:px-6 pb-4 sm:pb-6">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 const primary = action.variant === 'primary';
@@ -423,20 +423,20 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                     type="button"
                     onClick={action.onClick}
                     className={[
-                      'group rounded-[22px] border p-4 text-left transition-all',
+                      'group rounded-[18px] sm:rounded-[22px] border p-3 sm:p-4 text-left transition-all',
                       primary
                         ? 'border-[#ff4000]/35 bg-[#ff4000]/12 hover:-translate-y-0.5 hover:bg-[#ff4000]/20 hover:shadow-[0_16px_36px_rgba(255,64,0,0.18)]'
                         : 'border-white/12 bg-white/6 hover:-translate-y-0.5 hover:bg-white/12 hover:border-white/22 hover:shadow-[0_16px_36px_rgba(4,67,158,0.15)]'
                     ].join(' ')}
                   >
                     <div className={[
-                      'flex h-11 w-11 items-center justify-center rounded-2xl',
+                      'flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl',
                       primary ? 'bg-[#ff4000] text-white shadow-[0_12px_28px_rgba(255,64,0,0.28)]' : 'bg-white/15 text-white'
                     ].join(' ')}>
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <p className="mt-4 text-sm font-semibold text-white">{action.label}</p>
-                    <p className="mt-1 text-sm text-white/50">{action.description}</p>
+                    <p className="mt-2.5 sm:mt-4 text-xs sm:text-sm font-semibold text-white leading-tight">{action.label}</p>
+                    <p className="mt-1 text-[11px] sm:text-sm text-white/50 leading-tight">{action.description}</p>
                   </button>
                 );
               })}
