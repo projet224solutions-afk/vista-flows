@@ -8,6 +8,11 @@ Ce système permet au **PDG de déléguer des tâches spécifiques aux agents** 
 - **Backend**: Fonctions PostgreSQL sécurisées (SECURITY DEFINER)
 - **Frontend**: Hooks React + Composants UI protégés
 
+> Note compatibilite cles permissions:
+> - Frontend UI (hooks/guards) utilise les cles canoniques sans prefixe: `manage_*`, `view_*`, `access_*`.
+> - Les cles legacy prefixees `pdg_*` restent acceptees en verification pour compatibilite.
+> - Pour les nouveaux composants React, utilisez les cles canoniques sans `pdg_`.
+
 ---
 
 ## 🏗️ Architecture
@@ -20,6 +25,7 @@ Ce système permet au **PDG de déléguer des tâches spécifiques aux agents** 
 - pdg_id: UUID (PDG qui délègue)
 - agent_id: UUID (Agent qui reçoit)
 - permission_key: TEXT (clé permission, ex: 'pdg_manage_vendors')
+ - permission_key: TEXT (clé permission, ex: 'manage_vendors' ou legacy 'pdg_manage_vendors')
 - permission_name: TEXT (nom lisible)
 - permission_scope: JSONB (restriction optionnelle, ex: {"vendor_ids": ["id1", "id2"]})
 - is_active: BOOLEAN (activé/désactivé)
@@ -53,7 +59,7 @@ const { data, error } = await supabase.rpc(
   {
     p_pdg_id: pdgId,
     p_agent_id: agentId,
-    p_permission_key: 'pdg_manage_vendors',
+    p_permission_key: 'manage_vendors',
     p_scope: { vendor_ids: ['id1', 'id2'] }, // optionnel
     p_expires_in_days: 30 // optionnel
   }
@@ -68,7 +74,7 @@ const { data, error } = await supabase.rpc(
   {
     p_pdg_id: pdgId,
     p_agent_id: agentId,
-    p_permission_key: 'pdg_manage_vendors',
+    p_permission_key: 'manage_vendors',
     p_reason: 'Fin de contrat'
   }
 );
@@ -81,7 +87,7 @@ const hasAccess = await supabase.rpc(
   'agent_has_permission',
   {
     p_agent_id: agentId,
-    p_permission_key: 'pdg_manage_vendors'
+    p_permission_key: 'manage_vendors'
   }
 );
 ```
@@ -141,7 +147,7 @@ function MyComponent() {
   const handleGrant = async () => {
     const success = await grantPermission(
       agentId,
-      'pdg_manage_vendors',
+      'manage_vendors',
       30, // Expire dans 30 jours
       { vendor_ids: ['id1'] } // Scope optionnel
     );
@@ -162,7 +168,7 @@ function MyComponent() {
     hasAllPermissions      // (permKeys[]) => boolean
   } = useAgentPermissions();
 
-  if (hasPermission('pdg_manage_vendors')) {
+  if (hasPermission('manage_vendors')) {
     return <VendorManager />;
   }
 }
@@ -174,13 +180,13 @@ function MyComponent() {
 import { PermissionGuard } from '@/components/auth/PermissionGuard';
 
 // Usage simple
-<PermissionGuard requiredPermission="pdg_manage_vendors">
+<PermissionGuard requiredPermission="manage_vendors">
   <VendorManager />
 </PermissionGuard>
 
 // Permissions multiples
 <PermissionGuard 
-  requiredPermission={['pdg_manage_vendors', 'pdg_manage_drivers']}
+  requiredPermission={['manage_vendors', 'manage_drivers']}
   requireAll={false} // OU: requireAll={true} pour TOUS
 >
   <AdminPanel />
@@ -188,7 +194,7 @@ import { PermissionGuard } from '@/components/auth/PermissionGuard';
 
 // Avec fallback personnalisé
 <PermissionGuard 
-  requiredPermission="pdg_manage_vendors"
+  requiredPermission="manage_vendors"
   fallback={<ErrorMessage />}
 >
   <VendorManager />
@@ -274,7 +280,7 @@ if (user?.role !== 'pdg') {
 
 // Après (accepte PDG OU agents avec permission)
 const hasAccess = user?.role === 'pdg' || 
-  await checkAgentPermission(agentId, 'pdg_manage_vendors');
+  await checkAgentPermission(agentId, 'manage_vendors');
 
 if (!hasAccess) {
   return <Unauthorized />;
@@ -290,12 +296,12 @@ function VendorDashboard() {
   const { hasAnyPermission, hasAllPermissions } = useAgentPermissions();
 
   // Au moins une permission
-  if (!hasAnyPermission(['pdg_manage_vendors', 'pdg_view_reports'])) {
+  if (!hasAnyPermission(['manage_vendors', 'view_reports'])) {
     return <Forbidden />;
   }
 
   // Toutes les permissions
-  if (!hasAllPermissions(['pdg_manage_vendors', 'pdg_manage_inventory'])) {
+  if (!hasAllPermissions(['manage_vendors', 'manage_inventory'])) {
     return <LimitedMode />;
   }
 

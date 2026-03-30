@@ -11,8 +11,36 @@
 
 export type PermissionState = Record<string, boolean> | Set<string>;
 
+const withPdgPrefix = (key: string): string => {
+  return key.startsWith('pdg_') ? key : `pdg_${key}`;
+};
+
+const withoutPdgPrefix = (key: string): string => {
+  return key.startsWith('pdg_') ? key.slice(4) : key;
+};
+
+export function getPermissionCandidates(key: string): string[] {
+  const normalized = key.trim();
+  if (!normalized) return [];
+
+  const candidates = new Set<string>();
+  const base = withoutPdgPrefix(normalized);
+
+  candidates.add(normalized);
+  candidates.add(base);
+  candidates.add(withPdgPrefix(base));
+
+  return Array.from(candidates);
+}
+
 const hasRaw = (state: PermissionState, key: string): boolean => {
-  return state instanceof Set ? state.has(key) : state[key] === true;
+  const candidates = getPermissionCandidates(key);
+
+  if (state instanceof Set) {
+    return candidates.some((candidate) => state.has(candidate));
+  }
+
+  return candidates.some((candidate) => state[candidate] === true);
 };
 
 /**

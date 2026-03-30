@@ -52,7 +52,7 @@ export function PermissionGuard({
 
 /**
  * Hook pour vérifier les permissions dans les composants
- * Utilisation: const canDoX = useHasPermission('pdg_manage_users');
+ * Utilisation: const canDoX = useHasPermission('manage_users');
  */
 export function useHasPermission(permissionKey: string | string[]): boolean {
   const { hasPermission, hasAnyPermission } = useAgentPermissions();

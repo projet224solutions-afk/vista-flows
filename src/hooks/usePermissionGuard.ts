@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getPermissionCandidates } from '@/lib/agent-permissions';
 
 /**
  * Hook pour protéger les routes en vérifiant les permissions d'un agent
@@ -13,7 +14,7 @@ export const usePermissionGuard = (
   requiredPermission: string,
   redirectTo: string = '/pdg'
 ) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,8 +40,16 @@ export const usePermissionGuard = (
 
         if (agentError || !agent) {
           console.log('Utilisateur n\'est pas un agent');
-          setHasAccess(true); // Peut être PDG ou autre rôle
+
+          // Autoriser uniquement les rôles globaux PDG/Admin/CEO.
+          const role = (profile?.role || '').toString().toLowerCase();
+          const isGlobalManager = role === 'pdg' || role === 'ceo' || role === 'admin';
+
+          setHasAccess(isGlobalManager);
           setLoading(false);
+          if (!isGlobalManager) {
+            navigate(redirectTo);
+          }
           return;
         }
 
@@ -53,15 +62,28 @@ export const usePermissionGuard = (
         }
 
         // Vérifier la permission via RPC
-        const { data: permission, error: permError } = await supabase
-          .rpc('check_agent_permission' as any, {
-            p_agent_id: agent.id,
-            p_permission_key: requiredPermission
-          });
+        const permissionCandidates = getPermissionCandidates(requiredPermission);
+        let hasPermission = false;
 
-        if (permError) throw permError;
+        for (const candidate of permissionCandidates) {
+          const { data: permission, error: permError } = await supabase
+            .rpc('check_agent_permission' as any, {
+              p_agent_id: agent.id,
+              p_permission_key: candidate,
+            });
 
-        if (!permission) {
+          if (permError) {
+            console.warn('Erreur vérification candidate permission:', candidate, permError);
+            continue;
+          }
+
+          if (permission) {
+            hasPermission = true;
+            break;
+          }
+        }
+
+        if (!hasPermission) {
           toast.error('Permission refusée pour cet agent');
           setHasAccess(false);
           navigate(redirectTo);
@@ -79,7 +101,7 @@ export const usePermissionGuard = (
     };
 
     checkPermission();
-  }, [user, requiredPermission, navigate, redirectTo]);
+  }, [user, profile?.role, requiredPermission, navigate, redirectTo]);
 
   return { hasAccess, loading };
 };
