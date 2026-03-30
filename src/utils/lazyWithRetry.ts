@@ -59,26 +59,28 @@ const ReloadFallback = () => {
   }, [
     createElement('div', {
       key: 'icon',
-      style: { fontSize: '48px', marginBottom: '16px' }
-    }, '🧩'),
+      style: { fontSize: '48px', marginBottom: '16px', color: '#04439e' }
+    }, '🔄'),
     createElement('h3', {
       key: 'title',
-      style: { margin: '0 0 8px 0', color: '#333' }
+      style: { margin: '0 0 8px 0', color: '#04439e', fontWeight: '700' }
     }, 'Mise à jour requise'),
     createElement('p', {
       key: 'message',
-      style: { margin: '0', fontSize: '14px' }
+      style: { margin: '0', fontSize: '14px', color: '#04439e', opacity: '0.8' }
     }, "Impossible de charger une partie de l'application. Actualisez pour continuer."),
     createElement('button', {
       key: 'button',
       onClick: () => window.location.reload(),
       style: {
         marginTop: '16px',
-        padding: '8px 16px',
-        border: '1px solid #ddd',
+        padding: '10px 24px',
+        border: 'none',
         borderRadius: '6px',
-        background: '#fff',
-        cursor: 'pointer'
+        background: '#04439e',
+        color: '#fff',
+        cursor: 'pointer',
+        fontWeight: '600'
       }
     }, 'Actualiser')
   ]);
