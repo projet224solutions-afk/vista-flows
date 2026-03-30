@@ -561,7 +561,7 @@ export default function PaymentLinksManager() {
                               </div>
 
                               {/* Settlement info for paid links */}
-                              {(link.status === 'success' || link.status === 'paid') && link.net_amount && (
+                              {link.status === 'success' && link.net_amount && (
                                 <div className="flex items-center gap-3 text-xs mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg">
                                   <span>Brut: {formatCurrency(link.gross_amount || link.montant, link.devise)}</span>
                                   <span className="text-muted-foreground">Commission: {formatCurrency(link.platform_fee || 0, link.devise)}</span>
