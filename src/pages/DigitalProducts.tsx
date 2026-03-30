@@ -43,6 +43,8 @@ interface ProductModule {
   titleKey: string;
   descriptionKey: string;
   gradient: string;
+  iconSurface: string;
+  iconGlow: string;
   category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai' | 'physique_affilie';
 }
 
@@ -53,6 +55,8 @@ const productModules: ProductModule[] = [
     titleKey: 'digital.modules.dropshipping',
     descriptionKey: 'digital.modules.dropshippingDesc',
     gradient: 'bg-[#1f2a44]',
+    iconSurface: 'bg-[linear-gradient(135deg,#1f2a44_0%,#2c3d63_100%)]',
+    iconGlow: 'bg-[#2f4a83]/35',
     category: 'dropshipping'
   },
   {
@@ -61,6 +65,8 @@ const productModules: ProductModule[] = [
     titleKey: 'digital.modules.flight',
     descriptionKey: 'digital.modules.flightDesc',
     gradient: 'bg-[#0d3b8f]',
+    iconSurface: 'bg-[linear-gradient(135deg,#0d3b8f_0%,#1f61d5_100%)]',
+    iconGlow: 'bg-[#1f61d5]/35',
     category: 'voyage'
   },
   {
@@ -69,6 +75,8 @@ const productModules: ProductModule[] = [
     titleKey: 'digital.modules.software',
     descriptionKey: 'digital.modules.softwareDesc',
     gradient: 'bg-[#2a2f78]',
+    iconSurface: 'bg-[linear-gradient(135deg,#2a2f78_0%,#3f46aa_100%)]',
+    iconGlow: 'bg-[#4f5bd5]/35',
     category: 'logiciel'
   },
   {
@@ -77,6 +85,8 @@ const productModules: ProductModule[] = [
     titleKey: 'digital.modules.training',
     descriptionKey: 'digital.modules.trainingDesc',
     gradient: 'bg-[#135d3b]',
+    iconSurface: 'bg-[linear-gradient(135deg,#135d3b_0%,#1f9f64_100%)]',
+    iconGlow: 'bg-[#22c55e]/35',
     category: 'formation'
   },
   {
@@ -85,6 +95,8 @@ const productModules: ProductModule[] = [
     titleKey: 'digital.modules.books',
     descriptionKey: 'digital.modules.booksDesc',
     gradient: 'bg-[#6a4a12]',
+    iconSurface: 'bg-[linear-gradient(135deg,#6a4a12_0%,#b7791f_100%)]',
+    iconGlow: 'bg-[#f59e0b]/35',
     category: 'livre'
   },
   {
@@ -93,6 +105,8 @@ const productModules: ProductModule[] = [
     titleKey: 'digital.modules.ai',
     descriptionKey: 'digital.modules.aiDesc',
     gradient: 'bg-[#3c2b7a]',
+    iconSurface: 'bg-[linear-gradient(135deg,#3c2b7a_0%,#6f52d9_100%)]',
+    iconGlow: 'bg-[#8b5cf6]/35',
     category: 'ai'
   },
   {
@@ -101,6 +115,8 @@ const productModules: ProductModule[] = [
     titleKey: 'digital.modules.physicalAffiliate',
     descriptionKey: 'digital.modules.physicalAffiliateDesc',
     gradient: 'bg-[#8a2f0a]',
+    iconSurface: 'bg-[linear-gradient(135deg,#8a2f0a_0%,#f97316_100%)]',
+    iconGlow: 'bg-[#fb923c]/35',
     category: 'physique_affilie'
   }
 ];
@@ -450,13 +466,19 @@ export default function DigitalProducts() {
                 >
                   <CardContent className="p-5">
                     <div className="text-center">
-                      <div className={cn(
-                        'mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl',
-                        'text-white shadow-[0_12px_24px_rgba(11,27,51,0.18)]',
-                        'ring-1 ring-white/10 transition-transform duration-300 group-hover:scale-105',
-                        module.gradient
-                      )}>
-                        <div className="[&_svg]:h-6 [&_svg]:w-6 [&_svg]:stroke-[2.2]">{module.icon}</div>
+                      <div className="relative mx-auto mb-3 h-14 w-14">
+                        <div className={cn(
+                          'absolute inset-0 rounded-2xl blur-[10px] transition-opacity duration-300 group-hover:opacity-100 opacity-80',
+                          module.iconGlow
+                        )} />
+                        <div className={cn(
+                          'relative flex h-14 w-14 items-center justify-center rounded-2xl',
+                          'text-white shadow-[0_14px_26px_rgba(11,27,51,0.22)]',
+                          'ring-1 ring-white/25 transition-transform duration-300 group-hover:scale-105',
+                          module.iconSurface
+                        )}>
+                          <div className="[&_svg]:h-6 [&_svg]:w-6 [&_svg]:stroke-[2.3]">{module.icon}</div>
+                        </div>
                       </div>
 
                       <h3 className="text-base font-semibold tracking-tight text-[#0b1b33]">
