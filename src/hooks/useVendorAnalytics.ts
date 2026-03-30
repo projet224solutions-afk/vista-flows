@@ -196,7 +196,7 @@ export const useVendorAnalytics = () => {
         week: weekData,
         month: monthData,
         topProducts,
-        activeProductsCount: activeProductsCount || 0
+        activeProductsCount: activeProductsCount
       });
     } catch (error) {
       console.error('Erreur chargement analytics:', error);
