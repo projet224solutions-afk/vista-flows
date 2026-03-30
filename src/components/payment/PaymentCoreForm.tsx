@@ -81,20 +81,20 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
     setResultMessage('Initialisation du paiement...');
 
     try {
-      const { data, error } = await supabase.functions.invoke('payment-core', {
-        body: {
-          type,
-          reference_id: referenceId,
-          amount,
-          currency,
-          phone: phone.replace(/\s/g, ''),
-          method: selectedMethod,
-          vendor_id: vendorId,
-          description,
-          metadata,
-          idempotency_key: `${referenceId}-${Date.now()}`,
-        },
+      const { initiateDjomyPayment } = await import('@/services/paymentBackendService');
+      const result = await initiateDjomyPayment({
+        type,
+        reference_id: referenceId,
+        amount,
+        phone: phone.replace(/\s/g, ''),
+        method: selectedMethod,
+        currency,
+        vendor_id: vendorId,
+        description,
+        metadata,
       });
+      const data = result.data as any;
+      const error = result.success ? null : new Error(result.error);
 
       if (error) {
         throw new Error(error.message);
