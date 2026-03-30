@@ -70,15 +70,6 @@ export class DeliveryPaymentService {
 
       const data = result;
 
-      if (error) throw error;
-
-      if (!data?.success) {
-        return {
-          success: false,
-          error: data?.error || 'Erreur lors du paiement'
-        };
-      }
-
       // Mettre à jour le statut de la livraison (payment_method n'existe pas)
       // TODO: Ajouter colonne payment_method à la table deliveries si nécessaire
       const { error: updateError } = await supabase
