@@ -300,7 +300,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                 <CardTitle className="text-xl font-semibold text-white">Produits récents</CardTitle>
                 <CardDescription className="mt-1 text-sm text-white/55">Vos offres digitales les plus récentes avec leur statut commercial.</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate('/vendeur-digital/products')} className="rounded-xl border-white/25 bg-white/12 font-semibold text-white hover:bg-white/22 hover:text-white">
+              <Button variant="outline" size="sm" onClick={() => navigate('/vendeur-digital/products')} className="rounded-xl border-white/20 bg-white font-semibold text-[#04439e] hover:bg-white/90 hover:text-[#04439e]">
                 Voir tout
               </Button>
             </div>
