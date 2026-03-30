@@ -201,28 +201,23 @@ export default function PaymentLinksManager() {
     }
   };
 
-  const sharePaymentLink = async (paymentId: string) => {
+  const sharePaymentLink = async (link: any) => {
     try {
-      const baseUrl = window.location.origin;
-      const link = `${baseUrl}/payment/${paymentId}`;
+      const url = link.token
+        ? `${window.location.origin}/pay/${link.token}`
+        : `${window.location.origin}/payment/${link.payment_id}`;
       
       if (navigator.share) {
         await navigator.share({
           title: 'Lien de paiement 224SOLUTIONS',
           text: 'Effectuez votre paiement via ce lien sécurisé',
-          url: link
-        });
-        toast({
-          title: "Lien partagé",
-          description: "Le lien a été partagé avec succès",
+          url,
         });
       } else {
-        // Fallback: copier le lien
-        await copyPaymentLink(paymentId);
+        await copyPaymentLink(link);
       }
     } catch (error) {
       console.error('Erreur partage:', error);
-      // Si l'utilisateur annule le partage, on ne montre pas d'erreur
     }
   };
 
