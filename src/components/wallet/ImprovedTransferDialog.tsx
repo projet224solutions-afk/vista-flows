@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { UserSearchInput } from './UserSearchInput';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { transferToWallet } from '@/services/walletBackendService';
 import { toast } from 'sonner';
 import { SecureButton } from '@/components/ui/SecureButton';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
