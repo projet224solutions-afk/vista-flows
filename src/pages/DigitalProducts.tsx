@@ -388,7 +388,7 @@ export default function DigitalProducts() {
           {/* Status Banner */}
           {user && !isMerchant && (
             <div className="mx-4 mt-4 rounded-2xl border border-[#04439e]/25 bg-[linear-gradient(135deg,rgba(4,67,158,0.12),rgba(4,67,158,0.04))] px-3 py-3 sm:px-4 shadow-[0_12px_28px_rgba(4,67,158,0.10)]">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 min-[560px]:flex-row min-[560px]:items-center min-[560px]:justify-between">
                 <div className="flex items-start gap-2 flex-1 min-w-0">
                   <Store className="mt-0.5 w-4 h-4 text-[#04439e] shrink-0" />
                   <div className="min-w-0 text-xs">
@@ -399,7 +399,7 @@ export default function DigitalProducts() {
                 <Button
                   size="sm"
                   onClick={handleBecomeMerchant}
-                  className="h-9 w-full sm:w-auto text-xs bg-[#04439e] text-white hover:bg-[#05378a]"
+                  className="h-9 w-full min-[560px]:w-auto text-xs bg-[#04439e] text-white hover:bg-[#05378a]"
                 >
                   {t('digital.becomeMerchant')}
                 </Button>
@@ -408,8 +408,8 @@ export default function DigitalProducts() {
           )}
 
           {user && isMerchant && (
-            <div className="mx-4 mt-4 rounded-2xl px-3 py-3 sm:px-4 bg-[#04439e] text-white border border-[#04439e]/30 text-center text-xs sm:text-sm shadow-[0_12px_28px_rgba(4,67,158,0.25)]">
-              <span className="flex items-center justify-center gap-2 font-bold leading-tight">
+            <div className="mx-4 mt-4 rounded-2xl px-3 py-3 sm:px-4 bg-[#04439e] text-white border border-[#04439e]/30 text-center min-[560px]:text-left text-xs sm:text-sm shadow-[0_12px_28px_rgba(4,67,158,0.25)]">
+              <span className="flex items-center justify-center min-[560px]:justify-start gap-2 font-bold leading-tight">
                 <Store className="w-4 h-4 shrink-0" />
                 {t('digital.merchantActive')}
               </span>
@@ -419,8 +419,8 @@ export default function DigitalProducts() {
           {/* Hero Section */}
           <section className="px-4 pt-5 pb-4 sm:pt-6 sm:pb-5">
             <div className="overflow-hidden rounded-[24px] sm:rounded-[28px] border border-[#04439e]/25 bg-[linear-gradient(135deg,#04439e_0%,#0d4fb3_56%,#0b1b33_100%)] px-4 py-5 shadow-[0_22px_52px_rgba(4,67,158,0.28)] sm:px-7 sm:py-8">
-              <div className="flex flex-col gap-4 sm:gap-5 xl:flex-row xl:items-end xl:justify-between">
-                <div className="max-w-2xl">
+              <div className="flex flex-col gap-4 sm:gap-5 min-[560px]:flex-row min-[560px]:items-start min-[560px]:justify-between xl:items-end">
+                <div className="max-w-2xl min-[560px]:flex-1">
                   <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1.5 sm:px-3">
                     <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                     <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.12em] sm:tracking-[0.15em] text-white">{t('digital.marketplaceDigital')}</span>
@@ -434,7 +434,7 @@ export default function DigitalProducts() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 sm:gap-3 xl:min-w-[360px]">
+                <div className="grid grid-cols-3 gap-2 self-start min-[560px]:w-[240px] sm:gap-3 xl:min-w-[360px] xl:w-auto">
                   <div className="rounded-[18px] sm:rounded-2xl border border-white/18 bg-white/10 p-2.5 sm:p-3.5">
                     <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-white/55">Modules</p>
                     <p className="mt-1.5 sm:mt-2 text-xl sm:text-2xl font-semibold text-white">{productModules.length}</p>
