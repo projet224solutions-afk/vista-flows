@@ -24,6 +24,8 @@ import usersRoutes from "./users.routes.js";
 import aiRoutes from "./ai.routes.js";
 import filesRoutes from "./files.routes.js";
 import webhooksRoutes from "./webhooks.routes.js";
+import productsRoutes from "./products.routes.js";
+import ordersRoutes from "./orders.routes.js";
 // Import others as they are created
 // ... and so on
 
@@ -39,8 +41,8 @@ router.use("/users", usersRoutes);
 router.use("/ai", aiRoutes);
 router.use("/files", filesRoutes);
 router.use("/webhooks", webhooksRoutes);
-// router.use("/products", productsRoutes);
-// router.use("/orders", ordersRoutes);
+router.use("/products", productsRoutes);
+router.use("/orders", ordersRoutes);
 // router.use("/analytics", analyticsRoutes);
 
 /**
@@ -57,6 +59,8 @@ router.get("/health", (req, res) => {
       "ai (5/14)",
       "files (3/13)",
       "webhooks (6/9)",
+      "products (9/14)",
+      "orders (8/9)",
       // ... others
     ],
   });
