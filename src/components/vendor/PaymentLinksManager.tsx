@@ -608,7 +608,7 @@ export default function PaymentLinksManager() {
             <DialogDescription>Scannez pour accéder au paiement</DialogDescription>
           </DialogHeader>
           <div className="flex justify-center p-4">
-            {showQrModal && <QRCodeReact value={showQrModal} size={200} />}
+            {showQrModal && <QRCodeSVG value={showQrModal} size={200} />}
           </div>
           <Button onClick={() => { navigator.clipboard.writeText(showQrModal || ''); toast({ title: "Lien copié !" }); }}>
             <Copy className="w-4 h-4 mr-2" />Copier le lien
