@@ -114,9 +114,9 @@ class ErrorBoundary extends Component<Props, State> {
           <div className="min-h-screen flex items-center justify-center p-4 bg-background">
             <Card className="max-w-lg w-full">
               <CardHeader>
-                <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2" style={{ color: '#04439e' }}>
                   <WifiOff className="h-6 w-6" />
-                  <CardTitle>Mode hors ligne</CardTitle>
+                  <CardTitle style={{ color: '#04439e' }}>Mode hors ligne</CardTitle>
                 </div>
                 <CardDescription>
                   Cette page n'est pas disponible hors connexion
@@ -131,10 +131,10 @@ class ErrorBoundary extends Component<Props, State> {
                 </p>
 
                 <div className="flex gap-2">
-                  <Button onClick={this.handleGoHome} variant="outline">
+                  <Button onClick={this.handleGoHome} variant="outline" style={{ borderColor: '#04439e', color: '#04439e' }}>
                     Accueil
                   </Button>
-                  <Button onClick={this.handleReload} className="gap-2">
+                  <Button onClick={this.handleReload} className="gap-2" style={{ backgroundColor: '#04439e', color: '#fff' }}>
                     <RefreshCw className="h-4 w-4" />
                     Réessayer
                   </Button>
@@ -149,9 +149,9 @@ class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center p-4 bg-background">
           <Card className="max-w-lg w-full">
             <CardHeader>
-              <div className="flex items-center gap-2 text-destructive">
+              <div className="flex items-center gap-2" style={{ color: '#04439e' }}>
                 <AlertTriangle className="h-6 w-6" />
-                <CardTitle>Une erreur s'est produite</CardTitle>
+                <CardTitle style={{ color: '#04439e' }}>Une erreur s'est produite</CardTitle>
               </div>
               <CardDescription>
                 L'application a rencontré un problème inattendu
@@ -167,10 +167,10 @@ class ErrorBoundary extends Component<Props, State> {
               )}
 
               <div className="flex gap-2">
-                <Button onClick={this.handleReset} variant="outline">
+                <Button onClick={this.handleReset} variant="outline" style={{ borderColor: '#04439e', color: '#04439e' }}>
                   Réessayer
                 </Button>
-                <Button onClick={this.handleReload} className="gap-2">
+                <Button onClick={this.handleReload} className="gap-2" style={{ backgroundColor: '#04439e', color: '#fff' }}>
                   <RefreshCw className="h-4 w-4" />
                   Recharger la page
                 </Button>
