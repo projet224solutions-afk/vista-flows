@@ -52,7 +52,7 @@ const productModules: ProductModule[] = [
     icon: <Box className="w-7 h-7" />,
     titleKey: 'digital.modules.dropshipping',
     descriptionKey: 'digital.modules.dropshippingDesc',
-    gradient: 'from-indigo-500 to-purple-600',
+    gradient: 'bg-[#1f2a44]',
     category: 'dropshipping'
   },
   {
@@ -60,7 +60,7 @@ const productModules: ProductModule[] = [
     icon: <Plane className="w-7 h-7" />,
     titleKey: 'digital.modules.flight',
     descriptionKey: 'digital.modules.flightDesc',
-    gradient: 'from-primary to-secondary',
+    gradient: 'bg-[#0d3b8f]',
     category: 'voyage'
   },
   {
@@ -68,7 +68,7 @@ const productModules: ProductModule[] = [
     icon: <Monitor className="w-7 h-7" />,
     titleKey: 'digital.modules.software',
     descriptionKey: 'digital.modules.softwareDesc',
-    gradient: 'from-purple-500 to-pink-500',
+    gradient: 'bg-[#2a2f78]',
     category: 'logiciel'
   },
   {
@@ -76,7 +76,7 @@ const productModules: ProductModule[] = [
     icon: <GraduationCap className="w-7 h-7" />,
     titleKey: 'digital.modules.training',
     descriptionKey: 'digital.modules.trainingDesc',
-    gradient: 'from-green-500 to-emerald-500',
+    gradient: 'bg-[#135d3b]',
     category: 'formation'
   },
   {
@@ -84,7 +84,7 @@ const productModules: ProductModule[] = [
     icon: <BookOpen className="w-7 h-7" />,
     titleKey: 'digital.modules.books',
     descriptionKey: 'digital.modules.booksDesc',
-    gradient: 'from-amber-500 to-yellow-500',
+    gradient: 'bg-[#6a4a12]',
     category: 'livre'
   },
   {
@@ -92,7 +92,7 @@ const productModules: ProductModule[] = [
     icon: <Bot className="w-7 h-7" />,
     titleKey: 'digital.modules.ai',
     descriptionKey: 'digital.modules.aiDesc',
-    gradient: 'from-violet-500 to-fuchsia-500',
+    gradient: 'bg-[#3c2b7a]',
     category: 'ai'
   },
   {
@@ -100,7 +100,7 @@ const productModules: ProductModule[] = [
     icon: <ShoppingBag className="w-7 h-7" />,
     titleKey: 'digital.modules.physicalAffiliate',
     descriptionKey: 'digital.modules.physicalAffiliateDesc',
-    gradient: 'from-orange-500 to-red-500',
+    gradient: 'bg-[#8a2f0a]',
     category: 'physique_affilie'
   }
 ];
@@ -180,7 +180,7 @@ export default function DigitalProducts() {
 
   const getCategoryGradient = (category: string) => {
     const module = productModules.find(m => m.category === category);
-    return module?.gradient || 'from-primary to-primary/80';
+    return module?.gradient || 'bg-[#04439e]';
   };
 
   if (loading) {
@@ -306,7 +306,7 @@ export default function DigitalProducts() {
                     ) : (
                       <div className={cn(
                         'w-full h-full flex items-center justify-center',
-                        'bg-gradient-to-br text-white/50',
+                        'text-white/50',
                         getCategoryGradient(product.category)
                       )}>
                         <ShoppingCart className="w-10 h-10" />
@@ -385,7 +385,7 @@ export default function DigitalProducts() {
 
           {user && isMerchant && (
             <div className="px-4 py-2.5 bg-[#04439e]/12 text-[#04439e] border-b border-[#04439e]/25 text-center text-sm">
-              <span className="flex items-center justify-center gap-2">
+              <span className="flex items-center justify-center gap-2 font-bold">
                 <Store className="w-4 h-4" />
                 {t('digital.merchantActive')}
               </span>
@@ -425,7 +425,7 @@ export default function DigitalProducts() {
                   <CardContent className="p-4">
                     <div className={cn(
                       'w-12 h-12 rounded-xl flex items-center justify-center mb-3',
-                      'bg-gradient-to-br text-white shadow-md',
+                      'text-white shadow-md',
                       module.gradient
                     )}>
                       {module.icon}

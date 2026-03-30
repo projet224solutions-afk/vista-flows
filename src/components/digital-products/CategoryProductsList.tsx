@@ -133,7 +133,7 @@ export function CategoryProductsList({
               <Button
                 size="sm"
                 onClick={handleAddProduct}
-                className={cn('bg-gradient-to-r text-white', gradient)}
+                className={cn('text-white', gradient)}
               >
                 <Plus className="w-4 h-4 mr-1" />
                 {isMerchant ? 'Ajouter' : 'Vendre'}
@@ -172,7 +172,7 @@ export function CategoryProductsList({
           <div className="text-center py-12">
             <div className={cn(
               'w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center',
-              'bg-gradient-to-br text-white/80',
+                'text-white/80',
               gradient
             )}>
               <ShoppingCart className="w-8 h-8" />
@@ -216,7 +216,7 @@ export function CategoryProductsList({
                   ) : (
                     <div className={cn(
                       'w-full h-full flex items-center justify-center',
-                      'bg-gradient-to-br text-white/50',
+                      'text-white/50',
                       gradient
                     )}>
                       <ShoppingCart className="w-10 h-10" />
@@ -278,7 +278,7 @@ export function CategoryProductsList({
         <div className="fixed bottom-24 right-4 z-50">
           <Button
             onClick={handleAddProduct}
-            className={cn('rounded-full w-14 h-14 shadow-lg bg-gradient-to-r text-white', gradient)}
+            className={cn('rounded-full w-14 h-14 shadow-lg text-white', gradient)}
             title={user ? (isMerchant ? 'Ajouter un produit' : 'Devenir marchand pour vendre') : 'Se connecter'}
           >
             <Plus className="w-6 h-6" />
