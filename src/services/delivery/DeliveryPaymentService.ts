@@ -86,7 +86,7 @@ export class DeliveryPaymentService {
 
       return {
         success: true,
-        transaction_id: data.transactionId
+        transaction_id: data.transaction_id
       };
     } catch (error: any) {
       console.error('[DeliveryPayment] Wallet payment error:', error);
