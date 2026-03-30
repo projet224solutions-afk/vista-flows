@@ -137,18 +137,18 @@ export default function DigitalVendorDashboard() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-        <div className="min-h-screen w-full flex overflow-x-hidden bg-[#eef3fb]">
+        <div className="min-h-screen w-full flex bg-[#eef3fb]">
         <DigitalVendorSidebar />
 
-        <div className="flex-1 flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">
+        <div className="flex-1 flex flex-col min-w-0">
           <DigitalVendorHeader displayName={displayName} onSignOut={handleSignOut} />
 
           <main
-            className="flex-1 w-full max-w-full overflow-x-hidden overflow-y-auto overscroll-x-none px-3 pb-24 pt-5 sm:px-5 md:px-8 md:pb-10 md:pt-7"
+            className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-3 pb-24 pt-5 sm:px-5 md:px-8 md:pb-10 md:pt-7"
             role="main"
             aria-label="Dashboard vendeur digital"
           >
-            <div className="mx-auto w-full max-w-[1600px] min-w-0 overflow-x-hidden">
+            <div className="mx-auto w-full max-w-[1600px] min-w-0">
               <DigitalVendorRoutes vendorId={vendorId} />
             </div>
           </main>

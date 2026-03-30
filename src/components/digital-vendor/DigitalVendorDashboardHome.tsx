@@ -385,7 +385,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               <CardTitle className="text-base sm:text-xl font-semibold text-white">Vue business</CardTitle>
               <CardDescription className="text-xs sm:text-sm text-white/55">Lecture rapide de l'état de votre activité digitale.</CardDescription>
             </CardHeader>
-            <CardContent className="grid min-w-0 grid-cols-1 gap-2.5 px-4 pb-4 min-[400px]:grid-cols-2 sm:grid-cols-1 sm:gap-3 sm:px-6 sm:pb-6">
+            <CardContent className="grid min-w-0 grid-cols-1 gap-2.5 px-4 pb-4 sm:grid-cols-2 sm:gap-3 sm:px-6 sm:pb-6">
               {secondaryMetrics.map((metric) => {
                 const Icon = metric.icon;
 
@@ -412,7 +412,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               <CardTitle className="text-base sm:text-xl font-semibold text-white">Actions prioritaires</CardTitle>
               <CardDescription className="text-xs sm:text-sm text-white/50">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
             </CardHeader>
-            <CardContent className="grid min-w-0 grid-cols-1 gap-2.5 px-4 pb-4 min-[400px]:grid-cols-2 sm:gap-3 sm:px-6 sm:pb-6">
+            <CardContent className="grid min-w-0 grid-cols-1 gap-2.5 px-4 pb-4 sm:grid-cols-2 sm:gap-3 sm:px-6 sm:pb-6">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 const primary = action.variant === 'primary';
