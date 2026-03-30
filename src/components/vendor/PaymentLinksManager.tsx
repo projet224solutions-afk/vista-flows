@@ -105,9 +105,9 @@ export default function PaymentLinksManager() {
     }
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { data } = await supabase.from('professional_services').select('id, service_name, description, category')
-        .eq('user_id', user.id).order('service_name');
-      setServices(data || []);
+      const { data } = await supabase.from('professional_services').select('id, business_name, description')
+        .eq('user_id', user.id).order('business_name');
+      setServices((data || []).map((d: any) => ({ id: d.id, business_name: d.business_name, description: d.description })));
     }
   };
 
