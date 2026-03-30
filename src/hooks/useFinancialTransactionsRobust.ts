@@ -226,21 +226,8 @@ export function useFinancialTransactionsRobust() {
     try {
       console.log('💳→📱 Lancement transfert carte vers Orange Money');
 
-      const result = await circuitBreaker.execute(cardOmCircuitName, async () => {
-        return await retryWithBackoff(async () => {
-          const { data, error } = await supabase.functions.invoke('card-to-orange-money', {
-            body: { 
-              cardId, 
-              phoneNumber, 
-              amount,
-              idempotency_key: idempotencyKey
-            }
-          });
-
-          if (error) throw error;
-          return data;
-        }, CRITICAL_RETRY_CONFIG);
-      });
+      // TODO: La Edge Function 'card-to-orange-money' n'est pas encore déployée
+      throw new Error('Le transfert carte → Orange Money est temporairement indisponible');
 
       if (result?.success) {
         toast.success(`✅ ${result.message}`);

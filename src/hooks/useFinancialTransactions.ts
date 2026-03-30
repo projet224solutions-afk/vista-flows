@@ -49,20 +49,9 @@ export function useFinancialTransactions() {
     try {
       console.log('💳→📱 Lancement transfert carte vers Orange Money');
       
-      const { data, error } = await supabase.functions.invoke('card-to-orange-money', {
-        body: { cardId, phoneNumber, amount }
-      });
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast.success(`✅ ${data.message}`);
-        await loadTransactions();
-        return { success: true, data };
-      } else {
-        toast.error(`❌ ${data.message}`);
-        return { success: false, error: data.message };
-      }
+      // TODO: La Edge Function 'card-to-orange-money' n'est pas encore déployée
+      toast.error('Le transfert carte → Orange Money est temporairement indisponible');
+      return { success: false, error: 'Service temporairement indisponible' };
     } catch (error: any) {
       console.error('Erreur transfert carte→OM:', error);
       toast.error(error.message || 'Erreur lors du transfert');

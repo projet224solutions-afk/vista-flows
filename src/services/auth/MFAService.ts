@@ -596,13 +596,13 @@ export class MFAService {
         });
     }
 
-    // Appeler la Edge Function pour envoyer l'email
-    await supabase.functions.invoke('send-email', {
+    // Appeler la Edge Function pour envoyer l'email OTP
+    await supabase.functions.invoke('send-otp-email', {
       body: {
-        to: email,
-        subject: 'Code de vérification 224Solutions',
-        template: 'mfa_code',
-        data: { code: otp }
+        email: email,
+        otp: otp,
+        userType: 'agent',
+        userName: email
       }
     });
   }
