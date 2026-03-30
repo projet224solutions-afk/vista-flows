@@ -137,17 +137,16 @@ export default function PaymentLinkPage() {
         return;
       }
 
-      const data = result.data;
+      const data = result.data as any;
 
       if (paymentMethod === 'wallet') {
         setPaymentSuccess(true);
-        toast({ title: "Paiement réussi !", description: `Transaction ${data.transactionId}` });
-      } else if (paymentMethod === 'card' && data.clientSecret) {
+        toast({ title: "Paiement réussi !", description: `Transaction ${data?.transactionId || data?.payment_id || ''}` });
+      } else if (paymentMethod === 'card' && data?.clientSecret) {
         toast({ title: "Redirection vers le paiement par carte..." });
-        // In production, integrate Stripe Elements here
         setPaymentSuccess(true);
       } else {
-        toast({ title: "Paiement initié", description: data.message || "Vérifiez votre téléphone" });
+        toast({ title: "Paiement initié", description: data?.message || "Vérifiez votre téléphone" });
         setPaymentSuccess(true);
       }
     } catch (err: any) {
