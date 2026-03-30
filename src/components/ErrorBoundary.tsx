@@ -114,9 +114,9 @@ class ErrorBoundary extends Component<Props, State> {
           <div className="min-h-screen flex items-center justify-center p-4 bg-background">
             <Card className="max-w-lg w-full">
               <CardHeader>
-                <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2" style={{ color: '#04439e' }}>
                   <WifiOff className="h-6 w-6" />
-                  <CardTitle>Mode hors ligne</CardTitle>
+                  <CardTitle style={{ color: '#04439e' }}>Mode hors ligne</CardTitle>
                 </div>
                 <CardDescription>
                   Cette page n'est pas disponible hors connexion
@@ -149,9 +149,9 @@ class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center p-4 bg-background">
           <Card className="max-w-lg w-full">
             <CardHeader>
-              <div className="flex items-center gap-2 text-destructive">
+              <div className="flex items-center gap-2" style={{ color: '#04439e' }}>
                 <AlertTriangle className="h-6 w-6" />
-                <CardTitle>Une erreur s'est produite</CardTitle>
+                <CardTitle style={{ color: '#04439e' }}>Une erreur s'est produite</CardTitle>
               </div>
               <CardDescription>
                 L'application a rencontré un problème inattendu
