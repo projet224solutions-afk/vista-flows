@@ -293,14 +293,14 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
-        <Card className="rounded-[28px] border-0 bg-[#04439e] shadow-[0_22px_55px_rgba(4,67,158,0.22)]">
-          <CardHeader className="border-b border-white/12 pb-5">
+        <Card className="rounded-[28px] border border-gray-100 bg-white shadow-[0_22px_55px_rgba(0,0,0,0.08)]">
+          <CardHeader className="border-b border-gray-100 pb-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-xl font-semibold text-white">Produits récents</CardTitle>
-                <CardDescription className="mt-1 text-sm text-white/55">Vos offres digitales les plus récentes avec leur statut commercial.</CardDescription>
+                <CardTitle className="text-xl font-semibold text-gray-900">Produits récents</CardTitle>
+                <CardDescription className="mt-1 text-sm text-gray-500">Vos offres digitales les plus récentes avec leur statut commercial.</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate('/vendeur-digital/products')} className="rounded-xl border-white/20 bg-white font-semibold text-[#04439e] hover:bg-white/90 hover:text-[#04439e]">
+              <Button variant="outline" size="sm" onClick={() => navigate('/vendeur-digital/products')} className="rounded-xl border-[#04439e]/20 bg-[#04439e] font-semibold text-white hover:bg-[#04439e]/90 hover:text-white">
                 Voir tout
               </Button>
             </div>
@@ -309,10 +309,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
             {loading ? (
               <SectionLoader />
             ) : products.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-[24px] border border-dashed border-white/20 bg-white/8 py-12 text-center">
-                <Laptop className="mb-4 h-14 w-14 text-white/25" />
-                <p className="text-base font-semibold text-white">Aucun produit numérique</p>
-                <p className="mb-4 mt-2 max-w-sm text-sm text-white/55">Commencez à vendre avec une première offre digitale claire, crédible et prête à convertir.</p>
+              <div className="flex flex-col items-center justify-center rounded-[24px] border border-dashed border-gray-200 bg-gray-50 py-12 text-center">
+                <Laptop className="mb-4 h-14 w-14 text-gray-300" />
+                <p className="text-base font-semibold text-gray-900">Aucun produit numérique</p>
+                <p className="mb-4 mt-2 max-w-sm text-sm text-gray-500">Commencez à vendre avec une première offre digitale claire, crédible et prête à convertir.</p>
                 <Button onClick={() => navigate('/vendeur-digital/add-product')} size="sm" className="gap-2 rounded-xl bg-[#ff4000] font-semibold text-white hover:bg-[#e53900]">
                   <Plus className="w-4 h-4" />
                   Créer mon premier produit
@@ -334,36 +334,36 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                   const statusClass = product.status === 'published'
                     ? 'bg-[#ff4000] text-white'
                     : product.status === 'draft'
-                      ? 'bg-white/20 text-white/80'
+                      ? 'bg-gray-100 text-gray-600'
                       : product.status === 'rejected'
-                        ? 'bg-red-500/30 text-red-200'
-                        : 'bg-white/15 text-white/60';
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-gray-100 text-gray-500';
 
                   return (
                     <div
                       key={product.id}
                       onClick={() => navigate(`/digital-product/${product.id}`)}
-                      className="flex cursor-pointer items-center gap-3 sm:gap-4 rounded-[22px] border border-white/12 bg-white/8 p-3.5 sm:p-4 transition-all hover:-translate-y-0.5 hover:bg-white/15 hover:border-white/22 hover:shadow-[0_16px_36px_rgba(0,0,0,0.12)]"
+                      className="flex cursor-pointer items-center gap-3 sm:gap-4 rounded-[22px] border border-gray-100 bg-gray-50/50 p-3.5 sm:p-4 transition-all hover:-translate-y-0.5 hover:bg-gray-50 hover:border-gray-200 hover:shadow-[0_16px_36px_rgba(0,0,0,0.06)]"
                     >
-                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[18px] bg-white/12">
-                        <CategoryIcon className="h-6 w-6 text-white" />
+                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[18px] bg-[#04439e]/10">
+                        <CategoryIcon className="h-6 w-6 text-[#04439e]" />
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-semibold text-white sm:text-base">{product.title}</p>
-                          <Badge className="border-0 bg-white/15 text-[11px] font-semibold text-white/85 shadow-none">
+                          <p className="truncate text-sm font-semibold text-gray-900 sm:text-base">{product.title}</p>
+                          <Badge className="border-0 bg-[#04439e]/10 text-[11px] font-semibold text-[#04439e] shadow-none">
                             {product.product_mode === 'affiliate' ? 'Affiliation' : 'Vente directe'}
                           </Badge>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/50">
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-400">
                           <span>{product.sales_count || 0} ventes</span>
                           <span>•</span>
                           <span>{product.views_count || 0} vues</span>
                           <span>•</span>
                           <span>{product.price > 0 ? `${fmtNum(product.price)} ${product.currency}` : 'Gratuit'}</span>
                         </div>
-                        <p className="mt-2 text-xs text-white/38">
+                        <p className="mt-2 text-xs text-gray-400">
                           Mis à jour {formatDistanceToNow(new Date((product as any).updated_at || product.created_at), { addSuffix: true, locale: fr })}
                         </p>
                       </div>
