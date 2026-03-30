@@ -88,7 +88,9 @@ export function usePDGActions(options: UsePDGActionsOptions = {}) {
       if (error) throw error;
       
       if (!data.success) {
-        return { success: false, error: data.error || 'Erreur lors de la création' };
+        const errorMessage = data.error || 'Erreur lors de la création';
+        toast.error(errorMessage);
+        return { success: false, error: errorMessage };
       }
 
       toast.success('Agent créé avec succès');

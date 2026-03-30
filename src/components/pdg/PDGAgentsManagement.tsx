@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -86,7 +87,7 @@ export default function PDGAgentsManagement() {
     email: '',
     phone: '',
     password: '',
-    type_agent: '',
+    type_agent: 'principal',
     commission_rate: 10,
     permissions: {
       create_users: true,
@@ -189,8 +190,13 @@ export default function PDGAgentsManagement() {
           can_create_sub_agent: formData.permissions.create_sub_agents,
         }, pdgProfile.id);
 
+        if (!createRes?.success) {
+          // L'erreur est déjà affichée en toast par usePDGActions, on garde le dialog ouvert
+          return;
+        }
+
         // Après création, appliquer aussi les permissions avancées en base (agent_permissions)
-        if (createRes?.success && createRes.agent?.id) {
+        if (createRes.agent?.id) {
           const { error: permError } = await supabase.rpc('set_agent_permissions' as any, {
             p_agent_id: createRes.agent.id,
             p_permissions: advancedPermissions,
@@ -208,7 +214,7 @@ export default function PDGAgentsManagement() {
         email: '',
         phone: '',
         password: '',
-        type_agent: '',
+        type_agent: 'principal',
         commission_rate: 10,
         permissions: {
           create_users: true,
@@ -224,8 +230,9 @@ export default function PDGAgentsManagement() {
       
       setEditingAgent(null);
       setIsDialogOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur gestion agent:', error);
+      toast.error(error.message || 'Une erreur inattendue est survenue');
     } finally {
       setIsSubmitting(false);
     }
@@ -242,7 +249,7 @@ export default function PDGAgentsManagement() {
       email: agent.email,
       phone: agent.phone || '',
       password: '',
-      type_agent: agent.type_agent || '',
+      type_agent: agent.type_agent || 'principal',
       commission_rate: agent.commission_rate,
       permissions: {
         create_users: agent.permissions.includes('create_users'),
@@ -540,7 +547,7 @@ export default function PDGAgentsManagement() {
                 email: '',
                 phone: '',
                 password: '',
-                type_agent: '',
+                type_agent: 'principal',
                 commission_rate: 10,
                 permissions: {
                   create_users: true,
@@ -616,13 +623,21 @@ export default function PDGAgentsManagement() {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="type_agent">Type d'agent</Label>
-                            <Input
-                              id="type_agent"
+                            <Label>Type d'agent</Label>
+                            <Select
                               value={formData.type_agent}
-                              onChange={(e) => setFormData({ ...formData, type_agent: e.target.value })}
-                              placeholder="Ex: Agent Principal..."
-                            />
+                              onValueChange={(value) => setFormData({ ...formData, type_agent: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner un type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="principal">Agent Principal</SelectItem>
+                                <SelectItem value="agent_regional">Agent Régional</SelectItem>
+                                <SelectItem value="agent_local">Agent Local</SelectItem>
+                                <SelectItem value="sous_agent">Sous-agent</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="commission">Taux Commission (%)</Label>
@@ -784,13 +799,21 @@ export default function PDGAgentsManagement() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="type_agent">Type d'agent</Label>
-                        <Input
-                          id="type_agent"
+                        <Label>Type d'agent</Label>
+                        <Select
                           value={formData.type_agent}
-                          onChange={(e) => setFormData({ ...formData, type_agent: e.target.value })}
-                          placeholder="Ex: Agent Principal..."
-                        />
+                          onValueChange={(value) => setFormData({ ...formData, type_agent: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner un type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="principal">Agent Principal</SelectItem>
+                            <SelectItem value="agent_regional">Agent Régional</SelectItem>
+                            <SelectItem value="agent_local">Agent Local</SelectItem>
+                            <SelectItem value="sous_agent">Sous-agent</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="commission">Taux Commission (%)</Label>
