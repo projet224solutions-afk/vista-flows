@@ -65,7 +65,6 @@ const DigitalVendorRoutes = memo(function DigitalVendorRoutes({ vendorId }: Digi
         {/* Finance */}
         <Route path="wallet" element={<UniversalWalletTransactions />} />
         <Route path="liens-de-paiement" element={<PaymentLinksManager />} />
-        <Route path="payment-links" element={<PaymentLinksManager />} />
 
         {/* Mes Achats */}
         <Route path="my-purchases" element={<MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" />} />

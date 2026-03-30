@@ -1,10 +1,10 @@
 /**
  * 💳 PAGE PUBLIQUE DE PAIEMENT - /pay/:token
  * Page professionnelle pour payer via un lien de paiement 224SOLUTIONS
- * Supporte: invités (Orange Money, Carte Stripe Elements) + connectés (Wallet)
+ * Supporte: invités (Orange Money, Carte) + connectés (Wallet)
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,19 +12,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { resolvePaymentLink } from '@/services/paymentBackendService';
-import { loadStripe, Stripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import {
   CreditCard, Smartphone, Wallet, Shield, CheckCircle,
   AlertCircle, Clock, Loader2, ArrowLeft, Store,
   FileText, ShoppingCart, Wrench, Receipt, User
 } from 'lucide-react';
-
-// ──────── Types ────────
 
 interface PaymentLinkData {
   id: string;
@@ -61,99 +59,99 @@ const linkTypeConfig: Record<string, { icon: React.ReactNode; label: string; col
   service: { icon: <Wrench className="w-5 h-5" />, label: 'Service', color: 'bg-violet-100 text-violet-800' },
 };
 
-// ──────── Stripe Card Form (inner component) ────────
+const getStripePublishableKey = async (): Promise<string> => {
+  const envKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+  if (envKey) {
+    return envKey;
+  }
 
-function CardPaymentElementForm({
-  onSuccess,
-  onError,
-  token,
-  customerInfo,
-  userId,
-  amount,
-  currency,
-}: {
-  onSuccess: () => void;
-  onError: (msg: string) => void;
-  token: string;
-  customerInfo: { name: string; email: string; phone: string };
-  userId?: string;
-  amount: number;
-  currency: string;
-}) {
+  const { data, error } = await supabase
+    .from('stripe_config')
+    .select('stripe_publishable_key')
+    .limit(1)
+    .single();
+
+  if (!error && data?.stripe_publishable_key) {
+    return data.stripe_publishable_key;
+  }
+
+  throw new Error('Clé Stripe non configurée');
+};
+
+interface CardPaymentElementFormProps {
+  amountLabel: string;
+  disabled?: boolean;
+  onSuccess: (paymentIntentId: string) => Promise<void>;
+  onError: (errorMessage: string) => void;
+}
+
+function CardPaymentElementForm({ amountLabel, disabled = false, onSuccess, onError }: CardPaymentElementFormProps) {
   const stripe = useStripe();
   const elements = useElements();
-  const [finalizing, setFinalizing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
 
-    setFinalizing(true);
+    if (!stripe || !elements || disabled) {
+      return;
+    }
+
     try {
+      setSubmitting(true);
+
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         redirect: 'if_required',
       });
 
       if (error) {
-        onError(error.message || 'Erreur de paiement carte');
+        onError(error.message || 'Paiement carte échoué');
         return;
       }
 
-      if (!paymentIntent || paymentIntent.status !== 'succeeded') {
-        onError(`Le paiement n'a pas abouti (statut: ${paymentIntent?.status || 'inconnu'})`);
+      if (!paymentIntent) {
+        onError('Aucune confirmation Stripe reçue');
         return;
       }
 
-      // Step 2: Finalize on backend via Edge Function
-      const { data: finalResult, error: fnError } = await supabase.functions.invoke('process-payment-link', {
-        body: {
-          token,
-          paymentMethod: 'card',
-          paymentIntentId: paymentIntent.id,
-          customerName: customerInfo.name,
-          customerEmail: customerInfo.email,
-          customerPhone: customerInfo.phone,
-        },
-      });
-
-      if (fnError || !finalResult?.success) {
-        onError(finalResult?.error || fnError?.message || 'Erreur de finalisation');
+      if (paymentIntent.status !== 'succeeded') {
+        onError(`Paiement non confirmé (${paymentIntent.status})`);
         return;
       }
 
-      onSuccess();
-    } catch (err: any) {
-      onError(err.message || 'Erreur inattendue');
+      await onSuccess(paymentIntent.id);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Erreur de confirmation carte');
     } finally {
-      setFinalizing(false);
+      setSubmitting(false);
     }
   };
 
-  const formatCurrency = (amt: number, cur: string) =>
-    new Intl.NumberFormat('fr-FR').format(amt) + ' ' + cur;
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
-      <Button type="submit" disabled={!stripe || !elements || finalizing} className="w-full h-12 text-base font-semibold">
-        {finalizing ? (
+    <form onSubmit={handleCardSubmit} className="space-y-3">
+      <PaymentElement
+        options={{
+          layout: 'tabs',
+          paymentMethodOrder: ['card'],
+        }}
+      />
+      <Button type="submit" className="w-full" disabled={!stripe || submitting || disabled}>
+        {submitting ? (
           <>
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-            Finalisation du paiement...
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Confirmation en cours...
           </>
         ) : (
           <>
-            <CreditCard className="w-5 h-5 mr-2" />
-            Confirmer le paiement {formatCurrency(amount, currency)}
+            <CreditCard className="w-4 h-4 mr-2" />
+            Confirmer et payer {amountLabel}
           </>
         )}
       </Button>
     </form>
   );
 }
-
-// ──────── Main Page ────────
 
 export default function PaymentLinkPage() {
   const { token } = useParams<{ token: string }>();
@@ -171,10 +169,9 @@ export default function PaymentLinkPage() {
 
   const [paymentMethod, setPaymentMethod] = useState('');
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '' });
-
-  // Card payment states
   const [cardClientSecret, setCardClientSecret] = useState<string | null>(null);
   const [cardInitLoading, setCardInitLoading] = useState(false);
+  const [cardFinalizeLoading, setCardFinalizeLoading] = useState(false);
   const [cardError, setCardError] = useState<string | null>(null);
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
 
@@ -182,52 +179,37 @@ export default function PaymentLinkPage() {
     if (token) resolveLink();
   }, [token]);
 
+  // Pre-fill customer info if logged in
   useEffect(() => {
     if (user?.email) {
       setCustomerInfo(prev => ({ ...prev, email: user.email || '' }));
     }
   }, [user]);
 
-  // Load Stripe promise once
   useEffect(() => {
-    const loadStripeInstance = async () => {
-      let publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
-      // Fallback: try stripe_config table
-      if (!publishableKey) {
-        try {
-          const { data } = await supabase
-            .from('stripe_config')
-            .select('stripe_publishable_key')
-            .limit(1)
-            .maybeSingle();
-          if (data?.stripe_publishable_key) publishableKey = data.stripe_publishable_key;
-        } catch (e) {
-          console.warn('Could not load stripe_config fallback:', e);
-        }
-      }
-
-      if (publishableKey) {
-        setStripePromise(loadStripe(publishableKey));
-      }
-    };
-    loadStripeInstance();
-  }, []);
+    if (paymentMethod !== 'card') {
+      setCardClientSecret(null);
+      setCardError(null);
+      setCardFinalizeLoading(false);
+    }
+  }, [paymentMethod]);
 
   const resolveLink = async () => {
     try {
       setLoading(true);
-      const result = await resolvePaymentLink(token!);
+      const { data, error } = await supabase.functions.invoke('resolve-payment-link', {
+        body: { token },
+      });
 
-      if (!result.success) {
-        toast({ title: "Erreur", description: result.error || "Lien introuvable", variant: "destructive" });
+      if (error || !data?.success) {
+        toast({ title: "Erreur", description: data?.error || "Lien introuvable", variant: "destructive" });
         return;
       }
 
-      setLinkData(result.data?.link || null);
-      setOwnerInfo(result.data?.owner || null);
-      setProductInfo(result.data?.product || null);
-      setServiceInfo(result.data?.service || null);
+      setLinkData(data.link);
+      setOwnerInfo(data.owner);
+      setProductInfo(data.product);
+      setServiceInfo(data.service);
     } catch (err) {
       console.error('Resolve error:', err);
       toast({ title: "Erreur", description: "Impossible de charger le lien", variant: "destructive" });
@@ -236,14 +218,11 @@ export default function PaymentLinkPage() {
     }
   };
 
-  // Step 1 for card: Init PaymentIntent
-  const handleCardInit = async () => {
-    if (!token || !linkData) return;
-
-    setCardInitLoading(true);
-    setCardError(null);
-
+  const initCardPayment = async () => {
     try {
+      setCardInitLoading(true);
+      setCardError(null);
+
       const { data, error } = await supabase.functions.invoke('process-payment-link', {
         body: {
           token,
@@ -254,40 +233,81 @@ export default function PaymentLinkPage() {
         },
       });
 
-      if (error || !data?.success) {
-        setCardError(data?.error || error?.message || 'Impossible d\'initialiser le paiement carte');
+      if (error || !data?.success || !data?.clientSecret) {
+        const message = data?.error || 'Impossible d\'initialiser le paiement carte';
+        setCardError(message);
+        toast({ title: 'Erreur carte', description: message, variant: 'destructive' });
         return;
       }
 
-      if (data.clientSecret) {
-        setCardClientSecret(data.clientSecret);
-      } else {
-        setCardError('Aucun secret client retourné');
-      }
+      const publishableKey = await getStripePublishableKey();
+      setStripePromise(loadStripe(publishableKey));
+      setCardClientSecret(data.clientSecret);
+
+      toast({
+        title: 'Formulaire carte prêt',
+        description: 'Entrez vos informations bancaires puis confirmez le paiement.',
+      });
     } catch (err: any) {
-      setCardError(err.message || 'Erreur réseau');
+      const message = err?.message || 'Erreur de préparation carte';
+      setCardError(message);
+      toast({ title: 'Erreur carte', description: message, variant: 'destructive' });
     } finally {
       setCardInitLoading(false);
     }
   };
 
-  // Non-card payments (wallet, orange_money)
+  const finalizeCardPayment = async (paymentIntentId: string) => {
+    try {
+      setCardFinalizeLoading(true);
+      setCardError(null);
+
+      const { data, error } = await supabase.functions.invoke('process-payment-link', {
+        body: {
+          token,
+          paymentMethod: 'card',
+          paymentIntentId,
+          customerName: customerInfo.name,
+          customerEmail: customerInfo.email,
+          customerPhone: customerInfo.phone,
+        },
+      });
+
+      if (error || !data?.success) {
+        const message = data?.error || 'Confirmation du paiement impossible';
+        setCardError(message);
+        toast({ title: 'Erreur carte', description: message, variant: 'destructive' });
+        await resolveLink();
+        return;
+      }
+
+      await resolveLink();
+      setPaymentSuccess(true);
+      toast({ title: 'Paiement carte réussi !', description: `Transaction ${paymentIntentId}` });
+    } catch (err: any) {
+      const message = err?.message || 'Erreur de finalisation carte';
+      setCardError(message);
+      toast({ title: 'Erreur carte', description: message, variant: 'destructive' });
+    } finally {
+      setCardFinalizeLoading(false);
+    }
+  };
+
   const handlePayment = async () => {
     if (!paymentMethod) {
       toast({ title: "Erreur", description: "Choisissez un mode de paiement", variant: "destructive" });
       return;
     }
 
-    // Card flow is separate
-    if (paymentMethod === 'card') {
-      if (!cardClientSecret) {
-        await handleCardInit();
-      }
+    if (paymentMethod !== 'wallet' && !user && (!customerInfo.name || !customerInfo.phone)) {
+      toast({ title: "Erreur", description: "Nom et téléphone requis", variant: "destructive" });
       return;
     }
 
-    if (paymentMethod !== 'wallet' && (!customerInfo.name || !customerInfo.phone)) {
-      toast({ title: "Erreur", description: "Nom et téléphone requis", variant: "destructive" });
+    if (paymentMethod === 'card') {
+      if (!cardClientSecret) {
+        await initCardPayment();
+      }
       return;
     }
 
@@ -296,7 +316,7 @@ export default function PaymentLinkPage() {
 
       const { data, error } = await supabase.functions.invoke('process-payment-link', {
         body: {
-          token: token!,
+          token,
           paymentMethod,
           customerName: customerInfo.name,
           customerEmail: customerInfo.email,
@@ -305,15 +325,15 @@ export default function PaymentLinkPage() {
       });
 
       if (error || !data?.success) {
-        toast({ title: "Erreur", description: data?.error || error?.message || "Paiement échoué", variant: "destructive" });
+        toast({ title: "Erreur", description: data?.error || "Paiement échoué", variant: "destructive" });
         return;
       }
 
       if (paymentMethod === 'wallet') {
         setPaymentSuccess(true);
-        toast({ title: "Paiement réussi !", description: `Transaction ${data?.transactionId || data?.payment_id || ''}` });
+        toast({ title: "Paiement réussi !", description: `Transaction ${data.transactionId}` });
       } else {
-        toast({ title: "Paiement initié", description: data?.message || "Vérifiez votre téléphone" });
+        toast({ title: "Paiement initié", description: data.message || "Vérifiez votre téléphone" });
         setPaymentSuccess(true);
       }
     } catch (err: any) {
@@ -370,7 +390,7 @@ export default function PaymentLinkPage() {
     );
   }
 
-  // ──────── ALREADY PAID / SUCCESS ────────
+  // ──────── ALREADY PAID ────────
   if (linkData.status === 'success' || linkData.status === 'paid' || paymentSuccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -403,16 +423,6 @@ export default function PaymentLinkPage() {
   }
 
   const typeConfig = linkTypeConfig[linkData.linkType] || linkTypeConfig.payment;
-
-  // Button label logic for card
-  const getPayButtonLabel = () => {
-    if (paymentMethod === 'card') {
-      if (cardClientSecret) return 'Formulaire carte affiché ci-dessous';
-      if (cardInitLoading) return 'Initialisation...';
-      return `Continuer vers le formulaire carte`;
-    }
-    return `Payer ${formatCurrency(linkData.amount, linkData.currency)}`;
-  };
 
   // ──────── MAIN PAYMENT PAGE ────────
   return (
@@ -463,7 +473,7 @@ export default function PaymentLinkPage() {
               )}
             </div>
 
-            {/* Product image */}
+            {/* Product image if available */}
             {productInfo?.images?.[0] && (
               <div className="rounded-lg overflow-hidden border">
                 <img src={productInfo.images[0]} alt={productInfo.name} className="w-full h-32 object-cover" />
@@ -564,7 +574,7 @@ export default function PaymentLinkPage() {
           <CardContent className="space-y-2">
             {/* Orange Money */}
             <button
-              onClick={() => { setPaymentMethod('orange_money'); setCardClientSecret(null); setCardError(null); }}
+              onClick={() => setPaymentMethod('orange_money')}
               className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                 paymentMethod === 'orange_money' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
               }`}
@@ -580,7 +590,7 @@ export default function PaymentLinkPage() {
 
             {/* Card */}
             <button
-              onClick={() => { setPaymentMethod('card'); setCardError(null); }}
+              onClick={() => setPaymentMethod('card')}
               className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                 paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
               }`}
@@ -597,7 +607,7 @@ export default function PaymentLinkPage() {
             {/* Wallet (only if logged in) */}
             {user && (
               <button
-                onClick={() => { setPaymentMethod('wallet'); setCardClientSecret(null); setCardError(null); }}
+                onClick={() => setPaymentMethod('wallet')}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
                   paymentMethod === 'wallet' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
                 }`}
@@ -612,6 +622,37 @@ export default function PaymentLinkPage() {
               </button>
             )}
 
+            {paymentMethod === 'card' && cardError && (
+              <Alert variant="destructive" className="mt-2">
+                <AlertDescription>{cardError}</AlertDescription>
+              </Alert>
+            )}
+
+            {paymentMethod === 'card' && cardClientSecret && stripePromise && (
+              <div className="mt-3 p-3 border rounded-lg bg-muted/30 space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Finalisez le paiement avec votre carte. Le lien passe à "payé" uniquement après confirmation Stripe.
+                </p>
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret: cardClientSecret,
+                    appearance: { theme: 'stripe' },
+                  } as StripeElementsOptions}
+                >
+                  <CardPaymentElementForm
+                    amountLabel={formatCurrency(linkData.amount, linkData.currency)}
+                    disabled={cardFinalizeLoading}
+                    onSuccess={finalizeCardPayment}
+                    onError={(message) => {
+                      setCardError(message);
+                      toast({ title: 'Erreur carte', description: message, variant: 'destructive' });
+                    }}
+                  />
+                </Elements>
+              </div>
+            )}
+
             {/* Security badge */}
             <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg mt-3">
               <Shield className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -622,66 +663,35 @@ export default function PaymentLinkPage() {
           </CardContent>
         </Card>
 
-        {/* Card error */}
-        {cardError && (
-          <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{cardError}</span>
-          </div>
-        )}
-
-        {/* Stripe Elements Card Form */}
-        {paymentMethod === 'card' && cardClientSecret && stripePromise && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <CreditCard className="w-5 h-5" />
-                Informations de carte
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Elements stripe={stripePromise} options={{ clientSecret: cardClientSecret }}>
-                <CardPaymentElementForm
-                  onSuccess={() => {
-                    setPaymentSuccess(true);
-                    toast({ title: "Paiement réussi !", description: "Votre paiement par carte a été confirmé." });
-                  }}
-                  onError={(msg) => {
-                    setCardError(msg);
-                    toast({ title: "Erreur", description: msg, variant: "destructive" });
-                  }}
-                  token={token!}
-                  customerInfo={customerInfo}
-                  userId={user?.id}
-                  amount={linkData.amount}
-                  currency={linkData.currency}
-                />
-              </Elements>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Pay Button (non-card or card init) */}
-        {!(paymentMethod === 'card' && cardClientSecret) && (
-          <Button
-            onClick={handlePayment}
-            disabled={processing || cardInitLoading || !paymentMethod}
-            className="w-full h-12 text-base font-semibold"
-            size="lg"
-          >
-            {processing || cardInitLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                {cardInitLoading ? 'Initialisation carte...' : 'Traitement...'}
-              </>
-            ) : (
-              <>
-                <CreditCard className="w-5 h-5 mr-2" />
-                {getPayButtonLabel()}
-              </>
-            )}
-          </Button>
-        )}
+        {/* Pay Button */}
+        <Button
+          onClick={handlePayment}
+          disabled={processing || cardInitLoading || cardFinalizeLoading || !paymentMethod || (paymentMethod === 'card' && !!cardClientSecret)}
+          className="w-full h-12 text-base font-semibold"
+          size="lg"
+        >
+          {processing || cardInitLoading ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Traitement...
+            </>
+          ) : paymentMethod === 'card' && cardClientSecret ? (
+            <>
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Formulaire carte affiché ci-dessus
+            </>
+          ) : paymentMethod === 'card' ? (
+            <>
+              <CreditCard className="w-5 h-5 mr-2" />
+              Continuer vers le formulaire carte
+            </>
+          ) : (
+            <>
+              <CreditCard className="w-5 h-5 mr-2" />
+              Payer {formatCurrency(linkData.amount, linkData.currency)}
+            </>
+          )}
+        </Button>
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground">
