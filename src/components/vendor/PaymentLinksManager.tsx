@@ -724,14 +724,14 @@ export default function PaymentLinksManager() {
                           
                           {/* Lien de paiement cliquable */}
                           <a
-                            href={`/payment/${link.payment_id}`}
+                            href={link.token ? `/pay/${link.token}` : `/payment/${link.payment_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-primary hover:underline flex items-center gap-1 mb-2 break-all"
                             title="Cliquer pour ouvrir le lien de paiement"
                           >
                             <ExternalLink className="w-3 h-3 shrink-0" />
-                            {window.location.origin}/payment/{link.payment_id}
+                            {window.location.origin}{link.token ? `/pay/${link.token}` : `/payment/${link.payment_id}`}
                           </a>
                           
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
