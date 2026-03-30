@@ -759,7 +759,7 @@ export default function PaymentLinksManager() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyPaymentLink(link.payment_id)}
+                            onClick={() => copyPaymentLink(link)}
                             className="h-8 w-8 p-0"
                             title="Copier le lien"
                           >
