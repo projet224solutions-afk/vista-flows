@@ -62,7 +62,7 @@ const generateSessionId = () => {
   return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 };
 
-export default function CopiloteChat({ className = '', height = '600px', userRole = 'client' }: CopiloteChatProps) {
+export default function CopiloteChat({ className = '', height = 'calc(100vh - 140px)', userRole = 'client' }: CopiloteChatProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -656,47 +656,47 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
   const roleColor = userRole === 'vendeur' ? 'from-primary to-brand-blue-deep' : 'from-vendeur-secondary to-brand-orange-dark';
 
   return (
-    <Card className={`flex flex-col ${className}`} style={{ height }}>
-      <CardHeader className="pb-2 px-3 sm:px-6">
+    <Card className={`flex flex-col w-full ${className}`} style={{ height }}>
+      <CardHeader className="pb-4 px-4 sm:px-8 py-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="relative flex-shrink-0">
-              <Avatar className={`h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br ${roleColor}`}>
+              <Avatar className={`h-12 w-12 sm:h-14 sm:w-14 bg-gradient-to-br ${roleColor}`}>
                 <AvatarImage src="/copilote-avatar.png" alt="Copilote 224" />
                 <AvatarFallback>
-                  <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                  <Bot className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background"></div>
             </div>
             <div className="min-w-0 flex-1">
-              <CardTitle className="text-sm sm:text-lg flex items-center gap-1 flex-wrap">
-                <Sparkles className="h-4 w-4 text-blue-500 flex-shrink-0" />
+              <CardTitle className="text-lg sm:text-2xl flex items-center gap-2 flex-wrap">
+                <Sparkles className="h-6 w-6 text-blue-500 flex-shrink-0" />
                 <span className="truncate">Copilote 224</span>
-                <Badge variant="outline" className="text-[10px] sm:text-xs flex-shrink-0">{roleLabel}</Badge>
+                <Badge variant="outline" className="text-xs sm:text-sm flex-shrink-0">{roleLabel}</Badge>
               </CardTitle>
-              <p className="text-xs sm:text-sm text-muted-foreground truncate">
+              <p className="text-sm sm:text-base text-muted-foreground truncate">
                 Assistant IA dédié {roleLabel.toLowerCase()}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowHistory(!showHistory)}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="h-10 w-10 sm:h-11 sm:w-11 text-muted-foreground hover:text-foreground"
             >
-              <History className="h-4 w-4" />
+              <History className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={clearHistory}
-              className="h-8 w-8 text-muted-foreground hover:text-red-500"
+              className="h-10 w-10 sm:h-11 sm:w-11 text-muted-foreground hover:text-red-500"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
           </div>
         </div>
@@ -704,7 +704,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
         {userContext && (
           <div className="mt-2 p-2 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-2 text-xs sm:text-sm flex-wrap">
-              <Badge variant="secondary" className="text-[10px] sm:text-xs">{userContext.role}</Badge>
+              <Badge variant="secondary" className="text-xs sm:text-sm">{userContext.role}</Badge>
               <span className="text-muted-foreground truncate">
                 {userContext.name} • {userContext.balance} {userContext.currency}
               </span>
@@ -716,20 +716,20 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
       <Separator />
 
       <CardContent className="flex-1 p-0 overflow-hidden min-h-0">
-        <ScrollArea className="h-full px-2 py-3 sm:p-4">
-          <div className="space-y-4">
+        <ScrollArea className="h-full px-4 py-6 sm:px-8 sm:py-8">
+          <div className="space-y-6 sm:space-y-8">
             {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Bienvenue chez Copilote 224</h3>
-                <p className="text-muted-foreground mb-4">
+              <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
+                <MessageSquare className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground mb-6" />
+                <h3 className="text-2xl sm:text-3xl font-semibold mb-4">Bienvenue chez Copilote 224</h3>
+                <p className="text-base sm:text-lg text-muted-foreground mb-6">
                   {userRole === 'vendeur' 
                     ? useEnterpriseMode 
                       ? '🚀 Je suis votre IA ENTERPRISE de 224Solutions. Je peux analyser en profondeur TOUTE votre interface vendeur.'
                       : 'Je suis votre assistant pour gérer votre boutique, produits et ventes.'
                     : 'Je suis votre assistant pour vos achats, commandes et wallet.'}
                 </p>
-                <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4 text-base sm:text-lg text-muted-foreground">
                   {userRole === 'vendeur' ? (
                     useEnterpriseMode ? (
                       <>
@@ -802,50 +802,50 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
               return (
                 <div key={message.id}>
                   {showDate && (
-                    <div className="flex items-center justify-center my-4">
-                      <Badge variant="outline" className="text-xs">
+                    <div className="flex items-center justify-center my-6">
+                      <Badge variant="outline" className="text-xs sm:text-sm">
                         <Clock className="h-3 w-3 mr-1" />
                         {formatDate(message.timestamp)}
                       </Badge>
                     </div>
                   )}
 
-                  <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
-                    <div className={`flex items-start gap-1.5 sm:gap-2 max-w-[90%] sm:max-w-[85%] ${isUser ? 'flex-row-reverse' : ''}`}>
-                      <Avatar className={`h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 ${isUser ? 'bg-primary' : 'bg-gradient-to-br from-primary to-secondary'}`}>
+                  <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6 sm:mb-8`}>
+                    <div className={`flex items-start gap-3 sm:gap-4 max-w-[85%] sm:max-w-[80%] ${isUser ? 'flex-row-reverse' : ''}`}>
+                      <Avatar className={`h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 ${isUser ? 'bg-primary' : 'bg-gradient-to-br from-primary to-secondary'}`}>
                         {isUser ? (
                           <AvatarFallback>
-                            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
+                            <User className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                           </AvatarFallback>
                         ) : (
                           <AvatarFallback>
-                            <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
+                            <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                           </AvatarFallback>
                         )}
                       </Avatar>
 
-                      <div className={`rounded-xl px-3 py-2 sm:p-3 min-w-0 overflow-hidden ${
+                      <div className={`rounded-xl px-5 py-4 sm:px-6 sm:py-5 min-w-0 overflow-hidden ${
                         isUser
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
                       }`}>
                         {/* NOUVEAU: Support Markdown pour mode Enterprise */}
                         {!isUser && extractSourceLabel(message.content) && (
-                          <div className="mb-2">
-                            <Badge variant="secondary" className="text-[10px] sm:text-xs">
+                          <div className="mb-3">
+                            <Badge variant="secondary" className="text-xs sm:text-sm">
                               {extractSourceLabel(message.content)}
                             </Badge>
                           </div>
                         )}
 
                         {!isUser && useEnterpriseMode ? (
-                          <div className="prose prose-sm dark:prose-invert max-w-none text-xs sm:text-sm [&_p]:mb-1.5 [&_ul]:my-1 [&_li]:my-0.5 [&_a]:break-all [&_*]:max-w-full overflow-hidden">
+                          <div className="prose prose-base dark:prose-invert max-w-none text-sm sm:text-lg [&_p]:mb-2 [&_ul]:my-2 [&_li]:my-1 [&_a]:break-all [&_*]:max-w-full overflow-hidden">
                             <ReactMarkdown>{message.content}</ReactMarkdown>
                           </div>
                         ) : (
-                          <p className="text-xs sm:text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">{message.content}</p>
+                          <p className="text-sm sm:text-lg whitespace-pre-wrap break-words overflow-wrap-anywhere">{message.content}</p>
                         )}
-                        <p className="text-[10px] sm:text-xs mt-1 opacity-70">
+                        <p className="text-xs sm:text-sm mt-2 opacity-70">
                           {new Date(message.timestamp).toLocaleTimeString('fr-FR', {
                             hour: '2-digit',
                             minute: '2-digit'
@@ -867,8 +867,8 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
                   </Avatar>
                   <div className="bg-muted rounded-2xl px-4 py-3">
                     <div className="flex items-center space-x-1">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">Copilote 224 réfléchit...</span>
+                      <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
+                      <span className="text-base sm:text-lg text-muted-foreground">Copilote 224 réfléchit...</span>
                     </div>
                   </div>
                 </div>
@@ -882,9 +882,9 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
 
       <Separator />
 
-      <div className="p-2 sm:p-4">
+      <div className="px-4 py-6 sm:px-8 sm:py-8 bg-card">
         {userRole === 'vendeur' && vendorAccess.hasVendor === false && (
-          <div className="mb-2 rounded-lg border border-border bg-muted/50 p-2 text-xs sm:text-sm">
+          <div className="mb-4 rounded-lg border border-border bg-muted/50 p-4 text-sm sm:text-base">
             <div className="font-medium">Accès vendeur requis</div>
             <div className="text-muted-foreground">
               Votre compte n'est pas associé à une boutique.
@@ -893,7 +893,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
         )}
 
         <div
-          className={`space-y-2 rounded-lg transition-colors ${isDragOver ? 'bg-muted/40' : ''}`}
+          className={`space-y-4 sm:space-y-5 rounded-lg transition-colors ${isDragOver ? 'bg-muted/40' : ''}`}
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragOver(true);
@@ -909,7 +909,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
             <div className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2 text-xs sm:text-sm">
               <div className="flex items-center gap-2 min-w-0">
                 <ImagePlus className="h-4 w-4 text-muted-foreground" />
-                <span className="truncate">Image jointe: {attachedImage.name}</span>
+                <span className="text-base sm:text-lg">Image jointe: {attachedImage.name}</span>
                 {isAnalyzingImage && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               </div>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAttachedImage(null)}>
@@ -969,14 +969,14 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
           </Button>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8">
             {quickSuggestions.map((suggestion) => (
               <Button
                 key={suggestion}
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-7 text-[11px]"
+                className="h-10 sm:h-12 text-xs sm:text-sm px-4 py-2"
                 onClick={() => setInput(suggestion)}
                 disabled={isLoading}
               >
@@ -986,7 +986,7 @@ export default function CopiloteChat({ className = '', height = '600px', userRol
           </div>
         </div>
 
-        <div className="mt-1.5 text-[10px] sm:text-xs text-muted-foreground text-center hidden sm:block">
+        <div className="mt-4 text-sm sm:text-base text-muted-foreground text-center hidden sm:block">
           Appuyez sur Entrée pour envoyer • Shift+Entrée pour une nouvelle ligne
         </div>
       </div>
