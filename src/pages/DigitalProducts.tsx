@@ -113,7 +113,7 @@ const productModules: ProductModule[] = [
     gradient: 'bg-[#3c2b7a]',
     iconColor: 'text-[#8b5cf6]',
     coverImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80',
-    iconImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=200&q=80',
+    iconImage: 'https://images.unsplash.com/photo-1655720828018-edd2daec9349?auto=format&fit=crop&w=200&q=80',
     category: 'ai'
   },
   {
