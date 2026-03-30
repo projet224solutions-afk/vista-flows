@@ -17,6 +17,8 @@ export default function InstallMobileApp() {
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [isSafari, setIsSafari] = useState(false);
+  const [isSecureOrigin, setIsSecureOrigin] = useState(false);
 
   useEffect(() => {
     const ua = navigator.userAgent;
@@ -26,6 +28,13 @@ export default function InstallMobileApp() {
     
     // Détecter Android
     setIsAndroid(/Android/.test(ua));
+
+    // Détecter Safari iOS (Chrome/FB in-app browsers iOS exclus)
+    setIsSafari(/Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome|GSA|FBAN|FBAV|Instagram/i.test(ua));
+
+    // Installation PWA iOS: HTTPS obligatoire (sauf localhost)
+    const isLocalhost = /localhost|127\.0\.0\.1/.test(window.location.hostname);
+    setIsSecureOrigin(window.location.protocol === 'https:' || isLocalhost);
     
     // Desktop = ni iOS ni Android
     setIsDesktop(!(/iPad|iPhone|iPod|Android/.test(ua)));
@@ -33,12 +42,24 @@ export default function InstallMobileApp() {
     console.log('📱 [Install Page] Device detection:', {
       isIOS: /iPad|iPhone|iPod/.test(ua),
       isAndroid: /Android/.test(ua),
+      isSafari: /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome|GSA|FBAN|FBAV|Instagram/i.test(ua),
+      isSecureOrigin: window.location.protocol === 'https:' || /localhost|127\.0\.0\.1/.test(window.location.hostname),
       isInstallable,
       isInstalled
     });
   }, [isInstallable, isInstalled]);
 
   const handleInstallClick = async () => {
+    if (isIOS && !isSafari) {
+      toast.error('Sur iPhone, l\'installation fonctionne uniquement dans Safari.');
+      return;
+    }
+
+    if (!isSecureOrigin) {
+      toast.error('L\'installation nécessite HTTPS.');
+      return;
+    }
+
     if (isInstallable) {
       const success = await promptInstall();
       if (success) {
@@ -187,6 +208,22 @@ export default function InstallMobileApp() {
                   <CardDescription>Suivez ces étapes simples dans Safari</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {!isSafari && (
+                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <p className="text-sm text-amber-800 font-medium">
+                        ⚠️ Vous n'êtes pas dans Safari. Ouvrez ce lien dans Safari pour voir l'option "Sur l'écran d'accueil".
+                      </p>
+                    </div>
+                  )}
+
+                  {!isSecureOrigin && (
+                    <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                      <p className="text-sm text-red-800 font-medium">
+                        ⚠️ Domaine non sécurisé: iOS exige HTTPS pour installer l'application.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-sm text-blue-800 font-medium">
                       📱 Assurez-vous d'utiliser Safari pour cette installation
