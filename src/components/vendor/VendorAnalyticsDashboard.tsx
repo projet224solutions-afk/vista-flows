@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { useVendorAnalytics } from '@/hooks/useVendorAnalytics';
-import { TrendingUp, Store, Globe, Target, Package } from 'lucide-react';
+import { TrendingUp, Target, Package } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function VendorAnalyticsDashboard() {
@@ -25,18 +25,6 @@ export function VendorAnalyticsDashboard() {
       color: 'text-green-600'
     },
     {
-      title: "Ventes POS",
-      value: analytics.today.posOrders,
-      icon: Store,
-      color: 'text-blue-600'
-    },
-    {
-      title: "Commandes en ligne",
-      value: analytics.today.onlineOrders,
-      icon: Globe,
-      color: 'text-cyan-600'
-    },
-    {
       title: "Taux de Conversion",
       value: `${analytics.today.conversionRate.toFixed(1)}%`,
       icon: Target,
@@ -53,7 +41,7 @@ export function VendorAnalyticsDashboard() {
   return (
     <div className="space-y-6">
       {/* KPIs - grille responsive */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {stats.map((stat) => (
           <Card key={stat.title} className="p-4">
             <div className="flex items-center justify-between">
