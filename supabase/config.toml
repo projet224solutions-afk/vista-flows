@@ -362,3 +362,9 @@ verify_jwt = false
 
 [functions.resolve-short-link]
 verify_jwt = false
+
+[functions.resolve-payment-link]
+verify_jwt = false
+
+[functions.process-payment-link]
+verify_jwt = false

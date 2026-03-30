@@ -1,4 +1,10 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * 💳 GESTIONNAIRE UNIFIÉ DE LIENS DE PAIEMENT
+ * Supporte 4 types: payment, invoice, checkout, service
+ * Pour vendeurs digitaux, vendeurs physiques et prestataires
+ */
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,555 +14,349 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { usePaymentLinks } from '@/hooks/usePaymentLinks';
-import { useCurrentVendor } from '@/hooks/useCurrentVendor';
+import { usePaymentLinks, LinkType } from '@/hooks/usePaymentLinks';
 import { supabase } from '@/integrations/supabase/client';
+import { QRCodeSVG } from 'qrcode.react';
 import {
-  Link, Plus, Copy, Share2, RefreshCw, 
-  DollarSign, CheckCircle, Clock, XCircle, AlertCircle, ExternalLink,
-  Calendar, User, Package, Edit, Trash2
+  Link, Plus, Copy, Share2, RefreshCw,
+  DollarSign, CheckCircle, Clock, XCircle, AlertCircle,
+  ExternalLink, Calendar, User, Package, Edit, Trash2,
+  CreditCard, FileText, ShoppingCart, Wrench, Eye,
+  QrCode, Ban, MoreVertical, ArrowUpRight, Receipt,
+  Smartphone, Store
 } from 'lucide-react';
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  description?: string;
-  images?: string[];
-}
+const LINK_TYPES: { value: LinkType; label: string; icon: React.ReactNode; desc: string }[] = [
+  { value: 'payment', label: 'Paiement simple', icon: <CreditCard className="w-4 h-4" />, desc: 'Montant + objet pour paiement rapide' },
+  { value: 'invoice', label: 'Facture', icon: <FileText className="w-4 h-4" />, desc: 'Référence, description, montant, statut' },
+  { value: 'checkout', label: 'Checkout produit', icon: <ShoppingCart className="w-4 h-4" />, desc: 'Produit digital ou physique' },
+  { value: 'service', label: 'Service / Prestation', icon: <Wrench className="w-4 h-4" />, desc: 'Restaurant, livraison, transport, prestation' },
+];
+
+const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
+  pending: { icon: <Clock className="w-3.5 h-3.5" />, color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300', label: 'En attente' },
+  success: { icon: <CheckCircle className="w-3.5 h-3.5" />, color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300', label: 'Payé' },
+  paid: { icon: <CheckCircle className="w-3.5 h-3.5" />, color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300', label: 'Payé' },
+  failed: { icon: <XCircle className="w-3.5 h-3.5" />, color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', label: 'Échoué' },
+  expired: { icon: <AlertCircle className="w-3.5 h-3.5" />, color: 'bg-muted text-muted-foreground', label: 'Expiré' },
+  cancelled: { icon: <Ban className="w-3.5 h-3.5" />, color: 'bg-muted text-muted-foreground', label: 'Annulé' },
+};
+
+const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
+  payment: { icon: <CreditCard className="w-3.5 h-3.5" />, color: 'bg-primary/10 text-primary', label: 'Paiement' },
+  invoice: { icon: <FileText className="w-3.5 h-3.5" />, color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300', label: 'Facture' },
+  checkout: { icon: <ShoppingCart className="w-3.5 h-3.5" />, color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300', label: 'Checkout' },
+  service: { icon: <Wrench className="w-3.5 h-3.5" />, color: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300', label: 'Service' },
+};
+
+interface Product { id: string; name: string; price: number; description?: string; images?: string[] }
+interface Service { id: string; business_name: string; description?: string; category?: string }
+
+const initialForm = {
+  linkType: 'payment' as LinkType,
+  product_id: '',
+  service_id: '',
+  produit: '',
+  title: '',
+  description: '',
+  montant: '',
+  devise: 'GNF',
+  reference: '',
+  client_id: '',
+  customer_email: '',
+  customer_phone: '',
+  remise: '0',
+  type_remise: 'percentage' as 'percentage' | 'fixed',
+  payment_type: 'full',
+  is_single_use: true,
+  expires_days: '7',
+};
 
 export default function PaymentLinksManager() {
   const { toast } = useToast();
-  const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const {
-    paymentLinks,
-    stats,
-    loading,
-    loadPaymentLinks,
-    createPaymentLink: createLink,
-    updatePaymentLinkStatus,
-    deletePaymentLink
+    paymentLinks, stats, loading, vendorId, ownerType,
+    loadPaymentLinks, createPaymentLink, updatePaymentLinkStatus, deletePaymentLink, getPaymentUrl
   } = usePaymentLinks();
-  
+
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingLink, setEditingLink] = useState<any>(null);
+  const [showQrModal, setShowQrModal] = useState<string | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState<any>(null);
   const [creating, setCreating] = useState(false);
-  const [updating, setUpdating] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  
-  // Formulaire de création
-  const [formData, setFormData] = useState<{
-    product_id: string;
-    produit: string;
-    description: string;
-    montant: string;
-    devise: string;
-    client_id: string;
-    remise: string;
-    type_remise: 'percentage' | 'fixed';
-  }>({
-    product_id: '',
-    produit: '',
-    description: '',
-    montant: '',
-    devise: 'GNF',
-    client_id: '',
-    remise: '0',
-    type_remise: 'percentage'
-  });
+  const [services, setServices] = useState<Service[]>([]);
+  const [formData, setFormData] = useState(initialForm);
 
-  // Filtres
-  const [filters, setFilters] = useState({
-    status: 'all',
-    search: ''
-  });
+  const [filters, setFilters] = useState({ status: 'all', type: 'all', search: '' });
+  const [activeTab, setActiveTab] = useState('all');
 
-  // Charger les produits du vendeur
-  useEffect(() => {
-    loadVendorProducts();
-  }, []);
+  useEffect(() => { loadAssets(); }, [vendorId]);
+  useEffect(() => { loadPaymentLinks(filters); }, [filters.status, filters.search]);
 
-  // Recharger quand les filtres changent
-  useEffect(() => {
-    loadPaymentLinks(filters);
-  }, [filters.status, filters.search]);
-
-  const loadVendorProducts = async () => {
-    if (!vendorId) {
-      console.warn('⚠️ Pas de vendorId pour charger les produits');
-      return;
-    }
-
-    try {
-      setLoadingProducts(true);
-
-      // Récupérer les produits actifs du vendeur
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, price, description, images')
-        .eq('vendor_id', vendorId)
-        .eq('is_active', true)
-        .order('name');
-
-      if (error) throw error;
-
+  const loadAssets = async () => {
+    if (vendorId) {
+      const { data } = await supabase.from('products').select('id, name, price, description, images')
+        .eq('vendor_id', vendorId).eq('is_active', true).order('name');
       setProducts(data || []);
-    } catch (error) {
-      console.error('Erreur chargement produits:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les produits",
-        variant: "destructive"
-      });
-    } finally {
-      setLoadingProducts(false);
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase.from('professional_services').select('id, business_name, description')
+        .eq('user_id', user.id).order('business_name');
+      setServices((data || []).map((d: any) => ({ id: d.id, business_name: d.business_name, description: d.description })));
     }
   };
+
+  const filteredLinks = useMemo(() => {
+    let result = paymentLinks;
+    if (activeTab !== 'all') result = result.filter(l => l.link_type === activeTab);
+    if (filters.type !== 'all') result = result.filter(l => l.link_type === filters.type);
+    return result;
+  }, [paymentLinks, activeTab, filters.type]);
 
   const handleProductSelect = (productId: string) => {
-    const product = products.find(p => p.id === productId);
-    if (product) {
-      setSelectedProduct(product);
-      setFormData({
-        ...formData,
-        product_id: product.id,
-        produit: product.name,
-        description: product.description || '',
-        montant: product.price.toString(),
-        remise: '0',
-        type_remise: 'percentage'
-      });
+    const p = products.find(x => x.id === productId);
+    if (p) {
+      setFormData(f => ({ ...f, product_id: p.id, produit: p.name, title: p.name, description: p.description || '', montant: p.price.toString() }));
     }
   };
 
-  const handleRefresh = () => {
-    loadPaymentLinks(filters);
+  const handleServiceSelect = (serviceId: string) => {
+    const s = services.find(x => x.id === serviceId);
+    if (s) {
+      setFormData(f => ({ ...f, service_id: s.id, produit: s.business_name, title: s.business_name, description: s.description || '' }));
+    }
   };
 
-  const handleCreatePaymentLink = async () => {
+  const handleCreate = async () => {
     if (!formData.produit || !formData.montant) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
-        variant: "destructive"
-      });
+      toast({ title: "Erreur", description: "Titre et montant requis", variant: "destructive" });
       return;
     }
-
     try {
       setCreating(true);
-
-      const paymentId = await createLink({
+      const token = await createPaymentLink({
+        linkType: formData.linkType,
+        ownerType,
         produit: formData.produit,
+        title: formData.title || formData.produit,
         description: formData.description,
         montant: parseFloat(formData.montant),
         devise: formData.devise,
+        reference: formData.reference || undefined,
         client_id: formData.client_id || undefined,
         remise: parseFloat(formData.remise),
-        type_remise: formData.type_remise
+        type_remise: formData.type_remise,
+        product_id: formData.product_id || undefined,
+        service_id: formData.service_id || undefined,
+        payment_type: formData.payment_type,
+        is_single_use: formData.is_single_use,
+        expires_days: parseInt(formData.expires_days) || 7,
       });
 
-      if (paymentId) {
-        const paymentUrl = `${window.location.origin}/payment/${paymentId}`;
-        
-        // Copier le lien automatiquement
-        navigator.clipboard.writeText(paymentUrl);
-        toast({
-          title: "Lien copié",
-          description: "Le lien de paiement a été copié dans le presse-papiers",
-        });
-
-        // Réinitialiser le formulaire
+      if (token) {
+        const url = `${window.location.origin}/pay/${token}`;
+        navigator.clipboard.writeText(url);
+        toast({ title: "✅ Lien créé et copié !", description: url });
         setShowCreateModal(false);
-        setSelectedProduct(null);
-        setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '', remise: '0', type_remise: 'percentage' });
+        setFormData(initialForm);
       }
-    } catch (error: any) {
-      console.error('Erreur création lien:', error);
     } finally {
       setCreating(false);
     }
   };
 
-  const copyPaymentLink = async (link: any) => {
-    try {
-      const url = link.token
-        ? `${window.location.origin}/pay/${link.token}`
-        : `${window.location.origin}/payment/${link.payment_id}`;
-      await navigator.clipboard.writeText(url);
-      toast({
-        title: "Lien copié",
-        description: "Le lien de paiement a été copié dans le presse-papiers",
-      });
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de copier le lien",
-        variant: "destructive"
-      });
+  const copyLink = (link: any) => {
+    const url = getPaymentUrl(link);
+    navigator.clipboard.writeText(url);
+    toast({ title: "Lien copié !" });
+  };
+
+  const shareLink = async (link: any) => {
+    const url = getPaymentUrl(link);
+    if (navigator.share) {
+      await navigator.share({ title: `Paiement - ${link.title || link.produit}`, text: 'Effectuez votre paiement sécurisé', url });
+    } else {
+      copyLink(link);
     }
   };
 
-  const sharePaymentLink = async (link: any) => {
-    try {
-      const url = link.token
-        ? `${window.location.origin}/pay/${link.token}`
-        : `${window.location.origin}/payment/${link.payment_id}`;
-      
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Lien de paiement 224SOLUTIONS',
-          text: 'Effectuez votre paiement via ce lien sécurisé',
-          url,
-        });
-      } else {
-        await copyPaymentLink(link);
-      }
-    } catch (error) {
-      console.error('Erreur partage:', error);
-    }
+  const cancelLink = async (link: any) => {
+    if (!confirm(`Annuler le lien "${link.title || link.produit}" ?`)) return;
+    await updatePaymentLinkStatus(link.payment_id, 'cancelled');
   };
 
-  const handleEditLink = (link: any) => {
-    console.log('Editing link:', link);
-    console.log('Client data:', link.client);
-    
-    setEditingLink(link);
-    setFormData({
-      product_id: '',
-      produit: link.produit,
-      description: link.description || '',
-      montant: link.montant.toString(),
-      devise: link.devise,
-      client_id: link.client?.public_id || '',
-      remise: (link.remise || 0).toString(),
-      type_remise: link.type_remise || 'percentage'
-    });
-    setShowEditModal(true);
+  const removeLink = async (link: any) => {
+    if (!confirm(`Supprimer définitivement "${link.title || link.produit}" ?`)) return;
+    await deletePaymentLink(link.payment_id);
   };
 
-  const handleUpdateLink = async () => {
-    if (!editingLink || !formData.montant) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
-        variant: "destructive"
-      });
-      return;
-    }
+  const formatCurrency = (amount: number, currency: string) =>
+    new Intl.NumberFormat('fr-FR').format(amount) + ' ' + currency;
 
-    try {
-      setUpdating(true);
-
-      const newMontant = parseFloat(formData.montant);
-      const newRemise = parseFloat(formData.remise);
-      let montantApresRemise = newMontant;
-      
-      // Calculer le montant après remise
-      if (newRemise > 0) {
-        if (formData.type_remise === 'percentage') {
-          montantApresRemise = newMontant * (1 - newRemise / 100);
-        } else {
-          montantApresRemise = newMontant - newRemise;
-        }
-      }
-      
-      const newFrais = montantApresRemise * 0.01;
-      const newTotal = montantApresRemise + newFrais;
-
-      // Si un client_id est fourni, trouver l'UUID correspondant
-      let clientUuid: string | null = null;
-      if (formData.client_id) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('public_id', formData.client_id)
-          .single();
-
-        if (profileError || !profile) {
-          toast({
-            title: "Erreur",
-            description: "ID client introuvable",
-            variant: "destructive"
-          });
-          setUpdating(false);
-          return;
-        }
-        clientUuid = profile.id;
-      }
-
-      const { error } = await supabase
-        .from('payment_links')
-        .update({
-          produit: formData.produit,
-          description: formData.description || null,
-          montant: newMontant,
-          remise: newRemise,
-          type_remise: formData.type_remise,
-          frais: newFrais,
-          total: newTotal,
-          devise: formData.devise,
-          client_id: clientUuid
-        })
-        .eq('payment_id', editingLink.payment_id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Succès",
-        description: "Lien de paiement mis à jour",
-      });
-
-      setShowEditModal(false);
-      setEditingLink(null);
-      setFormData({ product_id: '', produit: '', description: '', montant: '', devise: 'GNF', client_id: '', remise: '0', type_remise: 'percentage' });
-      await loadPaymentLinks(filters);
-    } catch (error: any) {
-      console.error('Erreur mise à jour:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le lien",
-        variant: "destructive"
-      });
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const handleDeleteLink = async (paymentId: string, produit: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer le lien pour "${produit}" ?`)) {
-      return;
-    }
-
-    try {
-      await deletePaymentLink(paymentId);
-    } catch (error) {
-      console.error('Erreur suppression:', error);
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-600" />;
-      case 'failed':
-        return <XCircle className="w-4 h-4 text-red-600" />;
-      case 'expired':
-        return <AlertCircle className="w-4 h-4 text-gray-600" />;
-      default:
-        return <Clock className="w-4 h-4 text-gray-600" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      case 'expired':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' ' + currency;
-  };
-
+  // ─── RENDER ───
   return (
-    <div className="h-full flex flex-col space-y-4 p-4 overflow-hidden">
-      {/* En-tête avec statistiques - Version compacte */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-3">
-              <Link className="w-6 h-6 text-blue-600 shrink-0" />
+    <div className="h-full flex flex-col gap-4 overflow-hidden">
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 shrink-0">
+        {[
+          { icon: <Link className="w-5 h-5 text-primary" />, label: 'Total', value: stats?.total_links || 0 },
+          { icon: <CheckCircle className="w-5 h-5 text-emerald-600" />, label: 'Payés', value: stats?.successful_payments || 0, color: 'text-emerald-600' },
+          { icon: <Clock className="w-5 h-5 text-amber-600" />, label: 'En attente', value: stats?.pending_payments || 0, color: 'text-amber-600' },
+          { icon: <XCircle className="w-5 h-5 text-red-500" />, label: 'Échoués', value: stats?.failed_payments || 0, color: 'text-red-500' },
+          { icon: <DollarSign className="w-5 h-5 text-primary" />, label: 'Revenus', value: formatCurrency(stats?.total_revenue || 0, 'GNF'), isRevenue: true },
+        ].map((s, i) => (
+          <Card key={i}>
+            <CardContent className="p-3 flex items-center gap-3">
+              {s.icon}
               <div>
-                <p className="text-xs text-muted-foreground">Total Liens</p>
-                <p className="text-xl font-bold">{stats?.total_links || 0}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+                <p className={`font-bold ${s.isRevenue ? 'text-sm' : 'text-xl'} ${s.color || ''}`}>{s.value}</p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-6 h-6 text-green-600 shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Réussis</p>
-                <p className="text-xl font-bold text-green-600">{stats?.successful_payments || 0}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-3">
-              <Clock className="w-6 h-6 text-yellow-600 shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">En Attente</p>
-                <p className="text-xl font-bold text-yellow-600">{stats?.pending_payments || 0}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-6 h-6 text-blue-600 shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Revenus</p>
-                <p className="text-lg font-bold text-blue-600">
-                  {formatCurrency(stats?.total_revenue || 0, 'GNF')}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Actions et filtres - Version compacte */}
+      {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between shrink-0">
-        <div className="flex flex-col sm:flex-row gap-2 flex-1">
+        <div className="flex gap-2 flex-1">
           <Input
             placeholder="Rechercher..."
             value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
             className="sm:w-48"
           />
-          <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
-            <SelectTrigger className="sm:w-40">
-              <SelectValue placeholder="Statut" />
-            </SelectTrigger>
+          <Select value={filters.status} onValueChange={(v) => setFilters(f => ({ ...f, status: v }))}>
+            <SelectTrigger className="sm:w-36"><SelectValue placeholder="Statut" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="all">Tous statuts</SelectItem>
               <SelectItem value="pending">En attente</SelectItem>
-              <SelectItem value="success">Réussi</SelectItem>
-              <SelectItem value="failed">Échoué</SelectItem>
-              <SelectItem value="expired">Expiré</SelectItem>
+              <SelectItem value="success">Payés</SelectItem>
+              <SelectItem value="failed">Échoués</SelectItem>
+              <SelectItem value="expired">Expirés</SelectItem>
+              <SelectItem value="cancelled">Annulés</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        
         <div className="flex gap-2">
-          <Button onClick={handleRefresh} variant="outline" size="sm">
+          <Button onClick={() => loadPaymentLinks(filters)} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4" />
           </Button>
-          
           <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                <Plus className="w-4 h-4 mr-1" />
-                Créer
+              <Button size="sm" className="bg-primary hover:bg-primary/90">
+                <Plus className="w-4 h-4 mr-1" />Créer un lien
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+            <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
               <DialogHeader>
-                <DialogTitle>Créer un lien de paiement</DialogTitle>
-                <DialogDescription>
-                  Sélectionnez un produit de votre stock pour créer un lien de paiement
-                </DialogDescription>
+                <DialogTitle>Nouveau lien de paiement</DialogTitle>
+                <DialogDescription>Choisissez le type et remplissez les informations</DialogDescription>
               </DialogHeader>
-              
-              <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+              <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(90vh - 180px)' }}>
                 <div className="space-y-4 px-1 pr-4 pb-2">
+                  {/* Link type selection */}
                   <div>
-                    <Label htmlFor="product">Sélectionner un produit *</Label>
-                    <Select value={formData.product_id} onValueChange={handleProductSelect}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir un produit..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {loadingProducts ? (
-                          <SelectItem value="loading" disabled>Chargement...</SelectItem>
-                        ) : products.length === 0 ? (
-                          <SelectItem value="empty" disabled>Aucun produit disponible</SelectItem>
-                        ) : (
-                          products.map((product) => (
-                            <SelectItem key={product.id} value={product.id}>
-                              <div className="flex items-center gap-2">
-                                <Package className="w-4 h-4" />
-                                {product.name} - {new Intl.NumberFormat('fr-FR').format(product.price)} GNF
-                              </div>
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    {products.length === 0 && !loadingProducts && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Ajoutez d'abord des produits dans votre stock
-                      </p>
-                    )}
+                    <Label className="mb-2 block">Type de lien</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {LINK_TYPES.map(lt => (
+                        <button
+                          key={lt.value}
+                          type="button"
+                          onClick={() => setFormData(f => ({ ...f, linkType: lt.value, product_id: '', service_id: '' }))}
+                          className={`flex items-center gap-2 p-3 rounded-lg border-2 text-left transition-all ${
+                            formData.linkType === lt.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
+                          }`}
+                        >
+                          {lt.icon}
+                          <div>
+                            <p className="text-sm font-medium">{lt.label}</p>
+                            <p className="text-xs text-muted-foreground">{lt.desc}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  {selectedProduct && selectedProduct.images && selectedProduct.images.length > 0 && (
-                    <div className="rounded-lg overflow-hidden border">
-                      <img 
-                        src={selectedProduct.images[0]} 
-                        alt={selectedProduct.name}
-                        className="w-full h-32 object-cover"
-                      />
+                  <Separator />
+
+                  {/* Product select for checkout type */}
+                  {formData.linkType === 'checkout' && products.length > 0 && (
+                    <div>
+                      <Label>Produit</Label>
+                      <Select value={formData.product_id} onValueChange={handleProductSelect}>
+                        <SelectTrigger><SelectValue placeholder="Sélectionner un produit..." /></SelectTrigger>
+                        <SelectContent>
+                          {products.map(p => (
+                            <SelectItem key={p.id} value={p.id}>
+                              <div className="flex items-center gap-2">
+                                <Package className="w-3.5 h-3.5" />
+                                {p.name} — {new Intl.NumberFormat('fr-FR').format(p.price)} GNF
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   )}
-                  
-                  <div>
-                    <Label htmlFor="produit">Nom du produit *</Label>
-                    <Input
-                      id="produit"
-                      value={formData.produit}
-                      onChange={(e) => setFormData({ ...formData, produit: e.target.value })}
-                      placeholder="Nom du produit"
-                      required
-                      disabled={!!selectedProduct}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Description du produit ou service..."
-                      rows={3}
-                      disabled={!!selectedProduct}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+
+                  {/* Service select for service type */}
+                  {formData.linkType === 'service' && services.length > 0 && (
                     <div>
-                      <Label htmlFor="montant">Montant *</Label>
-                      <Input
-                        id="montant"
-                        type="number"
-                        value={formData.montant}
-                        onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
-                        placeholder="0"
-                        required
-                        disabled={!!selectedProduct}
-                      />
+                      <Label>Service</Label>
+                      <Select value={formData.service_id} onValueChange={handleServiceSelect}>
+                        <SelectTrigger><SelectValue placeholder="Sélectionner un service..." /></SelectTrigger>
+                        <SelectContent>
+                          {services.map(s => (
+                            <SelectItem key={s.id} value={s.id}>
+                              <div className="flex items-center gap-2">
+                                <Wrench className="w-3.5 h-3.5" />
+                                {s.business_name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    
+                  )}
+
+                  {/* Title */}
+                  <div>
+                    <Label>Titre / Objet *</Label>
+                    <Input
+                      value={formData.produit}
+                      onChange={(e) => setFormData(f => ({ ...f, produit: e.target.value, title: e.target.value }))}
+                      placeholder={formData.linkType === 'service' ? 'Ex: Course taxi Kaloum' : 'Ex: Formation Marketing Digital'}
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData(f => ({ ...f, description: e.target.value }))}
+                      placeholder="Description du paiement..."
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Amount & currency */}
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label htmlFor="devise">Devise</Label>
-                      <Select value={formData.devise} onValueChange={(value) => setFormData({ ...formData, devise: value })}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
+                      <Label>Montant *</Label>
+                      <Input type="number" value={formData.montant}
+                        onChange={(e) => setFormData(f => ({ ...f, montant: e.target.value }))} placeholder="0" />
+                    </div>
+                    <div>
+                      <Label>Devise</Label>
+                      <Select value={formData.devise} onValueChange={(v) => setFormData(f => ({ ...f, devise: v }))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="GNF">GNF</SelectItem>
                           <SelectItem value="FCFA">FCFA</SelectItem>
@@ -566,94 +366,87 @@ export default function PaymentLinksManager() {
                       </Select>
                     </div>
                   </div>
-                  
+
+                  {/* Reference (for invoice) */}
+                  {(formData.linkType === 'invoice' || formData.linkType === 'service') && (
+                    <div>
+                      <Label>Référence / N° facture</Label>
+                      <Input value={formData.reference}
+                        onChange={(e) => setFormData(f => ({ ...f, reference: e.target.value }))}
+                        placeholder="Ex: INV-2026-001" />
+                    </div>
+                  )}
+
+                  {/* Payment type */}
                   <div>
-                    <Label htmlFor="client_id">ID Client (optionnel)</Label>
-                    <Input
-                      id="client_id"
-                      value={formData.client_id}
-                      onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                      placeholder="Ex: USR0002"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Laissez vide pour un lien public accessible à tous
-                    </p>
+                    <Label>Type de règlement</Label>
+                    <Select value={formData.payment_type} onValueChange={(v) => setFormData(f => ({ ...f, payment_type: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="full">Paiement total</SelectItem>
+                        <SelectItem value="deposit">Acompte</SelectItem>
+                        <SelectItem value="balance">Solde restant</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  
-                  {/* Section Remise */}
-                  <div className="border-t pt-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <Label className="text-base font-semibold">Remise (Réduction)</Label>
+
+                  {/* Client info (optional) */}
+                  <div>
+                    <Label>ID Client (optionnel)</Label>
+                    <Input value={formData.client_id}
+                      onChange={(e) => setFormData(f => ({ ...f, client_id: e.target.value }))}
+                      placeholder="Ex: USR0002" />
+                    <p className="text-xs text-muted-foreground mt-1">Laissez vide pour un lien public</p>
+                  </div>
+
+                  {/* Discount */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Remise</Label>
+                      <Input type="number" min="0" value={formData.remise}
+                        onChange={(e) => setFormData(f => ({ ...f, remise: e.target.value }))} />
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label htmlFor="remise">Montant remise</Label>
-                        <Input
-                          id="remise"
-                          type="number"
-                          min="0"
-                          value={formData.remise}
-                          onChange={(e) => setFormData({ ...formData, remise: e.target.value })}
-                          placeholder="0"
-                        />
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="type_remise">Type</Label>
-                        <Select value={formData.type_remise} onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, type_remise: value })}>
-                          <SelectTrigger id="type_remise">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="percentage">Pourcentage (%)</SelectItem>
-                            <SelectItem value="fixed">Montant fixe</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    <div>
+                      <Label>Type remise</Label>
+                      <Select value={formData.type_remise}
+                        onValueChange={(v: 'percentage' | 'fixed') => setFormData(f => ({ ...f, type_remise: v }))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="percentage">%</SelectItem>
+                          <SelectItem value="fixed">Fixe</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                  
+
+                  {/* Expiry & single use */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Expire dans (jours)</Label>
+                      <Input type="number" min="1" max="365" value={formData.expires_days}
+                        onChange={(e) => setFormData(f => ({ ...f, expires_days: e.target.value }))} />
+                    </div>
+                    <div className="flex items-center gap-2 pt-6">
+                      <Switch checked={formData.is_single_use}
+                        onCheckedChange={(v) => setFormData(f => ({ ...f, is_single_use: v }))} />
+                      <Label className="text-sm">Usage unique</Label>
+                    </div>
+                  </div>
+
+                  {/* Summary */}
                   {formData.montant && (
-                    <div className="p-3 bg-blue-50 rounded-lg space-y-1">
-                      <p className="text-sm text-blue-800">
-                        <strong>Résumé :</strong>
-                      </p>
+                    <div className="p-3 bg-muted rounded-lg space-y-1">
+                      <p className="text-sm font-semibold">Résumé</p>
                       {(() => {
-                        const montant = parseFloat(formData.montant) || 0;
-                        const remise = parseFloat(formData.remise) || 0;
-                        let montantApresRemise = montant;
-                        
-                        if (remise > 0) {
-                          if (formData.type_remise === 'percentage') {
-                            montantApresRemise = montant * (1 - remise / 100);
-                          } else {
-                            montantApresRemise = montant - remise;
-                          }
-                        }
-                        
+                        const m = parseFloat(formData.montant) || 0;
+                        const r = parseFloat(formData.remise) || 0;
+                        let net = m;
+                        if (r > 0) net = formData.type_remise === 'percentage' ? m * (1 - r / 100) : m - r;
                         return (
                           <>
-                            <p className="text-xs text-blue-700">
-                              Montant initial : {formatCurrency(montant, formData.devise)}
-                            </p>
-                            {remise > 0 && (
-                              <>
-                                <p className="text-xs text-green-700 font-semibold">
-                                  Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
-                                  {' '}({formatCurrency(montant - montantApresRemise, formData.devise)})
-                                </p>
-                                <p className="text-xs text-blue-700">
-                                  Montant après remise : {formatCurrency(montantApresRemise, formData.devise)}
-                                </p>
-                              </>
-                            )}
-                            <p className="text-sm text-blue-900 font-bold mt-2">
-                              Montant à demander : {formatCurrency(montantApresRemise, formData.devise)}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              (Les frais de traitement seront ajoutés pour le client)
-                            </p>
+                            <p className="text-xs text-muted-foreground">Montant: {formatCurrency(m, formData.devise)}</p>
+                            {r > 0 && <p className="text-xs text-emerald-600">Remise: -{r}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}</p>}
+                            <p className="text-sm font-bold text-primary">À payer: {formatCurrency(net, formData.devise)}</p>
                           </>
                         );
                       })()}
@@ -661,23 +454,10 @@ export default function PaymentLinksManager() {
                   )}
                 </div>
               </ScrollArea>
-              
-              <div className="flex justify-end gap-2 pt-4 shrink-0">
-                <Button variant="outline" onClick={() => setShowCreateModal(false)}>
-                  Annuler
-                </Button>
-                <Button onClick={handleCreatePaymentLink} disabled={creating}>
-                  {creating ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Création...
-                    </>
-                  ) : (
-                    <>
-                      <Link className="w-4 h-4 mr-2" />
-                      Créer le lien
-                    </>
-                  )}
+              <div className="flex justify-end gap-2 pt-3 shrink-0">
+                <Button variant="outline" onClick={() => setShowCreateModal(false)}>Annuler</Button>
+                <Button onClick={handleCreate} disabled={creating}>
+                  {creating ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Création...</> : <><Plus className="w-4 h-4 mr-2" />Créer le lien</>}
                 </Button>
               </div>
             </DialogContent>
@@ -685,314 +465,154 @@ export default function PaymentLinksManager() {
         </div>
       </div>
 
-      {/* Liste des liens de paiement avec scroll */}
-      <Card className="flex-1 flex flex-col overflow-hidden">
-        <CardHeader className="pb-3 shrink-0">
-          <CardTitle className="text-lg">Mes liens de paiement</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 p-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="px-6 py-4">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-                  Chargement...
-                </div>
-              ) : paymentLinks.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="font-medium">Aucun lien de paiement</p>
-                  <p className="text-sm">Créez votre premier lien pour recevoir des paiements</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {paymentLinks.map((link) => (
-                    <div key={link.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h3 className="font-semibold text-sm truncate">{link.produit}</h3>
-                            <Badge className={`${getStatusColor(link.status)} text-xs flex items-center gap-1`}>
-                              {getStatusIcon(link.status)}
-                              <span className="capitalize">{link.status}</span>
-                            </Badge>
-                          </div>
-                          
-                          {link.description && (
-                            <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{link.description}</p>
-                          )}
-                          
-                          {/* Lien de paiement cliquable */}
-                          <a
-                            href={link.token ? `/pay/${link.token}` : `/payment/${link.payment_id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline flex items-center gap-1 mb-2 break-all"
-                            title="Cliquer pour ouvrir le lien de paiement"
-                          >
-                            <ExternalLink className="w-3 h-3 shrink-0" />
-                            {window.location.origin}{link.token ? `/pay/${link.token}` : `/payment/${link.payment_id}`}
-                          </a>
-                          
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1 font-medium">
-                              <DollarSign className="w-3 h-3" />
-                              {formatCurrency(link.total, link.devise)}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {new Date(link.created_at).toLocaleDateString('fr-FR', { 
-                                day: '2-digit', 
-                                month: 'short' 
-                              })}
-                            </span>
-                            {link.client && (
-                              <span className="flex items-center gap-1">
-                                <User className="w-3 h-3" />
-                                {link.client.name}
-                              </span>
-                            )}
+      {/* Tabs by link type */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <TabsList className="shrink-0 w-full justify-start">
+          <TabsTrigger value="all">Tous</TabsTrigger>
+          <TabsTrigger value="payment" className="gap-1"><CreditCard className="w-3.5 h-3.5" />Paiements</TabsTrigger>
+          <TabsTrigger value="invoice" className="gap-1"><FileText className="w-3.5 h-3.5" />Factures</TabsTrigger>
+          <TabsTrigger value="checkout" className="gap-1"><ShoppingCart className="w-3.5 h-3.5" />Checkouts</TabsTrigger>
+          <TabsTrigger value="service" className="gap-1"><Wrench className="w-3.5 h-3.5" />Services</TabsTrigger>
+        </TabsList>
+
+        <Card className="flex-1 flex flex-col overflow-hidden mt-3">
+          <CardContent className="flex-1 p-0 overflow-hidden">
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <RefreshCw className="w-6 h-6 animate-spin mr-2 text-primary" />
+                    <span className="text-muted-foreground">Chargement...</span>
+                  </div>
+                ) : filteredLinks.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Link className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p className="font-medium">Aucun lien de paiement</p>
+                    <p className="text-sm">Créez votre premier lien pour recevoir des paiements</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredLinks.map((link) => {
+                      const st = STATUS_CONFIG[link.status] || STATUS_CONFIG.pending;
+                      const tp = TYPE_CONFIG[link.link_type] || TYPE_CONFIG.payment;
+                      const url = getPaymentUrl(link);
+
+                      return (
+                        <div key={link.id} className="border rounded-xl p-4 hover:bg-accent/30 transition-colors">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              {/* Badges */}
+                              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                <Badge variant="outline" className={`${tp.color} text-xs gap-1`}>
+                                  {tp.icon}{tp.label}
+                                </Badge>
+                                <Badge variant="outline" className={`${st.color} text-xs gap-1`}>
+                                  {st.icon}{st.label}
+                                </Badge>
+                                {link.payment_type && link.payment_type !== 'full' && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {link.payment_type === 'deposit' ? 'Acompte' : 'Solde'}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Title */}
+                              <h3 className="font-semibold text-sm truncate">{link.title || link.produit}</h3>
+                              {link.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{link.description}</p>
+                              )}
+
+                              {/* URL */}
+                              <a href={url} target="_blank" rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline flex items-center gap-1 mt-1.5 break-all">
+                                <ExternalLink className="w-3 h-3 shrink-0" />{url}
+                              </a>
+
+                              {/* Meta row */}
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+                                <span className="flex items-center gap-1 font-semibold text-foreground">
+                                  <DollarSign className="w-3 h-3" />
+                                  {formatCurrency(link.total || link.montant, link.devise)}
+                                </span>
+                                {link.reference && (
+                                  <span className="flex items-center gap-1">
+                                    <Receipt className="w-3 h-3" />Réf: {link.reference}
+                                  </span>
+                                )}
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {new Date(link.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                                </span>
+                                {link.client && (
+                                  <span className="flex items-center gap-1">
+                                    <User className="w-3 h-3" />{link.client.name}
+                                  </span>
+                                )}
+                                {link.payment_method && (
+                                  <span className="flex items-center gap-1 capitalize">
+                                    <Smartphone className="w-3 h-3" />{link.payment_method.replace('_', ' ')}
+                                  </span>
+                                )}
+                                {link.wallet_credit_status && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Crédit: {link.wallet_credit_status === 'credited' ? '✅' : '⏳'} {link.wallet_credit_status}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {/* Settlement info for paid links */}
+                              {link.status === 'success' && link.net_amount && (
+                                <div className="flex items-center gap-3 text-xs mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg">
+                                  <span>Brut: {formatCurrency(link.gross_amount || link.montant, link.devise)}</span>
+                                  <span className="text-muted-foreground">Commission: {formatCurrency(link.platform_fee || 0, link.devise)}</span>
+                                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">Net: {formatCurrency(link.net_amount, link.devise)}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex flex-col gap-1 shrink-0">
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyLink(link)} title="Copier">
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => shareLink(link)} title="Partager">
+                                <Share2 className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowQrModal(url)} title="QR Code">
+                                <QrCode className="w-4 h-4" />
+                              </Button>
+                              {link.status === 'pending' && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => cancelLink(link)} title="Annuler">
+                                  <Ban className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        
-                        <div className="flex items-start gap-1 shrink-0 flex-wrap">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => copyPaymentLink(link)}
-                            className="h-8 w-8 p-0"
-                            title="Copier le lien"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => sharePaymentLink(link)}
-                            className="h-8 w-8 p-0"
-                            title="Partager"
-                          >
-                            <Share2 className="w-4 h-4" />
-                          </Button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </Tabs>
 
-                          {link.status === 'pending' && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditLink(link)}
-                                className="h-8 w-8 p-0"
-                                title="Modifier"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteLink(link.payment_id, link.produit)}
-                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                title="Supprimer"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(`/payment/${link.payment_id}`, '_blank')}
-                            className="h-8 w-8 p-0"
-                            title="Ouvrir"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
-      {/* Modal de modification */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+      {/* QR Code Modal */}
+      <Dialog open={!!showQrModal} onOpenChange={() => setShowQrModal(null)}>
+        <DialogContent className="max-w-xs text-center">
           <DialogHeader>
-            <DialogTitle>Modifier le lien de paiement</DialogTitle>
-            <DialogDescription>
-              Modifiez les informations du lien de paiement
-            </DialogDescription>
+            <DialogTitle>QR Code du lien</DialogTitle>
+            <DialogDescription>Scannez pour accéder au paiement</DialogDescription>
           </DialogHeader>
-          
-          <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
-            <div className="space-y-4 px-1 pr-4 pb-2">
-              <div>
-                <Label htmlFor="edit-produit">Produit / Service *</Label>
-                <Input
-                  id="edit-produit"
-                  value={formData.produit}
-                  onChange={(e) => setFormData({ ...formData, produit: e.target.value })}
-                  placeholder="Nom du produit"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="edit-description">Description</Label>
-                <Textarea
-                  id="edit-description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Description du produit"
-                  rows={3}
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="edit-montant">Montant *</Label>
-                  <Input
-                    id="edit-montant"
-                    type="number"
-                    value={formData.montant}
-                    onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
-                    placeholder="0"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="edit-devise">Devise</Label>
-                  <Select value={formData.devise} onValueChange={(value) => setFormData({ ...formData, devise: value })}>
-                    <SelectTrigger id="edit-devise">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="GNF">GNF</SelectItem>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="edit-client_id">ID Client (optionnel)</Label>
-                <Input
-                  id="edit-client_id"
-                  value={formData.client_id}
-                  onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                  placeholder="Ex: USR0002"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Laissez vide pour un lien public accessible à tous
-                </p>
-              </div>
-              
-              {/* Section Remise dans le modal d'édition */}
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <Label className="text-base font-semibold">Remise (Réduction)</Label>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="edit-remise">Montant remise</Label>
-                    <Input
-                      id="edit-remise"
-                      type="number"
-                      min="0"
-                      value={formData.remise}
-                      onChange={(e) => setFormData({ ...formData, remise: e.target.value })}
-                      placeholder="0"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="edit-type_remise">Type</Label>
-                    <Select value={formData.type_remise} onValueChange={(value: 'percentage' | 'fixed') => setFormData({ ...formData, type_remise: value })}>
-                      <SelectTrigger id="edit-type_remise">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="percentage">Pourcentage (%)</SelectItem>
-                        <SelectItem value="fixed">Montant fixe</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-              
-              {formData.montant && (
-                <div className="p-3 bg-blue-50 rounded-lg space-y-1">
-                  <p className="text-sm text-blue-800">
-                    <strong>Résumé :</strong>
-                  </p>
-                  {(() => {
-                    const montant = parseFloat(formData.montant) || 0;
-                    const remise = parseFloat(formData.remise) || 0;
-                    let montantApresRemise = montant;
-                    
-                    if (remise > 0) {
-                      if (formData.type_remise === 'percentage') {
-                        montantApresRemise = montant * (1 - remise / 100);
-                      } else {
-                        montantApresRemise = montant - remise;
-                      }
-                    }
-                    
-                    return (
-                      <>
-                        <p className="text-xs text-blue-700">
-                          Montant initial : {formatCurrency(montant, formData.devise)}
-                        </p>
-                        {remise > 0 && (
-                          <>
-                            <p className="text-xs text-green-700 font-semibold">
-                              Remise : -{remise}{formData.type_remise === 'percentage' ? '%' : ` ${formData.devise}`}
-                              {' '}({formatCurrency(montant - montantApresRemise, formData.devise)})
-                            </p>
-                            <p className="text-xs text-blue-700">
-                              Montant après remise : {formatCurrency(montantApresRemise, formData.devise)}
-                            </p>
-                          </>
-                        )}
-                        <p className="text-sm text-blue-900 font-bold mt-2">
-                          Montant à demander : {formatCurrency(montantApresRemise, formData.devise)}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          (Les frais de traitement seront ajoutés pour le client)
-                        </p>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-          
-          <div className="flex justify-end gap-2 pt-4 shrink-0">
-            <Button variant="outline" onClick={() => setShowEditModal(false)}>
-              Annuler
-            </Button>
-            <Button onClick={handleUpdateLink} disabled={updating}>
-              {updating ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Mise à jour...
-                </>
-              ) : (
-                <>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Mettre à jour
-                </>
-              )}
-            </Button>
+          <div className="flex justify-center p-4">
+            {showQrModal && <QRCodeSVG value={showQrModal} size={200} />}
           </div>
+          <Button onClick={() => { navigator.clipboard.writeText(showQrModal || ''); toast({ title: "Lien copié !" }); }}>
+            <Copy className="w-4 h-4 mr-2" />Copier le lien
+          </Button>
         </DialogContent>
       </Dialog>
     </div>

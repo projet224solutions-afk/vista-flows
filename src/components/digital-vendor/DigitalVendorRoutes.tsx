@@ -18,6 +18,9 @@ const DigitalProducts = lazy(() => import('@/pages/DigitalProducts'));
 // Affiliation
 const AffiliateManagement = lazy(() => import('@/components/vendor/AffiliateManagement'));
 
+// Liens de paiement
+const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
+
 // Finance
 const UniversalWalletTransactions = lazy(() => import('@/components/wallet/UniversalWalletTransactions'));
 
@@ -55,6 +58,9 @@ const DigitalVendorRoutes = memo(function DigitalVendorRoutes({ vendorId }: Digi
 
         {/* Statistiques */}
         <Route path="analytics" element={<VendorAnalyticsDashboard />} />
+
+        {/* Liens de paiement */}
+        <Route path="payment-links" element={<PaymentLinksManager />} />
 
         {/* Finance */}
         <Route path="wallet" element={<UniversalWalletTransactions />} />
