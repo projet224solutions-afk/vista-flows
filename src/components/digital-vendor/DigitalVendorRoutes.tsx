@@ -18,6 +18,9 @@ const DigitalProducts = lazy(() => import('@/pages/DigitalProducts'));
 // Affiliation
 const AffiliateManagement = lazy(() => import('@/components/vendor/AffiliateManagement'));
 
+// Liens de paiement
+const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
+
 // Finance
 const UniversalWalletTransactions = lazy(() => import('@/components/wallet/UniversalWalletTransactions'));
 
