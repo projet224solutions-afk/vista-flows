@@ -213,7 +213,7 @@ export default function DigitalProducts() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(4,67,158,0.10),transparent_28%),linear-gradient(180deg,#f4f8ff_0%,#eef4ff_42%,#f7faff_100%)] pb-24">
       {/* Header */}
       <header className="bg-card/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-3">
@@ -363,19 +363,19 @@ export default function DigitalProducts() {
         <>
           {/* Status Banner */}
           {user && !isMerchant && (
-            <div className="px-4 py-3 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 border-b border-primary/20">
+            <div className="mx-4 mt-4 rounded-2xl border border-[#04439e]/25 bg-[linear-gradient(135deg,rgba(4,67,158,0.12),rgba(4,67,158,0.04))] px-4 py-3 shadow-[0_12px_28px_rgba(4,67,158,0.10)]">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 flex-1">
-                  <Store className="w-4 h-4 text-primary shrink-0" />
+                  <Store className="w-4 h-4 text-[#04439e] shrink-0" />
                   <div className="text-xs">
-                    <p className="font-medium text-foreground">{t('digital.wantToSell')}</p>
-                    <p className="text-muted-foreground">{t('digital.activateMerchant')}</p>
+                    <p className="font-semibold text-[#0b1b33]">{t('digital.wantToSell')}</p>
+                    <p className="text-[#5673a7]">{t('digital.activateMerchant')}</p>
                   </div>
                 </div>
                 <Button
                   size="sm"
                   onClick={handleBecomeMerchant}
-                  className="shrink-0 h-8 text-xs"
+                  className="shrink-0 h-8 text-xs bg-[#04439e] text-white hover:bg-[#05378a]"
                 >
                   {t('digital.becomeMerchant')}
                 </Button>
@@ -384,7 +384,7 @@ export default function DigitalProducts() {
           )}
 
           {user && isMerchant && (
-            <div className="px-4 py-2.5 bg-[#04439e]/12 text-[#04439e] border-b border-[#04439e]/25 text-center text-sm">
+            <div className="mx-4 mt-4 rounded-2xl px-4 py-3 bg-[#04439e] text-white border border-[#04439e]/30 text-center text-sm shadow-[0_12px_28px_rgba(4,67,158,0.25)]">
               <span className="flex items-center justify-center gap-2 font-bold">
                 <Store className="w-4 h-4" />
                 {t('digital.merchantActive')}
@@ -393,52 +393,81 @@ export default function DigitalProducts() {
           )}
 
           {/* Hero Section */}
-          <section className="px-4 py-6">
-            <div className="text-center">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full mb-3">
-                <Package className="w-4 h-4 text-primary" />
-                <span className="text-xs font-medium text-primary">{t('digital.marketplaceDigital')}</span>
+          <section className="px-4 pt-6 pb-5">
+            <div className="overflow-hidden rounded-[28px] border border-[#04439e]/25 bg-[linear-gradient(135deg,#04439e_0%,#0d4fb3_56%,#0b1b33_100%)] px-5 py-6 shadow-[0_22px_52px_rgba(4,67,158,0.28)] sm:px-7 sm:py-8">
+              <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+                <div className="max-w-2xl">
+                  <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5">
+                    <Package className="w-4 h-4 text-white" />
+                    <span className="text-xs font-semibold uppercase tracking-[0.15em] text-white">{t('digital.marketplaceDigital')}</span>
+                  </div>
+                  <h2 className="text-2xl font-semibold leading-tight text-white sm:text-3xl">
+                    {t('digital.discover')}
+                  </h2>
+                  <p className="mt-3 max-w-xl text-sm leading-6 text-white/72 sm:text-base">
+                    {t('digital.discoverDesc')}
+                    {!isMerchant && ` ${t('digital.becomeSellerPrompt')}`}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:min-w-[360px]">
+                  <div className="rounded-2xl border border-white/18 bg-white/10 p-3.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">Modules</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">{productModules.length}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/18 bg-white/10 p-3.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">Marketplace</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">24/7</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/18 bg-white/10 p-3.5 col-span-2 sm:col-span-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/55">Focus</p>
+                    <p className="mt-2 text-base font-semibold text-[#ffb599]">Produits digitaux</p>
+                  </div>
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-foreground mb-2">
-                {t('digital.discover')}
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                {t('digital.discoverDesc')}
-                {!isMerchant && ` ${t('digital.becomeSellerPrompt')}`}
-              </p>
             </div>
           </section>
 
           {/* Modules Grid */}
           <section className="px-4 pb-6">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight text-[#0b1b33]">Choisissez votre module de vente</h3>
+                <p className="mt-1 text-sm text-[#5f78a5]">Une structure claire, orientee conversion et distribution internationale.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {productModules.map((module) => (
                 <Card
                   key={module.id}
                   className={cn(
-                    'cursor-pointer overflow-hidden rounded-2xl transition-all duration-250',
-                    'border border-border/60 bg-card/95 backdrop-blur-sm',
-                    'hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(4,67,158,0.14)] hover:border-[#04439e]/35'
+                    'group cursor-pointer overflow-hidden rounded-[24px] transition-all duration-300',
+                    'border border-[#d6e2f7] bg-white/96 backdrop-blur-sm',
+                    'hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(4,67,158,0.16)] hover:border-[#04439e]/35'
                   )}
                   onClick={() => handleModuleClick(module)}
                 >
                   <CardContent className="p-5">
-                    <div className={cn(
-                      'mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl',
-                      'text-white shadow-[0_12px_24px_rgba(11,27,51,0.18)]',
-                      'ring-1 ring-white/10',
-                      module.gradient
-                    )}>
-                      <div className="[&_svg]:h-6 [&_svg]:w-6 [&_svg]:stroke-[2.2]">{module.icon}</div>
-                    </div>
-
                     <div className="text-center">
-                      <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                      <div className={cn(
+                        'mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl',
+                        'text-white shadow-[0_12px_24px_rgba(11,27,51,0.18)]',
+                        'ring-1 ring-white/10 transition-transform duration-300 group-hover:scale-105',
+                        module.gradient
+                      )}>
+                        <div className="[&_svg]:h-6 [&_svg]:w-6 [&_svg]:stroke-[2.2]">{module.icon}</div>
+                      </div>
+
+                      <h3 className="text-base font-semibold tracking-tight text-[#0b1b33]">
                         {t(module.titleKey)}
                       </h3>
-                      <p className="mx-auto mt-1.5 max-w-[15rem] text-xs leading-5 text-muted-foreground line-clamp-2">
+                      <p className="mx-auto mt-1.5 max-w-[17rem] text-sm leading-6 text-[#5f78a5] line-clamp-2">
                         {t(module.descriptionKey)}
                       </p>
+                      <span className="mt-3 inline-flex items-center rounded-full border border-[#d9e6fb] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#04439e]">
+                        Ouvrir le module
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
