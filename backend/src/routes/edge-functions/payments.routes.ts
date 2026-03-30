@@ -13,7 +13,6 @@
 import { Router, Request, Response, raw } from "express";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
-import PayPalCheckoutSDK from "@paypal/checkout-server-sdk";
 
 const router = Router();
 
@@ -23,7 +22,7 @@ const supabase = createClient(
 );
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2024-04-10",
+  apiVersion: "2026-03-25.dahlia",
 });
 
 // ============ POST /payment/stripe/intent ============

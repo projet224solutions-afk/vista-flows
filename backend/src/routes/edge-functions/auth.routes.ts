@@ -15,8 +15,7 @@
 
 import { Router, Request, Response } from "express";
 import { createClient } from "@supabase/supabase-js";
-import jwt from "jsonwebtoken";
-import { speakeasy } from "speakeasy";
+import speakeasy from "speakeasy";
 
 const router = Router();
 

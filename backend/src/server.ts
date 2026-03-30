@@ -37,6 +37,8 @@ import paymentLinksRoutes from './routes/paymentLinks.routes.js';
 import webhookRoutes from './routes/webhooks.routes.js';
 // @ts-ignore
 import migrationsRoutes from './routes/migrations.js';
+// @ts-ignore
+import edgeFunctionsRoutes from './routes/edge-functions/index.js';
 
 // Routes legacy JS
 // @ts-ignore
@@ -167,6 +169,7 @@ app.use('/api/pos', posRoutes);
 app.use('/api/affiliate', affiliateRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/payment-links', paymentLinksRoutes);
+app.use('/edge-functions', edgeFunctionsRoutes);
 
 // ==================== ERROR HANDLING ====================
 
