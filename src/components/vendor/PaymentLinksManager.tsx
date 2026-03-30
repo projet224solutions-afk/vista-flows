@@ -182,11 +182,12 @@ export default function PaymentLinksManager() {
     }
   };
 
-  const copyPaymentLink = async (paymentId: string) => {
+  const copyPaymentLink = async (link: any) => {
     try {
-      const baseUrl = window.location.origin;
-      const link = `${baseUrl}/payment/${paymentId}`;
-      await navigator.clipboard.writeText(link);
+      const url = link.token
+        ? `${window.location.origin}/pay/${link.token}`
+        : `${window.location.origin}/payment/${link.payment_id}`;
+      await navigator.clipboard.writeText(url);
       toast({
         title: "Lien copié",
         description: "Le lien de paiement a été copié dans le presse-papiers",
