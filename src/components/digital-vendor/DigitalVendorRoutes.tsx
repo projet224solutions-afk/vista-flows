@@ -23,6 +23,7 @@ const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksM
 
 // Finance
 const UniversalWalletTransactions = lazy(() => import('@/components/wallet/UniversalWalletTransactions'));
+const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
 
 // Mes Achats
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
@@ -64,6 +65,8 @@ const DigitalVendorRoutes = memo(function DigitalVendorRoutes({ vendorId }: Digi
 
         {/* Finance */}
         <Route path="wallet" element={<UniversalWalletTransactions />} />
+        <Route path="liens-de-paiement" element={<PaymentLinksManager />} />
+        <Route path="payment-links" element={<PaymentLinksManager />} />
 
         {/* Mes Achats */}
         <Route path="my-purchases" element={<MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" />} />

@@ -7,7 +7,7 @@ import { memo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Laptop, Link, Wallet, Settings,
-  BarChart3, Home, Plus, Eye, ShoppingBag, Bot
+  BarChart3, Home, Plus, Eye, ShoppingBag, Bot, DollarSign
 } from "lucide-react";
 import {
   Sidebar,
@@ -71,6 +71,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
       items: [
         { title: "Liens de paiement", icon: Link, path: "payment-links" },
         { title: "Portefeuille", icon: Wallet, path: "wallet" },
+        { title: "Liens de paiement", icon: DollarSign, path: "liens-de-paiement" },
         { title: "Mes Achats", icon: ShoppingBag, path: "my-purchases" },
       ]
     },
