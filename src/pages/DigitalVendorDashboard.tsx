@@ -16,7 +16,10 @@ import { DigitalVendorRoutes } from '@/components/digital-vendor/DigitalVendorRo
 import { PageLoader } from '@/components/ui/GlobalLoader';
 import { DataLoadTimeoutState } from '@/components/ui/DataLoadTimeoutState';
 import { useLoadingTimeout } from '@/hooks/useLoadingTimeout';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { supabase } from '@/integrations/supabase/client';
+import { WifiOff, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function DigitalVendorDashboard() {
   const { user, profile, signOut, loading: authLoading, profileLoading } = useAuth();
@@ -78,6 +81,31 @@ export default function DigitalVendorDashboard() {
 
   const isLoading = authLoading || profileLoading || (!!user && vendorLoading);
   const { timedOut: loadingTimedOut, resetTimeout } = useLoadingTimeout(isLoading, 8000);
+  const { isOnline } = useOnlineStatus();
+
+  if (!isOnline) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#eef3fb] px-6">
+        <div className="max-w-sm w-full rounded-[28px] bg-white shadow-[0_22px_55px_rgba(4,67,158,0.12)] p-8 text-center">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#04439e]/10">
+            <WifiOff className="h-8 w-8 text-[#04439e]" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900">Connexion requise</h2>
+          <p className="mt-2 text-sm text-gray-500">
+            Le tableau de bord vendeur digital nécessite une connexion internet active.
+            Les produits numériques et les transactions ne sont pas accessibles hors ligne.
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="mt-6 w-full rounded-2xl bg-[#04439e] font-semibold text-white hover:bg-[#0536a8]"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (loadingTimedOut) {
     return (
