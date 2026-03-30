@@ -45,6 +45,7 @@ interface ProductModule {
   gradient: string;
   iconColor: string;
   coverImage: string;
+  iconImage: string;
   category: 'dropshipping' | 'voyage' | 'logiciel' | 'formation' | 'livre' | 'custom' | 'ai' | 'physique_affilie';
 }
 
@@ -57,6 +58,7 @@ const productModules: ProductModule[] = [
     gradient: 'bg-[#1f2a44]',
     iconColor: 'text-[#2f4a83]',
     coverImage: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&w=1200&q=80',
+    iconImage: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=200&q=80',
     category: 'dropshipping'
   },
   {
@@ -67,6 +69,7 @@ const productModules: ProductModule[] = [
     gradient: 'bg-[#0d3b8f]',
     iconColor: 'text-[#1f61d5]',
     coverImage: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80',
+    iconImage: 'https://images.unsplash.com/photo-1474302770737-173ee21bab63?auto=format&fit=crop&w=200&q=80',
     category: 'voyage'
   },
   {
@@ -77,6 +80,7 @@ const productModules: ProductModule[] = [
     gradient: 'bg-[#2a2f78]',
     iconColor: 'text-[#4f5bd5]',
     coverImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+    iconImage: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=200&q=80',
     category: 'logiciel'
   },
   {
@@ -87,6 +91,7 @@ const productModules: ProductModule[] = [
     gradient: 'bg-[#135d3b]',
     iconColor: 'text-[#22c55e]',
     coverImage: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80',
+    iconImage: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=200&q=80',
     category: 'formation'
   },
   {
@@ -97,6 +102,7 @@ const productModules: ProductModule[] = [
     gradient: 'bg-[#6a4a12]',
     iconColor: 'text-[#f59e0b]',
     coverImage: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80',
+    iconImage: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=200&q=80',
     category: 'livre'
   },
   {
@@ -107,6 +113,7 @@ const productModules: ProductModule[] = [
     gradient: 'bg-[#3c2b7a]',
     iconColor: 'text-[#8b5cf6]',
     coverImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80',
+    iconImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=200&q=80',
     category: 'ai'
   },
   {
@@ -117,6 +124,7 @@ const productModules: ProductModule[] = [
     gradient: 'bg-[#8a2f0a]',
     iconColor: 'text-[#fb923c]',
     coverImage: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&w=1200&q=80',
+    iconImage: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=200&q=80',
     category: 'physique_affilie'
   }
 ];
@@ -475,11 +483,13 @@ export default function DigitalProducts() {
                       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,27,51,0.10)_0%,rgba(11,27,51,0.72)_100%)]" />
 
                       <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
-                        <div className={cn(
-                          'flex h-12 w-12 items-center justify-center rounded-2xl bg-white/95 shadow-[0_10px_22px_rgba(11,27,51,0.26)]',
-                          module.iconColor
-                        )}>
-                          <div className="[&_svg]:h-8 [&_svg]:w-8 [&_svg]:stroke-[2.1]">{module.icon}</div>
+                        <div className="h-14 w-14 overflow-hidden rounded-2xl shadow-[0_10px_22px_rgba(11,27,51,0.36)] ring-2 ring-white/80">
+                          <img
+                            src={module.iconImage}
+                            alt={t(module.titleKey)}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
                         </div>
                       </div>
                     </div>
