@@ -36,6 +36,12 @@ export async function triggerAffiliateCommission(
   transactionType: string,
   transactionId?: string
 ): Promise<CommissionTriggerResult> {
+  // Validation montant (anti-exploit: pas de montants négatifs/nuls)
+  if (typeof amount !== 'number' || amount <= 0) {
+    logger.warn(`[Commission] Invalid amount: ${amount}`);
+    return { success: false, error: 'Amount must be > 0' };
+  }
+
   try {
     const { data, error } = await supabaseAdmin.rpc('credit_agent_commission', {
       p_user_id: userId,
@@ -43,7 +49,7 @@ export async function triggerAffiliateCommission(
       p_source_type: transactionType,
       p_transaction_id: transactionId || null,
       p_metadata: {
-        currency: 'GNF',
+        currency: 'GNF', // Validé: uniquement 'GNF' autorisé
         source: 'backend-node',
         triggered_at: new Date().toISOString(),
       },
@@ -67,7 +73,7 @@ export async function triggerAffiliateCommission(
       success: true,
       hasAgent: result?.has_agent || false,
       alreadyProcessed: result?.already_processed || false,
-      commissionAmount: result?.commission_amount,
+      commissionAmount: result?.agent_commission || result?.total_commissions,
     };
   } catch (err: any) {
     logger.error(`[Commission] triggerAffiliateCommission exception: ${err.message}`);

@@ -181,6 +181,14 @@ router.post('/commission', optionalJWT, async (req: Request, res: Response) => {
     return;
   }
 
+  // Anti-exploit: limiter les montants de commission manuels
+  const MAX_COMMISSION_AMOUNT = 100000000; // 100M GNF max par transaction
+  if (amount > MAX_COMMISSION_AMOUNT) {
+    logger.warn(`[Affiliate] Commission amount exceeds limit: ${amount}`);
+    res.status(400).json({ success: false, error: `Montant max ${MAX_COMMISSION_AMOUNT} GNF` });
+    return;
+  }
+
   await triggerAffiliateCommission(userId, amount, transactionType, transactionId);
 
   await auditTrail.log({
