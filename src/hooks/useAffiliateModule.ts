@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
-import { SubscriptionService } from '@/services/subscriptionService';
 
 export interface AffiliateModuleState {
   loading: boolean;
@@ -102,11 +101,11 @@ export function useAffiliateModule() {
     const hasActiveSubscription = !!subData?.id;
     const activePlan = (subData as any)?.plans;
     const activePlanEligible = activePlan ? isDedicatedAffiliatePlan(activePlan) : false;
-    const hasEligibleActiveSubscription = hasActiveSubscription && (!requiresDedicatedAffiliatePlan || activePlanEligible);
+    // Nouveau comportement: l'activation affiliation est gratuite et indépendante de l'abonnement.
+    const hasEligibleActiveSubscription = true;
 
     const affiliateStatus = affiliateData?.status || null;
-    const isAffiliateEnabled =
-      hasEligibleActiveSubscription && !!affiliateStatus && ACTIVE_AFFILIATE_STATUSES.has(String(affiliateStatus));
+    const isAffiliateEnabled = !!affiliateStatus && ACTIVE_AFFILIATE_STATUSES.has(String(affiliateStatus));
 
     setState({
       loading: false,
@@ -128,10 +127,6 @@ export function useAffiliateModule() {
 
   const activateWithExistingSubscription = useCallback(async () => {
     if (!user?.id) throw new Error('Utilisateur non connecté');
-    if (!state.hasActiveSubscription) throw new Error('Aucun abonnement actif');
-    if (!state.hasEligibleActiveSubscription) {
-      throw new Error('Votre abonnement actif ne débloque pas le module affilié dédié.');
-    }
 
     const payload = {
       user_id: user.id,
@@ -146,66 +141,17 @@ export function useAffiliateModule() {
 
     if (error) throw new Error(error.message || 'Impossible d\'activer le module affilié');
     await refresh();
-  }, [refresh, state.affiliateCode, state.hasActiveSubscription, state.hasEligibleActiveSubscription, user?.id]);
+  }, [refresh, state.affiliateCode, user?.id]);
 
   const subscribeAndActivate = useCallback(
     async (planId: string, billingCycle: 'monthly' | 'yearly' = 'monthly') => {
-      if (!user?.id) throw new Error('Utilisateur non connecté');
-
-      const [{ data: planData, error: planError }, { data: allPlans }] = await Promise.all([
-        supabase
-          .from('plans')
-          .select('id,name,display_name,features,monthly_price_gnf,yearly_price_gnf')
-          .eq('id', planId)
-          .eq('is_active', true)
-          .maybeSingle(),
-        supabase
-          .from('plans')
-          .select('name,display_name,features')
-          .eq('is_active', true),
-      ]);
-
-      if (planError || !planData) throw new Error('Plan introuvable');
-
-      const hasDedicatedPlans = (allPlans || []).some((plan) => isDedicatedAffiliatePlan(plan as any));
-      if (hasDedicatedPlans && !isDedicatedAffiliatePlan(planData as any)) {
-        throw new Error('Ce plan ne permet pas d\'activer l\'affiliation dédiée.');
-      }
-
-      const price =
-        billingCycle === 'yearly'
-          ? planData.yearly_price_gnf || Math.round((planData.monthly_price_gnf || 0) * 12 * 0.85)
-          : planData.monthly_price_gnf || 0;
-
-      const subscriptionId = await SubscriptionService.recordSubscriptionPayment({
-        userId: user.id,
-        planId: planData.id,
-        pricePaid: price,
-        paymentMethod: 'wallet',
-        billingCycle,
-      });
-
-      if (!subscriptionId) throw new Error('Échec de la souscription');
-
-      const payload = {
-        user_id: user.id,
-        status: 'approved',
-        affiliate_code: state.affiliateCode || generateAffiliateCode(),
-        specialization: ['general'],
-      };
-
-      const { error: affiliateError } = await (supabase as any)
-        .from('travel_affiliates')
-        .upsert(payload, { onConflict: 'user_id' });
-
-      if (affiliateError) {
-        throw new Error(affiliateError.message || 'Abonnement payé mais activation affilié impossible');
-      }
-
-      await refresh();
-      return subscriptionId;
+      // Compatibilité API: l'activation est désormais gratuite, le plan n'est plus utilisé.
+      void planId;
+      void billingCycle;
+      await activateWithExistingSubscription();
+      return 'free_activation';
     },
-    [refresh, state.affiliateCode, user?.id]
+    [activateWithExistingSubscription]
   );
 
   return useMemo(

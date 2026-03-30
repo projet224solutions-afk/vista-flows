@@ -1,41 +1,21 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Crown, Loader2, Sparkles, Wallet } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/lib/supabaseClient';
 import { useAffiliateModule } from '@/hooks/useAffiliateModule';
-import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 
-interface PlanLite {
-  id: string;
-  name: string;
-  display_name: string;
-  monthly_price_gnf: number;
-  yearly_price_gnf?: number | null;
-}
-
 export default function AffiliateActivationPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { t } = useTranslation();
   const {
     loading,
-    hasActiveSubscription,
-    hasEligibleActiveSubscription,
-    requiresDedicatedAffiliatePlan,
-    activeSubscriptionPlanName,
     isAffiliateEnabled,
     activateWithExistingSubscription,
-    subscribeAndActivate,
-    isDedicatedAffiliatePlan,
   } = useAffiliateModule();
 
-  const [plans, setPlans] = useState<PlanLite[]>([]);
-  const [subscribingPlanId, setSubscribingPlanId] = useState<string | null>(null);
   const [activating, setActivating] = useState(false);
 
   useEffect(() => {
@@ -43,27 +23,6 @@ export default function AffiliateActivationPage() {
       navigate('/affiliate/dashboard', { replace: true });
     }
   }, [isAffiliateEnabled, navigate]);
-
-  useEffect(() => {
-    const loadPlans = async () => {
-      const { data } = await supabase
-        .from('plans')
-        .select('id,name,display_name,monthly_price_gnf,yearly_price_gnf')
-        .eq('is_active', true)
-        .order('display_order');
-
-      const normalized = (data || []) as PlanLite[];
-      setPlans(normalized);
-    };
-
-    void loadPlans();
-  }, []);
-
-  const monthlyPlans = useMemo(() => plans.filter((p) => p.name !== 'free'), [plans]);
-  const dedicatedPlans = useMemo(() => monthlyPlans.filter((p) => isDedicatedAffiliatePlan(p)), [isDedicatedAffiliatePlan, monthlyPlans]);
-  const plansToDisplay = dedicatedPlans.length > 0 ? dedicatedPlans : monthlyPlans;
-
-  const formatPrice = (amount: number) => `${amount.toLocaleString('fr-FR')} GNF`;
 
   const handleActivate = async () => {
     setActivating(true);
@@ -75,24 +34,6 @@ export default function AffiliateActivationPage() {
       toast.error(error.message || t('affiliate.activation.errorActivationImpossible'));
     } finally {
       setActivating(false);
-    }
-  };
-
-  const handleSubscribePlan = async (plan: PlanLite) => {
-    if (!user?.id) {
-      toast.error(t('affiliate.activation.loginRequired'));
-      return;
-    }
-
-    setSubscribingPlanId(plan.id);
-    try {
-      await subscribeAndActivate(plan.id, 'monthly');
-      toast.success(t('affiliate.activation.successSubscribed'));
-      navigate('/affiliate/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || t('affiliate.activation.errorSubscriptionImpossible'));
-    } finally {
-      setSubscribingPlanId(null);
     }
   };
 
@@ -127,27 +68,16 @@ export default function AffiliateActivationPage() {
           </CardContent>
         </Card>
 
-        {requiresDedicatedAffiliatePlan && (
-          <Card className="border-amber-300/40 bg-amber-50/50">
-            <CardContent className="p-4 text-sm text-amber-800">
-              {t('affiliate.activation.dedicatedOnlyNotice')}
-            </CardContent>
-          </Card>
-        )}
-
         {loading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
-        ) : hasActiveSubscription && hasEligibleActiveSubscription ? (
+        ) : (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-primary" />
-                {t('affiliate.activation.activeSubTitle')}
-              </CardTitle>
+              <CardTitle>{t('affiliate.activation.title')}</CardTitle>
               <CardDescription>
-                {t('affiliate.activation.activeSubDesc')}
+                Activez gratuitement votre compte affilié pour commencer à parrainer.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -158,53 +88,6 @@ export default function AffiliateActivationPage() {
                   t('affiliate.activation.activateNow')
                 )}
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-amber-500" />
-                {t('affiliate.activation.conditionTitle')}
-              </CardTitle>
-              <CardDescription>
-                {t('affiliate.activation.conditionDesc')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {hasActiveSubscription && !hasEligibleActiveSubscription && (
-                <p className="text-sm text-amber-700">
-                  {t('affiliate.activation.ineligibleActivePlan').replace('{plan}', activeSubscriptionPlanName || '-')}
-                </p>
-              )}
-              {plansToDisplay.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t('affiliate.activation.noPlans')}</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {plansToDisplay.map((plan) => (
-                    <Card key={plan.id} className="border-border">
-                      <CardContent className="p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold">{plan.display_name}</h3>
-                          <Badge variant="outline">{t('affiliate.activation.monthly')}</Badge>
-                        </div>
-                        <p className="text-xl font-bold text-primary">{formatPrice(plan.monthly_price_gnf)}</p>
-                        <Button
-                          className="w-full"
-                          onClick={() => handleSubscribePlan(plan)}
-                          disabled={subscribingPlanId === plan.id}
-                        >
-                          {subscribingPlanId === plan.id ? (
-                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('affiliate.activation.processing')}</>
-                          ) : (
-                            t('affiliate.activation.subscribeAndActivate')
-                          )}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
         )}

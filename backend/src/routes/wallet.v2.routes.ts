@@ -1,19 +1,28 @@
 /**
- * 💰 WALLET v2 ROUTES - TypeScript (aligné DB existante)
- * 
+ * 💰 WALLET v2 ROUTES - Backend Node.js centralisé
+ *
  * Tables utilisées :
- *   - `wallets` (bigint id, numeric balance, wallet_status enum, pin_hash, daily_limit, etc.)
- *   - `wallet_transactions` (bigint id, sender/receiver_wallet_id, transaction_type enum, status enum)
- * 
- * ⚠️ Ce fichier est monté sur /api/v2/wallet (séparé du legacy /api/wallet)
- * Le legacy wallet.routes.js reste actif et inchangé.
+ *   - `wallets`, `wallet_transactions`, `wallet_idempotency_keys`
+ *
+ * Endpoints :
+ *   - GET /balance, /transactions, /status (lecture)
+ *   - POST /initialize (creation)
+ *   - POST /deposit  — crédit wallet (migré depuis wallet-operations Edge Function)
+ *   - POST /withdraw — débit wallet (migré depuis wallet-operations Edge Function)
+ *   - POST /transfer — transfert P2P (migré depuis wallet-operations / wallet-transfer Edge Function)
+ *   - POST /credit   — crédit admin/interne (service rôle)
+ *
+ * ⚠️ Route montée sur /api/v2/wallet (séparée du legacy /api/wallet)
  */
 
 import { Router, Response } from 'express';
+import crypto from 'crypto';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { creditWallet, debitWallet, transferBetweenWallets } from '../services/wallet.service.js';
+import { triggerAffiliateCommission } from '../services/commission.service.js';
 
 const router = Router();
 
@@ -143,6 +152,203 @@ router.get('/status', verifyJWT, async (req: AuthenticatedRequest, res: Response
   } catch (error: any) {
     logger.error(`Wallet status error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────
+// WALLET OPERATIONS — Migré depuis Edge Functions wallet-operations / wallet-transfer
+// ─────────────────────────────────────────────────────────
+
+/**
+ * POST /api/v2/wallet/deposit
+ * Crédite le wallet de l'utilisateur connecté.
+ *
+ * Auth : verifyJWT
+ * Body : { amount, description?, reference?, idempotency_key? }
+ */
+router.post('/deposit', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { amount, description, reference, idempotency_key } = req.body || {};
+
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      res.status(400).json({ success: false, error: 'Montant invalide' });
+      return;
+    }
+    if (amount > 100000000) {
+      res.status(400).json({ success: false, error: 'Montant trop élevé' });
+      return;
+    }
+
+    const idemKey = idempotency_key || `deposit:${userId}:${amount}:${Math.floor(Date.now() / 60000)}`;
+    const ref = reference || `dep_${Date.now()}`;
+
+    const result = await creditWallet(userId, amount, description || 'Dépôt', ref, 'deposit', idemKey);
+
+    if (!result.success) {
+      res.status(400).json({ success: false, error: result.error });
+      return;
+    }
+
+    // Déclencher commissions affiliées
+    await triggerAffiliateCommission(userId, amount, 'deposit', ref);
+
+    logger.info(`[WalletV2] Deposit: user=${userId}, amount=${amount}`);
+    res.json({ success: true, new_balance: result.newBalance, operation: 'deposit' });
+  } catch (error: any) {
+    logger.error(`Wallet deposit error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors du dépôt' });
+  }
+});
+
+/**
+ * POST /api/v2/wallet/withdraw
+ * Débite le wallet de l'utilisateur connecté.
+ *
+ * Auth : verifyJWT
+ * Body : { amount, description?, idempotency_key }
+ */
+router.post('/withdraw', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { amount, description, idempotency_key } = req.body || {};
+
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      res.status(400).json({ success: false, error: 'Montant invalide' });
+      return;
+    }
+
+    const idemKey = idempotency_key || `withdraw:${userId}:${amount}:${crypto.randomBytes(8).toString('hex')}`;
+
+    const result = await debitWallet(userId, amount, description || 'Retrait', idemKey);
+
+    if (!result.success) {
+      const statusCode = result.error === 'Solde insuffisant' ? 402
+        : result.error === 'Wallet bloqué' ? 403
+        : result.error?.includes('activité suspecte') ? 403
+        : 400;
+      res.status(statusCode).json({ success: false, error: result.error });
+      return;
+    }
+
+    logger.info(`[WalletV2] Withdraw: user=${userId}, amount=${amount}`);
+    res.json({ success: true, new_balance: result.newBalance, operation: 'withdraw' });
+  } catch (error: any) {
+    logger.error(`Wallet withdraw error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors du retrait' });
+  }
+});
+
+/**
+ * POST /api/v2/wallet/transfer
+ * Transfert P2P entre deux wallets.
+ *
+ * Auth : verifyJWT
+ * Body : { amount, recipient_id (UUID), description?, idempotency_key? }
+ */
+router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const senderId = req.user!.id;
+    const { amount, recipient_id, description, idempotency_key } = req.body || {};
+
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      res.status(400).json({ success: false, error: 'Montant invalide' });
+      return;
+    }
+    if (!recipient_id || typeof recipient_id !== 'string') {
+      res.status(400).json({ success: false, error: 'recipient_id requis' });
+      return;
+    }
+    if (recipient_id === senderId) {
+      res.status(400).json({ success: false, error: 'Transfert vers soi-même non autorisé' });
+      return;
+    }
+
+    // Vérifier que le destinataire existe
+    const { data: recipient } = await supabaseAdmin
+      .from('wallets')
+      .select('user_id')
+      .eq('user_id', recipient_id)
+      .maybeSingle();
+
+    if (!recipient) {
+      res.status(404).json({ success: false, error: 'Wallet destinataire introuvable' });
+      return;
+    }
+
+    const idemKey = idempotency_key || `transfer:${senderId}:${recipient_id}:${amount}:${crypto.randomBytes(8).toString('hex')}`;
+
+    const result = await transferBetweenWallets(senderId, recipient_id, amount, description || 'Transfert', idemKey);
+
+    if (!result.success) {
+      const statusCode = result.error === 'Solde insuffisant' ? 402
+        : result.error?.includes('bloqué') ? 403
+        : 400;
+      res.status(statusCode).json({ success: false, error: result.error });
+      return;
+    }
+
+    logger.info(`[WalletV2] Transfer: sender=${senderId}, receiver=${recipient_id}, amount=${amount}`);
+    res.json({ success: true, transaction_id: result.transactionId, operation: 'transfer' });
+  } catch (error: any) {
+    logger.error(`Wallet transfer error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors du transfert' });
+  }
+});
+
+/**
+ * POST /api/v2/wallet/credit
+ * Crédit admin/interne d'un wallet (service rôle uniquement).
+ * Utilisé par les admins pour créditer manuellement un vendeur/affilié.
+ *
+ * Auth : verifyJWT + rôle admin/PDG/CEO
+ * Body : { user_id, amount, description, reference?, transaction_type? }
+ */
+router.post('/credit', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const actorId = req.user!.id;
+
+    // Vérifier le rôle admin
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', actorId)
+      .maybeSingle();
+
+    const adminRoles = ['PDG', 'CEO', 'SUPER_ADMIN', 'admin'];
+    if (!profile || !adminRoles.includes(profile.role)) {
+      res.status(403).json({ success: false, error: 'Accès réservé aux administrateurs' });
+      return;
+    }
+
+    const { user_id, amount, description, reference, transaction_type = 'admin_credit' } = req.body || {};
+
+    if (!user_id || !amount || typeof amount !== 'number' || amount <= 0) {
+      res.status(400).json({ success: false, error: 'user_id et amount (positif) requis' });
+      return;
+    }
+
+    const ref = reference || `admin_${Date.now()}`;
+    const result = await creditWallet(user_id, amount, description || 'Crédit administrateur', ref, transaction_type);
+
+    if (!result.success) {
+      res.status(400).json({ success: false, error: result.error });
+      return;
+    }
+
+    // Audit log
+    await supabaseAdmin.from('financial_audit_logs').insert({
+      user_id: actorId,
+      action_type: 'admin_credit',
+      description: `Crédit admin: ${amount} GNF → user=${user_id}`,
+      request_data: { user_id, amount, description, reference: ref },
+    }).catch(() => {});
+
+    logger.info(`[WalletV2] Admin credit: actor=${actorId}, target=${user_id}, amount=${amount}`);
+    res.json({ success: true, new_balance: result.newBalance, operation: 'admin_credit' });
+  } catch (error: any) {
+    logger.error(`Wallet credit error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors du crédit' });
   }
 });
 

@@ -64,7 +64,7 @@ export default function PaymentPage() {
   const loadPaymentDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/payments/${paymentId}`);
+      const response = await fetch(`/api/payments/link/${paymentId}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -107,17 +107,19 @@ export default function PaymentPage() {
     try {
       setProcessing(true);
       
-      // Simuler le traitement du paiement
-      const response = await fetch('/api/payments/confirm', {
+      const response = await fetch(`/api/payments/link/${paymentId}/pay`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          payment_id: paymentId,
           payment_method: paymentMethod,
-          client_id: user?.id,
-          transaction_id: `txn_${Date.now()}`
+          transaction_id: `txn_${Date.now()}`,
+          client_info: {
+            name: clientInfo.name,
+            email: clientInfo.email,
+            phone: clientInfo.phone || null,
+          },
         }),
       });
 
@@ -129,12 +131,12 @@ export default function PaymentPage() {
         });
         
         // Rediriger vers une page de confirmation
-        navigate(`/payment/success/${paymentId}`);
+        navigate(`/payment/success`);
       } else {
         const error = await response.json();
         throw new Error(error.error || 'Erreur lors du paiement');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur paiement:', error);
       toast({
         title: "Erreur de paiement",

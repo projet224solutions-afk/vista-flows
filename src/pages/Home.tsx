@@ -7,14 +7,12 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HandCoins } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/contexts/CartContext';
 import { useUniversalProducts } from '@/hooks/useUniversalProducts';
 import { useNearbyServiceStats } from '@/hooks/useNearbyServiceStats';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 
 // Premium Home Components
 import {
@@ -128,27 +126,6 @@ export default function Home() {
 
         {/* Hero Section - Create Service */}
         <HeroSection />
-
-        <section className="px-4 mt-4">
-          <div className="rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/10 via-primary/5 to-background p-4 md:p-5 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <HandCoins className="w-4 h-4 text-primary" />
-                {t('travel.affiliateProgram')}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t('travel.earnCommissions')}
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="shrink-0"
-              onClick={() => navigate('/affiliate/activation')}
-            >
-              {t('travel.becomeAffiliate')}
-            </Button>
-          </div>
-        </section>
 
         {/* Nearby Services */}
         <NearbyServicesSection

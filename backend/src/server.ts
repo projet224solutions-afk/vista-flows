@@ -32,6 +32,7 @@ import productRoutes from './routes/products.routes.js';
 import orderRoutes from './routes/orders.routes.js';
 import posRoutes from './routes/pos.routes.js';
 import inventoryRoutes from './routes/inventory.routes.js';
+import affiliateRoutes from './routes/affiliate.routes.js';
 import webhookRoutes from './routes/webhooks.routes.js';
 
 // Routes legacy JS
@@ -95,6 +96,8 @@ app.use(compression());
 
 // ==================== WEBHOOK RAW BODY (before JSON parser) ====================
 
+// Djomy webhooks also need raw body for HMAC signature verification
+app.use('/webhooks/djomy', express.raw({ type: 'application/json' }));
 // Stripe webhooks need raw body for signature verification
 app.use('/webhooks/stripe', express.raw({ type: 'application/json' }));
 
@@ -155,6 +158,7 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/pos', posRoutes);
+app.use('/api/affiliate', affiliateRoutes);
 app.use('/api/inventory', inventoryRoutes);
 
 // ==================== ERROR HANDLING ====================
