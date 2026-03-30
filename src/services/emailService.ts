@@ -24,7 +24,7 @@ export interface SyndicateEmailData {
 
 class EmailService {
   private static instance: EmailService;
-  private baseURL = 'http://localhost:3001/api'; // Backend Express
+  private baseURL = import.meta.env.VITE_BACKEND_API_URL || '/api';
 
   static getInstance(): EmailService {
     if (!EmailService.instance) {
@@ -38,12 +38,18 @@ class EmailService {
    */
   async sendEmail(emailData: EmailData): Promise<boolean> {
     try {
+      const token = sessionStorage.getItem('agent_session') || localStorage.getItem('agent_session') || '';
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${this.baseURL}/email/send`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // JWT token
-        },
+        headers,
         body: JSON.stringify(emailData)
       });
 
@@ -82,7 +88,6 @@ class EmailService {
           to: data.president_email,
           subject: emailData.subject,
           link: data.permanent_link,
-          token: data.access_token
         });
         return true;
       } else {
@@ -93,7 +98,6 @@ class EmailService {
           president_email: data.president_email,
           bureau_code: data.bureau_code,
           permanent_link: data.permanent_link,
-          access_token: data.access_token
         });
         
         // Simuler un délai d'envoi
@@ -111,7 +115,6 @@ class EmailService {
         president_email: data.president_email,
         bureau_code: data.bureau_code,
         permanent_link: data.permanent_link,
-        access_token: data.access_token
       });
       
       return true; // Retourner true pour que l'interface fonctionne

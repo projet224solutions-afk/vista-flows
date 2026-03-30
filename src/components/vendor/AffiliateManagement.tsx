@@ -139,7 +139,7 @@ export default function AffiliateManagement({ shopId }: { shopId?: string }) {
             <a 
               href={link} 
               target="_blank" 
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="text-xs text-blue-600 hover:underline mt-2 inline-block"
             >
               Tester le lien →

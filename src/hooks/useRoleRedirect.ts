@@ -157,7 +157,7 @@ export const useRoleRedirect = () => {
               }
               
               if (vendorAgent?.access_token) {
-                console.log('🚀 [useRoleRedirect] Redirection vendor_agent vers /vendor-agent/', vendorAgent.access_token);
+                console.log('🚀 [useRoleRedirect] Redirection vendor_agent vers /vendor-agent/[token-masque]');
                 navigate(`/vendor-agent/${vendorAgent.access_token}`, { replace: true });
               } else {
                 console.warn('⚠️ [useRoleRedirect] Aucun access_token trouvé, tentative sans filtre is_active...');

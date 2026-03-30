@@ -253,7 +253,7 @@ export const useAgentAuth = () => {
         return false;
       }
 
-      // Succès → Stocker session (localStorage pour persistance après refresh)
+      // Succès → Stocker session (sessionStorage pour limiter l'exposition)
       if (data.session_token && data.user) {
         // Ajouter expiration (24 heures)
         const expiresAt = new Date();
@@ -264,8 +264,8 @@ export const useAgentAuth = () => {
           expires_at: expiresAt.toISOString()
         };
         
-        localStorage.setItem('agent_session', data.session_token);
-        localStorage.setItem('agent_user', JSON.stringify(userWithExpiry));
+        sessionStorage.setItem('agent_session', data.session_token);
+        sessionStorage.setItem('agent_user', JSON.stringify(userWithExpiry));
         
         toast.success(`Bienvenue ${data.user.first_name} ${data.user.last_name} !`);
         

@@ -1211,7 +1211,7 @@ export default function PDGAgentsManagement() {
                           size="sm"
                           variant="default"
                           className="bg-blue-600 hover:bg-blue-700"
-                          onClick={() => window.open(`/agent/${agent.access_token}`, '_blank')}
+                          onClick={() => window.open(`/agent/${agent.access_token}`, '_blank', 'noopener,noreferrer')}
                         >
                           <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
                           Ouvrir

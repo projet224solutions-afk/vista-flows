@@ -92,13 +92,20 @@ const hideLoader = () => {
 const showError = (rootElement: HTMLElement, error: unknown) => {
   hideLoader();
   const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  const safeErrorMessage = errorMessage
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
   rootElement.innerHTML = `
     <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: #f8f9fa; font-family: system-ui, -apple-system, sans-serif;">
       <div style="max-width: 500px; text-align: center;">
         <div style="font-size: 64px; margin-bottom: 16px;">⚠️</div>
         <h1 style="color: #e74c3c; font-size: 24px; margin-bottom: 16px;">Erreur de chargement</h1>
         <p style="color: #666; margin-bottom: 16px;">L'application n'a pas pu démarrer.</p>
-        <pre style="text-align: left; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #ddd; overflow-x: auto; font-size: 12px; color: #c0392b; margin-bottom: 24px; white-space: pre-wrap;">${errorMessage}</pre>
+        <pre style="text-align: left; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #ddd; overflow-x: auto; font-size: 12px; color: #c0392b; margin-bottom: 24px; white-space: pre-wrap;">${safeErrorMessage}</pre>
         <button onclick="location.reload()" style="padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Recharger</button>
       </div>
     </div>

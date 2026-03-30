@@ -89,9 +89,13 @@ export function CategoryProductsList({
     toast.success('Produit créé et publié!');
   };
 
+  const openExternalSafely = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const handleProductClick = (product: any) => {
     if (product.product_mode === 'affiliate' && product.affiliate_url) {
-      window.open(product.affiliate_url, '_blank');
+      openExternalSafely(product.affiliate_url);
     } else {
       navigate(`/digital-product/${product.id}`);
     }

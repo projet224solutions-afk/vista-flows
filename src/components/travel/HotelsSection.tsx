@@ -88,13 +88,17 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
     }
   };
 
+  const openExternalSafely = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const handleHotelClick = (hotel: HotelPartner) => {
     if (hotel.website_url) {
       let url = hotel.website_url;
       if (affiliateCode) {
         url += `?ref=${affiliateCode}`;
       }
-      window.open(url, '_blank');
+      openExternalSafely(url);
     }
     toast.info('Redirection vers le site partenaire...');
   };
@@ -106,9 +110,9 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
       if (affiliateCode) {
         url += `&ref=${affiliateCode}`;
       }
-      window.open(url, '_blank');
+      openExternalSafely(url);
     } else if (hotel?.website_url) {
-      window.open(hotel.website_url, '_blank');
+      openExternalSafely(hotel.website_url);
     }
     toast.info('Redirection vers le site partenaire...');
   };
