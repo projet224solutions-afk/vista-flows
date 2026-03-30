@@ -218,11 +218,11 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
   // Initialiser ou récupérer le session ID
   useEffect(() => {
     const storageKey = `copilote-session-${userRole}-${user?.id || 'anonymous'}`;
-    let existingSession = localStorage.getItem(storageKey);
+    let existingSession = sessionStorage.getItem(storageKey);
     
     if (!existingSession) {
       existingSession = generateSessionId();
-      localStorage.setItem(storageKey, existingSession);
+      sessionStorage.setItem(storageKey, existingSession);
     }
     
     setSessionId(existingSession);
@@ -596,7 +596,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       // Générer une nouvelle session après effacement
       const sessionKey = `copilote-session-${userRole}-${user?.id || 'anonymous'}`;
       const newSession = generateSessionId();
-      localStorage.setItem(sessionKey, newSession);
+      sessionStorage.setItem(sessionKey, newSession);
       setSessionId(newSession);
       setAttachedImage(null);
       console.log(`🔄 Nouvelle session créée: ${newSession}`);

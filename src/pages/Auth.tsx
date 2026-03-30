@@ -282,6 +282,14 @@ export default function Auth() {
     if (showSignup) {
       localStorage.setItem('oauth_is_new_signup', 'true');
     }
+    // ✅ FIX: Persister le type de boutique pour les vendeurs
+    if (vendorShopType) {
+      localStorage.setItem('oauth_vendor_shop_type', vendorShopType);
+    }
+    // ✅ Persister le service type pour les prestataires
+    if (selectedServiceType) {
+      localStorage.setItem('oauth_service_type', selectedServiceType);
+    }
 
     // 📊 Track click
     trackOAuthEvent('facebook', 'click', { attempt: oauthAttempts.facebook + 1, isRetry });
