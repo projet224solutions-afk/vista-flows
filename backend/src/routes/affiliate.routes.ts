@@ -15,6 +15,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { auditTrail } from '../services/auditTrail.service.js';
 import { verifyJWT, optionalJWT } from '../middlewares/auth.middleware.js';
+import { requirePermissionOrRole } from '../middlewares/permissions.middleware.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
 
 const router = Router();
@@ -157,17 +158,19 @@ router.post('/register', optionalJWT, async (req: Request, res: Response) => {
  * Corps : { userId, amount, transactionType, transactionId? }
  * Réservé aux admins et aux appels internes (X-Internal-API-Key).
  */
-router.post('/commission', optionalJWT, async (req: Request, res: Response) => {
+router.post(
+  '/commission',
+  optionalJWT,
+  requirePermissionOrRole({
+    permissionKey: 'manage_commissions',
+    allowInternalApiKey: true,
+    allowedRoles: ['admin', 'pdg', 'ceo'],
+  }),
+  async (req: Request, res: Response) => {
   const user = (req as any).user;
   const internalKey = req.headers['x-internal-api-key'] as string;
   const configuredInternalKey = process.env.INTERNAL_API_KEY;
   const isInternal = !!configuredInternalKey && internalKey === configuredInternalKey;
-  const isAdmin = user?.role === 'admin' || user?.user_metadata?.role === 'admin';
-
-  if (!isAdmin && !isInternal) {
-    res.status(403).json({ success: false, error: 'Accès refusé' });
-    return;
-  }
 
   const { userId, amount, transactionType, transactionId } = req.body;
 

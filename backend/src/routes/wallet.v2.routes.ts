@@ -18,6 +18,7 @@
 import { Router, Response } from 'express';
 import crypto from 'crypto';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { requirePermissionOrRole } from '../middlewares/permissions.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
@@ -304,22 +305,16 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
  * Auth : verifyJWT + rôle admin/PDG/CEO
  * Body : { user_id, amount, description, reference?, transaction_type? }
  */
-router.post('/credit', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post(
+  '/credit',
+  verifyJWT,
+  requirePermissionOrRole({
+    permissionKey: 'manage_wallet_transactions',
+    allowedRoles: ['admin', 'pdg', 'ceo'],
+  }),
+  async (req: AuthenticatedRequest, res: Response) => {
   try {
     const actorId = req.user!.id;
-
-    // Vérifier le rôle admin
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', actorId)
-      .maybeSingle();
-
-    const adminRoles = ['PDG', 'CEO', 'SUPER_ADMIN', 'admin'];
-    if (!profile || !adminRoles.includes(profile.role)) {
-      res.status(403).json({ success: false, error: 'Accès réservé aux administrateurs' });
-      return;
-    }
 
     const { user_id, amount, description, reference, transaction_type = 'admin_credit' } = req.body || {};
 
