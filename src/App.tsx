@@ -88,6 +88,7 @@ const BureauMonitoringPage = lazyWithRetry(() => import("./pages/BureauMonitorin
 const WorkerDashboard = lazyWithRetry(() => import("./pages/WorkerDashboard"));
 const Payment = lazyWithRetry(() => import("./pages/Payment"));
 const PaymentPage = lazyWithRetry(() => import("./pages/PaymentPage"));
+const PaymentLinkPage = lazyWithRetry(() => import("./pages/PaymentLinkPage"));
 const PaymentSuccessRedirect = lazyWithRetry(() => import("./pages/PaymentSuccessRedirect"));
 const DjomyPayment = lazyWithRetry(() => import("./pages/DjomyPayment"));
 const PaymentCorePage = lazyWithRetry(() => import("./pages/PaymentCore"));
@@ -495,6 +496,10 @@ function App() {
               <Route
                 path="/payment/:paymentId"
                 element={<PaymentPage />}
+              />
+              <Route
+                path="/pay/:token"
+                element={<PaymentLinkPage />}
               />
               <Route
                 path="/payment"

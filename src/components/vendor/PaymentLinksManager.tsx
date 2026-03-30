@@ -182,11 +182,12 @@ export default function PaymentLinksManager() {
     }
   };
 
-  const copyPaymentLink = async (paymentId: string) => {
+  const copyPaymentLink = async (link: any) => {
     try {
-      const baseUrl = window.location.origin;
-      const link = `${baseUrl}/payment/${paymentId}`;
-      await navigator.clipboard.writeText(link);
+      const url = link.token
+        ? `${window.location.origin}/pay/${link.token}`
+        : `${window.location.origin}/payment/${link.payment_id}`;
+      await navigator.clipboard.writeText(url);
       toast({
         title: "Lien copié",
         description: "Le lien de paiement a été copié dans le presse-papiers",
@@ -200,28 +201,23 @@ export default function PaymentLinksManager() {
     }
   };
 
-  const sharePaymentLink = async (paymentId: string) => {
+  const sharePaymentLink = async (link: any) => {
     try {
-      const baseUrl = window.location.origin;
-      const link = `${baseUrl}/payment/${paymentId}`;
+      const url = link.token
+        ? `${window.location.origin}/pay/${link.token}`
+        : `${window.location.origin}/payment/${link.payment_id}`;
       
       if (navigator.share) {
         await navigator.share({
           title: 'Lien de paiement 224SOLUTIONS',
           text: 'Effectuez votre paiement via ce lien sécurisé',
-          url: link
-        });
-        toast({
-          title: "Lien partagé",
-          description: "Le lien a été partagé avec succès",
+          url,
         });
       } else {
-        // Fallback: copier le lien
-        await copyPaymentLink(paymentId);
+        await copyPaymentLink(link);
       }
     } catch (error) {
       console.error('Erreur partage:', error);
-      // Si l'utilisateur annule le partage, on ne montre pas d'erreur
     }
   };
 
@@ -728,14 +724,14 @@ export default function PaymentLinksManager() {
                           
                           {/* Lien de paiement cliquable */}
                           <a
-                            href={`/payment/${link.payment_id}`}
+                            href={link.token ? `/pay/${link.token}` : `/payment/${link.payment_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-primary hover:underline flex items-center gap-1 mb-2 break-all"
                             title="Cliquer pour ouvrir le lien de paiement"
                           >
                             <ExternalLink className="w-3 h-3 shrink-0" />
-                            {window.location.origin}/payment/{link.payment_id}
+                            {window.location.origin}{link.token ? `/pay/${link.token}` : `/payment/${link.payment_id}`}
                           </a>
                           
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -763,7 +759,7 @@ export default function PaymentLinksManager() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyPaymentLink(link.payment_id)}
+                            onClick={() => copyPaymentLink(link)}
                             className="h-8 w-8 p-0"
                             title="Copier le lien"
                           >
@@ -773,7 +769,7 @@ export default function PaymentLinksManager() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => sharePaymentLink(link.payment_id)}
+                            onClick={() => sharePaymentLink(link)}
                             className="h-8 w-8 p-0"
                             title="Partager"
                           >
