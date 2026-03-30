@@ -106,34 +106,50 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
       value: statsLoading ? '...' : fmtNum(stats.totalSales),
       note: 'transactions finalisées',
       icon: ShoppingCart,
-      tone: 'text-[#04439e]',
-      iconBg: 'bg-[#04439e]/10',
+      cardBg: 'bg-[linear-gradient(135deg,#04439e_0%,#0d5ed2_100%)]',
+      valueTone: 'text-white',
+      labelTone: 'text-white/60',
+      noteTone: 'text-white/45',
+      iconBg: 'bg-white/15',
+      iconColor: 'text-white',
     },
     {
-      label: 'Chiffre d\'affaires brut',
+      label: "Chiffre d'affaires brut",
       value: statsLoading ? '...' : `${fmtNum(stats.grossRevenue)} GNF`,
       note: 'avant commissions',
       icon: DollarSign,
-      tone: 'text-[#ff4000]',
-      iconBg: 'bg-[#ff4000]/10',
+      cardBg: 'bg-[linear-gradient(135deg,#0b1b33_0%,#04439e_100%)]',
+      valueTone: 'text-[#ff8050]',
+      labelTone: 'text-white/60',
+      noteTone: 'text-white/45',
+      iconBg: 'bg-white/12',
+      iconColor: 'text-[#ff8050]',
     },
     {
       label: 'Revenu net',
       value: statsLoading ? '...' : `${fmtNum(stats.netRevenue)} GNF`,
       note: stats.totalCommissions > 0 ? `-${fmtNum(stats.totalCommissions)} GNF de commissions` : 'aucune commission déduite',
       icon: TrendingUp,
-      tone: 'text-emerald-600',
-      iconBg: 'bg-emerald-500/10',
+      cardBg: 'bg-[linear-gradient(135deg,#041f87_0%,#04439e_100%)]',
+      valueTone: 'text-emerald-300',
+      labelTone: 'text-white/60',
+      noteTone: 'text-white/45',
+      iconBg: 'bg-emerald-500/20',
+      iconColor: 'text-emerald-300',
     },
     {
       label: 'Abonnés actifs',
       value: statsLoading ? '...' : fmtNum(stats.activeSubscribers),
       note: stats.subscriptionRevenue > 0 ? `${fmtNum(stats.subscriptionRevenue)} GNF par période` : 'aucun abonnement actif',
       icon: Users,
-      tone: 'text-[#04439e]',
-      iconBg: 'bg-[#04439e]/10',
+      cardBg: 'bg-[linear-gradient(135deg,#063589_0%,#0536a8_100%)]',
+      valueTone: 'text-white',
+      labelTone: 'text-white/60',
+      noteTone: 'text-white/45',
+      iconBg: 'bg-white/15',
+      iconColor: 'text-white',
     },
-  ] as const;
+  ];
 
   const secondaryMetrics = [
     {
@@ -160,7 +176,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
       note: stats.totalSales > 0 ? `conversion ${((stats.totalSales / Math.max(totalViews, 1)) * 100).toFixed(1)}%` : 'conversion à construire',
       icon: Eye,
     },
-  ] as const;
+  ];
 
   const quickActions = [
     {
@@ -195,28 +211,28 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
 
   return (
     <div className="space-y-8">
-      <Card className="overflow-hidden border-[#dce7fb] bg-[linear-gradient(135deg,rgba(4,67,158,0.08),rgba(255,255,255,0.98)_38%,rgba(255,64,0,0.06)_100%)] shadow-[0_28px_65px_rgba(4,67,158,0.08)]">
+      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#04439e_0%,#0536a8_55%,#0b1b33_100%)] shadow-[0_28px_65px_rgba(4,67,158,0.30)]">
         <CardContent className="p-5 sm:p-7 lg:p-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-3xl">
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                <Badge className="border-0 bg-[#04439e]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#04439e] shadow-none">
+                <Badge className="border-0 bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-none">
                   Cockpit vendeur digital
                 </Badge>
-                <Badge className="border-0 bg-[#ff4000]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff4000] shadow-none">
+                <Badge className="border-0 bg-[#ff4000] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-none">
                   Marketplace premium
                 </Badge>
               </div>
-              <h2 className="text-xl font-semibold leading-tight text-[#0b1b33] sm:text-3xl lg:text-[2.3rem]">
+              <h2 className="text-xl font-semibold leading-tight text-white sm:text-3xl lg:text-[2.3rem]">
                 Pilotez vos produits numériques comme un vrai business international.
               </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70 sm:text-base">
                 Suivez vos revenus, vos produits publiés, vos performances commerciales et les actions à fort impact sans quitter votre espace vendeur digital.
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Button
                   onClick={() => navigate('/vendeur-digital/add-product')}
-                  className="h-11 rounded-2xl bg-[#ff4000] px-5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(255,64,0,0.26)] hover:bg-[#e53900]"
+                  className="h-11 rounded-2xl bg-[#ff4000] px-5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(255,64,0,0.38)] hover:bg-[#e53900]"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Nouveau produit
@@ -224,7 +240,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                 <Button
                   variant="outline"
                   onClick={() => navigate('/vendeur-digital/products')}
-                  className="h-11 rounded-2xl border-[#d7e3f9] bg-white px-5 text-sm font-semibold text-[#04439e] hover:bg-[#f7fbff]"
+                  className="h-11 rounded-2xl border-white/30 bg-white/10 px-5 text-sm font-semibold text-white hover:bg-white/20 hover:border-white/45"
                 >
                   <Laptop className="mr-2 h-4 w-4" />
                   Voir le catalogue
@@ -233,20 +249,20 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
             </div>
 
             <div className="grid w-full gap-3 sm:grid-cols-3 xl:max-w-[540px]">
-              <div className="rounded-[24px] border border-white/70 bg-white/90 p-3.5 sm:p-4 shadow-[0_18px_40px_rgba(4,67,158,0.08)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">Produits publiés</p>
-                <p className="mt-2 text-3xl font-semibold text-[#04439e]">{publishedCount}</p>
-                <p className="mt-2 text-xs text-slate-500">sur {products.length} produits au catalogue</p>
+              <div className="rounded-[24px] border border-white/15 bg-white/10 p-3.5 sm:p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">Produits publiés</p>
+                <p className="mt-2 text-3xl font-semibold text-white">{publishedCount}</p>
+                <p className="mt-2 text-xs text-white/45">sur {products.length} produits au catalogue</p>
               </div>
-              <div className="rounded-[24px] border border-white/70 bg-white/90 p-3.5 sm:p-4 shadow-[0_18px_40px_rgba(4,67,158,0.08)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">Mode dominant</p>
-                <p className="mt-2 text-xl font-semibold text-[#0b1b33]">{directCount >= affiliateCount ? 'Vente directe' : 'Affiliation'}</p>
-                <p className="mt-2 text-xs text-slate-500">{directCount} directs • {affiliateCount} affiliés</p>
+              <div className="rounded-[24px] border border-white/15 bg-white/10 p-3.5 sm:p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">Mode dominant</p>
+                <p className="mt-2 text-xl font-semibold text-white">{directCount >= affiliateCount ? 'Vente directe' : 'Affiliation'}</p>
+                <p className="mt-2 text-xs text-white/45">{directCount} directs • {affiliateCount} affiliés</p>
               </div>
-              <div className="rounded-[24px] border border-white/70 bg-white/90 p-3.5 sm:p-4 shadow-[0_18px_40px_rgba(4,67,158,0.08)]">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">Signal prioritaire</p>
-                <p className="mt-2 text-xl font-semibold text-[#0b1b33]">{publishedCount === 0 ? 'Publier un produit' : totalViews === 0 ? 'Booster la visibilité' : 'Optimiser la conversion'}</p>
-                <p className="mt-2 text-xs text-slate-500">prochaine action business recommandée</p>
+              <div className="rounded-[24px] border border-white/15 bg-white/10 p-3.5 sm:p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">Signal prioritaire</p>
+                <p className="mt-2 text-xl font-semibold text-[#ff8050]">{publishedCount === 0 ? 'Publier un produit' : totalViews === 0 ? 'Booster la visibilité' : 'Optimiser la conversion'}</p>
+                <p className="mt-2 text-xs text-white/45">prochaine action business recommandée</p>
               </div>
             </div>
           </div>
@@ -258,16 +274,16 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
           const Icon = metric.icon;
 
           return (
-            <Card key={metric.label} className="overflow-hidden rounded-[26px] border-[#dde8fb] bg-white shadow-[0_18px_45px_rgba(4,67,158,0.06)]">
+            <Card key={metric.label} className={['overflow-hidden rounded-[26px] border-0 shadow-[0_18px_45px_rgba(4,67,158,0.20)]', metric.cardBg].join(' ')}>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">{metric.label}</p>
-                    <p className={['mt-3 text-2xl font-semibold leading-none sm:text-[2rem]', metric.tone].join(' ')}>{metric.value}</p>
-                    <p className="mt-3 text-sm text-slate-500">{metric.note}</p>
+                    <p className={['text-[11px] font-semibold uppercase tracking-[0.18em]', metric.labelTone].join(' ')}>{metric.label}</p>
+                    <p className={['mt-3 text-2xl font-semibold leading-none sm:text-[2rem]', metric.valueTone].join(' ')}>{metric.value}</p>
+                    <p className={['mt-3 text-sm', metric.noteTone].join(' ')}>{metric.note}</p>
                   </div>
-                  <div className={['flex h-12 w-12 items-center justify-center rounded-2xl', metric.iconBg].join(' ')}>
-                    <Icon className={['h-5 w-5', metric.tone].join(' ')} />
+                  <div className={['flex h-12 w-12 items-center justify-center rounded-2xl flex-shrink-0', metric.iconBg].join(' ')}>
+                    <Icon className={['h-5 w-5', metric.iconColor].join(' ')} />
                   </div>
                 </div>
               </CardContent>
@@ -277,14 +293,14 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
-        <Card className="rounded-[28px] border-[#dde7fb] bg-white shadow-[0_22px_55px_rgba(4,67,158,0.06)]">
-          <CardHeader className="border-b border-[#eef3fd] pb-5">
+        <Card className="rounded-[28px] border-0 bg-[#04439e] shadow-[0_22px_55px_rgba(4,67,158,0.22)]">
+          <CardHeader className="border-b border-white/12 pb-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-xl font-semibold text-[#0b1b33]">Produits récents</CardTitle>
-                <CardDescription className="mt-1 text-sm text-slate-500">Vos offres digitales les plus récentes avec leur statut commercial.</CardDescription>
+                <CardTitle className="text-xl font-semibold text-white">Produits récents</CardTitle>
+                <CardDescription className="mt-1 text-sm text-white/55">Vos offres digitales les plus récentes avec leur statut commercial.</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => navigate('/vendeur-digital/products')} className="rounded-xl border-[#d7e3f9] bg-white font-semibold text-[#04439e] hover:bg-[#f7fbff]">
+              <Button variant="outline" size="sm" onClick={() => navigate('/vendeur-digital/products')} className="rounded-xl border-white/25 bg-white/12 font-semibold text-white hover:bg-white/22 hover:text-white">
                 Voir tout
               </Button>
             </div>
@@ -293,10 +309,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
             {loading ? (
               <SectionLoader />
             ) : products.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-[24px] border border-dashed border-[#d7e3f9] bg-[#f9fbff] py-12 text-center">
-                <Laptop className="mb-4 h-14 w-14 text-[#04439e]/30" />
-                <p className="text-base font-semibold text-[#0b1b33]">Aucun produit numérique</p>
-                <p className="mb-4 mt-2 max-w-sm text-sm text-slate-500">Commencez à vendre avec une première offre digitale claire, crédible et prête à convertir.</p>
+              <div className="flex flex-col items-center justify-center rounded-[24px] border border-dashed border-white/20 bg-white/8 py-12 text-center">
+                <Laptop className="mb-4 h-14 w-14 text-white/25" />
+                <p className="text-base font-semibold text-white">Aucun produit numérique</p>
+                <p className="mb-4 mt-2 max-w-sm text-sm text-white/55">Commencez à vendre avec une première offre digitale claire, crédible et prête à convertir.</p>
                 <Button onClick={() => navigate('/vendeur-digital/add-product')} size="sm" className="gap-2 rounded-xl bg-[#ff4000] font-semibold text-white hover:bg-[#e53900]">
                   <Plus className="w-4 h-4" />
                   Créer mon premier produit
@@ -316,38 +332,38 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                           ? 'Archivé'
                           : product.status;
                   const statusClass = product.status === 'published'
-                    ? 'bg-[#04439e] text-white'
+                    ? 'bg-[#ff4000] text-white'
                     : product.status === 'draft'
-                      ? 'bg-[#fff1ec] text-[#ff4000]'
+                      ? 'bg-white/20 text-white/80'
                       : product.status === 'rejected'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-slate-100 text-slate-600';
+                        ? 'bg-red-500/30 text-red-200'
+                        : 'bg-white/15 text-white/60';
 
                   return (
                     <div
                       key={product.id}
                       onClick={() => navigate(`/digital-product/${product.id}`)}
-                      className="flex cursor-pointer items-center gap-3 sm:gap-4 rounded-[22px] border border-[#edf3fd] bg-[#fbfdff] p-3.5 sm:p-4 transition-all hover:-translate-y-0.5 hover:border-[#d5e3fb] hover:bg-white hover:shadow-[0_16px_36px_rgba(4,67,158,0.07)]"
+                      className="flex cursor-pointer items-center gap-3 sm:gap-4 rounded-[22px] border border-white/12 bg-white/8 p-3.5 sm:p-4 transition-all hover:-translate-y-0.5 hover:bg-white/15 hover:border-white/22 hover:shadow-[0_16px_36px_rgba(0,0,0,0.12)]"
                     >
-                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[18px] bg-[linear-gradient(135deg,rgba(4,67,158,0.12),rgba(4,67,158,0.04))]">
-                        <CategoryIcon className="h-6 w-6 text-[#04439e]" />
+                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[18px] bg-white/12">
+                        <CategoryIcon className="h-6 w-6 text-white" />
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-semibold text-[#0b1b33] sm:text-base">{product.title}</p>
-                          <Badge className="border-0 bg-[#eaf1fd] text-[11px] font-semibold text-[#04439e] shadow-none">
+                          <p className="truncate text-sm font-semibold text-white sm:text-base">{product.title}</p>
+                          <Badge className="border-0 bg-white/15 text-[11px] font-semibold text-white/85 shadow-none">
                             {product.product_mode === 'affiliate' ? 'Affiliation' : 'Vente directe'}
                           </Badge>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/50">
                           <span>{product.sales_count || 0} ventes</span>
                           <span>•</span>
                           <span>{product.views_count || 0} vues</span>
                           <span>•</span>
                           <span>{product.price > 0 ? `${fmtNum(product.price)} ${product.currency}` : 'Gratuit'}</span>
                         </div>
-                        <p className="mt-2 text-xs text-slate-400">
+                        <p className="mt-2 text-xs text-white/38">
                           Mis à jour {formatDistanceToNow(new Date(product.updated_at || product.created_at), { addSuffix: true, locale: fr })}
                         </p>
                       </div>
@@ -364,25 +380,25 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="rounded-[28px] border-[#dde7fb] bg-white shadow-[0_22px_55px_rgba(4,67,158,0.06)]">
+          <Card className="rounded-[28px] border-0 bg-[linear-gradient(135deg,#0536a8_0%,#04439e_100%)] shadow-[0_22px_55px_rgba(4,67,158,0.25)]">
             <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold text-[#0b1b33]">Vue business</CardTitle>
-              <CardDescription className="text-sm text-slate-500">Lecture rapide de l'état de votre activité digitale.</CardDescription>
+              <CardTitle className="text-xl font-semibold text-white">Vue business</CardTitle>
+              <CardDescription className="text-sm text-white/55">Lecture rapide de l'état de votre activité digitale.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
               {secondaryMetrics.map((metric) => {
                 const Icon = metric.icon;
 
                 return (
-                  <div key={metric.label} className="rounded-[22px] border border-[#edf3fd] bg-[#fbfdff] p-4">
+                  <div key={metric.label} className="rounded-[22px] border border-white/12 bg-white/10 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">{metric.label}</p>
-                        <p className="mt-2 text-2xl font-semibold text-[#0b1b33]">{metric.value}</p>
-                        <p className="mt-2 text-sm text-slate-500">{metric.note}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">{metric.label}</p>
+                        <p className="mt-2 text-2xl font-semibold text-white">{metric.value}</p>
+                        <p className="mt-2 text-sm text-white/50">{metric.note}</p>
                       </div>
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f0f5fe]">
-                        <Icon className="h-5 w-5 text-[#04439e]" />
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
+                        <Icon className="h-5 w-5 text-white" />
                       </div>
                     </div>
                   </div>
@@ -391,10 +407,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[28px] border-[#dde7fb] bg-white shadow-[0_22px_55px_rgba(4,67,158,0.06)]">
+          <Card className="rounded-[28px] border-0 bg-[#0b1b33] shadow-[0_22px_55px_rgba(4,67,158,0.28)]">
             <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold text-[#0b1b33]">Actions prioritaires</CardTitle>
-              <CardDescription className="text-sm text-slate-500">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
+              <CardTitle className="text-xl font-semibold text-white">Actions prioritaires</CardTitle>
+              <CardDescription className="text-sm text-white/50">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
               {quickActions.map((action) => {
@@ -409,18 +425,18 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                     className={[
                       'group rounded-[22px] border p-4 text-left transition-all',
                       primary
-                        ? 'border-[#ffcfbf] bg-[linear-gradient(135deg,rgba(255,64,0,0.12),rgba(255,255,255,1))] hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(255,64,0,0.12)]'
-                        : 'border-[#edf3fd] bg-[#fbfdff] hover:-translate-y-0.5 hover:border-[#d5e3fb] hover:bg-white hover:shadow-[0_16px_36px_rgba(4,67,158,0.07)]'
+                        ? 'border-[#ff4000]/35 bg-[#ff4000]/12 hover:-translate-y-0.5 hover:bg-[#ff4000]/20 hover:shadow-[0_16px_36px_rgba(255,64,0,0.18)]'
+                        : 'border-white/12 bg-white/6 hover:-translate-y-0.5 hover:bg-white/12 hover:border-white/22 hover:shadow-[0_16px_36px_rgba(4,67,158,0.15)]'
                     ].join(' ')}
                   >
                     <div className={[
                       'flex h-11 w-11 items-center justify-center rounded-2xl',
-                      primary ? 'bg-[#ff4000] text-white shadow-[0_12px_28px_rgba(255,64,0,0.22)]' : 'bg-[#eef4ff] text-[#04439e]'
+                      primary ? 'bg-[#ff4000] text-white shadow-[0_12px_28px_rgba(255,64,0,0.28)]' : 'bg-white/15 text-white'
                     ].join(' ')}>
                       <Icon className="h-5 w-5" />
                     </div>
-                    <p className="mt-4 text-sm font-semibold text-[#0b1b33]">{action.label}</p>
-                    <p className="mt-1 text-sm text-slate-500">{action.description}</p>
+                    <p className="mt-4 text-sm font-semibold text-white">{action.label}</p>
+                    <p className="mt-1 text-sm text-white/50">{action.description}</p>
                   </button>
                 );
               })}

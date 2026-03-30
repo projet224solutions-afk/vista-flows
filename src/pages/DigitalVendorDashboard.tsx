@@ -109,7 +109,7 @@ export default function DigitalVendorDashboard() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen w-full flex overflow-x-hidden bg-[radial-gradient(circle_at_top_left,_rgba(4,67,158,0.12),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(255,64,0,0.08),_transparent_24%),linear-gradient(180deg,_#ffffff_0%,_#f8fbff_52%,_#ffffff_100%)] dark:bg-background">
+        <div className="min-h-screen w-full flex overflow-x-hidden bg-[#eef3fb]">
         <DigitalVendorSidebar />
 
         <div className="flex-1 flex flex-col w-full min-w-0 max-w-full overflow-x-hidden">

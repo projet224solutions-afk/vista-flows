@@ -194,18 +194,18 @@ export default function VendorDigitalProducts() {
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="overflow-hidden rounded-[28px] border border-[#dce7fb] bg-[linear-gradient(135deg,rgba(4,67,158,0.08),rgba(255,255,255,0.98)_40%,rgba(255,64,0,0.05)_100%)] p-5 shadow-[0_24px_60px_rgba(4,67,158,0.08)] sm:p-7">
+      <div className="overflow-hidden rounded-[28px] border-0 bg-[linear-gradient(135deg,#04439e_0%,#0536a8_60%,#0b1b33_100%)] p-5 shadow-[0_24px_60px_rgba(4,67,158,0.30)] sm:p-7">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
-            <div className="mb-3 inline-flex rounded-full bg-[#04439e]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#04439e]">
+            <div className="mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
               Catalogue digital
             </div>
-            <h2 className="text-xl font-semibold leading-tight text-[#0b1b33] sm:text-3xl">Gérez votre portefeuille de produits numériques avec une vue claire, premium et orientée business.</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
+            <h2 className="text-xl font-semibold leading-tight text-white sm:text-3xl">Gérez votre portefeuille de produits numériques avec une vue claire, premium et orientée business.</h2>
+            <p className="mt-3 text-sm leading-6 text-white/65 sm:text-base">
             Gérez vos produits numériques et affiliations
             </p>
           </div>
-          <Button onClick={() => navigate('/digital-products')} className="h-12 w-full rounded-2xl bg-[#ff4000] px-5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(255,64,0,0.26)] hover:bg-[#e53900] sm:w-auto gap-2">
+          <Button onClick={() => navigate('/digital-products')} className="h-12 w-full rounded-2xl bg-[#ff4000] px-5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(255,64,0,0.38)] hover:bg-[#e53900] sm:w-auto gap-2">
             <Plus className="w-4 h-4" />
             Ajouter un produit
           </Button>
@@ -214,49 +214,49 @@ export default function VendorDigitalProducts() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <Card className="rounded-[24px] border-[#dde8fb] bg-white shadow-[0_18px_45px_rgba(4,67,158,0.06)]">
+        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#04439e,#0d5ed2)] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
           <CardContent className="p-4 sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">Total</p>
-            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-[#0b1b33]">{products.length}</div>
-            <p className="mt-2 text-sm text-slate-500 truncate">produits dans le catalogue</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Total</p>
+            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">{products.length}</div>
+            <p className="mt-2 text-sm text-white/50 truncate">produits dans le catalogue</p>
           </CardContent>
         </Card>
-        <Card className="rounded-[24px] border-[#dde8fb] bg-white shadow-[0_18px_45px_rgba(4,67,158,0.06)]">
+        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#0b1b33,#04439e)] shadow-[0_18px_45px_rgba(4,67,158,0.25)]">
           <CardContent className="p-4 sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">Publiés</p>
-            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-[#04439e]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Publiés</p>
+            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">
               {products.filter(p => p.status === 'published').length}
             </div>
-            <p className="mt-2 text-sm text-slate-500 truncate">offres visibles sur le marché</p>
+            <p className="mt-2 text-sm text-white/50 truncate">offres visibles sur le marché</p>
           </CardContent>
         </Card>
-        <Card className="rounded-[24px] border-[#dde8fb] bg-white shadow-[0_18px_45px_rgba(4,67,158,0.06)]">
+        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#041f87,#04439e)] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
           <CardContent className="p-4 sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">Affiliation</p>
-            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-[#ff4000]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Affiliation</p>
+            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-[#ff8050]">
               {products.filter(p => p.product_mode === 'affiliate').length}
             </div>
-            <p className="mt-2 text-sm text-slate-500 truncate">produits partenaires</p>
+            <p className="mt-2 text-sm text-white/50 truncate">produits partenaires</p>
           </CardContent>
         </Card>
-        <Card className="rounded-[24px] border-[#dde8fb] bg-white shadow-[0_18px_45px_rgba(4,67,158,0.06)]">
+        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#063589,#0536a8)] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
           <CardContent className="p-4 sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f89b7]">Visibilité</p>
-            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-[#0b1b33]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Visibilité</p>
+            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">
               {products.reduce((sum, p) => sum + (p.views_count || 0), 0)}
             </div>
-            <p className="mt-2 text-sm text-slate-500 truncate">vues cumulées</p>
+            <p className="mt-2 text-sm text-white/50 truncate">vues cumulées</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Product List */}
       {products.length === 0 ? (
-        <Card className="rounded-[28px] border-[#dde7fb] bg-white shadow-[0_22px_55px_rgba(4,67,158,0.06)]">
+        <Card className="rounded-[28px] border-0 bg-[#04439e] shadow-[0_22px_55px_rgba(4,67,158,0.28)]">
           <CardContent className="flex flex-col items-center justify-center py-10 sm:py-14 text-center">
-            <Package className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground/50 mb-4" />
-            <h3 className="text-base sm:text-lg font-semibold mb-2 text-[#0b1b33]">Aucun produit numérique</h3>
-            <p className="text-sm text-slate-500 mb-4 max-w-sm px-4">
+            <Package className="w-12 h-12 sm:w-16 sm:h-16 text-white/25 mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2 text-white">Aucun produit numérique</h3>
+            <p className="text-sm text-white/55 mb-4 max-w-sm px-4">
               Commencez à vendre des produits numériques ou à promouvoir des affiliations
             </p>
             <Button onClick={() => navigate('/digital-products')} className="rounded-xl bg-[#ff4000] text-white hover:bg-[#e53900] gap-2">
@@ -273,7 +273,7 @@ export default function VendorDigitalProducts() {
             const canRepublish = product.status === 'rejected' || product.status === 'archived';
 
             return (
-              <Card key={product.id} className="overflow-hidden rounded-[28px] border-[#dde7fb] bg-white shadow-[0_20px_50px_rgba(4,67,158,0.06)] transition-all hover:-translate-y-0.5 hover:shadow-[0_28px_60px_rgba(4,67,158,0.09)]">
+              <Card key={product.id} className="overflow-hidden rounded-[28px] border-0 bg-[#04439e] shadow-[0_20px_50px_rgba(4,67,158,0.28)] transition-all hover:-translate-y-0.5 hover:shadow-[0_28px_60px_rgba(4,67,158,0.38)]">
                 {/* Image */}
                 <div className="relative h-40 sm:h-48 bg-muted">
                   <img
@@ -309,41 +309,41 @@ export default function VendorDigitalProducts() {
                 </div>
 
                 {/* Content */}
-                <CardContent className="p-5 sm:p-6">
-                  <h3 className="font-semibold text-lg text-[#0b1b33] line-clamp-1 mb-2">
+                <CardContent className="p-5 sm:p-6 bg-[#04439e]">
+                  <h3 className="font-semibold text-lg text-white line-clamp-1 mb-2">
                     {product.title}
                   </h3>
-                  <p className="text-sm text-slate-500 line-clamp-2 mb-4">
+                  <p className="text-sm text-white/55 line-clamp-2 mb-4">
                     {product.short_description || product.description || 'Aucune description'}
                   </p>
 
                   {/* Price */}
-                  <div className="mb-4 flex items-center justify-between gap-3 rounded-[22px] border border-[#edf3fd] bg-[#f8fbff] px-3 py-3 sm:px-4">
+                  <div className="mb-4 flex items-center justify-between gap-3 rounded-[22px] border border-white/15 bg-white/12 px-3 py-3 sm:px-4">
                     <div>
                       {product.price > 0 ? (
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-lg sm:text-xl text-[#04439e]">
+                          <span className="font-semibold text-lg sm:text-xl text-white">
                             {formatPrice(product.price, product.currency)}
                           </span>
                           {product.original_price && product.original_price > product.price && (
-                            <span className="text-sm text-slate-400 line-through">
+                            <span className="text-sm text-white/40 line-through">
                               {formatPrice(product.original_price, product.currency)}
                             </span>
                           )}
                         </div>
                       ) : (
-                          <span className="font-semibold text-lg sm:text-xl text-emerald-600">Gratuit</span>
+                          <span className="font-semibold text-lg sm:text-xl text-emerald-300">Gratuit</span>
                       )}
                     </div>
                     {product.product_mode === 'affiliate' && product.commission_rate > 0 && (
-                        <Badge className="border-0 bg-[#ff4000]/12 text-[11px] font-semibold text-[#ff4000] shadow-none">
+                        <Badge className="border-0 bg-[#ff4000] text-[11px] font-semibold text-white shadow-none">
                         {product.commission_rate}%
                       </Badge>
                     )}
                   </div>
 
                   {/* Stats */}
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-5">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-white/45 mb-5">
                     <span className="flex items-center gap-1">
                       <Eye className="w-3 h-3" />
                       {product.views_count || 0} vues
@@ -360,7 +360,7 @@ export default function VendorDigitalProducts() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-10 flex-1 rounded-xl border-[#d7e3f9] bg-white text-sm font-semibold text-[#04439e] hover:bg-[#f7fbff]"
+                      className="h-10 flex-1 rounded-xl border-white/25 bg-white/12 text-sm font-semibold text-white hover:bg-white/22"
                       onClick={() => navigate(`/digital-product/${product.id}`)}
                     >
                       <Eye className="w-4 h-4 mr-1.5" />
@@ -371,7 +371,7 @@ export default function VendorDigitalProducts() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-10 rounded-xl border-[#ffd8cb] bg-[#fff5f1] text-xs font-semibold text-[#ff4000] hover:bg-[#ffede6] gap-1"
+                        className="h-10 rounded-xl border-[#ff4000]/40 bg-[#ff4000]/18 text-xs font-semibold text-[#ff8050] hover:bg-[#ff4000]/30 hover:text-white gap-1"
                         disabled={actionLoading === product.id}
                         onClick={() => handleRepublish(product)}
                       >
@@ -387,7 +387,7 @@ export default function VendorDigitalProducts() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 shrink-0 rounded-xl border border-[#e8eef8] bg-white text-[#04439e] hover:bg-[#f7fbff]"
+                      className="h-10 w-10 shrink-0 rounded-xl border border-white/22 bg-white/10 text-white hover:bg-white/22"
                       onClick={() => setEditingProduct(product)}
                       aria-label="Modifier le produit"
                     >
@@ -397,7 +397,7 @@ export default function VendorDigitalProducts() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 shrink-0 rounded-xl border border-[#ffe1d7] bg-[#fff5f1] text-[#ff4000] hover:bg-[#ffede6]"
+                      className="h-10 w-10 shrink-0 rounded-xl border border-[#ff4000]/35 bg-[#ff4000]/15 text-[#ff8050] hover:bg-[#ff4000]/28"
                       onClick={() => handleRequestDelete(product)}
                       aria-label="Supprimer / Archiver"
                     >
