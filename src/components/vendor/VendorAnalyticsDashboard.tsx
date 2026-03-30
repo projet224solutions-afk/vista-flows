@@ -25,18 +25,6 @@ export function VendorAnalyticsDashboard() {
       color: 'text-green-600'
     },
     {
-      title: "Ventes POS",
-      value: analytics.today.posOrders,
-      icon: Store,
-      color: 'text-blue-600'
-    },
-    {
-      title: "Commandes en ligne",
-      value: analytics.today.onlineOrders,
-      icon: Globe,
-      color: 'text-cyan-600'
-    },
-    {
       title: "Taux de Conversion",
       value: `${analytics.today.conversionRate.toFixed(1)}%`,
       icon: Target,
