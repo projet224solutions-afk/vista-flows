@@ -20,7 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { usePaymentLinks, LinkType } from '@/hooks/usePaymentLinks';
 import { supabase } from '@/integrations/supabase/client';
-import QRCodeReact from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   Link, Plus, Copy, Share2, RefreshCw,
   DollarSign, CheckCircle, Clock, XCircle, AlertCircle,
