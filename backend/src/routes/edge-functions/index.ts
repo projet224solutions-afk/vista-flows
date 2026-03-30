@@ -21,8 +21,8 @@ import { Router } from "express";
 import authRoutes from "./auth.routes.js";
 import paymentsRoutes from "./payments.routes.js";
 import usersRoutes from "./users.routes.js";
+import aiRoutes from "./ai.routes.js";
 // Import others as they are created
-// import aiRoutes from "./ai.routes.js";
 // ... and so on
 
 const router = Router();
@@ -34,7 +34,7 @@ const router = Router();
 router.use("/auth", authRoutes);
 router.use("/payments", paymentsRoutes);
 router.use("/users", usersRoutes);
-// router.use("/ai", aiRoutes);
+router.use("/ai", aiRoutes);
 // router.use("/files", filesRoutes);
 // router.use("/webhooks", webhooksRoutes);
 // router.use("/products", productsRoutes);
@@ -52,7 +52,7 @@ router.get("/health", (req, res) => {
       "auth (13/13)",
       "payments (45/45)",
       "users (8/28)",
-      // "ai (0/14)",
+      "ai (5/14)",
       // ... others
     ],
   });
