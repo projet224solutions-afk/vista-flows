@@ -413,29 +413,33 @@ export default function DigitalProducts() {
           <section className="px-4 pb-6">
             <div className="grid grid-cols-2 gap-3">
               {productModules.map((module) => (
-                <Card 
+                <Card
                   key={module.id}
                   className={cn(
-                    'cursor-pointer overflow-hidden transition-all duration-200',
-                    'hover:shadow-lg hover:scale-[1.02]',
-                    'border-border/50 bg-card'
+                    'cursor-pointer overflow-hidden rounded-2xl transition-all duration-250',
+                    'border border-border/60 bg-card/95 backdrop-blur-sm',
+                    'hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(4,67,158,0.14)] hover:border-[#04439e]/35'
                   )}
                   onClick={() => handleModuleClick(module)}
                 >
-                  <CardContent className="p-4">
+                  <CardContent className="p-5">
                     <div className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center mb-3',
-                      'text-white shadow-md',
+                      'mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl',
+                      'text-white shadow-[0_12px_24px_rgba(11,27,51,0.18)]',
+                      'ring-1 ring-white/10',
                       module.gradient
                     )}>
-                      {module.icon}
+                      <div className="[&_svg]:h-6 [&_svg]:w-6 [&_svg]:stroke-[2.2]">{module.icon}</div>
                     </div>
-                    <h3 className="font-semibold text-foreground text-sm mb-1">
-                      {t(module.titleKey)}
-                    </h3>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {t(module.descriptionKey)}
-                    </p>
+
+                    <div className="text-center">
+                      <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                        {t(module.titleKey)}
+                      </h3>
+                      <p className="mx-auto mt-1.5 max-w-[15rem] text-xs leading-5 text-muted-foreground line-clamp-2">
+                        {t(module.descriptionKey)}
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
