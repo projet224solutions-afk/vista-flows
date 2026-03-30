@@ -102,16 +102,15 @@ export const ImprovedTransferDialog = ({
 
   // Execute local transfer (no international fees)
   const executeLocalTransfer = async (transferAmount: number, resolvedRecipient: string) => {
-    const { data, error } = await supabase.functions.invoke('wallet-operations', {
-      body: {
-        operation: 'transfer',
-        amount: transferAmount,
-        recipient_id: resolvedRecipient,
-        description: description
-      }
-    });
+    const result = await transferToWallet(
+      resolvedRecipient,
+      transferAmount,
+      description
+    );
 
-    if (error) throw error;
+    if (!result.success) {
+      throw new Error(result.error || 'Erreur lors du transfert');
+    }
 
     toast.success(`Transfert de ${transferAmount.toLocaleString()} réussi !`);
     resetForm();
