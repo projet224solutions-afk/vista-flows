@@ -449,11 +449,11 @@ export default function VendorAgentInterface() {
               </header>
 
               {/* Desktop Scrollable Content */}
-              <ScrollArea className="flex-1">
+              <div className="flex-1 overflow-y-auto">
                 <div className="p-6">
                   {renderTabContent()}
                 </div>
-              </ScrollArea>
+              </div>
             </main>
           </div>
         )}
