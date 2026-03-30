@@ -23,7 +23,6 @@ const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksM
 
 // Finance
 const UniversalWalletTransactions = lazy(() => import('@/components/wallet/UniversalWalletTransactions'));
-const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
 
 // Mes Achats
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
