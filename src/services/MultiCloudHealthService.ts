@@ -232,9 +232,8 @@ class MultiCloudHealthService {
           }, { onConflict: 'dedupe_key' });
         }
 
-        // AUTO-RESOLVE: service recovered
-        if (check.status === 'operational' && tracker && (tracker.lastStatus === 'outage' || tracker.lastStatus === 'degraded')) {
-          // Resolve open incidents for this service
+        // AUTO-RESOLVE: any open incident must close as soon as the service is healthy again.
+        if (check.status === 'operational') {
           await supabase.from('monitoring_incidents' as any)
             .update({ status: 'resolved', resolved_at: now, metadata: { auto_resolved: true, recovery_time: check.responseTime } })
             .eq('service_id', sid).eq('status', 'open');

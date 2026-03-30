@@ -20,6 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { usePaymentLinks, LinkType } from '@/hooks/usePaymentLinks';
 import { supabase } from '@/integrations/supabase/client';
+import { tryNativeShare } from '@/utils/nativeShare';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   Link, Plus, Copy, Share2, RefreshCw,
@@ -178,9 +179,13 @@ export default function PaymentLinksManager() {
 
   const shareLink = async (link: any) => {
     const url = getPaymentUrl(link);
-    if (navigator.share) {
-      await navigator.share({ title: `Paiement - ${link.title || link.produit}`, text: 'Effectuez votre paiement sécurisé', url });
-    } else {
+    const result = await tryNativeShare({
+      title: `Paiement - ${link.title || link.produit}`,
+      text: 'Effectuez votre paiement sécurisé',
+      url,
+    });
+
+    if (result === 'fallback') {
       copyLink(link);
     }
   };

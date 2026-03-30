@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useGeoDistance, formatDistance } from "@/hooks/useGeoDistance";
 import { ReservationModal } from "@/components/restaurant/ReservationModal";
+import { tryNativeShare } from "@/utils/nativeShare";
 
 interface ServiceDetail {
   id: string;
@@ -521,13 +522,13 @@ export default function ServiceDetailPage() {
 
   const handleShare = async () => {
     try {
-      if (navigator.share) {
-        await navigator.share({
+      const result = await tryNativeShare({
           title: service?.name,
           text: service?.description,
           url: window.location.href
-        });
-      } else {
+      });
+
+      if (result === 'fallback') {
         await navigator.clipboard.writeText(window.location.href);
         toast.success('Lien copié dans le presse-papier');
       }

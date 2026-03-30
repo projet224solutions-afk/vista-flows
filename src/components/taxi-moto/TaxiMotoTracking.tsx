@@ -26,6 +26,7 @@ import { LocalPrice } from '@/components/ui/LocalPrice';
 import { supabase } from "@/integrations/supabase/client";
 import { RidesService } from "@/services/taxi/ridesService";
 import RidePaymentFlow from "./RidePaymentFlow";
+import { tryNativeShare } from '@/utils/nativeShare';
 
 interface LocationCoordinates {
     latitude: number;
@@ -211,15 +212,21 @@ Vers: ${currentRide.destinationAddress}
 Conducteur: ${currentRide.driver?.name || 'En attente'}
 Suivi en temps réel: https://224solution.net/track/${currentRide.id}`;
 
-        if (navigator.share) {
-            navigator.share({
+        void (async () => {
+            const result = await tryNativeShare({
                 title: 'Suivi de ma course Taxi-Moto',
                 text: shareText
             });
-        } else {
+
+            if (result === 'fallback') {
+                await navigator.clipboard.writeText(shareText);
+                toast.success('Lien de suivi copié dans le presse-papier');
+            }
+        })().catch((error) => {
+            console.error('Erreur partage Taxi-Moto:', error);
             navigator.clipboard.writeText(shareText);
             toast.success('Lien de suivi copié dans le presse-papier');
-        }
+        });
     };
 
     /**

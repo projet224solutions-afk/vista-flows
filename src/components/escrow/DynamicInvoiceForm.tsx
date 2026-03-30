@@ -26,6 +26,7 @@ import {
 import useGeolocation from '../../hooks/useGeolocation';
 import EscrowService, { EscrowInvoice } from '../../services/escrow/EscrowService';
 import { Position } from '../../services/geolocation/GeolocationService';
+import { tryNativeShare } from '@/utils/nativeShare';
 
 interface DynamicInvoiceFormProps {
     driverId: string;
@@ -142,13 +143,17 @@ const DynamicInvoiceForm: React.FC<DynamicInvoiceFormProps> = ({
 
     // Partager le lien
     const sharePaymentLink = async () => {
-        if (createdInvoice && navigator.share) {
+        if (createdInvoice) {
             try {
-                await navigator.share({
+                const result = await tryNativeShare({
                     title: 'Facture 224SOLUTIONS',
                     text: `Facture de ${amount} GNF pour trajet de ${startLocation} vers ${endLocation}`,
                     url: createdInvoice.paymentLink
                 });
+
+                if (result === 'fallback') {
+                    await copyPaymentLink();
+                }
             } catch (error) {
                 console.error('Erreur partage:', error);
             }

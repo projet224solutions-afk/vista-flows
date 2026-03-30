@@ -69,6 +69,10 @@ const IGNORED_ERROR_PATTERNS = [
   'postMessage', 'blocked', 'insecure',
   // Toast/Notification issues (UI, not critical)
   'toast', 'notification', 'sonner',
+  // Native share denials are expected on unsupported browsers / permission policies
+  "Failed to execute 'share' on 'Navigator'",
+  'navigator.share',
+  'web share',
   // Format/Locale issues
   'toLocaleString', 'Intl', 'locale', 'format',
 ];

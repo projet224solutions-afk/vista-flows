@@ -10,6 +10,7 @@ import { Share2, Check, Link2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createShortLink } from "@/services/shortLinkService";
 import { toPublicShareUrl } from "@/lib/site";
+import { canUseNativeShare, tryNativeShare } from "@/utils/nativeShare";
 
 function sanitizeShareUrl(rawUrl: string): string {
   return toPublicShareUrl(rawUrl);
@@ -52,6 +53,7 @@ export function ShareButton({
 
   const shareUrl = sanitizeShareUrl(url || window.location.href);
   const shareText = text || title;
+  const nativeShareAvailable = canUseNativeShare({ title, text: shareText, url: shareUrl });
 
   /**
    * Obtient l'URL de partage.
@@ -109,10 +111,14 @@ export function ShareButton({
     try {
       const urlToShare = await getShareUrl();
 
-      if (navigator.share) {
-        await navigator.share({ title, text: shareText, url: urlToShare });
+      const shareResult = await tryNativeShare({ title, text: shareText, url: urlToShare });
+
+      if (shareResult === "shared") {
         toast.success("Partage réussi !");
-      } else {
+        return;
+      }
+
+      if (shareResult === "fallback") {
         await navigator.clipboard.writeText(urlToShare);
         setCopied(true);
         toast.success("Lien copié dans le presse-papier !");
@@ -154,7 +160,7 @@ export function ShareButton({
     </>
   );
 
-  if (navigator.share) {
+  if (nativeShareAvailable) {
     return (
       <Button variant={variant} size={size} onClick={handleNativeShare} className={className} title="Partager" disabled={loading}>
         <ButtonContent />

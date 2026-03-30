@@ -92,7 +92,10 @@ export function useMultiCloudHealth(autoRefreshMs = 30000) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'monitoring_providers' }, (payload) => {
         if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
           const u = payload.new as DbProvider;
-          setProviders(prev => prev.map(p => p.id === u.id ? u : p));
+          setProviders(prev => {
+            const exists = prev.find(p => p.id === u.id);
+            return exists ? prev.map(p => p.id === u.id ? u : p) : [...prev, u];
+          });
           setLastUpdate(new Date());
         }
       }).subscribe();
@@ -114,10 +117,20 @@ export function useMultiCloudHealth(autoRefreshMs = 30000) {
     const incCh = supabase.channel('mc-incidents-rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'monitoring_incidents' }, (payload) => {
         if (payload.eventType === 'INSERT') {
-          setIncidents(prev => [payload.new as DbIncident, ...prev].slice(0, 20));
+          const incident = payload.new as DbIncident;
+          if (incident.status === 'open') {
+            setIncidents(prev => [incident, ...prev.filter(i => i.id !== incident.id)].slice(0, 20));
+          }
         } else if (payload.eventType === 'UPDATE') {
           const u = payload.new as DbIncident;
-          setIncidents(prev => prev.map(i => i.id === u.id ? u : i));
+          setIncidents(prev => {
+            if (u.status !== 'open') {
+              return prev.filter(i => i.id !== u.id);
+            }
+
+            const exists = prev.find(i => i.id === u.id);
+            return exists ? prev.map(i => i.id === u.id ? u : i) : [u, ...prev].slice(0, 20);
+          });
         }
         setLastUpdate(new Date());
       }).subscribe();
