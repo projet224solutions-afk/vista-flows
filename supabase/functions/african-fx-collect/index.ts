@@ -662,6 +662,47 @@ serve(async (req) => {
       // ─── Vérifier si variation significative ───
       const existingUsd = existingMap.get(`USD->${code}`);
       if (existingUsd && Math.abs(collected.rateUsd - existingUsd) / existingUsd < VARIATION_THRESHOLD) {
+        // Heartbeat horaire: on met a jour retrieved_at/effective_date meme sans variation
+        await Promise.all([
+          supabase
+            .from("currency_exchange_rates")
+            .update({
+              retrieved_at: now,
+              effective_date: today,
+              source: collected.source,
+              source_url: collected.sourceUrl,
+              source_type: collected.sourceType,
+              status: "OK",
+              is_active: true,
+            })
+            .eq("from_currency", "USD")
+            .eq("to_currency", code),
+          supabase
+            .from("currency_exchange_rates")
+            .update({
+              retrieved_at: now,
+              effective_date: today,
+              source: collected.source,
+              source_url: collected.sourceUrl,
+              source_type: collected.sourceType,
+              status: "OK",
+              is_active: true,
+            })
+            .eq("from_currency", "EUR")
+            .eq("to_currency", code),
+        ]);
+
+        await supabase.from("fx_collection_log").insert({
+          currency_code: code,
+          rate_usd: collected.rateUsd,
+          rate_eur: collected.rateEur,
+          source: collected.source,
+          source_url: collected.sourceUrl,
+          source_type: collected.sourceType,
+          status: "NO_CHANGE",
+          error_message: "Aucune variation significative, heartbeat horaire applique",
+        });
+
         results.push({
           currency: code, status: "NO_CHANGE",
           sourceType: collected.sourceType, source: collected.source,
