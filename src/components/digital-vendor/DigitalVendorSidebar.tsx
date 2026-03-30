@@ -69,6 +69,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
     {
       label: "Finance",
       items: [
+        { title: "Liens de paiement", icon: Link, path: "payment-links" },
         { title: "Portefeuille", icon: Wallet, path: "wallet" },
         { title: "Mes Achats", icon: ShoppingBag, path: "my-purchases" },
       ]
