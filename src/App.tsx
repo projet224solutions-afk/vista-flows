@@ -90,7 +90,6 @@ const Payment = lazyWithRetry(() => import("./pages/Payment"));
 const PaymentPage = lazyWithRetry(() => import("./pages/PaymentPage"));
 const PaymentLinkPage = lazyWithRetry(() => import("./pages/PaymentLinkPage"));
 const PaymentSuccessRedirect = lazyWithRetry(() => import("./pages/PaymentSuccessRedirect"));
-const DjomyPayment = lazyWithRetry(() => import("./pages/DjomyPayment"));
 const PaymentCorePage = lazyWithRetry(() => import("./pages/PaymentCore"));
 const Orders = lazyWithRetry(() => import("./pages/Orders"));
 const DigitalPurchaseDownload = lazyWithRetry(() => import("./pages/DigitalPurchaseDownload"));
@@ -491,10 +490,6 @@ function App() {
               <Route
                 path="/payment"
                 element={<Payment />}
-              />
-              <Route
-                path="/djomy-payment"
-                element={<DjomyPayment />}
               />
               <Route
                 path="/payment-core"

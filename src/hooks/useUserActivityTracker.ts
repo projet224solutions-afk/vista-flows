@@ -198,7 +198,7 @@ export interface UserActivitySummary {
   
   // Transactions additionnelles
   financialTransactions: FinancialTransaction[];
-  djomyPayments: any[];
+  mobileMoneyPayments: any[];
   p2pTransactions: any[];
   
   // Commerce
@@ -302,7 +302,7 @@ export function useUserActivityTracker() {
         totalReceived: data.totalReceived || 0,
         
         financialTransactions: data.financialTransactions || [],
-        djomyPayments: data.djomyPayments || [],
+        mobileMoneyPayments: data.mobileMoneyPayments || [],
         p2pTransactions: data.p2pTransactions || [],
         
         orders: data.orders || [],

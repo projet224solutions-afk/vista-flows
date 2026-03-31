@@ -28,32 +28,6 @@ router.post("/chapchappay-webhook", async (req: Request, res: Response) => {
   return res.json({ success: true, acknowledged: true });
 });
 
-// Djomy Payment Integration
-router.post("/djomy-init-payment", async (req: Request, res: Response) => {
-  const { amount, phone } = req.body || {};
-  return res.json({ success: true, session_id: `DJMY-${Date.now()}`, amount, phone });
-});
-
-router.post("/djomy-payment", async (req: Request, res: Response) => {
-  const { amount, phone, reference } = req.body || {};
-  return res.json({ success: true, transaction_id: `DJMY-${Date.now()}`, amount, phone });
-});
-
-router.post("/djomy-secure-webhook", async (req: Request, res: Response) => {
-  const { transaction_id, status } = req.body || {};
-  return res.json({ success: true, verified: true });
-});
-
-router.post("/djomy-verify", async (req: Request, res: Response) => {
-  const { transaction_id } = req.body || {};
-  return res.json({ success: true, transaction_id, verified: true });
-});
-
-router.post("/djomy-webhook", async (req: Request, res: Response) => {
-  const { transaction_id, status } = req.body || {};
-  return res.json({ success: true, acknowledged: true });
-});
-
 // PayPal Integration
 router.get("/paypal-client-id", async (req: Request, res: Response) => {
   return res.json({ success: true, client_id: process.env.PAYPAL_CLIENT_ID || "sandbox-client" });

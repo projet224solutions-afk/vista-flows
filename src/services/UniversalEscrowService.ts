@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Escrow224Service, EscrowCreateRequest } from './escrow224Service';
 
 export type TransactionType = 'product' | 'digital_product' | 'taxi' | 'delivery' | 'service' | 'wallet_transfer';
-export type PaymentProvider = 'wallet' | 'stripe' | 'djomy' | 'cash' | 'orange_money';
+export type PaymentProvider = 'wallet' | 'stripe' | 'cash' | 'orange_money';
 
 export interface UniversalEscrowRequest {
   // Identifiants

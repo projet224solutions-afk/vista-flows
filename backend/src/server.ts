@@ -101,8 +101,6 @@ app.use(compression());
 
 // ==================== WEBHOOK RAW BODY (before JSON parser) ====================
 
-// Djomy webhooks also need raw body for HMAC signature verification
-app.use('/webhooks/djomy', express.raw({ type: 'application/json' }));
 // Stripe webhooks need raw body for signature verification
 app.use('/webhooks/stripe', express.raw({ type: 'application/json' }));
 // Edge Functions Stripe webhooks also need raw body for signature verification

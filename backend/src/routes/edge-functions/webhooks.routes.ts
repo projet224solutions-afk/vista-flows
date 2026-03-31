@@ -178,38 +178,6 @@ router.post("/chapchappay", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/djomy", async (req: Request, res: Response) => {
-  try {
-    const payload = req.body || {};
-    const txRef = payload?.reference || payload?.tx_ref || payload?.transaction_id || `djomy-${Date.now()}`;
-    const status = String(payload?.status || "").toLowerCase();
-
-    if (["success", "succeeded", "completed", "paid"].includes(status)) {
-      const orderId = payload?.metadata?.order_id || payload?.order_id;
-      if (orderId) {
-        await supabaseAdmin
-          .from("orders")
-          .update({ payment_status: "paid", status: "confirmed", updated_at: new Date().toISOString() })
-          .eq("id", orderId);
-      }
-    }
-
-    await supabaseAdmin.from("webhook_events").insert({
-      provider: "djomy",
-      webhook_id: String(txRef),
-      event_type: payload?.event || "payment.update",
-      payload: payload as any,
-      processing_status: "completed",
-      processed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    });
-
-    return res.status(200).json({ success: true, received: true });
-  } catch (error) {
-    return res.status(500).json({ success: false, error: error instanceof Error ? error.message : "Internal error" });
-  }
-});
-
 router.post("/subscription", async (req: Request, res: Response) => {
   try {
     const payload = req.body || {};

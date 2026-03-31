@@ -33,7 +33,7 @@ export function buildCSPHeader(nonce?: string): string {
     // Images
     "img-src 'self' data: https: blob:",
     // Connexions API
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://djomy.com https://api.djomy.com https://api.stripe.com https://api.mapbox.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://api.mapbox.com",
     // Frames
     "frame-src 'self' https://js.stripe.com",
     // Empêcher l'affichage dans une iframe

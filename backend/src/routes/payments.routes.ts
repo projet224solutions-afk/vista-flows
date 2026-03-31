@@ -3,13 +3,12 @@
  *
  * Endpoints de paiement gérés côté Node.js :
  *   - Liens de paiement (lecture publique + confirmation)
- *   - Initiation paiement mobile money Djomy (OM, MTN, KULU, CARD, MOMO)
  *   - Paiement sécurisé avec signature HMAC (init + validate / wallet deposit)
  *   - Historique et résumé des transactions
  *
  * Tables utilisées :
  *   - `payment_links`, `wallet_transactions`, `wallets`, `secure_transactions`,
- *     `djomy_transactions`, `djomy_api_logs`, `financial_audit_logs`
+ *     `financial_audit_logs`
  */
 
 import { Router, Response } from 'express';
@@ -19,7 +18,6 @@ import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { paymentRateLimit } from '../middlewares/routeRateLimiter.js';
-import { initiateDjomyPayment } from '../services/djomy.service.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
 
 const router = Router();
@@ -206,180 +204,6 @@ router.post('/link/:paymentId/pay', optionalJWT, async (req: AuthenticatedReques
 });
 
 // ─────────────────────────────────────────────────────────
-// DJOMY MOBILE MONEY — INITIATION
-// Migré depuis l'Edge Function payment-core
-// ─────────────────────────────────────────────────────────
-
-type PaymentType = 'ORDER_PAYMENT' | 'SUBSCRIPTION' | 'BOOST' | 'DELIVERY' | 'COMMISSION' | 'WALLET_TOPUP' | 'TRANSFER';
-type PaymentMethod = 'OM' | 'MTN' | 'KULU' | 'CARD' | 'MOMO';
-
-const VALID_PAYMENT_TYPES: PaymentType[] = ['ORDER_PAYMENT', 'SUBSCRIPTION', 'BOOST', 'DELIVERY', 'COMMISSION', 'WALLET_TOPUP', 'TRANSFER'];
-const VALID_PAYMENT_METHODS: PaymentMethod[] = ['OM', 'MTN', 'KULU', 'CARD', 'MOMO'];
-
-/**
- * POST /api/payments/djomy/initiate
- * Initie un paiement mobile money via l'API Djomy.
- * Remplace l'Edge Function payment-core.
- *
- * Auth : optionalJWT (les paiements invités sont autorisés)
- * Body : { type, reference_id, amount, phone, method, vendor_id?, metadata?, description?, idempotency_key? }
- */
-router.post('/djomy/initiate', optionalJWT, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const {
-      type,
-      reference_id,
-      amount,
-      currency = 'GNF',
-      phone,
-      method,
-      vendor_id,
-      metadata = {},
-      description,
-      idempotency_key,
-    } = req.body || {};
-
-    // ── Validation ──
-    if (!type || !VALID_PAYMENT_TYPES.includes(type as PaymentType)) {
-      res.status(400).json({ success: false, error: `Type invalide. Valeurs: ${VALID_PAYMENT_TYPES.join(', ')}` });
-      return;
-    }
-    if (!reference_id) {
-      res.status(400).json({ success: false, error: 'reference_id requis' });
-      return;
-    }
-    if (!amount || typeof amount !== 'number' || amount <= 0) {
-      res.status(400).json({ success: false, error: 'Montant invalide' });
-      return;
-    }
-    if (!phone || String(phone).length < 8) {
-      res.status(400).json({ success: false, error: 'Numéro de téléphone invalide' });
-      return;
-    }
-    if (!method || !VALID_PAYMENT_METHODS.includes(method as PaymentMethod)) {
-      res.status(400).json({ success: false, error: `Méthode invalide. Valeurs: ${VALID_PAYMENT_METHODS.join(', ')}` });
-      return;
-    }
-
-    const userId = req.user?.id || null;
-    logger.info(`[PaymentDjomy] Initiation: type=${type}, method=${method}, amount=${amount}, user=${userId}`);
-
-    // ── Idempotence ──
-    if (idempotency_key) {
-      const { data: existing } = await supabaseAdmin
-        .from('djomy_transactions')
-        .select('id, status, djomy_transaction_id, order_id')
-        .eq('idempotency_key', idempotency_key)
-        .maybeSingle();
-
-      if (existing) {
-        res.json({
-          success: true,
-          transaction_id: existing.id,
-          djomy_transaction_id: existing.djomy_transaction_id,
-          order_id: existing.order_id,
-          status: existing.status,
-          message: 'Transaction existante (idempotent)',
-        });
-        return;
-      }
-    }
-
-    // ── Création de la transaction en base (statut PENDING) ──
-    const orderId = `224-${String(type).substring(0, 3)}-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-
-    const { data: newTransaction, error: insertError } = await supabaseAdmin
-      .from('djomy_transactions')
-      .insert({
-        order_id: orderId,
-        payment_type: type,
-        reference_id,
-        user_id: userId,
-        vendor_id: vendor_id || null,
-        amount,
-        currency,
-        payment_method: method,
-        status: 'PENDING',
-        payer_phone: String(phone).replace(/\s/g, ''),
-        country_code: 'GN',
-        description: description || `Paiement ${type} - ${orderId}`,
-        metadata,
-        idempotency_key: idempotency_key || null,
-        ip_address: req.headers['x-forwarded-for'] || req.ip,
-        user_agent: req.headers['user-agent'],
-        auto_released: false,
-        release_type: 'BLOCKED',
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      logger.error(`[PaymentDjomy] DB insert error: ${insertError.message}`);
-      res.status(500).json({ success: false, error: 'Erreur lors de la création de la transaction' });
-      return;
-    }
-
-    // ── Log API request ──
-    await supabaseAdmin.from('djomy_api_logs').insert({
-      request_type: 'PAYMENT_INIT_BACKEND',
-      endpoint: '/v1/payments',
-      request_payload: { type, amount, method, reference_id },
-      transaction_id: newTransaction.id,
-    }).catch(() => {});
-
-    // ── Appel API Djomy ──
-    const djomyResult = await initiateDjomyPayment({
-      paymentMethod: method,
-      payerIdentifier: String(phone).replace(/\s/g, ''),
-      amount,
-      countryCode: 'GN',
-      merchantPaymentReference: orderId,
-      description: description || `224Solutions - ${type} - ${orderId}`,
-    });
-
-    if (!djomyResult.success) {
-      // Marquer la transaction comme échouée
-      await supabaseAdmin
-        .from('djomy_transactions')
-        .update({
-          status: 'FAILED',
-          error_message: djomyResult.error,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', newTransaction.id);
-
-      res.status(502).json({ success: false, error: `Paiement Djomy échoué: ${djomyResult.error}` });
-      return;
-    }
-
-    // ── Mise à jour avec la réponse Djomy ──
-    await supabaseAdmin
-      .from('djomy_transactions')
-      .update({
-        status: 'PROCESSING',
-        djomy_transaction_id: djomyResult.transactionId,
-        djomy_response: djomyResult.data,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', newTransaction.id);
-
-    logger.info(`[PaymentDjomy] Initiated: order=${orderId}, djomyTx=${djomyResult.transactionId}`);
-
-    res.json({
-      success: true,
-      transaction_id: newTransaction.id,
-      djomy_transaction_id: djomyResult.transactionId,
-      order_id: orderId,
-      status: 'PROCESSING',
-      message: 'Paiement initié. Veuillez confirmer sur votre téléphone.',
-    });
-  } catch (error: any) {
-    logger.error(`[PaymentDjomy] Unexpected error: ${error.message}`);
-    res.status(500).json({ success: false, error: 'Erreur interne' });
-  }
-});
-
-// ─────────────────────────────────────────────────────────
 // PAIEMENT SÉCURISÉ (Init + Validate) — WALLET DEPOSIT
 // Migré depuis les Edge Functions secure-payment-init / secure-payment-validate
 // ─────────────────────────────────────────────────────────
@@ -462,7 +286,7 @@ router.post('/secure/init', verifyJWT, async (req: AuthenticatedRequest, res: Re
         interface_type,
         payment_method,
         status: 'pending',
-        payment_provider: 'djomy',
+        payment_provider: 'wallet',
         ip_address: req.headers['x-forwarded-for'] || req.ip,
         user_agent: req.headers['user-agent'],
       });
@@ -704,7 +528,7 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
       receiver_wallet_id: walletId,
       transaction_type: 'deposit',
       amount: transaction.net_amount,
-      description: `Recharge sécurisée via ${transaction.payment_method || 'Djomy'}`,
+      description: `Recharge sécurisée via ${transaction.payment_method || 'mobile money'}`,
       status: 'completed',
       metadata: {
         reference: external_transaction_id,

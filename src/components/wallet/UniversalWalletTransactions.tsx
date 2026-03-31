@@ -614,7 +614,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     const loadingToast = toast.loading('Initialisation du paiement Mobile Money...');
 
     try {
-      // ✅ ChapChapPay au lieu de Djomy
+      // ✅ ChapChapPay pour les depots Mobile Money
       const paymentMethod = mobileMoneyProvider === 'orange' ? 'orange_money' : 'mtn_momo';
       
       const { data, error } = await supabase.functions.invoke('chapchappay-pull', {

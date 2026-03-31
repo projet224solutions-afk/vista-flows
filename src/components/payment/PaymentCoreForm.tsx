@@ -81,34 +81,7 @@ export const PaymentCoreForm: React.FC<PaymentCoreFormProps> = ({
     setResultMessage('Initialisation du paiement...');
 
     try {
-      const { initiateDjomyPayment } = await import('@/services/paymentBackendService');
-      const result = await initiateDjomyPayment({
-        type,
-        reference_id: referenceId,
-        amount,
-        phone: phone.replace(/\s/g, ''),
-        method: selectedMethod,
-        currency,
-        vendor_id: vendorId,
-        description,
-        metadata,
-      });
-      const data = result.data as any;
-      const error = result.success ? null : new Error(result.error);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Erreur lors du paiement');
-      }
-
-      setStatus('success');
-      setResultMessage('Paiement initié avec succès ! Vérifiez votre téléphone.');
-      toast.success('Paiement en cours de traitement');
-      
-      onSuccess?.(data.transaction_id, data.order_id);
+      throw new Error('Le flux legacy Payment Core a ete retire. Veuillez utiliser la page /payment pour payer via Wallet, Stripe ou ChapChapPay.');
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Erreur inconnue';

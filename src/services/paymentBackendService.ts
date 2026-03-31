@@ -64,14 +64,6 @@ export interface SecurePaymentValidation {
   transaction_id: string;
 }
 
-export interface DjomyPaymentInit {
-  transaction_id: string;
-  djomy_transaction_id: string;
-  order_id: string;
-  status: string;
-  message: string;
-}
-
 // ==================== PAYMENT LINKS (legacy) ====================
 
 /**
@@ -190,31 +182,6 @@ export async function validateSecurePayment(
       payment_status: paymentStatus,
       signature,
     },
-  });
-}
-
-// ==================== DJOMY MOBILE MONEY ====================
-
-/**
- * Initie un paiement mobile money via Djomy
- * Remplace supabase.functions.invoke('payment-core')
- */
-export async function initiateDjomyPayment(params: {
-  type: string;
-  reference_id: string;
-  amount: number;
-  phone: string;
-  method: string;
-  currency?: string;
-  vendor_id?: string;
-  description?: string;
-  metadata?: any;
-}) {
-  const idempotencyKey = generateIdempotencyKey();
-  return backendFetch<DjomyPaymentInit>('/api/payments/djomy/initiate', {
-    method: 'POST',
-    body: { ...params, idempotency_key: idempotencyKey },
-    idempotencyKey,
   });
 }
 

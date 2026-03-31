@@ -729,7 +729,7 @@ export default function Payment() {
         description: `Initialisation du paiement ${provider.toUpperCase()}...`
       });
 
-      // Utiliser Djomy directement
+      // Le flux mobile money est gere par le selecteur de paiement
       setPaymentOpen(false);
       
     } catch (error: any) {
@@ -744,11 +744,11 @@ export default function Payment() {
     }
   };
 
-  // Fonction pour paiement par carte — désormais géré par JomyPaymentSelector inline
+  // Fonction pour paiement par carte — géré par le selecteur de paiement inline
   // Cette fonction est conservée comme fallback si besoin
   const handleCardPayment = async () => {
     if (!user?.id || !paymentAmount) return;
-    // Redirect to the JomyPaymentSelector card flow
+    // Redirection vers le flux carte inline
     setSelectedPaymentMethod('card');
     setPaymentStep('method');
   };
