@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
 
   } catch (err) {
     console.error('❌ Sync to Cloud SQL error:', err);
-    return new Response(JSON.stringify({ error: err.message || 'Erreur interne' }), {
+    return new Response(JSON.stringify({ error: (err as Error).message || 'Erreur interne' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

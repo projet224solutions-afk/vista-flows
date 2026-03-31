@@ -70,8 +70,8 @@ async function resolveCode(shortCode: string): Promise<Response> {
   }
 
   // Increment views (fire and forget)
-  supabaseAdmin
-    .rpc("increment_shared_link_views", { p_short_code: shortCode })
+  (supabaseAdmin
+    .rpc("increment_shared_link_views", { p_short_code: shortCode }) as unknown as Promise<void>)
     .then(() => {})
     .catch(() => {});
 
