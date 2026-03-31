@@ -543,20 +543,22 @@ export default function EnhancedAuth() {
     setLoading(true);
 
     try {
-      const formattedPhone = phone.startsWith('+') ? phone : `+224${phone}`;
+      const formatted = phone.startsWith('+') ? phone : `+224${phone}`;
+      setFormattedPhoneNumber(formatted);
       
       const { error } = await supabase.auth.signInWithOtp({
-        phone: formattedPhone,
+        phone: formatted,
         options: {
           data: {
-            account_type: accountType
+            account_type: accountType,
+            role: mapAccountTypeToRole(accountType),
           }
         }
       });
       
       if (error) throw error;
       toast.success(t('auth.otpSent'));
-      // TODO: Show OTP input
+      setOtpSent(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : t('auth.otpError');
       setError(message);
@@ -564,6 +566,75 @@ export default function EnhancedAuth() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVerifyPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: formattedPhoneNumber,
+        token: otpCode,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
+      toast.success(t('auth.otpVerified'));
+
+      // After verification, resolve profile and navigate
+      if (data.user) {
+        let profileData = null;
+        let attempts = 0;
+        const maxAttempts = 10;
+
+        while (!profileData && attempts < maxAttempts) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.user.id)
+            .maybeSingle();
+
+          if (profile?.role) {
+            profileData = profile;
+            break;
+          }
+
+          if (attempts < maxAttempts - 1) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          attempts++;
+        }
+
+        if (profileData?.role) {
+          const roleRoutes: Record<string, string> = {
+            admin: '/pdg', ceo: '/pdg', pdg: '/pdg',
+            vendeur: '/vendeur', livreur: '/livreur',
+            taxi: '/taxi-moto/driver', driver: '/taxi-moto/driver',
+            syndicat: '/syndicat', transitaire: '/transitaire',
+            client: '/client', agent: '/agent',
+          };
+          const targetRoute = roleRoutes[profileData.role] || '/home';
+          navigate(targetRoute, { replace: true });
+        } else {
+          navigate('/home', { replace: true });
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('auth.otpInvalid');
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBackToPhone = () => {
+    setOtpSent(false);
+    setOtpCode('');
+    setError(null);
   };
 
   const goBack = () => {
