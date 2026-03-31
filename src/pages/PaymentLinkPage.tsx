@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { backendConfig } from '@/config/backend';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import {
@@ -197,11 +198,14 @@ export default function PaymentLinkPage() {
   const resolveLink = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('resolve-payment-link', {
-        body: { token },
+      const resp = await fetch(`${backendConfig.baseUrl}/api/payment-links/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
       });
+      const data = await resp.json();
 
-      if (error || !data?.success) {
+      if (!data?.success) {
         toast({ title: "Erreur", description: data?.error || "Lien introuvable", variant: "destructive" });
         return;
       }
@@ -223,17 +227,20 @@ export default function PaymentLinkPage() {
       setCardInitLoading(true);
       setCardError(null);
 
-      const { data, error } = await supabase.functions.invoke('process-payment-link', {
-        body: {
+      const resp = await fetch(`${backendConfig.baseUrl}/api/payment-links/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           token,
           paymentMethod: 'card',
           customerName: customerInfo.name,
           customerEmail: customerInfo.email,
           customerPhone: customerInfo.phone,
-        },
+        }),
       });
+      const data = await resp.json();
 
-      if (error || !data?.success || !data?.clientSecret) {
+      if (!data?.success || !data?.clientSecret) {
         const message = data?.error || 'Impossible d\'initialiser le paiement carte';
         setCardError(message);
         toast({ title: 'Erreur carte', description: message, variant: 'destructive' });
@@ -262,18 +269,21 @@ export default function PaymentLinkPage() {
       setCardFinalizeLoading(true);
       setCardError(null);
 
-      const { data, error } = await supabase.functions.invoke('process-payment-link', {
-        body: {
+      const resp = await fetch(`${backendConfig.baseUrl}/api/payment-links/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           token,
           paymentMethod: 'card',
           paymentIntentId,
           customerName: customerInfo.name,
           customerEmail: customerInfo.email,
           customerPhone: customerInfo.phone,
-        },
+        }),
       });
+      const data = await resp.json();
 
-      if (error || !data?.success) {
+      if (!data?.success) {
         const message = data?.error || 'Confirmation du paiement impossible';
         setCardError(message);
         toast({ title: 'Erreur carte', description: message, variant: 'destructive' });
@@ -314,17 +324,20 @@ export default function PaymentLinkPage() {
     try {
       setProcessing(true);
 
-      const { data, error } = await supabase.functions.invoke('process-payment-link', {
-        body: {
+      const resp = await fetch(`${backendConfig.baseUrl}/api/payment-links/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           token,
           paymentMethod,
           customerName: customerInfo.name,
           customerEmail: customerInfo.email,
           customerPhone: customerInfo.phone,
-        },
+        }),
       });
+      const data = await resp.json();
 
-      if (error || !data?.success) {
+      if (!data?.success) {
         toast({ title: "Erreur", description: data?.error || "Paiement échoué", variant: "destructive" });
         return;
       }

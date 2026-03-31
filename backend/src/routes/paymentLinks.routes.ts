@@ -196,6 +196,7 @@ router.post('/process', optionalJWT, async (req: AuthenticatedRequest, res: Resp
       customerName,
       customerEmail,
       customerPhone,
+      paymentIntentId,
     } = req.body;
 
     if (!token || !paymentMethod) {
@@ -376,6 +377,41 @@ router.post('/process', optionalJWT, async (req: AuthenticatedRequest, res: Resp
       // Dynamic import of Stripe
       const { default: Stripe } = await import('stripe');
       const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' as any });
+
+      // ── Step 2: Finalize — verify a confirmed PaymentIntent from Stripe Elements
+      if (paymentIntentId) {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (paymentIntent.metadata?.payment_link_id !== link.id || paymentIntent.metadata?.payment_link_token !== token) {
+          res.status(400).json({ success: false, error: 'Ce paiement ne correspond pas au lien fourni' });
+          return;
+        }
+        if (paymentIntent.status !== 'succeeded') {
+          res.status(400).json({
+            success: false,
+            error: paymentIntent.status === 'processing'
+              ? 'Paiement en cours de traitement'
+              : `Paiement non confirmé (${paymentIntent.status})`,
+          });
+          return;
+        }
+        await supabaseAdmin.from('payment_links').update({
+          status: 'success',
+          paid_at: new Date().toISOString(),
+          payment_method: 'card',
+          transaction_id: paymentIntent.id,
+          customer_name: customerName || null,
+          customer_email: customerEmail || null,
+          customer_phone: customerPhone || null,
+          use_count: (link.use_count || 0) + 1,
+          platform_fee: platformFee,
+          net_amount: netAmount,
+          gross_amount: payAmount,
+          wallet_credit_status: 'pending_settlement',
+        }).eq('id', link.id);
+        logger.info(`[PaymentLinks] Card payment finalized: intentId=${paymentIntentId}, linkId=${link.id}`);
+        res.json({ success: true, paymentMethod: 'card', confirmed: true, paymentIntentId, amount: payAmount });
+        return;
+      }
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(payAmount),

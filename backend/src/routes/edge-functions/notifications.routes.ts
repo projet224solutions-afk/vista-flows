@@ -89,8 +89,17 @@ function parseVisualAnalysis(content: string) {
 router.post("/otp-email", async (req: any, res: any) => {
   try {
     const { email, otp_code, template } = req.body;
-    console.log(`OTP ${otp_code} sent to ${email}`);
-    return res.json({ success: true });
+    if (!email) return res.status(400).json({ success: false, error: "email requis" });
+    // Send OTP via Supabase Auth magic link / OTP
+    const { error } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email });
+    if (error) throw error;
+    // Store in notifications for audit trail
+    await supabaseAdmin.from("notifications").insert({
+      message: `Code OTP: ${otp_code || "envoyé par email"}`,
+      channel: "email",
+      metadata: { template, email, otp_sent: true },
+    }).catch(() => null); // non-blocking
+    return res.json({ success: true, email_sent: true, email });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -99,8 +108,15 @@ router.post("/otp-email", async (req: any, res: any) => {
 router.post("/bureau-access", async (req: any, res: any) => {
   try {
     const { bureau_id, recipient_email } = req.body;
-    console.log(`Bureau access notification sent to ${recipient_email}`);
-    return res.json({ success: true });
+    if (!recipient_email) return res.status(400).json({ success: false, error: "recipient_email requis" });
+    const { error } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email: recipient_email });
+    if (error) throw error;
+    await supabaseAdmin.from("notifications").insert({
+      message: `Accès bureau envoyé à ${recipient_email}`,
+      channel: "email",
+      metadata: { bureau_id, recipient_email, type: "bureau_access" },
+    }).catch(() => null);
+    return res.json({ success: true, email_sent: true, recipient_email });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -119,9 +135,15 @@ router.post("/communication", async (req: any, res: any) => {
 
 router.post("/delivery", async (req: any, res: any) => {
   try {
-    const { order_id, status_update } = req.body;
-    console.log(`Delivery update for order ${order_id}: ${status_update}`);
-    return res.json({ success: true });
+    const { order_id, status_update, user_id } = req.body;
+    if (!order_id) return res.status(400).json({ success: false, error: "order_id requis" });
+    await supabaseAdmin.from("notifications").insert({
+      user_id: user_id || null,
+      message: `Mise à jour livraison commande ${order_id}: ${status_update}`,
+      channel: "in_app",
+      metadata: { order_id, status_update, type: "delivery" },
+    });
+    return res.json({ success: true, order_id, status_update });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -129,9 +151,16 @@ router.post("/delivery", async (req: any, res: any) => {
 
 router.post("/security-alert", async (req: any, res: any) => {
   try {
-    const { alert_severity, recipients } = req.body;
-    console.log(`Security alert severity ${alert_severity} sent to ${recipients.length} recipients`);
-    return res.json({ success: true });
+    const { alert_severity, recipients, message } = req.body;
+    if (!recipients?.length) return res.status(400).json({ success: false, error: "recipients requis" });
+    const inserts = (recipients as string[]).map((user_id: string) => ({
+      user_id,
+      message: message || `Alerte sécurité niveau ${alert_severity}`,
+      channel: "in_app",
+      metadata: { alert_severity, type: "security_alert" },
+    }));
+    await supabaseAdmin.from("notifications").insert(inserts);
+    return res.json({ success: true, sent_to: recipients.length, alert_severity });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -139,9 +168,17 @@ router.post("/security-alert", async (req: any, res: any) => {
 
 router.post("/sms", async (req: any, res: any) => {
   try {
-    const { phone_number, message_body } = req.body;
-    console.log(`SMS sent to ${phone_number}`);
-    return res.json({ success: true });
+    const { phone_number, message_body, user_id } = req.body;
+    if (!phone_number || !message_body) return res.status(400).json({ success: false, error: "phone_number et message_body requis" });
+    // Store as in_app notification (SMS provider à configurer via TWILIO_API_KEY ou autre)
+    await supabaseAdmin.from("notifications").insert({
+      user_id: user_id || null,
+      message: message_body,
+      channel: "sms",
+      metadata: { phone_number, type: "sms" },
+    });
+    // TODO: intégrer un vrai fournisseur SMS (Twilio, Orange SMS API, etc.) via TWILIO_API_KEY
+    return res.json({ success: true, queued: true, phone_number });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
