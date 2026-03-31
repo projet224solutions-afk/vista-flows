@@ -97,12 +97,12 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // 🔍 Chercher l'utilisateur par email (scalable, pas de listUsers complet)
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers({
+    // 🔍 Chercher l'utilisateur par email
+    const { data: allUsers } = await supabaseAdmin.auth.admin.listUsers({
       page: 1,
-      perPage: 1,
-    } as any);
-    const existingUser = existingUsers?.users?.[0];
+      perPage: 50,
+    });
+    const existingUser = allUsers?.users?.find((u: any) => u.email === email);
 
     if (mode === 'signup') {
       // === MODE INSCRIPTION ===
