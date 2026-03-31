@@ -25,7 +25,7 @@ import {
 import {
   UserCheck, Store, Truck, Bike, Ship, ArrowLeft,
   Lock, Mail, Loader2, Eye, EyeOff, AlertCircle,
-  User, LogIn, UserPlus
+  User, LogIn, UserPlus, Phone
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -131,6 +131,11 @@ export default function EnhancedAuth() {
   const [socialLoading, setSocialLoading] = useState<'google' | 'facebook' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Phone OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [formattedPhoneNumber, setFormattedPhoneNumber] = useState('');
 
   // Cognito confirmation state
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
@@ -538,20 +543,22 @@ export default function EnhancedAuth() {
     setLoading(true);
 
     try {
-      const formattedPhone = phone.startsWith('+') ? phone : `+224${phone}`;
+      const formatted = phone.startsWith('+') ? phone : `+224${phone}`;
+      setFormattedPhoneNumber(formatted);
       
       const { error } = await supabase.auth.signInWithOtp({
-        phone: formattedPhone,
+        phone: formatted,
         options: {
           data: {
-            account_type: accountType
+            account_type: accountType,
+            role: mapAccountTypeToRole(accountType),
           }
         }
       });
       
       if (error) throw error;
       toast.success(t('auth.otpSent'));
-      // TODO: Show OTP input
+      setOtpSent(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : t('auth.otpError');
       setError(message);
@@ -559,6 +566,75 @@ export default function EnhancedAuth() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVerifyPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: formattedPhoneNumber,
+        token: otpCode,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
+      toast.success(t('auth.otpVerified'));
+
+      // After verification, resolve profile and navigate
+      if (data.user) {
+        let profileData = null;
+        let attempts = 0;
+        const maxAttempts = 10;
+
+        while (!profileData && attempts < maxAttempts) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.user.id)
+            .maybeSingle();
+
+          if (profile?.role) {
+            profileData = profile;
+            break;
+          }
+
+          if (attempts < maxAttempts - 1) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          attempts++;
+        }
+
+        if (profileData?.role) {
+          const roleRoutes: Record<string, string> = {
+            admin: '/pdg', ceo: '/pdg', pdg: '/pdg',
+            vendeur: '/vendeur', livreur: '/livreur',
+            taxi: '/taxi-moto/driver', driver: '/taxi-moto/driver',
+            syndicat: '/syndicat', transitaire: '/transitaire',
+            client: '/client', agent: '/agent',
+          };
+          const targetRoute = roleRoutes[profileData.role] || '/home';
+          navigate(targetRoute, { replace: true });
+        } else {
+          navigate('/home', { replace: true });
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('auth.otpInvalid');
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBackToPhone = () => {
+    setOtpSent(false);
+    setOtpCode('');
+    setError(null);
   };
 
   const goBack = () => {
@@ -850,6 +926,114 @@ export default function EnhancedAuth() {
                       Facebook
                     </Button>
                   </div>
+
+                  {/* Séparateur téléphone */}
+                  <div className="relative py-1.5">
+                    <Separator className="bg-border/30" />
+                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1.5 text-[9px] text-muted-foreground uppercase">
+                      {t('auth.phoneNumber')}
+                    </span>
+                  </div>
+
+                  {/* Phone OTP Login */}
+                  {!otpSent ? (
+                    <form onSubmit={handlePhoneAuth} className="space-y-1.5">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="login-phone" className="text-[11px] font-medium flex items-center gap-1">
+                          <Phone className="h-3 w-3 text-muted-foreground" />
+                          {t('auth.phoneNumber')}
+                        </Label>
+                        <Input
+                          id="login-phone"
+                          type="tel"
+                          placeholder="+224 6XX XX XX XX"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          disabled={loading}
+                          className="h-8 text-xs rounded-md"
+                          required
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        className="w-full h-8 text-xs font-medium rounded-md gap-1.5"
+                        disabled={loading || !phone}
+                      >
+                        {loading ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Phone className="h-3 w-3" />
+                        )}
+                        {t('auth.otpSent') ? t('auth.verifyOtp') : t('auth.login')}
+                      </Button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleVerifyPhoneOtp} className="space-y-1.5">
+                      <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
+                        <Phone className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <p className="text-[10px] text-muted-foreground">
+                          {t('auth.otpSentTo')} <strong>{formattedPhoneNumber}</strong>
+                        </p>
+                      </div>
+                      <div className="space-y-0.5">
+                        <Label htmlFor="otp-code" className="text-[11px] font-medium flex items-center gap-1">
+                          <Lock className="h-3 w-3 text-muted-foreground" />
+                          {t('auth.enterOtp')}
+                        </Label>
+                        <Input
+                          id="otp-code"
+                          type="text"
+                          placeholder="123456"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value)}
+                          disabled={loading}
+                          className="h-8 text-xs rounded-md text-center tracking-widest font-mono"
+                          required
+                          maxLength={6}
+                          autoFocus
+                        />
+                      </div>
+
+                      {error && (
+                        <Alert variant="destructive" className="rounded-md py-1.5 px-2">
+                          <AlertCircle className="h-3 w-3" />
+                          <AlertDescription className="text-[10px] ml-1">{error}</AlertDescription>
+                        </Alert>
+                      )}
+
+                      <Button
+                        type="submit"
+                        className="w-full h-8 text-xs font-medium rounded-md"
+                        disabled={loading || otpCode.length < 4}
+                      >
+                        {loading ? (
+                          <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> {t('auth.connecting')}</>
+                        ) : (
+                          <>{t('auth.verifyOtp')}</>
+                        )}
+                      </Button>
+
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="flex-1 h-7 text-[10px]"
+                          onClick={handleBackToPhone}
+                        >
+                          <ArrowLeft className="mr-1 h-3 w-3" /> {t('auth.backToPhone')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="flex-1 h-7 text-[10px]"
+                          onClick={() => { setOtpSent(false); setTimeout(() => { setOtpSent(false); handlePhoneAuth(new Event('submit') as any); }, 100); }}
+                        >
+                          {t('auth.resendOtp')}
+                        </Button>
+                      </div>
+                    </form>
+                  )}
 
                   {/* Note compact */}
                   <div className="bg-amber-50/50 dark:bg-amber-900/10 rounded-md p-1.5">

@@ -1,13 +1,17 @@
 /**
- * DÉTAILS DU DEVIS - MODAL
+ * DÉTAILS DU DEVIS - MODAL (Modernisé style Odoo)
+ * Design professionnel avec support multilingue complet
  */
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Download, FileText, CheckCircle, Clock, XCircle, Building2, Mail, Phone, MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface QuoteDetailsProps {
   quote: {
@@ -36,34 +40,29 @@ interface QuoteDetailsProps {
 }
 
 export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteDetailsProps) {
+  const { t } = useTranslation();
+  const fc = useFormatCurrency();
+
   if (!quote) return null;
 
-  const getStatusBadge = (status: string) => {
-    const config = {
-      pending: { label: 'En attente', variant: 'secondary' as const, icon: Clock },
-      accepted: { label: 'Accepté', variant: 'default' as const, icon: CheckCircle },
-      rejected: { label: 'Refusé', variant: 'destructive' as const, icon: XCircle },
-      expired: { label: 'Expiré', variant: 'outline' as const, icon: Clock }
+  const getStatusConfig = (status: string) => {
+    const config: Record<string, { label: string; variant: 'secondary' | 'default' | 'destructive' | 'outline'; icon: typeof Clock; className: string }> = {
+      pending: { label: t('invoice.status.pending'), variant: 'secondary', icon: Clock, className: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400' },
+      accepted: { label: t('invoice.status.accepted'), variant: 'default', icon: CheckCircle, className: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400' },
+      rejected: { label: t('invoice.status.rejected'), variant: 'destructive', icon: XCircle, className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400' },
+      expired: { label: t('invoice.status.expired'), variant: 'outline', icon: Clock, className: 'bg-muted text-muted-foreground border-border' }
     };
-    
-    const { label, variant, icon: Icon } = config[status as keyof typeof config] || config.pending;
-    
-    return (
-      <Badge variant={variant} className="gap-1">
-        <Icon className="w-3 h-3" />
-        {label}
-      </Badge>
-    );
+    return config[status] || config.pending;
   };
+
+  const statusConfig = getStatusConfig(quote.status);
+  const StatusIcon = statusConfig.icon;
 
   const downloadPDF = async (pdfUrl: string, ref: string) => {
     try {
       const response = await fetch(pdfUrl);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const blob = await response.blob();
-
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -72,26 +71,22 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
-      toast.success('Téléchargement démarré');
+      toast.success(t('invoice.downloadStarted'));
     } catch (error) {
       console.error('Erreur téléchargement:', error);
-
-      // Fallback (souvent nécessaire si CORS / bucket privé)
       const opened = window.open(pdfUrl, '_blank', 'noopener,noreferrer');
       if (opened) {
-        toast.success('PDF ouvert dans un nouvel onglet');
+        toast.success(t('invoice.pdfOpenedNewTab'));
       } else {
-        toast.error("Téléchargement bloqué: autorisez les popups puis réessayez.");
+        toast.error(t('invoice.pdfBlockedPopup'));
       }
     }
   };
 
   const generatePDF = async () => {
     try {
-      toast.info('Génération du PDF en cours...');
+      toast.info(t('invoice.generating'));
 
-      // Récupérer les données les plus récentes du devis
       const { data: freshQuote, error: fetchError } = await supabase
         .from('quotes')
         .select('*')
@@ -121,83 +116,129 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
 
       if (error) throw error;
 
-      toast.success('PDF généré avec succès !');
+      toast.success(t('invoice.pdfGenerated'));
       
       if (data?.pdf_url) {
-        // Télécharger automatiquement le PDF généré
         await downloadPDF(data.pdf_url, freshQuote.ref);
       }
     } catch (error: any) {
       console.error('Erreur génération PDF:', error);
-      toast.error('Erreur lors de la génération du PDF');
+      toast.error(t('invoice.errorGeneratingPDF'));
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              <span>Détails du Devis {quote.ref}</span>
-            </div>
-            {getStatusBadge(quote.status)}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Informations client */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Client</h3>
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="font-medium">Nom :</span> {quote.client_name}
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
+        {/* Header - Inspired by Odoo invoice style */}
+        <div className="bg-primary/5 dark:bg-primary/10 px-6 py-4 border-b border-border/50">
+          <DialogHeader className="space-y-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <FileText className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-bold">
+                    {t('invoice.quote')} {quote.ref}
+                  </DialogTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t('invoice.createdAt')} {new Date(quote.created_at).toLocaleDateString()} {t('invoice.at')} {new Date(quote.created_at).toLocaleTimeString()}
+                  </p>
+                </div>
               </div>
-              {quote.client_email && (
-                <div>
-                  <span className="font-medium">Email :</span> {quote.client_email}
+              <Badge className={`gap-1 text-xs px-3 py-1 border ${statusConfig.className}`}>
+                <StatusIcon className="w-3.5 h-3.5" />
+                {statusConfig.label}
+              </Badge>
+            </div>
+          </DialogHeader>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Two-column: Client info + Payment info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Client */}
+            <div className="rounded-lg border border-border/60 p-4 bg-card">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5" />
+                {t('invoice.billedTo')}
+              </h3>
+              <div className="space-y-2">
+                <p className="font-semibold text-sm">{quote.client_name}</p>
+                {quote.client_email && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Mail className="w-3 h-3" />
+                    {quote.client_email}
+                  </div>
+                )}
+                {quote.client_phone && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Phone className="w-3 h-3" />
+                    {quote.client_phone}
+                  </div>
+                )}
+                {quote.client_address && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <MapPin className="w-3 h-3" />
+                    {quote.client_address}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Dates */}
+            <div className="rounded-lg border border-border/60 p-4 bg-card">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                {t('invoice.paymentInfo')}
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t('invoice.date')}:</span>
+                  <span className="font-medium">{new Date(quote.created_at).toLocaleDateString()}</span>
                 </div>
-              )}
-              {quote.client_phone && (
-                <div>
-                  <span className="font-medium">Téléphone :</span> {quote.client_phone}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t('invoice.validUntil')}:</span>
+                  <span className="font-medium">{new Date(quote.valid_until).toLocaleDateString()}</span>
                 </div>
-              )}
-              {quote.client_address && (
-                <div>
-                  <span className="font-medium">Adresse :</span> {quote.client_address}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t('invoice.ref')}:</span>
+                  <span className="font-mono font-medium text-primary">{quote.ref}</span>
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
-          {/* Articles */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Articles</h3>
+          {/* Items table - Odoo style */}
+          <div className="rounded-lg border border-border/60 overflow-hidden">
+            <div className="bg-primary/5 dark:bg-primary/10 px-4 py-2.5">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+                {t('invoice.description')}
+              </h3>
+            </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="text-left p-2">Produit/Service</th>
-                    <th className="text-center p-2">Quantité</th>
-                    <th className="text-right p-2">Prix unitaire</th>
-                    <th className="text-right p-2">Total</th>
+                <thead>
+                  <tr className="bg-muted/50 border-b border-border/50">
+                    <th className="text-left p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('invoice.description')}</th>
+                    <th className="text-center p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('invoice.quantity')}</th>
+                    <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('invoice.unitPrice')}</th>
+                    <th className="text-right p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('invoice.amount')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {quote.items.map((item: any, idx: number) => {
-                    // Normaliser les propriétés qui peuvent avoir des noms différents
                     const qty = item.quantity ?? item.qty ?? 0;
                     const price = item.unit_price ?? item.price ?? 0;
                     const itemTotal = item.total ?? (qty * price);
                     
                     return (
-                      <tr key={idx} className="border-t">
-                        <td className="p-2">{item.name || ''}</td>
-                        <td className="text-center p-2">{qty}</td>
-                        <td className="text-right p-2">{(price || 0).toLocaleString()} GNF</td>
-                        <td className="text-right p-2">{(itemTotal || 0).toLocaleString()} GNF</td>
+                      <tr key={idx} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
+                        <td className="p-3 font-medium">{item.name || ''}</td>
+                        <td className="text-center p-3 text-muted-foreground">{qty}</td>
+                        <td className="text-right p-3 text-muted-foreground">{fc(price || 0)}</td>
+                        <td className="text-right p-3 font-semibold">{fc(itemTotal || 0)}</td>
                       </tr>
                     );
                   })}
@@ -206,84 +247,77 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
             </div>
           </div>
 
-          {/* Montants */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Montants</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Sous-total :</span>
-                <span>{(quote.subtotal || 0).toLocaleString()} GNF</span>
+          {/* Totals - Right aligned like Odoo */}
+          <div className="flex justify-end">
+            <div className="w-full max-w-xs space-y-2 text-sm">
+              <div className="flex justify-between py-1">
+                <span className="text-muted-foreground">{t('invoice.subtotal')}:</span>
+                <span className="font-medium">{fc(quote.subtotal || 0)}</span>
               </div>
               {(quote.discount || 0) > 0 && (
-                <div className="flex justify-between text-red-600">
-                  <span>Remise :</span>
-                  <span>-{(quote.discount || 0).toLocaleString()} GNF</span>
+                <div className="flex justify-between py-1 text-red-600">
+                  <span>{t('invoice.discount')}:</span>
+                  <span>-{fc(quote.discount || 0)}</span>
                 </div>
               )}
               {(quote.tax || 0) > 0 && (
-                <div className="flex justify-between">
-                  <span>Taxe :</span>
-                  <span>+{(quote.tax || 0).toLocaleString()} GNF</span>
+                <div className="flex justify-between py-1">
+                  <span className="text-muted-foreground">{t('invoice.tax')}:</span>
+                  <span>{fc(quote.tax || 0)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                <span>TOTAL :</span>
-                <span className="text-primary">{(quote.total || 0).toLocaleString()} GNF</span>
+              <Separator />
+              <div className="flex justify-between py-2">
+                <span className="font-bold text-base">{t('invoice.total')}:</span>
+                <span className="font-bold text-xl text-primary">{fc(quote.total || 0)}</span>
               </div>
             </div>
           </div>
 
           {/* Notes */}
           {quote.notes && (
-            <div className="border rounded-lg p-4">
-              <h3 className="font-semibold mb-2">Notes / Conditions</h3>
+            <div className="rounded-lg border border-border/60 p-4 bg-muted/20">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                {t('invoice.notes')}
+              </h3>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{quote.notes}</p>
             </div>
           )}
 
-          {/* Informations supplémentaires */}
-          <div className="border rounded-lg p-4 bg-muted/50">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Créé le :</span>{' '}
-                {new Date(quote.created_at).toLocaleDateString('fr-FR')} à{' '}
-                {new Date(quote.created_at).toLocaleTimeString('fr-FR')}
-              </div>
-              <div>
-                <span className="font-medium">Valide jusqu'au :</span>{' '}
-                {new Date(quote.valid_until).toLocaleDateString('fr-FR')}
-              </div>
-            </div>
+          {/* Thank you note */}
+          <div className="text-center py-2">
+            <p className="text-xs text-muted-foreground italic">{t('invoice.thankYou')}</p>
           </div>
+
+          <Separator />
 
           {/* Actions */}
           <div className="flex gap-2 flex-wrap justify-end">
-            <Button variant="outline" onClick={onClose}>
-              Fermer
+            <Button variant="outline" onClick={onClose} size="sm" className="gap-1.5">
+              {t('invoice.close')}
             </Button>
             
-            <Button
-              variant="outline"
-              onClick={generatePDF}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Générer PDF A4
+            <Button variant="outline" onClick={generatePDF} size="sm" className="gap-1.5">
+              <Download className="w-3.5 h-3.5" />
+              {t('invoice.generatePDF')}
             </Button>
 
             {quote.pdf_url && (
               <Button
                 variant="outline"
+                size="sm"
+                className="gap-1.5"
                 onClick={() => downloadPDF(quote.pdf_url!, quote.ref)}
               >
-                <Download className="w-4 h-4 mr-2" />
-                Télécharger PDF
+                <Download className="w-3.5 h-3.5" />
+                {t('invoice.downloadPDF')}
               </Button>
             )}
 
             {quote.status === 'pending' && (
-              <Button onClick={onConvert}>
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Convertir en Facture
+              <Button onClick={onConvert} size="sm" className="gap-1.5">
+                <CheckCircle className="w-3.5 h-3.5" />
+                {t('invoice.convertToInvoice')}
               </Button>
             )}
           </div>

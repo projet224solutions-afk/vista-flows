@@ -239,7 +239,7 @@ serve(async (req) => {
     }
     
     // Attach reasons
-    const productsWithReasons = products.map(p => {
+    const productsWithReasons = products.map((p: any) => {
       const reco = topRecos.find(r => r.product_id === p.product_id);
       return { ...p, reason: reco?.reason || "", score: reco?.score || 0 };
     });

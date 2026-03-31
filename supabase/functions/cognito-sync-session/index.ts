@@ -97,13 +97,12 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // 🔍 Chercher l'utilisateur par email (scalable, pas de listUsers complet)
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers({
-      filter: `email.eq.${email}`,
+    // 🔍 Chercher l'utilisateur par email
+    const { data: allUsers } = await supabaseAdmin.auth.admin.listUsers({
       page: 1,
-      perPage: 1,
+      perPage: 50,
     });
-    const existingUser = existingUsers?.users?.[0];
+    const existingUser = allUsers?.users?.find((u: any) => u.email === email);
 
     if (mode === 'signup') {
       // === MODE INSCRIPTION ===
@@ -238,7 +237,7 @@ Deno.serve(async (req) => {
 
   } catch (err) {
     console.error('❌ Erreur cognito-sync-session:', err);
-    return new Response(JSON.stringify({ error: err.message || 'Erreur interne' }), {
+    return new Response(JSON.stringify({ error: (err as Error).message || 'Erreur interne' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
