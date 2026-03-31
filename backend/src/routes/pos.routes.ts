@@ -289,8 +289,6 @@ const PosStripePaymentSchema = z.object({
   orderId: z.string().min(1).max(200),
   sellerId: z.string().min(1, 'sellerId requis'),
   description: z.string().max(500).optional(),
-  // Taux optionnel fourni par le PDG via l'interface — sinon récupéré de pdg_settings
-  commissionRate: z.number().min(0).max(100).optional(),
 });
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -344,7 +342,7 @@ router.post('/stripe-payment', verifyJWT, async (req: AuthenticatedRequest, res:
     return;
   }
 
-  const { amount, currency, orderId, sellerId: rawSellerId, description, commissionRate: requestedRate } = parsed.data;
+  const { amount, currency, orderId, sellerId: rawSellerId, description } = parsed.data;
 
   // ── 2. Stripe configuré ? ─────────────────────────────────────────────────
   const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -359,9 +357,7 @@ router.post('/stripe-payment', verifyJWT, async (req: AuthenticatedRequest, res:
     const sellerId = await resolveSellerUuid(rawSellerId);
 
     // ── 4. Taux de commission ─────────────────────────────────────────────────
-    const commissionRate = requestedRate !== undefined
-      ? requestedRate
-      : await getPosCommissionRate();
+    const commissionRate = await getPosCommissionRate();
 
     // ── 5. CALCUL FINANCIER (colonne vertébrale — ne pas modifier sans audit) --
     // GNF est une devise sans décimales → on arrondit toujours à l'entier

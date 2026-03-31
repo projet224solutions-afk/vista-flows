@@ -370,7 +370,7 @@ export function StripeCardPaymentModal({
         const data = await resp.json();
 
         if (!data?.success) {
-          throw new Error(data?.error || fnError?.message || 'Erreur création paiement');
+          throw new Error(data?.error || 'Erreur création paiement');
         }
 
         setClientSecret(data.clientSecret);

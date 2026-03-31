@@ -225,6 +225,16 @@ export default function StripeCheckoutButton({
   }, []);
 
   useEffect(() => {
+    initCalledRef.current = false;
+    setClientSecret(null);
+    setError(null);
+
+    if (!disabled) {
+      setLoading(true);
+    }
+  }, [amount, currency, orderId, sellerId, edgeFunction, description, extraParams, creditWallet, disabled]);
+
+  useEffect(() => {
     // Guard against duplicate calls (StrictMode double-mount)
     if (initCalledRef.current) return;
 
@@ -305,7 +315,7 @@ export default function StripeCheckoutButton({
     };
 
     if (!disabled) init();
-  }, [amount, currency, orderId, creditWallet, disabled]);
+  }, [amount, currency, orderId, sellerId, edgeFunction, description, extraParams, creditWallet, disabled, onError]);
 
   if (disabled) {
     return (
