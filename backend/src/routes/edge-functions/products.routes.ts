@@ -1,20 +1,25 @@
 import { Router } from "express";
-import { queryBuilder, supabaseAdmin } from "../../config/supabase";
-import { getBearerToken } from "../../middlewares/auth";
+import { supabaseAdmin } from "../../config/supabase";
 import { z } from "zod";
 
 const router = Router();
+
+function getBearerToken(req: any): string | null {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+  return auth.slice("Bearer ".length).trim();
+}
 
 // Middleware to extract and validate bearer token
 const validateBearerToken = async (req: any, res: any, next: any) => {
   try {
     const token = getBearerToken(req);
     if (!token) return res.status(401).json({ success: false, error: "Missing bearer token" });
-    
-    const { data: user, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) return res.status(401).json({ success: false, error: "Invalid token" });
-    
-    req.user = user;
+
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !data.user) return res.status(401).json({ success: false, error: "Invalid token" });
+
+    req.user = data.user;
     next();
   } catch (err) {
     return res.status(500).json({ success: false, error: "Token validation failed" });

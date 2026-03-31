@@ -1,8 +1,13 @@
 import { Router } from "express";
 import { supabaseAdmin } from "../../config/supabase";
-import { getBearerToken } from "../../middlewares/auth";
 
 const router = Router();
+
+function getBearerToken(req: any): string | null {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+  return auth.slice("Bearer ".length).trim();
+}
 
 // Middleware to extract and validate bearer token
 const validateBearerToken = async (req: any, res: any, next: any) => {
@@ -10,10 +15,10 @@ const validateBearerToken = async (req: any, res: any, next: any) => {
     const token = getBearerToken(req);
     if (!token) return res.status(401).json({ success: false, error: "Missing bearer token" });
 
-    const { data: user, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) return res.status(401).json({ success: false, error: "Invalid token" });
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !data.user) return res.status(401).json({ success: false, error: "Invalid token" });
 
-    req.user = user;
+    req.user = data.user;
     next();
   } catch (err) {
     return res.status(500).json({ success: false, error: "Token validation failed" });
@@ -132,6 +137,10 @@ router.post("/pdg/create-agent", validateBearerToken, async (req: any, res: any)
       email_confirm: true,
     });
 
+    if (!user.user) {
+      return res.status(400).json({ success: false, error: "User creation failed" });
+    }
+
     // Create agent record
     const { data: agent, error } = await supabaseAdmin
       .from("agents_management")
@@ -189,6 +198,10 @@ router.post("/sub/create", validateBearerToken, async (req: any, res: any) => {
       email_confirm: true,
     });
 
+    if (!user.user) {
+      return res.status(400).json({ success: false, error: "User creation failed" });
+    }
+
     // Create sub-agent
     const { data: agent, error } = await supabaseAdmin
       .from("agents_management")
@@ -235,6 +248,10 @@ router.post("/vendor/create", validateBearerToken, async (req: any, res: any) =>
       email,
       email_confirm: true,
     });
+
+    if (!user.user) {
+      return res.status(400).json({ success: false, error: "User creation failed" });
+    }
 
     // Create vendor agent
     const { data: agent, error } = await supabaseAdmin
@@ -598,6 +615,9 @@ router.post("/register/affiliate", async (req: any, res: any) => {
     });
 
     if (authError) throw authError;
+    if (!user.user) {
+      return res.status(400).json({ success: false, error: "User creation failed" });
+    }
 
     // Create profile with referral
     const { data: profile, error } = await supabaseAdmin
@@ -678,6 +698,10 @@ router.post("/affiliate/member/create", validateBearerToken, async (req: any, re
       email,
       email_confirm: true,
     });
+
+    if (!user.user) {
+      return res.status(400).json({ success: false, error: "User creation failed" });
+    }
 
     // Create syndicate member
     const { data: member, error } = await supabaseAdmin

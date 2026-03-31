@@ -1,21 +1,88 @@
 import { Router } from "express";
 import { supabaseAdmin } from "../../config/supabase";
-import { getBearerToken } from "../../middlewares/auth";
 
 const router = Router();
+
+function getBearerToken(req: any): string | null {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith("Bearer ")) return null;
+  return auth.slice("Bearer ".length).trim();
+}
 
 const validateBearerToken = async (req: any, res: any, next: any) => {
   try {
     const token = getBearerToken(req);
     if (!token) return res.status(401).json({ success: false, error: "Missing bearer token" });
-    const { data: user, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) return res.status(401).json({ success: false, error: "Invalid token" });
-    req.user = user;
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !data.user) return res.status(401).json({ success: false, error: "Invalid token" });
+    req.user = data.user;
     next();
   } catch (err) {
     return res.status(500).json({ success: false, error: "Token validation failed" });
   }
 };
+
+async function callLovableVision(prompt: string, imageUrl: string) {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) {
+    throw new Error("LOVABLE_API_KEY not configured");
+  }
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: imageUrl } },
+          ],
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 600,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Vision API error ${response.status}: ${errText}`);
+  }
+
+  const data = await response.json();
+  return data?.choices?.[0]?.message?.content || "";
+}
+
+function parseVisualAnalysis(content: string) {
+  const fallback = {
+    products: [] as string[],
+    category: "general",
+    colors: [] as string[],
+    description: "",
+  };
+
+  try {
+    const clean = String(content)
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
+    const parsed = JSON.parse(clean);
+    return {
+      products: Array.isArray(parsed?.products) ? parsed.products.slice(0, 5) : [],
+      category: String(parsed?.category || "general"),
+      colors: Array.isArray(parsed?.colors) ? parsed.colors.slice(0, 5) : [],
+      description: String(parsed?.description || ""),
+    };
+  } catch {
+    return fallback;
+  }
+}
 
 // NOTIFICATIONS - 50+ endpoints
 // Communications
@@ -192,8 +259,64 @@ router.post("/media/translate-message", async (req: any, res: any) => {
 
 router.post("/media/search-visual", async (req: any, res: any) => {
   try {
-    const { image_url, search_type } = req.body;
-    return res.json({ success: true, results: [] });
+    const { image_url, imageBase64, search_type } = req.body;
+    const imageUrl = image_url || imageBase64;
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, error: "image_url or imageBase64 is required" });
+    }
+
+    const visionPrompt = `Analyse cette image et renvoie uniquement un JSON valide: {\n  \"products\": [\"mot-cle\"],\n  \"category\": \"categorie\",\n  \"colors\": [\"couleur\"],\n  \"description\": \"description breve\"\n}\nMaximum 5 mots-cles utiles pour la recherche produit.`;
+
+    const aiContent = await callLovableVision(visionPrompt, imageUrl);
+    const analysis = parseVisualAnalysis(aiContent);
+
+    const keywords = [
+      ...analysis.products,
+      analysis.category,
+      ...analysis.colors,
+      ...(analysis.description ? analysis.description.split(" ").filter((w: string) => w.length > 3).slice(0, 3) : []),
+    ]
+      .map((word: string) => String(word || "").trim())
+      .filter(Boolean)
+      .slice(0, 8);
+
+    const buckets = await Promise.all(
+      keywords.map(async (keyword: string) => {
+        const { data } = await supabaseAdmin
+          .from("products")
+          .select("id, name, price, images, rating, reviews_count, vendor_id")
+          .eq("is_active", true)
+          .ilike("name", `%${keyword}%`)
+          .limit(10);
+        return data || [];
+      })
+    );
+
+    const dedupedMap = new Map<string, any>();
+    for (const batch of buckets) {
+      for (const product of batch) {
+        if (!dedupedMap.has(product.id)) dedupedMap.set(product.id, product);
+      }
+    }
+
+    const results = Array.from(dedupedMap.values())
+      .map((product: any) => {
+        const name = String(product.name || "").toLowerCase();
+        let score = 0;
+        for (const keyword of keywords) {
+          if (name.includes(keyword.toLowerCase())) score += 20;
+        }
+        score += Number(product.rating || 0) * 5;
+        return {
+          ...product,
+          similarity: Math.min(0.95, 0.5 + score / 100),
+          search_type: search_type || "visual",
+        };
+      })
+      .sort((a: any, b: any) => b.similarity - a.similarity)
+      .slice(0, 12);
+
+    return res.json({ success: true, analysis, keywords, results });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
