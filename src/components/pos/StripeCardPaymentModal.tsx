@@ -23,6 +23,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Shield, CreditCard, CheckCircle2, XCircle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { backendConfig } from '@/config/backend';
 import { toast } from 'sonner';
 
 interface StripeCardPaymentModalProps {
@@ -346,18 +347,29 @@ export function StripeCardPaymentModal({
           setStripe(stripeInstance);
         }
 
-        const { data, error: fnError } = await supabase.functions.invoke(edgeFunction, {
-          body: {
+        // Appel backend Node.js — endpoint robuste avec calcul commission vérifié
+        const { data: session } = await supabase.auth.getSession();
+        const token = session?.session?.access_token;
+        if (!token) throw new Error('Non authentifié — reconnectez-vous');
+
+        const resp = await fetch(`${backendConfig.baseUrl}/api/pos/stripe-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
             amount,
             currency,
             orderId,
             sellerId,
             description,
             ...extraParams,
-          },
+          }),
         });
+        const data = await resp.json();
 
-        if (fnError || !data?.success) {
+        if (!data?.success) {
           throw new Error(data?.error || fnError?.message || 'Erreur création paiement');
         }
 

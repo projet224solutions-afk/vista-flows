@@ -573,7 +573,7 @@ export function JomyPaymentSelector({
                   transactionType === 'taxi' ? 'taxi-payment' :
                   transactionType === 'delivery' ? 'delivery-payment' :
                   transactionType === 'service' ? 'service-payment' :
-                  sellerId ? 'stripe-pos-payment' : undefined
+                  undefined
                 }
                 onSuccess={handleStripeSuccess}
                 onCancel={() => setShowStripeInline(false)}

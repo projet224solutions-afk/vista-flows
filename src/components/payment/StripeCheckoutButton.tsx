@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '@/integrations/supabase/client';
+import { backendConfig } from '@/config/backend';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -247,29 +248,44 @@ export default function StripeCheckoutButton({
           throw new Error('Impossible de charger Stripe. Vérifiez votre connexion.');
         }
 
-        // Determine which edge function to use
-        let functionName: string;
-        let body: Record<string, unknown>;
+        let data: any;
 
-        if (edgeFunction) {
-          functionName = edgeFunction;
-          body = { amount, currency: currency.toLowerCase(), orderId, sellerId, description, ...extraParams };
-        } else if (creditWallet) {
-          functionName = 'stripe-deposit';
-          body = { amount, currency: currency.toLowerCase() };
-        } else if (sellerId) {
-          functionName = 'stripe-pos-payment';
-          body = { amount, currency: currency.toLowerCase(), orderId, sellerId, description };
+        // Branche POS (avec sellerId) — backend Node.js avec calcul commission robuste
+        if (!edgeFunction && sellerId && !creditWallet) {
+          const { data: session } = await supabase.auth.getSession();
+          const token = session?.session?.access_token;
+          if (!token) throw new Error('Non authentifié — reconnectez-vous');
+
+          const resp = await fetch(`${backendConfig.baseUrl}/api/pos/stripe-payment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ amount, currency: currency.toLowerCase(), orderId, sellerId, description }),
+          });
+          data = await resp.json();
         } else {
-          functionName = 'stripe-deposit';
-          body = { amount, currency: currency.toLowerCase() };
+          // Autres cas (stripe-deposit, custom edgeFunction) — via Edge Function
+          let functionName: string;
+          let body: Record<string, unknown>;
+          if (edgeFunction) {
+            functionName = edgeFunction;
+            body = { amount, currency: currency.toLowerCase(), orderId, sellerId, description, ...extraParams };
+          } else if (creditWallet) {
+            functionName = 'stripe-deposit';
+            body = { amount, currency: currency.toLowerCase() };
+          } else {
+            functionName = 'stripe-deposit';
+            body = { amount, currency: currency.toLowerCase() };
+          }
+          const { data: invokeData, error: apiError } = await supabase.functions.invoke(functionName, { body });
+          if (!mountedRef.current) return;
+          if (apiError) throw new Error(apiError.message);
+          data = invokeData;
         }
 
-        const { data, error: apiError } = await supabase.functions.invoke(functionName, { body });
-
         if (!mountedRef.current) return;
-
-        if (apiError) throw new Error(apiError.message);
         if (!data?.success && !data?.clientSecret && !data?.client_secret) {
           throw new Error(data?.error || 'Erreur création paiement');
         }

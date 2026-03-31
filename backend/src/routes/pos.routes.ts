@@ -14,6 +14,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { posSyncRateLimit } from '../middlewares/routeRateLimiter.js';
 import { z } from 'zod';
+import Stripe from 'stripe';
 
 const router = Router();
 
@@ -269,3 +270,190 @@ router.get('/reconciliation', verifyJWT, async (req: AuthenticatedRequest, res: 
 });
 
 export default router;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/pos/stripe-payment
+// Crée un Payment Intent Stripe pour le POS avec commission marketplace
+//
+// LOGIQUE CALCUL (critique — erreur = perte vendeur):
+//   commissionAmount = Math.round(amount × commissionRate / 100)  ← arrondi entier GNF
+//   totalAmount      = amount + commissionAmount                   ← facturé au CLIENT
+//   sellerNetAmount  = amount                                      ← reversé au VENDEUR
+//
+// ⚠️  Ne jamais changer cette logique sans validation PDG
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PosStripePaymentSchema = z.object({
+  amount: z.number().positive('Le montant doit être positif'),
+  currency: z.string().min(2).max(5).default('GNF'),
+  orderId: z.string().min(1).max(200),
+  sellerId: z.string().min(1, 'sellerId requis'),
+  description: z.string().max(500).optional(),
+  // Taux optionnel fourni par le PDG via l'interface — sinon récupéré de pdg_settings
+  commissionRate: z.number().min(0).max(100).optional(),
+});
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Récupère le taux de commission depuis pdg_settings (clé: commission_achats)
+// Fallback: 2.5% si non configuré
+async function getPosCommissionRate(): Promise<number> {
+  const DEFAULT_RATE = 2.5;
+  try {
+    const { data } = await supabaseAdmin
+      .from('pdg_settings')
+      .select('setting_value')
+      .eq('setting_key', 'commission_achats')
+      .maybeSingle();
+    if (!data) return DEFAULT_RATE;
+    const raw = data.setting_value;
+    const rate = typeof raw === 'object' && raw !== null && 'value' in (raw as any)
+      ? Number((raw as any).value)
+      : Number(raw);
+    if (isNaN(rate) || rate < 0 || rate > 100) return DEFAULT_RATE;
+    return rate;
+  } catch {
+    return DEFAULT_RATE;
+  }
+}
+
+// Résout un sellerId (UUID OU public_id/custom_id) → UUID Supabase
+async function resolveSellerUuid(rawSellerId: string): Promise<string> {
+  if (UUID_REGEX.test(rawSellerId)) return rawSellerId;
+  const normalized = rawSellerId.trim().toUpperCase();
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .or(`public_id.eq.${normalized},custom_id.eq.${normalized}`)
+    .maybeSingle();
+  if (error || !data) throw new Error(`Vendeur introuvable avec l'identifiant: ${rawSellerId}`);
+  return data.id;
+}
+
+router.post('/stripe-payment', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  const buyerId = req.user!.id;
+
+  // ── 1. Validation des entrées ──────────────────────────────────────────────
+  const parsed = PosStripePaymentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      success: false,
+      error: 'Paramètres invalides',
+      details: parsed.error.flatten().fieldErrors,
+    });
+    return;
+  }
+
+  const { amount, currency, orderId, sellerId: rawSellerId, description, commissionRate: requestedRate } = parsed.data;
+
+  // ── 2. Stripe configuré ? ─────────────────────────────────────────────────
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeKey) {
+    logger.error('[POS Stripe] STRIPE_SECRET_KEY manquant');
+    res.status(503).json({ success: false, error: 'Paiement par carte non disponible (Stripe non configuré)' });
+    return;
+  }
+
+  try {
+    // ── 3. Résoudre le vendeur ────────────────────────────────────────────────
+    const sellerId = await resolveSellerUuid(rawSellerId);
+
+    // ── 4. Taux de commission ─────────────────────────────────────────────────
+    const commissionRate = requestedRate !== undefined
+      ? requestedRate
+      : await getPosCommissionRate();
+
+    // ── 5. CALCUL FINANCIER (colonne vertébrale — ne pas modifier sans audit) --
+    // GNF est une devise sans décimales → on arrondit toujours à l'entier
+    const commissionAmount = Math.round(amount * (commissionRate / 100));
+    const totalAmount      = amount + commissionAmount; // facturé au CLIENT
+    const sellerNetAmount  = amount;                   // reversé au VENDEUR
+
+    logger.info('[POS Stripe] Calcul commission', {
+      buyerId,
+      sellerId,
+      orderId,
+      productAmount: amount,
+      commissionRate: `${commissionRate}%`,
+      commissionAmount,
+      totalAmount,
+      sellerNetAmount,
+    });
+
+    // ── 6. Créer le Payment Intent Stripe ────────────────────────────────────
+    const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' as any });
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(totalAmount), // Stripe reçoit le total (GNF = entier)
+      currency: currency.toLowerCase(),
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        order_id:           orderId,
+        buyer_id:           buyerId,
+        seller_id:          sellerId,
+        product_amount:     amount.toString(),
+        commission_rate:    commissionRate.toString(),
+        commission_amount:  commissionAmount.toString(),
+        total_amount:       totalAmount.toString(),
+        seller_net_amount:  sellerNetAmount.toString(),
+        source:             'pos',
+        description:        description || 'Paiement POS 224Solutions',
+      },
+    });
+
+    // ── 7. Enregistrer en base (non-bloquant — le webhook confirme) ───────────
+    const { data: transaction, error: insertError } = await supabaseAdmin
+      .from('stripe_transactions')
+      .insert({
+        stripe_payment_intent_id: paymentIntent.id,
+        buyer_id:          buyerId,
+        seller_id:         sellerId,
+        amount:            totalAmount,        // total facturé client
+        currency:          currency.toUpperCase(),
+        commission_rate:   commissionRate,
+        commission_amount: commissionAmount,
+        seller_net_amount: sellerNetAmount,    // net reversé vendeur
+        status:            'PENDING',
+        order_id:          orderId || null,
+        payment_method:    'card',
+        metadata: {
+          description:    description || 'Paiement POS',
+          source:         'pos',
+          created_by:     buyerId,
+          product_amount: amount,
+          total_amount:   totalAmount,
+        },
+      })
+      .select('id')
+      .single();
+
+    if (insertError) {
+      // Logguer mais ne pas bloquer — le webhook peut recréer l'entrée
+      logger.warn('[POS Stripe] Erreur enregistrement stripe_transactions', { error: insertError.message, intentId: paymentIntent.id });
+    } else {
+      logger.info('[POS Stripe] Transaction enregistrée', { transactionId: transaction?.id, intentId: paymentIntent.id });
+    }
+
+    // ── 8. Réponse ────────────────────────────────────────────────────────────
+    res.json({
+      success:        true,
+      clientSecret:   paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      transactionId:  transaction?.id ?? null,
+      // Données de commissionnement pour affichage UI
+      commissionRate,
+      commissionAmount,
+      sellerNetAmount,
+      productAmount: amount,
+      totalAmount,
+    });
+  } catch (err: any) {
+    logger.error('[POS Stripe] Erreur création paiement', { error: err.message, buyerId, orderId });
+    // Ne jamais exposer les détails Stripe en clair (OWASP A3)
+    const isValidationError = err.message?.includes('introuvable') || err.message?.includes('invalide');
+    res.status(isValidationError ? 400 : 500).json({
+      success: false,
+      error: isValidationError ? err.message : 'Erreur lors de la création du paiement. Veuillez réessayer.',
+    });
+  }
+});
