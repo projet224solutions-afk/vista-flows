@@ -99,10 +99,9 @@ Deno.serve(async (req) => {
 
     // 🔍 Chercher l'utilisateur par email (scalable, pas de listUsers complet)
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers({
-      filter: `email.eq.${email}`,
       page: 1,
       perPage: 1,
-    });
+    } as any);
     const existingUser = existingUsers?.users?.[0];
 
     if (mode === 'signup') {
