@@ -132,6 +132,11 @@ export default function EnhancedAuth() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Phone OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [formattedPhoneNumber, setFormattedPhoneNumber] = useState('');
+
   // Cognito confirmation state
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [confirmationCode, setConfirmationCode] = useState('');
