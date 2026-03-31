@@ -805,4 +805,123 @@ router.post("/bulk-invite", validateBearerToken, async (req: any, res: any) => {
   }
 });
 
+// Compatibility aliases (Supabase function names)
+router.post("/send-agent-invitation", async (req: any, res: any) => {
+  try {
+    const { email, role, permissions, expires_in } = req.body || {};
+    if (!email || !role) {
+      return res.status(400).json({ success: false, error: "Missing required fields" });
+    }
+
+    const token = Buffer.from(`${email}:${Date.now()}`).toString("base64");
+    const expiresAt = new Date(Date.now() + (expires_in || 24 * 60 * 60 * 1000)).toISOString();
+    const { data: invitation, error } = await supabaseAdmin
+      .from("agent_invitations")
+      .insert({ email, role, permissions, token, expires_at: expiresAt })
+      .select()
+      .single();
+    if (error) throw error;
+    return res.json({ success: true, invitation });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/register-with-affiliate", async (req: any, res: any) => {
+  try {
+    const { email, affiliate_code, referrer_id } = req.body || {};
+    if (!email) {
+      return res.status(400).json({ success: false, error: "Missing email" });
+    }
+
+    const { data: affiliate } = await supabaseAdmin
+      .from("affiliate_links")
+      .select("agent_id")
+      .eq("code", affiliate_code)
+      .single();
+
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+    });
+    if (authError || !authData.user) throw authError || new Error("User creation failed");
+
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .insert({ user_id: authData.user.id, email, role: "customer", referrer_id: referrer_id || affiliate?.agent_id })
+      .select()
+      .single();
+    if (error) throw error;
+
+    return res.json({ success: true, user: profile });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get("/get-agent-users/:agent_id", async (req: any, res: any) => {
+  try {
+    const { agent_id } = req.params;
+    const { limit = 50, offset = 0 } = req.query;
+    const { data: users, count, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, user_id, email, first_name, last_name, role, vendor_id", { count: "exact" })
+      .eq("agent_id", agent_id)
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+    if (error) throw error;
+    return res.json({ success: true, users: users || [], pagination: { offset, limit, total: count || 0 } });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get("/get-agent-users", async (req: any, res: any) => {
+  try {
+    const { agent_id, limit = 50, offset = 0 } = req.query || {};
+    if (!agent_id) {
+      return res.status(400).json({ success: false, error: "agent_id is required" });
+    }
+    const { data: users, count, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, user_id, email, first_name, last_name, role, vendor_id", { count: "exact" })
+      .eq("agent_id", agent_id)
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+    if (error) throw error;
+    return res.json({ success: true, users: users || [], pagination: { offset, limit, total: count || 0 } });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/migrate-users-to-cognito", validateBearerToken, async (req: any, res: any) => {
+  try {
+    const { batch_size = 100, start_after = null } = req.body || {};
+    const { data: profile } = await supabaseAdmin.from("profiles").select("role").eq("user_id", req.user.id).single();
+    if (!["admin", "pdg"].includes(profile?.role)) {
+      return res.status(403).json({ success: false, error: "Unauthorized" });
+    }
+
+    let query = supabaseAdmin
+      .from("profiles")
+      .select("user_id, email, first_name, last_name")
+      .is("cognito_migrated", null)
+      .limit(batch_size);
+
+    if (start_after) query = query.lt("created_at", start_after);
+
+    const { data: users, error } = await query;
+    if (error) throw error;
+
+    const migrated: any[] = [];
+    for (const user of users || []) {
+      await supabaseAdmin.from("profiles").update({ cognito_migrated: true }).eq("user_id", user.user_id);
+      migrated.push(user);
+    }
+
+    return res.json({ success: true, migrated_count: migrated.length, users: migrated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

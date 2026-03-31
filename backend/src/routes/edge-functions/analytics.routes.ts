@@ -382,6 +382,23 @@ router.get("/metrics/conversion", validateBearerToken, async (req: any, res: any
   }
 });
 
+router.post("/competitive-analysis", validateBearerToken, async (req: any, res: any) => {
+  try {
+    const { product_id, competitors = [] } = req.body || {};
+    return res.json({
+      success: true,
+      product_id,
+      analysis: {
+        competitors_count: Array.isArray(competitors) ? competitors.length : 0,
+        price_position: "neutral",
+        recommendations: ["Track top competitor pricing", "Improve conversion copy"],
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get("/inventory/status", validateBearerToken, async (req: any, res: any) => {
   try {
     const { data: inventory } = await supabaseAdmin

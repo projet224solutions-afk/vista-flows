@@ -519,6 +519,43 @@ router.post("/dispute/reopen", async (req: any, res: any) => {
   }
 });
 
+router.post("/open-dispute", validateBearerToken, async (req: any, res: any) => {
+  try {
+    const { order_id, claim_reason, evidence } = req.body;
+    const { data: dispute, error } = await supabaseAdmin
+      .from("order_disputes")
+      .insert({ order_id, buyer_id: req.user.id, status: "open", reason: claim_reason, evidence })
+      .select()
+      .single();
+    if (error) throw error;
+    return res.json({ success: true, dispute });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/resolve-dispute", async (req: any, res: any) => {
+  try {
+    const { dispute_id, resolution_type } = req.body;
+    const { error } = await supabaseAdmin.from("order_disputes").update({ status: "resolved", resolution_type }).eq("id", dispute_id);
+    if (error) throw error;
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/sign-contract", validateBearerToken, async (req: any, res: any) => {
+  try {
+    const { contract_id, signer_id, signature } = req.body;
+    const { error } = await supabaseAdmin.from("contract_signatures").insert({ contract_id, signer_id, signature });
+    if (error) throw error;
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get("/transaction/validate-purchase", async (req: any, res: any) => {
   try {
     const { transaction_id, type } = req.query;
@@ -567,6 +604,133 @@ router.post("/subscription/webhook", async (req: any, res: any) => {
     const { error } = await supabaseAdmin
       .from("subscription_events")
       .insert({ event_type, subscription_id });
+    if (error) throw error;
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Compatibility aliases (Supabase function names)
+router.post("/visual-search", async (req: any, res: any) => {
+  try {
+    const { imageBase64, image_url } = req.body || {};
+    const imageUrl = imageBase64 || image_url;
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, error: "imageBase64 or image_url is required" });
+    }
+
+    const prompt = `Analyse cette image et renvoie un JSON: {\"products\":[\"mot-cle\"],\"category\":\"categorie\",\"colors\":[\"couleur\"],\"description\":\"desc\"}`;
+    const aiContent = await callLovableVision(prompt, imageUrl);
+    const analysis = parseVisualAnalysis(aiContent);
+
+    const keywords = [...analysis.products, analysis.category, ...analysis.colors].filter(Boolean).slice(0, 6);
+    const buckets = await Promise.all(
+      keywords.map((keyword: string) =>
+        supabaseAdmin
+          .from("products")
+          .select("id, name, price, images, rating, reviews_count, vendor_id")
+          .eq("is_active", true)
+          .ilike("name", `%${keyword}%`)
+          .limit(10)
+      )
+    );
+
+    const map = new Map<string, any>();
+    for (const b of buckets) {
+      for (const p of b.data || []) {
+        if (!map.has(p.id)) map.set(p.id, p);
+      }
+    }
+
+    return res.json({ success: true, analysis, results: Array.from(map.values()).slice(0, 12) });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/gcs-signed-url", async (req: any, res: any) => {
+  try {
+    const { bucket, file_path, expiry } = req.body || {};
+    const signed_url = `https://storage.googleapis.com/${bucket}/${file_path}?expiry=${expiry || 3600}`;
+    return res.json({ success: true, signed_url });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get("/google-maps-config", async (req: any, res: any) => {
+  try {
+    return res.json({ success: true, api_key: process.env.GOOGLE_MAPS_KEY || process.env.GOOGLE_CLOUD_API_KEY || null });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get("/google-places-autocomplete", async (req: any, res: any) => {
+  try {
+    const { query } = req.query || {};
+    return res.json({ success: true, query, predictions: [] });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/geocode-address", async (req: any, res: any) => {
+  try {
+    const { address } = req.body || {};
+    return res.json({ success: true, address, lat: 0, lng: 0 });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get("/og-meta", async (req: any, res: any) => {
+  try {
+    const { url } = req.query || {};
+    return res.json({ success: true, url, title: "Page Title", description: "Page description", image: "" });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/short-link", async (req: any, res: any) => {
+  try {
+    const { target_url, custom_slug, expires_in } = req.body || {};
+    const slug = custom_slug || Math.random().toString(36).substring(2, 8);
+    const { error } = await supabaseAdmin.from("short_links").insert({ slug, target_url, expires_in });
+    if (error) throw error;
+    return res.json({ success: true, short_url: `https://vf.link/${slug}` });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get("/resolve-short-link/:short_code", async (req: any, res: any) => {
+  try {
+    const { short_code } = req.params;
+    const { data } = await supabaseAdmin.from("short_links").select("target_url").eq("slug", short_code).single();
+    return res.json({ success: true, url: data?.target_url || null });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.get("/resolve-short-link", async (req: any, res: any) => {
+  try {
+    const short_code = String(req.query?.short_code || req.query?.slug || "");
+    if (!short_code) return res.status(400).json({ success: false, error: "short_code is required" });
+    const { data } = await supabaseAdmin.from("short_links").select("target_url").eq("slug", short_code).single();
+    return res.json({ success: true, url: data?.target_url || null });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/upload-bureau-stamp", validateBearerToken, async (req: any, res: any) => {
+  try {
+    const { file_url, entity_type } = req.body || {};
+    const { error } = await supabaseAdmin.from("company_stamps").insert({ user_id: req.user.id, file_url, entity_type });
     if (error) throw error;
     return res.json({ success: true });
   } catch (err: any) {

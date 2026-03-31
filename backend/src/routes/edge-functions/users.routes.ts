@@ -267,6 +267,48 @@ router.post("/export-cognito", async (req: Request, res: Response) => {
   }
 });
 
+router.post("/export-users-for-cognito", async (req: Request, res: Response) => {
+  try {
+    const requester = await requireAdminOrPdg(req);
+    if (!requester) {
+      return res.status(403).json({ success: false, error: "Accès refusé" });
+    }
+
+    const { limit = 1000, after_id } = req.body || {};
+
+    let query = supabaseAdmin
+      .from("profiles")
+      .select("id, email, first_name, last_name, role, phone, is_active, created_at")
+      .order("created_at", { ascending: true })
+      .limit(Math.min(Number(limit) || 1000, 5000));
+
+    if (after_id) {
+      query = query.gt("id", after_id);
+    }
+
+    const { data: users, error } = await query;
+    if (error) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+
+    const payload = (users || []).map((u: any) => ({
+      id: u.id,
+      username: u.email,
+      email: u.email,
+      given_name: u.first_name || "",
+      family_name: u.last_name || "",
+      phone_number: u.phone || null,
+      custom_role: u.role || "client",
+      enabled: u.is_active !== false,
+      created_at: u.created_at,
+    }));
+
+    return res.status(200).json({ success: true, count: payload.length, users: payload });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: "Erreur interne" });
+  }
+});
+
 router.get("/activity", async (req: Request, res: Response) => {
   try {
     const requester = await getRequester(req);

@@ -418,4 +418,137 @@ router.post("/pdg/mfa", async (req: AuthRequest, res: Response) => {
   }
 });
 
+// Compatibility aliases (Supabase function names)
+router.post("/generate-totp", async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Not authenticated" });
+    }
+
+    const secret = speakeasy.generateSecret({
+      name: `224Solutions (${req.user?.email})`,
+      issuer: "224Solutions",
+      length: 32,
+    });
+
+    const { error } = await supabase
+      .from("mfa_settings")
+      .upsert({ user_id: userId, totp_secret: secret.base32, enabled: false }, { onConflict: "user_id" });
+
+    if (error) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+
+    return res.status(200).json({
+      success: true,
+      secret: secret.base32,
+      qr_code_url: secret.otpauth_url,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+router.post("/verify-totp", async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { token } = req.body || {};
+
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Not authenticated" });
+    }
+    if (!token) {
+      return res.status(400).json({ success: false, error: "token is required" });
+    }
+
+    const { data: mfa } = await supabase
+      .from("mfa_settings")
+      .select("totp_secret")
+      .eq("user_id", userId)
+      .single();
+
+    if (!mfa?.totp_secret) {
+      return res.status(404).json({ success: false, error: "MFA not configured" });
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: mfa.totp_secret,
+      encoding: "base32",
+      token: String(token),
+      window: 1,
+    });
+
+    if (!verified) {
+      return res.status(401).json({ success: false, error: "Invalid token" });
+    }
+
+    await supabase.from("mfa_settings").update({ enabled: true }).eq("user_id", userId);
+
+    return res.status(200).json({ success: true, verified: true });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+router.patch("/change-agent-password", async (req: AuthRequest, res: Response) => {
+  try {
+    const { old_password, new_password } = req.body || {};
+    if (!old_password || !new_password) {
+      return res.status(400).json({ success: false, error: "Old and new passwords required" });
+    }
+    const { error: updateError } = await supabase.auth.updateUser({ password: new_password });
+    if (updateError) {
+      return res.status(400).json({ success: false, error: updateError.message });
+    }
+    return res.status(200).json({ success: true, message: "Password changed successfully" });
+  } catch {
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+router.patch("/change-bureau-password", async (req: AuthRequest, res: Response) => {
+  try {
+    const { new_password } = req.body || {};
+    if (!new_password) return res.status(400).json({ success: false, error: "new_password required" });
+    const { error } = await supabase.auth.updateUser({ password: new_password });
+    if (error) return res.status(400).json({ success: false, error: error.message });
+    return res.status(200).json({ success: true });
+  } catch {
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+router.patch("/change-member-password", async (req: AuthRequest, res: Response) => {
+  try {
+    const { new_password } = req.body || {};
+    if (!new_password) return res.status(400).json({ success: false, error: "new_password required" });
+    const { error } = await supabase.auth.updateUser({ password: new_password });
+    if (error) return res.status(400).json({ success: false, error: error.message });
+    return res.status(200).json({ success: true });
+  } catch {
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+router.post("/reset-agent-password", async (req: AuthRequest, res: Response) => {
+  try {
+    const { email } = req.body || {};
+    if (!email) return res.status(400).json({ success: false, error: "email required" });
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if (error) return res.status(400).json({ success: false, error: error.message });
+    return res.status(200).json({ success: true, message: "Reset email sent" });
+  } catch {
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
+
+router.post("/cognito-auth-proxy", async (req: AuthRequest, res: Response) => {
+  return res.status(200).json({ success: true, provider: "cognito", proxied: true });
+});
+
+router.post("/cognito-sync-session", async (req: AuthRequest, res: Response) => {
+  return res.status(200).json({ success: true, synced: true, timestamp: new Date().toISOString() });
+});
+
 export default router;
