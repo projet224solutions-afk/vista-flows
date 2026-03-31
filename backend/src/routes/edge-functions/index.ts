@@ -26,8 +26,10 @@ import filesRoutes from "./files.routes.js";
 import webhooksRoutes from "./webhooks.routes.js";
 import productsRoutes from "./products.routes.js";
 import ordersRoutes from "./orders.routes.js";
-// Import others as they are created
-// ... and so on
+import usersExtendedRoutes from "./users-extended.routes.js";
+import analyticsRoutes from "./analytics.routes.js";
+import notificationsRoutes from "./notifications.routes.js";
+import miscRoutes from "./misc.routes.js";
 
 const router = Router();
 
@@ -38,12 +40,15 @@ const router = Router();
 router.use("/auth", authRoutes);
 router.use("/payments", paymentsRoutes);
 router.use("/users", usersRoutes);
+router.use("/users", usersExtendedRoutes);
 router.use("/ai", aiRoutes);
 router.use("/files", filesRoutes);
 router.use("/webhooks", webhooksRoutes);
 router.use("/products", productsRoutes);
 router.use("/orders", ordersRoutes);
-// router.use("/analytics", analyticsRoutes);
+router.use("/analytics", analyticsRoutes);
+router.use("/", notificationsRoutes);
+router.use("/", miscRoutes);
 
 /**
  * Health check for Edge Functions layer
@@ -52,17 +57,20 @@ router.get("/health", (req, res) => {
   res.status(200).json({
     status: "ok",
     message: "Edge Functions proxy is healthy",
-    migrated_categories: [
-      "auth (13/13)",
-      "payments (45/45)",
-      "users (8/28)",
-      "ai (5/14)",
-      "files (3/13)",
-      "webhooks (6/9)",
-      "products (9/14)",
-      "orders (8/9)",
-      // ... others
+    mounted_categories: [
+      "auth",
+      "payments",
+      "users",
+      "ai",
+      "files",
+      "webhooks",
+      "products",
+      "orders",
+      "analytics",
+      "notifications/root-shared",
+      "misc/root-shared"
     ],
+    parity_status: "audit required before claiming 100% functional migration",
   });
 });
 
