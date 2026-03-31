@@ -2091,7 +2091,7 @@ export const translations: Record<string, Record<string, string>> = {
     "auth.verifyOtp": "Verify code",
     "auth.resendOtp": "Resend code",
     "auth.otpVerified": "Code verified successfully!",
-    "auth.otpError": "Error sending OTP code",
+    
     "auth.otpInvalid": "Invalid OTP code",
     "auth.backToPhone": "Back",
   },
