@@ -6,8 +6,8 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { PayPalScriptProvider, PayPalButtons, FUNDING } from '@paypal/react-paypal-js';
-import { supabase } from '@/integrations/supabase/client';
 import { signedInvoke, generateIdempotencyKey } from '@/lib/security/hmacSigner';
+import { backendConfig } from '@/config/backend';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard, Wallet } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -64,9 +64,16 @@ export default function PayPalCheckoutButton({
 
   useEffect(() => {
     mountedRef.current = true;
-    supabase.functions.invoke('paypal-client-id').then(({ data }) => {
-      if (data?.clientId && mountedRef.current) setClientId(data.clientId);
-    });
+    fetch(`${backendConfig.baseUrl}/edge-functions/paypal-client-id`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!mountedRef.current) return;
+        const clientIdValue = data?.clientId || data?.client_id;
+        if (clientIdValue) setClientId(clientIdValue);
+      })
+      .catch((error) => {
+        console.error('[PayPal Checkout] client id error:', error);
+      });
     return () => { mountedRef.current = false; };
   }, []);
 

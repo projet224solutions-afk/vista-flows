@@ -6,8 +6,19 @@
 
 import CryptoJS from 'crypto-js';
 
-// Clé de chiffrement (doit être en variable d'environnement en production)
-const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY || 'default-key-change-in-production';
+function getLocalEncryptionKey(): string {
+  if (typeof window === 'undefined') return 'default-local-key';
+
+  const storageKey = 'vf_security_layer_key';
+  let key = window.localStorage.getItem(storageKey);
+  if (!key) {
+    key = crypto.randomUUID().replace(/-/g, '');
+    window.localStorage.setItem(storageKey, key);
+  }
+  return key;
+}
+
+const ENCRYPTION_KEY = getLocalEncryptionKey();
 
 /**
  * Classe principale de sécurité

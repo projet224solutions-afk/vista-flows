@@ -8,6 +8,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { PayPalScriptProvider, PayPalButtons, FUNDING } from '@paypal/react-paypal-js';
 import { supabase } from '@/integrations/supabase/client';
+import { signedInvoke } from '@/lib/security/hmacSigner';
+import { backendConfig } from '@/config/backend';
 import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard, Wallet } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -51,11 +53,12 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
     
     // Fetch PayPal client ID and deposit fee in parallel
     Promise.all([
-      supabase.functions.invoke('paypal-client-id'),
+      fetch(`${backendConfig.baseUrl}/edge-functions/paypal-client-id`).then((response) => response.json()),
       supabase.from('pdg_settings').select('setting_value').eq('setting_key', 'deposit_fee_percentage').maybeSingle(),
     ]).then(([clientRes, feeRes]) => {
       if (!mountedRef.current) return;
-      if (clientRes.data?.clientId) setClientId(clientRes.data.clientId);
+      const clientIdValue = clientRes?.clientId || clientRes?.client_id;
+      if (clientIdValue) setClientId(clientIdValue);
       const val = (feeRes.data?.setting_value as any)?.value;
       if (val != null) setFeeRate(Number(val) / 100);
     });
@@ -82,15 +85,13 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
     const cancelUrl = new URL(window.location.href);
     cancelUrl.searchParams.set('paypal_result', 'cancel');
 
-    const { data, error } = await supabase.functions.invoke('paypal-deposit', {
-      body: {
-        amount: numAmount,
-        currency: selectedCurrency,
-        userCurrency: selectedCurrency,
-        action: 'create',
-        returnUrl: successUrl.toString(),
-        cancelUrl: cancelUrl.toString(),
-      },
+    const { data, error } = await signedInvoke('paypal-deposit', {
+      amount: numAmount,
+      currency: selectedCurrency,
+      userCurrency: selectedCurrency,
+      action: 'create',
+      returnUrl: successUrl.toString(),
+      cancelUrl: cancelUrl.toString(),
     });
 
     if (error) throw new Error(error.message);
@@ -102,8 +103,8 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
     if (!mountedRef.current) return;
     setProcessing(true);
     try {
-      const { data: captureData, error } = await supabase.functions.invoke('paypal-deposit', {
-        body: { action: 'capture', orderId: data.orderID },
+      const { data: captureData, error } = await signedInvoke('paypal-deposit', {
+        action: 'capture', orderId: data.orderID
       });
       if (error) throw new Error(error.message);
       if (!captureData?.success) throw new Error(captureData?.error || 'Capture échouée');

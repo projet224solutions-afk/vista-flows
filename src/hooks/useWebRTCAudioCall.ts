@@ -26,18 +26,16 @@ const STUN_SERVERS: RTCIceServer[] = [
 
 /**
  * Construit la liste ICE dynamiquement.
- * TURN est chargé depuis les variables d'environnement :
- *   VITE_TURN_URL        (ex: turn:your-server.com:3478)
- *   VITE_TURN_USERNAME
- *   VITE_TURN_CREDENTIAL
- * Si elles sont absentes → STUN seul (fonctionne pour ~80% des cas).
+ * TURN est chargé depuis une configuration runtime locale pour éviter
+ * d'embarquer des identifiants sensibles dans le bundle frontend.
+ * Si elle est absente → STUN seul (fonctionne pour ~80% des cas).
  */
 function buildIceServers(): RTCIceServer[] {
   const servers: RTCIceServer[] = [...STUN_SERVERS];
 
-  const turnUrl = import.meta.env.VITE_TURN_URL;
-  const turnUser = import.meta.env.VITE_TURN_USERNAME;
-  const turnCred = import.meta.env.VITE_TURN_CREDENTIAL;
+  const turnUrl = typeof window !== 'undefined' ? window.sessionStorage.getItem('vf_turn_url') : null;
+  const turnUser = typeof window !== 'undefined' ? window.sessionStorage.getItem('vf_turn_username') : null;
+  const turnCred = typeof window !== 'undefined' ? window.sessionStorage.getItem('vf_turn_credential') : null;
 
   if (turnUrl && turnUser && turnCred) {
     // Ajouter le TURN principal
@@ -65,7 +63,7 @@ function buildIceServers(): RTCIceServer[] {
   } else {
     console.warn(
       '⚠️ TURN non configuré — les appels ne fonctionneront pas sur les réseaux à NAT symétrique (4G/entreprise).\n' +
-      'Ajoutez VITE_TURN_URL, VITE_TURN_USERNAME, VITE_TURN_CREDENTIAL dans vos variables d\'environnement.\n' +
+      'Injectez vf_turn_url, vf_turn_username et vf_turn_credential en configuration runtime si nécessaire.\n' +
       'Voir https://github.com/coturn/coturn pour un serveur TURN auto-hébergé.'
     );
   }

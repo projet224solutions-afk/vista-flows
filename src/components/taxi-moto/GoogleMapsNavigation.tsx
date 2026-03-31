@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Navigation, Phone, Clock, MapPin, ArrowRight, Maximize2, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { backendConfig } from '@/config/backend';
 import { toast } from 'sonner';
 
 declare global {
@@ -66,12 +66,14 @@ export function GoogleMapsNavigation({
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('google-maps-config');
-        
-        if (error) throw error;
-        
-        if (data?.apiKey) {
-          setApiKey(data.apiKey);
+        const response = await fetch(`${backendConfig.baseUrl}/edge-functions/google-maps-config`);
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data?.error || 'google-maps-config error');
+
+        const apiKeyValue = data?.apiKey || data?.api_key;
+        if (apiKeyValue) {
+          setApiKey(apiKeyValue);
         } else {
           toast.error('Clé Google Maps non configurée');
         }

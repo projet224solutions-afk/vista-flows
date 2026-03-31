@@ -698,7 +698,8 @@ router.post("/gcs-signed-url", async (req: any, res: any) => {
 
 router.get("/google-maps-config", async (req: any, res: any) => {
   try {
-    return res.json({ success: true, api_key: process.env.GOOGLE_MAPS_KEY || process.env.GOOGLE_CLOUD_API_KEY || null });
+    const apiKey = process.env.GOOGLE_MAPS_KEY || null;
+    return res.json({ success: true, apiKey, api_key: apiKey });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

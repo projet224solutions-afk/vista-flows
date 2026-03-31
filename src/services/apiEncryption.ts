@@ -5,12 +5,23 @@
 
 import CryptoJS from 'crypto-js';
 
-// Clé de chiffrement principale depuis les secrets Supabase
-const ENCRYPTION_KEY = import.meta.env.VITE_ENCRYPTION_KEY;
+function getLocalEncryptionKey(): string | null {
+  if (typeof window === 'undefined') return null;
+
+  const storageKey = 'vf_local_encryption_key';
+  let key = window.localStorage.getItem(storageKey);
+  if (!key) {
+    key = crypto.randomUUID().replace(/-/g, '');
+    window.localStorage.setItem(storageKey, key);
+  }
+  return key;
+}
+
+const ENCRYPTION_KEY = getLocalEncryptionKey();
 
 // Avertissement si la clé est manquante (ne pas bloquer le chargement)
 if (!ENCRYPTION_KEY) {
-  console.warn('⚠️ VITE_ENCRYPTION_KEY manquante - Le chiffrement API sera désactivé');
+  console.warn('⚠️ Clé de chiffrement locale indisponible - Le chiffrement API sera désactivé');
 }
 
 export interface EncryptedData {

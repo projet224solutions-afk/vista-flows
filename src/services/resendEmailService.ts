@@ -5,10 +5,10 @@
  */
 
 import { toast } from 'sonner';
+import { backendConfig } from '@/config/backend';
 
 class ResendEmailService {
   private static instance: ResendEmailService;
-  private apiKey = import.meta.env.VITE_RESEND_API_KEY || 'demo';
   private fromEmail = import.meta.env.VITE_FROM_EMAIL || 'onboarding@resend.dev';
 
   static getInstance(): ResendEmailService {
@@ -25,41 +25,33 @@ class ResendEmailService {
     console.log('🔑 CODE MFA GÉNÉRÉ:', code);
     console.log('📧 Envoi à:', to);
 
-    // Si pas de clé API Resend, utiliser le mode développement
-    if (this.apiKey === 'demo') {
-      console.warn('⚠️ Clé API Resend non configurée - Mode développement');
-      this.showDevelopmentCode(code, to);
-      return true;
-    }
-
     try {
-      const response = await fetch('https://api.resend.com/emails', {
+      const response = await fetch(`${backendConfig.baseUrl}/edge-functions/send-otp-email`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          email: to,
+          otp: code,
           from: this.fromEmail,
-          to: [to],
           subject: '🔐 Code de vérification PDG - 224Solutions',
           html: this.generateMfaEmailTemplate(code),
         }),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erreur Resend API');
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.error || 'Erreur envoi email');
       }
 
       const result = await response.json();
-      console.log('✅ Email envoyé via Resend:', result.id);
+      console.log('✅ Email envoyé via backend:', result.email || to);
       toast.success('Code MFA envoyé à votre email');
       return true;
 
     } catch (error) {
-      console.error('❌ Erreur Resend:', error);
-      // Fallback en mode développement
+      console.error('❌ Erreur email backend:', error);
       this.showDevelopmentCode(code, to);
       return true;
     }
@@ -73,7 +65,7 @@ class ResendEmailService {
     
     toast.success(`🔐 CODE MFA: ${code}`, {
       duration: 120000, // 2 minutes
-      description: `Mode développement - Configurez VITE_RESEND_API_KEY pour envoyer de vrais emails\nDestination: ${email}`,
+      description: `Mode développement - Configurez le backend email pour envoyer de vrais emails\nDestination: ${email}`,
       style: {
         background: '#3b82f6',
         color: 'white',
@@ -83,7 +75,7 @@ class ResendEmailService {
     });
     
     setTimeout(() => {
-      alert(`🔐 CODE MFA DE DÉVELOPPEMENT\n\n${code}\n\nCopiez ce code pour continuer\n\n💡 Pour envoyer de vrais emails:\n1. Créez un compte sur https://resend.com\n2. Obtenez votre API Key\n3. Ajoutez VITE_RESEND_API_KEY dans .env`);
+      alert(`🔐 CODE MFA DE DÉVELOPPEMENT\n\n${code}\n\nCopiez ce code pour continuer\n\n💡 Pour envoyer de vrais emails:\n1. Configurez le backend Node.js\n2. Vérifiez l'endpoint /edge-functions/send-otp-email`);
     }, 500);
   }
 

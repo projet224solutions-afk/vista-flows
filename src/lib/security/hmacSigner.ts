@@ -12,13 +12,7 @@
  * 224Solutions
  */
 
-import { supabase } from '@/integrations/supabase/client';
-
-// API Key (publishable PayPal Client ID - from env only)
-const HMAC_API_KEY = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
-
-// Signing secret - uses TRANSACTION_SECRET_KEY
-const HMAC_SECRET = import.meta.env.VITE_TRANSACTION_SECRET_KEY || import.meta.env.VITE_HMAC_SECRET || "";
+import { backendFetch } from '@/services/backendApi';
 
 const encoder = new TextEncoder();
 
@@ -66,12 +60,11 @@ export async function signRequest(
   const timestamp = Date.now().toString();
   const nonce = generateNonce();
 
-  const payload = `${method.toUpperCase()}${path}${body}${timestamp}${nonce}`;
-  const signature = await hmacSha256(HMAC_SECRET, payload);
-
+  // No secret is embedded in the frontend anymore.
+  // Keep idempotency metadata only; server-side auth and rate limiting do the real protection.
   const headers: SignedHeaders = {
-    "x-api-key": HMAC_API_KEY,
-    "x-signature": signature,
+    "x-api-key": "",
+    "x-signature": "",
     "x-timestamp": timestamp,
     "x-nonce": nonce,
   };
@@ -95,28 +88,31 @@ export async function signedInvoke(
     skipSigning?: boolean;
   }
 ) {
-  const bodyStr = JSON.stringify(body);
-  const path = `/${functionName}`;
-  
-  // If HMAC secret is not configured, invoke without signing
-  if (!HMAC_SECRET || options?.skipSigning) {
-    return supabase.functions.invoke(functionName, { body });
+  const idempotencyKey = options?.idempotencyKey || generateNonce();
+  const response = await backendFetch(`/edge-functions/${functionName}`, {
+    method: 'POST',
+    body,
+    idempotencyKey,
+  });
+
+  if (!response.success) {
+    return {
+      data: null,
+      error: { message: response.error || 'Erreur serveur' },
+    };
   }
 
-  const idempotencyKey = options?.idempotencyKey || generateNonce();
-  const headers = await signRequest("POST", path, bodyStr, { idempotencyKey });
-
-  return supabase.functions.invoke(functionName, {
-    body,
-    headers: headers as unknown as Record<string, string>,
-  });
+  return {
+    data: response,
+    error: null,
+  };
 }
 
 /**
  * Check if HMAC signing is configured
  */
 export function isHmacConfigured(): boolean {
-  return Boolean(HMAC_API_KEY && HMAC_SECRET);
+  return false;
 }
 
 /**

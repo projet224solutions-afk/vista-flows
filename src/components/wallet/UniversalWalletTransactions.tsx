@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { signedInvoke } from '@/lib/security/hmacSigner';
 import { toast } from 'sonner';
 import { 
   Wallet, 
@@ -1791,8 +1792,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
                       if (!paypalWithdrawEmail || !paypalWithdrawEmail.includes('@')) { toast.error('Email PayPal invalide'); return; }
                       setProcessing(true);
                       try {
-                        const { data, error } = await supabase.functions.invoke('paypal-withdrawal', {
-                          body: { amount: numAmt, currency: 'USD', paypalEmail: paypalWithdrawEmail },
+                        const { data, error } = await signedInvoke('paypal-withdrawal', {
+                          amount: numAmt, currency: 'USD', paypalEmail: paypalWithdrawEmail,
                         });
                         if (error) throw new Error(error.message);
                         if (!data?.success) throw new Error(data?.error || 'Erreur retrait');

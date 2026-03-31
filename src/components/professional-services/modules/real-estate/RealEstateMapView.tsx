@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Loader2, AlertCircle, Maximize } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { supabase } from '@/integrations/supabase/client';
+import { backendConfig } from '@/config/backend';
 import type { Property } from '@/hooks/useRealEstateData';
 
 interface RealEstateMapViewProps {
@@ -29,13 +29,14 @@ export function RealEstateMapView({ properties, onPropertyClick }: RealEstateMap
   useEffect(() => {
     const fetchKey = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('google-maps-config');
-        if (error || !data?.success) {
+        const response = await fetch(`${backendConfig.baseUrl}/edge-functions/google-maps-config`);
+        const data = await response.json();
+        if (!response.ok || !data?.success) {
           setError('Clé Google Maps non configurée');
           setLoading(false);
           return;
         }
-        setApiKey(data.apiKey);
+        setApiKey(data.apiKey || data.api_key);
       } catch {
         setError('Impossible de charger la configuration de la carte');
         setLoading(false);

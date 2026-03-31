@@ -53,9 +53,6 @@ export class NavigationService {
   private isNavigating = false;
   private offRouteThreshold = 50; // mètres
 
-  // API Keys (utiliser variables d'environnement)
-  private OPENROUTE_API_KEY = '5b3ce3597851110001cf6248c91c2b7c56204073ba73c50fcb6e7f47'; // Clé publique exemple
-  
   private constructor() {}
 
   public static getInstance(): NavigationService {
@@ -132,53 +129,8 @@ export class NavigationService {
   public async geocodeAddress(address: string, countryCode: string = 'GN'): Promise<GPSPosition[]> {
     console.log(`🗺️ [NavigationService] Géocodage adresse: "${address}"`);
 
-    try {
-      // Utiliser OpenRouteService Geocoding
-      const response = await fetch(
-        `https://api.openrouteservice.org/geocode/search?` +
-        `api_key=${this.OPENROUTE_API_KEY}&` +
-        `text=${encodeURIComponent(address)}&` +
-        `boundary.country=${countryCode}&` +
-        `size=5`,
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Erreur API: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.features || data.features.length === 0) {
-        console.warn('⚠️ Aucun résultat trouvé pour:', address);
-        return [];
-      }
-
-      const results: GPSPosition[] = data.features.map((feature: any) => ({
-        longitude: feature.geometry.coordinates[0],
-        latitude: feature.geometry.coordinates[1],
-        accuracy: feature.properties.confidence || 100,
-        timestamp: Date.now()
-      }));
-
-      console.log(`✅ [NavigationService] ${results.length} résultat(s) trouvé(s)`);
-      results.forEach((pos, i) => {
-        console.log(`   ${i + 1}. ${pos.latitude.toFixed(6)}, ${pos.longitude.toFixed(6)}`);
-      });
-
-      return results;
-
-    } catch (error) {
-      console.error('❌ [NavigationService] Erreur géocodage:', error);
-      
-      // Fallback: Base de données locale Guinée
-      return this.getGuineaLocationCoordinates(address);
-    }
+    console.log(`🛡️ [NavigationService] Mode local sécurisé activé (${countryCode})`);
+    return this.getGuineaLocationCoordinates(address);
   }
 
   /**
@@ -259,75 +211,8 @@ export class NavigationService {
       profile
     });
 
-    try {
-      const body = {
-        coordinates: [
-          [start.longitude, start.latitude],
-          [end.longitude, end.latitude]
-        ],
-        instructions: true,
-        language: 'fr',
-        units: 'km'
-      };
-
-      const response = await fetch(
-        `https://api.openrouteservice.org/v2/directions/${profile}`,
-        {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json, application/geo+json',
-            'Content-Type': 'application/json',
-            'Authorization': this.OPENROUTE_API_KEY
-          },
-          body: JSON.stringify(body)
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (!data.routes || data.routes.length === 0) {
-        throw new Error('Aucun itinéraire trouvé');
-      }
-
-      const route = data.routes[0];
-      const segments = route.segments[0];
-
-      const steps: NavigationStep[] = segments.steps.map((step: any) => ({
-        instruction: step.instruction,
-        distance: step.distance,
-        duration: step.duration,
-        maneuver: step.type,
-        location: step.way_points.map((wpIndex: number) => 
-          route.geometry.coordinates[wpIndex]
-        )[0]
-      }));
-
-      const navigationRoute: NavigationRoute = {
-        distance: route.summary.distance, // km
-        duration: route.summary.duration / 60, // minutes
-        steps,
-        geometry: route.geometry,
-        bbox: route.bbox
-      };
-
-      console.log('✅ [NavigationService] Itinéraire calculé:', {
-        distance: `${navigationRoute.distance.toFixed(2)} km`,
-        duration: `${Math.round(navigationRoute.duration)} min`,
-        steps: navigationRoute.steps.length
-      });
-
-      return navigationRoute;
-
-    } catch (error) {
-      console.error('❌ [NavigationService] Erreur calcul itinéraire:', error);
-      
-      // Fallback: itinéraire simple
-      return this.createSimpleFallbackRoute(start, end);
-    }
+    console.log(`🛡️ [NavigationService] Mode itinéraire local sécurisé (${profile})`);
+    return this.createSimpleFallbackRoute(start, end);
   }
 
   /**

@@ -21,61 +21,9 @@ interface RateLimitResult {
  * Rate limiter avec Upstash Redis (production)
  */
 export const checkRateLimit = async (config: RateLimitConfig): Promise<RateLimitResult> => {
-  const { maxRequests, windowMs, identifier } = config;
-  
-  // Vérifier si Upstash est configuré
-  const upstashUrl = import.meta.env.VITE_UPSTASH_REDIS_REST_URL;
-  const upstashToken = import.meta.env.VITE_UPSTASH_REDIS_REST_TOKEN;
-  
-  if (!upstashUrl || !upstashToken) {
-    console.warn('⚠️ Upstash Redis non configuré, utilisation rate limit local');
-    return checkRateLimitLocal(config);
-  }
-  
-  try {
-    const key = `ratelimit:${identifier}`;
-    const now = Date.now();
-    const windowStart = now - windowMs;
-    
-    // Nettoyer anciennes entrées et compter requêtes dans fenêtre
-    const commands = [
-      ['ZREMRANGEBYSCORE', key, 0, windowStart],
-      ['ZCARD', key],
-      ['ZADD', key, now, `${now}-${Math.random()}`],
-      ['EXPIRE', key, Math.ceil(windowMs / 1000)]
-    ];
-    
-    const response = await fetch(`${upstashUrl}/pipeline`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${upstashToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(commands)
-    });
-    
-    if (!response.ok) {
-      throw new Error('Upstash request failed');
-    }
-    
-    const results = await response.json();
-    const count = results[1].result; // Résultat de ZCARD
-    
-    const allowed = count <= maxRequests;
-    const remaining = Math.max(0, maxRequests - count);
-    const resetAt = new Date(now + windowMs);
-    
-    return {
-      allowed,
-      remaining,
-      resetAt,
-      retryAfter: allowed ? undefined : Math.ceil(windowMs / 1000)
-    };
-  } catch (error) {
-    console.error('❌ Erreur rate limit Upstash:', error);
-    // Fallback sur rate limit local
-    return checkRateLimitLocal(config);
-  }
+  // Redis REST credentials must never live in the browser.
+  // Frontend keeps a local fallback only; distributed limiting belongs server-side.
+  return checkRateLimitLocal(config);
 };
 
 /**

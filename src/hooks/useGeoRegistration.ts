@@ -6,7 +6,7 @@ interface GeoDetectionResult {
   country: string;
   currency: string;
   language: string;
-  method: 'google-api' | 'sim-card' | 'geoip' | 'default';
+  method: 'gps' | 'sim-card' | 'geoip' | 'default';
   accuracy?: 'high' | 'medium' | 'low';
   metadata?: {
     latitude?: number;
@@ -55,7 +55,8 @@ export function useGeoRegistration() {
   };
 
   /**
-   * Méthode 1: Google Geocoding API (GPS précis)
+   * Méthode 1: GPS local seulement, sans appel provider externe.
+   * Si les coordonnées tombent dans l'emprise de la Guinée, on applique la config locale.
    */
   const detectViaGPS = async (): Promise<GeoDetectionResult | null> => {
     return new Promise((resolve) => {
@@ -69,45 +70,26 @@ export function useGeoRegistration() {
         async (position) => {
           try {
             const { latitude, longitude } = position.coords;
-            
-            // Reverse geocoding avec Google API
-            const response = await fetch(
-              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
-            );
-            
-            if (!response.ok) throw new Error('Google API error');
-            
-            const data = await response.json();
-            if (data.results?.[0]) {
-              const addressComponents = data.results[0].address_components;
-              const countryComponent = addressComponents.find((c: any) => 
-                c.types.includes('country')
-              );
-              
-              if (countryComponent) {
-                const country = countryComponent.short_name;
-                const currency = COUNTRY_CURRENCY_MAP[country] || 'GNF';
-                const language = COUNTRY_LANGUAGE_MAP[country] || 'fr';
-                
-                resolve({
-                  country,
-                  currency,
-                  language,
-                  method: 'google-api',
-                  accuracy: 'high',
-                  metadata: {
-                    latitude,
-                    longitude,
-                    city: addressComponents.find((c: any) => c.types.includes('locality'))?.long_name,
-                    region: addressComponents.find((c: any) => c.types.includes('administrative_area_level_1'))?.long_name
-                  }
-                });
-                return;
-              }
+
+            const isProbablyGuinea = latitude >= 7 && latitude <= 13 && longitude >= -16 && longitude <= -7;
+            if (isProbablyGuinea) {
+              resolve({
+                country: 'GN',
+                currency: 'GNF',
+                language: 'fr',
+                method: 'gps',
+                accuracy: 'high',
+                metadata: {
+                  latitude,
+                  longitude,
+                }
+              });
+              return;
             }
+
             resolve(null);
           } catch (error) {
-            console.error('Google geocoding error:', error);
+            console.error('GPS detection error:', error);
             resolve(null);
           }
         },
