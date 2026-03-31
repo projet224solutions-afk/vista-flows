@@ -32,7 +32,7 @@ async function safeFetch(url: string, options: RequestInit): Promise<{ ok: boole
 
     return { ok: true, data, status: res.status };
   } catch (err) {
-    return { ok: false, error: `Network error: ${err.message}` };
+    return { ok: false, error: `Network error: ${(err as Error).message}` };
   }
 }
 
