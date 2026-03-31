@@ -927,6 +927,114 @@ export default function EnhancedAuth() {
                     </Button>
                   </div>
 
+                  {/* Séparateur téléphone */}
+                  <div className="relative py-1.5">
+                    <Separator className="bg-border/30" />
+                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1.5 text-[9px] text-muted-foreground uppercase">
+                      {t('auth.phoneNumber')}
+                    </span>
+                  </div>
+
+                  {/* Phone OTP Login */}
+                  {!otpSent ? (
+                    <form onSubmit={handlePhoneAuth} className="space-y-1.5">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="login-phone" className="text-[11px] font-medium flex items-center gap-1">
+                          <Phone className="h-3 w-3 text-muted-foreground" />
+                          {t('auth.phoneNumber')}
+                        </Label>
+                        <Input
+                          id="login-phone"
+                          type="tel"
+                          placeholder="+224 6XX XX XX XX"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          disabled={loading}
+                          className="h-8 text-xs rounded-md"
+                          required
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        className="w-full h-8 text-xs font-medium rounded-md gap-1.5"
+                        disabled={loading || !phone}
+                      >
+                        {loading ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Phone className="h-3 w-3" />
+                        )}
+                        {t('auth.otpSent') ? t('auth.verifyOtp') : t('auth.login')}
+                      </Button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleVerifyPhoneOtp} className="space-y-1.5">
+                      <div className="bg-primary/5 rounded-md p-2 flex items-center gap-2">
+                        <Phone className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <p className="text-[10px] text-muted-foreground">
+                          {t('auth.otpSentTo')} <strong>{formattedPhoneNumber}</strong>
+                        </p>
+                      </div>
+                      <div className="space-y-0.5">
+                        <Label htmlFor="otp-code" className="text-[11px] font-medium flex items-center gap-1">
+                          <Lock className="h-3 w-3 text-muted-foreground" />
+                          {t('auth.enterOtp')}
+                        </Label>
+                        <Input
+                          id="otp-code"
+                          type="text"
+                          placeholder="123456"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value)}
+                          disabled={loading}
+                          className="h-8 text-xs rounded-md text-center tracking-widest font-mono"
+                          required
+                          maxLength={6}
+                          autoFocus
+                        />
+                      </div>
+
+                      {error && (
+                        <Alert variant="destructive" className="rounded-md py-1.5 px-2">
+                          <AlertCircle className="h-3 w-3" />
+                          <AlertDescription className="text-[10px] ml-1">{error}</AlertDescription>
+                        </Alert>
+                      )}
+
+                      <Button
+                        type="submit"
+                        className="w-full h-8 text-xs font-medium rounded-md"
+                        disabled={loading || otpCode.length < 4}
+                      >
+                        {loading ? (
+                          <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> {t('auth.connecting')}</>
+                        ) : (
+                          <>{t('auth.verifyOtp')}</>
+                        )}
+                      </Button>
+
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="flex-1 h-7 text-[10px]"
+                          onClick={handleBackToPhone}
+                        >
+                          <ArrowLeft className="mr-1 h-3 w-3" /> {t('auth.backToPhone')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="flex-1 h-7 text-[10px]"
+                          onClick={() => { setOtpSent(false); setTimeout(() => { setOtpSent(false); handlePhoneAuth(new Event('submit') as any); }, 100); }}
+                        >
+                          {t('auth.resendOtp')}
+                        </Button>
+                      </div>
+                    </form>
+                  )}
+
                   {/* Note compact */}
                   <div className="bg-amber-50/50 dark:bg-amber-900/10 rounded-md p-1.5">
                     <p className="text-[9px] text-amber-700 dark:text-amber-400 flex items-center gap-1">
