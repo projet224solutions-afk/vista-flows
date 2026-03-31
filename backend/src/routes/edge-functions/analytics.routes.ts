@@ -374,6 +374,15 @@ router.get("/metrics/engagement", validateBearerToken, async (req: any, res: any
   }
 });
 
+router.post("/advanced-analytics", (req: any, res: any) => {
+  try {
+    const { metric_type, period = "month" } = req.body || {};
+    return res.json({ success: true, metric_type, period, results: {} });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.get("/metrics/conversion", validateBearerToken, async (req: any, res: any) => {
   try {
     return res.json({ success: true, conversion_rate: 0.35 });
