@@ -25,7 +25,7 @@ import {
 import {
   UserCheck, Store, Truck, Bike, Ship, ArrowLeft,
   Lock, Mail, Loader2, Eye, EyeOff, AlertCircle,
-  User, LogIn, UserPlus
+  User, LogIn, UserPlus, Phone
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
