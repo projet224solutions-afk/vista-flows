@@ -23,6 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { getDashboardRoute } from '@/hooks/useRoleRedirect';
+import { resolvePostAuthRoute } from '@/utils/postAuthRoute';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export default function SetPasswordAfterOAuth() {
@@ -74,31 +75,15 @@ export default function SetPasswordAfterOAuth() {
 
   // Fonction pour rediriger vers le bon dashboard (service-aware)
   const redirectToProperDashboard = async () => {
+    const oauthShopType = localStorage.getItem('oauth_vendor_shop_type');
     let targetRoute = getDashboardRoute(profile?.role);
-    
-    // ✅ FIX: Vérifier si c'est un vendeur digital
-    if (profile?.role === 'vendeur') {
-      const oauthShopType = localStorage.getItem('oauth_vendor_shop_type');
-      
-      if (oauthShopType === 'digital') {
-        targetRoute = '/vendeur-digital';
-      }
-    }
-    
-    // ✅ NOUVEAU: Pour les prestataires, chercher le professional_service
-    if ((profile?.role as string) === 'prestataire') {
-      try {
-        const { data: proService } = await supabase
-          .from('professional_services')
-          .select('id')
-          .eq('user_id', user?.id || '')
-          .maybeSingle();
-        if (proService) {
-          targetRoute = `/dashboard/service/${proService.id}`;
-        }
-      } catch (e) {
-        console.warn('⚠️ Erreur récupération service:', e);
-      }
+
+    if (user?.id && profile?.role) {
+      targetRoute = await resolvePostAuthRoute({
+        userId: user.id,
+        role: profile.role,
+        vendorShopType: oauthShopType,
+      });
     }
     
     // Nettoyer les flags après utilisation

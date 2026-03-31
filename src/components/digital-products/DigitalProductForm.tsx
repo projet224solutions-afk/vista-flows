@@ -54,6 +54,33 @@ interface DigitalProductFormProps {
   initialProduct?: DigitalProduct;
 }
 
+interface TrainingLessonDraft {
+  title: string;
+  durationMinutes: string;
+}
+
+interface TrainingProductDraft {
+  instructorName: string;
+  level: 'debutant' | 'intermediaire' | 'avance';
+  estimatedHours: string;
+  targetAudience: string;
+  learningGoals: string;
+  lessons: TrainingLessonDraft[];
+}
+
+const DEFAULT_TRAINING_DRAFT: TrainingProductDraft = {
+  instructorName: '',
+  level: 'debutant',
+  estimatedHours: '',
+  targetAudience: '',
+  learningGoals: '',
+  lessons: [
+    { title: '', durationMinutes: '' },
+    { title: '', durationMinutes: '' },
+    { title: '', durationMinutes: '' },
+  ],
+};
+
 const categoryConfig: Record<ProductCategory, {
   title: string;
   description: string;
@@ -285,6 +312,33 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     productType: initialProduct?.product_type || '',
     publishImmediately: initialProduct ? initialProduct.status === 'published' : true
   }));
+
+  const [trainingData, setTrainingData] = useState<TrainingProductDraft>(() => {
+    const metadata = (initialProduct as any)?.metadata as any;
+    const training = metadata?.training;
+
+    if (!training) {
+      return DEFAULT_TRAINING_DRAFT;
+    }
+
+    const lessons = Array.isArray(training.lessons) && training.lessons.length > 0
+      ? training.lessons.map((lesson: any) => ({
+          title: lesson?.title || '',
+          durationMinutes: lesson?.durationMinutes ? String(lesson.durationMinutes) : '',
+        }))
+      : DEFAULT_TRAINING_DRAFT.lessons;
+
+    return {
+      instructorName: training.instructorName || '',
+      level: training.level || 'debutant',
+      estimatedHours: training.estimatedHours ? String(training.estimatedHours) : '',
+      targetAudience: training.targetAudience || '',
+      learningGoals: Array.isArray(training.learningGoals)
+        ? training.learningGoals.join('\n')
+        : (training.learningGoals || ''),
+      lessons,
+    };
+  });
   
   // Données d'affiliation
   const [affiliateData, setAffiliateData] = useState<AffiliateFormData>(() => ({
@@ -338,6 +392,28 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       productType: initialProduct.product_type || '',
       publishImmediately: initialProduct.status === 'published',
     });
+
+    const metadata = (initialProduct as any)?.metadata as any;
+    const training = metadata?.training;
+    if (training) {
+      setTrainingData({
+        instructorName: training.instructorName || '',
+        level: training.level || 'debutant',
+        estimatedHours: training.estimatedHours ? String(training.estimatedHours) : '',
+        targetAudience: training.targetAudience || '',
+        learningGoals: Array.isArray(training.learningGoals)
+          ? training.learningGoals.join('\n')
+          : (training.learningGoals || ''),
+        lessons: Array.isArray(training.lessons) && training.lessons.length > 0
+          ? training.lessons.map((lesson: any) => ({
+              title: lesson?.title || '',
+              durationMinutes: lesson?.durationMinutes ? String(lesson.durationMinutes) : '',
+            }))
+          : DEFAULT_TRAINING_DRAFT.lessons,
+      });
+    } else {
+      setTrainingData(DEFAULT_TRAINING_DRAFT);
+    }
 
     setAffiliateData((prev) => ({
       ...prev,
@@ -452,6 +528,29 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     setVideoPreviewUrl(url);
   };
 
+  const updateTrainingLesson = (index: number, field: keyof TrainingLessonDraft, value: string) => {
+    setTrainingData((prev) => ({
+      ...prev,
+      lessons: prev.lessons.map((lesson, lessonIndex) =>
+        lessonIndex === index ? { ...lesson, [field]: value } : lesson
+      ),
+    }));
+  };
+
+  const addTrainingLesson = () => {
+    setTrainingData((prev) => ({
+      ...prev,
+      lessons: [...prev.lessons, { title: '', durationMinutes: '' }],
+    }));
+  };
+
+  const removeTrainingLesson = (index: number) => {
+    setTrainingData((prev) => ({
+      ...prev,
+      lessons: prev.lessons.filter((_, lessonIndex) => lessonIndex !== index),
+    }));
+  };
+
   const handleNext = () => {
     const nextIndex = currentStepIndex + 1;
     if (nextIndex < steps.length) {
@@ -476,6 +575,30 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
           toast.error('Le titre est obligatoire');
           return false;
         }
+
+        if (category === 'formation') {
+          const filledLessons = trainingData.lessons.filter((lesson) => lesson.title.trim().length > 0);
+          const hasInvalidLessonDuration = filledLessons.some((lesson) => {
+            const lessonDuration = parseInt(lesson.durationMinutes || '0', 10);
+            return Number.isNaN(lessonDuration) || lessonDuration <= 0 || lessonDuration > 60;
+          });
+
+          if (!trainingData.instructorName.trim()) {
+            toast.error('Le nom du formateur est obligatoire pour une formation');
+            return false;
+          }
+
+          if (filledLessons.length === 0) {
+            toast.error('Ajoutez au moins un cours a votre formation');
+            return false;
+          }
+
+          if (hasInvalidLessonDuration) {
+            toast.error('Chaque cours doit durer entre 1 et 60 minutes');
+            return false;
+          }
+        }
+
         return true;
       case 'pricing':
         if (salesMode === 'affiliate') {
@@ -569,6 +692,32 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
           ? (isEdit ? (initialProduct?.published_at || new Date().toISOString()) : new Date().toISOString())
           : null
       };
+
+      if (category === 'formation') {
+        const normalizedLessons = trainingData.lessons
+          .filter((lesson) => lesson.title.trim().length > 0)
+          .map((lesson, index) => ({
+            order: index + 1,
+            title: lesson.title.trim(),
+            durationMinutes: Math.min(60, Math.max(1, parseInt(lesson.durationMinutes || '0', 10) || 0)),
+          }));
+
+        productData.metadata = {
+          ...(((initialProduct as any)?.metadata as any) || {}),
+          training: {
+            instructorName: trainingData.instructorName.trim(),
+            level: trainingData.level,
+            estimatedHours: trainingData.estimatedHours ? parseFloat(trainingData.estimatedHours) : null,
+            targetAudience: trainingData.targetAudience.trim(),
+            learningGoals: trainingData.learningGoals
+              .split('\n')
+              .map((goal) => goal.trim())
+              .filter(Boolean),
+            lessons: normalizedLessons,
+            videoMaxMinutes: 60,
+          },
+        };
+      }
 
       if (salesMode === 'affiliate') {
         productData.affiliate_url = affiliateData.affiliateUrl;
@@ -754,6 +903,144 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                     className="mt-1.5"
                   />
                 </div>
+
+                {category === 'formation' && (
+                  <Card className="rounded-[24px] border-[#dce8fb] bg-[linear-gradient(180deg,#f9fbff_0%,#f3f8ff_100%)] shadow-none">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        Architecture de la formation
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Structurez votre offre comme une academie premium: positionnement, objectifs d'apprentissage et decoupage par cours.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label htmlFor="training-instructor">Nom du formateur</Label>
+                          <Input
+                            id="training-instructor"
+                            value={trainingData.instructorName}
+                            onChange={(e) => setTrainingData((prev) => ({ ...prev, instructorName: e.target.value }))}
+                            placeholder="Ex: Mariama Diallo"
+                            className="mt-1.5"
+                          />
+                        </div>
+                        <div>
+                          <Label>Niveau cible</Label>
+                          <Select
+                            value={trainingData.level}
+                            onValueChange={(value) => setTrainingData((prev) => ({ ...prev, level: value as TrainingProductDraft['level'] }))}
+                          >
+                            <SelectTrigger className="mt-1.5">
+                              <SelectValue placeholder="Choisir un niveau" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="debutant">Debutant</SelectItem>
+                              <SelectItem value="intermediaire">Intermediaire</SelectItem>
+                              <SelectItem value="avance">Avance</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                          <Label htmlFor="training-hours">Duree totale estimee (heures)</Label>
+                          <Input
+                            id="training-hours"
+                            type="number"
+                            min="1"
+                            step="0.5"
+                            value={trainingData.estimatedHours}
+                            onChange={(e) => setTrainingData((prev) => ({ ...prev, estimatedHours: e.target.value }))}
+                            placeholder="Ex: 8"
+                            className="mt-1.5"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="training-audience">Audience cible</Label>
+                          <Input
+                            id="training-audience"
+                            value={trainingData.targetAudience}
+                            onChange={(e) => setTrainingData((prev) => ({ ...prev, targetAudience: e.target.value }))}
+                            placeholder="Ex: Debutants qui veulent lancer un business"
+                            className="mt-1.5"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="training-goals">Ce que l'apprenant va maitriser</Label>
+                        <Textarea
+                          id="training-goals"
+                          rows={4}
+                          value={trainingData.learningGoals}
+                          onChange={(e) => setTrainingData((prev) => ({ ...prev, learningGoals: e.target.value }))}
+                          placeholder={"Ex:\n- Comprendre la strategie\n- Construire une offre\n- Mettre en ligne un tunnel"}
+                          className="mt-1.5"
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <Label>Decoupage par cours</Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Chaque video de cours est plafonnee a 60 minutes pour garder un format premium, digestible et compatible mobile.
+                            </p>
+                          </div>
+                          <Button type="button" variant="outline" size="sm" onClick={addTrainingLesson}>
+                            Ajouter un cours
+                          </Button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {trainingData.lessons.map((lesson, index) => (
+                            <div key={`lesson-${index}`} className="grid gap-3 rounded-2xl border border-[#dbe7fa] bg-white p-3 sm:grid-cols-[1fr_140px_auto]">
+                              <div>
+                                <Label htmlFor={`lesson-title-${index}`}>Cours {index + 1}</Label>
+                                <Input
+                                  id={`lesson-title-${index}`}
+                                  value={lesson.title}
+                                  onChange={(e) => updateTrainingLesson(index, 'title', e.target.value)}
+                                  placeholder="Ex: Installer son environnement"
+                                  className="mt-1.5"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor={`lesson-duration-${index}`}>Duree (min)</Label>
+                                <Input
+                                  id={`lesson-duration-${index}`}
+                                  type="number"
+                                  min="1"
+                                  max="60"
+                                  value={lesson.durationMinutes}
+                                  onChange={(e) => updateTrainingLesson(index, 'durationMinutes', e.target.value)}
+                                  placeholder="45"
+                                  className="mt-1.5"
+                                />
+                              </div>
+                              <div className="flex items-end">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeTrainingLesson(index)}
+                                  disabled={trainingData.lessons.length <= 1}
+                                  className="h-10 w-10"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -919,12 +1206,14 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
               </CardHeader>
               <CardContent>
                 <VideoUploadPreview
-                  maxDuration={5}
-                  maxSizeMB={20}
+                  maxDuration={category === 'formation' ? 3600 : 120}
+                  maxSizeMB={category === 'formation' ? 1024 : 120}
                   onVideoSelect={handleVideoSelect}
                   currentVideoUrl={videoPreviewUrl}
                   label=""
-                  helpText="Une courte vidéo de présentation (5 secondes max)"
+                  helpText={category === 'formation'
+                    ? "Ajoutez une vraie lecon ou bande-annonce de formation. Chaque video peut durer jusqu'a 1 heure."
+                    : "Ajoutez une video de presentation courte pour mieux convertir sur mobile."}
                 />
               </CardContent>
             </Card>

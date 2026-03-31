@@ -82,7 +82,16 @@ const accessDurations = [
 
 export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 sm:space-y-5">
+      {data.pricingType === 'subscription' && (
+        <Alert className="border-[#cfe0fb] bg-[#f5f9ff] shadow-[0_18px_35px_rgba(4,67,158,0.06)]">
+          <RefreshCw className="h-4 w-4 text-[#04439e]" />
+          <AlertDescription className="text-sm text-slate-700">
+            Mode academie active: l'abonnement est ideal pour une bibliotheque de formations, des mises a jour mensuelles ou un coaching recurrent.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Type de tarification */}
       <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
         <CardHeader className="pb-3">
@@ -95,7 +104,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2">
+          <div className="grid gap-2 sm:gap-3">
             {pricingTypes.map((type) => {
               const Icon = type.icon;
               return (
@@ -103,7 +112,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
                   key={type.id}
                   onClick={() => onChange({ pricingType: type.id as DirectSaleFormData['pricingType'] })}
                   className={cn(
-                    'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all',
+                    'flex items-center gap-3 rounded-xl border p-3 sm:p-4 cursor-pointer transition-all',
                     data.pricingType === type.id
                       ? 'border-[#cfe0fb] bg-[#f5f9ff] shadow-sm'
                       : 'border-[#e8eef8] hover:border-[#cfe0fb]'
@@ -145,7 +154,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
           {/* Paiement unique ou abonnement */}
           {(data.pricingType === 'one_time' || data.pricingType === 'subscription') && (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="price" className="text-xs">
                     Prix {data.pricingType === 'subscription' && '(par période)'} <span className="text-destructive">*</span>
@@ -185,15 +194,15 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
               </div>
 
               {data.pricingType === 'subscription' && (
-                <div>
+                <div className="rounded-2xl border border-[#d9e6fb] bg-[#f8fbff] p-3 sm:p-4">
                   <Label className="text-xs">Fréquence de facturation</Label>
-                  <div className="grid grid-cols-3 gap-2 mt-1.5">
+                  <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-3">
                     {(['monthly', 'yearly', 'lifetime'] as const).map((interval) => (
                       <div
                         key={interval}
                         onClick={() => onChange({ subscriptionInterval: interval })}
                         className={cn(
-                          'p-2 rounded-lg border cursor-pointer text-center transition-all text-xs',
+                          'rounded-xl border p-3 text-center text-xs sm:text-sm cursor-pointer transition-all',
                           data.subscriptionInterval === interval
                             ? 'border-[#cfe0fb] bg-[#f5f9ff] font-medium text-[#04439e]'
                             : 'border-[#e8eef8] hover:border-[#cfe0fb]'
@@ -205,6 +214,9 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
                       </div>
                     ))}
                   </div>
+                  <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                    Pour une formation premium, combinez un plan mensuel d'entree et un plan annuel avec remise pour augmenter la conversion mobile.
+                  </p>
                 </div>
               )}
             </>
@@ -212,7 +224,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
 
           {/* Prix libre */}
           {data.pricingType === 'pay_what_you_want' && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <Label htmlFor="minimumPrice" className="text-xs">
                   Prix minimum <span className="text-destructive">*</span>
@@ -275,7 +287,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center justify-between gap-3 p-3 bg-muted/50 rounded-xl">
             <div className="flex items-center gap-2">
               <Download className="w-4 h-4 text-primary" />
               <div>
@@ -308,7 +320,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
             </Select>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center justify-between gap-3 p-3 bg-muted/50 rounded-xl">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-primary" />
               <div>
@@ -333,7 +345,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center justify-between gap-3 p-3 bg-muted/50 rounded-xl">
             <div className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-primary" />
               <div>
@@ -378,7 +390,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center justify-between gap-3 p-3 bg-muted/50 rounded-xl">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
               <div>
@@ -418,6 +430,18 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
           Vous recevez vos fonds après validation de la livraison.
         </AlertDescription>
       </Alert>
+
+      <div className="rounded-[24px] border border-dashed border-[#d7e3f9] bg-[#f8fbff] p-4">
+        <div className="flex items-start gap-3">
+          <Lock className="mt-0.5 h-4 w-4 text-[#04439e]" />
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Positionnement formation premium</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Structure recommandee: abonnement pour l'academie continue, achat unique pour le programme signature, garantie 14 a 30 jours et acces progressif au contenu pour maximiser la retention.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

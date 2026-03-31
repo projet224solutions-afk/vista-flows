@@ -28,12 +28,15 @@ export default function DigitalVendorDashboard() {
   useRoleRedirect();
 
   const [vendorId, setVendorId] = useState<string>('');
+  const [vendorBusinessType, setVendorBusinessType] = useState<string | null>(null);
   const [vendorLoading, setVendorLoading] = useState<boolean>(false);
+  const [redirectingToStandardDashboard, setRedirectingToStandardDashboard] = useState(false);
 
   useEffect(() => {
     if (!user?.id) {
       setVendorLoading(false);
       setVendorId('');
+      setVendorBusinessType(null);
       return;
     }
 
@@ -42,7 +45,7 @@ export default function DigitalVendorDashboard() {
       try {
         const { data, error } = await supabase
           .from('vendors')
-          .select('id')
+          .select('id, business_type')
           .eq('user_id', user.id)
           .maybeSingle();
 
@@ -54,7 +57,13 @@ export default function DigitalVendorDashboard() {
           return;
         }
 
-        if (data?.id) setVendorId(data.id);
+        if (data?.id) {
+          setVendorId(data.id);
+          setVendorBusinessType(data.business_type ?? null);
+        } else {
+          setVendorId('');
+          setVendorBusinessType(null);
+        }
       } catch (error) {
         console.error('FIRST SUPABASE ERROR', {
           scope: 'DigitalVendorDashboard.loadVendorId.catch',
@@ -67,6 +76,33 @@ export default function DigitalVendorDashboard() {
 
     void loadVendorId();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !profile?.role || vendorLoading || redirectingToStandardDashboard) {
+      return;
+    }
+
+    if (profile.role === 'admin') {
+      return;
+    }
+
+    if (profile.role === 'vendeur' && vendorBusinessType && vendorBusinessType !== 'digital') {
+      setRedirectingToStandardDashboard(true);
+      toast({
+        title: 'Compte vendeur classique détecté',
+        description: 'Redirection vers le dashboard vendeur standard.',
+      });
+      navigate('/vendeur', { replace: true });
+    }
+  }, [
+    user?.id,
+    profile?.role,
+    vendorLoading,
+    vendorBusinessType,
+    redirectingToStandardDashboard,
+    toast,
+    navigate,
+  ]);
 
   const handleSignOut = useCallback(async () => {
     try {
@@ -82,6 +118,10 @@ export default function DigitalVendorDashboard() {
   const isLoading = authLoading || profileLoading || (!!user && vendorLoading);
   const { timedOut: loadingTimedOut, resetTimeout } = useLoadingTimeout(isLoading, 8000);
   const { isOnline } = useOnlineStatus();
+
+  if (redirectingToStandardDashboard) {
+    return <PageLoader text="Redirection vers le dashboard vendeur..." />;
+  }
 
   if (!isOnline) {
     return (

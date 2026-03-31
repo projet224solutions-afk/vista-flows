@@ -53,7 +53,7 @@ export default function AffiliateRedirect() {
       // Récupérer les infos du vendeur
       const { data: vendor, error: vendorError } = await supabase
         .from('vendors')
-        .select('id, business_name')
+        .select('id, user_id, business_name, business_type')
         .eq('user_id', userIdData.user_id)
         .maybeSingle();
 
@@ -72,17 +72,33 @@ export default function AffiliateRedirect() {
           : 'Découvrez nos produits'
       });
 
-      // Récupérer les produits du vendeur
-      const { data: products } = await supabase
-        .from('products')
-        .select('id')
-        .eq('vendor_id', vendor.id)
-        .eq('is_active', true)
-        .limit(1);
+      const [physicalProductsRes, digitalProductsRes] = await Promise.all([
+        supabase
+          .from('products')
+          .select('id')
+          .eq('vendor_id', vendor.id)
+          .eq('is_active', true)
+          .limit(1),
+        supabase
+          .from('digital_products')
+          .select('id')
+          .eq('status', 'published')
+          .or(`vendor_id.eq.${vendor.id},merchant_id.eq.${vendor.user_id}`)
+          .limit(1)
+      ]);
 
-      // Rediriger directement vers le produit (lien partageable)
-      if (products && products.length > 0) {
-        navigate(`/product/${products[0].id}`);
+      if (physicalProductsRes.error) throw physicalProductsRes.error;
+      if (digitalProductsRes.error) throw digitalProductsRes.error;
+
+      const firstPhysicalProduct = physicalProductsRes.data?.[0];
+      const firstDigitalProduct = digitalProductsRes.data?.[0];
+
+      if (vendor.business_type === 'digital' && firstDigitalProduct) {
+        navigate(`/digital-product/${firstDigitalProduct.id}`);
+      } else if (firstPhysicalProduct) {
+        navigate(`/product/${firstPhysicalProduct.id}`);
+      } else if (firstDigitalProduct) {
+        navigate(`/digital-product/${firstDigitalProduct.id}`);
       } else {
         navigate('/marketplace');
       }

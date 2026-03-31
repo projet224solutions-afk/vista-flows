@@ -64,6 +64,10 @@ export default function Payment() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+
+  const getDigitalSuccessRoute = (pricingType?: 'one_time' | 'subscription' | 'pay_what_you_want') => {
+    return pricingType === 'subscription' ? '/my-digital-subscriptions' : '/my-digital-purchases';
+  };
   const { toast } = useToast();
   const { currency: userCurrency } = useCurrency();
   const { convert: convertPrice, loading: converterLoading } = usePriceConverter();
@@ -941,8 +945,9 @@ export default function Payment() {
               : `${productPaymentInfo.productName} — Accès au téléchargement accordé`
           });
 
+          const successRoute = getDigitalSuccessRoute(productPaymentInfo.pricingType);
           setProductPaymentInfo(null);
-          navigate('/my-digital-purchases');
+          navigate(successRoute);
           return;
         }
 
@@ -1310,7 +1315,7 @@ export default function Payment() {
                           loadRecentTransactions();
                           if (productPaymentInfo) {
                             if (productPaymentInfo.productType === 'digital') {
-                              navigate('/my-digital-purchases');
+                              navigate(getDigitalSuccessRoute(productPaymentInfo.pricingType));
                             } else {
                               navigate('/client');
                             }

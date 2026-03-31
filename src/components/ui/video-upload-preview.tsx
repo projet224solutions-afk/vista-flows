@@ -104,7 +104,7 @@ export function VideoUploadPreview({
 
       if (!valid) {
         toast.error(
-          `La vidéo doit faire maximum ${maxDuration} secondes (actuelle: ${Math.round(videoDuration)}s)`,
+          `La vidéo doit faire maximum ${formatMaxDurationLabel(maxDuration)} (actuelle: ${formatDuration(videoDuration)})`,
           { duration: 5000 }
         );
         if (event.target) event.target.value = '';
@@ -162,6 +162,20 @@ export function VideoUploadPreview({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const formatMaxDurationLabel = (seconds: number) => {
+    if (seconds >= 3600) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      return minutes > 0 ? `${hours}h ${minutes}min` : `${hours}h`;
+    }
+
+    if (seconds >= 60) {
+      return `${Math.floor(seconds / 60)} min`;
+    }
+
+    return `${seconds}s`;
+  };
+
   return (
     <div className={cn("space-y-2", className)}>
       {label && (
@@ -169,7 +183,7 @@ export function VideoUploadPreview({
           <Video className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">{label}</span>
           <span className="text-xs text-muted-foreground">
-            (max {maxDuration}s)
+            (max {formatMaxDurationLabel(maxDuration)})
           </span>
         </div>
       )}
@@ -253,7 +267,7 @@ export function VideoUploadPreview({
                 Ajouter une vidéo
               </span>
               <span className="text-xs text-muted-foreground mt-1">
-                Maximum {maxDuration} secondes • {maxSizeMB}MB max
+                Maximum {formatMaxDurationLabel(maxDuration)} • {maxSizeMB}MB max
               </span>
             </>
           )}

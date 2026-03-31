@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ExternalLink, Eye, Star, Shield, Download, ShoppingCart, MessageCircle, Store, RefreshCw } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock3, ExternalLink, Eye, MessageCircle, PlayCircle, RefreshCw, Shield, ShoppingCart, Star, Store, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -40,11 +40,23 @@ interface DigitalProductWithVendor {
   rating: number;
   reviews_count: number;
   created_at: string;
+  metadata?: {
+    training?: {
+      instructorName?: string;
+      level?: string;
+      estimatedHours?: number | null;
+      targetAudience?: string;
+      learningGoals?: string[];
+      lessons?: Array<{ order?: number; title?: string; durationMinutes?: number }>;
+      videoMaxMinutes?: number;
+    };
+  } | null;
   pricing_type?: string | null;
   subscription_interval?: string | null;
   access_duration?: string | null;
   vendors?: {
     id: string;
+    user_id?: string;
     business_name: string;
     shop_slug?: string;
     logo_url?: string;
@@ -97,7 +109,7 @@ export default function DigitalProductDetail() {
         .from('digital_products')
         .select(`
           *,
-          vendors:vendor_id(id, business_name, shop_slug, logo_url)
+          vendors:vendor_id(id, user_id, business_name, shop_slug, logo_url)
         `)
         .eq('id', productId)
         .maybeSingle();
@@ -159,6 +171,32 @@ export default function DigitalProductDetail() {
       return;
     }
 
+    if (product.price <= 0) {
+      const { error: purchaseError } = await supabase
+        .from('digital_product_purchases')
+        .insert({
+          product_id: product.id,
+          buyer_id: user.id,
+          merchant_id: product.merchant_id,
+          amount: 0,
+          payment_status: 'completed',
+          access_granted: true,
+          download_count: 0,
+          max_downloads: 10,
+          access_expires_at: null,
+        });
+
+      if (purchaseError && !purchaseError.message?.toLowerCase().includes('duplicate')) {
+        console.error('Erreur attribution acces gratuit:', purchaseError);
+        toast.error('Impossible d\'accorder l\'acces gratuit pour le moment');
+        return;
+      }
+
+      toast.success('Acces gratuit active');
+      navigate(`/digital-purchase/${product.id}`);
+      return;
+    }
+
     // Naviguer vers la page de paiement avec les infos du produit digital
     toast.success('Redirection vers le paiement...');
     navigate('/payment', {
@@ -174,7 +212,9 @@ export default function DigitalProductDetail() {
   };
 
   const handleContact = async () => {
-    if (!product?.vendor_id) {
+    const recipientUserId = product?.vendors?.user_id || product?.merchant_id;
+
+    if (!recipientUserId) {
       toast.error('Informations du vendeur non disponibles');
       return;
     }
@@ -191,14 +231,14 @@ export default function DigitalProductDetail() {
         .from('messages')
         .insert({
           sender_id: user.id,
-          recipient_id: product.vendor_id,
+          recipient_id: recipientUserId,
           content: `Bonjour, je suis intéressé par votre produit numérique "${product.title}".`,
           type: 'text'
         });
 
       if (error) throw error;
       toast.success('Message envoyé au vendeur');
-      navigate(`/messages?recipientId=${product.vendor_id}`);
+      navigate(`/messages?recipientId=${recipientUserId}`);
     } catch (error) {
       console.error('Erreur envoi message:', error);
       toast.error('Erreur lors de l\'envoi du message');
@@ -233,9 +273,40 @@ export default function DigitalProductDetail() {
     : ['/placeholder.svg'];
 
   const vendor = product.vendors;
+  const training = product.metadata?.training;
+  const learningGoals = Array.isArray(training?.learningGoals) ? training.learningGoals.filter(Boolean) : [];
+  const curriculum = Array.isArray(training?.lessons) ? training.lessons.filter((lesson) => lesson?.title) : [];
+  const trainingTotalMinutes = curriculum.reduce((sum, lesson) => sum + (lesson.durationMinutes || 0), 0);
+  const intervalLabel = product.subscription_interval === 'yearly'
+    ? 'par an'
+    : product.subscription_interval === 'lifetime'
+      ? 'a vie'
+      : 'par mois';
+  const subscriptionLabel = product.subscription_interval === 'yearly'
+    ? 'annuel'
+    : product.subscription_interval === 'lifetime'
+      ? 'a vie'
+      : 'mensuel';
+  const accessLabelMap: Record<string, string> = {
+    lifetime: 'Acces a vie',
+    '1_year': 'Acces 1 an',
+    '6_months': 'Acces 6 mois',
+    '3_months': 'Acces 3 mois',
+    '1_month': 'Acces 1 mois',
+  };
+  const accessLabel = product.pricing_type === 'subscription'
+    ? `Facturation ${intervalLabel}`
+    : accessLabelMap[product.access_duration || 'lifetime'] || 'Acces immediat';
+  const ctaLabel = product.product_mode === 'affiliate'
+    ? "Voir l'offre"
+    : product.price > 0
+      ? product.pricing_type === 'subscription'
+        ? `S'abonner (${subscriptionLabel})`
+        : 'Acheter maintenant'
+      : 'Acceder gratuitement';
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(4,67,158,0.08),transparent_32%),linear-gradient(180deg,#f7fbff_0%,#eef4ff_42%,#f9fbff_100%)] pb-32 md:pb-24">
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="px-4 py-4 flex items-center gap-4">
@@ -255,11 +326,11 @@ export default function DigitalProductDetail() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto p-4">
-        <div className="grid md:grid-cols-2 gap-6">
+      <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_420px] lg:items-start">
           {/* Images */}
           <div className="space-y-4">
-            <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+            <div className="relative aspect-square overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
               <img
                 src={images[currentImageIndex]}
                 alt={product.title}
@@ -270,17 +341,37 @@ export default function DigitalProductDetail() {
               />
               
               {/* Badges */}
-              <div className="absolute top-3 left-3 flex flex-col gap-2">
-                <Badge className="bg-primary text-primary-foreground">
+              <div className="absolute left-3 top-3 flex max-w-[85%] flex-wrap gap-2">
+                <Badge className="border-0 bg-slate-950/85 text-white backdrop-blur">
                   {product.category}
                 </Badge>
+                {training?.level && (
+                  <Badge variant="secondary" className="bg-white/90 text-slate-800">
+                    Niveau {training.level}
+                  </Badge>
+                )}
                 {product.product_mode === 'affiliate' && (
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="bg-white/90 text-slate-800">
                     <ExternalLink className="w-3 h-3 mr-1" />
                     Affiliation
                   </Badge>
                 )}
               </div>
+
+              {curriculum.length > 0 && (
+                <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/50 bg-slate-950/70 p-4 text-white backdrop-blur">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <div>
+                      <p className="font-semibold">Programme structure</p>
+                      <p className="text-white/75">
+                        {curriculum.length} module{curriculum.length > 1 ? 's' : ''}
+                        {trainingTotalMinutes > 0 ? ` · ${Math.ceil(trainingTotalMinutes / 60)}h de contenu` : ''}
+                      </p>
+                    </div>
+                    <PlayCircle className="h-10 w-10 text-white/90" />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Thumbnails */}
@@ -290,7 +381,7 @@ export default function DigitalProductDetail() {
                   <button
                     key={idx}
                     onClick={() => setCurrentImageIndex(idx)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                    className={`aspect-square overflow-hidden rounded-2xl border-2 transition-colors ${
                       currentImageIndex === idx ? 'border-primary' : 'border-transparent hover:border-primary/50'
                     }`}
                   >
@@ -309,128 +400,242 @@ export default function DigitalProductDetail() {
           </div>
 
           {/* Info */}
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">{product.title}</h2>
-              
-              {product.short_description && (
-                <p className="text-muted-foreground mb-4">{product.short_description}</p>
-              )}
-
-              <div className="flex items-center gap-4 mb-4">
-                {isVendorOwner && (
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Eye className="w-4 h-4" />
-                    <span className="text-sm">{product.views_count || 0} vues</span>
-                  </div>
-                )}
-                {product.rating > 0 && (
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm">{product.rating.toFixed(1)}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3 mb-4">
-                {product.price > 0 ? (
-                  <>
-                    <LocalPrice 
-                      amount={product.price} 
-                      currency={product.currency || 'GNF'} 
-                      size="xl"
-                      showOriginal={true}
-                      className="text-primary"
-                    />
-                    {product.original_price && product.original_price > product.price && (
-                      <LocalPrice 
-                        amount={product.original_price} 
-                        currency={product.currency || 'GNF'} 
-                        size="md"
-                        className="text-muted-foreground line-through"
-                      />
-                    )}
-                  </>
-                ) : (
-                  <span className="text-3xl font-bold text-green-600">Gratuit</span>
-                )}
-              </div>
-
-              {/* Pricing type badge */}
-              {product.product_mode !== 'affiliate' && product.pricing_type && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {product.pricing_type === 'subscription' ? (
-                    <Badge className="bg-primary/10 text-primary border-primary/20">
-                      <RefreshCw className="w-3 h-3 mr-1" />
-                      Abonnement {product.subscription_interval === 'yearly' ? 'annuel' : product.subscription_interval === 'lifetime' ? 'à vie' : 'mensuel'}
-                    </Badge>
-                  ) : product.pricing_type === 'pay_what_you_want' ? (
-                    <Badge variant="secondary">
-                      Prix libre
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-                      Achat unique — Accès permanent
-                    </Badge>
+          <div className="space-y-5">
+            <Card className="overflow-hidden border-white/70 bg-white/90 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur">
+              <div className="space-y-5 p-5 sm:p-7">
+                <div className="flex flex-wrap items-center gap-2">
+                  {product.product_mode !== 'affiliate' && product.pricing_type && (
+                    product.pricing_type === 'subscription' ? (
+                      <Badge className="border-primary/20 bg-primary/10 text-primary">
+                        <RefreshCw className="mr-1 h-3 w-3" />
+                        Abonnement {subscriptionLabel}
+                      </Badge>
+                    ) : product.pricing_type === 'pay_what_you_want' ? (
+                      <Badge variant="secondary">Prix libre</Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-700">
+                        Achat unique
+                      </Badge>
+                    )
+                  )}
+                  <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
+                    {accessLabel}
+                  </Badge>
+                  {product.product_mode === 'affiliate' && product.commission_rate > 0 && (
+                    <Badge variant="outline">Commission {product.commission_rate}%</Badge>
                   )}
                 </div>
-              )}
 
-              {product.product_mode === 'affiliate' && product.commission_rate > 0 && (
-                <Badge variant="outline" className="mb-4">
-                  Commission: {product.commission_rate}%
-                </Badge>
-              )}
-            </div>
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{product.title}</h2>
+              
+                  {product.short_description && (
+                    <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">{product.short_description}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="rounded-2xl bg-slate-50 p-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Acces</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{accessLabel}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Format</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{product.category}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Programme</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                      {curriculum.length > 0 ? `${curriculum.length} cours` : 'Acces immediat'}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-3">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Auteur</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-slate-900">{training?.instructorName || vendor?.business_name || 'Equipe'}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-end gap-3">
+                  {product.price > 0 ? (
+                    <>
+                      <LocalPrice 
+                        amount={product.price} 
+                        currency={product.currency || 'GNF'} 
+                        size="xl"
+                        showOriginal={true}
+                        className="text-primary"
+                      />
+                      {product.original_price && product.original_price > product.price && (
+                        <LocalPrice 
+                          amount={product.original_price} 
+                          currency={product.currency || 'GNF'} 
+                          size="md"
+                          className="text-muted-foreground line-through"
+                        />
+                      )}
+                      {product.pricing_type === 'subscription' && (
+                        <span className="pb-1 text-sm text-muted-foreground">{intervalLabel}</span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-3xl font-bold text-green-600">Gratuit</span>
+                  )}
+                </div>
+
+                <div className="grid gap-3 rounded-3xl border border-slate-100 bg-slate-50/80 p-4 sm:grid-cols-3">
+                  <div className="flex items-center gap-3">
+                    <Shield className="h-9 w-9 rounded-2xl bg-white p-2 text-primary shadow-sm" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Paiement securise</p>
+                      <p className="text-xs text-slate-500">Transaction et acces proteges</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Download className="h-9 w-9 rounded-2xl bg-white p-2 text-primary shadow-sm" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Activation rapide</p>
+                      <p className="text-xs text-slate-500">Debloque juste apres paiement</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Clock3 className="h-9 w-9 rounded-2xl bg-white p-2 text-primary shadow-sm" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Videos longues</p>
+                      <p className="text-xs text-slate-500">Jusqu'a 1h par video de formation</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button onClick={handleBuy} className="h-12 flex-1 rounded-2xl text-base" size="lg">
+                    {product.product_mode === 'affiliate' ? (
+                      <>
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        {ctaLabel}
+                      </>
+                    ) : product.price > 0 ? (
+                      <>
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        {ctaLabel}
+                      </>
+                    ) : (
+                      <>
+                        <Download className="mr-2 h-4 w-4" />
+                        {ctaLabel}
+                      </>
+                    )}
+                  </Button>
+                  <Button onClick={handleContact} variant="outline" size="lg" className="h-12 rounded-2xl px-4">
+                    <MessageCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
 
             {/* Description */}
             {product.description && (
-              <div>
-                <h3 className="font-semibold mb-2">Description</h3>
-                <p className="text-muted-foreground whitespace-pre-wrap">{product.description}</p>
-              </div>
+              <Card className="rounded-[28px] border-white/70 bg-white/90 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
+                <h3 className="mb-3 text-lg font-semibold">Description</h3>
+                <p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground sm:text-base">{product.description}</p>
+              </Card>
+            )}
+
+            {(training || curriculum.length > 0) && (
+              <Card className="rounded-[28px] border-white/70 bg-white/90 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Experience de formation</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Concue pour vendre comme un programme premium avec transformation claire, acces mobile et progression guidee.
+                    </p>
+                  </div>
+                  {training?.estimatedHours ? (
+                    <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">
+                      {training.estimatedHours}h estimees
+                    </Badge>
+                  ) : null}
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <div className="rounded-3xl bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Formateur</p>
+                    <p className="mt-2 text-base font-semibold text-slate-900">{training?.instructorName || vendor?.business_name || 'Equipe formation'}</p>
+                    {training?.targetAudience && (
+                      <p className="mt-3 text-sm leading-6 text-slate-600">Pour {training.targetAudience}</p>
+                    )}
+                  </div>
+                  <div className="rounded-3xl bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Ce que l'acheteur obtient</p>
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-slate-700">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        Acces mobile et ordinateur
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-slate-700">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        Contenu long format jusqu'a 60 min par video
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-slate-700">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        Parcours concu pour la conversion et la retention
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {learningGoals.length > 0 && (
+                  <div className="mt-5">
+                    <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Objectifs d'apprentissage</h4>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      {learningGoals.map((goal, index) => (
+                        <div key={`${goal}-${index}`} className="flex gap-3 rounded-2xl border border-slate-100 bg-white p-4">
+                          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                          <p className="text-sm leading-6 text-slate-700">{goal}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {curriculum.length > 0 && (
+                  <div className="mt-5">
+                    <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Programme</h4>
+                    <div className="mt-3 space-y-3">
+                      {curriculum.map((lesson, index) => (
+                        <div key={`${lesson.title}-${index}`} className="flex items-start justify-between gap-3 rounded-2xl border border-slate-100 bg-white p-4">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900">
+                              {(lesson.order || index + 1).toString().padStart(2, '0')} · {lesson.title}
+                            </p>
+                          </div>
+                          {lesson.durationMinutes ? (
+                            <Badge variant="secondary" className="shrink-0 bg-slate-100 text-slate-700">
+                              {lesson.durationMinutes} min
+                            </Badge>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </Card>
             )}
 
             {/* Tags */}
             {product.tags && product.tags.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-2">Tags</h3>
+              <Card className="rounded-[28px] border-white/70 bg-white/90 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
+                <h3 className="mb-3 font-semibold">Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {product.tags.map((tag, idx) => (
                     <Badge key={idx} variant="secondary">{tag}</Badge>
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
-
-            {/* Actions */}
-            <div className="flex gap-3">
-              <Button onClick={handleBuy} className="flex-1" size="lg">
-                {product.product_mode === 'affiliate' ? (
-                  <>
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Voir l'offre
-                  </>
-                ) : product.price > 0 ? (
-                  <>
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    {product.pricing_type === 'subscription' ? "S'abonner" : 'Acheter'}
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4 mr-2" />
-                    Télécharger
-                  </>
-                )}
-              </Button>
-              <Button onClick={handleContact} variant="outline" size="lg">
-                <MessageCircle className="w-4 h-4" />
-              </Button>
-            </div>
 
             {/* Vendor */}
             {vendor && (
-              <Card className="p-4">
+              <Card className="rounded-[28px] border-white/70 bg-white/90 p-4 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-5">
                 <h3 className="font-semibold mb-3">Vendu par</h3>
                 <div className="flex items-center justify-between gap-3">
                   <Link
@@ -460,24 +665,36 @@ export default function DigitalProductDetail() {
               </Card>
             )}
 
-            {/* Trust badges */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
-                <Shield className="w-8 h-8 text-primary" />
-                <div>
-                  <p className="font-medium text-sm">Paiement sécurisé</p>
-                  <p className="text-xs text-muted-foreground">100% protégé</p>
+            {isVendorOwner && (
+              <Card className="rounded-[28px] border-white/70 bg-white/90 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)]">
+                <h3 className="font-semibold text-foreground">Performance</h3>
+                <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    <span>{product.views_count || 0} vues</span>
+                  </div>
+                  {product.rating > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span>{product.rating.toFixed(1)} / 5</span>
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
-                <Download className="w-8 h-8 text-primary" />
-                <div>
-                  <p className="font-medium text-sm">Accès immédiat</p>
-                  <p className="text-xs text-muted-foreground">Téléchargement direct</p>
-                </div>
-              </div>
-            </div>
+              </Card>
+            )}
           </div>
+        </div>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/70 bg-white/95 px-4 py-3 shadow-[0_-20px_40px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-6xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-900">{product.title}</p>
+            <p className="text-xs text-slate-500">{product.price > 0 ? accessLabel : 'Acces gratuit immediat'}</p>
+          </div>
+          <Button onClick={handleBuy} className="rounded-2xl px-5">
+            {ctaLabel}
+          </Button>
         </div>
       </div>
     </div>
