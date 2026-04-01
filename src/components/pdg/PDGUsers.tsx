@@ -48,24 +48,43 @@ export default function PDGUsers() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      // Charger les profils avec leur public_id standardisé
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, role, is_active, status, public_id, created_at')
-        .order('created_at', { ascending: false});
+      // Charger les profils + user_ids pour afficher un ID canonique fiable.
+      const [profilesRes, userIdsRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, role, is_active, status, public_id, custom_id, created_at')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('user_ids')
+          .select('user_id, custom_id'),
+      ]);
+
+      const { data: profiles, error } = profilesRes;
 
       if (error) throw error;
-      setUsers(profiles || []);
+
+      const canonicalByUserId = new Map(
+        (userIdsRes.data || [])
+          .filter((row: any) => row?.user_id && row?.custom_id)
+          .map((row: any) => [row.user_id, String(row.custom_id).toUpperCase()])
+      );
+
+      const normalizedProfiles = (profiles || []).map((profile: any) => ({
+        ...profile,
+        public_id: canonicalByUserId.get(profile.id) || profile.public_id || profile.custom_id || null,
+      }));
+
+      setUsers(normalizedProfiles);
 
       // Charger les services pour chaque vendeur
       // NOTE: On utilise profiles.public_id comme source unique de vérité pour les IDs
       // Plus besoin de charger vendors.vendor_code car il est désynchronisé
-      const vendorIds = profiles?.filter(p => p.role === 'vendeur').map(p => p.id) || [];
+      const vendorIds = normalizedProfiles.filter((p: any) => p.role === 'vendeur').map((p: any) => p.id) || [];
       if (vendorIds.length > 0) {
         // On utilise directement profiles.public_id, plus besoin de vendorCodes
         // Le code est gardé pour compatibilité mais on préfère public_id
         const codesMap: Record<string, string> = {};
-        profiles?.filter(p => p.role === 'vendeur').forEach(profile => {
+        normalizedProfiles.filter((p: any) => p.role === 'vendeur').forEach((profile: any) => {
           // Priorité à public_id (source unique de vérité)
           if (profile.public_id) {
             codesMap[profile.id] = profile.public_id;

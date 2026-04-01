@@ -82,13 +82,48 @@ serve(async (req) => {
 
     if (profilesError) throw profilesError;
 
+    // Source canonique des IDs: user_ids.custom_id
+    const { data: userIdsRows, error: userIdsError } = await supabaseAdmin
+      .from('user_ids')
+      .select('user_id, custom_id')
+      .in('user_id', userIds);
+
+    if (userIdsError) throw userIdsError;
+
+    const canonicalIdsByUserId = new Map(
+      (userIdsRows || [])
+        .filter((row: any) => row?.user_id && row?.custom_id)
+        .map((row: any) => [row.user_id, String(row.custom_id).toUpperCase()])
+    );
+
+    // Auto-heal: réaligner profiles.public_id/profiles.custom_id sur l'ID canonique si divergence.
+    const driftedProfiles = (profiles || []).filter((p: any) => {
+      const canonical = canonicalIdsByUserId.get(p.id);
+      if (!canonical) return false;
+      return p.public_id !== canonical || p.custom_id !== canonical;
+    });
+
+    if (driftedProfiles.length > 0) {
+      for (const profile of driftedProfiles) {
+        const canonical = canonicalIdsByUserId.get(profile.id);
+        if (!canonical) continue;
+        await supabaseAdmin
+          .from('profiles')
+          .update({ public_id: canonical, custom_id: canonical })
+          .eq('id', profile.id);
+      }
+    }
+
     const users = createdUsers?.map(cu => {
       const profile = profiles?.find(p => p.id === cu.user_id);
+      const canonicalId = canonicalIdsByUserId.get(cu.user_id);
+      const displayId = canonicalId || profile?.public_id || profile?.custom_id || '';
+
       return {
         id: cu.user_id,
-        public_id: profile?.public_id || profile?.custom_id || '',
+        public_id: displayId,
         email: profile?.email || '',
-        role: cu.user_role,
+        role: profile?.role || cu.user_role,
         first_name: profile?.first_name || '',
         last_name: profile?.last_name || '',
         phone: profile?.phone || '',

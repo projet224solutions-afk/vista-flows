@@ -60,14 +60,33 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, role, is_active, status, public_id, created_at')
-        .order('created_at', { ascending: false })
-        .limit(500);
+      const [profilesRes, userIdsRes] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email, role, is_active, status, public_id, custom_id, created_at')
+          .order('created_at', { ascending: false })
+          .limit(500),
+        supabase
+          .from('user_ids')
+          .select('user_id, custom_id'),
+      ]);
+
+      const { data: profiles, error } = profilesRes;
 
       if (error) throw error;
-      setUsers(profiles || []);
+
+      const canonicalByUserId = new Map(
+        (userIdsRes.data || [])
+          .filter((row: any) => row?.user_id && row?.custom_id)
+          .map((row: any) => [row.user_id, String(row.custom_id).toUpperCase()])
+      );
+
+      const normalizedProfiles = (profiles || []).map((profile: any) => ({
+        ...profile,
+        public_id: canonicalByUserId.get(profile.id) || profile.public_id || profile.custom_id || null,
+      }));
+
+      setUsers(normalizedProfiles);
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
       toast.error('Erreur lors du chargement');
