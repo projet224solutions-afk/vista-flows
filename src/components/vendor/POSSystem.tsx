@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePOSPersistence, clearPOSState, type POSPersistedState } from '@/hooks/usePOSPersistence';
 import { Button } from '@/components/ui/button';
@@ -591,6 +591,7 @@ export function POSSystem() {
   // État pour le modal de paiement Stripe
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [pendingStripeOrder, setPendingStripeOrder] = useState<{id: string, order_number: string} | null>(null);
+  const skipStripeCancelOnCloseRef = useRef(false);
   
   // États pour personnalisation - Récupérer le nom de l'entreprise depuis le profil vendor
   const { profile: vendorProfile } = useVendorOptimized();
@@ -1447,6 +1448,7 @@ export function POSSystem() {
           await supabase.from('order_items').insert(orderItems);
 
           // Sauvegarder la commande et ouvrir le modal Stripe
+          skipStripeCancelOnCloseRef.current = false;
           setPendingStripeOrder({ id: order.id, order_number: order.order_number || order.id.substring(0, 8).toUpperCase() });
           setShowStripeModal(true);
           setShowOrderSummary(false);
@@ -2851,6 +2853,13 @@ export function POSSystem() {
           isOpen={showStripeModal}
           onClose={() => {
             setShowStripeModal(false);
+
+            if (skipStripeCancelOnCloseRef.current) {
+              skipStripeCancelOnCloseRef.current = false;
+              setPendingStripeOrder(null);
+              return;
+            }
+
             // Annuler la commande si le modal est fermé sans paiement
             if (pendingStripeOrder) {
               supabase.from('orders')
@@ -2862,7 +2871,7 @@ export function POSSystem() {
           amount={total}
           currency="GNF"
           orderId={pendingStripeOrder.id}
-          sellerId={vendorId}
+          sellerId={vendorUserId || vendorId}
           description={`Vente POS - ${cart.length} article(s)`}
           onSuccess={async (paymentIntentId) => {
             // Paiement réussi - POS orders are completed immediately (no delivery needed)
@@ -2876,6 +2885,7 @@ export function POSSystem() {
               });
               if (updateError) throw updateError;
 
+              skipStripeCancelOnCloseRef.current = true;
               setLastOrderNumber(pendingStripeOrder.order_number);
               setShowStripeModal(false);
               setPendingStripeOrder(null);

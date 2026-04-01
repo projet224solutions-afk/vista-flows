@@ -78,7 +78,7 @@ serve(async (req) => {
       throw new Error("Seller ID requis");
     }
 
-    // Résoudre le sellerId - il peut être un user_id UUID ou un public_id/custom_id
+    // Résoudre le sellerId - il peut être un profiles.id, vendors.id, public_id ou custom_id
     let sellerId = rawSellerId;
     
     // Créer un client admin pour les opérations DB
@@ -87,9 +87,38 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Si ce n'est pas un UUID valide, chercher par public_id ou custom_id
+    // Si UUID: vérifier profiles.id, sinon tenter vendors.id -> user_id
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(rawSellerId)) {
+    if (uuidRegex.test(rawSellerId)) {
+      const { data: profileById, error: profileByIdError } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('id', rawSellerId)
+        .maybeSingle();
+
+      if (profileByIdError) {
+        logStep("Error checking seller profile by UUID", { error: profileByIdError.message });
+      }
+
+      if (!profileById) {
+        const { data: vendorById, error: vendorByIdError } = await supabaseAdmin
+          .from('vendors')
+          .select('user_id')
+          .eq('id', rawSellerId)
+          .maybeSingle();
+
+        if (vendorByIdError) {
+          logStep("Error resolving vendor UUID to user_id", { error: vendorByIdError.message });
+        }
+
+        if (!vendorById?.user_id) {
+          throw new Error("Vendeur introuvable ou non lié à un profil utilisateur");
+        }
+
+        sellerId = vendorById.user_id;
+        logStep("Seller resolved from vendor UUID", { originalId: rawSellerId, resolvedId: sellerId });
+      }
+    } else {
       logStep("Resolving seller by public_id/custom_id", { rawSellerId });
       
       const normalizedId = rawSellerId.trim().toUpperCase();
