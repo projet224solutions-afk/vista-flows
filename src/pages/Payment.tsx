@@ -263,7 +263,7 @@ export default function Payment() {
       const vendorTotal = typedItems.reduce((sum: number, item: any) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
       const result = await createOrderForVendor({
         vendorId,
-        items,
+        items: typedItems,
         totalAmount: vendorTotal,
         paymentMethod,
         externalPaymentId,
