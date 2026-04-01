@@ -259,7 +259,8 @@ export default function Payment() {
     const results: Array<{ orderId: string; orderNumber: string }> = [];
 
     for (const [vendorId, items] of vendorEntries) {
-      const vendorTotal = items.reduce((sum: number, item: any) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+      const typedItems = items as any[];
+      const vendorTotal = typedItems.reduce((sum: number, item: any) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
       const result = await createOrderForVendor({
         vendorId,
         items,
