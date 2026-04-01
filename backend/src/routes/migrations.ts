@@ -50,14 +50,18 @@ router.post(
 
       // Step 2: Try to add column via RPC (if exec_sql exists)
       console.log("Adding type_agent column...");
-      const { error: addError } = await supabase
-        .rpc("exec_sql", {
+      let addError: { message?: string } | null = null;
+      try {
+        const addResponse = await supabase.rpc("exec_sql", {
           sql_string: `
         ALTER TABLE public.agents_management
         ADD COLUMN IF NOT EXISTS type_agent TEXT DEFAULT 'principal';
       `,
-        })
-        .catch(() => ({ error: null })); // Ignore if RPC doesn't exist
+        });
+        addError = addResponse.error as { message?: string } | null;
+      } catch {
+        addError = null;
+      }
 
       // Step 3: Update existing rows
       console.log("Updating existing agents...");
@@ -72,8 +76,8 @@ router.post(
 
       // Step 4: Try to add constraint
       console.log("Adding CHECK constraint...");
-      await supabase
-        .rpc("exec_sql", {
+      try {
+        await supabase.rpc("exec_sql", {
           sql_string: `
         ALTER TABLE public.agents_management
         DROP CONSTRAINT IF EXISTS agents_management_type_agent_check;
@@ -82,8 +86,10 @@ router.post(
         ADD CONSTRAINT agents_management_type_agent_check
         CHECK (type_agent IN ('principal', 'sous_agent', 'agent_regional', 'agent_local'));
       `,
-        })
-        .catch(() => ({ error: null }));
+        });
+      } catch {
+        // Ignore if RPC is unavailable on this environment.
+      }
 
       // Step 5: Verify migration
       console.log("Verifying migration...");

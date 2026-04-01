@@ -58,13 +58,15 @@ async function isMigrationApplied(name: string): Promise<boolean> {
 }
 
 async function recordMigration(name: string): Promise<void> {
-  await supabase.from("schema_migrations").insert({
+  const { error } = await supabase.from("schema_migrations").insert({
     version: name,
     hash: "",
     executed_at: new Date().toISOString(),
-  }).catch((err) => {
-    console.warn(`⚠️ Could not record migration: ${err.message}`);
   });
+
+  if (error) {
+    console.warn(`⚠️ Could not record migration: ${error.message}`);
+  }
 }
 
 async function executeSql(sql: string): Promise<void> {
@@ -76,12 +78,15 @@ async function executeSql(sql: string): Promise<void> {
 
   for (const statement of statements) {
     try {
-      const { error } = await supabase.rpc("exec_sql", {
-        sql_string: statement,
-      }).catch(() => {
-        // If exec_sql RPC doesn't exist, try with query
-        return { error: { message: "RPC not available" } };
-      });
+      let error: { message?: string } | null = null;
+      try {
+        const response = await supabase.rpc("exec_sql", {
+          sql_string: statement,
+        });
+        error = response.error as { message?: string } | null;
+      } catch {
+        error = { message: "RPC not available" };
+      }
 
       if (error && error.message !== "RPC not available") {
         throw new Error(error.message);
@@ -110,36 +115,19 @@ async function executeMigration(migrationFile: MigrationFile): Promise<boolean> 
     const sql = fs.readFileSync(migrationFile.path, "utf-8");
 
     // For direct SQL execution without RPC
-    const { error } = await supabase.rpc("exec_sql", {
-      sql_string: sql,
-    }).catch(async () => {
-      // Alternative: Try manual SQL execution via SQL query
-      // This requires a helper function in the database
-      console.warn(
-        "⚠️ RPC approach failed. Attempting direct database execution..."
-      );
+    let rpcError: unknown = null;
+    try {
+      const response = await supabase.rpc("exec_sql", {
+        sql_string: sql,
+      });
+      rpcError = response.error;
+    } catch (e) {
+      rpcError = e;
+    }
 
-      // Split and execute statements
-      const statements = sql
-        .split(";")
-        .map((stmt) => stmt.trim())
-        .filter((stmt) => stmt.length > 0 && !stmt.startsWith("--"));
-
-      for (const stmt of statements) {
-        try {
-          // Try to execute via a generic query
-          await supabase.from("information_schema.columns").select("*").limit(1);
-        } catch (e) {
-          console.error(`Failed to execute: ${stmt}`);
-          return { error: e };
-        }
-      }
-
-      return { error: null };
-    });
-
-    if (error) {
-      throw error;
+    if (rpcError) {
+      console.warn("⚠️ RPC approach failed. Attempting statement-by-statement execution...");
+      await executeSql(sql);
     }
 
     await recordMigration(migrationFile.name);
