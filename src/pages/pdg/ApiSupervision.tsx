@@ -24,6 +24,7 @@ import AddApiModal from '@/components/pdg/AddApiModal';
 import ApiAnalytics from '@/components/pdg/ApiAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import { backendFetch } from '@/services/backendApi';
+import { backendConfig } from '@/config/backend';
 
 interface CoreFeatureHealth24h {
   lastStatus: 'success' | 'degraded' | 'failure' | null;
@@ -68,6 +69,17 @@ export default function ApiSupervision() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [coreFeatures, setCoreFeatures] = useState<CoreFeatureRegistryRow[]>([]);
   const [coreFeaturesLoading, setCoreFeaturesLoading] = useState(false);
+  const [backendHealth, setBackendHealth] = useState<'ok' | 'error' | 'pending'>('pending');
+
+  const checkBackendHealth = async () => {
+    setBackendHealth('pending');
+    try {
+      const response = await fetch(`${backendConfig.baseUrl}/health`, { method: 'GET' });
+      setBackendHealth(response.ok ? 'ok' : 'error');
+    } catch {
+      setBackendHealth('error');
+    }
+  };
 
   const loadCoreSupervision = async () => {
     setCoreFeaturesLoading(true);
@@ -129,6 +141,7 @@ export default function ApiSupervision() {
 
   useEffect(() => {
     loadData();
+    checkBackendHealth();
     
     // Actualiser toutes les 30 secondes
     const interval = setInterval(loadData, 30000);
@@ -205,6 +218,18 @@ export default function ApiSupervision() {
               <p className="text-muted-foreground mt-1">
                 Monitoring intelligent avec 224Guard
               </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                <Badge variant="outline">Backend: {backendConfig.baseUrl || 'relative / same-origin'}</Badge>
+                <Badge className={
+                  backendHealth === 'ok'
+                    ? 'bg-green-600 text-white'
+                    : backendHealth === 'error'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-yellow-500 text-white'
+                }>
+                  Santé backend: {backendHealth}
+                </Badge>
+              </div>
             </div>
           </div>
           <div className="flex gap-3">
@@ -215,6 +240,14 @@ export default function ApiSupervision() {
             >
               <RefreshCw className="h-4 w-4" />
               Actualiser
+            </Button>
+            <Button
+              onClick={checkBackendHealth}
+              variant="outline"
+              className="gap-2"
+            >
+              <Activity className="h-4 w-4" />
+              Tester backend
             </Button>
             <Button
               className="gap-2"
