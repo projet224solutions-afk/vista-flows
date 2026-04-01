@@ -29,6 +29,7 @@ import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isFxSuccessStatus(status: string | null | undefined): boolean {
   const normalized = (status || '').toLowerCase();
@@ -46,6 +47,63 @@ async function requireValidTransactionPin(userId: string, pin: unknown): Promise
   }
 
   return { ok: true };
+}
+
+async function resolveRecipientUserId(rawRecipient: string): Promise<string | null> {
+  const candidate = String(rawRecipient || '').trim();
+  if (!candidate) return null;
+
+  if (UUID_REGEX.test(candidate)) {
+    return candidate;
+  }
+
+  const normalizedId = candidate.toUpperCase();
+
+  const { data: fromUserIds } = await supabaseAdmin
+    .from('user_ids')
+    .select('user_id')
+    .eq('custom_id', normalizedId)
+    .maybeSingle();
+
+  if (fromUserIds?.user_id) {
+    return fromUserIds.user_id;
+  }
+
+  const { data: fromProfileIds } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .or(`public_id.eq.${normalizedId},custom_id.eq.${normalizedId}`)
+    .maybeSingle();
+
+  if (fromProfileIds?.id) {
+    return fromProfileIds.id;
+  }
+
+  const normalizedEmail = candidate.toLowerCase();
+  if (normalizedEmail.includes('@')) {
+    const { data: fromEmail } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
+    if (fromEmail?.id) {
+      return fromEmail.id;
+    }
+  }
+
+  const normalizedPhone = candidate.replace(/\s+/g, '');
+  const { data: fromPhone } = await supabaseAdmin
+    .from('profiles')
+    .select('id')
+    .eq('phone', normalizedPhone)
+    .maybeSingle();
+
+  if (fromPhone?.id) {
+    return fromPhone.id;
+  }
+
+  return null;
 }
 
 /**
@@ -198,13 +256,14 @@ router.get('/pin/status', verifyJWT, async (req: AuthenticatedRequest, res: Resp
 
 router.post('/pin/setup', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { pin, confirm_pin } = req.body || {};
+    const { pin, confirm_pin, confirmPin } = req.body || {};
+    const confirmPinValue = confirm_pin ?? confirmPin;
 
-    if (typeof pin !== 'string' || typeof confirm_pin !== 'string') {
+    if (typeof pin !== 'string' || typeof confirmPinValue !== 'string') {
       res.status(400).json({ success: false, error: 'pin et confirm_pin requis' });
       return;
     }
-    if (pin !== confirm_pin) {
+    if (pin !== confirmPinValue) {
       res.status(400).json({ success: false, error: 'Les deux codes PIN ne correspondent pas' });
       return;
     }
@@ -219,18 +278,21 @@ router.post('/pin/setup', verifyJWT, async (req: AuthenticatedRequest, res: Resp
 
 router.post('/pin/change', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { current_pin, new_pin, confirm_pin } = req.body || {};
+    const { current_pin, new_pin, confirm_pin, currentPin, newPin, confirmPin } = req.body || {};
+    const currentPinValue = current_pin ?? currentPin;
+    const newPinValue = new_pin ?? newPin;
+    const confirmPinValue = confirm_pin ?? confirmPin;
 
-    if (typeof current_pin !== 'string' || typeof new_pin !== 'string' || typeof confirm_pin !== 'string') {
+    if (typeof currentPinValue !== 'string' || typeof newPinValue !== 'string' || typeof confirmPinValue !== 'string') {
       res.status(400).json({ success: false, error: 'current_pin, new_pin et confirm_pin requis' });
       return;
     }
-    if (new_pin !== confirm_pin) {
+    if (newPinValue !== confirmPinValue) {
       res.status(400).json({ success: false, error: 'Le nouveau code PIN et sa confirmation ne correspondent pas' });
       return;
     }
 
-    await changeWalletPin(req.user!.id, current_pin, new_pin);
+    await changeWalletPin(req.user!.id, currentPinValue, newPinValue);
     res.json({ success: true, message: 'Code PIN modifié avec succès' });
   } catch (error: any) {
     logger.error(`Wallet pin change error: ${error.message}`);
@@ -411,7 +473,14 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       res.status(400).json({ success: false, error: 'recipient_id requis' });
       return;
     }
-    if (recipient_id === senderId) {
+
+    const resolvedRecipientId = await resolveRecipientUserId(recipient_id);
+    if (!resolvedRecipientId) {
+      res.status(404).json({ success: false, error: 'Destinataire introuvable (UUID, ID public, email ou téléphone)' });
+      return;
+    }
+
+    if (resolvedRecipientId === senderId) {
       res.status(400).json({ success: false, error: 'Transfert vers soi-même non autorisé' });
       return;
     }
@@ -425,7 +494,7 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
         criticality: 'critical',
         status: 'failure',
         userId: senderId,
-        payload: { amount, recipient_id, reason: pinCheck.error || 'pin_invalid' },
+        payload: { amount, recipient_id, resolved_recipient_id: resolvedRecipientId, reason: pinCheck.error || 'pin_invalid' },
       });
       res.status(403).json({ success: false, error: pinCheck.error, locked_until: pinCheck.lockedUntil || null });
       return;
@@ -435,14 +504,14 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
     let { data: recipient } = await supabaseAdmin
       .from('wallets')
       .select('user_id')
-      .eq('user_id', recipient_id)
+      .eq('user_id', resolvedRecipientId)
       .maybeSingle();
 
     if (!recipient) {
       // Auto-initialiser le wallet destinataire pour éviter les échecs sur comptes PDG/agent nouvellement créés
       const { error: initError } = await supabaseAdmin
         .from('wallets')
-        .insert({ user_id: recipient_id })
+        .insert({ user_id: resolvedRecipientId })
         .select('user_id')
         .single();
 
@@ -451,12 +520,12 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
         return;
       }
 
-      recipient = { user_id: recipient_id } as any;
+      recipient = { user_id: resolvedRecipientId } as any;
     }
 
-    const idemKey = idempotency_key || `transfer:${senderId}:${recipient_id}:${amount}:${crypto.randomBytes(8).toString('hex')}`;
+    const idemKey = idempotency_key || `transfer:${senderId}:${resolvedRecipientId}:${amount}:${crypto.randomBytes(8).toString('hex')}`;
 
-    const result = await transferBetweenWallets(senderId, recipient_id, amount, description || 'Transfert', idemKey);
+    const result = await transferBetweenWallets(senderId, resolvedRecipientId, amount, description || 'Transfert', idemKey);
 
     if (!result.success) {
       await emitCoreFeatureEvent({
@@ -466,7 +535,7 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
         criticality: 'critical',
         status: 'failure',
         userId: senderId,
-        payload: { amount, recipient_id, error: result.error || 'transfer_failed' },
+        payload: { amount, recipient_id, resolved_recipient_id: resolvedRecipientId, error: result.error || 'transfer_failed' },
       });
       const statusCode = result.error === 'Solde insuffisant' ? 402
         : result.error?.includes('bloqué') ? 403
@@ -475,7 +544,7 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       return;
     }
 
-    logger.info(`[WalletV2] Transfer: sender=${senderId}, receiver=${recipient_id}, amount=${amount}`);
+    logger.info(`[WalletV2] Transfer: sender=${senderId}, receiver=${resolvedRecipientId}, amount=${amount}`);
     await emitCoreFeatureEvent({
       featureKey: 'wallet.transfer',
       coreEngine: 'payment',
@@ -483,7 +552,7 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       criticality: 'critical',
       status: 'success',
       userId: senderId,
-      payload: { amount, recipient_id },
+      payload: { amount, recipient_id, resolved_recipient_id: resolvedRecipientId },
     });
     res.json({ success: true, transaction_id: result.transactionId, operation: 'transfer' });
   } catch (error: any) {

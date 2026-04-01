@@ -64,6 +64,8 @@ const EXTERNAL_TABS: Record<string, string> = {
   'copilot-dashboard': '/pdg/copilot',
 };
 
+const PDG_TAB_STORAGE_KEY = 'pdg_active_tab';
+
 export default function PDG224Solutions() {
   const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -79,7 +81,9 @@ export default function PDG224Solutions() {
   const [sendingMfa, setSendingMfa] = useState(false);
   const [showMfaDialog, setShowMfaDialog] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem(PDG_TAB_STORAGE_KEY) || 'dashboard';
+  });
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [updatingEmail, setUpdatingEmail] = useState(false);
@@ -88,6 +92,11 @@ export default function PDG224Solutions() {
   const { error, clearError } = usePDGErrorBoundary();
   const { aiActive } = usePDGAIAssistant();
 
+  const setActiveTabPersisted = useCallback((tab: string) => {
+    setActiveTab(tab);
+    sessionStorage.setItem(PDG_TAB_STORAGE_KEY, tab);
+  }, []);
+
   const handleTabChange = useCallback((tab: string) => {
     // Redirect to external pages for certain tabs
     const externalUrl = EXTERNAL_TABS[tab];
@@ -95,8 +104,8 @@ export default function PDG224Solutions() {
       navigate(externalUrl);
       return;
     }
-    setActiveTab(tab);
-  }, [navigate]);
+    setActiveTabPersisted(tab);
+  }, [navigate, setActiveTabPersisted]);
 
   const loadFxCriticalAlerts = useCallback(async () => {
     try {
@@ -405,7 +414,7 @@ export default function PDG224Solutions() {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => setActiveTab('banking')}
+                    onClick={() => setActiveTabPersisted('banking')}
                     className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                   >
                     <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -484,7 +493,7 @@ export default function PDG224Solutions() {
               </div>
             }>
               {activeTab === 'dashboard' && (
-                <ErrorBoundary><PDGDashboardHome onNavigate={setActiveTab} /></ErrorBoundary>
+                <ErrorBoundary><PDGDashboardHome onNavigate={setActiveTabPersisted} /></ErrorBoundary>
               )}
               {activeTab === 'finance' && (
                 <ErrorBoundary><PDGFinance /></ErrorBoundary>
