@@ -40,7 +40,15 @@ import StripeWalletTopup from './StripeWalletTopup';
 import PayPalInlineDeposit from './PayPalInlineDeposit';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
-import { depositToWallet, transferToWallet, withdrawFromWallet } from '@/services/walletBackendService';
+import {
+  changeWalletPin,
+  depositToWallet,
+  getWalletPinStatus,
+  setupWalletPin,
+  transferToWallet,
+  withdrawFromWallet,
+} from '@/services/walletBackendService';
+import { WalletPinPromptDialog, WalletPinSetupDialog } from './WalletPinDialogs';
 
 interface UniversalWalletTransactionsProps {
   userId?: string;
@@ -120,14 +128,45 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   const [intlPreview, setIntlPreview] = useState<InternationalPreviewData | null>(null);
   const [showIntlConfirm, setShowIntlConfirm] = useState(false);
   const [intlExecuting, setIntlExecuting] = useState(false);
+  const [pinStatus, setPinStatus] = useState<{ pin_enabled: boolean; pin_locked_until: string | null } | null>(null);
+  const [pinAction, setPinAction] = useState<'withdraw' | 'transfer' | 'intl-transfer' | null>(null);
+  const [pinPromptOpen, setPinPromptOpen] = useState(false);
+  const [pinSetupOpen, setPinSetupOpen] = useState(false);
+  const [pinSetupMode, setPinSetupMode] = useState<'setup' | 'change'>('setup');
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
 
   useEffect(() => {
     if (effectiveUserId) {
       checkIfAgent();
+      void loadPinStatus();
     } else {
       setLoading(false);
     }
   }, [effectiveUserId]);
+
+  const loadPinStatus = async () => {
+    const response = await getWalletPinStatus();
+    if (response.success && response.data) {
+      setPinStatus({
+        pin_enabled: response.data.pin_enabled,
+        pin_locked_until: response.data.pin_locked_until,
+      });
+    }
+  };
+
+  const requestTransactionPin = (action: 'withdraw' | 'transfer' | 'intl-transfer') => {
+    setPinError(null);
+
+    if (!pinStatus?.pin_enabled) {
+      setPinSetupMode('setup');
+      setPinSetupOpen(true);
+      return;
+    }
+
+    setPinAction(action);
+    setPinPromptOpen(true);
+  };
 
   const checkIfAgent = async () => {
     if (!effectiveUserId) return;
@@ -667,7 +706,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }, 5000);
   };
 
-  const handleWithdraw = async () => {
+  const executeWithdraw = async (pin: string) => {
     if (!effectiveUserId || !withdrawAmount) {
       toast.error('Veuillez entrer un montant');
       return;
@@ -783,7 +822,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
       // Fallback robuste: retrait interne wallet via backend v2
       try {
-        const fallback = await withdrawFromWallet(amount, `Retrait wallet (${withdrawMethod})`);
+        const fallback = await withdrawFromWallet(amount, `Retrait wallet (${withdrawMethod})`, pin);
         if (fallback.success) {
           toast.success(`Retrait ${formatPrice(amount)} effectué via fallback backend`);
           setWithdrawAmount('');
@@ -803,6 +842,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleWithdraw = async () => {
+    if (!effectiveUserId || !withdrawAmount) {
+      toast.error('Veuillez entrer un montant');
+      return;
+    }
+
+    requestTransactionPin('withdraw');
   };
 
   const handlePreviewTransfer = async () => {
@@ -1059,7 +1107,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
   };
 
-  const handleConfirmTransfer = async () => {
+  const executeConfirmTransfer = async (pin: string) => {
     console.log('🔵 handleConfirmTransfer appelé', { 
       userId: user?.id, 
       effectiveUserId,
@@ -1195,7 +1243,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         const result = await transferToWallet(
           transferPreview.recipient_uuid,
           transferPreview.amount,
-          transferDescription || 'Transfert wallet'
+          transferDescription || 'Transfert wallet',
+          pin
         );
         if (!result.success) {
           throw new Error(result.error || 'Erreur lors du transfert');
@@ -1225,7 +1274,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     }
   };
 
-  const handleIntlConfirmTransfer = async () => {
+  const handleConfirmTransfer = async () => {
+    requestTransactionPin('transfer');
+  };
+
+  const executeIntlConfirmTransfer = async (pin: string) => {
     if (!effectiveUserId || !intlPreview) return;
     setIntlExecuting(true);
     try {
@@ -1233,7 +1286,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       const result = await transferToWallet(
         receiverId,
         intlPreview.amount_sent,
-        transferDescription || 'Transfert international wallet'
+        transferDescription || 'Transfert international wallet',
+        pin
       );
       if (!result.success) throw new Error(result.error || 'Erreur lors du transfert');
 
@@ -1253,6 +1307,60 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       toast.error(error.message || 'Erreur lors du transfert international');
     } finally {
       setIntlExecuting(false);
+    }
+  };
+
+  const handleIntlConfirmTransfer = async () => {
+    requestTransactionPin('intl-transfer');
+  };
+
+  const handlePinConfirm = async (pin: string) => {
+    try {
+      setPinLoading(true);
+      setPinError(null);
+
+      if (pinAction === 'withdraw') {
+        await executeWithdraw(pin);
+      }
+
+      if (pinAction === 'transfer') {
+        setPinPromptOpen(false);
+        await executeConfirmTransfer(pin);
+      }
+
+      if (pinAction === 'intl-transfer') {
+        setPinPromptOpen(false);
+        await executeIntlConfirmTransfer(pin);
+      }
+    } catch (error: any) {
+      setPinError(error?.message || 'Erreur de validation du code PIN');
+    } finally {
+      setPinLoading(false);
+      setPinAction(null);
+      await loadPinStatus();
+    }
+  };
+
+  const handlePinSetup = async ({ currentPin, pin, confirmPin }: { currentPin?: string; pin: string; confirmPin: string }) => {
+    try {
+      setPinLoading(true);
+      setPinError(null);
+
+      const response = pinSetupMode === 'change'
+        ? await changeWalletPin(currentPin || '', pin, confirmPin)
+        : await setupWalletPin(pin, confirmPin);
+
+      if (!response.success) {
+        throw new Error(response.error || 'Erreur configuration code PIN');
+      }
+
+      toast.success(pinSetupMode === 'change' ? 'Code PIN modifié' : 'Code PIN activé');
+      setPinSetupOpen(false);
+      await loadPinStatus();
+    } catch (error: any) {
+      setPinError(error?.message || 'Erreur configuration code PIN');
+    } finally {
+      setPinLoading(false);
     }
   };
 
@@ -1357,6 +1465,25 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           <p className="text-2xl sm:text-3xl font-bold">
             {wallet ? formatWalletBalance(wallet.balance) : 'Chargement...'}
           </p>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-3 py-2">
+          <div className="text-xs sm:text-sm text-muted-foreground">
+            {pinStatus?.pin_enabled ? 'Code PIN actif pour retraits et transferts' : 'Code PIN non configuré'}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setPinSetupMode(pinStatus?.pin_enabled ? 'change' : 'setup');
+              setPinError(null);
+              setPinSetupOpen(true);
+            }}
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            {pinStatus?.pin_enabled ? 'Modifier PIN' : 'Activer PIN'}
+          </Button>
         </div>
 
         {/* Boutons d'actions - optimisés mobile */}
@@ -1948,6 +2075,23 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           preview={intlPreview}
           onConfirm={handleIntlConfirmTransfer}
           loading={intlExecuting}
+        />
+
+        <WalletPinPromptDialog
+          open={pinPromptOpen}
+          onOpenChange={setPinPromptOpen}
+          loading={pinLoading}
+          error={pinError}
+          onConfirm={handlePinConfirm}
+        />
+
+        <WalletPinSetupDialog
+          open={pinSetupOpen}
+          onOpenChange={setPinSetupOpen}
+          mode={pinSetupMode}
+          loading={pinLoading}
+          error={pinError}
+          onSubmit={handlePinSetup}
         />
 
         {/* Historique des transactions - optimisé mobile */}

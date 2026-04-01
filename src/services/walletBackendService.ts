@@ -40,10 +40,26 @@ export interface WalletStatus {
   blocked_reason: string | null;
   blocked_at: string | null;
   biometric_enabled: boolean;
+  pin_enabled?: boolean;
+  pin_failed_attempts?: number;
+  pin_locked_until?: string | null;
+  pin_updated_at?: string | null;
   daily_limit: number;
   monthly_limit: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface WalletPinStatus {
+  pin_enabled: boolean;
+  pin_failed_attempts: number;
+  pin_locked_until: string | null;
+  pin_updated_at: string | null;
+  policy: {
+    pinLength: number;
+    maxFailedAttempts: number;
+    lockoutMinutes: number;
+  };
 }
 
 export interface WalletOperationResult {
@@ -126,12 +142,13 @@ export async function depositToWallet(
  */
 export async function withdrawFromWallet(
   amount: number,
-  description?: string
+  description?: string,
+  pin?: string
 ): Promise<WalletOperationResult> {
   const idempotencyKey = generateIdempotencyKey();
   const result = await backendFetch<WalletOperationResult>('/api/v2/wallet/withdraw', {
     method: 'POST',
-    body: { amount, description, idempotency_key: idempotencyKey },
+    body: { amount, description, pin, idempotency_key: idempotencyKey },
     idempotencyKey,
   });
 
@@ -147,7 +164,8 @@ export async function withdrawFromWallet(
 export async function transferToWallet(
   recipientId: string,
   amount: number,
-  description?: string
+  description?: string,
+  pin?: string
 ): Promise<WalletOperationResult> {
   const idempotencyKey = generateIdempotencyKey();
   const result = await backendFetch<WalletOperationResult>('/api/v2/wallet/transfer', {
@@ -156,6 +174,7 @@ export async function transferToWallet(
       amount,
       recipient_id: recipientId,
       description,
+      pin,
       idempotency_key: idempotencyKey,
     },
     idempotencyKey,
@@ -185,4 +204,29 @@ export async function adminCreditWallet(
     return { success: false, error: result.error || 'Erreur lors du crédit' };
   }
   return { success: true, new_balance: result.data?.new_balance, operation: 'admin_credit' };
+}
+
+export async function getWalletPinStatus(signal?: AbortSignal) {
+  return backendFetch<WalletPinStatus>('/api/v2/wallet/pin/status', {
+    method: 'GET',
+    signal,
+  });
+}
+
+export async function setupWalletPin(pin: string, confirmPin: string) {
+  return backendFetch<{ message: string }>('/api/v2/wallet/pin/setup', {
+    method: 'POST',
+    body: { pin, confirm_pin: confirmPin },
+  });
+}
+
+export async function changeWalletPin(currentPin: string, newPin: string, confirmPin: string) {
+  return backendFetch<{ message: string }>('/api/v2/wallet/pin/change', {
+    method: 'POST',
+    body: {
+      current_pin: currentPin,
+      new_pin: newPin,
+      confirm_pin: confirmPin,
+    },
+  });
 }

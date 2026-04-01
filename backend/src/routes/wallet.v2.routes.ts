@@ -24,6 +24,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { creditWallet, debitWallet, transferBetweenWallets } from '../services/wallet.service.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
+import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalletPinState, setupWalletPin, verifyWalletPin } from '../services/walletPin.service.js';
 
 const router = Router();
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -31,6 +32,19 @@ const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
 function isFxSuccessStatus(status: string | null | undefined): boolean {
   const normalized = (status || '').toLowerCase();
   return normalized === 'success' || normalized === 'completed' || normalized === 'ok';
+}
+
+async function requireValidTransactionPin(userId: string, pin: unknown): Promise<{ ok: boolean; error?: string; lockedUntil?: string | null }> {
+  if (typeof pin !== 'string') {
+    return { ok: false, error: 'Code PIN requis pour confirmer cette opération' };
+  }
+
+  const verification = await verifyWalletPin(userId, pin);
+  if (!verification.valid) {
+    return { ok: false, error: verification.error, lockedUntil: verification.lockedUntil };
+  }
+
+  return { ok: true };
 }
 
 /**
@@ -144,7 +158,7 @@ router.get('/status', verifyJWT, async (req: AuthenticatedRequest, res: Response
   try {
     const { data, error } = await supabaseAdmin
       .from('wallets')
-      .select('id, balance, currency, wallet_status, is_blocked, blocked_reason, blocked_at, biometric_enabled, daily_limit, monthly_limit, created_at, updated_at')
+      .select('id, balance, currency, wallet_status, is_blocked, blocked_reason, blocked_at, biometric_enabled, daily_limit, monthly_limit, created_at, updated_at, pin_enabled, pin_failed_attempts, pin_locked_until, pin_updated_at')
       .eq('user_id', req.user!.id)
       .maybeSingle();
 
@@ -159,6 +173,67 @@ router.get('/status', verifyJWT, async (req: AuthenticatedRequest, res: Response
   } catch (error: any) {
     logger.error(`Wallet status error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
+  }
+});
+
+router.get('/pin/status', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const wallet = await ensureWalletExistsForPin(req.user!.id);
+    res.json({
+      success: true,
+      data: {
+        pin_enabled: Boolean(wallet?.pin_enabled),
+        pin_failed_attempts: Number(wallet?.pin_failed_attempts || 0),
+        pin_locked_until: wallet?.pin_locked_until || null,
+        pin_updated_at: wallet?.pin_updated_at || null,
+        policy: getWalletPinPolicy(),
+      },
+    });
+  } catch (error: any) {
+    logger.error(`Wallet pin status error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors du chargement du statut PIN' });
+  }
+});
+
+router.post('/pin/setup', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { pin, confirm_pin } = req.body || {};
+
+    if (typeof pin !== 'string' || typeof confirm_pin !== 'string') {
+      res.status(400).json({ success: false, error: 'pin et confirm_pin requis' });
+      return;
+    }
+    if (pin !== confirm_pin) {
+      res.status(400).json({ success: false, error: 'Les deux codes PIN ne correspondent pas' });
+      return;
+    }
+
+    await setupWalletPin(req.user!.id, pin);
+    res.json({ success: true, message: 'Code PIN configuré avec succès' });
+  } catch (error: any) {
+    logger.error(`Wallet pin setup error: ${error.message}`);
+    res.status(400).json({ success: false, error: error.message || 'Erreur lors de la configuration du code PIN' });
+  }
+});
+
+router.post('/pin/change', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { current_pin, new_pin, confirm_pin } = req.body || {};
+
+    if (typeof current_pin !== 'string' || typeof new_pin !== 'string' || typeof confirm_pin !== 'string') {
+      res.status(400).json({ success: false, error: 'current_pin, new_pin et confirm_pin requis' });
+      return;
+    }
+    if (new_pin !== confirm_pin) {
+      res.status(400).json({ success: false, error: 'Le nouveau code PIN et sa confirmation ne correspondent pas' });
+      return;
+    }
+
+    await changeWalletPin(req.user!.id, current_pin, new_pin);
+    res.json({ success: true, message: 'Code PIN modifié avec succès' });
+  } catch (error: any) {
+    logger.error(`Wallet pin change error: ${error.message}`);
+    res.status(400).json({ success: false, error: error.message || 'Erreur lors du changement du code PIN' });
   }
 });
 
@@ -218,10 +293,16 @@ router.post('/deposit', verifyJWT, async (req: AuthenticatedRequest, res: Respon
 router.post('/withdraw', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { amount, description, idempotency_key } = req.body || {};
+    const { amount, description, idempotency_key, pin } = req.body || {};
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       res.status(400).json({ success: false, error: 'Montant invalide' });
+      return;
+    }
+
+    const pinCheck = await requireValidTransactionPin(userId, pin);
+    if (!pinCheck.ok) {
+      res.status(403).json({ success: false, error: pinCheck.error, locked_until: pinCheck.lockedUntil || null });
       return;
     }
 
@@ -256,7 +337,7 @@ router.post('/withdraw', verifyJWT, async (req: AuthenticatedRequest, res: Respo
 router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const senderId = req.user!.id;
-    const { amount, recipient_id, description, idempotency_key } = req.body || {};
+    const { amount, recipient_id, description, idempotency_key, pin } = req.body || {};
 
     if (!amount || typeof amount !== 'number' || amount <= 0) {
       res.status(400).json({ success: false, error: 'Montant invalide' });
@@ -268,6 +349,12 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
     }
     if (recipient_id === senderId) {
       res.status(400).json({ success: false, error: 'Transfert vers soi-même non autorisé' });
+      return;
+    }
+
+    const pinCheck = await requireValidTransactionPin(senderId, pin);
+    if (!pinCheck.ok) {
+      res.status(403).json({ success: false, error: pinCheck.error, locked_until: pinCheck.lockedUntil || null });
       return;
     }
 

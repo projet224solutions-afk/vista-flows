@@ -17,6 +17,7 @@ import {
   getWalletBalance,
   initializeWallet,
   getWalletTransactions,
+  getWalletPinStatus,
 } from '@/services/walletBackendService';
 
 export interface WalletData {
@@ -27,6 +28,10 @@ export interface WalletData {
   wallet_status: string;
   is_blocked: boolean;
   blocked_reason: string | null;
+  pin_enabled?: boolean;
+  pin_failed_attempts?: number;
+  pin_locked_until?: string | null;
+  pin_updated_at?: string | null;
   daily_limit: number;
   monthly_limit: number;
   created_at: string;
@@ -82,6 +87,9 @@ export const useWallet = () => {
 
       const walletData = balanceResponse.data;
       if (walletData) {
+        const pinStatusResponse = await getWalletPinStatus();
+        const pinStatus = pinStatusResponse.success ? pinStatusResponse.data : undefined;
+
         const normalizedWallet: WalletData = {
           id: String(walletData.id),
           user_id: user.id,
@@ -90,6 +98,10 @@ export const useWallet = () => {
           wallet_status: walletData.wallet_status || 'active',
           is_blocked: Boolean(walletData.is_blocked),
           blocked_reason: null,
+          pin_enabled: pinStatus?.pin_enabled,
+          pin_failed_attempts: pinStatus?.pin_failed_attempts,
+          pin_locked_until: pinStatus?.pin_locked_until,
+          pin_updated_at: pinStatus?.pin_updated_at,
           daily_limit: Number(walletData.daily_limit || 0),
           monthly_limit: Number(walletData.monthly_limit || 0),
           created_at: walletData.created_at || new Date().toISOString(),
@@ -207,7 +219,8 @@ export const useWallet = () => {
     try {
       const result = await withdrawFromWallet(
         amount,
-        metadata.description || 'Retrait de wallet'
+        metadata.description || 'Retrait de wallet',
+        metadata.pin
       );
 
       if (!result.success) {
@@ -259,7 +272,8 @@ export const useWallet = () => {
       const result = await transferToWallet(
         recipientId,
         amount,
-        description || 'Transfert'
+        description || 'Transfert',
+        metadata.pin
       );
 
       if (!result.success) {
