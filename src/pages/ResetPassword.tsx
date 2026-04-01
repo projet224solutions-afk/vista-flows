@@ -54,13 +54,55 @@ export default function ResetPassword() {
       // Extract tokens from hash or query
       const accessToken = hashParams.get("access_token") || queryParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token") || queryParams.get("refresh_token");
+      const code = queryParams.get("code");
+      const tokenHash = queryParams.get("token_hash");
       const type = hashParams.get("type") || queryParams.get("type");
 
       console.log("🔍 [ResetPassword] Detecting tokens:", {
         hasAccessToken: !!accessToken,
         hasRefreshToken: !!refreshToken,
+        hasCode: !!code,
+        hasTokenHash: !!tokenHash,
         type,
       });
+
+      // Supabase PKCE flow: exchange code for session
+      if (code) {
+        try {
+          const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (codeError) throw codeError;
+
+          if (data.session) {
+            console.log("✅ [ResetPassword] Session established from code");
+            setState("form");
+            window.history.replaceState({}, document.title, "/reset-password");
+            return;
+          }
+        } catch (e) {
+          console.error("❌ [ResetPassword] exchangeCodeForSession failed:", e);
+        }
+      }
+
+      // Supabase token_hash flow: verify OTP recovery token
+      if (tokenHash) {
+        try {
+          const { data, error: otpError } = await supabase.auth.verifyOtp({
+            type: 'recovery',
+            token_hash: tokenHash,
+          });
+
+          if (otpError) throw otpError;
+
+          if (data.session) {
+            console.log("✅ [ResetPassword] Session established from token_hash");
+            setState("form");
+            window.history.replaceState({}, document.title, "/reset-password");
+            return;
+          }
+        } catch (e) {
+          console.error("❌ [ResetPassword] verifyOtp failed:", e);
+        }
+      }
 
       // If we have tokens, set the session
       if (accessToken && refreshToken) {
@@ -95,7 +137,7 @@ export default function ResetPassword() {
 
       // Also listen for PASSWORD_RECOVERY event briefly
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (event === "PASSWORD_RECOVERY") {
+        if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && type === "recovery")) {
           console.log("🔐 [ResetPassword] PASSWORD_RECOVERY event");
           setState("form");
           window.history.replaceState({}, document.title, "/reset-password");
