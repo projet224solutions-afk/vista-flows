@@ -13,6 +13,20 @@ export default defineConfig(({ mode }) => {
       port: 8080,
       strictPort: false,
       open: false,
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+        },
+        '/edge-functions': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+        },
+        '/health': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+        },
+      },
     },
     preview: {
       port: 4173,
