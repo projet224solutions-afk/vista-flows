@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { PublicIdBadge } from '@/components/PublicIdBadge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch } from '@/services/backendApi';
 import { toast } from 'sonner';
 import {
   Wallet,
@@ -52,6 +53,36 @@ interface AdminStats {
   bureau_wallets: number;
 }
 
+interface FxHealthData {
+  stale_threshold_minutes: number;
+  is_stale: boolean;
+  age_minutes: number | null;
+  two_consecutive_failures: boolean;
+  last_rate: {
+    from_currency: string;
+    to_currency: string;
+    rate: number;
+    margin: number | null;
+    source_type: string | null;
+    source_url: string | null;
+    retrieved_at: string | null;
+  } | null;
+  bank_sources: Array<{
+    source: string | null;
+    source_type: string | null;
+    source_url: string | null;
+    last_seen_at: string | null;
+  }>;
+  active_alerts: Array<{
+    id: string;
+    alert_type: string;
+    severity: string;
+    title: string;
+    description: string;
+    created_at: string;
+  }>;
+}
+
 export function WalletAdminPanel() {
   const [wallets, setWallets] = useState<WalletAdminData[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -60,11 +91,46 @@ export function WalletAdminPanel() {
   const [blockReason, setBlockReason] = useState('');
   const [selectedWallet, setSelectedWallet] = useState<WalletAdminData | null>(null);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [fxHealth, setFxHealth] = useState<FxHealthData | null>(null);
+  const [fxLoading, setFxLoading] = useState(false);
+  const [fxRefreshing, setFxRefreshing] = useState(false);
 
   useEffect(() => {
     loadWallets();
     loadStats();
+    loadFxHealth();
   }, []);
+
+  const loadFxHealth = async () => {
+    try {
+      setFxLoading(true);
+      const response = await backendFetch<FxHealthData>('/api/v2/wallet/admin/fx-health', { method: 'GET' });
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Impossible de charger le monitoring FX');
+      }
+      setFxHealth(response.data);
+    } catch (error: any) {
+      toast.error(error?.message || 'Erreur chargement monitoring FX');
+    } finally {
+      setFxLoading(false);
+    }
+  };
+
+  const handleFxRefresh = async () => {
+    try {
+      setFxRefreshing(true);
+      const response = await backendFetch('/api/v2/wallet/admin/fx-refresh', { method: 'POST' });
+      if (!response.success) {
+        throw new Error(response.error || 'Refresh FX échoué');
+      }
+      toast.success('Collecte des taux lancée avec succès');
+      await loadFxHealth();
+    } catch (error: any) {
+      toast.error(error?.message || 'Erreur refresh FX');
+    } finally {
+      setFxRefreshing(false);
+    }
+  };
 
   const loadWallets = async () => {
     try {
@@ -266,6 +332,110 @@ export function WalletAdminPanel() {
       {/* Liste des wallets */}
       <Card>
         <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Monitoring Taux de Change
+              </CardTitle>
+              <CardDescription>
+                Surveillance horaire des taux bancaires africains pour la conversion wallet et marketplace
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleFxRefresh}
+              disabled={fxRefreshing}
+              className="gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${fxRefreshing ? 'animate-spin' : ''}`} />
+              Rafraîchir les taux
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {fxLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <RefreshCw className="w-7 h-7 animate-spin text-muted-foreground" />
+            </div>
+          ) : !fxHealth ? (
+            <div className="text-sm text-muted-foreground">Monitoring FX indisponible.</div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Fraîcheur des taux</p>
+                  <p className="text-lg font-semibold">
+                    {fxHealth.age_minutes === null ? 'N/A' : `${fxHealth.age_minutes} min`}
+                  </p>
+                  <Badge variant={fxHealth.is_stale ? 'destructive' : 'default'} className="mt-1">
+                    {fxHealth.is_stale ? 'Taux obsolètes' : 'Taux à jour'}
+                  </Badge>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Collecte consécutive</p>
+                  <p className="text-lg font-semibold">
+                    {fxHealth.two_consecutive_failures ? '2 échecs détectés' : 'Stable'}
+                  </p>
+                  <Badge variant={fxHealth.two_consecutive_failures ? 'destructive' : 'secondary'} className="mt-1">
+                    {fxHealth.two_consecutive_failures ? 'Alerte critique' : 'Normal'}
+                  </Badge>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Marge active</p>
+                  <p className="text-lg font-semibold">
+                    {typeof fxHealth.last_rate?.margin === 'number'
+                      ? `${Math.round(fxHealth.last_rate.margin * 100)}%`
+                      : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Paire: {fxHealth.last_rate ? `${fxHealth.last_rate.from_currency}/${fxHealth.last_rate.to_currency}` : 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border p-3">
+                <p className="text-sm font-medium mb-2">Sources bancaires visitées</p>
+                {fxHealth.bank_sources.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Aucune source bancaire trouvée.</p>
+                ) : (
+                  <div className="space-y-1">
+                    {fxHealth.bank_sources.slice(0, 6).map((source, idx) => (
+                      <div key={`${source.source_url}-${idx}`} className="text-xs flex items-center justify-between gap-3">
+                        <span className="truncate">{source.source || source.source_type || 'source'}</span>
+                        <span className="text-muted-foreground truncate">{source.source_url || 'N/A'}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border p-3">
+                <p className="text-sm font-medium mb-2">Alertes FX actives</p>
+                {fxHealth.active_alerts.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Aucune alerte active.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {fxHealth.active_alerts.slice(0, 5).map((alert) => (
+                      <div key={alert.id} className="flex items-start gap-2 text-xs">
+                        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 text-amber-500" />
+                        <div>
+                          <p className="font-medium">{alert.title}</p>
+                          <p className="text-muted-foreground">{alert.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -282,6 +452,7 @@ export function WalletAdminPanel() {
               onClick={() => {
                 loadWallets();
                 loadStats();
+                loadFxHealth();
               }}
               className="gap-2"
             >

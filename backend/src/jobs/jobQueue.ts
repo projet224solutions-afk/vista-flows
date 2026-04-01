@@ -29,6 +29,47 @@ const REDIS_CONNECTION = {
   maxRetriesPerRequest: null as any,
 };
 
+const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
+
+function isFxSuccessStatus(status: string | null | undefined): boolean {
+  const normalized = (status || '').toLowerCase();
+  return normalized === 'success' || normalized === 'completed' || normalized === 'ok';
+}
+
+async function createFxAlert(params: {
+  alertType: string;
+  title: string;
+  description: string;
+  severity: 'medium' | 'high' | 'critical';
+  metadata?: Record<string, any>;
+  dedupeMinutes?: number;
+}) {
+  const dedupeMinutes = params.dedupeMinutes ?? 60;
+  const dedupeCutoff = new Date(Date.now() - dedupeMinutes * 60 * 1000).toISOString();
+
+  const { data: existing } = await supabaseAdmin
+    .from('financial_security_alerts')
+    .select('id')
+    .eq('alert_type', params.alertType)
+    .eq('is_resolved', false)
+    .gte('created_at', dedupeCutoff)
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) {
+    return;
+  }
+
+  await supabaseAdmin.from('financial_security_alerts').insert({
+    user_id: SYSTEM_USER_ID,
+    alert_type: params.alertType,
+    severity: params.severity,
+    title: params.title,
+    description: params.description,
+    metadata: params.metadata || {},
+  }).catch(() => {});
+}
+
 // ==================== JOB REGISTRY ====================
 
 type JobHandler = (data: any) => Promise<void>;
@@ -370,36 +411,91 @@ registerHandler('payment-links.cleanup-expired', async () => {
 });
 
 registerHandler('fx.african-rates-refresh', async () => {
-  const functionUrl = `${env.SUPABASE_URL}/functions/v1/african-fx-collect`;
-
-  const response = await fetch(functionUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
-      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ source: 'backend_hourly_job' }),
-  });
-
-  const raw = await response.text();
-  let payload: any = null;
   try {
-    payload = raw ? JSON.parse(raw) : null;
-  } catch {
-    payload = { raw };
-  }
+    const functionUrl = `${env.SUPABASE_URL}/functions/v1/african-fx-collect`;
 
-  if (!response.ok) {
-    const message = payload?.error || payload?.message || `HTTP ${response.status}`;
-    throw new Error(`African FX collect failed: ${message}`);
-  }
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ source: 'backend_hourly_job' }),
+    });
 
-  logger.info('African FX rates refreshed from official sources', {
-    status: response.status,
-    source: payload?.source || 'african-fx-collect',
-    collected: payload?.collected_count || payload?.updated_count || null,
-  });
+    const raw = await response.text();
+    let payload: any = null;
+    try {
+      payload = raw ? JSON.parse(raw) : null;
+    } catch {
+      payload = { raw };
+    }
+
+    if (!response.ok) {
+      const message = payload?.error || payload?.message || `HTTP ${response.status}`;
+      await createFxAlert({
+        alertType: 'fx_collection_failed',
+        severity: 'high',
+        title: 'Échec collecte FX horaire',
+        description: `La collecte horaire des taux a échoué: ${message}`,
+        metadata: { status: response.status, payload },
+        dedupeMinutes: 30,
+      });
+      throw new Error(`African FX collect failed: ${message}`);
+    }
+
+    const { data: latestRate } = await supabaseAdmin
+      .from('currency_exchange_rates')
+      .select('retrieved_at')
+      .eq('is_active', true)
+      .order('retrieved_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const now = Date.now();
+    const lastRetrievedAt = latestRate?.retrieved_at ? new Date(latestRate.retrieved_at).getTime() : 0;
+    const ageMinutes = lastRetrievedAt ? Math.floor((now - lastRetrievedAt) / 60000) : 9999;
+    if (ageMinutes > 90) {
+      await createFxAlert({
+        alertType: 'fx_rates_stale',
+        severity: 'critical',
+        title: 'Taux FX obsolètes',
+        description: `Les taux ne sont pas à jour depuis ${ageMinutes} minutes (>90).`,
+        metadata: { age_minutes: ageMinutes, threshold_minutes: 90 },
+        dedupeMinutes: 60,
+      });
+    }
+
+    const { data: recentGnfRuns } = await supabaseAdmin
+      .from('fx_collection_log')
+      .select('status, collected_at, error_message')
+      .eq('currency_code', 'GNF')
+      .order('collected_at', { ascending: false })
+      .limit(2);
+
+    const twoConsecutiveFailures = (recentGnfRuns || []).length >= 2
+      && (recentGnfRuns || []).every((run) => !isFxSuccessStatus(run.status));
+
+    if (twoConsecutiveFailures) {
+      await createFxAlert({
+        alertType: 'fx_two_consecutive_failures',
+        severity: 'critical',
+        title: 'Collecte FX en échec consécutif',
+        description: 'Deux collectes consécutives ont échoué pour GNF.',
+        metadata: { recent_runs: recentGnfRuns },
+        dedupeMinutes: 60,
+      });
+    }
+
+    logger.info('African FX rates refreshed from official sources', {
+      status: response.status,
+      source: payload?.source || 'african-fx-collect',
+      collected: payload?.collected_count || payload?.updated_count || null,
+    });
+  } catch (error: any) {
+    throw error;
+  }
 });
 
 // ==================== PUBLIC API ====================

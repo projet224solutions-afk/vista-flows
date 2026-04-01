@@ -26,6 +26,12 @@ import { creditWallet, debitWallet, transferBetweenWallets } from '../services/w
 import { triggerAffiliateCommission } from '../services/commission.service.js';
 
 const router = Router();
+const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
+
+function isFxSuccessStatus(status: string | null | undefined): boolean {
+  const normalized = (status || '').toLowerCase();
+  return normalized === 'success' || normalized === 'completed' || normalized === 'ok';
+}
 
 /**
  * GET /api/v2/wallet/balance
@@ -346,5 +352,145 @@ router.post(
     res.status(500).json({ success: false, error: 'Erreur lors du crédit' });
   }
 });
+
+/**
+ * GET /api/v2/wallet/admin/fx-health
+ * Dashboard FX pour PDG/Admin (fraicheur + alertes + sources bancaires)
+ */
+router.get(
+  '/admin/fx-health',
+  verifyJWT,
+  requirePermissionOrRole({
+    permissionKey: 'manage_wallet_transactions',
+    allowedRoles: ['admin', 'pdg', 'ceo'],
+  }),
+  async (_req: AuthenticatedRequest, res: Response) => {
+    try {
+      const now = Date.now();
+
+      const [{ data: latestRate }, { data: recentRuns }, { data: unresolvedAlerts }] = await Promise.all([
+        supabaseAdmin
+          .from('currency_exchange_rates')
+          .select('from_currency, to_currency, rate, margin, source_type, source_url, retrieved_at')
+          .eq('is_active', true)
+          .order('retrieved_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabaseAdmin
+          .from('fx_collection_log')
+          .select('currency_code, status, source, source_url, source_type, error_message, collected_at')
+          .order('collected_at', { ascending: false })
+          .limit(30),
+        supabaseAdmin
+          .from('financial_security_alerts')
+          .select('id, alert_type, severity, title, description, created_at, metadata')
+          .like('alert_type', 'fx_%')
+          .eq('is_resolved', false)
+          .order('created_at', { ascending: false })
+          .limit(20),
+      ]);
+
+      const lastRetrievedAt = latestRate?.retrieved_at ? new Date(latestRate.retrieved_at).getTime() : null;
+      const ageMinutes = lastRetrievedAt ? Math.floor((now - lastRetrievedAt) / 60000) : null;
+      const staleThresholdMinutes = 90;
+      const stale = ageMinutes === null || ageMinutes > staleThresholdMinutes;
+
+      const runRows = recentRuns || [];
+      const recentGnfRuns = runRows
+        .filter((row) => row.currency_code === 'GNF')
+        .slice(0, 2);
+      const twoConsecutiveFailures = recentGnfRuns.length >= 2 && recentGnfRuns.every((row) => !isFxSuccessStatus(row.status));
+
+      const bankSources = Array.from(new Map(
+        runRows
+          .filter((row) => row.source_url && (row.source_type === 'official_html' || row.source_type === 'official_fixed_parity' || row.source_type === 'official_cross'))
+          .map((row) => [row.source_url, {
+            source: row.source,
+            source_type: row.source_type,
+            source_url: row.source_url,
+            last_seen_at: row.collected_at,
+          }])
+      ).values());
+
+      res.json({
+        success: true,
+        data: {
+          stale_threshold_minutes: staleThresholdMinutes,
+          is_stale: stale,
+          age_minutes: ageMinutes,
+          last_rate: latestRate || null,
+          two_consecutive_failures: twoConsecutiveFailures,
+          recent_runs: runRows.slice(0, 10),
+          bank_sources: bankSources,
+          active_alerts: unresolvedAlerts || [],
+        },
+      });
+    } catch (error: any) {
+      logger.error(`FX health error: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors du chargement du monitoring FX' });
+    }
+  }
+);
+
+/**
+ * POST /api/v2/wallet/admin/fx-refresh
+ * Déclenche manuellement une collecte des taux (PDG/Admin)
+ */
+router.post(
+  '/admin/fx-refresh',
+  verifyJWT,
+  requirePermissionOrRole({
+    permissionKey: 'manage_wallet_transactions',
+    allowedRoles: ['admin', 'pdg', 'ceo'],
+  }),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const functionUrl = `${process.env.SUPABASE_URL}/functions/v1/african-fx-collect`;
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ''}`,
+          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ source: 'pdg_manual_refresh', actor_id: req.user!.id }),
+      });
+
+      const raw = await response.text();
+      let payload: any = null;
+      try {
+        payload = raw ? JSON.parse(raw) : null;
+      } catch {
+        payload = { raw };
+      }
+
+      if (!response.ok) {
+        await supabaseAdmin.from('financial_security_alerts').insert({
+          user_id: SYSTEM_USER_ID,
+          alert_type: 'fx_manual_refresh_failed',
+          severity: 'high',
+          title: 'Échec du refresh FX manuel',
+          description: 'Le déclenchement manuel de la collecte FX a échoué.',
+          metadata: {
+            actor_id: req.user!.id,
+            status: response.status,
+            error: payload?.error || payload?.message || 'unknown',
+          },
+        }).catch(() => {});
+
+        res.status(response.status).json({
+          success: false,
+          error: payload?.error || payload?.message || 'Le refresh FX manuel a échoué',
+        });
+        return;
+      }
+
+      res.json({ success: true, data: payload });
+    } catch (error: any) {
+      logger.error(`FX manual refresh error: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors du refresh FX manuel' });
+    }
+  }
+);
 
 export default router;
