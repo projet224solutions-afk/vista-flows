@@ -75,7 +75,8 @@ function OrderProgressTracker({ status }: { status: string }) {
     { key: 'delivered', label: 'Livrée', icon: CheckCircle },
   ];
 
-  const currentIndex = steps.findIndex(s => s.key === status);
+  const normalizedStatus = status === 'completed' ? 'delivered' : status;
+  const currentIndex = steps.findIndex(s => s.key === normalizedStatus);
   const progressPercent = currentIndex >= 0 ? ((currentIndex + 1) / steps.length) * 100 : 0;
 
   return (
@@ -293,7 +294,11 @@ export default function MyPurchasesOrdersList({
         // Sans escrow: mettre à jour directement le statut de la commande
         const { error } = await supabase
           .from('orders')
-          .update({ status: 'delivered', updated_at: new Date().toISOString() })
+          .update({
+            status: 'completed',
+            payment_status: isCashOnDelivery(selectedOrder) ? 'paid' : selectedOrder.payment_status,
+            updated_at: new Date().toISOString()
+          })
           .eq('id', selectedOrder.id);
 
         if (error) throw error;
@@ -394,6 +399,7 @@ export default function MyPurchasesOrdersList({
       ready: { label: 'Prête', color: 'bg-blue-100 text-blue-800', icon: Package },
       in_transit: { label: 'En transit', color: 'bg-orange-100 text-orange-800', icon: Truck },
       delivered: { label: 'Livrée', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+      completed: { label: 'Terminée', color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle },
       cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800', icon: XCircle }
     };
 
@@ -435,14 +441,14 @@ export default function MyPurchasesOrdersList({
     if (activeFilter === 'all') return orders;
     if (activeFilter === 'pending') return orders.filter(o => ['pending', 'confirmed', 'preparing', 'ready'].includes(o.status));
     if (activeFilter === 'in_progress') return orders.filter(o => o.status === 'in_transit');
-    if (activeFilter === 'delivered') return orders.filter(o => o.status === 'delivered');
+    if (activeFilter === 'delivered') return orders.filter(o => o.status === 'delivered' || o.status === 'completed');
     return orders;
   };
 
   const filteredOrders = getFilteredOrders();
   const pendingCount = orders.filter(o => ['pending', 'confirmed', 'preparing', 'ready'].includes(o.status)).length;
   const inProgressCount = orders.filter(o => o.status === 'in_transit').length;
-  const deliveredCount = orders.filter(o => o.status === 'delivered').length;
+  const deliveredCount = orders.filter(o => o.status === 'delivered' || o.status === 'completed').length;
 
   if (loading) {
     return (
@@ -597,10 +603,10 @@ export default function MyPurchasesOrdersList({
                           )}
                         </div>
 
-                        {order.status === 'delivered' && escrow?.status === 'released' && (
+                        {(order.status === 'delivered' || order.status === 'completed') && escrow?.status === 'released' && (
                           <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                             <CheckCircle className="w-4 h-4 text-green-600" />
-                            <span className="text-sm text-muted-foreground">Livrée - Paiement transféré au vendeur</span>
+                            <span className="text-sm text-muted-foreground">Terminée - Paiement transféré au vendeur</span>
                           </div>
                         )}
                       </CardContent>

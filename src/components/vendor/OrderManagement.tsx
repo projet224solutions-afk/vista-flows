@@ -672,7 +672,7 @@ export default function OrderManagement() {
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
   const processingOrders = orders.filter(o => ['confirmed', 'processing'].includes(o.status)).length;
-  const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
+  const deliveredOrders = orders.filter(o => ['delivered', 'completed'].includes(o.status)).length;
   const totalRevenue = orders
     .filter(o => o.payment_status === 'paid')
     .reduce((sum, o) => sum + o.total_amount, 0);

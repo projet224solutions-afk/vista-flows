@@ -234,14 +234,18 @@ export default function ClientOrdersList() {
       } else {
         const { error } = await supabase
           .from('orders')
-          .update({ status: 'delivered', updated_at: new Date().toISOString() })
+          .update({
+            status: 'completed',
+            payment_status: isCashOnDelivery(selectedOrder) ? 'paid' : selectedOrder.payment_status,
+            updated_at: new Date().toISOString()
+          })
           .eq('id', selectedOrder.id);
 
         if (error) throw error;
       }
 
-      toast.success('Livraison confirmée !', {
-        description: 'Le vendeur a reçu le paiement'
+      toast.success('Réception confirmée !', {
+        description: escrow ? 'Le vendeur a reçu le paiement' : 'La commande est maintenant terminée'
       });
 
       // Afficher la fenêtre de notation
@@ -365,6 +369,7 @@ export default function ClientOrdersList() {
       ready: { label: 'Prête', color: 'bg-blue-100 text-blue-800', icon: Package },
       in_transit: { label: 'En transit', color: 'bg-orange-100 text-orange-800', icon: Truck },
       delivered: { label: 'Livrée', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+      completed: { label: 'Terminée', color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle },
       cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-800', icon: XCircle }
     };
 
@@ -422,8 +427,8 @@ export default function ClientOrdersList() {
       return orders.filter(o => o.status === 'in_transit');
     }
     if (activeFilter === 'delivered') {
-      // Livrées = delivered
-      return orders.filter(o => o.status === 'delivered');
+      // Livrées = delivered + completed
+      return orders.filter(o => o.status === 'delivered' || o.status === 'completed');
     }
     return orders;
   };
@@ -431,7 +436,7 @@ export default function ClientOrdersList() {
   const filteredOrders = getFilteredOrders();
   const pendingCount = orders.filter(o => ['pending', 'confirmed', 'preparing', 'ready'].includes(o.status)).length;
   const inProgressCount = orders.filter(o => o.status === 'in_transit').length;
-  const deliveredCount = orders.filter(o => o.status === 'delivered').length;
+  const deliveredCount = orders.filter(o => o.status === 'delivered' || o.status === 'completed').length;
 
   if (orders.length === 0) {
     return (
@@ -558,7 +563,7 @@ export default function ClientOrdersList() {
                 </div>
 
                 {/* Info Paiement à la livraison */}
-                {isCashOnDelivery(order) && order.status !== 'delivered' && order.status !== 'cancelled' && (
+                {isCashOnDelivery(order) && !['delivered', 'completed', 'cancelled'].includes(order.status) && (
                   <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
                     <Banknote className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -656,11 +661,11 @@ export default function ClientOrdersList() {
                 </div>
 
                 {/* Info si déjà livrée */}
-                {order.status === 'delivered' && escrow?.status === 'released' && (
+                {(order.status === 'delivered' || order.status === 'completed') && escrow?.status === 'released' && (
                   <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                     <CheckCircle className="w-4 h-4 text-green-600" />
                     <span className="text-sm text-muted-foreground">
-                      Commande livrée et paiement transféré au vendeur
+                      Commande terminée et paiement transféré au vendeur
                     </span>
                   </div>
                 )}

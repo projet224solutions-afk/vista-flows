@@ -151,11 +151,14 @@ serve(async (req) => {
       throw releaseError;
     }
 
-    // Update order status to delivered
+    const isCashOnDelivery = order.payment_method === 'cash' && order.shipping_address?.is_cod === true;
+
+    // Update order status to completed once the buyer confirms reception.
     const { error: updateError } = await supabase
       .from("orders")
       .update({ 
-        status: 'delivered',
+        status: 'completed',
+        payment_status: isCashOnDelivery ? 'paid' : order.payment_status,
         updated_at: new Date().toISOString()
       })
       .eq("id", order_id);
