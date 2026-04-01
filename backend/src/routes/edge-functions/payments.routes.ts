@@ -703,8 +703,38 @@ router.post("/secure-payment-validate", async (req: Request, res: Response) => {
 
 router.post("/african-fx-collect", async (req: Request, res: Response) => {
   try {
-    const { amount, currency = "XAF", provider = "manual" } = req.body || {};
-    return res.json({ success: true, amount: Number(amount || 0), currency, provider, status: "collected" });
+    const functionUrl = `${process.env.SUPABASE_URL}/functions/v1/african-fx-collect`;
+    const response = await fetch(functionUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ""}`,
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ source: "backend_endpoint_manual_trigger" }),
+    });
+
+    const raw = await response.text();
+    let payload: any = null;
+    try {
+      payload = raw ? JSON.parse(raw) : null;
+    } catch {
+      payload = { raw };
+    }
+
+    if (!response.ok) {
+      return res.status(response.status).json({
+        success: false,
+        error: payload?.error || payload?.message || "African FX collect failed",
+      });
+    }
+
+    return res.json({
+      success: true,
+      source: "official_african_banks",
+      refreshed_at: new Date().toISOString(),
+      details: payload,
+    });
   } catch (error) {
     return res.status(500).json({ success: false, error: error instanceof Error ? error.message : "African FX collect failed" });
   }
@@ -712,9 +742,61 @@ router.post("/african-fx-collect", async (req: Request, res: Response) => {
 
 router.get("/african-fx-query", async (req: Request, res: Response) => {
   try {
-    const base = String((req.query as any)?.base || "XAF");
-    const quote = String((req.query as any)?.quote || "USD");
-    return res.json({ success: true, base, quote, rate: 0, source: "placeholder" });
+    const base = String((req.query as any)?.base || "USD").toUpperCase();
+    const quote = String((req.query as any)?.quote || "XOF").toUpperCase();
+
+    if (base === quote) {
+      return res.json({ success: true, base, quote, rate: 1, source: "identity", retrieved_at: new Date().toISOString() });
+    }
+
+    const { data: direct } = await supabase
+      .from("currency_exchange_rates")
+      .select("rate, margin, source_type, source_url, retrieved_at")
+      .eq("from_currency", base)
+      .eq("to_currency", quote)
+      .eq("is_active", true)
+      .order("retrieved_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (direct?.rate && Number(direct.rate) > 0) {
+      return res.json({
+        success: true,
+        base,
+        quote,
+        rate: Number(direct.rate),
+        margin: direct.margin,
+        source_type: direct.source_type,
+        source_url: direct.source_url,
+        retrieved_at: direct.retrieved_at,
+      });
+    }
+
+    const { data: inverse } = await supabase
+      .from("currency_exchange_rates")
+      .select("rate, margin, source_type, source_url, retrieved_at")
+      .eq("from_currency", quote)
+      .eq("to_currency", base)
+      .eq("is_active", true)
+      .order("retrieved_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (inverse?.rate && Number(inverse.rate) > 0) {
+      return res.json({
+        success: true,
+        base,
+        quote,
+        rate: 1 / Number(inverse.rate),
+        margin: inverse.margin,
+        source_type: inverse.source_type,
+        source_url: inverse.source_url,
+        retrieved_at: inverse.retrieved_at,
+        computed_from_inverse: true,
+      });
+    }
+
+    return res.status(404).json({ success: false, error: `No active FX rate found for ${base}/${quote}` });
   } catch (error) {
     return res.status(500).json({ success: false, error: error instanceof Error ? error.message : "African FX query failed" });
   }

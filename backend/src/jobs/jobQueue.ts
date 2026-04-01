@@ -12,11 +12,13 @@
  *   - escrow.auto-release
  *   - orders.stuck-alert
  *   - subscriptions.expire-check
+ *   - fx.african-rates-refresh
  */
 
 import { Queue, Worker, Job } from 'bullmq';
 import { logger } from '../config/logger.js';
 import { supabaseAdmin } from '../config/supabase.js';
+import { env } from '../config/env.js';
 
 // ==================== REDIS CONNECTION (for BullMQ) ====================
 
@@ -367,6 +369,39 @@ registerHandler('payment-links.cleanup-expired', async () => {
   }
 });
 
+registerHandler('fx.african-rates-refresh', async () => {
+  const functionUrl = `${env.SUPABASE_URL}/functions/v1/african-fx-collect`;
+
+  const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ source: 'backend_hourly_job' }),
+  });
+
+  const raw = await response.text();
+  let payload: any = null;
+  try {
+    payload = raw ? JSON.parse(raw) : null;
+  } catch {
+    payload = { raw };
+  }
+
+  if (!response.ok) {
+    const message = payload?.error || payload?.message || `HTTP ${response.status}`;
+    throw new Error(`African FX collect failed: ${message}`);
+  }
+
+  logger.info('African FX rates refreshed from official sources', {
+    status: response.status,
+    source: payload?.source || 'african-fx-collect',
+    collected: payload?.collected_count || payload?.updated_count || null,
+  });
+});
+
 // ==================== PUBLIC API ====================
 
 export const jobQueue = {
@@ -438,6 +473,8 @@ export const jobQueue = {
       // Every hour: cleanup + stuck orders
       await queue.add('idempotency.cleanup', {}, { repeat: { every: 3600000 } });
       await queue.add('orders.stuck-alert', {}, { repeat: { every: 3600000 } });
+      await queue.add('payment-links.cleanup-expired', {}, { repeat: { every: 3600000 } });
+      await queue.add('fx.african-rates-refresh', {}, { repeat: { every: 3600000 } });
 
       // Every 6 hours: escrow + subscriptions + POS
       await queue.add('escrow.auto-release', {}, { repeat: { every: 6 * 3600000 } });
