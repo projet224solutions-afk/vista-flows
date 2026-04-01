@@ -189,7 +189,7 @@ serve(async (req) => {
 
     if (idError || !agentCode) {
       console.error('❌ Erreur génération ID agent:', idError);
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user!.id);
+      if (!existingUser) await supabaseAdmin.auth.admin.deleteUser(authUserId);
       return new Response(
         JSON.stringify({ 
           success: false, 
