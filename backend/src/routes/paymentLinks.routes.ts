@@ -84,10 +84,15 @@ router.post('/resolve', async (req: Request, res: Response) => {
       return;
     }
 
-    // Check expiry
-    if (link.status === 'pending' && link.expires_at && new Date(link.expires_at) < new Date()) {
-      await supabaseAdmin.from('payment_links').update({ status: 'expired' }).eq('id', link.id);
-      link.status = 'expired';
+    // Check expiry (with timezone-safe comparison)
+    if (link.status === 'pending' && link.expires_at) {
+      const expiresAtTime = new Date(link.expires_at).getTime();
+      const nowTime = Date.now();
+      if (expiresAtTime < nowTime) {
+        await supabaseAdmin.from('payment_links').update({ status: 'expired' }).eq('id', link.id);
+        link.status = 'expired';
+        logger.info(`Payment link expired: ${link.id} (expires_at: ${link.expires_at}, now: ${new Date(nowTime).toISOString()})`);
+      }
     }
 
     // Mark as viewed
@@ -224,10 +229,16 @@ router.post('/process', optionalJWT, async (req: AuthenticatedRequest, res: Resp
       return;
     }
 
-    if (link.expires_at && new Date(link.expires_at) < new Date()) {
-      await supabaseAdmin.from('payment_links').update({ status: 'expired' }).eq('id', link.id);
-      res.status(400).json({ success: false, error: 'Ce lien de paiement a expiré' });
-      return;
+    // Check expiry (timezone-safe comparison)
+    if (link.expires_at) {
+      const expiresAtTime = new Date(link.expires_at).getTime();
+      const nowTime = Date.now();
+      if (expiresAtTime < nowTime) {
+        await supabaseAdmin.from('payment_links').update({ status: 'expired' }).eq('id', link.id);
+        res.status(410).json({ success: false, error: 'Ce lien de paiement a expiré', expiredAt: link.expires_at });
+        logger.info(`Payment link expired on process attempt: ${link.id}`);
+        return;
+      }
     }
 
     if (link.is_single_use && link.use_count > 0) {

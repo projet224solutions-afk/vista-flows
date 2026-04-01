@@ -241,7 +241,19 @@ export function usePaymentLinks() {
         if (profile) clientUuid = profile.id;
       }
 
-      const expireDays = data.expires_days || 7;
+      // Valider et normaliser expireDays
+      let expireDays = data.expires_days || 30; // Augmenté de 7 à 30 jours par défaut
+      // Sécurité: min 1 jour, max 365 jours
+      expireDays = Math.max(1, Math.min(365, parseInt(String(expireDays)) || 30));
+      
+      // Calcul sûr de la date d'expiration
+      const expiresAtMs = Date.now() + (expireDays * 24 * 60 * 60 * 1000);
+      const expiresAtDate = new Date(expiresAtMs);
+      
+      // Vérification de validité
+      if (isNaN(expiresAtDate.getTime())) {
+        throw new Error('Erreur de calcul de date d\'expiration');
+      }
 
       const { data: newLink, error } = await supabase
         .from('payment_links')
@@ -270,7 +282,7 @@ export function usePaymentLinks() {
           payment_type: data.payment_type || 'full',
           is_single_use: data.is_single_use !== false,
           status: 'pending',
-          expires_at: new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000).toISOString(),
+          expires_at: expiresAtDate.toISOString(),
         })
         .select('token, payment_id')
         .single();

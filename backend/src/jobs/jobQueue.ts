@@ -351,6 +351,22 @@ registerHandler('recommendations.recalculate', async () => {
   logger.info(`Recommendations recalculated: ${updated} products scored from ${activities.length} activities`);
 });
 
+registerHandler('payment-links.cleanup-expired', async () => {
+  const now = new Date().toISOString();
+  const { data: expired, error } = await supabaseAdmin
+    .from('payment_links')
+    .update({ status: 'expired' })
+    .eq('status', 'pending')
+    .lt('expires_at', now)
+    .select('id, payment_id');
+
+  if (error) {
+    logger.warn(`Payment links cleanup failed: ${error.message}`);
+  } else if (expired?.length) {
+    logger.info(`Payment links cleanup: marked ${expired.length} links as expired`);
+  }
+});
+
 // ==================== PUBLIC API ====================
 
 export const jobQueue = {
