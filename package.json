@@ -24,7 +24,11 @@
     "test:load:light": "k6 run --vus 100 --duration 1m scripts/load-test.js",
     "migrate:type-agent": "tsx scripts/apply-type-agent-migration.ts",
     "api:migrate": "curl -X POST http://localhost:3001/api/migrations/apply-type-agent",
-    "api:migrate-status": "curl http://localhost:3001/api/migrations/status"
+    "api:migrate-status": "curl http://localhost:3001/api/migrations/status",
+    "audit:edge-migration": "node scripts/audit-edge-migration.mjs",
+    "audit:edge-migration:strict": "node scripts/audit-edge-migration.mjs --strict",
+    "guard:backend-first": "node scripts/backend-first-guard.mjs",
+    "guard:backend-first:update": "node scripts/backend-first-guard.mjs --update-baseline"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",

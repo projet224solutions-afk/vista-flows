@@ -242,6 +242,42 @@ router.post("/anomalies/surveillance", async (req: any, res: any) => {
   }
 });
 
+router.post("/spatial-analysis", async (req: any, res: any) => {
+  try {
+    const locations = Array.isArray(req.body?.locations) ? req.body.locations : [];
+
+    if (!locations.length) {
+      return res.json({
+        success: true,
+        clusters: [],
+        heatmap: [],
+        summary: { total_points: 0, cluster_count: 0 },
+      });
+    }
+
+    const heatmap = locations
+      .filter((loc: any) => Number.isFinite(Number(loc?.lat)) && Number.isFinite(Number(loc?.lng)))
+      .map((loc: any, index: number) => ({
+        id: index + 1,
+        lat: Number(loc.lat),
+        lng: Number(loc.lng),
+        weight: Number(loc.weight || 1),
+      }));
+
+    return res.json({
+      success: true,
+      clusters: [],
+      heatmap,
+      summary: {
+        total_points: heatmap.length,
+        cluster_count: 0,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post("/security/analysis", async (req: any, res: any) => {
   try {
     const { target_type, asset_id } = req.body;
