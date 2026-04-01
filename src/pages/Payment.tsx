@@ -23,6 +23,7 @@ import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
 import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
 import { useFormPersistence } from "@/hooks/useAppPersistence";
+import { createOrder } from "@/services/orderBackendService";
 
 // Mapping pays → devise pour dériver la devise du vendeur
 const COUNTRY_CURRENCY_MAP: Record<string, string> = {
@@ -180,59 +181,64 @@ export default function Payment() {
   const createOrderForVendor = async ({
     vendorId,
     items,
-    totalAmount,
     paymentMethod,
     externalPaymentId,
+    shippingAddress,
+    markAsPaid = false,
   }: {
     vendorId: string;
     items: any[];
-    totalAmount: number;
-    paymentMethod: 'card' | 'mobile_money' | 'wallet';
+    paymentMethod: 'card' | 'mobile_money' | 'wallet' | 'cod';
     externalPaymentId?: string;
+    shippingAddress?: {
+      full_name: string;
+      phone: string;
+      address_line: string;
+      city: string;
+      country: string;
+      postal_code?: string | null;
+      notes?: string | null;
+    };
+    markAsPaid?: boolean;
   }) => {
-    const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
-      p_user_id: user!.id,
-      p_vendor_id: vendorId,
-      p_items: items.map((item: any) => ({
+    const response = await createOrder({
+      vendor_id: vendorId,
+      items: items.map((item: any) => ({
         product_id: item.product_id || item.id,
         quantity: item.quantity,
-        price: item.price,
+        variant_id: item.variant_id || null,
       })),
-      p_total_amount: totalAmount,
-      p_payment_method: paymentMethod,
-      p_shipping_address: {
-        address: 'Adresse de livraison',
+      payment_method: paymentMethod,
+      payment_intent_id: externalPaymentId || null,
+      shipping_address: shippingAddress || {
+        full_name: user?.user_metadata?.full_name || user?.email || 'Client 224Solutions',
+        phone: user?.phone || 'Non fourni',
+        address_line: 'Adresse de livraison',
         city: 'Conakry',
         country: 'Guinée',
+        notes: null,
+        postal_code: null,
       },
     });
 
-    if (orderError || !orderResult || orderResult.length === 0) {
-      throw new Error(orderError?.message || 'Impossible de créer la commande');
+    if (!response.success || !response.data?.order) {
+      throw new Error(response.error || 'Impossible de créer la commande');
     }
 
-    const orderId = orderResult[0].order_id;
-    const orderNumber = orderResult[0].order_number;
+    const orderId = response.data.order.id;
+    const orderNumber = response.data.order.order_number;
 
-    await supabase
-      .from('orders')
-      .update({
-        payment_status: 'paid',
-        metadata: {
-          external_payment_id: externalPaymentId || null,
-          source: 'payment_page_post_provider_success',
-        },
-      })
-      .eq('id', orderId);
-
-    if (externalPaymentId && externalPaymentId.startsWith('pi_')) {
-      await supabase.functions.invoke('link-escrow-order', {
-        body: {
-          payment_intent_id: externalPaymentId,
-          vendor_id: vendorId,
-          order_id: orderId,
-        },
-      });
+    if (markAsPaid || externalPaymentId) {
+      await supabase
+        .from('orders')
+        .update({
+          payment_status: markAsPaid ? 'paid' : response.data.order.payment_status,
+          metadata: {
+            external_payment_id: externalPaymentId || null,
+            source: 'payment_page_post_provider_success',
+          },
+        })
+        .eq('id', orderId);
     }
 
     return { orderId, orderNumber };
@@ -259,14 +265,12 @@ export default function Payment() {
     const results: Array<{ orderId: string; orderNumber: string }> = [];
 
     for (const [vendorId, items] of vendorEntries) {
-      const typedItems = items as any[];
-      const vendorTotal = typedItems.reduce((sum: number, item: any) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
       const result = await createOrderForVendor({
         vendorId,
-        items: typedItems,
-        totalAmount: vendorTotal,
+        items,
         paymentMethod,
         externalPaymentId,
+        markAsPaid: true,
       });
       results.push(result);
     }
@@ -795,16 +799,49 @@ export default function Payment() {
           instructions: 'Le client sera contacté pour confirmer l\'adresse exacte'
         };
 
-        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
-          p_user_id: user.id,
-          p_vendor_id: vendorId,
-          p_items: items,
-          p_total_amount: parseFloat(paymentAmount),
-          p_payment_method: 'cash', // Utiliser 'cash' car 'cash_on_delivery' n'existe pas dans l'enum
-          p_shipping_address: shippingAddress
-        });
-
-        if (orderError) throw orderError;
+        if (cartPaymentInfo?.items?.length) {
+          await Promise.all(
+            Object.entries(
+              cartPaymentInfo.items.reduce((acc: Record<string, any[]>, item: any) => {
+                const currentVendorId = getVendorIdFromItem(item);
+                if (!currentVendorId) return acc;
+                if (!acc[currentVendorId]) acc[currentVendorId] = [];
+                acc[currentVendorId].push(item);
+                return acc;
+              }, {})
+            ).map(([currentVendorId, currentItems]) =>
+              createOrderForVendor({
+                vendorId: currentVendorId,
+                items: currentItems,
+                paymentMethod: 'cod',
+                shippingAddress: {
+                  full_name: user.user_metadata?.full_name || user.email || 'Client 224Solutions',
+                  phone: profileData?.phone || 'Non fourni',
+                  address_line: shippingAddress.address,
+                  city: shippingAddress.city,
+                  country: shippingAddress.country,
+                  notes: shippingAddress.instructions || null,
+                  postal_code: null,
+                },
+              })
+            )
+          );
+        } else if (vendorId && items) {
+          await createOrderForVendor({
+            vendorId,
+            items,
+            paymentMethod: 'cod',
+            shippingAddress: {
+              full_name: user.user_metadata?.full_name || user.email || 'Client 224Solutions',
+              phone: profileData?.phone || 'Non fourni',
+              address_line: shippingAddress.address,
+              city: shippingAddress.city,
+              country: shippingAddress.country,
+              notes: shippingAddress.instructions || null,
+              postal_code: null,
+            },
+          });
+        }
 
         toast({
           title: "✅ Commande créée !",
@@ -815,6 +852,7 @@ export default function Payment() {
         setPaymentStep('form');
         setProductPaymentInfo(null);
         setCartPaymentInfo(null);
+        clearCart();
         navigate('/client');
       } else {
         toast({
@@ -884,72 +922,16 @@ export default function Payment() {
       if (cartPaymentInfo) {
         console.log('[Payment] Creating cart order:', cartPaymentInfo);
 
-        // Préparer les items pour la commande
-        const orderItems = cartPaymentInfo.items.map((item: any) => ({
-          product_id: item.product_id || item.id,
-          quantity: item.quantity,
-          price: item.price
-        }));
-
-        // Créer la commande via la fonction PostgreSQL
-        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
-          p_user_id: user.id,
-          p_vendor_id: cartPaymentInfo.vendorId,
-          p_items: orderItems,
-          p_total_amount: paymentPreview.amount,
-          p_payment_method: 'wallet',
-          p_shipping_address: {
-            address: 'Adresse de livraison',
-            city: 'Conakry',
-            country: 'Guinée'
-          }
-        });
-
-        if (orderError || !orderResult || orderResult.length === 0) {
-          console.error('[Payment] Cart order creation failed:', orderError);
-          throw new Error(orderError?.message || 'Impossible de créer la commande');
-        }
-
-        const orderId = orderResult[0].order_id;
-        const orderNumber = orderResult[0].order_number;
-        console.log('[Payment] Cart order created:', { orderId, orderNumber });
-
-        // Créer l'escrow pour le panier
-        const escrowResult = await UniversalEscrowService.createEscrow({
-          buyer_id: user.id,
-          seller_id: cartPaymentInfo.vendorUserId,
-          order_id: orderId,
-          amount: paymentPreview.amount,
-          currency: 'GNF',
-          transaction_type: 'product',
-          payment_provider: 'wallet',
-          metadata: {
-            items_count: cartPaymentInfo.items.length,
-            order_number: orderNumber,
-            description: paymentDescription || `Achat panier (${cartPaymentInfo.items.length} articles)`
-          }
-        });
-
-        if (!escrowResult.success) {
-          throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
-        }
-
-        // Mettre à jour la commande avec l'escrow_transaction_id
-        await supabase
-          .from('orders')
-          .update({ 
-            metadata: { escrow_transaction_id: escrowResult.escrow_id },
-            payment_status: 'paid'
-          })
-          .eq('id', orderId);
+        const orders = await createOrdersForCartAfterPayment({ paymentMethod: 'wallet' });
 
         toast({
           title: "✅ Commande créée !",
-          description: `Commande ${orderNumber} - ${cartPaymentInfo.items.length} article(s) - Paiement sécurisé`
+          description: `${orders.length} commande(s) créée(s) pour votre panier`
         });
 
         // Réinitialiser et naviguer vers les commandes
         setCartPaymentInfo(null);
+        clearCart();
         navigate('/client');
         return;
       } 
@@ -1071,62 +1053,16 @@ export default function Payment() {
         }
 
         // ====== PRODUIT PHYSIQUE ======
-        // Créer la commande via la fonction PostgreSQL
-        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
-          p_user_id: user.id,
-          p_vendor_id: productPaymentInfo.vendorId,
-          p_items: [{
+        const { orderNumber } = await createOrderForVendor({
+          vendorId: productPaymentInfo.vendorId,
+          items: [{
             product_id: productPaymentInfo.productId,
             quantity: productPaymentInfo.quantity,
-            price: paymentPreview.amount / productPaymentInfo.quantity
+            price: paymentPreview.amount / productPaymentInfo.quantity,
           }],
-          p_total_amount: paymentPreview.amount,
-          p_payment_method: 'wallet',
-          p_shipping_address: {
-            address: 'Adresse de livraison',
-            city: 'Conakry',
-            country: 'Guinée'
-          }
+          paymentMethod: 'wallet',
+          markAsPaid: true,
         });
-
-        if (orderError || !orderResult || orderResult.length === 0) {
-          console.error('[Payment] Order creation failed:', orderError);
-          throw new Error(orderError?.message || 'Impossible de créer la commande');
-        }
-
-        const orderId = orderResult[0].order_id;
-        const orderNumber = orderResult[0].order_number;
-        console.log('[Payment] Order created:', { orderId, orderNumber });
-
-        // Créer l'escrow pour le produit
-        const escrowResult = await UniversalEscrowService.createEscrow({
-          buyer_id: user.id,
-          seller_id: productPaymentInfo.vendorUserId,
-          order_id: orderId,
-          amount: paymentPreview.amount,
-          currency: 'GNF',
-          transaction_type: 'product',
-          payment_provider: 'wallet',
-          metadata: {
-            product_id: productPaymentInfo.productId,
-            product_name: productPaymentInfo.productName,
-            order_number: orderNumber,
-            description: paymentDescription || `Achat: ${productPaymentInfo.productName}`
-          }
-        });
-
-        if (!escrowResult.success) {
-          throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
-        }
-
-        // Mettre à jour la commande avec l'escrow_transaction_id
-        await supabase
-          .from('orders')
-          .update({ 
-            metadata: { escrow_transaction_id: escrowResult.escrow_id },
-            payment_status: 'paid'
-          })
-          .eq('id', orderId);
 
         toast({
           title: "✅ Commande créée !",
@@ -1386,9 +1322,9 @@ export default function Payment() {
                                   quantity: productPaymentInfo.quantity,
                                   price: (parseFloat(paymentAmount) || 0) / Math.max(productPaymentInfo.quantity, 1),
                                 }],
-                                totalAmount: parseFloat(paymentAmount) || 0,
                                 paymentMethod: normalizedMethod,
                                 externalPaymentId: transactionId || undefined,
+                                markAsPaid: true,
                               });
                               console.log('[Payment] Physical order created after provider success:', order);
                             } catch (err: any) {

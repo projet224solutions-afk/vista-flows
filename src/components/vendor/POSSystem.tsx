@@ -63,6 +63,7 @@ import { BarcodeScannerModal } from './pos/BarcodeScannerModal';
 import { Scan } from 'lucide-react';
 import { useChapChapPay, type ChapChapPayMethod } from '@/hooks/useChapChapPay';
 import { StripeCardPaymentModal } from '@/components/pos/StripeCardPaymentModal';
+import { syncPosSales } from '@/services/posBackendService';
 
 interface Product {
   id: string;
@@ -1562,46 +1563,45 @@ export function POSSystem() {
         }
       }
       
-      // Mode ONLINE: procéder via RPC sécurisée (évite erreurs RLS/Items)
-      console.log('🔄 [POS] Création de commande via RPC create_online_order...');
+      // Mode ONLINE: passer par le backend POS atomique
+      console.log('🔄 [POS] Création de vente via backend atomique...');
 
-      const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
-        p_user_id: user.id,
-        p_vendor_id: vendorId,
-        p_items: cart.map(item => ({
-          product_id: item.id,
-          quantity: item.quantity,
-          price: item.quantity > 0 ? item.total / item.quantity : item.price
-        })),
-        p_total_amount: total,
-        p_payment_method: 'cash',
-        p_shipping_address: { address: 'Point de vente' }
-      });
+      const localSaleId = `pos-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const syncResponse = await syncPosSales([
+        {
+          local_sale_id: localSaleId,
+          items: cart.map(item => ({
+            product_id: item.id,
+            product_name: item.name,
+            quantity: item.quantity,
+            unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
+            discount: 0,
+          })),
+          payment_method: 'cash',
+          total_amount: total,
+          discount_total: 0,
+          customer_name: selectedCustomer?.name || 'Client comptoir',
+          customer_phone: selectedCustomer?.phone || null,
+          notes: 'Paiement POS - Espèces',
+          sold_at: new Date().toISOString(),
+        },
+      ]);
 
-      if (orderError || !orderResult || orderResult.length === 0) {
-        console.error('❌ [POS] RPC create_online_order failed:', orderError);
-        throw orderError || new Error('Impossible de créer la commande (RPC)');
+      if (!syncResponse.success || !syncResponse.data?.results?.length) {
+        throw new Error(syncResponse.error || 'Impossible de créer la vente POS');
+      }
+
+      const saleResult = syncResponse.data.results[0];
+      if (saleResult.status === 'error' || !saleResult.sale_id) {
+        throw new Error(saleResult.error || 'Échec de création de la vente POS');
       }
 
       const order = {
-        id: orderResult[0].order_id,
-        order_number: orderResult[0].order_number
+        id: saleResult.sale_id,
+        order_number: localSaleId.toUpperCase(),
       };
 
-      console.log('✅ [POS] Commande créée via RPC:', order.id, order.order_number);
-
-      // Mettre à jour pour POS (source + paiement payé + statut)
-      const { error: updateError } = await updatePosOrderStatus(order.id, {
-        payment_status: 'paid',
-        source: 'pos',
-        notes: 'Paiement POS - Espèces'
-      });
-
-      if (updateError) {
-        console.error('❌ [POS] Erreur mise à jour statut:', updateError);
-        throw updateError;
-      }
-      console.log('✅ [POS] Statut mis à jour');
+      console.log('✅ [POS] Vente créée via backend atomique:', order.id, order.order_number);
 
       // 5. Stock: géré côté base de données
       // - décrément via trigger sur order_items

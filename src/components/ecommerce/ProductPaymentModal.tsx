@@ -21,12 +21,11 @@ import { supabase } from "@/lib/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Escrow224Service } from "@/services/escrow224Service";
-import { UniversalEscrowService } from "@/services/UniversalEscrowService";
 import { SecureButton } from "@/components/ui/SecureButton";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { useChapChapPay } from "@/hooks/useChapChapPay";
 import { usePriceConverter } from "@/hooks/usePriceConverter";
+import { createOrder } from '@/services/orderBackendService';
 
 const StripeCheckoutButton = lazy(() => import("@/components/payment/StripeCheckoutButton"));
 
@@ -116,6 +115,65 @@ export default function ProductPaymentModal({
   const [loadingCommission, setLoadingCommission] = useState(false);
   const [commissionFee, setCommissionFee] = useState(0);
   const [grandTotal, setGrandTotal] = useState(totalAmount);
+
+  const createMarketplaceOrder = async ({
+    vendorId,
+    items,
+    paymentMethod,
+    chargedAmount,
+    paymentReference,
+    markAsPaid,
+    shippingAddress,
+    metadata,
+  }: {
+    vendorId: string;
+    items: CartItem[];
+    paymentMethod: 'wallet' | 'card' | 'mobile_money' | 'cod';
+    chargedAmount: number;
+    paymentReference?: string;
+    markAsPaid: boolean;
+    shippingAddress: {
+      full_name: string;
+      phone: string;
+      address_line: string;
+      city: string;
+      country: string;
+      postal_code?: string | null;
+      notes?: string | null;
+    };
+    metadata?: Record<string, unknown>;
+  }) => {
+    const response = await createOrder({
+      vendor_id: vendorId,
+      items: items.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity || 1,
+        variant_id: null,
+      })),
+      payment_method: paymentMethod,
+      payment_intent_id: paymentReference || null,
+      shipping_address: shippingAddress,
+    });
+
+    if (!response.success || !response.data?.order) {
+      throw new Error(response.error || 'Erreur lors de la création de la commande');
+    }
+
+    const order = response.data.order;
+    await supabase
+      .from('orders')
+      .update({
+        total_amount: chargedAmount,
+        payment_status: markAsPaid ? 'paid' : order.payment_status,
+        metadata: {
+          external_payment_id: paymentReference || null,
+          ...(metadata || {}),
+        },
+      })
+      .eq('id', order.id);
+
+    return order;
+  };
 
   useEffect(() => {
     if (open && cartItems.length > 0) {
@@ -262,27 +320,30 @@ export default function ProductPaymentModal({
       const vendorTotalWithCommission = vendorProductTotal + commissionPerVendor;
       const normalizedMethod = method === 'mtn_money' ? 'mobile_money' : method === 'orange_money' ? 'mobile_money' : method;
 
-      const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
-        p_user_id: userId, p_vendor_id: vendorId,
-        p_items: items.map(item => ({ product_id: item.id, quantity: item.quantity || 1, price: item.price })),
-        p_total_amount: vendorTotalWithCommission, p_payment_method: normalizedMethod,
-        p_shipping_address: { address: 'Adresse de livraison', city: 'Conakry', country: 'Guinée', commission_fee: commissionPerVendor, product_total: vendorProductTotal, external_payment_id: paymentId }
+      const order = await createMarketplaceOrder({
+        vendorId,
+        items,
+        paymentMethod: normalizedMethod as 'wallet' | 'card' | 'mobile_money' | 'cod',
+        chargedAmount: vendorTotalWithCommission,
+        paymentReference: paymentId,
+        markAsPaid: true,
+        shippingAddress: {
+          full_name: 'Client 224Solutions',
+          phone: 'Non fourni',
+          address_line: 'Adresse de livraison',
+          city: 'Conakry',
+          country: 'Guinée',
+          postal_code: null,
+          notes: null,
+        },
+        metadata: { commission_fee: commissionPerVendor, product_total: vendorProductTotal },
       });
-
-      if (orderError || !orderResult?.length) {
-        console.error('[ProductPayment] Order creation failed:', orderError);
-        toast.error('Erreur lors de la création de la commande');
-        continue;
-      }
-
-      const orderId = orderResult[0].order_id;
-      await supabase.from('orders').update({ payment_status: 'paid', metadata: { external_payment_id: paymentId, commission_fee: commissionPerVendor, product_total: vendorProductTotal } }).eq('id', orderId);
 
       if (commissionPerVendor > 0) {
         await supabase.rpc('record_pdg_revenue', {
           p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor,
           p_percentage: commissionConfig?.commission_value || 10, p_transaction_id: paymentId,
-          p_user_id: userId, p_metadata: { order_id: orderId, vendor_id: vendorId, product_total: vendorProductTotal }
+          p_user_id: userId, p_metadata: { order_id: order.id, vendor_id: vendorId, product_total: vendorProductTotal }
         });
       }
     }
@@ -332,57 +393,48 @@ export default function ProductPaymentModal({
 
         console.log('[ProductPayment] Creating order for vendor:', { vendorId, itemCount: items.length, total: vendorTotalWithCommission });
 
-        const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
-          p_user_id: userId, p_vendor_id: vendorId,
-          p_items: items.map(item => ({ product_id: item.id, quantity: item.quantity || 1, price: item.price })),
-          p_total_amount: vendorTotalWithCommission, p_payment_method: 'card',
-          p_shipping_address: { address: 'Adresse de livraison', city: 'Conakry', country: 'Guinée', commission_fee: commissionPerVendor, product_total: vendorProductTotal, external_payment_id: data.paymentIntentId }
-        });
-
-        if (orderError || !orderResult?.length) {
-          const errMsg = orderError?.message || 'Résultat vide';
+        let order;
+        try {
+          order = await createMarketplaceOrder({
+            vendorId,
+            items,
+            paymentMethod: 'card',
+            chargedAmount: vendorTotalWithCommission,
+            paymentReference: data.paymentIntentId,
+            markAsPaid: false,
+            shippingAddress: {
+              full_name: 'Client 224Solutions',
+              phone: 'Non fourni',
+              address_line: 'Adresse de livraison',
+              city: 'Conakry',
+              country: 'Guinée',
+              postal_code: null,
+              notes: null,
+            },
+            metadata: {
+              escrow_active: true,
+              commission_fee: commissionPerVendor,
+              product_total: vendorProductTotal,
+              commission_percent: commissionConfig?.commission_value || 10,
+            },
+          });
+        } catch (error: any) {
+          const errMsg = error?.message || 'Résultat vide';
           console.error('[ProductPayment] Order creation failed for vendor', vendorId, ':', errMsg);
           errors.push(errMsg);
           toast.error(`Erreur commande: ${errMsg}`);
           continue;
         }
 
-        const orderId = orderResult[0].order_id;
-        createdOrders.push(orderId);
-        console.log('[ProductPayment] Order created:', { orderId, orderNumber: orderResult[0].order_number });
-
-        // payment_status = 'pending' car fonds en escrow (pas encore capturés)
-        await supabase.from('orders').update({
-          payment_status: 'pending',
-          metadata: {
-            external_payment_id: data.paymentIntentId,
-            escrow_active: true,
-            commission_fee: commissionPerVendor,
-            product_total: vendorProductTotal,
-            commission_percent: commissionConfig?.commission_value || 10
-          }
-        }).eq('id', orderId);
-
-        // Lier l'escrow à l'order_id côté serveur (bypass RLS)
-        const { data: linkData, error: linkError } = await supabase.functions.invoke('link-escrow-order', {
-          body: {
-            payment_intent_id: data.paymentIntentId,
-            vendor_id: vendorId,
-            order_id: orderId,
-          }
-        });
-
-        if (linkError || !linkData?.success) {
-          console.error('[ProductPayment] Escrow linking failed:', linkError || linkData?.error);
-          errors.push(linkError?.message || linkData?.error || 'Échec liaison escrow');
-        }
+        createdOrders.push(order.id);
+        console.log('[ProductPayment] Order created:', { orderId: order.id, orderNumber: order.order_number });
 
         // Enregistrer la commission PDG
         if (commissionPerVendor > 0) {
           await supabase.rpc('record_pdg_revenue', {
             p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor,
             p_percentage: commissionConfig?.commission_value || 10, p_transaction_id: data.paymentIntentId,
-            p_user_id: userId, p_metadata: { order_id: orderId, vendor_id: vendorId, product_total: vendorProductTotal }
+            p_user_id: userId, p_metadata: { order_id: order.id, vendor_id: vendorId, product_total: vendorProductTotal }
           });
         }
       }
@@ -511,43 +563,38 @@ export default function ProductPaymentModal({
         }
       }
 
-      const { data: vendorData, error: vendorError } = await supabase.from('vendors').select('user_id').eq('id', vendorId).single();
-      if (vendorError || !vendorData) { toast.error('Erreur vendeur'); continue; }
-
       const normalizedPaymentMethod = isCODMethod ? 'cash' : paymentMethod;
 
-      const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
-        p_user_id: userId, p_vendor_id: vendorId,
-        p_items: items.map(item => ({ product_id: item.id, quantity: item.quantity || 1, price: item.price })),
-        p_total_amount: vendorTotalWithCommission, p_payment_method: normalizedPaymentMethod,
-        p_shipping_address: {
-          address: isCODMethod && codPhone ? codPhone : 'Adresse de livraison',
-          city: isCODMethod && codCity ? codCity : 'Conakry', country: 'Guinée',
-          commission_fee: commissionPerVendor, product_total: vendorProductTotal,
-          ...(isCODMethod ? { is_cod: true, cod_phone: codPhone, cod_city: codCity } : {})
-        }
-      });
-
-      if (orderError || !orderResult?.length) { toast.error('Erreur création commande', { description: orderError?.message }); continue; }
-
-      const orderId = orderResult[0].order_id;
-      const orderNumber = orderResult[0].order_number;
-
-      if (paymentMethod === 'wallet') {
-        const escrowResult = await UniversalEscrowService.createEscrow({
-          buyer_id: userId, seller_id: vendorData.user_id, order_id: orderId,
-          amount: vendorTotalWithCommission, currency: cur, transaction_type: 'product', payment_provider: 'wallet',
-          metadata: { product_ids: items.map(i => i.id), order_number: orderNumber, description: `Achat produits (${items.length} articles)`, product_total: vendorProductTotal, commission_fee: commissionPerVendor, commission_percent: commissionConfig?.commission_value || 10 },
-          escrow_options: { commission_percent: commissionConfig?.commission_value || 10 }
+      try {
+        const order = await createMarketplaceOrder({
+          vendorId,
+          items,
+          paymentMethod: (isCODMethod ? 'cod' : normalizedPaymentMethod) as 'wallet' | 'card' | 'mobile_money' | 'cod',
+          chargedAmount: vendorTotalWithCommission,
+          markAsPaid: paymentMethod === 'wallet',
+          shippingAddress: {
+            full_name: 'Client 224Solutions',
+            phone: isCODMethod && codPhone ? codPhone : 'Non fourni',
+            address_line: isCODMethod && codPhone ? codPhone : 'Adresse de livraison',
+            city: isCODMethod && codCity ? codCity : 'Conakry',
+            country: 'Guinée',
+            postal_code: null,
+            notes: isCODMethod ? 'Paiement à la livraison' : null,
+          },
+          metadata: {
+            commission_fee: commissionPerVendor,
+            product_total: vendorProductTotal,
+            commission_percent: commissionConfig?.commission_value || 10,
+            ...(isCODMethod ? { is_cod: true, cod_phone: codPhone, cod_city: codCity } : {}),
+          },
         });
 
-        if (!escrowResult.success) { toast.error('Erreur de paiement', { description: escrowResult.error }); continue; }
-
-        await supabase.from('orders').update({ metadata: { escrow_transaction_id: escrowResult.escrow_id, commission_fee: commissionPerVendor, product_total: vendorProductTotal, commission_percent: commissionConfig?.commission_value || 10 }, payment_status: 'paid' }).eq('id', orderId);
-
-        if (commissionPerVendor > 0) {
-          await supabase.rpc('record_pdg_revenue', { p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor, p_percentage: commissionConfig?.commission_value || 10, p_transaction_id: escrowResult.escrow_id, p_user_id: userId, p_metadata: { order_id: orderId, order_number: orderNumber, vendor_id: vendorId, product_total: vendorProductTotal } });
+        if (paymentMethod === 'wallet' && commissionPerVendor > 0) {
+          await supabase.rpc('record_pdg_revenue', { p_source_type: 'frais_achat_commande', p_amount: commissionPerVendor, p_percentage: commissionConfig?.commission_value || 10, p_transaction_id: `wallet-${order.id}`, p_user_id: userId, p_metadata: { order_id: order.id, order_number: order.order_number, vendor_id: vendorId, product_total: vendorProductTotal } });
         }
+      } catch (error: any) {
+        toast.error('Erreur création commande', { description: error?.message });
+        continue;
       }
     }
 

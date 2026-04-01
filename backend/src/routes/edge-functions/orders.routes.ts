@@ -197,28 +197,6 @@ router.post("/marketplace-escrow-payment", validateBearerToken, async (req: any,
       },
     });
 
-    // Create escrow transactions for each vendor
-    const escrowRecords = [];
-    for (const item of cartItems) {
-      const { data: escrow } = await supabaseAdmin
-        .from("escrow_transactions")
-        .insert({
-          payment_intent_id: paymentIntent.id,
-          buyer_id: profile?.user_id,
-          seller_id: item.vendorId,
-          amount: item.price * item.quantity,
-          currency,
-          status: "pending",
-          auto_release_enabled: true,
-          auto_release_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          created_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      escrowRecords.push(escrow);
-    }
-
     // Store in stripe_transactions
     await supabaseAdmin
       .from("stripe_transactions")

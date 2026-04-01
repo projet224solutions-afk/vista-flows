@@ -201,9 +201,24 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
       return;
     }
 
+    let escrowStatus = result.escrow_status as string;
+    if (payment_method === 'cod') {
+      await supabaseAdmin
+        .from('escrow_transactions')
+        .update({
+          status: 'pending',
+          metadata: {
+            payment_type: 'cash_on_delivery',
+            note: 'Paiement à la livraison - escrow virtuel',
+          },
+        })
+        .eq('order_id', result.order_id);
+      escrowStatus = 'pending';
+    }
+
     // Performance logging
     const duration = Date.now() - startTime;
-    logger.info(`✅ Order created: ${result.order_id} (${orderNumber}), vendor=${vendor_id}, total=${result.total_amount} ${currency}, escrow=held, duration=${duration}ms, db_calls=2`);
+    logger.info(`✅ Order created: ${result.order_id} (${orderNumber}), vendor=${vendor_id}, total=${result.total_amount} ${currency}, escrow=${escrowStatus}, duration=${duration}ms, db_calls=2`);
 
     res.status(201).json({
       success: true,
@@ -220,7 +235,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
           shipping_address,
         },
         items: result.items,
-        escrow_status: result.escrow_status,
+        escrow_status: escrowStatus,
       },
       _perf: { duration_ms: duration, db_calls: 2 },
     });
@@ -434,7 +449,7 @@ router.patch('/:orderId/status', verifyJWT, orderCreateRateLimit, async (req: Au
     const { orderId } = req.params;
 
     const statusSchema = z.object({
-      status: z.enum(['confirmed', 'preparing', 'shipped', 'delivered', 'cancelled']),
+      status: z.enum(['confirmed', 'preparing', 'ready', 'shipped', 'in_transit', 'delivered', 'cancelled']),
       tracking_number: z.string().max(100).nullish(),
       cancellation_reason: z.string().max(500).nullish(),
     });
@@ -445,7 +460,9 @@ router.patch('/:orderId/status', verifyJWT, orderCreateRateLimit, async (req: Au
       return;
     }
 
-    const { status, tracking_number, cancellation_reason } = validation.data;
+    const requestedStatus = validation.data.status;
+    const status = requestedStatus === 'shipped' ? 'in_transit' : requestedStatus;
+    const { tracking_number, cancellation_reason } = validation.data;
 
     const { data: vendor } = await supabaseAdmin
       .from('vendors').select('id').eq('user_id', userId).maybeSingle();
@@ -470,8 +487,10 @@ router.patch('/:orderId/status', verifyJWT, orderCreateRateLimit, async (req: Au
     const allowedTransitions: Record<string, string[]> = {
       pending: ['confirmed', 'cancelled'],
       confirmed: ['preparing', 'cancelled'],
-      preparing: ['shipped', 'cancelled'],
+      preparing: ['ready', 'cancelled'],
+      ready: ['in_transit', 'cancelled'],
       shipped: ['delivered'],
+      in_transit: ['delivered'],
       delivered: [],
       cancelled: [],
     };
@@ -509,10 +528,6 @@ router.patch('/:orderId/status', verifyJWT, orderCreateRateLimit, async (req: Au
 
     if (status === 'delivered') {
       updates.delivered_at = new Date().toISOString();
-      await supabaseAdmin
-        .from('escrow_transactions')
-        .update({ status: 'released', released_at: new Date().toISOString() })
-        .eq('order_id', orderId);
     }
 
     if (status === 'cancelled') {
