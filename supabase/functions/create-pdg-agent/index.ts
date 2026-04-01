@@ -109,60 +109,71 @@ serve(async (req) => {
       );
     }
 
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(u => u.email === email);
+    // Vérifier si l'email existe déjà dans agents_management
+    const { data: existingAgentByEmail } = await supabaseAdmin
+      .from('agents_management')
+      .select('id, name')
+      .eq('email', email)
+      .maybeSingle();
 
-    if (existingUser) {
-      const { data: existingAgent } = await supabaseAdmin
-        .from('agents_management')
-        .select('id, name')
-        .eq('user_id', existingUser.id)
-        .single();
-
-      if (existingAgent) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: `Cet email est déjà utilisé par l'agent: ${existingAgent.name}` 
-          }),
-          { status: 400, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
+    if (existingAgentByEmail) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: `Cet email est déjà enregistré dans le système. Veuillez utiliser un autre email.` 
+          error: `Cet email est déjà utilisé par l'agent: ${existingAgentByEmail.name}` 
         }),
         { status: 400, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { data: authUser, error: authError2 } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: password,
-      email_confirm: true,
-      user_metadata: {
-        first_name: name.split(' ')[0] || name,
-        last_name: name.split(' ').slice(1).join(' ') || '',
-        phone: phone,
-        role: 'agent',
-        country: 'Guinée'
-      }
-    });
+    // Chercher si l'utilisateur existe déjà dans auth.users
+    let authUserId: string;
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email === email);
 
-    if (authError2) {
-      console.error('❌ Erreur création auth:', authError2);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Erreur création utilisateur: ${authError2.message}` 
-        }),
-        { status: 500, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (existingUser) {
+      // Réutiliser le compte auth existant
+      console.log('ℹ️ Utilisateur auth existant trouvé, réutilisation:', existingUser.id);
+      authUserId = existingUser.id;
+      
+      // Mettre à jour les métadonnées
+      await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+        password: password,
+        user_metadata: {
+          ...existingUser.user_metadata,
+          role: 'agent',
+          phone: phone,
+        }
+      });
+    } else {
+      // Créer un nouveau compte auth
+      const { data: authUser, error: authError2 } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: password,
+        email_confirm: true,
+        user_metadata: {
+          first_name: name.split(' ')[0] || name,
+          last_name: name.split(' ').slice(1).join(' ') || '',
+          phone: phone,
+          role: 'agent',
+          country: 'Guinée'
+        }
+      });
+
+      if (authError2) {
+        console.error('❌ Erreur création auth:', authError2);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Erreur création utilisateur: ${authError2.message}` 
+          }),
+          { status: 500, headers: { ...securityHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      authUserId = authUser.user!.id;
     }
 
-    console.log('✅ Utilisateur créé avec mot de passe sécurisé:', authUser.user?.id);
+    console.log('✅ Utilisateur auth prêt:', authUserId);
 
     let passwordHash = password;
     try {
@@ -178,7 +189,7 @@ serve(async (req) => {
 
     if (idError || !agentCode) {
       console.error('❌ Erreur génération ID agent:', idError);
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user!.id);
+      if (!existingUser) await supabaseAdmin.auth.admin.deleteUser(authUserId);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -192,7 +203,7 @@ serve(async (req) => {
       .from('agents_management')
       .insert({
         pdg_id: pdgProfile.id,
-        user_id: authUser.user!.id,
+        user_id: authUserId,
         agent_code: agentCode,
         name,
         email,
@@ -208,7 +219,7 @@ serve(async (req) => {
 
     if (agentError) {
       console.error('❌ Erreur création agent:', agentError);
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user!.id);
+      if (!existingUser) await supabaseAdmin.auth.admin.deleteUser(authUserId);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -223,7 +234,7 @@ serve(async (req) => {
     const { error: agentsTableError } = await supabaseAdmin
       .from('agents')
       .insert({
-        id: authUser.user!.id,
+        id: authUserId,
         email,
         phone,
         first_name: name.split(' ')[0] || name,
@@ -251,7 +262,7 @@ serve(async (req) => {
     const { error: walletError } = await supabaseAdmin
       .from('wallets')
       .insert({
-        user_id: authUser.user!.id,
+        user_id: authUserId,
         balance: 0,
         currency: 'GNF'
       });
