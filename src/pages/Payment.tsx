@@ -232,7 +232,7 @@ export default function Payment() {
       await supabase
         .from('orders')
         .update({
-          payment_status: markAsPaid ? 'paid' : response.data.order.payment_status,
+          payment_status: (markAsPaid ? 'paid' : response.data.order.payment_status) as "failed" | "paid" | "pending" | "refunded",
           metadata: {
             external_payment_id: externalPaymentId || null,
             source: 'payment_page_post_provider_success',
