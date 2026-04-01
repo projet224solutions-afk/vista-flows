@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,15 +9,78 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Package, Search, Eye, Ban, Trash2, Edit, AlertTriangle, DollarSign, TrendingUp, TrendingDown, Box, Store, AlertCircle } from 'lucide-react';
 import { usePDGProductsData } from '@/hooks/usePDGProductsData';
+import { getPdgVisibilityOverview, updatePdgVisibilityConfig } from '@/services/marketplaceVisibilityService';
+import { toast } from 'sonner';
 
 export default function PDGProductsManagement() {
   const { products, vendors, loading, stats, toggleProductStatus, deleteProduct, updateProduct } = usePDGProductsData();
+  const [visibilityOverview, setVisibilityOverview] = useState<any>(null);
+  const [savingVisibilityConfig, setSavingVisibilityConfig] = useState(false);
+  const [visibilityConfig, setVisibilityConfig] = useState({
+    subscription_weight: 35,
+    performance_weight: 25,
+    boost_weight: 20,
+    quality_weight: 10,
+    relevance_weight: 10,
+    sponsored_slots_ratio: 20,
+    popular_slots_ratio: 30,
+    organic_slots_ratio: 50,
+    max_boost_per_vendor: 10,
+    vendor_diversity_penalty: 8,
+    min_quality_threshold: 20,
+    rotation_factor: 10,
+  });
   
   const [searchTerm, setSearchTerm] = useState('');
   const [viewProduct, setViewProduct] = useState<any>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'orphan' | 'active' | 'inactive'>('all');
+
+  useEffect(() => {
+    let mounted = true;
+    getPdgVisibilityOverview().then((resp) => {
+      if (!mounted) return;
+      if (resp.success) {
+        const data = resp.data || {};
+        setVisibilityOverview(data);
+        if (data.settings) {
+          setVisibilityConfig((prev) => ({ ...prev, ...data.settings }));
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleSaveVisibilityConfig = async () => {
+    setSavingVisibilityConfig(true);
+    try {
+      const totalWeight =
+        Number(visibilityConfig.subscription_weight) +
+        Number(visibilityConfig.performance_weight) +
+        Number(visibilityConfig.boost_weight) +
+        Number(visibilityConfig.quality_weight) +
+        Number(visibilityConfig.relevance_weight);
+
+      if (Math.abs(totalWeight - 100) > 0.01) {
+        toast.error('Les poids de ranking doivent totaliser 100%');
+        return;
+      }
+
+      const resp = await updatePdgVisibilityConfig(visibilityConfig);
+      if (!resp.success) {
+        toast.error(resp.error || 'Échec de sauvegarde de la configuration visibilité');
+        return;
+      }
+
+      toast.success('Configuration visibilité mise à jour');
+    } finally {
+      setSavingVisibilityConfig(false);
+    }
+  };
 
   // Filtrer les produits
   const filteredProducts = products.filter(product => {
@@ -187,6 +251,80 @@ export default function PDGProductsManagement() {
           </Card>
         )}
       </div>
+
+      <Card className="border-primary/30">
+        <CardHeader>
+          <CardTitle>Cockpit Visibilité Marketplace</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="p-3 rounded-lg border bg-card">
+              <p className="text-xs text-muted-foreground">Boosts actifs</p>
+              <p className="text-2xl font-bold">{Number(visibilityOverview?.activeBoostCount || 0)}</p>
+            </div>
+            <div className="p-3 rounded-lg border bg-card">
+              <p className="text-xs text-muted-foreground">Revenus boosts</p>
+              <p className="text-2xl font-bold">{Number(visibilityOverview?.totalBoostRevenue || 0).toLocaleString('fr-FR')} GNF</p>
+            </div>
+            <div className="p-3 rounded-lg border bg-card">
+              <p className="text-xs text-muted-foreground">Vendeurs boosteurs (top)</p>
+              <p className="text-2xl font-bold">{Array.isArray(visibilityOverview?.topBoostVendors) ? visibilityOverview.topBoostVendors.length : 0}</p>
+            </div>
+            <div className="p-3 rounded-lg border bg-card">
+              <p className="text-xs text-muted-foreground">Plans configurés</p>
+              <p className="text-2xl font-bold">{Array.isArray(visibilityOverview?.planScores) ? visibilityOverview.planScores.length : 0}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div>
+              <Label>Poids abonnement (%)</Label>
+              <Input type="number" value={visibilityConfig.subscription_weight} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, subscription_weight: Number(e.target.value || 0) }))} />
+            </div>
+            <div>
+              <Label>Poids performance (%)</Label>
+              <Input type="number" value={visibilityConfig.performance_weight} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, performance_weight: Number(e.target.value || 0) }))} />
+            </div>
+            <div>
+              <Label>Poids boost (%)</Label>
+              <Input type="number" value={visibilityConfig.boost_weight} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, boost_weight: Number(e.target.value || 0) }))} />
+            </div>
+            <div>
+              <Label>Poids qualité (%)</Label>
+              <Input type="number" value={visibilityConfig.quality_weight} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, quality_weight: Number(e.target.value || 0) }))} />
+            </div>
+            <div>
+              <Label>Poids pertinence (%)</Label>
+              <Input type="number" value={visibilityConfig.relevance_weight} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, relevance_weight: Number(e.target.value || 0) }))} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div>
+              <Label>Ratio sponsorisé (%)</Label>
+              <Input type="number" value={visibilityConfig.sponsored_slots_ratio} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, sponsored_slots_ratio: Number(e.target.value || 0) }))} />
+            </div>
+            <div>
+              <Label>Ratio populaire (%)</Label>
+              <Input type="number" value={visibilityConfig.popular_slots_ratio} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, popular_slots_ratio: Number(e.target.value || 0) }))} />
+            </div>
+            <div>
+              <Label>Ratio organique (%)</Label>
+              <Input type="number" value={visibilityConfig.organic_slots_ratio} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, organic_slots_ratio: Number(e.target.value || 0) }))} />
+            </div>
+            <div>
+              <Label>Pénalité diversité vendeur</Label>
+              <Input type="number" value={visibilityConfig.vendor_diversity_penalty} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, vendor_diversity_penalty: Number(e.target.value || 0) }))} />
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSaveVisibilityConfig} disabled={savingVisibilityConfig}>
+              {savingVisibilityConfig ? 'Sauvegarde...' : 'Sauvegarder la configuration visibilité'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recherche et Filtres */}
       <Card>

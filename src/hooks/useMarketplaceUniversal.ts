@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getCurrencyForCountry } from '@/data/countryMappings';
+import { rankMarketplaceCandidates } from '@/services/marketplaceVisibilityService';
 
 // Mapping des catégories techniques vers des noms lisibles
 const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
@@ -54,6 +55,7 @@ export interface MarketplaceItem {
   // Champs pour affiliés
   product_mode?: 'direct' | 'affiliate';
   affiliate_url?: string;
+  visibility_score?: number;
 }
 
 interface UseMarketplaceUniversalOptions {
@@ -67,7 +69,7 @@ interface UseMarketplaceUniversalOptions {
   country?: string;
   city?: string;
   itemType?: 'all' | 'product' | 'digital_product' | 'professional_service';
-  sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'position';
+  sortBy?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'position' | 'visibility';
   autoLoad?: boolean;
 }
 
@@ -596,6 +598,58 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       
       // Combiner: sponsorisés en tête, puis les autres
       allItems = [...sponsored, ...nonSponsored];
+
+      // Ranking centralisé backend (abonnement + performance + boost + qualité + pertinence)
+      // On l'applique pour les modes de découverte (visibility/position/popular)
+      if (allItems.length > 0 && (sortBy === 'visibility' || sortBy === 'position' || sortBy === 'popular')) {
+        const candidates = allItems
+          .map(item => {
+            const imageCount = Array.isArray(item.images) ? item.images.length : 0;
+            return {
+              id: item.id,
+              itemType: item.item_type,
+              vendorId: item.vendor_id,
+              vendorUserId: item.vendor_user_id,
+              rating: item.rating,
+              reviewsCount: item.reviews_count,
+              createdAt: item.created_at,
+              descriptionLength: (item.description || '').length,
+              imageCount,
+              isSponsored: !!item.is_sponsored,
+            };
+          })
+          .filter(c => !!c.vendorUserId);
+
+        if (candidates.length > 0) {
+          const ranked = await rankMarketplaceCandidates(candidates, {
+            channel: 'marketplace',
+            sortBy,
+            category: category || 'all',
+            itemType,
+            country: country || 'all',
+            city: city || 'all',
+          });
+
+          if (ranked?.orderedIds?.length) {
+            const scoreById = ranked.scores || {};
+            const orderMap = new Map<string, number>(ranked.orderedIds.map((id, idx) => [id, idx]));
+
+            allItems = allItems
+              .map(item => ({
+                ...item,
+                visibility_score: Number(scoreById[item.id]?.finalScore || 0),
+              }))
+              .sort((a, b) => {
+                const idxA = orderMap.has(a.id) ? (orderMap.get(a.id) as number) : Number.MAX_SAFE_INTEGER;
+                const idxB = orderMap.has(b.id) ? (orderMap.get(b.id) as number) : Number.MAX_SAFE_INTEGER;
+                if (idxA !== idxB) return idxA - idxB;
+
+                // fallback stable order
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+              });
+          }
+        }
+      }
 
       // Pagination
       const currentPage = reset ? 1 : page;

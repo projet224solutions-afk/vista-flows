@@ -34,6 +34,7 @@ import posRoutes from './routes/pos.routes.js';
 import inventoryRoutes from './routes/inventory.routes.js';
 import affiliateRoutes from './routes/affiliate.routes.js';
 import paymentLinksRoutes from './routes/paymentLinks.routes.js';
+import marketplaceVisibilityRoutes from './routes/marketplaceVisibility.routes.js';
 import webhookRoutes from './routes/webhooks.routes.js';
 // @ts-ignore
 import migrationsRoutes from './routes/migrations.js';
@@ -169,6 +170,7 @@ app.use('/api/pos', posRoutes);
 app.use('/api/affiliate', affiliateRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/payment-links', paymentLinksRoutes);
+app.use('/api/marketplace-visibility', marketplaceVisibilityRoutes);
 app.use('/edge-functions', edgeFunctionsRoutes);
 
 // ==================== ERROR HANDLING ====================
