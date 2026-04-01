@@ -645,7 +645,7 @@ serve(async (req) => {
 
         if (!transferResult.success) {
           console.error('[wallet-ops] Transfer failed:', transferResult.error);
-          return new Response(JSON.stringify({ error: transferResult.error || 'Échec du transfert' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: 'Échec du transfert' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
         await logSecureAudit(serviceClient, user.id, isInternational ? "international_transfer" : "local_transfer", {
