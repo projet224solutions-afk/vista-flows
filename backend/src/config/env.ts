@@ -38,6 +38,11 @@ export const env = {
   INTERNAL_API_KEY: optionalEnv('INTERNAL_API_KEY', ''),
   JWT_SECRET: optionalEnv('JWT_SECRET', ''),
 
+  // OAuth (Google)
+  OAUTH_CLIENT_ID: requireEnv('OAUTH_CLIENT_ID'),
+  OAUTH_CLIENT_SECRET: requireEnv('OAUTH_CLIENT_SECRET'),
+  OAUTH_REDIRECT_URI: optionalEnv('OAUTH_REDIRECT_URI', ''),
+
   // CORS
   CORS_ORIGINS: optionalEnv('CORS_ORIGINS', 'http://localhost:5173'),
 
