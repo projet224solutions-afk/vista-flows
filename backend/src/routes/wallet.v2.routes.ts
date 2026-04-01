@@ -25,6 +25,7 @@ import { logger } from '../config/logger.js';
 import { creditWallet, debitWallet, transferBetweenWallets } from '../services/wallet.service.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalletPinState, setupWalletPin, verifyWalletPin } from '../services/walletPin.service.js';
+import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -268,6 +269,15 @@ router.post('/deposit', verifyJWT, async (req: AuthenticatedRequest, res: Respon
     const result = await creditWallet(userId, amount, description || 'Dépôt', ref, 'deposit', idemKey);
 
     if (!result.success) {
+      await emitCoreFeatureEvent({
+        featureKey: 'wallet.deposit',
+        coreEngine: 'payment',
+        ownerModule: 'wallet',
+        criticality: 'high',
+        status: 'failure',
+        userId,
+        payload: { amount, error: result.error || 'deposit_failed' },
+      });
       res.status(400).json({ success: false, error: result.error });
       return;
     }
@@ -276,9 +286,27 @@ router.post('/deposit', verifyJWT, async (req: AuthenticatedRequest, res: Respon
     await triggerAffiliateCommission(userId, amount, 'deposit', ref);
 
     logger.info(`[WalletV2] Deposit: user=${userId}, amount=${amount}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'wallet.deposit',
+      coreEngine: 'payment',
+      ownerModule: 'wallet',
+      criticality: 'high',
+      status: 'success',
+      userId,
+      payload: { amount },
+    });
     res.json({ success: true, new_balance: result.newBalance, operation: 'deposit' });
   } catch (error: any) {
     logger.error(`Wallet deposit error: ${error.message}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'wallet.deposit',
+      coreEngine: 'payment',
+      ownerModule: 'wallet',
+      criticality: 'high',
+      status: 'failure',
+      userId: req.user?.id || null,
+      payload: { error: error.message },
+    });
     res.status(500).json({ success: false, error: 'Erreur lors du dépôt' });
   }
 });
@@ -302,6 +330,15 @@ router.post('/withdraw', verifyJWT, async (req: AuthenticatedRequest, res: Respo
 
     const pinCheck = await requireValidTransactionPin(userId, pin);
     if (!pinCheck.ok) {
+      await emitCoreFeatureEvent({
+        featureKey: 'wallet.withdraw',
+        coreEngine: 'payment',
+        ownerModule: 'wallet',
+        criticality: 'critical',
+        status: 'failure',
+        userId,
+        payload: { amount, reason: pinCheck.error || 'pin_invalid' },
+      });
       res.status(403).json({ success: false, error: pinCheck.error, locked_until: pinCheck.lockedUntil || null });
       return;
     }
@@ -311,6 +348,15 @@ router.post('/withdraw', verifyJWT, async (req: AuthenticatedRequest, res: Respo
     const result = await debitWallet(userId, amount, description || 'Retrait', idemKey);
 
     if (!result.success) {
+      await emitCoreFeatureEvent({
+        featureKey: 'wallet.withdraw',
+        coreEngine: 'payment',
+        ownerModule: 'wallet',
+        criticality: 'critical',
+        status: 'failure',
+        userId,
+        payload: { amount, error: result.error || 'withdraw_failed' },
+      });
       const statusCode = result.error === 'Solde insuffisant' ? 402
         : result.error === 'Wallet bloqué' ? 403
         : result.error?.includes('activité suspecte') ? 403
@@ -320,9 +366,27 @@ router.post('/withdraw', verifyJWT, async (req: AuthenticatedRequest, res: Respo
     }
 
     logger.info(`[WalletV2] Withdraw: user=${userId}, amount=${amount}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'wallet.withdraw',
+      coreEngine: 'payment',
+      ownerModule: 'wallet',
+      criticality: 'critical',
+      status: 'success',
+      userId,
+      payload: { amount },
+    });
     res.json({ success: true, new_balance: result.newBalance, operation: 'withdraw' });
   } catch (error: any) {
     logger.error(`Wallet withdraw error: ${error.message}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'wallet.withdraw',
+      coreEngine: 'payment',
+      ownerModule: 'wallet',
+      criticality: 'critical',
+      status: 'failure',
+      userId: req.user?.id || null,
+      payload: { error: error.message },
+    });
     res.status(500).json({ success: false, error: 'Erreur lors du retrait' });
   }
 });
@@ -354,6 +418,15 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
 
     const pinCheck = await requireValidTransactionPin(senderId, pin);
     if (!pinCheck.ok) {
+      await emitCoreFeatureEvent({
+        featureKey: 'wallet.transfer',
+        coreEngine: 'payment',
+        ownerModule: 'wallet',
+        criticality: 'critical',
+        status: 'failure',
+        userId: senderId,
+        payload: { amount, recipient_id, reason: pinCheck.error || 'pin_invalid' },
+      });
       res.status(403).json({ success: false, error: pinCheck.error, locked_until: pinCheck.lockedUntil || null });
       return;
     }
@@ -386,6 +459,15 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
     const result = await transferBetweenWallets(senderId, recipient_id, amount, description || 'Transfert', idemKey);
 
     if (!result.success) {
+      await emitCoreFeatureEvent({
+        featureKey: 'wallet.transfer',
+        coreEngine: 'payment',
+        ownerModule: 'wallet',
+        criticality: 'critical',
+        status: 'failure',
+        userId: senderId,
+        payload: { amount, recipient_id, error: result.error || 'transfer_failed' },
+      });
       const statusCode = result.error === 'Solde insuffisant' ? 402
         : result.error?.includes('bloqué') ? 403
         : 400;
@@ -394,9 +476,27 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
     }
 
     logger.info(`[WalletV2] Transfer: sender=${senderId}, receiver=${recipient_id}, amount=${amount}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'wallet.transfer',
+      coreEngine: 'payment',
+      ownerModule: 'wallet',
+      criticality: 'critical',
+      status: 'success',
+      userId: senderId,
+      payload: { amount, recipient_id },
+    });
     res.json({ success: true, transaction_id: result.transactionId, operation: 'transfer' });
   } catch (error: any) {
     logger.error(`Wallet transfer error: ${error.message}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'wallet.transfer',
+      coreEngine: 'payment',
+      ownerModule: 'wallet',
+      criticality: 'critical',
+      status: 'failure',
+      userId: req.user?.id || null,
+      payload: { error: error.message },
+    });
     res.status(500).json({ success: false, error: 'Erreur lors du transfert' });
   }
 });

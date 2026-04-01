@@ -13,6 +13,7 @@ import {
   getGoogleUserInfo,
 } from '../services/oauth.service.js';
 import { supabaseAdmin } from '../config/supabase.js';
+import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
 
@@ -44,11 +45,27 @@ router.get('/google/callback', async (req: Request, res: Response): Promise<void
 
     if (oauthError) {
       logger.warn(`OAuth denied by user: ${oauthError}`);
+      await emitCoreFeatureEvent({
+        featureKey: 'auth.oauth.google.callback',
+        coreEngine: 'identity',
+        ownerModule: 'auth',
+        criticality: 'high',
+        status: 'failure',
+        payload: { reason: String(oauthError) },
+      });
       res.status(400).json({ success: false, error: 'OAuth consent denied' });
       return;
     }
 
     if (!code || typeof code !== 'string') {
+      await emitCoreFeatureEvent({
+        featureKey: 'auth.oauth.google.callback',
+        coreEngine: 'identity',
+        ownerModule: 'auth',
+        criticality: 'high',
+        status: 'failure',
+        payload: { reason: 'missing_code' },
+      });
       res.status(400).json({ success: false, error: 'Missing authorization code' });
       return;
     }
@@ -87,6 +104,14 @@ router.get('/google/callback', async (req: Request, res: Response): Promise<void
 
       if (createError || !newUser.user) {
         logger.error(`Supabase user creation error: ${createError?.message}`);
+        await emitCoreFeatureEvent({
+          featureKey: 'auth.oauth.google.user.provision',
+          coreEngine: 'identity',
+          ownerModule: 'auth',
+          criticality: 'critical',
+          status: 'failure',
+          payload: { error: createError?.message || 'create_user_failed' },
+        });
         res.status(500).json({ success: false, error: 'Failed to create user' });
         return;
       }
@@ -107,8 +132,26 @@ router.get('/google/callback', async (req: Request, res: Response): Promise<void
       // Note: NE PAS renvoyer tokens.id_token ou access_token Google au frontend
       // Utiliser une session Supabase à la place
     });
+
+    await emitCoreFeatureEvent({
+      featureKey: 'auth.oauth.google.callback',
+      coreEngine: 'identity',
+      ownerModule: 'auth',
+      criticality: 'high',
+      status: 'success',
+      userId,
+      payload: { email: userInfo.email },
+    });
   } catch (error: any) {
     logger.error(`OAuth callback error: ${error.message}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'auth.oauth.google.callback',
+      coreEngine: 'identity',
+      ownerModule: 'auth',
+      criticality: 'critical',
+      status: 'failure',
+      payload: { error: error.message },
+    });
     res.status(500).json({ success: false, error: 'OAuth authentication failed' });
   }
 });

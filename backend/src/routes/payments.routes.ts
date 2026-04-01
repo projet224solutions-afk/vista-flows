@@ -19,6 +19,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { paymentRateLimit } from '../middlewares/routeRateLimiter.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
+import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
 
@@ -192,13 +193,41 @@ router.post('/link/:paymentId/pay', optionalJWT, async (req: AuthenticatedReques
     if (updateError) throw updateError;
 
     if (!updated) {
+      await emitCoreFeatureEvent({
+        featureKey: 'payment.links.pay',
+        coreEngine: 'payment',
+        ownerModule: 'payment_links',
+        criticality: 'critical',
+        status: 'degraded',
+        userId: req.user?.id || null,
+        payload: { payment_id: paymentId, reason: 'parallel_update_conflict' },
+      });
       res.status(409).json({ success: false, error: 'Le lien a été traité en parallèle, veuillez rafraîchir' });
       return;
     }
 
+    await emitCoreFeatureEvent({
+      featureKey: 'payment.links.pay',
+      coreEngine: 'payment',
+      ownerModule: 'payment_links',
+      criticality: 'critical',
+      status: 'success',
+      userId: req.user?.id || null,
+      payload: { payment_id: paymentId, payment_method },
+    });
+
     res.json({ success: true, payment: updated });
   } catch (error: any) {
     logger.error(`Error confirming payment link: ${error.message}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'payment.links.pay',
+      coreEngine: 'payment',
+      ownerModule: 'payment_links',
+      criticality: 'critical',
+      status: 'failure',
+      userId: req.user?.id || null,
+      payload: { payment_id: req.params.paymentId, error: error.message },
+    });
     res.status(500).json({ success: false, error: 'Erreur lors de la confirmation du paiement' });
   }
 });
@@ -309,6 +338,16 @@ router.post('/secure/init', verifyJWT, async (req: AuthenticatedRequest, res: Re
 
     logger.info(`[SecurePayment] Init: user=${userId}, total=${totalAmount}, tx=${transactionId}`);
 
+    await emitCoreFeatureEvent({
+      featureKey: 'payment.secure.init',
+      coreEngine: 'payment',
+      ownerModule: 'secure_payment',
+      criticality: 'high',
+      status: 'success',
+      userId,
+      payload: { transaction_id: transactionId, total_amount: totalAmount },
+    });
+
     res.json({
       success: true,
       transaction_id: transactionId,
@@ -322,6 +361,15 @@ router.post('/secure/init', verifyJWT, async (req: AuthenticatedRequest, res: Re
     });
   } catch (error: any) {
     logger.error(`[SecurePayment] Init error: ${error.message}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'payment.secure.init',
+      coreEngine: 'payment',
+      ownerModule: 'secure_payment',
+      criticality: 'high',
+      status: 'failure',
+      userId: req.user?.id || null,
+      payload: { error: error.message },
+    });
     res.status(500).json({ success: false, error: 'Erreur interne' });
   }
 });
@@ -551,6 +599,16 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
 
     logger.info(`[SecurePayment] Validated: user=${userId}, net=${transaction.net_amount}, newBalance=${newBalance}`);
 
+    await emitCoreFeatureEvent({
+      featureKey: 'payment.secure.validate',
+      coreEngine: 'payment',
+      ownerModule: 'secure_payment',
+      criticality: 'critical',
+      status: 'success',
+      userId,
+      payload: { transaction_id, net_amount: transaction.net_amount },
+    });
+
     res.json({
       success: true,
       message: 'Paiement validé et wallet crédité',
@@ -560,6 +618,15 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
     });
   } catch (error: any) {
     logger.error(`[SecurePayment] Validate error: ${error.message}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'payment.secure.validate',
+      coreEngine: 'payment',
+      ownerModule: 'secure_payment',
+      criticality: 'critical',
+      status: 'failure',
+      userId: req.user?.id || null,
+      payload: { transaction_id: req.body?.transaction_id || null, error: error.message },
+    });
     res.status(500).json({ success: false, error: 'Erreur interne' });
   }
 });

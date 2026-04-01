@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
-import { verifyJWT, requireRole } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { requirePermissionOrRole } from '../middlewares/permissions.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
@@ -9,6 +10,7 @@ import {
   getVendorVisibilitySummary,
   getVisibilityAdminOverview,
 } from '../services/marketplaceVisibility.service.js';
+import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
 
@@ -78,9 +80,25 @@ router.post('/rank-candidates', async (req, res: Response) => {
     }
 
     const result = await rankMarketplaceCandidates(parsed.data.items, parsed.data.context);
+    await emitCoreFeatureEvent({
+      featureKey: 'marketplace.ranking',
+      coreEngine: 'commerce',
+      ownerModule: 'marketplace_visibility',
+      criticality: 'high',
+      status: 'success',
+      payload: { items_count: parsed.data.items.length },
+    });
     res.json(result);
   } catch (error: any) {
     logger.error(`[Visibility] rank-candidates error: ${error.message}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'marketplace.ranking',
+      coreEngine: 'commerce',
+      ownerModule: 'marketplace_visibility',
+      criticality: 'high',
+      status: 'failure',
+      payload: { error: error.message },
+    });
     res.status(500).json({ success: false, error: 'Erreur de ranking' });
   }
 });
@@ -160,15 +178,38 @@ router.post('/vendor/boosts', verifyJWT, async (req: AuthenticatedRequest, res: 
 
     if (error) throw error;
 
+    await emitCoreFeatureEvent({
+      featureKey: 'marketplace.boost.create',
+      coreEngine: 'commerce',
+      ownerModule: 'marketplace_visibility',
+      criticality: 'high',
+      status: 'success',
+      userId: req.user!.id,
+      payload: { boost_id: (data as any)?.id, status },
+    });
+
     res.status(201).json({ success: true, data, message: status === 'pending' ? 'Boost créé en attente de validation' : 'Boost activé' });
   } catch (error: any) {
     logger.error(`[Visibility] create boost error: ${error.message}`);
+    await emitCoreFeatureEvent({
+      featureKey: 'marketplace.boost.create',
+      coreEngine: 'commerce',
+      ownerModule: 'marketplace_visibility',
+      criticality: 'high',
+      status: 'failure',
+      userId: req.user?.id || null,
+      payload: { error: error.message },
+    });
     res.status(500).json({ success: false, error: 'Erreur création boost' });
   }
 });
 
 // PDG/Admin overview
-router.get('/pdg/overview', verifyJWT, requireRole(['admin', 'pdg']), async (_req: AuthenticatedRequest, res: Response) => {
+router.get(
+  '/pdg/overview',
+  verifyJWT,
+  requirePermissionOrRole({ permissionKey: 'manage_marketplace_visibility', allowedRoles: ['admin', 'pdg', 'ceo'] }),
+  async (_req: AuthenticatedRequest, res: Response) => {
   try {
     const overview = await getVisibilityAdminOverview();
     res.json({ success: true, data: overview });
@@ -179,7 +220,11 @@ router.get('/pdg/overview', verifyJWT, requireRole(['admin', 'pdg']), async (_re
 });
 
 // PDG/Admin config update
-router.put('/pdg/config', verifyJWT, requireRole(['admin', 'pdg']), async (req: AuthenticatedRequest, res: Response) => {
+router.put(
+  '/pdg/config',
+  verifyJWT,
+  requirePermissionOrRole({ permissionKey: 'manage_marketplace_visibility', allowedRoles: ['admin', 'pdg', 'ceo'] }),
+  async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parsed = ConfigPayloadSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -224,7 +269,11 @@ router.put('/pdg/config', verifyJWT, requireRole(['admin', 'pdg']), async (req: 
 });
 
 // PDG/Admin plan score update
-router.put('/pdg/plan-score', verifyJWT, requireRole(['admin', 'pdg']), async (req: AuthenticatedRequest, res: Response) => {
+router.put(
+  '/pdg/plan-score',
+  verifyJWT,
+  requirePermissionOrRole({ permissionKey: 'manage_marketplace_visibility', allowedRoles: ['admin', 'pdg', 'ceo'] }),
+  async (req: AuthenticatedRequest, res: Response) => {
   try {
     const parsed = PlanScorePayloadSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -261,7 +310,11 @@ router.put('/pdg/plan-score', verifyJWT, requireRole(['admin', 'pdg']), async (r
 });
 
 // PDG/Admin boost moderation
-router.patch('/pdg/boosts/:boostId/status', verifyJWT, requireRole(['admin', 'pdg']), async (req: AuthenticatedRequest, res: Response) => {
+router.patch(
+  '/pdg/boosts/:boostId/status',
+  verifyJWT,
+  requirePermissionOrRole({ permissionKey: 'manage_marketplace_visibility', allowedRoles: ['admin', 'pdg', 'ceo'] }),
+  async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { boostId } = req.params;
     const status = String(req.body?.status || '').trim();
