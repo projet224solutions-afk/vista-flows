@@ -267,7 +267,7 @@ export default function Payment() {
     for (const [vendorId, items] of vendorEntries) {
       const result = await createOrderForVendor({
         vendorId,
-        items,
+        items: items as any[],
         paymentMethod,
         externalPaymentId,
         markAsPaid: true,
