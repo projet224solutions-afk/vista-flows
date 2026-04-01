@@ -10,7 +10,9 @@ function normalizeUrl(url: string): string {
 function resolveBackendBaseUrl(): string {
   const configuredUrl =
     import.meta.env.VITE_BACKEND_URL ||
+    import.meta.env.VITE_BACKEND_API_URL ||
     import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
     import.meta.env.VITE_BACKEND_MOBILE_URL;
 
   if (configuredUrl) {
