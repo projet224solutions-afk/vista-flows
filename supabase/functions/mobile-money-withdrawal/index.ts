@@ -77,6 +77,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  return new Response(
+    JSON.stringify({
+      success: false,
+      error: "Djomy has been fully decommissioned from this system.",
+      code: "DJOMY_DECOMMISSIONED",
+    }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 410 }
+  );
+
   try {
     logStep("Function started");
 

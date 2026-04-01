@@ -376,40 +376,7 @@ async function calculateCompleteBalance(client: any, userId: string): Promise<Ba
     transactions: [...(p2pSent || []), ...(p2pReceived || [])]
   })
 
-  // 3. DJOMY_PAYMENTS
-  const { data: djomySent } = await client
-    .from('djomy_payments')
-    .select('*')
-    .eq('payer_user_id', userId)
-    .eq('status', 'completed')
-
-  const { data: djomyReceived } = await client
-    .from('djomy_payments')
-    .select('*')
-    .eq('receiver_user_id', userId)
-    .eq('status', 'completed')
-
-  let djomyIncoming = 0, djomyOutgoing = 0, djomyFees = 0
-  for (const tx of (djomyReceived || [])) {
-    djomyIncoming += Number(tx.net_amount || tx.amount) || 0
-    allTransactions.push({ ...tx, _source: 'djomy_payments', _direction: 'received' })
-  }
-  for (const tx of (djomySent || [])) {
-    djomyOutgoing += Number(tx.amount) || 0
-    djomyFees += Number(tx.fee) || 0
-    allTransactions.push({ ...tx, _source: 'djomy_payments', _direction: 'sent' })
-  }
-
-  sources.push({
-    name: 'Paiements Djomy',
-    incoming: djomyIncoming,
-    outgoing: djomyOutgoing,
-    fees: djomyFees,
-    count: (djomySent?.length || 0) + (djomyReceived?.length || 0),
-    transactions: [...(djomySent || []), ...(djomyReceived || [])]
-  })
-
-  // 4. STRIPE_WALLET_TRANSACTIONS (dépôts/retraits)
+  // 3. STRIPE_WALLET_TRANSACTIONS (dépôts/retraits)
   const { data: stripeTx } = await client
     .from('stripe_wallet_transactions')
     .select('*')
@@ -437,7 +404,7 @@ async function calculateCompleteBalance(client: any, userId: string): Promise<Ba
     transactions: stripeTx || []
   })
 
-  // 5. FINANCIAL_TRANSACTIONS (transactions génériques)
+  // 4. FINANCIAL_TRANSACTIONS (transactions génériques)
   const { data: financialTx } = await client
     .from('financial_transactions')
     .select('*')

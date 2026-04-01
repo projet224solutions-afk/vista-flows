@@ -6,20 +6,6 @@ verify_jwt = true
 [functions.secure-payment-validate]
 verify_jwt = false
 
-[functions.djomy-payment]
-verify_jwt = true
-
-[functions.djomy-webhook]
-verify_jwt = false
-
-[functions.djomy-verify]
-verify_jwt = true
-
-[functions.djomy-init-payment]
-verify_jwt = true
-
-[functions.djomy-secure-webhook]
-verify_jwt = false
 
 [functions.admin-release-funds]
 verify_jwt = true
@@ -308,9 +294,6 @@ verify_jwt = true
 
 [functions.mobile-money-withdrawal]
 verify_jwt = true
-
-[functions.djomy-test-sandbox]
-verify_jwt = false
 
 [functions.get-user-activity]
 verify_jwt = false

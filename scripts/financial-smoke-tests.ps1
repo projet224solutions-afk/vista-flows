@@ -321,16 +321,6 @@ if ($internalApiKey) {
   Add-Result -name "Affiliate commission internal" -status "SKIP" -code 0 -body $null -note "INTERNAL_API_KEY missing"
 }
 
-# 6) Djomy webhook security checks
-Write-Section "Djomy Webhook Security"
-$webhookBody = '{"eventType":"payment.success","eventId":"evt-no-sig","data":{"transactionId":"tx-123"}}'
-
-$whNoSig = Invoke-Api -Method POST -Url "$BaseUrl/webhooks/djomy" -Body $webhookBody
-Expect-Status -Name "Djomy webhook no signature" -Resp $whNoSig -AllowedStatus @(401)
-
-$whBadSig = Invoke-Api -Method POST -Url "$BaseUrl/webhooks/djomy" -Headers @{ "x-webhook-signature" = "v1:deadbeef" } -Body $webhookBody
-Expect-Status -Name "Djomy webhook bad signature" -Resp $whBadSig -AllowedStatus @(401)
-
 # Summary
 Write-Section "Summary"
 Write-Host ("PASS: {0} | FAIL: {1} | SKIP: {2}" -f $script:PassCount, $script:FailCount, $script:SkipCount) -ForegroundColor Magenta

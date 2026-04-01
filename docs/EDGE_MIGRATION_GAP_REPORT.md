@@ -1,17 +1,18 @@
 # EDGE Migration Gap Report
 
-Generated at: 2026-04-01T02:00:19.560Z
+Generated at: 2026-04-01T02:12:15.579Z
 
 ## Summary
 
-- Source functions scanned: 175
-- Heuristically covered in backend routes: 175
+- Source functions scanned: 170
+- Heuristically covered in backend routes: 170
 - Potentially missing migrations: 0
 
 ## Notes
 
 - This report is heuristic and may include false positives.
 - A function can be migrated under a renamed endpoint grouped by domain route.
+- Decommissioned functions are excluded from the parity check.
 - Use this list as migration backlog, then validate endpoint behavior manually.
 
 ## Potentially Missing (Top 200)
@@ -77,11 +78,6 @@ No potential gaps detected by heuristic check.
 - detect-anomalies
 - detect-surveillance-anomalies
 - dispute-ai-arbitrate
-- djomy-init-payment
-- djomy-payment
-- djomy-secure-webhook
-- djomy-verify
-- djomy-webhook
 - enhance-product-image
 - error-monitor
 - escrow-auto-release

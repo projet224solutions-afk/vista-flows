@@ -8,6 +8,7 @@ const supabaseFunctionsDir = path.join(root, 'supabase', 'functions');
 const backendEdgeRoutesDir = path.join(root, 'backend', 'src', 'routes', 'edge-functions');
 const reportMdPath = path.join(root, 'EDGE_FUNCTIONS_MIGRATION_REPORT.md');
 const outputPath = path.join(root, 'docs', 'EDGE_MIGRATION_GAP_REPORT.md');
+const decommissionedPath = path.join(root, 'scripts', 'config', 'decommissioned-edge-functions.json');
 
 const strict = process.argv.includes('--strict');
 
@@ -28,6 +29,16 @@ function getSupabaseFunctionDirs() {
     .map((entry) => entry.name)
     .filter((name) => name !== '_shared')
     .sort();
+}
+
+function getDecommissionedFunctions() {
+  try {
+    const data = JSON.parse(readFileSafe(decommissionedPath));
+    if (!Array.isArray(data?.functions)) return new Set();
+    return new Set(data.functions.map((fn) => normalizeName(String(fn))));
+  } catch {
+    return new Set();
+  }
 }
 
 function getBackendEdgeRouteContents() {
@@ -86,8 +97,10 @@ function generateGapReport() {
   const supabaseDirs = getSupabaseFunctionDirs();
   const backendContent = getBackendEdgeRouteContents();
   const reportFunctions = parseFunctionNamesFromMigrationReport();
+  const decommissioned = getDecommissionedFunctions();
 
-  const sourceUniverse = reportFunctions.length > 0 ? reportFunctions : supabaseDirs;
+  const sourceUniverseBase = reportFunctions.length > 0 ? reportFunctions : supabaseDirs;
+  const sourceUniverse = sourceUniverseBase.filter((fn) => !decommissioned.has(normalizeName(fn)));
 
   const covered = [];
   const missing = [];
@@ -116,6 +129,7 @@ function generateGapReport() {
     '',
     '- This report is heuristic and may include false positives.',
     '- A function can be migrated under a renamed endpoint grouped by domain route.',
+    '- Decommissioned functions are excluded from the parity check.',
     '- Use this list as migration backlog, then validate endpoint behavior manually.',
     '',
     '## Potentially Missing (Top 200)',

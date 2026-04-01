@@ -188,48 +188,7 @@ Deno.serve(async (req) => {
       )
 
     } else if (payment_method === 'mobile_money') {
-      // Orange Money / MTN / Moov
-      if (!phone_number || !provider) {
-        throw new Error('Numéro téléphone et provider requis')
-      }
-
-      // Appeler Djomy API pour Orange Money
-      const { data: djomyData, error: djomyError } = await supabase.functions.invoke('djomy-init-payment', {
-        body: {
-          amount: amount,
-          currency: 'GNF',
-          phone_number: phone_number,
-          provider: provider,
-          metadata: {
-            delivery_id: delivery_id,
-            customer_id: customer_id,
-            driver_id: driver_id
-          }
-        }
-      })
-
-      if (djomyError) throw new Error('Erreur paiement Mobile Money')
-
-      // Créer l'escrow (attendre confirmation webhook Djomy)
-      const { data: escrowData, error: escrowError } = await supabase.rpc('create_escrow', {
-        p_buyer_id: customer_id,
-        p_seller_id: driver_id,
-        p_order_id: delivery_id,
-        p_amount: amount,
-        p_currency: 'GNF',
-        p_transaction_type: 'delivery',
-        p_commission_percent: 3.0,
-        p_auto_release_days: 1,
-        p_metadata: {
-          delivery_id: delivery_id,
-          djomy_transaction_id: djomyData.transaction_id,
-          payment_method: 'mobile_money',
-          provider: provider
-        }
-      })
-
-      if (escrowError) throw new Error('Échec création escrow')
-      escrowId = escrowData
+      throw new Error('Mobile money via Djomy est définitivement désactivé')
 
     } else if (payment_method === 'cash') {
       // Paiement cash - Escrow créé mais statut "pending_cash"
