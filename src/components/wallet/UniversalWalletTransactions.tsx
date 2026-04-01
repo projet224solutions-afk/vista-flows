@@ -40,6 +40,7 @@ import StripeWalletTopup from './StripeWalletTopup';
 import PayPalInlineDeposit from './PayPalInlineDeposit';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
+import { depositToWallet, transferToWallet, withdrawFromWallet } from '@/services/walletBackendService';
 
 interface UniversalWalletTransactionsProps {
   userId?: string;
@@ -557,35 +558,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       // Créer une transaction de dépôt
       const referenceNumber = `DEP${Date.now()}${Math.floor(Math.random() * 1000)}`;
       
-      // ⚡ Update atomique
-      const { error: balanceError } = await (supabase
-        .rpc('update_wallet_balance_atomic' as any, {
-          p_wallet_id: Number(walletData.id),
-          p_amount: amount,
-          p_tx_id: referenceNumber,
-          p_description: 'Dépôt manuel sur le wallet'
-        }) as any);
-
-      if (balanceError) throw balanceError;
-
-      // Enregistrer transaction
-      const { error: transactionError } = await (supabase
-        .from('wallet_transactions')
-        .insert([
-          {
-            amount: amount,
-            net_amount: amount,
-            fee: 0,
-            currency: 'GNF',
-            status: 'completed',
-            description: 'Dépôt manuel sur le wallet',
-            receiver_wallet_id: Number(walletData.id),
-            receiver_user_id: effectiveUserId,
-            metadata: { transaction_type: 'deposit', reference: referenceNumber }
-          } as any
-        ] as any));
-
-      if (transactionError) console.warn('Transaction log failed:', transactionError);
+      const backendResult = await depositToWallet(amount, 'Dépôt manuel sur le wallet', referenceNumber);
+      if (!backendResult.success) {
+        throw new Error(backendResult.error || 'Échec du dépôt wallet');
+      }
 
       console.log('✅ Dépôt effectué avec succès');
 
@@ -804,6 +780,25 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       await Promise.all([loadWalletData(), loadTransactions()]);
     } catch (error: any) {
       console.error('❌ Erreur retrait:', error);
+
+      // Fallback robuste: retrait interne wallet via backend v2
+      try {
+        const fallback = await withdrawFromWallet(amount, `Retrait wallet (${withdrawMethod})`);
+        if (fallback.success) {
+          toast.success(`Retrait ${formatPrice(amount)} effectué via fallback backend`);
+          setWithdrawAmount('');
+          setWithdrawPhone('');
+          setBankName('');
+          setBankIban('');
+          setBankAccountHolder('');
+          setWithdrawOpen(false);
+          await Promise.all([loadWalletData(), loadTransactions()]);
+          return;
+        }
+      } catch {
+        // Ignore fallback error and show original message
+      }
+
       toast.error(error.message || 'Erreur lors du retrait');
     } finally {
       setProcessing(false);
@@ -1030,7 +1025,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             frais_international: data.frais_international || 0,
             rate_lock_seconds: data.rate_lock_seconds || 60,
             receiver_name: recipientName || data.receiver_name,
-            receiver_code: data.receiver_code,
+            receiver_code: recipientUuid,
           });
           setShowIntlConfirm(true);
           setTransferOpen(false);
@@ -1197,29 +1192,16 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         console.log('✅ Transfert bureau réussi');
       } else {
         // ✅ Transfert normal via edge function (local ET international)
-        const { data, error } = await supabase.functions.invoke(
-          'wallet-transfer',
-          {
-            body: {
-              action: 'transfer',
-              sender_id: effectiveUserId,
-              receiver_id: transferPreview.recipient_uuid,
-              amount: transferPreview.amount,
-              description: transferDescription,
-            },
-          }
+        const result = await transferToWallet(
+          transferPreview.recipient_uuid,
+          transferPreview.amount,
+          transferDescription || 'Transfert wallet'
         );
-
-        if (error) {
-          console.error('❌ Erreur transfert:', error);
-          throw error;
+        if (!result.success) {
+          throw new Error(result.error || 'Erreur lors du transfert');
         }
 
-        if (!data?.success) {
-          throw new Error(data?.error || 'Erreur lors du transfert');
-        }
-
-        console.log('✅ Transfert réussi:', data);
+        console.log('✅ Transfert backend réussi:', result);
       }
 
       const cur = transferPreview.currency_sent || wallet?.currency || 'GNF';
@@ -1247,25 +1229,16 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     if (!effectiveUserId || !intlPreview) return;
     setIntlExecuting(true);
     try {
-      // Utiliser recipientId tel quel - l'edge function résout l'identifiant
-      const { data, error } = await supabase.functions.invoke(
-        'wallet-transfer',
-        {
-          body: {
-            action: 'transfer',
-            sender_id: effectiveUserId,
-            receiver_id: recipientId.trim(),
-            amount: intlPreview.amount_sent,
-            description: transferDescription,
-          },
-        }
+      const receiverId = intlPreview.receiver_code || recipientId.trim();
+      const result = await transferToWallet(
+        receiverId,
+        intlPreview.amount_sent,
+        transferDescription || 'Transfert international wallet'
       );
-
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Erreur lors du transfert');
+      if (!result.success) throw new Error(result.error || 'Erreur lors du transfert');
 
       toast.success(
-        `🌍 Transfert international réussi ! Code: ${data.transfer_code || ''}`,
+        '🌍 Transfert international réussi !',
         { duration: 5000 }
       );
 

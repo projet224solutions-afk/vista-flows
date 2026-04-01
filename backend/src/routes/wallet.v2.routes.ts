@@ -272,15 +272,26 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
     }
 
     // Vérifier que le destinataire existe
-    const { data: recipient } = await supabaseAdmin
+    let { data: recipient } = await supabaseAdmin
       .from('wallets')
       .select('user_id')
       .eq('user_id', recipient_id)
       .maybeSingle();
 
     if (!recipient) {
-      res.status(404).json({ success: false, error: 'Wallet destinataire introuvable' });
-      return;
+      // Auto-initialiser le wallet destinataire pour éviter les échecs sur comptes PDG/agent nouvellement créés
+      const { error: initError } = await supabaseAdmin
+        .from('wallets')
+        .insert({ user_id: recipient_id })
+        .select('user_id')
+        .single();
+
+      if (initError) {
+        res.status(404).json({ success: false, error: 'Wallet destinataire introuvable' });
+        return;
+      }
+
+      recipient = { user_id: recipient_id } as any;
     }
 
     const idemKey = idempotency_key || `transfer:${senderId}:${recipient_id}:${amount}:${crypto.randomBytes(8).toString('hex')}`;
