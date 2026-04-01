@@ -5,6 +5,7 @@
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -29,14 +30,61 @@ import { cn } from '@/lib/utils';
 import { usePDGStats } from '@/hooks/usePDGStats';
 import { WalletBalanceDisplay } from '@/components/wallet/WalletBalanceDisplay';
 import { useAuth } from '@/hooks/useAuth';
+import { backendFetch } from '@/services/backendApi';
 
 interface PDGDashboardHomeProps {
   onNavigate?: (tab: string) => void;
 }
 
+interface CoreFeatureHealth24h {
+  lastStatus: 'success' | 'degraded' | 'failure' | null;
+  total: number;
+  failures: number;
+  degraded: number;
+}
+
+interface CoreFeatureRegistryRow {
+  feature_key: string;
+  health24h?: CoreFeatureHealth24h;
+}
+
 export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
   const stats = usePDGStats();
   const { user } = useAuth();
+  const [coreSummary, setCoreSummary] = useState({
+    totalFeatures: 0,
+    totalEvents24h: 0,
+    failures24h: 0,
+    degraded24h: 0,
+  });
+
+  useEffect(() => {
+    const loadCoreSummary = async () => {
+      try {
+        const response = await backendFetch<CoreFeatureRegistryRow[]>('/api/core/supervision/feature-registry', {
+          method: 'GET',
+        });
+
+        if (!response.success || !response.data) return;
+
+        const rows = response.data;
+        const totalEvents24h = rows.reduce((sum, row) => sum + (row.health24h?.total || 0), 0);
+        const failures24h = rows.reduce((sum, row) => sum + (row.health24h?.failures || 0), 0);
+        const degraded24h = rows.reduce((sum, row) => sum + (row.health24h?.degraded || 0), 0);
+
+        setCoreSummary({
+          totalFeatures: rows.length,
+          totalEvents24h,
+          failures24h,
+          degraded24h,
+        });
+      } catch {
+        // Best effort only for dashboard summary block.
+      }
+    };
+
+    loadCoreSummary();
+  }, []);
 
   if (stats.loading) {
     return (
@@ -509,6 +557,58 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
               }}
             >
               Accéder à la gestion
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Supervision Core (visible sur Home PDG) */}
+        <Card
+          className="border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950 dark:to-yellow-950 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+          onClick={() => onNavigate?.('api')}
+        >
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-amber-600 text-white group-hover:scale-110 transition-transform">
+                  <Eye className="w-5 h-5" />
+                </div>
+                Supervision Core
+              </CardTitle>
+              <Badge variant="secondary" className="bg-amber-600 text-white">
+                Live
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Surveillance centralisée Identity/Payment/Commerce/Intelligence avec état de santé 24h.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">Features</p>
+                <p className="text-lg font-bold text-amber-700">{coreSummary.totalFeatures}</p>
+              </div>
+              <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">Événements 24h</p>
+                <p className="text-lg font-bold text-amber-700">{coreSummary.totalEvents24h}</p>
+              </div>
+              <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">Failures</p>
+                <p className="text-lg font-bold text-red-600">{coreSummary.failures24h}</p>
+              </div>
+              <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
+                <p className="text-xs text-muted-foreground">Degraded</p>
+                <p className="text-lg font-bold text-yellow-700">{coreSummary.degraded24h}</p>
+              </div>
+            </div>
+            <Button
+              className="w-full mt-4 bg-amber-600 hover:bg-amber-700 group-hover:scale-105 transition-transform"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigate?.('api');
+              }}
+            >
+              Ouvrir la supervision API/Core
             </Button>
           </CardContent>
         </Card>
