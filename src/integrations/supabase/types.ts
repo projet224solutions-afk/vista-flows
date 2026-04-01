@@ -1429,7 +1429,7 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
-          actor_id: string
+          actor_id: string | null
           created_at: string
           data_json: Json | null
           hash: string | null
@@ -1441,7 +1441,7 @@ export type Database = {
         }
         Insert: {
           action: string
-          actor_id: string
+          actor_id?: string | null
           created_at?: string
           data_json?: Json | null
           hash?: string | null
@@ -1453,7 +1453,7 @@ export type Database = {
         }
         Update: {
           action?: string
-          actor_id?: string
+          actor_id?: string | null
           created_at?: string
           data_json?: Json | null
           hash?: string | null
@@ -1896,7 +1896,7 @@ export type Database = {
           metadata: Json | null
           priority: string
           scheduled_at: string | null
-          sender_id: string
+          sender_id: string | null
           sender_name: string | null
           sent_at: string | null
           status: string
@@ -1920,7 +1920,7 @@ export type Database = {
           metadata?: Json | null
           priority?: string
           scheduled_at?: string | null
-          sender_id: string
+          sender_id?: string | null
           sender_name?: string | null
           sent_at?: string | null
           status?: string
@@ -1944,7 +1944,7 @@ export type Database = {
           metadata?: Json | null
           priority?: string
           scheduled_at?: string | null
-          sender_id?: string
+          sender_id?: string | null
           sender_name?: string | null
           sent_at?: string | null
           status?: string
@@ -4653,7 +4653,7 @@ export type Database = {
           message_in: string
           message_out: string
           mfa_verified: boolean
-          pdg_user_id: string
+          pdg_user_id: string | null
         }
         Insert: {
           actions?: Json | null
@@ -4663,7 +4663,7 @@ export type Database = {
           message_in: string
           message_out: string
           mfa_verified?: boolean
-          pdg_user_id: string
+          pdg_user_id?: string | null
         }
         Update: {
           actions?: Json | null
@@ -4673,7 +4673,7 @@ export type Database = {
           message_in?: string
           message_out?: string
           mfa_verified?: boolean
-          pdg_user_id?: string
+          pdg_user_id?: string | null
         }
         Relationships: []
       }
@@ -6100,7 +6100,7 @@ export type Database = {
           dispute_id: string
           id: string
           message: string
-          sender_id: string
+          sender_id: string | null
           sender_type: string
         }
         Insert: {
@@ -6109,7 +6109,7 @@ export type Database = {
           dispute_id: string
           id?: string
           message: string
-          sender_id: string
+          sender_id?: string | null
           sender_type: string
         }
         Update: {
@@ -6118,7 +6118,7 @@ export type Database = {
           dispute_id?: string
           id?: string
           message?: string
-          sender_id?: string
+          sender_id?: string | null
           sender_type?: string
         }
         Relationships: [
@@ -6139,7 +6139,7 @@ export type Database = {
           ai_justification: string | null
           arbitrated_at: string | null
           auto_escalate_at: string | null
-          client_id: string
+          client_id: string | null
           created_at: string | null
           decision_payload: Json | null
           description: string
@@ -6159,7 +6159,7 @@ export type Database = {
           status: string
           updated_at: string | null
           vendor_counter_offer: Json | null
-          vendor_id: string
+          vendor_id: string | null
           vendor_response: string | null
           vendor_response_date: string | null
         }
@@ -6170,7 +6170,7 @@ export type Database = {
           ai_justification?: string | null
           arbitrated_at?: string | null
           auto_escalate_at?: string | null
-          client_id: string
+          client_id?: string | null
           created_at?: string | null
           decision_payload?: Json | null
           description: string
@@ -6190,7 +6190,7 @@ export type Database = {
           status?: string
           updated_at?: string | null
           vendor_counter_offer?: Json | null
-          vendor_id: string
+          vendor_id?: string | null
           vendor_response?: string | null
           vendor_response_date?: string | null
         }
@@ -6201,7 +6201,7 @@ export type Database = {
           ai_justification?: string | null
           arbitrated_at?: string | null
           auto_escalate_at?: string | null
-          client_id?: string
+          client_id?: string | null
           created_at?: string | null
           decision_payload?: Json | null
           description?: string
@@ -6221,7 +6221,7 @@ export type Database = {
           status?: string
           updated_at?: string | null
           vendor_counter_offer?: Json | null
-          vendor_id?: string
+          vendor_id?: string | null
           vendor_response?: string | null
           vendor_response_date?: string | null
         }
@@ -6550,7 +6550,7 @@ export type Database = {
           payment_method: string
           subscription_id: string
           transaction_id: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -6559,7 +6559,7 @@ export type Database = {
           payment_method: string
           subscription_id: string
           transaction_id?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -6568,7 +6568,7 @@ export type Database = {
           payment_method?: string
           subscription_id?: string
           transaction_id?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -8579,8 +8579,8 @@ export type Database = {
           metadata: Json | null
           notes: string | null
           order_id: string | null
-          payer_id: string
-          receiver_id: string
+          payer_id: string | null
+          receiver_id: string | null
           refunded_at: string | null
           released_at: string | null
           released_by: string | null
@@ -8611,8 +8611,8 @@ export type Database = {
           metadata?: Json | null
           notes?: string | null
           order_id?: string | null
-          payer_id: string
-          receiver_id: string
+          payer_id?: string | null
+          receiver_id?: string | null
           refunded_at?: string | null
           released_at?: string | null
           released_by?: string | null
@@ -8643,8 +8643,8 @@ export type Database = {
           metadata?: Json | null
           notes?: string | null
           order_id?: string | null
-          payer_id?: string
-          receiver_id?: string
+          payer_id?: string | null
+          receiver_id?: string | null
           refunded_at?: string | null
           released_at?: string | null
           released_by?: string | null
@@ -14934,7 +14934,7 @@ export type Database = {
       plan_price_history: {
         Row: {
           changed_at: string | null
-          changed_by: string
+          changed_by: string | null
           id: string
           new_price: number
           old_price: number
@@ -14943,7 +14943,7 @@ export type Database = {
         }
         Insert: {
           changed_at?: string | null
-          changed_by: string
+          changed_by?: string | null
           id?: string
           new_price: number
           old_price: number
@@ -14952,7 +14952,7 @@ export type Database = {
         }
         Update: {
           changed_at?: string | null
-          changed_by?: string
+          changed_by?: string | null
           id?: string
           new_price?: number
           old_price?: number
@@ -18964,7 +18964,7 @@ export type Database = {
       service_bookings: {
         Row: {
           booking_type: string
-          client_id: string
+          client_id: string | null
           commission_amount: number | null
           created_at: string | null
           id: string
@@ -18979,7 +18979,7 @@ export type Database = {
         }
         Insert: {
           booking_type: string
-          client_id: string
+          client_id?: string | null
           commission_amount?: number | null
           created_at?: string | null
           id?: string
@@ -18994,7 +18994,7 @@ export type Database = {
         }
         Update: {
           booking_type?: string
-          client_id?: string
+          client_id?: string | null
           commission_amount?: number | null
           created_at?: string | null
           id?: string
@@ -19238,7 +19238,7 @@ export type Database = {
       service_reviews: {
         Row: {
           booking_id: string | null
-          client_id: string
+          client_id: string | null
           comment: string | null
           created_at: string | null
           id: string
@@ -19250,7 +19250,7 @@ export type Database = {
         }
         Insert: {
           booking_id?: string | null
-          client_id: string
+          client_id?: string | null
           comment?: string | null
           created_at?: string | null
           id?: string
@@ -19262,7 +19262,7 @@ export type Database = {
         }
         Update: {
           booking_id?: string | null
-          client_id?: string
+          client_id?: string | null
           comment?: string | null
           created_at?: string | null
           id?: string
@@ -27145,11 +27145,11 @@ export type Database = {
           rate_displayed: number
           rate_used: number
           receiver_country: string | null
-          receiver_id: string
+          receiver_id: string | null
           receiver_wallet_id: string | null
           security_margin_applied: number | null
           sender_country: string | null
-          sender_id: string
+          sender_id: string | null
           sender_wallet_id: string | null
           status: string | null
           transfer_code: string
@@ -27177,11 +27177,11 @@ export type Database = {
           rate_displayed?: number
           rate_used?: number
           receiver_country?: string | null
-          receiver_id: string
+          receiver_id?: string | null
           receiver_wallet_id?: string | null
           security_margin_applied?: number | null
           sender_country?: string | null
-          sender_id: string
+          sender_id?: string | null
           sender_wallet_id?: string | null
           status?: string | null
           transfer_code: string
@@ -27209,11 +27209,11 @@ export type Database = {
           rate_displayed?: number
           rate_used?: number
           receiver_country?: string | null
-          receiver_id?: string
+          receiver_id?: string | null
           receiver_wallet_id?: string | null
           security_margin_applied?: number | null
           sender_country?: string | null
-          sender_id?: string
+          sender_id?: string | null
           sender_wallet_id?: string | null
           status?: string | null
           transfer_code?: string
