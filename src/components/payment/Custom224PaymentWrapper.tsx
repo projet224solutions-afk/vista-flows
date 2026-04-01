@@ -79,7 +79,8 @@ export function Custom224PaymentWrapper({
       setLoading(true);
       setError('');
 
-      const response = await fetch(`${backendConfig.baseUrl}/edge-functions/paypal-client-id`);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/paypal-client-id`);
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'PayPal Client ID indisponible');
 
