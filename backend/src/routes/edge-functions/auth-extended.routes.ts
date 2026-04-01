@@ -325,12 +325,4 @@ router.post("/create-bureau-with-auth", async (req: Request, res: Response) => {
 });
 
 export default router;
-      .select("role, vendor_id, agent_id, bureau_id")
-      .eq("user_id", data.user.id)
-      .maybeSingle();
-    return res.json({ success: true, user: data.user, session: data.session, role: profile?.role || "user", profile });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
-  }
-});
 

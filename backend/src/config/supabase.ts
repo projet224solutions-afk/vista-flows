@@ -30,6 +30,9 @@ export const supabaseAnon: SupabaseClient = env.SUPABASE_ANON_KEY
     })
   : supabaseAdmin;
 
+// Alias pour compatibilité avec les fichiers legacy JS
+export const supabase = supabaseAnon;
+
 /**
  * Health check Supabase
  */
