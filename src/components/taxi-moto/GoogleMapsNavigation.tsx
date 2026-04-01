@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Navigation, Phone, Clock, MapPin, ArrowRight, Maximize2, Loader2 } from 'lucide-react';
-import { backendConfig } from '@/config/backend';
 import { toast } from 'sonner';
 
 declare global {
@@ -62,30 +61,15 @@ export function GoogleMapsNavigation({
   const mapInitialized = useRef(false);
   const lastCleanupLog = useRef(0);
 
-  // Récupérer la clé API Google Maps depuis le backend
+  // Récupérer la clé API Google Maps depuis les variables publiques frontend
   useEffect(() => {
-    const fetchApiKey = async () => {
-      try {
-        const response = await fetch(`${backendConfig.baseUrl}/edge-functions/google-maps-config`);
-        const data = await response.json();
-
-        if (!response.ok) throw new Error(data?.error || 'google-maps-config error');
-
-        const apiKeyValue = data?.apiKey || data?.api_key;
-        if (apiKeyValue) {
-          setApiKey(apiKeyValue);
-        } else {
-          toast.error('Clé Google Maps non configurée');
-        }
-      } catch (error) {
-        console.error('Erreur récupération clé API:', error);
-        toast.error('Impossible de charger Google Maps');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchApiKey();
+    const apiKeyValue = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_GOOGLE_CLOUD_API_KEY || '';
+    if (apiKeyValue) {
+      setApiKey(apiKeyValue);
+    } else {
+      toast.error('Clé Google Maps non configurée');
+    }
+    setLoading(false);
   }, []);
 
   // Charger Google Maps API avec la vraie clé

@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Loader2, AlertCircle, Maximize } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { backendConfig } from '@/config/backend';
 import type { Property } from '@/hooks/useRealEstateData';
 
 interface RealEstateMapViewProps {
@@ -25,24 +24,15 @@ export function RealEstateMapView({ properties, onPropertyClick }: RealEstateMap
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const formatPrice = useFormatCurrency();
 
-  // Fetch Google Maps API key
+  // Fetch Google Maps API key from frontend env vars
   useEffect(() => {
-    const fetchKey = async () => {
-      try {
-        const response = await fetch(`${backendConfig.baseUrl}/edge-functions/google-maps-config`);
-        const data = await response.json();
-        if (!response.ok || !data?.success) {
-          setError('Clé Google Maps non configurée');
-          setLoading(false);
-          return;
-        }
-        setApiKey(data.apiKey || data.api_key);
-      } catch {
-        setError('Impossible de charger la configuration de la carte');
-        setLoading(false);
-      }
-    };
-    fetchKey();
+    const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_GOOGLE_CLOUD_API_KEY || null;
+    if (!key) {
+      setError('Clé Google Maps non configurée');
+      setLoading(false);
+      return;
+    }
+    setApiKey(key);
   }, []);
 
   // Load Google Maps script

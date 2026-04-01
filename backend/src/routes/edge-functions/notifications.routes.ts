@@ -210,7 +210,8 @@ router.post("/smart", validateBearerToken, async (req: any, res: any) => {
 // Geolocation (5)
 router.get("/geo/maps-config", async (req: any, res: any) => {
   try {
-    return res.json({ success: true, api_key: process.env.GOOGLE_MAPS_KEY });
+    const configured = Boolean(process.env.GOOGLE_MAPS_KEY);
+    return res.json({ success: true, configured, api_key: null, apiKey: null });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -698,8 +699,8 @@ router.post("/gcs-signed-url", async (req: any, res: any) => {
 
 router.get("/google-maps-config", async (req: any, res: any) => {
   try {
-    const apiKey = process.env.GOOGLE_MAPS_KEY || null;
-    return res.json({ success: true, apiKey, api_key: apiKey });
+    const configured = Boolean(process.env.GOOGLE_MAPS_KEY);
+    return res.json({ success: true, configured, apiKey: null, api_key: null });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

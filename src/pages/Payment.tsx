@@ -10,6 +10,7 @@ import { CreditCard, ArrowLeft, Wallet, Receipt, TrendingUp, TrendingDown, Clock
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
+import { useCart } from "@/contexts/CartContext";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -64,6 +65,7 @@ export default function Payment() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { clearCart } = useCart();
 
   const getDigitalSuccessRoute = (pricingType?: 'one_time' | 'subscription' | 'pay_what_you_want') => {
     return pricingType === 'subscription' ? '/my-digital-subscriptions' : '/my-digital-purchases';
@@ -157,10 +159,119 @@ export default function Payment() {
   const [cartPaymentInfo, setCartPaymentInfo] = useState<{
     items: any[];
     totalAmount: number;
-    vendorId: string;
-    vendorUserId: string;
+    vendorId?: string;
+    vendorUserId?: string;
     productType: 'physical' | 'digital'; // Type de produit
   } | null>(null);
+
+  const getVendorIdFromItem = (item: any): string | null => {
+    return item?.vendor_id || item?.vendorId || item?.vendor?.id || null;
+  };
+
+  const inferPaymentMethod = (status?: string, transactionId?: string): 'card' | 'mobile_money' | 'wallet' => {
+    const upperStatus = (status || '').toUpperCase();
+    if (upperStatus.includes('WALLET')) return 'wallet';
+    if (upperStatus.includes('MOBILE')) return 'mobile_money';
+    if (upperStatus.includes('CARD')) return 'card';
+    if ((transactionId || '').startsWith('pi_')) return 'card';
+    return 'card';
+  };
+
+  const createOrderForVendor = async ({
+    vendorId,
+    items,
+    totalAmount,
+    paymentMethod,
+    externalPaymentId,
+  }: {
+    vendorId: string;
+    items: any[];
+    totalAmount: number;
+    paymentMethod: 'card' | 'mobile_money' | 'wallet';
+    externalPaymentId?: string;
+  }) => {
+    const { data: orderResult, error: orderError } = await supabase.rpc('create_online_order', {
+      p_user_id: user!.id,
+      p_vendor_id: vendorId,
+      p_items: items.map((item: any) => ({
+        product_id: item.product_id || item.id,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      p_total_amount: totalAmount,
+      p_payment_method: paymentMethod,
+      p_shipping_address: {
+        address: 'Adresse de livraison',
+        city: 'Conakry',
+        country: 'Guinée',
+      },
+    });
+
+    if (orderError || !orderResult || orderResult.length === 0) {
+      throw new Error(orderError?.message || 'Impossible de créer la commande');
+    }
+
+    const orderId = orderResult[0].order_id;
+    const orderNumber = orderResult[0].order_number;
+
+    await supabase
+      .from('orders')
+      .update({
+        payment_status: 'paid',
+        metadata: {
+          external_payment_id: externalPaymentId || null,
+          source: 'payment_page_post_provider_success',
+        },
+      })
+      .eq('id', orderId);
+
+    if (externalPaymentId && externalPaymentId.startsWith('pi_')) {
+      await supabase.functions.invoke('link-escrow-order', {
+        body: {
+          payment_intent_id: externalPaymentId,
+          vendor_id: vendorId,
+          order_id: orderId,
+        },
+      });
+    }
+
+    return { orderId, orderNumber };
+  };
+
+  const createOrdersForCartAfterPayment = async ({
+    paymentMethod,
+    externalPaymentId,
+  }: {
+    paymentMethod: 'card' | 'mobile_money' | 'wallet';
+    externalPaymentId?: string;
+  }) => {
+    if (!cartPaymentInfo || !cartPaymentInfo.items.length) return [];
+
+    const byVendor = cartPaymentInfo.items.reduce((acc: Record<string, any[]>, item: any) => {
+      const vendorId = getVendorIdFromItem(item);
+      if (!vendorId) return acc;
+      if (!acc[vendorId]) acc[vendorId] = [];
+      acc[vendorId].push(item);
+      return acc;
+    }, {});
+
+    const vendorEntries = Object.entries(byVendor);
+    const results: Array<{ orderId: string; orderNumber: string }> = [];
+
+    for (const [vendorId, items] of vendorEntries) {
+      const vendorTotal = items.reduce((sum: number, item: any) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+      const result = await createOrderForVendor({
+        vendorId,
+        items,
+        totalAmount: vendorTotal,
+        paymentMethod,
+        externalPaymentId,
+      });
+      results.push(result);
+    }
+
+    return results;
+  };
 
   // Charger les informations de paiement de produit ou panier
   const loadProductPaymentInfo = async () => {
@@ -177,8 +288,10 @@ export default function Payment() {
         const cartItems = stateData.cartItems;
         const totalAmount = stateData.totalAmount;
         
-        // Grouper par vendeur (pour simplifier, on prend le premier vendeur)
+        // Calcul multi-vendeur
         const firstItem = cartItems[0];
+        const uniqueVendorIds = Array.from(new Set(cartItems.map((item: any) => getVendorIdFromItem(item)).filter(Boolean))) as string[];
+        const isMultiVendorCart = uniqueVendorIds.length > 1;
         
         // Charger les infos du vendeur
         const { data: vendorInfo, error: vendorError } = await supabase
@@ -197,15 +310,18 @@ export default function Payment() {
           return;
         }
 
-        // Récupérer le public_id depuis profiles (source de vérité)
-        const { data: vendorProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('public_id')
-          .eq('id', vendorInfo.user_id)
-          .maybeSingle();
+        let vendorProfile: any = null;
+        if (!isMultiVendorCart) {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('public_id')
+            .eq('id', vendorInfo.user_id)
+            .maybeSingle();
 
-        if (profileError) {
-          console.error('Erreur chargement profil vendeur:', profileError);
+          if (profileError) {
+            console.error('Erreur chargement profil vendeur:', profileError);
+          }
+          vendorProfile = profileData;
         }
 
         // Dériver la devise du vendeur depuis son pays
@@ -224,13 +340,15 @@ export default function Payment() {
         // Pré-remplir les champs
         setPaymentAmount(totalAmount.toString());
 
-        // Utiliser le public_id depuis profiles (source de vérité unique - ex: VND0003)
-        const vendorCode = vendorProfile?.public_id || `VEN-${vendorInfo.user_id.substring(0, 8).toUpperCase()}`;
-
-        setRecipientId(vendorCode);
-
-        const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
-        setPaymentDescription(`Achat panier: ${itemNames}`);
+        if (isMultiVendorCart) {
+          setRecipientId('');
+          setPaymentDescription(`Achat panier multi-vendeurs (${cartItems.length} articles)`);
+        } else {
+          const vendorCode = vendorProfile?.public_id || `VEN-${vendorInfo.user_id.substring(0, 8).toUpperCase()}`;
+          setRecipientId(vendorCode);
+          const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
+          setPaymentDescription(`Achat panier: ${itemNames}`);
+        }
 
         // Si une méthode de paiement est pré-sélectionnée (depuis ProductPaymentModal)
         if (stateData?.paymentMethod) {
@@ -1229,10 +1347,59 @@ export default function Payment() {
                         transactionType={productPaymentInfo || cartPaymentInfo ? 'product' : 'transfer'}
                         productType={productPaymentInfo?.productType || cartPaymentInfo?.productType || 'physical'}
                         enableEscrow={!!(productPaymentInfo || cartPaymentInfo)}
-                        recipientId={recipientId}
-                        sellerId={productPaymentInfo?.vendorUserId || cartPaymentInfo?.vendorUserId}
-                        onPaymentSuccess={async (transactionId) => {
+                        recipientId={cartPaymentInfo && new Set(cartPaymentInfo.items.map((item: any) => getVendorIdFromItem(item)).filter(Boolean)).size > 1 ? undefined : recipientId}
+                        sellerId={cartPaymentInfo && new Set(cartPaymentInfo.items.map((item: any) => getVendorIdFromItem(item)).filter(Boolean)).size > 1 ? undefined : (productPaymentInfo?.vendorUserId || cartPaymentInfo?.vendorUserId)}
+                        onPaymentSuccess={async (transactionId, status) => {
                           console.log('[Payment] Success:', transactionId);
+                          const normalizedMethod = inferPaymentMethod(status, transactionId);
+
+                          if (cartPaymentInfo && user?.id) {
+                            try {
+                              const orders = await createOrdersForCartAfterPayment({
+                                paymentMethod: normalizedMethod,
+                                externalPaymentId: transactionId || undefined,
+                              });
+
+                              if (orders.length === 0) {
+                                throw new Error('Aucune commande créée après paiement');
+                              }
+
+                              clearCart();
+                            } catch (err: any) {
+                              console.error('[Payment] Error creating cart orders after payment:', err);
+                              toast({
+                                title: 'Paiement reçu mais commande incomplète',
+                                description: err?.message || 'Contactez le support avec votre référence de paiement',
+                                variant: 'destructive',
+                              });
+                              return;
+                            }
+                          }
+
+                          if (productPaymentInfo?.productType === 'physical' && user?.id) {
+                            try {
+                              const order = await createOrderForVendor({
+                                vendorId: productPaymentInfo.vendorId,
+                                items: [{
+                                  product_id: productPaymentInfo.productId,
+                                  quantity: productPaymentInfo.quantity,
+                                  price: (parseFloat(paymentAmount) || 0) / Math.max(productPaymentInfo.quantity, 1),
+                                }],
+                                totalAmount: parseFloat(paymentAmount) || 0,
+                                paymentMethod: normalizedMethod,
+                                externalPaymentId: transactionId || undefined,
+                              });
+                              console.log('[Payment] Physical order created after provider success:', order);
+                            } catch (err: any) {
+                              console.error('[Payment] Error creating physical order after payment:', err);
+                              toast({
+                                title: 'Paiement reçu mais commande incomplète',
+                                description: err?.message || 'Contactez le support avec votre référence de paiement',
+                                variant: 'destructive',
+                              });
+                              return;
+                            }
+                          }
                           
                           // Pour les produits numériques, créer l'enregistrement d'achat
                           if (productPaymentInfo?.productType === 'digital' && user?.id) {

@@ -269,7 +269,7 @@ export function JomyPaymentSelector({
 
         setPaymentStatus('success');
         toast.success('🎉 Transfert réussi !');
-        onPaymentSuccess(data.transaction_id || '', 'SUCCESS');
+        onPaymentSuccess(data.transaction_id || '', 'SUCCESS_WALLET');
       } catch (err) {
         console.error('[Wallet] Transfer error:', err);
         setPaymentStatus('failed');
@@ -322,7 +322,7 @@ export function JomyPaymentSelector({
             if (status.status === 'completed') {
               setPaymentStatus('success');
               toast.success('🎉 Paiement réussi via ChapChapPay !');
-              onPaymentSuccess(result.transactionId!, 'SUCCESS');
+              onPaymentSuccess(result.transactionId!, 'SUCCESS_MOBILE_MONEY');
             } else if (status.status === 'failed' || status.status === 'cancelled') {
               setPaymentStatus('failed');
               toast.error('Paiement échoué');
@@ -333,7 +333,7 @@ export function JomyPaymentSelector({
           if (finalStatus) {
             if (finalStatus.status === 'completed') {
               setPaymentStatus('success');
-              onPaymentSuccess(result.transactionId, 'SUCCESS');
+              onPaymentSuccess(result.transactionId, 'SUCCESS_MOBILE_MONEY');
             } else if (finalStatus.status === 'pending') {
               onPaymentPending?.(result.transactionId);
               toast.info('Paiement en attente de confirmation');
@@ -363,7 +363,7 @@ export function JomyPaymentSelector({
     console.log('✅ [JomyPaymentSelector] Stripe payment success:', data);
     setShowStripeInline(false);
     setPaymentStatus('success');
-    onPaymentSuccess(data.paymentIntentId, 'SUCCESS');
+    onPaymentSuccess(data.paymentIntentId, 'SUCCESS_CARD');
   };
 
   const handleStripeError = (errorMsg: string) => {
