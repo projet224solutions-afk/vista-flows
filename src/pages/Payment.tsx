@@ -812,7 +812,7 @@ export default function Payment() {
             ).map(([currentVendorId, currentItems]) =>
               createOrderForVendor({
                 vendorId: currentVendorId,
-                items: currentItems,
+                items: currentItems as any[],
                 paymentMethod: 'cod',
                 shippingAddress: {
                   full_name: user.user_metadata?.full_name || user.email || 'Client 224Solutions',

@@ -164,7 +164,7 @@ export default function ProductPaymentModal({
       .from('orders')
       .update({
         total_amount: chargedAmount,
-        payment_status: markAsPaid ? 'paid' : order.payment_status,
+        payment_status: (markAsPaid ? 'paid' : order.payment_status) as "failed" | "paid" | "pending" | "refunded",
         metadata: {
           external_payment_id: paymentReference || null,
           ...(metadata || {}),
