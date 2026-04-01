@@ -37,6 +37,23 @@ export interface OrderItemDetail {
   unit_price: number;
   total_price: number;
   variant_id?: string | null;
+  products?: {
+    name: string;
+  } | null;
+}
+
+export interface OrderVendorSummary {
+  business_name: string;
+}
+
+export interface OrderEscrowSummary {
+  id: string;
+  status: string;
+  amount?: number;
+  currency?: string;
+  auto_release_at?: string | null;
+  released_at?: string | null;
+  seller_confirmed_at?: string | null;
 }
 
 export interface OrderSummary {
@@ -55,6 +72,10 @@ export interface OrderSummary {
   delivered_at?: string;
   created_at: string;
   updated_at: string;
+  vendor_id: string;
+  payment_intent_id?: string | null;
+  vendors?: OrderVendorSummary | null;
+  escrow?: OrderEscrowSummary | null;
   order_items?: OrderItemDetail[];
 }
 
@@ -64,7 +85,7 @@ export interface CreateOrderResponse {
   escrow_status: string;
 }
 
-export type OrderStatusTransition = 'confirmed' | 'preparing' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatusTransition = 'confirmed' | 'preparing' | 'ready' | 'shipped' | 'in_transit' | 'delivered' | 'cancelled';
 
 // ==================== API CALLS ====================
 

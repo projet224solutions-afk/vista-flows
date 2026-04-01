@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabaseClient';
+import { cancelOrder as cancelOrderRequest, listMyOrders } from '@/services/orderBackendService';
 import { toast } from 'sonner';
 import { 
   Package, CheckCircle, Clock, Truck, XCircle, 
@@ -43,10 +44,12 @@ interface Order {
   };
   order_items?: {
     quantity: number;
+    product_name?: string;
     products: {
       name: string;
-    };
+    } | null;
   }[];
+  escrow?: EscrowStatus | null;
 }
 
 // Helper pour vérifier si une commande est paiement à la livraison
@@ -128,75 +131,21 @@ export default function ClientOrdersList() {
     try {
       if (!user?.id) return;
 
-      // Récupérer le customer_id
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!customer) return;
-
-      // Récupérer toutes les commandes du client (online et pos)
-      const { data: ordersData, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          vendors(business_name),
-          order_items(
-            quantity,
-            products(name)
-          )
-        `)
-        .eq('customer_id', customer.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setOrders(ordersData || []);
-
-      // Charger les statuts escrow pour chaque commande
-      if (ordersData && ordersData.length > 0) {
-        const escrowPromises = ordersData.map(async (order) => {
-          let escrow: EscrowStatus | null = null;
-
-          const { data: escrowByOrder } = await supabase
-            .from('escrow_transactions')
-            .select('id, status, amount')
-            .eq('order_id', order.id)
-            .maybeSingle();
-
-          escrow = escrowByOrder;
-
-          if (!escrow && order.payment_method === 'card') {
-            const paymentIntentId = typeof (order as any)?.metadata?.external_payment_id === 'string'
-              ? (order as any).metadata.external_payment_id
-              : null;
-            if (paymentIntentId) {
-              const { data: escrowByIntent } = await supabase
-                .from('escrow_transactions')
-                .select('id, status, amount')
-                .eq('stripe_payment_intent_id', paymentIntentId)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-
-              escrow = escrowByIntent;
-            }
-          }
-
-          return { orderId: order.id, escrow };
-        });
-
-        const escrowResults = await Promise.all(escrowPromises);
-        const escrowMap: Record<string, EscrowStatus> = {};
-        escrowResults.forEach(({ orderId, escrow }) => {
-          if (escrow) {
-            escrowMap[orderId] = escrow;
-          }
-        });
-        setEscrows(escrowMap);
+      const response = await listMyOrders({ limit: 100 });
+      if (!response.success) {
+        throw new Error(response.error || 'Impossible de charger les commandes');
       }
+
+      const ordersData = (response.data || []) as Order[];
+      setOrders(ordersData);
+
+      const escrowMap: Record<string, EscrowStatus> = {};
+      ordersData.forEach((order) => {
+        if (order.escrow) {
+          escrowMap[order.id] = order.escrow;
+        }
+      });
+      setEscrows(escrowMap);
     } catch (error) {
       console.error('Error loading orders:', error);
       toast.error('Erreur lors du chargement des commandes');
@@ -282,22 +231,16 @@ export default function ClientOrdersList() {
     setShowCancelDialog(false);
 
     try {
-      const { data, error } = await supabase.functions.invoke('cancel-order', {
-        body: {
-          order_id: selectedOrder.id,
-          reason: cancelReason
-        }
-      });
+      const response = await cancelOrderRequest(
+        selectedOrder.id,
+        cancelReason.trim() || 'Annulation demandée par le client'
+      );
 
-      if (error) throw error;
-      
-      if (!data?.success) {
-        throw new Error(data?.error || 'Erreur lors de l\'annulation');
+      if (!response.success) {
+        throw new Error(response.error || 'Erreur lors de l\'annulation');
       }
 
-      toast.success('Commande annulée avec succès', {
-        description: data.refunded ? 'Votre paiement a été remboursé' : undefined
-      });
+      toast.success('Commande annulée avec succès');
 
       // Recharger les commandes
       await loadOrders();
@@ -544,7 +487,7 @@ export default function ClientOrdersList() {
                 <div className="space-y-1">
                   {order.order_items?.map((item, idx) => (
                     <div key={idx} className="text-sm">
-                      {item.quantity}x {item.products.name}
+                      {item.quantity}x {item.products?.name || item.product_name || 'Produit'}
                     </div>
                   ))}
                 </div>

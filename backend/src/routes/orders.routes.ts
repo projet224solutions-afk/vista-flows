@@ -101,6 +101,97 @@ const CreateOrderSchema = z.object({
   coupon_code: z.string().max(50).nullish(),
 });
 
+const ORDER_LIST_SELECT = `
+  id,
+  order_number,
+  status,
+  payment_status,
+  payment_method,
+  subtotal,
+  total_amount,
+  currency,
+  shipping_address,
+  tracking_number,
+  cancellation_reason,
+  seller_confirmed_at,
+  delivered_at,
+  created_at,
+  updated_at,
+  vendor_id,
+  payment_intent_id,
+  vendors(business_name),
+  order_items(
+    product_id,
+    product_name,
+    quantity,
+    unit_price,
+    total_price,
+    variant_id
+  )
+`;
+
+async function attachEscrowToOrders<T extends { id: string }>(orders: T[]) {
+  if (!orders.length) {
+    return orders.map(order => ({ ...order, escrow: null }));
+  }
+
+  const { data: escrows, error } = await supabaseAdmin
+    .from('escrow_transactions')
+    .select('id, order_id, status, amount, currency, auto_release_at, released_at, seller_confirmed_at')
+    .in('order_id', orders.map(order => order.id))
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    logger.warn(`Unable to load escrow data for orders: ${error.message}`);
+    return orders.map(order => ({ ...order, escrow: null }));
+  }
+
+  const escrowByOrderId = new Map<string, any>();
+  for (const escrow of escrows || []) {
+    if (!escrowByOrderId.has(escrow.order_id)) {
+      escrowByOrderId.set(escrow.order_id, escrow);
+    }
+  }
+
+  return orders.map(order => ({
+    ...order,
+    escrow: escrowByOrderId.get(order.id) || null,
+  }));
+}
+
+async function getCustomerIdByUserId(userId: string) {
+  const { data: customer, error } = await supabaseAdmin
+    .from('customers')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return customer?.id ?? null;
+}
+
+async function getOrCreateCustomerId(userId: string) {
+  const existingCustomerId = await getCustomerIdByUserId(userId);
+  if (existingCustomerId) {
+    return existingCustomerId;
+  }
+
+  const { data: createdCustomer, error } = await supabaseAdmin
+    .from('customers')
+    .insert({ user_id: userId })
+    .select('id')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return createdCustomer.id;
+}
+
 // ==================== ROUTES ====================
 
 /**
@@ -130,6 +221,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
 
   try {
     const userId = req.user!.id;
+    const customerId = await getOrCreateCustomerId(userId);
 
     // 1. Validation Zod (no DB call)
     const validation = CreateOrderSchema.safeParse(req.body);
@@ -172,7 +264,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
     //    All in one PostgreSQL transaction with row-level locking
     const { data: result, error: rpcError } = await supabaseAdmin.rpc('create_order_core', {
       p_order_number: orderNumber,
-      p_customer_id: userId,
+      p_customer_id: customerId,
       p_vendor_id: vendor_id,
       p_vendor_user_id: vendor.user_id,
       p_payment_method: payment_method,
@@ -249,10 +341,11 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
 /**
  * GET /api/orders/:orderId
  */
-router.get('/:orderId', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/:orderId([0-9a-fA-F-]{36})', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { orderId } = req.params;
+    const customerId = await getCustomerIdByUserId(userId);
 
     const { data: order, error } = await supabaseAdmin
       .from('orders')
@@ -265,7 +358,7 @@ router.get('/:orderId', verifyJWT, async (req: AuthenticatedRequest, res: Respon
       return;
     }
 
-    const isCustomer = order.customer_id === userId;
+    const isCustomer = customerId !== null && order.customer_id === customerId;
     let isVendor = false;
     if (!isCustomer) {
       const { data: vendor } = await supabaseAdmin
@@ -295,11 +388,17 @@ router.get('/:orderId', verifyJWT, async (req: AuthenticatedRequest, res: Respon
  * POST /api/orders/:orderId/cancel
  * P0 OPTIMIZED: Uses increment_stock_batch instead of per-product loop
  */
-router.post('/:orderId/cancel', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:orderId([0-9a-fA-F-]{36})/cancel', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { orderId } = req.params;
     const { reason } = req.body || {};
+    const customerId = await getCustomerIdByUserId(userId);
+
+    if (!customerId) {
+      res.status(404).json({ success: false, error: 'Profil client introuvable' });
+      return;
+    }
 
     if (!reason || typeof reason !== 'string' || reason.trim().length < 3) {
       res.status(400).json({ success: false, error: 'Raison d\'annulation requise (min 3 caractères)' });
@@ -310,7 +409,7 @@ router.post('/:orderId/cancel', verifyJWT, orderCreateRateLimit, idempotencyGuar
       .from('orders')
       .select('id, status, customer_id, vendor_id, seller_confirmed_at')
       .eq('id', orderId)
-      .eq('customer_id', userId)
+      .eq('customer_id', customerId)
       .single();
 
     if (!order) {
@@ -379,14 +478,20 @@ router.post('/:orderId/cancel', verifyJWT, orderCreateRateLimit, idempotencyGuar
 router.get('/mine', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
+    const customerId = await getCustomerIdByUserId(userId);
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
     const offset = parseInt(req.query.offset as string) || 0;
     const status = req.query.status as string;
 
+    if (!customerId) {
+      res.json({ success: true, data: [], meta: { limit, offset, total: 0 } });
+      return;
+    }
+
     let query = supabaseAdmin
       .from('orders')
-      .select('*, order_items(*)', { count: 'exact' })
-      .eq('customer_id', userId)
+      .select(ORDER_LIST_SELECT, { count: 'exact' })
+      .eq('customer_id', customerId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -395,7 +500,9 @@ router.get('/mine', verifyJWT, async (req: AuthenticatedRequest, res: Response) 
     const { data, error, count } = await query;
     if (error) throw error;
 
-    res.json({ success: true, data: data || [], meta: { limit, offset, total: count || 0 } });
+    const enrichedOrders = await attachEscrowToOrders(data || []);
+
+    res.json({ success: true, data: enrichedOrders, meta: { limit, offset, total: count || 0 } });
   } catch (error: any) {
     logger.error(`Error fetching client orders: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
@@ -422,7 +529,7 @@ router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response
 
     let query = supabaseAdmin
       .from('orders')
-      .select('*, order_items(*)', { count: 'exact' })
+      .select(ORDER_LIST_SELECT, { count: 'exact' })
       .eq('vendor_id', vendor.id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -432,7 +539,9 @@ router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response
     const { data, error, count } = await query;
     if (error) throw error;
 
-    res.json({ success: true, data: data || [], meta: { limit, offset, total: count || 0 } });
+    const enrichedOrders = await attachEscrowToOrders(data || []);
+
+    res.json({ success: true, data: enrichedOrders, meta: { limit, offset, total: count || 0 } });
   } catch (error: any) {
     logger.error(`Error fetching vendor orders: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
@@ -443,7 +552,7 @@ router.get('/vendor', verifyJWT, async (req: AuthenticatedRequest, res: Response
  * PATCH /api/orders/:orderId/status
  * P0 OPTIMIZED: Uses increment_stock_batch for vendor cancellations
  */
-router.patch('/:orderId/status', verifyJWT, orderCreateRateLimit, async (req: AuthenticatedRequest, res: Response) => {
+router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderCreateRateLimit, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { orderId } = req.params;
