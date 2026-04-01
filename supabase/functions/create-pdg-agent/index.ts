@@ -262,7 +262,7 @@ serve(async (req) => {
     const { error: walletError } = await supabaseAdmin
       .from('wallets')
       .insert({
-        user_id: authUser.user!.id,
+        user_id: authUserId,
         balance: 0,
         currency: 'GNF'
       });
