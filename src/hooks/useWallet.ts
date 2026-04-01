@@ -14,6 +14,9 @@ import {
   depositToWallet,
   withdrawFromWallet,
   transferToWallet,
+  getWalletBalance,
+  initializeWallet,
+  getWalletTransactions,
 } from '@/services/walletBackendService';
 
 export interface WalletData {
@@ -67,79 +70,49 @@ export const useWallet = () => {
     try {
       setLoading(true);
 
-      // Récupérer ou créer le wallet
-      let { data: walletData, error: walletError } = await supabase
-        .from('wallets')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('currency', 'GNF')
-        .maybeSingle();
-
-      // Créer le wallet si inexistant via RPC
-      if (!walletData) {
-        console.log('⚠️ Wallet non trouvé pour user:', user.id);
-        console.log('📝 Initialisation via RPC...');
-        
-        try {
-          const { data: initResult, error: rpcError } = await supabase
-            .rpc('initialize_user_wallet', { p_user_id: user.id });
-          
-          if (rpcError) {
-            console.error('❌ Erreur RPC:', rpcError);
-            setWallet(null);
-            setLoading(false);
-            return;
-          }
-          
-          if (initResult) {
-            const result = initResult as any;
-            if (result.success) {
-              console.log('✅ Wallet initialisé:', result);
-              const { data: newWalletData } = await supabase
-                .from('wallets')
-                .select('*')
-                .eq('user_id', user.id)
-                .eq('currency', 'GNF')
-                .maybeSingle();
-              
-              walletData = newWalletData;
-            }
-          } else {
-            setWallet(null);
-            setLoading(false);
-            return;
-          }
-        } catch (initError) {
-          console.error('❌ Erreur appel fonction initialisation:', initError);
+      let balanceResponse = await getWalletBalance();
+      if (!balanceResponse.success || !balanceResponse.data) {
+        const initResponse = await initializeWallet();
+        if (!initResponse.success) {
           setWallet(null);
-          setLoading(false);
           return;
         }
+        balanceResponse = await getWalletBalance();
       }
 
+      const walletData = balanceResponse.data;
       if (walletData) {
-        setWallet({ ...walletData, id: String(walletData.id) } as WalletData);
+        const normalizedWallet: WalletData = {
+          id: String(walletData.id),
+          user_id: user.id,
+          balance: Number(walletData.balance || 0),
+          currency: walletData.currency || 'GNF',
+          wallet_status: walletData.wallet_status || 'active',
+          is_blocked: Boolean(walletData.is_blocked),
+          blocked_reason: null,
+          daily_limit: Number(walletData.daily_limit || 0),
+          monthly_limit: Number(walletData.monthly_limit || 0),
+          created_at: walletData.created_at || new Date().toISOString(),
+        };
 
-        // Calculer les stats à partir des transactions
-        const { data: txData } = await supabase
-          .from('wallet_transactions')
-          .select('amount, transaction_type, created_at')
-          .or(`sender_wallet_id.eq.${walletData.id},receiver_wallet_id.eq.${walletData.id}`)
-          .eq('status', 'completed')
-          .order('created_at', { ascending: false })
-          .limit(100);
+        setWallet(normalizedWallet);
 
-        const totalReceived = txData?.filter(t => t.transaction_type === 'deposit' || t.transaction_type === 'mobile_money_in')
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-        const totalSent = txData?.filter(t => t.transaction_type === 'withdrawal' || t.transaction_type === 'mobile_money_out')
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+        const txResponse = await getWalletTransactions({ limit: 100, offset: 0 });
+        const txData = txResponse.success ? (txResponse.data || []) : [];
+
+        const totalReceived = txData
+          .filter((t) => ['deposit', 'mobile_money_in', 'admin_credit', 'escrow_release'].includes(t.transaction_type))
+          .reduce((sum, t) => sum + Math.abs(Number(t.amount || 0)), 0);
+        const totalSent = txData
+          .filter((t) => ['withdrawal', 'mobile_money_out', 'transfer'].includes(t.transaction_type))
+          .reduce((sum, t) => sum + Math.abs(Number(t.amount || 0)), 0);
 
         setStats({
-          balance: walletData.balance,
+          balance: normalizedWallet.balance,
           total_received: totalReceived,
           total_sent: totalSent,
-          transactions_count: txData?.length || 0,
-          last_transaction: txData?.[0]?.created_at || null
+          transactions_count: txData.length,
+          last_transaction: txData[0]?.created_at || null,
         });
       } else {
         setWallet(null);
@@ -158,15 +131,22 @@ export const useWallet = () => {
     if (!user?.id) return;
 
     try {
-      const { data, error } = await (supabase
-        .from('enhanced_transactions' as any)
-        .select('*')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-        .order('created_at', { ascending: false })
-        .limit(50) as any);
+      const response = await getWalletTransactions({ limit: 50, offset: 0 });
+      if (!response.success) throw new Error(response.error || 'Erreur chargement transactions');
 
-      if (error) throw error;
-      setTransactions((data || []) as TransactionData[]);
+      const mapped: TransactionData[] = (response.data || []).map((tx: any) => ({
+        id: String(tx.id),
+        sender_id: String(tx.sender_wallet_id || ''),
+        receiver_id: String(tx.receiver_wallet_id || ''),
+        amount: Number(tx.amount || 0),
+        currency: tx.currency || 'GNF',
+        method: tx.transaction_type || 'wallet',
+        status: tx.status || 'completed',
+        created_at: tx.created_at,
+        metadata: tx.metadata || {},
+      }));
+
+      setTransactions(mapped);
 
     } catch (error) {
       console.error('❌ Erreur loadTransactions:', error);

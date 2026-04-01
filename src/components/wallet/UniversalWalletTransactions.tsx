@@ -458,20 +458,22 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       return true;
     }
     
-    if (!profile?.role) {
+    const normalizedRole = (profile?.role || '').toString().toLowerCase().trim();
+
+    if (!normalizedRole) {
       toast.error('UNAUTHORIZED_ACTION: Rôle utilisateur non défini');
       return false;
     }
 
     const permissions: Record<string, string[]> = {
-      send: ['admin', 'agent', 'vendeur', 'client', 'livreur'],
-      receive: ['admin', 'agent', 'vendeur', 'client', 'livreur'],
-      withdraw: ['admin', 'agent', 'vendeur', 'client', 'livreur'],
-      deposit: ['admin', 'agent', 'vendeur', 'client', 'livreur']
+      send: ['admin', 'pdg', 'ceo', 'agent', 'vendor_agent', 'vendeur', 'client', 'livreur', 'taxi', 'syndicat', 'transitaire', 'bureau'],
+      receive: ['admin', 'pdg', 'ceo', 'agent', 'vendor_agent', 'vendeur', 'client', 'livreur', 'taxi', 'syndicat', 'transitaire', 'bureau'],
+      withdraw: ['admin', 'pdg', 'ceo', 'agent', 'vendor_agent', 'vendeur', 'client', 'livreur', 'taxi', 'syndicat', 'transitaire', 'bureau'],
+      deposit: ['admin', 'pdg', 'ceo', 'agent', 'vendor_agent', 'vendeur', 'client', 'livreur', 'taxi', 'syndicat', 'transitaire', 'bureau']
     };
 
-    if (!permissions[action].includes(profile.role)) {
-      toast.error(`UNAUTHORIZED_ACTION: Votre rôle (${profile.role}) ne permet pas cette action`);
+    if (!permissions[action].includes(normalizedRole)) {
+      toast.error(`UNAUTHORIZED_ACTION: Votre rôle (${normalizedRole}) ne permet pas cette action`);
       return false;
     }
 
