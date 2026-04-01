@@ -246,7 +246,7 @@ async function executeAtomicTransfer(
 
   if (txCreateError) {
     console.error('❌ [wallet-operations] enhanced_transactions insert failed:', txCreateError);
-    return { success: false, error: `Erreur création transaction: ${txCreateError.message}` };
+    return { success: false, error: 'Erreur création transaction' };
   }
 
   // Debit sender (optimistic lock)
