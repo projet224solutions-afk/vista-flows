@@ -55,6 +55,15 @@ export interface ApiAlert {
   created_at: string;
 }
 
+export interface GuardAnalysisResult {
+  apiId: string;
+  riskScore: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  anomalies: string[];
+  recommendations: string[];
+  source: 'edge' | 'local';
+}
+
 export class ApiMonitoringService {
   /**
    * Récupère toutes les API connectées
@@ -226,7 +235,7 @@ export class ApiMonitoringService {
   /**
    * Crée une nouvelle alerte
    */
-  static async createAlert(alert: Partial<ApiAlert>): Promise<void> {
+  static async createAlert(alert: Partial<ApiAlert>): Promise<boolean> {
     try {
       const { error } = await supabase
         .from('api_alerts')
@@ -240,8 +249,11 @@ export class ApiMonitoringService {
       } else if (alert.severity === 'high') {
         toast.warning(`⚠️ ${alert.title}`);
       }
+
+      return true;
     } catch (error) {
       console.error('❌ Erreur création alerte:', error);
+      return false;
     }
   }
 
@@ -270,25 +282,64 @@ export class ApiMonitoringService {
   /**
    * 224Guard - Détection d'activité suspecte
    */
-  static async detect224GuardAnomalies(apiConnectionId: string): Promise<void> {
+  static async detect224GuardAnomalies(apiConnectionId: string): Promise<GuardAnalysisResult> {
+    // 1) Preferred path: server-side intelligent analyzer (224Guard edge function)
+    const { data, error } = await supabase.functions.invoke('api-guard-monitor', {
+      body: { mode: 'analyze', apiId: apiConnectionId },
+    });
+
+    if (!error && data && !data.error) {
+      return {
+        apiId: data.apiId || apiConnectionId,
+        riskScore: Number(data.riskScore || 0),
+        riskLevel: (data.riskLevel || 'low') as GuardAnalysisResult['riskLevel'],
+        anomalies: Array.isArray(data.anomalies) ? data.anomalies : [],
+        recommendations: Array.isArray(data.recommendations) ? data.recommendations : [],
+        source: 'edge',
+      };
+    }
+
+    // 2) Fallback path: local heuristic analysis to avoid total outage
+    return this.detect224GuardAnomaliesFallback(apiConnectionId);
+  }
+
+  private static async detect224GuardAnomaliesFallback(apiConnectionId: string): Promise<GuardAnalysisResult> {
     try {
       // Récupérer les derniers logs
       const logs = await this.getApiUsageLogs(apiConnectionId, 100);
       
-      if (logs.length === 0) return;
+      if (logs.length === 0) {
+        return {
+          apiId: apiConnectionId,
+          riskScore: 0,
+          riskLevel: 'low',
+          anomalies: [],
+          recommendations: ['Aucune donnée de logs disponible pour analyse.'],
+          source: 'local',
+        };
+      }
+
+      let riskScore = 0;
+      const anomalies: string[] = [];
+      const recommendations: string[] = [];
 
       // Analyse 1: Taux d'erreur élevé (> 30%)
       const errorCount = logs.filter(log => log.status_code && log.status_code >= 400).length;
       const errorRate = (errorCount / logs.length) * 100;
       
       if (errorRate > 30) {
-        await this.createAlert({
+        const created = await this.createAlert({
           api_connection_id: apiConnectionId,
           alert_type: 'api_error',
           severity: 'high',
           title: '224Guard: Taux d\'erreur élevé détecté',
           message: `${errorRate.toFixed(1)}% d'erreurs détectées sur les 100 dernières requêtes`
         });
+        if (created) {
+          anomalies.push(`Taux d'erreur élevé: ${errorRate.toFixed(1)}%`);
+          recommendations.push('Inspecter les endpoints en erreur et corriger les credentials/API keys.');
+          riskScore += 40;
+        }
       }
 
       // Analyse 2: Temps de réponse anormal
@@ -297,13 +348,18 @@ export class ApiMonitoringService {
         .reduce((sum, log) => sum + (log.response_time_ms || 0), 0) / logs.length;
       
       if (avgResponseTime > 5000) { // > 5 secondes
-        await this.createAlert({
+        const created = await this.createAlert({
           api_connection_id: apiConnectionId,
           alert_type: 'suspicious_activity',
           severity: 'medium',
           title: '224Guard: Performances dégradées',
           message: `Temps de réponse moyen: ${avgResponseTime.toFixed(0)}ms`
         });
+        if (created) {
+          anomalies.push(`Temps de réponse élevé: ${avgResponseTime.toFixed(0)}ms`);
+          recommendations.push('Réduire la latence réseau et vérifier la disponibilité du fournisseur API.');
+          riskScore += 20;
+        }
       }
 
       // Analyse 3: Consommation excessive de tokens
@@ -316,16 +372,34 @@ export class ApiMonitoringService {
         .reduce((sum, log) => sum + log.tokens_consumed, 0);
 
       if (recentTokens > 10000) {
-        await this.createAlert({
+        const created = await this.createAlert({
           api_connection_id: apiConnectionId,
           alert_type: 'suspicious_activity',
           severity: 'high',
           title: '224Guard: Consommation anormale détectée',
           message: `${recentTokens} tokens consommés en 24h`
         });
+        if (created) {
+          anomalies.push(`Consommation anormale: ${recentTokens} tokens/24h`);
+          recommendations.push('Vérifier le throttling et les scripts automatiques consommateurs de quotas.');
+          riskScore += 30;
+        }
       }
+
+      const riskLevel: GuardAnalysisResult['riskLevel'] =
+        riskScore >= 80 ? 'critical' : riskScore >= 50 ? 'high' : riskScore >= 20 ? 'medium' : 'low';
+
+      return {
+        apiId: apiConnectionId,
+        riskScore,
+        riskLevel,
+        anomalies,
+        recommendations,
+        source: 'local',
+      };
     } catch (error) {
       console.error('❌ Erreur 224Guard:', error);
+      throw new Error('224Guard indisponible: impossible d\'analyser cette API pour le moment');
     }
   }
 

@@ -55,8 +55,15 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
     
     setAnalyzing(true);
     try {
-      await ApiMonitoringService.detect224GuardAnomalies(api.id);
-      toast.success('✅ Analyse 224Guard terminée');
+      const result = await ApiMonitoringService.detect224GuardAnomalies(api.id);
+
+      const details = result.anomalies.length > 0
+        ? `${result.anomalies.length} anomalie(s), risque ${result.riskLevel.toUpperCase()}`
+        : 'Aucune anomalie détectée';
+
+      toast.success(`✅ Analyse 224Guard terminée (${result.source}) - ${details}`);
+
+      await loadLogs();
     } catch (error) {
       toast.error('Erreur lors de l\'analyse');
     }
