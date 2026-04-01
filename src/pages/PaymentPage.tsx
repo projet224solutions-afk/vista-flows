@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { backendConfig } from '@/config/backend';
 import {
   CreditCard, Smartphone, Wallet, Shield, CheckCircle, 
   AlertCircle, Clock, DollarSign, User, Package, Calendar,
@@ -64,7 +65,7 @@ export default function PaymentPage() {
   const loadPaymentDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/payments/link/${paymentId}`);
+      const response = await fetch(`${backendConfig.baseUrl}/api/payments/link/${paymentId}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -107,7 +108,7 @@ export default function PaymentPage() {
     try {
       setProcessing(true);
       
-      const response = await fetch(`/api/payments/link/${paymentId}/pay`, {
+      const response = await fetch(`${backendConfig.baseUrl}/api/payments/link/${paymentId}/pay`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

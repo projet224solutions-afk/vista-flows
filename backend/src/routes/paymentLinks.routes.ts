@@ -51,6 +51,30 @@ async function getPdgFeeRate(settingKey: string): Promise<number> {
   }
 }
 
+async function findPaymentLinkByPublicId(publicId: string) {
+  const byToken = await supabaseAdmin
+    .from('payment_links')
+    .select('*')
+    .eq('token', publicId)
+    .maybeSingle();
+
+  if (!byToken.error && byToken.data) {
+    return { data: byToken.data, error: null };
+  }
+
+  const byPaymentId = await supabaseAdmin
+    .from('payment_links')
+    .select('*')
+    .eq('payment_id', publicId)
+    .maybeSingle();
+
+  if (!byPaymentId.error && byPaymentId.data) {
+    return { data: byPaymentId.data, error: null };
+  }
+
+  return { data: null, error: byToken.error || byPaymentId.error };
+}
+
 // ─────────────────────────────────────────────────────────
 // POST /api/payment-links/resolve
 // Résolution publique d'un lien de paiement par token
@@ -60,29 +84,54 @@ async function getPdgFeeRate(settingKey: string): Promise<number> {
 router.post('/resolve', async (req: Request, res: Response) => {
   try {
     const { token } = req.body;
+    const publicId = String(token || '').trim();
 
-    if (!token || typeof token !== 'string' || token.length < 10) {
-      res.status(400).json({ success: false, error: 'Token invalide' });
+    if (!publicId || publicId.length < 6) {
+      res.status(400).json({ success: false, error: 'Identifiant de lien invalide' });
       return;
     }
 
-    const { data: link, error } = await supabaseAdmin
-      .from('payment_links')
-      .select(`
-        id, token, payment_id, link_type, title, produit, description,
-        montant, gross_amount, platform_fee, net_amount, frais, total,
-        devise, status, expires_at, created_at, is_single_use, use_count,
-        payment_type, reference, owner_type, owner_user_id, vendeur_id,
-        product_id, service_id, customer_name, customer_email, customer_phone,
-        viewed_at, remise, type_remise
-      `)
-      .eq('token', token)
-      .maybeSingle();
+    const { data: rawLink, error } = await findPaymentLinkByPublicId(publicId);
 
-    if (error || !link) {
+    if (error || !rawLink) {
       res.status(404).json({ success: false, error: 'Lien de paiement introuvable' });
       return;
     }
+
+    const link: any = {
+      id: rawLink.id,
+      token: rawLink.token,
+      payment_id: rawLink.payment_id,
+      link_type: rawLink.link_type,
+      title: rawLink.title,
+      produit: rawLink.produit,
+      description: rawLink.description,
+      montant: rawLink.montant,
+      gross_amount: rawLink.gross_amount,
+      platform_fee: rawLink.platform_fee,
+      net_amount: rawLink.net_amount,
+      frais: rawLink.frais,
+      total: rawLink.total,
+      devise: rawLink.devise,
+      status: rawLink.status,
+      expires_at: rawLink.expires_at,
+      created_at: rawLink.created_at,
+      is_single_use: rawLink.is_single_use,
+      use_count: rawLink.use_count,
+      payment_type: rawLink.payment_type,
+      reference: rawLink.reference,
+      owner_type: rawLink.owner_type,
+      owner_user_id: rawLink.owner_user_id,
+      vendeur_id: rawLink.vendeur_id,
+      product_id: rawLink.product_id,
+      service_id: rawLink.service_id,
+      customer_name: rawLink.customer_name,
+      customer_email: rawLink.customer_email,
+      customer_phone: rawLink.customer_phone,
+      viewed_at: rawLink.viewed_at,
+      remise: rawLink.remise,
+      type_remise: rawLink.type_remise,
+    };
 
     // Check expiry (with timezone-safe comparison)
     if (link.status === 'pending' && link.expires_at) {
@@ -204,17 +253,15 @@ router.post('/process', optionalJWT, async (req: AuthenticatedRequest, res: Resp
       paymentIntentId,
     } = req.body;
 
-    if (!token || !paymentMethod) {
-      res.status(400).json({ success: false, error: 'Token et méthode de paiement requis' });
+    const publicId = String(token || '').trim();
+
+    if (!publicId || !paymentMethod) {
+      res.status(400).json({ success: false, error: 'Identifiant de lien et méthode de paiement requis' });
       return;
     }
 
     // 1. Fetch and validate link
-    const { data: link, error: linkError } = await supabaseAdmin
-      .from('payment_links')
-      .select('*')
-      .eq('token', token)
-      .maybeSingle();
+    const { data: link, error: linkError } = await findPaymentLinkByPublicId(publicId);
 
     if (linkError || !link) {
       res.status(404).json({ success: false, error: 'Lien de paiement introuvable' });
@@ -255,7 +302,7 @@ router.post('/process', optionalJWT, async (req: AuthenticatedRequest, res: Resp
     const platformFee = Math.round(payAmount * (commissionRate / 100));
     const netAmount = payAmount - platformFee;
 
-    logger.info(`[PaymentLinks] Process: token=${token}, method=${paymentMethod}, amount=${payAmount}, fee=${platformFee}`);
+    logger.info(`[PaymentLinks] Process: id=${publicId}, method=${paymentMethod}, amount=${payAmount}, fee=${platformFee}`);
 
     // ──────── WALLET PAYMENT ────────
     if (paymentMethod === 'wallet') {
