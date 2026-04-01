@@ -7,6 +7,7 @@
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
 import { logger } from '../config/logger.js';
+import { oauthConfig } from '../config/oauth.config.js';
 import {
   buildGoogleAuthUrl,
   exchangeCodeForTokens,
@@ -23,6 +24,11 @@ const router = Router();
  */
 router.get('/google', (req: Request, res: Response): void => {
   try {
+    if (!oauthConfig.enabled) {
+      res.status(503).json({ success: false, error: 'OAuth Google non configuré côté serveur' });
+      return;
+    }
+
     // State anti-CSRF stocké en mémoire (en prod: cookie httpOnly ou session)
     const state = crypto.randomBytes(16).toString('hex');
     const authUrl = buildGoogleAuthUrl(state);
@@ -41,6 +47,11 @@ router.get('/google', (req: Request, res: Response): void => {
  */
 router.get('/google/callback', async (req: Request, res: Response): Promise<void> => {
   try {
+    if (!oauthConfig.enabled) {
+      res.status(503).json({ success: false, error: 'OAuth Google non configuré côté serveur' });
+      return;
+    }
+
     const { code, error: oauthError } = req.query;
 
     if (oauthError) {
@@ -164,7 +175,7 @@ router.get('/oauth/status', (_req: Request, res: Response): void => {
   res.json({
     success: true,
     provider: 'google',
-    configured: true,
+    configured: oauthConfig.enabled,
     note: 'Client Secret is server-side only and never exposed',
   });
 });

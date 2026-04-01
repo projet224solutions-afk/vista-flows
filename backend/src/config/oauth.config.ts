@@ -7,6 +7,7 @@
 import { env } from './env.js';
 
 export const oauthConfig = {
+  enabled: env.oauthConfigured,
   google: {
     clientId: env.OAUTH_CLIENT_ID,
     clientSecret: env.OAUTH_CLIENT_SECRET,

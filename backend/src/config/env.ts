@@ -39,8 +39,8 @@ export const env = {
   JWT_SECRET: optionalEnv('JWT_SECRET', ''),
 
   // OAuth (Google)
-  OAUTH_CLIENT_ID: requireEnv('OAUTH_CLIENT_ID'),
-  OAUTH_CLIENT_SECRET: requireEnv('OAUTH_CLIENT_SECRET'),
+  OAUTH_CLIENT_ID: optionalEnv('OAUTH_CLIENT_ID', ''),
+  OAUTH_CLIENT_SECRET: optionalEnv('OAUTH_CLIENT_SECRET', ''),
   OAUTH_REDIRECT_URI: optionalEnv('OAUTH_REDIRECT_URI', ''),
 
   // CORS
@@ -80,5 +80,9 @@ export const env = {
 
   get corsOrigins(): string[] {
     return this.CORS_ORIGINS.split(',').map(s => s.trim()).filter(Boolean);
+  },
+
+  get oauthConfigured(): boolean {
+    return Boolean(this.OAUTH_CLIENT_ID && this.OAUTH_CLIENT_SECRET && this.OAUTH_REDIRECT_URI);
   }
 } as const;
