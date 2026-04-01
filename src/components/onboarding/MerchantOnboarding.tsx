@@ -23,11 +23,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Loader2, Store, MapPin, Navigation } from "lucide-react";
 
 const merchantSetupSchema = z.object({
   business_name: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
+  description: z.string().max(500, "La description ne peut pas dépasser 500 caractères").optional().or(z.literal("")),
   phone: z
     .string()
     .trim()
@@ -53,6 +55,7 @@ export default function MerchantOnboarding() {
     resolver: zodResolver(merchantSetupSchema),
     defaultValues: {
       business_name: "",
+      description: "",
       phone: profile?.phone || "",
       city: profile?.city || "",
       address: "",
@@ -110,6 +113,7 @@ export default function MerchantOnboarding() {
         setVendorId(null);
         form.reset({
           business_name: "",
+          description: "",
           phone: profile.phone || "",
           city: profile.city || "",
           address: "",
@@ -143,6 +147,7 @@ export default function MerchantOnboarding() {
           .from("vendors")
           .update({
             business_name: values.business_name,
+            description: values.description || null,
             phone: values.phone || null,
             address: values.address || null,
             city: values.city || null,
@@ -151,16 +156,19 @@ export default function MerchantOnboarding() {
 
         if (error) throw error;
       } else {
+        // Upsert: gère la course condition entre createVendorForOAuth (fire-and-forget)
+        // et l'affichage du formulaire. Si le vendor existe déjà, on met simplement à jour.
         const { data, error } = await supabase
           .from("vendors")
-          .insert({
+          .upsert({
             user_id: user.id,
             business_name: values.business_name,
+            description: values.description || null,
             phone: values.phone || null,
             address: values.address || null,
             city: values.city || null,
             is_active: true,
-          })
+          }, { onConflict: 'user_id' })
           .select("id")
           .single();
 
@@ -221,6 +229,26 @@ export default function MerchantOnboarding() {
                       {...field} 
                       disabled={submitting}
                       className="h-11"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description de la boutique</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Décrivez votre boutique, vos produits, vos services…"
+                      rows={3}
+                      {...field}
+                      disabled={submitting}
+                      className="resize-none"
                     />
                   </FormControl>
                   <FormMessage />
