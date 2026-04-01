@@ -23,6 +23,24 @@ import ApiDetailsModal from '@/components/pdg/ApiDetailsModal';
 import AddApiModal from '@/components/pdg/AddApiModal';
 import ApiAnalytics from '@/components/pdg/ApiAnalytics';
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch } from '@/services/backendApi';
+
+interface CoreFeatureHealth24h {
+  lastStatus: 'success' | 'degraded' | 'failure' | null;
+  total: number;
+  failures: number;
+  degraded: number;
+}
+
+interface CoreFeatureRegistryRow {
+  feature_key: string;
+  core_engine: 'identity' | 'payment' | 'commerce' | 'intelligence_supervision';
+  owner_module: string | null;
+  criticality: 'low' | 'medium' | 'high' | 'critical';
+  enabled: boolean;
+  auto_monitor: boolean;
+  health24h?: CoreFeatureHealth24h;
+}
 
 const STATUS_COLORS = {
   active: 'bg-green-500',
@@ -48,6 +66,29 @@ export default function ApiSupervision() {
   const [selectedApi, setSelectedApi] = useState<ApiConnection | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [coreFeatures, setCoreFeatures] = useState<CoreFeatureRegistryRow[]>([]);
+  const [coreFeaturesLoading, setCoreFeaturesLoading] = useState(false);
+
+  const loadCoreSupervision = async () => {
+    setCoreFeaturesLoading(true);
+    try {
+      const response = await backendFetch<CoreFeatureRegistryRow[]>('/api/core/supervision/feature-registry', {
+        method: 'GET',
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || 'Erreur chargement supervision core');
+      }
+
+      setCoreFeatures(response.data || []);
+    } catch (error: any) {
+      console.error('❌ Erreur chargement supervision core:', error);
+      setCoreFeatures([]);
+      toast.error(error?.message || 'Impossible de charger la supervision core');
+    } finally {
+      setCoreFeaturesLoading(false);
+    }
+  };
 
   // Charger les données
   const loadData = async () => {
@@ -58,7 +99,8 @@ export default function ApiSupervision() {
       
       const [apisData, alertsData] = await Promise.all([
         ApiMonitoringService.getAllApiConnections(),
-        ApiMonitoringService.getUnresolvedAlerts()
+        ApiMonitoringService.getUnresolvedAlerts(),
+        loadCoreSupervision(),
       ]);
       
       setApis(apisData || []);
@@ -258,6 +300,7 @@ export default function ApiSupervision() {
             <TabsTrigger value="apis">API connectées</TabsTrigger>
             <TabsTrigger value="alerts">Alertes</TabsTrigger>
             <TabsTrigger value="analytics">Analytiques</TabsTrigger>
+            <TabsTrigger value="core-supervision">Supervision Core</TabsTrigger>
           </TabsList>
 
           {/* Vue d'ensemble */}
@@ -557,6 +600,67 @@ export default function ApiSupervision() {
           {/* Analytiques */}
           <TabsContent value="analytics" className="space-y-4">
             <ApiAnalytics apis={apis} />
+          </TabsContent>
+
+          {/* Supervision Core */}
+          <TabsContent value="core-supervision" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  Registre des fonctionnalités critiques
+                </CardTitle>
+                <CardDescription>
+                  Données issues de /api/core/supervision/feature-registry (Intelligence & Supervision Core)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {coreFeaturesLoading ? (
+                  <div className="py-10 text-center text-muted-foreground">Chargement de la supervision core...</div>
+                ) : coreFeatures.length === 0 ? (
+                  <div className="py-10 text-center">
+                    <p className="text-muted-foreground mb-4">Aucune feature monitorée retournée</p>
+                    <Button variant="outline" onClick={loadCoreSupervision}>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Recharger
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {coreFeatures.map((feature) => {
+                      const lastStatus = feature.health24h?.lastStatus || null;
+                      const statusBadgeClass =
+                        lastStatus === 'success'
+                          ? 'bg-green-500 text-white'
+                          : lastStatus === 'degraded'
+                          ? 'bg-yellow-500 text-white'
+                          : lastStatus === 'failure'
+                          ? 'bg-red-600 text-white'
+                          : 'bg-muted text-muted-foreground';
+
+                      return (
+                        <div key={feature.feature_key} className="p-4 border rounded-lg bg-card">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div>
+                              <p className="font-semibold">{feature.feature_key}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Moteur: {feature.core_engine} • Module: {feature.owner_module || 'n/a'} • Criticité: {feature.criticality}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge className={statusBadgeClass}>{lastStatus || 'no-signal'}</Badge>
+                              <Badge variant="outline">24h: {feature.health24h?.total || 0}</Badge>
+                              <Badge variant="outline">Failures: {feature.health24h?.failures || 0}</Badge>
+                              <Badge variant="outline">Degraded: {feature.health24h?.degraded || 0}</Badge>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
