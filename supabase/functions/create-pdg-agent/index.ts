@@ -219,7 +219,7 @@ serve(async (req) => {
 
     if (agentError) {
       console.error('❌ Erreur création agent:', agentError);
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user!.id);
+      if (!existingUser) await supabaseAdmin.auth.admin.deleteUser(authUserId);
       return new Response(
         JSON.stringify({ 
           success: false, 
