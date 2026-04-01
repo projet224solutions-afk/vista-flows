@@ -232,7 +232,7 @@ export default function Payment() {
       await supabase
         .from('orders')
         .update({
-          payment_status: markAsPaid ? 'paid' : response.data.order.payment_status,
+          payment_status: (markAsPaid ? 'paid' : response.data.order.payment_status) as "failed" | "paid" | "pending" | "refunded",
           metadata: {
             external_payment_id: externalPaymentId || null,
             source: 'payment_page_post_provider_success',
@@ -267,7 +267,7 @@ export default function Payment() {
     for (const [vendorId, items] of vendorEntries) {
       const result = await createOrderForVendor({
         vendorId,
-        items,
+        items: items as any[],
         paymentMethod,
         externalPaymentId,
         markAsPaid: true,
@@ -812,7 +812,7 @@ export default function Payment() {
             ).map(([currentVendorId, currentItems]) =>
               createOrderForVendor({
                 vendorId: currentVendorId,
-                items: currentItems,
+                items: currentItems as any[],
                 paymentMethod: 'cod',
                 shippingAddress: {
                   full_name: user.user_metadata?.full_name || user.email || 'Client 224Solutions',
