@@ -234,7 +234,7 @@ serve(async (req) => {
     const { error: agentsTableError } = await supabaseAdmin
       .from('agents')
       .insert({
-        id: authUser.user!.id,
+        id: authUserId,
         email,
         phone,
         first_name: name.split(' ')[0] || name,
