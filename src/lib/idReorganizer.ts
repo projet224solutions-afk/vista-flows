@@ -83,7 +83,6 @@ export async function analyzeIdGaps(roleType: RoleType): Promise<{
  * Les IDs sont décalés vers le bas pour remplir les trous
  */
 export async function reorganizeIds(roleType: RoleType): Promise<ReorganizationResult> {
-  const config = getIdConfig(roleType);
   const result: ReorganizationResult = {
     success: true,
     reorganized: [],
@@ -91,75 +90,29 @@ export async function reorganizeIds(roleType: RoleType): Promise<ReorganizationR
   };
 
   try {
-    // Récupérer tous les IDs triés
-    const { data, error } = await supabase
-      .from('user_ids')
-      .select('id, custom_id, user_id')
-      .like('custom_id', `${config.prefix}%`)
-      .order('custom_id', { ascending: true });
+    const { data, error } = await supabase.rpc('reorganize_user_ids_from_db', {
+      p_role_type: roleType,
+    });
 
     if (error) {
-      throw new Error(`Erreur récupération IDs: ${error.message}`);
+      throw new Error(`Erreur RPC réorganisation: ${error.message}`);
     }
 
-    if (!data || data.length === 0) {
-      return result;
-    }
+    const rows = (data || []) as Array<{
+      role_type: string;
+      user_id: string;
+      old_id: string | null;
+      new_id: string;
+      action: string;
+    }>;
 
-    // Extraire et trier par numéro
-    const sortedIds = data
-      .map(row => ({
-        id: row.id,
-        custom_id: row.custom_id,
-        user_id: row.user_id,
-        number: parseInt(row.custom_id.replace(config.prefix, ''), 10)
-      }))
-      .filter(item => !isNaN(item.number))
-      .sort((a, b) => a.number - b.number);
-
-    // Pour chaque ID, vérifier s'il doit être déplacé
-    let targetNumber = 1;
-    
-    for (const item of sortedIds) {
-      if (item.number !== targetNumber) {
-        // Cet ID doit être réorganisé
-        const newId = `${config.prefix}${targetNumber.toString().padStart(config.length, '0')}`;
-        
-        try {
-          // Mettre à jour user_ids
-          const { error: updateError } = await supabase
-            .from('user_ids')
-            .update({ custom_id: newId })
-            .eq('id', item.id);
-
-          if (updateError) {
-            throw updateError;
-          }
-
-          // Mettre à jour la table de rôle
-          const { error: roleError } = await supabase
-            .from(config.table as any)
-            .update({ [config.column]: newId })
-            .eq('user_id', item.user_id);
-
-          if (roleError) {
-            console.warn(`Avertissement mise à jour table ${config.table}:`, roleError);
-          }
-
-          result.reorganized.push({
-            oldId: item.custom_id,
-            newId: newId,
-            userId: item.user_id
-          });
-
-          console.log(`✅ Réorganisé: ${item.custom_id} → ${newId}`);
-        } catch (err: any) {
-          result.errors.push(`Erreur ${item.custom_id}: ${err.message}`);
-          console.error(`❌ Erreur réorganisation ${item.custom_id}:`, err);
-        }
-      }
-      targetNumber++;
-    }
+    result.reorganized = rows
+      .filter((row) => row.action === 'reorganized')
+      .map((row) => ({
+        oldId: row.old_id || '',
+        newId: row.new_id,
+        userId: row.user_id,
+      }));
 
     result.success = result.errors.length === 0;
     return result;

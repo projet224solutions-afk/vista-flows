@@ -35,7 +35,7 @@ interface RoleStats {
 
 const ROLE_LABELS: Record<RoleType, string> = {
   vendor: 'Vendeurs (VND)',
-  client: 'Clients (CLT)',
+  client: 'Clients (CLI)',
   agent: 'Agents (AGT)',
   driver: 'Chauffeurs (DRV)',
   taxi: 'Taxi-Motos (TAX)',
@@ -52,7 +52,7 @@ export function IdReorganizationPanel() {
   const [reorganizing, setReorganizing] = useState<RoleType | 'all' | null>(null);
   const [lastResults, setLastResults] = useState<{ oldId: string; newId: string }[]>([]);
 
-  const roleTypes: RoleType[] = ['vendor', 'client', 'agent', 'driver', 'bureau', 'transitaire', 'worker'];
+  const roleTypes: RoleType[] = ['vendor', 'client', 'agent', 'driver', 'taxi', 'livreur', 'bureau', 'pdg', 'transitaire', 'worker'];
 
   useEffect(() => {
     loadAllStats();
