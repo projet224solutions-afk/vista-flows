@@ -64,13 +64,18 @@ export interface PosReconciliationEntry {
  */
 export async function syncPosSales(
   sales: PosSalePayload[],
+  vendorId?: string,
   signal?: AbortSignal
 ) {
+  const headers: Record<string, string> = {};
+  if (vendorId) headers['x-vendor-id'] = vendorId;
+
   return backendFetch<{ results: SyncResult[]; summary: SyncSummary }>(
     '/api/pos/sync',
     {
       method: 'POST',
       body: { sales },
+      headers,
       signal,
     }
   );
@@ -81,6 +86,7 @@ export async function syncPosSales(
  */
 export async function listPosSales(
   params: { limit?: number; offset?: number } = {},
+  vendorId?: string,
   signal?: AbortSignal
 ) {
   const query = new URLSearchParams();
@@ -88,8 +94,12 @@ export async function listPosSales(
   if (params.offset) query.set('offset', String(params.offset));
 
   const qs = query.toString();
+  const headers: Record<string, string> = {};
+  if (vendorId) headers['x-vendor-id'] = vendorId;
+
   return backendFetch(`/api/pos/sales${qs ? `?${qs}` : ''}`, {
     method: 'GET',
+    headers,
     signal,
   });
 }
@@ -97,9 +107,13 @@ export async function listPosSales(
 /**
  * Lister les écarts de stock en attente de réconciliation
  */
-export async function getReconciliationPending(signal?: AbortSignal) {
+export async function getReconciliationPending(vendorId?: string, signal?: AbortSignal) {
+  const headers: Record<string, string> = {};
+  if (vendorId) headers['x-vendor-id'] = vendorId;
+
   return backendFetch<PosReconciliationEntry[]>('/api/pos/reconciliation', {
     method: 'GET',
+    headers,
     signal,
   });
 }

@@ -1587,7 +1587,7 @@ export function POSSystem() {
           notes: 'Paiement POS - Espèces',
           sold_at: new Date().toISOString(),
         },
-      ]);
+      ], vendorId);
 
       if (!syncResponse.success || !syncResponse.data?.results?.length) {
         throw new Error(syncResponse.error || 'Impossible de créer la vente POS');

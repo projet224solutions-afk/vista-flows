@@ -18,6 +18,61 @@ import Stripe from 'stripe';
 
 const router = Router();
 
+async function agentHasPosPermission(agentId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabaseAdmin.rpc('check_agent_permission' as any, {
+      p_agent_id: agentId,
+      p_permission_key: 'access_pos',
+    });
+
+    if (error) {
+      logger.warn(`[POS] check_agent_permission failed: ${error.message}`);
+      return false;
+    }
+
+    return Boolean(data);
+  } catch (error: any) {
+    logger.warn(`[POS] check_agent_permission exception: ${error?.message || 'unknown'}`);
+    return false;
+  }
+}
+
+async function resolvePosVendorId(userId: string, requestedVendorId?: string | null): Promise<string | null> {
+  const { data: ownVendor } = await supabaseAdmin
+    .from('vendors')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (ownVendor?.id) {
+    if (!requestedVendorId || requestedVendorId === ownVendor.id) {
+      return ownVendor.id;
+    }
+    return null;
+  }
+
+  const { data: agent } = await supabaseAdmin
+    .from('agents_management')
+    .select('id, vendor_id, is_active')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!agent || !agent.is_active || !agent.vendor_id) {
+    return null;
+  }
+
+  if (requestedVendorId && requestedVendorId !== agent.vendor_id) {
+    return null;
+  }
+
+  const canAccessPos = await agentHasPosPermission(agent.id);
+  if (!canAccessPos) {
+    return null;
+  }
+
+  return agent.vendor_id;
+}
+
 // ==================== VALIDATION SCHEMAS ====================
 
 const PosSaleItemSchema = z.object({
@@ -82,14 +137,10 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
   try {
     const userId = req.user!.id;
 
-    // TODO P2: Cache this lookup in Redis
-    const { data: vendor } = await supabaseAdmin
-      .from('vendors')
-      .select('id')
-      .eq('user_id', userId)
-      .maybeSingle();
+    const requestedVendorId = (req.headers['x-vendor-id'] as string | undefined)?.trim() || null;
+    const vendorId = await resolvePosVendorId(userId, requestedVendorId);
 
-    if (!vendor) {
+    if (!vendorId) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée' });
       return;
     }
@@ -113,7 +164,7 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
     const processSale = async (sale: typeof sales[number]) => {
       try {
         const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('create_pos_sale_complete', {
-          p_vendor_id: vendor.id,
+          p_vendor_id: vendorId,
           p_local_sale_id: sale.local_sale_id,
           p_items: sale.items,
           p_payment_method: sale.payment_method,
@@ -192,7 +243,7 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
     const errors = results.filter(r => r.status === 'error').length;
     const stockPending = results.filter(r => (r as any).stock_synced === false).length;
 
-    logger.info(`POS sync: vendor=${vendor.id}, created=${created}, duplicates=${duplicates}, errors=${errors}, stock_pending=${stockPending}`);
+    logger.info(`POS sync: vendor=${vendorId}, created=${created}, duplicates=${duplicates}, errors=${errors}, stock_pending=${stockPending}`);
 
     res.json({
       success: errors === 0,
@@ -212,10 +263,10 @@ router.post('/sync', verifyJWT, posSyncRateLimit, async (req: AuthenticatedReque
 router.get('/sales', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { data: vendor } = await supabaseAdmin
-      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
+    const requestedVendorId = (req.headers['x-vendor-id'] as string | undefined)?.trim() || null;
+    const vendorId = await resolvePosVendorId(userId, requestedVendorId);
 
-    if (!vendor) {
+    if (!vendorId) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée' });
       return;
     }
@@ -226,7 +277,7 @@ router.get('/sales', verifyJWT, async (req: AuthenticatedRequest, res: Response)
     const { data, error, count } = await supabaseAdmin
       .from('pos_sales')
       .select('*, pos_sale_items(*)', { count: 'exact' })
-      .eq('vendor_id', vendor.id)
+      .eq('vendor_id', vendorId)
       .order('sold_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -245,10 +296,10 @@ router.get('/sales', verifyJWT, async (req: AuthenticatedRequest, res: Response)
 router.get('/reconciliation', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { data: vendor } = await supabaseAdmin
-      .from('vendors').select('id').eq('user_id', userId).maybeSingle();
+    const requestedVendorId = (req.headers['x-vendor-id'] as string | undefined)?.trim() || null;
+    const vendorId = await resolvePosVendorId(userId, requestedVendorId);
 
-    if (!vendor) {
+    if (!vendorId) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée' });
       return;
     }
@@ -256,7 +307,7 @@ router.get('/reconciliation', verifyJWT, async (req: AuthenticatedRequest, res: 
     const { data, error } = await supabaseAdmin
       .from('pos_stock_reconciliation')
       .select('*, product:products(id, name, sku)')
-      .eq('vendor_id', vendor.id)
+      .eq('vendor_id', vendorId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false });
 
