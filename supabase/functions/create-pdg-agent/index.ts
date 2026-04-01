@@ -203,7 +203,7 @@ serve(async (req) => {
       .from('agents_management')
       .insert({
         pdg_id: pdgProfile.id,
-        user_id: authUser.user!.id,
+        user_id: authUserId,
         agent_code: agentCode,
         name,
         email,
