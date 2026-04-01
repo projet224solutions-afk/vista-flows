@@ -12456,6 +12456,219 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_visibility_boosts: {
+        Row: {
+          amount_paid: number
+          boost_score: number
+          budget_amount: number
+          category_slug: string | null
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          metadata: Json
+          owner_user_id: string
+          payment_reference: string | null
+          placement: string
+          starts_at: string | null
+          status: string
+          target_id: string
+          target_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount_paid?: number
+          boost_score?: number
+          budget_amount?: number
+          category_slug?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          metadata?: Json
+          owner_user_id: string
+          payment_reference?: string | null
+          placement?: string
+          starts_at?: string | null
+          status?: string
+          target_id: string
+          target_type: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          boost_score?: number
+          budget_amount?: number
+          category_slug?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          metadata?: Json
+          owner_user_id?: string
+          payment_reference?: string | null
+          placement?: string
+          starts_at?: string | null
+          status?: string
+          target_id?: string
+          target_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      marketplace_visibility_plan_scores: {
+        Row: {
+          base_score: number
+          created_at: string
+          created_by: string | null
+          exposure_multiplier: number
+          frequency_boost: number
+          id: string
+          plan_name: string
+          updated_at: string
+          updated_by: string | null
+          visibility_tier: string
+        }
+        Insert: {
+          base_score: number
+          created_at?: string
+          created_by?: string | null
+          exposure_multiplier?: number
+          frequency_boost?: number
+          id?: string
+          plan_name: string
+          updated_at?: string
+          updated_by?: string | null
+          visibility_tier: string
+        }
+        Update: {
+          base_score?: number
+          created_at?: string
+          created_by?: string | null
+          exposure_multiplier?: number
+          frequency_boost?: number
+          id?: string
+          plan_name?: string
+          updated_at?: string
+          updated_by?: string | null
+          visibility_tier?: string
+        }
+        Relationships: []
+      }
+      marketplace_visibility_score_logs: {
+        Row: {
+          boost_score: number
+          context: Json
+          created_at: string
+          final_score: number
+          id: string
+          item_id: string
+          item_type: string
+          performance_score: number
+          quality_score: number
+          relevance_score: number
+          subscription_score: number
+          vendor_user_id: string | null
+        }
+        Insert: {
+          boost_score: number
+          context?: Json
+          created_at?: string
+          final_score: number
+          id?: string
+          item_id: string
+          item_type: string
+          performance_score: number
+          quality_score: number
+          relevance_score: number
+          subscription_score: number
+          vendor_user_id?: string | null
+        }
+        Update: {
+          boost_score?: number
+          context?: Json
+          created_at?: string
+          final_score?: number
+          id?: string
+          item_id?: string
+          item_type?: string
+          performance_score?: number
+          quality_score?: number
+          relevance_score?: number
+          subscription_score?: number
+          vendor_user_id?: string | null
+        }
+        Relationships: []
+      }
+      marketplace_visibility_settings: {
+        Row: {
+          boost_weight: number
+          config_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          max_boost_per_vendor: number
+          min_quality_threshold: number
+          organic_slots_ratio: number
+          performance_weight: number
+          popular_slots_ratio: number
+          quality_weight: number
+          relevance_weight: number
+          rotation_factor: number
+          sponsored_slots_ratio: number
+          subscription_weight: number
+          updated_at: string
+          updated_by: string | null
+          vendor_diversity_penalty: number
+        }
+        Insert: {
+          boost_weight?: number
+          config_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          max_boost_per_vendor?: number
+          min_quality_threshold?: number
+          organic_slots_ratio?: number
+          performance_weight?: number
+          popular_slots_ratio?: number
+          quality_weight?: number
+          relevance_weight?: number
+          rotation_factor?: number
+          sponsored_slots_ratio?: number
+          subscription_weight?: number
+          updated_at?: string
+          updated_by?: string | null
+          vendor_diversity_penalty?: number
+        }
+        Update: {
+          boost_weight?: number
+          config_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          max_boost_per_vendor?: number
+          min_quality_threshold?: number
+          organic_slots_ratio?: number
+          performance_weight?: number
+          popular_slots_ratio?: number
+          quality_weight?: number
+          relevance_weight?: number
+          rotation_factor?: number
+          sponsored_slots_ratio?: number
+          subscription_weight?: number
+          updated_at?: string
+          updated_by?: string | null
+          vendor_diversity_penalty?: number
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           bureau_id: string | null
@@ -28839,6 +29052,14 @@ export type Database = {
         Args: { p_deleted_by?: string; p_reason?: string; p_user_id: string }
         Returns: string
       }
+      audit_user_identity_integrity: {
+        Args: never
+        Returns: {
+          affected_count: number
+          issue_key: string
+          sample: Json
+        }[]
+      }
       auto_correct_negative_stock: {
         Args: never
         Returns: {
@@ -30446,6 +30667,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      identity_role_prefix: { Args: { p_role: string }; Returns: string }
+      identity_role_to_prefix: { Args: { p_role: string }; Returns: string }
       increment_digital_product_views: {
         Args: { p_product_id: string }
         Returns: undefined
@@ -31003,6 +31226,23 @@ export type Database = {
           p_reason?: string
         }
         Returns: Json
+      }
+      reorganize_user_ids_from_db: {
+        Args: { p_role_type?: string }
+        Returns: {
+          action: string
+          new_id: string
+          old_id: string
+          role_type: string
+          user_id: string
+        }[]
+      }
+      repair_user_identity_integrity: {
+        Args: never
+        Returns: {
+          affected_count: number
+          step_key: string
+        }[]
       }
       request_bank_withdrawal: {
         Args: {
