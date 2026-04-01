@@ -2,7 +2,7 @@ import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, LogOut, Lock, Brain, Mail, Activity } from 'lucide-react';
+import { Shield, LogOut, Lock, Brain, Mail, Activity, AlertTriangle } from 'lucide-react';
 import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -83,6 +83,7 @@ export default function PDG224Solutions() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [updatingEmail, setUpdatingEmail] = useState(false);
+  const [fxCriticalAlerts, setFxCriticalAlerts] = useState(0);
 
   const { error, clearError } = usePDGErrorBoundary();
   const { aiActive } = usePDGAIAssistant();
@@ -96,6 +97,24 @@ export default function PDG224Solutions() {
     }
     setActiveTab(tab);
   }, [navigate]);
+
+  const loadFxCriticalAlerts = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('financial_security_alerts')
+        .select('id')
+        .like('alert_type', 'fx_%')
+        .eq('is_resolved', false)
+        .in('severity', ['critical', 'high'])
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) return;
+      setFxCriticalAlerts((data || []).length);
+    } catch {
+      // Silent fail on badge refresh to avoid blocking PDG UI
+    }
+  }, []);
 
   useEffect(() => {
     if (!user && !profileLoading) {
@@ -129,6 +148,12 @@ export default function PDG224Solutions() {
       });
     }
   }, [user, profile, profileLoading, navigate, mfaVerified]);
+
+  useEffect(() => {
+    loadFxCriticalAlerts();
+    const intervalId = window.setInterval(loadFxCriticalAlerts, 60000);
+    return () => window.clearInterval(intervalId);
+  }, [loadFxCriticalAlerts]);
 
   // Server-side MFA: send code
   const handleSendMfaCode = useCallback(async () => {
@@ -376,6 +401,17 @@ export default function PDG224Solutions() {
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                   <span className="hidden sm:inline">Système</span> Actif
                 </Badge>
+                {fxCriticalAlerts > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setActiveTab('banking')}
+                    className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                  >
+                    <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4" />
+                    FX Critique ({fxCriticalAlerts})
+                  </Button>
+                )}
                 {aiActive && (
                   <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20 gap-1 text-xs flex-shrink-0">
                     <Brain className="w-3 h-3" />
