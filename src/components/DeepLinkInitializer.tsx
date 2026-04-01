@@ -13,6 +13,8 @@ const PUBLIC_PATH_PREFIXES = [
   '/shop/',
   '/product/',
   '/produit/',
+  '/pay/',
+  '/payment/',
   '/marketplace',
   '/services-proximite/',
   '/service/',

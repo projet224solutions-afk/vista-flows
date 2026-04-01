@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePaymentLinks, LinkType } from '@/hooks/usePaymentLinks';
 import { supabase } from '@/integrations/supabase/client';
 import { tryNativeShare } from '@/utils/nativeShare';
+import { getPublicBaseUrl } from '@/lib/site';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   Link, Plus, Copy, Share2, RefreshCw,
@@ -160,7 +161,7 @@ export default function PaymentLinksManager() {
       });
 
       if (token) {
-        const url = `${window.location.origin}/pay/${token}`;
+        const url = `${getPublicBaseUrl()}/pay/${encodeURIComponent(token)}`;
         navigator.clipboard.writeText(url);
         toast({ title: "✅ Lien créé et copié !", description: url });
         setShowCreateModal(false);

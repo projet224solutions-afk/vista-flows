@@ -3,6 +3,7 @@ import { dataManager } from '@/services/DataManager';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from './use-toast';
+import { getPublicBaseUrl } from '@/lib/site';
 
 export type LinkType = 'payment' | 'invoice' | 'checkout' | 'service';
 export type OwnerType = 'vendor' | 'provider' | 'agent';
@@ -327,10 +328,17 @@ export function usePaymentLinks() {
   };
 
   const getPaymentUrl = (link: PaymentLink) => {
-    if (link.token) {
-      return `${window.location.origin}/pay/${link.token}`;
+    const baseUrl = getPublicBaseUrl();
+
+    if (link.token && link.token.trim() !== '') {
+      return `${baseUrl}/pay/${encodeURIComponent(link.token)}`;
     }
-    return `${window.location.origin}/payment/${link.payment_id}`;
+
+    if (link.payment_id && link.payment_id.trim() !== '') {
+      return `${baseUrl}/payment/${encodeURIComponent(link.payment_id)}`;
+    }
+
+    return `${baseUrl}/payment`;
   };
 
   return {

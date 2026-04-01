@@ -14,6 +14,16 @@ interface DeepLinkHandler {
 
 // Patterns de deep linking supportés
 const DEEP_LINK_PATTERNS: DeepLinkHandler[] = [
+  // Lien de paiement public: /pay/:token
+  {
+    pattern: /(?:myapp:\/\/|.*\/)(pay)\/([a-zA-Z0-9_-]+)/,
+    handler: (matches) => `/pay/${matches[2]}`,
+  },
+  // Lien de paiement legacy: /payment/:paymentId
+  {
+    pattern: /(?:myapp:\/\/|.*\/)(payment)\/([a-zA-Z0-9_-]+)/,
+    handler: (matches) => `/payment/${matches[2]}`,
+  },
   // Shop: /shop/:vendorId — preserve /shop/ prefix
   {
     pattern: /(?:myapp:\/\/|.*\/)(shop)\/([a-zA-Z0-9-]+)/,
