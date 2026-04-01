@@ -493,7 +493,7 @@ export default function PDG224Solutions() {
               </div>
             }>
               {activeTab === 'dashboard' && (
-                <ErrorBoundary><PDGDashboardHome onNavigate={setActiveTabPersisted} /></ErrorBoundary>
+                <ErrorBoundary><PDGDashboardHome onNavigate={handleTabChange} /></ErrorBoundary>
               )}
               {activeTab === 'finance' && (
                 <ErrorBoundary><PDGFinance /></ErrorBoundary>

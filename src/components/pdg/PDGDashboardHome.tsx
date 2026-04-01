@@ -51,6 +51,7 @@ interface CoreFeatureRegistryRow {
 export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
   const stats = usePDGStats();
   const { user } = useAuth();
+  const [coreSummaryLoading, setCoreSummaryLoading] = useState(false);
   const [coreSummary, setCoreSummary] = useState({
     totalFeatures: 0,
     totalEvents24h: 0,
@@ -59,15 +60,35 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
   });
 
   useEffect(() => {
+    if (!user?.id) return;
+
     const loadCoreSummary = async () => {
+      setCoreSummaryLoading(true);
       try {
         const response = await backendFetch<CoreFeatureRegistryRow[]>('/api/core/supervision/feature-registry', {
           method: 'GET',
         });
 
-        if (!response.success || !response.data) return;
+        if (!response.success) {
+          return;
+        }
 
-        const rows = response.data;
+        const payload: any = response.data;
+        const rows: CoreFeatureRegistryRow[] = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.features)
+          ? payload.features
+          : [];
+
+        if (rows.length === 0) {
+          setCoreSummary({
+            totalFeatures: 0,
+            totalEvents24h: 0,
+            failures24h: 0,
+            degraded24h: 0,
+          });
+          return;
+        }
         const totalEvents24h = rows.reduce((sum, row) => sum + (row.health24h?.total || 0), 0);
         const failures24h = rows.reduce((sum, row) => sum + (row.health24h?.failures || 0), 0);
         const degraded24h = rows.reduce((sum, row) => sum + (row.health24h?.degraded || 0), 0);
@@ -80,11 +101,15 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
         });
       } catch {
         // Best effort only for dashboard summary block.
+      } finally {
+        setCoreSummaryLoading(false);
       }
     };
 
     loadCoreSummary();
-  }, []);
+    const intervalId = window.setInterval(loadCoreSummary, 60000);
+    return () => window.clearInterval(intervalId);
+  }, [user?.id]);
 
   if (stats.loading) {
     return (
@@ -586,19 +611,19 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Features</p>
-                <p className="text-lg font-bold text-amber-700">{coreSummary.totalFeatures}</p>
+                <p className="text-lg font-bold text-amber-700">{coreSummaryLoading ? '...' : coreSummary.totalFeatures}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Événements 24h</p>
-                <p className="text-lg font-bold text-amber-700">{coreSummary.totalEvents24h}</p>
+                <p className="text-lg font-bold text-amber-700">{coreSummaryLoading ? '...' : coreSummary.totalEvents24h}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Failures</p>
-                <p className="text-lg font-bold text-red-600">{coreSummary.failures24h}</p>
+                <p className="text-lg font-bold text-red-600">{coreSummaryLoading ? '...' : coreSummary.failures24h}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">Degraded</p>
-                <p className="text-lg font-bold text-yellow-700">{coreSummary.degraded24h}</p>
+                <p className="text-lg font-bold text-yellow-700">{coreSummaryLoading ? '...' : coreSummary.degraded24h}</p>
               </div>
             </div>
             <Button

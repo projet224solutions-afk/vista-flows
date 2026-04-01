@@ -1204,6 +1204,53 @@ export function POSSystem() {
     return { error: primaryUpdate.error };
   };
 
+  const createCashOrderFallbackDirect = async () => {
+    const customerId = await getOrCreateCustomerId();
+    if (!customerId) {
+      throw new Error('Impossible de créer le client pour la vente POS');
+    }
+
+    const fallbackOrderNumber = `POS-CASH-${Date.now().toString(36).toUpperCase()}`;
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        order_number: fallbackOrderNumber,
+        vendor_id: vendorId,
+        customer_id: customerId,
+        total_amount: total,
+        subtotal: subtotal,
+        tax_amount: tax,
+        discount_amount: discountValue,
+        payment_status: 'paid',
+        status: 'confirmed',
+        payment_method: 'cash',
+        shipping_address: { address: 'Point de vente' },
+        notes: 'Fallback POS cash (backend indisponible)',
+        source: 'pos',
+      })
+      .select('id, order_number')
+      .single();
+
+    if (orderError || !order) {
+      throw orderError || new Error('Impossible de créer la commande POS fallback');
+    }
+
+    const orderItems = cart.map(item => ({
+      order_id: order.id,
+      product_id: item.id,
+      quantity: item.quantity,
+      unit_price: item.quantity > 0 ? item.total / item.quantity : item.price,
+      total_price: item.total,
+    }));
+
+    const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+    if (itemsError) {
+      throw itemsError;
+    }
+
+    return order;
+  };
+
   const processPayment = async () => {
     // Note: Le montant reçu n'est plus obligatoire pour valider
 
@@ -1590,7 +1637,22 @@ export function POSSystem() {
       ], vendorId);
 
       if (!syncResponse.success || !syncResponse.data?.results?.length) {
-        throw new Error(syncResponse.error || 'Impossible de créer la vente POS');
+        const backendError = syncResponse.error || 'Impossible de créer la vente POS';
+        const shouldFallbackToDirect = paymentMethod === 'cash';
+
+        if (!shouldFallbackToDirect) {
+          throw new Error(backendError);
+        }
+
+        console.warn('⚠️ [POS] Backend indisponible, fallback direct Supabase activé:', backendError);
+        const fallbackOrder = await createCashOrderFallbackDirect();
+
+        setLastOrderNumber((fallbackOrder.order_number || fallbackOrder.id).toUpperCase());
+        setShowOrderSummary(false);
+        setShowReceipt(true);
+        toast.success('Paiement effectué avec succès! (mode fallback)');
+        await loadVendorProducts();
+        return;
       }
 
       const saleResult = syncResponse.data.results[0];
@@ -1622,6 +1684,22 @@ export function POSSystem() {
 
       // ✨ NOUVEAU: Si erreur réseau, proposer le mode offline
       if (error.message?.includes('fetch') || error.message?.includes('network') || error.message?.includes('Failed')) {
+        if (paymentMethod === 'cash') {
+          try {
+            console.warn('⚠️ [POS] Erreur réseau détectée, tentative fallback direct Supabase...');
+            const fallbackOrder = await createCashOrderFallbackDirect();
+
+            setLastOrderNumber((fallbackOrder.order_number || fallbackOrder.id).toUpperCase());
+            setShowOrderSummary(false);
+            setShowReceipt(true);
+            toast.success('Paiement effectué avec succès! (fallback réseau)');
+            await loadVendorProducts();
+            return;
+          } catch (fallbackError: any) {
+            console.error('❌ [POS] Échec fallback direct Supabase:', fallbackError);
+          }
+        }
+
         toast.error('Connexion perdue', {
           description: 'Passez en mode hors-ligne pour continuer les ventes en espèces.',
           duration: 5000
