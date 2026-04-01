@@ -236,7 +236,7 @@ export default function ClientOrdersList() {
           .from('orders')
           .update({
             status: 'completed',
-            payment_status: isCashOnDelivery(selectedOrder) ? 'paid' : selectedOrder.payment_status,
+            payment_status: (isCashOnDelivery(selectedOrder) ? 'paid' : selectedOrder.payment_status) as "failed" | "paid" | "pending" | "refunded",
             updated_at: new Date().toISOString()
           })
           .eq('id', selectedOrder.id);
