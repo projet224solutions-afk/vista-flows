@@ -31,10 +31,10 @@ export interface MarketplaceVisibilityScoresResponse {
 }
 
 export async function rankMarketplaceCandidates(candidates: MarketplaceVisibilityCandidate[], context?: Record<string, any>) {
-  if (!backendConfig.baseUrl) return null;
+  const baseUrl = backendConfig.baseUrl || '';
 
   try {
-    const response = await fetch(`${backendConfig.baseUrl}/api/marketplace-visibility/rank-candidates`, {
+    const response = await fetch(`${baseUrl}/api/marketplace-visibility/rank-candidates`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
