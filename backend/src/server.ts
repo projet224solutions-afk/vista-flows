@@ -41,8 +41,9 @@ import migrationsRoutes from './routes/migrations.js';
 // @ts-ignore
 import edgeFunctionsRoutes from './routes/edge-functions/index.js';
 
-// Routes legacy JS
+// Routes legacy JS (auth migré vers auth.routes.ts)
 // @ts-ignore
+import authRoutesLegacy from './routes/auth.routes.js';
 import authRoutes from './routes/auth.routes.js';
 // @ts-ignore
 import walletRoutes from './routes/wallet.routes.js';
