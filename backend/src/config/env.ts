@@ -44,7 +44,10 @@ export const env = {
   OAUTH_REDIRECT_URI: optionalEnv('OAUTH_REDIRECT_URI', ''),
 
   // CORS
-  CORS_ORIGINS: optionalEnv('CORS_ORIGINS', 'http://localhost:5173'),
+  CORS_ORIGINS: optionalEnv(
+    'CORS_ORIGINS',
+    'http://localhost:5173,http://localhost:8080,https://224solution.net,https://www.224solution.net'
+  ),
 
   // CSP
   CSP_CONNECT_SRC: optionalEnv('CSP_CONNECT_SRC', ''),

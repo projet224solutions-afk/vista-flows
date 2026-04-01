@@ -61,6 +61,20 @@ import { rateLimiter } from './middlewares/rateLimiter.js';
 
 const app = express();
 
+function originMatchesPattern(origin: string, pattern: string): boolean {
+  if (!pattern) return false;
+  if (pattern === '*') return true;
+  if (origin === pattern) return true;
+
+  // Support patterns like: https://*.224solution.net
+  const wildcardIndex = pattern.indexOf('*');
+  if (wildcardIndex === -1) return false;
+
+  const prefix = pattern.slice(0, wildcardIndex);
+  const suffix = pattern.slice(wildcardIndex + 1);
+  return origin.startsWith(prefix) && origin.endsWith(suffix);
+}
+
 // ==================== SECURITY MIDDLEWARES ====================
 
 const cspConnectSrc = env.CSP_CONNECT_SRC
@@ -87,7 +101,10 @@ app.use(helmet({
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (env.corsOrigins.includes(origin)) {
+
+    const isAllowed = env.corsOrigins.some((allowedOrigin) => originMatchesPattern(origin, allowedOrigin));
+
+    if (isAllowed) {
       callback(null, true);
     } else {
       logger.warn(`Blocked CORS from: ${origin}`);
