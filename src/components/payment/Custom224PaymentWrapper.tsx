@@ -86,15 +86,6 @@ export function Custom224PaymentWrapper({
         throw new Error('PayPal Client ID non disponible');
       }
       setPaypalClientId(clientIdValue);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data?.error || 'PayPal Client ID indisponible');
-
-      const clientIdValue = data?.clientId || data?.client_id;
-      if (!clientIdValue) {
-        throw new Error('PayPal Client ID non disponible');
-      }
-
-      setPaypalClientId(clientIdValue);
     } catch (err) {
       console.error('Error fetching PayPal client ID:', err);
       const message = "Impossible d'initialiser le paiement";
