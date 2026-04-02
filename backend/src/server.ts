@@ -155,6 +155,8 @@ app.use(requestLogger);
 
 // Health (public)
 app.use('/health', healthRoutes);
+app.use('/healthz', healthRoutes);
+app.use('/healthz.json', healthRoutes);
 
 // Migrations (admin, applies database changes)
 app.use('/api/migrations', migrationsRoutes);

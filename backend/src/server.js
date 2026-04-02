@@ -106,6 +106,8 @@ app.use(requestLogger);
 
 // Health check (public)
 app.use('/health', healthRoutes);
+app.use('/healthz', healthRoutes);
+app.use('/healthz.json', healthRoutes);
 
 // Auth routes (public)
 app.use('/auth', authRoutes);
