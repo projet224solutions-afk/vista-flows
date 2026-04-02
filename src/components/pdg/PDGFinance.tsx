@@ -41,6 +41,7 @@ export default function PDGFinance() {
   const [conversionStatsLoading, setConversionStatsLoading] = useState(false);
   const [alertCheckLoading, setAlertCheckLoading] = useState(false);
   const [clockMs, setClockMs] = useState(Date.now());
+  const [fxFetchedAtMs, setFxFetchedAtMs] = useState<number | null>(null);
 
   const formatConakryTime = (iso: string | null | undefined): string => {
     if (!iso) return 'Heure N/A';
@@ -62,7 +63,7 @@ export default function PDGFinance() {
     const remaining = cycleSeconds - (ageSeconds % cycleSeconds);
     const minutes = Math.floor(remaining / 60);
     const seconds = remaining % 60;
-    return `${String(seconds).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    return `${String(seconds).padStart(2, '0')} sec : ${String(minutes).padStart(2, '0')} min`;
   };
 
   const visibleBankSources = (() => {
@@ -116,6 +117,7 @@ export default function PDGFinance() {
         throw new Error(response.error || 'Impossible de récupérer les données FX');
       }
       setFxHealth(response.data || null);
+      setFxFetchedAtMs(Date.now());
     } catch (error) {
       console.error('Erreur chargement FX health:', error);
       setFxHealth(null);
@@ -226,7 +228,11 @@ export default function PDGFinance() {
   const liveRateAgeSeconds = (() => {
     const retrievedAt = fxHealth?.current_rate?.retrieved_at;
     if (!retrievedAt) {
-      return typeof fxHealth?.age_minutes === 'number' ? Math.max(0, fxHealth.age_minutes * 60) : null;
+      if (typeof fxHealth?.age_minutes !== 'number') return null;
+      const baseAgeSeconds = Math.max(0, fxHealth.age_minutes * 60);
+      if (!fxFetchedAtMs) return baseAgeSeconds;
+      const elapsedSinceFetchSeconds = Math.max(0, Math.floor((clockMs - fxFetchedAtMs) / 1000));
+      return baseAgeSeconds + elapsedSinceFetchSeconds;
     }
 
     const parsed = new Date(retrievedAt).getTime();

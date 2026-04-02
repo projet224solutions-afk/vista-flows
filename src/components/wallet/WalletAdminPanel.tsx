@@ -124,6 +124,7 @@ export function WalletAdminPanel() {
   const [fxLoading, setFxLoading] = useState(false);
   const [fxRefreshing, setFxRefreshing] = useState(false);
   const [clockMs, setClockMs] = useState(Date.now());
+  const [fxFetchedAtMs, setFxFetchedAtMs] = useState<number | null>(null);
 
   const formatConakryTime = (iso: string | null | undefined): string => {
     if (!iso) return 'Heure N/A';
@@ -145,7 +146,7 @@ export function WalletAdminPanel() {
     const remaining = cycleSeconds - (ageSeconds % cycleSeconds);
     const minutes = Math.floor(remaining / 60);
     const seconds = remaining % 60;
-    return `${String(seconds).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    return `${String(seconds).padStart(2, '0')} sec : ${String(minutes).padStart(2, '0')} min`;
   };
 
   useEffect(() => {
@@ -167,6 +168,7 @@ export function WalletAdminPanel() {
         throw new Error(response.error || 'Impossible de charger le monitoring FX');
       }
       setFxHealth(response.data);
+      setFxFetchedAtMs(Date.now());
     } catch (error: any) {
       toast.error(error?.message || 'Erreur chargement monitoring FX');
     } finally {
@@ -324,7 +326,13 @@ export function WalletAdminPanel() {
 
   const liveRateAgeSeconds = (() => {
     const retrievedAt = fxHealth?.current_rate?.retrieved_at;
-    if (!retrievedAt) return typeof fxHealth?.age_minutes === 'number' ? Math.max(0, fxHealth.age_minutes * 60) : null;
+    if (!retrievedAt) {
+      if (typeof fxHealth?.age_minutes !== 'number') return null;
+      const baseAgeSeconds = Math.max(0, fxHealth.age_minutes * 60);
+      if (!fxFetchedAtMs) return baseAgeSeconds;
+      const elapsedSinceFetchSeconds = Math.max(0, Math.floor((clockMs - fxFetchedAtMs) / 1000));
+      return baseAgeSeconds + elapsedSinceFetchSeconds;
+    }
 
     const parsed = new Date(retrievedAt).getTime();
     if (!Number.isFinite(parsed)) return typeof fxHealth?.age_minutes === 'number' ? Math.max(0, fxHealth.age_minutes * 60) : null;
