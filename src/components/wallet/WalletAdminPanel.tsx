@@ -594,11 +594,21 @@ export function WalletAdminPanel() {
                               : 'N/A'}
                           </span>
                         </div>
-                        <div className="mt-1 text-muted-foreground">
-                          {formatConakryTime(rate.retrieved_at)}
-                          {' • '}
-                          {rate.source_url || rate.source_type || 'Source N/A'}
+                        <div className="mt-1 text-muted-foreground flex items-center justify-between gap-2">
+                          <span>
+                            {formatConakryTime(rate.retrieved_at)}
+                            {' • '}
+                            {rate.source_url || rate.source_type || 'Source N/A'}
+                          </span>
+                          {typeof rate.margin === 'number' && (
+                            <span className="font-medium text-blue-500">Marge: {(rate.margin * 100).toFixed(2)}%</span>
+                          )}
                         </div>
+                        {typeof rate.final_rate_usd === 'number' && (
+                          <div className="mt-1 text-blue-500 text-xs">
+                            Taux final: {rate.final_rate_usd.toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

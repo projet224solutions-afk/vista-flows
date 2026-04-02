@@ -415,7 +415,7 @@ export default function PDGFinance() {
             <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-lg border p-3">
                   <p className="text-xs text-muted-foreground">Taux actuel</p>
                   <p className="text-lg font-semibold">
@@ -427,6 +427,19 @@ export default function PDGFinance() {
                     {fxHealth.current_rate
                       ? `${fxHealth.current_rate.from_currency}/${fxHealth.current_rate.to_currency}`
                       : 'Paire indisponible'}
+                  </p>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Commission appliquée</p>
+                  <p className="text-lg font-semibold">
+                    {typeof fxHealth.current_rate?.margin === 'number'
+                      ? `${(fxHealth.current_rate.margin * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {typeof fxHealth.current_rate?.final_rate_usd === 'number' && typeof fxHealth.current_rate?.rate === 'number'
+                      ? `Taux final: ${fxHealth.current_rate.final_rate_usd.toLocaleString(undefined, { maximumFractionDigits: 6 })}`
+                      : 'N/A'}
                   </p>
                 </div>
                 <div className="rounded-lg border p-3">
@@ -484,9 +497,19 @@ export default function PDGFinance() {
                           <span className="font-medium">{rate.from_currency}/{rate.to_currency}</span>
                           <span>{typeof rate.rate === 'number' ? rate.rate.toLocaleString(undefined, { maximumFractionDigits: 6 }) : 'N/A'}</span>
                         </div>
-                        <div className="mt-1 text-muted-foreground">
-                          {formatConakryTime(rate.retrieved_at)} {' • '} {rate.source_url || rate.source_type || 'Source N/A'}
+                        <div className="mt-1 text-muted-foreground flex items-center justify-between gap-2">
+                          <span>
+                            {formatConakryTime(rate.retrieved_at)} {' • '} {rate.source_url || rate.source_type || 'Source N/A'}
+                          </span>
+                          {typeof rate.margin === 'number' && (
+                            <span className="font-medium text-blue-500">Marge: {(rate.margin * 100).toFixed(2)}%</span>
+                          )}
                         </div>
+                        {typeof rate.final_rate_usd === 'number' && (
+                          <div className="mt-1 text-blue-500 text-xs">
+                            Taux final: {rate.final_rate_usd.toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -509,11 +532,21 @@ export default function PDGFinance() {
                               : 'N/A'}
                           </span>
                         </div>
-                        <div className="mt-1 text-muted-foreground">
-                          {formatConakryTime(rate.retrieved_at)}
-                          {' • '}
-                          {rate.source_url || rate.source_type || 'Source N/A'}
+                        <div className="mt-1 text-muted-foreground flex items-center justify-between gap-2">
+                          <span>
+                            {formatConakryTime(rate.retrieved_at)}
+                            {' • '}
+                            {rate.source_url || rate.source_type || 'Source N/A'}
+                          </span>
+                          {typeof rate.margin === 'number' && (
+                            <span className="font-medium text-blue-500">Marge: {(rate.margin * 100).toFixed(2)}%</span>
+                          )}
                         </div>
+                        {typeof rate.final_rate_usd === 'number' && (
+                          <div className="mt-1 text-blue-500 text-xs">
+                            Taux final: {rate.final_rate_usd.toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
