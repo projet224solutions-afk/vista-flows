@@ -1,5 +1,8 @@
 export const AFRICAN_BANK_SOURCE_URLS: string[] = [
   'https://www.bcrg-guinee.org',
+  'https://bcrg-guinee.org',
+  'https://www.bcrg.org',
+  'https://bcrg.org',
   'https://www.bceao.int',
   'https://www.beac.int',
   'https://www.bankofalgeria.dz',
@@ -107,6 +110,11 @@ export function isAfricanBankSourceUrl(sourceUrl: string | null | undefined): bo
     // 2) Subdomains of curated list
     for (const knownHost of AFRICAN_BANK_HOSTS) {
       if (host.endsWith(`.${knownHost}`)) return true;
+    }
+
+    // 2.1) Explicit Guinea central bank host aliases
+    if (host.includes('bcrg')) {
+      return true;
     }
 
     // 3) Generic coverage: african ccTLD + bank keyword
