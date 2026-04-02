@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import legacy from "@vitejs/plugin-legacy";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { buildInfoPlugin } from "./vite-plugins/buildInfo";
@@ -34,6 +35,14 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
+      legacy({
+        targets: [
+          "defaults",
+          "Android >= 8",
+          "iOS >= 12",
+        ],
+        modernPolyfills: true,
+      }),
       buildInfoPlugin(),
       mode === 'development' && componentTagger(),
     ].filter(Boolean),

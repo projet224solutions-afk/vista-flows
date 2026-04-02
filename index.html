@@ -3,6 +3,14 @@
 
 <head>
   <meta charset="UTF-8" />
+  <script>
+    (function () {
+      var host = window.location.hostname;
+      if (host && host.indexOf('224solution.net') !== -1 && window.location.protocol === 'http:') {
+        window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+      }
+    })();
+  </script>
   
   <!-- 🚀 OPTIMISATION PERFORMANCE: Preconnect ALL Supabase subdomains -->
   <link rel="preconnect" href="https://uakkxaibujzxdiqzpnpr.supabase.co" crossorigin>
