@@ -31,12 +31,18 @@ jobs:
         
       - name: Build React app
         run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "❌ Missing Supabase env vars for frontend build"
+            echo "Define one of: secrets/vars VITE_SUPABASE_URL or SUPABASE_URL"
+            echo "Define one of: secrets/vars VITE_SUPABASE_ANON_KEY or SUPABASE_ANON_KEY"
+            exit 1
+          fi
           npm run build
           echo "React app built successfully"
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_BACKEND_MOBILE_URL: ${{ secrets.VITE_BACKEND_MOBILE_URL }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL || vars.VITE_SUPABASE_URL || vars.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY }}
+          VITE_BACKEND_MOBILE_URL: ${{ secrets.VITE_BACKEND_MOBILE_URL || secrets.VITE_BACKEND_URL || vars.VITE_BACKEND_MOBILE_URL || vars.VITE_BACKEND_URL || '' }}
           
       - name: Install Capacitor
         run: |
