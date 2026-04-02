@@ -40,6 +40,10 @@ const FeatureEventSchema = z.object({
   payload: z.record(z.string(), z.any()).optional(),
 });
 
+const ApiConnectionHealthCheckSchema = z.object({
+  forceUrl: z.string().url().optional(),
+});
+
 function mapRoleToBaseModules(role: string | null | undefined): Set<string> {
   const modules = new Set<string>(['client']);
   const normalized = String(role || 'client').toLowerCase().trim();
@@ -261,6 +265,140 @@ router.post(
     } catch (error: any) {
       logger.error(`[Core] supervision/run-check error: ${error.message}`);
       res.status(500).json({ success: false, error: 'Erreur execution check supervision' });
+    }
+  }
+);
+
+router.post(
+  '/supervision/api-connections/:apiConnectionId/health-check',
+  verifyJWT,
+  requirePermissionOrRole({ permissionKey: 'monitoring.manage', allowedRoles: ['admin', 'pdg', 'ceo'] }),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const apiConnectionId = String(req.params.apiConnectionId || '').trim();
+      if (!apiConnectionId) {
+        res.status(400).json({ success: false, error: 'apiConnectionId manquant' });
+        return;
+      }
+
+      const parsed = ApiConnectionHealthCheckSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        res.status(400).json({ success: false, error: 'Payload invalide', details: parsed.error.flatten() });
+        return;
+      }
+
+      const { data: connection, error: findError } = await supabaseAdmin
+        .from('api_connections')
+        .select('id, api_name, api_provider, base_url, api_key_encrypted, metadata')
+        .eq('id', apiConnectionId)
+        .maybeSingle();
+
+      if (findError) throw findError;
+      if (!connection) {
+        res.status(404).json({ success: false, error: 'Connexion API introuvable' });
+        return;
+      }
+
+      const baseUrl = parsed.data.forceUrl || (connection as any).base_url || null;
+      const encryptedKey = String((connection as any).api_key_encrypted || '');
+      const keyConfigured = encryptedKey.length > 8 && encryptedKey !== 'not_configured';
+
+      let responseTimeMs: number | null = null;
+      let httpStatus: number | null = null;
+      let checkError: string | null = null;
+
+      if (baseUrl) {
+        const started = Date.now();
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+
+        try {
+          const response = await fetch(baseUrl, {
+            method: 'GET',
+            signal: controller.signal,
+          });
+          responseTimeMs = Date.now() - started;
+          httpStatus = response.status;
+        } catch (error: any) {
+          responseTimeMs = Date.now() - started;
+          checkError = error?.name === 'AbortError' ? 'timeout' : error?.message || 'network_error';
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+
+      const provider = String((connection as any).api_provider || '').toLowerCase();
+      const providerHintValid =
+        provider.includes('openai')
+          ? encryptedKey.startsWith('U2FsdGVk') || encryptedKey.startsWith('sk-')
+          : provider.includes('stripe')
+          ? encryptedKey.startsWith('U2FsdGVk') || encryptedKey.startsWith('sk_') || encryptedKey.startsWith('pk_')
+          : keyConfigured;
+
+      const reachable = httpStatus ? httpStatus < 500 : baseUrl ? false : true;
+      const isWorking = Boolean(keyConfigured && providerHintValid && reachable);
+      const computedStatus = isWorking ? 'active' : 'error';
+
+      const nextMetadata = {
+        ...((connection as any).metadata || {}),
+        is_working: isWorking,
+        key_configured: keyConfigured,
+        last_health_check_at: new Date().toISOString(),
+        health_http_status: httpStatus,
+        health_error: checkError,
+        health_checked_by: 'node_supervision',
+      };
+
+      const { error: updateError } = await supabaseAdmin
+        .from('api_connections')
+        .update({
+          status: computedStatus,
+          metadata: nextMetadata,
+          last_request_at: new Date().toISOString(),
+        })
+        .eq('id', apiConnectionId);
+
+      if (updateError) throw updateError;
+
+      const { error: logError } = await supabaseAdmin
+        .from('api_usage_logs')
+        .insert({
+          api_connection_id: apiConnectionId,
+          endpoint: baseUrl || '/health-check',
+          method: 'GET',
+          status_code: httpStatus || (isWorking ? 200 : 503),
+          response_time_ms: responseTimeMs,
+          tokens_consumed: 0,
+          error_message: checkError,
+          request_metadata: {
+            source: 'node_supervision_health_check',
+            api_name: (connection as any).api_name,
+            reachable,
+            providerHintValid,
+          },
+        });
+
+      if (logError) {
+        logger.warn(`[Core] api health-check log insert failed: ${logError.message}`);
+      }
+
+      res.json({
+        success: true,
+        data: {
+          id: (connection as any).id,
+          apiName: (connection as any).api_name,
+          status: computedStatus,
+          isWorking,
+          keyConfigured,
+          reachable,
+          httpStatus,
+          responseTimeMs,
+          error: checkError,
+        },
+      });
+    } catch (error: any) {
+      logger.error(`[Core] supervision/api-connections/health-check error: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur test connexion API' });
     }
   }
 );

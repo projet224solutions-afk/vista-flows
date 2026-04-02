@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { ApiConnection, ApiUsageLog, ApiMonitoringService } from '@/services/apiMonitoring';
 import { maskApiKey } from '@/services/apiEncryption';
+import { backendFetch } from '@/services/backendApi';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 
@@ -34,6 +35,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
   const [logs, setLogs] = useState<ApiUsageLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [healthChecking, setHealthChecking] = useState(false);
 
   useEffect(() => {
     if (api && open) {
@@ -77,6 +79,40 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
     if (success) {
       toast.success('API suspendue');
       onClose();
+    }
+  };
+
+  const runHealthCheck = async () => {
+    if (!api) return;
+
+    setHealthChecking(true);
+    try {
+      const response = await backendFetch(`/api/core/supervision/api-connections/${api.id}/health-check`, {
+        method: 'POST',
+      });
+
+      if (!response.success) {
+        toast.error(response.error || 'Test de connexion impossible');
+        return;
+      }
+
+      const data = response.data as {
+        isWorking?: boolean;
+        httpStatus?: number | null;
+        error?: string | null;
+      };
+
+      if (data?.isWorking) {
+        toast.success(`Connexion API OK${data.httpStatus ? ` (HTTP ${data.httpStatus})` : ''}`);
+      } else {
+        toast.warning(`API en echec${data?.error ? `: ${data.error}` : ''}`);
+      }
+
+      await loadLogs();
+    } catch (error) {
+      toast.error('Erreur lors du test de connexion API');
+    } finally {
+      setHealthChecking(false);
     }
   };
 
@@ -203,6 +239,15 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
 
             {/* Actions */}
             <div className="flex gap-3">
+              <Button
+                onClick={runHealthCheck}
+                disabled={healthChecking}
+                variant="outline"
+                className="flex-1"
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                {healthChecking ? 'Test en cours...' : 'Tester la connexion'}
+              </Button>
               <Button
                 onClick={runAnalysis}
                 disabled={analyzing}

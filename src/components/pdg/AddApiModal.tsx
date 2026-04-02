@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { ApiMonitoringService } from '@/services/apiMonitoring';
 import { encryptApiKey } from '@/services/apiEncryption';
+import { backendFetch } from '@/services/backendApi';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -85,6 +86,26 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
       const result = await ApiMonitoringService.addApiConnection(apiConnection);
       
       if (result) {
+        const healthCheck = await backendFetch(`/api/core/supervision/api-connections/${result.id}/health-check`, {
+          method: 'POST',
+        });
+
+        if (healthCheck.success) {
+          const payload = healthCheck.data as {
+            isWorking?: boolean;
+            httpStatus?: number | null;
+            error?: string | null;
+          };
+
+          if (payload?.isWorking) {
+            toast.success(`API testee avec succes${payload.httpStatus ? ` (HTTP ${payload.httpStatus})` : ''}`);
+          } else {
+            toast.warning(`API ajoutee mais test de sante en echec${payload?.error ? `: ${payload.error}` : ''}`);
+          }
+        } else {
+          toast.warning('API ajoutee, mais test de sante backend indisponible');
+        }
+
         toast.success('✅ API ajoutée avec succès');
         onSuccess();
         onClose();
