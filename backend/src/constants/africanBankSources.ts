@@ -63,15 +63,60 @@ const AFRICAN_BANK_HOSTS = new Set(
   }).filter(Boolean)
 );
 
+const AFRICAN_COUNTRY_TLDS = new Set([
+  'dz', 'ao', 'bj', 'bw', 'bf', 'bi', 'cm', 'cv', 'cf', 'td', 'km', 'cg', 'cd', 'ci',
+  'dj', 'eg', 'gq', 'er', 'et', 'ga', 'gm', 'gh', 'gn', 'gw', 'ke', 'ls', 'lr', 'ly',
+  'mg', 'mw', 'ml', 'mr', 'mu', 'ma', 'mz', 'na', 'ne', 'ng', 'rw', 'st', 'sn', 'sc',
+  'sl', 'so', 'za', 'ss', 'sd', 'sz', 'tz', 'tg', 'tn', 'ug', 'zm', 'zw', 're', 'yt',
+]);
+
+const BANK_KEYWORDS = [
+  'bank', 'banque', 'banco', 'centralbank', 'banquecentrale',
+  'reservebank', 'resbank', 'cbn', 'bceao', 'beac', 'bcrg',
+  'afreximbank', 'ecobank', 'orabank',
+];
+
+function hasBankKeyword(input: string): boolean {
+  const normalized = input.toLowerCase();
+  return BANK_KEYWORDS.some((keyword) => normalized.includes(keyword));
+}
+
+function hasAfricanCountryTld(hostname: string): boolean {
+  const parts = hostname.toLowerCase().split('.').filter(Boolean);
+  if (parts.length === 0) return false;
+
+  const tld = parts[parts.length - 1];
+  const secondLevel = parts.length >= 2 ? parts[parts.length - 2] : '';
+
+  if (AFRICAN_COUNTRY_TLDS.has(tld)) return true;
+  if (tld === 'uk' && AFRICAN_COUNTRY_TLDS.has(secondLevel)) return true;
+
+  return false;
+}
+
 export function isAfricanBankSourceUrl(sourceUrl: string | null | undefined): boolean {
   if (!sourceUrl) return false;
   try {
-    const host = new URL(sourceUrl).hostname.toLowerCase();
+    const url = new URL(sourceUrl);
+    const host = url.hostname.toLowerCase();
+    const hostAndPath = `${host}${url.pathname}`.toLowerCase();
+
+    // 1) Explicit curated list (high confidence)
     if (AFRICAN_BANK_HOSTS.has(host)) return true;
 
-    // Accept subdomains of known hosts.
+    // 2) Subdomains of curated list
     for (const knownHost of AFRICAN_BANK_HOSTS) {
       if (host.endsWith(`.${knownHost}`)) return true;
+    }
+
+    // 3) Generic coverage: african ccTLD + bank keyword
+    if (hasAfricanCountryTld(host) && hasBankKeyword(hostAndPath)) {
+      return true;
+    }
+
+    // 4) Regional institutions hosted on .org/.int/.com domains
+    if (hasBankKeyword(hostAndPath) && /africa|african|uemoa|cemac|westafrica|eastafrica/i.test(hostAndPath)) {
+      return true;
     }
 
     return false;

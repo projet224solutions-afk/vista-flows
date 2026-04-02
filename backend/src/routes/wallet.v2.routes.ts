@@ -1277,6 +1277,7 @@ router.post(
           source: 'pdg_manual_refresh',
           actor_id: req.user!.id,
           strict_african_sources: true,
+          include_all_african_banks: true,
           preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
         }),
       });

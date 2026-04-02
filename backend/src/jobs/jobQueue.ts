@@ -428,6 +428,7 @@ registerHandler('fx.african-rates-refresh', async () => {
       body: JSON.stringify({
         source: 'backend_hourly_job',
         strict_african_sources: true,
+        include_all_african_banks: true,
         preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
       }),
     });
