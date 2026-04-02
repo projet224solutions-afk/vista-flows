@@ -56,10 +56,13 @@ export default function PDGFinance() {
     }
   };
 
-  const formatRateAgeCountdown = (ageMinutes: number | null | undefined): string => {
-    if (typeof ageMinutes !== 'number' || ageMinutes < 0) return 'N/A';
-    const countdown = 60 - (ageMinutes % 61);
-    return `${String(countdown).padStart(2, '0')} min`;
+  const formatRateAgeCountdown = (ageSeconds: number | null | undefined): string => {
+    if (typeof ageSeconds !== 'number' || ageSeconds < 0) return 'N/A';
+    const cycleSeconds = 60 * 60;
+    const remaining = cycleSeconds - (ageSeconds % cycleSeconds);
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
   const visibleBankSources = (() => {
@@ -220,14 +223,18 @@ export default function PDGFinance() {
     commission: Number(t.fee)
   }));
 
-  const liveRateAgeMinutes = (() => {
+  const liveRateAgeSeconds = (() => {
     const retrievedAt = fxHealth?.current_rate?.retrieved_at;
-    if (!retrievedAt) return typeof fxHealth?.age_minutes === 'number' ? fxHealth.age_minutes : null;
+    if (!retrievedAt) {
+      return typeof fxHealth?.age_minutes === 'number' ? Math.max(0, fxHealth.age_minutes * 60) : null;
+    }
 
     const parsed = new Date(retrievedAt).getTime();
-    if (!Number.isFinite(parsed)) return typeof fxHealth?.age_minutes === 'number' ? fxHealth.age_minutes : null;
+    if (!Number.isFinite(parsed)) {
+      return typeof fxHealth?.age_minutes === 'number' ? Math.max(0, fxHealth.age_minutes * 60) : null;
+    }
 
-    return Math.max(0, Math.floor((clockMs - parsed) / 60000));
+    return Math.max(0, Math.floor((clockMs - parsed) / 1000));
   })();
 
   return (
@@ -380,7 +387,7 @@ export default function PDGFinance() {
                 <div className="rounded-lg border p-3">
                   <p className="text-xs text-muted-foreground">Âge du taux</p>
                   <p className="text-lg font-semibold">
-                    {formatRateAgeCountdown(liveRateAgeMinutes)}
+                    {formatRateAgeCountdown(liveRateAgeSeconds)}
                   </p>
                   <Badge variant={fxHealth.is_stale ? 'destructive' : 'secondary'} className="mt-1">
                     {fxHealth.is_stale ? 'Stale' : 'Fresh'}
