@@ -21,9 +21,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 );
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-03-25.dahlia",
-});
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2026-03-25.dahlia",
+    })
+  : null;
 
 // ============ POST /payment/stripe/intent ============
 /**
@@ -32,6 +34,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
  */
 router.post("/stripe/intent", async (req: Request, res: Response) => {
   try {
+    if (!stripe) {
+      return res.status(503).json({ success: false, error: "Stripe not configured" });
+    }
+
     const { amount, currency = "USD", customer_id, description } = req.body;
 
     if (!amount || amount <= 0) {
@@ -72,6 +78,10 @@ router.post("/stripe/intent", async (req: Request, res: Response) => {
  */
 router.post("/stripe/webhook", raw({ type: "application/json" }), async (req: Request, res: Response) => {
   try {
+    if (!stripe) {
+      return res.status(503).json({ success: false, error: "Stripe not configured" });
+    }
+
     const signature = req.headers["stripe-signature"] as string;
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
@@ -136,6 +146,10 @@ router.post("/stripe/webhook", raw({ type: "application/json" }), async (req: Re
  */
 router.post("/stripe/deposit", async (req: Request, res: Response) => {
   try {
+    if (!stripe) {
+      return res.status(503).json({ success: false, error: "Stripe not configured" });
+    }
+
     const { amount, customer_id } = req.body;
     const userId = (req as any).user?.id;
 

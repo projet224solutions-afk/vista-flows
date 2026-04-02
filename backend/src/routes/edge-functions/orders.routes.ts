@@ -3,9 +3,11 @@ import { supabaseAdmin } from "../../config/supabase";
 import Stripe from "stripe";
 
 const router = Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-03-25.dahlia",
-});
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2026-03-25.dahlia",
+    })
+  : null;
 
 function getBearerToken(req: any): string | null {
   const auth = req.headers.authorization;
@@ -161,6 +163,10 @@ router.post("/create-paypal-order", validateBearerToken, async (req: any, res: a
 // 2. Marketplace Escrow Payment (Stripe)
 router.post("/marketplace-escrow-payment", validateBearerToken, async (req: any, res: any) => {
   try {
+    if (!stripe) {
+      return res.status(503).json({ success: false, error: "Stripe not configured" });
+    }
+
     const { amount, currency = "gnf", cartItems, description } = req.body;
 
     if (!amount || !cartItems || cartItems.length === 0) {
@@ -238,6 +244,10 @@ router.post("/marketplace-escrow-payment", validateBearerToken, async (req: any,
 // 3. Stripe Marketplace Payment (Standard)
 router.post("/stripe-marketplace-payment", validateBearerToken, async (req: any, res: any) => {
   try {
+    if (!stripe) {
+      return res.status(503).json({ success: false, error: "Stripe not configured" });
+    }
+
     const { amount, currency = "gnf", cartItems, description } = req.body;
 
     if (!amount || !cartItems || cartItems.length === 0) {

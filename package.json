@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node backend/src/server.js",
     "dev": "vite",
-    "dev:backend": "node backend/src/server.js",
+    "dev:backend": "npm --prefix backend run dev",
     "dev:all": "concurrently -n FRONT,API -c blue,green \"npm:dev\" \"npm:dev:backend\"",
     "build": "vite build",
     "build:dev": "vite build --mode development",

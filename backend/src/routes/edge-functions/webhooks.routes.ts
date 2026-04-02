@@ -15,9 +15,11 @@ const supabaseAdmin = createClient(
   }
 );
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-03-25.dahlia",
-});
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2026-03-25.dahlia",
+    })
+  : null;
 
 function safeJsonParse(value: string): any {
   try {
@@ -29,6 +31,10 @@ function safeJsonParse(value: string): any {
 
 router.post("/stripe", async (req: Request, res: Response) => {
   try {
+    if (!stripe) {
+      return res.status(503).json({ success: false, error: "Stripe not configured" });
+    }
+
     const signature = req.headers["stripe-signature"] as string | undefined;
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
