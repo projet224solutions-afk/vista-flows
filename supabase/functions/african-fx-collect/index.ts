@@ -403,6 +403,9 @@ async function upsertRateAndLog(
     is_active: true,
   };
 
+  const invFinalRateUsd = rateUsd > 0 ? 1 / finalRateUsd : 0;
+  const invFinalRateEur = rateEur > 0 ? 1 / finalRateEur : 0;
+
   await Promise.all([
     // USD → DEVISE
     supabase.from("currency_exchange_rates").upsert({
@@ -418,20 +421,22 @@ async function upsertRateAndLog(
       margin, final_rate_usd: finalRateUsd, final_rate_eur: finalRateEur,
       ...baseFields,
     }, { onConflict: "from_currency,to_currency", ignoreDuplicates: false }),
-    // DEVISE → USD (inverse)
+    // DEVISE → USD (inverse) with margin applied
     rateUsd > 0
       ? supabase.from("currency_exchange_rates").upsert({
           from_currency: code, to_currency: "USD",
-          rate: 1 / rateUsd, source, source_type: sourceType,
-          effective_date: today, retrieved_at: now, status: "OK", is_active: true,
+          rate: 1 / rateUsd, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
+          margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
+          ...baseFields,
         }, { onConflict: "from_currency,to_currency", ignoreDuplicates: false })
       : Promise.resolve(),
-    // DEVISE → EUR (inverse)
+    // DEVISE → EUR (inverse) with margin applied
     rateEur > 0
       ? supabase.from("currency_exchange_rates").upsert({
           from_currency: code, to_currency: "EUR",
-          rate: 1 / rateEur, source, source_type: sourceType,
-          effective_date: today, retrieved_at: now, status: "OK", is_active: true,
+          rate: 1 / rateEur, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
+          margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
+          ...baseFields,
         }, { onConflict: "from_currency,to_currency", ignoreDuplicates: false })
       : Promise.resolve(),
   ]);
@@ -536,14 +541,67 @@ serve(async (req) => {
       ];
       for (const [curr, rateToXof] of bceaoExtras) {
         if (rateToXof && rateToXof > 0) {
-          // Stocker CURR → XOF directement (utile pour les cross)
-          await supabase.from("currency_exchange_rates").upsert({
-            from_currency: curr, to_currency: "XOF",
-            rate: rateToXof, source: "bceao-official-html",
-            source_type: "official_html",
+          // Calculer USD/CURR et EUR/CURR depuis les taux XOF
+          // XOF est entre les deux, donc: USD/CURR = rateToUsd / rateToXof * xofToUsd
+          // Reconversion: 1 USD = X XOF, 1 CURR = Y XOF → 1 USD = (X/Y) CURR → USD/CURR = X/Y
+          const rateUsd = bceaoRates.usdXof / rateToXof;
+          const rateEur = 655.957 / rateToXof;
+          
+          const finalRateUsd = rateUsd * (1 + margin);
+          const finalRateEur = rateEur * (1 + margin);
+          const invFinalRateUsd = rateUsd > 0 ? 1 / finalRateUsd : 0;
+          const invFinalRateEur = rateEur > 0 ? 1 / finalRateEur : 0;
+          
+          const baseFields = {
+            source: "bceao-official-html",
             source_url: "https://www.bceao.int/fr/cours/cours-des-devises",
+            source_type: "official_html",
             effective_date: today, retrieved_at: now, status: "OK", is_active: true,
-          }, { onConflict: "from_currency,to_currency", ignoreDuplicates: false });
+          };
+          
+          // Stocker les 4 paires: USD→CURR, EUR→CURR, CURR→USD, CURR→EUR (tous avec marge)
+          await Promise.all([
+            // USD → CURR
+            supabase.from("currency_exchange_rates").upsert({
+              from_currency: "USD", to_currency: curr,
+              rate: rateUsd, rate_usd: rateUsd, rate_eur: rateEur,
+              margin, final_rate_usd: finalRateUsd, final_rate_eur: finalRateEur,
+              ...baseFields,
+            }, { onConflict: "from_currency,to_currency", ignoreDuplicates: false }),
+            // EUR → CURR
+            supabase.from("currency_exchange_rates").upsert({
+              from_currency: "EUR", to_currency: curr,
+              rate: rateEur, rate_usd: rateUsd, rate_eur: rateEur,
+              margin, final_rate_usd: finalRateUsd, final_rate_eur: finalRateEur,
+              ...baseFields,
+            }, { onConflict: "from_currency,to_currency", ignoreDuplicates: false }),
+            // CURR → USD (inverse)
+            rateUsd > 0
+              ? supabase.from("currency_exchange_rates").upsert({
+                  from_currency: curr, to_currency: "USD",
+                  rate: 1 / rateUsd, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
+                  margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
+                  ...baseFields,
+                }, { onConflict: "from_currency,to_currency", ignoreDuplicates: false })
+              : Promise.resolve(),
+            // CURR → EUR (inverse)
+            rateEur > 0
+              ? supabase.from("currency_exchange_rates").upsert({
+                  from_currency: curr, to_currency: "EUR",
+                  rate: 1 / rateEur, rate_usd: 1 / rateUsd, rate_eur: 1 / rateEur,
+                  margin, final_rate_usd: invFinalRateUsd, final_rate_eur: invFinalRateEur,
+                  ...baseFields,
+                }, { onConflict: "from_currency,to_currency", ignoreDuplicates: false })
+              : Promise.resolve(),
+            // Stocker CURR → XOF directement (utile pour les cross)
+            supabase.from("currency_exchange_rates").upsert({
+              from_currency: curr, to_currency: "XOF",
+              rate: rateToXof, source: "bceao-official-html",
+              source_type: "official_html",
+              source_url: "https://www.bceao.int/fr/cours/cours-des-devises",
+              effective_date: today, retrieved_at: now, status: "OK", is_active: true,
+            }, { onConflict: "from_currency,to_currency", ignoreDuplicates: false }),
+          ]);
         }
       }
     }
@@ -665,7 +723,13 @@ serve(async (req) => {
       // ─── Vérifier si variation significative ───
       const existingUsd = existingMap.get(`USD->${code}`);
       if (existingUsd && Math.abs(collected.rateUsd - existingUsd) / existingUsd < VARIATION_THRESHOLD) {
-        // Heartbeat horaire: on met a jour retrieved_at/effective_date meme sans variation
+        // Heartbeat horaire: on met a jour retrieved_at/effective_date même sans variation
+        // Et on recalcule la marge au cas où elle aurait changé
+        const finalRateUsd = collected.rateUsd * (1 + margin);
+        const finalRateEur = collected.rateEur * (1 + margin);
+        const invFinalRateUsd = collected.rateUsd > 0 ? 1 / finalRateUsd : 0;
+        const invFinalRateEur = collected.rateEur > 0 ? 1 / finalRateEur : 0;
+        
         await Promise.all([
           supabase
             .from("currency_exchange_rates")
@@ -677,6 +741,9 @@ serve(async (req) => {
               source_type: collected.sourceType,
               status: "OK",
               is_active: true,
+              margin,
+              final_rate_usd: finalRateUsd,
+              final_rate_eur: finalRateEur,
             })
             .eq("from_currency", "USD")
             .eq("to_currency", code),
@@ -690,9 +757,44 @@ serve(async (req) => {
               source_type: collected.sourceType,
               status: "OK",
               is_active: true,
+              margin,
+              final_rate_usd: finalRateUsd,
+              final_rate_eur: finalRateEur,
             })
             .eq("from_currency", "EUR")
             .eq("to_currency", code),
+          supabase
+            .from("currency_exchange_rates")
+            .update({
+              retrieved_at: now,
+              effective_date: today,
+              source: collected.source,
+              source_url: collected.sourceUrl,
+              source_type: collected.sourceType,
+              status: "OK",
+              is_active: true,
+              margin,
+              final_rate_usd: invFinalRateUsd,
+              final_rate_eur: invFinalRateEur,
+            })
+            .eq("from_currency", code)
+            .eq("to_currency", "USD"),
+          supabase
+            .from("currency_exchange_rates")
+            .update({
+              retrieved_at: now,
+              effective_date: today,
+              source: collected.source,
+              source_url: collected.sourceUrl,
+              source_type: collected.sourceType,
+              status: "OK",
+              is_active: true,
+              margin,
+              final_rate_usd: invFinalRateUsd,
+              final_rate_eur: invFinalRateEur,
+            })
+            .eq("from_currency", code)
+            .eq("to_currency", "EUR"),
         ]);
 
         await supabase.from("fx_collection_log").insert({

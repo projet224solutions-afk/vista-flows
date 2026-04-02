@@ -62,11 +62,10 @@ export default function PDGFinance() {
 
   const formatRateAgeCountdown = (ageSeconds: number | null | undefined): string => {
     if (typeof ageSeconds !== 'number' || ageSeconds < 0) return 'N/A';
-    const cycleSeconds = 60 * 60;
-    const remaining = cycleSeconds - (ageSeconds % cycleSeconds);
-    const minutes = Math.floor(remaining / 60);
-    const seconds = remaining % 60;
-    return `${String(seconds).padStart(2, '0')} sec : ${String(minutes).padStart(2, '0')} min`;
+    // Affiche l'âge du taux écoulé (MM:SS format)
+    const minutes = Math.floor(ageSeconds / 60);
+    const seconds = ageSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
   const visibleBankSources = (() => {
