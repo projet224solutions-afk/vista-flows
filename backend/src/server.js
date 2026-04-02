@@ -26,7 +26,20 @@ import internalRoutes from './routes/internal.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
+import subscriptionRoutesV3 from '../dist/routes/subscriptions.routes.js';
+import paymentRoutesV3 from '../dist/routes/payments.routes.js';
+import walletRoutesV2 from '../dist/routes/wallet.v2.routes.js';
+import vendorRoutesV3 from '../dist/routes/vendors.routes.js';
+import productRoutesV3 from '../dist/routes/products.routes.js';
+import orderRoutesV3 from '../dist/routes/orders.routes.js';
+import posRoutesV3 from '../dist/routes/pos.routes.js';
+import inventoryRoutesV3 from '../dist/routes/inventory.routes.js';
+import affiliateRoutesV3 from '../dist/routes/affiliate.routes.js';
 import paymentLinksRoutesV3 from '../dist/routes/paymentLinks.routes.js';
+import marketplaceVisibilityRoutesV3 from '../dist/routes/marketplaceVisibility.routes.js';
+import coreRoutesV3 from '../dist/routes/core.routes.js';
+import webhookRoutesV3 from '../dist/routes/webhooks.routes.js';
+import migrationsRoutesV3 from '../dist/routes/migrations.js';
 import edgePaymentsRoutesV3 from '../dist/routes/edge-functions/payments.routes.js';
 
 // Configuration
@@ -111,17 +124,34 @@ app.use('/health', healthRoutes);
 app.use('/healthz', healthRoutes);
 app.use('/healthz.json', healthRoutes);
 
+// Webhooks (public, signature-validated)
+app.use('/webhooks', webhookRoutesV3);
+
 // Auth routes (public)
 app.use('/auth', authRoutes);
 
 // Analytics tracking routes (public tracking + authenticated retrieval)
 app.use('/api/analytics', analyticsRoutes);
 
-// Wallet routes (protégé par JWT)
+// Legacy wallet routes
 app.use('/api/wallet', walletRoutes);
 
-// Payment and FX routes from the compiled v3 backend
+// V2 routes from the compiled backend
+app.use('/api/v2/wallet', walletRoutesV2);
+app.use('/api/subscriptions', subscriptionRoutesV3);
+app.use('/api/payments', paymentRoutesV3);
+
+// V3 routes from the compiled backend
+app.use('/api/vendors', vendorRoutesV3);
+app.use('/api/products', productRoutesV3);
+app.use('/api/orders', orderRoutesV3);
+app.use('/api/pos', posRoutesV3);
+app.use('/api/affiliate', affiliateRoutesV3);
+app.use('/api/inventory', inventoryRoutesV3);
 app.use('/api/payment-links', paymentLinksRoutesV3);
+app.use('/api/marketplace-visibility', marketplaceVisibilityRoutesV3);
+app.use('/api/core', coreRoutesV3);
+app.use('/api/migrations', migrationsRoutesV3);
 app.use('/edge-functions/payments', edgePaymentsRoutesV3);
 
 // Internal API (protégé par clé interne)
