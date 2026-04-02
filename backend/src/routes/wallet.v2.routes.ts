@@ -31,6 +31,17 @@ const router = Router();
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+interface ResolvedRecipient {
+  userId: string;
+  query: string;
+  matchedBy: 'uuid' | 'user_ids.custom_id' | 'profiles.public_id' | 'profiles.custom_id' | 'profiles.email' | 'profiles.phone' | 'auth.users.email' | 'auth.users.phone';
+  displayName: string | null;
+  email: string | null;
+  phone: string | null;
+  publicId: string | null;
+  customId: string | null;
+}
+
 function isFxSuccessStatus(status: string | null | undefined): boolean {
   const normalized = (status || '').toLowerCase();
   return normalized === 'success' || normalized === 'completed' || normalized === 'ok';
@@ -49,12 +60,39 @@ async function requireValidTransactionPin(userId: string, pin: unknown): Promise
   return { ok: true };
 }
 
-async function resolveRecipientUserId(rawRecipient: string): Promise<string | null> {
+function normalizePhoneCandidates(raw: string): string[] {
+  const compact = raw.replace(/[\s\-()]/g, '');
+  const digits = compact.replace(/[^\d]/g, '');
+  const withPlus = digits ? `+${digits}` : '';
+  const localNoPrefix = digits.startsWith('00') ? digits.slice(2) : digits;
+  return Array.from(new Set([raw, compact, digits, withPlus, localNoPrefix].filter(Boolean)));
+}
+
+async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient | null> {
   const candidate = String(rawRecipient || '').trim();
   if (!candidate) return null;
 
   if (UUID_REGEX.test(candidate)) {
-    return candidate;
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email, phone, first_name, last_name, public_id, custom_id')
+      .eq('id', candidate)
+      .maybeSingle();
+
+    const displayName = profile
+      ? `${String((profile as any).first_name || '').trim()} ${String((profile as any).last_name || '').trim()}`.trim() || null
+      : null;
+
+    return {
+      userId: candidate,
+      query: candidate,
+      matchedBy: 'uuid',
+      displayName,
+      email: profile ? String((profile as any).email || '') || null : null,
+      phone: profile ? String((profile as any).phone || '') || null : null,
+      publicId: profile ? String((profile as any).public_id || '') || null : null,
+      customId: profile ? String((profile as any).custom_id || '') || null : null,
+    };
   }
 
   const normalizedId = candidate.toUpperCase();
@@ -66,45 +104,174 @@ async function resolveRecipientUserId(rawRecipient: string): Promise<string | nu
     .maybeSingle();
 
   if (fromUserIds?.user_id) {
-    return fromUserIds.user_id;
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email, phone, first_name, last_name, public_id, custom_id')
+      .eq('id', fromUserIds.user_id)
+      .maybeSingle();
+
+    const displayName = profile
+      ? `${String((profile as any).first_name || '').trim()} ${String((profile as any).last_name || '').trim()}`.trim() || null
+      : null;
+
+    return {
+      userId: fromUserIds.user_id,
+      query: candidate,
+      matchedBy: 'user_ids.custom_id',
+      displayName,
+      email: profile ? String((profile as any).email || '') || null : null,
+      phone: profile ? String((profile as any).phone || '') || null : null,
+      publicId: profile ? String((profile as any).public_id || '') || null : null,
+      customId: profile ? String((profile as any).custom_id || '') || null : null,
+    };
   }
 
   const { data: fromProfileIds } = await supabaseAdmin
     .from('profiles')
-    .select('id')
+    .select('id, email, phone, first_name, last_name, public_id, custom_id')
     .or(`public_id.eq.${normalizedId},custom_id.eq.${normalizedId}`)
     .maybeSingle();
 
   if (fromProfileIds?.id) {
-    return fromProfileIds.id;
+    const matchedBy = String((fromProfileIds as any).public_id || '').toUpperCase() === normalizedId
+      ? 'profiles.public_id'
+      : 'profiles.custom_id';
+    const displayName = `${String((fromProfileIds as any).first_name || '').trim()} ${String((fromProfileIds as any).last_name || '').trim()}`.trim() || null;
+    return {
+      userId: fromProfileIds.id,
+      query: candidate,
+      matchedBy,
+      displayName,
+      email: String((fromProfileIds as any).email || '') || null,
+      phone: String((fromProfileIds as any).phone || '') || null,
+      publicId: String((fromProfileIds as any).public_id || '') || null,
+      customId: String((fromProfileIds as any).custom_id || '') || null,
+    };
   }
 
   const normalizedEmail = candidate.toLowerCase();
   if (normalizedEmail.includes('@')) {
     const { data: fromEmail } = await supabaseAdmin
       .from('profiles')
-      .select('id')
+      .select('id, email, phone, first_name, last_name, public_id, custom_id')
       .eq('email', normalizedEmail)
       .maybeSingle();
 
     if (fromEmail?.id) {
-      return fromEmail.id;
+      const displayName = `${String((fromEmail as any).first_name || '').trim()} ${String((fromEmail as any).last_name || '').trim()}`.trim() || null;
+      return {
+        userId: fromEmail.id,
+        query: candidate,
+        matchedBy: 'profiles.email',
+        displayName,
+        email: String((fromEmail as any).email || '') || null,
+        phone: String((fromEmail as any).phone || '') || null,
+        publicId: String((fromEmail as any).public_id || '') || null,
+        customId: String((fromEmail as any).custom_id || '') || null,
+      };
+    }
+
+    const { data: authUser } = await supabaseAdmin
+      .schema('auth')
+      .from('users')
+      .select('id, email, phone')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
+    if (authUser?.id) {
+      return {
+        userId: authUser.id,
+        query: candidate,
+        matchedBy: 'auth.users.email',
+        displayName: null,
+        email: String((authUser as any).email || '') || null,
+        phone: String((authUser as any).phone || '') || null,
+        publicId: null,
+        customId: null,
+      };
     }
   }
 
-  const normalizedPhone = candidate.replace(/\s+/g, '');
-  const { data: fromPhone } = await supabaseAdmin
-    .from('profiles')
-    .select('id')
-    .eq('phone', normalizedPhone)
-    .maybeSingle();
+  const phoneCandidates = normalizePhoneCandidates(candidate);
+  if (phoneCandidates.length > 0) {
+    const phoneFilter = phoneCandidates.map((p) => `phone.eq.${p}`).join(',');
+    const { data: fromPhone } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email, phone, first_name, last_name, public_id, custom_id')
+      .or(phoneFilter)
+      .limit(1)
+      .maybeSingle();
 
-  if (fromPhone?.id) {
-    return fromPhone.id;
+    if (fromPhone?.id) {
+      const displayName = `${String((fromPhone as any).first_name || '').trim()} ${String((fromPhone as any).last_name || '').trim()}`.trim() || null;
+      return {
+        userId: fromPhone.id,
+        query: candidate,
+        matchedBy: 'profiles.phone',
+        displayName,
+        email: String((fromPhone as any).email || '') || null,
+        phone: String((fromPhone as any).phone || '') || null,
+        publicId: String((fromPhone as any).public_id || '') || null,
+        customId: String((fromPhone as any).custom_id || '') || null,
+      };
+    }
+
+    const authPhoneFilter = phoneCandidates.map((p) => `phone.eq.${p}`).join(',');
+    const { data: authPhone } = await supabaseAdmin
+      .schema('auth')
+      .from('users')
+      .select('id, email, phone')
+      .or(authPhoneFilter)
+      .limit(1)
+      .maybeSingle();
+
+    if (authPhone?.id) {
+      return {
+        userId: authPhone.id,
+        query: candidate,
+        matchedBy: 'auth.users.phone',
+        displayName: null,
+        email: String((authPhone as any).email || '') || null,
+        phone: String((authPhone as any).phone || '') || null,
+        publicId: null,
+        customId: null,
+      };
+    }
   }
 
   return null;
 }
+
+async function resolveRecipientUserId(rawRecipient: string): Promise<string | null> {
+  const resolved = await resolveRecipient(rawRecipient);
+  return resolved?.userId || null;
+}
+
+router.get('/recipient/resolve', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const query = String(req.query.q || '').trim();
+    if (!query) {
+      res.status(400).json({ success: false, error: 'q requis (ID public, email, telephone ou UUID)' });
+      return;
+    }
+
+    const resolved = await resolveRecipient(query);
+    if (!resolved) {
+      res.status(404).json({ success: false, error: 'Destinataire introuvable' });
+      return;
+    }
+
+    if (resolved.userId === req.user!.id) {
+      res.status(400).json({ success: false, error: 'Transfert vers soi-meme non autorise' });
+      return;
+    }
+
+    res.json({ success: true, data: resolved });
+  } catch (error: any) {
+    logger.error(`Wallet recipient resolve error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la resolution du destinataire' });
+  }
+});
 
 /**
  * GET /api/v2/wallet/balance

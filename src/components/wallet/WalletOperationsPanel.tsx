@@ -22,7 +22,7 @@ import {
   Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { changeWalletPin, getWalletPinStatus, setupWalletPin } from '@/services/walletBackendService';
+import { changeWalletPin, getWalletPinStatus, resolveWalletRecipient, setupWalletPin } from '@/services/walletBackendService';
 import { WalletPinPromptDialog, WalletPinSetupDialog } from '@/components/wallet/WalletPinDialogs';
 
 // ChapChapPay - Mobile Money
@@ -112,8 +112,8 @@ export function WalletOperationsPanel() {
       return;
     }
 
-    if (!recipientId || recipientId.length < 8) {
-      toast.error('ID destinataire invalide');
+    if (!recipientId || recipientId.trim().length < 3) {
+      toast.error('Destinataire invalide');
       return;
     }
 
@@ -121,6 +121,20 @@ export function WalletOperationsPanel() {
       toast.error('Description requise');
       return;
     }
+
+    const recipientResolution = await resolveWalletRecipient(recipientId);
+    if (!recipientResolution.success || !recipientResolution.data?.userId) {
+      toast.error(recipientResolution.error || 'Destinataire introuvable');
+      return;
+    }
+
+    const resolvedId = recipientResolution.data.userId;
+    if (resolvedId === wallet.user_id) {
+      toast.error('Vous ne pouvez pas transférer à vous-même');
+      return;
+    }
+
+    setRecipientId(resolvedId);
 
     if (!pinStatus?.pin_enabled) {
       setPinSetupMode('setup');

@@ -70,6 +70,17 @@ export interface WalletOperationResult {
   error?: string;
 }
 
+export interface WalletRecipientResolved {
+  userId: string;
+  query: string;
+  matchedBy: string;
+  displayName: string | null;
+  email: string | null;
+  phone: string | null;
+  publicId: string | null;
+  customId: string | null;
+}
+
 // ==================== API CALLS ====================
 
 /**
@@ -111,6 +122,17 @@ export async function getWalletTransactions(
  */
 export async function getWalletStatus(signal?: AbortSignal) {
   return backendFetch<WalletStatus>('/api/v2/wallet/status', {
+    method: 'GET',
+    signal,
+  });
+}
+
+/**
+ * Résout un destinataire de transfert via ID public/custom, email, téléphone ou UUID.
+ */
+export async function resolveWalletRecipient(query: string, signal?: AbortSignal) {
+  const encoded = encodeURIComponent(query.trim());
+  return backendFetch<WalletRecipientResolved>(`/api/v2/wallet/recipient/resolve?q=${encoded}`, {
     method: 'GET',
     signal,
   });

@@ -44,6 +44,7 @@ import {
   changeWalletPin,
   depositToWallet,
   getWalletPinStatus,
+  resolveWalletRecipient,
   setupWalletPin,
   transferToWallet,
   withdrawFromWallet,
@@ -883,6 +884,21 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       const searchTerm = recipientId.trim();
       const isEmail = searchTerm.includes('@');
       const isPhone = /^[+]?\d{6,}$/.test(searchTerm.replace(/[\s\-()]/g, ''));
+
+      let recipientUuid: string | null = null;
+      let recipientName: string | null = null;
+
+      // 0. Résolution fiable côté backend (service role) pour UUID, ID public/custom, email, téléphone.
+      const resolved = await resolveWalletRecipient(searchTerm);
+      if (resolved.success && resolved.data?.userId) {
+        recipientUuid = resolved.data.userId;
+        recipientName = resolved.data.displayName
+          || resolved.data.customId
+          || resolved.data.publicId
+          || resolved.data.email
+          || resolved.data.phone
+          || 'Utilisateur';
+      }
       
       // 1. Chercher dans profiles par email, téléphone ou ID
       let profileQuery = supabase
@@ -898,7 +914,9 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         profileQuery = profileQuery.or(`custom_id.eq.${searchTerm.toUpperCase()},public_id.eq.${searchTerm.toUpperCase()}`);
       }
       
-      const { data: profileData, error: profileError } = await profileQuery.maybeSingle();
+      const { data: profileData, error: profileError } = recipientUuid
+        ? ({ data: null, error: null } as any)
+        : await profileQuery.maybeSingle();
 
       if (profileError) {
         console.error('❌ Erreur recherche profil:', profileError);
@@ -906,18 +924,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         return;
       }
 
-      let recipientUuid: string | null = null;
-      let recipientName: string | null = null;
-
       // Si trouvé dans profiles
-      if (profileData) {
+      if (!recipientUuid && profileData) {
         console.log('📋 Profil trouvé:', profileData);
         recipientUuid = profileData.id;
         recipientName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() || 
                        profileData.custom_id || 
                        profileData.public_id || 
                        'Utilisateur';
-      } else if (!isEmail && !isPhone) {
+      } else if (!recipientUuid && !isEmail && !isPhone) {
         // 2. Sinon, chercher dans agents_management (agent_code) - seulement pour les IDs
         console.log('🔍 Recherche dans agents_management...');
         const { data: agentData, error: agentError } = await supabase
