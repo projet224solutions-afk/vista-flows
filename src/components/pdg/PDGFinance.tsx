@@ -41,6 +41,8 @@ export default function PDGFinance() {
   const [conversionStatsLoading, setConversionStatsLoading] = useState(false);
   const [alertCheckLoading, setAlertCheckLoading] = useState(false);
   const [marginUpdateLoading, setMarginUpdateLoading] = useState(false);
+  const [showMarginDialog, setShowMarginDialog] = useState(false);
+  const [marginPercentInput, setMarginPercentInput] = useState('3');
   const [clockMs, setClockMs] = useState(Date.now());
   const [fxFetchedAtMs, setFxFetchedAtMs] = useState<number | null>(null);
 
@@ -173,11 +175,13 @@ export default function PDGFinance() {
     }
   };
 
-  const updateFxMargin = async () => {
-    const raw = window.prompt('Commission a ajouter sur le taux (en %):', String(Math.round((fxHealth?.current_rate?.margin || 0.03) * 100)));
-    if (raw === null) return;
+  const openFxMarginDialog = () => {
+    setMarginPercentInput(String(Math.round((fxHealth?.current_rate?.margin || 0.03) * 100)));
+    setShowMarginDialog(true);
+  };
 
-    const marginPercent = Number(String(raw).replace(',', '.'));
+  const updateFxMargin = async () => {
+    const marginPercent = Number(String(marginPercentInput).replace(',', '.'));
     if (!Number.isFinite(marginPercent) || marginPercent < 0 || marginPercent > 30) {
       toast.error('Commission invalide. Entrez un pourcentage entre 0 et 30.');
       return;
@@ -195,6 +199,7 @@ export default function PDGFinance() {
       }
 
       toast.success(`Commission FX mise a jour: ${marginPercent}%`);
+      setShowMarginDialog(false);
       await loadFxHealth();
     } catch (error: any) {
       toast.error(error?.message || 'Erreur mise a jour commission FX');
@@ -395,7 +400,7 @@ export default function PDGFinance() {
               <AlertTriangle className="w-4 h-4" />
               {alertCheckLoading ? 'Verification...' : 'Alerte changement < 1h'}
             </Button>
-            <Button type="button" variant="default" className="gap-2" onClick={updateFxMargin} disabled={marginUpdateLoading}>
+            <Button type="button" variant="default" className="gap-2" onClick={openFxMarginDialog} disabled={marginUpdateLoading}>
               <DollarSign className="w-4 h-4" />
               {marginUpdateLoading ? 'Mise a jour...' : 'Ajouter commission au taux'}
             </Button>
@@ -763,6 +768,39 @@ export default function PDGFinance() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={showMarginDialog} onOpenChange={setShowMarginDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajouter commission FX</DialogTitle>
+            <DialogDescription>
+              Définir la commission (%) appliquée sur le taux de change.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Commission en pourcentage</p>
+              <Input
+                type="number"
+                min="0"
+                max="30"
+                step="0.1"
+                value={marginPercentInput}
+                onChange={(e) => setMarginPercentInput(e.target.value)}
+                placeholder="Ex: 3"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setShowMarginDialog(false)} disabled={marginUpdateLoading}>
+                Annuler
+              </Button>
+              <Button type="button" onClick={updateFxMargin} disabled={marginUpdateLoading}>
+                {marginUpdateLoading ? 'Mise a jour...' : 'Appliquer'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal des Wallets */}
       <Dialog open={showConversionStatsDialog} onOpenChange={setShowConversionStatsDialog}>

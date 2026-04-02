@@ -124,6 +124,8 @@ export function WalletAdminPanel() {
   const [fxLoading, setFxLoading] = useState(false);
   const [fxRefreshing, setFxRefreshing] = useState(false);
   const [fxMarginUpdating, setFxMarginUpdating] = useState(false);
+  const [showFxMarginDialog, setShowFxMarginDialog] = useState(false);
+  const [fxMarginPercentInput, setFxMarginPercentInput] = useState('3');
   const [clockMs, setClockMs] = useState(Date.now());
   const [fxFetchedAtMs, setFxFetchedAtMs] = useState<number | null>(null);
 
@@ -193,11 +195,13 @@ export function WalletAdminPanel() {
     }
   };
 
-  const handleFxMarginUpdate = async () => {
-    const raw = window.prompt('Commission a ajouter sur le taux (en %):', String(Math.round((fxHealth?.current_rate?.margin || 0.03) * 100)));
-    if (raw === null) return;
+  const openFxMarginDialog = () => {
+    setFxMarginPercentInput(String(Math.round((fxHealth?.current_rate?.margin || 0.03) * 100)));
+    setShowFxMarginDialog(true);
+  };
 
-    const marginPercent = Number(String(raw).replace(',', '.'));
+  const handleFxMarginUpdate = async () => {
+    const marginPercent = Number(String(fxMarginPercentInput).replace(',', '.'));
     if (!Number.isFinite(marginPercent) || marginPercent < 0 || marginPercent > 30) {
       toast.error('Commission invalide. Entrez un pourcentage entre 0 et 30.');
       return;
@@ -214,6 +218,7 @@ export function WalletAdminPanel() {
       }
 
       toast.success(`Commission FX mise a jour: ${marginPercent}%`);
+      setShowFxMarginDialog(false);
       await loadFxHealth();
     } catch (error: any) {
       toast.error(error?.message || 'Erreur mise a jour commission FX');
@@ -452,7 +457,7 @@ export function WalletAdminPanel() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={handleFxMarginUpdate}
+                onClick={openFxMarginDialog}
                 disabled={fxMarginUpdating}
                 className="gap-2"
               >
@@ -759,6 +764,51 @@ export function WalletAdminPanel() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={showFxMarginDialog} onOpenChange={setShowFxMarginDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter commission FX</DialogTitle>
+            <DialogDescription>
+              Saisissez le pourcentage de commission à appliquer au taux.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Commission (%)</label>
+              <Input
+                type="number"
+                min="0"
+                max="30"
+                step="0.1"
+                value={fxMarginPercentInput}
+                onChange={(e) => setFxMarginPercentInput(e.target.value)}
+                className="mt-2"
+                placeholder="Ex: 3"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowFxMarginDialog(false)}
+                disabled={fxMarginUpdating}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleFxMarginUpdate}
+                disabled={fxMarginUpdating}
+              >
+                {fxMarginUpdating ? 'Mise a jour...' : 'Appliquer'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog blocage */}
       <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
