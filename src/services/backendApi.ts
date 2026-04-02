@@ -82,6 +82,18 @@ export async function backendFetch<T = unknown>(
 ): Promise<BackendResponse<T>> {
   const { body, idempotencyKey, signal: externalSignal, ...rest } = options;
 
+  if (
+    !backendConfig.baseUrl &&
+    typeof window !== 'undefined' &&
+    !import.meta.env.DEV &&
+    (/^capacitor:\/\//i.test(window.location.origin) || /^ionic:\/\//i.test(window.location.origin) || /^http:\/\/localhost(:\d+)?$/i.test(window.location.origin))
+  ) {
+    return {
+      success: false,
+      error: 'Configuration backend mobile manquante (VITE_BACKEND_MOBILE_URL).',
+    };
+  }
+
   const token = await getAuthToken();
   if (!token) {
     return { success: false, error: 'Non authentifié', error_code: undefined };

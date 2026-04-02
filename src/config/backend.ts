@@ -7,30 +7,46 @@ function normalizeUrl(url: string): string {
   return url.replace(/\/$/, '');
 }
 
+function isLoopbackHttpUrl(url: string): boolean {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(url);
+}
+
 function resolveBackendBaseUrl(): string {
   // 1. Mobile-specific URL takes highest priority (Capacitor/native context)
-  const mobileUrl = import.meta.env.VITE_BACKEND_MOBILE_URL;
+  const mobileUrl = import.meta.env.VITE_BACKEND_MOBILE_URL?.trim();
   if (mobileUrl) {
     return normalizeUrl(mobileUrl);
   }
 
-  const configuredUrl =
+  const configuredUrl = (
     import.meta.env.VITE_BACKEND_URL ||
     import.meta.env.VITE_BACKEND_API_URL ||
     import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL;
+    import.meta.env.VITE_API_BASE_URL
+  )?.trim();
 
   // In local dev, prefer Vite proxy for localhost backends to avoid CORS issues
   // when the dev server port changes (e.g. 8080 -> 8081).
   if (
     import.meta.env.DEV &&
     configuredUrl &&
-    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(configuredUrl)
+    isLoopbackHttpUrl(configuredUrl)
   ) {
     return '';
   }
 
   if (configuredUrl) {
+    // Prevent accidental production builds pointing to localhost.
+    if (
+      !import.meta.env.DEV &&
+      isLoopbackHttpUrl(configuredUrl) &&
+      typeof window !== 'undefined' &&
+      !/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname)
+    ) {
+      console.warn('[backendConfig] URL backend locale ignorée en production', { configuredUrl });
+      return '';
+    }
+
     return normalizeUrl(configuredUrl);
   }
 

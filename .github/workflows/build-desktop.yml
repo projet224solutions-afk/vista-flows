@@ -28,6 +28,10 @@ jobs:
         run: |
           npm run build
           echo "React app built successfully"
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_BACKEND_MOBILE_URL: ${{ secrets.VITE_BACKEND_MOBILE_URL }}
           
       - name: Verify desktop assets (Windows)
         shell: pwsh
