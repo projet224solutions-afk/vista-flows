@@ -50,12 +50,28 @@ jobs:
       - name: Install Capacitor
         run: |
           npm install -g @capacitor/cli
-          npx cap add ios
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          else
+            echo "iOS project directory already exists, skipping cap add"
+          fi
           npx cap sync ios
+
+      - name: Resolve iOS app directory
+        id: ios-path
+        run: |
+          PODFILE_DIR=$(find ios -name Podfile -type f | head -n 1 | xargs -I {} dirname {})
+          if [ -z "$PODFILE_DIR" ]; then
+            echo "❌ No Podfile found after Capacitor sync"
+            find ios -maxdepth 4 -type f | head -n 50
+            exit 1
+          fi
+          echo "Detected iOS app dir: $PODFILE_DIR"
+          echo "app_dir=$PODFILE_DIR" >> "$GITHUB_OUTPUT"
           
       - name: Install CocoaPods
         run: |
-          cd ios/App
+          cd "${{ steps.ios-path.outputs.app_dir }}"
           pod install
           
       - name: Import Code-Signing Certificates
@@ -77,7 +93,7 @@ jobs:
           
       - name: Build iOS Archive
         run: |
-          cd ios/App
+          cd "${{ steps.ios-path.outputs.app_dir }}"
           xcodebuild -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
@@ -85,19 +101,10 @@ jobs:
             -archivePath $PWD/build/App.xcarchive \
             archive
             
-      - name: Export IPA
-        if: github.event_name != 'pull_request'
-        run: |
-          cd ios/App
-          xcodebuild -exportArchive \
-            -archivePath $PWD/build/App.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
-            -exportPath $PWD/build/ipa
-            
       - name: Create ExportOptions.plist
         if: github.event_name != 'pull_request'
         run: |
-          cd ios/App
+          cd "${{ steps.ios-path.outputs.app_dir }}"
           cat > ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -116,20 +123,29 @@ jobs:
           </dict>
           </plist>
           EOF
+
+      - name: Export IPA
+        if: github.event_name != 'pull_request'
+        run: |
+          cd "${{ steps.ios-path.outputs.app_dir }}"
+          xcodebuild -exportArchive \
+            -archivePath $PWD/build/App.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath $PWD/build/ipa
           
       - name: Upload IPA artifact
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: 224solutions-ios-ipa
-          path: ios/App/build/ipa/*.ipa
+          path: ${{ steps.ios-path.outputs.app_dir }}/build/ipa/*.ipa
           retention-days: 30
           
       - name: Upload to TestFlight
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: Apple-Actions/upload-testflight-build@v1
         with:
-          app-path: ios/App/build/ipa/App.ipa
+          app-path: ${{ steps.ios-path.outputs.app_dir }}/build/ipa/App.ipa
           issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
           api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
           api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
