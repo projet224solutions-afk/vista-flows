@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v19';
+const CACHE_VERSION = 'v20';
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
@@ -207,12 +207,21 @@ self.addEventListener('fetch', (event) => {
           if (response.ok) {
             const clone = response.clone();
             caches.open(STATIC_CACHE).then((c) => c.put(event.request, clone));
+            return response;
+          }
+          // 404 means a new deployment invalidated this chunk.
+          // Clear all caches to force a fresh load on next navigation.
+          if (response.status === 404) {
+            caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
           }
           return response;
         })
         .catch(async () => {
           const cached = await caches.match(event.request);
-          return cached || Response.error();
+          if (cached) return cached;
+          // Network failed and no cache — signal a hard reload is needed.
+          caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
+          return Response.error();
         }),
     );
     return;

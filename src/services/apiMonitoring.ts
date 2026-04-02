@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch } from '@/services/backendApi';
 import { toast } from 'sonner';
 
 export interface ApiConnection {
@@ -281,22 +282,19 @@ export class ApiMonitoringService {
 
   /**
    * 224Guard - Détection d'activité suspecte
+   * Utilise le backend Node.js (guard:backend-first) avec fallback local
    */
   static async detect224GuardAnomalies(apiConnectionId: string): Promise<GuardAnalysisResult> {
-    // 1) Preferred path: server-side intelligent analyzer (224Guard edge function)
-    const { data, error } = await supabase.functions.invoke('api-guard-monitor', {
-      body: { mode: 'analyze', apiId: apiConnectionId },
-    });
-
-    if (!error && data && !data.error) {
-      return {
-        apiId: data.apiId || apiConnectionId,
-        riskScore: Number(data.riskScore || 0),
-        riskLevel: (data.riskLevel || 'low') as GuardAnalysisResult['riskLevel'],
-        anomalies: Array.isArray(data.anomalies) ? data.anomalies : [],
-        recommendations: Array.isArray(data.recommendations) ? data.recommendations : [],
-        source: 'edge',
-      };
+    // 1) Preferred path: backend Node.js API
+    try {
+      const response = await backendFetch<GuardAnalysisResult>(
+        `/api/v2/monitoring/guard-analyze?apiId=${encodeURIComponent(apiConnectionId)}`
+      );
+      if (response.success && response.data) {
+        return { ...response.data, source: 'edge' };
+      }
+    } catch {
+      // fall through to local analysis
     }
 
     // 2) Fallback path: local heuristic analysis to avoid total outage
