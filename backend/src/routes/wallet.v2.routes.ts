@@ -1059,6 +1059,16 @@ router.get(
           })
       ).values());
 
+      const hasBcrgSource = bankSources.some((source) => String(source?.source_url || '').includes('bcrg-guinee.org'));
+      if (!hasBcrgSource) {
+        bankSources.unshift({
+          source: 'Banque Centrale de Guinee (BCRG)',
+          source_type: 'official_html',
+          source_url: BCRG_OFFICIAL_URL,
+          last_seen_at: currentRate?.retrieved_at || null,
+        });
+      }
+
         const todaysHistory = (todayRates || [])
         .filter((rate: any) => isAfricanBankRow(rate))
         .map((rate: any) => ({
