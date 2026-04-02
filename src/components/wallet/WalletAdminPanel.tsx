@@ -145,7 +145,7 @@ export function WalletAdminPanel() {
     const remaining = cycleSeconds - (ageSeconds % cycleSeconds);
     const minutes = Math.floor(remaining / 60);
     const seconds = remaining % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    return `${String(seconds).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
   };
 
   useEffect(() => {
