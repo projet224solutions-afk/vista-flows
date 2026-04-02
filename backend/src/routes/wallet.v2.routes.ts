@@ -1346,6 +1346,81 @@ router.post(
  * Déclenche manuellement une collecte des taux (PDG/Admin)
  */
 router.post(
+  '/admin/fx-margin',
+  verifyJWT,
+  requirePermissionOrRole({
+    permissionKey: 'manage_wallet_transactions',
+    allowedRoles: ['admin', 'pdg', 'ceo'],
+  }),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const marginPercentRaw = Number(req.body?.margin_percent);
+      if (!Number.isFinite(marginPercentRaw) || marginPercentRaw < 0 || marginPercentRaw > 30) {
+        res.status(400).json({ success: false, error: 'margin_percent invalide (attendu: 0 a 30)' });
+        return;
+      }
+
+      const marginValue = marginPercentRaw / 100;
+      const { error: upsertError } = await supabaseAdmin
+        .from('margin_config')
+        .upsert({
+          config_key: 'default_margin',
+          config_value: marginValue,
+        }, { onConflict: 'config_key' });
+
+      if (upsertError) {
+        throw upsertError;
+      }
+
+      // Apply new margin immediately by triggering a fresh collection.
+      const functionUrl = `${process.env.SUPABASE_URL}/functions/v1/african-fx-collect`;
+      const refreshResponse = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ''}`,
+          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          source: 'pdg_margin_update',
+          actor_id: req.user!.id,
+          strict_african_sources: true,
+          include_all_african_banks: true,
+          primary_source_url: BCRG_OFFICIAL_URL,
+          preferred_currency_pairs: [
+            { from: 'USD', to: 'GNF' },
+            { from: 'EUR', to: 'GNF' },
+          ],
+          bcrg_source_urls: [BCRG_OFFICIAL_URL],
+          preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
+        }),
+      });
+
+      let refreshPayload: any = null;
+      try {
+        refreshPayload = await refreshResponse.json();
+      } catch {
+        refreshPayload = null;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          margin_percent: marginPercentRaw,
+          margin_value: marginValue,
+          refresh_triggered: refreshResponse.ok,
+          refresh_status: refreshResponse.status,
+          refresh_payload: refreshPayload,
+        },
+      });
+    } catch (error: any) {
+      logger.error(`FX margin update error: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors de la mise a jour de la commission FX' });
+    }
+  }
+);
+
+router.post(
   '/admin/fx-refresh',
   verifyJWT,
   requirePermissionOrRole({

@@ -123,6 +123,7 @@ export function WalletAdminPanel() {
   const [fxHealth, setFxHealth] = useState<FxHealthData | null>(null);
   const [fxLoading, setFxLoading] = useState(false);
   const [fxRefreshing, setFxRefreshing] = useState(false);
+  const [fxMarginUpdating, setFxMarginUpdating] = useState(false);
   const [clockMs, setClockMs] = useState(Date.now());
   const [fxFetchedAtMs, setFxFetchedAtMs] = useState<number | null>(null);
 
@@ -189,6 +190,35 @@ export function WalletAdminPanel() {
       toast.error(error?.message || 'Erreur refresh FX');
     } finally {
       setFxRefreshing(false);
+    }
+  };
+
+  const handleFxMarginUpdate = async () => {
+    const raw = window.prompt('Commission a ajouter sur le taux (en %):', String(Math.round((fxHealth?.current_rate?.margin || 0.03) * 100)));
+    if (raw === null) return;
+
+    const marginPercent = Number(String(raw).replace(',', '.'));
+    if (!Number.isFinite(marginPercent) || marginPercent < 0 || marginPercent > 30) {
+      toast.error('Commission invalide. Entrez un pourcentage entre 0 et 30.');
+      return;
+    }
+
+    try {
+      setFxMarginUpdating(true);
+      const response = await backendFetch('/api/v2/wallet/admin/fx-margin', {
+        method: 'POST',
+        body: JSON.stringify({ margin_percent: marginPercent }),
+      });
+      if (!response.success) {
+        throw new Error(response.error || 'Mise a jour commission FX echouee');
+      }
+
+      toast.success(`Commission FX mise a jour: ${marginPercent}%`);
+      await loadFxHealth();
+    } catch (error: any) {
+      toast.error(error?.message || 'Erreur mise a jour commission FX');
+    } finally {
+      setFxMarginUpdating(false);
     }
   };
 
@@ -418,16 +448,28 @@ export function WalletAdminPanel() {
                 Surveillance horaire des taux bancaires africains pour la conversion wallet et marketplace
               </CardDescription>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleFxRefresh}
-              disabled={fxRefreshing}
-              className="gap-2"
-            >
-              <RefreshCw className={`w-4 h-4 ${fxRefreshing ? 'animate-spin' : ''}`} />
-              Rafraîchir les taux
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleFxMarginUpdate}
+                disabled={fxMarginUpdating}
+                className="gap-2"
+              >
+                <DollarSign className="w-4 h-4" />
+                {fxMarginUpdating ? 'Mise a jour...' : 'Ajouter commission'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleFxRefresh}
+                disabled={fxRefreshing}
+                className="gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${fxRefreshing ? 'animate-spin' : ''}`} />
+                Rafraîchir les taux
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">

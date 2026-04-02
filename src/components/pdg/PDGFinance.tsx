@@ -40,6 +40,7 @@ export default function PDGFinance() {
   const [conversionStats, setConversionStats] = useState<any>(null);
   const [conversionStatsLoading, setConversionStatsLoading] = useState(false);
   const [alertCheckLoading, setAlertCheckLoading] = useState(false);
+  const [marginUpdateLoading, setMarginUpdateLoading] = useState(false);
   const [clockMs, setClockMs] = useState(Date.now());
   const [fxFetchedAtMs, setFxFetchedAtMs] = useState<number | null>(null);
 
@@ -169,6 +170,36 @@ export default function PDGFinance() {
       toast.error(error?.message || 'Erreur verification alerte FX');
     } finally {
       setAlertCheckLoading(false);
+    }
+  };
+
+  const updateFxMargin = async () => {
+    const raw = window.prompt('Commission a ajouter sur le taux (en %):', String(Math.round((fxHealth?.current_rate?.margin || 0.03) * 100)));
+    if (raw === null) return;
+
+    const marginPercent = Number(String(raw).replace(',', '.'));
+    if (!Number.isFinite(marginPercent) || marginPercent < 0 || marginPercent > 30) {
+      toast.error('Commission invalide. Entrez un pourcentage entre 0 et 30.');
+      return;
+    }
+
+    try {
+      setMarginUpdateLoading(true);
+      const response = await backendFetch('/api/v2/wallet/admin/fx-margin', {
+        method: 'POST',
+        body: JSON.stringify({ margin_percent: marginPercent }),
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || 'Mise a jour de la commission FX impossible');
+      }
+
+      toast.success(`Commission FX mise a jour: ${marginPercent}%`);
+      await loadFxHealth();
+    } catch (error: any) {
+      toast.error(error?.message || 'Erreur mise a jour commission FX');
+    } finally {
+      setMarginUpdateLoading(false);
     }
   };
 
@@ -363,6 +394,10 @@ export default function PDGFinance() {
             <Button type="button" variant="secondary" className="gap-2" onClick={checkRateChangeAlert} disabled={alertCheckLoading}>
               <AlertTriangle className="w-4 h-4" />
               {alertCheckLoading ? 'Verification...' : 'Alerte changement < 1h'}
+            </Button>
+            <Button type="button" variant="default" className="gap-2" onClick={updateFxMargin} disabled={marginUpdateLoading}>
+              <DollarSign className="w-4 h-4" />
+              {marginUpdateLoading ? 'Mise a jour...' : 'Ajouter commission au taux'}
             </Button>
           </div>
         </CardHeader>
