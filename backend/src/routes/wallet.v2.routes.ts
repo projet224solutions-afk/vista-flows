@@ -119,6 +119,18 @@ function isAfricanBankRow(row: { source_url?: string | null; source?: string | n
   return /bcrg|bceao|beac|cbn|sarb|ecobank|orabank|afreximbank|banque|bank|afric/i.test(text);
 }
 
+function resolveOfficialBankSourceUrl(row: { source_url?: string | null; source?: string | null; source_type?: string | null }): string | null {
+  if (row?.source_url) return row.source_url;
+
+  const text = `${String(row?.source || '').toLowerCase()} ${String(row?.source_type || '').toLowerCase()}`;
+
+  if (/bcrg|banque centrale de guinee|banque centrale de guinée/.test(text)) {
+    return 'https://www.bcrg-guinee.org';
+  }
+
+  return null;
+}
+
 async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient | null> {
   const candidate = String(rawRecipient || '').trim();
   if (!candidate) return null;
@@ -1025,12 +1037,15 @@ router.get(
       const bankSources = Array.from(new Map(
         runRows
           .filter((row) => isAfricanBankRow(row))
-          .map((row) => [row.source_url || `${row.source || 'source'}:${row.source_type || 'type'}`, {
+          .map((row) => {
+            const resolvedSourceUrl = resolveOfficialBankSourceUrl(row);
+            return [resolvedSourceUrl || `${row.source || 'source'}:${row.source_type || 'type'}`, {
             source: row.source,
             source_type: row.source_type,
-            source_url: row.source_url,
+            source_url: resolvedSourceUrl,
             last_seen_at: row.collected_at,
-          }])
+            }];
+          })
       ).values());
 
         const todaysHistory = (todayRates || [])
@@ -1041,7 +1056,7 @@ router.get(
           rate: rate.rate,
           margin: rate.margin,
           source_type: rate.source_type,
-          source_url: rate.source_url,
+          source_url: resolveOfficialBankSourceUrl(rate),
           retrieved_at: rate.retrieved_at,
         }));
 
