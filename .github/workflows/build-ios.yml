@@ -60,16 +60,29 @@ jobs:
       - name: Resolve iOS app directory
         id: ios-path
         run: |
-          PODFILE_DIR=$(find ios -name Podfile -type f | head -n 1 | xargs -I {} dirname {})
-          if [ -z "$PODFILE_DIR" ]; then
-            echo "❌ No Podfile found after Capacitor sync"
-            find ios -maxdepth 4 -type f | head -n 50
+          APP_XCODEPROJ=$(find ios -name App.xcodeproj -type d | head -n 1)
+          if [ -z "$APP_XCODEPROJ" ]; then
+            echo "❌ No App.xcodeproj found after Capacitor sync"
+            find ios -maxdepth 5 -type f | head -n 80
             exit 1
           fi
-          echo "Detected iOS app dir: $PODFILE_DIR"
-          echo "app_dir=$PODFILE_DIR" >> "$GITHUB_OUTPUT"
+
+          APP_DIR=$(dirname "$APP_XCODEPROJ")
+          PODFILE_PATH=$(find "$APP_DIR" -maxdepth 2 -name Podfile -type f | head -n 1)
+
+          echo "Detected iOS app dir: $APP_DIR"
+          echo "app_dir=$APP_DIR" >> "$GITHUB_OUTPUT"
+
+          if [ -n "$PODFILE_PATH" ]; then
+            echo "Detected Podfile: $PODFILE_PATH"
+            echo "use_cocoapods=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Podfile found; using Xcode project build (SPM mode)"
+            echo "use_cocoapods=false" >> "$GITHUB_OUTPUT"
+          fi
           
       - name: Install CocoaPods
+        if: steps.ios-path.outputs.use_cocoapods == 'true'
         run: |
           cd "${{ steps.ios-path.outputs.app_dir }}"
           pod install
@@ -94,12 +107,21 @@ jobs:
       - name: Build iOS Archive
         run: |
           cd "${{ steps.ios-path.outputs.app_dir }}"
-          xcodebuild -workspace App.xcworkspace \
-            -scheme App \
-            -configuration Release \
-            -destination generic/platform=iOS \
-            -archivePath $PWD/build/App.xcarchive \
-            archive
+          if [ "${{ steps.ios-path.outputs.use_cocoapods }}" = "true" ]; then
+            xcodebuild -workspace App.xcworkspace \
+              -scheme App \
+              -configuration Release \
+              -destination generic/platform=iOS \
+              -archivePath $PWD/build/App.xcarchive \
+              archive
+          else
+            xcodebuild -project App.xcodeproj \
+              -scheme App \
+              -configuration Release \
+              -destination generic/platform=iOS \
+              -archivePath $PWD/build/App.xcarchive \
+              archive
+          fi
             
       - name: Create ExportOptions.plist
         if: github.event_name != 'pull_request'
@@ -173,7 +195,7 @@ jobs:
             
             📊 **Build:** ${{ github.sha }}
             🕒 **Date:** ${{ github.event.head_commit.timestamp }}
-          files: ios/App/build/ipa/*.ipa
+          files: ${{ steps.ios-path.outputs.app_dir }}/build/ipa/*.ipa
           draft: false
           prerelease: false
         env:
