@@ -58,6 +58,15 @@ interface FxHealthData {
   is_stale: boolean;
   age_minutes: number | null;
   two_consecutive_failures: boolean;
+  current_rate: {
+    from_currency: string;
+    to_currency: string;
+    rate: number;
+    margin: number | null;
+    source_type: string | null;
+    source_url: string | null;
+    retrieved_at: string | null;
+  } | null;
   last_rate: {
     from_currency: string;
     to_currency: string;
@@ -72,6 +81,15 @@ interface FxHealthData {
     source_type: string | null;
     source_url: string | null;
     last_seen_at: string | null;
+  }>;
+  today_history: Array<{
+    from_currency: string;
+    to_currency: string;
+    rate: number;
+    margin: number | null;
+    source_type: string | null;
+    source_url: string | null;
+    retrieved_at: string | null;
   }>;
   active_alerts: Array<{
     id: string;
@@ -363,7 +381,7 @@ export function WalletAdminPanel() {
             <div className="text-sm text-muted-foreground">Monitoring FX indisponible.</div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-lg border p-3">
                   <p className="text-xs text-muted-foreground">Fraîcheur des taux</p>
                   <p className="text-lg font-semibold">
@@ -383,14 +401,27 @@ export function WalletAdminPanel() {
                   </Badge>
                 </div>
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Marge active</p>
+                  <p className="text-xs text-muted-foreground">Taux actuel</p>
                   <p className="text-lg font-semibold">
-                    {typeof fxHealth.last_rate?.margin === 'number'
-                      ? `${Math.round(fxHealth.last_rate.margin * 100)}%`
+                    {typeof fxHealth.current_rate?.rate === 'number'
+                      ? fxHealth.current_rate.rate.toLocaleString(undefined, { maximumFractionDigits: 6 })
                       : 'N/A'}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Paire: {fxHealth.last_rate ? `${fxHealth.last_rate.from_currency}/${fxHealth.last_rate.to_currency}` : 'N/A'}
+                    {fxHealth.current_rate
+                      ? `${fxHealth.current_rate.from_currency}/${fxHealth.current_rate.to_currency}`
+                      : 'Paire indisponible'}
+                  </p>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Marge active</p>
+                  <p className="text-lg font-semibold">
+                    {typeof fxHealth.current_rate?.margin === 'number'
+                      ? `${Math.round(fxHealth.current_rate.margin * 100)}%`
+                      : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Source: {fxHealth.current_rate?.source_type || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -405,6 +436,33 @@ export function WalletAdminPanel() {
                       <div key={`${source.source_url}-${idx}`} className="text-xs flex items-center justify-between gap-3">
                         <span className="truncate">{source.source || source.source_type || 'source'}</span>
                         <span className="text-muted-foreground truncate">{source.source_url || 'N/A'}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border p-3">
+                <p className="text-sm font-medium mb-2">Historique du taux (aujourd'hui)</p>
+                {fxHealth.today_history.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Aucun taux collecté aujourd'hui.</p>
+                ) : (
+                  <div className="max-h-64 overflow-auto space-y-1">
+                    {fxHealth.today_history.slice(0, 20).map((rate, idx) => (
+                      <div key={`${rate.retrieved_at || 'na'}-${idx}`} className="text-xs rounded border p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium">{rate.from_currency}/{rate.to_currency}</span>
+                          <span>
+                            {typeof rate.rate === 'number'
+                              ? rate.rate.toLocaleString(undefined, { maximumFractionDigits: 6 })
+                              : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-muted-foreground">
+                          {rate.retrieved_at ? new Date(rate.retrieved_at).toLocaleTimeString('fr-FR') : 'Heure N/A'}
+                          {' • '}
+                          {rate.source_url || rate.source_type || 'Source N/A'}
+                        </div>
                       </div>
                     ))}
                   </div>

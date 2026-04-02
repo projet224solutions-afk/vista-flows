@@ -48,6 +48,14 @@ function isFxSuccessStatus(status: string | null | undefined): boolean {
 }
 
 async function requireValidTransactionPin(userId: string, pin: unknown): Promise<{ ok: boolean; error?: string; lockedUntil?: string | null }> {
+  const walletPinState = await getWalletPinState(userId);
+  const pinEnabled = Boolean(walletPinState?.pin_enabled);
+
+  // Compatibility mode: if PIN is not configured yet, keep operations available.
+  if (!pinEnabled) {
+    return { ok: true };
+  }
+
   if (typeof pin !== 'string') {
     return { ok: false, error: 'Code PIN requis pour confirmer cette opération' };
   }
@@ -926,8 +934,9 @@ router.get(
   async (_req: AuthenticatedRequest, res: Response) => {
     try {
       const now = Date.now();
+      const startOfDayIso = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
 
-      const [{ data: latestRate }, { data: recentRuns }, { data: unresolvedAlerts }] = await Promise.all([
+      const [{ data: latestRate }, { data: recentRuns }, { data: unresolvedAlerts }, { data: todayRates }] = await Promise.all([
         supabaseAdmin
           .from('currency_exchange_rates')
           .select('from_currency, to_currency, rate, margin, source_type, source_url, retrieved_at')
@@ -947,6 +956,13 @@ router.get(
           .eq('is_resolved', false)
           .order('created_at', { ascending: false })
           .limit(20),
+        supabaseAdmin
+          .from('currency_exchange_rates')
+          .select('from_currency, to_currency, rate, margin, source_type, source_url, retrieved_at')
+          .eq('is_active', true)
+          .gte('retrieved_at', startOfDayIso)
+          .order('retrieved_at', { ascending: false })
+          .limit(200),
       ]);
 
       const lastRetrievedAt = latestRate?.retrieved_at ? new Date(latestRate.retrieved_at).getTime() : null;
@@ -971,6 +987,16 @@ router.get(
           }])
       ).values());
 
+        const todaysHistory = (todayRates || []).map((rate: any) => ({
+          from_currency: rate.from_currency,
+          to_currency: rate.to_currency,
+          rate: rate.rate,
+          margin: rate.margin,
+          source_type: rate.source_type,
+          source_url: rate.source_url,
+          retrieved_at: rate.retrieved_at,
+        }));
+
       res.json({
         success: true,
         data: {
@@ -979,7 +1005,9 @@ router.get(
           age_minutes: ageMinutes,
           last_rate: latestRate || null,
           two_consecutive_failures: twoConsecutiveFailures,
+          current_rate: latestRate || null,
           recent_runs: runRows.slice(0, 10),
+          today_history: todaysHistory,
           bank_sources: bankSources,
           active_alerts: unresolvedAlerts || [],
         },
