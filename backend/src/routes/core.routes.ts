@@ -5,6 +5,7 @@ import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { requirePermissionOrRole } from '../middlewares/permissions.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { surveillance24x7Service } from '../services/surveillance24x7.service.js';
 
 const router = Router();
 
@@ -236,6 +237,30 @@ router.get(
     } catch (error: any) {
       logger.error(`[Core] supervision/feature-registry error: ${error.message}`);
       res.status(500).json({ success: false, error: 'Erreur chargement feature registry' });
+    }
+  }
+);
+
+router.post(
+  '/supervision/run-check',
+  verifyJWT,
+  requirePermissionOrRole({ permissionKey: 'monitoring.manage', allowedRoles: ['admin', 'pdg', 'ceo'] }),
+  async (_req: AuthenticatedRequest, res: Response) => {
+    try {
+      const summary = await surveillance24x7Service.runOnce('manual_api');
+
+      if (!summary) {
+        res.status(409).json({
+          success: false,
+          error: 'Un cycle de surveillance est deja en cours. Reessayez dans quelques secondes.',
+        });
+        return;
+      }
+
+      res.status(200).json({ success: true, data: summary });
+    } catch (error: any) {
+      logger.error(`[Core] supervision/run-check error: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur execution check supervision' });
     }
   }
 );

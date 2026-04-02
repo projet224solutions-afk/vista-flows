@@ -21,6 +21,7 @@ import { requestLogger } from './middlewares/requestLogger.js';
 import { closeRedis } from './config/redis.js';
 import { jobQueue } from './jobs/jobQueue.js';
 import { metrics } from './services/metrics.service.js';
+import { surveillance24x7Service } from './services/surveillance24x7.service.js';
 
 // Routes TypeScript
 import healthRoutes from './routes/health.routes.js';
@@ -211,6 +212,7 @@ const server = app.listen(env.PORT, async () => {
   // Initialize job queues (non-blocking, graceful failure)
   await jobQueue.init();
   await jobQueue.scheduleRecurring();
+  surveillance24x7Service.start();
 
   logger.info(`✅ Ready to handle requests`);
 });
@@ -221,6 +223,7 @@ const gracefulShutdown = async (signal: string) => {
 
   server.close(async () => {
     logger.info('HTTP server closed');
+    surveillance24x7Service.stop();
     await jobQueue.shutdown();
     await closeRedis();
     await metrics.flushToDB();

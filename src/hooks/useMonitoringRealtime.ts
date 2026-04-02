@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { healthCheckEngine } from '@/services/monitoring/HealthCheckEngine';
+import { backendFetch } from '@/services/backendApi';
 
 export interface MonitoringAlert {
   id: string;
@@ -102,7 +103,15 @@ export function useMonitoringRealtime() {
   }, []);
 
   const forceHealthCheck = useCallback(async () => {
-    await healthCheckEngine.runAllChecks();
+    const response = await backendFetch('/api/core/supervision/run-check', {
+      method: 'POST',
+    });
+
+    // Fallback client-side check if backend trigger is unavailable.
+    if (!response.success) {
+      await healthCheckEngine.runAllChecks();
+    }
+
     await loadData();
   }, [loadData]);
 
