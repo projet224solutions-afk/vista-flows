@@ -112,6 +112,7 @@ let mainQueue: Queue | null = null;
 let criticalQueue: Queue | null = null;
 let mainWorker: Worker | null = null;
 let criticalWorker: Worker | null = null;
+let recurringTimers: Array<ReturnType<typeof setInterval>> = [];
 
 function createQueue(name: string): Queue | null {
   try {
@@ -416,6 +417,18 @@ registerHandler('fx.african-rates-refresh', async () => {
   try {
     const functionUrl = `${env.SUPABASE_URL}/functions/v1/african-fx-collect`;
 
+    const preferredAfricanBankSources = [
+      'https://www.bcrg-guinee.org',
+      'https://www.bceao.int',
+      'https://www.beac.int',
+      'https://www.sarb.co.za',
+      'https://www.cbn.gov.ng',
+      'https://www.bankofghana.org',
+      'https://www.bou.or.ug',
+      'https://www.ecobank.com',
+      'https://www.orabank.net',
+    ];
+
     const response = await fetch(functionUrl, {
       method: 'POST',
       headers: {
@@ -423,7 +436,11 @@ registerHandler('fx.african-rates-refresh', async () => {
         apikey: env.SUPABASE_SERVICE_ROLE_KEY,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ source: 'backend_hourly_job' }),
+      body: JSON.stringify({
+        source: 'backend_hourly_job',
+        strict_african_sources: true,
+        preferred_source_urls: preferredAfricanBankSources,
+      }),
     });
 
     const raw = await response.text();
@@ -566,8 +583,33 @@ export const jobQueue = {
    * Schedule recurring jobs. Call once at startup.
    */
   async scheduleRecurring(): Promise<void> {
+    if (!env.ENABLE_CRON_JOBS) {
+      logger.info('Recurring jobs disabled by ENABLE_CRON_JOBS=false');
+      return;
+    }
+
     if (!REDIS_JOBS_ENABLED) {
-      logger.info('Recurring jobs disabled: Redis queue layer is off');
+      logger.info('Recurring jobs using in-process fallback scheduler (Redis disabled)');
+
+      const everyHour = 3600000;
+      const every6Hours = 6 * 3600000;
+      const every24Hours = 24 * 3600000;
+
+      // Trigger FX immediately on startup to avoid missing today's first rate.
+      this.enqueue('fx.african-rates-refresh', {}).catch(() => {});
+
+      recurringTimers.push(setInterval(() => this.enqueue('idempotency.cleanup', {}).catch(() => {}), everyHour));
+      recurringTimers.push(setInterval(() => this.enqueue('orders.stuck-alert', {}).catch(() => {}), everyHour));
+      recurringTimers.push(setInterval(() => this.enqueue('payment-links.cleanup-expired', {}).catch(() => {}), everyHour));
+      recurringTimers.push(setInterval(() => this.enqueue('fx.african-rates-refresh', {}).catch(() => {}), everyHour));
+
+      recurringTimers.push(setInterval(() => this.enqueue('escrow.auto-release', {}).catch(() => {}), every6Hours));
+      recurringTimers.push(setInterval(() => this.enqueue('subscriptions.expire-check', {}).catch(() => {}), every6Hours));
+      recurringTimers.push(setInterval(() => this.enqueue('pos.reconcile', {}).catch(() => {}), every6Hours));
+
+      recurringTimers.push(setInterval(() => this.enqueue('recommendations.recalculate', {}).catch(() => {}), every24Hours));
+
+      logger.info('✅ In-process recurring jobs scheduled');
       return;
     }
 
@@ -602,6 +644,9 @@ export const jobQueue = {
    * Graceful shutdown.
    */
   async shutdown(): Promise<void> {
+    recurringTimers.forEach((timer) => clearInterval(timer));
+    recurringTimers = [];
+
     await mainWorker?.close();
     await criticalWorker?.close();
     await mainQueue?.close();

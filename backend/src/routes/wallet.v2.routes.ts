@@ -47,6 +47,48 @@ function isFxSuccessStatus(status: string | null | undefined): boolean {
   return normalized === 'success' || normalized === 'completed' || normalized === 'ok';
 }
 
+const AFRICAN_BANK_DOMAIN_HINTS = [
+  'bcrg-guinee.org',
+  'bceao.int',
+  'beac.int',
+  'cbn.gov.ng',
+  'sarb.co.za',
+  'bankofghana',
+  'bankofuganda',
+  'banquecentrale',
+  'centralbank',
+  'afreximbank',
+  'afdb.org',
+  'ecobank',
+  'orabank',
+  'bank',
+  'banque',
+  'banco',
+];
+
+function isAfricanBankSourceUrl(sourceUrl: string | null | undefined): boolean {
+  if (!sourceUrl) return false;
+  try {
+    const url = new URL(sourceUrl);
+    const host = url.hostname.toLowerCase();
+    const path = url.pathname.toLowerCase();
+
+    const hasBankHint = AFRICAN_BANK_DOMAIN_HINTS.some((hint) => host.includes(hint) || path.includes(hint));
+    if (!hasBankHint) return false;
+
+    const africanTlds = [
+      '.dz', '.ao', '.bj', '.bw', '.bf', '.bi', '.cm', '.cv', '.cf', '.td', '.km', '.cg', '.cd', '.ci', '.dj', '.eg', '.gq', '.er',
+      '.sz', '.et', '.ga', '.gm', '.gh', '.gn', '.gw', '.ke', '.ls', '.lr', '.ly', '.mg', '.mw', '.ml', '.mr', '.mu', '.ma', '.mz',
+      '.na', '.ne', '.ng', '.rw', '.st', '.sn', '.sc', '.sl', '.so', '.za', '.ss', '.sd', '.tz', '.tg', '.tn', '.ug', '.zm', '.zw',
+      '.int', '.org', '.com',
+    ];
+
+    return africanTlds.some((tld) => host.endsWith(tld));
+  } catch {
+    return false;
+  }
+}
+
 async function requireValidTransactionPin(userId: string, pin: unknown): Promise<{ ok: boolean; error?: string; lockedUntil?: string | null }> {
   const walletPinState = await getWalletPinState(userId);
   const pinEnabled = Boolean(walletPinState?.pin_enabled);
@@ -978,7 +1020,10 @@ router.get(
 
       const bankSources = Array.from(new Map(
         runRows
-          .filter((row) => row.source_url && (row.source_type === 'official_html' || row.source_type === 'official_fixed_parity' || row.source_type === 'official_cross'))
+          .filter((row) => row.source_url
+            && (row.source_type === 'official_html' || row.source_type === 'official_fixed_parity' || row.source_type === 'official_cross')
+            && isAfricanBankSourceUrl(row.source_url)
+          )
           .map((row) => [row.source_url, {
             source: row.source,
             source_type: row.source_type,
@@ -987,7 +1032,9 @@ router.get(
           }])
       ).values());
 
-        const todaysHistory = (todayRates || []).map((rate: any) => ({
+        const todaysHistory = (todayRates || [])
+        .filter((rate: any) => isAfricanBankSourceUrl(rate?.source_url))
+        .map((rate: any) => ({
           from_currency: rate.from_currency,
           to_currency: rate.to_currency,
           rate: rate.rate,

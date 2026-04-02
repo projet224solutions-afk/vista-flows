@@ -20,6 +20,7 @@ import {
 } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { useFinanceData } from '@/hooks/useFinanceData';
+import { backendFetch } from '@/services/backendApi';
 import PlatformRevenueOverview from './PlatformRevenueOverview';
 
 const PDGRevenueAnalytics = lazy(() => import('./PDGRevenueAnalytics'));
@@ -33,6 +34,32 @@ export default function PDGFinance() {
   const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [showWalletsDialog, setShowWalletsDialog] = useState(false);
+  const [fxHealth, setFxHealth] = useState<any>(null);
+  const [fxLoading, setFxLoading] = useState(false);
+
+  const visibleBankSources = (() => {
+    if (Array.isArray(fxHealth?.bank_sources) && fxHealth.bank_sources.length > 0) {
+      return fxHealth.bank_sources;
+    }
+    if (!Array.isArray(fxHealth?.today_history)) {
+      return [];
+    }
+
+    const byUrl = new Map<string, { source: string | null; source_type: string | null; source_url: string | null; last_seen_at: string | null }>();
+    for (const rate of fxHealth.today_history) {
+      const url = rate?.source_url;
+      if (!url) continue;
+      if (!byUrl.has(url)) {
+        byUrl.set(url, {
+          source: null,
+          source_type: rate?.source_type || null,
+          source_url: url,
+          last_seen_at: rate?.retrieved_at || null,
+        });
+      }
+    }
+    return Array.from(byUrl.values());
+  })();
 
   // Auto-rafraîchir les données au montage du composant
   useEffect(() => {
@@ -52,6 +79,26 @@ export default function PDGFinance() {
       });
     }
   }, [loading, stats, transactions]);
+
+  const loadFxHealth = async () => {
+    try {
+      setFxLoading(true);
+      const response = await backendFetch('/api/v2/wallet/admin/fx-health', { method: 'GET' });
+      if (!response.success) {
+        throw new Error(response.error || 'Impossible de récupérer les données FX');
+      }
+      setFxHealth(response.data || null);
+    } catch (error) {
+      console.error('Erreur chargement FX health:', error);
+      setFxHealth(null);
+    } finally {
+      setFxLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFxHealth();
+  }, []);
 
   const chartConfig = {
     amount: { label: "Montant", color: "hsl(var(--primary))" },
@@ -211,6 +258,108 @@ export default function PDGFinance() {
       </TabsContent>
 
       <TabsContent value="transactions" className="space-y-8">
+      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            Santé FX (devises)
+          </CardTitle>
+          <CardDescription>Taux actuel, historique du jour et sources consultées</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {fxLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              Chargement des données FX...
+            </div>
+          ) : !fxHealth ? (
+            <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Taux actuel</p>
+                  <p className="text-lg font-semibold">
+                    {typeof fxHealth.current_rate?.rate === 'number'
+                      ? fxHealth.current_rate.rate.toLocaleString(undefined, { maximumFractionDigits: 6 })
+                      : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {fxHealth.current_rate
+                      ? `${fxHealth.current_rate.from_currency}/${fxHealth.current_rate.to_currency}`
+                      : 'Paire indisponible'}
+                  </p>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Âge du taux</p>
+                  <p className="text-lg font-semibold">
+                    {typeof fxHealth.age_minutes === 'number' ? `${fxHealth.age_minutes} min` : 'N/A'}
+                  </p>
+                  <Badge variant={fxHealth.is_stale ? 'destructive' : 'secondary'} className="mt-1">
+                    {fxHealth.is_stale ? 'Stale' : 'Fresh'}
+                  </Badge>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <p className="text-xs text-muted-foreground">Sources bancaires visitées</p>
+                  <p className="text-lg font-semibold">{visibleBankSources.length}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Collecte du backend</p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border p-3">
+                <p className="text-sm font-medium mb-2">Sources bancaires visitées (URLs)</p>
+                {visibleBankSources.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Aucune source bancaire trouvée.</p>
+                ) : (
+                  <div className="max-h-44 overflow-auto space-y-1">
+                    {visibleBankSources.slice(0, 12).map((source, idx) => (
+                      <div key={`${source.source_url || 'na'}-${idx}`} className="text-xs rounded border p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium truncate">{source.source || source.source_type || 'Source bancaire'}</span>
+                          <span className="text-muted-foreground">
+                            {source.last_seen_at ? new Date(source.last_seen_at).toLocaleTimeString('fr-FR') : 'Heure N/A'}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-muted-foreground break-all">
+                          {source.source_url || 'URL indisponible'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border p-3">
+                <p className="text-sm font-medium mb-2">Historique du taux (aujourd'hui)</p>
+                {!fxHealth.today_history || fxHealth.today_history.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Aucun taux collecté aujourd'hui.</p>
+                ) : (
+                  <div className="max-h-64 overflow-auto space-y-1">
+                    {fxHealth.today_history.slice(0, 20).map((rate, idx) => (
+                      <div key={`${rate.retrieved_at || 'na'}-${idx}`} className="text-xs rounded border p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium">{rate.from_currency}/{rate.to_currency}</span>
+                          <span>
+                            {typeof rate.rate === 'number'
+                              ? rate.rate.toLocaleString(undefined, { maximumFractionDigits: 6 })
+                              : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-muted-foreground">
+                          {rate.retrieved_at ? new Date(rate.retrieved_at).toLocaleTimeString('fr-FR') : 'Heure N/A'}
+                          {' • '}
+                          {rate.source_url || rate.source_type || 'Source N/A'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 group">
