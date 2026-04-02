@@ -320,6 +320,89 @@ export default function PDGFinance() {
 
       <TabsContent value="overview" className="space-y-6">
         <PlatformRevenueOverview />
+        
+        {/* FX Commission Management Card */}
+        <Card className="border-border/40 bg-gradient-to-br from-blue-500/5 to-purple-500/5 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <DollarSign className="w-5 h-5 text-blue-500" />
+              Gestion Commission FX
+            </CardTitle>
+            <CardDescription>Gérez le taux de commission appliqué sur les conversions de devises</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {fxLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Chargement données FX...
+              </div>
+            ) : !fxHealth ? (
+              <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-lg border border-blue-200/50 bg-blue-50/30 p-3">
+                  <p className="text-xs text-muted-foreground font-medium">Commission Actuelle</p>
+                  <p className="text-2xl font-bold text-blue-600 mt-1">
+                    {typeof fxHealth.current_rate?.margin === 'number'
+                      ? `${(fxHealth.current_rate.margin * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Appliquée sur tous les taux de change
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-purple-200/50 bg-purple-50/30 p-3">
+                  <p className="text-xs text-muted-foreground font-medium">Taux Actuel</p>
+                  <p className="text-lg font-semibold mt-1">
+                    {fxHealth.current_rate
+                      ? `${fxHealth.current_rate.from_currency}/${fxHealth.current_rate.to_currency}`
+                      : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {typeof fxHealth.current_rate?.rate === 'number'
+                      ? fxHealth.current_rate.rate.toLocaleString(undefined, { maximumFractionDigits: 6 })
+                      : 'N/A'}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-emerald-200/50 bg-emerald-50/30 p-3">
+                  <p className="text-xs text-muted-foreground font-medium">Taux Final (avec commission)</p>
+                  <p className="text-lg font-semibold mt-1 text-emerald-600">
+                    {typeof fxHealth.current_rate?.final_rate_usd === 'number'
+                      ? fxHealth.current_rate.final_rate_usd.toLocaleString(undefined, { maximumFractionDigits: 6 })
+                      : 'N/A'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {formatRateAgeCountdown(liveRateAgeSeconds)}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex gap-2 pt-2">
+              <Button 
+                type="button" 
+                variant="default" 
+                className="gap-2 flex-1"
+                onClick={openFxMarginDialog}
+                disabled={marginUpdateLoading || !fxHealth}
+              >
+                <DollarSign className="w-4 h-4" />
+                {marginUpdateLoading ? 'Mise à jour...' : 'Modifier Commission'}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="gap-2"
+                onClick={loadFxHealth}
+                disabled={fxLoading}
+              >
+                <RefreshCw className={`w-4 h-4 ${fxLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </TabsContent>
 
       <TabsContent value="transfer-limits" className="space-y-6">
@@ -385,10 +468,28 @@ export default function PDGFinance() {
       <TabsContent value="transactions" className="space-y-8">
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            Santé FX (devises)
-          </CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <CardTitle className="text-xl">Santé FX (devises)</CardTitle>
+              {typeof fxHealth?.current_rate?.margin === 'number' && (
+                <Badge variant="secondary" className="ml-2">
+                  Commission: {(fxHealth.current_rate.margin * 100).toFixed(2)}%
+                </Badge>
+              )}
+            </div>
+            <Button 
+              type="button" 
+              variant="default" 
+              className="gap-2"
+              onClick={openFxMarginDialog}
+              disabled={marginUpdateLoading || !fxHealth}
+              size="sm"
+            >
+              <DollarSign className="w-4 h-4" />
+              {marginUpdateLoading ? 'Mise à jour...' : 'Modifier Commission'}
+            </Button>
+          </div>
           <CardDescription>Taux actuel, historique du jour et sources consultées</CardDescription>
           <div className="flex flex-wrap gap-2 pt-2">
             <Button type="button" variant="outline" className="gap-2" onClick={loadConversionStats} disabled={conversionStatsLoading}>
@@ -398,10 +499,6 @@ export default function PDGFinance() {
             <Button type="button" variant="secondary" className="gap-2" onClick={checkRateChangeAlert} disabled={alertCheckLoading}>
               <AlertTriangle className="w-4 h-4" />
               {alertCheckLoading ? 'Verification...' : 'Alerte changement < 1h'}
-            </Button>
-            <Button type="button" variant="default" className="gap-2" onClick={openFxMarginDialog} disabled={marginUpdateLoading}>
-              <DollarSign className="w-4 h-4" />
-              {marginUpdateLoading ? 'Mise a jour...' : 'Ajouter commission au taux'}
             </Button>
           </div>
         </CardHeader>

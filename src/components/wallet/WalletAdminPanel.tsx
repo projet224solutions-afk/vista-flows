@@ -442,13 +442,18 @@ export function WalletAdminPanel() {
       {/* Liste des wallets */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                Monitoring Taux de Change
-              </CardTitle>
-              <CardDescription>
+                <CardTitle>Monitoring Taux de Change</CardTitle>
+                {fxHealth && typeof fxHealth.current_rate?.margin === 'number' && (
+                  <Badge variant="secondary">
+                    Commission: {(fxHealth.current_rate.margin * 100).toFixed(2)}%
+                  </Badge>
+                )}
+              </div>
+              <CardDescription className="mt-1">
                 Surveillance horaire des taux bancaires africains pour la conversion wallet et marketplace
               </CardDescription>
             </div>
@@ -461,7 +466,7 @@ export function WalletAdminPanel() {
                 className="gap-2"
               >
                 <DollarSign className="w-4 h-4" />
-                {fxMarginUpdating ? 'Mise a jour...' : 'Ajouter commission'}
+                {fxMarginUpdating ? 'Mise a jour...' : 'Modifier commission'}
               </Button>
               <Button
                 variant="outline"
