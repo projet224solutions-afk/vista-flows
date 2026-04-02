@@ -10,6 +10,8 @@
     "dev:all": "concurrently -n FRONT,API -c blue,green \"npm:dev\" \"npm:dev:backend\"",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "vercel:whoami": "npx --yes vercel whoami",
+    "deploy:vercel": "npm run build && npx --yes vercel deploy --prod",
     "build:obfuscate": "cross-env OBFUSCATE=true node --max-old-space-size=8192 node_modules/vite/bin/vite.js build",
     "lint": "eslint .",
     "preview": "vite preview",

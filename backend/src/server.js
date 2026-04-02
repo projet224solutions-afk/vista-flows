@@ -26,6 +26,8 @@ import internalRoutes from './routes/internal.routes.js';
 import healthRoutes from './routes/health.routes.js';
 import walletRoutes from './routes/wallet.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
+import paymentLinksRoutesV3 from '../dist/routes/paymentLinks.routes.js';
+import edgePaymentsRoutesV3 from '../dist/routes/edge-functions/payments.routes.js';
 
 // Configuration
 dotenv.config();
@@ -118,6 +120,10 @@ app.use('/api/analytics', analyticsRoutes);
 // Wallet routes (protégé par JWT)
 app.use('/api/wallet', walletRoutes);
 
+// Payment and FX routes from the compiled v3 backend
+app.use('/api/payment-links', paymentLinksRoutesV3);
+app.use('/edge-functions/payments', edgePaymentsRoutesV3);
+
 // Internal API (protégé par clé interne)
 app.use('/internal', internalRoutes);
 
@@ -143,29 +149,36 @@ app.use(errorHandler);
 
 // ==================== SERVEUR ====================
 
-const server = app.listen(PORT, () => {
-  logger.info(`🚀 Backend Node.js started on port ${PORT}`);
-  logger.info(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`🔐 CORS Origins: ${process.env.CORS_ORIGINS || 'localhost:5173'}`);
-  logger.info(`✅ Ready to handle requests`);
-});
+const isVercelRuntime = Boolean(process.env.VERCEL);
+let server = null;
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    logger.info('HTTP server closed');
-    process.exit(0);
+if (isVercelRuntime) {
+  logger.info('⚡ Backend running in Vercel serverless mode');
+} else {
+  server = app.listen(PORT, () => {
+    logger.info(`🚀 Backend Node.js started on port ${PORT}`);
+    logger.info(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`🔐 CORS Origins: ${process.env.CORS_ORIGINS || 'localhost:5173'}`);
+    logger.info(`✅ Ready to handle requests`);
   });
-});
 
-process.on('SIGINT', () => {
-  logger.info('SIGINT signal received: closing HTTP server');
-  server.close(() => {
-    logger.info('HTTP server closed');
-    process.exit(0);
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    logger.info('SIGTERM signal received: closing HTTP server');
+    server?.close(() => {
+      logger.info('HTTP server closed');
+      process.exit(0);
+    });
   });
-});
+
+  process.on('SIGINT', () => {
+    logger.info('SIGINT signal received: closing HTTP server');
+    server?.close(() => {
+      logger.info('HTTP server closed');
+      process.exit(0);
+    });
+  });
+}
 
 // Gestion erreurs non catchées
 process.on('unhandledRejection', (reason, promise) => {

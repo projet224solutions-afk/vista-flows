@@ -9,6 +9,41 @@ const stripe = process.env.STRIPE_SECRET_KEY
     })
   : null;
 
+const DEFAULT_FEES: Record<string, number> = {
+  commission_achats: 5,
+};
+
+const FEE_KEY_ALIASES: Record<string, string[]> = {
+  commission_achats: ["purchase_commission_percentage"],
+};
+
+async function getPdgFeeRatePercent(settingKey: string): Promise<number> {
+  const defaultValue = DEFAULT_FEES[settingKey] ?? 0;
+  const candidateKeys = [settingKey, ...(FEE_KEY_ALIASES[settingKey] || [])];
+  try {
+    for (const key of candidateKeys) {
+      const { data, error } = await supabaseAdmin
+        .from("pdg_settings")
+        .select("setting_value")
+        .eq("setting_key", key)
+        .maybeSingle();
+
+      if (error || !data) continue;
+
+      const raw = data.setting_value;
+      const rate = typeof raw === "object" && raw !== null && "value" in (raw as any)
+        ? Number((raw as any).value)
+        : Number(raw);
+
+      if (Number.isFinite(rate) && rate >= 0) return rate;
+    }
+
+    return defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
 function getBearerToken(req: any): string | null {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith("Bearer ")) return null;
@@ -81,12 +116,8 @@ router.post("/create-paypal-order", validateBearerToken, async (req: any, res: a
       return res.status(404).json({ success: false, error: "Seller not found" });
     }
 
-    // Get PDG fee rate via RPC
-    const { data: feeData } = await supabaseAdmin.rpc("getPdgFeeRate", {
-      p_amount: amount,
-    });
-
-    const commissionRate = feeData?.fee_rate || 0.025; // Default 2.5%
+    const commissionRatePercent = await getPdgFeeRatePercent("commission_achats");
+    const commissionRate = commissionRatePercent / 100;
     const commissionAmount = amount * commissionRate;
 
     // Get PayPal access token
@@ -180,12 +211,8 @@ router.post("/marketplace-escrow-payment", validateBearerToken, async (req: any,
       .eq("user_id", req.user.id)
       .single();
 
-    // Get PDG fee rate
-    const { data: feeData } = await supabaseAdmin.rpc("getPdgFeeRate", {
-      p_amount: amount,
-    });
-
-    const commissionRate = feeData?.fee_rate || 0.025;
+    const commissionRatePercent = await getPdgFeeRatePercent("commission_achats");
+    const commissionRate = commissionRatePercent / 100;
     const commissionAmount = amount * commissionRate;
     const totalAmount = amount + commissionAmount;
 
@@ -261,12 +288,8 @@ router.post("/stripe-marketplace-payment", validateBearerToken, async (req: any,
       .eq("user_id", req.user.id)
       .single();
 
-    // Get PDG fee rate
-    const { data: feeData } = await supabaseAdmin.rpc("getPdgFeeRate", {
-      p_amount: amount,
-    });
-
-    const commissionRate = feeData?.fee_rate || 0.025;
+    const commissionRatePercent = await getPdgFeeRatePercent("commission_achats");
+    const commissionRate = commissionRatePercent / 100;
     const commissionAmount = amount * commissionRate;
     const totalAmount = amount + commissionAmount;
 

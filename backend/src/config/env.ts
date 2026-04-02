@@ -24,6 +24,8 @@ function optionalEnvInt(key: string, defaultValue: number): number {
   return val ? parseInt(val, 10) : defaultValue;
 }
 
+const defaultUploadPath = process.env.VERCEL ? '/tmp/uploads' : './uploads';
+
 export const env = {
   // Server
   NODE_ENV: optionalEnv('NODE_ENV', 'development'),
@@ -58,7 +60,7 @@ export const env = {
 
   // Uploads
   MAX_FILE_SIZE: optionalEnvInt('MAX_FILE_SIZE', 10 * 1024 * 1024),
-  UPLOAD_PATH: optionalEnv('UPLOAD_PATH', './uploads'),
+  UPLOAD_PATH: optionalEnv('UPLOAD_PATH', defaultUploadPath),
 
   // Logging
   LOG_LEVEL: optionalEnv('LOG_LEVEL', 'info'),

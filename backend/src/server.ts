@@ -206,8 +206,10 @@ app.use(errorHandler);
 
 // ==================== SERVER ====================
 
-const server = app.listen(env.PORT, async () => {
-  logger.info(`🚀 Backend v3 (Phase 6) started on port ${env.PORT}`);
+const isVercelRuntime = Boolean(process.env.VERCEL);
+let server: ReturnType<typeof app.listen> | null = null;
+
+async function bootstrapBackgroundServices() {
   logger.info(`📍 Environment: ${env.NODE_ENV}`);
   logger.info(`🔐 CORS Origins: ${env.corsOrigins.join(', ')}`);
 
@@ -217,11 +219,25 @@ const server = app.listen(env.PORT, async () => {
   surveillance24x7Service.start();
 
   logger.info(`✅ Ready to handle requests`);
-});
+}
+
+if (isVercelRuntime) {
+  logger.info('⚡ Backend v3 running in Vercel serverless mode');
+} else {
+  server = app.listen(env.PORT, async () => {
+    logger.info(`🚀 Backend v3 (Phase 6) started on port ${env.PORT}`);
+    await bootstrapBackgroundServices();
+  });
+}
 
 // Graceful shutdown
 const gracefulShutdown = async (signal: string) => {
   logger.info(`${signal} received: shutting down gracefully`);
+
+  if (!server) {
+    process.exit(0);
+    return;
+  }
 
   server.close(async () => {
     logger.info('HTTP server closed');
@@ -241,6 +257,7 @@ const gracefulShutdown = async (signal: string) => {
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 process.on('unhandledRejection', (reason) => {
   logger.error('Unhandled Rejection:', reason);
   metrics.increment('errors.unhandled_rejection');

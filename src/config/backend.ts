@@ -3,12 +3,20 @@
  * URL du backend Node.js (Auth Gateway) déployé sur AWS Lambda
  */
 
+import { getPrimaryRegion } from './regions';
+
+const DEFAULT_PUBLIC_BACKEND_URL = getPrimaryRegion().endpoints.api;
+
 function normalizeUrl(url: string): string {
   return url.replace(/\/$/, '');
 }
 
 function isLoopbackHttpUrl(url: string): boolean {
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(url);
+}
+
+function isPublic224Host(hostname: string): boolean {
+  return /(^|\.)224solution\.net$/i.test(hostname);
 }
 
 function resolveBackendBaseUrl(): string {
@@ -43,8 +51,11 @@ function resolveBackendBaseUrl(): string {
       typeof window !== 'undefined' &&
       !/^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname)
     ) {
-      console.warn('[backendConfig] URL backend locale ignorée en production', { configuredUrl });
-      return '';
+      console.warn('[backendConfig] URL backend locale ignorée en production; fallback API publique', {
+        configuredUrl,
+        fallback: DEFAULT_PUBLIC_BACKEND_URL,
+      });
+      return normalizeUrl(DEFAULT_PUBLIC_BACKEND_URL);
     }
 
     return normalizeUrl(configuredUrl);
@@ -57,6 +68,7 @@ function resolveBackendBaseUrl(): string {
 
   if (typeof window !== 'undefined') {
     const origin = window.location.origin;
+    const hostname = window.location.hostname;
 
     // Native WebViews (Capacitor iOS: capacitor://localhost, Android: http://localhost)
     // must NOT use the local WebView origin as the API base — it doesn't route to the backend.
@@ -69,13 +81,18 @@ function resolveBackendBaseUrl(): string {
       return '';
     }
 
-    // Standard HTTPS origin (web deployment) — use relative API calls.
+    // Public web deployment: prefer the dedicated API host instead of the SPA origin.
+    if (isPublic224Host(hostname)) {
+      return normalizeUrl(DEFAULT_PUBLIC_BACKEND_URL);
+    }
+
+    // Standard HTTPS origin (custom deployments with same-origin API) — use relative API calls.
     if (/^https?:\/\//i.test(origin)) {
       return normalizeUrl(origin);
     }
   }
 
-  return '';
+  return normalizeUrl(DEFAULT_PUBLIC_BACKEND_URL);
 }
 
 export const backendConfig = {

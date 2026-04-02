@@ -29,23 +29,33 @@ const DEFAULT_FEES: Record<string, number> = {
   commission_services: 0.5,
 };
 
+const FEE_KEY_ALIASES: Record<string, string[]> = {
+  commission_achats: ['purchase_commission_percentage'],
+  commission_services: ['service_commissions'],
+};
+
 async function getPdgFeeRate(settingKey: string): Promise<number> {
   const defaultValue = DEFAULT_FEES[settingKey] ?? 0;
+  const candidateKeys = [settingKey, ...(FEE_KEY_ALIASES[settingKey] || [])];
   try {
-    const { data, error } = await supabaseAdmin
-      .from('pdg_settings')
-      .select('setting_value')
-      .eq('setting_key', settingKey)
-      .maybeSingle();
+    for (const key of candidateKeys) {
+      const { data, error } = await supabaseAdmin
+        .from('pdg_settings')
+        .select('setting_value')
+        .eq('setting_key', key)
+        .maybeSingle();
 
-    if (error || !data) return defaultValue;
+      if (error || !data) continue;
 
-    const raw = data.setting_value;
-    const rate = typeof raw === 'object' && raw !== null && 'value' in (raw as any)
-      ? Number((raw as any).value)
-      : Number(raw);
+      const raw = data.setting_value;
+      const rate = typeof raw === 'object' && raw !== null && 'value' in (raw as any)
+        ? Number((raw as any).value)
+        : Number(raw);
 
-    return isNaN(rate) || rate < 0 ? defaultValue : rate;
+      if (!isNaN(rate) && rate >= 0) return rate;
+    }
+
+    return defaultValue;
   } catch {
     return defaultValue;
   }

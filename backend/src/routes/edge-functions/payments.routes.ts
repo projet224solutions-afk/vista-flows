@@ -27,6 +27,8 @@ const stripe = process.env.STRIPE_SECRET_KEY
     })
   : null;
 
+const BCRG_OFFICIAL_URL = "https://www.bcrg-guinee.org";
+
 // ============ POST /payment/stripe/intent ============
 /**
  * Create Stripe Payment Intent
@@ -725,7 +727,17 @@ router.post("/african-fx-collect", async (req: Request, res: Response) => {
         apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ source: "backend_endpoint_manual_trigger" }),
+      body: JSON.stringify({
+        source: "backend_endpoint_manual_trigger",
+        strict_african_sources: true,
+        include_all_african_banks: true,
+        primary_source_url: BCRG_OFFICIAL_URL,
+        preferred_currency_pairs: [
+          { from: "USD", to: "GNF" },
+          { from: "EUR", to: "GNF" },
+        ],
+        bcrg_source_urls: [BCRG_OFFICIAL_URL],
+      }),
     });
 
     const raw = await response.text();
@@ -758,20 +770,47 @@ router.get("/african-fx-query", async (req: Request, res: Response) => {
   try {
     const base = String((req.query as any)?.base || "USD").toUpperCase();
     const quote = String((req.query as any)?.quote || "XOF").toUpperCase();
+    const pairInvolvesGNF = base === "GNF" || quote === "GNF";
+    const todayStartUtc = new Date();
+    todayStartUtc.setUTCHours(0, 0, 0, 0);
+    const todayIso = todayStartUtc.toISOString();
 
     if (base === quote) {
       return res.json({ success: true, base, quote, rate: 1, source: "identity", retrieved_at: new Date().toISOString() });
     }
 
-    const { data: direct } = await supabase
+    const directQueryBase = supabase
       .from("currency_exchange_rates")
       .select("rate, margin, source_type, source_url, retrieved_at")
       .eq("from_currency", base)
       .eq("to_currency", quote)
       .eq("is_active", true)
-      .order("retrieved_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("retrieved_at", { ascending: false });
+
+    let direct: any = null;
+    if (pairInvolvesGNF) {
+      const { data } = await directQueryBase
+        .ilike("source_url", "%bcrg-guinee.org%")
+        .gte("retrieved_at", todayIso)
+        .limit(1)
+        .maybeSingle();
+      direct = data;
+    }
+
+    if (!direct && pairInvolvesGNF) {
+      const { data } = await directQueryBase
+        .ilike("source_url", "%bcrg-guinee.org%")
+        .limit(1)
+        .maybeSingle();
+      direct = data;
+    }
+
+    if (!direct) {
+      const { data } = await directQueryBase
+        .limit(1)
+        .maybeSingle();
+      direct = data;
+    }
 
     if (direct?.rate && Number(direct.rate) > 0) {
       return res.json({
@@ -786,15 +825,38 @@ router.get("/african-fx-query", async (req: Request, res: Response) => {
       });
     }
 
-    const { data: inverse } = await supabase
+    const inverseQueryBase = supabase
       .from("currency_exchange_rates")
       .select("rate, margin, source_type, source_url, retrieved_at")
       .eq("from_currency", quote)
       .eq("to_currency", base)
       .eq("is_active", true)
-      .order("retrieved_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("retrieved_at", { ascending: false });
+
+    let inverse: any = null;
+    if (pairInvolvesGNF) {
+      const { data } = await inverseQueryBase
+        .ilike("source_url", "%bcrg-guinee.org%")
+        .gte("retrieved_at", todayIso)
+        .limit(1)
+        .maybeSingle();
+      inverse = data;
+    }
+
+    if (!inverse && pairInvolvesGNF) {
+      const { data } = await inverseQueryBase
+        .ilike("source_url", "%bcrg-guinee.org%")
+        .limit(1)
+        .maybeSingle();
+      inverse = data;
+    }
+
+    if (!inverse) {
+      const { data } = await inverseQueryBase
+        .limit(1)
+        .maybeSingle();
+      inverse = data;
+    }
 
     if (inverse?.rate && Number(inverse.rate) > 0) {
       return res.json({

@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const logLevel = process.env.LOG_LEVEL || 'info';
-const isLambda = !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+const isServerlessRuntime = !!process.env.AWS_LAMBDA_FUNCTION_NAME || !!process.env.VERCEL;
 
 // Format personnalisé
 const customFormat = winston.format.combine(
@@ -39,7 +39,7 @@ const transports = [
   }),
 ];
 
-if (!isLambda) {
+if (!isServerlessRuntime) {
   transports.push(
     new winston.transports.File({
       filename: path.join(__dirname, '../../logs/backend.log'),

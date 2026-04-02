@@ -344,23 +344,29 @@ const PosStripePaymentSchema = z.object({
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// Récupère le taux de commission depuis pdg_settings (clé: commission_achats)
+// Récupère le taux de commission depuis pdg_settings (clé principale + alias)
 // Fallback: 2.5% si non configuré
 async function getPosCommissionRate(): Promise<number> {
   const DEFAULT_RATE = 2.5;
+  const candidateKeys = ['commission_achats', 'purchase_commission_percentage'];
   try {
-    const { data } = await supabaseAdmin
-      .from('pdg_settings')
-      .select('setting_value')
-      .eq('setting_key', 'commission_achats')
-      .maybeSingle();
-    if (!data) return DEFAULT_RATE;
-    const raw = data.setting_value;
-    const rate = typeof raw === 'object' && raw !== null && 'value' in (raw as any)
-      ? Number((raw as any).value)
-      : Number(raw);
-    if (isNaN(rate) || rate < 0 || rate > 100) return DEFAULT_RATE;
-    return rate;
+    for (const key of candidateKeys) {
+      const { data } = await supabaseAdmin
+        .from('pdg_settings')
+        .select('setting_value')
+        .eq('setting_key', key)
+        .maybeSingle();
+
+      if (!data) continue;
+
+      const raw = data.setting_value;
+      const rate = typeof raw === 'object' && raw !== null && 'value' in (raw as any)
+        ? Number((raw as any).value)
+        : Number(raw);
+      if (!isNaN(rate) && rate >= 0 && rate <= 100) return rate;
+    }
+
+    return DEFAULT_RATE;
   } catch {
     return DEFAULT_RATE;
   }

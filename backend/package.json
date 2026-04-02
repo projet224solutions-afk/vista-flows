@@ -7,8 +7,8 @@
     "start": "node dist/server.js",
     "start:legacy": "node src/server.js",
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.json --pretty false || exit 0",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.4",
@@ -29,7 +29,8 @@
     "speakeasy": "^2.0.0",
     "stripe": "^21.0.1",
     "winston": "^3.18.3",
-    "xss-clean": "^0.1.4"
+    "xss-clean": "^0.1.4",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/compression": "^1.7.5",

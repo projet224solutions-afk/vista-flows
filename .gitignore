@@ -40,3 +40,5 @@ backendpackage.json.txt
 nano dockerfile.txt
 rc
 upabase
+.vercel
+.env*.local
