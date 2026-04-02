@@ -274,6 +274,131 @@ router.get('/recipient/resolve', verifyJWT, async (req: AuthenticatedRequest, re
 });
 
 /**
+ * POST /api/v2/wallet/transfer/preview
+ * Prévisualisation d'un transfert wallet (frais, solde après, informations destinataire).
+ * Entièrement côté backend Node.js (plus de dépendance Edge Function wallet-transfer).
+ */
+router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const senderId = req.user!.id;
+    const { amount, recipient_id } = req.body || {};
+
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      res.status(400).json({ success: false, error: 'Montant invalide' });
+      return;
+    }
+    if (!recipient_id || typeof recipient_id !== 'string') {
+      res.status(400).json({ success: false, error: 'recipient_id requis' });
+      return;
+    }
+
+    const resolved = await resolveRecipient(recipient_id);
+    if (!resolved) {
+      res.status(404).json({ success: false, error: 'Destinataire introuvable' });
+      return;
+    }
+
+    if (resolved.userId === senderId) {
+      res.status(400).json({ success: false, error: 'Transfert vers soi-même non autorisé' });
+      return;
+    }
+
+    const [{ data: senderWallet, error: senderWalletError }, { data: receiverWallet, error: receiverWalletError }] = await Promise.all([
+      supabaseAdmin
+        .from('wallets')
+        .select('id, balance, currency, user_id')
+        .eq('user_id', senderId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('wallets')
+        .select('id, balance, currency, user_id')
+        .eq('user_id', resolved.userId)
+        .maybeSingle(),
+    ]);
+
+    if (senderWalletError || !senderWallet) {
+      res.status(404).json({ success: false, error: 'Wallet expéditeur introuvable' });
+      return;
+    }
+
+    let recipientWallet = receiverWallet;
+    if (receiverWalletError || !recipientWallet) {
+      const { data: createdWallet, error: createWalletError } = await supabaseAdmin
+        .from('wallets')
+        .insert({ user_id: resolved.userId })
+        .select('id, balance, currency, user_id')
+        .single();
+
+      if (createWalletError || !createdWallet) {
+        res.status(404).json({ success: false, error: 'Wallet destinataire introuvable' });
+        return;
+      }
+
+      recipientWallet = createdWallet as any;
+    }
+
+    const feePercentage = 1;
+    const feeAmount = Math.ceil(amount * (feePercentage / 100));
+    const totalDebit = amount + feeAmount;
+    const senderBalance = Number((senderWallet as any).balance || 0);
+
+    if (senderBalance < totalDebit) {
+      res.status(402).json({ success: false, error: 'Solde insuffisant' });
+      return;
+    }
+
+    const senderCurrency = String((senderWallet as any).currency || 'GNF');
+    const receiverCurrency = String((recipientWallet as any).currency || senderCurrency);
+    const isInternational = senderCurrency !== receiverCurrency;
+    const rateDisplayed = 1;
+    const amountAfterFee = amount;
+    const amountReceived = amountAfterFee;
+
+    res.json({
+      success: true,
+      is_international: isInternational,
+      sender: {
+        id: senderId,
+        name: null,
+        email: req.user?.email || null,
+        phone: null,
+        custom_id: null,
+      },
+      receiver: {
+        id: resolved.userId,
+        name: resolved.displayName,
+        email: resolved.email,
+        phone: resolved.phone,
+        custom_id: resolved.customId || resolved.publicId || null,
+      },
+      receiver_name: resolved.displayName,
+      receiver_email: resolved.email,
+      receiver_phone: resolved.phone,
+      receiver_code: resolved.customId || resolved.publicId || resolved.userId,
+      amount_sent: amount,
+      currency_sent: senderCurrency,
+      fee_percentage: feePercentage,
+      fee_amount: feeAmount,
+      amount_after_fee: amountAfterFee,
+      total_debit: totalDebit,
+      amount_received: amountReceived,
+      currency_received: receiverCurrency,
+      rate_displayed: rateDisplayed,
+      sender_balance: senderBalance,
+      balance_after: senderBalance - totalDebit,
+      sender_country: null,
+      receiver_country: null,
+      commission_conversion: 0,
+      frais_international: 0,
+      rate_lock_seconds: 60,
+    });
+  } catch (error: any) {
+    logger.error(`Wallet transfer preview error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la prévisualisation du transfert' });
+  }
+});
+
+/**
  * GET /api/v2/wallet/balance
  * Récupère le solde du wallet de l'utilisateur connecté
  */

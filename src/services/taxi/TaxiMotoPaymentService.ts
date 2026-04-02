@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { transferToWallet, withdrawFromWallet } from '@/services/walletBackendService';
 
 export interface PaymentMethod {
   type: 'wallet' | 'mobile_money' | 'card' | 'cash' | 'paypal';
@@ -62,30 +63,24 @@ export class TaxiMotoPaymentService {
         };
       }
 
-      // Effectuer le paiement via l'edge function wallet-operations (avec clé idempotente)
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'taxi_payment',
-          amount,
-          ride_id: rideId, // Idempotency key
-          idempotency_key: rideId,
-          description: `Paiement course Taxi Moto #${rideId.slice(0, 8)}`
-        }
-      });
+      const debitResult = await withdrawFromWallet(
+        amount,
+        `Paiement course Taxi Moto #${rideId.slice(0, 8)}`
+      );
 
-      if (error) {
-        console.error('[Payment] Wallet payment error:', error);
+      if (!debitResult.success) {
+        console.error('[Payment] Wallet payment error:', debitResult.error);
         // Log audit trail
         await (supabase.from as any)('wallet_logs').insert({
           user_id: customerId,
           operation: 'taxi_payment_failed',
           amount,
-          context: { ride_id: rideId, error: error.message }
+          context: { ride_id: rideId, error: debitResult.error }
         });
         
         return {
           success: false,
-          error: error.message || 'Erreur de paiement'
+          error: debitResult.error || 'Erreur de paiement'
         };
       }
 
@@ -104,12 +99,12 @@ export class TaxiMotoPaymentService {
         user_id: customerId,
         operation: 'taxi_payment_success',
         amount,
-        context: { ride_id: rideId, transaction_id: data?.transaction_id }
+        context: { ride_id: rideId, transaction_id: debitResult.transaction_id }
       });
 
       return {
         success: true,
-        transaction_id: data?.transaction_id || rideId
+        transaction_id: debitResult.transaction_id || rideId
       };
     } catch (err: any) {
       console.error('[Payment] Error:', err);
@@ -430,19 +425,14 @@ export class TaxiMotoPaymentService {
     rideId: string
   ): Promise<boolean> {
     try {
-      // Appeler l'edge function pour le transfert
-      const { error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'driver_earning',
-          recipient_id: driverId,
-          amount,
-          ride_id: rideId,
-          description: `Gains course #${rideId.slice(0, 8)}`
-        }
-      });
+      const transferResult = await transferToWallet(
+        driverId,
+        amount,
+        `Gains course #${rideId.slice(0, 8)}`
+      );
 
-      if (error) {
-        console.error('[Payment] Transfer error:', error);
+      if (!transferResult.success) {
+        console.error('[Payment] Transfer error:', transferResult.error);
         return false;
       }
 

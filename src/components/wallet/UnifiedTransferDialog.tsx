@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
+import { previewWalletTransfer, transferToWallet } from '@/services/walletBackendService';
 
 interface UnifiedTransferDialogProps {
   senderCode: string; // Le code de l'expéditeur (USR0001, etc.)
@@ -142,20 +143,9 @@ export function UnifiedTransferDialog({
 
       console.log('🔍 Prévisualisation transfert:', { sender: user?.id, recipient: resolvedRecipient, amount: transferAmount });
 
-      const { data: previewData, error: previewError } = await supabase.functions.invoke(
-        'wallet-transfer',
-        {
-          body: {
-            action: 'preview',
-            sender_id: user?.id,
-            receiver_id: resolvedRecipient,
-            amount: transferAmount,
-          },
-        }
-      );
-
-      if (previewError) throw previewError;
-      if (!previewData?.success) throw new Error(previewData?.error || 'Erreur de prévisualisation');
+      const previewResponse = await previewWalletTransfer(resolvedRecipient, transferAmount);
+      if (!previewResponse.success) throw new Error(previewResponse.error || 'Erreur de prévisualisation');
+      const previewData = previewResponse.data;
 
       console.log('📋 Résultat prévisualisation:', previewData);
 
@@ -218,29 +208,17 @@ export function UnifiedTransferDialog({
 
       console.log('💸 Exécution du transfert...');
 
-      const { data, error } = await supabase.functions.invoke(
-        'wallet-transfer',
-        {
-          body: {
-            action: 'transfer',
-            sender_id: user?.id,
-            receiver_id: resolvedRecipient,
-            amount: preview.amount,
-            description,
-          },
-        }
-      );
+      const result = await transferToWallet(resolvedRecipient, preview.amount, description);
 
-      if (error) throw error;
-      if (!data?.success) {
-        toast.error(data?.error || 'Erreur lors du transfert');
+      if (!result.success) {
+        toast.error(result.error || 'Erreur lors du transfert');
         return;
       }
 
-      console.log('✅ Transfert réussi:', data);
+      console.log('✅ Transfert réussi:', result);
 
       toast.success(
-        `✅ Transfert réussi ! Code: ${data.transfer_code || ''}`,
+        `✅ Transfert réussi !`,
         { duration: 5000 }
       );
       
@@ -267,26 +245,13 @@ export function UnifiedTransferDialog({
     try {
       const resolvedRecipient = recipientUserId || recipientCode;
 
-      const { data, error } = await supabase.functions.invoke(
-        'wallet-transfer',
-        {
-          body: {
-            action: 'transfer',
-            sender_id: user?.id,
-            receiver_id: resolvedRecipient,
-            amount: intlPreview.amount_sent,
-            description,
-          },
-        }
-      );
-
-      if (error) throw error;
-      if (!data?.success) {
-        toast.error(data?.error || 'Erreur lors du transfert');
+      const result = await transferToWallet(resolvedRecipient, intlPreview.amount_sent, description);
+      if (!result.success) {
+        toast.error(result.error || 'Erreur lors du transfert');
         return;
       }
 
-      toast.success(`🌍 Transfert international réussi ! Code: ${data.transfer_code || ''}`, { duration: 5000 });
+      toast.success('🌍 Transfert international réussi !', { duration: 5000 });
       setAmount('');
       setRecipientCode('');
       setRecipientUserId(null);

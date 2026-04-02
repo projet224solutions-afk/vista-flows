@@ -4,13 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserSearchInput } from './UserSearchInput';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { transferToWallet } from '@/services/walletBackendService';
+import { previewWalletTransfer, transferToWallet } from '@/services/walletBackendService';
 import { toast } from 'sonner';
 import { SecureButton } from '@/components/ui/SecureButton';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
-import { Globe, Loader2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Loader2 } from 'lucide-react';
 
 interface ImprovedTransferDialogProps {
   open: boolean;
@@ -57,29 +55,17 @@ export const ImprovedTransferDialog = ({
       throw new Error('Solde insuffisant');
     }
 
-    // First, call wallet-transfer?action=preview to detect international
+    // First, call backend preview to detect international transfers
     setPreviewLoading(true);
     try {
       // Resolve recipient ID first
       const resolvedRecipient = recipientUserId || recipientCode;
 
-      const { data: previewData, error: previewError } = await supabase.functions.invoke(
-        'wallet-transfer',
-        {
-          body: {
-            action: 'preview',
-            sender_id: user.id,
-            receiver_id: resolvedRecipient,
-            amount: transferAmount,
-          },
-        }
-      );
-
-      if (previewError) throw previewError;
-
-      if (!previewData?.success) {
-        throw new Error(previewData?.error || 'Erreur de prévisualisation');
+      const previewResponse = await previewWalletTransfer(resolvedRecipient, transferAmount);
+      if (!previewResponse.success) {
+        throw new Error(previewResponse.error || 'Erreur de prévisualisation');
       }
+      const previewData = previewResponse.data;
 
       if (previewData.is_international) {
         // Show international confirmation dialog
@@ -119,35 +105,26 @@ export const ImprovedTransferDialog = ({
     window.dispatchEvent(new CustomEvent('wallet-updated'));
   };
 
-  // Execute international transfer via wallet-transfer edge function
+  // Execute international transfer via backend wallet API
   const executeInternationalTransfer = useCallback(async () => {
-    if (!user?.id || !intlPreview) return;
+    if (!intlPreview) return;
 
     setExecuting(true);
     try {
       const resolvedRecipient = recipientUserId || recipientCode;
 
-      const { data, error } = await supabase.functions.invoke(
-        'wallet-transfer',
-        {
-          body: {
-            action: 'transfer',
-            sender_id: user.id,
-            receiver_id: resolvedRecipient,
-            amount: intlPreview.amount_sent,
-            description,
-          },
-        }
+      const result = await transferToWallet(
+        resolvedRecipient,
+        intlPreview.amount_sent,
+        description
       );
 
-      if (error) throw error;
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Erreur lors du transfert');
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors du transfert');
       }
 
       toast.success(
-        `🌍 Transfert international réussi ! Code: ${data.transfer_code}`,
+        '🌍 Transfert international réussi !',
         { duration: 5000 }
       );
 
@@ -162,7 +139,7 @@ export const ImprovedTransferDialog = ({
     } finally {
       setExecuting(false);
     }
-  }, [user?.id, intlPreview, recipientCode, recipientUserId, description, onSuccess]);
+  }, [intlPreview, recipientCode, recipientUserId, description, onSuccess]);
 
   const resetForm = () => {
     setRecipientCode('');

@@ -70,6 +70,45 @@ export interface WalletOperationResult {
   error?: string;
 }
 
+export interface WalletTransferPreviewResult {
+  success: boolean;
+  is_international: boolean;
+  sender?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    phone: string | null;
+    custom_id: string | null;
+  };
+  receiver?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    phone: string | null;
+    custom_id: string | null;
+  };
+  receiver_name?: string | null;
+  receiver_email?: string | null;
+  receiver_phone?: string | null;
+  receiver_code?: string | null;
+  amount_sent: number;
+  currency_sent: string;
+  fee_percentage: number;
+  fee_amount: number;
+  amount_after_fee: number;
+  total_debit: number;
+  amount_received: number;
+  currency_received: string;
+  rate_displayed: number;
+  sender_balance: number;
+  balance_after: number;
+  sender_country?: string | null;
+  receiver_country?: string | null;
+  commission_conversion?: number;
+  frais_international?: number;
+  rate_lock_seconds?: number;
+}
+
 export interface WalletRecipientResolved {
   userId: string;
   query: string;
@@ -206,6 +245,19 @@ export async function transferToWallet(
     return { success: false, error: result.error || 'Erreur lors du transfert' };
   }
   return { success: true, transaction_id: result.data?.transaction_id, operation: 'transfer' };
+}
+
+/**
+ * Prévisualise un transfert (frais + conversion + solde après) côté backend Node.js.
+ */
+export async function previewWalletTransfer(recipientId: string, amount: number) {
+  return backendFetch<WalletTransferPreviewResult>('/api/v2/wallet/transfer/preview', {
+    method: 'POST',
+    body: {
+      recipient_id: recipientId,
+      amount,
+    },
+  });
 }
 
 /**

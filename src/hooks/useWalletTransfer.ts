@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { signedInvoke, generateIdempotencyKey } from '@/lib/security/hmacSigner';
+import { previewWalletTransfer, transferToWallet } from '@/services/walletBackendService';
 
 export interface TransferPreview {
   success: boolean;
@@ -19,6 +19,7 @@ export interface TransferPreview {
 export interface TransferResult extends TransferPreview {
   transfer_id?: string;
   transfer_code?: string;
+  transaction_id?: string;
 }
 
 interface UseWalletTransferResult {
@@ -53,24 +54,26 @@ export function useWalletTransfer(): UseWalletTransferResult {
       setLoading(true);
       setError(null);
 
-      const { data: previewData, error: previewError } = await signedInvoke(
-        'wallet-transfer',
-        {
-          action: 'preview',
-          sender_id: user.id,
-          receiver_id: receiverId,
-          amount,
-        }
-      );
-
-      if (previewError) throw previewError;
-
-      if (previewData?.success) {
-        setPreview(previewData);
-        return previewData;
-      } else {
-        throw new Error(previewData?.error || 'Erreur lors de la prévisualisation');
+      const previewResponse = await previewWalletTransfer(receiverId, amount);
+      if (!previewResponse.success) {
+        throw new Error(previewResponse.error || 'Erreur lors de la prévisualisation');
       }
+
+      const previewData = previewResponse.data;
+      const normalizedPreview: TransferPreview = {
+        success: true,
+        amount_sent: previewData.amount_sent,
+        currency_sent: previewData.currency_sent,
+        fee_percentage: previewData.fee_percentage,
+        fee_amount: previewData.fee_amount,
+        amount_after_fee: previewData.amount_after_fee,
+        rate_displayed: previewData.rate_displayed,
+        amount_received: previewData.amount_received,
+        currency_received: previewData.currency_received,
+      };
+
+      setPreview(normalizedPreview);
+      return normalizedPreview;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur de prévisualisation';
       setError(message);
@@ -95,31 +98,30 @@ export function useWalletTransfer(): UseWalletTransferResult {
       setExecuting(true);
       setError(null);
 
-      const idempotencyKey = generateIdempotencyKey('transfer', user.id);
-      const { data, error: fnError } = await signedInvoke(
-        'wallet-transfer',
-        {
-          action: 'transfer',
-          sender_id: user.id,
-          receiver_id: receiverId,
-          amount,
-          description,
-        },
-        { idempotencyKey }
-      );
+      const result = await transferToWallet(receiverId, amount, description);
 
-      if (fnError) throw fnError;
-
-      if (data?.success) {
-        toast.success(`Transfert réussi! Code: ${data.transfer_code}`);
+      if (result.success) {
+        toast.success('Transfert réussi!');
         
         // Déclencher l'événement de mise à jour du wallet
         window.dispatchEvent(new CustomEvent('wallet-updated'));
         
         setPreview(null);
-        return data;
+        return {
+          success: true,
+          amount_sent: amount,
+          currency_sent: preview?.currency_sent || 'GNF',
+          fee_percentage: preview?.fee_percentage || 0,
+          fee_amount: preview?.fee_amount || 0,
+          amount_after_fee: preview?.amount_after_fee || amount,
+          rate_displayed: preview?.rate_displayed || 1,
+          amount_received: preview?.amount_received || amount,
+          currency_received: preview?.currency_received || (preview?.currency_sent || 'GNF'),
+          transfer_id: result.transaction_id,
+          transaction_id: result.transaction_id,
+        };
       } else {
-        throw new Error(data?.error || 'Erreur lors du transfert');
+        throw new Error(result.error || 'Erreur lors du transfert');
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erreur de transfert';
@@ -129,7 +131,7 @@ export function useWalletTransfer(): UseWalletTransferResult {
     } finally {
       setExecuting(false);
     }
-  }, [user?.id]);
+  }, [user?.id, preview]);
 
   const clearPreview = useCallback(() => {
     setPreview(null);

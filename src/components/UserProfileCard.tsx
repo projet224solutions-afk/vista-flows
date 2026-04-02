@@ -20,6 +20,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { depositToWallet, withdrawFromWallet } from '@/services/walletBackendService';
 import { 
   CreditCard, 
   Wallet, 
@@ -239,19 +240,12 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     console.log('🔄 Dépôt en cours:', { amount, userId: user.id });
     
     try {
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'deposit',
-          amount: amount,
-          description: 'Dépôt sur le wallet'
-        }
-      });
+      const result = await depositToWallet(amount, 'Dépôt sur le wallet');
 
-      console.log('✅ Réponse dépôt:', { data, error });
+      console.log('✅ Réponse dépôt:', { result });
 
-      if (error) {
-        console.error('❌ Erreur dépôt:', error);
-        throw error;
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur dépôt');
       }
 
       toast.success(`Dépôt de ${formatPrice(amount)} effectué avec succès !`);
@@ -301,19 +295,12 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     console.log('🔄 Retrait en cours:', { amount, userId: user.id });
     
     try {
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'withdraw',
-          amount: amount,
-          description: 'Retrait du wallet'
-        }
-      });
+      const result = await withdrawFromWallet(amount, 'Retrait du wallet');
 
-      console.log('✅ Réponse retrait:', { data, error });
+      console.log('✅ Réponse retrait:', { result });
 
-      if (error) {
-        console.error('❌ Erreur retrait:', error);
-        throw error;
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur retrait');
       }
 
       toast.success(`Retrait de ${formatPrice(amount)} effectué avec succès !`);

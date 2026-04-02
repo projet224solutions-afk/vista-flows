@@ -13,6 +13,7 @@ import { QuickTransferButton } from '@/components/wallet/QuickTransferButton';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { depositToWallet, withdrawFromWallet } from '@/services/walletBackendService';
 
 interface DriverEarningsProps {
   driverId: string;
@@ -208,15 +209,10 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
 
     setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'deposit',
-          amount: parseFloat(depositAmount),
-          method: 'cash',
-        },
-      });
-
-      if (error) throw error;
+      const result = await depositToWallet(parseFloat(depositAmount), 'Dépôt wallet chauffeur');
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors du dépôt');
+      }
 
       toast.success('Dépôt effectué avec succès');
       setDepositAmount('');
@@ -244,15 +240,10 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
 
     setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('wallet-operations', {
-        body: {
-          operation: 'withdraw',
-          amount: parseFloat(withdrawAmount),
-          method: 'cash',
-        },
-      });
-
-      if (error) throw error;
+      const result = await withdrawFromWallet(parseFloat(withdrawAmount), 'Retrait wallet chauffeur');
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors du retrait');
+      }
 
       toast.success('Retrait effectué avec succès');
       setWithdrawAmount('');

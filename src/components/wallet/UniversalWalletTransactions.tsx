@@ -44,6 +44,7 @@ import {
   changeWalletPin,
   depositToWallet,
   getWalletPinStatus,
+  previewWalletTransfer,
   resolveWalletRecipient,
   setupWalletPin,
   transferToWallet,
@@ -1042,24 +1043,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         setShowTransferPreview(true);
         setTransferOpen(false);
       } else {
-        // ✅ Appeler l'edge function pour TOUS les transferts (local ET international)
-        const { data, error } = await supabase.functions.invoke(
-          'wallet-transfer',
-          {
-            body: {
-              action: 'preview',
-              sender_id: effectiveUserId,
-              receiver_id: recipientUuid,
-              amount,
-            },
-          }
-        );
+        const previewResponse = await previewWalletTransfer(recipientUuid, amount);
 
-        if (error) {
-          console.error('❌ Erreur preview:', error);
-          toast.error(error.message || 'Erreur lors de la prévisualisation');
+        if (!previewResponse.success) {
+          console.error('❌ Erreur preview:', previewResponse.error);
+          toast.error(previewResponse.error || 'Erreur lors de la prévisualisation');
           return;
         }
+        const data = previewResponse.data;
 
         console.log('✅ Réponse prévisualisation:', data);
 

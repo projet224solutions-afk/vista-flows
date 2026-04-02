@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { circuitBreaker } from '@/lib/circuitBreaker';
 import { retryWithBackoff, RetryConfig } from '@/lib/retryWithBackoff';
+import { depositToWallet, transferToWallet, withdrawFromWallet } from '@/services/walletBackendService';
 
 export interface WalletData {
   id: string;
@@ -327,7 +328,7 @@ export const useWalletRobust = () => {
   // Dépôt sécurisé
   const deposit = async (
     amount: number,
-    method: string = 'card',
+    _method: string = 'card',
     metadata: any = {}
   ): Promise<boolean> => {
     if (!wallet) {
@@ -343,18 +344,15 @@ export const useWalletRobust = () => {
     const result = await executeFinancialOperation(
       'deposit',
       amount,
-      async (idempotencyKey) => {
-        const { data, error } = await supabase.functions.invoke('wallet-operations', {
-          body: {
-            operation: 'deposit',
-            amount,
-            description: metadata.description || 'Dépôt sur wallet',
-            idempotency_key: idempotencyKey
-          }
-        });
-
-        if (error) throw error;
-        return data;
+      async () => {
+        const apiResult = await depositToWallet(
+          amount,
+          metadata.description || 'Dépôt sur wallet'
+        );
+        if (!apiResult.success) {
+          throw new Error(apiResult.error || 'Erreur lors du dépôt');
+        }
+        return apiResult;
       }
     );
 
@@ -370,7 +368,7 @@ export const useWalletRobust = () => {
   // Retrait sécurisé
   const withdraw = async (
     amount: number,
-    method: string = 'card',
+    _method: string = 'card',
     metadata: any = {}
   ): Promise<boolean> => {
     if (!wallet) {
@@ -396,18 +394,16 @@ export const useWalletRobust = () => {
     const result = await executeFinancialOperation(
       'withdraw',
       amount,
-      async (idempotencyKey) => {
-        const { data, error } = await supabase.functions.invoke('wallet-operations', {
-          body: {
-            operation: 'withdraw',
-            amount,
-            description: metadata.description || 'Retrait de wallet',
-            idempotency_key: idempotencyKey
-          }
-        });
-
-        if (error) throw error;
-        return data;
+      async () => {
+        const apiResult = await withdrawFromWallet(
+          amount,
+          metadata.description || 'Retrait de wallet',
+          metadata.pin
+        );
+        if (!apiResult.success) {
+          throw new Error(apiResult.error || 'Erreur lors du retrait');
+        }
+        return apiResult;
       }
     );
 
@@ -455,19 +451,17 @@ export const useWalletRobust = () => {
     const result = await executeFinancialOperation(
       'transfer',
       amount,
-      async (idempotencyKey) => {
-        const { data, error } = await supabase.functions.invoke('wallet-operations', {
-          body: {
-            operation: 'transfer',
-            amount,
-            recipient_id: recipientId,
-            description,
-            idempotency_key: idempotencyKey
-          }
-        });
-
-        if (error) throw error;
-        return data;
+      async () => {
+        const apiResult = await transferToWallet(
+          recipientId,
+          amount,
+          description,
+          metadata.pin
+        );
+        if (!apiResult.success) {
+          throw new Error(apiResult.error || 'Erreur lors du transfert');
+        }
+        return apiResult;
       },
       recipientId
     );

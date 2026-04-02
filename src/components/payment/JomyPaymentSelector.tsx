@@ -31,6 +31,7 @@ import { supabase } from '@/integrations/supabase/client';
 import StripeCheckoutButton from '@/components/payment/StripeCheckoutButton';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { formatCurrency } from '@/lib/formatters';
+import { transferToWallet } from '@/services/walletBackendService';
 
 interface JomyPaymentSelectorProps {
   amount: number;
@@ -254,22 +255,19 @@ export function JomyPaymentSelector({
       setPaymentStatus('processing');
 
       try {
-        const { data, error } = await supabase.functions.invoke('wallet-operations', {
-          body: {
-            operation: 'transfer',
-            amount,
-            recipient_id: recipientId,
-            description: description || 'Transfert'
-          }
-        });
+        const result = await transferToWallet(
+          recipientId,
+          amount,
+          description || 'Transfert'
+        );
 
-        if (error || !data?.success) {
-          throw new Error(data?.error || error?.message || 'Échec du transfert');
+        if (!result.success) {
+          throw new Error(result.error || 'Échec du transfert');
         }
 
         setPaymentStatus('success');
         toast.success('🎉 Transfert réussi !');
-        onPaymentSuccess(data.transaction_id || '', 'SUCCESS_WALLET');
+        onPaymentSuccess(result.transaction_id || '', 'SUCCESS_WALLET');
       } catch (err) {
         console.error('[Wallet] Transfer error:', err);
         setPaymentStatus('failed');
