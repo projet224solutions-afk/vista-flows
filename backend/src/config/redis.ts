@@ -8,6 +8,8 @@
 import Redis from 'ioredis';
 import { logger } from './logger.js';
 
+const REDIS_ENABLED = (process.env.REDIS_ENABLED ?? (process.env.NODE_ENV === 'production' ? 'true' : 'false')) === 'true';
+
 // ==================== CONFIG ====================
 
 const REDIS_CONFIG = {
@@ -36,8 +38,24 @@ let client: Redis | null = null;
 let isConnected = false;
 let connectAttempts = 0;
 const MAX_ATTEMPTS = 5;
+let disabledLogged = false;
+let fallbackLogged = false;
+
+function logFallbackOnce(message: string): void {
+  if (fallbackLogged) return;
+  fallbackLogged = true;
+  logger.warn(message);
+}
 
 export async function getRedis(): Promise<Redis | null> {
+  if (!REDIS_ENABLED) {
+    if (!disabledLogged) {
+      disabledLogged = true;
+      logger.info('Redis disabled (REDIS_ENABLED=false), using fallback mode');
+    }
+    return null;
+  }
+
   if (client && isConnected) return client;
   if (connectAttempts >= MAX_ATTEMPTS) return null;
 
@@ -45,14 +63,17 @@ export async function getRedis(): Promise<Redis | null> {
     connectAttempts++;
     if (!client) {
       client = new Redis(REDIS_CONFIG);
-      client.on('connect', () => { isConnected = true; connectAttempts = 0; logger.info('✅ Redis connected'); });
-      client.on('error', (err) => { isConnected = false; logger.warn(`Redis error: ${err.message}`); });
+      client.on('connect', () => { isConnected = true; connectAttempts = 0; fallbackLogged = false; logger.info('✅ Redis connected'); });
+      client.on('error', (_err) => {
+        isConnected = false;
+        logFallbackOnce('Redis unavailable, continuing in fallback mode');
+      });
       client.on('close', () => { isConnected = false; });
     }
     await client.connect();
     return client;
   } catch (err: any) {
-    logger.warn(`Redis connect failed (attempt ${connectAttempts}): ${err.message}`);
+    logFallbackOnce(`Redis connect failed (attempt ${connectAttempts}), fallback mode enabled`);
     return null;
   }
 }

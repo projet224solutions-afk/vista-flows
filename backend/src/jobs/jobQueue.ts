@@ -20,6 +20,8 @@ import { logger } from '../config/logger.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { env } from '../config/env.js';
 
+const REDIS_JOBS_ENABLED = (process.env.REDIS_ENABLED ?? (env.isProduction ? 'true' : 'false')) === 'true';
+
 // ==================== REDIS CONNECTION (for BullMQ) ====================
 
 const REDIS_CONNECTION = {
@@ -505,6 +507,11 @@ export const jobQueue = {
    * Initialize queues and workers. Call once at app startup.
    */
   async init(): Promise<void> {
+    if (!REDIS_JOBS_ENABLED) {
+      logger.info('Job queues disabled (REDIS_ENABLED=false), using direct execution fallback');
+      return;
+    }
+
     try {
       mainQueue = createQueue('main');
       criticalQueue = createQueue('critical');
@@ -559,6 +566,11 @@ export const jobQueue = {
    * Schedule recurring jobs. Call once at startup.
    */
   async scheduleRecurring(): Promise<void> {
+    if (!REDIS_JOBS_ENABLED) {
+      logger.info('Recurring jobs disabled: Redis queue layer is off');
+      return;
+    }
+
     const queue = mainQueue;
     if (!queue) {
       logger.warn('Recurring jobs not scheduled: no queue available');
