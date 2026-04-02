@@ -74,8 +74,17 @@ export default function ApiSupervision() {
   const checkBackendHealth = async () => {
     setBackendHealth('pending');
     try {
-      const response = await fetch(`${backendConfig.baseUrl}/health`, { method: 'GET' });
-      setBackendHealth(response.ok ? 'ok' : 'error');
+      // In dev, prefer same-origin health endpoint to leverage Vite proxy and avoid CORS issues.
+      const healthUrl = import.meta.env.DEV ? '/health' : `${backendConfig.baseUrl || ''}/health`;
+      const response = await fetch(healthUrl, { method: 'GET' });
+      if (!response.ok) {
+        setBackendHealth('error');
+        return;
+      }
+
+      const payload = await response.json().catch(() => null);
+      const isHealthy = payload?.success === true || payload?.status === 'healthy' || payload?.status === 'ready';
+      setBackendHealth(isHealthy ? 'ok' : 'error');
     } catch {
       setBackendHealth('error');
     }
