@@ -123,6 +123,7 @@ export function WalletAdminPanel() {
   const [fxHealth, setFxHealth] = useState<FxHealthData | null>(null);
   const [fxLoading, setFxLoading] = useState(false);
   const [fxRefreshing, setFxRefreshing] = useState(false);
+  const [clockMs, setClockMs] = useState(Date.now());
 
   const formatConakryTime = (iso: string | null | undefined): string => {
     if (!iso) return 'Heure N/A';
@@ -138,10 +139,21 @@ export function WalletAdminPanel() {
     }
   };
 
+  const formatRateAgeCountdown = (ageMinutes: number | null | undefined): string => {
+    if (typeof ageMinutes !== 'number' || ageMinutes < 0) return 'N/A';
+    const countdown = 60 - (ageMinutes % 61);
+    return `${String(countdown).padStart(2, '0')} min`;
+  };
+
   useEffect(() => {
     loadWallets();
     loadStats();
     loadFxHealth();
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setClockMs(Date.now()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const loadFxHealth = async () => {
@@ -307,6 +319,16 @@ export function WalletAdminPanel() {
     );
   });
 
+  const liveRateAgeMinutes = (() => {
+    const retrievedAt = fxHealth?.current_rate?.retrieved_at;
+    if (!retrievedAt) return fxHealth?.age_minutes ?? null;
+
+    const parsed = new Date(retrievedAt).getTime();
+    if (!Number.isFinite(parsed)) return fxHealth?.age_minutes ?? null;
+
+    return Math.max(0, Math.floor((clockMs - parsed) / 60000));
+  })();
+
   return (
     <div className="space-y-6">
       {/* Statistiques */}
@@ -410,7 +432,7 @@ export function WalletAdminPanel() {
                 <div className="rounded-lg border p-3">
                   <p className="text-xs text-muted-foreground">Fraîcheur des taux</p>
                   <p className="text-lg font-semibold">
-                    {fxHealth.age_minutes === null ? 'N/A' : `${fxHealth.age_minutes} min`}
+                    {formatRateAgeCountdown(liveRateAgeMinutes)}
                   </p>
                   <Badge variant={fxHealth.is_stale ? 'destructive' : 'default'} className="mt-1">
                     {fxHealth.is_stale ? 'Taux obsolètes' : 'Taux à jour'}
