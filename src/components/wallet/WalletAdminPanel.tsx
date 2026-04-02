@@ -54,6 +54,8 @@ interface AdminStats {
 }
 
 interface FxHealthData {
+  timezone?: string;
+  start_of_day_iso?: string;
   stale_threshold_minutes: number;
   is_stale: boolean;
   age_minutes: number | null;
@@ -91,6 +93,15 @@ interface FxHealthData {
     source_url: string | null;
     retrieved_at: string | null;
   }>;
+  gnf_today_history?: Array<{
+    from_currency: string;
+    to_currency: string;
+    rate: number;
+    margin: number | null;
+    source_type: string | null;
+    source_url: string | null;
+    retrieved_at: string | null;
+  }>;
   active_alerts: Array<{
     id: string;
     alert_type: string;
@@ -112,6 +123,20 @@ export function WalletAdminPanel() {
   const [fxHealth, setFxHealth] = useState<FxHealthData | null>(null);
   const [fxLoading, setFxLoading] = useState(false);
   const [fxRefreshing, setFxRefreshing] = useState(false);
+
+  const formatConakryTime = (iso: string | null | undefined): string => {
+    if (!iso) return 'Heure N/A';
+    try {
+      return new Intl.DateTimeFormat('fr-FR', {
+        timeZone: 'Africa/Conakry',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }).format(new Date(iso));
+    } catch {
+      return 'Heure N/A';
+    }
+  };
 
   useEffect(() => {
     loadWallets();
@@ -435,7 +460,39 @@ export function WalletAdminPanel() {
                     {fxHealth.bank_sources.slice(0, 6).map((source, idx) => (
                       <div key={`${source.source_url}-${idx}`} className="text-xs flex items-center justify-between gap-3">
                         <span className="truncate">{source.source || source.source_type || 'source'}</span>
-                        <span className="text-muted-foreground truncate">{source.source_url || 'N/A'}</span>
+                        <span className="text-muted-foreground truncate">{source.source_url || source.source || source.source_type || 'Source N/A'}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border p-3">
+                <p className="text-sm font-medium mb-2">Fuseau horaire</p>
+                <p className="text-xs text-muted-foreground">
+                  {fxHealth.timezone || 'Africa/Conakry'} (normalisé backend)
+                </p>
+              </div>
+
+              <div className="rounded-lg border p-3">
+                <p className="text-sm font-medium mb-2">Historique devise Guinée (GNF)</p>
+                {!fxHealth.gnf_today_history || fxHealth.gnf_today_history.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Aucun taux GNF collecté aujourd'hui.</p>
+                ) : (
+                  <div className="max-h-48 overflow-auto space-y-1">
+                    {fxHealth.gnf_today_history.slice(0, 20).map((rate, idx) => (
+                      <div key={`${rate.retrieved_at || 'na'}-${idx}`} className="text-xs rounded border p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium">{rate.from_currency}/{rate.to_currency}</span>
+                          <span>
+                            {typeof rate.rate === 'number'
+                              ? rate.rate.toLocaleString(undefined, { maximumFractionDigits: 6 })
+                              : 'N/A'}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-muted-foreground">
+                          {formatConakryTime(rate.retrieved_at)} {' • '} {rate.source_url || rate.source_type || 'Source N/A'}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -459,7 +516,7 @@ export function WalletAdminPanel() {
                           </span>
                         </div>
                         <div className="mt-1 text-muted-foreground">
-                          {rate.retrieved_at ? new Date(rate.retrieved_at).toLocaleTimeString('fr-FR') : 'Heure N/A'}
+                          {formatConakryTime(rate.retrieved_at)}
                           {' • '}
                           {rate.source_url || rate.source_type || 'Source N/A'}
                         </div>

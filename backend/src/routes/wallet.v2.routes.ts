@@ -103,6 +103,22 @@ function mapCurrencyToCountry(currency: string | null | undefined): string {
   return CURRENCY_TO_COUNTRY[String(currency).toUpperCase()] || String(currency).toUpperCase();
 }
 
+function isAfricanBankRow(row: { source_url?: string | null; source?: string | null; source_type?: string | null }): boolean {
+  if (row?.source_url && isAfricanBankSourceUrl(row.source_url)) {
+    return true;
+  }
+
+  const source = String(row?.source || '').toLowerCase();
+  const sourceType = String(row?.source_type || '').toLowerCase();
+  const text = `${source} ${sourceType}`;
+
+  if (sourceType === 'official_fixed_parity' || sourceType === 'official_cross' || sourceType === 'official_html') {
+    return true;
+  }
+
+  return /bcrg|bceao|beac|cbn|sarb|ecobank|orabank|afreximbank|banque|bank|afric/i.test(text);
+}
+
 async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient | null> {
   const candidate = String(rawRecipient || '').trim();
   if (!candidate) return null;
@@ -961,7 +977,10 @@ router.get(
   async (_req: AuthenticatedRequest, res: Response) => {
     try {
       const now = Date.now();
-      const startOfDayIso = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+      // Conakry uses UTC+0; use UTC start-of-day to avoid host machine/local timezone drift.
+      const startOfDay = new Date();
+      startOfDay.setUTCHours(0, 0, 0, 0);
+      const startOfDayIso = startOfDay.toISOString();
 
       const [{ data: latestRate }, { data: recentRuns }, { data: unresolvedAlerts }, { data: todayRates }] = await Promise.all([
         supabaseAdmin
@@ -1005,11 +1024,8 @@ router.get(
 
       const bankSources = Array.from(new Map(
         runRows
-          .filter((row) => row.source_url
-            && (row.source_type === 'official_html' || row.source_type === 'official_fixed_parity' || row.source_type === 'official_cross')
-            && isAfricanBankSourceUrl(row.source_url)
-          )
-          .map((row) => [row.source_url, {
+          .filter((row) => isAfricanBankRow(row))
+          .map((row) => [row.source_url || `${row.source || 'source'}:${row.source_type || 'type'}`, {
             source: row.source,
             source_type: row.source_type,
             source_url: row.source_url,
@@ -1018,7 +1034,7 @@ router.get(
       ).values());
 
         const todaysHistory = (todayRates || [])
-        .filter((rate: any) => isAfricanBankSourceUrl(rate?.source_url))
+        .filter((rate: any) => isAfricanBankRow(rate))
         .map((rate: any) => ({
           from_currency: rate.from_currency,
           to_currency: rate.to_currency,
@@ -1029,9 +1045,13 @@ router.get(
           retrieved_at: rate.retrieved_at,
         }));
 
+      const gnfTodayHistory = todaysHistory.filter((rate: any) => rate.from_currency === 'GNF' || rate.to_currency === 'GNF');
+
       res.json({
         success: true,
         data: {
+          timezone: 'Africa/Conakry',
+          start_of_day_iso: startOfDayIso,
           stale_threshold_minutes: staleThresholdMinutes,
           is_stale: stale,
           age_minutes: ageMinutes,
@@ -1040,6 +1060,7 @@ router.get(
           current_rate: latestRate || null,
           recent_runs: runRows.slice(0, 10),
           today_history: todaysHistory,
+          gnf_today_history: gnfTodayHistory,
           bank_sources: bankSources,
           active_alerts: unresolvedAlerts || [],
         },

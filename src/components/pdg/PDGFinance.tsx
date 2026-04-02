@@ -41,6 +41,20 @@ export default function PDGFinance() {
   const [conversionStatsLoading, setConversionStatsLoading] = useState(false);
   const [alertCheckLoading, setAlertCheckLoading] = useState(false);
 
+  const formatConakryTime = (iso: string | null | undefined): string => {
+    if (!iso) return 'Heure N/A';
+    try {
+      return new Intl.DateTimeFormat('fr-FR', {
+        timeZone: 'Africa/Conakry',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }).format(new Date(iso));
+    } catch {
+      return 'Heure N/A';
+    }
+  };
+
   const visibleBankSources = (() => {
     if (Array.isArray(fxHealth?.bank_sources) && fxHealth.bank_sources.length > 0) {
       return fxHealth.bank_sources;
@@ -357,6 +371,10 @@ export default function PDGFinance() {
                 </div>
               </div>
 
+              <div className="rounded-lg border p-3 text-xs text-muted-foreground">
+                Fuseau horaire système: <span className="font-medium text-foreground">{fxHealth.timezone || 'Africa/Conakry'}</span>
+              </div>
+
               <div className="rounded-lg border p-3">
                 <p className="text-sm font-medium mb-2">Sources bancaires visitées (URLs)</p>
                 {visibleBankSources.length === 0 ? (
@@ -368,11 +386,32 @@ export default function PDGFinance() {
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-medium truncate">{source.source || source.source_type || 'Source bancaire'}</span>
                           <span className="text-muted-foreground">
-                            {source.last_seen_at ? new Date(source.last_seen_at).toLocaleTimeString('fr-FR') : 'Heure N/A'}
+                            {formatConakryTime(source.last_seen_at)}
                           </span>
                         </div>
                         <div className="mt-1 text-muted-foreground break-all">
-                          {source.source_url || 'URL indisponible'}
+                          {source.source_url || source.source || source.source_type || 'Source indisponible'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border p-3">
+                <p className="text-sm font-medium mb-2">Historique devise Guinée (GNF)</p>
+                {!Array.isArray(fxHealth.gnf_today_history) || fxHealth.gnf_today_history.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Aucun taux GNF collecté aujourd'hui.</p>
+                ) : (
+                  <div className="max-h-40 overflow-auto space-y-1">
+                    {fxHealth.gnf_today_history.slice(0, 20).map((rate: any, idx: number) => (
+                      <div key={`gnf-${rate.retrieved_at || 'na'}-${idx}`} className="text-xs rounded border p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium">{rate.from_currency}/{rate.to_currency}</span>
+                          <span>{typeof rate.rate === 'number' ? rate.rate.toLocaleString(undefined, { maximumFractionDigits: 6 }) : 'N/A'}</span>
+                        </div>
+                        <div className="mt-1 text-muted-foreground">
+                          {formatConakryTime(rate.retrieved_at)} {' • '} {rate.source_url || rate.source_type || 'Source N/A'}
                         </div>
                       </div>
                     ))}
@@ -397,7 +436,7 @@ export default function PDGFinance() {
                           </span>
                         </div>
                         <div className="mt-1 text-muted-foreground">
-                          {rate.retrieved_at ? new Date(rate.retrieved_at).toLocaleTimeString('fr-FR') : 'Heure N/A'}
+                          {formatConakryTime(rate.retrieved_at)}
                           {' • '}
                           {rate.source_url || rate.source_type || 'Source N/A'}
                         </div>
