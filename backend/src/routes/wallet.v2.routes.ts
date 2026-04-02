@@ -1045,31 +1045,7 @@ router.get(
         .slice(0, 2);
       const twoConsecutiveFailures = recentGnfRuns.length >= 2 && recentGnfRuns.every((row) => !isFxSuccessStatus(row.status));
 
-      const bankSources = Array.from(new Map(
-        runRows
-          .filter((row) => isAfricanBankRow(row))
-          .map((row) => {
-            const resolvedSourceUrl = resolveOfficialBankSourceUrl(row);
-            return [resolvedSourceUrl || `${row.source || 'source'}:${row.source_type || 'type'}`, {
-            source: row.source,
-            source_type: row.source_type,
-            source_url: resolvedSourceUrl,
-            last_seen_at: row.collected_at,
-            }];
-          })
-      ).values());
-
-      const hasBcrgSource = bankSources.some((source) => String(source?.source_url || '').includes('bcrg-guinee.org'));
-      if (!hasBcrgSource) {
-        bankSources.unshift({
-          source: 'Banque Centrale de Guinee (BCRG)',
-          source_type: 'official_html',
-          source_url: BCRG_OFFICIAL_URL,
-          last_seen_at: currentRate?.retrieved_at || null,
-        });
-      }
-
-        const todaysHistory = (todayRates || [])
+      const todaysHistory = (todayRates || [])
         .filter((rate: any) => isAfricanBankRow(rate))
         .map((rate: any) => ({
           from_currency: rate.from_currency,
@@ -1080,6 +1056,62 @@ router.get(
           source_url: resolveOfficialBankSourceUrl(rate),
           retrieved_at: rate.retrieved_at,
         }));
+
+      const sourceMap = new Map<string, { source: string | null; source_type: string | null; source_url: string | null; last_seen_at: string | null }>();
+      const upsertSource = (entry: { source?: string | null; source_type?: string | null; source_url?: string | null; last_seen_at?: string | null }) => {
+        const key = entry.source_url || `${entry.source || 'source'}:${entry.source_type || 'type'}`;
+        if (!key) return;
+        const current = sourceMap.get(key);
+        const next = {
+          source: entry.source || null,
+          source_type: entry.source_type || null,
+          source_url: entry.source_url || null,
+          last_seen_at: entry.last_seen_at || null,
+        };
+        if (!current) {
+          sourceMap.set(key, next);
+          return;
+        }
+        const currentTs = current.last_seen_at ? new Date(current.last_seen_at).getTime() : 0;
+        const nextTs = next.last_seen_at ? new Date(next.last_seen_at).getTime() : 0;
+        if (nextTs >= currentTs) {
+          sourceMap.set(key, next);
+        }
+      };
+
+      for (const row of runRows.filter((row) => isAfricanBankRow(row))) {
+        upsertSource({
+          source: row.source,
+          source_type: row.source_type,
+          source_url: resolveOfficialBankSourceUrl(row),
+          last_seen_at: row.collected_at,
+        });
+      }
+
+      for (const rate of todaysHistory) {
+        upsertSource({
+          source: null,
+          source_type: rate.source_type,
+          source_url: rate.source_url,
+          last_seen_at: rate.retrieved_at,
+        });
+      }
+
+      const hasBcrgSource = Array.from(sourceMap.values()).some((source) => String(source?.source_url || '').includes('bcrg-guinee.org'));
+      if (!hasBcrgSource) {
+        upsertSource({
+          source: 'Banque Centrale de Guinee (BCRG)',
+          source_type: 'official_html',
+          source_url: BCRG_OFFICIAL_URL,
+          last_seen_at: currentRate?.retrieved_at || null,
+        });
+      }
+
+      const bankSources = Array.from(sourceMap.values()).sort((a, b) => {
+        const aTs = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
+        const bTs = b.last_seen_at ? new Date(b.last_seen_at).getTime() : 0;
+        return bTs - aTs;
+      });
 
       const gnfTodayHistory = todaysHistory.filter((rate: any) => rate.from_currency === 'GNF' || rate.to_currency === 'GNF');
 
