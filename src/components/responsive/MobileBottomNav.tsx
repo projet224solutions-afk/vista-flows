@@ -50,13 +50,15 @@ export function MobileBottomNav({
               size="sm"
               onClick={() => onValueChange(item.value)}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 h-auto py-2 px-1',
+                'flex flex-col items-center justify-center gap-1 h-auto py-2 px-1 rounded-xl',
                 'transition-all duration-200',
-                isActive && 'bg-primary/10 text-primary'
+                isActive
+                  ? 'bg-primary text-primary-foreground shadow-md ring-1 ring-primary/20'
+                  : 'text-muted-foreground hover:text-primary hover:bg-primary/5'
               )}
             >
               <div className="relative">
-                <Icon className={cn('w-5 h-5', isActive && 'scale-110')} />
+                <Icon className={cn('w-5 h-5 transition-all duration-200', isActive && 'scale-110 text-primary-foreground')} />
                 {item.badge && item.badge > 0 && (
                   <Badge
                     className={cn(
@@ -72,7 +74,7 @@ export function MobileBottomNav({
               <span
                 className={cn(
                   'text-xs font-medium truncate w-full text-center',
-                  isActive ? 'text-primary' : 'text-muted-foreground'
+                  isActive ? 'text-primary-foreground font-semibold' : 'text-muted-foreground'
                 )}
               >
                 {item.label}

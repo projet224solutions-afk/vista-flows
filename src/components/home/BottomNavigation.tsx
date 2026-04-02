@@ -69,15 +69,15 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
                 key={item.id}
                 onClick={() => navigate(itemPath)}
                 className={cn(
-                  'relative flex flex-col items-center justify-center gap-0.5 py-2.5 px-1 no-hover-effect',
+                  'relative flex flex-col items-center justify-center gap-0.5 py-2 px-1.5 mx-1 my-1 rounded-xl no-hover-effect',
                   'transition-all duration-200',
                   active
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground active:scale-95'
+                    ? 'bg-primary text-primary-foreground shadow-md ring-1 ring-primary/20 scale-[1.02]'
+                    : 'text-muted-foreground hover:text-primary hover:bg-primary/5 active:scale-95'
                 )}
               >
                 {/* Icon */}
-                <div className="relative">
+                <div className={cn('relative p-1 rounded-full transition-all duration-200', active && 'bg-white/15')}>
                   <Icon 
                     className={cn(
                       'w-5 h-5 transition-transform duration-200',
@@ -87,7 +87,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
                   />
                   {/* Active dot indicator */}
                   {active && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-white/90 rounded-full" />
                   )}
                 </div>
 
@@ -95,7 +95,7 @@ export function BottomNavigation({ className }: BottomNavigationProps) {
                 <span
                   className={cn(
                     'text-[11px] font-medium mt-0.5',
-                    active ? 'text-primary' : 'text-muted-foreground'
+                    active ? 'text-primary-foreground font-semibold' : 'text-muted-foreground'
                   )}
                 >
                   {t(item.labelKey)}

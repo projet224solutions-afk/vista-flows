@@ -153,22 +153,22 @@ const NotFound = () => {
                 className={cn(
                   "flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 min-w-[70px] group",
                   isActive
-                    ? "text-primary bg-accent scale-105"
-                    : "text-muted-foreground hover:text-primary hover:bg-accent/50 hover:scale-105"
+                    ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary/20 scale-105"
+                    : "text-muted-foreground hover:text-primary hover:bg-primary/5 hover:scale-105"
                 )}
                 title={item.description}
               >
                 <div className={cn(
                   "p-2 rounded-full transition-all duration-300",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-glow"
+                    ? "bg-white/15 text-primary-foreground"
                     : "bg-muted group-hover:bg-accent group-hover:text-primary"
                 )}>
                   <Icon size={20} />
                 </div>
                 <span className={cn(
                   "text-xs font-medium mt-1 leading-tight",
-                  isActive ? "text-primary font-semibold" : "text-muted-foreground group-hover:text-primary"
+                  isActive ? "text-primary-foreground font-semibold" : "text-muted-foreground group-hover:text-primary"
                 )}>
                   {item.label}
                 </span>

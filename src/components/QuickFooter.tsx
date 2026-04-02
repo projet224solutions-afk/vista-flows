@@ -80,14 +80,14 @@ export default function QuickFooter() {
               className={cn(
                 "flex flex-col items-center justify-center p-1.5 rounded-lg transition-all duration-300 min-w-[56px] group relative",
                 isActive
-                  ? "text-primary scale-105"
-                  : "text-muted-foreground hover:text-primary hover:scale-105"
+                  ? "bg-primary text-primary-foreground shadow-md scale-105 ring-1 ring-primary/20"
+                  : "text-muted-foreground hover:text-primary hover:bg-primary/5 hover:scale-105"
               )}
             >
               <div className={cn(
                 "p-1.5 rounded-full transition-all duration-300 relative",
                 isActive
-                  ? "text-primary"
+                  ? "bg-white/15 text-primary-foreground"
                   : "group-hover:text-primary"
               )}>
                 <Icon size={18} />
@@ -103,7 +103,7 @@ export default function QuickFooter() {
               </div>
               <span className={cn(
                 "text-[10px] font-medium mt-0.5 leading-tight",
-                isActive ? "text-primary font-semibold" : "text-muted-foreground group-hover:text-primary"
+                isActive ? "text-primary-foreground font-semibold" : "text-muted-foreground group-hover:text-primary"
               )}>
                 {t(item.labelKey)}
               </span>
