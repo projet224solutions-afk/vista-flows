@@ -22,6 +22,7 @@ import { requirePermissionOrRole } from '../middlewares/permissions.middleware.j
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { AFRICAN_BANK_SOURCE_URLS, isAfricanBankSourceUrl } from '../constants/africanBankSources.js';
 import { creditWallet, debitWallet, transferBetweenWallets } from '../services/wallet.service.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalletPinState, setupWalletPin, verifyWalletPin } from '../services/walletPin.service.js';
@@ -45,48 +46,6 @@ interface ResolvedRecipient {
 function isFxSuccessStatus(status: string | null | undefined): boolean {
   const normalized = (status || '').toLowerCase();
   return normalized === 'success' || normalized === 'completed' || normalized === 'ok';
-}
-
-const AFRICAN_BANK_DOMAIN_HINTS = [
-  'bcrg-guinee.org',
-  'bceao.int',
-  'beac.int',
-  'cbn.gov.ng',
-  'sarb.co.za',
-  'bankofghana',
-  'bankofuganda',
-  'banquecentrale',
-  'centralbank',
-  'afreximbank',
-  'afdb.org',
-  'ecobank',
-  'orabank',
-  'bank',
-  'banque',
-  'banco',
-];
-
-function isAfricanBankSourceUrl(sourceUrl: string | null | undefined): boolean {
-  if (!sourceUrl) return false;
-  try {
-    const url = new URL(sourceUrl);
-    const host = url.hostname.toLowerCase();
-    const path = url.pathname.toLowerCase();
-
-    const hasBankHint = AFRICAN_BANK_DOMAIN_HINTS.some((hint) => host.includes(hint) || path.includes(hint));
-    if (!hasBankHint) return false;
-
-    const africanTlds = [
-      '.dz', '.ao', '.bj', '.bw', '.bf', '.bi', '.cm', '.cv', '.cf', '.td', '.km', '.cg', '.cd', '.ci', '.dj', '.eg', '.gq', '.er',
-      '.sz', '.et', '.ga', '.gm', '.gh', '.gn', '.gw', '.ke', '.ls', '.lr', '.ly', '.mg', '.mw', '.ml', '.mr', '.mu', '.ma', '.mz',
-      '.na', '.ne', '.ng', '.rw', '.st', '.sn', '.sc', '.sl', '.so', '.za', '.ss', '.sd', '.tz', '.tg', '.tn', '.ug', '.zm', '.zw',
-      '.int', '.org', '.com',
-    ];
-
-    return africanTlds.some((tld) => host.endsWith(tld));
-  } catch {
-    return false;
-  }
 }
 
 async function requireValidTransactionPin(userId: string, pin: unknown): Promise<{ ok: boolean; error?: string; lockedUntil?: string | null }> {
@@ -116,6 +75,32 @@ function normalizePhoneCandidates(raw: string): string[] {
   const withPlus = digits ? `+${digits}` : '';
   const localNoPrefix = digits.startsWith('00') ? digits.slice(2) : digits;
   return Array.from(new Set([raw, compact, digits, withPlus, localNoPrefix].filter(Boolean)));
+}
+
+const CURRENCY_TO_COUNTRY: Record<string, string> = {
+  GNF: 'Guinee',
+  XOF: 'UEMOA',
+  XAF: 'CEMAC',
+  NGN: 'Nigeria',
+  GHS: 'Ghana',
+  KES: 'Kenya',
+  UGX: 'Uganda',
+  ZAR: 'Afrique du Sud',
+  MAD: 'Maroc',
+  TND: 'Tunisie',
+  EGP: 'Egypte',
+  ZMW: 'Zambie',
+  RWF: 'Rwanda',
+  TZS: 'Tanzanie',
+  BWP: 'Botswana',
+  MZN: 'Mozambique',
+  EUR: 'Zone Euro',
+  USD: 'Etats-Unis',
+};
+
+function mapCurrencyToCountry(currency: string | null | undefined): string {
+  if (!currency) return 'Inconnu';
+  return CURRENCY_TO_COUNTRY[String(currency).toUpperCase()] || String(currency).toUpperCase();
 }
 
 async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient | null> {
@@ -1067,6 +1052,207 @@ router.get(
 );
 
 /**
+ * GET /api/v2/wallet/admin/fx-conversion-stats
+ * Statistiques conversions/transferts: volume utilisateur, pays et corridors pays->pays
+ */
+router.get(
+  '/admin/fx-conversion-stats',
+  verifyJWT,
+  requirePermissionOrRole({
+    permissionKey: 'manage_wallet_transactions',
+    allowedRoles: ['admin', 'pdg', 'ceo'],
+  }),
+  async (_req: AuthenticatedRequest, res: Response) => {
+    try {
+      const windowHours = 24;
+      const sinceIso = new Date(Date.now() - windowHours * 3600000).toISOString();
+
+      const [{ data: txRows }, { data: wallets }, { data: profiles }] = await Promise.all([
+        supabaseAdmin
+          .from('wallet_transactions')
+          .select('id, sender_wallet_id, receiver_wallet_id, amount, transaction_type, created_at')
+          .eq('status', 'completed')
+          .gte('created_at', sinceIso)
+          .order('created_at', { ascending: false })
+          .limit(5000),
+        supabaseAdmin
+          .from('wallets')
+          .select('id, user_id, currency'),
+        supabaseAdmin
+          .from('profiles')
+          .select('id, country, email, first_name, last_name'),
+      ]);
+
+      const walletMap = new Map((wallets || []).map((w: any) => [w.id, w]));
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+      const byUser = new Map<string, { user_id: string; user_label: string; country: string; conversions_count: number; total_amount: number }>();
+      const byCountry = new Map<string, { country: string; conversions_count: number; total_amount: number }>();
+      const countryCorridors = new Map<string, { from_country: string; to_country: string; conversions_count: number; total_amount: number }>();
+
+      let totalConversions = 0;
+      let internationalConversions = 0;
+
+      for (const tx of txRows || []) {
+        if (tx.transaction_type !== 'transfer') continue;
+
+        const senderWallet = walletMap.get(tx.sender_wallet_id);
+        const receiverWallet = walletMap.get(tx.receiver_wallet_id);
+        if (!senderWallet || !receiverWallet) continue;
+
+        const senderProfile = profileMap.get(senderWallet.user_id);
+        const receiverProfile = profileMap.get(receiverWallet.user_id);
+
+        const senderCountry = String(senderProfile?.country || mapCurrencyToCountry(senderWallet.currency || null));
+        const receiverCountry = String(receiverProfile?.country || mapCurrencyToCountry(receiverWallet.currency || null));
+        const amount = Number(tx.amount || 0);
+
+        totalConversions += 1;
+        if (senderCountry !== receiverCountry) internationalConversions += 1;
+
+        const senderName = `${String(senderProfile?.first_name || '').trim()} ${String(senderProfile?.last_name || '').trim()}`.trim();
+        const senderLabel = senderName || String(senderProfile?.email || senderWallet.user_id);
+
+        const currentUser = byUser.get(senderWallet.user_id) || {
+          user_id: senderWallet.user_id,
+          user_label: senderLabel,
+          country: senderCountry,
+          conversions_count: 0,
+          total_amount: 0,
+        };
+        currentUser.conversions_count += 1;
+        currentUser.total_amount += amount;
+        byUser.set(senderWallet.user_id, currentUser);
+
+        const senderCountryStats = byCountry.get(senderCountry) || {
+          country: senderCountry,
+          conversions_count: 0,
+          total_amount: 0,
+        };
+        senderCountryStats.conversions_count += 1;
+        senderCountryStats.total_amount += amount;
+        byCountry.set(senderCountry, senderCountryStats);
+
+        const corridorKey = `${senderCountry}=>${receiverCountry}`;
+        const corridorStats = countryCorridors.get(corridorKey) || {
+          from_country: senderCountry,
+          to_country: receiverCountry,
+          conversions_count: 0,
+          total_amount: 0,
+        };
+        corridorStats.conversions_count += 1;
+        corridorStats.total_amount += amount;
+        countryCorridors.set(corridorKey, corridorStats);
+      }
+
+      res.json({
+        success: true,
+        data: {
+          window_hours: windowHours,
+          total_conversions: totalConversions,
+          international_conversions: internationalConversions,
+          by_user: Array.from(byUser.values()).sort((a, b) => b.conversions_count - a.conversions_count).slice(0, 50),
+          by_country: Array.from(byCountry.values()).sort((a, b) => b.conversions_count - a.conversions_count),
+          country_corridors: Array.from(countryCorridors.values()).sort((a, b) => b.conversions_count - a.conversions_count).slice(0, 100),
+        },
+      });
+    } catch (error: any) {
+      logger.error(`FX conversion stats error: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors du chargement des stats de conversion' });
+    }
+  }
+);
+
+/**
+ * POST /api/v2/wallet/admin/fx-rate-alert-check
+ * Bouton alerte: crée une alerte si un changement de taux est détecté en moins d'1h.
+ */
+router.post(
+  '/admin/fx-rate-alert-check',
+  verifyJWT,
+  requirePermissionOrRole({
+    permissionKey: 'manage_wallet_transactions',
+    allowedRoles: ['admin', 'pdg', 'ceo'],
+  }),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { data: rateRows } = await supabaseAdmin
+        .from('currency_exchange_rates')
+        .select('from_currency, to_currency, rate, source_url, retrieved_at')
+        .eq('is_active', true)
+        .order('retrieved_at', { ascending: false })
+        .limit(100);
+
+      const validRates = (rateRows || []).filter((r: any) => isAfricanBankSourceUrl(r?.source_url));
+      if (validRates.length < 2) {
+        res.json({ success: true, data: { alert_created: false, reason: 'not_enough_data' } });
+        return;
+      }
+
+      const latest = validRates[0] as any;
+      const previous = validRates.find((r: any) => r.from_currency === latest.from_currency && r.to_currency === latest.to_currency && r.retrieved_at !== latest.retrieved_at) as any;
+      if (!previous) {
+        res.json({ success: true, data: { alert_created: false, reason: 'no_previous_same_pair' } });
+        return;
+      }
+
+      const latestTs = latest.retrieved_at ? new Date(latest.retrieved_at).getTime() : 0;
+      const previousTs = previous.retrieved_at ? new Date(previous.retrieved_at).getTime() : 0;
+      const minutesBetween = Math.abs(latestTs - previousTs) / 60000;
+
+      const latestRate = Number(latest.rate || 0);
+      const previousRate = Number(previous.rate || 0);
+      const changed = latestRate > 0 && previousRate > 0 && latestRate !== previousRate;
+      const changedUnderOneHour = changed && minutesBetween <= 60;
+
+      let alertCreated = false;
+      if (changedUnderOneHour) {
+        const thresholdIso = new Date(Date.now() - 60 * 60000).toISOString();
+        const { data: existing } = await supabaseAdmin
+          .from('financial_security_alerts')
+          .select('id')
+          .eq('alert_type', 'fx_rate_change_under_1h')
+          .eq('is_resolved', false)
+          .gte('created_at', thresholdIso)
+          .limit(1)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabaseAdmin.from('financial_security_alerts').insert({
+            user_id: SYSTEM_USER_ID,
+            alert_type: 'fx_rate_change_under_1h',
+            severity: 'high',
+            title: 'Changement de taux detecte en moins d\'1 heure',
+            description: `${latest.from_currency}/${latest.to_currency} a change de ${previousRate} a ${latestRate} en ${Math.round(minutesBetween)} minutes.`,
+            metadata: {
+              actor_id: req.user!.id,
+              latest,
+              previous,
+              minutes_between: Math.round(minutesBetween),
+            },
+          }).catch(() => {});
+          alertCreated = true;
+        }
+      }
+
+      res.json({
+        success: true,
+        data: {
+          alert_created: alertCreated,
+          changed_under_one_hour: changedUnderOneHour,
+          minutes_between: Math.round(minutesBetween),
+          latest,
+          previous,
+        },
+      });
+    } catch (error: any) {
+      logger.error(`FX rate alert check error: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors de la verification d\'alerte FX' });
+    }
+  }
+);
+
+/**
  * POST /api/v2/wallet/admin/fx-refresh
  * Déclenche manuellement une collecte des taux (PDG/Admin)
  */
@@ -1087,7 +1273,12 @@ router.post(
           apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ source: 'pdg_manual_refresh', actor_id: req.user!.id }),
+        body: JSON.stringify({
+          source: 'pdg_manual_refresh',
+          actor_id: req.user!.id,
+          strict_african_sources: true,
+          preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
+        }),
       });
 
       const raw = await response.text();

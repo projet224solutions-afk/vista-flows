@@ -19,6 +19,7 @@ import { Queue, Worker, Job } from 'bullmq';
 import { logger } from '../config/logger.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { env } from '../config/env.js';
+import { AFRICAN_BANK_SOURCE_URLS } from '../constants/africanBankSources.js';
 
 const REDIS_JOBS_ENABLED = (process.env.REDIS_ENABLED ?? (env.isProduction ? 'true' : 'false')) === 'true';
 
@@ -417,18 +418,6 @@ registerHandler('fx.african-rates-refresh', async () => {
   try {
     const functionUrl = `${env.SUPABASE_URL}/functions/v1/african-fx-collect`;
 
-    const preferredAfricanBankSources = [
-      'https://www.bcrg-guinee.org',
-      'https://www.bceao.int',
-      'https://www.beac.int',
-      'https://www.sarb.co.za',
-      'https://www.cbn.gov.ng',
-      'https://www.bankofghana.org',
-      'https://www.bou.or.ug',
-      'https://www.ecobank.com',
-      'https://www.orabank.net',
-    ];
-
     const response = await fetch(functionUrl, {
       method: 'POST',
       headers: {
@@ -439,7 +428,7 @@ registerHandler('fx.african-rates-refresh', async () => {
       body: JSON.stringify({
         source: 'backend_hourly_job',
         strict_african_sources: true,
-        preferred_source_urls: preferredAfricanBankSources,
+        preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
       }),
     });
 

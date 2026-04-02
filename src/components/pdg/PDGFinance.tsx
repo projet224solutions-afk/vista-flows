@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar, Crown, Shield, Bike, Sparkles, Building2, ArrowUpDown } from 'lucide-react';
+import { DollarSign, TrendingUp, Wallet, Download, Clock, BarChart3, RefreshCw, User, Mail, Phone, CreditCard, Calendar, Crown, Shield, Bike, Sparkles, Building2, ArrowUpDown, AlertTriangle, Globe2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   LineChart,
@@ -36,6 +36,10 @@ export default function PDGFinance() {
   const [showWalletsDialog, setShowWalletsDialog] = useState(false);
   const [fxHealth, setFxHealth] = useState<any>(null);
   const [fxLoading, setFxLoading] = useState(false);
+  const [showConversionStatsDialog, setShowConversionStatsDialog] = useState(false);
+  const [conversionStats, setConversionStats] = useState<any>(null);
+  const [conversionStatsLoading, setConversionStatsLoading] = useState(false);
+  const [alertCheckLoading, setAlertCheckLoading] = useState(false);
 
   const visibleBankSources = (() => {
     if (Array.isArray(fxHealth?.bank_sources) && fxHealth.bank_sources.length > 0) {
@@ -99,6 +103,43 @@ export default function PDGFinance() {
   useEffect(() => {
     loadFxHealth();
   }, []);
+
+  const loadConversionStats = async () => {
+    try {
+      setConversionStatsLoading(true);
+      const response = await backendFetch('/api/v2/wallet/admin/fx-conversion-stats', { method: 'GET' });
+      if (!response.success) {
+        throw new Error(response.error || 'Impossible de charger les stats de conversion');
+      }
+      setConversionStats(response.data || null);
+      setShowConversionStatsDialog(true);
+    } catch (error: any) {
+      toast.error(error?.message || 'Erreur stats de conversion');
+    } finally {
+      setConversionStatsLoading(false);
+    }
+  };
+
+  const checkRateChangeAlert = async () => {
+    try {
+      setAlertCheckLoading(true);
+      const response = await backendFetch('/api/v2/wallet/admin/fx-rate-alert-check', { method: 'POST' });
+      if (!response.success) {
+        throw new Error(response.error || 'Impossible de verifier les alertes FX');
+      }
+
+      if (response.data?.changed_under_one_hour) {
+        toast.warning(`Changement de taux detecte en ${response.data?.minutes_between || 'N/A'} min.${response.data?.alert_created ? ' Alerte enregistree.' : ' Alerte deja active.'}`);
+      } else {
+        toast.success('Aucun changement de taux en moins d\'1 heure.');
+      }
+      await loadFxHealth();
+    } catch (error: any) {
+      toast.error(error?.message || 'Erreur verification alerte FX');
+    } finally {
+      setAlertCheckLoading(false);
+    }
+  };
 
   const chartConfig = {
     amount: { label: "Montant", color: "hsl(var(--primary))" },
@@ -265,6 +306,16 @@ export default function PDGFinance() {
             Santé FX (devises)
           </CardTitle>
           <CardDescription>Taux actuel, historique du jour et sources consultées</CardDescription>
+          <div className="flex flex-wrap gap-2 pt-2">
+            <Button type="button" variant="outline" className="gap-2" onClick={loadConversionStats} disabled={conversionStatsLoading}>
+              <Globe2 className="w-4 h-4" />
+              {conversionStatsLoading ? 'Chargement...' : 'Voir conversions par pays'}
+            </Button>
+            <Button type="button" variant="secondary" className="gap-2" onClick={checkRateChangeAlert} disabled={alertCheckLoading}>
+              <AlertTriangle className="w-4 h-4" />
+              {alertCheckLoading ? 'Verification...' : 'Alerte changement < 1h'}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {fxLoading ? (
@@ -603,6 +654,88 @@ export default function PDGFinance() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal des Wallets */}
+      <Dialog open={showConversionStatsDialog} onOpenChange={setShowConversionStatsDialog}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <Globe2 className="w-6 h-6 text-primary" />
+              Conversions utilisateurs par pays
+            </DialogTitle>
+            <DialogDescription>
+              Volume de conversions (fenetre glissante {conversionStats?.window_hours || 24}h), pays origine/destination
+            </DialogDescription>
+          </DialogHeader>
+
+          {!conversionStats ? (
+            <p className="text-sm text-muted-foreground">Aucune statistique disponible.</p>
+          ) : (
+            <div className="space-y-4 mt-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Card>
+                  <CardContent className="pt-4">
+                    <p className="text-xs text-muted-foreground">Conversions totales</p>
+                    <p className="text-2xl font-bold">{conversionStats.total_conversions || 0}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <p className="text-xs text-muted-foreground">Conversions internationales</p>
+                    <p className="text-2xl font-bold">{conversionStats.international_conversions || 0}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4">
+                    <p className="text-xs text-muted-foreground">Pays actifs</p>
+                    <p className="text-2xl font-bold">{Array.isArray(conversionStats.by_country) ? conversionStats.by_country.length : 0}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Corridors pays vers pays</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!Array.isArray(conversionStats.country_corridors) || conversionStats.country_corridors.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Aucun corridor détecté.</p>
+                  ) : (
+                    <div className="max-h-56 overflow-auto space-y-1">
+                      {conversionStats.country_corridors.slice(0, 30).map((row: any, idx: number) => (
+                        <div key={`${row.from_country}-${row.to_country}-${idx}`} className="text-xs rounded border p-2 flex items-center justify-between gap-2">
+                          <span className="font-medium">{row.from_country} -> {row.to_country}</span>
+                          <span>{row.conversions_count} conversions</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Top utilisateurs (conversions)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!Array.isArray(conversionStats.by_user) || conversionStats.by_user.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Aucun utilisateur détecté.</p>
+                  ) : (
+                    <div className="max-h-56 overflow-auto space-y-1">
+                      {conversionStats.by_user.slice(0, 30).map((row: any, idx: number) => (
+                        <div key={`${row.user_id}-${idx}`} className="text-xs rounded border p-2 flex items-center justify-between gap-2">
+                          <span className="truncate">{row.user_label} ({row.country || 'Inconnu'})</span>
+                          <span>{row.conversions_count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Modal des Wallets */}
       <Dialog open={showWalletsDialog} onOpenChange={setShowWalletsDialog}>
