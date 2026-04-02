@@ -7,7 +7,7 @@
  * - Anti-fraud helpers
  */
 
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { logger } from '../config/logger.js';
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
@@ -33,10 +33,8 @@ export const trackingRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    // Rate limit by IP + session to prevent abuse
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
-               req.headers['x-real-ip'] || 
-               req.ip;
+    // Use official helper for IPv6-safe IP normalization.
+    const ip = ipKeyGenerator(req.ip);
     const sessionId = req.headers['x-session-id'] || req.body?.sessionId || '';
     return `${ip}-${sessionId}`;
   },
