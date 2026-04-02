@@ -33,6 +33,7 @@ const REDIS_CONNECTION = {
 };
 
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
+const BCRG_OFFICIAL_URL = 'https://www.bcrg-guinee.org';
 
 function isFxSuccessStatus(status: string | null | undefined): boolean {
   const normalized = (status || '').toLowerCase();
@@ -429,6 +430,14 @@ registerHandler('fx.african-rates-refresh', async () => {
         source: 'backend_hourly_job',
         strict_african_sources: true,
         include_all_african_banks: true,
+        primary_source_url: BCRG_OFFICIAL_URL,
+        preferred_currency_pairs: [
+          { from: 'USD', to: 'GNF' },
+          { from: 'EUR', to: 'GNF' },
+        ],
+        bcrg_source_urls: [
+          BCRG_OFFICIAL_URL,
+        ],
         preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
       }),
     });

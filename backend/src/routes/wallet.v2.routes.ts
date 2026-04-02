@@ -30,6 +30,7 @@ import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
+const BCRG_OFFICIAL_URL = 'https://www.bcrg-guinee.org';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface ResolvedRecipient {
@@ -125,7 +126,7 @@ function resolveOfficialBankSourceUrl(row: { source_url?: string | null; source?
   const text = `${String(row?.source || '').toLowerCase()} ${String(row?.source_type || '').toLowerCase()}`;
 
   if (/bcrg|banque centrale de guinee|banque centrale de guinée/.test(text)) {
-    return 'https://www.bcrg-guinee.org';
+    return BCRG_OFFICIAL_URL;
   }
 
   return null;
@@ -994,11 +995,20 @@ router.get(
       startOfDay.setUTCHours(0, 0, 0, 0);
       const startOfDayIso = startOfDay.toISOString();
 
-      const [{ data: latestRate }, { data: recentRuns }, { data: unresolvedAlerts }, { data: todayRates }] = await Promise.all([
+      const [{ data: latestAnyRate }, { data: latestUsdGnfRate }, { data: recentRuns }, { data: unresolvedAlerts }, { data: todayRates }] = await Promise.all([
         supabaseAdmin
           .from('currency_exchange_rates')
           .select('from_currency, to_currency, rate, margin, source_type, source_url, retrieved_at')
           .eq('is_active', true)
+          .order('retrieved_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabaseAdmin
+          .from('currency_exchange_rates')
+          .select('from_currency, to_currency, rate, margin, source_type, source_url, retrieved_at')
+          .eq('is_active', true)
+          .eq('from_currency', 'USD')
+          .eq('to_currency', 'GNF')
           .order('retrieved_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
@@ -1023,7 +1033,8 @@ router.get(
           .limit(200),
       ]);
 
-      const lastRetrievedAt = latestRate?.retrieved_at ? new Date(latestRate.retrieved_at).getTime() : null;
+      const currentRate = latestUsdGnfRate || latestAnyRate;
+      const lastRetrievedAt = currentRate?.retrieved_at ? new Date(currentRate.retrieved_at).getTime() : null;
       const ageMinutes = lastRetrievedAt ? Math.floor((now - lastRetrievedAt) / 60000) : null;
       const staleThresholdMinutes = 90;
       const stale = ageMinutes === null || ageMinutes > staleThresholdMinutes;
@@ -1070,9 +1081,9 @@ router.get(
           stale_threshold_minutes: staleThresholdMinutes,
           is_stale: stale,
           age_minutes: ageMinutes,
-          last_rate: latestRate || null,
+          last_rate: currentRate || null,
           two_consecutive_failures: twoConsecutiveFailures,
-          current_rate: latestRate || null,
+          current_rate: currentRate || null,
           recent_runs: runRows.slice(0, 10),
           today_history: todaysHistory,
           gnf_today_history: gnfTodayHistory,
@@ -1314,6 +1325,14 @@ router.post(
           actor_id: req.user!.id,
           strict_african_sources: true,
           include_all_african_banks: true,
+          primary_source_url: BCRG_OFFICIAL_URL,
+          preferred_currency_pairs: [
+            { from: 'USD', to: 'GNF' },
+            { from: 'EUR', to: 'GNF' },
+          ],
+          bcrg_source_urls: [
+            BCRG_OFFICIAL_URL,
+          ],
           preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
         }),
       });

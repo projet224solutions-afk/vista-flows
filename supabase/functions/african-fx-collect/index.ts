@@ -250,13 +250,16 @@ interface BcrgRates {
   eurGnf?: number;
 }
 
-async function scrapeBcrg(): Promise<BcrgRates | null> {
-  const urls = [
-    "https://www.bcrg.gov.gn",
-    "https://www.bcrg.gov.gn/cours-de-change",
-  ];
+const BCRG_PRIMARY_URL = "https://www.bcrg-guinee.org";
+const BCRG_SCRAPE_URLS = [
+  "https://www.bcrg-guinee.org",
+  "https://www.bcrg-guinee.org/cours-de-change",
+  "https://www.bcrg.gov.gn",
+  "https://www.bcrg.gov.gn/cours-de-change",
+];
 
-  for (const url of urls) {
+async function scrapeBcrg(): Promise<BcrgRates | null> {
+  for (const url of BCRG_SCRAPE_URLS) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
@@ -558,7 +561,7 @@ serve(async (req) => {
           rateUsd: bcrgRates.usdGnf,
           rateEur: eurGnf,
           source: "bcrg-official-html",
-          sourceUrl: "https://www.bcrg.gov.gn",
+          sourceUrl: BCRG_PRIMARY_URL,
           sourceType: "official_html",
         };
       }
