@@ -210,7 +210,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
   ];
 
   return (
-    <div className="min-w-0 space-y-5 overflow-x-hidden pb-[calc(env(safe-area-inset-bottom)+6.5rem)] sm:space-y-8 md:pb-0">
+    <div className="min-w-0 space-y-5 overflow-x-hidden pb-[calc(env(safe-area-inset-bottom)+8.5rem)] sm:space-y-8 md:pb-0">
       <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#04439e_0%,#0536a8_55%,#0b1b33_100%)] shadow-[0_28px_65px_rgba(4,67,158,0.30)]">
         <CardContent className="p-4 sm:p-7 lg:p-8">
           <div className="flex flex-col gap-4 sm:gap-6 xl:flex-row xl:items-end xl:justify-between">
@@ -269,7 +269,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         {primaryMetrics.map((metric) => {
           const Icon = metric.icon;
 
@@ -407,12 +407,12 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden rounded-[28px] border-0 bg-[#0b1b33] shadow-[0_22px_55px_rgba(4,67,158,0.28)]">
+          <Card className="rounded-[28px] border-0 bg-[#0b1b33] shadow-[0_22px_55px_rgba(4,67,158,0.28)]">
             <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6 pt-4 sm:pt-6">
               <CardTitle className="text-base sm:text-xl font-semibold text-white">Actions prioritaires</CardTitle>
               <CardDescription className="text-xs sm:text-sm text-white/50">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
             </CardHeader>
-            <CardContent className="grid min-w-0 grid-cols-1 gap-2.5 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:grid-cols-2 sm:gap-3 sm:px-6 sm:pb-6">
+            <CardContent className="grid min-w-0 grid-cols-1 gap-3 px-4 pb-[calc(env(safe-area-inset-bottom)+4rem)] sm:px-6 md:grid-cols-2 md:gap-3 md:pb-6">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 const primary = action.variant === 'primary';
@@ -423,20 +423,20 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                     type="button"
                     onClick={action.onClick}
                     className={[
-                      'group min-w-0 rounded-[18px] border p-3 text-left transition-all min-h-[140px] sm:min-h-[164px] sm:rounded-[22px] sm:p-4',
+                      'group flex h-full w-full min-w-0 flex-col items-start justify-start rounded-[20px] border p-3.5 text-left transition-all min-h-[156px] md:min-h-[164px] sm:rounded-[22px] sm:p-4',
                       primary
                         ? 'border-[#ff4000]/35 bg-[#ff4000]/12 hover:-translate-y-0.5 hover:bg-[#ff4000]/20 hover:shadow-[0_16px_36px_rgba(255,64,0,0.18)]'
                         : 'border-white/12 bg-white/6 hover:-translate-y-0.5 hover:bg-white/12 hover:border-white/22 hover:shadow-[0_16px_36px_rgba(4,67,158,0.15)]'
                     ].join(' ')}
                   >
                     <div className={[
-                      'flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl',
+                      'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11 sm:rounded-2xl',
                       primary ? 'bg-[#ff4000] text-white shadow-[0_12px_28px_rgba(255,64,0,0.28)]' : 'bg-white/15 text-white'
                     ].join(' ')}>
                       <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <p className="mt-2.5 break-words text-xs font-semibold leading-tight text-white sm:mt-4 sm:text-sm">{action.label}</p>
-                    <p className="mt-1 break-words text-[11px] leading-snug text-white/50 sm:text-sm">{action.description}</p>
+                    <p className="mt-3 break-words text-sm font-semibold leading-snug text-white sm:mt-4">{action.label}</p>
+                    <p className="mt-1.5 break-words text-[11px] leading-snug text-white/60 sm:text-sm">{action.description}</p>
                   </button>
                 );
               })}
