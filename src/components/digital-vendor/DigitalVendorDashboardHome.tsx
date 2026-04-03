@@ -210,7 +210,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
   ];
 
   return (
-    <div className="min-w-0 space-y-5 overflow-x-hidden sm:space-y-8">
+    <div className="min-w-0 space-y-5 overflow-x-hidden pb-[calc(env(safe-area-inset-bottom)+6.5rem)] sm:space-y-8 md:pb-0">
       <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#04439e_0%,#0536a8_55%,#0b1b33_100%)] shadow-[0_28px_65px_rgba(4,67,158,0.30)]">
         <CardContent className="p-4 sm:p-7 lg:p-8">
           <div className="flex flex-col gap-4 sm:gap-6 xl:flex-row xl:items-end xl:justify-between">
@@ -393,9 +393,9 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                   <div key={metric.label} className="min-w-0 rounded-[18px] border border-white/12 bg-white/10 p-3 sm:rounded-[22px] sm:p-4">
                     <div className="flex items-start justify-between gap-2 sm:gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[9px] font-semibold uppercase tracking-[0.08em] text-white/50 min-[400px]:text-[8px] sm:text-[11px] sm:tracking-[0.18em]">{metric.label}</p>
+                        <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-white/50 min-[400px]:text-[8px] sm:text-[11px] sm:tracking-[0.18em]">{metric.label}</p>
                         <p className="mt-1.5 text-lg font-semibold text-white sm:text-2xl">{metric.value}</p>
-                        <p className="mt-1 truncate text-[10px] leading-tight text-white/50 sm:text-sm">{metric.note}</p>
+                        <p className="mt-1 text-[10px] leading-tight text-white/50 sm:text-sm">{metric.note}</p>
                       </div>
                       <div className="flex h-8 w-8 sm:h-11 sm:w-11 items-center justify-center rounded-xl sm:rounded-2xl bg-white/15 flex-shrink-0">
                         <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
@@ -412,7 +412,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               <CardTitle className="text-base sm:text-xl font-semibold text-white">Actions prioritaires</CardTitle>
               <CardDescription className="text-xs sm:text-sm text-white/50">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
             </CardHeader>
-            <CardContent className="grid min-w-0 grid-cols-1 gap-2.5 px-4 pb-4 sm:grid-cols-2 sm:gap-3 sm:px-6 sm:pb-6">
+            <CardContent className="grid min-w-0 grid-cols-1 gap-2.5 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:grid-cols-2 sm:gap-3 sm:px-6 sm:pb-6">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 const primary = action.variant === 'primary';
@@ -423,7 +423,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                     type="button"
                     onClick={action.onClick}
                     className={[
-                      'group min-w-0 overflow-hidden rounded-[18px] border p-3 text-left transition-all sm:rounded-[22px] sm:p-4',
+                      'group min-w-0 overflow-hidden rounded-[18px] border p-3 text-left transition-all min-h-[120px] sm:min-h-[132px] sm:rounded-[22px] sm:p-4',
                       primary
                         ? 'border-[#ff4000]/35 bg-[#ff4000]/12 hover:-translate-y-0.5 hover:bg-[#ff4000]/20 hover:shadow-[0_16px_36px_rgba(255,64,0,0.18)]'
                         : 'border-white/12 bg-white/6 hover:-translate-y-0.5 hover:bg-white/12 hover:border-white/22 hover:shadow-[0_16px_36px_rgba(4,67,158,0.15)]'
