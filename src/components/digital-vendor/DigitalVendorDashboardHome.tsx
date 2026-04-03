@@ -412,7 +412,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
               <CardTitle className="text-base sm:text-xl font-semibold text-white">Actions prioritaires</CardTitle>
               <CardDescription className="text-xs sm:text-sm text-white/50">Les raccourcis les plus utiles pour piloter rapidement votre activité.</CardDescription>
             </CardHeader>
-            <CardContent className="grid min-w-0 grid-cols-1 gap-3 px-4 pb-[calc(env(safe-area-inset-bottom)+4rem)] sm:px-6 md:grid-cols-2 md:gap-3 md:pb-6">
+            <CardContent className="grid min-w-0 grid-cols-1 gap-2.5 px-4 pb-[calc(env(safe-area-inset-bottom)+4.5rem)] sm:px-6 lg:grid-cols-2 lg:gap-3 lg:pb-6">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 const primary = action.variant === 'primary';
@@ -423,7 +423,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                     type="button"
                     onClick={action.onClick}
                     className={[
-                      'group flex h-full w-full min-w-0 flex-col items-start justify-start rounded-[20px] border p-3.5 text-left transition-all min-h-[156px] md:min-h-[164px] sm:rounded-[22px] sm:p-4',
+                      'group flex w-full min-w-0 items-start gap-3 rounded-[20px] border p-3.5 text-left transition-all sm:rounded-[22px] sm:p-4 lg:min-h-[164px] lg:flex-col lg:items-start lg:justify-start',
                       primary
                         ? 'border-[#ff4000]/35 bg-[#ff4000]/12 hover:-translate-y-0.5 hover:bg-[#ff4000]/20 hover:shadow-[0_16px_36px_rgba(255,64,0,0.18)]'
                         : 'border-white/12 bg-white/6 hover:-translate-y-0.5 hover:bg-white/12 hover:border-white/22 hover:shadow-[0_16px_36px_rgba(4,67,158,0.15)]'
@@ -435,8 +435,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                     ].join(' ')}>
                       <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <p className="mt-3 break-words text-sm font-semibold leading-snug text-white sm:mt-4">{action.label}</p>
-                    <p className="mt-1.5 break-words text-[11px] leading-snug text-white/60 sm:text-sm">{action.description}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-sm font-semibold leading-snug text-white">{action.label}</p>
+                      <p className="mt-1 break-words text-[11px] leading-snug text-white/60 sm:text-sm">{action.description}</p>
+                    </div>
                   </button>
                 );
               })}
