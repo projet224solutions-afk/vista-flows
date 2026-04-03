@@ -423,7 +423,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                     type="button"
                     onClick={action.onClick}
                     className={[
-                      'group min-w-0 overflow-hidden rounded-[18px] border p-3 text-left transition-all min-h-[120px] sm:min-h-[132px] sm:rounded-[22px] sm:p-4',
+                      'group min-w-0 rounded-[18px] border p-3 text-left transition-all min-h-[140px] sm:min-h-[164px] sm:rounded-[22px] sm:p-4',
                       primary
                         ? 'border-[#ff4000]/35 bg-[#ff4000]/12 hover:-translate-y-0.5 hover:bg-[#ff4000]/20 hover:shadow-[0_16px_36px_rgba(255,64,0,0.18)]'
                         : 'border-white/12 bg-white/6 hover:-translate-y-0.5 hover:bg-white/12 hover:border-white/22 hover:shadow-[0_16px_36px_rgba(4,67,158,0.15)]'
@@ -436,7 +436,7 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
                       <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
                     <p className="mt-2.5 break-words text-xs font-semibold leading-tight text-white sm:mt-4 sm:text-sm">{action.label}</p>
-                    <p className="mt-1 break-words text-[11px] leading-tight text-white/50 sm:text-sm">{action.description}</p>
+                    <p className="mt-1 break-words text-[11px] leading-snug text-white/50 sm:text-sm">{action.description}</p>
                   </button>
                 );
               })}
