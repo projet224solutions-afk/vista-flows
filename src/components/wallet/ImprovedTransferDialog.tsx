@@ -1,4 +1,4 @@
-import { useState, startTransition, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { previewWalletTransfer, transferToWallet } from '@/services/walletBacken
 import { toast } from 'sonner';
 import { SecureButton } from '@/components/ui/SecureButton';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
+import { WalletPinPromptDialog } from './WalletPinDialogs';
 import { Loader2 } from 'lucide-react';
 
 interface ImprovedTransferDialogProps {
@@ -32,6 +33,12 @@ export const ImprovedTransferDialog = ({
   const [intlPreview, setIntlPreview] = useState<InternationalPreviewData | null>(null);
   const [showIntlConfirm, setShowIntlConfirm] = useState(false);
   const [executing, setExecuting] = useState(false);
+  const [pinPromptOpen, setPinPromptOpen] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [pendingTransferKind, setPendingTransferKind] = useState<'local' | 'international' | null>(null);
+
+  const isPinRequiredError = (message?: string) => /code pin requis/i.test(message || '');
 
   const handleUserSelect = (userId: string) => {
     setRecipientUserId(userId);
@@ -87,15 +94,23 @@ export const ImprovedTransferDialog = ({
   }, [user?.id, recipientCode, recipientUserId, amount, description, currentBalance, onOpenChange]);
 
   // Execute local transfer (no international fees)
-  const executeLocalTransfer = async (transferAmount: number, resolvedRecipient: string) => {
+  const executeLocalTransfer = async (transferAmount: number, resolvedRecipient: string, pin?: string) => {
     const result = await transferToWallet(
       resolvedRecipient,
       transferAmount,
-      description
+      description,
+      pin
     );
 
     if (!result.success) {
-      throw new Error(result.error || 'Erreur lors du transfert');
+      const errorMessage = result.error || 'Erreur lors du transfert';
+      if (!pin && isPinRequiredError(errorMessage)) {
+        setPendingTransferKind('local');
+        setPinError(null);
+        setPinPromptOpen(true);
+        return false;
+      }
+      throw new Error(errorMessage);
     }
 
     toast.success(`Transfert de ${transferAmount.toLocaleString()} réussi !`);
@@ -103,42 +118,44 @@ export const ImprovedTransferDialog = ({
     onOpenChange(false);
     onSuccess?.();
     window.dispatchEvent(new CustomEvent('wallet-updated'));
+    return true;
   };
 
   // Execute international transfer via backend wallet API
-  const executeInternationalTransfer = useCallback(async () => {
-    if (!intlPreview) return;
+  const executeInternationalTransfer = useCallback(async (pin?: string) => {
+    if (!intlPreview) return false;
 
-    setExecuting(true);
-    try {
-      const resolvedRecipient = recipientUserId || recipientCode;
+    const resolvedRecipient = recipientUserId || recipientCode;
 
-      const result = await transferToWallet(
-        resolvedRecipient,
-        intlPreview.amount_sent,
-        description
-      );
+    const result = await transferToWallet(
+      resolvedRecipient,
+      intlPreview.amount_sent,
+      description,
+      pin
+    );
 
-      if (!result.success) {
-        throw new Error(result.error || 'Erreur lors du transfert');
+    if (!result.success) {
+      const errorMessage = result.error || 'Erreur lors du transfert';
+      if (!pin && isPinRequiredError(errorMessage)) {
+        setPendingTransferKind('international');
+        setPinError(null);
+        setPinPromptOpen(true);
+        return false;
       }
-
-      toast.success(
-        '🌍 Transfert international réussi !',
-        { duration: 5000 }
-      );
-
-      resetForm();
-      setShowIntlConfirm(false);
-      setIntlPreview(null);
-      onSuccess?.();
-      window.dispatchEvent(new CustomEvent('wallet-updated'));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur de transfert';
-      toast.error(message);
-    } finally {
-      setExecuting(false);
+      throw new Error(errorMessage);
     }
+
+    toast.success(
+      '🌍 Transfert international réussi !',
+      { duration: 5000 }
+    );
+
+    resetForm();
+    setShowIntlConfirm(false);
+    setIntlPreview(null);
+    onSuccess?.();
+    window.dispatchEvent(new CustomEvent('wallet-updated'));
+    return true;
   }, [intlPreview, recipientCode, recipientUserId, description, onSuccess]);
 
   const resetForm = () => {
@@ -221,8 +238,55 @@ export const ImprovedTransferDialog = ({
           if (!val) setIntlPreview(null);
         }}
         preview={intlPreview}
-        onConfirm={executeInternationalTransfer}
+        onConfirm={async () => {
+          setExecuting(true);
+          try {
+            await executeInternationalTransfer();
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Erreur de transfert';
+            toast.error(message);
+          } finally {
+            setExecuting(false);
+          }
+        }}
         loading={executing}
+      />
+
+      <WalletPinPromptDialog
+        open={pinPromptOpen}
+        onOpenChange={(value) => {
+          setPinPromptOpen(value);
+          if (!value) {
+            setPinError(null);
+            setPendingTransferKind(null);
+          }
+        }}
+        loading={pinLoading}
+        error={pinError}
+        onConfirm={async (pin) => {
+          if (!pendingTransferKind) return;
+
+          try {
+            setPinLoading(true);
+            setPinError(null);
+
+            const resolvedRecipient = recipientUserId || recipientCode;
+            const transferAmount = parseFloat(amount || '0');
+            const success = pendingTransferKind === 'international'
+              ? await executeInternationalTransfer(pin)
+              : await executeLocalTransfer(transferAmount, resolvedRecipient, pin);
+
+            if (success) {
+              setPinPromptOpen(false);
+              setPendingTransferKind(null);
+            }
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Code PIN invalide';
+            setPinError(message);
+          } finally {
+            setPinLoading(false);
+          }
+        }}
       />
     </>
   );

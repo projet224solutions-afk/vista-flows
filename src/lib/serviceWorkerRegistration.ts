@@ -35,10 +35,14 @@ function registerSW() {
 
       console.log("[PWA] SW registered, scope:", registration.scope);
 
-      // On installed PWA, check for updates immediately
-      if (isPWAStandalone()) {
-        console.log("[PWA] Standalone mode — checking for SW update...");
-        registration.update().catch(() => {});
+      // Toujours vérifier immédiatement les mises à jour pour éviter les écrans blancs liés aux anciens chunks.
+      registration.update().catch(() => {});
+
+      if (registration.waiting) {
+        console.log("[PWA] Waiting SW detected — auto-activating...");
+        registration.waiting.postMessage("skipWaiting");
+        setTimeout(() => window.location.reload(), 500);
+        return;
       }
 
       registration.onupdatefound = () => {
@@ -46,16 +50,9 @@ function registerSW() {
         if (newWorker) {
           newWorker.onstatechange = () => {
             if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              console.log("[PWA] New SW version available");
-              // On standalone PWA, auto-activate new SW
-              if (isPWAStandalone()) {
-                console.log("[PWA] Auto-activating new SW for standalone...");
-                newWorker.postMessage("skipWaiting");
-                // Reload after a short delay to let SW activate
-                setTimeout(() => window.location.reload(), 500);
-              } else {
-                showUpdateMessage();
-              }
+              console.log("[PWA] New SW version available — auto-activating...");
+              newWorker.postMessage("skipWaiting");
+              setTimeout(() => window.location.reload(), 500);
             }
           };
         }

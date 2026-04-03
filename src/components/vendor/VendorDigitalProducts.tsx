@@ -198,68 +198,106 @@ export default function VendorDigitalProducts() {
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
             <div className="mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
-              Catalogue digital
+              Catalogue vendeur digital
             </div>
-            <h2 className="text-xl font-semibold leading-tight text-white sm:text-3xl">Gérez votre portefeuille de produits numériques avec une vue claire, premium et orientée business.</h2>
-            <p className="mt-3 text-sm leading-6 text-white/65 sm:text-base">
-            Gérez vos produits numériques et affiliations
+            <h2 className="text-xl font-semibold leading-tight text-white sm:text-3xl">Organisez votre boutique digitale avec une gestion claire, sérieuse et orientée conversion.</h2>
+            <p className="mt-3 text-sm leading-6 text-white/70 sm:text-base">
+              Retrouvez vos produits, leur statut commercial et les actions de gestion dans une structure plus propre et plus crédible.
             </p>
           </div>
-          <Button onClick={() => navigate('/digital-products')} className="h-12 w-full rounded-2xl bg-[#ff4000] px-5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(255,64,0,0.38)] hover:bg-[#e53900] sm:w-auto gap-2">
+          <Button onClick={() => navigate('/vendeur-digital/add-product')} className="h-12 w-full rounded-2xl bg-[#ff4000] px-5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(255,64,0,0.34)] hover:bg-[#e53900] sm:w-auto gap-2">
             <Plus className="w-4 h-4" />
-            Ajouter un produit
+            Nouveau produit
           </Button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 min-[520px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
         <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#04439e,#0d5ed2)] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
           <CardContent className="p-4 sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Total</p>
-            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">{products.length}</div>
-            <p className="mt-2 text-sm text-white/50 truncate">produits dans le catalogue</p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Total</p>
+                <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">{products.length}</div>
+                <p className="mt-2 text-sm text-white/55">produits dans le catalogue</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-white">
+                <Package className="h-5 w-5" />
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#0b1b33,#04439e)] shadow-[0_18px_45px_rgba(4,67,158,0.25)]">
+        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#ff4000,#e53900)] shadow-[0_18px_45px_rgba(255,64,0,0.20)]">
           <CardContent className="p-4 sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Publiés</p>
-            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">
-              {products.filter(p => p.status === 'published').length}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">Publiés</p>
+                <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">
+                  {products.filter(p => p.status === 'published').length}
+                </div>
+                <p className="mt-2 text-sm text-white/60">offres visibles sur le marché</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-white">
+                <Laptop className="h-5 w-5" />
+              </div>
             </div>
-            <p className="mt-2 text-sm text-white/50 truncate">offres visibles sur le marché</p>
           </CardContent>
         </Card>
-        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#041f87,#04439e)] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
+        <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#0b1b33,#04439e)] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
           <CardContent className="p-4 sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Affiliation</p>
-            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-[#ff8050]">
-              {products.filter(p => p.product_mode === 'affiliate').length}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Affiliation</p>
+                <div className="mt-3 text-2xl sm:text-3xl font-semibold text-[#ffb08a]">
+                  {products.filter(p => p.product_mode === 'affiliate').length}
+                </div>
+                <p className="mt-2 text-sm text-white/55">produits partenaires</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-white">
+                <ExternalLink className="h-5 w-5" />
+              </div>
             </div>
-            <p className="mt-2 text-sm text-white/50 truncate">produits partenaires</p>
           </CardContent>
         </Card>
         <Card className="rounded-[24px] border-0 bg-[linear-gradient(135deg,#063589,#0536a8)] shadow-[0_18px_45px_rgba(4,67,158,0.22)]">
           <CardContent className="p-4 sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Visibilité</p>
-            <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">
-              {products.reduce((sum, p) => sum + (p.views_count || 0), 0)}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Visibilité</p>
+                <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">
+                  {products.reduce((sum, p) => sum + (p.views_count || 0), 0)}
+                </div>
+                <p className="mt-2 text-sm text-white/55">vues cumulées</p>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-white">
+                <Eye className="h-5 w-5" />
+              </div>
             </div>
-            <p className="mt-2 text-sm text-white/50 truncate">vues cumulées</p>
           </CardContent>
         </Card>
       </div>
 
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h3 className="text-lg font-semibold tracking-tight text-[#0b1b33]">Catalogue en gestion</h3>
+          <p className="text-sm text-[#5f78a5]">Retrouvez vos fiches, leur statut et les actions utiles dans un flux clair et professionnel.</p>
+        </div>
+        <Badge className="w-fit border-0 bg-[#04439e]/10 px-3 py-1 text-[11px] font-semibold text-[#04439e] shadow-none">
+          {products.length} fiche{products.length > 1 ? 's' : ''}
+        </Badge>
+      </div>
+
       {/* Product List */}
       {products.length === 0 ? (
-        <Card className="rounded-[28px] border-0 bg-[#04439e] shadow-[0_22px_55px_rgba(4,67,158,0.28)]">
+        <Card className="rounded-[28px] border border-dashed border-slate-200 bg-white shadow-[0_16px_38px_rgba(15,23,42,0.06)]">
           <CardContent className="flex flex-col items-center justify-center py-10 sm:py-14 text-center">
-            <Package className="w-12 h-12 sm:w-16 sm:h-16 text-white/25 mb-4" />
-            <h3 className="text-base sm:text-lg font-semibold mb-2 text-white">Aucun produit numérique</h3>
-            <p className="text-sm text-white/55 mb-4 max-w-sm px-4">
-              Commencez à vendre des produits numériques ou à promouvoir des affiliations
+            <Package className="mb-4 h-12 w-12 text-slate-300 sm:h-16 sm:w-16" />
+            <h3 className="mb-2 text-base font-semibold text-slate-900 sm:text-lg">Aucun produit numérique</h3>
+            <p className="mb-4 max-w-sm px-4 text-sm text-slate-500">
+              Commencez à vendre des produits numériques ou à développer vos offres d’affiliation dans un espace propre et structuré.
             </p>
-            <Button onClick={() => navigate('/digital-products')} className="rounded-xl bg-[#ff4000] text-white hover:bg-[#e53900] gap-2">
+            <Button onClick={() => navigate('/vendeur-digital/add-product')} className="rounded-xl bg-[#ff4000] text-white hover:bg-[#e53900] gap-2">
               <Plus className="w-4 h-4" />
               Créer mon premier produit
             </Button>
@@ -273,7 +311,7 @@ export default function VendorDigitalProducts() {
             const canRepublish = product.status === 'rejected' || product.status === 'archived';
 
             return (
-              <Card key={product.id} className="overflow-hidden rounded-[28px] border-0 bg-[#04439e] shadow-[0_20px_50px_rgba(4,67,158,0.28)] transition-all hover:-translate-y-0.5 hover:shadow-[0_28px_60px_rgba(4,67,158,0.38)]">
+              <Card key={product.id} className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_52px_rgba(15,23,42,0.12)]">
                 {/* Image */}
                 <div className="relative h-40 sm:h-48 bg-muted">
                   <img
@@ -282,7 +320,7 @@ export default function VendorDigitalProducts() {
                     className="w-full h-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
                   />
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,67,158,0.08)_0%,rgba(4,67,158,0.02)_42%,rgba(11,27,51,0.74)_100%)]" />
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.06)_0%,rgba(15,23,42,0.02)_42%,rgba(15,23,42,0.68)_100%)]" />
                   <div className="absolute top-2 left-2 flex gap-1">
                     <Badge className="border-0 bg-white/90 text-[11px] font-semibold text-[#04439e] shadow-none backdrop-blur">
                       <CategoryIcon className="w-3 h-3 mr-1" />
@@ -309,24 +347,24 @@ export default function VendorDigitalProducts() {
                 </div>
 
                 {/* Content */}
-                <CardContent className="p-5 sm:p-6 bg-[#04439e]">
-                  <h3 className="font-semibold text-lg text-white line-clamp-1 mb-2">
+                <CardContent className="bg-white p-5 sm:p-6">
+                  <h3 className="mb-2 line-clamp-1 text-lg font-semibold text-slate-900">
                     {product.title}
                   </h3>
-                  <p className="text-sm text-white/55 line-clamp-2 mb-4">
+                  <p className="mb-4 line-clamp-2 text-sm text-slate-600">
                     {product.short_description || product.description || 'Aucune description'}
                   </p>
 
                   {/* Price */}
-                  <div className="mb-4 flex items-center justify-between gap-3 rounded-[22px] border border-white/15 bg-white/12 px-3 py-3 sm:px-4">
+                  <div className="mb-4 flex items-center justify-between gap-3 rounded-[22px] border border-slate-200 bg-slate-50 px-3 py-3 sm:px-4">
                     <div>
                       {product.price > 0 ? (
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-lg sm:text-xl text-white">
+                            <span className="text-lg font-semibold text-slate-900 sm:text-xl">
                             {formatPrice(product.price, product.currency)}
                           </span>
                           {product.original_price && product.original_price > product.price && (
-                            <span className="text-sm text-white/40 line-through">
+                            <span className="text-sm text-slate-400 line-through">
                               {formatPrice(product.original_price, product.currency)}
                             </span>
                           )}
@@ -343,7 +381,7 @@ export default function VendorDigitalProducts() {
                   </div>
 
                   {/* Stats */}
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-white/45 mb-5">
+                    <div className="mb-5 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                     <span className="flex items-center gap-1">
                       <Eye className="w-3 h-3" />
                       {product.views_count || 0} vues
@@ -360,7 +398,7 @@ export default function VendorDigitalProducts() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-10 flex-1 rounded-xl border-white/25 bg-white/12 text-sm font-semibold text-white hover:bg-white/22"
+                      className="h-10 flex-1 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-[#04439e] hover:bg-slate-100"
                       onClick={() => navigate(`/digital-product/${product.id}`)}
                     >
                       <Eye className="w-4 h-4 mr-1.5" />
@@ -387,7 +425,7 @@ export default function VendorDigitalProducts() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 shrink-0 rounded-xl border border-white/22 bg-white/10 text-white hover:bg-white/22"
+                      className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
                       onClick={() => setEditingProduct(product)}
                       aria-label="Modifier le produit"
                     >

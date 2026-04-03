@@ -73,6 +73,93 @@ const iconMap: Record<string, LucideIcon> = {
 const BRAND_BLUE = '#04439e';
 const BRAND_ORANGE = '#ff4000';
 
+const serviceTypeVisualMap: Record<string, { image: string; accent?: string }> = {
+  agriculture: {
+    image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80',
+    accent: '#15803d'
+  },
+  beaute: {
+    image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+    accent: '#d63384'
+  },
+  construction: {
+    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80',
+    accent: '#b45309'
+  },
+  education: {
+    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80',
+    accent: '#1d4ed8'
+  },
+  ecommerce: {
+    image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+    accent: BRAND_BLUE
+  },
+  freelance: {
+    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80',
+    accent: '#1d4ed8'
+  },
+  informatique: {
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
+    accent: '#7c3aed'
+  },
+  livraison: {
+    image: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?auto=format&fit=crop&w=800&q=80',
+    accent: BRAND_ORANGE
+  },
+  location: {
+    image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80',
+    accent: '#0369a1'
+  },
+  maison: {
+    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80',
+    accent: '#c2410c'
+  },
+  media: {
+    image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80',
+    accent: '#9333ea'
+  },
+  menage: {
+    image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80',
+    accent: '#0891b2'
+  },
+  reparation: {
+    image: 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80',
+    accent: '#b45309'
+  },
+  restaurant: {
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+    accent: '#e85d04'
+  },
+  sante: {
+    image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80',
+    accent: '#dc2626'
+  },
+  sport: {
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
+    accent: '#16a34a'
+  },
+  vtc: {
+    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80',
+    accent: '#1d4ed8'
+  }
+};
+
+const getServiceVisual = (serviceType: ServiceType) => {
+  const code = serviceType.code?.toLowerCase() || '';
+  const normalized = `${serviceType.name} ${serviceType.category}`.toLowerCase();
+
+  if (serviceTypeVisualMap[code]) return serviceTypeVisualMap[code];
+  if (normalized.includes('boutique') || normalized.includes('e-commerce') || normalized.includes('commerce')) return serviceTypeVisualMap.ecommerce;
+  if (normalized.includes('éducation') || normalized.includes('education') || normalized.includes('formation')) return serviceTypeVisualMap.education;
+  if (normalized.includes('immobilier') || normalized.includes('location')) return serviceTypeVisualMap.location;
+  if (normalized.includes('photo') || normalized.includes('vidéo') || normalized.includes('video')) return serviceTypeVisualMap.media;
+  if (normalized.includes('santé') || normalized.includes('sante')) return serviceTypeVisualMap.sante;
+  if (normalized.includes('maison') || normalized.includes('déco') || normalized.includes('deco')) return serviceTypeVisualMap.maison;
+  if (normalized.includes('livraison')) return serviceTypeVisualMap.livraison;
+
+  return { image: '', accent: BRAND_BLUE };
+};
+
 interface ServiceTypesGridProps {
   onBack?: () => void;
   searchQuery?: string;
@@ -176,6 +263,7 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
         {filteredTypes.map((serviceType) => {
           const IconComponent = iconMap[serviceType.icon] || Briefcase;
           const count = serviceCounts[serviceType.id] || 0;
+          const visual = getServiceVisual(serviceType);
 
           return (
             <Card
@@ -186,35 +274,50 @@ export function ServiceTypesGrid({ onBack, searchQuery }: ServiceTypesGridProps)
               )}
               onClick={() => handleServiceClick(serviceType)}
             >
-              <CardContent className="p-4 sm:p-6">
-                {/* Icône avec couleur de marque unie */}
-                <div 
-                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mb-4 shadow-lg"
-                  style={{ backgroundColor: BRAND_BLUE }}
-                >
-                  <IconComponent className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+              <CardContent className="p-0">
+                <div className="relative h-24 overflow-hidden sm:h-28">
+                  {visual.image ? (
+                    <>
+                      <img
+                        src={visual.image}
+                        alt={serviceType.name}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0b1b33]/70 via-[#04439e]/20 to-transparent" />
+                    </>
+                  ) : (
+                    <div className="h-full w-full bg-[linear-gradient(135deg,#04439e_0%,#0536a8_100%)]" />
+                  )}
+
+                  <div
+                    className="absolute left-4 top-4 flex h-12 w-12 items-center justify-center rounded-xl shadow-lg sm:h-14 sm:w-14"
+                    style={{ backgroundColor: visual.accent || BRAND_BLUE }}
+                  >
+                    <IconComponent className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                  </div>
                 </div>
 
-                {/* Nom du service */}
-                <h3 className="font-semibold text-sm sm:text-base line-clamp-1 mb-1 transition-colors group-hover:text-white">
-                  {serviceType.name}
-                </h3>
+                <div className="p-4 sm:p-6">
+                  <h3 className="mb-1 line-clamp-1 text-sm font-semibold transition-colors group-hover:text-white sm:text-base">
+                    {serviceType.name}
+                  </h3>
 
-                {/* Description */}
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-3 transition-colors group-hover:text-white">
-                  {serviceType.description}
-                </p>
+                  <p className="mb-3 line-clamp-2 text-xs text-muted-foreground transition-colors group-hover:text-white">
+                    {serviceType.description}
+                  </p>
 
-                {/* Footer avec nombre et flèche */}
-                <div className="flex items-center justify-between">
-                  <Badge variant="secondary" className="text-xs transition-colors group-hover:text-white group-hover:bg-transparent">
-                    <Users className="w-3 h-3 mr-1" />
-                    {count} {count > 1 ? 'prestataires' : 'prestataire'}
-                  </Badge>
-                  <ArrowRight 
-                    className="w-4 h-4 transition-all group-hover:translate-x-1 group-hover:text-white"
-                    style={{ color: BRAND_ORANGE }}
-                  />
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="text-xs transition-colors group-hover:bg-transparent group-hover:text-white">
+                      <Users className="mr-1 h-3 w-3" />
+                      {count} {count > 1 ? 'prestataires' : 'prestataire'}
+                    </Badge>
+                    <ArrowRight
+                      className="h-4 w-4 transition-all group-hover:translate-x-1 group-hover:text-white"
+                      style={{ color: BRAND_ORANGE }}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>

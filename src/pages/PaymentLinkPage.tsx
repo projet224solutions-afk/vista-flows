@@ -18,12 +18,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { backendConfig } from '@/config/backend';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';
+import { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import {
   CreditCard, Smartphone, Wallet, Shield, CheckCircle,
   AlertCircle, Clock, Loader2, ArrowLeft, Store,
   FileText, ShoppingCart, Wrench, Receipt, User
 } from 'lucide-react';
+import { getStripeInstance } from '@/lib/stripe/client';
 
 interface PaymentLinkData {
   id: string;
@@ -60,24 +61,6 @@ const linkTypeConfig: Record<string, { icon: React.ReactNode; label: string; col
   service: { icon: <Wrench className="w-5 h-5" />, label: 'Service', color: 'bg-violet-100 text-violet-800' },
 };
 
-const getStripePublishableKey = async (): Promise<string> => {
-  const envKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-  if (envKey) {
-    return envKey;
-  }
-
-  const { data, error } = await supabase
-    .from('stripe_config')
-    .select('stripe_publishable_key')
-    .limit(1)
-    .single();
-
-  if (!error && data?.stripe_publishable_key) {
-    return data.stripe_publishable_key;
-  }
-
-  throw new Error('Clé Stripe non configurée');
-};
 
 interface CardPaymentElementFormProps {
   amountLabel: string;
@@ -222,23 +205,52 @@ export default function PaymentLinkPage() {
     }
   };
 
+  const processPaymentLinkRequest = async (payload: Record<string, unknown>) => {
+    const requestBody = { token, ...payload };
+
+    try {
+      const resp = await fetch(`${backendConfig.baseUrl}/api/payment-links/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+      const data = await resp.json();
+
+      const shouldFallbackToEdge =
+        resp.status >= 500 ||
+        (!data?.success && /paiement par carte non disponible|stripe non configur/i.test(String(data?.error || '')));
+
+      if (!shouldFallbackToEdge) {
+        return data;
+      }
+
+      console.warn('⚠️ [PaymentLink] Backend indisponible pour Stripe, bascule vers la fonction Edge');
+    } catch (error) {
+      console.warn('⚠️ [PaymentLink] Erreur backend, tentative via la fonction Edge', error);
+    }
+
+    const { data, error } = await supabase.functions.invoke('process-payment-link', {
+      body: requestBody,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Erreur de paiement');
+    }
+
+    return data;
+  };
+
   const initCardPayment = async () => {
     try {
       setCardInitLoading(true);
       setCardError(null);
 
-      const resp = await fetch(`${backendConfig.baseUrl}/api/payment-links/process`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          paymentMethod: 'card',
-          customerName: customerInfo.name,
-          customerEmail: customerInfo.email,
-          customerPhone: customerInfo.phone,
-        }),
+      const data = await processPaymentLinkRequest({
+        paymentMethod: 'card',
+        customerName: customerInfo.name,
+        customerEmail: customerInfo.email,
+        customerPhone: customerInfo.phone,
       });
-      const data = await resp.json();
 
       if (!data?.success || !data?.clientSecret) {
         const message = data?.error || 'Impossible d\'initialiser le paiement carte';
@@ -247,8 +259,7 @@ export default function PaymentLinkPage() {
         return;
       }
 
-      const publishableKey = await getStripePublishableKey();
-      setStripePromise(loadStripe(publishableKey));
+      setStripePromise(getStripeInstance());
       setCardClientSecret(data.clientSecret);
 
       toast({
@@ -269,19 +280,13 @@ export default function PaymentLinkPage() {
       setCardFinalizeLoading(true);
       setCardError(null);
 
-      const resp = await fetch(`${backendConfig.baseUrl}/api/payment-links/process`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          paymentMethod: 'card',
-          paymentIntentId,
-          customerName: customerInfo.name,
-          customerEmail: customerInfo.email,
-          customerPhone: customerInfo.phone,
-        }),
+      const data = await processPaymentLinkRequest({
+        paymentMethod: 'card',
+        paymentIntentId,
+        customerName: customerInfo.name,
+        customerEmail: customerInfo.email,
+        customerPhone: customerInfo.phone,
       });
-      const data = await resp.json();
 
       if (!data?.success) {
         const message = data?.error || 'Confirmation du paiement impossible';
@@ -324,18 +329,12 @@ export default function PaymentLinkPage() {
     try {
       setProcessing(true);
 
-      const resp = await fetch(`${backendConfig.baseUrl}/api/payment-links/process`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          paymentMethod,
-          customerName: customerInfo.name,
-          customerEmail: customerInfo.email,
-          customerPhone: customerInfo.phone,
-        }),
+      const data = await processPaymentLinkRequest({
+        paymentMethod,
+        customerName: customerInfo.name,
+        customerEmail: customerInfo.email,
+        customerPhone: customerInfo.phone,
       });
-      const data = await resp.json();
 
       if (!data?.success) {
         toast({ title: "Erreur", description: data?.error || "Paiement échoué", variant: "destructive" });

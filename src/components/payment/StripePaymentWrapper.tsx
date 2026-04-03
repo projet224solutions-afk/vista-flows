@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';
+import { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { StripePaymentForm } from './StripePaymentForm';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, AlertTriangle, WifiOff } from 'lucide-react';
@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { getStripeInstance, STRIPE_OFFLINE_ERROR } from '@/lib/stripe/client';
 
 interface StripePaymentWrapperProps {
   amount: number;
@@ -30,8 +31,6 @@ interface StripePaymentWrapperProps {
   onError: (error: string) => void;
 }
 
-let stripePromise: Promise<Stripe | null> | null = null;
-
 /**
  * Vérifie si l'app est en mode hors ligne
  */
@@ -39,67 +38,15 @@ const isOffline = (): boolean => {
   return typeof navigator !== 'undefined' && !navigator.onLine;
 };
 
-const getStripePublishableKey = async (): Promise<string> => {
-  if (isOffline()) {
-    throw new Error('OFFLINE_MODE');
-  }
-  
-  const envKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-  if (envKey) {
-    return envKey;
-  }
-
-  // Tenter de récupérer depuis la base de données
-  try {
-    const { data, error } = await supabase
-      .from('stripe_config')
-      .select('stripe_publishable_key')
-      .limit(1)
-      .single();
-
-    if (!error && data?.stripe_publishable_key) {
-      return data.stripe_publishable_key;
-    }
-  } catch (dbError) {
-    console.warn('⚠️ Could not fetch Stripe key from DB:', dbError);
-  }
-
-  throw new Error('Clé Stripe non configurée. Définissez VITE_STRIPE_PUBLISHABLE_KEY dans Vercel.');
-};
-
 const getStripe = async (): Promise<Stripe | null> => {
-  // Vérifier mode offline avant de charger Stripe
   if (isOffline()) {
-    throw new Error('OFFLINE_MODE');
+    throw new Error(STRIPE_OFFLINE_ERROR);
   }
-  
-  if (!stripePromise) {
-    try {
-      const key = await getStripePublishableKey();
-      
-      // Ajouter un timeout pour éviter un blocage infini
-      const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error('Stripe loading timeout')), 15000);
-      });
-      
-      stripePromise = Promise.race([
-        loadStripe(key),
-        timeoutPromise
-      ]) as Promise<Stripe | null>;
-      
-    } catch (error) {
-      console.error('❌ Error loading Stripe:', error);
-      // Reset pour permettre un nouveau retry
-      stripePromise = null;
-      throw error;
-    }
-  }
-  
+
   try {
-    return await stripePromise;
+    return await getStripeInstance();
   } catch (error) {
-    // Reset si le chargement échoue
-    stripePromise = null;
+    console.error('❌ Error loading Stripe:', error);
     throw error;
   }
 };

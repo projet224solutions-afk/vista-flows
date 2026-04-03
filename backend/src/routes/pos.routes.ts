@@ -73,6 +73,36 @@ async function resolvePosVendorId(userId: string, requestedVendorId?: string | n
   return agent.vendor_id;
 }
 
+async function getConfiguredStripeSecretKey(): Promise<string | null> {
+  const envKey = process.env.STRIPE_SECRET_KEY?.trim();
+  if (envKey) {
+    return envKey;
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('stripe_config')
+      .select('stripe_secret_key')
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      logger.warn(`[POS Stripe] stripe_config inaccessible: ${error.message}`);
+      return null;
+    }
+
+    const dbKey = data?.stripe_secret_key?.trim();
+    if (dbKey) {
+      logger.warn('[POS Stripe] STRIPE_SECRET_KEY absent du runtime, fallback stripe_config activé');
+      return dbKey;
+    }
+  } catch (error: any) {
+    logger.warn(`[POS Stripe] Fallback stripe_config échoué: ${error?.message || 'unknown'}`);
+  }
+
+  return null;
+}
+
 // ==================== VALIDATION SCHEMAS ====================
 
 const PosSaleItemSchema = z.object({
@@ -402,9 +432,9 @@ router.post('/stripe-payment', verifyJWT, async (req: AuthenticatedRequest, res:
   const { amount, currency, orderId, sellerId: rawSellerId, description } = parsed.data;
 
   // ── 2. Stripe configuré ? ─────────────────────────────────────────────────
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = await getConfiguredStripeSecretKey();
   if (!stripeKey) {
-    logger.error('[POS Stripe] STRIPE_SECRET_KEY manquant');
+    logger.error('[POS Stripe] STRIPE_SECRET_KEY manquant dans le runtime et stripe_config');
     res.status(503).json({ success: false, error: 'Paiement par carte non disponible (Stripe non configuré)' });
     return;
   }

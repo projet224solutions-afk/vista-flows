@@ -34,6 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
 import { previewWalletTransfer, transferToWallet } from '@/services/walletBackendService';
+import { WalletPinPromptDialog } from './WalletPinDialogs';
 
 interface UnifiedTransferDialogProps {
   senderCode: string; // Le code de l'expéditeur (USR0001, etc.)
@@ -94,6 +95,12 @@ export function UnifiedTransferDialog({
   const [intlPreview, setIntlPreview] = useState<InternationalPreviewData | null>(null);
   const [showIntlConfirm, setShowIntlConfirm] = useState(false);
   const [intlExecuting, setIntlExecuting] = useState(false);
+  const [pinPromptOpen, setPinPromptOpen] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [pendingTransferKind, setPendingTransferKind] = useState<'local' | 'international' | null>(null);
+
+  const isPinRequiredError = (message?: string) => /code pin requis/i.test(message || '');
 
   // Charger la devise du wallet de l'utilisateur
   useEffect(() => {
@@ -197,40 +204,47 @@ export function UnifiedTransferDialog({
     }
   };
 
+  const executeLocalTransfer = async (pin?: string) => {
+    if (!preview) return false;
+
+    const resolvedRecipient = recipientUserId || recipientCode;
+    console.log('💸 Exécution du transfert...');
+
+    const result = await transferToWallet(resolvedRecipient, preview.amount, description, pin);
+
+    if (!result.success) {
+      const errorMessage = result.error || 'Erreur lors du transfert';
+      if (!pin && isPinRequiredError(errorMessage)) {
+        setPendingTransferKind('local');
+        setPinError(null);
+        setPinPromptOpen(true);
+        return false;
+      }
+      throw new Error(errorMessage);
+    }
+
+    console.log('✅ Transfert réussi:', result);
+    toast.success('✅ Transfert réussi !', { duration: 5000 });
+
+    setAmount('');
+    setRecipientCode('');
+    setRecipientUserId(null);
+    setDescription('');
+    setPreview(null);
+
+    onSuccess?.();
+    window.dispatchEvent(new CustomEvent('wallet-updated'));
+    return true;
+  };
+
   const handleConfirm = async () => {
     if (!preview) return;
-    
+
     setLoading(true);
     setShowPreview(false);
-    
+
     try {
-      const resolvedRecipient = recipientUserId || recipientCode;
-
-      console.log('💸 Exécution du transfert...');
-
-      const result = await transferToWallet(resolvedRecipient, preview.amount, description);
-
-      if (!result.success) {
-        toast.error(result.error || 'Erreur lors du transfert');
-        return;
-      }
-
-      console.log('✅ Transfert réussi:', result);
-
-      toast.success(
-        `✅ Transfert réussi !`,
-        { duration: 5000 }
-      );
-      
-      // Reset
-      setAmount('');
-      setRecipientCode('');
-      setRecipientUserId(null);
-      setDescription('');
-      setPreview(null);
-
-      onSuccess?.();
-      window.dispatchEvent(new CustomEvent('wallet-updated'));
+      await executeLocalTransfer();
     } catch (error: any) {
       console.error('❌ Erreur transfert:', error);
       toast.error(error.message || 'Erreur lors du transfert');
@@ -239,31 +253,66 @@ export function UnifiedTransferDialog({
     }
   };
 
+  const executeInternationalTransfer = async (pin?: string) => {
+    if (!intlPreview) return false;
+
+    const resolvedRecipient = recipientUserId || recipientCode;
+    const result = await transferToWallet(resolvedRecipient, intlPreview.amount_sent, description, pin);
+
+    if (!result.success) {
+      const errorMessage = result.error || 'Erreur lors du transfert';
+      if (!pin && isPinRequiredError(errorMessage)) {
+        setPendingTransferKind('international');
+        setPinError(null);
+        setPinPromptOpen(true);
+        return false;
+      }
+      throw new Error(errorMessage);
+    }
+
+    toast.success('🌍 Transfert international réussi !', { duration: 5000 });
+    setAmount('');
+    setRecipientCode('');
+    setRecipientUserId(null);
+    setDescription('');
+    setIntlPreview(null);
+    setShowIntlConfirm(false);
+    onSuccess?.();
+    window.dispatchEvent(new CustomEvent('wallet-updated'));
+    return true;
+  };
+
   const handleIntlConfirm = async () => {
     if (!intlPreview) return;
     setIntlExecuting(true);
     try {
-      const resolvedRecipient = recipientUserId || recipientCode;
-
-      const result = await transferToWallet(resolvedRecipient, intlPreview.amount_sent, description);
-      if (!result.success) {
-        toast.error(result.error || 'Erreur lors du transfert');
-        return;
-      }
-
-      toast.success('🌍 Transfert international réussi !', { duration: 5000 });
-      setAmount('');
-      setRecipientCode('');
-      setRecipientUserId(null);
-      setDescription('');
-      setIntlPreview(null);
-      setShowIntlConfirm(false);
-      onSuccess?.();
-      window.dispatchEvent(new CustomEvent('wallet-updated'));
+      await executeInternationalTransfer();
     } catch (error: any) {
       toast.error(error.message || 'Erreur lors du transfert international');
     } finally {
       setIntlExecuting(false);
+    }
+  };
+
+  const handlePinConfirm = async (pin: string) => {
+    if (!pendingTransferKind) return;
+
+    try {
+      setPinLoading(true);
+      setPinError(null);
+
+      const success = pendingTransferKind === 'international'
+        ? await executeInternationalTransfer(pin)
+        : await executeLocalTransfer(pin);
+
+      if (success) {
+        setPinPromptOpen(false);
+        setPendingTransferKind(null);
+      }
+    } catch (error: any) {
+      setPinError(error.message || 'Code PIN invalide');
+    } finally {
+      setPinLoading(false);
     }
   };
 
@@ -433,6 +482,20 @@ export function UnifiedTransferDialog({
         preview={intlPreview}
         onConfirm={handleIntlConfirm}
         loading={intlExecuting}
+      />
+
+      <WalletPinPromptDialog
+        open={pinPromptOpen}
+        onOpenChange={(value) => {
+          setPinPromptOpen(value);
+          if (!value) {
+            setPinError(null);
+            setPendingTransferKind(null);
+          }
+        }}
+        loading={pinLoading}
+        error={pinError}
+        onConfirm={handlePinConfirm}
       />
     </>
   );

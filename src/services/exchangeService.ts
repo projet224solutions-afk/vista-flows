@@ -2,7 +2,7 @@
  * SERVICE INTERNE DE TAUX DE CHANGE
  * Lit les taux depuis la table currency_exchange_rates (alimentée par le cron horaire)
  * Remplace toute dépendance aux API externes (fx-rates edge function, open.er-api.com)
- * 
+ *
  * Les taux incluent déjà la marge de 3% configurée dans margin_config.
  * Le backend (african-fx-collect) actualise les taux toutes les heures via pg_cron.
  */
@@ -11,16 +11,74 @@ import { supabase } from '@/integrations/supabase/client';
 
 /** Cache mémoire côté client – TTL 5 min (les taux changent au max toutes les heures) */
 const CACHE_TTL_MS = 5 * 60_000;
+const OFFICIAL_BANK_HINTS = /bcrg|bceao|beac|cbn|banque|bank|afric/i;
 
 interface CachedRates {
   rates: Map<string, number>;
   fetchedAt: number;
 }
 
+interface RateRow {
+  from_currency?: string | null;
+  to_currency?: string | null;
+  rate?: number | null;
+  margin?: number | null;
+  source_type?: string | null;
+  source_url?: string | null;
+  retrieved_at?: string | null;
+}
+
 let ratesCache: CachedRates | null = null;
 
 /** Promesse en cours pour dédupliquer les requêtes concurrentes (thundering herd) */
 let inflightPromise: Promise<Map<string, number>> | null = null;
+
+function parseTimestampMs(value?: string | null): number {
+  const parsed = Date.parse(value || '');
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function isSameUtcDay(value?: string | null): boolean {
+  const timestamp = parseTimestampMs(value);
+  if (!timestamp) return false;
+
+  const candidate = new Date(timestamp);
+  const now = new Date();
+  return candidate.getUTCFullYear() === now.getUTCFullYear()
+    && candidate.getUTCMonth() === now.getUTCMonth()
+    && candidate.getUTCDate() === now.getUTCDate();
+}
+
+function isOfficialBankRow(row: RateRow): boolean {
+  const url = String(row.source_url || '').toLowerCase();
+  const sourceType = String(row.source_type || '').toLowerCase();
+  return url.includes('bcrg-guinee.org') || OFFICIAL_BANK_HINTS.test(`${url} ${sourceType}`);
+}
+
+function getRateRowPriority(row: RateRow): number {
+  const from = String(row.from_currency || '').toUpperCase();
+  const to = String(row.to_currency || '').toUpperCase();
+  const involvesGNF = from === 'GNF' || to === 'GNF';
+  const official = isOfficialBankRow(row);
+  const sameDay = isSameUtcDay(row.retrieved_at);
+
+  if (involvesGNF && official && sameDay) return 4;
+  if (involvesGNF && official) return 3;
+  if (sameDay) return 2;
+  if (official) return 1;
+  return 0;
+}
+
+function shouldPreferRateRow(candidate: RateRow, current: RateRow): boolean {
+  const candidatePriority = getRateRowPriority(candidate);
+  const currentPriority = getRateRowPriority(current);
+
+  if (candidatePriority !== currentPriority) {
+    return candidatePriority > currentPriority;
+  }
+
+  return parseTimestampMs(candidate.retrieved_at) > parseTimestampMs(current.retrieved_at);
+}
 
 /**
  * Charge tous les taux actifs depuis la DB en une seule requête.
@@ -32,7 +90,6 @@ async function loadAllRates(): Promise<Map<string, number>> {
     return ratesCache.rates;
   }
 
-  // Si une requête est déjà en cours, réutiliser la même promesse
   if (inflightPromise) {
     return inflightPromise;
   }
@@ -41,17 +98,33 @@ async function loadAllRates(): Promise<Map<string, number>> {
     try {
       const { data, error } = await (supabase as any)
         .from('currency_exchange_rates')
-        .select('from_currency, to_currency, rate, margin')
-        .eq('is_active', true);
+        .select('from_currency, to_currency, rate, margin, source_type, source_url, retrieved_at')
+        .eq('is_active', true)
+        .order('retrieved_at', { ascending: false });
 
+      const selectedRates = new Map<string, RateRow>();
       const map = new Map<string, number>();
 
-      if (!error && data && Array.isArray(data)) {
-        for (const row of data) {
-          if (typeof row.rate === 'number' && row.rate > 0) {
-            const key = `${row.from_currency}→${row.to_currency}`;
-            map.set(key, row.rate);
+      if (!error && Array.isArray(data)) {
+        for (const row of data as RateRow[]) {
+          const from = String(row.from_currency || '').toUpperCase();
+          const to = String(row.to_currency || '').toUpperCase();
+          const rate = Number(row.rate || 0);
+
+          if (!from || !to || !Number.isFinite(rate) || rate <= 0) {
+            continue;
           }
+
+          const key = `${from}→${to}`;
+          const current = selectedRates.get(key);
+
+          if (!current || shouldPreferRateRow(row, current)) {
+            selectedRates.set(key, row);
+          }
+        }
+
+        for (const [key, row] of selectedRates.entries()) {
+          map.set(key, Number(row.rate));
         }
       }
 
@@ -68,7 +141,7 @@ async function loadAllRates(): Promise<Map<string, number>> {
 /**
  * Obtient le taux final (avec marge) pour une paire de devises.
  * Essaie d'abord la paire directe, puis le pivot via USD, puis EUR.
- * 
+ *
  * @returns taux final ou null si indisponible
  */
 export async function getFinalRate(from: string, to: string): Promise<number | null> {
@@ -78,20 +151,16 @@ export async function getFinalRate(from: string, to: string): Promise<number | n
 
   const rates = await loadAllRates();
 
-  // 1. Paire directe
   const direct = rates.get(`${f}→${t}`);
   if (direct) return direct;
 
-  // 2. Paire inverse
   const inverse = rates.get(`${t}→${f}`);
   if (inverse && inverse > 0) return 1 / inverse;
 
-  // 3. Pivot via USD : from→USD * USD→to
   const fromToUsd = rates.get(`${f}→USD`) ?? (rates.get(`USD→${f}`) ? 1 / rates.get(`USD→${f}`)! : null);
   const usdToTo = rates.get(`USD→${t}`) ?? (rates.get(`${t}→USD`) ? 1 / rates.get(`${t}→USD`)! : null);
   if (fromToUsd && usdToTo) return fromToUsd * usdToTo;
 
-  // 4. Pivot via EUR
   const fromToEur = rates.get(`${f}→EUR`) ?? (rates.get(`EUR→${f}`) ? 1 / rates.get(`EUR→${f}`)! : null);
   const eurToTo = rates.get(`EUR→${t}`) ?? (rates.get(`${t}→EUR`) ? 1 / rates.get(`${t}→EUR`)! : null);
   if (fromToEur && eurToTo) return fromToEur * eurToTo;
@@ -105,7 +174,6 @@ export async function getFinalRate(from: string, to: string): Promise<number | n
  */
 export async function getRatesForBase(base: string, symbols: string[]): Promise<Record<string, number>> {
   const result: Record<string, number> = {};
-  // Paralléliser toutes les résolutions
   const entries = await Promise.all(
     symbols.map(async (sym) => {
       const rate = await getFinalRate(base, sym);
@@ -132,6 +200,7 @@ export async function convertAmount(amount: number, from: string, to: string): P
  */
 export function invalidateRatesCache() {
   ratesCache = null;
+  lastUpdatedCache = null;
 }
 
 /**
@@ -151,12 +220,18 @@ export async function getLastUpdated(): Promise<Date | null> {
     try {
       const { data } = await (supabase as any)
         .from('currency_exchange_rates')
-        .select('retrieved_at')
+        .select('from_currency, to_currency, source_type, source_url, retrieved_at')
         .eq('is_active', true)
         .order('retrieved_at', { ascending: false })
-        .limit(1);
+        .limit(200);
 
-      const value = data?.[0]?.retrieved_at ? new Date(data[0].retrieved_at) : null;
+      const rows = Array.isArray(data) ? (data as RateRow[]) : [];
+      const preferred = rows.reduce<RateRow | null>((best, row) => {
+        if (!best) return row;
+        return shouldPreferRateRow(row, best) ? row : best;
+      }, null);
+
+      const value = preferred?.retrieved_at ? new Date(preferred.retrieved_at) : null;
       lastUpdatedCache = { value, fetchedAt: Date.now() };
       return value;
     } finally {

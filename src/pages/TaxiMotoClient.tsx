@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import useCurrentLocation from "@/hooks/useGeolocation";
+import { calculateDistance } from '@/hooks/useGeoDistance';
 import TaxiMotoBooking from "@/components/taxi-moto/TaxiMotoBooking";
 import TaxiMotoTracking from "@/components/taxi-moto/TaxiMotoTracking";
 import TaxiMotoHistory from "@/components/taxi-moto/TaxiMotoHistory";
@@ -101,10 +102,15 @@ export default function TaxiMotoClient() {
         toast.error('Activez votre GPS pour une meilleure expérience');
       }
     };
-    
-    initGPS();
-    loadNearbyDrivers();
+
+    void initGPS();
   }, [getCurrentLocation]);
+
+  useEffect(() => {
+    if (location?.latitude && location?.longitude) {
+      void loadNearbyDrivers();
+    }
+  }, [location?.latitude, location?.longitude]);
 
   // Écouter les mises à jour de course
   useEffect(() => {
@@ -146,24 +152,54 @@ export default function TaxiMotoClient() {
    */
   const loadNearbyDrivers = async () => {
     try {
+      if (!location?.latitude || !location?.longitude) {
+        setNearbyDrivers([]);
+        return;
+      }
+
       const { data: drivers, error } = await supabase
         .from('taxi_drivers')
-        .select('*')
+        .select('id, user_id, vehicle_type, rating, total_rides, last_lat, last_lng, profiles:user_id(first_name, last_name)')
         .in('status', ['available', 'online'])
         .eq('is_online', true)
+        .not('last_lat', 'is', null)
+        .not('last_lng', 'is', null)
         .limit(10);
 
       if (error) throw error;
 
-      const formattedDrivers: Driver[] = (drivers || []).map((d, index) => ({
-        id: d.id,
-        name: `Conducteur ${index + 1}`,
-        rating: d.rating || 4.5,
-        distance: Math.random() * 2,
-        vehicleType: d.vehicle_type || 'moto_rapide',
-        eta: `${Math.floor(Math.random() * 5) + 1} min`,
-        rides: d.total_rides || 0
-      }));
+      const formattedDrivers: Driver[] = (drivers || [])
+        .map((d: any, index) => {
+          const lat = Number(d.last_lat);
+          const lng = Number(d.last_lng);
+
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return null;
+          }
+
+          const distanceKm = calculateDistance(location.latitude, location.longitude, lat, lng);
+          if (!Number.isFinite(distanceKm)) {
+            return null;
+          }
+
+          const roundedDistance = Number(distanceKm.toFixed(1));
+          const etaMinutes = Math.max(2, Math.min(30, Math.round(distanceKm * 3 + 2)));
+          const firstName = d.profiles?.first_name?.trim?.() || '';
+          const lastInitial = d.profiles?.last_name ? ` ${String(d.profiles.last_name).trim().charAt(0)}.` : '';
+          const displayName = firstName ? `${firstName}${lastInitial}` : `Conducteur ${index + 1}`;
+
+          return {
+            id: d.id,
+            name: displayName,
+            rating: d.rating || 4.5,
+            distance: roundedDistance,
+            vehicleType: d.vehicle_type || 'moto_rapide',
+            eta: `${etaMinutes} min`,
+            rides: d.total_rides || 0,
+          };
+        })
+        .filter((driver): driver is Driver => Boolean(driver))
+        .sort((a, b) => a.distance - b.distance || b.rating - a.rating);
 
       setNearbyDrivers(formattedDrivers);
     } catch (error) {

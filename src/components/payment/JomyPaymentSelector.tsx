@@ -32,6 +32,7 @@ import StripeCheckoutButton from '@/components/payment/StripeCheckoutButton';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { formatCurrency } from '@/lib/formatters';
 import { transferToWallet } from '@/services/walletBackendService';
+import { WalletPinPromptDialog } from '@/components/wallet/WalletPinDialogs';
 
 interface JomyPaymentSelectorProps {
   amount: number;
@@ -102,6 +103,9 @@ export function JomyPaymentSelector({
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [walletCurrency, setWalletCurrency] = useState<string>('GNF');
   const [showStripeInline, setShowStripeInline] = useState(false);
+  const [walletPinPromptOpen, setWalletPinPromptOpen] = useState(false);
+  const [walletPinLoading, setWalletPinLoading] = useState(false);
+  const [walletPinError, setWalletPinError] = useState<string | null>(null);
 
   // Reset error state when switching payment methods
   const handleMethodChange = (value: string) => {
@@ -241,41 +245,7 @@ export function JomyPaymentSelector({
 
     // Paiement par Wallet
     if (selectedMethod === 'WALLET') {
-      if (!recipientId) {
-        toast.error('ID du destinataire requis');
-        return;
-      }
-      
-      if (walletBalance !== null && walletBalance < amount) {
-        toast.error('Solde insuffisant');
-        return;
-      }
-
-      setProcessing(true);
-      setPaymentStatus('processing');
-
-      try {
-        const result = await transferToWallet(
-          recipientId,
-          amount,
-          description || 'Transfert'
-        );
-
-        if (!result.success) {
-          throw new Error(result.error || 'Échec du transfert');
-        }
-
-        setPaymentStatus('success');
-        toast.success('🎉 Transfert réussi !');
-        onPaymentSuccess(result.transaction_id || '', 'SUCCESS_WALLET');
-      } catch (err) {
-        console.error('[Wallet] Transfer error:', err);
-        setPaymentStatus('failed');
-        toast.error(err instanceof Error ? err.message : 'Erreur de transfert');
-        onPaymentFailed?.(err instanceof Error ? err.message : 'Erreur inconnue');
-      } finally {
-        setProcessing(false);
-      }
+      await executeWalletTransfer();
       return;
     }
 
@@ -355,6 +325,56 @@ export function JomyPaymentSelector({
     // Ce bloc n'est plus utilisé - ChapChapPay gère tous les paiements Mobile Money
     toast.error('Méthode de paiement non supportée');
     setProcessing(false);
+  };
+
+  const isWalletPinRequiredError = (message?: string) => /code pin requis/i.test(message || '');
+
+  const executeWalletTransfer = async (pin?: string) => {
+    if (!recipientId) {
+      toast.error('ID du destinataire requis');
+      return false;
+    }
+
+    if (walletBalance !== null && walletBalance < amount) {
+      toast.error('Solde insuffisant');
+      return false;
+    }
+
+    setProcessing(true);
+    setPaymentStatus('processing');
+
+    try {
+      const result = await transferToWallet(
+        recipientId,
+        amount,
+        description || 'Transfert',
+        pin
+      );
+
+      if (!result.success) {
+        const errorMessage = result.error || 'Échec du transfert';
+        if (!pin && isWalletPinRequiredError(errorMessage)) {
+          setWalletPinError(null);
+          setWalletPinPromptOpen(true);
+          return false;
+        }
+        throw new Error(errorMessage);
+      }
+
+      setPaymentStatus('success');
+      toast.success('🎉 Transfert réussi !');
+      onPaymentSuccess(result.transaction_id || '', 'SUCCESS_WALLET');
+      return true;
+    } catch (err) {
+      console.error('[Wallet] Transfer error:', err);
+      setPaymentStatus('failed');
+      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      toast.error(errorMessage);
+      onPaymentFailed?.(errorMessage);
+      throw err;
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleStripeSuccess = (data: { paymentIntentId: string; amount: number; currency: string }) => {
@@ -614,6 +634,33 @@ export function JomyPaymentSelector({
           )}
         </CardContent>
       </Card>
+
+      <WalletPinPromptDialog
+        open={walletPinPromptOpen}
+        onOpenChange={(value) => {
+          setWalletPinPromptOpen(value);
+          if (!value) {
+            setWalletPinError(null);
+          }
+        }}
+        loading={walletPinLoading}
+        error={walletPinError}
+        onConfirm={async (pin) => {
+          try {
+            setWalletPinLoading(true);
+            setWalletPinError(null);
+            const success = await executeWalletTransfer(pin);
+            if (success) {
+              setWalletPinPromptOpen(false);
+            }
+          } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Code PIN invalide';
+            setWalletPinError(errorMessage);
+          } finally {
+            setWalletPinLoading(false);
+          }
+        }}
+      />
     </>
   );
 }

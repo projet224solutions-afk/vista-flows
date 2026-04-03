@@ -120,6 +120,14 @@ export interface WalletRecipientResolved {
   customId: string | null;
 }
 
+function extractOperationValue<T extends keyof WalletOperationResult>(
+  response: any,
+  key: T
+): WalletOperationResult[T] | undefined {
+  const nested = response?.data && typeof response.data === 'object' ? response.data : null;
+  return (nested?.[key] ?? response?.[key]) as WalletOperationResult[T] | undefined;
+}
+
 // ==================== API CALLS ====================
 
 /**
@@ -195,7 +203,11 @@ export async function depositToWallet(
   if (!result.success) {
     return { success: false, error: result.error || 'Erreur lors du dépôt' };
   }
-  return { success: true, new_balance: result.data?.new_balance, operation: 'deposit' };
+  return {
+    success: true,
+    new_balance: extractOperationValue(result, 'new_balance'),
+    operation: (extractOperationValue(result, 'operation') as string | undefined) || 'deposit',
+  };
 }
 
 /**
@@ -216,7 +228,11 @@ export async function withdrawFromWallet(
   if (!result.success) {
     return { success: false, error: result.error || 'Erreur lors du retrait' };
   }
-  return { success: true, new_balance: result.data?.new_balance, operation: 'withdraw' };
+  return {
+    success: true,
+    new_balance: extractOperationValue(result, 'new_balance'),
+    operation: (extractOperationValue(result, 'operation') as string | undefined) || 'withdraw',
+  };
 }
 
 /**
@@ -244,7 +260,11 @@ export async function transferToWallet(
   if (!result.success) {
     return { success: false, error: result.error || 'Erreur lors du transfert' };
   }
-  return { success: true, transaction_id: result.data?.transaction_id, operation: 'transfer' };
+  return {
+    success: true,
+    transaction_id: extractOperationValue(result, 'transaction_id'),
+    operation: (extractOperationValue(result, 'operation') as string | undefined) || 'transfer',
+  };
 }
 
 /**
@@ -277,7 +297,11 @@ export async function adminCreditWallet(
   if (!result.success) {
     return { success: false, error: result.error || 'Erreur lors du crédit' };
   }
-  return { success: true, new_balance: result.data?.new_balance, operation: 'admin_credit' };
+  return {
+    success: true,
+    new_balance: extractOperationValue(result, 'new_balance'),
+    operation: (extractOperationValue(result, 'operation') as string | undefined) || 'admin_credit',
+  };
 }
 
 export async function getWalletPinStatus(signal?: AbortSignal) {

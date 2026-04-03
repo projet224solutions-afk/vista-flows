@@ -401,7 +401,9 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       recipientWallet = createdWallet as any;
     }
 
-    const feePercentage = 1;
+    // Garder la prévisualisation cohérente avec l'exécution réelle du transfert.
+    // Les frais configurables seront réactivés ici quand ils seront effectivement débités côté service.
+    const feePercentage = 0;
     const feeAmount = Math.ceil(amount * (feePercentage / 100));
     const totalDebit = amount + feeAmount;
     const senderBalance = Number((senderWallet as any).balance || 0);

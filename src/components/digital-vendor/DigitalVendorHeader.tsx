@@ -5,7 +5,7 @@
 import { memo, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Laptop, LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
 const QuickTransferButton = lazy(() =>
@@ -27,7 +27,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[linear-gradient(135deg,#04439e_0%,#0536a8_75%,#041f87_100%)] shadow-[0_4px_24px_rgba(4,67,158,0.38)]">
+    <header className="sticky top-0 z-40 w-full bg-[linear-gradient(135deg,#04439e_0%,#0536a8_65%,#0b1b33_100%)] shadow-[0_8px_28px_rgba(4,67,158,0.32)]">
       <div className="flex w-full min-w-0 flex-col gap-2 px-2.5 py-2 sm:gap-3 sm:px-5 sm:py-3 md:px-8">
         {/* Brand */}
         <div className="flex items-center justify-between gap-2.5 min-w-0">
@@ -42,14 +42,17 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="whitespace-nowrap text-xs font-semibold tracking-[0.01em] text-white sm:text-base md:text-xl">
-                  Digital Seller Studio
+                  Cockpit vendeur digital
                 </h1>
                 <span className="hidden rounded-full bg-[#ff4000] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white sm:inline-flex">
-                  Premium
+                  Business
                 </span>
               </div>
-              <p className="mt-1 flex items-center gap-2 text-xs text-white/55 md:text-sm">
-                <span className="h-2 w-2 rounded-full bg-[#ff4000] shadow-[0_0_0_4px_rgba(255,64,0,0.28)]" />
+              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-white/50 sm:text-xs">
+                Catalogue • ventes • revenus
+              </p>
+              <p className="mt-1 flex items-center gap-2 text-xs text-white/60 md:text-sm">
+                <span className="h-2 w-2 rounded-full bg-[#ff4000] shadow-[0_0_0_4px_rgba(255,64,0,0.20)]" />
                 <span className="truncate max-w-[220px] sm:max-w-[340px]">{displayName}</span>
               </p>
             </div>
@@ -57,13 +60,13 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
 
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <Suspense fallback={null}>
-              <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-9 w-9 rounded-2xl border border-white/20 bg-white/10 text-white hover:bg-white/23 sm:h-10 sm:w-10 md:h-11 md:w-11" />
+              <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-9 w-9 rounded-2xl border border-white/20 bg-white/10 text-white hover:bg-white/22 sm:h-10 sm:w-10 md:h-11 md:w-11" />
             </Suspense>
 
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-2xl border border-white/20 bg-white/10 text-white hover:bg-white/23 sm:h-10 sm:w-10 md:h-11 md:w-11"
+              className="h-9 w-9 rounded-2xl border border-white/20 bg-white/10 text-white hover:bg-white/22 sm:h-10 sm:w-10 md:h-11 md:w-11"
               onClick={() => navigate('/vendeur-digital/settings')}
               aria-label="Paramètres"
             >

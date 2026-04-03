@@ -190,7 +190,7 @@ export function NumericKeypadPopup({
             )}
             <Button
               onClick={() => handleInput('enter')}
-              className={`h-12 font-semibold shadow-lg hover:shadow-xl transition-all ${isQuantityMode ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400' : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400'} text-white`}
+              className={`h-12 font-semibold shadow-lg hover:shadow-xl transition-all ${isQuantityMode ? 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400' : 'bg-gradient-to-r from-[#ff4000] to-[#e53900] hover:from-[#e53900] hover:to-[#cc3200]'} text-white`}
             >
               <CheckSquare className="h-4 w-4 mr-2" />
               {isQuantityMode ? 'Confirmer quantité' : 'Valider'}

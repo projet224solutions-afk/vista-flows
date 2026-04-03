@@ -45,39 +45,33 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
 
   const menuSections = [
     {
-      label: "Principal",
+      label: "Vue d’ensemble",
       items: [
         { title: "Tableau de bord", icon: LayoutDashboard, path: "dashboard" },
-        { title: "Statistiques", icon: BarChart3, path: "analytics" },
-        { title: "Copilote IA", icon: Bot, path: "copilot" },
-      ]
-    },
-    {
-      label: "Produits Numériques",
-      items: [
-        { title: "Mes Produits", icon: Laptop, path: "products", badge: products.length > 0 ? products.length.toString() : null },
+        { title: "Catalogue", icon: Laptop, path: "products", badge: products.length > 0 ? products.length.toString() : null },
         { title: "Ajouter un produit", icon: Plus, path: "add-product" },
-        { title: "Marketplace", icon: Eye, path: "marketplace" },
       ]
     },
     {
-      label: "Affiliation",
+      label: "Croissance",
       items: [
-        { title: "Programme Affiliation", icon: Link, path: "affiliate", badge: affiliateCount > 0 ? affiliateCount.toString() : null },
+        { title: "Statistiques", icon: BarChart3, path: "analytics" },
+        { title: "Affiliation", icon: Link, path: "affiliate", badge: affiliateCount > 0 ? affiliateCount.toString() : null },
+        { title: "Liens de paiement", icon: DollarSign, path: "payment-links" },
+        { title: "Explorer le marché", icon: Eye, path: "marketplace" },
       ]
     },
     {
       label: "Finance",
       items: [
-        { title: "Liens de paiement", icon: Link, path: "payment-links" },
         { title: "Portefeuille", icon: Wallet, path: "wallet" },
-        
-        { title: "Mes Achats", icon: ShoppingBag, path: "my-purchases" },
       ]
     },
     {
-      label: "Système",
+      label: "Outils",
       items: [
+        { title: "Copilote IA", icon: Bot, path: "copilot" },
+        { title: "Mes achats", icon: ShoppingBag, path: "my-purchases" },
         { title: "Paramètres", icon: Settings, path: "settings" },
       ]
     },
@@ -102,7 +96,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
                 </div>
                 {!collapsed && (
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-sm font-semibold tracking-[0.02em] text-white">224Solutions Digital</h2>
+                    <h2 className="text-sm font-semibold tracking-[0.02em] text-white">Cockpit vendeur digital</h2>
                     <p className="mt-1 text-xs text-white/55">{publishedCount} produit{publishedCount !== 1 ? 's' : ''} publié{publishedCount !== 1 ? 's' : ''}</p>
                   </div>
                 )}
@@ -110,11 +104,11 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
               {!collapsed && (
                 <div className="mt-4 flex items-center justify-between gap-2 rounded-2xl bg-white/10 px-3 py-2.5">
                   <div>
-                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/45">Catalogue actif</p>
+                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/45">Activité boutique</p>
                     <p className="text-sm font-semibold text-white">{products.length} références digitales</p>
                   </div>
                   <Badge className="border-0 bg-[#ff4000] px-2.5 py-1 text-[11px] font-semibold text-white shadow-none">
-                    {affiliateCount} affiliés
+                    {affiliateCount} affiliation{affiliateCount > 1 ? 's' : ''}
                   </Badge>
                 </div>
               )}

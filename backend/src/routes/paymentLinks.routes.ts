@@ -85,6 +85,36 @@ async function findPaymentLinkByPublicId(publicId: string) {
   return { data: null, error: byToken.error || byPaymentId.error };
 }
 
+async function getConfiguredStripeSecretKey(): Promise<string | null> {
+  const envKey = process.env.STRIPE_SECRET_KEY?.trim();
+  if (envKey) {
+    return envKey;
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('stripe_config')
+      .select('stripe_secret_key')
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      logger.warn(`[PaymentLinks] stripe_config inaccessible: ${error.message}`);
+      return null;
+    }
+
+    const dbKey = data?.stripe_secret_key?.trim();
+    if (dbKey) {
+      logger.warn('[PaymentLinks] STRIPE_SECRET_KEY absent du runtime, fallback stripe_config activé');
+      return dbKey;
+    }
+  } catch (error: any) {
+    logger.warn(`[PaymentLinks] Fallback stripe_config échoué: ${error?.message || 'unknown'}`);
+  }
+
+  return null;
+}
+
 // ─────────────────────────────────────────────────────────
 // POST /api/payment-links/resolve
 // Résolution publique d'un lien de paiement par token
@@ -436,9 +466,9 @@ router.post('/process', optionalJWT, async (req: AuthenticatedRequest, res: Resp
 
     // ──────── CARD PAYMENT (Stripe) ────────
     if (paymentMethod === 'card') {
-      const stripeKey = process.env.STRIPE_SECRET_KEY;
+      const stripeKey = await getConfiguredStripeSecretKey();
       if (!stripeKey) {
-        res.status(500).json({ success: false, error: 'Paiement par carte non disponible' });
+        res.status(500).json({ success: false, error: 'Paiement par carte non disponible (Stripe non configuré)' });
         return;
       }
 

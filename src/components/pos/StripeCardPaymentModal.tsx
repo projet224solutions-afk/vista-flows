@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { loadStripe, Stripe } from '@stripe/stripe-js';
+import { Stripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import {
   Dialog,
@@ -24,6 +24,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Shield, CreditCard, CheckCircle2, XCircle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getStripeInstance } from '@/lib/stripe/client';
 
 interface StripeCardPaymentModalProps {
   isOpen: boolean;
@@ -42,12 +43,6 @@ interface StripeCardPaymentModalProps {
   onError: (error: string) => void;
 }
 
-// Clé publique Stripe (variable d'environnement obligatoire)
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
-// Charger Stripe une seule fois
-let stripePromise: Promise<Stripe | null> | null = null;
-
 /**
  * Vérifie si l'app est en mode hors ligne
  */
@@ -56,28 +51,17 @@ const isOffline = (): boolean => {
 };
 
 const getStripe = async (): Promise<Stripe | null> => {
-  // Vérifier mode offline avant de charger Stripe
   if (isOffline()) {
     console.warn('⚠️ Mode hors ligne détecté, Stripe non disponible');
     return null;
   }
 
-  if (!STRIPE_PUBLISHABLE_KEY) {
-    console.error('❌ [STRIPE LOAD FAIL] VITE_STRIPE_PUBLISHABLE_KEY is not set');
+  try {
+    return await getStripeInstance();
+  } catch (error) {
+    console.error('❌ [STRIPE LOAD FAIL]', error);
     return null;
   }
-  
-  if (!stripePromise) {
-    console.log('🔄 [STRIPE LOAD START]');
-    try {
-      stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
-    } catch (error) {
-      console.error('❌ [STRIPE LOAD FAIL]', error);
-      stripePromise = null;
-      return null;
-    }
-  }
-  return stripePromise;
 };
 
 function PaymentForm({
@@ -163,12 +147,12 @@ function PaymentForm({
     return (
       <div className="text-center space-y-4 py-8">
         <div className="flex justify-center">
-          <div className="rounded-full bg-green-100 p-4">
-            <CheckCircle2 className="w-16 h-16 text-green-600" />
+          <div className="rounded-full bg-orange-100 p-4">
+            <CheckCircle2 className="w-16 h-16 text-[#ff4000]" />
           </div>
         </div>
         <div>
-          <h3 className="text-2xl font-bold text-green-600">Paiement réussi!</h3>
+          <h3 className="text-2xl font-bold text-[#ff4000]">Paiement réussi!</h3>
           <p className="text-muted-foreground mt-2">
             <strong>{formatAmount(totalAmount)}</strong> encaissé
           </p>

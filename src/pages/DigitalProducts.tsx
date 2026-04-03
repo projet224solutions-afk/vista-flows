@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Package,
   Plane,
@@ -131,7 +131,10 @@ const productModules: ProductModule[] = [
 
 export default function DigitalProducts() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile, loading } = useAuth();
+  const isVendorWorkspace = location.pathname.startsWith('/vendeur-digital');
+  const isVendorAddFlow = location.pathname.includes('/add-product');
   const { t } = useTranslation();
   const [showActivationDialog, setShowActivationDialog] = useState(false);
   const [selectedModule, setSelectedModule] = useState<ProductModule | null>(null);
@@ -245,26 +248,32 @@ export default function DigitalProducts() {
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => navigate('/')}
+              onClick={() => navigate(isVendorWorkspace ? '/vendeur-digital/dashboard' : '/')}
               className="shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-lg font-bold text-foreground">{t('digital.title')}</h1>
+              <h1 className="text-lg font-bold text-foreground">
+                {isVendorWorkspace ? (isVendorAddFlow ? 'Ajouter un produit digital' : 'Modules de vente digitale') : t('digital.title')}
+              </h1>
               <p className="text-xs text-muted-foreground">
-                {t('digital.subtitle')}
+                {isVendorWorkspace
+                  ? (isVendorAddFlow
+                    ? 'Choisissez un module puis poursuivez la publication sans quitter votre cockpit vendeur.'
+                    : 'Explorez les modules utiles à votre boutique digitale depuis un espace structuré.')
+                  : t('digital.subtitle')}
               </p>
             </div>
             {user && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/marketplace?type=digital')}
+                onClick={() => navigate(isVendorWorkspace ? '/vendeur-digital/products' : '/marketplace?type=digital')}
                 className="shrink-0"
               >
                 <Store className="w-4 h-4 mr-1.5" />
-                {t('nav.marketplace')}
+                {isVendorWorkspace ? 'Mon catalogue' : t('nav.marketplace')}
               </Button>
             )}
           </div>
@@ -277,7 +286,7 @@ export default function DigitalProducts() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Rechercher un produit numérique..."
+            placeholder={isVendorWorkspace ? 'Rechercher un module ou un produit à ajouter...' : 'Rechercher un produit numérique...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 h-10 bg-muted/50 border-border"
@@ -386,7 +395,7 @@ export default function DigitalProducts() {
       ) : (
         <>
           {/* Status Banner */}
-          {user && !isMerchant && (
+          {!isVendorWorkspace && user && !isMerchant && (
             <div className="mx-4 mt-4 rounded-2xl border border-[#04439e]/25 bg-[linear-gradient(135deg,rgba(4,67,158,0.12),rgba(4,67,158,0.04))] px-3 py-3 sm:px-4 shadow-[0_12px_28px_rgba(4,67,158,0.10)]">
               <div className="flex flex-col gap-3 min-[560px]:flex-row min-[560px]:items-center min-[560px]:justify-between">
                 <div className="flex items-start gap-2 flex-1 min-w-0">
@@ -407,7 +416,7 @@ export default function DigitalProducts() {
             </div>
           )}
 
-          {user && isMerchant && (
+          {!isVendorWorkspace && user && isMerchant && (
             <div className="mx-4 mt-4 rounded-2xl px-3 py-3 sm:px-4 bg-[#04439e] text-white border border-[#04439e]/30 text-center min-[560px]:text-left text-xs sm:text-sm shadow-[0_12px_28px_rgba(4,67,158,0.25)]">
               <span className="flex items-center justify-center min-[560px]:justify-start gap-2 font-bold leading-tight">
                 <Store className="w-4 h-4 shrink-0" />
@@ -423,14 +432,28 @@ export default function DigitalProducts() {
                 <div className="max-w-2xl min-[560px]:flex-1">
                   <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1.5 sm:px-3">
                     <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                    <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.12em] sm:tracking-[0.15em] text-white">{t('digital.marketplaceDigital')}</span>
+                    <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.12em] sm:tracking-[0.15em] text-white">
+                      {isVendorAddFlow ? 'Création produit' : isVendorWorkspace ? 'Outils vendeur' : t('digital.marketplaceDigital')}
+                    </span>
                   </div>
                   <h2 className="text-xl font-semibold leading-tight text-white sm:text-3xl">
-                    {t('digital.discover')}
+                    {isVendorAddFlow
+                      ? 'Choisissez le module de votre prochain produit digital.'
+                      : isVendorWorkspace
+                        ? 'Développez votre catalogue et votre visibilité depuis un espace vendeur cohérent.'
+                        : t('digital.discover')}
                   </h2>
                   <p className="mt-2.5 max-w-xl text-[13px] leading-5 text-white/72 sm:mt-3 sm:text-base sm:leading-6">
-                    {t('digital.discoverDesc')}
-                    {!isMerchant && ` ${t('digital.becomeSellerPrompt')}`}
+                    {isVendorWorkspace
+                      ? (isVendorAddFlow
+                        ? 'Sélectionnez le bon module pour publier votre offre sans quitter le cockpit vendeur.'
+                        : 'Retrouvez les modules utiles à votre croissance, votre visibilité et votre distribution digitale.')
+                      : (
+                        <>
+                          {t('digital.discoverDesc')}
+                          {!isMerchant && ` ${t('digital.becomeSellerPrompt')}`}
+                        </>
+                      )}
                   </p>
                 </div>
 
@@ -522,7 +545,7 @@ export default function DigitalProducts() {
         onSuccess={handleActivationSuccess}
       />
 
-      <QuickFooter />
+      {!isVendorWorkspace && <QuickFooter />}
     </div>
   );
 }

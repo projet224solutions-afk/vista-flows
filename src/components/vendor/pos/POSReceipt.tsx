@@ -131,7 +131,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto p-0 mx-2">
         {/* Header avec actions */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-green-600 to-green-500 text-white p-3 rounded-t-lg">
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-[#ff4000] to-[#e53900] text-white p-3 rounded-t-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -162,11 +162,11 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
           >
             {/* En-tête reçu */}
             <div className="text-center border-b border-dashed border-muted-foreground/30 pb-3 mb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl mx-auto mb-2 flex items-center justify-center overflow-hidden">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#ff4000] to-[#e53900] rounded-xl mx-auto mb-2 flex items-center justify-center overflow-hidden shadow-md">
                 {orderData.logoUrl ? (
                   <img loading="lazy" src={orderData.logoUrl} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
-                  <Store className="h-6 w-6 text-primary-foreground" />
+                  <Store className="h-6 w-6 text-white" />
                 )}
               </div>
               <h3 className="text-lg font-bold text-foreground">{orderData.companyName}</h3>
@@ -178,9 +178,9 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
             </div>
 
             {/* Numéro de commande */}
-            <div className="bg-muted/30 rounded-lg p-2 mb-3 text-center">
+            <div className="bg-orange-50 rounded-lg p-2 mb-3 text-center border border-orange-100">
               <p className="text-xs text-muted-foreground">N° Commande</p>
-              <p className="text-lg font-bold text-primary">#{orderData.orderNumber}</p>
+              <p className="text-lg font-bold text-[#ff4000]">#{orderData.orderNumber}</p>
             </div>
 
             {/* Articles */}
@@ -200,7 +200,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                       } × {item.price.toLocaleString()} {orderData.currency}
                     </p>
                     {item.saleType === 'carton' && (
-                      <p className="text-[10px] text-green-600 font-medium">Vente par carton</p>
+                      <p className="text-[10px] text-[#ff4000] font-medium">Vente par carton</p>
                     )}
                   </div>
                   <p className="font-bold text-foreground text-sm">
@@ -225,7 +225,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                 <span className="font-medium">{orderData.tax.toLocaleString()} {orderData.currency}</span>
               </div>
               {orderData.discount > 0 && (
-                <div className="flex justify-between text-sm text-green-600 font-medium">
+                <div className="flex justify-between text-sm text-[#ff4000] font-medium">
                   <span>Remise ({orderData.discount}%)</span>
                   <span>-{((orderData.subtotal + orderData.tax) * orderData.discount / 100).toLocaleString()} {orderData.currency}</span>
                 </div>
@@ -233,7 +233,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
               
               <div className="flex justify-between text-xl font-bold pt-2 border-t-2 border-foreground">
                 <span>TOTAL</span>
-                <span className="text-primary">{orderData.total.toLocaleString()} {orderData.currency}</span>
+                <span className="text-[#ff4000]">{orderData.total.toLocaleString()} {orderData.currency}</span>
               </div>
             </div>
 
@@ -246,7 +246,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                   {getPaymentIcon()}
                   <span className="font-medium text-sm">{getPaymentLabel()}</span>
                 </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                <Badge variant="secondary" className="bg-orange-100 text-[#e53900] text-xs border border-orange-200">
                   Payé
                 </Badge>
               </div>
@@ -257,7 +257,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                     <span className="text-muted-foreground">Reçu</span>
                     <span>{orderData.receivedAmount.toLocaleString()} {orderData.currency}</span>
                   </div>
-                  <div className="flex justify-between font-semibold text-green-600">
+                  <div className="flex justify-between font-semibold text-[#ff4000]">
                     <span>Rendu</span>
                     <span>{orderData.change.toLocaleString()} {orderData.currency}</span>
                   </div>
@@ -288,7 +288,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
             </Button>
             <Button
               onClick={downloadReceipt}
-              className="h-10 text-sm bg-gradient-to-r from-primary to-primary/80 shadow-md"
+              className="h-10 text-sm bg-gradient-to-r from-[#ff4000] to-[#e53900] shadow-md hover:from-[#e53900] hover:to-[#cc3200]"
             >
               <Download className="h-4 w-4 mr-1" />
               PDF

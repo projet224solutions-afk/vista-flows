@@ -4,8 +4,8 @@
  * 224SOLUTIONS
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';
+import { useState, useEffect, useRef } from 'react';
+import { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '@/integrations/supabase/client';
 import { backendConfig } from '@/config/backend';
@@ -13,29 +13,15 @@ import { toast } from 'sonner';
 import { Loader2, Shield, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getStripeInstance, resetStripeInstance } from '@/lib/stripe/client';
 
-// Clé publique Stripe (variable d'environnement obligatoire)
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
-let stripePromise: Promise<Stripe | null> | null = null;
-const getStripe = (): Promise<Stripe | null> => {
-  if (!STRIPE_PUBLISHABLE_KEY) {
-    console.error('❌ [STRIPE LOAD FAIL] VITE_STRIPE_PUBLISHABLE_KEY is not set');
-    return Promise.resolve(null);
+const getStripe = async (): Promise<Stripe | null> => {
+  try {
+    return await getStripeInstance();
+  } catch (err) {
+    console.error('❌ [STRIPE LOAD FAIL]', err);
+    return null;
   }
-  if (!stripePromise) {
-    console.log('🔄 [STRIPE LOAD START]');
-    stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY).then((s) => {
-      if (s) console.log('✅ [STRIPE LOAD SUCCESS]');
-      else console.error('❌ [STRIPE LOAD FAIL] loadStripe returned null');
-      return s;
-    }).catch((err) => {
-      console.error('❌ [STRIPE LOAD FAIL]', err);
-      stripePromise = null;
-      return null;
-    });
-  }
-  return stripePromise;
 };
 
 interface StripeCheckoutButtonProps {
@@ -244,10 +230,6 @@ export default function StripeCheckoutButton({
         setLoading(true);
         setError(null);
 
-        if (!STRIPE_PUBLISHABLE_KEY) {
-          throw new Error('La clé Stripe n\'est pas configurée. Contactez l\'administrateur.');
-        }
-
         console.log('🔄 [CHECKOUT START] amount:', amount, currency);
         const stripeInstance = await getStripe();
         if (!mountedRef.current) return;
@@ -260,21 +242,52 @@ export default function StripeCheckoutButton({
 
         let data: any;
 
-        // Branche POS (avec sellerId) — backend Node.js avec calcul commission robuste
+        // Branche POS (avec sellerId) — backend Node.js avec fallback Edge Function
         if (!edgeFunction && sellerId && !creditWallet) {
           const { data: session } = await supabase.auth.getSession();
           const token = session?.session?.access_token;
           if (!token) throw new Error('Non authentifié — reconnectez-vous');
 
-          const resp = await fetch(`${backendConfig.baseUrl}/api/pos/stripe-payment`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({ amount, currency: currency.toLowerCase(), orderId, sellerId, description }),
-          });
-          data = await resp.json();
+          const posPayload = {
+            amount,
+            currency: currency.toLowerCase(),
+            orderId,
+            sellerId,
+            description,
+          };
+
+          let backendData: any = null;
+          let shouldFallbackToEdge = false;
+
+          try {
+            const resp = await fetch(`${backendConfig.baseUrl}/api/pos/stripe-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify(posPayload),
+            });
+
+            backendData = await resp.json();
+            shouldFallbackToEdge =
+              resp.status === 503 ||
+              /stripe non configur|paiement par carte non disponible/i.test(String(backendData?.error || ''));
+          } catch (backendError) {
+            console.warn('⚠️ [CHECKOUT FALLBACK] Backend POS indisponible, tentative via Edge Function', backendError);
+            shouldFallbackToEdge = true;
+          }
+
+          if (shouldFallbackToEdge) {
+            console.warn('⚠️ [CHECKOUT FALLBACK] Bascule vers stripe-pos-payment');
+            const { data: invokeData, error: apiError } = await supabase.functions.invoke('stripe-pos-payment', {
+              body: posPayload,
+            });
+            if (apiError) throw new Error(apiError.message);
+            data = invokeData;
+          } else {
+            data = backendData;
+          }
         } else {
           // Autres cas (stripe-deposit, custom edgeFunction) — via Edge Function
           let functionName: string;
@@ -350,7 +363,7 @@ export default function StripeCheckoutButton({
             className="w-full"
             onClick={() => {
               initCalledRef.current = false;
-              stripePromise = null;
+              resetStripeInstance();
               setError(null);
               setLoading(true);
             }}

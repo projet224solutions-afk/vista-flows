@@ -180,7 +180,7 @@ export function QuantityKeypadPopup({
             <Button
               onClick={() => handleInput('enter')}
               disabled={!isValidQuantity}
-              className="h-12 font-semibold bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+              className="h-12 font-semibold bg-gradient-to-r from-[#ff4000] to-[#e53900] hover:from-[#e53900] hover:to-[#cc3200] text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
             >
               <CheckSquare className="h-4 w-4 mr-2" />
               Ajouter

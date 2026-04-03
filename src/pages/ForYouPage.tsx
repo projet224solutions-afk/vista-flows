@@ -35,7 +35,7 @@ export default function ForYouPage() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary to-accent">
+            <div className="rounded-lg bg-gradient-to-br from-[#04439e] to-[#0536a8] p-1.5">
               <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
             <div>
