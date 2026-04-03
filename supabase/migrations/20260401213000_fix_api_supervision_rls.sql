@@ -15,7 +15,6 @@ DROP POLICY IF EXISTS "Service role can insert api_usage_logs" ON public.api_usa
 
 DROP POLICY IF EXISTS "PDG can manage api_alerts" ON public.api_alerts;
 DROP POLICY IF EXISTS "admin_manage_api_alerts" ON public.api_alerts;
-
 -- Shared role predicate (admin/pdg/ceo)
 CREATE POLICY "core_supervision_manage_api_connections"
 ON public.api_connections

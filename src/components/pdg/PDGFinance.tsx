@@ -980,7 +980,7 @@ export default function PDGFinance() {
                     <div className="max-h-56 overflow-auto space-y-1">
                       {conversionStats.country_corridors.slice(0, 30).map((row: any, idx: number) => (
                         <div key={`${row.from_country}-${row.to_country}-${idx}`} className="text-xs rounded border p-2 flex items-center justify-between gap-2">
-                          <span className="font-medium">{row.from_country} -> {row.to_country}</span>
+                          <span className="font-medium">{row.from_country} → {row.to_country}</span>
                           <span>{row.conversions_count} conversions</span>
                         </div>
                       ))}
