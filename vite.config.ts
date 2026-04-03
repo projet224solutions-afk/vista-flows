@@ -111,13 +111,15 @@ export default defineConfig(({ mode }) => {
         },
         // Suppress eval warning from agora-rtm (unavoidable in their bundled code)
         onwarn(warning, warn) {
+          // Some plugins still inject legacy Rollup output option `minify`.
+          // Ignore this non-blocking warning to keep build logs clean.
+          if (warning.code === 'UNKNOWN_OPTION' && /Unknown output options: minify/.test(warning.message)) return;
           if (warning.code === 'EVAL' && warning.id?.includes('agora-rtm')) return;
           warn(warning);
         },
       },
       chunkSizeWarningLimit: 3000,
       sourcemap: false,
-      minify: 'esbuild',
     }
   };
 });
