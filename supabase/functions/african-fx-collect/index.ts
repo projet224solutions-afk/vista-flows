@@ -258,64 +258,111 @@ const BCRG_SCRAPE_URLS = [
   "https://www.bcrg.gov.gn/cours-de-change",
 ];
 
+function normalizeBcrgUrl(rawUrl: string): string {
+  try {
+    return new URL(rawUrl, BCRG_PRIMARY_URL).toString();
+  } catch {
+    return rawUrl;
+  }
+}
+
+function extractBcrgFixingUrls(html: string): string[] {
+  const urls: string[] = [];
+  const pushUrl = (value: string) => {
+    const normalized = normalizeBcrgUrl(value);
+    if (!normalized.includes('/cours_des_devises/fixing-du-')) return;
+    if (!urls.includes(normalized)) {
+      urls.push(normalized);
+    }
+  };
+
+  for (const match of html.matchAll(/href=["']([^"']*\/cours_des_devises\/fixing-du-[^"']+)["']/gi)) {
+    pushUrl(match[1]);
+  }
+
+  for (const match of html.matchAll(/https?:\/\/www\.bcrg-guinee\.org\/cours_des_devises\/fixing-du-[^"'\s<]+/gi)) {
+    pushUrl(match[0]);
+  }
+
+  return urls;
+}
+
+function extractBcrgRateFromHtml(html: string, currency: 'USD' | 'EUR'): number | undefined {
+  const labelPattern = currency === 'USD' ? '(?:USD|Dollar)' : '(?:EUR|Euro)';
+  const patterns = [
+    new RegExp(`${labelPattern}\\s*=\\s*<\\/h\\d>[\\s\\S]{0,1800}?<h\\d[^>]*>\\s*([\\d\\s.,]+)\\s*<\\/h\\d>`, 'gi'),
+    new RegExp(`<td[^>]*>\\s*${labelPattern}\\s*=?\\s*<\\/td>\\s*<td[^>]*>\\s*([\\d\\s.,]+)\\s*<\\/td>`, 'gi'),
+    new RegExp(`(?:1\\s*${currency}\\s*=\\s*|${currency}\\s*\\/\\s*GNF\\s*[:=]\\s*)([\\d\\s.,]+)`, 'gi'),
+  ];
+
+  for (const pattern of patterns) {
+    const matches = Array.from(html.matchAll(pattern));
+    for (let index = matches.length - 1; index >= 0; index -= 1) {
+      const rawValue = matches[index]?.[1];
+      if (!rawValue) continue;
+
+      const parsed = parseFrenchNumber(rawValue);
+      if (!Number.isNaN(parsed) && parsed > 1000 && parsed < 25000) {
+        return parsed;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+async function fetchBcrgHtml(url: string): Promise<string | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const resp = await fetch(url, {
+      headers: { "User-Agent": "224Solutions-FX-Collector/2.0", "Accept": "text/html" },
+      signal: controller.signal,
+    });
+
+    if (!resp.ok) {
+      console.warn(`[BCRG] HTTP ${resp.status} for ${url}`);
+      await resp.text();
+      return null;
+    }
+
+    return await resp.text();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function scrapeBcrg(): Promise<BcrgRates | null> {
-  for (const url of BCRG_SCRAPE_URLS) {
+  let homepageHtml: string | null = null;
+
+  try {
+    homepageHtml = await fetchBcrgHtml(BCRG_PRIMARY_URL);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.warn(`[BCRG] Erreur homepage: ${msg}`);
+  }
+
+  const fixingUrls = homepageHtml ? extractBcrgFixingUrls(homepageHtml) : [];
+  const urlsToTry = Array.from(new Set([
+    ...fixingUrls,
+    ...BCRG_SCRAPE_URLS,
+  ]));
+
+  for (const url of urlsToTry) {
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const html = url === BCRG_PRIMARY_URL && homepageHtml
+        ? homepageHtml
+        : await fetchBcrgHtml(url);
 
-      const resp = await fetch(url, {
-        headers: { "User-Agent": "224Solutions-FX-Collector/2.0", "Accept": "text/html" },
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
+      if (!html) continue;
 
-      if (!resp.ok) {
-        console.warn(`[BCRG] HTTP ${resp.status} for ${url}`);
-        await resp.text();
-        continue;
-      }
+      const usdGnf = extractBcrgRateFromHtml(html, 'USD');
+      if (!usdGnf) continue;
 
-      const html = await resp.text();
+      const eurGnf = extractBcrgRateFromHtml(html, 'EUR');
 
-      // Pattern 1: Table with "Dollar" row: USD | 8 650 | 8 700
-      // Pattern 2: "1 USD = 8 650 GNF" style text
-      // Pattern 3: JSON-like data in page
-
-      // Try table pattern: Dollar | 8 650 | 8 700
-      const dollarTableMatch = html.match(
-        /(?:Dollar|USD)[^<]*?(?:<\/td>\s*<td[^>]*>|[\|:])\s*([\d\s.,]+)/i
-      );
-
-      // Try inline pattern: "1 USD = 8 650 GNF" or "USD/GNF : 8650"
-      const dollarInlineMatch = html.match(
-        /(?:1\s*USD\s*=\s*|USD\s*\/\s*GNF\s*[:=]\s*)([\d\s.,]+)/i
-      );
-
-      const euroTableMatch = html.match(
-        /(?:Euro|EUR)[^<]*?(?:<\/td>\s*<td[^>]*>|[\|:])\s*([\d\s.,]+)/i
-      );
-
-      const euroInlineMatch = html.match(
-        /(?:1\s*EUR\s*=\s*|EUR\s*\/\s*GNF\s*[:=]\s*)([\d\s.,]+)/i
-      );
-
-      const usdMatch = dollarTableMatch || dollarInlineMatch;
-      if (!usdMatch) continue;
-
-      const usdGnf = parseFrenchNumber(usdMatch[1]);
-      if (isNaN(usdGnf) || usdGnf < 1000 || usdGnf > 20000) continue; // Sanity check for GNF
-
-      const eurMatch = euroTableMatch || euroInlineMatch;
-      let eurGnf: number | undefined;
-      if (eurMatch) {
-        const parsed = parseFrenchNumber(eurMatch[1]);
-        if (!isNaN(parsed) && parsed > 1000 && parsed < 25000) {
-          eurGnf = parsed;
-        }
-      }
-
-      console.log(`[BCRG] Taux scrappés — USD/GNF: ${usdGnf}${eurGnf ? `, EUR/GNF: ${eurGnf}` : ""}`);
+      console.log(`[BCRG] Taux scrappés — USD/GNF: ${usdGnf}${eurGnf ? `, EUR/GNF: ${eurGnf}` : ""} (source: ${url})`);
       return { usdGnf, eurGnf };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -324,7 +371,6 @@ async function scrapeBcrg(): Promise<BcrgRates | null> {
       } else {
         console.warn(`[BCRG] Erreur pour ${url}: ${msg}`);
       }
-      continue;
     }
   }
 

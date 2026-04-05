@@ -510,7 +510,7 @@ export function WalletAdminPanel() {
                   </Badge>
                 </div>
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Taux actuel</p>
+                  <p className="text-xs text-muted-foreground">Taux officiel BCRG</p>
                   <p className="text-lg font-semibold">
                     {typeof fxHealth.current_rate?.rate === 'number'
                       ? fxHealth.current_rate.rate.toLocaleString(undefined, { maximumFractionDigits: 6 })

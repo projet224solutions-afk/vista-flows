@@ -132,6 +132,67 @@ function resolveOfficialBankSourceUrl(row: { source_url?: string | null; source?
   return null;
 }
 
+function parseFxRateNumber(rawValue: string): number {
+  const parsed = Number.parseFloat(String(rawValue || '').replace(/\u00a0/g, ' ').replace(/\s/g, '').replace(/,/g, '.'));
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
+
+function extractBcrgWidgetRate(html: string, currency: 'USD' | 'EUR'): number | null {
+  const labelPattern = currency === 'USD' ? '(?:USD|Dollar)' : '(?:EUR|Euro)';
+  const patterns = [
+    new RegExp(`${labelPattern}\\s*=\\s*<\\/h\\d>[\\s\\S]{0,1800}?<h\\d[^>]*>\\s*([\\d\\s.,]+)\\s*<\\/h\\d>`, 'gi'),
+    new RegExp(`<td[^>]*>\\s*${labelPattern}\\s*=?\\s*<\\/td>\\s*<td[^>]*>\\s*([\\d\\s.,]+)\\s*<\\/td>`, 'gi'),
+    new RegExp(`(?:1\\s*${currency}\\s*=\\s*|${currency}\\s*\\/\\s*GNF\\s*[:=]\\s*)([\\d\\s.,]+)`, 'gi'),
+  ];
+
+  for (const pattern of patterns) {
+    const matches = Array.from(html.matchAll(pattern));
+    for (let index = matches.length - 1; index >= 0; index -= 1) {
+      const parsed = parseFxRateNumber(matches[index]?.[1] || '');
+      if (Number.isFinite(parsed) && parsed > 1000 && parsed < 25000) {
+        return parsed;
+      }
+    }
+  }
+
+  return null;
+}
+
+async function fetchLiveBcrgUsdGnf(): Promise<{ usdGnf: number; eurGnf: number | null; retrievedAt: string } | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch(BCRG_OFFICIAL_URL, {
+      headers: {
+        'User-Agent': '224Solutions-FX-Monitor/2.0',
+        Accept: 'text/html',
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const html = await response.text();
+    const usdGnf = extractBcrgWidgetRate(html, 'USD');
+    if (!usdGnf) {
+      return null;
+    }
+
+    return {
+      usdGnf,
+      eurGnf: extractBcrgWidgetRate(html, 'EUR'),
+      retrievedAt: new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient | null> {
   const candidate = String(rawRecipient || '').trim();
   if (!candidate) return null;
@@ -1000,14 +1061,14 @@ router.get(
       const [{ data: latestAnyRate }, { data: latestUsdGnfRate }, { data: recentRuns }, { data: unresolvedAlerts }, { data: todayRates }] = await Promise.all([
         supabaseAdmin
           .from('currency_exchange_rates')
-          .select('from_currency, to_currency, rate, margin, source_type, source_url, retrieved_at')
+          .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
           .eq('is_active', true)
           .order('retrieved_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
         supabaseAdmin
           .from('currency_exchange_rates')
-          .select('from_currency, to_currency, rate, margin, source_type, source_url, retrieved_at')
+          .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
           .eq('is_active', true)
           .eq('from_currency', 'USD')
           .eq('to_currency', 'GNF')
@@ -1028,14 +1089,31 @@ router.get(
           .limit(20),
         supabaseAdmin
           .from('currency_exchange_rates')
-          .select('from_currency, to_currency, rate, margin, source_type, source_url, retrieved_at')
+          .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
           .eq('is_active', true)
           .gte('retrieved_at', startOfDayIso)
           .order('retrieved_at', { ascending: false })
           .limit(200),
       ]);
 
-      const currentRate = latestUsdGnfRate || latestAnyRate;
+      const liveBcrgRate = await fetchLiveBcrgUsdGnf();
+      const fallbackRate: any = latestUsdGnfRate || latestAnyRate || null;
+      const currentMargin = Number(fallbackRate?.margin ?? 0.03);
+      const currentRate = liveBcrgRate
+        ? {
+            ...(fallbackRate || {}),
+            from_currency: 'USD',
+            to_currency: 'GNF',
+            rate: liveBcrgRate.usdGnf,
+            margin: currentMargin,
+            final_rate_usd: liveBcrgRate.usdGnf * (1 + currentMargin),
+            final_rate_eur: liveBcrgRate.eurGnf ? liveBcrgRate.eurGnf * (1 + currentMargin) : fallbackRate?.final_rate_eur ?? null,
+            source: 'bcrg-live-widget',
+            source_type: 'official_html',
+            source_url: BCRG_OFFICIAL_URL,
+            retrieved_at: liveBcrgRate.retrievedAt,
+          }
+        : fallbackRate;
       const lastRetrievedAt = currentRate?.retrieved_at ? new Date(currentRate.retrieved_at).getTime() : null;
       const ageMinutes = lastRetrievedAt ? Math.floor((now - lastRetrievedAt) / 60000) : null;
       const staleThresholdMinutes = 90;
@@ -1054,6 +1132,9 @@ router.get(
           to_currency: rate.to_currency,
           rate: rate.rate,
           margin: rate.margin,
+          final_rate_usd: rate.final_rate_usd,
+          final_rate_eur: rate.final_rate_eur,
+          source: rate.source,
           source_type: rate.source_type,
           source_url: resolveOfficialBankSourceUrl(rate),
           retrieved_at: rate.retrieved_at,
