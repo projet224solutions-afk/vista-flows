@@ -6,7 +6,7 @@ import type { Database } from './types';
 // Configuration Supabase - variables d'environnement Vercel avec fallback hardcodé
 // Une fois VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY configurés sur Vercel,
 // les fallbacks ne seront plus utilisés.
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://uakkxaibujzxdiqzpnpr.supabase.co";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -144,11 +144,41 @@ export const stopSessionMonitor = () => {
  */
 export const getLocalSession = () => {
   try {
-    const storageKey = `sb-uakkxaibujzxdiqzpnpr-auth-token`;
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed;
+    const candidates = new Set<string>();
+
+    const refFromAnon = (() => {
+      try {
+        const token = SUPABASE_KEY;
+        const parts = token.split('.');
+        if (parts.length < 2) return null;
+        const payload = JSON.parse(atob(parts[1]));
+        return typeof payload?.ref === 'string' ? payload.ref : null;
+      } catch {
+        return null;
+      }
+    })();
+
+    if (refFromAnon) {
+      candidates.add(`sb-${refFromAnon}-auth-token`);
+    }
+
+    if (SUPABASE_URL) {
+      try {
+        const hostPrefix = new URL(SUPABASE_URL).hostname.split('.')[0];
+        if (hostPrefix) {
+          candidates.add(`sb-${hostPrefix}-auth-token`);
+        }
+      } catch {
+        // Ignore malformed URL silently.
+      }
+    }
+
+    for (const storageKey of candidates) {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed;
+      }
     }
   } catch (e) {
     console.warn('⚠️ [Supabase] Erreur lecture session locale:', e);

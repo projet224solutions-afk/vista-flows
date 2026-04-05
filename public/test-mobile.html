@@ -79,7 +79,7 @@
   </div>
 
   <script>
-    const APK_URL = 'https://uakkxaibujzxdiqzpnpr.supabase.co/storage/v1/object/public/app-downloads/224Solutions.apk';
+    const APK_URL = window.__APK_URL__ || '';
     
     // Afficher les infos appareil
     document.getElementById('device-info').innerHTML = `
