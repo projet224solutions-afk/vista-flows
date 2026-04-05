@@ -1058,7 +1058,7 @@ router.get(
       startOfDay.setUTCHours(0, 0, 0, 0);
       const startOfDayIso = startOfDay.toISOString();
 
-      const [{ data: latestAnyRate }, { data: latestUsdGnfRate }, { data: recentRuns }, { data: unresolvedAlerts }, { data: todayRates }] = await Promise.all([
+      const [{ data: latestAnyRate }, { data: latestUsdGnfRate }, { data: recentRuns }, { data: unresolvedAlerts }, { data: todayRates }, { data: marginConfig }] = await Promise.all([
         supabaseAdmin
           .from('currency_exchange_rates')
           .select('from_currency, to_currency, rate, margin, final_rate_usd, final_rate_eur, source, source_type, source_url, retrieved_at')
@@ -1094,26 +1094,47 @@ router.get(
           .gte('retrieved_at', startOfDayIso)
           .order('retrieved_at', { ascending: false })
           .limit(200),
+        supabaseAdmin
+          .from('margin_config')
+          .select('config_value')
+          .eq('config_key', 'default_margin')
+          .maybeSingle(),
       ]);
 
       const liveBcrgRate = await fetchLiveBcrgUsdGnf();
       const fallbackRate: any = latestUsdGnfRate || latestAnyRate || null;
-      const currentMargin = Number(fallbackRate?.margin ?? 0.03);
+      const configuredMarginRaw = Number(marginConfig?.config_value ?? fallbackRate?.margin ?? 0.03);
+      const currentMargin = Number.isFinite(configuredMarginRaw) ? configuredMarginRaw : 0.03;
+      const currentRateBase = fallbackRate
+        ? {
+            ...fallbackRate,
+            margin: currentMargin,
+            configured_margin: currentMargin,
+            final_rate_usd: Number.isFinite(Number(fallbackRate?.rate))
+              ? Number(fallbackRate.rate) * (1 + currentMargin)
+              : fallbackRate?.final_rate_usd ?? null,
+            final_rate_eur:
+              Number.isFinite(Number(fallbackRate?.final_rate_eur)) && Number.isFinite(Number(fallbackRate?.margin))
+                ? (Number(fallbackRate.final_rate_eur) / (1 + Number(fallbackRate.margin))) * (1 + currentMargin)
+                : fallbackRate?.final_rate_eur ?? null,
+          }
+        : null;
       const currentRate = liveBcrgRate
         ? {
-            ...(fallbackRate || {}),
+            ...(currentRateBase || {}),
             from_currency: 'USD',
             to_currency: 'GNF',
             rate: liveBcrgRate.usdGnf,
             margin: currentMargin,
+            configured_margin: currentMargin,
             final_rate_usd: liveBcrgRate.usdGnf * (1 + currentMargin),
-            final_rate_eur: liveBcrgRate.eurGnf ? liveBcrgRate.eurGnf * (1 + currentMargin) : fallbackRate?.final_rate_eur ?? null,
+            final_rate_eur: liveBcrgRate.eurGnf ? liveBcrgRate.eurGnf * (1 + currentMargin) : currentRateBase?.final_rate_eur ?? null,
             source: 'bcrg-live-widget',
             source_type: 'official_html',
             source_url: BCRG_OFFICIAL_URL,
             retrieved_at: liveBcrgRate.retrievedAt,
           }
-        : fallbackRate;
+        : currentRateBase;
       const lastRetrievedAt = currentRate?.retrieved_at ? new Date(currentRate.retrieved_at).getTime() : null;
       const ageMinutes = lastRetrievedAt ? Math.floor((now - lastRetrievedAt) / 60000) : null;
       const staleThresholdMinutes = 90;
@@ -1206,7 +1227,8 @@ router.get(
           stale_threshold_minutes: staleThresholdMinutes,
           is_stale: stale,
           age_minutes: ageMinutes,
-          last_rate: currentRate || null,
+          last_rate: currentRateBase || null,
+          configured_margin: currentMargin,
           two_consecutive_failures: twoConsecutiveFailures,
           current_rate: currentRate || null,
           recent_runs: runRows.slice(0, 10),

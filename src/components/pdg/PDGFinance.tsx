@@ -174,8 +174,15 @@ export default function PDGFinance() {
     }
   };
 
+  const displayedFxMargin = typeof fxHealth?.current_rate?.configured_margin === 'number'
+    ? fxHealth.current_rate.configured_margin
+    : typeof fxHealth?.current_rate?.margin === 'number'
+      ? fxHealth.current_rate.margin
+      : null;
+
   const openFxMarginDialog = () => {
-    setMarginPercentInput(String(Math.round((fxHealth?.current_rate?.margin || 0.03) * 100)));
+    const currentMarginPercent = Number(((displayedFxMargin ?? 0.03) * 100).toFixed(2));
+    setMarginPercentInput(Number.isFinite(currentMarginPercent) ? String(currentMarginPercent) : '3');
     setShowMarginDialog(true);
   };
 
@@ -190,7 +197,7 @@ export default function PDGFinance() {
       setMarginUpdateLoading(true);
       const response = await backendFetch('/api/v2/wallet/admin/fx-margin', {
         method: 'POST',
-        body: JSON.stringify({ margin_percent: marginPercent }),
+        body: { margin_percent: marginPercent },
       });
 
       if (!response.success) {
@@ -472,9 +479,9 @@ export default function PDGFinance() {
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
               <CardTitle className="text-xl">Santé FX (devises)</CardTitle>
-              {typeof fxHealth?.current_rate?.margin === 'number' && (
+              {typeof displayedFxMargin === 'number' && (
                 <Badge variant="secondary" className="ml-2">
-                  Commission: {(fxHealth.current_rate.margin * 100).toFixed(2)}%
+                  Commission: {(displayedFxMargin * 100).toFixed(2)}%
                 </Badge>
               )}
             </div>
@@ -901,7 +908,7 @@ export default function PDGFinance() {
       <Dialog open={showMarginDialog} onOpenChange={setShowMarginDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Ajouter commission FX</DialogTitle>
+            <DialogTitle>Modifier commission FX</DialogTitle>
             <DialogDescription>
               Définir la commission (%) appliquée sur le taux de change.
             </DialogDescription>
@@ -916,7 +923,7 @@ export default function PDGFinance() {
                 step="0.1"
                 value={marginPercentInput}
                 onChange={(e) => setMarginPercentInput(e.target.value)}
-                placeholder="Ex: 3"
+                placeholder="Ex: 3,7"
               />
             </div>
             <div className="flex items-center justify-end gap-2">

@@ -100,11 +100,27 @@ export async function backendFetch<T = unknown>(
   }
 
   const url = `${backendConfig.baseUrl}${path}`;
+  const rawHeaders = ((rest.headers as Record<string, string>) || {});
+  const isRawBody =
+    typeof body === 'string' ||
+    body instanceof FormData ||
+    body instanceof URLSearchParams ||
+    body instanceof Blob;
+
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
-    ...((rest.headers as Record<string, string>) || {}),
+    ...rawHeaders,
   };
+
+  if (!headers['Content-Type'] && (!isRawBody || typeof body === 'string')) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const requestBody = body == null
+    ? undefined
+    : isRawBody
+      ? body
+      : JSON.stringify(body);
 
   if (idempotencyKey) {
     headers['Idempotency-Key'] = idempotencyKey;
@@ -122,7 +138,7 @@ export async function backendFetch<T = unknown>(
       const response = await fetch(url, {
         ...rest,
         headers,
-        body: body ? JSON.stringify(body) : undefined,
+        body: requestBody,
         signal: controller.signal,
       });
 

@@ -60,11 +60,16 @@ interface FxHealthData {
   is_stale: boolean;
   age_minutes: number | null;
   two_consecutive_failures: boolean;
+  configured_margin?: number | null;
   current_rate: {
     from_currency: string;
     to_currency: string;
     rate: number;
     margin: number | null;
+    configured_margin?: number | null;
+    final_rate_usd?: number | null;
+    final_rate_eur?: number | null;
+    source?: string | null;
     source_type: string | null;
     source_url: string | null;
     retrieved_at: string | null;
@@ -151,6 +156,12 @@ export function WalletAdminPanel() {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
+  const displayedFxMargin = typeof fxHealth?.current_rate?.configured_margin === 'number'
+    ? fxHealth.current_rate.configured_margin
+    : typeof fxHealth?.current_rate?.margin === 'number'
+      ? fxHealth.current_rate.margin
+      : null;
+
   useEffect(() => {
     loadWallets();
     loadStats();
@@ -195,7 +206,8 @@ export function WalletAdminPanel() {
   };
 
   const openFxMarginDialog = () => {
-    setFxMarginPercentInput(String(Math.round((fxHealth?.current_rate?.margin || 0.03) * 100)));
+    const currentMarginPercent = Number(((displayedFxMargin ?? 0.03) * 100).toFixed(2));
+    setFxMarginPercentInput(Number.isFinite(currentMarginPercent) ? String(currentMarginPercent) : '3');
     setShowFxMarginDialog(true);
   };
 
@@ -210,7 +222,7 @@ export function WalletAdminPanel() {
       setFxMarginUpdating(true);
       const response = await backendFetch('/api/v2/wallet/admin/fx-margin', {
         method: 'POST',
-        body: JSON.stringify({ margin_percent: marginPercent }),
+        body: { margin_percent: marginPercent },
       });
       if (!response.success) {
         throw new Error(response.error || 'Mise a jour commission FX echouee');
@@ -447,9 +459,9 @@ export function WalletAdminPanel() {
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
                 <CardTitle>Monitoring Taux de Change</CardTitle>
-                {fxHealth && typeof fxHealth.current_rate?.margin === 'number' && (
+                {typeof displayedFxMargin === 'number' && (
                   <Badge variant="secondary">
-                    Commission: {(fxHealth.current_rate.margin * 100).toFixed(2)}%
+                    Commission: {(displayedFxMargin * 100).toFixed(2)}%
                   </Badge>
                 )}
               </div>
@@ -525,8 +537,8 @@ export function WalletAdminPanel() {
                 <div className="rounded-lg border p-3">
                   <p className="text-xs text-muted-foreground">Marge active</p>
                   <p className="text-lg font-semibold">
-                    {typeof fxHealth.current_rate?.margin === 'number'
-                      ? `${Math.round(fxHealth.current_rate.margin * 100)}%`
+                    {typeof displayedFxMargin === 'number'
+                      ? `${(displayedFxMargin * 100).toFixed(2)}%`
                       : 'N/A'}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -782,7 +794,7 @@ export function WalletAdminPanel() {
       <Dialog open={showFxMarginDialog} onOpenChange={setShowFxMarginDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ajouter commission FX</DialogTitle>
+            <DialogTitle>Modifier commission FX</DialogTitle>
             <DialogDescription>
               Saisissez le pourcentage de commission à appliquer au taux.
             </DialogDescription>
@@ -799,7 +811,7 @@ export function WalletAdminPanel() {
                 value={fxMarginPercentInput}
                 onChange={(e) => setFxMarginPercentInput(e.target.value)}
                 className="mt-2"
-                placeholder="Ex: 3"
+                placeholder="Ex: 3,7"
               />
             </div>
 
