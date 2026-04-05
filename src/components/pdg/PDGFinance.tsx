@@ -204,9 +204,18 @@ export default function PDGFinance() {
         throw new Error(response.error || 'Mise a jour de la commission FX impossible');
       }
 
+      const nextMarginValue = marginPercent / 100;
+      setFxHealth((current: any) => current ? ({
+        ...current,
+        configured_margin: nextMarginValue,
+        current_rate: current.current_rate
+          ? { ...current.current_rate, configured_margin: nextMarginValue }
+          : current.current_rate,
+      }) : current);
+
       toast.success(`Commission FX mise a jour: ${marginPercent}%`);
       setShowMarginDialog(false);
-      await loadFxHealth();
+      void loadFxHealth();
     } catch (error: any) {
       toast.error(error?.message || 'Erreur mise a jour commission FX');
     } finally {

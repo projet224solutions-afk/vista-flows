@@ -193,6 +193,77 @@ async function fetchLiveBcrgUsdGnf(): Promise<{ usdGnf: number; eurGnf: number |
   }
 }
 
+function buildAfricanFxCollectPayload(source: string, actorId: string | null) {
+  return {
+    source,
+    actor_id: actorId,
+    strict_african_sources: true,
+    include_all_african_banks: true,
+    primary_source_url: BCRG_OFFICIAL_URL,
+    preferred_currency_pairs: [
+      { from: 'USD', to: 'GNF' },
+      { from: 'EUR', to: 'GNF' },
+    ],
+    bcrg_source_urls: [BCRG_OFFICIAL_URL],
+    preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
+  };
+}
+
+async function triggerAfricanFxCollection(source: string, actorId: string | null, timeoutMs = 3500): Promise<{ ok: boolean; status: number | null; payload: any; timedOut: boolean }> {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    logger.warn('FX collect trigger skipped: Supabase env manquante');
+    return {
+      ok: false,
+      status: null,
+      payload: { message: 'Configuration Supabase manquante' },
+      timedOut: false,
+    };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${process.env.SUPABASE_URL}/functions/v1/african-fx-collect`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(buildAfricanFxCollectPayload(source, actorId)),
+      signal: controller.signal,
+    });
+
+    const raw = await response.text();
+    let payload: any = null;
+    try {
+      payload = raw ? JSON.parse(raw) : null;
+    } catch {
+      payload = raw ? { raw } : null;
+    }
+
+    return {
+      ok: response.ok,
+      status: response.status,
+      payload,
+      timedOut: false,
+    };
+  } catch (error: any) {
+    if (error?.name === 'AbortError') {
+      return {
+        ok: true,
+        status: 202,
+        payload: { queued: true, message: 'Collecte FX lancée en arrière-plan.' },
+        timedOut: true,
+      };
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function resolveRecipient(rawRecipient: string): Promise<ResolvedRecipient | null> {
   const candidate = String(rawRecipient || '').trim();
   if (!candidate) return null;
@@ -1477,35 +1548,10 @@ router.post(
         throw upsertError;
       }
 
-      // Apply new margin immediately by triggering a fresh collection.
-      const functionUrl = `${process.env.SUPABASE_URL}/functions/v1/african-fx-collect`;
-      const refreshResponse = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ''}`,
-          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          source: 'pdg_margin_update',
-          actor_id: req.user!.id,
-          strict_african_sources: true,
-          include_all_african_banks: true,
-          primary_source_url: BCRG_OFFICIAL_URL,
-          preferred_currency_pairs: [
-            { from: 'USD', to: 'GNF' },
-            { from: 'EUR', to: 'GNF' },
-          ],
-          bcrg_source_urls: [BCRG_OFFICIAL_URL],
-          preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
-        }),
-      });
+      const refreshResult = await triggerAfricanFxCollection('pdg_margin_update', req.user!.id);
 
-      let refreshPayload: any = null;
-      try {
-        refreshPayload = await refreshResponse.json();
-      } catch {
-        refreshPayload = null;
+      if (!refreshResult.ok && !refreshResult.timedOut) {
+        logger.warn(`FX margin update: refresh non confirmé (status=${refreshResult.status ?? 'n/a'})`);
       }
 
       res.json({
@@ -1513,9 +1559,10 @@ router.post(
         data: {
           margin_percent: marginPercentRaw,
           margin_value: marginValue,
-          refresh_triggered: refreshResponse.ok,
-          refresh_status: refreshResponse.status,
-          refresh_payload: refreshPayload,
+          refresh_triggered: refreshResult.ok,
+          refresh_status: refreshResult.status,
+          refresh_payload: refreshResult.payload,
+          refresh_timed_out: refreshResult.timedOut,
         },
       });
     } catch (error: any) {
@@ -1534,40 +1581,9 @@ router.post(
   }),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const functionUrl = `${process.env.SUPABASE_URL}/functions/v1/african-fx-collect`;
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ''}`,
-          apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          source: 'pdg_manual_refresh',
-          actor_id: req.user!.id,
-          strict_african_sources: true,
-          include_all_african_banks: true,
-          primary_source_url: BCRG_OFFICIAL_URL,
-          preferred_currency_pairs: [
-            { from: 'USD', to: 'GNF' },
-            { from: 'EUR', to: 'GNF' },
-          ],
-          bcrg_source_urls: [
-            BCRG_OFFICIAL_URL,
-          ],
-          preferred_source_urls: AFRICAN_BANK_SOURCE_URLS,
-        }),
-      });
+      const refreshResult = await triggerAfricanFxCollection('pdg_manual_refresh', req.user!.id, 4000);
 
-      const raw = await response.text();
-      let payload: any = null;
-      try {
-        payload = raw ? JSON.parse(raw) : null;
-      } catch {
-        payload = { raw };
-      }
-
-      if (!response.ok) {
+      if (!refreshResult.ok && !refreshResult.timedOut) {
         await supabaseAdmin.from('financial_security_alerts').insert({
           user_id: SYSTEM_USER_ID,
           alert_type: 'fx_manual_refresh_failed',
@@ -1576,19 +1592,26 @@ router.post(
           description: 'Le déclenchement manuel de la collecte FX a échoué.',
           metadata: {
             actor_id: req.user!.id,
-            status: response.status,
-            error: payload?.error || payload?.message || 'unknown',
+            status: refreshResult.status,
+            error: refreshResult.payload?.error || refreshResult.payload?.message || 'unknown',
           },
         }).catch(() => {});
 
-        res.status(response.status).json({
+        res.status(refreshResult.status || 502).json({
           success: false,
-          error: payload?.error || payload?.message || 'Le refresh FX manuel a échoué',
+          error: refreshResult.payload?.error || refreshResult.payload?.message || 'Le refresh FX manuel a échoué',
         });
         return;
       }
 
-      res.json({ success: true, data: payload });
+      res.json({
+        success: true,
+        data: refreshResult.payload || { queued: true },
+        meta: {
+          refresh_status: refreshResult.status,
+          refresh_timed_out: refreshResult.timedOut,
+        },
+      });
     } catch (error: any) {
       logger.error(`FX manual refresh error: ${error.message}`);
       res.status(500).json({ success: false, error: 'Erreur lors du refresh FX manuel' });

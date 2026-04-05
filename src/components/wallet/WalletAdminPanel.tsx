@@ -228,9 +228,18 @@ export function WalletAdminPanel() {
         throw new Error(response.error || 'Mise a jour commission FX echouee');
       }
 
+      const nextMarginValue = marginPercent / 100;
+      setFxHealth((current) => current ? ({
+        ...current,
+        configured_margin: nextMarginValue,
+        current_rate: current.current_rate
+          ? { ...current.current_rate, configured_margin: nextMarginValue }
+          : current.current_rate,
+      }) : current);
+
       toast.success(`Commission FX mise a jour: ${marginPercent}%`);
       setShowFxMarginDialog(false);
-      await loadFxHealth();
+      void loadFxHealth();
     } catch (error: any) {
       toast.error(error?.message || 'Erreur mise a jour commission FX');
     } finally {
