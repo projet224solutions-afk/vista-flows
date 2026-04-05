@@ -159,10 +159,22 @@
         if (check()) { clearInterval(interval); hide(); }
       }, 200);
       
-      // After max wait, show error + reload option
+      // After max wait, auto-heal once for stale PWA cache, then show manual recovery link
       setTimeout(function() {
         clearInterval(interval);
         if (!check() && loader && textEl) {
+          var autoRecoverKey = '__224_auto_recover_done';
+          var alreadyAutoRecovered = sessionStorage.getItem(autoRecoverKey) === '1';
+
+          if (!alreadyAutoRecovered) {
+            sessionStorage.setItem(autoRecoverKey, '1');
+            textEl.innerHTML = 'Réparation automatique en cours...';
+            setTimeout(function() {
+              window.location.replace('/?resetSw=1&autoRecover=1');
+            }, 700);
+            return;
+          }
+
           textEl.innerHTML = 'Le chargement prend plus de temps que prévu.<br><a href="/?resetSw=1" style="color:#023288;text-decoration:underline;margin-top:8px;display:inline-block">Recharger l\'application</a>';
         } else {
           hide();

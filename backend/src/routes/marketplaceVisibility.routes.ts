@@ -10,6 +10,7 @@ import {
   getVendorVisibilitySummary,
   getVisibilityAdminOverview,
 } from '../services/marketplaceVisibility.service.js';
+import type { VisibilityCandidate } from '../services/marketplaceVisibility.service.js';
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
@@ -79,7 +80,7 @@ router.post('/rank-candidates', async (req, res: Response) => {
       return;
     }
 
-    const result = await rankMarketplaceCandidates(parsed.data.items, parsed.data.context);
+    const result = await rankMarketplaceCandidates(parsed.data.items as VisibilityCandidate[], parsed.data.context);
     await emitCoreFeatureEvent({
       featureKey: 'marketplace.ranking',
       coreEngine: 'commerce',

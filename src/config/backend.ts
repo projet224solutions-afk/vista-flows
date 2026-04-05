@@ -71,14 +71,12 @@ function resolveBackendBaseUrl(): string {
     const hostname = window.location.hostname;
 
     // Native WebViews (Capacitor iOS: capacitor://localhost, Android: http://localhost)
-    // must NOT use the local WebView origin as the API base — it doesn't route to the backend.
+    // must never call the local WebView origin as the API base.
     if (/^capacitor:\/\//i.test(origin) || /^ionic:\/\//i.test(origin)) {
-      // Native app without VITE_BACKEND_MOBILE_URL set: API calls will fail gracefully.
-      return '';
+      return normalizeUrl(DEFAULT_PUBLIC_BACKEND_URL);
     }
     if (/^http:\/\/localhost(:\d+)?$/i.test(origin) && !import.meta.env.DEV) {
-      // Android WebView serves from http://localhost — same issue, no backend there.
-      return '';
+      return normalizeUrl(DEFAULT_PUBLIC_BACKEND_URL);
     }
 
     // Public web deployment: prefer the dedicated API host instead of the SPA origin.
@@ -98,3 +96,10 @@ function resolveBackendBaseUrl(): string {
 export const backendConfig = {
   baseUrl: resolveBackendBaseUrl(),
 };
+
+export function resolveBackendUrl(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return backendConfig.baseUrl
+    ? `${backendConfig.baseUrl}${normalizedPath}`
+    : normalizedPath;
+}

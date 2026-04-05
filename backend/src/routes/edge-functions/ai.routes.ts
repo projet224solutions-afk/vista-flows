@@ -3,6 +3,14 @@ import { createClient } from "@supabase/supabase-js";
 
 const router = Router();
 
+type ChatCompletionResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string | null;
+    };
+  }>;
+};
+
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || "",
   process.env.SUPABASE_SERVICE_ROLE_KEY || "",
@@ -72,7 +80,7 @@ async function callLovableChat(params: {
     throw err;
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as ChatCompletionResponse;
   const content = data?.choices?.[0]?.message?.content;
   if (!content) {
     throw new Error("No AI content received");
@@ -427,7 +435,7 @@ router.post("/generate-product-description", async (req: Request, res: Response)
       return res.status(response.status).json({ success: false, error: `OpenAI error: ${errorText}` });
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as ChatCompletionResponse;
     const description = data?.choices?.[0]?.message?.content || "";
 
     return res.status(200).json({

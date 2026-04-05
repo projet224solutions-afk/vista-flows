@@ -1,3 +1,4 @@
+import { resolveBackendUrl } from '@/config/backend';
 import { supabase } from '@/integrations/supabase/client';
 
 export type ConnectivityStatus = 'online' | 'degraded' | 'offline';
@@ -24,7 +25,7 @@ interface HealthProbeResult {
   source: 'healthz' | 'supabase' | 'business';
 }
 
-const HEALTH_CHECK_PATH = '/healthz.json';
+const HEALTH_CHECK_PATH = resolveBackendUrl('/healthz.json');
 const FALLBACK_SUPABASE_URL = (supabase as any)?.supabaseUrl as string | undefined;
 const FALLBACK_SUPABASE_KEY = (supabase as any)?.supabaseKey as string | undefined;
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;

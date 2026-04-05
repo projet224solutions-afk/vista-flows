@@ -23,6 +23,10 @@ import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
 
+async function ignoreSupabaseError(operation: PromiseLike<unknown> | unknown): Promise<void> {
+  await Promise.resolve(operation).catch(() => undefined);
+}
+
 // Apply payment rate limit to all payment routes
 router.use(paymentRateLimit);
 
@@ -279,7 +283,7 @@ router.post('/secure/init', verifyJWT, async (req: AuthenticatedRequest, res: Re
       .maybeSingle();
 
     if (securityFlags?.is_blocked) {
-      await supabaseAdmin.from('financial_audit_logs').insert({
+      await ignoreSupabaseError(supabaseAdmin.from('financial_audit_logs').insert({
         user_id: userId,
         action_type: 'attempt',
         description: 'Tentative de paiement par utilisateur bloqué',
@@ -287,7 +291,7 @@ router.post('/secure/init', verifyJWT, async (req: AuthenticatedRequest, res: Re
         security_flags: ['blocked_user_attempt'],
         ip_address: req.headers['x-forwarded-for'] || req.ip,
         user_agent: req.headers['user-agent'],
-      }).catch(() => {});
+      }));
 
       res.status(403).json({ success: false, error: 'USER_BLOCKED', message: 'Compte bloqué' });
       return;
@@ -326,7 +330,7 @@ router.post('/secure/init', verifyJWT, async (req: AuthenticatedRequest, res: Re
       return;
     }
 
-    await supabaseAdmin.from('financial_audit_logs').insert({
+    await ignoreSupabaseError(supabaseAdmin.from('financial_audit_logs').insert({
       transaction_id: transactionId,
       user_id: userId,
       action_type: 'create',
@@ -334,7 +338,7 @@ router.post('/secure/init', verifyJWT, async (req: AuthenticatedRequest, res: Re
       new_status: 'pending',
       request_data: { requested_amount, fee_amount: feeAmount, total_amount: totalAmount },
       ip_address: req.headers['x-forwarded-for'] || req.ip,
-    }).catch(() => {});
+    }));
 
     logger.info(`[SecurePayment] Init: user=${userId}, total=${totalAmount}, tx=${transactionId}`);
 
@@ -406,14 +410,14 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
       .single();
 
     if (fetchError || !transaction) {
-      await supabaseAdmin.from('financial_audit_logs').insert({
+      await ignoreSupabaseError(supabaseAdmin.from('financial_audit_logs').insert({
         user_id: '00000000-0000-0000-0000-000000000000',
         action_type: 'attempt',
         description: 'Tentative validation avec ID transaction invalide',
         request_data: { transaction_id },
         is_suspicious: true,
         security_flags: ['invalid_transaction_id'],
-      }).catch(() => {});
+      }));
 
       res.status(404).json({ success: false, error: 'TRANSACTION_NOT_FOUND' });
       return;
@@ -441,7 +445,7 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
     }
 
     if (!signature || signature !== expectedSignature) {
-      await supabaseAdmin.from('financial_security_alerts').insert({
+      await ignoreSupabaseError(supabaseAdmin.from('financial_security_alerts').insert({
         transaction_id,
         user_id: userId,
         alert_type: 'signature_invalid',
@@ -450,21 +454,21 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
         description: 'Tentative de validation avec signature incorrecte',
         expected_value: expectedSignature,
         received_value: signature || 'NULL',
-      }).catch(() => {});
+      }));
 
       await supabaseAdmin
         .from('secure_transactions')
         .update({ status: 'rejected', rejection_reason: 'INVALID_SIGNATURE', failed_at: new Date().toISOString() })
         .eq('id', transaction_id);
 
-      await supabaseAdmin.from('financial_audit_logs').insert({
+      await ignoreSupabaseError(supabaseAdmin.from('financial_audit_logs').insert({
         transaction_id,
         user_id: userId,
         action_type: 'reject',
         description: 'SIGNATURE INVALIDE — Paiement REFUSÉ',
         is_suspicious: true,
         security_flags: ['invalid_signature'],
-      }).catch(() => {});
+      }));
 
       res.status(403).json({ success: false, error: 'INVALID_SIGNATURE', message: 'Paiement REFUSÉ' });
       return;
@@ -489,7 +493,7 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
     // Vérifier l'exact montant payé
     const amountDiff = Math.abs(Number(amount_paid) - Number(transaction.total_amount));
     if (!amount_paid || amountDiff > 0.01) {
-      await supabaseAdmin.from('financial_security_alerts').insert({
+      await ignoreSupabaseError(supabaseAdmin.from('financial_security_alerts').insert({
         transaction_id,
         user_id: userId,
         alert_type: 'amount_mismatch',
@@ -498,7 +502,7 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
         description: 'Le montant payé ne correspond pas au montant attendu',
         expected_value: String(transaction.total_amount),
         received_value: String(amount_paid ?? 'NULL'),
-      }).catch(() => {});
+      }));
 
       await supabaseAdmin
         .from('secure_transactions')
@@ -571,7 +575,7 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
       .eq('id', transaction_id);
 
     // Journal wallets (aligné au schéma wallet_transactions existant)
-    await supabaseAdmin.from('wallet_transactions').insert({
+    await ignoreSupabaseError(supabaseAdmin.from('wallet_transactions').insert({
       sender_wallet_id: walletId,
       receiver_wallet_id: walletId,
       transaction_type: 'deposit',
@@ -583,19 +587,19 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
         secure_transaction_id: transaction_id,
         source: 'backend-node',
       },
-    }).catch(() => {});
+    }));
 
     // Déclencher les commissions affiliées
     await triggerAffiliateCommission(userId, Number(transaction.net_amount), 'wallet_deposit', transaction_id);
 
-    await supabaseAdmin.from('financial_audit_logs').insert({
+    await ignoreSupabaseError(supabaseAdmin.from('financial_audit_logs').insert({
       transaction_id,
       user_id: userId,
       action_type: 'complete',
       description: `Paiement validé et wallet crédité: ${transaction.net_amount} GNF`,
       old_status: 'pending',
       new_status: 'completed',
-    }).catch(() => {});
+    }));
 
     logger.info(`[SecurePayment] Validated: user=${userId}, net=${transaction.net_amount}, newBalance=${newBalance}`);
 

@@ -2,6 +2,15 @@ name: Build iOS IPA
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VITE_SUPABASE_URL: ''
+  VITE_SUPABASE_ANON_KEY: ''
+  VITE_BACKEND_MOBILE_URL: ''
+  APPLE_CERTIFICATES_P12: ''
+  APPLE_CERTIFICATES_PASSWORD: ''
+  APPLE_ISSUER_ID: ''
+  APPLE_API_KEY_ID: ''
+  APPLE_API_PRIVATE_KEY: ''
+  APPLE_TEAM_ID: ''
 
 on:
   push:
@@ -31,7 +40,40 @@ jobs:
           
       - name: Install dependencies
         run: npm ci
-        
+
+      - name: Resolve workflow env
+        shell: bash
+        env:
+          RAW_VARS: ${{ toJson(vars) }}
+          RAW_SECRETS: ${{ toJson(secrets) }}
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const varsObj = JSON.parse(process.env.RAW_VARS || '{}');
+          const secretsObj = JSON.parse(process.env.RAW_SECRETS || '{}');
+          const pick = (...keys) => {
+            for (const key of keys) {
+              const value = secretsObj[key] ?? varsObj[key] ?? '';
+              if (String(value).trim()) return String(value);
+            }
+            return '';
+          };
+          const entries = {
+            VITE_SUPABASE_URL: pick('VITE_SUPABASE_URL', 'SUPABASE_URL'),
+            VITE_SUPABASE_ANON_KEY: pick('VITE_SUPABASE_ANON_KEY', 'SUPABASE_ANON_KEY', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_PUBLISHABLE_KEY'),
+            VITE_BACKEND_MOBILE_URL: pick('VITE_BACKEND_MOBILE_URL', 'VITE_BACKEND_URL'),
+            APPLE_CERTIFICATES_P12: pick('APPLE_CERTIFICATES_P12'),
+            APPLE_CERTIFICATES_PASSWORD: pick('APPLE_CERTIFICATES_PASSWORD'),
+            APPLE_ISSUER_ID: pick('APPLE_ISSUER_ID'),
+            APPLE_API_KEY_ID: pick('APPLE_API_KEY_ID'),
+            APPLE_API_PRIVATE_KEY: pick('APPLE_API_PRIVATE_KEY'),
+            APPLE_TEAM_ID: pick('APPLE_TEAM_ID'),
+          };
+          for (const [key, value] of Object.entries(entries)) {
+            fs.appendFileSync(process.env.GITHUB_ENV, `${key}<<__ENV__\n${value}\n__ENV__\n`);
+          }
+          EOF
+
       - name: Build React app
         run: |
           if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
@@ -42,10 +84,6 @@ jobs:
           fi
           npm run build
           echo "React app built successfully"
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL || vars.VITE_SUPABASE_URL || vars.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_PUBLISHABLE_KEY || vars.VITE_SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY || vars.VITE_SUPABASE_PUBLISHABLE_KEY || vars.SUPABASE_PUBLISHABLE_KEY }}
-          VITE_BACKEND_MOBILE_URL: ${{ secrets.VITE_BACKEND_MOBILE_URL || secrets.VITE_BACKEND_URL || vars.VITE_BACKEND_MOBILE_URL || vars.VITE_BACKEND_URL || '' }}
           
       - name: Install Capacitor
         run: |
@@ -91,8 +129,8 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: Apple-Actions/import-codesign-certs@v2
         with:
-          p12-file-base64: ${{ secrets.APPLE_CERTIFICATES_P12 }}
-          p12-password: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
+          p12-file-base64: ${{ env.APPLE_CERTIFICATES_P12 }}
+          p12-password: ${{ env.APPLE_CERTIFICATES_PASSWORD }}
           
       - name: Download Provisioning Profile
         if: github.event_name != 'pull_request'
@@ -100,9 +138,9 @@ jobs:
         with:
           bundle-id: com.224solutions.app
           profile-type: 'IOS_APP_STORE'
-          issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+          issuer-id: ${{ env.APPLE_ISSUER_ID }}
+          api-key-id: ${{ env.APPLE_API_KEY_ID }}
+          api-private-key: ${{ env.APPLE_API_PRIVATE_KEY }}
           
       - name: Build iOS Archive
         run: |
@@ -135,7 +173,7 @@ jobs:
               <key>method</key>
               <string>app-store</string>
               <key>teamID</key>
-              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <string>$APPLE_TEAM_ID</string>
               <key>uploadBitcode</key>
               <false/>
               <key>uploadSymbols</key>
@@ -168,9 +206,9 @@ jobs:
         uses: Apple-Actions/upload-testflight-build@v1
         with:
           app-path: ${{ steps.ios-path.outputs.app_dir }}/build/ipa/App.ipa
-          issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+          issuer-id: ${{ env.APPLE_ISSUER_ID }}
+          api-key-id: ${{ env.APPLE_API_KEY_ID }}
+          api-private-key: ${{ env.APPLE_API_PRIVATE_KEY }}
           
       - name: Create Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

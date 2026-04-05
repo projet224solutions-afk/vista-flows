@@ -1,7 +1,27 @@
 import { Router } from "express";
-import { supabaseAdmin } from "../../config/supabase";
+import { supabaseAdmin } from "../../config/supabase.js";
 
 const router = Router();
+
+type LovableVisionContentItem = {
+  type?: string;
+  image_url?: {
+    url?: string | null;
+  };
+};
+
+type LovableVisionResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string | LovableVisionContentItem[] | null;
+      images?: Array<{
+        image_url?: {
+          url?: string | null;
+        };
+      }>;
+    };
+  }>;
+};
 
 function getBearerToken(req: any): string | null {
   const auth = req.headers.authorization;
@@ -56,8 +76,9 @@ async function callLovableChat(params: {
     throw new Error(`AI gateway error ${response.status}: ${errorText}`);
   }
 
-  const data = await response.json();
-  return data?.choices?.[0]?.message?.content || "";
+  const data = (await response.json()) as LovableVisionResponse;
+  const content = data?.choices?.[0]?.message?.content;
+  return typeof content === "string" ? content : JSON.stringify(content || "");
 }
 
 function safeJsonBlock(input: string, fallback: any) {
@@ -872,7 +893,7 @@ router.post("/generate/image-similar", async (req: any, res: any) => {
         throw new Error(`Image generation failed (${response.status}): ${errText}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as LovableVisionResponse;
       let imageData = data?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
       if (!imageData && Array.isArray(data?.choices?.[0]?.message?.content)) {
@@ -1202,7 +1223,7 @@ router.post("/generate-similar-image", async (req: any, res: any) => {
       throw new Error(`Image generation failed (${response.status}): ${errText}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as LovableVisionResponse;
     const similarImageUrl =
       data?.choices?.[0]?.message?.images?.[0]?.image_url?.url ||
       (typeof data?.choices?.[0]?.message?.content === "string" ? data.choices[0].message.content : null);

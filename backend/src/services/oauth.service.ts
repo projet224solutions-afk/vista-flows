@@ -71,7 +71,7 @@ export async function exchangeCodeForTokens(code: string): Promise<GoogleTokenRe
     throw new Error(`OAuth token exchange failed: ${response.status}`);
   }
 
-  const tokens: GoogleTokenResponse = await response.json();
+  const tokens = (await response.json()) as GoogleTokenResponse;
   logger.info('OAuth: Tokens obtained successfully');
   return tokens;
 }
@@ -92,7 +92,7 @@ export async function getGoogleUserInfo(accessToken: string): Promise<GoogleUser
     throw new Error(`Failed to fetch Google user info: ${response.status}`);
   }
 
-  const userInfo: GoogleUserInfo = await response.json();
+  const userInfo = (await response.json()) as GoogleUserInfo;
   logger.info(`OAuth: User info retrieved for ${userInfo.email}`);
   return userInfo;
 }
@@ -121,7 +121,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<GoogleTo
     throw new Error(`OAuth token refresh failed: ${response.status}`);
   }
 
-  const tokens: GoogleTokenResponse = await response.json();
+  const tokens = (await response.json()) as GoogleTokenResponse;
   logger.info('OAuth: Access token refreshed successfully');
   return tokens;
 }

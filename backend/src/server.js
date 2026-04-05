@@ -48,6 +48,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+function originMatchesPattern(origin, pattern) {
+  if (!pattern) return false;
+  if (pattern === '*') return true;
+  if (origin === pattern) return true;
+
+  const wildcardIndex = pattern.indexOf('*');
+  if (wildcardIndex === -1) return false;
+
+  const prefix = pattern.slice(0, wildcardIndex);
+  const suffix = pattern.slice(wildcardIndex + 1);
+  return origin.startsWith(prefix) && origin.endsWith(suffix);
+}
+
 // ==================== MIDDLEWARES SÉCURITÉ ====================
 
 // Helmet - Sécurité headers HTTP (optimisé pour React/Vite)
@@ -77,18 +90,30 @@ app.use(helmet({
   }
 }));
 
-// CORS - Configuration stricte
+// CORS - Configuration stricte avec support mobile / domaines wildcard
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [
+    const defaultOrigins = [
+      'http://localhost',
+      'http://localhost:3000',
       'http://localhost:5173',
-      'https://localhost:5173'
+      'http://localhost:8080',
+      'https://localhost:5173',
+      'capacitor://localhost',
+      'ionic://localhost',
+      'https://224solution.net',
+      'https://www.224solution.net',
+      'https://*.224solution.net'
     ];
+    const envOrigins = process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean) || [];
+    const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
     
     // Autoriser les requêtes sans origin (mobile apps, Postman)
     if (!origin) return callback(null, true);
+
+    const isAllowed = allowedOrigins.some((allowedOrigin) => originMatchesPattern(origin, allowedOrigin));
     
-    if (allowedOrigins.includes(origin)) {
+    if (isAllowed) {
       callback(null, true);
     } else {
       logger.warn(`Blocked CORS request from origin: ${origin}`);
@@ -97,7 +122,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-API-Key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-API-Key', 'Idempotency-Key']
 };
 app.use(cors(corsOptions));
 

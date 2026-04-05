@@ -4,6 +4,12 @@ import PDFDocument from "pdfkit";
 
 const router = Router();
 
+type ImageGenerationResponse = {
+  data?: Array<{
+    url?: string | null;
+  }>;
+};
+
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || "",
   process.env.SUPABASE_SERVICE_ROLE_KEY || "",
@@ -278,7 +284,7 @@ router.post("/product-image-openai", async (req: Request, res: Response) => {
       return res.status(response.status).json({ success: false, error: `OpenAI error: ${errorText}` });
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as ImageGenerationResponse;
     const imageUrl = data?.data?.[0]?.url;
     if (!imageUrl) {
       return res.status(500).json({ success: false, error: "No image generated" });

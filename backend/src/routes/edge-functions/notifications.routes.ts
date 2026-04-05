@@ -1,7 +1,15 @@
 import { Router } from "express";
-import { supabaseAdmin } from "../../config/supabase";
+import { supabaseAdmin } from "../../config/supabase.js";
 
 const router = Router();
+
+type LovableVisionResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string | null;
+    };
+  }>;
+};
 
 function getBearerToken(req: any): string | null {
   const auth = req.headers.authorization;
@@ -55,7 +63,7 @@ async function callLovableVision(prompt: string, imageUrl: string) {
     throw new Error(`Vision API error ${response.status}: ${errText}`);
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as LovableVisionResponse;
   return data?.choices?.[0]?.message?.content || "";
 }
 
@@ -94,11 +102,11 @@ router.post("/otp-email", async (req: any, res: any) => {
     const { error } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email });
     if (error) throw error;
     // Store in notifications for audit trail
-    await supabaseAdmin.from("notifications").insert({
+    await Promise.resolve(supabaseAdmin.from("notifications").insert({
       message: `Code OTP: ${otp_code || "envoyé par email"}`,
       channel: "email",
       metadata: { template, email, otp_sent: true },
-    }).catch(() => null); // non-blocking
+    })).catch(() => null); // non-blocking
     return res.json({ success: true, email_sent: true, email });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
@@ -111,11 +119,11 @@ router.post("/bureau-access", async (req: any, res: any) => {
     if (!recipient_email) return res.status(400).json({ success: false, error: "recipient_email requis" });
     const { error } = await supabaseAdmin.auth.admin.generateLink({ type: "magiclink", email: recipient_email });
     if (error) throw error;
-    await supabaseAdmin.from("notifications").insert({
+    await Promise.resolve(supabaseAdmin.from("notifications").insert({
       message: `Accès bureau envoyé à ${recipient_email}`,
       channel: "email",
       metadata: { bureau_id, recipient_email, type: "bureau_access" },
-    }).catch(() => null);
+    })).catch(() => null);
     return res.json({ success: true, email_sent: true, recipient_email });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });

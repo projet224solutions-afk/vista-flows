@@ -2,6 +2,9 @@ name: Build Desktop Apps
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VITE_SUPABASE_URL: ''
+  VITE_SUPABASE_ANON_KEY: ''
+  VITE_BACKEND_MOBILE_URL: ''
 
 on:
   push:
@@ -26,7 +29,28 @@ jobs:
           
       - name: Install dependencies
         run: npm ci
-        
+
+      - name: Resolve frontend env
+        shell: pwsh
+        env:
+          RAW_VARS: ${{ toJson(vars) }}
+          RAW_SECRETS: ${{ toJson(secrets) }}
+        run: |
+          $varsObj = ($env:RAW_VARS | ConvertFrom-Json)
+          $secretsObj = ($env:RAW_SECRETS | ConvertFrom-Json)
+
+          function Pick([string[]]$keys) {
+            foreach ($key in $keys) {
+              if ($secretsObj.PSObject.Properties.Name -contains $key -and -not [string]::IsNullOrWhiteSpace([string]$secretsObj.$key)) { return [string]$secretsObj.$key }
+              if ($varsObj.PSObject.Properties.Name -contains $key -and -not [string]::IsNullOrWhiteSpace([string]$varsObj.$key)) { return [string]$varsObj.$key }
+            }
+            return ''
+          }
+
+          Add-Content -Path $env:GITHUB_ENV -Value "VITE_SUPABASE_URL=$(Pick @('VITE_SUPABASE_URL','SUPABASE_URL'))"
+          Add-Content -Path $env:GITHUB_ENV -Value "VITE_SUPABASE_ANON_KEY=$(Pick @('VITE_SUPABASE_ANON_KEY','SUPABASE_ANON_KEY','VITE_SUPABASE_PUBLISHABLE_KEY','SUPABASE_PUBLISHABLE_KEY'))"
+          Add-Content -Path $env:GITHUB_ENV -Value "VITE_BACKEND_MOBILE_URL=$(Pick @('VITE_BACKEND_MOBILE_URL','VITE_BACKEND_URL'))"
+
       - name: Build React app
         run: |
           if ([string]::IsNullOrWhiteSpace($env:VITE_SUPABASE_URL) -or [string]::IsNullOrWhiteSpace($env:VITE_SUPABASE_ANON_KEY)) {
@@ -37,10 +61,6 @@ jobs:
           }
           npm run build
           echo "React app built successfully"
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL || vars.VITE_SUPABASE_URL || vars.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_PUBLISHABLE_KEY || vars.VITE_SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY || vars.VITE_SUPABASE_PUBLISHABLE_KEY || vars.SUPABASE_PUBLISHABLE_KEY }}
-          VITE_BACKEND_MOBILE_URL: ${{ secrets.VITE_BACKEND_MOBILE_URL || secrets.VITE_BACKEND_URL || vars.VITE_BACKEND_MOBILE_URL || vars.VITE_BACKEND_URL || '' }}
           
       - name: Verify desktop assets (Windows)
         shell: pwsh

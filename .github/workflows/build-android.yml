@@ -2,6 +2,13 @@ name: Build Android APK
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VITE_SUPABASE_URL: ''
+  VITE_SUPABASE_ANON_KEY: ''
+  VITE_BACKEND_MOBILE_URL: ''
+  ANDROID_KEYSTORE_B64: ''
+  KEYSTORE_PASSWORD: ''
+  KEY_ALIAS: ''
+  KEY_PASSWORD: ''
 
 on:
   push:
@@ -32,7 +39,38 @@ jobs:
           
       - name: Install dependencies
         run: npm ci
-        
+
+      - name: Resolve workflow env
+        shell: bash
+        env:
+          RAW_VARS: ${{ toJson(vars) }}
+          RAW_SECRETS: ${{ toJson(secrets) }}
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const varsObj = JSON.parse(process.env.RAW_VARS || '{}');
+          const secretsObj = JSON.parse(process.env.RAW_SECRETS || '{}');
+          const pick = (...keys) => {
+            for (const key of keys) {
+              const value = secretsObj[key] ?? varsObj[key] ?? '';
+              if (String(value).trim()) return String(value);
+            }
+            return '';
+          };
+          const entries = {
+            VITE_SUPABASE_URL: pick('VITE_SUPABASE_URL', 'SUPABASE_URL'),
+            VITE_SUPABASE_ANON_KEY: pick('VITE_SUPABASE_ANON_KEY', 'SUPABASE_ANON_KEY', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_PUBLISHABLE_KEY'),
+            VITE_BACKEND_MOBILE_URL: pick('VITE_BACKEND_MOBILE_URL', 'VITE_BACKEND_URL'),
+            ANDROID_KEYSTORE_B64: pick('ANDROID_KEYSTORE'),
+            KEYSTORE_PASSWORD: pick('KEYSTORE_PASSWORD'),
+            KEY_ALIAS: pick('KEY_ALIAS'),
+            KEY_PASSWORD: pick('KEY_PASSWORD'),
+          };
+          for (const [key, value] of Object.entries(entries)) {
+            fs.appendFileSync(process.env.GITHUB_ENV, `${key}<<__ENV__\n${value}\n__ENV__\n`);
+          }
+          EOF
+
       - name: Build React app
         run: |
           if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
@@ -43,10 +81,6 @@ jobs:
           fi
           npm run build
           echo "React app built successfully"
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || secrets.SUPABASE_URL || vars.VITE_SUPABASE_URL || vars.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_PUBLISHABLE_KEY || vars.VITE_SUPABASE_ANON_KEY || vars.SUPABASE_ANON_KEY || vars.VITE_SUPABASE_PUBLISHABLE_KEY || vars.SUPABASE_PUBLISHABLE_KEY }}
-          VITE_BACKEND_MOBILE_URL: ${{ secrets.VITE_BACKEND_MOBILE_URL || secrets.VITE_BACKEND_URL || vars.VITE_BACKEND_MOBILE_URL || vars.VITE_BACKEND_URL || '' }}
           
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -66,13 +100,17 @@ jobs:
       - name: Sign APK
         if: github.event_name != 'pull_request'
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > android/app/keystore.jks
+          if [ -z "$ANDROID_KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "❌ Android signing secrets are missing"
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_B64" | base64 -d > android/app/keystore.jks
           cd android
           ./gradlew assembleRelease \
             -Pandroid.injected.signing.store.file=keystore.jks \
-            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
-            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
-            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
             
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

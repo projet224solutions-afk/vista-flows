@@ -1,8 +1,29 @@
 import { Router } from "express";
-import { supabaseAdmin } from "../../config/supabase";
+import { supabaseAdmin } from "../../config/supabase.js";
 import { z } from "zod";
 
 const router = Router();
+
+type OpenAIChatResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string | null;
+    };
+  }>;
+  error?: {
+    message?: string;
+  };
+};
+
+type LovableImageResponse = {
+  data?: Array<{
+    url?: string | null;
+    b64_json?: string | null;
+  }>;
+  error?: {
+    message?: string;
+  };
+};
 
 function getBearerToken(req: any): string | null {
   const auth = req.headers.authorization;
@@ -429,7 +450,7 @@ Descriptions should be professional, engaging, and suitable for a Guinean e-comm
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = (await response.json()) as OpenAIChatResponse;
       if (response.status === 429) {
         return res.status(429).json({ success: false, error: "Rate limit exceeded" });
       }
@@ -439,8 +460,8 @@ Descriptions should be professional, engaging, and suitable for a Guinean e-comm
       throw new Error(error.error?.message || "OpenAI request failed");
     }
 
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
+    const data = (await response.json()) as OpenAIChatResponse;
+    const content = data.choices?.[0]?.message?.content || "{}";
     const description = JSON.parse(content);
 
     return res.json({
@@ -489,7 +510,7 @@ Professional studio setting, clean white background, well-lit, product-focused p
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = (await response.json()) as LovableImageResponse;
       if (response.status === 429) {
         return res.status(429).json({ success: false, error: "Rate limit exceeded" });
       }
@@ -499,7 +520,7 @@ Professional studio setting, clean white background, well-lit, product-focused p
       throw new Error(error.error?.message || "Image generation failed");
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as LovableImageResponse;
     const imageUrl = data.data?.[0]?.url || data.data?.[0]?.b64_json;
 
     return res.json({

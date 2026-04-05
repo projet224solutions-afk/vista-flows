@@ -64,14 +64,16 @@ async function createFxAlert(params: {
     return;
   }
 
-  await supabaseAdmin.from('financial_security_alerts').insert({
-    user_id: SYSTEM_USER_ID,
-    alert_type: params.alertType,
-    severity: params.severity,
-    title: params.title,
-    description: params.description,
-    metadata: params.metadata || {},
-  }).catch(() => {});
+  await Promise.resolve(
+    supabaseAdmin.from('financial_security_alerts').insert({
+      user_id: SYSTEM_USER_ID,
+      alert_type: params.alertType,
+      severity: params.severity,
+      title: params.title,
+      description: params.description,
+      metadata: params.metadata || {},
+    })
+  ).catch(() => {});
 }
 
 // ==================== JOB REGISTRY ====================

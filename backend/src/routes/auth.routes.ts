@@ -94,7 +94,8 @@ router.get('/google/callback', async (req: Request, res: Response): Promise<void
       logger.error(`Supabase user lookup error: ${lookupError.message}`);
     }
 
-    const existingUser = existingUsers?.users?.find(u => u.email === userInfo.email);
+    const listedUsers = existingUsers?.users ?? [];
+    const existingUser = listedUsers.find((u: any) => u.email === userInfo.email);
 
     let userId: string;
 

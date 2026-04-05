@@ -8,6 +8,65 @@ import { initPWAInstallPromptListener } from "./lib/pwaInstallPrompt";
 import { initMonitoring } from "./lib/monitoring";
 import { initializeSecurity } from "./lib/security";
 import { initFrontendObserver } from "./services/monitoring/FrontendObserver";
+import { backendConfig, resolveBackendUrl } from "./config/backend";
+
+function installBackendRequestBridge() {
+  if (typeof window === 'undefined' || import.meta.env.DEV) return;
+  if ((window as any).__vfBackendBridgeInstalled) return;
+
+  const baseUrl = backendConfig.baseUrl?.trim();
+  if (!baseUrl) return;
+
+  const currentOrigin = window.location.origin;
+  const currentHost = window.location.hostname;
+  const currentProtocol = window.location.protocol;
+  const shouldRewriteRelativeBackendCalls =
+    /^capacitor:$/i.test(currentProtocol) ||
+    /^ionic:$/i.test(currentProtocol) ||
+    /^http:\/\/localhost(:\d+)?$/i.test(currentOrigin) ||
+    /(^|\.)224solution\.net$/i.test(currentHost);
+
+  if (!shouldRewriteRelativeBackendCalls) return;
+
+  const originalFetch = window.fetch.bind(window);
+  const backendPrefixes = ['/api', '/edge-functions', '/health', '/healthz', '/healthz.json'];
+
+  const isBackendPath = (url: URL) =>
+    backendPrefixes.some((prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`));
+
+  const rewriteCandidate = (rawUrl: string) => {
+    const url = new URL(rawUrl, currentOrigin);
+    if (!isBackendPath(url)) return null;
+    if (url.origin !== currentOrigin) return null;
+    return resolveBackendUrl(`${url.pathname}${url.search}`);
+  };
+
+  window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+    try {
+      if (input instanceof Request) {
+        const rewritten = rewriteCandidate(input.url);
+        if (rewritten) {
+          return originalFetch(new Request(rewritten, input), init);
+        }
+      } else {
+        const raw = typeof input === 'string' ? input : input.toString();
+        const rewritten = rewriteCandidate(raw);
+        if (rewritten) {
+          return originalFetch(rewritten, init);
+        }
+      }
+    } catch (error) {
+      console.warn('[NetworkBridge] Rewrite skipped', error);
+    }
+
+    return originalFetch(input as RequestInfo, init);
+  }) as typeof window.fetch;
+
+  (window as any).__vfBackendBridgeInstalled = true;
+  console.info('[NetworkBridge] Active', { baseUrl });
+}
+
+installBackendRequestBridge();
 
 // Initialiser le monitoring (Sentry, erreurs globales, performance)
 initMonitoring().catch(console.error);

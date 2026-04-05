@@ -29,6 +29,11 @@ import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalle
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
+
+async function ignoreSupabaseError(operation: PromiseLike<unknown> | unknown): Promise<void> {
+  await Promise.resolve(operation).catch(() => undefined);
+}
+
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
 const BCRG_OFFICIAL_URL = 'https://www.bcrg-guinee.org';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -1290,12 +1295,12 @@ router.post(
     }
 
     // Audit log
-    await supabaseAdmin.from('financial_audit_logs').insert({
+    await ignoreSupabaseError(supabaseAdmin.from('financial_audit_logs').insert({
       user_id: actorId,
       action_type: 'admin_credit',
       description: `Crédit admin: ${amount} GNF → user=${user_id}`,
       request_data: { user_id, amount, description, reference: ref },
-    }).catch(() => {});
+    }));
 
     logger.info(`[WalletV2] Admin credit: actor=${actorId}, target=${user_id}, amount=${amount}`);
     res.json({ success: true, new_balance: result.newBalance, operation: 'admin_credit' });
@@ -1678,7 +1683,7 @@ router.post(
           .maybeSingle();
 
         if (!existing) {
-          await supabaseAdmin.from('financial_security_alerts').insert({
+          await ignoreSupabaseError(supabaseAdmin.from('financial_security_alerts').insert({
             user_id: SYSTEM_USER_ID,
             alert_type: 'fx_rate_change_under_1h',
             severity: 'high',
@@ -1690,7 +1695,7 @@ router.post(
               previous,
               minutes_between: Math.round(minutesBetween),
             },
-          }).catch(() => {});
+          }));
           alertCreated = true;
         }
       }
@@ -1779,7 +1784,7 @@ router.post(
       const refreshResult = await triggerAfricanFxCollection('pdg_manual_refresh', req.user!.id, 4000);
 
       if (!refreshResult.ok && !refreshResult.timedOut) {
-        await supabaseAdmin.from('financial_security_alerts').insert({
+        await ignoreSupabaseError(supabaseAdmin.from('financial_security_alerts').insert({
           user_id: SYSTEM_USER_ID,
           alert_type: 'fx_manual_refresh_failed',
           severity: 'high',
@@ -1790,7 +1795,7 @@ router.post(
             status: refreshResult.status,
             error: refreshResult.payload?.error || refreshResult.payload?.message || 'unknown',
           },
-        }).catch(() => {});
+        }));
 
         res.status(refreshResult.status || 502).json({
           success: false,

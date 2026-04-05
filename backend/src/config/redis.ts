@@ -8,6 +8,24 @@
 import Redis from 'ioredis';
 import { logger } from './logger.js';
 
+type RedisClient = {
+  on(event: string, listener: (...args: any[]) => void): void;
+  connect(): Promise<void>;
+  get(key: string): Promise<string | null>;
+  setex(key: string, ttlSeconds: number, value: string): Promise<unknown>;
+  del(...keys: string[]): Promise<number>;
+  keys(pattern: string): Promise<string[]>;
+  set(key: string, value: string, mode: 'EX', ttlSeconds: number, condition: 'NX'): Promise<'OK' | null | string>;
+  expire(key: string, ttlSeconds: number): Promise<number>;
+  ping(): Promise<string>;
+  quit(): Promise<string>;
+  multi(): {
+    incr(key: string): unknown;
+    ttl(key: string): unknown;
+    exec(): Promise<Array<[unknown, unknown]>>;
+  };
+};
+
 const REDIS_ENABLED = (process.env.REDIS_ENABLED ?? (process.env.NODE_ENV === 'production' ? 'true' : 'false')) === 'true';
 
 // ==================== CONFIG ====================
@@ -34,7 +52,7 @@ const REDIS_CONFIG = {
 
 // ==================== SINGLETON ====================
 
-let client: Redis | null = null;
+let client: RedisClient | null = null;
 let isConnected = false;
 let connectAttempts = 0;
 const MAX_ATTEMPTS = 5;
@@ -47,7 +65,7 @@ function logFallbackOnce(message: string): void {
   logger.warn(message);
 }
 
-export async function getRedis(): Promise<Redis | null> {
+export async function getRedis(): Promise<RedisClient | null> {
   if (!REDIS_ENABLED) {
     if (!disabledLogged) {
       disabledLogged = true;
@@ -62,7 +80,7 @@ export async function getRedis(): Promise<Redis | null> {
   try {
     connectAttempts++;
     if (!client) {
-      client = new Redis(REDIS_CONFIG);
+      client = new (Redis as any)(REDIS_CONFIG) as RedisClient;
       client.on('connect', () => { isConnected = true; connectAttempts = 0; fallbackLogged = false; logger.info('✅ Redis connected'); });
       client.on('error', (_err) => {
         isConnected = false;

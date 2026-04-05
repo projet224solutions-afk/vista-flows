@@ -458,7 +458,8 @@ router.post("/agents/create", async (req: Request, res: Response) => {
     }
 
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    const already = existingUsers.users.find((u) => u.email?.toLowerCase() === String(email).toLowerCase());
+    const users = existingUsers?.users ?? [];
+    const already = users.find((u: any) => u.email?.toLowerCase() === String(email).toLowerCase());
     if (already) {
       return res.status(400).json({ success: false, error: "Cet email existe déjà" });
     }

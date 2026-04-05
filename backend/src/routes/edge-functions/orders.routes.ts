@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { supabaseAdmin } from "../../config/supabase";
+import { supabaseAdmin } from "../../config/supabase.js";
 import Stripe from "stripe";
 
 const router = Router();
@@ -15,6 +15,15 @@ const DEFAULT_FEES: Record<string, number> = {
 
 const FEE_KEY_ALIASES: Record<string, string[]> = {
   commission_achats: ["purchase_commission_percentage"],
+};
+
+type PayPalAuthResponse = {
+  access_token?: string;
+};
+
+type PayPalOrderResponse = {
+  id?: string;
+  links?: unknown[];
 };
 
 async function getPdgFeeRatePercent(settingKey: string): Promise<number> {
@@ -85,7 +94,10 @@ const getPayPalAccessToken = async (): Promise<string> => {
     body: "grant_type=client_credentials",
   });
 
-  const data = await response.json();
+  const data = (await response.json()) as PayPalAuthResponse;
+  if (!data.access_token) {
+    throw new Error("PayPal access token missing in response");
+  }
   return data.access_token;
 };
 
@@ -152,7 +164,10 @@ router.post("/create-paypal-order", validateBearerToken, async (req: any, res: a
       throw new Error("PayPal order creation failed");
     }
 
-    const paypalOrder = await paypalOrderResponse.json();
+    const paypalOrder = (await paypalOrderResponse.json()) as PayPalOrderResponse;
+    if (!paypalOrder.id) {
+      throw new Error("PayPal order ID missing in response");
+    }
 
     // Store transaction in Supabase
     const { data: transaction } = await supabaseAdmin
