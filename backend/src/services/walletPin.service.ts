@@ -31,8 +31,40 @@ export async function getWalletPinState(userId: string) {
     .eq('user_id', userId)
     .maybeSingle();
 
-  if (error) throw error;
-  return data;
+  if (!error) {
+    return data;
+  }
+
+  const errorMessage = String(error.message || error.details || '');
+  const pinColumnsMissing = /pin_hash|pin_enabled|pin_failed_attempts|pin_locked_until|pin_updated_at/i.test(errorMessage)
+    && /column|does not exist|schema cache/i.test(errorMessage);
+
+  if (!pinColumnsMissing) {
+    throw error;
+  }
+
+  const { data: fallbackWallet, error: fallbackError } = await supabaseAdmin
+    .from('wallets')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (fallbackError) {
+    throw fallbackError;
+  }
+
+  if (!fallbackWallet) {
+    return null;
+  }
+
+  return {
+    id: fallbackWallet.id,
+    pin_hash: null,
+    pin_enabled: false,
+    pin_failed_attempts: 0,
+    pin_locked_until: null,
+    pin_updated_at: null,
+  };
 }
 
 export async function ensureWalletExistsForPin(userId: string) {
