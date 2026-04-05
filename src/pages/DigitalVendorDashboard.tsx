@@ -174,6 +174,7 @@ export default function DigitalVendorDashboard() {
   }
 
   const displayName = profile?.first_name || user?.email?.split('@')[0] || 'Vendeur Digital';
+  const sellerCode = (profile as any)?.public_id || (profile as any)?.custom_id || vendorId || null;
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -181,7 +182,7 @@ export default function DigitalVendorDashboard() {
         <DigitalVendorSidebar />
 
         <div className="flex-1 flex flex-col min-w-0">
-          <DigitalVendorHeader displayName={displayName} onSignOut={handleSignOut} />
+          <DigitalVendorHeader displayName={displayName} sellerCode={sellerCode} onSignOut={handleSignOut} />
 
           <main
             className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden px-3 pb-24 pt-5 sm:px-5 md:px-8 md:pb-10 md:pt-7"

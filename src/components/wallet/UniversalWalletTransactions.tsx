@@ -159,6 +159,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
   const requestTransactionPin = (action: 'withdraw' | 'transfer' | 'intl-transfer') => {
     setPinError(null);
+    setPinAction(action);
 
     if (!pinStatus?.pin_enabled) {
       setPinSetupMode('setup');
@@ -166,7 +167,6 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       return;
     }
 
-    setPinAction(action);
     setPinPromptOpen(true);
   };
 
@@ -819,6 +819,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       setBankAccountHolder('');
       setWithdrawOpen(false);
       await Promise.all([loadWalletData(), loadTransactions()]);
+      return true;
     } catch (error: any) {
       console.error('❌ Erreur retrait:', error);
 
@@ -834,13 +835,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
           setBankAccountHolder('');
           setWithdrawOpen(false);
           await Promise.all([loadWalletData(), loadTransactions()]);
-          return;
+          return true;
         }
       } catch {
         // Ignore fallback error and show original message
       }
 
       toast.error(error.message || 'Erreur lors du retrait');
+      return false;
     } finally {
       setProcessing(false);
     }
@@ -1124,7 +1126,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
     if (!effectiveUserId || !transferPreview) {
       console.error('❌ Transfert annulé: données manquantes', { effectiveUserId, transferPreview });
       toast.error('Données de transfert manquantes');
-      return;
+      return false;
     }
     
     setProcessing(true);
@@ -1270,11 +1272,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       setTransferDescription('');
       setTransferPreview(null);
       await Promise.all([loadWalletData(), loadTransactions()]);
+      return true;
     } catch (error: any) {
       console.error('❌ Erreur transfert:', error);
       // Afficher le message d'erreur spécifique
       const errorMessage = error.message || error.error || 'Erreur lors du transfert';
       toast.error(errorMessage);
+      return false;
     } finally {
       setProcessing(false);
     }
@@ -1309,8 +1313,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
       setShowIntlConfirm(false);
       await Promise.all([loadWalletData(), loadTransactions()]);
       window.dispatchEvent(new CustomEvent('wallet-updated'));
+      return true;
     } catch (error: any) {
       toast.error(error.message || 'Erreur lors du transfert international');
+      return false;
     } finally {
       setIntlExecuting(false);
     }
@@ -1321,29 +1327,41 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
   };
 
   const handlePinConfirm = async (pin: string) => {
+    const currentAction = pinAction;
+    if (!currentAction) return;
+
+    let success = false;
+
     try {
       setPinLoading(true);
       setPinError(null);
 
-      if (pinAction === 'withdraw') {
-        await executeWithdraw(pin);
+      if (currentAction === 'withdraw') {
+        success = Boolean(await executeWithdraw(pin));
       }
 
-      if (pinAction === 'transfer') {
-        setPinPromptOpen(false);
-        await executeConfirmTransfer(pin);
+      if (currentAction === 'transfer') {
+        success = Boolean(await executeConfirmTransfer(pin));
       }
 
-      if (pinAction === 'intl-transfer') {
-        setPinPromptOpen(false);
-        await executeIntlConfirmTransfer(pin);
+      if (currentAction === 'intl-transfer') {
+        success = Boolean(await executeIntlConfirmTransfer(pin));
+      }
+
+      if (!success) {
+        setPinError('Opération non validée. Vérifiez le code PIN et réessayez.');
       }
     } catch (error: any) {
       setPinError(error?.message || 'Erreur de validation du code PIN');
     } finally {
       setPinLoading(false);
-      setPinAction(null);
       await loadPinStatus();
+    }
+
+    if (success) {
+      setPinPromptOpen(false);
+      setPinAction(null);
+      setPinError(null);
     }
   };
 
@@ -1360,9 +1378,17 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
         throw new Error(response.error || 'Erreur configuration code PIN');
       }
 
-      toast.success(pinSetupMode === 'change' ? 'Code PIN modifié' : 'Code PIN activé');
-      setPinSetupOpen(false);
       await loadPinStatus();
+      setPinSetupOpen(false);
+
+      if (pinSetupMode === 'setup' && pinAction) {
+        toast.success('Code PIN activé. Confirmez maintenant votre opération.');
+        setPinPromptOpen(true);
+        return;
+      }
+
+      toast.success(pinSetupMode === 'change' ? 'Code PIN modifié' : 'Code PIN activé');
+      setPinAction(null);
     } catch (error: any) {
       setPinError(error?.message || 'Erreur configuration code PIN');
     } finally {
@@ -1482,6 +1508,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
             variant="outline"
             size="sm"
             onClick={() => {
+              setPinAction(null);
               setPinSetupMode(pinStatus?.pin_enabled ? 'change' : 'setup');
               setPinError(null);
               setPinSetupOpen(true);
@@ -2085,7 +2112,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
         <WalletPinPromptDialog
           open={pinPromptOpen}
-          onOpenChange={setPinPromptOpen}
+          onOpenChange={(value) => {
+            setPinPromptOpen(value);
+            if (!value) {
+              setPinError(null);
+              setPinAction(null);
+            }
+          }}
           loading={pinLoading}
           error={pinError}
           onConfirm={handlePinConfirm}
@@ -2093,7 +2126,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance = 
 
         <WalletPinSetupDialog
           open={pinSetupOpen}
-          onOpenChange={setPinSetupOpen}
+          onOpenChange={(value) => {
+            setPinSetupOpen(value);
+            if (!value) {
+              setPinError(null);
+              if (!pinPromptOpen) {
+                setPinAction(null);
+              }
+            }
+          }}
           mode={pinSetupMode}
           loading={pinLoading}
           error={pinError}

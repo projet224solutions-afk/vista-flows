@@ -17,11 +17,13 @@ const WalletBalanceWidget = lazy(() =>
 
 interface DigitalVendorHeaderProps {
   displayName: string;
+  sellerCode?: string | null;
   onSignOut: () => Promise<void>;
 }
 
 const DigitalVendorHeader = memo(function DigitalVendorHeader({
   displayName,
+  sellerCode,
   onSignOut,
 }: DigitalVendorHeaderProps) {
   const navigate = useNavigate();
@@ -55,6 +57,11 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
                 <span className="h-2 w-2 rounded-full bg-[#ff4000] shadow-[0_0_0_4px_rgba(255,64,0,0.20)]" />
                 <span className="truncate max-w-[220px] sm:max-w-[340px]">{displayName}</span>
               </p>
+              {sellerCode ? (
+                <p className="mt-1 text-[11px] text-white/78 sm:text-xs">
+                  ID vendeur : <span className="font-mono font-semibold text-[#ffb08a]">{sellerCode}</span>
+                </p>
+              ) : null}
             </div>
           </div>
 

@@ -128,6 +128,22 @@ function extractOperationValue<T extends keyof WalletOperationResult>(
   return (nested?.[key] ?? response?.[key]) as WalletOperationResult[T] | undefined;
 }
 
+function extractResponsePayload<T extends Record<string, any>>(response: any): T | undefined {
+  if (response?.data && typeof response.data === 'object') {
+    const nested = response.data as T;
+    return ('success' in nested ? nested : { success: Boolean(response?.success), ...nested }) as T;
+  }
+
+  if (response && typeof response === 'object') {
+    const { data, error, error_code, details, meta, ...rest } = response;
+    if (Object.keys(rest).length > 0) {
+      return rest as T;
+    }
+  }
+
+  return undefined;
+}
+
 // ==================== API CALLS ====================
 
 /**
@@ -271,13 +287,22 @@ export async function transferToWallet(
  * Prévisualise un transfert (frais + conversion + solde après) côté backend Node.js.
  */
 export async function previewWalletTransfer(recipientId: string, amount: number) {
-  return backendFetch<WalletTransferPreviewResult>('/api/v2/wallet/transfer/preview', {
+  const response = await backendFetch<WalletTransferPreviewResult>('/api/v2/wallet/transfer/preview', {
     method: 'POST',
     body: {
       recipient_id: recipientId,
       amount,
     },
   });
+
+  if (!response.success) {
+    return response;
+  }
+
+  return {
+    ...response,
+    data: extractResponsePayload<WalletTransferPreviewResult>(response),
+  };
 }
 
 /**

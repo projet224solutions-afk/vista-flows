@@ -95,13 +95,14 @@ export function WalletOperationsPanel() {
       return;
     }
 
+    setPinAction('withdraw');
+
     if (!pinStatus?.pin_enabled) {
       setPinSetupMode('setup');
       setPinSetupOpen(true);
       return;
     }
 
-    setPinAction('withdraw');
     setPinPromptOpen(true);
   };
 
@@ -136,13 +137,14 @@ export function WalletOperationsPanel() {
 
     setRecipientId(resolvedId);
 
+    setPinAction('transfer');
+
     if (!pinStatus?.pin_enabled) {
       setPinSetupMode('setup');
       setPinSetupOpen(true);
       return;
     }
 
-    setPinAction('transfer');
     setPinPromptOpen(true);
   };
 
@@ -151,33 +153,40 @@ export function WalletOperationsPanel() {
       setPinLoading(true);
       setPinError(null);
 
+      let success = false;
+
       if (pinAction === 'withdraw') {
         const amount = parseFloat(withdrawAmount);
-        const success = await withdraw(amount, withdrawMethod, {
+        success = await withdraw(amount, withdrawMethod, {
           description: `Retrait via ${PAYMENT_METHODS.find(m => m.value === withdrawMethod)?.label}`,
           pin,
         });
         if (success) {
           setWithdrawAmount('');
-          setPinPromptOpen(false);
         }
       }
 
       if (pinAction === 'transfer') {
         const amount = parseFloat(transferAmount);
-        const success = await transfer(recipientId, amount, transferDescription, { pin });
+        success = await transfer(recipientId, amount, transferDescription, { pin });
         if (success) {
           setTransferAmount('');
           setRecipientId('');
           setTransferDescription('');
-          setPinPromptOpen(false);
         }
+      }
+
+      if (success) {
+        setPinPromptOpen(false);
+        setPinAction(null);
+        setPinError(null);
+      } else {
+        setPinError('Opération non validée. Vérifiez le code PIN et réessayez.');
       }
     } catch (error: any) {
       setPinError(error?.message || 'Erreur de validation du code PIN');
     } finally {
       setPinLoading(false);
-      setPinAction(null);
       await loadPinStatus();
     }
   };
@@ -195,9 +204,17 @@ export function WalletOperationsPanel() {
         throw new Error(response.error || 'Erreur configuration code PIN');
       }
 
-      toast.success(pinSetupMode === 'change' ? 'Code PIN modifié' : 'Code PIN activé');
-      setPinSetupOpen(false);
       await loadPinStatus();
+      setPinSetupOpen(false);
+
+      if (pinSetupMode === 'setup' && pinAction) {
+        toast.success('Code PIN activé. Confirmez maintenant votre opération.');
+        setPinPromptOpen(true);
+        return;
+      }
+
+      toast.success(pinSetupMode === 'change' ? 'Code PIN modifié' : 'Code PIN activé');
+      setPinAction(null);
     } catch (error: any) {
       setPinError(error?.message || 'Erreur configuration code PIN');
     } finally {
@@ -231,6 +248,7 @@ export function WalletOperationsPanel() {
               {pinStatus?.pin_enabled ? 'Code PIN actif pour retraits et transferts' : 'Code PIN non configuré'}
             </div>
             <Button type="button" variant="outline" size="sm" onClick={() => {
+              setPinAction(null);
               setPinSetupMode(pinStatus?.pin_enabled ? 'change' : 'setup');
               setPinError(null);
               setPinSetupOpen(true);
@@ -447,14 +465,28 @@ export function WalletOperationsPanel() {
       </Card>
       <WalletPinPromptDialog
         open={pinPromptOpen}
-        onOpenChange={setPinPromptOpen}
+        onOpenChange={(value) => {
+          setPinPromptOpen(value);
+          if (!value) {
+            setPinError(null);
+            setPinAction(null);
+          }
+        }}
         loading={pinLoading}
         error={pinError}
         onConfirm={handlePinConfirm}
       />
       <WalletPinSetupDialog
         open={pinSetupOpen}
-        onOpenChange={setPinSetupOpen}
+        onOpenChange={(value) => {
+          setPinSetupOpen(value);
+          if (!value) {
+            setPinError(null);
+            if (!pinPromptOpen) {
+              setPinAction(null);
+            }
+          }
+        }}
         mode={pinSetupMode}
         loading={pinLoading}
         error={pinError}
