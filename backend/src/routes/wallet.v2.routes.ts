@@ -104,6 +104,127 @@ function mapCurrencyToCountry(currency: string | null | undefined): string {
   return CURRENCY_TO_COUNTRY[String(currency).toUpperCase()] || String(currency).toUpperCase();
 }
 
+const ZERO_DECIMAL_TRANSFER_CURRENCIES = new Set([
+  'GNF', 'XOF', 'XAF', 'VND', 'IDR', 'KRW', 'JPY', 'CLP', 'UGX', 'RWF',
+  'PYG', 'COP', 'HUF', 'ISK', 'BIF', 'DJF', 'KMF', 'MGA', 'VUV',
+]);
+
+function smartRoundCurrencyAmount(amount: number, currency: string): number {
+  if (!Number.isFinite(amount)) return 0;
+  return ZERO_DECIMAL_TRANSFER_CURRENCIES.has(String(currency || '').toUpperCase())
+    ? Math.round(amount)
+    : Math.round(amount * 100) / 100;
+}
+
+function resolveStoredFxRate(
+  row: { rate?: number | null; final_rate_usd?: number | null; final_rate_eur?: number | null; retrieved_at?: string | null } | null | undefined,
+  baseCurrency: string,
+): number {
+  if (!row) return Number.NaN;
+
+  const base = String(baseCurrency || '').toUpperCase();
+  if (base === 'USD' && Number.isFinite(Number(row.final_rate_usd)) && Number(row.final_rate_usd) > 0) {
+    return Number(row.final_rate_usd);
+  }
+  if (base === 'EUR' && Number.isFinite(Number(row.final_rate_eur)) && Number(row.final_rate_eur) > 0) {
+    return Number(row.final_rate_eur);
+  }
+
+  const directRate = Number(row.rate);
+  if (Number.isFinite(directRate) && directRate > 0) {
+    return directRate;
+  }
+
+  const fallbackUsd = Number(row.final_rate_usd);
+  if (Number.isFinite(fallbackUsd) && fallbackUsd > 0) {
+    return fallbackUsd;
+  }
+
+  const fallbackEur = Number(row.final_rate_eur);
+  if (Number.isFinite(fallbackEur) && fallbackEur > 0) {
+    return fallbackEur;
+  }
+
+  return Number.NaN;
+}
+
+async function getInternalFxRateFromTable(from: string, to: string): Promise<{ rate: number; source: string; fetchedAt: string }> {
+  const sourceCurrency = String(from || '').toUpperCase();
+  const targetCurrency = String(to || '').toUpperCase();
+
+  if (sourceCurrency === targetCurrency) {
+    return { rate: 1, source: 'identity', fetchedAt: new Date().toISOString() };
+  }
+
+  const { data: direct } = await supabaseAdmin
+    .from('currency_exchange_rates')
+    .select('rate, final_rate_usd, final_rate_eur, retrieved_at')
+    .eq('from_currency', sourceCurrency)
+    .eq('to_currency', targetCurrency)
+    .eq('is_active', true)
+    .order('retrieved_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const directRate = resolveStoredFxRate(direct, sourceCurrency);
+  if (Number.isFinite(directRate) && directRate > 0) {
+    return { rate: directRate, source: 'table-direct', fetchedAt: direct?.retrieved_at || new Date().toISOString() };
+  }
+
+  const { data: inverse } = await supabaseAdmin
+    .from('currency_exchange_rates')
+    .select('rate, final_rate_usd, final_rate_eur, retrieved_at')
+    .eq('from_currency', targetCurrency)
+    .eq('to_currency', sourceCurrency)
+    .eq('is_active', true)
+    .order('retrieved_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const inverseRate = resolveStoredFxRate(inverse, targetCurrency);
+  if (Number.isFinite(inverseRate) && inverseRate > 0) {
+    return {
+      rate: 1 / inverseRate,
+      source: 'table-inverse',
+      fetchedAt: inverse?.retrieved_at || new Date().toISOString(),
+    };
+  }
+
+  const [{ data: usdToSource }, { data: usdToTarget }] = await Promise.all([
+    supabaseAdmin
+      .from('currency_exchange_rates')
+      .select('rate, final_rate_usd, retrieved_at')
+      .eq('from_currency', 'USD')
+      .eq('to_currency', sourceCurrency)
+      .eq('is_active', true)
+      .order('retrieved_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabaseAdmin
+      .from('currency_exchange_rates')
+      .select('rate, final_rate_usd, retrieved_at')
+      .eq('from_currency', 'USD')
+      .eq('to_currency', targetCurrency)
+      .eq('is_active', true)
+      .order('retrieved_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const sourceViaUsd = resolveStoredFxRate(usdToSource, 'USD');
+  const targetViaUsd = resolveStoredFxRate(usdToTarget, 'USD');
+
+  if (Number.isFinite(sourceViaUsd) && sourceViaUsd > 0 && Number.isFinite(targetViaUsd) && targetViaUsd > 0) {
+    return {
+      rate: targetViaUsd / sourceViaUsd,
+      source: 'table-usd-pivot',
+      fetchedAt: usdToTarget?.retrieved_at || usdToSource?.retrieved_at || new Date().toISOString(),
+    };
+  }
+
+  throw new Error(`Taux de change introuvable pour ${sourceCurrency}→${targetCurrency}`);
+}
+
 function isAfricanBankRow(row: { source_url?: string | null; source?: string | null; source_type?: string | null }): boolean {
   if (row?.source_url && isAfricanBankSourceUrl(row.source_url)) {
     return true;
@@ -533,10 +654,8 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       recipientWallet = createdWallet as any;
     }
 
-    // Garder la prévisualisation cohérente avec l'exécution réelle du transfert.
-    // Les frais configurables seront réactivés ici quand ils seront effectivement débités côté service.
     const feePercentage = 0;
-    const feeAmount = Math.ceil(amount * (feePercentage / 100));
+    const feeAmount = 0;
     const totalDebit = amount + feeAmount;
     const senderBalance = Number((senderWallet as any).balance || 0);
 
@@ -545,12 +664,22 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       return;
     }
 
-    const senderCurrency = String((senderWallet as any).currency || 'GNF');
-    const receiverCurrency = String((recipientWallet as any).currency || senderCurrency);
+    const senderCurrency = String((senderWallet as any).currency || 'GNF').toUpperCase();
+    const receiverCurrency = String((recipientWallet as any).currency || senderCurrency).toUpperCase();
     const isInternational = senderCurrency !== receiverCurrency;
-    const rateDisplayed = 1;
     const amountAfterFee = amount;
-    const amountReceived = amountAfterFee;
+    let rateDisplayed = 1;
+    let amountReceived = amountAfterFee;
+    let rateSource = 'identity';
+    let rateFetchedAt = new Date().toISOString();
+
+    if (isInternational) {
+      const fxResult = await getInternalFxRateFromTable(senderCurrency, receiverCurrency);
+      rateDisplayed = fxResult.rate;
+      rateSource = fxResult.source;
+      rateFetchedAt = fxResult.fetchedAt;
+      amountReceived = smartRoundCurrencyAmount(amountAfterFee * rateDisplayed, receiverCurrency);
+    }
 
     res.json({
       success: true,
@@ -584,10 +713,12 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
       rate_displayed: rateDisplayed,
       sender_balance: senderBalance,
       balance_after: senderBalance - totalDebit,
-      sender_country: null,
-      receiver_country: null,
+      sender_country: mapCurrencyToCountry(senderCurrency),
+      receiver_country: mapCurrencyToCountry(receiverCurrency),
       commission_conversion: 0,
       frais_international: 0,
+      rate_source: rateSource,
+      rate_fetched_at: rateFetchedAt,
       rate_lock_seconds: 60,
     });
   } catch (error: any) {
@@ -1013,9 +1144,51 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       recipient = { user_id: resolvedRecipientId } as any;
     }
 
+    const [{ data: senderWallet }, { data: recipientWallet }] = await Promise.all([
+      supabaseAdmin
+        .from('wallets')
+        .select('currency')
+        .eq('user_id', senderId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('wallets')
+        .select('currency')
+        .eq('user_id', resolvedRecipientId)
+        .maybeSingle(),
+    ]);
+
+    const senderCurrency = String(senderWallet?.currency || 'GNF').toUpperCase();
+    const receiverCurrency = String(recipientWallet?.currency || senderCurrency).toUpperCase();
+    const isInternational = senderCurrency !== receiverCurrency;
+    let rateUsed = 1;
+    let rateSource = 'identity';
+    let amountToCredit = amount;
+
+    if (isInternational) {
+      const fxResult = await getInternalFxRateFromTable(senderCurrency, receiverCurrency);
+      rateUsed = fxResult.rate;
+      rateSource = fxResult.source;
+      amountToCredit = smartRoundCurrencyAmount(amount * rateUsed, receiverCurrency);
+    }
+
     const idemKey = idempotency_key || `transfer:${senderId}:${resolvedRecipientId}:${amount}:${crypto.randomBytes(8).toString('hex')}`;
 
-    const result = await transferBetweenWallets(senderId, resolvedRecipientId, amount, description || 'Transfert', idemKey);
+    const result = await transferBetweenWallets(
+      senderId,
+      resolvedRecipientId,
+      amount,
+      description || 'Transfert',
+      idemKey,
+      {
+        amountToCredit,
+        senderCurrency,
+        receiverCurrency,
+        isInternational,
+        rateUsed,
+        rateSource,
+        feeAmount: 0,
+      },
+    );
 
     if (!result.success) {
       await emitCoreFeatureEvent({
@@ -1034,7 +1207,7 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       return;
     }
 
-    logger.info(`[WalletV2] Transfer: sender=${senderId}, receiver=${resolvedRecipientId}, amount=${amount}`);
+    logger.info(`[WalletV2] Transfer: sender=${senderId}, receiver=${resolvedRecipientId}, amount=${amount}, credited=${amountToCredit}, ${senderCurrency}->${receiverCurrency}`);
     await emitCoreFeatureEvent({
       featureKey: 'wallet.transfer',
       coreEngine: 'payment',
@@ -1042,9 +1215,31 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       criticality: 'critical',
       status: 'success',
       userId: senderId,
-      payload: { amount, recipient_id, resolved_recipient_id: resolvedRecipientId },
+      payload: {
+        amount,
+        amount_received: amountToCredit,
+        recipient_id,
+        resolved_recipient_id: resolvedRecipientId,
+        is_international: isInternational,
+        sender_currency: senderCurrency,
+        receiver_currency: receiverCurrency,
+        rate_used: rateUsed,
+      },
     });
-    res.json({ success: true, transaction_id: result.transactionId, operation: 'transfer' });
+    res.json({
+      success: true,
+      transaction_id: result.transactionId,
+      operation: 'transfer',
+      is_international: isInternational,
+      amount_sent: amount,
+      amount_received: amountToCredit,
+      currency_sent: senderCurrency,
+      currency_received: receiverCurrency,
+      fee_amount: 0,
+      fee_percentage: 0,
+      rate_used: rateUsed,
+      rate_source: rateSource,
+    });
   } catch (error: any) {
     logger.error(`Wallet transfer error: ${error.message}`);
     await emitCoreFeatureEvent({

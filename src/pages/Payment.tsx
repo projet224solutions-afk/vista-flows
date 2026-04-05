@@ -24,6 +24,7 @@ import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManage
 import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
 import { useFormPersistence } from "@/hooks/useAppPersistence";
 import { createOrder } from "@/services/orderBackendService";
+import { previewWalletTransfer, transferToWallet } from "@/services/walletBackendService";
 
 // Mapping pays → devise pour dériver la devise du vendeur
 const COUNTRY_CURRENCY_MAP: Record<string, string> = {
@@ -98,6 +99,9 @@ export default function Payment() {
     current_balance: number;
     balance_after: number;
     receiver_id?: string;
+    is_international?: boolean;
+    currency_sent?: string;
+    currency_received?: string;
   } | null>(null);
   
   // Persistance des préférences de paiement
@@ -699,32 +703,27 @@ export default function Payment() {
         return;
       }
 
-      const { data, error } = await supabase.rpc('preview_wallet_transfer', {
-        p_sender_id: user.id,
-        p_receiver_id: receiverId,
-        p_amount: amount
-      });
+      const previewResponse = await previewWalletTransfer(receiverId, amount);
+      const result = (previewResponse as any)?.data || previewResponse;
 
-      if (error) throw error;
+      console.log('[Payment] Preview response:', result);
 
-      console.log('[Payment] Preview response:', data);
-
-      // La fonction retourne un JSON, donc data est déjà l'objet complet
-      const result = data as any;
-
-      if (!result.success) {
-        throw new Error(result.error || 'Erreur lors de la prévisualisation');
+      if (!result?.success) {
+        throw new Error(result?.error || 'Erreur lors de la prévisualisation');
       }
 
       const previewData = {
-        amount: result.amount || 0,
-        fee_percent: result.fee_percent || 0,
-        fee_amount: result.fee_amount || 0,
-        total_debit: result.total_debit || 0,
-        amount_received: result.amount_received || 0,
-        current_balance: result.current_balance || 0,
-        balance_after: result.balance_after || 0,
-        receiver_id: receiverId // Stocker le user_id pour la confirmation
+        amount: result.amount ?? result.amount_sent ?? 0,
+        fee_percent: result.fee_percent ?? result.fee_percentage ?? 0,
+        fee_amount: result.fee_amount ?? 0,
+        total_debit: result.total_debit ?? 0,
+        amount_received: result.amount_received ?? 0,
+        current_balance: result.current_balance ?? result.sender_balance ?? 0,
+        balance_after: result.balance_after ?? 0,
+        receiver_id: receiverId,
+        is_international: Boolean(result.is_international),
+        currency_sent: result.currency_sent || result.currency || 'GNF',
+        currency_received: result.currency_received || result.currency || 'GNF',
       };
 
       console.log('[Payment] Preview data extracted:', previewData);
@@ -1075,7 +1074,7 @@ export default function Payment() {
         return;
       } else {
         // Transfert wallet normal (non-produit)
-        const shouldUseEscrow = paymentPreview.amount >= 10000;
+        const shouldUseEscrow = paymentPreview.amount >= 10000 && !paymentPreview.is_international;
 
         if (shouldUseEscrow) {
           console.log('[Payment] Using escrow for wallet transfer');
@@ -1084,7 +1083,7 @@ export default function Payment() {
             buyer_id: user.id,
             seller_id: paymentPreview.receiver_id,
             amount: paymentPreview.amount,
-            currency: 'GNF',
+            currency: paymentPreview.currency_sent || 'GNF',
             transaction_type: 'wallet_transfer',
             payment_provider: 'wallet',
             metadata: {
@@ -1102,24 +1101,27 @@ export default function Payment() {
             throw new Error(escrowResult.error || 'Échec de la création de l\'escrow');
           }
 
+          const senderCurrency = paymentPreview.currency_sent || 'GNF';
           toast({
             title: "Transfert sécurisé effectué",
-            description: `✅ Transfert réussi via Escrow\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${paymentPreview.amount.toLocaleString()} GNF`
+            description: `✅ Transfert réussi via Escrow\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} ${senderCurrency}\n💰 Montant transféré : ${paymentPreview.amount.toLocaleString()} ${senderCurrency}`
           });
         } else {
           // Transfert direct sans escrow
-          const { data, error } = await supabase.rpc('process_wallet_transaction', {
-            p_sender_id: user.id,
-            p_receiver_id: paymentPreview.receiver_id,
-            p_amount: paymentPreview.amount,
-            p_description: paymentDescription || 'Paiement via wallet'
-          });
+          const transferResult = await transferToWallet(
+            paymentPreview.receiver_id,
+            paymentPreview.amount,
+            paymentDescription || 'Paiement via wallet'
+          );
 
-          if (error) throw error;
+          if (!transferResult.success) {
+            throw new Error(transferResult.error || 'Échec du paiement wallet');
+          }
 
+          const senderCurrency = paymentPreview.currency_sent || 'GNF';
           toast({
             title: "Paiement effectué",
-            description: `✅ Paiement réussi\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} GNF\n💰 Montant payé : ${paymentPreview.amount.toLocaleString()} GNF`
+            description: `✅ Paiement réussi\n💸 Frais appliqués : ${paymentPreview.fee_amount.toLocaleString()} ${senderCurrency}\n💰 Montant payé : ${paymentPreview.amount.toLocaleString()} ${senderCurrency}`
           });
         }
       }
@@ -1580,28 +1582,28 @@ export default function Payment() {
                   <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">💰 Montant</span>
-                      <span className="text-lg font-bold">{paymentPreview?.amount?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold">{paymentPreview?.amount?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>
                     <div className="flex justify-between items-center border-t pt-2">
                       <span className="text-sm font-medium">💸 Frais de paiement ({paymentPreview?.fee_percent}%)</span>
-                      <span className="text-lg font-bold">{paymentPreview?.fee_amount?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold">{paymentPreview?.fee_amount?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>
                     <div className="flex justify-between items-center border-t pt-2 bg-red-50 dark:bg-red-950 -mx-4 px-4 py-2 rounded">
                       <span className="text-sm font-bold">💳 Total à débiter</span>
-                      <span className="text-xl font-bold text-destructive">{paymentPreview?.total_debit?.toLocaleString()} GNF</span>
+                      <span className="text-xl font-bold text-destructive">{paymentPreview?.total_debit?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>
                     <div className="flex justify-between items-center border-t pt-2 bg-green-50 dark:bg-green-950 -mx-4 px-4 py-2 rounded">
                       <span className="text-sm font-medium">✅ Le destinataire recevra</span>
-                      <span className="text-lg font-bold text-success">{paymentPreview?.amount_received?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold text-success">{paymentPreview?.amount_received?.toLocaleString()} {paymentPreview?.currency_received || paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>
                   </div>
                   
                   <div className="text-sm space-y-1 text-muted-foreground">
                     <p>
-                      <strong>Solde actuel:</strong> {paymentPreview?.current_balance?.toLocaleString()} GNF
+                      <strong>Solde actuel:</strong> {paymentPreview?.current_balance?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}
                     </p>
                     <p>
-                      <strong>Solde après paiement:</strong> {paymentPreview?.balance_after?.toLocaleString()} GNF
+                      <strong>Solde après paiement:</strong> {paymentPreview?.balance_after?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}
                     </p>
                   </div>
                   

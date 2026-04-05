@@ -20,7 +20,12 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { depositToWallet, withdrawFromWallet } from '@/services/walletBackendService';
+import {
+  depositToWallet,
+  previewWalletTransfer,
+  transferToWallet,
+  withdrawFromWallet,
+} from '@/services/walletBackendService';
 import { 
   CreditCard, 
   Wallet, 
@@ -349,19 +354,11 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     setProcessing(true);
     
     try {
-      // Appeler la fonction de prévisualisation
-      const { data, error } = await supabase.rpc('preview_wallet_transfer', {
-        p_sender_id: user.id,
-        p_receiver_id: recipientId,
-        p_amount: amount
-      });
+      const previewResponse = await previewWalletTransfer(recipientId, amount);
+      const previewData = (previewResponse as any)?.data || previewResponse;
 
-      if (error) throw error;
-
-      const previewData = data as any;
-
-      if (!previewData.success) {
-        toast.error(previewData.error);
+      if (!previewData?.success) {
+        toast.error(previewData?.error || 'Erreur lors de la prévisualisation');
         return;
       }
 
@@ -384,19 +381,19 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     setShowTransferPreview(false);
     
     try {
-      // Exécuter le transfert avec la fonction RPC
-      const { data, error } = await supabase.rpc('process_wallet_transaction', {
-        p_sender_id: user.id,
-        p_receiver_id: recipientId,
-        p_amount: transferPreview.amount,
-        p_currency: 'GNF',
-        p_description: 'Transfert entre wallets'
-      });
+      const result = await transferToWallet(
+        recipientId,
+        transferPreview.amount,
+        'Transfert entre wallets'
+      );
 
-      if (error) throw error;
+      if (!result.success) {
+        throw new Error(result.error || 'Erreur lors du transfert');
+      }
 
+      const senderCurrency = transferPreview?.currency_sent || userInfo.wallet?.currency || 'GNF';
       toast.success(
-        `✅ Transfert réussi\n💸 Frais appliqués : ${transferPreview.fee_amount.toLocaleString()} GNF\n💰 Montant transféré : ${transferPreview.amount.toLocaleString()} GNF`,
+        `✅ Transfert réussi\n💸 Frais appliqués : ${Number(transferPreview.fee_amount || 0).toLocaleString()} ${senderCurrency}\n💰 Montant transféré : ${Number(transferPreview.amount || 0).toLocaleString()} ${senderCurrency}`,
         { duration: 5000 }
       );
       
@@ -414,8 +411,8 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
     }
   };
 
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' GNF';
+  const formatPrice = (amount: number, currency?: string) => {
+    return `${new Intl.NumberFormat('fr-FR').format(amount)} ${currency || userInfo.wallet?.currency || 'GNF'}`;
   };
 
   if (loading) {
@@ -623,27 +620,27 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                   <div className="p-4 bg-slate-50 rounded-lg space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">💰 Montant à transférer</span>
-                      <span className="text-lg font-bold">{transferPreview?.amount?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold">{formatPrice(transferPreview?.amount || 0, transferPreview?.currency_sent)}</span>
                     </div>
                     <div className="flex justify-between items-center text-orange-600">
-                      <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
-                      <span className="text-lg font-bold">{transferPreview?.fee_amount?.toLocaleString()} GNF</span>
+                      <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent ?? transferPreview?.fee_percentage ?? 0}%)</span>
+                      <span className="text-lg font-bold">{formatPrice(transferPreview?.fee_amount || 0, transferPreview?.currency_sent)}</span>
                     </div>
                     <div className="border-t pt-3 flex justify-between items-center">
                       <span className="text-sm font-medium">📉 Total débité de votre compte</span>
-                      <span className="text-xl font-bold text-red-600">{transferPreview?.total_debit?.toLocaleString()} GNF</span>
+                      <span className="text-xl font-bold text-red-600">{formatPrice(transferPreview?.total_debit || 0, transferPreview?.currency_sent)}</span>
                     </div>
                     <div className="flex justify-between items-center text-green-600">
                       <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
-                      <span className="text-lg font-bold">{transferPreview?.amount_received?.toLocaleString()} GNF</span>
+                      <span className="text-lg font-bold">{formatPrice(transferPreview?.amount_received || 0, transferPreview?.currency_received || transferPreview?.currency_sent)}</span>
                     </div>
                   </div>
                   
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>Solde actuel:</strong> {transferPreview?.current_balance?.toLocaleString()} GNF
+                      <strong>Solde actuel:</strong> {formatPrice(transferPreview?.current_balance || 0, transferPreview?.currency_sent)}
                       <br />
-                      <strong>Solde après transfert:</strong> {transferPreview?.balance_after?.toLocaleString()} GNF
+                      <strong>Solde après transfert:</strong> {formatPrice(transferPreview?.balance_after || 0, transferPreview?.currency_sent)}
                     </p>
                   </div>
 

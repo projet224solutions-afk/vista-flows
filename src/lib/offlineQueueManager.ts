@@ -212,7 +212,7 @@ export const queueOperations = {
 
   // Wallet
   walletTransfer: (transferData: any, userId: string) => enqueue('wallet_transfer', transferData, {
-    endpoint: '/api/wallet/transfer',
+    endpoint: '/api/v2/wallet/transfer',
     method: 'POST',
     priority: 'critical',
     user_id: userId,
