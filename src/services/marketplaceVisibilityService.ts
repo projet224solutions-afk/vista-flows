@@ -1,6 +1,8 @@
 import { backendConfig } from '@/config/backend';
 import { backendFetch } from './backendApi';
 
+const MARKETPLACE_VISIBILITY_TIMEOUT_MS = 4500;
+
 export type MarketplaceVisibilityItemType = 'product' | 'digital_product' | 'professional_service';
 
 export interface MarketplaceVisibilityCandidate {
@@ -32,6 +34,8 @@ export interface MarketplaceVisibilityScoresResponse {
 
 export async function rankMarketplaceCandidates(candidates: MarketplaceVisibilityCandidate[], context?: Record<string, any>) {
   const baseUrl = backendConfig.baseUrl || '';
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), MARKETPLACE_VISIBILITY_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${baseUrl}/api/marketplace-visibility/rank-candidates`, {
@@ -40,6 +44,7 @@ export async function rankMarketplaceCandidates(candidates: MarketplaceVisibilit
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ items: candidates, context }),
+      signal: controller.signal,
     });
 
     if (!response.ok) return null;
@@ -47,8 +52,13 @@ export async function rankMarketplaceCandidates(candidates: MarketplaceVisibilit
     if (!json?.success) return null;
 
     return json as { success: true } & MarketplaceVisibilityScoresResponse;
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.warn('[MarketplaceVisibility] Timeout classement, fallback tri local');
+    }
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

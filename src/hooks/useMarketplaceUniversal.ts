@@ -73,6 +73,26 @@ interface UseMarketplaceUniversalOptions {
   autoLoad?: boolean;
 }
 
+const MARKETPLACE_SOURCE_TIMEOUT_MS = 8000;
+
+async function withTimeout<T>(promise: Promise<T>, fallbackValue: T, label: string, timeoutMs: number = MARKETPLACE_SOURCE_TIMEOUT_MS): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race<T>([
+      promise,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => {
+          console.warn(`[Marketplace] Timeout source: ${label}`);
+          resolve(fallbackValue);
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions = {}) => {
   const {
     limit = 24,
@@ -94,6 +114,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const sourceRowLimit = Math.max(limit * 5, 120);
 
   const requestIdRef = useRef(0);
   const lastLoadedAtRef = useRef(0);
@@ -145,7 +166,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       if (maxPrice && maxPrice > 0) query = query.lte('price', maxPrice);
       if (minRating && minRating > 0) query = query.gte('rating', minRating);
 
-      const { data, error } = await query;
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(sourceRowLimit);
       if (error) throw error;
 
       // Règle marketplace: exclure les vendeurs "physical" (boutique physique uniquement)
@@ -269,7 +292,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         query = query.or(`city.ilike.${city.trim()}%,city.ilike.${city.trim().split(' ')[0]}%`);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(sourceRowLimit);
       if (error) throw error;
 
       // Note: professional_services n'a pas de champ country,
@@ -376,7 +401,9 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
         query = query.eq("category", category);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(sourceRowLimit);
       if (error) throw error;
 
       // Filtrage par pays et ville (via le vendeur associé)
@@ -496,9 +523,6 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       loadingRef.current = true;
       setLoading(true);
 
-      // Récupérer le nom de la catégorie si c'est un UUID
-      const categoryName = category && category !== 'all' ? await getCategoryName(category) : null;
-      
       // Si une catégorie e-commerce est sélectionnée (UUID), ne charger que les produits
       const isEcommerceCategorySelected = category && category !== 'all' && 
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category);
@@ -506,23 +530,23 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       // Charger selon le type sélectionné
       let allItems: MarketplaceItem[] = [];
       if (itemType === 'product') {
-        allItems = await loadProducts();
+        allItems = await withTimeout(loadProducts(), [], 'products');
       } else if (itemType === 'digital_product') {
         // Si une catégorie e-commerce est sélectionnée, ne pas charger les produits numériques
-        allItems = isEcommerceCategorySelected ? [] : await loadDigitalProducts();
+        allItems = isEcommerceCategorySelected ? [] : await withTimeout(loadDigitalProducts(), [], 'digital_products');
       } else if (itemType === 'professional_service') {
         // Si une catégorie e-commerce est sélectionnée, ne pas charger les services pro
-        allItems = isEcommerceCategorySelected ? [] : await loadProfessionalServices();
+        allItems = isEcommerceCategorySelected ? [] : await withTimeout(loadProfessionalServices(), [], 'professional_services');
       } else {
         // 'all' = produits + numériques + services professionnels
         // Si une catégorie e-commerce est sélectionnée, ne charger que les produits
         if (isEcommerceCategorySelected) {
-          allItems = await loadProducts();
+          allItems = await withTimeout(loadProducts(), [], 'products');
         } else {
           const [products, digitalProducts, professionalServices] = await Promise.all([
-            loadProducts(),
-            loadDigitalProducts(),
-            loadProfessionalServices()
+            withTimeout(loadProducts(), [], 'products'),
+            withTimeout(loadDigitalProducts(), [], 'digital_products'),
+            withTimeout(loadProfessionalServices(), [], 'professional_services')
           ]);
           allItems = [...products, ...digitalProducts, ...professionalServices];
         }
@@ -621,14 +645,19 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           .filter(c => !!c.vendorUserId);
 
         if (candidates.length > 0) {
-          const ranked = await rankMarketplaceCandidates(candidates, {
-            channel: 'marketplace',
-            sortBy,
-            category: category || 'all',
-            itemType,
-            country: country || 'all',
-            city: city || 'all',
-          });
+          const ranked = await withTimeout(
+            rankMarketplaceCandidates(candidates, {
+              channel: 'marketplace',
+              sortBy,
+              category: category || 'all',
+              itemType,
+              country: country || 'all',
+              city: city || 'all',
+            }),
+            null,
+            'visibility_ranking',
+            4500
+          );
 
           if (ranked?.orderedIds?.length) {
             const scoreById = ranked.scores || {};
