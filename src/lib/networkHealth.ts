@@ -73,7 +73,7 @@ async function probeHealthz(timeoutMs: number, attempt: number): Promise<HealthP
       cache: 'no-store',
       signal: controller.signal,
       keepalive: true,
-      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache' },
+      headers: { Accept: 'application/json' },
     });
 
     clearTimeout(timer);

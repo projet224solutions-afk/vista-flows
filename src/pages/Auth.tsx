@@ -19,6 +19,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import LanguageSelector from "@/components/LanguageSelector";
 
 import { syncCognitoProfile } from "@/services/cognitoSyncService";
+import { getSafeBrowserGeo } from "@/lib/safeGeo";
 import { resolvePostAuthRoute, cleanupOAuthFlags, cleanupAffiliateFlags } from "@/utils/postAuthRoute";
 import { COUNTRY_PHONE_CODES, WORLD_PHONE_CODES, PHONE_VALIDATION_RULES, validatePhoneNumber, getPhoneExample, getPhoneLengthHint } from "@/utils/phoneData";
 
@@ -2091,12 +2092,11 @@ export default function Auth() {
                     onClick={async () => {
                       try {
                         setLoading(true);
-                        const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
-                        const data = await res.json();
-                        handleInputChange('country', data.country_name || '');
-                        handleInputChange('city', data.city || '');
-                        handleInputChange('address', [data.region, data.city, data.country_name].filter(Boolean).join(', '));
-                        toast({ title: "📍 Position détectée", description: `${data.city}, ${data.country_name}` });
+                        const data = getSafeBrowserGeo();
+                        handleInputChange('country', data.countryName || 'Guinée');
+                        handleInputChange('city', data.city || 'Conakry');
+                        handleInputChange('address', [data.region, data.city, data.countryName].filter(Boolean).join(', '));
+                        toast({ title: "📍 Position détectée", description: `${data.city || 'Conakry'}, ${data.countryName || 'Guinée'}` });
                       } catch {
                         toast({ title: "Erreur", description: "Impossible de détecter la position", variant: "destructive" });
                       } finally {

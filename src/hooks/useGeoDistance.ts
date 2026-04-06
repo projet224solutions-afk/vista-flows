@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { getSafeBrowserGeo } from '@/lib/safeGeo';
 
 const DEFAULT_POSITION = { latitude: 9.5370, longitude: -13.6785 }; // Conakry centre
 const LOCATION_CACHE_KEY = '224solutions:geo-distance:last-good-position';
@@ -83,12 +84,9 @@ export function formatDistance(distance: number | null | undefined): string {
 
 async function getIpFallbackPosition(): Promise<GeoPosition | null> {
   try {
-    const response = await fetch('https://ipapi.co/json/');
-    if (!response.ok) return null;
-
-    const data = await response.json();
-    const latitude = Number(data?.latitude);
-    const longitude = Number(data?.longitude);
+    const data = getSafeBrowserGeo();
+    const latitude = Number(data.latitude);
+    const longitude = Number(data.longitude);
 
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       return null;
@@ -97,9 +95,9 @@ async function getIpFallbackPosition(): Promise<GeoPosition | null> {
     return {
       latitude,
       longitude,
-      accuracy: 5000,
+      accuracy: data.source === 'fallback' ? null : 5000,
       timestamp: Date.now(),
-      source: 'ip',
+      source: data.source === 'fallback' ? 'default' : 'ip',
     };
   } catch {
     return null;

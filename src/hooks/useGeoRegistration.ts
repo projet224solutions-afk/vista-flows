@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getSafeBrowserGeo } from '@/lib/safeGeo';
 
 interface GeoDetectionResult {
   country: string;
@@ -107,29 +108,25 @@ export function useGeoRegistration() {
    */
   const detectViaGeoIP = async (): Promise<GeoDetectionResult | null> => {
     try {
-      const response = await fetch('https://ipapi.co/json/');
-      if (!response.ok) throw new Error('GeoIP API error');
-      
-      const data = await response.json();
-      if (data.country_code) {
-        const country = data.country_code;
-        const currency = COUNTRY_CURRENCY_MAP[country] || 'GNF';
-        const language = COUNTRY_LANGUAGE_MAP[country] || 'fr';
-        
-        return {
-          country,
-          currency,
-          language,
-          method: 'geoip',
-          accuracy: 'medium',
-          metadata: {
-            ip: data.ip,
-            city: data.city,
-            region: data.region
-          }
-        };
-      }
-      return null;
+      const data = getSafeBrowserGeo();
+      const country = data.countryCode;
+      const currency = COUNTRY_CURRENCY_MAP[country] || 'GNF';
+      const language = COUNTRY_LANGUAGE_MAP[country] || 'fr';
+
+      return {
+        country,
+        currency,
+        language,
+        method: data.source === 'fallback' ? 'default' : 'geoip',
+        accuracy: data.source === 'fallback' ? 'low' : 'medium',
+        metadata: {
+          ip: data.ip,
+          city: data.city,
+          region: data.region,
+          latitude: data.latitude,
+          longitude: data.longitude,
+        }
+      };
     } catch (error) {
       console.error('GeoIP detection error:', error);
       return null;

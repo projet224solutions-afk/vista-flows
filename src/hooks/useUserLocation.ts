@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { mapService } from '@/services/mapService';
+import { getSafeBrowserGeo } from '@/lib/safeGeo';
 
 interface UserLocation {
   latitude: number;
@@ -138,21 +139,13 @@ function formatAddress(fullAddress: string): string {
 
 // Fallback: détection par IP
 async function detectLocationByIP(): Promise<UserLocation> {
-  const response = await fetch('https://ipapi.co/json/', {
-    signal: AbortSignal.timeout(5000)
-  });
-  
-  if (!response.ok) {
-    throw new Error('IP geolocation failed');
-  }
-  
-  const data = await response.json();
-  
+  const data = getSafeBrowserGeo();
+
   return {
     latitude: data.latitude || 9.509167,
     longitude: data.longitude || -13.712222,
-    address: `${data.city || 'Conakry'}, ${data.country_name || 'Guinée'}`,
-    accuracy: 5000 // IP geolocation has low accuracy
+    address: `${data.city || 'Conakry'}, ${data.countryName || 'Guinée'}`,
+    accuracy: data.source === 'fallback' ? undefined : 5000,
   };
 }
 

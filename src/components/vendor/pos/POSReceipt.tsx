@@ -29,6 +29,11 @@ interface CartItem {
   total: number;
   saleType?: 'unit' | 'carton';
   displayQuantity?: string;
+  discount?: {
+    type: 'percent' | 'amount' | null;
+    value: number;
+    discountAmount?: number;
+  };
 }
 
 interface POSReceiptProps {
@@ -42,6 +47,9 @@ interface POSReceiptProps {
     taxRate: number;
     taxEnabled: boolean;
     discount: number;
+    discountMode?: 'percent' | 'amount';
+    discountPercent?: number;
+    totalBeforeDiscount?: number;
     total: number;
     paymentMethod: 'cash' | 'card' | 'mobile';
     receivedAmount: number;
@@ -55,6 +63,33 @@ interface POSReceiptProps {
 
 export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  const hasDiscount = orderData.discount > 0;
+  const totalBeforeDiscount = orderData.totalBeforeDiscount ?? (orderData.subtotal + orderData.tax);
+  const discountLabel = orderData.discountMode === 'percent' && (orderData.discountPercent || 0) > 0
+    ? `Remise (${orderData.discountPercent}%)`
+    : 'Remise';
+
+  const getItemPricing = (item: CartItem) => {
+    const discountType = item.discount?.type;
+    const discountValue = Number(item.discount?.value || 0);
+
+    let discountPerUnit = 0;
+    if (discountType === 'percent') {
+      discountPerUnit = (item.price * discountValue) / 100;
+    } else if (discountType === 'amount') {
+      discountPerUnit = discountValue;
+    }
+
+    const finalUnitPrice = Math.max(0, item.price - discountPerUnit);
+    const finalTotal = discountPerUnit > 0 ? finalUnitPrice * item.quantity : item.total;
+
+    return {
+      hasItemDiscount: discountPerUnit > 0,
+      finalUnitPrice,
+      finalTotal,
+    };
+  };
 
   const downloadReceipt = async () => {
     if (!receiptRef.current) return;
@@ -186,28 +221,44 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
             {/* Articles */}
             <div className="space-y-1 mb-3">
               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Articles</p>
-              {orderData.items.map((item, index) => (
-                <div key={`${item.id}-${item.saleType || 'unit'}`} className="flex justify-between items-start py-1">
-                  <div className="flex-1">
-                    <p className="font-semibold text-foreground text-sm">
-                      {item.saleType === 'carton' && '📦 '}
-                      {item.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.saleType === 'carton' && item.displayQuantity 
-                        ? item.displayQuantity
-                        : `${item.quantity} unité(s)`
-                      } × {item.price.toLocaleString()} {orderData.currency}
-                    </p>
-                    {item.saleType === 'carton' && (
-                      <p className="text-[10px] text-[#ff4000] font-medium">Vente par carton</p>
-                    )}
+              {orderData.items.map((item) => {
+                const pricing = getItemPricing(item);
+
+                return (
+                  <div key={`${item.id}-${item.saleType || 'unit'}`} className="flex justify-between items-start py-1">
+                    <div className="flex-1">
+                      <p className="font-semibold text-foreground text-sm">
+                        {item.saleType === 'carton' && '📦 '}
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.saleType === 'carton' && item.displayQuantity 
+                          ? item.displayQuantity
+                          : `${item.quantity} unité(s)`
+                        } × {pricing.hasItemDiscount ? pricing.finalUnitPrice.toLocaleString() : item.price.toLocaleString()} {orderData.currency}
+                      </p>
+                      {pricing.hasItemDiscount && (
+                        <p className="text-[10px] text-[#ff4000] font-medium">
+                          Remise appliquée sur l'article
+                        </p>
+                      )}
+                      {item.saleType === 'carton' && (
+                        <p className="text-[10px] text-[#ff4000] font-medium">Vente par carton</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      {pricing.hasItemDiscount && (
+                        <p className="text-[10px] line-through text-muted-foreground">
+                          {item.total.toLocaleString()} {orderData.currency}
+                        </p>
+                      )}
+                      <p className="font-bold text-foreground text-sm">
+                        {pricing.finalTotal.toLocaleString()} {orderData.currency}
+                      </p>
+                    </div>
                   </div>
-                  <p className="font-bold text-foreground text-sm">
-                    {item.total.toLocaleString()} {orderData.currency}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <Separator className="my-3" />
@@ -224,16 +275,25 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                 </span>
                 <span className="font-medium">{orderData.tax.toLocaleString()} {orderData.currency}</span>
               </div>
-              {orderData.discount > 0 && (
+              {hasDiscount && (
                 <div className="flex justify-between text-sm text-[#ff4000] font-medium">
-                  <span>Remise ({orderData.discount}%)</span>
-                  <span>-{((orderData.subtotal + orderData.tax) * orderData.discount / 100).toLocaleString()} {orderData.currency}</span>
+                  <span>{discountLabel}</span>
+                  <span>-{orderData.discount.toLocaleString()} {orderData.currency}</span>
                 </div>
               )}
-              
-              <div className="flex justify-between text-xl font-bold pt-2 border-t-2 border-foreground">
-                <span>TOTAL</span>
-                <span className="text-[#ff4000]">{orderData.total.toLocaleString()} {orderData.currency}</span>
+
+              <div className="flex justify-between items-start pt-2 border-t-2 border-foreground">
+                <div>
+                  <span className="text-xl font-bold">TOTAL</span>
+                  {hasDiscount && totalBeforeDiscount > orderData.total && (
+                    <p className="text-[10px] text-muted-foreground line-through">
+                      {totalBeforeDiscount.toLocaleString()} {orderData.currency}
+                    </p>
+                  )}
+                </div>
+                <span className="text-xl font-bold text-[#ff4000]">
+                  {orderData.total.toLocaleString()} {orderData.currency}
+                </span>
               </div>
             </div>
 

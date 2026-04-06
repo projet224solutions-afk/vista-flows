@@ -427,14 +427,39 @@ export function POSCartSection({
             </details>
 
             {/* Total and Tax */}
-            <div className="flex items-center justify-between py-1.5 border-y border-border/30">
-              <span className="text-[10px] text-muted-foreground">
-                TVA: {formatCurrency(tax)}
-              </span>
-              <div className="text-right">
-                <span className="text-lg sm:text-xl font-black text-primary">
-                  {formatCurrency(total)}
+            <div className="space-y-1.5 py-1.5 border-y border-border/30">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground">
+                  TVA: {formatCurrency(tax)}
                 </span>
+                {(globalDiscountValue > 0 || totalItemDiscounts > 0) && (
+                  <span className="text-[10px] text-muted-foreground line-through">
+                    {formatCurrency(totalBeforeDiscount)}
+                  </span>
+                )}
+              </div>
+
+              {totalItemDiscounts > 0 && (
+                <div className="flex items-center justify-between text-[11px] font-semibold text-[#ff4000]">
+                  <span>Remises articles</span>
+                  <span>-{formatCurrency(totalItemDiscounts)}</span>
+                </div>
+              )}
+
+              {globalDiscountValue > 0 && (
+                <div className="flex items-center justify-between text-[11px] font-semibold text-[#ff4000]">
+                  <span>Remise globale</span>
+                  <span>-{formatCurrency(globalDiscountValue)}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-foreground">Total à payer</span>
+                <div className="text-right">
+                  <span className="text-lg sm:text-xl font-black text-primary">
+                    {formatCurrency(total)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

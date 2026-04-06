@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { getSafeBrowserGeo } from '@/lib/safeGeo';
 
 interface GeoData {
   country: string;
@@ -52,33 +53,21 @@ async function detectGeoLocation(): Promise<GeoData> {
   }
 
   try {
-    const response = await fetch('https://ipapi.co/json/', {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(5000)
-    });
+    const data = getSafeBrowserGeo();
 
-    if (!response.ok) {
-      throw new Error('IP geolocation failed');
-    }
-
-    const data = await response.json();
-    
     geoCache = {
-      country: data.country_code || 'unknown',
-      city: data.city || 'unknown',
+      country: data.countryCode || 'GN',
+      city: data.city || 'Conakry',
       ip: data.ip || '0.0.0.0'
     };
     geoCacheTimestamp = Date.now();
-    
-    console.log('🌍 Géolocalisation détectée:', geoCache);
+
     return geoCache;
-    
   } catch (error) {
     console.warn('⚠️ Géolocalisation échouée, utilisation de valeurs par défaut:', error);
     return {
-      country: 'unknown',
-      city: 'unknown',
+      country: 'GN',
+      city: 'Conakry',
       ip: '0.0.0.0'
     };
   }

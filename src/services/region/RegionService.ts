@@ -12,6 +12,7 @@ import {
   getFailoverRegions,
   GLOBAL_CONFIG,
 } from '@/config/regions';
+import { getSafeBrowserGeo } from '@/lib/safeGeo';
 
 interface GeoLocation {
   latitude: number;
@@ -85,24 +86,21 @@ class RegionService {
     if (this.userLocation) return this.userLocation;
 
     try {
-      // Essayer l'API de géolocalisation IP
-      const response = await fetch('https://ipapi.co/json/', { 
-        signal: AbortSignal.timeout(5000) 
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        this.userLocation = {
-          latitude: data.latitude,
-          longitude: data.longitude,
-          country: data.country_code,
-          city: data.city,
-          continent: data.continent_code,
-          timezone: data.timezone,
-        };
-        console.log(`📍 User location detected: ${data.city}, ${data.country_code}`);
-        return this.userLocation;
-      }
+      const data = getSafeBrowserGeo();
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const continent = this.getContinentFromTimezone(timezone);
+
+      this.userLocation = {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        country: data.countryCode,
+        city: data.city,
+        continent,
+        timezone,
+      };
+
+      console.log(`📍 User location detected: ${data.city}, ${data.countryCode}`);
+      return this.userLocation;
     } catch (error) {
       console.warn('⚠️ Could not detect user location:', error);
     }

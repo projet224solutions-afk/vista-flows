@@ -705,6 +705,10 @@ export function POSSystem() {
     : discountAmount;
   const total = Math.max(0, totalBeforeDiscount - discountValue);
   const change = receivedAmount - total;
+  const hasDiscount = discountValue > 0;
+  const discountLabel = discountMode === 'percent' && discountPercent > 0
+    ? `Remise (${discountPercent}%)`
+    : 'Remise';
 
   // Fonction d'ajout au panier avec calcul automatique (unités)
   const addToCart = (productOrCartItem: Product | CartItem, quantity: number = 1) => {
@@ -1628,7 +1632,7 @@ export function POSSystem() {
           })),
           payment_method: 'cash',
           total_amount: total,
-          discount_total: 0,
+          discount_total: discountValue,
           customer_name: selectedCustomer?.name || 'Client comptoir',
           customer_phone: selectedCustomer?.phone || null,
           notes: 'Paiement POS - Espèces',
@@ -2584,13 +2588,31 @@ export function POSSystem() {
                   </div>
                 </details>
                 
-                {/* Total et TVA sur une ligne */}
-                <div className="flex items-center justify-between py-1.5 border-y border-border/30">
-                  <span className="text-[10px] text-muted-foreground">
-                    TVA: {formatPriceWithCurrency(tax)}
-                  </span>
-                  <div className="text-right">
-                    <span className="text-lg sm:text-xl font-black text-primary">{formatPriceWithCurrency(total)}</span>
+                {/* Total et TVA avec remise visible */}
+                <div className="space-y-1.5 py-1.5 border-y border-border/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground">
+                      TVA: {formatPriceWithCurrency(tax)}
+                    </span>
+                    {hasDiscount && (
+                      <span className="text-[10px] text-muted-foreground line-through">
+                        {formatPriceWithCurrency(totalBeforeDiscount)}
+                      </span>
+                    )}
+                  </div>
+
+                  {hasDiscount && (
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-[#ff4000]">
+                      <span>{discountLabel}</span>
+                      <span>-{formatPriceWithCurrency(discountValue)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-semibold text-foreground">Total à payer</span>
+                    <div className="text-right">
+                      <span className="text-lg sm:text-xl font-black text-primary">{formatPriceWithCurrency(total)}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -2738,6 +2760,12 @@ export function POSSystem() {
                   <span>TVA ({taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'désactivée'})</span>
                   <span>{tax.toLocaleString()} GNF</span>
                 </div>
+                {hasDiscount && (
+                  <div className="flex justify-between text-[#ff4000] font-medium">
+                    <span>{discountLabel}</span>
+                    <span>-{discountValue.toLocaleString()} GNF</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
                   <span>TOTAL</span>
                   <span className="text-primary">{total.toLocaleString()} GNF</span>
@@ -2796,9 +2824,25 @@ export function POSSystem() {
                 ))}
               </div>
               <Separator className="my-3" />
-              <div className="flex justify-between font-bold text-lg">
-                <span>TOTAL</span>
-                <span className="text-primary">{total.toLocaleString()} GNF</span>
+              <div className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span>Sous-total</span>
+                  <span>{subtotal.toLocaleString()} GNF</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>TVA ({taxEnabled ? `${(taxRate * 100).toFixed(1)}%` : 'désactivée'})</span>
+                  <span>{tax.toLocaleString()} GNF</span>
+                </div>
+                {hasDiscount && (
+                  <div className="flex justify-between text-sm text-[#ff4000] font-medium">
+                    <span>{discountLabel}</span>
+                    <span>-{discountValue.toLocaleString()} GNF</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
+                  <span>TOTAL</span>
+                  <span className="text-primary">{total.toLocaleString()} GNF</span>
+                </div>
               </div>
             </div>
 
@@ -2894,6 +2938,9 @@ export function POSSystem() {
           taxRate,
           taxEnabled,
           discount: discountValue,
+          discountMode,
+          discountPercent,
+          totalBeforeDiscount,
           total,
           paymentMethod,
           receivedAmount,
