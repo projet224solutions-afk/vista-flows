@@ -128,15 +128,7 @@ export default function Marketplace() {
   const { user } = useAuth();
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
-  
-  // AI Recommendations
-  const { data: aiPersonalized, isLoading: loadingAIPersonalized } = useAIPersonalized(6);
-  const { data: aiTrending, isLoading: loadingAITrending } = useAITrending(6);
-  const { data: discoveryProducts, isLoading: loadingDiscovery } = useDiscoveryProducts(8);
-  // Smart recommendations (new scoring system)
-  const { data: smartRecs, isLoading: loadingSmartRecs } = useSmartRecommendations(8);
-  const { data: trendingProducts, isLoading: loadingTrendingProducts } = useTrendingProducts(8);
-  const { data: recentlyViewed, isLoading: loadingRecentlyViewed } = useRecentlyViewed(8);
+
   // Behavior tracking
   useBehaviorTracking({ sessionType: 'browse' });
   useRecommendationRealtimeInvalidation();
@@ -193,6 +185,21 @@ export default function Marketplace() {
     sortBy,
     autoLoad: true
   });
+
+  const shouldEnableRecommendations =
+    selectedCategory === 'all' &&
+    selectedItemType !== 'professional_service' &&
+    selectedItemType !== 'digital_product' &&
+    !marketplaceLoading;
+
+  // Recommandations secondaires chargées après le contenu principal
+  const { data: aiPersonalized, isLoading: loadingAIPersonalized } = useAIPersonalized(6, shouldEnableRecommendations);
+  const { data: aiTrending, isLoading: loadingAITrending } = useAITrending(6, shouldEnableRecommendations);
+  const { data: discoveryProducts, isLoading: loadingDiscovery } = useDiscoveryProducts(8, shouldEnableRecommendations);
+  const { data: smartRecs, isLoading: loadingSmartRecs } = useSmartRecommendations(8, shouldEnableRecommendations);
+  const { data: trendingProducts, isLoading: loadingTrendingProducts } = useTrendingProducts(8, shouldEnableRecommendations);
+  const { data: recentlyViewed, isLoading: loadingRecentlyViewed } = useRecentlyViewed(8, shouldEnableRecommendations);
+
   // Charger le nom du vendeur si filtré par vendeur
   useEffect(() => {
     if (vendorId) {

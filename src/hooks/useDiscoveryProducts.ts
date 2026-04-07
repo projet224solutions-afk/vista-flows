@@ -36,7 +36,7 @@ async function withDiscoveryTimeout<T>(promise: Promise<T>, label: string): Prom
   }
 }
 
-export function useDiscoveryProducts(limit = 12) {
+export function useDiscoveryProducts(limit = 12, enabled = true) {
   const { user, loading: authLoading } = useAuth();
 
   return useQuery({
@@ -122,7 +122,7 @@ export function useDiscoveryProducts(limit = 12) {
       return [];
     }
   },
-    enabled: !authLoading,
+    enabled: enabled && !authLoading,
     staleTime: CACHE_TTL.discovery.staleTime,
     gcTime: CACHE_TTL.discovery.gcTime,
     retry: 0,

@@ -66,7 +66,7 @@ async function fetchAIRecommendations(
 }
 
 /** Recommandations personnalisées par IA (fonctionne aussi sans auth avec fallback) */
-export function useAIPersonalized(limit = 20) {
+export function useAIPersonalized(limit = 20, enabled = true) {
   const { user, loading: authLoading } = useAuth();
 
   return useQuery({
@@ -97,10 +97,10 @@ export function useAIPersonalized(limit = 20) {
           reason: 'Nouveauté',
         }));
     },
-    enabled: !authLoading,
+    enabled: enabled && !authLoading,
     staleTime: CACHE_TTL.personalized.staleTime,
     gcTime: CACHE_TTL.personalized.gcTime,
-    retry: 1,
+    retry: 0,
     refetchOnWindowFocus: false,
   });
 }
@@ -132,7 +132,7 @@ export function useAIContextual(context: Record<string, unknown> = {}, limit = 1
 }
 
 /** Produits tendances adaptés à l'utilisateur (fonctionne aussi sans auth) */
-export function useAITrending(limit = 16) {
+export function useAITrending(limit = 16, enabled = true) {
   const { user, loading: authLoading } = useAuth();
 
   return useQuery({
@@ -185,10 +185,10 @@ export function useAITrending(limit = 16) {
           rating: p.rating,
         }));
     },
-    enabled: !authLoading,
+    enabled: enabled && !authLoading,
     staleTime: CACHE_TTL.trending.staleTime,
     gcTime: CACHE_TTL.trending.gcTime,
-    retry: 1,
+    retry: 0,
     refetchOnWindowFocus: false,
   });
 }

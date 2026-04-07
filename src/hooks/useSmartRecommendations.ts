@@ -96,7 +96,7 @@ export async function trackActivity(
 // ==========================================
 
 /** Recommandations personnalisées pour la homepage */
-export function useSmartRecommendations(limit = 20) {
+export function useSmartRecommendations(limit = 20, enabled = true) {
   return useQuery<SmartProduct[]>({
     queryKey: ['smart-recommendations', 'home', limit],
     queryFn: async () => {
@@ -110,13 +110,16 @@ export function useSmartRecommendations(limit = 20) {
         'home'
       );
     },
+    enabled,
     staleTime: CACHE_TTL.personalized.staleTime,
     gcTime: CACHE_TTL.personalized.gcTime,
+    retry: 0,
+    refetchOnWindowFocus: false,
   });
 }
 
 /** Produits tendance / populaires */
-export function useTrendingProducts(limit = 16) {
+export function useTrendingProducts(limit = 16, enabled = true) {
   return useQuery<SmartProduct[]>({
     queryKey: ['smart-recommendations', 'trending', limit],
     queryFn: async () => {
@@ -125,8 +128,11 @@ export function useTrendingProducts(limit = 16) {
         'trending'
       );
     },
+    enabled,
     staleTime: CACHE_TTL.trending.staleTime,
     gcTime: CACHE_TTL.trending.gcTime,
+    retry: 0,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -149,7 +155,7 @@ export function useSmartSimilarProducts(productId: string | null | undefined, li
 }
 
 /** Récemment consultés */
-export function useRecentlyViewed(limit = 12) {
+export function useRecentlyViewed(limit = 12, enabled = true) {
   return useQuery<SmartProduct[]>({
     queryKey: ['smart-recommendations', 'recently-viewed', limit],
     queryFn: async () => {
@@ -163,7 +169,10 @@ export function useRecentlyViewed(limit = 12) {
         'recently_viewed'
       );
     },
+    enabled,
     staleTime: 2 * 60 * 1000, // 2 min
     gcTime: 5 * 60 * 1000,
+    retry: 0,
+    refetchOnWindowFocus: false,
   });
 }
