@@ -3,6 +3,7 @@
  * Navigation horizontale fluide avec swipe, flèches et snap
  */
 
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, TrendingUp, Clock, Gift, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,8 +64,17 @@ export function AIRecommendationSection({
   const { isMobile, isTablet } = useResponsive();
   const { addToCart } = useCart();
   const Icon = icons[icon];
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
-  if (!isLoading && (!products || products.length === 0)) return null;
+  useEffect(() => {
+    setLoadingTimedOut(false);
+    if (!isLoading) return;
+
+    const timer = window.setTimeout(() => setLoadingTimedOut(true), 3500);
+    return () => window.clearTimeout(timer);
+  }, [isLoading, title]);
+
+  if ((!isLoading || loadingTimedOut) && (!products || products.length === 0)) return null;
 
   const displayProducts = products?.slice(0, maxItems) || [];
 
@@ -112,7 +122,7 @@ export function AIRecommendationSection({
       </div>
 
       {/* Products - Horizontal Scroll */}
-      {isLoading ? (
+      {isLoading && !loadingTimedOut && displayProducts.length === 0 ? (
         <HorizontalScrollRow showArrows={false} gap={12}>
           {Array.from({ length: 6 }).map((_, i) => (
             <ScrollItem key={i} width={cardWidth}>

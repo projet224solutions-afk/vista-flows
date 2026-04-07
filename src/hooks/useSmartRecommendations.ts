@@ -21,6 +21,29 @@ interface SmartProduct {
   reason: string;
 }
 
+const SMART_RECO_TIMEOUT_MS = 4500;
+
+async function runRpcWithTimeout<T>(promise: Promise<{ data: T | null; error: any }>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    const result = await Promise.race<{ data: T | null; error: any }>([
+      promise,
+      new Promise<{ data: T | null; error: any }>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label}_timeout`)), SMART_RECO_TIMEOUT_MS);
+      }),
+    ]);
+
+    if (result.error) throw result.error;
+    return (result.data || []) as T;
+  } catch (error) {
+    console.warn(`[SmartRecommendations] Fallback ${label}`, error);
+    return [] as T;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 // ==========================================
 // TRACKING UNIFIÉ (non-bloquant)
 // ==========================================
@@ -78,13 +101,14 @@ export function useSmartRecommendations(limit = 20) {
     queryKey: ['smart-recommendations', 'home', limit],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data, error } = await supabase.rpc('get_smart_recommendations', {
-        p_user_id: user?.id || null,
-        p_limit: limit,
-        p_type: 'home'
-      });
-      if (error) throw error;
-      return (data || []) as SmartProduct[];
+      return await runRpcWithTimeout<SmartProduct[]>(
+        supabase.rpc('get_smart_recommendations', {
+          p_user_id: user?.id || null,
+          p_limit: limit,
+          p_type: 'home'
+        }),
+        'home'
+      );
     },
     staleTime: CACHE_TTL.personalized.staleTime,
     gcTime: CACHE_TTL.personalized.gcTime,
@@ -96,9 +120,10 @@ export function useTrendingProducts(limit = 16) {
   return useQuery<SmartProduct[]>({
     queryKey: ['smart-recommendations', 'trending', limit],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_trending_products', { p_limit: limit });
-      if (error) throw error;
-      return (data || []) as SmartProduct[];
+      return await runRpcWithTimeout<SmartProduct[]>(
+        supabase.rpc('get_trending_products', { p_limit: limit }),
+        'trending'
+      );
     },
     staleTime: CACHE_TTL.trending.staleTime,
     gcTime: CACHE_TTL.trending.gcTime,
@@ -130,12 +155,13 @@ export function useRecentlyViewed(limit = 12) {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
-      const { data, error } = await supabase.rpc('get_recently_viewed', {
-        p_user_id: user.id,
-        p_limit: limit
-      });
-      if (error) throw error;
-      return (data || []) as SmartProduct[];
+      return await runRpcWithTimeout<SmartProduct[]>(
+        supabase.rpc('get_recently_viewed', {
+          p_user_id: user.id,
+          p_limit: limit
+        }),
+        'recently_viewed'
+      );
     },
     staleTime: 2 * 60 * 1000, // 2 min
     gcTime: 5 * 60 * 1000,

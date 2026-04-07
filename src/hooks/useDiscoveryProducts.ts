@@ -19,15 +19,33 @@ interface DiscoveryProduct {
   category_name?: string;
 }
 
+const DISCOVERY_TIMEOUT_MS = 4500;
+
+async function withDiscoveryTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race<T>([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label}_timeout`)), DISCOVERY_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export function useDiscoveryProducts(limit = 12) {
   const { user, loading: authLoading } = useAuth();
 
   return useQuery({
     queryKey: ['discovery-products', user?.id ?? 'anon'],
     queryFn: async (): Promise<DiscoveryProduct[]> => {
-      // 1. Récupérer les produits vus (si connecté)
-      let viewedIds: string[] = [];
-      let viewedCategoryIds: string[] = [];
+      try {
+        // 1. Récupérer les produits vus (si connecté)
+        let viewedIds: string[] = [];
+        let viewedCategoryIds: string[] = [];
 
       if (user) {
         const { data: viewedProducts } = await supabase
@@ -64,7 +82,7 @@ export function useDiscoveryProducts(limit = 12) {
         }
       }
 
-      const { data: discoveryData, error } = await query;
+      const { data: discoveryData, error } = await withDiscoveryTimeout(query, 'discovery_products');
       if (error) throw error;
 
       const unseen = filterByAllowedVendors(discoveryData || [])
@@ -73,12 +91,15 @@ export function useDiscoveryProducts(limit = 12) {
 
       // Si pas assez, compléter avec des produits populaires
       if (unseen.length < DISCOVERY_MIN_PRODUCTS) {
-        const { data: fallback } = await supabase
-          .from('products')
-          .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type)')
-          .eq('is_active', true)
-          .order('reviews_count', { ascending: false })
-          .limit(limit * 2);
+        const { data: fallback } = await withDiscoveryTimeout(
+          supabase
+            .from('products')
+            .select('id, name, price, images, rating, category_id, vendor_id, categories(name), vendors(business_type)')
+            .eq('is_active', true)
+            .order('reviews_count', { ascending: false })
+            .limit(limit * 2),
+          'discovery_fallback'
+        );
 
         const fallbackFiltered = filterByAllowedVendors(fallback || [])
           .filter(p => !viewedIds.includes(p.id) && !unseen.find(u => u.id === p.id))
@@ -96,11 +117,15 @@ export function useDiscoveryProducts(limit = 12) {
         reason: `Découvrir: ${(p.categories as any)?.name || 'Nouveauté'}`,
         category_name: (p.categories as any)?.name,
       }));
-    },
+    } catch (error) {
+      console.warn('[DiscoveryProducts] fallback empty', error);
+      return [];
+    }
+  },
     enabled: !authLoading,
     staleTime: CACHE_TTL.discovery.staleTime,
     gcTime: CACHE_TTL.discovery.gcTime,
-    retry: 1,
+    retry: 0,
     refetchOnWindowFocus: false,
   });
 }

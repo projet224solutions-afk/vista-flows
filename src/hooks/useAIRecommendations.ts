@@ -28,14 +28,34 @@ interface AIRecommendationResult {
 
 type RecoType = 'personalized' | 'contextual' | 'trending' | 'post_purchase';
 
+const AI_RECOMMENDATION_TIMEOUT_MS = 4500;
+
+async function withAITimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race<T>([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label}_timeout`)), AI_RECOMMENDATION_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function fetchAIRecommendations(
   type: RecoType,
   productId?: string,
   context?: Record<string, unknown>
 ): Promise<AIRecommendationResult> {
-  const { data, error } = await supabase.functions.invoke('ai-recommend', {
-    body: { type, product_id: productId, context: context || {} },
-  });
+  const { data, error } = await withAITimeout(
+    supabase.functions.invoke('ai-recommend', {
+      body: { type, product_id: productId, context: context || {} },
+    }),
+    'ai_recommend'
+  );
 
   if (error) {
     console.error('[AIRecommendations] Error:', error);
