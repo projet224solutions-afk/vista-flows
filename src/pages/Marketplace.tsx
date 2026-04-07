@@ -129,10 +129,6 @@ export default function Marketplace() {
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
 
-  // Behavior tracking différé pour ne pas ralentir l'ouverture initiale
-  useBehaviorTracking({ sessionType: 'browse' }, deferRecommendations);
-  useRecommendationRealtimeInvalidation(deferRecommendations);
-  
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -151,6 +147,10 @@ export default function Marketplace() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [vendorName, setVendorName] = useState<string | null>(null);
   const [deferRecommendations, setDeferRecommendations] = useState(false);
+
+  // Behavior tracking différé pour ne pas ralentir l'ouverture initiale
+  useBehaviorTracking({ sessionType: 'browse' }, deferRecommendations);
+  useRecommendationRealtimeInvalidation(deferRecommendations);
   
   const vendorId = searchParams.get('vendor') || undefined;
   const includePhysicalVendors = searchParams.get('includePhysical') === '1';
