@@ -8,10 +8,12 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export function useRecommendationRealtimeInvalidation() {
+export function useRecommendationRealtimeInvalidation(enabled = true) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (!enabled) return;
+
     const channel = supabase
       .channel('product-changes-for-reco')
       .on('postgres_changes', {
@@ -29,5 +31,5 @@ export function useRecommendationRealtimeInvalidation() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [enabled, queryClient]);
 }

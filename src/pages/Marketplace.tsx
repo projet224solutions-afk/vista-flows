@@ -129,9 +129,9 @@ export default function Marketplace() {
   const { addToCart, getCartCount } = useCart();
   const { t } = useTranslation();
 
-  // Behavior tracking
-  useBehaviorTracking({ sessionType: 'browse' });
-  useRecommendationRealtimeInvalidation();
+  // Behavior tracking différé pour ne pas ralentir l'ouverture initiale
+  useBehaviorTracking({ sessionType: 'browse' }, deferRecommendations);
+  useRecommendationRealtimeInvalidation(deferRecommendations);
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
@@ -150,6 +150,7 @@ export default function Marketplace() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [vendorName, setVendorName] = useState<string | null>(null);
+  const [deferRecommendations, setDeferRecommendations] = useState(false);
   
   const vendorId = searchParams.get('vendor') || undefined;
   const includePhysicalVendors = searchParams.get('includePhysical') === '1';
@@ -192,13 +193,41 @@ export default function Marketplace() {
     selectedItemType !== 'digital_product' &&
     !marketplaceLoading;
 
-  // Recommandations secondaires chargées après le contenu principal
-  const { data: aiPersonalized, isLoading: loadingAIPersonalized } = useAIPersonalized(6, shouldEnableRecommendations);
-  const { data: aiTrending, isLoading: loadingAITrending } = useAITrending(6, shouldEnableRecommendations);
-  const { data: discoveryProducts, isLoading: loadingDiscovery } = useDiscoveryProducts(8, shouldEnableRecommendations);
-  const { data: smartRecs, isLoading: loadingSmartRecs } = useSmartRecommendations(8, shouldEnableRecommendations);
-  const { data: trendingProducts, isLoading: loadingTrendingProducts } = useTrendingProducts(8, shouldEnableRecommendations);
-  const { data: recentlyViewed, isLoading: loadingRecentlyViewed } = useRecentlyViewed(8, shouldEnableRecommendations);
+  useEffect(() => {
+    setDeferRecommendations(false);
+
+    if (!shouldEnableRecommendations) return;
+
+    const enableRecommendations = () => setDeferRecommendations(true);
+    let timeoutId: number | null = null;
+    let idleId: number | null = null;
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleId = (window as Window & { requestIdleCallback: (callback: () => void, options?: { timeout: number }) => number }).requestIdleCallback(
+        enableRecommendations,
+        { timeout: isMobile ? 2500 : 1200 }
+      );
+    } else {
+      timeoutId = window.setTimeout(enableRecommendations, isMobile ? 2200 : 900);
+    }
+
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      if (idleId !== null && 'cancelIdleCallback' in window) {
+        (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+      }
+    };
+  }, [isMobile, shouldEnableRecommendations]);
+
+  const shouldLoadRecommendations = shouldEnableRecommendations && deferRecommendations;
+
+  // Recommandations secondaires chargées après le contenu principal et le premier rendu mobile
+  const { data: aiPersonalized, isLoading: loadingAIPersonalized } = useAIPersonalized(6, shouldLoadRecommendations);
+  const { data: aiTrending, isLoading: loadingAITrending } = useAITrending(6, shouldLoadRecommendations);
+  const { data: discoveryProducts, isLoading: loadingDiscovery } = useDiscoveryProducts(8, shouldLoadRecommendations);
+  const { data: smartRecs, isLoading: loadingSmartRecs } = useSmartRecommendations(8, shouldLoadRecommendations);
+  const { data: trendingProducts, isLoading: loadingTrendingProducts } = useTrendingProducts(8, shouldLoadRecommendations);
+  const { data: recentlyViewed, isLoading: loadingRecentlyViewed } = useRecentlyViewed(8, shouldLoadRecommendations);
 
   // Charger le nom du vendeur si filtré par vendeur
   useEffect(() => {

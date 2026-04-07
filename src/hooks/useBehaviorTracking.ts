@@ -13,7 +13,7 @@ interface BehaviorSession {
   searchQuery?: string;
 }
 
-export function useBehaviorTracking(session: BehaviorSession) {
+export function useBehaviorTracking(session: BehaviorSession, enabled = true) {
   const startTime = useRef(Date.now());
   const scrollDepth = useRef(0);
   const clickCount = useRef(0);
@@ -21,6 +21,8 @@ export function useBehaviorTracking(session: BehaviorSession) {
 
   // Track scroll depth
   useEffect(() => {
+    if (!enabled) return;
+
     const handleScroll = () => {
       const winHeight = window.innerHeight;
       const docHeight = document.documentElement.scrollHeight;
@@ -31,14 +33,16 @@ export function useBehaviorTracking(session: BehaviorSession) {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [enabled]);
 
   // Track clicks
   useEffect(() => {
+    if (!enabled) return;
+
     const handleClick = () => { clickCount.current++; };
     document.addEventListener('click', handleClick, { passive: true });
     return () => document.removeEventListener('click', handleClick);
-  }, []);
+  }, [enabled]);
 
   // Save session on unmount or page change
   const saveSession = useCallback(async () => {
@@ -70,13 +74,15 @@ export function useBehaviorTracking(session: BehaviorSession) {
   }, [session.productId, session.sessionType, session.categoryId, session.searchQuery]);
 
   useEffect(() => {
+    if (!enabled) return;
+
     startTime.current = Date.now();
     scrollDepth.current = 0;
     clickCount.current = 0;
     savedRef.current = false;
 
     return () => { saveSession(); };
-  }, [session.productId, session.sessionType, saveSession]);
+  }, [enabled, session.productId, session.sessionType, saveSession]);
 
   return { saveSession };
 }
