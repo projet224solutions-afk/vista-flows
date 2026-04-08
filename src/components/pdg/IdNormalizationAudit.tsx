@@ -107,6 +107,7 @@ const ROLE_COLORS: Record<string, string> = {
 const PREFIX_TO_ROLE: Record<string, string> = {
   'VND': 'Vendeur',
   'CLT': 'Client',
+  'CLI': 'Client (ancien format)',
   'AGT': 'Agent',
   'SAG': 'Sous-Agent',
   'VAG': 'Vendor Agent',
@@ -1071,11 +1072,14 @@ export default function IdNormalizationAudit() {
                     <TableBody>
                       {nonStandardUsers.map((item) => {
                         const prefix = (item.custom_id?.substring(0, 3) || '').toUpperCase();
+                        const isLegacyClientPrefix = prefix === 'CLI';
                         const isValidPrefix = VALID_PREFIXES.includes(prefix);
                         const hasCorrectLength = item.custom_id?.length >= 7;
                         
                         let problem = '';
-                        if (!isValidPrefix && !hasCorrectLength) {
+                        if (isLegacyClientPrefix) {
+                          problem = 'Ancien préfixe client "CLI" à migrer vers "CLT"';
+                        } else if (!isValidPrefix && !hasCorrectLength) {
                           problem = 'Préfixe invalide + longueur incorrecte';
                         } else if (!isValidPrefix) {
                           problem = `Préfixe "${prefix}" non reconnu`;

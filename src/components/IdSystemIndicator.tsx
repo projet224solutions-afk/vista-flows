@@ -35,7 +35,8 @@ export function IdSystemIndicator() {
     'AGT': 'Agent',
     'PDG': 'PDG',
     'SYD': 'Syndicat',
-    'CLI': 'Client'
+    'CLT': 'Client',
+    'CLI': 'Client (ancien format)'
   };
 
   return (

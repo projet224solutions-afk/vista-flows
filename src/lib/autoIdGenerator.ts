@@ -63,10 +63,10 @@ const ID_CONFIGS: Record<RoleType, IdConfig> = {
     length: 4 // LIV0001 = 7 chars max
   },
   client: {
-    prefix: 'CLI',
+    prefix: 'CLT',
     table: 'profiles',
     column: 'public_id',
-    length: 4 // CLI0001 = 7 chars max
+    length: 4 // CLT0001 = 7 chars max
   },
   pdg: {
     prefix: 'PDG',

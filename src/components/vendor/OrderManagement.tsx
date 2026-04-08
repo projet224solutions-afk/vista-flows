@@ -283,7 +283,7 @@ export default function OrderManagement() {
       if (userIds.length > 0) {
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name, phone, email, full_name, city, country')
+          .select('id, public_id, first_name, last_name, phone, email, full_name, city, country')
           .in('id', userIds);
 
         if (profilesData) {
@@ -1075,9 +1075,7 @@ export default function OrderManagement() {
                       <div>
                         <span className="text-muted-foreground">ID Client:</span>
                         <span className="ml-2 font-mono text-[10px] sm:text-xs font-semibold bg-muted px-1.5 py-0.5 rounded">
-                          {order.customers?.id 
-                            ? `CLI${order.customers.id.slice(-4).toUpperCase()}`
-                            : 'N/A'}
+                          {order.customers?.profiles?.public_id || 'Non attribué'}
                         </span>
                       </div>
                       <div>
@@ -1334,9 +1332,7 @@ export default function OrderManagement() {
                         <div>
                           <span className="text-muted-foreground">ID Client:</span>
                           <span className="ml-2 font-mono text-[10px] sm:text-xs font-semibold bg-muted px-1.5 py-0.5 rounded">
-                            {order.customers?.id 
-                              ? `CLI${order.customers.id.slice(-4).toUpperCase()}`
-                              : 'N/A'}
+                            {order.customers?.profiles?.public_id || 'Non attribué'}
                           </span>
                         </div>
                         <div>

@@ -35,7 +35,7 @@ interface RoleStats {
 
 const ROLE_LABELS: Record<RoleType, string> = {
   vendor: 'Vendeurs (VND)',
-  client: 'Clients (CLI)',
+  client: 'Clients (CLT)',
   agent: 'Agents (AGT)',
   driver: 'Chauffeurs (DRV)',
   taxi: 'Taxi-Motos (TAX)',
