@@ -16,11 +16,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { RoleType, getIdConfig } from "@/lib/autoIdGenerator";
-import { 
-  getIdStats, 
-  reorganizeIds, 
+import {
+  getIdStats,
+  reorganizeIds,
   reorganizeAllIds,
-  analyzeIdGaps 
 } from "@/lib/idReorganizer";
 
 interface RoleStats {
@@ -30,6 +29,8 @@ interface RoleStats {
   maxNumber: number;
   gaps: number[];
   gapCount: number;
+  legacyCount: number;
+  invalidCount: number;
   loading: boolean;
 }
 
@@ -60,17 +61,18 @@ export function IdReorganizationPanel() {
 
   const loadAllStats = async () => {
     setLoading(true);
-    const newStats: RoleStats[] = [];
 
-    for (const roleType of roleTypes) {
-      const stat = await getIdStats(roleType);
-      newStats.push({
-        roleType,
-        label: ROLE_LABELS[roleType],
-        ...stat,
-        loading: false
-      });
-    }
+    const newStats = await Promise.all(
+      roleTypes.map(async (roleType) => {
+        const stat = await getIdStats(roleType);
+        return {
+          roleType,
+          label: ROLE_LABELS[roleType],
+          ...stat,
+          loading: false,
+        };
+      })
+    );
 
     setStats(newStats);
     setLoading(false);
@@ -128,6 +130,8 @@ export function IdReorganizationPanel() {
   };
 
   const totalGaps = stats.reduce((sum, s) => sum + s.gapCount, 0);
+  const totalLegacyIds = stats.reduce((sum, s) => sum + s.legacyCount + s.invalidCount, 0);
+  const hasIssues = totalGaps > 0 || totalLegacyIds > 0;
 
   return (
     <Card className="w-full">
@@ -139,7 +143,7 @@ export function IdReorganizationPanel() {
               Réorganisation des IDs
             </CardTitle>
             <CardDescription>
-              Maintenir une séquence continue d'IDs sans gaps
+              Vérifier les numéros libres et les anciens formats avant réorganisation
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -152,7 +156,7 @@ export function IdReorganizationPanel() {
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Actualiser
             </Button>
-            {totalGaps > 0 && (
+            {hasIssues && (
               <Button
                 size="sm"
                 onClick={handleReorganizeAll}
@@ -170,132 +174,168 @@ export function IdReorganizationPanel() {
         </div>
       </CardHeader>
       <CardContent>
-        {totalGaps === 0 && !loading ? (
+        {!hasIssues && !loading ? (
           <Alert>
             <CheckCircle2 className="h-4 w-4 text-green-500" />
             <AlertDescription>
-              Tous les IDs sont correctement séquencés. Aucun gap détecté.
+              Tous les IDs actifs sont cohérents. Aucun numéro libre ou ancien format détecté.
             </AlertDescription>
           </Alert>
         ) : (
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-              <TabsTrigger value="details">Détails par rôle</TabsTrigger>
-              {lastResults.length > 0 && (
-                <TabsTrigger value="history">Dernières modifications</TabsTrigger>
-              )}
-            </TabsList>
+          <>
+            <Alert className="mb-4">
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <AlertDescription>
+                Les écarts affichés représentent des numéros libres dans la séquence active, pas des utilisateurs perdus.
+              </AlertDescription>
+            </Alert>
 
-            <TabsContent value="overview">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {stats.map((stat) => (
-                  <Card key={stat.roleType} className={stat.gapCount > 0 ? 'border-yellow-500/50' : ''}>
-                    <CardContent className="pt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium">{stat.label}</span>
-                        {stat.gapCount > 0 ? (
-                          <Badge variant="destructive" className="bg-yellow-500">
-                            {stat.gapCount} gap(s)
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-green-600 border-green-600">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            OK
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        <p>Total: {stat.total} IDs</p>
-                        <p>Max: {getIdConfig(stat.roleType).prefix}{stat.maxNumber.toString().padStart(4, '0')}</p>
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+                <TabsTrigger value="details">Détails par rôle</TabsTrigger>
+                {lastResults.length > 0 && (
+                  <TabsTrigger value="history">Dernières modifications</TabsTrigger>
+                )}
+              </TabsList>
+
+              <TabsContent value="overview">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {stats.map((stat) => {
+                    const hasRoleIssues = stat.gapCount > 0 || stat.legacyCount > 0 || stat.invalidCount > 0;
+
+                    return (
+                      <Card key={stat.roleType} className={hasRoleIssues ? 'border-yellow-500/50' : ''}>
+                        <CardContent className="pt-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium">{stat.label}</span>
+                            {hasRoleIssues ? (
+                              <Badge variant="destructive" className="bg-yellow-500">
+                                {stat.gapCount > 0 ? `${stat.gapCount} n° libres` : 'À revoir'}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-green-600 border-green-600">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                OK
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            <p>Total: {stat.total} IDs actifs</p>
+                            <p>Max: {getIdConfig(stat.roleType).prefix}{stat.maxNumber.toString().padStart(4, '0')}</p>
+                            {stat.legacyCount > 0 && (
+                              <p className="text-amber-600">Anciens formats: {stat.legacyCount}</p>
+                            )}
+                            {stat.invalidCount > 0 && (
+                              <p className="text-destructive">Formats à normaliser: {stat.invalidCount}</p>
+                            )}
+                            {stat.gapCount > 0 && (
+                              <p className="text-yellow-600">
+                                Numéros libres: {stat.gaps.slice(0, 5).join(', ')}
+                                {stat.gaps.length > 5 && '...'}
+                              </p>
+                            )}
+                          </div>
+                          {hasRoleIssues && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full mt-3"
+                              onClick={() => handleReorganize(stat.roleType)}
+                              disabled={!!reorganizing}
+                            >
+                              {reorganizing === stat.roleType ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                              )}
+                              Réorganiser
+                            </Button>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="details">
+                <ScrollArea className="h-[400px]">
+                  {stats.filter((s) => s.gapCount > 0 || s.legacyCount > 0 || s.invalidCount > 0).map((stat) => (
+                    <div key={stat.roleType} className="mb-6">
+                      <h3 className="font-semibold mb-2 flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                        {stat.label}
+                      </h3>
+                      <div className="pl-6 space-y-1">
                         {stat.gapCount > 0 && (
-                          <p className="text-yellow-600">
-                            Gaps: {stat.gaps.slice(0, 5).join(', ')}
-                            {stat.gaps.length > 5 && '...'}
+                          <>
+                            <p className="text-sm text-muted-foreground">
+                              Numéros libres dans la séquence active:
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {stat.gaps.slice(0, 24).map((gap) => (
+                                <Badge key={gap} variant="outline" className="text-yellow-600">
+                                  {getIdConfig(stat.roleType).prefix}{gap.toString().padStart(4, '0')}
+                                </Badge>
+                              ))}
+                              {stat.gaps.length > 24 && (
+                                <Badge variant="secondary">+{stat.gaps.length - 24} autres</Badge>
+                              )}
+                            </div>
+                          </>
+                        )}
+                        {stat.legacyCount > 0 && (
+                          <p className="text-xs text-amber-600 mt-2">
+                            {stat.legacyCount} ID(s) utilisent encore un ancien préfixe pour ce rôle.
                           </p>
                         )}
+                        {stat.invalidCount > 0 && (
+                          <p className="text-xs text-destructive mt-2">
+                            {stat.invalidCount} ID(s) ne respectent pas encore le format attendu.
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          La réorganisation resserre uniquement les numéros actifs et garde la séquence plus lisible.
+                        </p>
                       </div>
-                      {stat.gapCount > 0 && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full mt-3"
-                          onClick={() => handleReorganize(stat.roleType)}
-                          disabled={!!reorganizing}
-                        >
-                          {reorganizing === stat.roleType ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                          )}
-                          Réorganiser
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="details">
-              <ScrollArea className="h-[400px]">
-                {stats.filter(s => s.gapCount > 0).map((stat) => (
-                  <div key={stat.roleType} className="mb-6">
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                      {stat.label}
-                    </h3>
-                    <div className="pl-6 space-y-1">
-                      <p className="text-sm text-muted-foreground">
-                        IDs manquants dans la séquence:
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {stat.gaps.map((gap) => (
-                          <Badge key={gap} variant="outline" className="text-yellow-600">
-                            {getIdConfig(stat.roleType).prefix}{gap.toString().padStart(4, '0')}
-                          </Badge>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        La réorganisation décalera les IDs suivants pour combler ces gaps.
-                      </p>
                     </div>
-                  </div>
-                ))}
-                {stats.filter(s => s.gapCount > 0).length === 0 && (
-                  <Alert>
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <AlertDescription>
-                      Aucun gap à afficher. Tous les IDs sont séquentiels.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </ScrollArea>
-            </TabsContent>
-
-            {lastResults.length > 0 && (
-              <TabsContent value="history">
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-2">
-                    {lastResults.map((result, index) => (
-                      <div 
-                        key={index}
-                        className="flex items-center gap-2 p-2 rounded-lg bg-muted/50"
-                      >
-                        <Badge variant="outline" className="font-mono">
-                          {result.oldId}
-                        </Badge>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                        <Badge className="font-mono bg-green-500">
-                          {result.newId}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
+                  ))}
+                  {stats.filter((s) => s.gapCount > 0 || s.legacyCount > 0 || s.invalidCount > 0).length === 0 && (
+                    <Alert>
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <AlertDescription>
+                        Aucun écart à afficher. Tous les IDs sont déjà propres.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </ScrollArea>
               </TabsContent>
-            )}
-          </Tabs>
+
+              {lastResults.length > 0 && (
+                <TabsContent value="history">
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-2">
+                      {lastResults.map((result, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 p-2 rounded-lg bg-muted/50"
+                        >
+                          <Badge variant="outline" className="font-mono">
+                            {result.oldId}
+                          </Badge>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                          <Badge className="font-mono bg-green-500">
+                            {result.newId}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+              )}
+            </Tabs>
+          </>
         )}
       </CardContent>
     </Card>
