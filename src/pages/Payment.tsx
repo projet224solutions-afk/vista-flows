@@ -62,6 +62,60 @@ function getVendorCurrency(country?: string | null): string {
   return nameMap[upper] || 'GNF';
 }
 
+function pickPreferredVendorIdentifier(...values: Array<string | null | undefined>): string | null {
+  for (const value of values) {
+    const normalized = String(value || '').trim();
+    if (normalized) return normalized;
+  }
+  return null;
+}
+
+async function resolveVendorDisplayId(options: {
+  vendorId?: string | null;
+  vendorUserId?: string | null;
+  preferredId?: string | null;
+}): Promise<string> {
+  const immediate = pickPreferredVendorIdentifier(options.preferredId);
+  if (immediate) return immediate;
+
+  const [vendorByIdResult, vendorByUserResult, profileResult] = await Promise.all([
+    options.vendorId
+      ? supabase
+          .from('vendors')
+          .select('vendor_code, public_id')
+          .eq('id', options.vendorId)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null } as any),
+    options.vendorUserId
+      ? supabase
+          .from('vendors')
+          .select('vendor_code, public_id')
+          .eq('user_id', options.vendorUserId)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null } as any),
+    options.vendorUserId
+      ? supabase
+          .from('profiles')
+          .select('public_id, custom_id')
+          .eq('id', options.vendorUserId)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null } as any),
+  ]);
+
+  return (
+    pickPreferredVendorIdentifier(
+      vendorByIdResult?.data?.vendor_code,
+      vendorByIdResult?.data?.public_id,
+      vendorByUserResult?.data?.vendor_code,
+      vendorByUserResult?.data?.public_id,
+      profileResult?.data?.custom_id,
+      profileResult?.data?.public_id,
+      options.vendorUserId,
+      options.vendorId,
+    ) || ''
+  );
+}
+
 export default function Payment() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -305,7 +359,7 @@ export default function Payment() {
         // Charger les infos du vendeur
         const { data: vendorInfo, error: vendorError } = await supabase
           .from('vendors')
-          .select('id, user_id, country')
+          .select('id, user_id, country, vendor_code, public_id')
           .eq('id', firstItem.vendor_id)
           .single();
 
@@ -317,20 +371,6 @@ export default function Payment() {
             description: "Impossible de charger les informations du vendeur"
           });
           return;
-        }
-
-        let vendorProfile: any = null;
-        if (!isMultiVendorCart) {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('public_id')
-            .eq('id', vendorInfo.user_id)
-            .maybeSingle();
-
-          if (profileError) {
-            console.error('Erreur chargement profil vendeur:', profileError);
-          }
-          vendorProfile = profileData;
         }
 
         // Dériver la devise du vendeur depuis son pays
@@ -353,7 +393,11 @@ export default function Payment() {
           setRecipientId('');
           setPaymentDescription(`Achat panier multi-vendeurs (${cartItems.length} articles)`);
         } else {
-          const vendorCode = vendorProfile?.public_id || `VEN-${vendorInfo.user_id.substring(0, 8).toUpperCase()}`;
+          const vendorCode = await resolveVendorDisplayId({
+            vendorId: vendorInfo.id,
+            vendorUserId: vendorInfo.user_id,
+            preferredId: (vendorInfo as any).vendor_code || (vendorInfo as any).public_id || null,
+          });
           setRecipientId(vendorCode);
           const itemNames = cartItems.map((item: any) => `${item.name} (x${item.quantity})`).join(', ');
           setPaymentDescription(`Achat panier: ${itemNames}`);
@@ -403,7 +447,7 @@ export default function Payment() {
               pricing_type,
               subscription_interval,
               access_duration,
-              vendors:vendors!digital_products_vendor_id_fkey(user_id, business_name, country)
+              vendors:vendors!digital_products_vendor_id_fkey(user_id, business_name, country, vendor_code, public_id)
             `)
             .eq('id', id)
             .maybeSingle();
@@ -429,23 +473,13 @@ export default function Payment() {
               subscriptionInterval: (dpProduct as any).subscription_interval || undefined,
             });
             
-            // Récupérer le public_id du vendeur
-            const { data: vendorProfile } = await supabase
-              .from('profiles')
-              .select('public_id, custom_id')
-              .eq('id', vendorUserId)
-              .maybeSingle();
+            const vendorCode = await resolveVendorDisplayId({
+              vendorId: dpProduct.vendor_id || null,
+              vendorUserId,
+              preferredId: (v as any)?.vendor_code || (v as any)?.public_id || null,
+            });
 
             setPaymentAmount(totalAmount.toString());
-            
-            let vendorCode: string;
-            if (vendorProfile?.custom_id) {
-              vendorCode = vendorProfile.custom_id;
-            } else if (vendorProfile?.public_id && vendorProfile.public_id.length <= 15) {
-              vendorCode = vendorProfile.public_id;
-            } else {
-              vendorCode = `VEN-${vendorUserId.substring(0, 8).toUpperCase()}`;
-            }
             setRecipientId(vendorCode);
             const isSubscription = (dpProduct as any).pricing_type === 'subscription';
             const interval = (dpProduct as any).subscription_interval || 'monthly';
@@ -484,22 +518,11 @@ export default function Payment() {
               });
               
               const proUserId = proService.user_id;
-              const { data: vendorProfile } = await supabase
-                .from('profiles')
-                .select('public_id, custom_id')
-                .eq('id', proUserId)
-                .maybeSingle();
+              const vendorCode = await resolveVendorDisplayId({
+                vendorUserId: proUserId,
+              });
 
               setPaymentAmount(totalAmount.toString());
-              
-              let vendorCode: string;
-              if (vendorProfile?.custom_id) {
-                vendorCode = vendorProfile.custom_id;
-              } else if (vendorProfile?.public_id && vendorProfile.public_id.length <= 15) {
-                vendorCode = vendorProfile.public_id;
-              } else {
-                vendorCode = `VEN-${proUserId.substring(0, 8).toUpperCase()}`;
-              }
               setRecipientId(vendorCode);
               setPaymentDescription(`Achat numérique: ${digitalProduct.name} (x${qty})`);
               setPaymentOpen(true);
@@ -514,7 +537,7 @@ export default function Payment() {
               name,
               price,
               vendor_id,
-              vendors!inner(user_id, country)
+              vendors!inner(user_id, country, vendor_code, public_id)
             `)
             .eq('id', id)
             .single();
@@ -543,15 +566,13 @@ export default function Payment() {
             // Pré-remplir les champs
             setPaymentAmount(totalAmount.toString());
 
-            // Récupérer le public_id depuis profiles (source de vérité unique)
-            const { data: vendorProfile } = await supabase
-              .from('profiles')
-              .select('public_id')
-              .eq('id', vendorUserId)
-              .maybeSingle();
+            const vendorCode = await resolveVendorDisplayId({
+              vendorId: product.vendor_id,
+              vendorUserId,
+              preferredId: (product.vendors as any)?.vendor_code || (product.vendors as any)?.public_id || null,
+            });
 
-            // Utiliser le public_id depuis profiles (ex: VND0003)
-            setRecipientId(vendorProfile?.public_id || `VEN-${vendorUserId.substring(0, 8).toUpperCase()}`);
+            setRecipientId(vendorCode);
 
             setPaymentDescription(`Achat: ${product.name} (x${qty})`);
             
@@ -1248,8 +1269,8 @@ export default function Payment() {
                             <Input
                               id="recipient-id"
                               placeholder={searchParams.get('productId') !== null || location.state?.productId || location.state?.fromCart
-                                ? 'ID vendeur détecté automatiquement'
-                                : 'ID public, email ou téléphone'}
+                                ? 'ID réel du vendeur détecté automatiquement'
+                                : 'ID public, email, téléphone ou UUID'}
                               value={recipientId}
                               onChange={(e) => setRecipientId(e.target.value)}
                               maxLength={64}
@@ -1258,8 +1279,8 @@ export default function Payment() {
                             />
                             <p className="text-xs text-muted-foreground">
                               {searchParams.get('productId') !== null || location.state?.productId || location.state?.fromCart
-                                ? 'ID vendeur appliqué automatiquement pour cet achat marketplace.'
-                                : 'Formats acceptés : VND0001, VEN-6D2C8F2F, email ou téléphone.'}
+                                ? 'Le vrai ID vendeur est appliqué automatiquement pour cet achat marketplace.'
+                                : 'Formats acceptés : VND0001, email, téléphone ou UUID.'}
                             </p>
                           </div>
                           <div className="space-y-2">
