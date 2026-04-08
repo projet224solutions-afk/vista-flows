@@ -22,6 +22,8 @@
     "wallet:apply-sql": "node apply-wallet-sql.mjs",
     "wallet:test": "node test-wallet.mjs",
     "e2e:wallet": "node scripts/e2e_test_wallet_communication.js",
+    "test": "vitest",
+    "test:run": "vitest run",
     "test:load": "k6 run scripts/load-test.js",
     "test:load:light": "k6 run --vus 100 --duration 1m scripts/load-test.js",
     "migrate:type-agent": "tsx scripts/apply-type-agent-migration.ts",
@@ -150,6 +152,8 @@
     "terser": "^5.44.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.49.0",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vitest": "^3.2.4",
+    "jsdom": "^26.1.0"
   }
 }

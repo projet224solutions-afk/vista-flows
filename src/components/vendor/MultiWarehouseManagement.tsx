@@ -48,9 +48,12 @@ import {
   ChevronRight,
   Building2,
   ShoppingBag,
-  AlertCircle
+  AlertCircle,
+  FileDown
 } from 'lucide-react';
 import { useMultiWarehouse, VendorLocation, StockTransfer, CreateLocationInput, CreateTransferInput } from '@/hooks/useMultiWarehouse';
+import TransferCreator from '@/components/vendor/TransferCreator';
+import TransferReception from '@/components/vendor/TransferReception';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -277,6 +280,7 @@ export default function MultiWarehouseManagement() {
     shipTransfer,
     confirmTransferReception,
     cancelTransfer,
+    downloadTransferReceipt,
     refresh
   } = useMultiWarehouse();
 
@@ -586,7 +590,7 @@ export default function MultiWarehouseManagement() {
                           <TransferStatusBadge status={transfer.status} />
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap justify-end">
                           {transfer.status === 'pending' && (
                             <>
                               <Button 
@@ -615,6 +619,16 @@ export default function MultiWarehouseManagement() {
                             >
                               <CheckCircle2 className="w-4 h-4 mr-1" />
                               Confirmer réception
+                            </Button>
+                          )}
+                          {['completed', 'partial', 'delivered'].includes(transfer.status) && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadTransferReceipt(transfer)}
+                            >
+                              <FileDown className="w-4 h-4 mr-1" />
+                              Reçu PDF
                             </Button>
                           )}
                         </div>
@@ -910,89 +924,24 @@ export default function MultiWarehouseManagement() {
 
       {/* Dialog: Créer un transfert */}
       <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ArrowRightLeft className="w-5 h-5" />
-              Créer un transfert de stock
+              Inventory Transfer System
             </DialogTitle>
             <DialogDescription>
-              Transférez des produits entre vos différents lieux
+              Transferts intelligents multi-destinations entrepôt → boutique / client / autre entrepôt
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleCreateTransfer} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Lieu source *</Label>
-                <Select 
-                  value={transferForm.from_location_id}
-                  onValueChange={(v) => setTransferForm(prev => ({ ...prev, from_location_id: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.filter(l => l.id !== transferForm.to_location_id).map((loc) => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        <span className="flex items-center gap-2">
-                          {loc.is_pos_enabled ? <Store className="w-4 h-4" /> : <Warehouse className="w-4 h-4" />}
-                          {loc.name}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Lieu destination *</Label>
-                <Select 
-                  value={transferForm.to_location_id}
-                  onValueChange={(v) => setTransferForm(prev => ({ ...prev, to_location_id: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.filter(l => l.id !== transferForm.from_location_id).map((loc) => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        <span className="flex items-center gap-2">
-                          {loc.is_pos_enabled ? <Store className="w-4 h-4" /> : <Warehouse className="w-4 h-4" />}
-                          {loc.name}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label>Notes (optionnel)</Label>
-              <Textarea
-                placeholder="Notes pour ce transfert..."
-                value={transferForm.notes}
-                onChange={(e) => setTransferForm(prev => ({ ...prev, notes: e.target.value }))}
-              />
-            </div>
-
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Sélectionnez les produits à transférer depuis la vue stock du lieu source
-              </AlertDescription>
-            </Alert>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowTransferDialog(false)}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={!transferForm.from_location_id || !transferForm.to_location_id}>
-                Créer le transfert
-              </Button>
-            </DialogFooter>
-          </form>
+          <TransferCreator
+            onSuccess={() => {
+              setShowTransferDialog(false);
+              refresh();
+            }}
+            onCancel={() => setShowTransferDialog(false)}
+          />
         </DialogContent>
       </Dialog>
 
@@ -1077,38 +1026,21 @@ export default function MultiWarehouseManagement() {
 
       {/* Dialog: Confirmer réception */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmer la réception</DialogTitle>
-            <DialogDescription>
-              Transfert {selectedTransfer?.transfer_number}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <p>Confirmez-vous avoir reçu tous les articles de ce transfert ?</p>
-            
-            {selectedTransfer?.items && (
-              <div className="space-y-2">
-                {selectedTransfer.items.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center p-2 bg-muted rounded">
-                    <span>{item.product?.name}</span>
-                    <Badge>{item.quantity_sent} unité(s)</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
-              Annuler
-            </Button>
-            <Button onClick={handleConfirmReception} className="bg-green-600 hover:bg-green-700">
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Tout reçu
-            </Button>
-          </DialogFooter>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          {selectedTransfer && (
+            <TransferReception
+              transfer={selectedTransfer}
+              onSuccess={() => {
+                setShowConfirmDialog(false);
+                setSelectedTransfer(null);
+                refresh();
+              }}
+              onCancel={() => {
+                setShowConfirmDialog(false);
+                setSelectedTransfer(null);
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

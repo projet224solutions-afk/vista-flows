@@ -32,9 +32,15 @@ import {
   Check,
   ArrowRight
 } from 'lucide-react';
-import { useMultiWarehouse, VendorLocation, CreateTransferInput, LocationStock } from '@/hooks/useMultiWarehouse';
+import { useMultiWarehouse, LocationStock } from '@/hooks/useMultiWarehouse';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import {
+  buildDestinationSummary,
+  computeTotalUnits,
+  normalizeStockUnits,
+  splitTotalUnits,
+} from '@/lib/inventory/multiWarehouseUtils';
 
 interface TransferItem {
   product_id: string;
@@ -42,7 +48,14 @@ interface TransferItem {
   product_sku: string;
   product_image?: string;
   available_quantity: number;
-  quantity_to_send: number;
+  available_cartons: number;
+  available_units_loose: number;
+  units_per_carton: number;
+  quantity_cartons: number;
+  quantity_units: number;
+  total_units: number;
+  shop_product_id?: string | null;
+  shop_product_name?: string | null;
 }
 
 interface TransferCreatorProps {
@@ -53,8 +66,11 @@ interface TransferCreatorProps {
 export default function TransferCreator({ onSuccess, onCancel }: TransferCreatorProps) {
   const {
     locations,
+    posLocations,
+    productMappings,
     getLocationStock,
-    createTransfer
+    getShopProductMappingForItem,
+    createAdvancedTransfer,
   } = useMultiWarehouse();
 
   const { toast } = useToast();
@@ -66,6 +82,12 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
   // Sélection des lieux
   const [fromLocationId, setFromLocationId] = useState<string>('');
   const [toLocationId, setToLocationId] = useState<string>('');
+  const [destinationType, setDestinationType] = useState<'warehouse' | 'shop' | 'client'>('warehouse');
+  const [clientInfo, setClientInfo] = useState({
+    name: '',
+    phone: '',
+    address: '',
+  });
 
   // Stock source et items à transférer
   const [sourceStock, setSourceStock] = useState<LocationStock[]>([]);
@@ -81,15 +103,22 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
 
   // Lieux disponibles pour la source
   const sourceLocations = useMemo(() => 
-    locations.filter(l => l.id !== toLocationId),
+    locations.filter(l => !l.is_pos_enabled && l.location_type !== 'shop' && l.id !== toLocationId),
     [locations, toLocationId]
   );
 
   // Lieux disponibles pour la destination
-  const destinationLocations = useMemo(() =>
-    locations.filter(l => l.id !== fromLocationId),
-    [locations, fromLocationId]
-  );
+  const destinationLocations = useMemo(() => {
+    if (destinationType === 'shop') {
+      return posLocations.filter(l => l.id !== fromLocationId);
+    }
+
+    if (destinationType === 'warehouse') {
+      return locations.filter(l => !l.is_pos_enabled && l.location_type !== 'shop' && l.id !== fromLocationId);
+    }
+
+    return [];
+  }, [destinationType, locations, posLocations, fromLocationId]);
 
   // Lieu source sélectionné
   const fromLocation = useMemo(() =>
@@ -112,11 +141,33 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
     }
   }, [fromLocationId]);
 
+  useEffect(() => {
+    setTransferItems((prev) => prev.map((item) => {
+      if (destinationType !== 'shop') {
+        return {
+          ...item,
+          shop_product_id: undefined,
+          shop_product_name: undefined,
+        };
+      }
+
+      const mapping = getShopProductMappingForItem(item.product_id, toLocationId);
+      return {
+        ...item,
+        shop_product_id: mapping?.shop_product_id || item.product_id,
+        shop_product_name: mapping?.shop_product?.name || item.product_name,
+      };
+    }));
+  }, [destinationType, toLocationId, getShopProductMappingForItem]);
+
   const loadSourceStock = async () => {
     setLoadingStock(true);
     try {
       const stock = await getLocationStock(fromLocationId);
-      setSourceStock(stock.filter(s => s.available_quantity > 0));
+      setSourceStock(stock.filter(s => {
+        const normalized = normalizeStockUnits(s);
+        return (s.available_quantity ?? normalized.availableUnits) > 0;
+      }));
     } finally {
       setLoadingStock(false);
     }
@@ -134,31 +185,62 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
 
   // Ajouter un produit au transfert
   const addToTransfer = (stock: LocationStock) => {
+    const normalized = normalizeStockUnits(stock);
     const existing = transferItems.find(i => i.product_id === stock.product_id);
+    const mapping = destinationType === 'shop' ? getShopProductMappingForItem(stock.product_id, toLocationId) : null;
+    const defaultShopProductId = mapping?.shop_product_id || (destinationType === 'shop' ? stock.product_id : null);
+    const defaultShopProductName = mapping?.shop_product?.name || (destinationType === 'shop' ? stock.product?.name || 'Produit boutique lié' : null);
+
     if (existing) {
-      // Incrémenter la quantité
-      updateQuantity(stock.product_id, existing.quantity_to_send + 1);
+      updateBreakdown(stock.product_id, {
+        quantity_units: existing.quantity_units + 1,
+      });
     } else {
       setTransferItems(prev => [...prev, {
         product_id: stock.product_id,
         product_name: stock.product?.name || 'Produit',
         product_sku: stock.product?.sku || '',
         product_image: stock.product?.images?.[0],
-        available_quantity: stock.available_quantity,
-        quantity_to_send: 1
+        available_quantity: stock.available_quantity ?? normalized.availableUnits,
+        available_cartons: normalized.qtyCartonsClosed,
+        available_units_loose: normalized.qtyUnitsLoose,
+        units_per_carton: stock.units_per_carton || normalized.unitsPerCarton || 1,
+        quantity_cartons: 0,
+        quantity_units: 1,
+        total_units: 1,
+        shop_product_id: mapping?.shop_product_id || null,
+        shop_product_name: mapping?.shop_product?.name || null,
       }]);
     }
   };
 
-  // Mettre à jour la quantité d'un item
-  const updateQuantity = (productId: string, quantity: number) => {
+  // Mettre à jour la quantité d'un item en cartons + unités
+  const updateBreakdown = (
+    productId: string,
+    updates: Partial<Pick<TransferItem, 'quantity_cartons' | 'quantity_units' | 'shop_product_id'>>,
+  ) => {
     setTransferItems(prev => prev.map(item => {
-      if (item.product_id === productId) {
-        const newQty = Math.max(0, Math.min(quantity, item.available_quantity));
-        return { ...item, quantity_to_send: newQty };
-      }
-      return item;
-    }).filter(item => item.quantity_to_send > 0));
+      if (item.product_id !== productId) return item;
+
+      const nextCartons = Math.max(0, Number(updates.quantity_cartons ?? item.quantity_cartons ?? 0));
+      const nextUnits = Math.max(0, Number(updates.quantity_units ?? item.quantity_units ?? 0));
+      const proposedTotal = computeTotalUnits({
+        unitsPerCarton: item.units_per_carton,
+        quantityCartons: nextCartons,
+        quantityUnits: nextUnits,
+      });
+
+      const clampedTotal = Math.min(item.available_quantity, proposedTotal);
+      const normalizedBreakdown = splitTotalUnits(clampedTotal, item.units_per_carton);
+
+      return {
+        ...item,
+        quantity_cartons: normalizedBreakdown.qtyCartonsClosed,
+        quantity_units: normalizedBreakdown.qtyUnitsLoose,
+        total_units: clampedTotal,
+        shop_product_id: updates.shop_product_id ?? item.shop_product_id ?? null,
+      };
+    }).filter(item => item.total_units > 0));
   };
 
   // Supprimer un item
@@ -171,29 +253,54 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
     transferItems.some(i => i.product_id === productId);
 
   // Total des items
-  const totalItems = transferItems.reduce((sum, i) => sum + i.quantity_to_send, 0);
+  const totalItems = transferItems.reduce((sum, i) => sum + i.total_units, 0);
+
+  const hasMissingShopMapping = destinationType === 'shop' && transferItems.some(item => !item.shop_product_id);
+  const destinationSummary = buildDestinationSummary(destinationType, {
+    locationName: toLocation?.name,
+    clientName: clientInfo.name,
+    clientPhone: clientInfo.phone,
+    clientAddress: clientInfo.address,
+  });
 
   // Soumettre le transfert
   const handleSubmit = async () => {
-    if (!fromLocationId || !toLocationId || transferItems.length === 0) {
+    const clientTargetMissing = destinationType === 'client' && !clientInfo.name.trim() && !clientInfo.phone.trim();
+
+    if (!fromLocationId || transferItems.length === 0 || clientTargetMissing || (destinationType !== 'client' && !toLocationId)) {
       toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner les lieux et ajouter des produits",
-        variant: "destructive"
+        title: 'Erreur',
+        description: 'Veuillez renseigner la source, la destination et au moins un produit.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (hasMissingShopMapping) {
+      toast({
+        title: 'Liaison boutique manquante',
+        description: 'Chaque produit doit être lié à un produit boutique avant confirmation.',
+        variant: 'destructive'
       });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const result = await createTransfer({
-        from_location_id: fromLocationId,
-        to_location_id: toLocationId,
+      const result = await createAdvancedTransfer({
+        source_location_id: fromLocationId,
+        destination_type: destinationType,
+        destination_location_id: destinationType === 'client' ? null : toLocationId,
+        destination_shop_id: destinationType === 'shop' ? toLocationId : null,
+        destination_client_info: destinationType === 'client' ? clientInfo : null,
         items: transferItems.map(i => ({
           product_id: i.product_id,
-          quantity: i.quantity_to_send
+          quantity_cartons: i.quantity_cartons,
+          quantity_units: i.quantity_units,
+          units_per_carton: i.units_per_carton,
+          shop_product_id: i.shop_product_id || null,
         })),
-        notes
+        notes,
       });
 
       if (result) {
@@ -206,8 +313,18 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
 
   // Peut-on passer à l'étape suivante ?
   const canProceed = () => {
-    if (step === 1) return fromLocationId && toLocationId;
-    if (step === 2) return transferItems.length > 0;
+    if (step === 1) {
+      if (!fromLocationId) return false;
+      if (destinationType === 'client') {
+        return Boolean(clientInfo.name.trim() || clientInfo.phone.trim());
+      }
+      return Boolean(toLocationId);
+    }
+
+    if (step === 2) {
+      return transferItems.length > 0 && !hasMissingShopMapping;
+    }
+
     return true;
   };
 
@@ -315,57 +432,109 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
 
               {/* Lieu destination */}
               <div className="space-y-3 md:-mt-16">
-                <Label className="text-base font-semibold">Lieu destination</Label>
-                <Select value={toLocationId} onValueChange={setToLocationId}>
-                  <SelectTrigger className="h-14">
-                    <SelectValue placeholder="Vers où transférer ?" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {destinationLocations.map(loc => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "p-1.5 rounded",
-                            loc.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
-                          )}>
-                            {loc.is_pos_enabled ? (
-                              <Store className="w-4 h-4 text-green-600" />
-                            ) : (
-                              <Warehouse className="w-4 h-4 text-blue-600" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium">{loc.name}</p>
-                            {loc.code && (
-                              <p className="text-xs text-muted-foreground">{loc.code}</p>
-                            )}
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-base font-semibold">Destination</Label>
 
-                {toLocation && (
+                <div className="space-y-2">
+                  <Label>Type de destination</Label>
+                  <Select value={destinationType} onValueChange={(value: 'warehouse' | 'shop' | 'client') => {
+                    setDestinationType(value);
+                    setToLocationId('');
+                  }}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder="Choisir un type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="warehouse">🏭 Autre entrepôt</SelectItem>
+                      <SelectItem value="shop">🏬 Boutique / POS</SelectItem>
+                      <SelectItem value="client">👤 Client final</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {destinationType !== 'client' ? (
+                  <>
+                    <Select value={toLocationId} onValueChange={setToLocationId}>
+                      <SelectTrigger className="h-14">
+                        <SelectValue placeholder={destinationType === 'shop' ? 'Vers quelle boutique ?' : 'Vers quel entrepôt ?'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {destinationLocations.map(loc => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            <div className="flex items-center gap-3">
+                              <div className={cn(
+                                "p-1.5 rounded",
+                                loc.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
+                              )}>
+                                {loc.is_pos_enabled ? (
+                                  <Store className="w-4 h-4 text-green-600" />
+                                ) : (
+                                  <Warehouse className="w-4 h-4 text-blue-600" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium">{loc.name}</p>
+                                {loc.code && (
+                                  <p className="text-xs text-muted-foreground">{loc.code}</p>
+                                )}
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {toLocation && (
+                      <Card className="bg-muted/50">
+                        <CardContent className="pt-4">
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "p-2 rounded-lg",
+                              toLocation.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
+                            )}>
+                              {toLocation.is_pos_enabled ? (
+                                <Store className="w-5 h-5 text-green-600" />
+                              ) : (
+                                <Warehouse className="w-5 h-5 text-blue-600" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-semibold">{toLocation.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {toLocation.city || toLocation.address || 'Adresse non définie'}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </>
+                ) : (
                   <Card className="bg-muted/50">
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "p-2 rounded-lg",
-                          toLocation.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
-                        )}>
-                          {toLocation.is_pos_enabled ? (
-                            <Store className="w-5 h-5 text-green-600" />
-                          ) : (
-                            <Warehouse className="w-5 h-5 text-blue-600" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-semibold">{toLocation.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {toLocation.city || toLocation.address || 'Adresse non définie'}
-                          </p>
-                        </div>
+                    <CardContent className="pt-4 space-y-3">
+                      <div>
+                        <Label>Nom du client</Label>
+                        <Input
+                          placeholder="Ex: Mamadou Diallo"
+                          value={clientInfo.name}
+                          onChange={(e) => setClientInfo((prev) => ({ ...prev, name: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label>Téléphone</Label>
+                        <Input
+                          placeholder="+224 ..."
+                          value={clientInfo.phone}
+                          onChange={(e) => setClientInfo((prev) => ({ ...prev, phone: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label>Adresse</Label>
+                        <Textarea
+                          placeholder="Adresse de livraison ou retrait"
+                          value={clientInfo.address}
+                          onChange={(e) => setClientInfo((prev) => ({ ...prev, address: e.target.value }))}
+                          rows={2}
+                        />
                       </div>
                     </CardContent>
                   </Card>
@@ -412,6 +581,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                     {filteredStock.map(stock => {
                       const inTransfer = isInTransfer(stock.product_id);
                       const item = transferItems.find(i => i.product_id === stock.product_id);
+                      const normalizedStock = normalizeStockUnits(stock);
+                      const mappedShopProduct = destinationType === 'shop'
+                        ? getShopProductMappingForItem(stock.product_id, toLocationId)
+                        : null;
                       
                       return (
                         <div
@@ -447,12 +620,24 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                                 {stock.product.sku}
                               </p>
                             )}
+                            {destinationType === 'shop' && (
+                              <p className={cn(
+                                'text-[11px] mt-1 font-medium',
+                                mappedShopProduct ? 'text-green-600' : 'text-red-600'
+                              )}>
+                                {mappedShopProduct ? `Liaison boutique: ${mappedShopProduct.shop_product?.name || 'OK'}` : 'Liaison auto: même produit boutique'}
+                              </p>
+                            )}
                           </div>
 
                           {/* Quantité disponible */}
                           <div className="text-right shrink-0">
-                            <p className="font-bold">{stock.available_quantity}</p>
-                            <p className="text-xs text-muted-foreground">dispo.</p>
+                            <p className="font-bold">{stock.available_quantity ?? normalizedStock.availableUnits}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {normalizedStock.unitsPerCarton > 1
+                                ? `${normalizedStock.qtyCartonsClosed} ctn + ${normalizedStock.qtyUnitsLoose} u`
+                                : 'unités dispo.'}
+                            </p>
                           </div>
 
                           {/* Bouton ou check */}
@@ -535,32 +720,55 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                         </div>
 
                         {/* Contrôles de quantité */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(item.product_id, item.quantity_to_send - 1)}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </Button>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={item.available_quantity}
-                            value={item.quantity_to_send}
-                            onChange={(e) => updateQuantity(item.product_id, parseInt(e.target.value) || 0)}
-                            className="w-16 h-8 text-center"
-                          />
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => updateQuantity(item.product_id, item.quantity_to_send + 1)}
-                            disabled={item.quantity_to_send >= item.available_quantity}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 shrink-0 min-w-[190px]">
+                          {item.units_per_carton > 1 && (
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Cartons</Label>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={item.available_cartons}
+                                value={item.quantity_cartons}
+                                onChange={(e) => updateBreakdown(item.product_id, { quantity_cartons: Number(e.target.value || 0) })}
+                                className="h-8 text-center"
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <Label className="text-[11px] text-muted-foreground">Unités</Label>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8"
+                                onClick={() => updateBreakdown(item.product_id, { quantity_units: item.quantity_units - 1 })}
+                              >
+                                <Minus className="w-3 h-3" />
+                              </Button>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={item.available_quantity}
+                                value={item.quantity_units}
+                                onChange={(e) => updateBreakdown(item.product_id, { quantity_units: Number(e.target.value || 0) })}
+                                className="w-16 h-8 text-center"
+                              />
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8"
+                                onClick={() => updateBreakdown(item.product_id, { quantity_units: item.quantity_units + 1 })}
+                                disabled={item.total_units >= item.available_quantity}
+                              >
+                                <Plus className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="sm:col-span-2 text-[11px] text-muted-foreground">
+                            Total auto: <span className="font-semibold text-foreground">{item.total_units} unité(s)</span>
+                            {item.units_per_carton > 1 && ` • 1 carton = ${item.units_per_carton} unités`}
+                            {destinationType === 'shop' && item.shop_product_name && ` • Boutique: ${item.shop_product_name}`}
+                          </div>
                         </div>
 
                         {/* Supprimer */}
@@ -606,7 +814,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                   )}
                 </div>
                 <p className="font-semibold">{fromLocation?.name}</p>
-                <p className="text-sm text-muted-foreground">Source</p>
+                <p className="text-sm text-muted-foreground">Stock entrepôt source</p>
               </div>
 
               <div className="p-3 rounded-full bg-primary/10">
@@ -616,16 +824,20 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
               <div className="flex-1 text-center">
                 <div className={cn(
                   "inline-flex p-3 rounded-lg mb-2",
-                  toLocation?.is_pos_enabled ? "bg-green-100" : "bg-blue-100"
+                  destinationType === 'client'
+                    ? 'bg-amber-100'
+                    : toLocation?.is_pos_enabled ? 'bg-green-100' : 'bg-blue-100'
                 )}>
-                  {toLocation?.is_pos_enabled ? (
+                  {destinationType === 'client' ? (
+                    <Package className="w-6 h-6 text-amber-600" />
+                  ) : toLocation?.is_pos_enabled ? (
                     <Store className="w-6 h-6 text-green-600" />
                   ) : (
                     <Warehouse className="w-6 h-6 text-blue-600" />
                   )}
                 </div>
-                <p className="font-semibold">{toLocation?.name}</p>
-                <p className="text-sm text-muted-foreground">Destination</p>
+                <p className="font-semibold">{destinationSummary}</p>
+                <p className="text-sm text-muted-foreground">Destination {destinationType}</p>
               </div>
             </div>
 
@@ -636,9 +848,17 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
               </h4>
               <div className="space-y-2">
                 {transferItems.map(item => (
-                  <div key={item.product_id} className="flex justify-between items-center p-2 bg-muted/50 rounded">
-                    <span className="font-medium">{item.product_name}</span>
-                    <Badge variant="secondary">{item.quantity_to_send} unité(s)</Badge>
+                  <div key={item.product_id} className="flex justify-between items-center p-2 bg-muted/50 rounded gap-3">
+                    <div>
+                      <span className="font-medium">{item.product_name}</span>
+                      {destinationType === 'shop' && item.shop_product_name && (
+                        <p className="text-xs text-muted-foreground">Produit boutique lié: {item.shop_product_name}</p>
+                      )}
+                    </div>
+                    <Badge variant="secondary">
+                      {item.quantity_cartons > 0 ? `${item.quantity_cartons} carton(s) + ` : ''}
+                      {item.quantity_units} unité(s) • {item.total_units} total
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -664,10 +884,18 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Le stock sera retiré de la source uniquement après l'expédition du transfert.
-                La destination devra confirmer la réception pour finaliser le transfert.
+                Le stock logistique reste séparé du stock boutique. Le stock sera retiré de la source uniquement après l'expédition, puis confirmé à la réception avec traçabilité et reçu PDF.
               </AlertDescription>
             </Alert>
+
+            {hasMissingShopMapping && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Au moins un produit n'est pas lié à un produit boutique. Le transfert vers boutique est bloqué tant que le mapping n'existe pas.
+                </AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
       )}
