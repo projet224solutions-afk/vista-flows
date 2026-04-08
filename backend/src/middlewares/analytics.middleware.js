@@ -33,8 +33,14 @@ export const trackingRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
-    // Skip rate limiting for local development
-    return req.ip === '::1' || req.ip === '127.0.0.1';
+    const ip = String(req.ip || '').trim();
+    const forwardedFor = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    const isLocalIp = ['::1', '127.0.0.1', '::ffff:127.0.0.1'].includes(ip)
+      || ['::1', '127.0.0.1', '::ffff:127.0.0.1'].includes(forwardedFor);
+
+    return req.method === 'OPTIONS'
+      || req.path === '/health'
+      || (process.env.NODE_ENV !== 'production' && isLocalIp);
   },
   handler: (req, res) => {
     logger.warn(`Tracking rate limit exceeded for IP: ${req.ip}`);
@@ -43,10 +49,6 @@ export const trackingRateLimiter = rateLimit({
       error: 'Too many tracking requests, please slow down',
       code: 'RATE_LIMIT_EXCEEDED'
     });
-  },
-  skip: (req) => {
-    // Skip rate limiting for health checks
-    return req.path === '/health';
   }
 });
 

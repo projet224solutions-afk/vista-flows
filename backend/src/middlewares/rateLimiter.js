@@ -6,14 +6,28 @@
 import rateLimit from 'express-rate-limit';
 import { logger } from '../config/logger.js';
 
+const LOCALHOST_PATTERN = /^(localhost|127\.0\.0\.1)(:\d+)?$/i;
+const LOCAL_IPS = new Set(['::1', '127.0.0.1', '::ffff:127.0.0.1']);
+
+function isLocalDevelopmentRequest(req) {
+  const ip = String(req.ip || '').trim();
+  const forwardedFor = String(req.headers['x-forwarded-for'] || '')
+    .split(',')[0]
+    .trim();
+  const host = String(req.headers.host || '').trim();
+
+  const isLocalIp = LOCAL_IPS.has(ip) || LOCAL_IPS.has(forwardedFor);
+  return process.env.NODE_ENV !== 'production' && (isLocalIp || LOCALHOST_PATTERN.test(host));
+}
+
 /**
  * Rate limiter global
  * 10,000 requêtes par minute par IP (166 req/sec)
  * Augmenté pour supporter 2,000-3,000 utilisateurs simultanés
  */
 export const rateLimiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 60 * 1000, // 1 minute
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 10000, // 10,000 req/min
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 60 * 1000, // 1 minute
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 10000, // 10,000 req/min
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -29,8 +43,18 @@ export const rateLimiter = rateLimit({
     });
   },
   skip: (req) => {
-    // Skip rate limiting pour health check et static assets
-    return req.path === '/health' || req.path.startsWith('/assets');
+    if (isLocalDevelopmentRequest(req)) {
+      return true;
+    }
+
+    // Skip rate limiting pour routes techniques / navigation de base
+    return req.method === 'OPTIONS'
+      || req.path === '/'
+      || req.path === '/health'
+      || req.path === '/healthz'
+      || req.path === '/healthz.json'
+      || req.path.startsWith('/assets')
+      || req.path.startsWith('/favicon');
   }
 });
 
