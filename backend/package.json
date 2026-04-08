@@ -1,46 +1,26 @@
 {
   "name": "backend-224solutions",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "type": "module",
-  "main": "dist/server.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node dist/server.js",
-    "start:legacy": "node src/server.js",
-    "dev": "tsx watch src/server.ts",
-    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.json --pretty false || exit 0",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "start": "npx --yes tsx src/server.ts",
+    "dev": "npx --yes tsx src/server.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.4",
-    "@types/pdfkit": "^0.17.5",
-    "@types/speakeasy": "^2.0.10",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-rate-limit": "^8.2.1",
     "helmet": "^7.0.0",
-    "ioredis": "^5.8.1",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.2",
     "node-cron": "^3.0.3",
-    "bullmq": "^5.58.0",
-    "pdfkit": "^0.18.0",
     "sharp": "^0.33.3",
-    "speakeasy": "^2.0.0",
-    "stripe": "^21.0.1",
     "winston": "^3.18.3",
-    "xss-clean": "^0.1.4",
-    "zod": "^3.24.1"
-  },
-  "devDependencies": {
-    "@types/compression": "^1.7.5",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
-    "@types/multer": "^1.4.12",
-    "@types/node": "^22.0.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.6.0"
+    "xss-clean": "^0.1.4"
   }
 }
