@@ -7,7 +7,7 @@
 import { memo, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Activity, LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useVendorNotifications } from '@/hooks/useVendorNotifications';
@@ -60,10 +60,14 @@ const AppBranding = memo(function AppBranding() {
       />
 
       <div
-        className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0"
+        className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden bg-white shadow-sm ring-1 ring-blue-100"
         aria-hidden="true"
       >
-        <Activity className="w-4 h-4 md:w-6 md:h-6 text-white" />
+        <img
+          src="/logo-224solutions.png"
+          alt="224Solutions"
+          className="w-full h-full object-contain p-0.5"
+        />
       </div>
 
       <h1 className="text-sm md:text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent whitespace-nowrap pr-1">
