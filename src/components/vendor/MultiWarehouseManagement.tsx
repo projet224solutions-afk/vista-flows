@@ -496,7 +496,7 @@ export default function MultiWarehouseManagement() {
         {/* Tab: Lieux */}
         <TabsContent value="locations" className="space-y-4">
           {locations.length === 0 ? (
-            <Card className="p-12 text-center">
+            <Card className="p-6 sm:p-8 md:p-10 text-center mb-20 lg:mb-0">
               <Warehouse className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">Aucun lieu configuré</h3>
               <p className="text-muted-foreground mb-4">
@@ -928,10 +928,10 @@ export default function MultiWarehouseManagement() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ArrowRightLeft className="w-5 h-5" />
-              Inventory Transfer System
+              Créer un transfert de stock
             </DialogTitle>
             <DialogDescription>
-              Transferts intelligents multi-destinations entrepôt → boutique / client / autre entrepôt
+              Transférez des produits entre vos lieux sans modifier l’organisation actuelle de votre système d’entrepôt.
             </DialogDescription>
           </DialogHeader>
 

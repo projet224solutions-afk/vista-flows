@@ -431,7 +431,7 @@ export default function VendeurDashboard() {
 
           {/* Contenu principal */}
           <main
-            className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-auto overflow-y-auto pt-4 pb-24 md:pb-8 w-full max-w-full"
+            className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-auto overflow-y-auto pt-4 pb-28 lg:pb-12 w-full max-w-full"
             role="main"
             aria-label="Contenu principal du dashboard vendeur"
           >
