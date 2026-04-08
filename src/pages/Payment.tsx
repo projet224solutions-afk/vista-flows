@@ -24,7 +24,7 @@ import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManage
 import { JomyPaymentSelector } from "@/components/payment/JomyPaymentSelector";
 import { useFormPersistence } from "@/hooks/useAppPersistence";
 import { createOrder } from "@/services/orderBackendService";
-import { previewWalletTransfer, transferToWallet } from "@/services/walletBackendService";
+import { previewWalletTransfer, resolveWalletRecipient, transferToWallet } from "@/services/walletBackendService";
 
 // Mapping pays → devise pour dériver la devise du vendeur
 const COUNTRY_CURRENCY_MAP: Record<string, string> = {
@@ -661,42 +661,63 @@ export default function Payment() {
 
     setProcessing(true);
     try {
-      // Convertir le code (custom_id/public_id ou vendor_code) en user_id
-      const normalizedRecipient = recipientId.trim().toUpperCase();
+      const normalizedRecipient = recipientId.trim();
+      const isMarketplaceRecipientLocked = Boolean(
+        searchParams.get('productId') !== null || location.state?.productId || location.state?.fromCart
+      );
 
-      // 1) Chercher dans profiles (transferts entre utilisateurs)
-      let receiverId: string | null = null;
-      const { data: profileMatch, error: profileMatchError } = await supabase
-        .from('profiles')
-        .select('id')
-        .or(`public_id.eq.${normalizedRecipient},custom_id.eq.${normalizedRecipient}`)
-        .maybeSingle();
+      // Pour un achat marketplace, on connaît déjà l'ID réel du vendeur.
+      let receiverId: string | null = isMarketplaceRecipientLocked
+        ? productPaymentInfo?.vendorUserId || cartPaymentInfo?.vendorUserId || null
+        : null;
 
-      if (profileMatchError) {
-        console.warn('Erreur lookup profiles destinataire:', profileMatchError);
+      // Sinon, essayer la résolution backend (ID public, email, téléphone, UUID).
+      if (!receiverId && normalizedRecipient) {
+        const recipientResolution = await resolveWalletRecipient(normalizedRecipient);
+        if (recipientResolution.success && recipientResolution.data?.userId) {
+          receiverId = recipientResolution.data.userId;
+        }
       }
 
-      if (profileMatch?.id) receiverId = profileMatch.id;
-
-      // 2) Sinon, chercher dans vendors (paiements vers un vendeur via vendor_code/public_id)
+      // Fallback legacy pour certains vendeurs encore résolus via profiles/vendors.
       if (!receiverId) {
-        const { data: vendorMatch, error: vendorMatchError } = await supabase
-          .from('vendors')
-          .select('user_id')
-          .or(`vendor_code.eq.${normalizedRecipient},public_id.eq.${normalizedRecipient}`)
+        const legacyLookupValue = normalizedRecipient.toUpperCase();
+
+        const { data: profileMatch, error: profileMatchError } = await supabase
+          .from('profiles')
+          .select('id')
+          .or(`public_id.eq.${legacyLookupValue},custom_id.eq.${legacyLookupValue}`)
           .maybeSingle();
 
-        if (vendorMatchError) {
-          console.warn('Erreur lookup vendors destinataire:', vendorMatchError);
+        if (profileMatchError) {
+          console.warn('Erreur lookup profiles destinataire:', profileMatchError);
         }
 
-        if (vendorMatch?.user_id) receiverId = vendorMatch.user_id;
+        if (profileMatch?.id) {
+          receiverId = profileMatch.id;
+        }
+
+        if (!receiverId) {
+          const { data: vendorMatch, error: vendorMatchError } = await supabase
+            .from('vendors')
+            .select('user_id')
+            .or(`vendor_code.eq.${legacyLookupValue},public_id.eq.${legacyLookupValue}`)
+            .maybeSingle();
+
+          if (vendorMatchError) {
+            console.warn('Erreur lookup vendors destinataire:', vendorMatchError);
+          }
+
+          if (vendorMatch?.user_id) {
+            receiverId = vendorMatch.user_id;
+          }
+        }
       }
 
       if (!receiverId) {
         toast({
           title: "Erreur",
-          description: "Utilisateur introuvable avec cet ID",
+          description: "Destinataire introuvable. Utilisez un ID public, un email ou un téléphone valide.",
           variant: "destructive"
         });
         setProcessing(false);
@@ -1226,15 +1247,19 @@ export default function Payment() {
                             <Label htmlFor="recipient-id">ID du destinataire *</Label>
                             <Input
                               id="recipient-id"
-                              placeholder="VND0001, USR0001..."
+                              placeholder={searchParams.get('productId') !== null || location.state?.productId || location.state?.fromCart
+                                ? 'ID vendeur détecté automatiquement'
+                                : 'ID public, email ou téléphone'}
                               value={recipientId}
-                              onChange={(e) => setRecipientId(e.target.value.toUpperCase())}
-                              maxLength={20}
+                              onChange={(e) => setRecipientId(e.target.value)}
+                              maxLength={64}
                               readOnly={searchParams.get('productId') !== null || location.state?.productId || location.state?.fromCart}
                               className={searchParams.get('productId') || location.state?.productId || location.state?.fromCart ? 'bg-muted cursor-not-allowed' : ''}
                             />
                             <p className="text-xs text-muted-foreground">
-                              Format: 3 lettres + 4 chiffres (ex: VND0001)
+                              {searchParams.get('productId') !== null || location.state?.productId || location.state?.fromCart
+                                ? 'ID vendeur appliqué automatiquement pour cet achat marketplace.'
+                                : 'Formats acceptés : VND0001, VEN-6D2C8F2F, email ou téléphone.'}
                             </p>
                           </div>
                           <div className="space-y-2">
