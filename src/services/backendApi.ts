@@ -174,6 +174,12 @@ export async function backendFetch<T = unknown>(
         await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
         continue;
       }
+
+      const isLocalApiRequest = import.meta.env.DEV && (backendConfig.baseUrl === '' || /https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(backendConfig.baseUrl));
+      if (isLocalApiRequest) {
+        return { success: false, error: 'Serveur backend local indisponible. Lancez npm run dev:backend.' };
+      }
+
       return { success: false, error: 'Erreur réseau' };
     }
   }

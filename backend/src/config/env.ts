@@ -48,7 +48,7 @@ export const env = {
   // CORS
   CORS_ORIGINS: optionalEnv(
     'CORS_ORIGINS',
-    'http://localhost,http://localhost:3000,http://localhost:5173,http://localhost:8080,https://localhost:5173,capacitor://localhost,ionic://localhost,https://224solution.net,https://www.224solution.net,https://*.224solution.net'
+    'http://localhost,http://localhost:3000,http://localhost:5173,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:8080,http://[::1]:3000,http://[::1]:5173,http://[::1]:8080,https://localhost:5173,capacitor://localhost,ionic://localhost,https://224solution.net,https://www.224solution.net,https://*.224solution.net'
   ),
 
   // CSP
@@ -86,6 +86,12 @@ export const env = {
       'http://localhost:3000',
       'http://localhost:5173',
       'http://localhost:8080',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:8080',
+      'http://[::1]:3000',
+      'http://[::1]:5173',
+      'http://[::1]:8080',
       'https://localhost:5173',
       'capacitor://localhost',
       'ionic://localhost',

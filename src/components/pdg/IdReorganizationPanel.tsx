@@ -76,6 +76,7 @@ export function IdReorganizationPanel() {
 
     setStats(newStats);
     setLoading(false);
+    return newStats;
   };
 
   const handleReorganize = async (roleType: RoleType) => {
@@ -108,20 +109,39 @@ export function IdReorganizationPanel() {
       const results = await reorganizeAllIds();
       let totalReorganized = 0;
       let totalErrors = 0;
+      const aggregatedResults: { oldId: string; newId: string }[] = [];
+      const detailedErrors = Array.from(
+        new Set(
+          Object.values(results).flatMap((result) => result.errors)
+        )
+      );
 
       for (const roleType of Object.keys(results) as RoleType[]) {
         const result = results[roleType];
         totalReorganized += result.reorganized.length;
         totalErrors += result.errors.length;
+        aggregatedResults.push(...result.reorganized.map(({ oldId, newId }) => ({ oldId, newId })));
       }
 
-      if (totalErrors === 0) {
+      setLastResults(aggregatedResults);
+
+      if (totalErrors === 0 && totalReorganized > 0) {
         toast.success(`${totalReorganized} ID(s) réorganisé(s) au total`);
+      } else if (totalErrors === 0) {
+        toast.info('Aucun ID supplémentaire à réorganiser.');
       } else {
-        toast.warning(`${totalReorganized} réorganisé(s), ${totalErrors} erreur(s)`);
+        toast.warning(detailedErrors[0] ?? `${totalReorganized} réorganisé(s), ${totalErrors} erreur(s)`);
       }
 
-      await loadAllStats();
+      const refreshedStats = await loadAllStats();
+      const remainingIssues = refreshedStats.reduce(
+        (sum, stat) => sum + stat.gapCount + stat.legacyCount + stat.invalidCount,
+        0
+      );
+
+      if (totalErrors === 0 && totalReorganized === 0 && remainingIssues > 0) {
+        toast.warning('La réorganisation a bien été lancée, mais la base doit encore être alignée sur les préfixes CLT/BST. Appliquez la migration SQL puis relancez l’action.');
+      }
     } catch (error: any) {
       toast.error(`Erreur: ${error.message}`);
     } finally {
@@ -132,6 +152,9 @@ export function IdReorganizationPanel() {
   const totalGaps = stats.reduce((sum, s) => sum + s.gapCount, 0);
   const totalLegacyIds = stats.reduce((sum, s) => sum + s.legacyCount + s.invalidCount, 0);
   const hasIssues = totalGaps > 0 || totalLegacyIds > 0;
+  const hasLegacyPrefixDrift = stats.some(
+    (stat) => (stat.roleType === 'client' || stat.roleType === 'bureau') && stat.legacyCount > 0
+  );
 
   return (
     <Card className="w-full">
@@ -189,6 +212,15 @@ export function IdReorganizationPanel() {
                 Les écarts affichés représentent des numéros libres dans la séquence active, pas des utilisateurs perdus.
               </AlertDescription>
             </Alert>
+
+            {hasLegacyPrefixDrift && (
+              <Alert className="mb-4 border-amber-500/40 bg-amber-500/5">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertDescription>
+                  Des IDs utilisent encore un ancien préfixe (`CLI` / `SYN`). Le correctif d’alignement `CLT` / `BST` doit être appliqué côté base pour que <strong>Tout réorganiser</strong> les corrige définitivement.
+                </AlertDescription>
+              </Alert>
+            )}
 
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="mb-4">

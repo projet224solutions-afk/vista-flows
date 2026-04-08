@@ -96,6 +96,39 @@ FROM public.profiles p
 LEFT JOIN public.user_ids ui ON ui.user_id = p.id
 WHERE ui.user_id IS NULL;
 
+-- 4b) Prefix helper alignment + remaining legacy prefixes
+SELECT
+  public.identity_role_prefix('client') AS client_generation_prefix,
+  public.identity_role_to_prefix('client') AS client_reorganization_prefix,
+  public.identity_role_prefix('bureau') AS bureau_generation_prefix,
+  public.identity_role_to_prefix('bureau') AS bureau_reorganization_prefix;
+
+SELECT
+  'legacy_cli_profiles_or_custom_ids' AS check_name,
+  COUNT(*) AS affected_count
+FROM public.profiles
+WHERE COALESCE(public_id, '') LIKE 'CLI%'
+   OR COALESCE(custom_id, '') LIKE 'CLI%'
+UNION ALL
+SELECT
+  'legacy_cli_user_ids' AS check_name,
+  COUNT(*) AS affected_count
+FROM public.user_ids
+WHERE COALESCE(custom_id, '') LIKE 'CLI%'
+UNION ALL
+SELECT
+  'legacy_syn_profiles_or_custom_ids' AS check_name,
+  COUNT(*) AS affected_count
+FROM public.profiles
+WHERE COALESCE(public_id, '') LIKE 'SYN%'
+   OR COALESCE(custom_id, '') LIKE 'SYN%'
+UNION ALL
+SELECT
+  'legacy_syn_user_ids' AS check_name,
+  COUNT(*) AS affected_count
+FROM public.user_ids
+WHERE COALESCE(custom_id, '') LIKE 'SYN%';
+
 -- 5) Sequence continuity audit by role prefix
 WITH role_prefix AS (
   SELECT
@@ -104,7 +137,7 @@ WITH role_prefix AS (
     CASE LOWER(BTRIM(COALESCE(p.role::TEXT, '')))
       WHEN 'vendeur' THEN 'VND'
       WHEN 'vendor' THEN 'VND'
-      WHEN 'client' THEN 'CLI'
+      WHEN 'client' THEN 'CLT'
       WHEN 'agent' THEN 'AGT'
       WHEN 'pdg' THEN 'PDG'
       WHEN 'livreur' THEN 'LIV'

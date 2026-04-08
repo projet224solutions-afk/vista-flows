@@ -20,6 +20,14 @@ interface IdGap {
   userId: string;
 }
 
+interface RpcReorganizationRow {
+  role_type: string;
+  user_id: string;
+  old_id: string | null;
+  new_id: string;
+  action: string;
+}
+
 interface NormalizedIdRow {
   custom_id: string;
   user_id: string;
@@ -51,9 +59,85 @@ const LEGACY_PREFIXES: Partial<Record<RoleType, string[]>> = {
   bureau: ['SYN'],
 };
 
+const ALL_ROLE_TYPES: RoleType[] = ['vendor', 'client', 'agent', 'driver', 'taxi', 'livreur', 'bureau', 'pdg', 'transitaire', 'worker'];
+
+const PREFIX_ALIGNMENT_HINTS: Partial<Record<RoleType, string>> = {
+  client: 'Le backend renvoie encore le préfixe client historique `CLI`. Appliquez la migration d’alignement `CLT` puis relancez la réorganisation.',
+  bureau: 'Le backend renvoie encore un ancien préfixe bureau. Appliquez la migration d’alignement `BST` puis relancez la réorganisation.',
+};
+
+function createEmptyResult(): ReorganizationResult {
+  return {
+    success: true,
+    reorganized: [],
+    errors: [],
+  };
+}
+
+function normalizeRoleType(role: string | null | undefined): RoleType | null {
+  switch (String(role ?? '').trim().toLowerCase()) {
+    case 'vendor':
+    case 'vendeur':
+      return 'vendor';
+    case 'client':
+      return 'client';
+    case 'agent':
+      return 'agent';
+    case 'driver':
+    case 'chauffeur':
+      return 'driver';
+    case 'taxi':
+      return 'taxi';
+    case 'livreur':
+      return 'livreur';
+    case 'bureau':
+    case 'syndicat':
+      return 'bureau';
+    case 'pdg':
+      return 'pdg';
+    case 'transitaire':
+      return 'transitaire';
+    case 'worker':
+      return 'worker';
+    default:
+      return null;
+  }
+}
+
 function getSupportedPrefixes(roleType: RoleType): string[] {
   const currentPrefix = getIdConfig(roleType).prefix;
   return Array.from(new Set([currentPrefix, ...(LEGACY_PREFIXES[roleType] ?? [])]));
+}
+
+function collectUnexpectedPrefixErrors(roleType: RoleType, rows: RpcReorganizationRow[]): string[] {
+  const expectedPrefix = getIdConfig(roleType).prefix;
+  const unexpectedPrefixes = Array.from(
+    new Set(
+      rows
+        .filter((row) => normalizeRoleType(row.role_type) === roleType && typeof row.new_id === 'string' && row.new_id.length >= 3)
+        .map((row) => row.new_id.slice(0, 3).toUpperCase())
+        .filter((prefix) => prefix !== expectedPrefix)
+    )
+  );
+
+  if (unexpectedPrefixes.length === 0) {
+    return [];
+  }
+
+  return [
+    PREFIX_ALIGNMENT_HINTS[roleType] ??
+      `Le backend renvoie encore ${unexpectedPrefixes.join(', ')} pour ${roleType} au lieu de ${expectedPrefix}. Appliquez la migration d'alignement des préfixes puis relancez la réorganisation.`,
+  ];
+}
+
+function normalizeReorganizationError(error: unknown): string {
+  const rawMessage = error instanceof Error ? error.message : String(error ?? 'Erreur inconnue pendant la réorganisation');
+
+  if (/column reference\s+"user_id"\s+is ambiguous/i.test(rawMessage)) {
+    return 'Le hotfix SQL de réorganisation n’est pas encore appliqué en base. Exécutez la migration `20260408173500_fix_reorganize_rpc_user_id_ambiguity.sql`, puis relancez l’action.';
+  }
+
+  return rawMessage;
 }
 
 async function fetchRoleIdDataset(roleType: RoleType): Promise<RoleIdDataset> {
@@ -164,11 +248,7 @@ export async function analyzeIdGaps(roleType: RoleType): Promise<{
  * Les IDs sont décalés vers le bas pour remplir les trous
  */
 export async function reorganizeIds(roleType: RoleType): Promise<ReorganizationResult> {
-  const result: ReorganizationResult = {
-    success: true,
-    reorganized: [],
-    errors: []
-  };
+  const result = createEmptyResult();
 
   try {
     const { data, error } = await supabase.rpc('reorganize_user_ids_from_db', {
@@ -179,13 +259,7 @@ export async function reorganizeIds(roleType: RoleType): Promise<ReorganizationR
       throw new Error(`Erreur RPC réorganisation: ${error.message}`);
     }
 
-    const rows = (data || []) as Array<{
-      role_type: string;
-      user_id: string;
-      old_id: string | null;
-      new_id: string;
-      action: string;
-    }>;
+    const rows = (data || []) as RpcReorganizationRow[];
 
     result.reorganized = rows
       .filter((row) => row.action === 'reorganized')
@@ -195,12 +269,12 @@ export async function reorganizeIds(roleType: RoleType): Promise<ReorganizationR
         userId: row.user_id,
       }));
 
+    result.errors.push(...collectUnexpectedPrefixErrors(roleType, rows));
     result.success = result.errors.length === 0;
     return result;
-
   } catch (error: any) {
     result.success = false;
-    result.errors.push(error.message);
+    result.errors.push(normalizeReorganizationError(error));
     return result;
   }
 }
@@ -209,15 +283,56 @@ export async function reorganizeIds(roleType: RoleType): Promise<ReorganizationR
  * Réorganise tous les types d'IDs
  */
 export async function reorganizeAllIds(): Promise<Record<RoleType, ReorganizationResult>> {
-  const roleTypes: RoleType[] = ['vendor', 'client', 'agent', 'driver', 'taxi', 'livreur', 'bureau', 'pdg', 'transitaire', 'worker'];
-  const results: Partial<Record<RoleType, ReorganizationResult>> = {};
+  const results = Object.fromEntries(
+    ALL_ROLE_TYPES.map((roleType) => [roleType, createEmptyResult()])
+  ) as Record<RoleType, ReorganizationResult>;
 
-  for (const roleType of roleTypes) {
-    console.log(`📋 Réorganisation des IDs ${roleType}...`);
-    results[roleType] = await reorganizeIds(roleType);
+  try {
+    const { data, error } = await supabase.rpc('reorganize_user_ids_from_db', {
+      p_role_type: null,
+    });
+
+    if (error) {
+      throw new Error(`Erreur RPC réorganisation globale: ${error.message}`);
+    }
+
+    const rows = (data || []) as RpcReorganizationRow[];
+
+    for (const row of rows) {
+      const roleType = normalizeRoleType(row.role_type);
+
+      if (!roleType) {
+        continue;
+      }
+
+      if (row.action === 'reorganized') {
+        results[roleType].reorganized.push({
+          oldId: row.old_id || '',
+          newId: row.new_id,
+          userId: row.user_id,
+        });
+      }
+    }
+
+    for (const roleType of ALL_ROLE_TYPES) {
+      results[roleType].errors.push(...collectUnexpectedPrefixErrors(roleType, rows));
+      results[roleType].success = results[roleType].errors.length === 0;
+    }
+
+    return results;
+  } catch (error: any) {
+    const message = normalizeReorganizationError(error);
+
+    for (const roleType of ALL_ROLE_TYPES) {
+      results[roleType] = {
+        success: false,
+        reorganized: [],
+        errors: [message],
+      };
+    }
+
+    return results;
   }
-
-  return results as Record<RoleType, ReorganizationResult>;
 }
 
 /**

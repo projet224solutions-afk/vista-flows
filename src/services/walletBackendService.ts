@@ -353,3 +353,14 @@ export async function changeWalletPin(currentPin: string, newPin: string, confir
     },
   });
 }
+
+export async function resetWalletPin(accountPassword: string, newPin: string, confirmPin: string) {
+  return backendFetch<{ message: string }>('/api/v2/wallet/pin/reset', {
+    method: 'POST',
+    body: {
+      account_password: accountPassword,
+      new_pin: newPin,
+      confirm_pin: confirmPin,
+    },
+  });
+}

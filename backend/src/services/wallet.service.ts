@@ -99,32 +99,54 @@ async function persistTransferHistory(params: {
       metadata,
     });
 
-  const enhancedTxPromise = transactionId
-    ? supabaseAdmin
+  const persistEnhancedHistory = async () => {
+    const enhancedPayload = {
+      sender_id: senderId,
+      receiver_id: receiverId,
+      amount: amountSent,
+      method: transferType,
+      status: 'completed',
+      currency: senderCurrency,
+      metadata,
+    };
+
+    if (transactionId) {
+      const { data: updatedRows, error: updateError } = await supabaseAdmin
         .from('enhanced_transactions')
-        .update({
-          status: 'completed',
-          currency: senderCurrency,
-          transaction_type: transferType,
-          metadata,
-        })
+        .update(enhancedPayload)
         .eq('id', transactionId)
-    : supabaseAdmin
+        .select('id');
+
+      if (updateError) {
+        return { error: updateError };
+      }
+
+      if (Array.isArray(updatedRows) && updatedRows.length > 0) {
+        return { error: null };
+      }
+
+      const { error: insertWithIdError } = await supabaseAdmin
         .from('enhanced_transactions')
         .insert({
-          sender_id: senderId,
-          receiver_id: receiverId,
-          amount: amountSent,
-          method: 'wallet',
-          status: 'completed',
-          currency: senderCurrency,
-          transaction_type: transferType,
-          metadata,
+          id: transactionId,
+          ...enhancedPayload,
         });
+
+      if (!insertWithIdError) {
+        return { error: null };
+      }
+    }
+
+    const { error: insertError } = await supabaseAdmin
+      .from('enhanced_transactions')
+      .insert(enhancedPayload);
+
+    return { error: insertError };
+  };
 
   const [walletTxResult, enhancedTxResult] = await Promise.all([
     walletTxPromise,
-    enhancedTxPromise,
+    persistEnhancedHistory(),
   ]);
 
   if (walletTxResult?.error) {

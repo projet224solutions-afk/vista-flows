@@ -25,7 +25,7 @@ import { logger } from '../config/logger.js';
 import { AFRICAN_BANK_SOURCE_URLS, isAfricanBankSourceUrl } from '../constants/africanBankSources.js';
 import { creditWallet, debitWallet, transferBetweenWallets } from '../services/wallet.service.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
-import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalletPinState, setupWalletPin, verifyWalletPin } from '../services/walletPin.service.js';
+import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalletPinState, resetWalletPinWithPassword, setupWalletPin, verifyWalletPin } from '../services/walletPin.service.js';
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
@@ -54,9 +54,13 @@ function isFxSuccessStatus(status: string | null | undefined): boolean {
   return normalized === 'success' || normalized === 'completed' || normalized === 'ok';
 }
 
+function hasWalletPinEnabled(walletPinState: { pin_enabled?: boolean | null; pin_hash?: string | null } | null | undefined): boolean {
+  return Boolean(walletPinState?.pin_enabled ?? walletPinState?.pin_hash);
+}
+
 async function requireValidTransactionPin(userId: string, pin: unknown): Promise<{ ok: boolean; error?: string; lockedUntil?: string | null }> {
   const walletPinState = await getWalletPinState(userId);
-  const pinEnabled = Boolean(walletPinState?.pin_enabled);
+  const pinEnabled = hasWalletPinEnabled(walletPinState);
 
   // Compatibility mode: if PIN is not configured yet, keep operations available.
   if (!pinEnabled) {
@@ -841,20 +845,60 @@ router.get('/transactions', verifyJWT, async (req: AuthenticatedRequest, res: Re
  */
 router.get('/status', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const userId = req.user!.id;
     const { data, error } = await supabaseAdmin
       .from('wallets')
       .select('id, balance, currency, wallet_status, is_blocked, blocked_reason, blocked_at, biometric_enabled, daily_limit, monthly_limit, created_at, updated_at, pin_enabled, pin_failed_attempts, pin_locked_until, pin_updated_at')
-      .eq('user_id', req.user!.id)
+      .eq('user_id', userId)
       .maybeSingle();
 
-    if (error) throw error;
+    if (!error) {
+      if (!data) {
+        res.json({ success: true, exists: false, data: null });
+        return;
+      }
 
-    if (!data) {
+      res.json({ success: true, exists: true, data });
+      return;
+    }
+
+    const errorMessage = String(error.message || error.details || '');
+    const pinSchemaMissing = /pin_hash|pin_enabled|pin_failed_attempts|pin_locked_until|pin_updated_at/i.test(errorMessage)
+      && /column|does not exist|schema cache/i.test(errorMessage);
+
+    if (!pinSchemaMissing) {
+      throw error;
+    }
+
+    const [{ data: walletData, error: walletError }, pinState] = await Promise.all([
+      supabaseAdmin
+        .from('wallets')
+        .select('id, balance, currency, wallet_status, is_blocked, blocked_reason, blocked_at, biometric_enabled, daily_limit, monthly_limit, created_at, updated_at')
+        .eq('user_id', userId)
+        .maybeSingle(),
+      getWalletPinState(userId),
+    ]);
+
+    if (walletError) {
+      throw walletError;
+    }
+
+    if (!walletData) {
       res.json({ success: true, exists: false, data: null });
       return;
     }
 
-    res.json({ success: true, exists: true, data });
+    res.json({
+      success: true,
+      exists: true,
+      data: {
+        ...walletData,
+        pin_enabled: hasWalletPinEnabled(pinState),
+        pin_failed_attempts: Number(pinState?.pin_failed_attempts || 0),
+        pin_locked_until: pinState?.pin_locked_until || null,
+        pin_updated_at: pinState?.pin_updated_at || null,
+      },
+    });
   } catch (error: any) {
     logger.error(`Wallet status error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
@@ -867,7 +911,7 @@ router.get('/pin/status', verifyJWT, async (req: AuthenticatedRequest, res: Resp
     res.json({
       success: true,
       data: {
-        pin_enabled: Boolean(wallet?.pin_enabled),
+        pin_enabled: hasWalletPinEnabled(wallet),
         pin_failed_attempts: Number(wallet?.pin_failed_attempts || 0),
         pin_locked_until: wallet?.pin_locked_until || null,
         pin_updated_at: wallet?.pin_updated_at || null,
@@ -923,6 +967,30 @@ router.post('/pin/change', verifyJWT, async (req: AuthenticatedRequest, res: Res
   } catch (error: any) {
     logger.error(`Wallet pin change error: ${error.message}`);
     res.status(400).json({ success: false, error: error.message || 'Erreur lors du changement du code PIN' });
+  }
+});
+
+router.post('/pin/reset', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { account_password, new_pin, confirm_pin, accountPassword, newPin, confirmPin } = req.body || {};
+    const accountPasswordValue = account_password ?? accountPassword;
+    const newPinValue = new_pin ?? newPin;
+    const confirmPinValue = confirm_pin ?? confirmPin;
+
+    if (typeof accountPasswordValue !== 'string' || typeof newPinValue !== 'string' || typeof confirmPinValue !== 'string') {
+      res.status(400).json({ success: false, error: 'account_password, new_pin et confirm_pin requis' });
+      return;
+    }
+    if (newPinValue !== confirmPinValue) {
+      res.status(400).json({ success: false, error: 'Le nouveau code PIN et sa confirmation ne correspondent pas' });
+      return;
+    }
+
+    await resetWalletPinWithPassword(req.user!.id, req.user?.email || null, accountPasswordValue, newPinValue);
+    res.json({ success: true, message: 'Code PIN réinitialisé avec succès' });
+  } catch (error: any) {
+    logger.error(`Wallet pin reset error: ${error.message}`);
+    res.status(400).json({ success: false, error: error.message || 'Erreur lors de la réinitialisation du code PIN' });
   }
 });
 

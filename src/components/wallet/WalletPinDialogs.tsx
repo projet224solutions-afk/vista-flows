@@ -12,6 +12,7 @@ interface WalletPinPromptDialogProps {
   loading?: boolean;
   error?: string | null;
   onConfirm: (pin: string) => Promise<void>;
+  onForgotPin?: () => void;
 }
 
 export function WalletPinPromptDialog({
@@ -22,6 +23,7 @@ export function WalletPinPromptDialog({
   loading = false,
   error,
   onConfirm,
+  onForgotPin,
 }: WalletPinPromptDialogProps) {
   const [pin, setPin] = useState('');
 
@@ -52,6 +54,13 @@ export function WalletPinPromptDialog({
             />
           </div>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {onForgotPin ? (
+            <div className="text-right">
+              <Button type="button" variant="link" className="h-auto px-0 text-xs" onClick={onForgotPin}>
+                PIN oublié ? Réinitialiser
+              </Button>
+            </div>
+          ) : null}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Annuler</Button>
@@ -65,10 +74,11 @@ export function WalletPinPromptDialog({
 interface WalletPinSetupDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  mode?: 'setup' | 'change';
+  mode?: 'setup' | 'change' | 'reset';
   loading?: boolean;
   error?: string | null;
-  onSubmit: (payload: { currentPin?: string; pin: string; confirmPin: string }) => Promise<void>;
+  onSubmit: (payload: { currentPin?: string; accountPassword?: string; pin: string; confirmPin: string }) => Promise<void>;
+  onForgotPin?: () => void;
 }
 
 export function WalletPinSetupDialog({
@@ -78,19 +88,23 @@ export function WalletPinSetupDialog({
   loading = false,
   error,
   onSubmit,
+  onForgotPin,
 }: WalletPinSetupDialogProps) {
   const [currentPin, setCurrentPin] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
 
   const handleSubmit = async () => {
     await onSubmit({
       currentPin: mode === 'change' ? currentPin : undefined,
+      accountPassword: mode === 'reset' ? accountPassword : undefined,
       pin,
       confirmPin,
     });
     if (!loading) {
       setCurrentPin('');
+      setAccountPassword('');
       setPin('');
       setConfirmPin('');
     }
@@ -100,11 +114,19 @@ export function WalletPinSetupDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{mode === 'change' ? 'Modifier le code PIN' : 'Configurer le code PIN wallet'}</DialogTitle>
+          <DialogTitle>
+            {mode === 'change'
+              ? 'Modifier le code PIN'
+              : mode === 'reset'
+                ? 'Réinitialiser le code PIN'
+                : 'Configurer le code PIN wallet'}
+          </DialogTitle>
           <DialogDescription>
             {mode === 'change'
               ? 'Entrez votre ancien code puis le nouveau code de sécurité à 6 chiffres.'
-              : 'Créez un code de sécurité à 6 chiffres. Il sera demandé pour chaque retrait ou transfert.'}
+              : mode === 'reset'
+                ? 'Entrez le mot de passe de votre compte, puis choisissez un nouveau code PIN à 6 chiffres.'
+                : 'Créez un code de sécurité à 6 chiffres. Il sera demandé pour chaque retrait ou transfert.'}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -120,6 +142,25 @@ export function WalletPinSetupDialog({
                 onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000"
                 className="text-center tracking-[0.4em] text-lg"
+              />
+              {onForgotPin ? (
+                <div className="mt-1 text-right">
+                  <Button type="button" variant="link" className="h-auto px-0 text-xs" onClick={onForgotPin}>
+                    PIN oublié ?
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {mode === 'reset' ? (
+            <div>
+              <Label htmlFor="wallet-account-password">Mot de passe du compte</Label>
+              <Input
+                id="wallet-account-password"
+                type="password"
+                value={accountPassword}
+                onChange={(e) => setAccountPassword(e.target.value)}
+                placeholder="Votre mot de passe de connexion"
               />
             </div>
           ) : null}
@@ -155,9 +196,9 @@ export function WalletPinSetupDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Annuler</Button>
           <Button
             onClick={handleSubmit}
-            disabled={loading || pin.length !== 6 || confirmPin.length !== 6 || (mode === 'change' && currentPin.length !== 6)}
+            disabled={loading || pin.length !== 6 || confirmPin.length !== 6 || (mode === 'change' && currentPin.length !== 6) || (mode === 'reset' && accountPassword.trim().length === 0)}
           >
-            {mode === 'change' ? 'Mettre à jour' : 'Activer le code PIN'}
+            {mode === 'change' ? 'Mettre à jour' : mode === 'reset' ? 'Réinitialiser le PIN' : 'Activer le code PIN'}
           </Button>
         </DialogFooter>
       </DialogContent>

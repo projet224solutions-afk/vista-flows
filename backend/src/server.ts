@@ -76,6 +76,22 @@ function originMatchesPattern(origin: string, pattern: string): boolean {
   return origin.startsWith(prefix) && origin.endsWith(suffix);
 }
 
+function isAllowedLocalDevOrigin(origin: string): boolean {
+  try {
+    const parsed = new URL(origin);
+    const hostname = parsed.hostname.replace(/^\[(.*)\]$/, '$1');
+
+    return [
+      'localhost',
+      '127.0.0.1',
+      '::1',
+      '0.0.0.0',
+    ].includes(hostname);
+  } catch {
+    return false;
+  }
+}
+
 // ==================== SECURITY MIDDLEWARES ====================
 
 const cspConnectSrc = env.CSP_CONNECT_SRC
@@ -104,8 +120,9 @@ app.use(cors({
     if (!origin) return callback(null, true);
 
     const isAllowed = env.corsOrigins.some((allowedOrigin) => originMatchesPattern(origin, allowedOrigin));
+    const isLocalDevOrigin = env.isDevelopment && isAllowedLocalDevOrigin(origin);
 
-    if (isAllowed) {
+    if (isAllowed || isLocalDevOrigin) {
       callback(null, true);
     } else {
       logger.warn(`Blocked CORS from: ${origin}`);
@@ -113,7 +130,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-API-Key', 'Idempotency-Key'],
   exposedHeaders: ['X-Request-Id', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
 }));

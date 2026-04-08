@@ -22,7 +22,7 @@ import {
   Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { changeWalletPin, getWalletPinStatus, resolveWalletRecipient, setupWalletPin } from '@/services/walletBackendService';
+import { changeWalletPin, getWalletPinStatus, resetWalletPin, resolveWalletRecipient, setupWalletPin } from '@/services/walletBackendService';
 import { WalletPinPromptDialog, WalletPinSetupDialog } from '@/components/wallet/WalletPinDialogs';
 
 // ChapChapPay - Mobile Money
@@ -40,7 +40,7 @@ export function WalletOperationsPanel() {
   const [pinLoading, setPinLoading] = useState(false);
   const [pinSetupOpen, setPinSetupOpen] = useState(false);
   const [pinPromptOpen, setPinPromptOpen] = useState(false);
-  const [pinSetupMode, setPinSetupMode] = useState<'setup' | 'change'>('setup');
+  const [pinSetupMode, setPinSetupMode] = useState<'setup' | 'change' | 'reset'>('setup');
 
   // États formulaires
   const [depositAmount, setDepositAmount] = useState('');
@@ -54,13 +54,23 @@ export function WalletOperationsPanel() {
   const [transferDescription, setTransferDescription] = useState('');
 
   const loadPinStatus = async () => {
-    const response = await getWalletPinStatus();
-    if (response.success && response.data) {
-      setPinStatus({
-        pin_enabled: response.data.pin_enabled,
-        pin_locked_until: response.data.pin_locked_until,
-      });
+    try {
+      const response = await getWalletPinStatus();
+      if (response.success && response.data) {
+        setPinStatus({
+          pin_enabled: response.data.pin_enabled,
+          pin_locked_until: response.data.pin_locked_until,
+        });
+        return;
+      }
+    } catch (error) {
+      console.warn('Impossible de charger le statut PIN du wallet:', error);
     }
+
+    setPinStatus({
+      pin_enabled: false,
+      pin_locked_until: null,
+    });
   };
 
   useEffect(() => {
@@ -191,14 +201,26 @@ export function WalletOperationsPanel() {
     }
   };
 
-  const handlePinSetup = async ({ currentPin, pin, confirmPin }: { currentPin?: string; pin: string; confirmPin: string }) => {
+  const handlePinSetup = async ({
+    currentPin,
+    accountPassword,
+    pin,
+    confirmPin,
+  }: {
+    currentPin?: string;
+    accountPassword?: string;
+    pin: string;
+    confirmPin: string;
+  }) => {
     try {
       setPinLoading(true);
       setPinError(null);
 
       const response = pinSetupMode === 'change'
         ? await changeWalletPin(currentPin || '', pin, confirmPin)
-        : await setupWalletPin(pin, confirmPin);
+        : pinSetupMode === 'reset'
+          ? await resetWalletPin(accountPassword || '', pin, confirmPin)
+          : await setupWalletPin(pin, confirmPin);
 
       if (!response.success) {
         throw new Error(response.error || 'Erreur configuration code PIN');
@@ -213,7 +235,13 @@ export function WalletOperationsPanel() {
         return;
       }
 
-      toast.success(pinSetupMode === 'change' ? 'Code PIN modifié' : 'Code PIN activé');
+      toast.success(
+        pinSetupMode === 'change'
+          ? 'Code PIN modifié'
+          : pinSetupMode === 'reset'
+            ? 'Code PIN réinitialisé'
+            : 'Code PIN activé'
+      );
       setPinAction(null);
     } catch (error: any) {
       setPinError(error?.message || 'Erreur configuration code PIN');
@@ -475,6 +503,12 @@ export function WalletOperationsPanel() {
         loading={pinLoading}
         error={pinError}
         onConfirm={handlePinConfirm}
+        onForgotPin={() => {
+          setPinPromptOpen(false);
+          setPinError(null);
+          setPinSetupMode('reset');
+          setPinSetupOpen(true);
+        }}
       />
       <WalletPinSetupDialog
         open={pinSetupOpen}
@@ -491,6 +525,10 @@ export function WalletOperationsPanel() {
         loading={pinLoading}
         error={pinError}
         onSubmit={handlePinSetup}
+        onForgotPin={() => {
+          setPinError(null);
+          setPinSetupMode('reset');
+        }}
       />
     </>
   );

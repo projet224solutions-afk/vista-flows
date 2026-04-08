@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ interface Transaction {
   method: string;
   created_at: string;
   status: string;
+  metadata?: any;
 }
 
 interface WalletTransactionHistoryProps {
@@ -45,19 +46,13 @@ export const WalletTransactionHistory = ({
   const [showAll, setShowAll] = useState(false);
   const INITIAL_DISPLAY_COUNT = 3;
 
-  useEffect(() => {
-    if (user) {
-      loadTransactions();
-    }
-  }, [user]);
-
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
     setError(null);
+
     try {
-      // Récupérer le wallet de l'utilisateur
       const { data: walletData, error: walletError } = await supabase
         .from('wallets')
         .select('id, balance, currency')
@@ -70,58 +65,186 @@ export const WalletTransactionHistory = ({
         return;
       }
 
-      if (walletData) {
-        setWalletCurrency(walletData.currency);
+      setWalletCurrency(walletData?.currency || 'GNF');
 
-        // Récupérer les transactions depuis enhanced_transactions (exclure archivées)
-        const { data: transactionsData, error: transactionsError } = await (supabase
+      const [{ data: enhancedData, error: enhancedError }, { data: walletTransactionsData, error: walletTransactionsError }] = await Promise.all([
+        (supabase
           .from('enhanced_transactions' as any)
-          .select('id, amount, sender_id, receiver_id, method, created_at, status')
+          .select('id, amount, sender_id, receiver_id, method, created_at, status, metadata')
           .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
           .order('created_at', { ascending: false })
-          .limit(limit) as any);
+          .limit(limit) as any),
+        supabase
+          .from('wallet_transactions')
+          .select('id, sender_wallet_id, receiver_wallet_id, amount, transaction_type, created_at, status, description, metadata')
+          .or(`sender_wallet_id.eq.${walletData.id},receiver_wallet_id.eq.${walletData.id}`)
+          .order('created_at', { ascending: false })
+          .limit(limit),
+      ]);
 
-        if (transactionsError) {
-          console.error('Erreur récupération transactions:', transactionsError);
-          setError(`Impossible de charger l'historique: ${transactionsError.message}`);
-        } else if (transactionsData) {
-          const txArray = (transactionsData || []) as Array<{ id: string | number; amount: number; sender_id: string; receiver_id: string; method: string; created_at: string; status: string }>;
-          // Collecter tous les IDs uniques d'un coup (1 requête au lieu de 2 par transaction)
-          const uniqueUserIds = [...new Set(txArray.flatMap(tx => [tx.sender_id, tx.receiver_id].filter(Boolean)))];
-          let profilesMap: Record<string, { public_id?: string; full_name?: string }> = {};
-          if (uniqueUserIds.length > 0) {
-            const { data: profilesData } = await supabase
-              .from('profiles')
-              .select('id, public_id, full_name')
-              .in('id', uniqueUserIds);
-            if (profilesData) {
-              profilesMap = Object.fromEntries(profilesData.map(p => [p.id, p]));
-            }
-          }
-          const enrichedTransactions = txArray.map((tx) => ({
-            id: tx.id,
-            amount: tx.amount,
-            sender_id: tx.sender_id,
-            receiver_id: tx.receiver_id,
-            method: tx.method,
-            created_at: tx.created_at,
-            status: tx.status,
-            sender_custom_id: profilesMap[tx.sender_id]?.public_id || tx.sender_id?.slice(0, 8),
-            receiver_custom_id: profilesMap[tx.receiver_id]?.public_id || tx.receiver_id?.slice(0, 8),
-            sender_name: profilesMap[tx.sender_id]?.full_name || 'Utilisateur',
-            receiver_name: profilesMap[tx.receiver_id]?.full_name || 'Utilisateur'
-          }));
-          setTransactions(enrichedTransactions);
+      if (enhancedError) {
+        console.error('Erreur récupération enhanced_transactions:', enhancedError);
+      }
+      if (walletTransactionsError) {
+        console.error('Erreur récupération wallet_transactions:', walletTransactionsError);
+      }
+
+      const walletTxRows = (walletTransactionsData || []) as Array<{
+        id: string;
+        sender_wallet_id: string;
+        receiver_wallet_id: string;
+        amount: number;
+        transaction_type: string;
+        created_at: string;
+        status: string;
+        description?: string | null;
+        metadata?: any;
+      }>;
+
+      const otherWalletIds = Array.from(new Set(
+        walletTxRows
+          .flatMap((tx) => [tx.sender_wallet_id, tx.receiver_wallet_id])
+          .filter((walletId) => walletId && walletId !== walletData.id)
+      ));
+
+      let walletIdToUserId = new Map<string, string>();
+      if (otherWalletIds.length > 0) {
+        const { data: otherWalletRows } = await supabase
+          .from('wallets')
+          .select('id, user_id')
+          .in('id', otherWalletIds);
+
+        walletIdToUserId = new Map((otherWalletRows || []).map((row: any) => [row.id, row.user_id]));
+      }
+
+      const uniqueUserIds = new Set<string>();
+      ((enhancedData || []) as Array<{ sender_id?: string; receiver_id?: string }>).forEach((tx) => {
+        if (tx.sender_id) uniqueUserIds.add(tx.sender_id);
+        if (tx.receiver_id) uniqueUserIds.add(tx.receiver_id);
+      });
+      Array.from(walletIdToUserId.values()).forEach((userId) => uniqueUserIds.add(userId));
+      uniqueUserIds.add(user.id);
+
+      let profilesMap: Record<string, { public_id?: string; full_name?: string; first_name?: string; last_name?: string; email?: string }> = {};
+      if (uniqueUserIds.size > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, public_id, full_name, first_name, last_name, email')
+          .in('id', Array.from(uniqueUserIds));
+
+        if (profilesData) {
+          profilesMap = Object.fromEntries(profilesData.map((profile: any) => [profile.id, profile]));
         }
       }
 
+      const getUserDisplay = (userId: string | null | undefined) => {
+        if (!userId) {
+          return { customId: 'SYS', name: 'Système' };
+        }
+
+        const profile = profilesMap[userId];
+        const name = profile?.full_name
+          || [profile?.first_name, profile?.last_name].filter(Boolean).join(' ')
+          || profile?.email
+          || 'Utilisateur';
+
+        return {
+          customId: profile?.public_id || userId.slice(0, 8),
+          name,
+        };
+      };
+
+      const mergedTransactions = new Map<string, Transaction>();
+
+      for (const tx of (enhancedData || []) as any[]) {
+        const metadata = tx.metadata || {};
+        const sender = getUserDisplay(tx.sender_id);
+        const receiver = getUserDisplay(tx.receiver_id);
+        const dedupeKey = metadata?.idempotency_key || `enhanced:${tx.id}`;
+
+        mergedTransactions.set(dedupeKey, {
+          id: tx.id,
+          amount: Number(tx.amount || 0),
+          sender_id: tx.sender_id,
+          receiver_id: tx.receiver_id,
+          method: tx.method || 'transaction',
+          created_at: tx.created_at,
+          status: tx.status || 'completed',
+          metadata,
+          sender_custom_id: sender.customId,
+          receiver_custom_id: receiver.customId,
+          sender_name: sender.name,
+          receiver_name: receiver.name,
+        });
+      }
+
+      for (const tx of walletTxRows) {
+        const metadata = tx.metadata || {};
+        const dedupeKey = metadata?.idempotency_key || `wallet:${tx.id}`;
+
+        if (mergedTransactions.has(dedupeKey)) {
+          continue;
+        }
+
+        const isOutgoing = tx.sender_wallet_id === walletData.id;
+        const otherWalletId = isOutgoing ? tx.receiver_wallet_id : tx.sender_wallet_id;
+        const otherUserId = walletIdToUserId.get(otherWalletId) || null;
+        const counterparty = getUserDisplay(otherUserId);
+
+        mergedTransactions.set(dedupeKey, {
+          id: tx.id,
+          amount: Number(tx.amount || 0),
+          sender_id: isOutgoing ? user.id : (otherUserId || 'system'),
+          receiver_id: isOutgoing ? (otherUserId || 'system') : user.id,
+          method: tx.transaction_type || 'transaction',
+          created_at: tx.created_at,
+          status: tx.status || 'completed',
+          metadata: {
+            ...metadata,
+            description: tx.description || metadata?.description,
+          },
+          sender_custom_id: isOutgoing ? 'Vous' : counterparty.customId,
+          receiver_custom_id: isOutgoing ? counterparty.customId : 'Vous',
+          sender_name: isOutgoing ? 'Vous' : counterparty.name,
+          receiver_name: isOutgoing ? counterparty.name : 'Vous',
+        });
+      }
+
+      const merged = Array.from(mergedTransactions.values())
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, limit);
+
+      setTransactions(merged);
+
+      if (merged.length === 0 && enhancedError && walletTransactionsError) {
+        setError(`Impossible de charger l'historique: ${enhancedError.message}`);
+      }
     } catch (error: any) {
       console.error('Erreur chargement transactions:', error);
       setError(error?.message || 'Une erreur inattendue s\'est produite');
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit, user]);
+
+  useEffect(() => {
+    if (user) {
+      void loadTransactions();
+    }
+  }, [user, loadTransactions]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const handleWalletUpdate = () => {
+      void loadTransactions();
+    };
+
+    window.addEventListener('wallet-updated', handleWalletUpdate);
+    return () => window.removeEventListener('wallet-updated', handleWalletUpdate);
+  }, [user, loadTransactions]);
 
   const getTransactionIcon = (transaction: Transaction, status: string) => {
     if (status === 'pending') return <Clock className="w-4 h-4 text-orange-500" />;
