@@ -4,7 +4,7 @@
  */
 
 import { useLanguage } from '@/i18n/LanguageContext';
-import { useCurrency } from '@/context/CurrencyContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { useGeoDetection } from '@/hooks/useGeoDetection';
 
 interface UseLocaleResult {

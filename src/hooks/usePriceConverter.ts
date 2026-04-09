@@ -8,7 +8,7 @@
 import { useMemo, useCallback, useState, useEffect } from 'react';
 import { useGeoDetection } from './useGeoDetection';
 import { formatCurrency } from '@/lib/formatters';
-import { useCurrency } from '@/context/CurrencyContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { getRatesForBase, invalidateRatesCache, getLastUpdated } from '@/services/exchangeService';
 import { WORLD_CURRENCIES } from '@/data/currencies';
 

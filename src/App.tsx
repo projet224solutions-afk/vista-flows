@@ -14,7 +14,7 @@ import OAuthPasswordGate from "@/components/auth/OAuthPasswordGate";
 import { ThemeProvider } from "next-themes";
 // OfflineBanner retiré du global - maintenant uniquement dans VendeurDashboard
 import { CartProvider } from "@/contexts/CartContext";
-import { CurrencyProvider } from "@/context/CurrencyContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { LanguageProvider } from "@/i18n/LanguageContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";

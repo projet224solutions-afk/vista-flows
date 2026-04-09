@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useCurrency } from '@/context/CurrencyContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { getSortedCurrencies, getCurrencyByCode } from '@/data/currencies';
 
 const PAYPAL_NATIVE_CODES = new Set([

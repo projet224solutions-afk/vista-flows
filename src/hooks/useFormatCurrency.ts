@@ -5,7 +5,7 @@
  */
 
 import { useCallback } from 'react';
-import { useCurrency } from '@/context/CurrencyContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { formatCurrency } from '@/lib/formatters';
 
 /**

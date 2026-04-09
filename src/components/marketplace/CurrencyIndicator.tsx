@@ -26,7 +26,7 @@ import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { useGeoDetection } from '@/hooks/useGeoDetection';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getCurrencyByCode } from '@/data/currencies';
-import { useCurrency } from '@/context/CurrencyContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { toast } from 'sonner';
 
 interface CurrencyIndicatorProps {

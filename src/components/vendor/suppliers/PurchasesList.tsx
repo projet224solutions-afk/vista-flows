@@ -29,7 +29,7 @@ import { fr, enUS } from 'date-fns/locale';
 import { PurchaseEditor } from './PurchaseEditor';
 import { NewPurchaseDialog, PurchaseProduct } from './NewPurchaseDialog';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useCurrency } from '@/context/CurrencyContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { formatCurrency as formatCurrencyUtil } from '@/lib/formatters';
 import {
   AlertDialog,
