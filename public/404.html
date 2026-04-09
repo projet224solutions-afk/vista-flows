@@ -3,19 +3,96 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>224Solutions</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <title>224Solutions - Redirection</title>
   <script>
-    // SPA redirect: redirect to index with preserved path
-    sessionStorage.setItem('redirect', location.pathname + location.search + location.hash);
-    location.replace('/');
+    (function () {
+      var APP_BASE = '/';
+      var STORAGE_KEY = 'spa_redirect';
+
+      try {
+        var redirectPath =
+          window.location.pathname +
+          window.location.search +
+          window.location.hash;
+
+        if (
+          redirectPath &&
+          redirectPath !== APP_BASE &&
+          redirectPath !== APP_BASE + 'index.html'
+        ) {
+          sessionStorage.setItem(STORAGE_KEY, redirectPath);
+        }
+
+        window.location.replace(APP_BASE);
+      } catch (error) {
+        console.error('SPA redirect error:', error);
+        window.location.replace(APP_BASE);
+      }
+    })();
   </script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8f9fb;
+      color: #111827;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .wrapper {
+      width: calc(100% - 32px);
+      max-width: 440px;
+      padding: 32px;
+      text-align: center;
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+    }
+
+    .loader {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 18px;
+      border: 4px solid #e5e7eb;
+      border-top-color: #007bff;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    .brand {
+      font-size: 26px;
+      font-weight: 700;
+      color: #007bff;
+      margin-bottom: 10px;
+    }
+
+    .text {
+      font-size: 15px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 <body>
-  <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui;">
-    <div style="text-align:center;">
-      <div style="font-size:24px;color:#007BFF;font-weight:bold;">224Solutions</div>
-      <div style="margin-top:16px;color:#666;">Redirection...</div>
-    </div>
+  <div class="wrapper">
+    <div class="loader"></div>
+    <div class="brand">224Solutions</div>
+    <div class="text">Redirection sécurisée vers l’application...</div>
   </div>
 </body>
 </html>
