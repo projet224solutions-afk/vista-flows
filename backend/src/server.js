@@ -1,18 +1,28 @@
 /**
  * 🚀 224SOLUTIONS - BACKEND NODE.JS SECONDAIRE
- * 
- * Architecture: Backend pour traitement lourd, cron jobs, services internes
- * Auth: Vérification JWT Supabase
- * Database: PostgreSQL via Supabase
- * Scalabilité: Horizontale (stateless)
+ *
+ * Rôle :
+ * - traitement lourd
+ * - cron jobs
+ * - services internes
+ * - API secondaire stateless
+ *
+ * Auth :
+ * - vérification JWT Supabase dans les middlewares/routes protégées
+ *
+ * Database :
+ * - PostgreSQL via Supabase
+ *
+ * Scalabilité :
+ * - horizontale (stateless)
  */
 
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import xss from 'xss-clean';
 import dotenv from 'dotenv';
+
 import { logger } from './config/logger.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { requestLogger } from './middlewares/requestLogger.js';
@@ -28,146 +38,236 @@ import walletRoutes from './routes/wallet.routes.js';
 import walletV2Routes from './routes/walletV2.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 
-// Configuration
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = Number(process.env.PORT) || 3001;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const IS_PROD = NODE_ENV === 'production';
 
-// ==================== MIDDLEWARES SÉCURITÉ ====================
+/**
+ * Trust proxy:
+ * nécessaire si l'app tourne derrière Nginx / Load Balancer / Vercel / Render / Railway / ECS / etc.
+ * permet à Express de mieux lire IP / protocole réel
+ */
+app.set('trust proxy', 1);
 
-// Helmet - Sécurité headers HTTP (optimisé pour React/Vite)
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "*"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  }
-}));
+/**
+ * Helper CORS
+ */
+function getAllowedOrigins() {
+  const envOrigins = process.env.CORS_ORIGINS;
 
-// CORS - Configuration stricte
-const corsOptions = {
-  origin: (origin, callback) => {
-    const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [
+  if (!envOrigins) {
+    return [
       'http://localhost:5173',
-      'https://localhost:5173'
+      'https://localhost:5173',
     ];
-    
-    // Autoriser les requêtes sans origin (mobile apps, Postman)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
+  }
+
+  return envOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+const allowedOrigins = getAllowedOrigins();
+
+/**
+ * ==================== MIDDLEWARES SÉCURITÉ ====================
+ */
+
+/**
+ * Helmet
+ * Pour une API backend JSON, on garde une politique simple et cohérente.
+ * On évite une CSP trop complexe ou trompeuse si ce serveur ne rend pas de pages HTML riches.
+ */
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    hsts: IS_PROD
+      ? {
+          maxAge: 31536000,
+          includeSubDomains: true,
+          preload: true,
+        }
+      : false,
+    contentSecurityPolicy: false,
+  })
+);
+
+/**
+ * CORS
+ * - whitelist explicite
+ * - autorise absence d'origin pour mobile apps, curl, Postman, jobs serveur-serveur
+ */
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
       logger.warn(`Blocked CORS request from origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Internal-API-Key']
-};
-app.use(cors(corsOptions));
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Internal-API-Key',
+      'X-Requested-With',
+    ],
+    optionsSuccessStatus: 204,
+  })
+);
 
-// Compression gzip pour réduire la taille des réponses
-app.use(compression());
+/**
+ * Compression
+ * Réduit le poids des réponses
+ */
+app.use(
+  compression({
+    threshold: 1024,
+  })
+);
 
-// Protection contre les attaques XSS et injections
-app.use(xss());
+/**
+ * Parsing JSON / form
+ * Limite raisonnable pour éviter les abus sur payload
+ */
+app.use(
+  express.json({
+    limit: '2mb',
+    strict: true,
+  })
+);
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(
+  express.urlencoded({
+    extended: false,
+    limit: '2mb',
+  })
+);
 
-// Rate limiting global
-app.use(rateLimiter);
-
-// Logging des requêtes
+/**
+ * Logging requêtes
+ */
 app.use(requestLogger);
 
-// ==================== ROUTES ====================
+/**
+ * Rate limiting global
+ * suppose que le middleware gère déjà la logique IP / trusted proxy
+ */
+app.use(rateLimiter);
 
-// Health check (public)
+/**
+ * ==================== ROUTES ====================
+ */
+
+/**
+ * Health check public
+ */
 app.use('/health', healthRoutes);
 
-// Auth routes (public)
+/**
+ * Routes publiques
+ */
 app.use('/auth', authRoutes);
-
-// Analytics tracking routes (public tracking + authenticated retrieval)
 app.use('/api/analytics', analyticsRoutes);
 
-// Wallet routes (protégé par JWT)
+/**
+ * Routes applicatives
+ * IMPORTANT :
+ * les middlewares JWT / internal API key doivent être appliqués
+ * dans les route files concernés ou via middleware dédié avant montage.
+ */
 app.use('/api/wallet', walletRoutes);
-
-// Wallet v2 routes — /api/v2/wallet (PIN, balance, status, transactions)
 app.use('/api/v2/wallet', walletV2Routes);
-
-// Internal API (protégé par clé interne)
 app.use('/internal', internalRoutes);
-
-// Jobs & Cron (protégé par JWT)
 app.use('/jobs', jobsRoutes);
-
-// Media processing (protégé par JWT)
 app.use('/media', mediaRoutes);
 
-// ==================== ERROR HANDLING ====================
-
-// 404 Handler
+/**
+ * ==================== 404 ====================
+ */
 app.use((req, res) => {
   res.status(404).json({
     success: false,
     error: 'Route not found',
-    path: req.originalUrl
+    path: req.originalUrl,
+    method: req.method,
   });
 });
 
-// Global error handler
+/**
+ * ==================== ERROR HANDLER GLOBAL ====================
+ */
 app.use(errorHandler);
 
-// ==================== SERVEUR ====================
-
+/**
+ * ==================== SERVEUR ====================
+ */
 const server = app.listen(PORT, () => {
   logger.info(`🚀 Backend Node.js started on port ${PORT}`);
-  logger.info(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`🔐 CORS Origins: ${process.env.CORS_ORIGINS || 'localhost:5173'}`);
-  logger.info(`✅ Ready to handle requests`);
+  logger.info(`📍 Environment: ${NODE_ENV}`);
+  logger.info(`🔐 Allowed CORS origins: ${allowedOrigins.join(', ')}`);
+  logger.info('✅ Ready to handle requests');
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
+/**
+ * Timeouts serveur
+ * utiles pour éviter les connexions qui restent bloquées trop longtemps
+ */
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
+
+/**
+ * ==================== GRACEFUL SHUTDOWN ====================
+ */
+let isShuttingDown = false;
+
+function shutdown(signal, exitCode = 0) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  logger.info(`${signal} signal received: closing HTTP server`);
+
+  server.close((err) => {
+    if (err) {
+      logger.error('Error while closing HTTP server:', err);
+      process.exit(1);
+      return;
+    }
+
     logger.info('HTTP server closed');
-    process.exit(0);
+    process.exit(exitCode);
   });
-});
 
-process.on('SIGINT', () => {
-  logger.info('SIGINT signal received: closing HTTP server');
-  server.close(() => {
-    logger.info('HTTP server closed');
-    process.exit(0);
-  });
-});
+  setTimeout(() => {
+    logger.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000).unref();
+}
 
-// Gestion erreurs non catchées
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+/**
+ * ==================== ERREURS PROCESS ====================
+ */
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception:', error);
-  process.exit(1);
+  shutdown('uncaughtException', 1);
 });
 
 export default app;
