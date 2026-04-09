@@ -1,103 +1,207 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
   <title>224Solutions - Diagnostic Mobile</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-1: #667eea;
+      --bg-2: #764ba2;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --success-bg: #d1fae5;
+      --success-text: #065f46;
+      --error-bg: #fee2e2;
+      --error-text: #991b1b;
+      --warning-bg: #fef3c7;
+      --warning-text: #92400e;
+      --info-bg: #dbeafe;
+      --info-text: #1e40af;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    html, body {
+      min-height: 100%;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
       min-height: 100vh;
       padding: 20px;
+      color: var(--text);
     }
+
     .container {
-      max-width: 500px;
+      max-width: 560px;
       margin: 0 auto;
     }
+
     h1 {
-      color: white;
+      color: #ffffff;
       text-align: center;
-      margin-bottom: 20px;
-      font-size: 1.5rem;
+      margin-bottom: 22px;
+      font-size: 1.6rem;
+      line-height: 1.2;
     }
+
     .card {
-      background: white;
-      border-radius: 16px;
+      background: var(--card);
+      border-radius: 18px;
       padding: 20px;
-      margin-bottom: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
     }
+
     .card h2 {
-      font-size: 1rem;
-      color: #333;
-      margin-bottom: 10px;
+      font-size: 1.02rem;
+      color: #111827;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .status {
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      margin-top: 10px;
-    }
-    .success { background: #d4edda; color: #155724; }
-    .error { background: #f8d7da; color: #721c24; }
-    .pending { background: #fff3cd; color: #856404; }
-    .info { background: #e7f1ff; color: #004085; }
-    button {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .log {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 10px;
-      font-family: monospace;
-      font-size: 0.75rem;
-      max-height: 150px;
-      overflow-y: auto;
-      margin-top: 10px;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
+
     .test-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid #eee;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
     }
-    .test-item:last-child { border-bottom: none; }
+
+    .test-item:last-child {
+      border-bottom: none;
+    }
+
+    .test-item span:first-child {
+      font-size: 0.95rem;
+      color: #374151;
+    }
+
     .badge {
-      padding: 4px 10px;
-      border-radius: 20px;
+      padding: 5px 10px;
+      border-radius: 999px;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 700;
+      white-space: nowrap;
     }
-    .badge-success { background: #28a745; color: white; }
-    .badge-error { background: #dc3545; color: white; }
-    .badge-pending { background: #ffc107; color: #333; }
+
+    .badge-success {
+      background: #16a34a;
+      color: #ffffff;
+    }
+
+    .badge-error {
+      background: #dc2626;
+      color: #ffffff;
+    }
+
+    .badge-pending {
+      background: #f59e0b;
+      color: #111827;
+    }
+
+    .badge-info {
+      background: #2563eb;
+      color: #ffffff;
+    }
+
+    .status-box {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      margin-top: 12px;
+    }
+
+    .success {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .error {
+      background: var(--error-bg);
+      color: var(--error-text);
+    }
+
+    .pending {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+
+    .info {
+      background: var(--info-bg);
+      color: var(--info-text);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.98rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(102, 126, 234, 0.28);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .log {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.76rem;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-top: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.45;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.84rem;
+      margin-top: 8px;
+      line-height: 1.45;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🔧 Diagnostic Mobile 224Solutions</h1>
 
-    <!-- Test Réseau -->
     <div class="card">
       <h2>📡 Connectivité Réseau</h2>
       <div class="test-item">
@@ -108,9 +212,12 @@
         <span>Type de connexion</span>
         <span id="connection-type" class="badge badge-pending">...</span>
       </div>
+      <div class="test-item">
+        <span>Test réel réseau</span>
+        <span id="network-fetch" class="badge badge-pending">...</span>
+      </div>
     </div>
 
-    <!-- Test Supabase -->
     <div class="card">
       <h2>🔐 Connexion Supabase</h2>
       <div class="test-item">
@@ -128,7 +235,6 @@
       <div id="supabase-log" class="log" style="display:none;"></div>
     </div>
 
-    <!-- Test Service Worker -->
     <div class="card">
       <h2>⚙️ Service Worker / PWA</h2>
       <div class="test-item">
@@ -136,35 +242,35 @@
         <span id="sw-status" class="badge badge-pending">...</span>
       </div>
       <div class="test-item">
-        <span>Cache Version</span>
+        <span>Cache détecté</span>
         <span id="sw-cache" class="badge badge-pending">...</span>
       </div>
-      <button onclick="clearCacheAndReload()">🗑️ Vider le cache et recharger</button>
+      <button id="clearCacheBtn" type="button">🗑️ Vider le cache et recharger</button>
     </div>
 
-    <!-- Test Local Storage -->
     <div class="card">
       <h2>💾 Stockage Local</h2>
       <div class="test-item">
-        <span>Session stockée</span>
+        <span>Session Supabase</span>
         <span id="session-stored" class="badge badge-pending">...</span>
       </div>
       <div class="test-item">
         <span>Token valide</span>
         <span id="token-valid" class="badge badge-pending">...</span>
       </div>
-      <button onclick="clearLocalStorage()">🗑️ Effacer le stockage local</button>
+      <button id="clearStorageBtn" type="button">🗑️ Effacer les données locales de l'app</button>
+      <div class="muted">
+        Efface uniquement les clés locales liées à 224Solutions / Supabase, pas tout le stockage du domaine.
+      </div>
     </div>
 
-    <!-- Actions -->
     <div class="card">
       <h2>🚀 Actions</h2>
-      <button onclick="runAllTests()">▶️ Relancer tous les tests</button>
-      <button onclick="window.location.href='/'">🏠 Aller à l'accueil</button>
-      <button onclick="forceReinstall()">📱 Réinstaller l'app</button>
+      <button id="runTestsBtn" type="button">▶️ Relancer tous les tests</button>
+      <button id="homeBtn" type="button">🏠 Aller à l'accueil</button>
+      <button id="reinstallBtn" type="button">📱 Réinstaller l'app</button>
     </div>
 
-    <!-- Logs -->
     <div class="card">
       <h2>📋 Logs détaillés</h2>
       <div id="detailed-log" class="log"></div>
@@ -172,267 +278,518 @@
   </div>
 
   <script>
-    // Configuration chargée dynamiquement (ne pas hardcoder les clés en production)
-    // Ces valeurs sont des clés "anon" publiques par conception Supabase
-    // mais il est préférable de les charger depuis une config sécurisée
-    const SUPABASE_URL = window.__SUPABASE_URL__ || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
-    const SUPABASE_KEY = window.__SUPABASE_ANON_KEY__ || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
-    
-    // ⚠️ NOTE: Ce fichier de diagnostic ne devrait PAS être inclus en production
-    // Ajouter à .gitignore ou exclure du build de production
+    (function () {
+      const APP_BASE = '/';
 
-    let logs = [];
-    
-    function log(message) {
-      const timestamp = new Date().toLocaleTimeString();
-      logs.push(`[${timestamp}] ${message}`);
-      document.getElementById('detailed-log').textContent = logs.join('\n');
-    }
+      // ⚠️ En production, injecter idéalement ces valeurs via config runtime
+      const SUPABASE_URL =
+        window.__SUPABASE_URL__ || 'https://uakkxaibujzxdiqzpnpr.supabase.co';
+      const SUPABASE_KEY =
+        window.__SUPABASE_ANON_KEY__ ||
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVha2t4YWlidWp6eGRpcXpwbnByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMDA2NTcsImV4cCI6MjA3NDU3NjY1N30.kqYNdg-73BTP0Yht7kid-EZu2APg9qw-b_KW9z5hJbM';
 
-    function setBadge(id, status, text) {
-      const el = document.getElementById(id);
-      el.textContent = text;
-      el.className = 'badge badge-' + status;
-    }
+      const logs = [];
+      const MAX_LOGS = 300;
 
-    // Test réseau
-    function testNetwork() {
-      log('🔍 Test réseau...');
-      
-      if (navigator.onLine) {
-        setBadge('network-status', 'success', '✅ En ligne');
-        log('✅ Connecté à Internet');
-      } else {
-        setBadge('network-status', 'error', '❌ Hors ligne');
-        log('❌ Pas de connexion Internet');
+      const dom = {
+        detailedLog: document.getElementById('detailed-log'),
+        supabaseLog: document.getElementById('supabase-log'),
+        runTestsBtn: document.getElementById('runTestsBtn'),
+        clearCacheBtn: document.getElementById('clearCacheBtn'),
+        clearStorageBtn: document.getElementById('clearStorageBtn'),
+        homeBtn: document.getElementById('homeBtn'),
+        reinstallBtn: document.getElementById('reinstallBtn')
+      };
+
+      function log(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        logs.push(`[${timestamp}] ${message}`);
+        if (logs.length > MAX_LOGS) logs.shift();
+        dom.detailedLog.textContent = logs.join('\n');
       }
 
-      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-      if (connection) {
-        setBadge('connection-type', 'success', connection.effectiveType || connection.type || 'Inconnu');
-        log(`📶 Type: ${connection.effectiveType || connection.type}`);
-      } else {
-        setBadge('connection-type', 'pending', 'N/A');
-      }
-    }
-
-    // Test Supabase
-    async function testSupabase() {
-      log('🔍 Test Supabase...');
-      const logEl = document.getElementById('supabase-log');
-      logEl.style.display = 'block';
-      logEl.textContent = 'Test en cours...';
-
-      // Test API
-      try {
-        const start = Date.now();
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          }
-        });
-        const latency = Date.now() - start;
-        
-        if (response.ok) {
-          setBadge('supabase-api', 'success', `✅ ${latency}ms`);
-          log(`✅ API Supabase OK (${latency}ms)`);
-          logEl.textContent += `\nAPI: OK (${latency}ms)`;
-        } else {
-          setBadge('supabase-api', 'error', `❌ ${response.status}`);
-          log(`❌ API Supabase: ${response.status}`);
-          logEl.textContent += `\nAPI: Erreur ${response.status}`;
-        }
-      } catch (e) {
-        setBadge('supabase-api', 'error', '❌ Erreur');
-        log(`❌ API Supabase: ${e.message}`);
-        logEl.textContent += `\nAPI: ${e.message}`;
+      function clearLogs() {
+        logs.length = 0;
+        dom.detailedLog.textContent = '';
       }
 
-      // Test DB - produits
-      try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=id&limit=1`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setBadge('supabase-db', 'success', `✅ ${data.length} prod`);
-          log(`✅ DB OK - ${data.length} produit(s) trouvé(s)`);
-          logEl.textContent += `\nDB: OK`;
-        } else {
-          setBadge('supabase-db', 'error', '❌ Erreur');
-          log(`❌ DB: ${response.status}`);
-          logEl.textContent += `\nDB: Erreur ${response.status}`;
-        }
-      } catch (e) {
-        setBadge('supabase-db', 'error', '❌ Erreur');
-        log(`❌ DB: ${e.message}`);
-        logEl.textContent += `\nDB: ${e.message}`;
+      function setBadge(id, status, text) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = text;
+        el.className = 'badge badge-' + status;
       }
 
-      // Test Auth
-      const session = localStorage.getItem('sb-uakkxaibujzxdiqzpnpr-auth-token');
-      if (session) {
+      function escapeHtml(text) {
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function appendSupabaseLog(line) {
+        dom.supabaseLog.style.display = 'block';
+        dom.supabaseLog.innerHTML += (dom.supabaseLog.innerHTML ? '<br>' : '') + escapeHtml(line);
+      }
+
+      function resetSupabaseLog() {
+        dom.supabaseLog.style.display = 'block';
+        dom.supabaseLog.textContent = 'Test en cours...';
+      }
+
+      function getProjectRefFromUrl(url) {
         try {
-          const parsed = JSON.parse(session);
-          if (parsed.access_token) {
-            const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-              headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${parsed.access_token}`
-              }
-            });
-            
-            if (response.ok) {
-              setBadge('supabase-auth', 'success', '✅ Connecté');
-              log('✅ Utilisateur authentifié');
-              logEl.textContent += `\nAuth: Connecté`;
-            } else {
-              setBadge('supabase-auth', 'error', '❌ Token expiré');
-              log('❌ Token expiré');
-              logEl.textContent += `\nAuth: Token expiré`;
+          const host = new URL(url).hostname;
+          return host.split('.')[0] || null;
+        } catch {
+          return null;
+        }
+      }
+
+      function getPossibleSupabaseStorageKeys() {
+        const keys = [];
+        const projectRef = getProjectRefFromUrl(SUPABASE_URL);
+
+        if (projectRef) {
+          keys.push(`sb-${projectRef}-auth-token`);
+        }
+
+        return keys;
+      }
+
+      function getStoredSessionRaw() {
+        const keys = getPossibleSupabaseStorageKeys();
+
+        for (const key of keys) {
+          const value = localStorage.getItem(key);
+          if (value) {
+            return { key, value };
+          }
+        }
+
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            const value = localStorage.getItem(key);
+            if (value) {
+              return { key, value };
             }
           }
-        } catch (e) {
-          setBadge('supabase-auth', 'error', '❌ Erreur');
-          log(`❌ Auth: ${e.message}`);
         }
-      } else {
-        setBadge('supabase-auth', 'pending', '⚠️ Non connecté');
-        log('⚠️ Aucune session stockée');
-        logEl.textContent += `\nAuth: Non connecté`;
-      }
-    }
 
-    // Test Service Worker
-    async function testServiceWorker() {
-      log('🔍 Test Service Worker...');
-      
-      if ('serviceWorker' in navigator) {
+        return null;
+      }
+
+      async function testNetwork() {
+        log('🔍 Test réseau...');
+
+        if (navigator.onLine) {
+          setBadge('network-status', 'success', '✅ En ligne');
+          log('✅ navigator.onLine = true');
+        } else {
+          setBadge('network-status', 'error', '❌ Hors ligne');
+          log('❌ navigator.onLine = false');
+        }
+
+        const connection =
+          navigator.connection ||
+          navigator.mozConnection ||
+          navigator.webkitConnection;
+
+        if (connection) {
+          const type = connection.effectiveType || connection.type || 'Inconnu';
+          setBadge('connection-type', 'info', type);
+          log(`📶 Type de connexion: ${type}`);
+        } else {
+          setBadge('connection-type', 'pending', 'N/A');
+          log('ℹ️ API Network Information non disponible');
+        }
+
+        try {
+          const start = Date.now();
+          const response = await fetch(APP_BASE, {
+            method: 'GET',
+            cache: 'no-store',
+            credentials: 'same-origin'
+          });
+          const latency = Date.now() - start;
+
+          if (response.ok) {
+            setBadge('network-fetch', 'success', `✅ ${latency}ms`);
+            log(`✅ Test réel réseau OK (${latency}ms)`);
+          } else {
+            setBadge('network-fetch', 'error', `❌ ${response.status}`);
+            log(`❌ Test réel réseau: HTTP ${response.status}`);
+          }
+        } catch (error) {
+          setBadge('network-fetch', 'error', '❌ Échec');
+          log(`❌ Test réel réseau impossible: ${error.message}`);
+        }
+      }
+
+      async function testSupabase() {
+        log('🔍 Test Supabase...');
+        resetSupabaseLog();
+
+        // 1. Test API basique
+        try {
+          const start = Date.now();
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+            method: 'GET',
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: `Bearer ${SUPABASE_KEY}`
+            },
+            cache: 'no-store'
+          });
+          const latency = Date.now() - start;
+
+          if (response.ok) {
+            setBadge('supabase-api', 'success', `✅ ${latency}ms`);
+            log(`✅ API Supabase accessible (${latency}ms)`);
+            appendSupabaseLog(`API: OK (${latency}ms)`);
+          } else {
+            setBadge('supabase-api', 'error', `❌ ${response.status}`);
+            log(`❌ API Supabase HTTP ${response.status}`);
+            appendSupabaseLog(`API: Erreur ${response.status}`);
+          }
+        } catch (error) {
+          setBadge('supabase-api', 'error', '❌ Erreur');
+          log(`❌ API Supabase inaccessible: ${error.message}`);
+          appendSupabaseLog(`API: ${error.message}`);
+        }
+
+        // 2. Test DB plus tolérant
+        // Ce test dépend de la présence de la table "products" et des règles RLS.
+        // Donc on distingue "API OK mais table non lisible" de "DB totalement KO".
+        try {
+          const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/products?select=id&limit=1`,
+            {
+              method: 'GET',
+              headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`
+              },
+              cache: 'no-store'
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            setBadge('supabase-db', 'success', `✅ ${Array.isArray(data) ? data.length : 0} trouvé`);
+            log('✅ Test table products OK');
+            appendSupabaseLog('DB: Table products accessible');
+          } else if (response.status === 401 || response.status === 403) {
+            setBadge('supabase-db', 'pending', '⚠️ RLS / accès');
+            log(`⚠️ DB accessible mais lecture refusée (${response.status})`);
+            appendSupabaseLog(`DB: Accès refusé (${response.status}) - vérifier RLS`);
+          } else if (response.status === 404) {
+            setBadge('supabase-db', 'pending', '⚠️ Table absente');
+            log('⚠️ Table products absente ou non exposée');
+            appendSupabaseLog('DB: Table products absente ou non exposée');
+          } else {
+            setBadge('supabase-db', 'error', `❌ ${response.status}`);
+            log(`❌ DB HTTP ${response.status}`);
+            appendSupabaseLog(`DB: Erreur ${response.status}`);
+          }
+        } catch (error) {
+          setBadge('supabase-db', 'error', '❌ Erreur');
+          log(`❌ Test DB impossible: ${error.message}`);
+          appendSupabaseLog(`DB: ${error.message}`);
+        }
+
+        // 3. Test Auth
+        const sessionEntry = getStoredSessionRaw();
+
+        if (!sessionEntry) {
+          setBadge('supabase-auth', 'pending', '⚠️ Non connecté');
+          log('⚠️ Aucune session Supabase trouvée');
+          appendSupabaseLog('Auth: Aucune session locale trouvée');
+          return;
+        }
+
+        log(`ℹ️ Session trouvée dans ${sessionEntry.key}`);
+
+        try {
+          const parsed = JSON.parse(sessionEntry.value);
+          const accessToken =
+            parsed?.access_token ||
+            parsed?.currentSession?.access_token ||
+            parsed?.session?.access_token ||
+            null;
+
+          if (!accessToken) {
+            setBadge('supabase-auth', 'error', '❌ Session invalide');
+            log('❌ Session présente mais access_token introuvable');
+            appendSupabaseLog('Auth: Session locale invalide');
+            return;
+          }
+
+          const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+            method: 'GET',
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: `Bearer ${accessToken}`
+            },
+            cache: 'no-store'
+          });
+
+          if (response.ok) {
+            const user = await response.json();
+            setBadge('supabase-auth', 'success', '✅ Connecté');
+            log(`✅ Utilisateur authentifié: ${user.email || user.id || 'inconnu'}`);
+            appendSupabaseLog(`Auth: Connecté (${user.email || user.id || 'utilisateur'})`);
+          } else if (response.status === 401) {
+            setBadge('supabase-auth', 'error', '❌ Token expiré');
+            log('❌ Token expiré ou invalide');
+            appendSupabaseLog('Auth: Token expiré ou invalide');
+          } else {
+            setBadge('supabase-auth', 'error', `❌ ${response.status}`);
+            log(`❌ Auth HTTP ${response.status}`);
+            appendSupabaseLog(`Auth: Erreur ${response.status}`);
+          }
+        } catch (error) {
+          setBadge('supabase-auth', 'error', '❌ Erreur');
+          log(`❌ Test auth impossible: ${error.message}`);
+          appendSupabaseLog(`Auth: ${error.message}`);
+        }
+      }
+
+      async function testServiceWorker() {
+        log('🔍 Test Service Worker...');
+
+        if (!('serviceWorker' in navigator)) {
+          setBadge('sw-status', 'pending', '⚠️ Non supporté');
+          setBadge('sw-cache', 'pending', 'N/A');
+          log('⚠️ Service Worker non supporté par ce navigateur');
+          return;
+        }
+
         try {
           const registration = await navigator.serviceWorker.getRegistration();
-          if (registration) {
-            setBadge('sw-status', 'success', '✅ Actif');
-            log(`✅ SW actif: ${registration.active?.scriptURL}`);
-            
-            // Essayer de récupérer la version du cache
-            const caches_names = await caches.keys();
-            const version = caches_names.find(n => n.includes('224solutions')) || 'Inconnu';
-            setBadge('sw-cache', 'success', version.split('-').pop() || 'v?');
-            log(`📦 Caches: ${caches_names.join(', ')}`);
-          } else {
+
+          if (!registration) {
             setBadge('sw-status', 'error', '❌ Non enregistré');
             setBadge('sw-cache', 'pending', 'N/A');
-            log('❌ Service Worker non enregistré');
+            log('❌ Aucun Service Worker enregistré');
+            return;
           }
-        } catch (e) {
-          setBadge('sw-status', 'error', '❌ Erreur');
-          log(`❌ SW: ${e.message}`);
-        }
-      } else {
-        setBadge('sw-status', 'pending', '⚠️ Non supporté');
-        setBadge('sw-cache', 'pending', 'N/A');
-        log('⚠️ Service Worker non supporté');
-      }
-    }
 
-    // Test Local Storage
-    function testLocalStorage() {
-      log('🔍 Test stockage local...');
-      
-      const session = localStorage.getItem('sb-uakkxaibujzxdiqzpnpr-auth-token');
-      if (session) {
+          const state =
+            registration.active ? 'Actif' :
+            registration.waiting ? 'En attente' :
+            registration.installing ? 'Installation' :
+            'Enregistré';
+
+          setBadge('sw-status', 'success', `✅ ${state}`);
+          log(
+            `✅ Service Worker: ${registration.active?.scriptURL || registration.waiting?.scriptURL || registration.installing?.scriptURL || 'enregistré'}`
+          );
+
+          if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            if (cacheNames.length > 0) {
+              setBadge('sw-cache', 'success', `✅ ${cacheNames.length}`);
+              log(`📦 ${cacheNames.length} cache(s): ${cacheNames.join(', ')}`);
+            } else {
+              setBadge('sw-cache', 'pending', '⚠️ Aucun');
+              log('⚠️ Aucun cache détecté');
+            }
+          } else {
+            setBadge('sw-cache', 'pending', 'N/A');
+            log('ℹ️ Cache API non supportée');
+          }
+        } catch (error) {
+          setBadge('sw-status', 'error', '❌ Erreur');
+          setBadge('sw-cache', 'error', '❌ Erreur');
+          log(`❌ Erreur Service Worker: ${error.message}`);
+        }
+      }
+
+      function testLocalStorage() {
+        log('🔍 Test stockage local...');
+
+        const sessionEntry = getStoredSessionRaw();
+
+        if (!sessionEntry) {
+          setBadge('session-stored', 'pending', '⚠️ Absent');
+          setBadge('token-valid', 'pending', 'N/A');
+          log('⚠️ Aucune session locale détectée');
+          return;
+        }
+
         setBadge('session-stored', 'success', '✅ Présent');
-        log('✅ Session stockée trouvée');
-        
+        log(`✅ Session locale trouvée: ${sessionEntry.key}`);
+
         try {
-          const parsed = JSON.parse(session);
-          const expiresAt = parsed.expires_at;
+          const parsed = JSON.parse(sessionEntry.value);
+          const expiresAt =
+            parsed?.expires_at ||
+            parsed?.currentSession?.expires_at ||
+            parsed?.session?.expires_at ||
+            null;
+
+          if (!expiresAt) {
+            setBadge('token-valid', 'pending', '⚠️ Inconnu');
+            log('⚠️ Expiration du token introuvable');
+            return;
+          }
+
           const now = Math.floor(Date.now() / 1000);
-          
-          if (expiresAt && expiresAt > now) {
-            const remaining = Math.floor((expiresAt - now) / 60);
-            setBadge('token-valid', 'success', `✅ ${remaining}min`);
-            log(`✅ Token valide (${remaining} minutes restantes)`);
+
+          if (expiresAt > now) {
+            const remainingMinutes = Math.floor((expiresAt - now) / 60);
+            setBadge('token-valid', 'success', `✅ ${remainingMinutes} min`);
+            log(`✅ Token encore valide (${remainingMinutes} min restantes)`);
           } else {
             setBadge('token-valid', 'error', '❌ Expiré');
             log('❌ Token expiré');
           }
-        } catch (e) {
+        } catch (error) {
           setBadge('token-valid', 'error', '❌ Corrompu');
-          log(`❌ Session corrompue: ${e.message}`);
+          log(`❌ Session locale corrompue: ${error.message}`);
         }
-      } else {
-        setBadge('session-stored', 'pending', '⚠️ Absent');
-        setBadge('token-valid', 'pending', 'N/A');
-        log('⚠️ Aucune session stockée');
       }
-    }
 
-    // Actions
-    async function clearCacheAndReload() {
-      log('🗑️ Vidage du cache...');
-      
-      if ('caches' in window) {
-        const names = await caches.keys();
-        await Promise.all(names.map(name => caches.delete(name)));
-        log(`✅ ${names.length} cache(s) supprimé(s)`);
+      async function clearCacheAndReload() {
+        log('🗑️ Vidage des caches et désenregistrement des Service Workers...');
+
+        try {
+          if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map((name) => caches.delete(name)));
+            log(`✅ ${cacheNames.length} cache(s) supprimé(s)`);
+          } else {
+            log('ℹ️ Cache API non disponible');
+          }
+
+          if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((r) => r.unregister()));
+            log(`✅ ${registrations.length} Service Worker(s) désenregistré(s)`);
+          } else {
+            log('ℹ️ Service Worker non supporté');
+          }
+        } catch (error) {
+          log(`❌ Erreur pendant le nettoyage du cache: ${error.message}`);
+        }
+
+        setTimeout(() => {
+          window.location.href = `${APP_BASE}?resetSw=1&mobile=1`;
+        }, 800);
       }
-      
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map(r => r.unregister()));
-        log(`✅ ${registrations.length} Service Worker(s) désenregistré(s)`);
+
+      function clearLocalStorage() {
+        log('🗑️ Nettoyage ciblé du stockage local...');
+
+        const keysToDelete = [];
+
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (
+            key &&
+            (
+              key.startsWith('sb-') ||
+              key.includes('224solutions') ||
+              key.includes('supabase')
+            )
+          ) {
+            keysToDelete.push(key);
+          }
+        }
+
+        for (const key of keysToDelete) {
+          localStorage.removeItem(key);
+        }
+
+        const sessionKeysToDelete = [];
+
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i);
+          if (
+            key &&
+            (
+              key.includes('224solutions') ||
+              key.includes('supabase') ||
+              key.startsWith('sb-')
+            )
+          ) {
+            sessionKeysToDelete.push(key);
+          }
+        }
+
+        for (const key of sessionKeysToDelete) {
+          sessionStorage.removeItem(key);
+        }
+
+        log(`✅ ${keysToDelete.length} clé(s) localStorage supprimée(s)`);
+        log(`✅ ${sessionKeysToDelete.length} clé(s) sessionStorage supprimée(s)`);
+
+        testLocalStorage();
       }
-      
-      setTimeout(() => {
-        window.location.href = '/?resetSw=1&mobile=1';
-      }, 1000);
-    }
 
-    function clearLocalStorage() {
-      log('🗑️ Effacement du stockage local...');
-      localStorage.clear();
-      sessionStorage.clear();
-      log('✅ Stockage local effacé');
-      runAllTests();
-    }
+      async function forceReinstall() {
+        log('📱 Réinstallation de l’app en préparation...');
+        await clearCacheAndReload();
+      }
 
-    function forceReinstall() {
-      log('📱 Préparation réinstallation...');
-      clearCacheAndReload();
-    }
+      async function runAllTests() {
+        dom.runTestsBtn.disabled = true;
+        clearLogs();
 
-    async function runAllTests() {
-      logs = [];
-      log('🚀 Démarrage des tests...');
-      log(`📱 User Agent: ${navigator.userAgent}`);
-      log(`🕐 Date: ${new Date().toLocaleString()}`);
-      
-      testNetwork();
-      await testSupabase();
-      await testServiceWorker();
-      testLocalStorage();
-      
-      log('✅ Tests terminés');
-    }
+        setBadge('network-status', 'pending', '...');
+        setBadge('connection-type', 'pending', '...');
+        setBadge('network-fetch', 'pending', '...');
+        setBadge('supabase-api', 'pending', '...');
+        setBadge('supabase-auth', 'pending', '...');
+        setBadge('supabase-db', 'pending', '...');
+        setBadge('sw-status', 'pending', '...');
+        setBadge('sw-cache', 'pending', '...');
+        setBadge('session-stored', 'pending', '...');
+        setBadge('token-valid', 'pending', '...');
 
-    // Lancer les tests au chargement
-    window.addEventListener('load', runAllTests);
-    
-    // Écouter les changements de connexion
-    window.addEventListener('online', () => {
-      log('📶 Connexion rétablie');
-      testNetwork();
-    });
-    window.addEventListener('offline', () => {
-      log('📴 Connexion perdue');
-      testNetwork();
-    });
+        log('🚀 Démarrage des tests...');
+        log(`📱 User Agent: ${navigator.userAgent}`);
+        log(`🕐 Date: ${new Date().toLocaleString()}`);
+        log(`🌐 URL app: ${window.location.href}`);
+        log(`🔗 Supabase URL: ${SUPABASE_URL}`);
+
+        try {
+          await testNetwork();
+          await testSupabase();
+          await testServiceWorker();
+          testLocalStorage();
+          log('✅ Tous les tests sont terminés');
+        } catch (error) {
+          log(`❌ Erreur générale pendant les tests: ${error.message}`);
+        } finally {
+          dom.runTestsBtn.disabled = false;
+        }
+      }
+
+      dom.runTestsBtn.addEventListener('click', runAllTests);
+      dom.clearCacheBtn.addEventListener('click', clearCacheAndReload);
+      dom.clearStorageBtn.addEventListener('click', clearLocalStorage);
+      dom.reinstallBtn.addEventListener('click', forceReinstall);
+      dom.homeBtn.addEventListener('click', () => {
+        window.location.href = APP_BASE;
+      });
+
+      window.addEventListener('online', () => {
+        log('📶 Connexion rétablie');
+        testNetwork();
+      });
+
+      window.addEventListener('offline', () => {
+        log('📴 Connexion perdue');
+        testNetwork();
+      });
+
+      window.addEventListener('load', runAllTests);
+    })();
   </script>
 </body>
 </html>
