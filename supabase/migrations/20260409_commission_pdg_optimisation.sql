@@ -52,11 +52,12 @@ BEGIN
   IF v_fee_rate IS NULL THEN
     v_fee_rate := 0.025; -- fallback 2.5%
   END IF;
-  v_platform_fee := p_amount * v_fee_rate;
-  v_vendor_net := p_amount - v_platform_fee;
+  -- Arrondir tous les montants à 2 décimales pour éviter les erreurs de précision
+  v_platform_fee := ROUND(p_amount * v_fee_rate, 2);
+  v_vendor_net := ROUND(p_amount - v_platform_fee, 2);
   v_transaction_id := gen_random_uuid();
   -- Débiter l'utilisateur
-  UPDATE wallets SET balance = balance - p_amount, updated_at = NOW()
+  UPDATE wallets SET balance = balance - ROUND(p_amount, 2), updated_at = NOW()
   WHERE id = v_user_wallet_id;
   -- Créditer le vendeur
   UPDATE wallets SET balance = balance + v_vendor_net, updated_at = NOW()
@@ -66,15 +67,15 @@ BEGIN
     id, sender_wallet_id, receiver_wallet_id, amount, fee, net_amount,
     currency, transaction_type, status, description, metadata, created_at, completed_at
   ) VALUES (
-    v_transaction_id, v_user_wallet_id, v_vendor_wallet_id, p_amount, v_platform_fee, v_vendor_net,
+    v_transaction_id, v_user_wallet_id, v_vendor_wallet_id, ROUND(p_amount, 2), v_platform_fee, v_vendor_net,
     'GNF', 'purchase', 'completed', 'Paiement commande #' || p_order_id::text,
     jsonb_build_object('order_id', p_order_id, 'vendor_id', p_vendor_id),
     NOW(), NOW()
   );
-  -- Calculer et créditer la commission agent
+  -- Calculer et créditer la commission agent (la fonction credit_agent_commission applique aussi ROUND sur les montants)
   v_commission_result := credit_agent_commission(
     p_user_id,
-    p_amount,
+    ROUND(p_amount, 2),
     'achat_produit',
     v_transaction_id,
     jsonb_build_object('order_id', p_order_id, 'vendor_id', p_vendor_id)
@@ -82,7 +83,7 @@ BEGIN
   RETURN jsonb_build_object(
     'success', true,
     'transaction_id', v_transaction_id,
-    'amount', p_amount,
+    'amount', ROUND(p_amount, 2),
     'platform_fee', v_platform_fee,
     'vendor_net', v_vendor_net,
     'agent_commission', v_commission_result
@@ -94,6 +95,7 @@ $$;
 DROP FUNCTION IF EXISTS calculate_and_distribute_commissions(UUID, DECIMAL, DECIMAL);
 
 -- 3. Uniformisation des paramètres de commission (Agent, Sous-Agent, PDG)
+
 -- (Suppression des valeurs codées en dur dans credit_agent_commission, voir fonction existante)
 -- S'assurer que credit_agent_commission lit les taux depuis pdg_settings ou system_settings
 -- (Si besoin, adapter la fonction pour utiliser COALESCE(
@@ -101,6 +103,9 @@ DROP FUNCTION IF EXISTS calculate_and_distribute_commissions(UUID, DECIMAL, DECI
 --   (SELECT setting_value::NUMERIC FROM system_settings WHERE setting_key = 'agent_commission_percentage'),
 --   0.20
 -- ))
+--
+-- AUDIT : Tous les calculs de commissions (Agent, Sous-Agent, PDG) doivent utiliser ROUND(..., 2) pour garantir la précision décimale.
+-- Vérifier que la fonction credit_agent_commission applique bien ROUND sur les montants crédités (agent_commission, parent_commission, etc).
 
 -- 4. Sécurité wallet : la fonction create_agent_wallet existe et est utilisée dans credit_agent_commission
 -- (aucune action requise, sécurité OK)
