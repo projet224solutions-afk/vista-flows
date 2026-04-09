@@ -6,8 +6,8 @@ import type { Database } from './types';
 // Configuration Supabase - variables d'environnement Vercel avec fallback hardcodé
 // Une fois VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY configurés sur Vercel,
 // les fallbacks ne seront plus utilisés.
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
+const SUPABASE_URL = import.meta.env.NEXT_PUBLIC_VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || "";
+const SUPABASE_KEY = import.meta.env.NEXT_PUBLIC_VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('❌ [CRITICAL] Supabase URL or Key missing. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
