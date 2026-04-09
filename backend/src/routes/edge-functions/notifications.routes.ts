@@ -714,14 +714,17 @@ router.get("/google-maps-config", async (req: any, res: any) => {
   }
 });
 
-router.get("/google-places-autocomplete", async (req: any, res: any) => {
+const handleGooglePlacesAutocomplete = async (req: any, res: any) => {
   try {
-    const { query } = req.query || {};
+    const query = req.query?.query || req.body?.query || req.body?.input || '';
     return res.json({ success: true, query, predictions: [] });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
-});
+};
+
+router.get("/google-places-autocomplete", handleGooglePlacesAutocomplete);
+router.post("/google-places-autocomplete", handleGooglePlacesAutocomplete);
 
 router.post("/geocode-address", async (req: any, res: any) => {
   try {

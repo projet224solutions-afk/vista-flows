@@ -18,10 +18,13 @@ router.post("/chapchappay-push", async (req: Request, res: Response) => {
   return res.json({ success: true, transaction_id, pushed: true });
 });
 
-router.get("/chapchappay-status", async (req: Request, res: Response) => {
-  const { transaction_id } = req.query || {};
+const handleChapChapPayStatus = async (req: Request, res: Response) => {
+  const transaction_id = (req.method === 'GET' ? req.query?.transaction_id : req.body?.transaction_id) || null;
   return res.json({ success: true, transaction_id, status: "completed" });
-});
+};
+
+router.get("/chapchappay-status", handleChapChapPayStatus);
+router.post("/chapchappay-status", handleChapChapPayStatus);
 
 router.post("/chapchappay-webhook", async (req: Request, res: Response) => {
   const { transaction_id, status } = req.body || {};
@@ -29,9 +32,12 @@ router.post("/chapchappay-webhook", async (req: Request, res: Response) => {
 });
 
 // PayPal Integration
-router.get("/paypal-client-id", async (req: Request, res: Response) => {
+const handlePayPalClientId = async (_req: Request, res: Response) => {
   return res.json({ success: true, client_id: process.env.PAYPAL_CLIENT_ID || "sandbox-client" });
-});
+};
+
+router.get("/paypal-client-id", handlePayPalClientId);
+router.post("/paypal-client-id", handlePayPalClientId);
 
 router.post("/paypal-deposit", async (req: Request, res: Response) => {
   const { amount, currency = "USD" } = req.body || {};

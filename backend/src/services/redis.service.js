@@ -16,8 +16,6 @@
 import Redis from 'ioredis';
 import { logger } from '../config/logger.js';
 
-const REDIS_ENABLED = (process.env.REDIS_ENABLED ?? (process.env.NODE_ENV === 'production' ? 'true' : 'false')) === 'true';
-
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
@@ -86,28 +84,12 @@ let redisClient = null;
 let isRedisConnected = false;
 let connectionAttempts = 0;
 const MAX_CONNECTION_ATTEMPTS = 5;
-let redisDisabledLogged = false;
-let redisFallbackLogged = false;
-
-function logRedisFallbackOnce(message) {
-  if (redisFallbackLogged) return;
-  redisFallbackLogged = true;
-  logger.warn(message);
-}
 
 /**
  * Initialize Redis connection with lazy loading
  * @returns {Promise<Redis|null>}
  */
 async function getRedisClient() {
-  if (!REDIS_ENABLED) {
-    if (!redisDisabledLogged) {
-      redisDisabledLogged = true;
-      logger.info('Analytics Redis disabled (REDIS_ENABLED=false), using PostgreSQL fallback');
-    }
-    return null;
-  }
-
   if (redisClient && isRedisConnected) {
     return redisClient;
   }
@@ -125,18 +107,17 @@ async function getRedisClient() {
       redisClient.on('connect', () => {
         isRedisConnected = true;
         connectionAttempts = 0;
-        redisFallbackLogged = false;
         logger.info('✅ Redis connected successfully');
       });
       
-      redisClient.on('error', (_err) => {
+      redisClient.on('error', (err) => {
         isRedisConnected = false;
-        logRedisFallbackOnce('Analytics Redis unavailable, continuing with PostgreSQL fallback');
+        logger.error(`Redis error: ${err.message}`);
       });
       
       redisClient.on('close', () => {
         isRedisConnected = false;
-        logRedisFallbackOnce('Analytics Redis connection closed, fallback mode enabled');
+        logger.warn('Redis connection closed');
       });
     }
     
@@ -144,7 +125,7 @@ async function getRedisClient() {
     return redisClient;
     
   } catch (error) {
-    logRedisFallbackOnce('Analytics Redis connection failed, fallback mode enabled');
+    logger.error(`Redis connection failed: ${error.message}`);
     return null;
   }
 }

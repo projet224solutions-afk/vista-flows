@@ -146,10 +146,12 @@ export function VendorAnalyticsDashboard() {
 
       <Card className="p-4">
         <div className="space-y-3">
-          <h3 className="text-base font-semibold">Boost Visibilité</h3>
-          <p className="text-xs text-muted-foreground">
-            Créez un boost ciblé sur votre boutique ou un produit précis pour augmenter votre exposition.
-          </p>
+          <div>
+            <h3 className="text-base font-semibold">Boost Visibilité</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Créez un boost ciblé sur votre boutique ou un produit précis pour augmenter votre exposition.
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
@@ -176,12 +178,6 @@ export function VendorAnalyticsDashboard() {
               <Label>Durée (jours)</Label>
               <Input type="number" min={1} max={90} value={boostDays} onChange={(e) => setBoostDays(Number(e.target.value || 1))} />
             </div>
-          </div>
-
-          <div className="flex justify-end">
-            <Button onClick={handleCreateBoost} disabled={creatingBoost}>
-              {creatingBoost ? 'Création...' : 'Créer un boost'}
-            </Button>
           </div>
 
           <div className="pt-2 text-xs text-muted-foreground">

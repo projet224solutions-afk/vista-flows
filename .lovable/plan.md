@@ -1,60 +1,111 @@
 
+# Plan d'intégration - Animation Spline 3D (Globe) en arrière-plan
 
-# Analyse : Supabase Pro et Capacité Réelle
+## Objectif
+Intégrer l'animation 3D du globe terrestre Spline en arrière-plan de la section Hero de la page d'accueil, créant un effet visuel immersif et moderne.
 
-## Diagnostic Actuel
+## Approche technique
 
-Votre base Supabase est **massivement surdimensionnée en schéma** par rapport aux données réelles :
+### Option choisie : Package React officiel `@splinetool/react-spline`
 
-| Métrique | Valeur | Problème |
-|---|---|---|
-| Tables | **477** | ~400 probablement inutilisées |
-| RLS Policies | **1,018** | Évaluation lente à chaque requête |
-| Fonctions SQL | **1,252** | Overhead mémoire PostgreSQL |
-| Index | **1,596** | Ralentit les écritures |
-| Données réelles | **~5,000 lignes** total | Très peu de données |
+Cette approche est recommandée car :
+- Intégration native avec React (meilleure compatibilité)
+- Support du lazy loading pour optimiser les performances
+- API propre avec gestion des événements
 
-## Pourquoi 500 utilisateurs max ?
+### URL de la scène Spline
+```
+https://prod.spline.design/h5xspcRA7yF54Tzy/scene.splinecode
+```
 
-Ce n'est **pas** une limite du plan Pro Supabase. Le plan Pro supporte normalement **10,000+ utilisateurs**. Le problème vient de :
+---
 
-1. **1,018 RLS policies** - Chaque requête évalue des dizaines de policies, ce qui consomme le CPU PostgreSQL
-2. **477 tables avec 1,596 index** - PostgreSQL maintient tous ces index en mémoire, laissant peu de ressources pour les requêtes
-3. **1,252 fonctions** - Le catalogue PostgreSQL est saturé
+## Étapes d'implémentation
 
-## Ce que Supabase Pro offre réellement
+### 1. Installation du package
 
-- **8 Go RAM**, CPU dédié
-- **Connexions directes illimitées** (pool de 60)
-- Support **5,000-50,000 utilisateurs** selon la complexité des requêtes
+Ajouter la dépendance `@splinetool/react-spline` au projet.
 
-## Plan d'Optimisation (sans changer de plan)
+### 2. Création d'un composant SplineBackground
 
-### Phase 1 — Nettoyage base de données (impact majeur)
-- Identifier et supprimer les ~350 tables inutilisées (logs, tables de debug, tables vides)
-- Supprimer les index redondants ou inutilisés (~800+)
-- Supprimer les fonctions SQL orphelines (~900+)
-- **Résultat attendu : x5-x10 performance**
+Créer un nouveau composant dédié `SplineBackground.tsx` dans `src/components/home/` :
 
-### Phase 2 — Optimisation RLS
-- Consolider les policies redondantes (passer de 1,018 à ~200)
-- Utiliser des fonctions `SECURITY DEFINER` pour les vérifications complexes
-- **Résultat attendu : x3-x5 sur les requêtes authentifiées**
+- Utiliser `React.lazy()` pour charger Spline de manière asynchrone
+- Envelopper dans `Suspense` avec un fallback élégant (gradient animé)
+- Positionner en `absolute` avec `z-index: 0` pour rester derrière le contenu
+- Ajouter un overlay semi-transparent pour garantir la lisibilité du texte
 
-### Phase 3 — Décharger Supabase
-- Déplacer les lectures fréquentes (produits, catégories) vers le cache Redis (déjà configuré avec Upstash)
-- Utiliser le backend AWS pour les opérations lourdes (analytics, rapports)
-- **Résultat attendu : -70% de charge sur PostgreSQL**
+```text
+┌─────────────────────────────────────┐
+│  SplineBackground (position: abs)   │
+│  ┌─────────────────────────────────┐│
+│  │    Globe 3D Spline              ││
+│  │    (opacity: 0.3-0.5)           ││
+│  └─────────────────────────────────┘│
+│  ┌─────────────────────────────────┐│
+│  │    Overlay gradient             ││
+│  │    (pour lisibilité texte)      ││
+│  └─────────────────────────────────┘│
+└─────────────────────────────────────┘
+```
 
-### Capacité après optimisation
+### 3. Modification de HeroSection.tsx
 
-| Scénario | Avant | Après |
-|---|---|---|
-| Utilisateurs simultanés | ~500 | **5,000-10,000** |
-| Requêtes/seconde | ~100 | **1,000-3,000** |
-| Requêtes/minute | ~6,000 | **60,000-180,000** |
+- Importer le nouveau composant `SplineBackground`
+- Ajouter `position: relative` et `overflow: hidden` à la section
+- Placer `SplineBackground` comme premier enfant
+- S'assurer que le contenu existant a un `z-index` supérieur
 
-## Résumé
+### 4. Optimisations de performance
 
-Le plan Pro Supabase est **largement suffisant**. Le problème n'est pas l'abonnement mais la **complexité excessive du schéma** (477 tables, 1,018 RLS, 1,252 fonctions pour seulement 5,000 lignes de données). Un nettoyage en profondeur multipliera la capacité par 10 sans aucun coût supplémentaire.
+- **Lazy loading** : Charger Spline seulement après le rendu initial
+- **Préchargement différé** : Utiliser `setTimeout` pour déclencher le chargement après 2-3 secondes
+- **Fallback gracieux** : Afficher un gradient animé pendant le chargement
+- **Mobile** : Réduire l'opacité ou désactiver sur les appareils à faibles ressources
 
+---
+
+## Structure des fichiers modifiés
+
+| Fichier | Action |
+|---------|--------|
+| `package.json` | Ajouter `@splinetool/react-spline` |
+| `src/components/home/SplineBackground.tsx` | **Créer** - Composant wrapper Spline |
+| `src/components/home/HeroSection.tsx` | Modifier - Intégrer SplineBackground |
+| `src/components/home/index.ts` | Modifier - Exporter SplineBackground |
+
+---
+
+## Détails techniques
+
+### SplineBackground.tsx
+
+```text
+Composant React avec :
+├── React.lazy() pour import dynamique
+├── Suspense avec fallback gradient
+├── Container en position absolute, inset-0
+├── Spline viewer avec scène URL
+├── Overlay dégradé pour lisibilité
+└── Contrôle d'opacité responsive
+```
+
+### Styles appliqués
+
+- **Container** : `absolute inset-0 z-0 overflow-hidden`
+- **Spline** : `w-full h-full opacity-30 sm:opacity-40`
+- **Overlay** : `absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background`
+
+### Fallback pendant chargement
+
+Un dégradé animé avec effet de pulsation pour indiquer le chargement sans être intrusif.
+
+---
+
+## Résultat attendu
+
+La page d'accueil affichera :
+1. Le globe 3D interactif en arrière-plan (légèrement transparent)
+2. Un overlay dégradé garantissant la lisibilité du texte
+3. Tout le contenu existant (badge, titre, boutons, services) reste parfaitement visible et cliquable
+4. Animation fluide sans impact sur les performances grâce au lazy loading

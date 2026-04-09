@@ -1,17 +1,5 @@
 name: Build iOS IPA
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  VITE_SUPABASE_URL: ''
-  VITE_SUPABASE_ANON_KEY: ''
-  VITE_BACKEND_MOBILE_URL: ''
-  APPLE_CERTIFICATES_P12: ''
-  APPLE_CERTIFICATES_PASSWORD: ''
-  APPLE_ISSUER_ID: ''
-  APPLE_API_KEY_ID: ''
-  APPLE_API_PRIVATE_KEY: ''
-  APPLE_TEAM_ID: ''
-
 on:
   push:
     branches: [ main, develop ]
@@ -30,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
           cache: 'npm'
           
       - name: Setup Xcode
@@ -40,97 +28,29 @@ jobs:
           
       - name: Install dependencies
         run: npm ci
-
-      - name: Resolve workflow env
-        shell: bash
-        env:
-          RAW_VARS: ${{ toJson(vars) }}
-          RAW_SECRETS: ${{ toJson(secrets) }}
-        run: |
-          node <<'EOF'
-          const fs = require('fs');
-          const varsObj = JSON.parse(process.env.RAW_VARS || '{}');
-          const secretsObj = JSON.parse(process.env.RAW_SECRETS || '{}');
-          const pick = (...keys) => {
-            for (const key of keys) {
-              const value = secretsObj[key] ?? varsObj[key] ?? '';
-              if (String(value).trim()) return String(value);
-            }
-            return '';
-          };
-          const entries = {
-            VITE_SUPABASE_URL: pick('VITE_SUPABASE_URL', 'SUPABASE_URL'),
-            VITE_SUPABASE_ANON_KEY: pick('VITE_SUPABASE_ANON_KEY', 'SUPABASE_ANON_KEY', 'VITE_SUPABASE_PUBLISHABLE_KEY', 'SUPABASE_PUBLISHABLE_KEY'),
-            VITE_BACKEND_MOBILE_URL: pick('VITE_BACKEND_MOBILE_URL', 'VITE_BACKEND_URL'),
-            APPLE_CERTIFICATES_P12: pick('APPLE_CERTIFICATES_P12'),
-            APPLE_CERTIFICATES_PASSWORD: pick('APPLE_CERTIFICATES_PASSWORD'),
-            APPLE_ISSUER_ID: pick('APPLE_ISSUER_ID'),
-            APPLE_API_KEY_ID: pick('APPLE_API_KEY_ID'),
-            APPLE_API_PRIVATE_KEY: pick('APPLE_API_PRIVATE_KEY'),
-            APPLE_TEAM_ID: pick('APPLE_TEAM_ID'),
-          };
-          for (const [key, value] of Object.entries(entries)) {
-            fs.appendFileSync(process.env.GITHUB_ENV, `${key}<<__ENV__\n${value}\n__ENV__\n`);
-          }
-          EOF
-
+        
       - name: Build React app
         run: |
-          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
-            echo "❌ Missing Supabase env vars for frontend build"
-            echo "Define one of: secrets/vars VITE_SUPABASE_URL or SUPABASE_URL"
-            echo "Define one of: secrets/vars VITE_SUPABASE_ANON_KEY or SUPABASE_ANON_KEY"
-            exit 1
-          fi
           npm run build
           echo "React app built successfully"
           
       - name: Install Capacitor
         run: |
           npm install -g @capacitor/cli
-          if [ ! -d "ios" ]; then
-            npx cap add ios
-          else
-            echo "iOS project directory already exists, skipping cap add"
-          fi
+          npx cap add ios
           npx cap sync ios
-
-      - name: Resolve iOS app directory
-        id: ios-path
-        run: |
-          APP_XCODEPROJ=$(find ios -name App.xcodeproj -type d | head -n 1)
-          if [ -z "$APP_XCODEPROJ" ]; then
-            echo "❌ No App.xcodeproj found after Capacitor sync"
-            find ios -maxdepth 5 -type f | head -n 80
-            exit 1
-          fi
-
-          APP_DIR=$(dirname "$APP_XCODEPROJ")
-          PODFILE_PATH=$(find "$APP_DIR" -maxdepth 2 -name Podfile -type f | head -n 1)
-
-          echo "Detected iOS app dir: $APP_DIR"
-          echo "app_dir=$APP_DIR" >> "$GITHUB_OUTPUT"
-
-          if [ -n "$PODFILE_PATH" ]; then
-            echo "Detected Podfile: $PODFILE_PATH"
-            echo "use_cocoapods=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "No Podfile found; using Xcode project build (SPM mode)"
-            echo "use_cocoapods=false" >> "$GITHUB_OUTPUT"
-          fi
           
       - name: Install CocoaPods
-        if: steps.ios-path.outputs.use_cocoapods == 'true'
         run: |
-          cd "${{ steps.ios-path.outputs.app_dir }}"
+          cd ios/App
           pod install
           
       - name: Import Code-Signing Certificates
         if: github.event_name != 'pull_request'
         uses: Apple-Actions/import-codesign-certs@v2
         with:
-          p12-file-base64: ${{ env.APPLE_CERTIFICATES_P12 }}
-          p12-password: ${{ env.APPLE_CERTIFICATES_PASSWORD }}
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATES_P12 }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATES_PASSWORD }}
           
       - name: Download Provisioning Profile
         if: github.event_name != 'pull_request'
@@ -138,33 +58,33 @@ jobs:
         with:
           bundle-id: com.224solutions.app
           profile-type: 'IOS_APP_STORE'
-          issuer-id: ${{ env.APPLE_ISSUER_ID }}
-          api-key-id: ${{ env.APPLE_API_KEY_ID }}
-          api-private-key: ${{ env.APPLE_API_PRIVATE_KEY }}
+          issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
           
       - name: Build iOS Archive
         run: |
-          cd "${{ steps.ios-path.outputs.app_dir }}"
-          if [ "${{ steps.ios-path.outputs.use_cocoapods }}" = "true" ]; then
-            xcodebuild -workspace App.xcworkspace \
-              -scheme App \
-              -configuration Release \
-              -destination generic/platform=iOS \
-              -archivePath $PWD/build/App.xcarchive \
-              archive
-          else
-            xcodebuild -project App.xcodeproj \
-              -scheme App \
-              -configuration Release \
-              -destination generic/platform=iOS \
-              -archivePath $PWD/build/App.xcarchive \
-              archive
-          fi
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -destination generic/platform=iOS \
+            -archivePath $PWD/build/App.xcarchive \
+            archive
+            
+      - name: Export IPA
+        if: github.event_name != 'pull_request'
+        run: |
+          cd ios/App
+          xcodebuild -exportArchive \
+            -archivePath $PWD/build/App.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath $PWD/build/ipa
             
       - name: Create ExportOptions.plist
         if: github.event_name != 'pull_request'
         run: |
-          cd "${{ steps.ios-path.outputs.app_dir }}"
+          cd ios/App
           cat > ExportOptions.plist << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -173,7 +93,7 @@ jobs:
               <key>method</key>
               <string>app-store</string>
               <key>teamID</key>
-              <string>$APPLE_TEAM_ID</string>
+              <string>${{ secrets.APPLE_TEAM_ID }}</string>
               <key>uploadBitcode</key>
               <false/>
               <key>uploadSymbols</key>
@@ -183,32 +103,23 @@ jobs:
           </dict>
           </plist>
           EOF
-
-      - name: Export IPA
-        if: github.event_name != 'pull_request'
-        run: |
-          cd "${{ steps.ios-path.outputs.app_dir }}"
-          xcodebuild -exportArchive \
-            -archivePath $PWD/build/App.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
-            -exportPath $PWD/build/ipa
           
       - name: Upload IPA artifact
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: 224solutions-ios-ipa
-          path: ${{ steps.ios-path.outputs.app_dir }}/build/ipa/*.ipa
+          path: ios/App/build/ipa/*.ipa
           retention-days: 30
           
       - name: Upload to TestFlight
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: Apple-Actions/upload-testflight-build@v1
         with:
-          app-path: ${{ steps.ios-path.outputs.app_dir }}/build/ipa/App.ipa
-          issuer-id: ${{ env.APPLE_ISSUER_ID }}
-          api-key-id: ${{ env.APPLE_API_KEY_ID }}
-          api-private-key: ${{ env.APPLE_API_PRIVATE_KEY }}
+          app-path: ios/App/build/ipa/App.ipa
+          issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
           
       - name: Create Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -233,7 +144,7 @@ jobs:
             
             📊 **Build:** ${{ github.sha }}
             🕒 **Date:** ${{ github.event.head_commit.timestamp }}
-          files: ${{ steps.ios-path.outputs.app_dir }}/build/ipa/*.ipa
+          files: ios/App/build/ipa/*.ipa
           draft: false
           prerelease: false
         env:

@@ -10,11 +10,10 @@ import { uploadRateLimiter } from '../middlewares/rateLimiter.js';
 import { logger } from '../config/logger.js';
 
 const router = express.Router();
-const defaultUploadPath = process.env.VERCEL ? '/tmp/uploads/' : './uploads/';
 
 // Configuration Multer
 const upload = multer({
-  dest: process.env.UPLOAD_PATH || defaultUploadPath,
+  dest: process.env.UPLOAD_PATH || './uploads/',
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024 // 10MB
   },

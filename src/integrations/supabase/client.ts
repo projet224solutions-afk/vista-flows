@@ -43,6 +43,164 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
   },
 });
 
+const NODE_BACKEND_EDGE_EXACT = new Set([
+  'vendor-ai-assistant',
+  'pdg-ai-assistant',
+  'ai-copilot',
+  'ai-error-analyzer',
+  'visual-search',
+  'delivery-payment',
+  'send-delivery-notification',
+  'send-otp-email',
+  'send-sms',
+  'send-security-alert',
+  'geo-detect',
+  'geocode-address',
+  'google-places-autocomplete',
+  'gcs-signed-url',
+]);
+
+const NODE_BACKEND_EDGE_PREFIXES = [
+  'chapchappay-',
+  'paypal-',
+  'stripe-',
+  'escrow-',
+  'security-',
+];
+
+const NODE_BACKEND_EDGE_AI_NESTED = new Set([
+  'vendor-ai-assistant',
+  'pdg-ai-assistant',
+  'ai-copilot',
+]);
+
+function shouldRouteFunctionThroughNode(functionName: string): boolean {
+  return NODE_BACKEND_EDGE_EXACT.has(functionName)
+    || NODE_BACKEND_EDGE_PREFIXES.some((prefix) => functionName.startsWith(prefix));
+}
+
+function getNodeEdgeFunctionCandidates(functionName: string): string[] {
+  if (NODE_BACKEND_EDGE_AI_NESTED.has(functionName)) {
+    return [`/edge-functions/ai/${functionName}`, `/edge-functions/${functionName}`];
+  }
+
+  if (
+    functionName.startsWith('chapchappay-')
+    || functionName.startsWith('paypal-')
+    || functionName.startsWith('stripe-')
+    || functionName.startsWith('escrow-')
+  ) {
+    return [`/edge-functions/payments/${functionName}`, `/edge-functions/${functionName}`];
+  }
+
+  return [`/edge-functions/${functionName}`];
+}
+
+async function invokeNodeEdgeFunction(functionName: string, options: Record<string, any> = {}) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  const method = String(options.method || 'POST').toUpperCase();
+  const headers = new Headers(options.headers || {});
+
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  let body: BodyInit | undefined;
+
+  if (!(method === 'GET' && options.body && typeof options.body === 'object' && !isFormData) && options.body !== undefined) {
+    if (isFormData) {
+      body = options.body as FormData;
+    } else if (typeof options.body === 'string') {
+      body = options.body;
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+      }
+    } else {
+      body = JSON.stringify(options.body);
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+      }
+    }
+  }
+
+  try {
+    const candidates = getNodeEdgeFunctionCandidates(functionName);
+
+    for (let index = 0; index < candidates.length; index++) {
+      let url = candidates[index];
+
+      if (method === 'GET' && options.body && typeof options.body === 'object' && !isFormData) {
+        const params = new URLSearchParams();
+        for (const [key, value] of Object.entries(options.body)) {
+          if (value !== undefined && value !== null) {
+            params.set(key, String(value));
+          }
+        }
+        const query = params.toString();
+        if (query) {
+          url += `?${query}`;
+        }
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers,
+        body,
+        keepalive: true,
+      });
+
+      if (response.status === 404 && index < candidates.length - 1) {
+        continue;
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      const payload = contentType.includes('application/json')
+        ? await response.json()
+        : await response.text();
+
+      if (!response.ok) {
+        return {
+          data: null,
+          error: {
+            message: (typeof payload === 'object' && payload && 'error' in payload)
+              ? String((payload as { error?: unknown }).error || `Erreur ${response.status}`)
+              : (typeof payload === 'string' && payload) || `Erreur ${response.status}`,
+            status: response.status,
+            details: payload,
+          },
+        };
+      }
+
+      return { data: payload, error: null };
+    }
+
+    return {
+      data: null,
+      error: {
+        message: `Route backend introuvable pour ${functionName}`,
+      },
+    };
+  } catch (error: any) {
+    return {
+      data: null,
+      error: {
+        message: error?.message || 'Erreur réseau backend',
+      },
+    };
+  }
+}
+
+const originalInvoke = supabase.functions.invoke.bind(supabase.functions);
+(supabase.functions as any).invoke = async (functionName: string, options: Record<string, any> = {}) => {
+  if (shouldRouteFunctionThroughNode(functionName)) {
+    return invokeNodeEdgeFunction(functionName, options);
+  }
+
+  return originalInvoke(functionName, options);
+};
+
 /**
  * Vérifie si l'app est en mode hors ligne
  */
