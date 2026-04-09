@@ -428,6 +428,20 @@ export function useMultiWarehouse() {
   // LOCATION MANAGEMENT
   // =============================================
 
+  const normalizeLocationInput = (input: Partial<CreateLocationInput>) => ({
+    ...input,
+    name: input.name?.trim(),
+    code: input.code?.trim() || null,
+    description: input.description?.trim() || null,
+    address: input.address?.trim() || null,
+    city: input.city?.trim() || null,
+    country: input.country?.trim() || 'Guinée',
+    manager_name: input.manager_name?.trim() || null,
+    manager_phone: input.manager_phone?.trim() || null,
+    manager_email: input.manager_email?.trim() || null,
+    location_type: input.location_type || 'warehouse',
+  });
+
   const createLocation = async (input: CreateLocationInput): Promise<VendorLocation | null> => {
     if (!vendorId) {
       toast.error('Vendeur non identifié');
@@ -435,33 +449,37 @@ export function useMultiWarehouse() {
     }
 
     try {
+      const normalizedInput = normalizeLocationInput(input);
+
       const { data, error } = await supabase
         .from('vendor_locations')
         .insert({
           vendor_id: vendorId,
-          ...input,
-          location_type: input.location_type || 'warehouse',
+          ...normalizedInput,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      toast.success(`${input.location_type === 'pos' ? 'Point de vente' : 'Entrepôt'} créé avec succès`);
+      toast.success(`${normalizedInput.location_type === 'pos' ? 'Point de vente' : 'Entrepôt'} créé avec succès`);
       await fetchLocations();
       return data;
     } catch (err: any) {
       console.error('Erreur création lieu:', err);
-      toast.error(err.message || 'Erreur lors de la création');
+      const isDuplicateCode = err?.code === '23505' || String(err?.message || '').includes('vendor_locations_vendor_id_code_key');
+      toast.error(isDuplicateCode ? 'Ce code d’entrepôt existe déjà. Modifiez-le ou laissez ce champ vide.' : (err.message || 'Erreur lors de la création'));
       return null;
     }
   };
 
   const updateLocation = async (locationId: string, updates: Partial<CreateLocationInput>): Promise<boolean> => {
     try {
+      const normalizedUpdates = normalizeLocationInput(updates);
+
       const { error } = await supabase
         .from('vendor_locations')
-        .update(updates)
+        .update(normalizedUpdates)
         .eq('id', locationId);
 
       if (error) throw error;

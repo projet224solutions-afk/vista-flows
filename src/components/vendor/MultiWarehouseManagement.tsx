@@ -85,28 +85,23 @@ function LocationStatsCard({ stats }: { stats: any }) {
   );
 }
 
-// Carte d'un lieu (entrepôt ou POS)
+// Carte d'un lieu logistique
 function LocationCard({ 
   location, 
   onEdit, 
   onDelete, 
-  onTogglePOS, 
   onSetDefault,
   onViewStock 
 }: { 
   location: VendorLocation;
   onEdit: () => void;
   onDelete: () => void;
-  onTogglePOS: () => void;
   onSetDefault: () => void;
   onViewStock: () => void;
 }) {
-  const isPos = location.is_pos_enabled;
-  
   return (
     <Card className={cn(
       "relative overflow-hidden transition-all hover:shadow-lg",
-      isPos && "border-green-500/50 bg-green-50/30 dark:bg-green-950/20",
       location.is_default && "ring-2 ring-primary"
     )}>
       {/* Badge type */}
@@ -117,34 +112,16 @@ function LocationCard({
             Par défaut
           </Badge>
         )}
-        <Badge variant={isPos ? "default" : "secondary"} className={cn(
-          isPos && "bg-green-600"
-        )}>
-          {isPos ? (
-            <>
-              <Store className="w-3 h-3 mr-1" />
-              POS
-            </>
-          ) : (
-            <>
-              <Warehouse className="w-3 h-3 mr-1" />
-              Entrepôt
-            </>
-          )}
+        <Badge variant="secondary">
+          <Warehouse className="w-3 h-3 mr-1" />
+          Entrepôt
         </Badge>
       </div>
 
       <CardHeader className="pb-2">
         <div className="flex items-start gap-3">
-          <div className={cn(
-            "p-3 rounded-xl",
-            isPos ? "bg-green-100 dark:bg-green-900/50" : "bg-blue-100 dark:bg-blue-900/50"
-          )}>
-            {isPos ? (
-              <Store className={cn("w-6 h-6", isPos ? "text-green-600" : "text-blue-600")} />
-            ) : (
-              <Warehouse className="w-6 h-6 text-blue-600" />
-            )}
+          <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/50">
+            <Warehouse className="w-6 h-6 text-blue-600" />
           </div>
           <div className="flex-1 min-w-0">
             <CardTitle className="text-lg truncate pr-20">{location.name}</CardTitle>
@@ -210,19 +187,6 @@ function LocationCard({
           Stock
         </Button>
         
-        <Button
-          variant={isPos ? "secondary" : "default"}
-          size="sm"
-          onClick={onTogglePOS}
-          className={cn(
-            "flex-1",
-            isPos ? "bg-green-100 text-green-700 hover:bg-green-200" : ""
-          )}
-        >
-          <Store className="w-4 h-4 mr-1" />
-          {isPos ? 'Désactiver POS' : 'Activer POS'}
-        </Button>
-
         <Button variant="ghost" size="icon" onClick={onEdit}>
           <Edit className="w-4 h-4" />
         </Button>
@@ -269,6 +233,7 @@ export default function MultiWarehouseManagement() {
     inTransitTransfers,
     losses,
     totalLossValue,
+    productMappings,
     loading,
     createLocation,
     updateLocation,
@@ -316,6 +281,26 @@ export default function MultiWarehouseManagement() {
     notes: ''
   });
 
+  const resetLocationForm = () => {
+    setSelectedLocation(null);
+    setNewLocation({
+      name: '',
+      code: '',
+      location_type: 'warehouse',
+      address: '',
+      city: '',
+      manager_name: '',
+      manager_phone: '',
+    });
+  };
+
+  const handleCreateDialogChange = (open: boolean) => {
+    setShowCreateDialog(open);
+    if (!open) {
+      resetLocationForm();
+    }
+  };
+
   // Charger le stock d'un lieu
   const handleViewStock = async (location: VendorLocation) => {
     setSelectedLocation(location);
@@ -324,21 +309,17 @@ export default function MultiWarehouseManagement() {
     setShowStockDialog(true);
   };
 
-  // Créer un nouveau lieu
+  // Créer ou modifier un lieu
   const handleCreateLocation = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await createLocation(newLocation);
-    if (result) {
+
+    const success = selectedLocation
+      ? await updateLocation(selectedLocation.id, newLocation)
+      : await createLocation(newLocation);
+
+    if (success) {
       setShowCreateDialog(false);
-      setNewLocation({
-        name: '',
-        code: '',
-        location_type: 'warehouse',
-        address: '',
-        city: '',
-        manager_name: '',
-        manager_phone: '',
-      });
+      resetLocationForm();
     }
   };
 
@@ -415,9 +396,9 @@ export default function MultiWarehouseManagement() {
               <Building2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">Gestion Multi-Sites</h1>
+              <h1 className="text-2xl md:text-3xl font-bold">Gestion des Entrepôts</h1>
               <p className="text-muted-foreground">
-                {locations.length} lieu(x) • {posLocations.length} POS actif(s)
+                Pilotage du stock logistique, des transferts et du suivi des écarts • {warehouses.length} entrepôt(s)
               </p>
             </div>
           </div>
@@ -432,20 +413,79 @@ export default function MultiWarehouseManagement() {
             <DialogTrigger asChild>
               <Button variant="outline" className="flex-1 md:flex-none">
                 <ArrowRightLeft className="w-4 h-4 mr-2" />
-                Transfert
+                Transfert logistique
               </Button>
             </DialogTrigger>
           </Dialog>
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <Dialog open={showCreateDialog} onOpenChange={handleCreateDialogChange}>
             <DialogTrigger asChild>
-              <Button className="flex-1 md:flex-none bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40">
+              <Button
+                className="flex-1 md:flex-none bg-primary hover:bg-primary/90 shadow-lg shadow-primary/40"
+                onClick={() => {
+                  resetLocationForm();
+                  setShowCreateDialog(true);
+                }}
+              >
                 <Plus className="w-4 h-4 mr-2" />
-                Nouveau Lieu
+                Nouveau site
               </Button>
             </DialogTrigger>
           </Dialog>
         </div>
       </div>
+
+      {/* Vue d'ensemble professionnelle */}
+      <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
+        <Card className="shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Entrepôts actifs</p>
+                <p className="text-2xl font-bold">{warehouses.length}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-blue-100 text-blue-700">
+                <Warehouse className="w-5 h-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Transferts à traiter</p>
+                <p className="text-2xl font-bold">{pendingTransfers.length + inTransitTransfers.length}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-purple-100 text-purple-700">
+                <ArrowRightLeft className="w-5 h-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Écarts signalés</p>
+                <p className="text-2xl font-bold">{losses.length}</p>
+              </div>
+              <div className="p-2 rounded-lg bg-amber-100 text-amber-700">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Alert className="border-primary/20 bg-primary/5">
+        <Package className="h-4 w-4 text-primary" />
+        <AlertTitle>Mode entrepôt professionnel</AlertTitle>
+        <AlertDescription>
+          Le module se concentre maintenant sur le <strong>stock logistique</strong>, les transferts vers un client ou un autre entrepôt, la traçabilité, le reçu PDF et l’audit.
+        </AlertDescription>
+      </Alert>
 
       {/* Alertes */}
       {pendingTransfers.length > 0 && (
@@ -470,46 +510,67 @@ export default function MultiWarehouseManagement() {
 
       {/* Onglets */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-4 w-full md:w-auto">
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 h-auto w-full md:w-auto gap-1">
           <TabsTrigger value="locations" className="gap-2">
             <Building2 className="w-4 h-4" />
-            <span className="hidden md:inline">Lieux</span>
-            <Badge variant="secondary" className="ml-1">{locations.length}</Badge>
+            <span className="hidden md:inline">Entrepôts</span>
+            <Badge variant="secondary" className="ml-1">{warehouses.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="transfers" className="gap-2">
             <ArrowRightLeft className="w-4 h-4" />
             <span className="hidden md:inline">Transferts</span>
             <Badge variant="secondary" className="ml-1">{transfers.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="pos" className="gap-2">
-            <Store className="w-4 h-4" />
-            <span className="hidden md:inline">Points de vente</span>
-            <Badge variant="secondary" className="ml-1">{posLocations.length}</Badge>
-          </TabsTrigger>
           <TabsTrigger value="losses" className="gap-2">
             <TrendingDown className="w-4 h-4" />
-            <span className="hidden md:inline">Pertes</span>
+            <span className="hidden md:inline">Audit</span>
             <Badge variant="secondary" className="ml-1">{losses.length}</Badge>
           </TabsTrigger>
         </TabsList>
 
         {/* Tab: Lieux */}
         <TabsContent value="locations" className="space-y-4">
-          {locations.length === 0 ? (
+          {warehouses.length === 0 ? (
             <Card className="p-6 sm:p-8 md:p-10 text-center mb-20 lg:mb-0">
               <Warehouse className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Aucun lieu configuré</h3>
-              <p className="text-muted-foreground mb-4">
-                Créez votre premier entrepôt ou point de vente pour commencer
+              <h3 className="text-xl font-semibold mb-2">Configurez votre réseau d’entrepôts</h3>
+              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                Créez vos <strong>sites logistiques</strong>, organisez les mouvements de stock entre entrepôts ou vers le client final, puis suivez chaque sortie avec traçabilité complète.
               </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Créer un lieu
-              </Button>
+
+              <div className="grid md:grid-cols-2 gap-3 text-left mb-6">
+                <div className="rounded-lg border bg-muted/40 p-4">
+                  <p className="font-semibold mb-1">1. Stock logistique</p>
+                  <p className="text-sm text-muted-foreground">Gestion en cartons + unités pour l’approvisionnement et la réserve.</p>
+                </div>
+                <div className="rounded-lg border bg-muted/40 p-4">
+                  <p className="font-semibold mb-1">2. Transferts sécurisés</p>
+                  <p className="text-sm text-muted-foreground">Entrepôt → entrepôt ou client avec suivi opérationnel et validation de réception.</p>
+                </div>
+                <div className="rounded-lg border bg-muted/40 p-4">
+                  <p className="font-semibold mb-1">3. Traçabilité complète</p>
+                  <p className="text-sm text-muted-foreground">Reçu PDF, historique des mouvements et audit des écarts.</p>
+                </div>
+                <div className="rounded-lg border bg-muted/40 p-4">
+                  <p className="font-semibold mb-1">4. Contrôle centralisé</p>
+                  <p className="text-sm text-muted-foreground">Un seul espace pour superviser les stocks, pertes et flux logistiques.</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-center gap-2">
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Créer un entrepôt
+                </Button>
+                <Button variant="outline" onClick={() => setShowTransferDialog(true)}>
+                  <ArrowRightLeft className="w-4 h-4 mr-2" />
+                  Préparer un transfert
+                </Button>
+              </div>
             </Card>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {locations.map((location) => (
+              {warehouses.map((location) => (
                 <LocationCard
                   key={location.id}
                   location={location}
@@ -531,7 +592,6 @@ export default function MultiWarehouseManagement() {
                       deleteLocation(location.id);
                     }
                   }}
-                  onTogglePOS={() => handleTogglePOS(location)}
                   onSetDefault={() => setDefaultLocation(location.id)}
                   onViewStock={() => handleViewStock(location)}
                 />
@@ -659,62 +719,6 @@ export default function MultiWarehouseManagement() {
           </Card>
         </TabsContent>
 
-        {/* Tab: POS */}
-        <TabsContent value="pos" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Store className="w-5 h-5 text-green-600" />
-                Points de vente actifs
-              </CardTitle>
-              <CardDescription>
-                Les lieux avec POS activé peuvent effectuer des ventes directes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {posLocations.length === 0 ? (
-                <div className="text-center py-8">
-                  <Store className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                  <p className="text-muted-foreground mb-4">Aucun point de vente activé</p>
-                  <p className="text-sm text-muted-foreground">
-                    Activez le POS sur un entrepôt pour commencer à vendre
-                  </p>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {posLocations.map((location) => (
-                    <Card key={location.id} className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
-                      <CardContent className="pt-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <Store className="w-5 h-5 text-green-600" />
-                            <span className="font-semibold">{location.name}</span>
-                          </div>
-                          <Badge className="bg-green-600">Actif</Badge>
-                        </div>
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          {location.address && (
-                            <p className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {location.address}
-                            </p>
-                          )}
-                          {location.manager_name && (
-                            <p className="flex items-center gap-1">
-                              <User className="w-3 h-3" />
-                              {location.manager_name}
-                            </p>
-                          )}
-                        </div>
-                        <LocationStatsCard stats={location.stats} />
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* Tab: Pertes */}
         <TabsContent value="losses" className="space-y-4">
@@ -724,10 +728,10 @@ export default function MultiWarehouseManagement() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingDown className="w-5 h-5 text-red-600" />
-                    Registre des pertes
+                    Audit, pertes et écarts
                   </CardTitle>
                   <CardDescription>
-                    Historique des produits manquants et endommagés
+                    Historique des produits manquants, écarts de réception et pertes logistiques.
                   </CardDescription>
                 </div>
                 <div className="text-right">
@@ -784,7 +788,7 @@ export default function MultiWarehouseManagement() {
       </Tabs>
 
       {/* Dialog: Créer/Modifier un lieu */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      <Dialog open={showCreateDialog} onOpenChange={handleCreateDialogChange}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -803,7 +807,7 @@ export default function MultiWarehouseManagement() {
             <DialogDescription>
               {selectedLocation 
                 ? "Modifiez les informations de ce lieu"
-                : "Créez un nouvel entrepôt ou point de vente"
+                : "Créez un nouvel entrepôt ou site logistique"
               }
             </DialogDescription>
           </DialogHeader>
@@ -845,12 +849,6 @@ export default function MultiWarehouseManagement() {
                       <span className="flex items-center gap-2">
                         <Warehouse className="w-4 h-4" />
                         Entrepôt
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="pos">
-                      <span className="flex items-center gap-2">
-                        <Store className="w-4 h-4" />
-                        Point de vente (POS)
                       </span>
                     </SelectItem>
                   </SelectContent>
@@ -901,16 +899,7 @@ export default function MultiWarehouseManagement() {
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => {
                 setShowCreateDialog(false);
-                setSelectedLocation(null);
-                setNewLocation({
-                  name: '',
-                  code: '',
-                  location_type: 'warehouse',
-                  address: '',
-                  city: '',
-                  manager_name: '',
-                  manager_phone: '',
-                });
+                resetLocationForm();
               }}>
                 Annuler
               </Button>

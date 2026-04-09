@@ -347,16 +347,16 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
       {step === 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>Sélectionnez les lieux</CardTitle>
+            <CardTitle>Sélectionnez les sites logistiques</CardTitle>
             <CardDescription>
-              Choisissez le lieu source et la destination du transfert
+              Choisissez l’entrepôt source puis la destination : client final ou autre entrepôt.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Lieu source */}
               <div className="space-y-3">
-                <Label className="text-base font-semibold">Lieu source</Label>
+                  <Label className="text-base font-semibold">Entrepôt source</Label>
                 <Select value={fromLocationId} onValueChange={setFromLocationId}>
                   <SelectTrigger className="h-14">
                     <SelectValue placeholder="D'où transférer ?" />
@@ -406,6 +406,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                           <p className="text-sm text-muted-foreground">
                             {fromLocation.city || fromLocation.address || 'Adresse non définie'}
                           </p>
+                          <p className="text-xs text-blue-700 mt-1">Stock logistique / approvisionnement</p>
                         </div>
                       </div>
                       <div className="mt-3 grid grid-cols-2 gap-2 text-center">
@@ -432,7 +433,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
 
               {/* Lieu destination */}
               <div className="space-y-3 md:-mt-16">
-                <Label className="text-base font-semibold">Destination</Label>
+                <Label className="text-base font-semibold">Destination opérationnelle</Label>
 
                 <div className="space-y-2">
                   <Label>Type de destination</Label>
@@ -445,7 +446,6 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="warehouse">🏭 Autre entrepôt</SelectItem>
-                      <SelectItem value="shop">🏬 Boutique / POS</SelectItem>
                       <SelectItem value="client">👤 Client final</SelectItem>
                     </SelectContent>
                   </Select>
@@ -455,7 +455,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                   <>
                     <Select value={toLocationId} onValueChange={setToLocationId}>
                       <SelectTrigger className="h-14">
-                        <SelectValue placeholder={destinationType === 'shop' ? 'Vers quelle boutique ?' : 'Vers quel entrepôt ?'} />
+                        <SelectValue placeholder="Vers quel entrepôt ?" />
                       </SelectTrigger>
                       <SelectContent>
                         {destinationLocations.map(loc => (
@@ -884,7 +884,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                Le stock logistique reste séparé du stock boutique. Le stock sera retiré de la source uniquement après l'expédition, puis confirmé à la réception avec traçabilité et reçu PDF.
+                Le stock logistique reste tracé à chaque étape. Il sera retiré de la source après expédition, puis confirmé à la réception avec reçu PDF et historique d’audit.
               </AlertDescription>
             </Alert>
 
