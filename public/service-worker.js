@@ -1,7 +1,10 @@
-const CACHE_VERSION = 'v25';
+const CACHE_VERSION = 'v26';
 const STATIC_CACHE = `224solutions-static-${CACHE_VERSION}`;
-const DYNAMIC_CACHE = `224solutions-dynamic-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `224solutions-runtime-${CACHE_VERSION}`;
 const APP_SHELL_CACHE = `224solutions-app-shell-${CACHE_VERSION}`;
+
+const OFFLINE_URL = '/offline.html';
+const APP_SHELL_URL = '/index.html';
 
 let firebaseAvailable = false;
 try {
@@ -47,40 +50,24 @@ function initFCM() {
 
 const PRECACHE_ASSETS = [
   '/',
-  '/index.html',
+  APP_SHELL_URL,
   '/manifest.webmanifest?v=3',
-  '/offline.html',
+  OFFLINE_URL,
   '/favicon.png?v=3',
   '/apple-touch-icon.png?v=3',
   '/icon-192.png?v=3',
   '/icon-512.png?v=3',
 ];
 
-const EXTERNAL_API_DOMAINS = [
-  'supabase',
-  'googleapis',
-  'mapbox',
-  'agora',
-  'stripe',
-  'gstatic',
-  'firebase',
-  'paypal',
-  'cognito',
-  'amazoncognito',
-  'sentry',
-  'emailjs',
-];
-
-async function fetchWithTimeout(resource, timeout = 5000, init = {}) {
+async function fetchWithTimeout(resource, timeout = 8000, init = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(resource, {
+    return await fetch(resource, {
       ...init,
       signal: controller.signal,
     });
-    return response;
   } finally {
     clearTimeout(timer);
   }
@@ -97,16 +84,78 @@ async function safeCachePut(cacheName, request, response) {
   }
 }
 
-async function getOfflineFallback() {
+async function deleteOldCaches() {
+  const keys = await caches.keys();
+
+  await Promise.all(
+    keys
+      .filter((key) => {
+        if (!key.startsWith('224solutions-')) return false;
+        return !key.includes(CACHE_VERSION);
+      })
+      .map((key) => {
+        console.log('[SW] Delete old cache:', key);
+        return caches.delete(key);
+      })
+  );
+}
+
+async function clear224Caches() {
+  const keys = await caches.keys();
+
+  await Promise.all(
+    keys
+      .filter((key) => key.startsWith('224solutions-'))
+      .map((key) => caches.delete(key))
+  );
+}
+
+async function notifyClients(message) {
+  const clients = await self.clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true,
+  });
+
+  for (const client of clients) {
+    client.postMessage(message);
+  }
+}
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+function isBypassRequest(url) {
   return (
-    (await caches.match('/offline.html')) ||
-    new Response(
-      '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hors ligne</title></head><body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f5f5;margin:0"><div style="text-align:center;max-width:400px;padding:40px"><div style="font-size:60px;margin-bottom:16px">📡</div><h1 style="margin-bottom:12px">Mode Hors Ligne</h1><p style="color:#666;margin-bottom:24px">Connexion Internet requise pour charger l’application.</p><button onclick="location.reload()" style="padding:12px 24px;background:#023288;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer">Réessayer</button></div><script>window.addEventListener("online",()=>location.reload())</script></body></html>',
-      {
-        status: 503,
-        headers: { 'Content-Type': 'text/html; charset=utf-8' },
-      }
-    )
+    url.pathname === '/manifest.webmanifest' ||
+    url.pathname === '/manifest.json' ||
+    url.pathname === '/healthz.json' ||
+    url.pathname.startsWith('/~oauth') ||
+    url.pathname.startsWith('/rest/') ||
+    url.pathname.startsWith('/auth/') ||
+    url.pathname.startsWith('/functions/') ||
+    url.pathname.startsWith('/storage/')
+  );
+}
+
+function isStaticAsset(url) {
+  return url.pathname.startsWith('/assets/') && /\.(js|css)$/.test(url.pathname);
+}
+
+function isMediaAsset(url) {
+  return /\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|webp)$/i.test(url.pathname);
+}
+
+async function getOfflineFallback() {
+  const cached = await caches.match(OFFLINE_URL);
+  if (cached) return cached;
+
+  return new Response(
+    '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hors ligne</title></head><body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f5f5;margin:0"><div style="text-align:center;max-width:400px;padding:40px"><div style="font-size:60px;margin-bottom:16px">📡</div><h1 style="margin-bottom:12px">Mode Hors Ligne</h1><p style="color:#666;margin-bottom:24px">Connexion Internet requise pour charger l’application.</p><button onclick="location.reload()" style="padding:12px 24px;background:#023288;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer">Réessayer</button></div><script>window.addEventListener("online",()=>location.reload())</script></body></html>',
+    {
+      status: 503,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    }
   );
 }
 
@@ -120,47 +169,169 @@ async function precacheShell() {
         if (response.ok) {
           await safeCachePut(STATIC_CACHE, url, response.clone());
         }
-      } catch (err) {
-        console.warn(`[SW] Skip ${url}:`, err?.message || err);
+      } catch (error) {
+        console.warn(`[SW] Skip ${url}:`, error?.message || error);
       }
     })
   );
 
   try {
-    const res = await fetchWithTimeout('/index.html', 10000, { cache: 'no-cache' });
+    const response = await fetchWithTimeout(APP_SHELL_URL, 12000, { cache: 'no-cache' });
 
-    if (res?.ok) {
-      await safeCachePut(APP_SHELL_CACHE, '/', res.clone());
-      await safeCachePut(STATIC_CACHE, '/index.html', res.clone());
+    if (!response?.ok) return;
 
-      const html = await res.text();
+    await safeCachePut(APP_SHELL_CACHE, '/', response.clone());
+    await safeCachePut(APP_SHELL_CACHE, APP_SHELL_URL, response.clone());
+    await safeCachePut(STATIC_CACHE, APP_SHELL_URL, response.clone());
 
-      const assetUrls = [
-        ...new Set(
-          Array.from(
-            html.matchAll(/(?:href|src)=["'](\/assets\/[^"']+)["']/g)
-          ).map((m) => m[1])
-        ),
-      ].filter((u) => /\.(js|css)$/.test(u));
+    const html = await response.text();
 
-      await Promise.allSettled(
-        assetUrls.map(async (u) => {
-          try {
-            const r = await fetchWithTimeout(u, 15000, { cache: 'no-cache' });
-            if (r.ok) {
-              await safeCachePut(STATIC_CACHE, u, r.clone());
-            }
-          } catch (err) {
-            console.warn(`[SW] Asset skip ${u}:`, err?.message || err);
+    const assetUrls = [
+      ...new Set(
+        Array.from(
+          html.matchAll(/(?:href|src)=["'](\/assets\/[^"']+)["']/g)
+        ).map((m) => m[1])
+      ),
+    ].filter((url) => /\.(js|css)$/i.test(url));
+
+    await Promise.allSettled(
+      assetUrls.map(async (assetUrl) => {
+        try {
+          const assetResponse = await fetchWithTimeout(assetUrl, 15000, {
+            cache: 'no-cache',
+          });
+
+          if (assetResponse.ok) {
+            await safeCachePut(STATIC_CACHE, assetUrl, assetResponse.clone());
           }
-        })
-      );
+        } catch (error) {
+          console.warn(`[SW] Asset skip ${assetUrl}:`, error?.message || error);
+        }
+      })
+    );
 
-      console.log(`[SW] Cached ${assetUrls.length} build assets`);
-    }
-  } catch (e) {
-    console.warn('[SW] Shell precache failed:', e?.message || e);
+    console.log(`[SW] Cached ${assetUrls.length} build assets`);
+  } catch (error) {
+    console.warn('[SW] Shell precache failed:', error?.message || error);
   }
+}
+
+async function handleNavigationRequest(event) {
+  try {
+    const networkResponse = await fetchWithTimeout(event.request, 12000, {
+      cache: 'no-cache',
+      credentials: 'same-origin',
+    });
+
+    if (networkResponse?.ok) {
+      const contentType = networkResponse.headers.get('content-type') || '';
+
+      if (contentType.includes('text/html')) {
+        const clone = networkResponse.clone();
+
+        await safeCachePut(RUNTIME_CACHE, event.request, clone.clone());
+
+        // On garde le shell principal propre uniquement si la réponse
+        // correspond au shell SPA attendu.
+        if (
+          new URL(event.request.url).pathname === '/' ||
+          new URL(event.request.url).pathname === APP_SHELL_URL
+        ) {
+          await safeCachePut(APP_SHELL_CACHE, '/', clone.clone());
+          await safeCachePut(APP_SHELL_CACHE, APP_SHELL_URL, clone.clone());
+        }
+      }
+    }
+
+    return networkResponse;
+  } catch (error) {
+    console.warn('[SW] Navigation network failed:', error?.message || error);
+
+    const cachedResponse =
+      (await caches.match(event.request)) ||
+      (await caches.match('/')) ||
+      (await caches.match(APP_SHELL_URL)) ||
+      (await caches.open(APP_SHELL_CACHE).then((cache) => cache.match('/'))) ||
+      (await caches.open(APP_SHELL_CACHE).then((cache) => cache.match(APP_SHELL_URL)));
+
+    if (cachedResponse) return cachedResponse;
+
+    return getOfflineFallback();
+  }
+}
+
+async function handleStaticAssetRequest(event) {
+  try {
+    const response = await fetchWithTimeout(event.request, 15000, {
+      cache: 'no-cache',
+    });
+
+    if (response.ok) {
+      event.waitUntil(safeCachePut(STATIC_CACHE, event.request, response.clone()));
+      return response;
+    }
+
+    if (response.status === 404) {
+      event.waitUntil(
+        (async () => {
+          await clear224Caches();
+          await notifyClients({
+            type: 'SW_ASSET_404',
+            message: 'Un nouveau déploiement a été détecté. Rechargement conseillé.',
+            url: event.request.url,
+          });
+        })()
+      );
+    }
+
+    return response;
+  } catch (error) {
+    const cached = await caches.match(event.request);
+    if (cached) return cached;
+
+    event.waitUntil(
+      (async () => {
+        await clear224Caches();
+        await notifyClients({
+          type: 'SW_HARD_REFRESH_REQUIRED',
+          message: 'Les fichiers de build ont changé. Un rechargement complet est nécessaire.',
+          url: event.request.url,
+        });
+      })()
+    );
+
+    return Response.error();
+  }
+}
+
+async function handleMediaAssetRequest(event) {
+  const cached = await caches.match(event.request);
+
+  const networkFetch = (async () => {
+    try {
+      const response = await fetchWithTimeout(event.request, 10000);
+
+      if (response?.ok) {
+        event.waitUntil(safeCachePut(STATIC_CACHE, event.request, response.clone()));
+      }
+
+      return response;
+    } catch (error) {
+      if (cached) return cached;
+
+      if (/\.(png|jpg|jpeg|gif|svg|webp)$/i.test(new URL(event.request.url).pathname)) {
+        return new Response(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="#ddd" width="200" height="200"/><text fill="#999" x="50%" y="50%" text-anchor="middle" dy=".3em">Offline</text></svg>',
+          { headers: { 'Content-Type': 'image/svg+xml' } }
+        );
+      }
+
+      return Response.error();
+    }
+  })();
+
+  // stale-while-revalidate
+  return cached || networkFetch;
 }
 
 self.addEventListener('install', (event) => {
@@ -177,18 +348,12 @@ self.addEventListener('activate', (event) => {
   console.log(`[SW] Activate ${CACHE_VERSION}`);
   event.waitUntil(
     (async () => {
-      const keys = await caches.keys();
-
-      await Promise.all(
-        keys
-          .filter((k) => !k.includes(CACHE_VERSION))
-          .map((k) => {
-            console.log('[SW] Delete old cache:', k);
-            return caches.delete(k);
-          })
-      );
-
+      await deleteOldCaches();
       await self.clients.claim();
+      await notifyClients({
+        type: 'SW_ACTIVATED',
+        version: CACHE_VERSION,
+      });
     })()
   );
 });
@@ -198,118 +363,21 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  if (url.pathname === '/manifest.webmanifest' || url.pathname === '/manifest.json') return;
-  if (url.pathname === '/healthz.json') return;
-  if (url.pathname.startsWith('/~oauth')) return;
-
-  if (url.hostname !== self.location.hostname) {
-    const isExternalApi = EXTERNAL_API_DOMAINS.some((d) => url.hostname.includes(d));
-    if (isExternalApi) return;
-    return;
-  }
-
-  if (
-    url.pathname.startsWith('/rest/') ||
-    url.pathname.startsWith('/auth/') ||
-    url.pathname.startsWith('/functions/') ||
-    url.pathname.startsWith('/storage/')
-  ) {
-    return;
-  }
+  if (!isSameOrigin(url)) return;
+  if (isBypassRequest(url)) return;
 
   if (event.request.mode === 'navigate') {
-    event.respondWith(
-      (async () => {
-        try {
-          const networkResponse = await fetchWithTimeout(event.request, 12000, {
-            cache: 'no-cache',
-            credentials: 'same-origin',
-          });
-
-          if (networkResponse?.ok) {
-            const clone = networkResponse.clone();
-            await safeCachePut(DYNAMIC_CACHE, event.request, clone.clone());
-            await safeCachePut(DYNAMIC_CACHE, '/', clone.clone());
-            await safeCachePut(DYNAMIC_CACHE, '/index.html', clone.clone());
-          }
-
-          return networkResponse;
-        } catch (error) {
-          console.warn('[SW] Navigation network failed:', error?.message || error);
-
-          const shell =
-            (await caches.match(event.request)) ||
-            (await caches.match('/')) ||
-            (await caches.match('/index.html')) ||
-            (await caches.open(APP_SHELL_CACHE).then((c) => c.match('/')));
-
-          if (shell) return shell;
-
-          return getOfflineFallback();
-        }
-      })()
-    );
+    event.respondWith(handleNavigationRequest(event));
     return;
   }
 
-  if (url.pathname.startsWith('/assets/') && /\.(js|css)$/.test(url.pathname)) {
-    event.respondWith(
-      (async () => {
-        try {
-          const response = await fetchWithTimeout(event.request, 15000, {
-            cache: 'no-cache',
-          });
-
-          if (response.ok) {
-            event.waitUntil(safeCachePut(STATIC_CACHE, event.request, response.clone()));
-            return response;
-          }
-
-          if (response.status === 404) {
-            event.waitUntil(
-              caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
-            );
-          }
-
-          return response;
-        } catch (error) {
-          const cached = await caches.match(event.request);
-          if (cached) return cached;
-
-          event.waitUntil(
-            caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
-          );
-
-          return Response.error();
-        }
-      })()
-    );
+  if (isStaticAsset(url)) {
+    event.respondWith(handleStaticAssetRequest(event));
     return;
   }
 
-  if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|webp)$/)) {
-    event.respondWith(
-      (async () => {
-        const cached = await caches.match(event.request);
-        if (cached) return cached;
-
-        try {
-          const response = await fetchWithTimeout(event.request, 10000);
-          if (response?.ok) {
-            event.waitUntil(safeCachePut(STATIC_CACHE, event.request, response.clone()));
-          }
-          return response;
-        } catch (error) {
-          if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp)$/)) {
-            return new Response(
-              '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect fill="#ddd" width="200" height="200"/><text fill="#999" x="50%" y="50%" text-anchor="middle" dy=".3em">Offline</text></svg>',
-              { headers: { 'Content-Type': 'image/svg+xml' } }
-            );
-          }
-          return Response.error();
-        }
-      })()
-    );
+  if (isMediaAsset(url)) {
+    event.respondWith(handleMediaAssetRequest(event));
     return;
   }
 });
@@ -321,7 +389,7 @@ self.addEventListener('message', (event) => {
   }
 
   if (event.data === 'forceRefresh') {
-    self.clients.matchAll().then((clients) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       clients.forEach((client) => client.navigate(client.url));
     });
     return;
@@ -334,7 +402,8 @@ self.addEventListener('message', (event) => {
   }
 
   if (event.data === 'clearAllCaches') {
-    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))));
+    event.waitUntil?.(clear224Caches());
+    clear224Caches();
   }
 });
 
@@ -354,8 +423,8 @@ self.addEventListener('push', (event) => {
         vibrate: [200, 100, 200],
       })
     );
-  } catch (e) {
-    console.warn('[SW] Push parse error:', e);
+  } catch (error) {
+    console.warn('[SW] Push parse error:', error);
   }
 });
 
