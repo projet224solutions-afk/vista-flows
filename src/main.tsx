@@ -233,6 +233,7 @@ function warmUpConnections() {
 }
 
 // Initialize app
+
 const initApp = () => {
   console.log("🚀 224Solutions - Starting...");
   logPwaDiagnostics();
@@ -246,7 +247,8 @@ const initApp = () => {
 
   try {
     const root = createRoot(rootElement);
-    
+    // Log de debug visible
+    console.log("[DEBUG] Avant rendu React");
     root.render(
       <React.StrictMode>
         <HelmetProvider>
@@ -254,16 +256,14 @@ const initApp = () => {
         </HelmetProvider>
       </React.StrictMode>
     );
-    
+    console.log("[DEBUG] Après rendu React");
     console.log("✅ React app mounted");
-    
     // Hide loader after React renders
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         hideLoader();
       });
     });
-    
   } catch (error) {
     console.error("❌ React render error:", error);
     showError(rootElement, error);
