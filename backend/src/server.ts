@@ -1,3 +1,8 @@
+
+// Charger dotenv AVANT tout autre import
+import dotenv from 'dotenv';
+dotenv.config();
+
 /**
  * 🚀 224SOLUTIONS - BACKEND NODE.JS CENTRALISÉ v3 (Phase 6)
  * 
@@ -169,6 +174,17 @@ app.use(rateLimiter);
 app.use(requestLogger);
 
 // ==================== ROUTES ====================
+
+// Accueil API (GET /)
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Bienvenue sur l’API 224Solutions',
+    status: 'online',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Health (public)
 app.use('/health', healthRoutes);

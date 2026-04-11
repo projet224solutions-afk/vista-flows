@@ -4,8 +4,13 @@
  * Aucun fallback sur les secrets critiques
  */
 
-import dotenv from 'dotenv';
-dotenv.config();
+// dotenv.config() appelé dans server.ts
+
+// DEBUG: Affiche le chemin du .env et les variables Supabase au démarrage
+console.log('Chargement .env depuis :', process.env.NODE_ENV);
+console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
+console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '[OK]' : '[ABSENT]');
+console.log('SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? '[OK]' : '[ABSENT]');
 
 function requireEnv(key: string): string {
   const value = process.env[key];

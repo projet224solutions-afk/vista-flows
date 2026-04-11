@@ -412,8 +412,13 @@ export default function Proximite() {
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
                   />
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,rgba(11,27,51,0.08) 0%,rgba(11,27,51,0.80) 100%)' }} />
+                  {/* Dynamic accent gradient overlay */}
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: `linear-gradient(120deg,${service.accent}33 0%,rgba(11,27,51,0.80) 100%)`
+                    }}
+                  />
                   {/* Content */}
                   <div className="relative z-10 flex h-full flex-col justify-end p-3.5" style={{ minHeight: 160 }}>
                     <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/90 shadow-md">
@@ -442,7 +447,12 @@ export default function Proximite() {
                   style={{ minHeight: 160 }}
                 >
                   <img src={service.image} alt={service.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,rgba(11,27,51,0.08) 0%,rgba(11,27,51,0.80) 100%)' }} />
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: `linear-gradient(120deg,${service.accent}33 0%,rgba(11,27,51,0.80) 100%)`
+                    }}
+                  />
                   <div className="relative z-10 flex h-full flex-col justify-end p-3.5" style={{ minHeight: 160 }}>
                     <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/90 shadow-md">
                       <Icon className="h-5 w-5" style={{ color: service.accent }} />
@@ -480,7 +490,12 @@ export default function Proximite() {
                   style={{ minHeight: 160 }}
                 >
                   <img src={service.image} alt={service.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,rgba(11,27,51,0.05) 0%,rgba(11,27,51,0.78) 100%)' }} />
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: `linear-gradient(120deg,${service.accent}33 0%,rgba(11,27,51,0.78) 100%)`
+                    }}
+                  />
                   {service.trending && (
                     <div className="absolute top-2.5 right-2.5 z-10 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ backgroundColor: ORANGE, color: 'white' }}>
                       Tendance
@@ -588,7 +603,12 @@ export default function Proximite() {
                   style={{ minHeight: 150 }}
                 >
                   <img src={service.image} alt={service.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,rgba(11,27,51,0.05) 0%,rgba(11,27,51,0.82) 100%)' }} />
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: `linear-gradient(120deg,${service.accent}33 0%,rgba(11,27,51,0.82) 100%)`
+                    }}
+                  />
                   <div className="relative z-10 flex h-full flex-col justify-end p-3.5" style={{ minHeight: 150 }}>
                     <div className="mb-1.5 flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 shadow-md">
                       <Icon className="h-4.5 w-4.5" style={{ color: service.accent }} />
