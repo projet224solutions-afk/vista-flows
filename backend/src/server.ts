@@ -1,7 +1,6 @@
 
-// Charger dotenv AVANT tout autre import
-import dotenv from 'dotenv';
-dotenv.config();
+// Charger dotenv AVANT tout autre import (absolument en premier)
+import './config/load-env.js';
 
 /**
  * 🚀 224SOLUTIONS - BACKEND NODE.JS CENTRALISÉ v3 (Phase 6)
