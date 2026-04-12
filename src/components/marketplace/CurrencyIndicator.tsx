@@ -4,6 +4,7 @@
  * Inclut rafraîchissement de la détection géographique
  */
 
+import { useState, useEffect } from 'react';
 import { Globe, RefreshCw, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
