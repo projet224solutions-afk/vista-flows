@@ -219,8 +219,8 @@ serve(async (req) => {
       }
     }
 
-    // Obtenir la config du pays
-    const config = COUNTRY_CONFIG[detectedCountry] || { currency: "USD", language: "en" };
+    // Obtenir la config du pays (fallback GNF pour pays inconnus, cible principale = Guinée)
+    const config = COUNTRY_CONFIG[detectedCountry] || { currency: "GNF", language: "fr" };
     
     const result: GeoDetectResponse = {
       success: true,

@@ -4,7 +4,6 @@
  * Inclut rafraîchissement de la détection géographique
  */
 
-import { useState, useEffect } from 'react';
 import { Globe, RefreshCw, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,16 +33,16 @@ interface CurrencyIndicatorProps {
   showToggle?: boolean;
 }
 
-const CURRENCY_STORAGE_KEY = 'marketplace_display_currency';
-
 // Fonction pour vider tous les caches géo et langue
 function clearAllGeoCaches() {
   try {
     localStorage.removeItem('geo_detection_cache');
     localStorage.removeItem('user_country');
-    localStorage.removeItem(CURRENCY_STORAGE_KEY);
+    localStorage.removeItem('marketplace_display_currency'); // legacy cleanup
     localStorage.removeItem('app_language');
-    localStorage.removeItem('app_language_manual'); // Permettre la re-détection auto
+    localStorage.removeItem('app_language_manual');
+    localStorage.removeItem('app_currency');
+    localStorage.removeItem('app_currency_manual');
   } catch {}
 }
 
@@ -53,44 +52,22 @@ export function CurrencyIndicator({
 }: CurrencyIndicatorProps) {
   const { userCurrency, userCountry, loading, lastUpdated, refreshRates } = usePriceConverter();
   const { forceRefresh: forceGeoRefresh, loading: geoLoading } = useGeoDetection();
-  const { setCurrency: setGlobalCurrency } = useCurrency();
+  const { currency: globalCurrency, setCurrency: setGlobalCurrency } = useCurrency();
   const { t } = useTranslation();
-  
-  // État local pour la devise d'affichage (peut être différente de la devise détectée)
-  const [displayCurrency, setDisplayCurrency] = useState<string>(() => {
-    const stored = localStorage.getItem(CURRENCY_STORAGE_KEY);
-    return stored || userCurrency;
-  });
 
-  // Synchroniser avec la devise détectée
-  useEffect(() => {
-    if (!localStorage.getItem(CURRENCY_STORAGE_KEY) && userCurrency) {
-      setDisplayCurrency(userCurrency);
-    }
-  }, [userCurrency]);
-
-  // Écouter les mises à jour de la devise utilisateur
-  useEffect(() => {
-    if (userCurrency && userCurrency !== displayCurrency && !localStorage.getItem(CURRENCY_STORAGE_KEY)) {
-      setDisplayCurrency(userCurrency);
-    }
-  }, [userCurrency]);
+  // Source unique de vérité : le contexte global
+  const displayCurrency = globalCurrency || userCurrency;
 
   const handleToggleCurrency = () => {
     const newCurrency = displayCurrency === 'GNF' ? userCurrency : 'GNF';
-    setDisplayCurrency(newCurrency);
-    localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
-    setGlobalCurrency(newCurrency); // Synchroniser avec le contexte global
-    
+    setGlobalCurrency(newCurrency);
     window.dispatchEvent(new CustomEvent('currencyChanged', { 
       detail: { currency: newCurrency } 
     }));
   };
 
   const handleSelectCurrency = (currency: string) => {
-    setDisplayCurrency(currency);
-    localStorage.setItem(CURRENCY_STORAGE_KEY, currency);
-    setGlobalCurrency(currency); // Synchroniser avec le contexte global
+    setGlobalCurrency(currency);
     window.dispatchEvent(new CustomEvent('currencyChanged', { 
       detail: { currency } 
     }));
@@ -101,8 +78,6 @@ export function CurrencyIndicator({
     clearAllGeoCaches();
     await forceGeoRefresh();
     await refreshRates();
-    // Réinitialiser la devise d'affichage
-    setDisplayCurrency(userCurrency);
     toast.success(t('marketplace.geoRefreshed') || 'Localisation actualisée');
     
     // Recharger la page pour appliquer les changements

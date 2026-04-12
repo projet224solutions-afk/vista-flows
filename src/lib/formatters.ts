@@ -26,9 +26,12 @@ export function formatCurrency(amount: number, currencyCode: string = 'GNF'): st
   // S'assurer que le montant est un nombre valide
   const safeAmount = typeof roundedAmount === 'number' && isFinite(roundedAmount) ? roundedAmount : 0;
   
+  // Choisir la locale adaptée à la devise pour un formatage correct (séparateurs)
+  const locale = ['USD', 'GBP', 'CAD', 'AUD', 'HKD', 'SGD', 'NZD'].includes(code) ? 'en-US' : 'fr-FR';
+
   let formattedAmount: string;
   try {
-    formattedAmount = safeAmount.toLocaleString('fr-FR', {
+    formattedAmount = safeAmount.toLocaleString(locale, {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     });
