@@ -30,12 +30,12 @@ const OrderManagement = lazy(() => import('@/components/vendor/OrderManagement')
 // === FINANCE ===
 const UniversalWalletTransactions = lazy(() => import('@/components/wallet/UniversalWalletTransactions'));
 const ProfessionalVirtualCard = lazy(() => import('@/components/virtual-card').then(m => ({ default: m.ProfessionalVirtualCard })));
-const VendorQuotesInvoices = lazy(() => import('@/pages/VendorQuotesInvoices'));
+const VendorQuotesInvoices = lazy(() => import('@/pg/VendorQuotesInvoices'));
 const PaymentManagement = lazy(() => import('@/components/vendor/PaymentManagement'));
 const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
 const ExpenseManagementDashboard = lazy(() => import('@/components/vendor/ExpenseManagementDashboard'));
 const VendorDebtManagement = lazy(() => import('@/components/vendor/debts/VendorDebtManagement').then(m => ({ default: m.VendorDebtManagement })));
-const VendorContracts = lazy(() => import('@/pages/VendorContracts'));
+const VendorContracts = lazy(() => import('@/pg/VendorContracts'));
 const AffiliateManagement = lazy(() => import('@/components/vendor/AffiliateManagement'));
 const CollectionAccountsManager = lazy(() => import('@/components/vendor/accounts/CollectionAccountsManager'));
 const InstallmentPlansManager = lazy(() => import('@/components/vendor/payments/InstallmentPlansManager'));
@@ -71,7 +71,7 @@ const VendorAnalyticsDashboard = lazy(() => import('@/components/vendor/VendorAn
 const VendorReportsManager = lazy(() => import('@/components/vendor/reports/VendorReportsManager'));
 
 // === SYSTEM ===
-const VendorSettings = lazy(() => import('@/pages/vendor/Settings'));
+const VendorSettings = lazy(() => import('@/pg/vendor/Settings'));
 const CopiloteChat = lazy(() => import('@/components/copilot/CopiloteChat'));
 const OfflineSyncPanel = lazy(() => import('@/components/vendor/OfflineSyncPanel'));
 const PWADiagnostic = lazy(() => import('@/components/pwa/PWADiagnostic'));
