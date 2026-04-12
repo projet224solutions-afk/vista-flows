@@ -57,10 +57,95 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-    // ...existing code...
-  });
 
-  // ...existing code...
+    // Vérifier si une devise a été choisie manuellement (flag explicite)
+    const hasManualChoice = localStorage.getItem(CURRENCY_MANUAL_KEY) === 'true';
+    if (hasManualChoice) {
+      console.log('💱 Devise choisie manuellement, pas de sync auto');
+      setLoading(false);
+      return;
+    }
+
+    // Lire depuis le cache de géo-détection (peuplé par useGeoDetection)
+    try {
+      const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
+      if (geoCacheRaw) {
+        const geoCache = JSON.parse(geoCacheRaw);
+        // Ignorer les résultats fallback (GN/GNF par défaut — pas fiable)
+        if (geoCache?.data?.country && geoCache?.data?.currency && geoCache?.data?.detectionMethod !== 'fallback') {
+          const country = geoCache.data.country;
+          const detectedCurrency = geoCache.data.currency;
+
+          console.log(`💱 Auto-détection (geo-cache): pays=${country}, devise=${detectedCurrency}`);
+          setUserCountry(country);
+          setCurrencyState(detectedCurrency);
+          setHasAutoDetected(true);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch {}
+
+    // Pas encore de cache — useGeoDetection le peuplera, on attend via l'intervalle ci-dessous
+    setLoading(false);
+  }, [hasAutoDetected]);
+
+  // Sync live depuis geo-cache (quand useGeoDetection met à jour le cache dans le même onglet)
+  useEffect(() => {
+    const syncFromGeoCache = () => {
+      // Ne pas écraser si choix manuel explicite
+      const hasManualChoice = localStorage.getItem(CURRENCY_MANUAL_KEY) === 'true';
+      if (hasManualChoice) return;
+
+      try {
+        const geoCacheRaw = localStorage.getItem(GEO_CACHE_KEY);
+        if (!geoCacheRaw) return;
+
+        const geoCache = JSON.parse(geoCacheRaw);
+        const nextCurrency = geoCache?.data?.currency;
+        const nextCountry = geoCache?.data?.country;
+
+        if (nextCurrency && nextCurrency !== currency) {
+          console.log(`💱 Sync devise depuis geo-cache: ${nextCurrency}`);
+          setCurrencyState(nextCurrency);
+          setUserCountry(nextCountry || null);
+          setHasAutoDetected(true);
+        }
+      } catch {}
+    };
+
+    syncFromGeoCache();
+    const interval = setInterval(syncFromGeoCache, 2000);
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === GEO_CACHE_KEY) syncFromGeoCache();
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [currency]);
+
+  // Fonction pour changer manuellement la devise
+  const setCurrency = useCallback((newCurrency: string) => {
+    setCurrencyState(newCurrency);
+    localStorage.setItem(CURRENCY_STORAGE_KEY, newCurrency);
+    localStorage.setItem(CURRENCY_MANUAL_KEY, 'true'); // Marquer comme choix manuel
+    console.log('💱 Devise changée manuellement:', newCurrency);
+  }, []);
+
+  return (
+    <CurrencyContext.Provider value={{
+      currency,
+      setCurrency,
+      userCountry,
+      loading
+    }}>
+      {children}
+    </CurrencyContext.Provider>
+  );
 }
 
 export const useCurrency = () => useContext(CurrencyContext);

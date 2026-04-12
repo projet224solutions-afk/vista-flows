@@ -1,0 +1,204 @@
+﻿import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, CheckCircle2, Loader2, Sparkles, TrendingUp, Link2, Wallet, Users, Shield, Gift } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useAffiliateModule } from '@/hooks/useAffiliateModule';
+import { useTranslation } from '@/hooks/useTranslation';
+import { toast } from 'sonner';
+
+export default function AffiliateActivationPage() {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const {
+    loading,
+    isAffiliateEnabled,
+    activateWithExistingSubscription,
+  } = useAffiliateModule();
+
+  const [activating, setActivating] = useState(false);
+
+  useEffect(() => {
+    if (isAffiliateEnabled) {
+      navigate('/affiliate/dashboard', { replace: true });
+    }
+  }, [isAffiliateEnabled, navigate]);
+
+  const handleActivate = async () => {
+    setActivating(true);
+    try {
+      await activateWithExistingSubscription();
+      toast.success('Module affili├® activ├® avec succ├¿s ! ­ƒÄë');
+      navigate('/affiliate/dashboard');
+    } catch (error: any) {
+      toast.error(error.message || "Impossible d'activer le module affili├®");
+    } finally {
+      setActivating(false);
+    }
+  };
+
+  const steps = [
+    {
+      icon: <Gift className="h-5 w-5 text-primary" />,
+      title: "Activez gratuitement",
+      description: "Cliquez sur le bouton d'activation pour ouvrir votre espace affili├®. Aucun frais, aucun engagement."
+    },
+    {
+      icon: <Link2 className="h-5 w-5 text-primary" />,
+      title: "Partagez vos liens",
+      description: "Recevez un code affili├® unique et des liens de parrainage ├á partager avec votre r├®seau."
+    },
+    {
+      icon: <Users className="h-5 w-5 text-primary" />,
+      title: "Parrainez des utilisateurs",
+      description: "Chaque personne qui s'inscrit ou ach├¿te via votre lien vous rapporte une commission."
+    },
+    {
+      icon: <Wallet className="h-5 w-5 text-primary" />,
+      title: "Gagnez des commissions",
+      description: "Vos gains sont cr├®dit├®s directement sur votre wallet. Retirez quand vous voulez."
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background pb-24">
+      <div className="container max-w-4xl mx-auto p-4 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/client')}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Devenir Affili├®</h1>
+            <p className="text-muted-foreground text-sm">Gagnez de l'argent en recommandant nos services</p>
+          </div>
+        </div>
+
+        {/* Hero Card */}
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-background overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Programme gratuit
+              </Badge>
+            </div>
+            <CardTitle className="text-xl mt-2">Programme d'Affiliation</CardTitle>
+            <CardDescription className="text-sm">
+              Rejoignez notre programme d'affiliation et transformez votre r├®seau en source de revenus.
+              Votre compte client reste intact ÔÇö l'affiliation est un module compl├®mentaire.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Commissions sur chaque vente</p>
+                  <p className="text-xs text-muted-foreground">Gagnez un pourcentage sur les transactions de vos filleuls</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Tableau de bord d├®di├®</p>
+                  <p className="text-xs text-muted-foreground">Suivez vos performances, liens et paiements en temps r├®el</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Liens de parrainage illimit├®s</p>
+                  <p className="text-xs text-muted-foreground">Cr├®ez autant de liens que n├®cessaire pour vos campagnes</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Paiement direct au wallet</p>
+                  <p className="text-xs text-muted-foreground">Commissions cr├®dit├®es automatiquement sur votre portefeuille</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* How it works */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Comment ├ºa marche ?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {steps.map((step, index) => (
+                <div key={index} className="flex items-start gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      {step.icon}
+                    </div>
+                    {index < steps.length - 1 && (
+                      <div className="w-0.5 h-6 bg-border mt-1" />
+                    )}
+                  </div>
+                  <div className="pt-1.5">
+                    <p className="font-medium text-sm">{step.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Important info */}
+        <Card className="border-blue-500/20 bg-blue-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-sm">Votre compte client reste intact</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  L'activation de l'affiliation est un module compl├®mentaire. Vous conservez toutes vos fonctionnalit├®s :
+                  commandes, wallet, favoris, historique, param├¿tres et notifications.
+                  Aucune donn├®e ne sera modifi├®e ou supprim├®e.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Activation CTA */}
+        {loading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <Card className="border-primary/30">
+            <CardHeader>
+              <CardTitle>Pr├¬t ├á commencer ?</CardTitle>
+              <CardDescription>
+                Activez gratuitement votre module affili├® en un clic et commencez ├á gagner des commissions d├¿s maintenant.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={handleActivate} disabled={activating} size="lg" className="flex-1 sm:flex-none">
+                {activating ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Activation en cours...</>
+                ) : (
+                  <><Sparkles className="mr-2 h-4 w-4" />Activer l'affiliation gratuitement</>
+                )}
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/client')}>
+                Retour au compte client
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
