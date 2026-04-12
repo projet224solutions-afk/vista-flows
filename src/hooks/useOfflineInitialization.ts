@@ -103,9 +103,6 @@ export function useOfflineInitialization() {
         const error = 'Connexion internet requise pour la première initialisation';
         console.warn('[OfflineInit]', error);
         setStatus(prev => ({ ...prev, isInitializing: false, error }));
-        toast.warning(error, {
-          description: 'Reconnectez-vous pour télécharger le catalogue'
-        });
         return;
       }
 
