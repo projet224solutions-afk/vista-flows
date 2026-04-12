@@ -111,17 +111,22 @@ export default function PDGFinance() {
     }
   }, [loading, stats, transactions]);
 
+  const [fxError, setFxError] = useState<string | null>(null);
+
   const loadFxHealth = async () => {
     try {
       setFxLoading(true);
+      setFxError(null);
       const response = await backendFetch('/api/v2/wallet/admin/fx-health', { method: 'GET' });
       if (!response.success) {
         throw new Error(response.error || 'Impossible de récupérer les données FX');
       }
       setFxHealth(response.data || null);
       setFxFetchedAtMs(Date.now());
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur chargement FX health:', error);
+      const msg = error?.message || 'Erreur inconnue';
+      setFxError(msg);
       setFxHealth(null);
     } finally {
       setFxLoading(false);
@@ -129,7 +134,15 @@ export default function PDGFinance() {
   };
 
   useEffect(() => {
-    loadFxHealth();
+    // Retry loadFxHealth after a delay if the first attempt fails (auth session may not be ready)
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+    loadFxHealth().catch(() => {}).finally(() => {
+      if (!cancelled) {
+        retryTimer = setTimeout(() => loadFxHealth(), 3000);
+      }
+    });
+    return () => { cancelled = true; if (retryTimer) clearTimeout(retryTimer); };
   }, []);
 
   useEffect(() => {
@@ -354,7 +367,16 @@ export default function PDGFinance() {
                 Chargement données FX...
               </div>
             ) : !fxHealth ? (
-              <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
+                {fxError && (
+                  <p className="text-xs text-red-500">Erreur: {fxError}</p>
+                )}
+                <Button type="button" variant="outline" size="sm" onClick={loadFxHealth} className="gap-2">
+                  <RefreshCw className="w-3 h-3" />
+                  Réessayer
+                </Button>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="rounded-lg border border-blue-200/50 bg-blue-50/30 p-3">
@@ -534,7 +556,16 @@ export default function PDGFinance() {
               Chargement des données FX...
             </div>
           ) : !fxHealth ? (
-            <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
+              {fxError && (
+                <p className="text-xs text-red-500">Erreur: {fxError}</p>
+              )}
+              <Button type="button" variant="outline" size="sm" onClick={loadFxHealth} className="gap-2">
+                <RefreshCw className="w-3 h-3" />
+                Réessayer
+              </Button>
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
