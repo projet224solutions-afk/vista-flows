@@ -29,6 +29,8 @@ import { getCurrencyByCode } from '@/data/currencies';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { toast } from 'sonner';
 
+const CURRENCY_STORAGE_KEY = 'app_currency';
+
 interface CurrencyIndicatorProps {
   variant?: 'default' | 'compact';
   showToggle?: boolean;
