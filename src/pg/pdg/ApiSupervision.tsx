@@ -189,7 +189,7 @@ export default function ApiSupervision() {
     .filter(a => a.tokens_limit)
     .map(a => ({
       name: a.api_name,
-      utilis├®s: a.tokens_used,
+      utilises: a.tokens_used,
       restants: a.tokens_remaining || 0,
       limite: a.tokens_limit
     }));
@@ -389,7 +389,7 @@ export default function ApiSupervision() {
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="utilis├®s" fill="#3B82F6" />
+                      <Bar dataKey="utilises" fill="#3B82F6" />
                       <Bar dataKey="restants" fill="#10B981" />
                     </BarChart>
                   </ResponsiveContainer>

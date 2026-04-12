@@ -32,6 +32,7 @@ const PDGTransferLimits = lazy(() => import('./PDGTransferLimits'));
 
 export default function PDGFinance() {
   const { stats, transactions, wallets, loading, refetch } = useFinanceData(true);
+  const [activeFinanceTab, setActiveFinanceTab] = useState('overview');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [showWalletsDialog, setShowWalletsDialog] = useState(false);
   const [fxHealth, setFxHealth] = useState<any>(null);
@@ -309,7 +310,7 @@ export default function PDGFinance() {
 
   return (
     <>
-    <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+    <Tabs value={activeFinanceTab} onValueChange={setActiveFinanceTab} className="space-y-4 sm:space-y-6">
       {/* Mobile: Horizontal scrollable tabs */}
       <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
         <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-8 gap-1 bg-muted/50 p-1 rounded-xl">
