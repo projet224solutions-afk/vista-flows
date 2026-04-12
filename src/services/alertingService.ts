@@ -35,9 +35,12 @@ class AlertingService {
     autoFix: false, // Désactivé pour éviter les notifications répétitives
   };
 
+  private monitoringInterval: ReturnType<typeof setInterval> | null = null;
+
   private constructor() {
-    this.setupDefaultAlertRules();
-    this.startMonitoring();
+    // Alerting désactivé — les notifications sont coupées
+    // this.setupDefaultAlertRules();
+    // this.startMonitoring();
   }
 
   static getInstance(): AlertingService {
@@ -388,10 +391,10 @@ class AlertingService {
   }
 
   private startMonitoring() {
-    // Vérifier les erreurs toutes les 5 minutes (au lieu de 30s)
-    setInterval(async () => {
-      await this.checkForAlerts();
-    }, 300000);
+    // Monitoring désactivé
+    // setInterval(async () => {
+    //   await this.checkForAlerts();
+    // }, 300000);
   }
 
   // Patterns à ignorer dans les alertes (déploiements, cache, modules dynamiques)
