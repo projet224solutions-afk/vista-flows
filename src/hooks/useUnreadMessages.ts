@@ -4,7 +4,7 @@
  * en utilisant Supabase Realtime pour les mises à jour en temps réel
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -57,9 +57,10 @@ export function useUnreadMessages(): UnreadMessagesState {
 
     fetchUnreadCount();
 
-    // Écouter les nouveaux messages en temps réel
+    // Écouter les nouveaux messages en temps réel (nom unique pour éviter les conflits StrictMode)
+    const channelName = `unread-messages-badge-${user.id}-${Date.now()}`;
     const channel = supabase
-      .channel('unread-messages-badge')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
