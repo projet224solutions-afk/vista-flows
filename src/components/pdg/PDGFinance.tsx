@@ -295,6 +295,7 @@ export default function PDGFinance() {
   })();
 
   return (
+    <>
     <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
       {/* Mobile: Horizontal scrollable tabs */}
       <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
@@ -396,7 +397,7 @@ export default function PDGFinance() {
               </div>
             )}
             
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-wrap gap-2 pt-2">
               <Button 
                 type="button" 
                 variant="default" 
@@ -406,6 +407,14 @@ export default function PDGFinance() {
               >
                 <DollarSign className="w-4 h-4" />
                 {marginUpdateLoading ? 'Mise à jour...' : 'Modifier Commission'}
+              </Button>
+              <Button type="button" variant="outline" className="gap-2" onClick={loadConversionStats} disabled={conversionStatsLoading}>
+                <Globe2 className="w-4 h-4" />
+                {conversionStatsLoading ? 'Chargement...' : 'Conversions par pays'}
+              </Button>
+              <Button type="button" variant="secondary" className="gap-2" onClick={checkRateChangeAlert} disabled={alertCheckLoading}>
+                <AlertTriangle className="w-4 h-4" />
+                {alertCheckLoading ? 'Vérification...' : 'Alerte changement < 1h'}
               </Button>
               <Button 
                 type="button" 
@@ -914,6 +923,9 @@ export default function PDGFinance() {
         </CardContent>
       </Card>
 
+      </TabsContent>
+    </Tabs>
+
       <Dialog open={showMarginDialog} onOpenChange={setShowMarginDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -1149,7 +1161,6 @@ export default function PDGFinance() {
           </div>
         </DialogContent>
       </Dialog>
-      </TabsContent>
-    </Tabs>
+    </>
   );
 }
