@@ -440,6 +440,9 @@ export async function transferBetweenWallets(
       return { success: true };
     }
 
+    // Record idempotency key early to prevent duplicate transfers on crash/retry
+    await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
+
     const suspect = await detectSuspiciousActivity(senderId, amount);
     if (suspect.shouldBlock) {
       return { success: false, error: 'Transfert bloqué pour activité suspecte' };
@@ -496,7 +499,6 @@ export async function transferBetweenWallets(
         const txId = Array.isArray(rpcData)
           ? (rpcData[0]?.transaction_id || rpcData[0]?.id)
           : (rpcData?.transaction_id || rpcData?.id);
-        await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
         await persistTransferHistory({
           transactionId: txId,
           senderId,
@@ -549,7 +551,6 @@ export async function transferBetweenWallets(
       return { success: false, error: 'Échec du crédit destinataire — transaction annulée' };
     }
 
-    await recordIdempotencyKey(idempotencyKey, senderId, 'transfer');
     await persistTransferHistory({
       senderId,
       receiverId,

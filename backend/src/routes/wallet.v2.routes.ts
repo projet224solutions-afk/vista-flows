@@ -1163,12 +1163,25 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       res.status(400).json({ success: false, error: 'Montant invalide' });
       return;
     }
-    if (!recipient_id || typeof recipient_id !== 'string') {
+
+    const MAX_TRANSFER_AMOUNT = 50_000_000;
+    const MIN_TRANSFER_AMOUNT = 100;
+
+    if (amount < MIN_TRANSFER_AMOUNT) {
+      res.status(400).json({ success: false, error: `Montant minimum: ${MIN_TRANSFER_AMOUNT}` });
+      return;
+    }
+    if (amount > MAX_TRANSFER_AMOUNT) {
+      res.status(400).json({ success: false, error: `Montant maximum: ${MAX_TRANSFER_AMOUNT.toLocaleString()}` });
+      return;
+    }
+
+    if (!recipient_id || typeof recipient_id !== 'string' || !recipient_id.trim()) {
       res.status(400).json({ success: false, error: 'recipient_id requis' });
       return;
     }
 
-    const resolvedRecipientId = await resolveRecipientUserId(recipient_id);
+    const resolvedRecipientId = await resolveRecipientUserId(recipient_id.trim());
     if (!resolvedRecipientId) {
       res.status(404).json({ success: false, error: 'Destinataire introuvable (UUID, ID public, email ou téléphone)' });
       return;
