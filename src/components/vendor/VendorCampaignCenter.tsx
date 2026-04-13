@@ -401,12 +401,16 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
     setAudiencePreview(null);
   };
 
+  const [previewFailed, setPreviewFailed] = useState(false);
+
   const loadPreview = async () => {
     setLoadingPreview(true);
+    setPreviewFailed(false);
     try {
       const preview = await previewAudience(form.target_type, form.target_filters);
       setAudiencePreview(preview);
     } catch {
+      setPreviewFailed(true);
       setAudiencePreview(null);
     } finally {
       setLoadingPreview(false);
@@ -609,10 +613,16 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
                 </Card>
               )}
               {loadingPreview && <p className="text-sm text-muted-foreground text-center">Calcul de l'audience...</p>}
+              {previewFailed && (
+                <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  <span>Impossible de calculer l'audience (vérifiez que le backend et la base sont configurés). Vous pouvez continuer malgré tout.</span>
+                </div>
+              )}
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setStep(1)}>Retour</Button>
-                <Button onClick={() => setStep(3)} disabled={!audiencePreview || audiencePreview.total === 0}>
+                <Button onClick={() => setStep(3)} disabled={loadingPreview || (!previewFailed && !audiencePreview) || (audiencePreview !== null && audiencePreview.total === 0)}>
                   Suivant: Canaux
                 </Button>
               </div>
