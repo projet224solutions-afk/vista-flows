@@ -4,7 +4,7 @@
  * Inclut le calcul et la facturation des commissions
  */
 
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -610,6 +610,14 @@ export default function ProductPaymentModal({
   }, [userId, customerId, cartItems, paymentMethod, totalAmount, commissionFee, grandTotal, walletBalance, commissionConfig, onPaymentSuccess, onClose, codPhone, codCity, fc, navigate]);
 
   const insufficientBalance = paymentMethod === 'wallet' && walletBalance !== null && walletBalance < grandTotal;
+
+  const stripeExtraParams = useMemo(() => ({
+    cartItems: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId: i.vendorId }))
+  }), [cartItems]);
+
+  const handleStripeError = useCallback((error: string) => {
+    toast.error(error);
+  }, []);
   const firstVendorId = cartItems.find(item => item.vendorId)?.vendorId || '';
 
   // ======== RENDER: Success screen ========
@@ -868,10 +876,10 @@ export default function ProductPaymentModal({
                 currency={cur}
                 description={`Achat ${cartItems.length} article(s) - Marketplace 224Solutions`}
                 edgeFunction="marketplace-escrow-payment"
-                extraParams={{ cartItems: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId: i.vendorId })) }}
+                extraParams={stripeExtraParams}
                 onSuccess={handleCardSuccess}
                 onCancel={() => setShowCardInline(false)}
-                onError={(error) => { toast.error(error); }}
+                onError={handleStripeError}
               />
             </Suspense>
             <Button variant="outline" onClick={() => setShowCardInline(false)} className="w-full" size="sm">

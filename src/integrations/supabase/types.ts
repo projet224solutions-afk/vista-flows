@@ -13682,6 +13682,7 @@ export type Database = {
           metadata: Json | null
           notes: string | null
           order_number: string
+          payment_intent_id: string | null
           payment_method: Database["public"]["Enums"]["payment_method"] | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           public_id: string | null
@@ -13707,6 +13708,7 @@ export type Database = {
           metadata?: Json | null
           notes?: string | null
           order_number: string
+          payment_intent_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           public_id?: string | null
@@ -13732,6 +13734,7 @@ export type Database = {
           metadata?: Json | null
           notes?: string | null
           order_number?: string
+          payment_intent_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           public_id?: string | null

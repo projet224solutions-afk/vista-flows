@@ -4,7 +4,7 @@
  * 224SOLUTIONS
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,15 +14,6 @@ import { Loader2, Shield, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getStripeInstance, resetStripeInstance } from '@/lib/stripe/client';
-
-const getStripe = async (): Promise<Stripe | null> => {
-  try {
-    return await getStripeInstance();
-  } catch (err) {
-    console.error('❌ [STRIPE LOAD FAIL]', err);
-    return null;
-  }
-};
 
 interface StripeCheckoutButtonProps {
   amount: number;
@@ -204,6 +195,9 @@ export default function StripeCheckoutButton({
   const mountedRef = useRef(true);
   const initCalledRef = useRef(false);
 
+  // Stabilize extraParams to prevent re-init on every render
+  const extraParamsKey = useMemo(() => JSON.stringify(extraParams ?? {}), [extraParams]);
+
   useEffect(() => {
     mountedRef.current = true;
     initCalledRef.current = false;
@@ -218,7 +212,7 @@ export default function StripeCheckoutButton({
     if (!disabled) {
       setLoading(true);
     }
-  }, [amount, currency, orderId, sellerId, edgeFunction, description, extraParams, creditWallet, disabled]);
+  }, [amount, currency, orderId, sellerId, edgeFunction, description, extraParamsKey, creditWallet, disabled]);
 
   useEffect(() => {
     // Guard against duplicate calls (StrictMode double-mount)
@@ -231,13 +225,12 @@ export default function StripeCheckoutButton({
         setError(null);
 
         console.log('🔄 [CHECKOUT START] amount:', amount, currency);
-        const stripeInstance = await getStripe();
+        const stripeInstance = await getStripeInstance();
         if (!mountedRef.current) return;
         setStripe(stripeInstance);
 
         if (!stripeInstance) {
-          console.error('❌ [CHECKOUT FAIL] Stripe instance is null');
-          throw new Error('Impossible de charger Stripe. Vérifiez votre connexion.');
+          throw new Error('Impossible de charger Stripe. Vérifiez la configuration.');
         }
 
         let data: any;
@@ -328,7 +321,8 @@ export default function StripeCheckoutButton({
     };
 
     if (!disabled) init();
-  }, [amount, currency, orderId, sellerId, edgeFunction, description, extraParams, creditWallet, disabled, onError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [amount, currency, orderId, sellerId, edgeFunction, description, extraParamsKey, creditWallet, disabled]);
 
   if (disabled) {
     return (
