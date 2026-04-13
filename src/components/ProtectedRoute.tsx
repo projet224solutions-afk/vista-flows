@@ -163,13 +163,14 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   // Vérification d'authentification sécurisée - NE PAS rediriger si offline
   useEffect(() => {
     if (!loading && customAuth.checked && !user && !customAuth.isValid) {
-      // En mode offline, ne pas rediriger si on a un profil en cache
-      if (!isOnline && offlineProfile) {
+      const browserOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+      // En mode vraiment offline (navigator.onLine=false), ne pas rediriger si profil cache
+      if (!browserOnline && offlineProfile) {
         console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (profil cache disponible)");
         return;
       }
-      // En mode offline sans profil cache, ne pas rediriger non plus (l'app ne pourrait pas charger /auth)
-      if (!isOnline) {
+      // En mode vraiment offline sans profil cache, ne pas rediriger non plus
+      if (!browserOnline) {
         console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (offline)");
         return;
       }
@@ -197,7 +198,8 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   }
 
   // Vérifier si l'utilisateur est authentifié via Supabase OU session custom OU offline cache
-  const isAuthenticated = !!user || customAuth.isValid || (!isOnline && !!offlineProfile);
+  const browserOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  const isAuthenticated = !!user || customAuth.isValid || (!browserOnline && !!offlineProfile);
   const rawRole = profile?.role || customAuth.role || offlineProfile?.role || 'client';
   
   // Normaliser les rôles équivalents (pdg/ceo/admin sont tous des rôles PDG)
@@ -210,8 +212,9 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   
   const effectiveRole = normalizeRole(rawRole);
   if (!isAuthenticated || (effectiveRole && !allowedRoles.includes(effectiveRole))) {
-    // En mode offline, afficher un message adapté au lieu de rediriger
-    if (!isOnline) {
+    // Vrai mode offline = navigator.onLine est false (pas juste le health check)
+    const trulyOffline = !isOnline && (typeof navigator === 'undefined' || !navigator.onLine);
+    if (trulyOffline) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center p-6 max-w-md">
