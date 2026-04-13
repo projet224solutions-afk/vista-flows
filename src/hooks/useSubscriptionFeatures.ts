@@ -82,6 +82,7 @@ export const MODULE_FEATURE_MAP: Record<string, SubscriptionFeature> = {
   'agents': 'sales_agents',
   'prospects': 'prospect_management',
   'marketing': 'marketing_promotions',
+  'campaigns': 'marketing_promotions',
   'wallet': 'wallet_basic',
   'virtual-card': 'wallet_basic',
   'quotes-invoices': 'quotes_invoices',

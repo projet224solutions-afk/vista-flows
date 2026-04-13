@@ -54,6 +54,7 @@ const IdNormalizationAudit = lazy(() => import('@/components/pdg/IdNormalization
 const LogicSurveillanceDashboard = lazy(() => import('@/components/pdg/LogicSurveillanceDashboard'));
 const PDGSyncDashboard = lazy(() => import('@/components/pdg/PDGSyncDashboard'));
 const BroadcastMessageCenter = lazy(() => import('@/components/pdg/BroadcastMessageCenter'));
+const PDGCampaignSupervision = lazy(() => import('@/components/pdg/PDGCampaignSupervision'));
 const DeletedUsersRestore = lazy(() => import('@/components/pdg/DeletedUsersRestore'));
 
 // Tabs that redirect to dedicated pages instead of inline content
@@ -596,6 +597,9 @@ export default function PDG224Solutions() {
               )}
               {activeTab === 'broadcast-center' && (
                 <ErrorBoundary><BroadcastMessageCenter /></ErrorBoundary>
+              )}
+              {activeTab === 'campaign-supervision' && (
+                <ErrorBoundary><PDGCampaignSupervision /></ErrorBoundary>
               )}
               {activeTab === 'deleted-users-restore' && (
                 <ErrorBoundary><DeletedUsersRestore /></ErrorBoundary>

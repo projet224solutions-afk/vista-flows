@@ -41,6 +41,7 @@ import affiliateRoutes from './routes/affiliate.routes.js';
 import paymentLinksRoutes from './routes/paymentLinks.routes.js';
 import marketplaceVisibilityRoutes from './routes/marketplaceVisibility.routes.js';
 import coreRoutes from './routes/core.routes.js';
+import campaignRoutes from './routes/campaigns.routes.js';
 import webhookRoutes from './routes/webhooks.routes.js';
 // @ts-ignore
 import migrationsRoutes from './routes/migrations.js';
@@ -225,6 +226,7 @@ app.use('/api/affiliate', affiliateRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/payment-links', paymentLinksRoutes);
 app.use('/api/marketplace-visibility', marketplaceVisibilityRoutes);
+app.use('/api/campaigns', campaignRoutes);
 app.use('/api/core', coreRoutes);
 app.use('/edge-functions', edgeFunctionsRoutes);
 

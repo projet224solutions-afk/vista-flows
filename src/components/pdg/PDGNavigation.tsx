@@ -77,6 +77,7 @@ const categories: NavCategory[] = [
       { value: 'quotes-invoices', label: 'Devis & Factures', icon: FileText, permission: 'view_quotes_invoices' },
       { value: 'communication', label: 'Communication', icon: MessageSquare, permission: 'access_communication' },
       { value: 'broadcast-center', label: '📢 Diffusion Globale', icon: Megaphone, badge: true, permission: 'view_broadcasts' },
+      { value: 'campaign-supervision', label: '📊 Campagnes Vendeurs', icon: Megaphone, permission: 'view_broadcasts' },
       { value: 'agent-wallet-audit', label: 'Audit Wallet Agents', icon: Shield, permission: 'view_agent_wallet_audit' },
     ]
   },

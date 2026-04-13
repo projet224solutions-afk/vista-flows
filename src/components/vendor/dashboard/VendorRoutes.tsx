@@ -45,6 +45,7 @@ const ClientManagement = lazy(() => import('@/components/vendor/ClientManagement
 const AgentManagement = lazy(() => import('@/components/vendor/AgentManagement'));
 const ProspectManagement = lazy(() => import('@/components/vendor/ProspectManagement'));
 const MarketingManagement = lazy(() => import('@/components/vendor/MarketingManagement'));
+const VendorCampaignCenter = lazy(() => import('@/components/vendor/VendorCampaignCenter'));
 
 // === INVENTORY & PRODUCTS ===
 const InventoryManagement = lazy(() => import('@/components/vendor/InventoryManagement'));
@@ -279,6 +280,12 @@ const VendorRoutes = memo(function VendorRoutes({
         <Route path="marketing" element={
           <ProtectedRoute feature="marketing_promotions">
             <MarketingManagement />
+          </ProtectedRoute>
+        } />
+
+        <Route path="campaigns" element={
+          <ProtectedRoute feature="marketing_promotions">
+            <VendorCampaignCenter />
           </ProtectedRoute>
         } />
 

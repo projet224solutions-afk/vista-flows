@@ -167,6 +167,7 @@ export function VendorSidebar() {
         { title: t('sidebar.agents'), icon: Users, path: "agents" },
         { title: t('sidebar.prospects'), icon: Target, path: "prospects" },
         { title: t('sidebar.marketing'), icon: Megaphone, path: "marketing" },
+        { title: "Campagnes", icon: Megaphone, path: "campaigns" },
       ]
     },
     {
