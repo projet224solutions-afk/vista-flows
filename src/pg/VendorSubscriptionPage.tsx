@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useVendorSubscription } from '@/hooks/useVendorSubscription';
 import { Plan, SubscriptionService } from '@/services/subscriptionService';
 import { format, addMonths, addYears } from 'date-fns';
@@ -137,6 +137,7 @@ function buildPlanDescription(plan: Plan): string {
 
 export default function VendorSubscriptionPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     subscription,
     plans,
@@ -168,7 +169,14 @@ export default function VendorSubscriptionPage() {
     if (limit) setProductLimit(limit as unknown as ProductLimitInfo);
   };
 
-  const handleBack = () => navigate('/vendeur/dashboard');
+  const handleBack = () => {
+    if (location.pathname.startsWith('/vendeur-digital')) {
+      navigate('/vendeur-digital/dashboard');
+      return;
+    }
+
+    navigate('/vendeur/dashboard');
+  };
 
   const handleSelectPlan = (plan: Plan) => {
     if (plan.name === 'free') return;

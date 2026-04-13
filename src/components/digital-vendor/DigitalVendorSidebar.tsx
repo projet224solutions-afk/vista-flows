@@ -7,7 +7,7 @@ import { memo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Laptop, Link, Wallet, Settings,
-  BarChart3, Home, Plus, Eye, ShoppingBag, Bot, DollarSign, Megaphone
+  BarChart3, Home, Plus, Eye, ShoppingBag, Bot, DollarSign, Megaphone, Crown
 } from "lucide-react";
 import {
   Sidebar,
@@ -66,6 +66,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
       label: "Finance",
       items: [
         { title: "Portefeuille", icon: Wallet, path: "wallet" },
+        { title: "Abonnement", icon: Crown, path: "subscription" },
       ]
     },
     {

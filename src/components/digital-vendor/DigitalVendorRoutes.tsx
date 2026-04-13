@@ -31,6 +31,7 @@ const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchases
 
 // Système
 const VendorSettings = lazy(() => import('@/pg/vendor/Settings'));
+const VendorSubscriptionPage = lazy(() => import('@/pg/VendorSubscriptionPage'));
 
 // Analytics
 const VendorAnalyticsDashboard = lazy(() => import('@/components/vendor/VendorAnalyticsDashboard').then(m => ({ default: m.VendorAnalyticsDashboard })));
@@ -73,6 +74,7 @@ const DigitalVendorRoutes = memo(function DigitalVendorRoutes({ vendorId }: Digi
 
         {/* Finance */}
         <Route path="wallet" element={<UniversalWalletTransactions />} />
+        <Route path="subscription" element={<VendorSubscriptionPage />} />
         <Route path="liens-de-paiement" element={<PaymentLinksManager />} />
 
         {/* Mes Achats */}
