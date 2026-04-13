@@ -348,12 +348,14 @@ export default function StripeCheckoutButton({
   }
 
   if (error || !clientSecret || !stripe) {
-    const isMissingKey = error?.includes('clé Stripe') || error?.includes('not configured');
+    const isMissingKey = error?.includes('clé Stripe') || error?.includes('not configured') || error?.includes('non configurée');
     return (
       <div className="space-y-3 my-2">
         <Alert variant="destructive">
           <AlertDescription>
-            {error || 'Impossible de charger le système de paiement.'}
+            {isMissingKey
+              ? 'Le paiement par carte bancaire n\'est pas encore configuré. Contactez l\'administrateur.'
+              : error || 'Impossible de charger le système de paiement.'}
           </AlertDescription>
         </Alert>
         {!isMissingKey && (

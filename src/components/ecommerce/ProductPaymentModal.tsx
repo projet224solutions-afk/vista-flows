@@ -871,7 +871,7 @@ export default function ProductPaymentModal({
                 extraParams={{ cartItems: cartItems.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, vendorId: i.vendorId })) }}
                 onSuccess={handleCardSuccess}
                 onCancel={() => setShowCardInline(false)}
-                onError={(error) => { toast.error(error); setShowCardInline(false); }}
+                onError={(error) => { toast.error(error); }}
               />
             </Suspense>
             <Button variant="outline" onClick={() => setShowCardInline(false)} className="w-full" size="sm">

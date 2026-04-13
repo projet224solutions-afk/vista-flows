@@ -10,14 +10,26 @@ const isOffline = (): boolean => {
   return typeof navigator !== 'undefined' && !navigator.onLine;
 };
 
+/** Validate that a key looks like a real Stripe publishable key */
+const isValidStripeKey = (key: string | undefined): key is string => {
+  if (!key) return false;
+  const trimmed = key.trim();
+  // Must start with pk_test_ or pk_live_ and have at least 20 chars after prefix
+  return /^pk_(test|live)_[A-Za-z0-9]{20,}$/.test(trimmed);
+};
+
 export const getStripePublishableKey = async (): Promise<string> => {
   if (isOffline()) {
     throw new Error(STRIPE_OFFLINE_ERROR);
   }
 
   const envKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim();
-  if (envKey) {
+  if (isValidStripeKey(envKey)) {
     return envKey;
+  }
+
+  if (envKey) {
+    console.warn('⚠️ [Stripe] VITE_STRIPE_PUBLISHABLE_KEY invalide, tentative via stripe_config DB');
   }
 
   if (!publishableKeyPromise) {
@@ -34,8 +46,11 @@ export const getStripePublishableKey = async (): Promise<string> => {
         }
 
         const dbKey = data?.stripe_publishable_key?.trim();
-        if (dbKey) {
+        if (isValidStripeKey(dbKey)) {
           return dbKey;
+        }
+        if (dbKey) {
+          console.warn('⚠️ [Stripe] Clé stripe_config invalide');
         }
       } catch (error) {
         console.warn('⚠️ [Stripe] Impossible de récupérer la clé publique depuis stripe_config:', error);
