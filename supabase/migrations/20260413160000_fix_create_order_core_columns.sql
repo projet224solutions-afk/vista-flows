@@ -104,10 +104,10 @@ BEGIN
   -- ====== PHASE 5: Create escrow ======
   INSERT INTO escrow_transactions (
     order_id, buyer_id, seller_id, amount, currency,
-    status, auto_release_at, payment_method
+    status, auto_release_date
   ) VALUES (
     order_id, p_customer_id, p_vendor_user_id, subtotal, p_currency,
-    'held', now() + (p_auto_release_days || ' days')::interval, p_payment_method
+    'held', (now() + (p_auto_release_days || ' days')::interval)::date
   );
   
   -- ====== SUCCESS ======

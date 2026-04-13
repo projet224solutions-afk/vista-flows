@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { supabase } from "@/integrations/supabase/client";
+import { updateOrderStatus as updateOrderStatusBackend } from "@/services/orderBackendService";
 import { useToast } from "@/hooks/use-toast";
 import { GeocodedAddress } from "@/components/vendor/GeocodedAddress";
 import CreditSalesForm from "@/components/vendor/CreditSalesForm";
@@ -441,43 +442,16 @@ export default function OrderManagement() {
     ));
     
     try {
-      // Update (ne dépend pas du retour de lignes pour considérer le succès)
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          status: newStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId)
-        .eq('vendor_id', vendorId);
+      // Use backend API for proper escrow handling, stock management, and transition guards
+      const response = await updateOrderStatusBackend(orderId, newStatus as any, {
+        ...(newStatus === 'cancelled' ? { cancellation_reason: 'Annulée par le vendeur' } : {}),
+      });
 
-      if (updateError) {
-        console.error('❌ Supabase error updating order status:', updateError);
-        throw updateError;
+      if (!response.success) {
+        throw new Error(response.error || 'Erreur lors de la mise à jour');
       }
 
-      // Vérifier que la mise à jour est bien appliquée (évite les faux négatifs “0 rows returned”)
-      const { data: verify, error: verifyError } = await supabase
-        .from('orders')
-        .select('id, status')
-        .eq('id', orderId)
-        .eq('vendor_id', vendorId)
-        .maybeSingle();
-
-      if (verifyError) {
-        console.error('❌ Supabase error verifying order status:', verifyError);
-        throw verifyError;
-      }
-
-      if (!verify) {
-        throw new Error('Commande non trouvée ou non autorisée');
-      }
-
-      if (verify.status !== newStatus) {
-        throw new Error(`Le statut n'a pas été changé (actuel: ${verify.status})`);
-      }
-
-      console.log('✅ Order status updated successfully:', verify);
+      console.log('✅ Order status updated via backend:', response.data);
 
       toast({
         title: "✅ Statut mis à jour",

@@ -246,7 +246,7 @@ export default function Payment() {
   }: {
     vendorId: string;
     items: any[];
-    paymentMethod: 'card' | 'mobile_money' | 'wallet' | 'cod';
+    paymentMethod: 'card' | 'mobile_money' | 'wallet' | 'cash';
     externalPaymentId?: string;
     shippingAddress?: {
       full_name: string;
@@ -854,7 +854,7 @@ export default function Payment() {
               createOrderForVendor({
                 vendorId: currentVendorId,
                 items: currentItems as any[],
-                paymentMethod: 'cod',
+                paymentMethod: 'cash',
                 shippingAddress: {
                   full_name: user.user_metadata?.full_name || user.email || 'Client 224Solutions',
                   phone: profileData?.phone || 'Non fourni',
@@ -871,7 +871,7 @@ export default function Payment() {
           await createOrderForVendor({
             vendorId,
             items,
-            paymentMethod: 'cod',
+            paymentMethod: 'cash',
             shippingAddress: {
               full_name: user.user_metadata?.full_name || user.email || 'Client 224Solutions',
               phone: profileData?.phone || 'Non fourni',

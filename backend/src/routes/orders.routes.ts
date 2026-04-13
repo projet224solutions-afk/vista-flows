@@ -96,7 +96,7 @@ const CreateOrderSchema = z.object({
     postal_code: z.string().max(20).nullish(),
     notes: z.string().max(500).nullish(),
   }),
-  payment_method: z.enum(['card', 'mobile_money', 'wallet', 'cod']),
+  payment_method: z.enum(['card', 'mobile_money', 'wallet', 'cash']),
   payment_intent_id: z.string().max(500).nullish(),
   coupon_code: z.string().max(50).nullish(),
 });
@@ -290,7 +290,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
     }
 
     let escrowStatus = result.escrow_status as string;
-    if (payment_method === 'cod') {
+    if (payment_method === 'cash') {
       await supabaseAdmin
         .from('escrow_transactions')
         .update({
@@ -315,7 +315,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
           id: result.order_id,
           order_number: result.order_number,
           status: 'pending',
-          payment_status: payment_method === 'cod' ? 'pending' : 'processing',
+          payment_status: payment_method === 'cash' ? 'pending' : 'processing',
           payment_method,
           subtotal: result.subtotal,
           total_amount: result.total_amount,
@@ -616,23 +616,27 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderCreateRateLim
     }
 
     const updates: Record<string, any> = { status, updated_at: new Date().toISOString() };
-    if (tracking_number) updates.tracking_number = tracking_number;
-    if (cancellation_reason) updates.cancellation_reason = cancellation_reason;
+    // Note: tracking_number, cancellation_reason, seller_confirmed_at, delivered_at
+    // don't exist on orders table — store in metadata instead
+    if (tracking_number || cancellation_reason) {
+      updates.metadata = {
+        ...(tracking_number ? { tracking_number } : {}),
+        ...(cancellation_reason ? { cancellation_reason } : {}),
+      };
+    }
 
     if (status === 'confirmed') {
-      updates.seller_confirmed_at = new Date().toISOString();
       await supabaseAdmin
         .from('escrow_transactions')
         .update({
           seller_confirmed_at: new Date().toISOString(),
-          cancellable: false,
-          auto_release_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          auto_release_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         })
         .eq('order_id', orderId);
     }
 
     if (status === 'delivered') {
-      updates.delivered_at = new Date().toISOString();
+      updates.metadata = { ...(updates.metadata || {}), delivered_at: new Date().toISOString() };
     }
 
     if (status === 'cancelled') {
