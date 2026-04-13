@@ -13,7 +13,7 @@ const DigitalVendorCopilot = lazy(() => import('./DigitalVendorCopilot'));
 
 // Produits numériques
 const VendorDigitalProducts = lazy(() => import('@/components/vendor/VendorDigitalProducts'));
-const DigitalProducts = lazy(() => import('@/pages/DigitalProducts'));
+const DigitalProducts = lazy(() => import('@/pg/DigitalProducts'));
 
 // Affiliation
 const AffiliateManagement = lazy(() => import('@/components/vendor/AffiliateManagement'));
@@ -28,7 +28,7 @@ const UniversalWalletTransactions = lazy(() => import('@/components/wallet/Unive
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 
 // Système
-const VendorSettings = lazy(() => import('@/pages/vendor/Settings'));
+const VendorSettings = lazy(() => import('@/pg/vendor/Settings'));
 
 // Analytics
 const VendorAnalyticsDashboard = lazy(() => import('@/components/vendor/VendorAnalyticsDashboard').then(m => ({ default: m.VendorAnalyticsDashboard })));
