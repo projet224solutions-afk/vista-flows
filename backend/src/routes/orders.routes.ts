@@ -109,12 +109,8 @@ const ORDER_LIST_SELECT = `
   payment_method,
   subtotal,
   total_amount,
-  currency,
   shipping_address,
-  tracking_number,
-  cancellation_reason,
-  seller_confirmed_at,
-  delivered_at,
+  metadata,
   created_at,
   updated_at,
   vendor_id,
@@ -122,11 +118,11 @@ const ORDER_LIST_SELECT = `
   vendors(business_name),
   order_items(
     product_id,
-    product_name,
     quantity,
     unit_price,
     total_price,
-    variant_id
+    variant_id,
+    products(name)
   )
 `;
 
