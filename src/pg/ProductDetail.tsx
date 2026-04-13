@@ -150,7 +150,7 @@ export default function ProductDetail() {
       } else {
         console.warn('ÔÜá´©Å [ProductDetail] Aucun profil customer trouv├® pour user:', user.id);
         toast.error('Profil client manquant', {
-          description: 'Veuillez compl├®ter votre profil client'
+          description: 'Veuillez compléter votre profil client'
         });
       }
     }
@@ -199,7 +199,7 @@ export default function ProductDetail() {
   };
 
   const handlePaymentSuccess = () => {
-    toast.success('Paiement r├®ussi ! Redirection vers vos achats...', { duration: 2000 });
+    toast.success('Paiement réussi ! Redirection vers vos achats...', { duration: 2000 });
     setShowPaymentModal(false);
     setTimeout(() => navigate('/my-purchases'), 1500);
   };
@@ -229,12 +229,12 @@ export default function ProductDetail() {
         .insert({
           sender_id: user.id,
           recipient_id: vendorUserId,
-          content: `Bonjour, je suis int├®ress├® par votre produit "${product.name}".`,
+          content: `Bonjour, je suis intéressé par votre produit "${product.name}".`,
           type: 'text'
         });
 
       if (error) throw error;
-      toast.success('Message envoy├® au vendeur');
+      toast.success('Message envoyé au vendeur');
       navigate(`/messages?recipientId=${vendorUserId}`);
     } catch (error) {
       console.error('Erreur envoi message:', error);
@@ -258,7 +258,7 @@ export default function ProductDetail() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="p-8 text-center max-w-md">
           <h2 className="text-xl font-bold mb-4">Produit introuvable</h2>
-          <p className="text-muted-foreground mb-6">Ce produit n'existe pas ou a ├®t├® supprim├®.</p>
+          <p className="text-muted-foreground mb-6">Ce produit n'existe pas ou a été supprimé.</p>
           <Button onClick={() => navigate('/marketplace')}>Retour au marketplace</Button>
         </Card>
       </div>
@@ -282,7 +282,7 @@ export default function ProductDetail() {
           <Button variant="ghost" size="icon" onClick={() => navigate('/marketplace')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-bold text-foreground">D├®tails du produit</h1>
+          <h1 className="text-xl font-bold text-foreground">Détails du produit</h1>
         </div>
       </header>
 
@@ -423,7 +423,7 @@ export default function ProductDetail() {
 
             {/* Quantity */}
             <div className="flex items-center gap-4">
-              <span className="font-medium">Quantit├®:</span>
+              <span className="font-medium">Quantité:</span>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -461,7 +461,7 @@ export default function ProductDetail() {
               </Button>
               <ShareButton
                 title={product.name}
-                text={`D├®couvrez ${product.name} - 224 Solutions`}
+                text={`Découvrez ${product.name} - 224 Solutions`}
                 url={`${window.location.origin}/product/${product.id}`}
                 resourceType="product"
                 resourceId={product.id}
@@ -491,7 +491,7 @@ export default function ProductDetail() {
 
                   <ShareButton
                     title={product.vendors.business_name}
-                    text={`D├®couvrez la boutique ${product.vendors.business_name} sur 224 Solutions`}
+                    text={`Découvrez la boutique ${product.vendors.business_name} sur 224 Solutions`}
                     url={`${window.location.origin}/boutique/${product.vendors.shop_slug || product.vendors.id}`}
                     variant="outline"
                     size="icon"
@@ -509,8 +509,8 @@ export default function ProductDetail() {
               <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
                 <Shield className="w-8 h-8 text-primary" />
                 <div>
-                  <p className="font-medium text-sm">Paiement s├®curis├®</p>
-                  <p className="text-xs text-muted-foreground">100% prot├®g├®</p>
+                  <p className="font-medium text-sm">Paiement sécurisé</p>
+                  <p className="text-xs text-muted-foreground">100% protégé</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
