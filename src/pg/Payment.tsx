@@ -1356,8 +1356,8 @@ export default function Payment() {
                                 title: 'Paiement re├ºu mais commande incompl├¿te',
                                 description: err?.message || 'Contactez le support avec votre r├®f├®rence de paiement',
                                 variant: 'destructive',
+                                duration: 10000,
                               });
-                              return;
                             }
                           }
 
@@ -1381,8 +1381,8 @@ export default function Payment() {
                                 title: 'Paiement re├ºu mais commande incompl├¿te',
                                 description: err?.message || 'Contactez le support avec votre r├®f├®rence de paiement',
                                 variant: 'destructive',
+                                duration: 10000,
                               });
-                              return;
                             }
                           }
                           
