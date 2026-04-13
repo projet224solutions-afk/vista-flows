@@ -7,7 +7,7 @@ import { memo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Laptop, Link, Wallet, Settings,
-  BarChart3, Home, Plus, Eye, ShoppingBag, Bot, DollarSign
+  BarChart3, Home, Plus, Eye, ShoppingBag, Bot, DollarSign, Megaphone
 } from "lucide-react";
 import {
   Sidebar,
@@ -56,6 +56,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
       label: "Croissance",
       items: [
         { title: "Statistiques", icon: BarChart3, path: "analytics" },
+        { title: "Campagnes", icon: Megaphone, path: "campaigns" },
         { title: "Affiliation", icon: Link, path: "affiliate", badge: affiliateCount > 0 ? affiliateCount.toString() : null },
         { title: "Liens de paiement", icon: DollarSign, path: "payment-links" },
         { title: "Explorer le marché", icon: Eye, path: "marketplace" },

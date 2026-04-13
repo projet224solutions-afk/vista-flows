@@ -10,6 +10,7 @@ import { SectionLoader } from '@/components/ui/GlobalLoader';
 // Core
 const DigitalVendorDashboardHome = lazy(() => import('./DigitalVendorDashboardHome'));
 const DigitalVendorCopilot = lazy(() => import('./DigitalVendorCopilot'));
+const ProtectedRoute = lazy(() => import('@/components/subscription/ProtectedRoute').then(m => ({ default: m.ProtectedRoute })));
 
 // Produits numériques
 const VendorDigitalProducts = lazy(() => import('@/components/vendor/VendorDigitalProducts'));
@@ -20,6 +21,7 @@ const AffiliateManagement = lazy(() => import('@/components/vendor/AffiliateMana
 
 // Liens de paiement
 const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
+const VendorCampaignCenter = lazy(() => import('@/components/vendor/VendorCampaignCenter'));
 
 // Finance
 const UniversalWalletTransactions = lazy(() => import('@/components/wallet/UniversalWalletTransactions'));
@@ -58,6 +60,13 @@ const DigitalVendorRoutes = memo(function DigitalVendorRoutes({ vendorId }: Digi
 
         {/* Statistiques */}
         <Route path="analytics" element={<VendorAnalyticsDashboard />} />
+
+        {/* Campagnes */}
+        <Route path="campaigns" element={
+          <ProtectedRoute feature="marketing_promotions">
+            <VendorCampaignCenter />
+          </ProtectedRoute>
+        } />
 
         {/* Liens de paiement */}
         <Route path="payment-links" element={<PaymentLinksManager />} />
