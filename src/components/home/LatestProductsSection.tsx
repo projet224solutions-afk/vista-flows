@@ -124,8 +124,8 @@ export function LatestProductsSection({
           </Button>
         </div>
       ) : (
-        <MarketplaceGrid>
-          {products.map((product, index) => (
+        <div className="grid grid-cols-2 gap-3">
+          {products.slice(0, 4).map((product, index) => (
             <div
               key={product.id}
               className="animate-fade-in"
@@ -153,7 +153,7 @@ export function LatestProductsSection({
               />
             </div>
           ))}
-        </MarketplaceGrid>
+        </div>
       )}
     </section>
   );

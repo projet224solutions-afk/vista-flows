@@ -50,7 +50,7 @@ export default function Home() {
 
   // Universal products hook - memoized options
   const productOptions = useMemo(() => ({
-    limit: 6,
+    limit: 4,
     sortBy: 'newest' as const,
     autoLoad: true,
   }), []);
