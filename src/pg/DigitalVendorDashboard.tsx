@@ -89,7 +89,7 @@ export default function DigitalVendorDashboard() {
     if (profile.role === 'vendeur' && vendorBusinessType && vendorBusinessType !== 'digital') {
       setRedirectingToStandardDashboard(true);
       toast({
-        title: 'Compte vendeur classique d├®tect├®',
+        title: 'Compte vendeur classique détecté',
         description: 'Redirection vers le dashboard vendeur standard.',
       });
       navigate('/vendeur', { replace: true });
@@ -107,11 +107,11 @@ export default function DigitalVendorDashboard() {
   const handleSignOut = useCallback(async () => {
     try {
       await signOut();
-      toast({ title: 'D├®connexion r├®ussie' });
+      toast({ title: 'Déconnexion réussie' });
       navigate('/');
     } catch (err) {
-      console.error('Erreur d├®connexion:', err);
-      toast({ title: 'Erreur', description: 'Erreur lors de la d├®connexion', variant: 'destructive' });
+      console.error('Erreur déconnexion:', err);
+      toast({ title: 'Erreur', description: 'Erreur lors de la déconnexion', variant: 'destructive' });
     }
   }, [signOut, toast, navigate]);
 
@@ -123,7 +123,7 @@ export default function DigitalVendorDashboard() {
     return <PageLoader text="Redirection vers le dashboard vendeur..." />;
   }
 
-  if (!isOnline) {
+  if (!isOnline && typeof navigator !== 'undefined' && !navigator.onLine) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#eef3fb] px-6">
         <div className="max-w-sm w-full rounded-[28px] bg-white shadow-[0_22px_55px_rgba(4,67,158,0.12)] p-8 text-center">
@@ -132,15 +132,15 @@ export default function DigitalVendorDashboard() {
           </div>
           <h2 className="text-xl font-semibold text-gray-900">Connexion requise</h2>
           <p className="mt-2 text-sm text-gray-500">
-            Le tableau de bord vendeur digital n├®cessite une connexion internet active.
-            Les produits num├®riques et les transactions ne sont pas accessibles hors ligne.
+            Le tableau de bord vendeur digital nécessite une connexion internet active.
+            Les produits numériques et les transactions ne sont pas accessibles hors ligne.
           </p>
           <Button
             onClick={() => window.location.reload()}
             className="mt-6 w-full rounded-2xl bg-[#04439e] font-semibold text-white hover:bg-[#0536a8]"
           >
             <RefreshCw className="mr-2 h-4 w-4" />
-            R├®essayer
+            Réessayer
           </Button>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function DigitalVendorDashboard() {
     return (
       <DataLoadTimeoutState
         title="Impossible de charger le dashboard vendeur digital"
-        description="Le chargement est trop long. R├®essayez ou rechargez lÔÇÖapplication."
+        description="Le chargement est trop long. Réessayez ou rechargez l'application."
         onRetry={resetTimeout}
         onReload={() => window.location.reload()}
       />
@@ -159,7 +159,7 @@ export default function DigitalVendorDashboard() {
   }
 
   if (isLoading) {
-    return <PageLoader text="Chargement des donn├®es..." />;
+    return <PageLoader text="Chargement des données..." />;
   }
 
   if (!user) {
