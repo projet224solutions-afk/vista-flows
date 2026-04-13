@@ -1,5 +1,5 @@
 ﻿/**
- * Page Produits Num├®riques & Marketplace
+ * Page Produits Numériques & Marketplace
  * Modules: Voyage, Logiciel, Formation, Livres, Dropshipping, Produit custom
  */
 
@@ -160,14 +160,14 @@ export default function DigitalProducts() {
   const isSearching = searchQuery.trim().length > 0;
 
   const handleModuleClick = (module: ProductModule) => {
-    // Afficher directement les produits de la cat├®gorie
-    // Tous les modules fonctionnent de la m├¬me mani├¿re - les utilisateurs publient leurs liens d'affiliation
+    // Afficher directement les produits de la catégorie
+    // Tous les modules fonctionnent de la même manière - les utilisateurs publient leurs liens d'affiliation
     setSelectedModule(module);
     setShowCategoryProducts(true);
   };
 
   const handleBecomeMerchant = () => {
-    // Si pas connect├®, rediriger vers auth
+    // Si pas connecté, rediriger vers auth
     if (!user) {
       toast.info(t('digital.loginRequired'));
       navigate('/auth', { state: { redirectTo: '/digital-products' } });
@@ -180,13 +180,13 @@ export default function DigitalProducts() {
       return;
     }
 
-    // Si connect├® mais pas marchand, afficher dialog d'activation
+    // Si connecté mais pas marchand, afficher dialog d'activation
     if (!isMerchant) {
       setShowActivationDialog(true);
       return;
     }
 
-    // Si d├®j├á marchand, rediriger vers la cr├®ation de produit
+    // Si déjà marchand, rediriger vers la création de produit
     toast.info(t('digital.alreadyMerchant'));
   };
 
@@ -223,7 +223,7 @@ export default function DigitalProducts() {
     return <TravelModule onBack={() => setShowTravelModule(false)} />;
   }
 
-  // Affichage des produits par cat├®gorie
+  // Affichage des produits par catégorie
   if (showCategoryProducts && selectedModule) {
     return (
       <CategoryProductsList
@@ -240,7 +240,7 @@ export default function DigitalProducts() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(4,67,158,0.10),transparent_28%),linear-gradient(180deg,#f4f8ff_0%,#eef4ff_42%,#f7faff_100%)] pb-24">
+    <div className="min-h-screen bg-slate-50 pb-24">
       {/* Header */}
       <header className="bg-card/95 backdrop-blur-md border-b border-border sticky top-0 z-40">
         <div className="px-4 py-3">
@@ -261,7 +261,7 @@ export default function DigitalProducts() {
                 {isVendorWorkspace
                   ? (isVendorAddFlow
                     ? 'Choisissez un module puis poursuivez la publication sans quitter votre cockpit vendeur.'
-                    : 'Explorez les modules utiles ├á votre boutique digitale depuis un espace structur├®.')
+                    : 'Explorez les modules utiles à votre boutique digitale depuis un espace structuré.')
                   : t('digital.subtitle')}
               </p>
             </div>
@@ -281,12 +281,12 @@ export default function DigitalProducts() {
       </header>
 
       {/* Barre de recherche */}
-      <section className="px-4 py-3 border-b border-border">
+      <section className="px-4 pt-4 pb-2">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder={isVendorWorkspace ? 'Rechercher un module ou un produit ├á ajouter...' : 'Rechercher un produit num├®rique...'}
+            placeholder={isVendorWorkspace ? 'Rechercher un module ou un produit à ajouter...' : 'Rechercher un produit numérique...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 h-10 bg-muted/50 border-border"
@@ -294,12 +294,12 @@ export default function DigitalProducts() {
         </div>
         {isSearching && (
           <p className="text-xs text-muted-foreground mt-2">
-            {filteredProducts.length} r├®sultat{filteredProducts.length !== 1 ? 's' : ''} pour "{searchQuery}"
+            {filteredProducts.length} résultat{filteredProducts.length !== 1 ? 's' : ''} pour "{searchQuery}"
           </p>
         )}
       </section>
 
-      {/* R├®sultats de recherche */}
+      {/* Résultats de recherche */}
       {isSearching ? (
         <section className="px-4 py-4">
           {productsLoading ? (
@@ -312,10 +312,10 @@ export default function DigitalProducts() {
                 <Search className="w-8 h-8 text-muted-foreground" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">
-                Aucun r├®sultat pour "{searchQuery}"
+                Aucun résultat pour "{searchQuery}"
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Essayez avec d'autres mots-cl├®s
+                Essayez avec d'autres mots-clés
               </p>
               <Button variant="outline" onClick={() => setSearchQuery('')}>
                 Effacer la recherche
@@ -351,7 +351,7 @@ export default function DigitalProducts() {
                       {product.product_mode === 'affiliate' && (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
                           <ExternalLink className="w-3 h-3 mr-1" />
-                          Affili├®
+                          Affilié
                         </Badge>
                       )}
                       {product.is_featured && (
@@ -396,7 +396,7 @@ export default function DigitalProducts() {
         <>
           {/* Status Banner */}
           {!isVendorWorkspace && user && !isMerchant && (
-            <div className="mx-4 mt-4 rounded-2xl border border-[#04439e]/25 bg-[linear-gradient(135deg,rgba(4,67,158,0.12),rgba(4,67,158,0.04))] px-3 py-3 sm:px-4 shadow-[0_12px_28px_rgba(4,67,158,0.10)]">
+            <div className="mx-4 mt-4 rounded-xl border border-slate-200 bg-white px-3 py-3 sm:px-4 shadow-sm">
               <div className="flex flex-col gap-3 min-[560px]:flex-row min-[560px]:items-center min-[560px]:justify-between">
                 <div className="flex items-start gap-2 flex-1 min-w-0">
                   <Store className="mt-0.5 w-4 h-4 text-[#04439e] shrink-0" />
@@ -417,7 +417,7 @@ export default function DigitalProducts() {
           )}
 
           {!isVendorWorkspace && user && isMerchant && (
-            <div className="mx-4 mt-4 rounded-2xl px-3 py-3 sm:px-4 bg-[#04439e] text-white border border-[#04439e]/30 text-center min-[560px]:text-left text-xs sm:text-sm shadow-[0_12px_28px_rgba(4,67,158,0.25)]">
+            <div className="mx-4 mt-4 rounded-xl px-3 py-3 sm:px-4 bg-[#04439e] text-white text-center min-[560px]:text-left text-xs sm:text-sm shadow-sm">
               <span className="flex items-center justify-center min-[560px]:justify-start gap-2 font-bold leading-tight">
                 <Store className="w-4 h-4 shrink-0" />
                 {t('digital.merchantActive')}
@@ -426,87 +426,61 @@ export default function DigitalProducts() {
           )}
 
           {/* Hero Section */}
-          <section className="px-4 pt-5 pb-4 sm:pt-6 sm:pb-5">
-            <div className="overflow-hidden rounded-[24px] sm:rounded-[28px] border border-[#04439e]/25 bg-[linear-gradient(135deg,#04439e_0%,#0d4fb3_56%,#0b1b33_100%)] px-4 py-5 shadow-[0_22px_52px_rgba(4,67,158,0.28)] sm:px-7 sm:py-8">
-              <div className="flex flex-col gap-4 sm:gap-5 min-[560px]:flex-row min-[560px]:items-start min-[560px]:justify-between xl:items-end">
-                <div className="max-w-2xl min-[560px]:flex-1">
-                  <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1.5 sm:px-3">
-                    <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                    <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.12em] sm:tracking-[0.15em] text-white">
-                      {isVendorAddFlow ? 'Cr├®ation produit' : isVendorWorkspace ? 'Outils vendeur' : t('digital.marketplaceDigital')}
-                    </span>
-                  </div>
-                  <h2 className="text-xl font-semibold leading-tight text-white sm:text-3xl">
-                    {isVendorAddFlow
-                      ? 'Choisissez le module de votre prochain produit digital.'
-                      : isVendorWorkspace
-                        ? 'D├®veloppez votre catalogue et votre visibilit├® depuis un espace vendeur coh├®rent.'
-                        : t('digital.discover')}
-                  </h2>
-                  <p className="mt-2.5 max-w-xl text-[13px] leading-5 text-white/72 sm:mt-3 sm:text-base sm:leading-6">
-                    {isVendorWorkspace
-                      ? (isVendorAddFlow
-                        ? 'S├®lectionnez le bon module pour publier votre offre sans quitter le cockpit vendeur.'
-                        : 'Retrouvez les modules utiles ├á votre croissance, votre visibilit├® et votre distribution digitale.')
-                      : (
-                        <>
-                          {t('digital.discoverDesc')}
-                          {!isMerchant && ` ${t('digital.becomeSellerPrompt')}`}
-                        </>
-                      )}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 self-start min-[560px]:w-[240px] sm:gap-3 xl:min-w-[360px] xl:w-auto">
-                  <div className="rounded-[18px] sm:rounded-2xl border border-white/18 bg-white/10 p-2.5 sm:p-3.5">
-                    <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-white/55">Modules</p>
-                    <p className="mt-1.5 sm:mt-2 text-xl sm:text-2xl font-semibold text-white">{productModules.length}</p>
-                  </div>
-                  <div className="rounded-[18px] sm:rounded-2xl border border-white/18 bg-white/10 p-2.5 sm:p-3.5">
-                    <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-white/55">Marketplace</p>
-                    <p className="mt-1.5 sm:mt-2 text-xl sm:text-2xl font-semibold text-white">24/7</p>
-                  </div>
-                  <div className="rounded-[18px] sm:rounded-2xl border border-white/18 bg-white/10 p-2.5 sm:p-3.5">
-                    <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-white/55">Focus</p>
-                    <p className="mt-1.5 sm:mt-2 text-xs sm:text-base font-semibold text-[#ffb599] leading-tight">Produits digitaux</p>
-                  </div>
-                </div>
+          <section className="px-4 pt-5 pb-2">
+            <div className="rounded-2xl bg-[#04439e] px-5 py-5 sm:px-7 sm:py-6">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 mb-3">
+                <Package className="w-3.5 h-3.5 text-white" />
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-white/90">
+                  {isVendorAddFlow ? 'Création produit' : isVendorWorkspace ? 'Outils vendeur' : t('digital.marketplaceDigital')}
+                </span>
               </div>
+              <h2 className="text-lg font-bold leading-snug text-white sm:text-2xl max-w-lg">
+                {isVendorAddFlow
+                  ? 'Choisissez le module de votre prochain produit digital.'
+                  : isVendorWorkspace
+                    ? 'Développez votre catalogue depuis un espace vendeur cohérent.'
+                    : t('digital.discover')}
+              </h2>
+              <p className="mt-2 max-w-xl text-[13px] leading-5 text-white/70 sm:text-sm">
+                {isVendorWorkspace
+                  ? (isVendorAddFlow
+                    ? 'Sélectionnez le bon module pour publier votre offre.'
+                    : 'Modules utiles à votre croissance et distribution digitale.')
+                  : (
+                    <>
+                      {t('digital.discoverDesc')}
+                      {!isMerchant && ` ${t('digital.becomeSellerPrompt')}`}
+                    </>
+                  )}
+              </p>
             </div>
           </section>
 
           {/* Modules Grid */}
           <section className="px-4 pb-6">
-            <div className="mb-4 flex items-end justify-between gap-3">
-              <div>
-                <h3 className="text-base sm:text-lg font-semibold tracking-tight text-[#0b1b33]">Choisissez votre module de vente</h3>
-                <p className="mt-1 text-[13px] sm:text-sm text-[#5f78a5]">Une structure claire, orientee conversion et distribution internationale.</p>
-              </div>
+            <div className="mb-4">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900">Modules de vente</h3>
+              <p className="mt-0.5 text-xs sm:text-sm text-slate-500">Explorez nos modules de vente digitale</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               {productModules.map((module) => (
                 <Card
                   key={module.id}
-                  className={cn(
-                    'group cursor-pointer overflow-hidden rounded-[24px] transition-all duration-300',
-                    'border border-[#d6e2f7] bg-white/96 backdrop-blur-sm',
-                    'hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(4,67,158,0.16)] hover:border-[#04439e]/35'
-                  )}
+                  className="group cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300"
                   onClick={() => handleModuleClick(module)}
                 >
                   <CardContent className="p-0">
-                    <div className="relative h-32 sm:h-36 w-full overflow-hidden">
+                    <div className="relative h-28 sm:h-32 w-full overflow-hidden">
                       <img
                         src={module.coverImage}
                         alt={t(module.titleKey)}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                         loading="lazy"
                       />
-                      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,27,51,0.10)_0%,rgba(11,27,51,0.72)_100%)]" />
-
-                      <div className="absolute bottom-2.5 sm:bottom-3 left-1/2 -translate-x-1/2">
-                        <div className="h-12 w-12 sm:h-14 sm:w-14 overflow-hidden rounded-[18px] sm:rounded-2xl shadow-[0_10px_22px_rgba(11,27,51,0.36)] ring-2 ring-white/80">
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-black/40" />
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+                        <div className="h-10 w-10 sm:h-11 sm:w-11 overflow-hidden rounded-xl shadow-lg ring-2 ring-white">
                           <img
                             src={module.iconImage}
                             alt={t(module.titleKey)}
@@ -516,19 +490,16 @@ export default function DigitalProducts() {
                         </div>
                       </div>
                     </div>
-
-                    <div className="p-4 sm:p-5">
-                    <div className="text-center">
-                      <h3 className="text-[15px] sm:text-base font-semibold tracking-tight text-[#0b1b33]">
+                    <div className="px-3 py-3 sm:px-4 sm:py-3.5 text-center">
+                      <h3 className="text-sm sm:text-[15px] font-semibold text-slate-900 leading-tight">
                         {t(module.titleKey)}
                       </h3>
-                      <p className="mx-auto mt-1.5 max-w-[17rem] text-[13px] sm:text-sm leading-5 sm:leading-6 text-[#5f78a5] line-clamp-2">
+                      <p className="mt-1 text-xs sm:text-[13px] leading-relaxed text-slate-500 line-clamp-2">
                         {t(module.descriptionKey)}
                       </p>
-                      <span className="mt-3 inline-flex items-center rounded-full border border-[#d9e6fb] px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.1em] sm:tracking-[0.14em] text-[#04439e]">
-                        Ouvrir le module
+                      <span className="mt-2 inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-[#04439e]">
+                        Ouvrir le module →
                       </span>
-                    </div>
                     </div>
                   </CardContent>
                 </Card>
