@@ -95,12 +95,38 @@ async function isAlreadyProcessed(webhookId: string): Promise<boolean> {
 
 // ==================== EVENT HANDLERS ====================
 
+// Zero-decimal currencies that Stripe sends without ×100
+const STRIPE_ZERO_DECIMAL_CURRENCIES = new Set([
+  'BIF','CLP','DJF','GNF','JPY','KMF','KRW','MGA','PYG','RWF',
+  'UGX','VND','VUV','XAF','XOF','XPF',
+]);
+
+function stripeAmountToReal(stripeAmount: number, currency: string): number {
+  return STRIPE_ZERO_DECIMAL_CURRENCIES.has(currency.toUpperCase())
+    ? stripeAmount
+    : stripeAmount / 100;
+}
+
 async function handlePaymentIntentSucceeded(event: any): Promise<void> {
   const paymentIntent = event.data.object;
-  const orderId = paymentIntent.metadata?.order_id;
+  let orderId = paymentIntent.metadata?.order_id;
   const userId = paymentIntent.metadata?.user_id;
 
   logger.info(`Webhook: payment_intent.succeeded — PI=${paymentIntent.id}, order=${orderId}`);
+
+  // If no order_id in metadata, try to find the order by payment_intent_id
+  // (marketplace-escrow flow creates the order AFTER the PaymentIntent)
+  if (!orderId) {
+    const { data: matchedOrder } = await supabaseAdmin
+      .from('orders')
+      .select('id')
+      .eq('payment_intent_id', paymentIntent.id)
+      .maybeSingle();
+    if (matchedOrder) {
+      orderId = matchedOrder.id;
+      logger.info(`Webhook: resolved order by payment_intent_id — order=${orderId}`);
+    }
+  }
 
   if (orderId) {
     // Update order payment status
@@ -113,12 +139,18 @@ async function handlePaymentIntentSucceeded(event: any): Promise<void> {
       })
       .eq('id', orderId);
 
-    // Update escrow to confirmed
+    // Update escrow to confirmed (try both order_id and stripe_payment_intent_id)
     await supabaseAdmin
       .from('escrow_transactions')
       .update({ payment_confirmed: true, updated_at: new Date().toISOString() })
       .eq('order_id', orderId);
   }
+
+  // Also confirm escrow by stripe_payment_intent_id (for marketplace-escrow flow)
+  await supabaseAdmin
+    .from('escrow_transactions')
+    .update({ payment_confirmed: true, updated_at: new Date().toISOString() })
+    .eq('stripe_payment_intent_id', paymentIntent.id);
 
   // Record in stripe_payments if exists
   await supabaseAdmin
@@ -129,10 +161,16 @@ async function handlePaymentIntentSucceeded(event: any): Promise<void> {
     })
     .eq('payment_intent_id', paymentIntent.id);
 
+  // Update stripe_transactions status
+  await supabaseAdmin
+    .from('stripe_transactions')
+    .update({ status: 'SUCCEEDED', updated_at: new Date().toISOString() })
+    .eq('stripe_payment_intent_id', paymentIntent.id);
+
   // Credit wallet if it's a deposit
   if (paymentIntent.metadata?.type === 'wallet_deposit' && userId) {
-    const amount = paymentIntent.amount / 100; // Stripe uses cents
     const currency = paymentIntent.currency?.toUpperCase() || 'GNF';
+    const amount = stripeAmountToReal(paymentIntent.amount, currency);
 
     await supabaseAdmin.rpc('credit_wallet', {
       p_user_id: userId,

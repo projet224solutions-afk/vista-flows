@@ -55,12 +55,19 @@ serve(async (req) => {
 
     if (!amount || amount <= 0) throw new Error("Montant invalide");
 
+    // Zero-decimal currencies (Stripe requires amount as-is, not ×100)
+    const ZERO_DECIMAL = new Set(['gnf','xof','xaf','bif','clp','djf','jpy','kmf','krw','mga','pyg','rwf','ugx','vnd','vuv','xpf']);
+    const isZeroDecimal = ZERO_DECIMAL.has(currency.toLowerCase());
+
     // Commission dynamique
     const commissionRate = await getPdgFeeRate(supabaseAdmin, FEE_KEYS.PURCHASE_COMMISSION);
     const commissionAmount = Math.round(amount * (commissionRate / 100));
     const totalAmount = amount + commissionAmount;
 
-    logStep("Payment details", { productAmount: amount, commissionRate, commissionAmount, totalAmount });
+    // Convert to Stripe amount (multiply by 100 for non-zero-decimal currencies)
+    const stripeAmount = isZeroDecimal ? Math.round(totalAmount) : Math.round(totalAmount * 100);
+
+    logStep("Payment details", { productAmount: amount, commissionRate, commissionAmount, totalAmount, stripeAmount, isZeroDecimal });
 
     // Résumé vendeurs
     const vendorSummary: Record<string, number> = {};
@@ -78,7 +85,7 @@ serve(async (req) => {
 
     // *** CAPTURE MANUELLE = ESCROW ***
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(totalAmount),
+      amount: stripeAmount,
       currency: currency.toLowerCase(),
       capture_method: 'manual',
       automatic_payment_methods: { enabled: true },
