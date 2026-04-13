@@ -57,48 +57,41 @@ export function useUnreadMessages(): UnreadMessagesState {
 
     fetchUnreadCount();
 
-    // Écouter les nouveaux messages en temps réel (nom unique pour éviter les conflits StrictMode)
-    const channelName = `unread-messages-badge-${user.id}-${Date.now()}`;
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `recipient_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('[useUnreadMessages] 📩 Nouveau message reçu');
-          // Incrémenter le compteur pour les nouveaux messages
-          setUnreadCount(prev => prev + 1);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
-          filter: `recipient_id=eq.${user.id}`
-        },
-        (payload) => {
-          // Quand un message est mis à jour, recompter pour éviter les erreurs de sync
-          const newRecord = payload.new as any;
-          const oldRecord = payload.old as any;
-          
-          if (!oldRecord.read_at && newRecord.read_at) {
-            console.log('[useUnreadMessages] ✅ Message marqué lu - recalcul du compteur');
-            // Recharger le compteur complet pour assurer la cohérence
-            fetchUnreadCount();
+    // Écouter les changements messages en temps réel (un seul .on avec event '*')
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      const channelName = `unread-messages-badge-${user.id}-${Date.now()}`;
+      channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'messages',
+            filter: `recipient_id=eq.${user.id}`
+          },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              setUnreadCount(prev => prev + 1);
+            } else if (payload.eventType === 'UPDATE') {
+              const newRecord = payload.new as any;
+              const oldRecord = payload.old as any;
+              if (!oldRecord.read_at && newRecord.read_at) {
+                fetchUnreadCount();
+              }
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn('[useUnreadMessages] Realtime subscription failed:', err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [user?.id, fetchUnreadCount]);
 
