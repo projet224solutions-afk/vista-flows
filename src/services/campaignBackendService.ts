@@ -4,7 +4,7 @@
  * Aligné 1:1 avec backend/src/routes/campaigns.routes.ts
  */
 
-import { backendFetch } from './backendApi';
+import { backendFetch, type BackendResponse } from './backendApi';
 
 // ==================== TYPES ====================
 
@@ -129,11 +129,19 @@ export interface SendResult {
   status: string;
 }
 
+function requireBackendData<T>(response: BackendResponse<T>, fallbackMessage: string): T {
+  if (!response.success || response.data === undefined) {
+    throw new Error(response.error || fallbackMessage);
+  }
+
+  return response.data;
+}
+
 // ==================== API CALLS ====================
 
 export async function listVendorClients(): Promise<VendorCustomerLink[]> {
   const res = await backendFetch<VendorCustomerLink[]>('/api/campaigns/clients');
-  return res.data || [];
+  return requireBackendData(res, 'Impossible de charger les clients');
 }
 
 export async function previewAudience(targetType: CampaignTargetType, targetFilters?: Record<string, any>): Promise<AudiencePreview> {
@@ -141,7 +149,7 @@ export async function previewAudience(targetType: CampaignTargetType, targetFilt
     method: 'POST',
     body: { target_type: targetType, target_filters: targetFilters || {} },
   });
-  return res.data!;
+  return requireBackendData(res, 'Impossible de prévisualiser l\'audience');
 }
 
 export async function createCampaign(payload: CreateCampaignPayload): Promise<VendorCampaign> {
@@ -149,34 +157,35 @@ export async function createCampaign(payload: CreateCampaignPayload): Promise<Ve
     method: 'POST',
     body: payload,
   });
-  return res.data!;
+  return requireBackendData(res, 'Impossible de créer la campagne');
 }
 
 export async function listCampaigns(status?: string): Promise<VendorCampaign[]> {
   const params = status && status !== 'all' ? `?status=${status}` : '';
   const res = await backendFetch<VendorCampaign[]>(`/api/campaigns${params}`);
-  return res.data || [];
+  return requireBackendData(res, 'Impossible de charger les campagnes');
 }
 
 export async function getCampaign(id: string): Promise<VendorCampaign> {
   const res = await backendFetch<VendorCampaign>(`/api/campaigns/${id}`);
-  return res.data!;
+  return requireBackendData(res, 'Impossible de charger la campagne');
 }
 
 export async function getCampaignAnalytics(id: string): Promise<CampaignAnalytics> {
   const res = await backendFetch<CampaignAnalytics>(`/api/campaigns/${id}/analytics`);
-  return res.data!;
+  return requireBackendData(res, 'Impossible de charger les analytics');
 }
 
 export async function sendCampaign(id: string): Promise<SendResult> {
   const res = await backendFetch<SendResult>(`/api/campaigns/${id}/send`, {
     method: 'POST',
   });
-  return res.data!;
+  return requireBackendData(res, 'Impossible d\'envoyer la campagne');
 }
 
 export async function cancelCampaign(id: string): Promise<void> {
-  await backendFetch(`/api/campaigns/${id}/cancel`, { method: 'POST' });
+  const res = await backendFetch(`/api/campaigns/${id}/cancel`, { method: 'POST' });
+  requireBackendData(res, 'Impossible d\'annuler la campagne');
 }
 
 // ==================== ADMIN API ====================
@@ -188,12 +197,13 @@ export async function listAllCampaignsAdmin(params?: { limit?: number; offset?: 
   if (params?.vendor_id) searchParams.set('vendor_id', params.vendor_id);
   const qs = searchParams.toString();
   const res = await backendFetch<VendorCampaign[]>(`/api/campaigns/admin/all${qs ? `?${qs}` : ''}`);
-  return res.data || [];
+  return requireBackendData(res, 'Impossible de charger les campagnes admin');
 }
 
 export async function suspendCampaignAdmin(id: string, reason: string): Promise<void> {
-  await backendFetch(`/api/campaigns/admin/${id}/suspend`, {
+  const res = await backendFetch(`/api/campaigns/admin/${id}/suspend`, {
     method: 'POST',
     body: { reason },
   });
+  requireBackendData(res, 'Impossible de suspendre la campagne');
 }
