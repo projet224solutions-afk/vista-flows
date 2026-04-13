@@ -458,7 +458,7 @@ export default function DigitalProducts() {
 
           {/* Modules Grid */}
           <section className="px-4 pb-6">
-            <div className="mb-4">
+            <div className="mb-4 text-center">
               <h3 className="text-base sm:text-lg font-semibold text-slate-900">Modules de vente</h3>
               <p className="mt-0.5 text-xs sm:text-sm text-slate-500">Explorez nos modules de vente digitale</p>
             </div>
