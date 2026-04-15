@@ -131,10 +131,10 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
               transition={{ delay: index * 0.1 }}
               className={cn(
                 'relative text-left rounded-2xl border-2 p-4 transition-all duration-300 h-full',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#04439e]',
                 isSelected 
-                  ? 'border-[#cfe0fb] shadow-[0_20px_42px_rgba(4,67,158,0.10)] bg-[linear-gradient(180deg,rgba(4,67,158,0.05),#ffffff)]' 
-                  : 'border-[#e8eef8] bg-white hover:border-[#cfe0fb] hover:shadow-[0_16px_34px_rgba(4,67,158,0.08)]',
+                  ? 'border-[rgba(4,67,158,0.22)] shadow-[0_20px_42px_rgba(4,67,158,0.12)] bg-[linear-gradient(180deg,rgba(4,67,158,0.08),#ffffff)]' 
+                  : 'border-[#e8eef8] bg-white hover:border-[rgba(4,67,158,0.22)] hover:shadow-[0_16px_34px_rgba(4,67,158,0.10)]',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -167,7 +167,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
                 <div className={cn(
                   'w-12 h-12 rounded-xl flex items-center justify-center mx-auto',
                   mode.color === 'blue' 
-                    ? 'bg-[linear-gradient(135deg,#04439e_0%,#0d5ed2_100%)]' 
+                      ? 'bg-[#04439e]' 
                     : 'bg-[linear-gradient(135deg,#ff4000_0%,#ff6a33_100%)]',
                   'text-white shadow-lg'
                 )}>

@@ -12,6 +12,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { generateEAN13Barcode } from '@/lib/barcodeGenerator';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
+import {
+  canCreateProductWithLimit,
+  canDuplicateProductWithLimit,
+  canReactivateProductWithLimit,
+} from '@/lib/subscriptions/productQuotaRules';
 
 interface ProductFormData {
   name: string;
@@ -264,7 +269,7 @@ export function useProductActions({
       });
 
       // ❌ BLOQUER si limite atteinte
-      if (!limitCheck.can_add) {
+      if (!canCreateProductWithLimit(limitCheck, formData.is_active !== false)) {
         const message = limitCheck.is_unlimited
           ? 'Erreur de vérification de limite'
           : `🚫 Limite atteinte : ${limitCheck.current_count}/${limitCheck.max_products} produits. Mettez à jour votre abonnement pour ajouter plus de produits.`;
@@ -394,6 +399,32 @@ export function useProductActions({
     }
 
     try {
+      const { data: existingProduct, error: existingError } = await supabase
+        .from('products')
+        .select('id, is_active')
+        .eq('id', productId)
+        .eq('vendor_id', vendorId)
+        .single();
+
+      if (existingError || !existingProduct) {
+        toast.error('Produit introuvable');
+        return { success: false };
+      }
+
+      if (!existingProduct.is_active && formData.is_active && user?.id) {
+        const limitCheck = await SubscriptionService.checkProductLimit(user.id);
+
+        if (!limitCheck) {
+          toast.error('Impossible de vérifier les limites d\'abonnement');
+          return { success: false };
+        }
+
+        if (!canReactivateProductWithLimit(limitCheck, existingProduct.is_active, formData.is_active)) {
+          toast.error(`🚫 Limite atteinte : ${limitCheck.current_count}/${limitCheck.max_products} produits actifs.`);
+          return { success: false };
+        }
+      }
+
       // Upload nouvelles images
       const newImageUrls = await uploadImages(newImages);
 
@@ -460,7 +491,7 @@ export function useProductActions({
       toast.error(`Erreur mise à jour: ${error.message}`);
       return { success: false };
     }
-  }, [vendorId, uploadImages, handleCategory, onProductUpdated, syncInventoryQuantity]);
+  }, [vendorId, uploadImages, handleCategory, onProductUpdated, syncInventoryQuantity, user?.id]);
 
   /**
    * Supprimer un produit
@@ -513,6 +544,20 @@ export function useProductActions({
 
       if (fetchError) throw fetchError;
 
+      if (original?.is_active && user?.id) {
+        const limitCheck = await SubscriptionService.checkProductLimit(user.id);
+
+        if (!limitCheck) {
+          toast.error('Impossible de vérifier les limites d\'abonnement');
+          return { success: false };
+        }
+
+        if (!canDuplicateProductWithLimit(limitCheck, original.is_active)) {
+          toast.error(`🚫 Limite atteinte : ${limitCheck.current_count}/${limitCheck.max_products} produits actifs.`);
+          return { success: false };
+        }
+      }
+
       // Générer nouveau public_id
       const public_id = await generatePublicId('products', false);
       if (!public_id) {
@@ -548,7 +593,7 @@ export function useProductActions({
       toast.error(`Erreur duplication: ${error.message}`);
       return { success: false };
     }
-  }, [vendorId, generatePublicId, onProductCreated, generateUniqueSKU]);
+  }, [vendorId, generatePublicId, onProductCreated, generateUniqueSKU, user?.id]);
 
   /**
    * Mise à jour en masse du stock

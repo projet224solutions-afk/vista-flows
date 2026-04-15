@@ -20,7 +20,8 @@ import {
   ExternalLink,
   Star,
   ShoppingCart,
-  Box
+  Box,
+  PlayCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -326,7 +327,7 @@ export default function DigitalProducts() {
               {filteredProducts.map((product) => (
                 <Card 
                   key={product.id}
-                  className="cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-200"
+                  className="group cursor-pointer overflow-hidden hover:shadow-lg transition-all duration-200"
                   onClick={() => handleProductClick(product)}
                 >
                   <div className="relative aspect-square bg-muted">
@@ -335,6 +336,14 @@ export default function DigitalProducts() {
                         src={product.images[0]} 
                         alt={product.title}
                         className="w-full h-full object-cover"
+                      />
+                    ) : product.video_url ? (
+                      <video
+                        src={product.video_url}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
                       />
                     ) : (
                       <div className={cn(
@@ -348,6 +357,12 @@ export default function DigitalProducts() {
                     
                     {/* Badges */}
                     <div className="absolute top-2 left-2 flex flex-col gap-1">
+                      {product.video_url && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 bg-slate-950/75 text-white hover:bg-slate-950/75">
+                          <PlayCircle className="w-3 h-3 mr-1" />
+                          Vidéo
+                        </Badge>
+                      )}
                       {product.product_mode === 'affiliate' && (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
                           <ExternalLink className="w-3 h-3 mr-1" />
@@ -385,6 +400,11 @@ export default function DigitalProducts() {
                         <Eye className="w-3 h-3" />
                         <span className="text-xs">{product.views_count || 0}</span>
                       </div>
+                    </div>
+
+                    <div className="mt-2 flex items-center justify-between rounded-lg bg-slate-50 px-2.5 py-2 text-[11px] font-medium text-slate-600 transition-colors group-hover:bg-slate-100 group-hover:text-[#04439e]">
+                      <span>Appuyer pour ouvrir</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
                     </div>
                   </CardContent>
                 </Card>

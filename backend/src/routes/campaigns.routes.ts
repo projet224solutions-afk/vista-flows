@@ -15,12 +15,20 @@
  *   POST   /api/campaigns/admin/:id/suspend — Admin: suspendre une campagne
  */
 
-import { Router, Response } from 'express';
+import { Router } from 'express';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { z } from 'zod';
+
+type CampaignRequest = AuthenticatedRequest & {
+  body: Record<string, any>;
+  query: Record<string, string | string[] | undefined>;
+  params: Record<string, string>;
+};
+
+type CampaignResponse = Parameters<typeof verifyJWT>[1];
 
 const router = Router();
 
@@ -107,7 +115,7 @@ async function auditLog(vendorId: string, action: string, campaignId?: string, d
 /**
  * GET /api/campaigns/clients — Liste des clients du vendeur
  */
-router.get('/clients', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/clients', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
     const userId = req.user!.id;
     const vendorId = await getVendorId(userId);
@@ -132,7 +140,7 @@ router.get('/clients', verifyJWT, async (req: AuthenticatedRequest, res: Respons
 /**
  * POST /api/campaigns/preview-audience — Prévisualiser l'audience
  */
-router.post('/preview-audience', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/preview-audience', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
     const userId = req.user!.id;
     const vendorId = await getVendorId(userId);
@@ -158,7 +166,7 @@ router.post('/preview-audience', verifyJWT, async (req: AuthenticatedRequest, re
 /**
  * POST /api/campaigns — Créer une campagne
  */
-router.post('/', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
     const userId = req.user!.id;
     const vendorId = await getVendorId(userId);
@@ -235,7 +243,7 @@ router.post('/', verifyJWT, async (req: AuthenticatedRequest, res: Response) => 
 /**
  * GET /api/campaigns — Lister les campagnes du vendeur
  */
-router.get('/', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
     const userId = req.user!.id;
     const vendorId = await getVendorId(userId);
@@ -267,7 +275,7 @@ router.get('/', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
 /**
  * GET /api/campaigns/:id — Détail d'une campagne  
  */
-router.get('/:id', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/:id', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
     const userId = req.user!.id;
     const vendorId = await getVendorId(userId);
@@ -318,7 +326,7 @@ router.get('/:id', verifyJWT, async (req: AuthenticatedRequest, res: Response) =
 /**
  * GET /api/campaigns/:id/analytics — Analytics détaillées
  */
-router.get('/:id/analytics', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/:id/analytics', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
     const userId = req.user!.id;
     const vendorId = await getVendorId(userId);
@@ -385,7 +393,7 @@ router.get('/:id/analytics', verifyJWT, async (req: AuthenticatedRequest, res: R
  * POST /api/campaigns/:id/send — Lancer l'envoi d'une campagne
  * Traitement par batch côté backend
  */
-router.post('/:id/send', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:id/send', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
     const userId = req.user!.id;
     const vendorId = await getVendorId(userId);
@@ -570,7 +578,7 @@ router.post('/:id/send', verifyJWT, async (req: AuthenticatedRequest, res: Respo
 /**
  * POST /api/campaigns/:id/cancel — Annuler une campagne
  */
-router.post('/:id/cancel', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/:id/cancel', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
     const userId = req.user!.id;
     const vendorId = await getVendorId(userId);
@@ -610,7 +618,7 @@ router.post('/:id/cancel', verifyJWT, async (req: AuthenticatedRequest, res: Res
 /**
  * GET /api/campaigns/admin/all — Admin: toutes les campagnes
  */
-router.get('/admin/all', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/admin/all', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
     const userId = req.user!.id;
     if (!(await isAdminUser(userId))) {
@@ -644,7 +652,7 @@ router.get('/admin/all', verifyJWT, async (req: AuthenticatedRequest, res: Respo
 /**
  * POST /api/campaigns/admin/:id/suspend — Admin: suspendre une campagne
  */
-router.post('/admin/:id/suspend', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/admin/:id/suspend', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
   try {
     const userId = req.user!.id;
     if (!(await isAdminUser(userId))) {

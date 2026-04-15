@@ -20,6 +20,10 @@ import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { z } from 'zod';
+import {
+  shouldBlockActiveProductCreation,
+  shouldBlockProductReactivation,
+} from '../lib/productQuotaApiRules.js';
 
 // ==================== VALIDATION SCHEMAS ====================
 
@@ -243,6 +247,7 @@ router.post('/', verifyJWT, async (req: AuthenticatedRequest, res: Response) => 
   try {
     const userId = req.user!.id;
     const vendorId = await resolveVendorId(userId);
+    const requestedActive = req.body?.is_active !== false;
 
     if (!vendorId) {
       res.status(404).json({ success: false, error: 'Boutique non trouvée. Créez d\'abord votre boutique.' });
@@ -256,15 +261,16 @@ router.post('/', verifyJWT, async (req: AuthenticatedRequest, res: Response) => 
     ]);
 
     // 2. Bloquer si quota max_products atteint
-    if (limits.max_products !== null && currentCount >= limits.max_products) {
+    const createDecision = shouldBlockActiveProductCreation(requestedActive, limits, currentCount);
+    if (createDecision.blocked) {
       logger.warn(`Product creation blocked: vendor=${vendorId}, current=${currentCount}, max=${limits.max_products}, plan=${limits.plan_name}`);
       res.status(403).json({
         success: false,
         error: 'Limite de produits atteinte',
-        message: `Votre plan "${limits.plan_name}" autorise ${limits.max_products} produits actifs. Vous en avez ${currentCount}. Passez à un plan supérieur pour en ajouter davantage.`,
-        current: currentCount,
-        max: limits.max_products,
-        plan: limits.plan_name,
+        message: createDecision.message,
+        current: createDecision.current,
+        max: createDecision.max,
+        plan: createDecision.plan,
       });
       return;
     }
@@ -355,7 +361,7 @@ router.patch('/:productId', verifyJWT, async (req: AuthenticatedRequest, res: Re
     // Vérifier que le produit appartient bien au vendeur
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from('products')
-      .select('id, vendor_id')
+      .select('id, vendor_id, is_active')
       .eq('id', productId)
       .single();
 
@@ -367,6 +373,27 @@ router.patch('/:productId', verifyJWT, async (req: AuthenticatedRequest, res: Re
     if (existing.vendor_id !== vendorId) {
       res.status(403).json({ success: false, error: 'Ce produit ne vous appartient pas' });
       return;
+    }
+
+    const requestedActive = req.body?.is_active;
+    if (existing && existing.vendor_id === vendorId && existing.id) {
+      const [limits, currentCount] = await Promise.all([
+        getVendorLimits(userId),
+        countActiveProducts(vendorId),
+      ]);
+
+      const reactivationDecision = shouldBlockProductReactivation(existing.is_active, requestedActive, limits, currentCount);
+      if (reactivationDecision.blocked) {
+        res.status(403).json({
+          success: false,
+          error: 'Limite de produits atteinte',
+          message: reactivationDecision.message,
+          current: reactivationDecision.current,
+          max: reactivationDecision.max,
+          plan: reactivationDecision.plan,
+        });
+        return;
+      }
     }
 
 

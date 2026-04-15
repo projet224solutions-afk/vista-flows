@@ -362,6 +362,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           description,
           short_description,
           images,
+          video_url,
           category,
           product_type,
           product_mode,
@@ -464,7 +465,7 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
           currency: derivedCurrency, // Devise du produit ou dérivée du vendeur
           description: product.short_description || product.description || "",
           images,
-          promotional_videos: [],
+          promotional_videos: product.video_url ? [product.video_url] : [],
           vendor_id: product.vendor_id || product.merchant_id,
           vendor_name: v?.business_name || "Vendeur",
           vendor_user_id: vendorUserId,

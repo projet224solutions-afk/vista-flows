@@ -836,6 +836,7 @@ export default function Marketplace() {
                     key={item.id}
                     id={item.id}
                     image={item.images || []}
+                    promotionalVideos={item.promotional_videos || []}
                     title={item.name}
                     description={item.description}
                     price={item.price}

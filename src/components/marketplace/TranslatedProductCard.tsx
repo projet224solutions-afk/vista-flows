@@ -10,6 +10,7 @@ import { useProductTranslation } from '@/hooks/useProductTranslation';
 interface TranslatedProductCardProps {
   id: string;
   image: string | string[];
+  promotionalVideos?: string[];
   title: string;
   description?: string;
   price: number;

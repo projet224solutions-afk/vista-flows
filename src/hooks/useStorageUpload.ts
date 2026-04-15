@@ -80,10 +80,60 @@ const MAX_SIZES: Record<StorageFolder, number> = {
   documents: 20 * 1024 * 1024, // 20 MB
   stamps: 2 * 1024 * 1024, // 2 MB
   restaurant: 5 * 1024 * 1024, // 5 MB
-  'digital-products': 50 * 1024 * 1024, // 50 MB
+  'digital-products': 5 * 1024 * 1024 * 1024, // 5 GB
   travel: 10 * 1024 * 1024, // 10 MB
   misc: 10 * 1024 * 1024, // 10 MB
 };
+
+function formatMaxSizeLabel(sizeInBytes: number): string {
+  if (sizeInBytes >= 1024 * 1024 * 1024) {
+    return `${Math.round((sizeInBytes / (1024 * 1024 * 1024)) * 10) / 10} Go`;
+  }
+
+  return `${Math.round(sizeInBytes / (1024 * 1024))} Mo`;
+}
+
+function resolveContentType(file: File, folder: StorageFolder): string {
+  const normalizedType = file.type?.split(';')[0].trim().toLowerCase();
+
+  if (normalizedType) {
+    return normalizedType;
+  }
+
+  const extension = file.name.split('.').pop()?.toLowerCase();
+
+  if (folder === 'digital-products') {
+    const digitalProductMimeMap: Record<string, string> = {
+      apk: 'application/vnd.android.package-archive',
+      appx: 'application/vnd.ms-appx',
+      appxbundle: 'application/vnd.ms-appxbundle',
+      bat: 'application/x-msdos-program',
+      bin: 'application/octet-stream',
+      dmg: 'application/x-apple-diskimage',
+      exe: 'application/vnd.microsoft.portable-executable',
+      ipa: 'application/octet-stream',
+      iso: 'application/x-iso9660-image',
+      jar: 'application/java-archive',
+      msi: 'application/x-msi',
+      pkg: 'application/octet-stream',
+      rar: 'application/vnd.rar',
+      tar: 'application/x-tar',
+      zip: 'application/zip',
+      '7z': 'application/x-7z-compressed',
+      deb: 'application/vnd.debian.binary-package',
+      rpm: 'application/x-rpm',
+      sh: 'application/x-sh',
+    };
+
+    if (extension && digitalProductMimeMap[extension]) {
+      return digitalProductMimeMap[extension];
+    }
+
+    return 'application/octet-stream';
+  }
+
+  return 'application/octet-stream';
+}
 
 /**
  * Vérifie si un type MIME de fichier correspond à un type autorisé
@@ -121,6 +171,17 @@ export function useStorageUpload(): UseStorageUploadReturn {
     const allowedTypes = ALLOWED_TYPES[folder];
     const maxSize = MAX_SIZES[folder];
 
+    if (folder === 'digital-products') {
+      if (file.size > maxSize) {
+        return {
+          valid: false,
+          error: `Le fichier dépasse la taille maximale de ${formatMaxSizeLabel(maxSize)}`,
+        };
+      }
+
+      return { valid: true };
+    }
+
     // Pour l'audio, utiliser une validation plus flexible
     if (folder === 'audio') {
       const baseType = file.type.split(';')[0].trim().toLowerCase();
@@ -141,10 +202,9 @@ export function useStorageUpload(): UseStorageUploadReturn {
     }
 
     if (file.size > maxSize) {
-      const maxSizeMB = Math.round(maxSize / (1024 * 1024));
       return { 
         valid: false, 
-        error: `Le fichier dépasse la taille maximale de ${maxSizeMB} Mo` 
+        error: `Le fichier dépasse la taille maximale de ${formatMaxSizeLabel(maxSize)}` 
       };
     }
 
@@ -167,13 +227,14 @@ export function useStorageUpload(): UseStorageUploadReturn {
     const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]/g, '-');
     const fileName = `${baseName}-${timestamp}-${random}.${extension}`;
     const filePath = subfolder ? `${subfolder}/${fileName}` : `${folder}/${fileName}`;
+    const contentType = resolveContentType(file, folder);
 
     console.log(`[useStorageUpload] Uploading to Supabase bucket: ${bucket}, path: ${filePath}`);
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(filePath, file, {
-        contentType: file.type,
+        contentType,
         upsert: true
       });
 
@@ -204,6 +265,7 @@ export function useStorageUpload(): UseStorageUploadReturn {
     options: UploadOptions
   ): Promise<UploadResult> => {
     const { folder, subfolder, onProgress, preferSupabase } = options;
+    const contentType = resolveContentType(file, folder);
 
     // Validation
     const validation = validateFile(file, folder);
@@ -261,7 +323,7 @@ export function useStorageUpload(): UseStorageUploadReturn {
             body: {
               action: 'upload',
               fileName: file.name,
-              contentType: file.type,
+              contentType,
               folder: folderPath,
               expiresInMinutes: 15,
             },
@@ -291,7 +353,7 @@ export function useStorageUpload(): UseStorageUploadReturn {
         const uploadResponse = await fetch(signedUrlData.signedUrl, {
           method: 'PUT',
           headers: {
-            'Content-Type': file.type,
+            'Content-Type': contentType,
           },
           body: file,
         });
@@ -317,7 +379,7 @@ export function useStorageUpload(): UseStorageUploadReturn {
               metadata: {
                 originalName: file.name,
                 size: file.size,
-                mimeType: file.type,
+                mimeType: contentType,
                 ...options.metadata,
               },
             },

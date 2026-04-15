@@ -142,11 +142,11 @@ router.post("/create-product", validateBearerToken, async (req: any, res: any) =
     }
     
     // Check product limit via RPC
-    const { data: canCreate } = await supabaseAdmin.rpc("check_product_limit", {
-      p_vendor_id: profile.vendor_id,
+    const { data: limitCheck } = await supabaseAdmin.rpc("check_product_limit", {
+      p_user_id: req.user.id,
     });
     
-    if (!canCreate) {
+    if (!limitCheck || (limitCheck as any).can_add === false) {
       return res.status(403).json({ success: false, error: "Product limit exceeded" });
     }
     

@@ -122,20 +122,31 @@ export default function SubscriptionManagement() {
       // 4. Récupérer les profils
       const userIds = [...new Set(allSubs.map(sub => sub.user_id))];
       let profiles: any[] = [];
+      let vendors: any[] = [];
       if (userIds.length > 0) {
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, email, first_name, last_name, role')
-          .in('id', userIds);
+        const [{ data: profilesData }, { data: vendorsData }] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('id, email, first_name, last_name, role')
+            .in('id', userIds),
+          supabase
+            .from('vendors')
+            .select('user_id, business_name, business_type')
+            .in('user_id', userIds),
+        ]);
         profiles = profilesData || [];
+        vendors = vendorsData || [];
       }
 
       // 5. Enrichir avec profils + statut réel calculé
       const enrichedData = allSubs.map(sub => {
         const realStatus = computeRealStatus(sub);
+        const vendor = vendors.find(v => v.user_id === sub.user_id);
         return {
           ...sub,
           profiles: profiles.find(p => p.id === sub.user_id),
+          vendor_business_name: vendor?.business_name || null,
+          vendor_business_type: vendor?.business_type || null,
           acquisition_type: determineAcquisitionType(sub),
           real_status: realStatus,
         };
@@ -604,15 +615,26 @@ export default function SubscriptionManagement() {
                 {subs.map((sub) => (
                   <TableRow key={`${sub.source}-${sub.id}`}>
                     <TableCell className="font-medium">
-                      {sub.profiles?.first_name} {sub.profiles?.last_name}
+                      <div className="space-y-1">
+                        <div>{sub.profiles?.first_name} {sub.profiles?.last_name}</div>
+                        {sub.source === 'vendor' && sub.vendor_business_name && (
+                          <div className="text-xs text-muted-foreground">{sub.vendor_business_name}</div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {sub.profiles?.email}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={sub.source === 'service' ? 'secondary' : 'outline'}>
-                        {sub.source === 'service' ? '🏪 Service' : '🛒 Boutique'}
-                      </Badge>
+                      {sub.source === 'service' ? (
+                        <Badge variant="secondary">🏪 Service</Badge>
+                      ) : sub.vendor_business_type === 'digital' ? (
+                        <Badge variant="outline" className="border-sky-200 bg-sky-50 text-sky-700">Vendeur digital</Badge>
+                      ) : sub.vendor_business_type === 'hybrid' ? (
+                        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">Vendeur hybride</Badge>
+                      ) : (
+                        <Badge variant="outline">🛒 Boutique</Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{sub.plan_display}</Badge>

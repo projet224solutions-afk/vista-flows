@@ -32,6 +32,7 @@ import { ProductImageCarousel } from "./ProductImageCarousel";
 interface MarketplaceProductCardProps {
   id: string;
   image: string | string[];
+  promotionalVideos?: string[];
   title: string;
   price: number;
   originalPrice?: number;
@@ -56,6 +57,7 @@ interface MarketplaceProductCardProps {
 export function MarketplaceProductCard({
   id,
   image,
+  promotionalVideos = [],
   title,
   price,
   originalPrice,
@@ -141,6 +143,7 @@ export function MarketplaceProductCard({
       <div className="relative">
         <ProductImageCarousel 
           images={images}
+          videos={promotionalVideos}
           alt={title}
           className="marketplace-card-image-container"
         />

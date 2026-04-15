@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause, Layers, Package } from "lucide-react";
+import { ShoppingCart, MessageCircle, Star, Truck, Shield, X, Plus, ExternalLink, Play, Pause, Layers, Package, Volume2 } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrencyForCountry } from "@/data/countryMappings";
@@ -51,6 +51,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { t } = useTranslation();
@@ -80,6 +81,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     videoRef,
     goToVideo,
     goToImage,
+    pauseAutoPlay,
     toggleAutoPlay
   } = useAutoCarousel({
     videos,
@@ -95,9 +97,31 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     // Reset tracking when modal closes or product changes
     if (!open) {
       hasTrackedView.current = false;
-      
+      setIsVideoMuted(true);
     }
   }, [productId, open]);
+
+  useEffect(() => {
+    setIsVideoMuted(true);
+  }, [productId]);
+
+  const enableVideoAudio = () => {
+    setIsVideoMuted(false);
+    pauseAutoPlay();
+
+    if (videoRef.current) {
+      videoRef.current.muted = false;
+      videoRef.current.volume = 1;
+      videoRef.current.play().catch(() => {
+        // Le navigateur peut encore imposer une interaction supplémentaire selon le contexte.
+      });
+    }
+  };
+
+  const handleVideoSelect = (index: number) => {
+    goToVideo(index);
+    enableVideoAudio();
+  };
 
   // Tracker la vue du produit une seule fois par produit
   useEffect(() => {
@@ -212,6 +236,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           currency,
           description,
           images,
+          video_url,
           status,
           vendor_id,
           merchant_id,
@@ -248,7 +273,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
           currency: derivedCurrency, // Devise du produit
           description: digitalProduct.description || undefined,
           images: Array.isArray(digitalProduct.images) ? (digitalProduct.images as string[]) : [],
-          promotional_videos: [],
+          promotional_videos: digitalProduct.video_url ? [digitalProduct.video_url] : [],
           vendor_id: digitalProduct.vendor_id || digitalProduct.merchant_id,
           category_id: undefined,
           is_active: true,
@@ -505,15 +530,37 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             <div className="relative h-[600px] rounded-lg overflow-hidden bg-white flex items-center justify-center p-3 border border-border/20">
 
               {isPlayingVideo && videos.length > 0 ? (
-                <video
-                  ref={videoRef}
-                  src={videos[currentVideoIndex]}
-                  controls
-                  autoPlay
-                  muted
-                  className="max-w-full max-h-full w-auto h-auto object-contain"
-                  style={{ maxWidth: '100%', maxHeight: '100%' }}
-                />
+                <>
+                  <video
+                    ref={videoRef}
+                    src={videos[currentVideoIndex]}
+                    controls
+                    autoPlay
+                    muted={isVideoMuted}
+                    onVolumeChange={(event) => {
+                      setIsVideoMuted(event.currentTarget.muted);
+                    }}
+                    className="max-w-full max-h-full w-auto h-auto object-contain"
+                    style={{ maxWidth: '100%', maxHeight: '100%' }}
+                  />
+                  {isVideoMuted && (
+                    <div className="pointer-events-none absolute inset-x-3 top-3 flex justify-end">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="pointer-events-auto gap-2 bg-black/75 text-white hover:bg-black/85"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          enableVideoAudio();
+                        }}
+                      >
+                        <Volume2 className="h-4 w-4" />
+                        Activer le son
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <img
                   src={images[currentImageIndex]}
@@ -544,7 +591,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
               {videos.map((_, index) => (
                 <button
                   key={`video-${index}`}
-                  onClick={() => goToVideo(index)}
+                  onClick={() => handleVideoSelect(index)}
                   className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all bg-black flex items-center justify-center ${
                     isPlayingVideo && currentVideoIndex === index ? 'border-primary' : 'border-transparent hover:border-primary/50'
                   }`}

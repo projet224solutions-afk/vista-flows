@@ -1,6 +1,6 @@
 ﻿import { useParams, useNavigate, Link } from "react-router-dom";
 import { useEffect, useState, useMemo, useRef } from "react";
-import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink, Play, Pause, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ShoppingCart, MessageCircle, Star, Shield, Truck, ExternalLink, Play, Pause, CheckCircle2, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -63,6 +63,7 @@ export default function ProductDetail() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
   const hasTrackedView = useRef(false);
   
   // Behavior tracking for AI recommendations
@@ -86,6 +87,7 @@ export default function ProductDetail() {
     videoRef,
     goToVideo,
     goToImage,
+    pauseAutoPlay,
     toggleAutoPlay
   } = useAutoCarousel({
     videos,
@@ -99,6 +101,28 @@ export default function ProductDetail() {
       loadProduct();
     }
   }, [id]);
+
+  useEffect(() => {
+    setIsVideoMuted(true);
+  }, [id]);
+
+  const enableVideoAudio = () => {
+    setIsVideoMuted(false);
+    pauseAutoPlay();
+
+    if (videoRef.current) {
+      videoRef.current.muted = false;
+      videoRef.current.volume = 1;
+      videoRef.current.play().catch(() => {
+        // Certains contextes navigateur peuvent encore demander une interaction utilisateur supplémentaire.
+      });
+    }
+  };
+
+  const handleVideoSelect = (index: number) => {
+    goToVideo(index);
+    enableVideoAudio();
+  };
 
   // Tracker la vue du produit une seule fois
   useEffect(() => {
@@ -300,15 +324,37 @@ export default function ProductDetail() {
               </button>
 
               {isPlayingVideo && videos.length > 0 ? (
-                <video
-                  ref={videoRef}
-                  src={videos[currentVideoIndex]}
-                  controls
-                  autoPlay
-                  muted
-                  className="max-w-full max-h-full w-auto h-auto object-contain"
-                  style={{ maxWidth: '100%', maxHeight: '100%' }}
-                />
+                <>
+                  <video
+                    ref={videoRef}
+                    src={videos[currentVideoIndex]}
+                    controls
+                    autoPlay
+                    muted={isVideoMuted}
+                    onVolumeChange={(event) => {
+                      setIsVideoMuted(event.currentTarget.muted);
+                    }}
+                    className="max-w-full max-h-full w-auto h-auto object-contain"
+                    style={{ maxWidth: '100%', maxHeight: '100%' }}
+                  />
+                  {isVideoMuted && (
+                    <div className="pointer-events-none absolute inset-x-3 top-3 flex justify-start">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="pointer-events-auto gap-2 bg-black/75 text-white hover:bg-black/85"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          enableVideoAudio();
+                        }}
+                      >
+                        <Volume2 className="h-4 w-4" />
+                        Activer le son
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <img
                   src={images[currentImageIndex]}
@@ -339,7 +385,7 @@ export default function ProductDetail() {
               {videos.map((_, index) => (
                 <button
                   key={`video-${index}`}
-                  onClick={() => goToVideo(index)}
+                  onClick={() => handleVideoSelect(index)}
                   className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors bg-black flex items-center justify-center ${
                     isPlayingVideo && currentVideoIndex === index ? 'border-primary' : 'border-transparent hover:border-primary/50'
                   }`}

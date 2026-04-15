@@ -6,6 +6,7 @@ export interface HomeProduct {
   name: string;
   price: number;
   images: string[] | null;
+  promotional_videos?: string[] | null;
   rating?: number;
   reviews_count?: number;
   category_id?: string;
@@ -23,7 +24,7 @@ export const useHomeProducts = (limit: number = 4) => {
         // 🚀 Filter server-side with IN instead of fetching 2x + client filter
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, price, images, category_id, rating, reviews_count, vendors!inner(business_type)')
+          .select('id, name, price, images, promotional_videos, category_id, rating, reviews_count, vendors!inner(business_type)')
           .eq('is_active', true)
           .in('vendors.business_type', ['hybrid', 'online'])
           .order('created_at', { ascending: false })
@@ -34,7 +35,7 @@ export const useHomeProducts = (limit: number = 4) => {
           console.warn('Optimized query failed, using fallback:', error.message);
           const { data: fallbackData } = await supabase
             .from('products')
-            .select('id, name, price, images, category_id, rating, reviews_count, vendors(business_type, business_name)')
+            .select('id, name, price, images, promotional_videos, category_id, rating, reviews_count, vendors(business_type, business_name)')
             .eq('is_active', true)
             .order('created_at', { ascending: false })
             .limit(limit * 2);

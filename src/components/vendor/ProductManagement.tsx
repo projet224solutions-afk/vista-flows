@@ -848,11 +848,11 @@ export default function ProductManagement() {
                   ⚠️ Produits automatiquement désactivés
                 </h3>
                 <p className="text-sm text-red-800 dark:text-red-200 mt-1">
-                  Vous avez {productLimitStatus.total_products} produits mais votre abonnement ne permet que {productLimitStatus.max_allowed} produits actifs.
+                  Vous avez {productLimitStatus.active_products} produits actifs mais votre abonnement ne permet que {productLimitStatus.max_allowed} produits actifs.
                   <br />
                   <strong>{productLimitStatus.excess_products} produit(s)</strong> ont été automatiquement désactivés et ne sont pas visibles sur le marketplace.
                   <br />
-                  Les produits les plus récents restent actifs, les plus anciens sont désactivés.
+                  Les produits actifs les plus récents restent actifs, les plus anciens parmi les actifs sont désactivés.
                 </p>
                 <div className="flex gap-2 mt-3">
                   <Button

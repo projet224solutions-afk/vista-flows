@@ -23,6 +23,7 @@ interface DigitalProductWithVendor {
   description: string | null;
   short_description: string | null;
   images: string[];
+  video_url?: string | null;
   category: string;
   product_mode: string;
   price: number;
@@ -270,7 +271,12 @@ export default function DigitalProductDetail() {
 
   const images = product.images && product.images.length > 0 
     ? product.images 
-    : ['/placeholder.svg'];
+    : [];
+  const mediaItems: Array<{ type: 'video' | 'image'; src: string }> = [
+    ...(product.video_url ? [{ type: 'video' as const, src: product.video_url }] : []),
+    ...(images.length > 0 ? images.map((src) => ({ type: 'image' as const, src })) : [{ type: 'image' as const, src: '/placeholder.svg' }]),
+  ];
+  const currentMedia = mediaItems[currentImageIndex] || mediaItems[0];
 
   const vendor = product.vendors;
   const training = product.metadata?.training;
@@ -331,14 +337,25 @@ export default function DigitalProductDetail() {
           {/* Images */}
           <div className="space-y-4">
             <div className="relative aspect-square overflow-hidden rounded-[28px] border border-white/60 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-              <img
-                src={images[currentImageIndex]}
-                alt={product.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/placeholder.svg';
-                }}
-              />
+              {currentMedia?.type === 'video' ? (
+                <video
+                  src={currentMedia.src}
+                  className="w-full h-full object-cover"
+                  controls
+                  playsInline
+                  preload="metadata"
+                  poster={images[0] || '/placeholder.svg'}
+                />
+              ) : (
+                <img
+                  src={currentMedia?.src || '/placeholder.svg'}
+                  alt={product.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                />
+              )}
               
               {/* Badges */}
               <div className="absolute left-3 top-3 flex max-w-[85%] flex-wrap gap-2">
@@ -375,24 +392,40 @@ export default function DigitalProductDetail() {
             </div>
 
             {/* Thumbnails */}
-            {images.length > 1 && (
+            {mediaItems.length > 1 && (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                {images.map((img, idx) => (
+                {mediaItems.map((media, idx) => (
                   <button
-                    key={idx}
+                    key={`${media.type}-${idx}`}
                     onClick={() => setCurrentImageIndex(idx)}
                     className={`aspect-square overflow-hidden rounded-2xl border-2 transition-colors ${
                       currentImageIndex === idx ? 'border-primary' : 'border-transparent hover:border-primary/50'
                     }`}
                   >
-                    <img
-                      src={img}
-                      alt={`${product.title} ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder.svg';
-                      }}
-                    />
+                    {media.type === 'video' ? (
+                      <div className="relative h-full w-full bg-slate-950">
+                        <video
+                          src={media.src}
+                          className="w-full h-full object-cover"
+                          muted
+                          playsInline
+                          preload="metadata"
+                          poster={images[0] || '/placeholder.svg'}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/25">
+                          <PlayCircle className="h-8 w-8 text-white drop-shadow" />
+                        </div>
+                      </div>
+                    ) : (
+                      <img
+                        src={media.src}
+                        alt={`${product.title} ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder.svg';
+                        }}
+                      />
+                    )}
                   </button>
                 ))}
               </div>

@@ -18,6 +18,7 @@ interface Product {
   price: number;
   currency?: string;
   images?: string | string[];
+  promotional_videos?: string[];
   vendor_id?: string;
   vendor_name?: string;
   vendor_public_id?: string;
@@ -139,6 +140,7 @@ export function LatestProductsSection({
                     : product.images?.[0] ||
                       'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop'
                 }
+                promotionalVideos={product.promotional_videos || []}
                 title={product.name}
                 price={product.price}
                 currency={product.currency || 'GNF'}

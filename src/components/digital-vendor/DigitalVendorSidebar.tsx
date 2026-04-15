@@ -109,7 +109,7 @@ const DigitalVendorSidebar = memo(function DigitalVendorSidebar() {
                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/45">Activité boutique</p>
                     <p className="text-sm font-semibold text-white">{products.length} références digitales</p>
                   </div>
-                  <Badge className="border-0 bg-[#ff4000] px-2.5 py-1 text-[11px] font-semibold text-white shadow-none">
+                  <Badge className="inline-flex min-w-[92px] items-center justify-center whitespace-nowrap border-0 bg-[#ff4000] px-2.5 py-1 text-center text-[11px] font-semibold text-white shadow-none">
                     {affiliateCount} affiliation{affiliateCount > 1 ? 's' : ''}
                   </Badge>
                 </div>

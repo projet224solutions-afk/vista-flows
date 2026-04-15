@@ -29,51 +29,51 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[linear-gradient(135deg,#04439e_0%,#0536a8_65%,#0b1b33_100%)] shadow-[0_8px_28px_rgba(4,67,158,0.32)]">
+    <header className="sticky top-0 z-40 w-full bg-transparent shadow-none">
       <div className="flex w-full min-w-0 flex-col gap-2 px-2.5 py-2 sm:gap-3 sm:px-5 sm:py-3 md:px-8">
         {/* Brand */}
-        <div className="flex items-center justify-between gap-2.5 min-w-0">
+        <div className="flex items-center justify-between gap-3 min-w-0 rounded-[28px] border border-sky-200/80 bg-[linear-gradient(135deg,#ffffff_0%,#f8fbff_52%,#eef4ff_100%)] px-3 py-2 shadow-[0_14px_30px_rgba(15,23,42,0.07)] sm:px-4 sm:py-3">
           <div className="flex items-center gap-3 min-w-0">
           <SidebarTrigger
-            className="h-10 w-10 rounded-2xl border border-white/20 bg-white/10 text-white shadow-none hover:bg-white/22 [&_svg]:h-4 [&_svg]:w-4 sm:h-11 sm:w-11 sm:[&_svg]:h-5 sm:[&_svg]:w-5"
+            className="h-10 w-10 rounded-2xl border border-sky-200/80 bg-white text-slate-700 shadow-[0_8px_18px_rgba(148,163,184,0.16)] hover:bg-sky-50 [&_svg]:h-4 [&_svg]:w-4 sm:h-11 sm:w-11 sm:[&_svg]:h-5 sm:[&_svg]:w-5"
             aria-label="Ouvrir/Fermer le menu"
           />
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15 shadow-[0_6px_16px_rgba(0,0,0,0.20)] sm:h-12 sm:w-12">
+            <div className="flex h-8 w-8 items-center justify-center rounded-2xl border border-sky-100 bg-white shadow-[0_10px_24px_rgba(59,130,246,0.12)] sm:h-12 sm:w-12">
               <img src="/logo-224solutions.png" alt="224Solutions" className="h-5 w-5 rounded-md object-contain sm:h-8 sm:w-8" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="whitespace-nowrap text-xs font-semibold tracking-[0.01em] text-white sm:text-base md:text-xl">
+                <h1 className="whitespace-nowrap text-xs font-semibold tracking-[0.01em] text-slate-950 sm:text-base md:text-xl">
                   Cockpit vendeur digital
                 </h1>
-                <span className="hidden rounded-full bg-[#ff4000] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white sm:inline-flex">
+                <span className="hidden rounded-full border border-[#ffb08a] bg-[#fff1e9] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff5a1f] sm:inline-flex">
                   Business
                 </span>
               </div>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-white/50 sm:text-xs">
+              <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500 sm:text-xs">
                 Catalogue • ventes • revenus
               </p>
-              <p className="mt-1 flex items-center gap-2 text-xs text-white/60 md:text-sm">
-                <span className="h-2 w-2 rounded-full bg-[#ff4000] shadow-[0_0_0_4px_rgba(255,64,0,0.20)]" />
+              <p className="mt-1 flex items-center gap-2 text-xs text-slate-600 md:text-sm">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#ff6a1a] shadow-[0_0_0_5px_rgba(255,106,26,0.16)]" />
                 <span className="truncate max-w-[220px] sm:max-w-[340px]">{displayName}</span>
               </p>
               {sellerCode ? (
-                <p className="mt-1 text-[11px] text-white/78 sm:text-xs">
-                  ID vendeur : <span className="font-mono font-semibold text-[#ffb08a]">{sellerCode}</span>
+                <p className="mt-1 text-[11px] text-slate-500 sm:text-xs">
+                  ID vendeur : <span className="font-mono font-semibold text-slate-900">{sellerCode}</span>
                 </p>
               ) : null}
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <div className="flex flex-shrink-0 items-center gap-1.5 rounded-[24px] border border-sky-200/80 bg-white/88 p-1.5 shadow-[0_10px_20px_rgba(15,23,42,0.05)] sm:gap-2">
             <Suspense fallback={null}>
-              <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-9 w-9 rounded-2xl border border-white/20 bg-white/10 text-white hover:bg-white/22 sm:h-10 sm:w-10 md:h-11 md:w-11" />
+              <QuickTransferButton variant="ghost" size="icon" showText={false} className="h-9 w-9 rounded-2xl border border-sky-200/80 bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800 sm:h-10 sm:w-10 md:h-11 md:w-11" />
             </Suspense>
 
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-2xl border border-white/20 bg-white/10 text-white hover:bg-white/22 sm:h-10 sm:w-10 md:h-11 md:w-11"
+              className="h-9 w-9 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 sm:h-10 sm:w-10 md:h-11 md:w-11"
               onClick={() => navigate('/vendeur-digital/settings')}
               aria-label="Paramètres"
             >
@@ -84,7 +84,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
               variant="ghost"
               size="icon"
               onClick={onSignOut}
-              className="h-9 w-9 rounded-2xl border border-[#ff4000]/40 bg-[#ff4000]/18 text-[#ff8050] hover:bg-[#ff4000]/30 hover:text-white sm:h-10 sm:w-10 md:h-11 md:w-11"
+              className="h-9 w-9 rounded-2xl border border-[#ffcfb8] bg-[#fff4ee] text-[#ff6a1a] hover:bg-[#ff6a1a] hover:text-white sm:h-10 sm:w-10 md:h-11 md:w-11"
               aria-label="Se déconnecter"
             >
               <LogOut className="h-4 w-4 md:h-5 md:w-5" />
@@ -94,9 +94,9 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
       </div>
 
       {/* Wallet compact - desktop */}
-      <div className="hidden border-t border-white/12 px-5 py-3 xl:block md:px-8 bg-white/6">
+      <div className="hidden px-5 py-3 xl:block md:px-8">
         <Suspense fallback={null}>
-          <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} />
+          <WalletBalanceWidget className="max-w-[250px]" showTransferButton={false} variant="surface" />
         </Suspense>
       </div>
     </header>

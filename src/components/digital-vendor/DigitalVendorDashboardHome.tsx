@@ -186,8 +186,10 @@ const DigitalVendorDashboardHome = memo(function DigitalVendorDashboardHome() {
         <CardContent className="px-1 py-2 sm:px-0 sm:py-3 lg:py-4">
           <div className="flex flex-col gap-5 sm:gap-6">
             <div className="max-w-3xl">
-              <h2 className="text-center text-xl font-extrabold uppercase leading-tight text-[#ffb08a] xl:text-left sm:text-3xl lg:text-[2.6rem]">
-                Pilotez vos produits numériques comme un vrai business international.
+              <h2 className="text-center text-xl font-extrabold uppercase leading-tight tracking-[-0.02em] text-[#0b1b33] xl:text-left sm:text-3xl lg:text-[2.6rem]">
+                <span className="text-[#04439e]">Pilotez vos produits numériques</span>{' '}
+                <span className="text-[#0b1b33]">comme un vrai business</span>{' '}
+                <span className="text-[#ff6a1a]">international.</span>
               </h2>
               <p className="mt-4 max-w-2xl text-center text-sm leading-6 text-[#425466] xl:text-left sm:text-base">
                 Organisez vos offres, suivez vos revenus et accédez rapidement aux actions qui font progresser votre boutique digitale.

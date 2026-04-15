@@ -229,6 +229,7 @@ export default function VendorShop() {
           name,
           price,
           images,
+          promotional_videos,
           is_active,
           stock_quantity,
           category_id,
@@ -736,6 +737,7 @@ export default function VendorShop() {
                           key={product.id}
                           id={product.id}
                           image={product.images || []}
+                          promotionalVideos={product.promotional_videos || []}
                           title={product.name}
                           price={product.price}
                           currency={vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF'}
@@ -763,21 +765,45 @@ export default function VendorShop() {
                     {digitalProducts.map((product: any) => (
                       <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/digital-product/${product.id}`)}>
                         <div className="relative h-40 bg-muted">
-                          <img
-                            src={product.images?.[0] || '/placeholder.svg'}
-                            alt={product.title}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/placeholder.svg';
-                            }}
-                          />
+                          {product.images?.[0] ? (
+                            <img
+                              src={product.images[0]}
+                              alt={product.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/placeholder.svg';
+                              }}
+                            />
+                          ) : product.video_url ? (
+                            <video
+                              src={product.video_url}
+                              className="w-full h-full object-cover"
+                              muted
+                              playsInline
+                              preload="metadata"
+                            />
+                          ) : (
+                            <img
+                              src="/placeholder.svg"
+                              alt={product.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                          )}
                           <div className="absolute top-2 left-2">
                             <Badge className="bg-accent text-accent-foreground">
                               <Laptop className="w-3 h-3 mr-1" />
                               {product.category}
                             </Badge>
                           </div>
+                          {product.video_url && (
+                            <div className="absolute bottom-2 left-2">
+                              <Badge className="bg-black/70 text-white hover:bg-black/70">
+                                Vidéo
+                              </Badge>
+                            </div>
+                          )}
                           {product.product_mode === 'affiliate' && (
                             <div className="absolute top-2 right-2">
                               <Badge variant="outline" className="bg-white/90">
@@ -843,6 +869,7 @@ export default function VendorShop() {
                         key={product.id}
                         id={product.id}
                         image={product.images || []}
+                        promotionalVideos={product.promotional_videos || []}
                         title={product.name}
                         price={product.price}
                         currency={vendor.country ? getCurrencyForCountry(vendor.country) : 'GNF'}

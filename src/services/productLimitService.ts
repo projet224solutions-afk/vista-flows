@@ -5,6 +5,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { buildProductActivationPlan } from '@/lib/subscriptions/productQuotaRules';
 
 export interface ProductLimitStatus {
   total_products: number;
@@ -59,9 +60,20 @@ export class ProductLimitService {
 
       // Si illimité, pas de désactivation
       if (limit.is_unlimited) {
+        const { count: totalCount } = await supabase
+          .from('products')
+          .select('id', { count: 'exact', head: true })
+          .eq('vendor_id', vendorId);
+
+        const { count: activeCount } = await supabase
+          .from('products')
+          .select('id', { count: 'exact', head: true })
+          .eq('vendor_id', vendorId)
+          .eq('is_active', true);
+
         return {
-          total_products: limit.current_count,
-          active_products: limit.current_count,
+          total_products: totalCount || activeCount || limit.current_count,
+          active_products: activeCount || limit.current_count,
           max_allowed: Infinity,
           is_unlimited: true,
           excess_products: 0,
@@ -79,25 +91,17 @@ export class ProductLimitService {
       if (productsError) throw productsError;
       if (!products) throw new Error('Aucun produit trouvé');
 
-      const totalProducts = products.length;
-      const maxAllowed = limit.max_products;
-      const excessCount = Math.max(0, totalProducts - maxAllowed);
+      const activationPlan = buildProductActivationPlan(products, limit.max_products, false);
+      const totalProducts = activationPlan.totalProducts;
+      const activeProductCount = activationPlan.activeProducts;
+      const maxAllowed = activationPlan.maxAllowed;
+      const excessCount = activationPlan.excessCount;
 
-      // 4. Si pas de dépassement, réactiver tous les produits
+      // 4. Si pas de dépassement, ne pas toucher aux activations manuelles
       if (excessCount === 0) {
-        const activeProducts = products.filter(p => p.is_active).length;
-        
-        // Réactiver tous les produits si certains sont désactivés
-        if (activeProducts < totalProducts) {
-          await supabase
-            .from('products')
-            .update({ is_active: true })
-            .eq('vendor_id', vendorId);
-        }
-
         return {
           total_products: totalProducts,
-          active_products: totalProducts,
+          active_products: activeProductCount,
           max_allowed: maxAllowed,
           is_unlimited: false,
           excess_products: 0,
@@ -105,23 +109,10 @@ export class ProductLimitService {
         };
       }
 
-      // 5. Identifier les produits à désactiver (les plus anciens)
-      const productsToKeepActive = products.slice(0, maxAllowed);
-      const productsToDeactivate = products.slice(maxAllowed);
+      // 5. Identifier les produits actifs à désactiver (les plus anciens parmi les actifs)
+      const deactivateIds = activationPlan.deactivateIds;
 
-      const activeIds = productsToKeepActive.map(p => p.id);
-      const deactivateIds = productsToDeactivate.map(p => p.id);
-
-      // 6. Mettre à jour le statut des produits
-      // Activer les N premiers produits
-      if (activeIds.length > 0) {
-        await supabase
-          .from('products')
-          .update({ is_active: true })
-          .in('id', activeIds);
-      }
-
-      // Désactiver les produits excédentaires
+      // 6. Désactiver uniquement les produits actifs excédentaires
       if (deactivateIds.length > 0) {
         await supabase
           .from('products')
@@ -182,9 +173,10 @@ export class ProductLimitService {
         .eq('vendor_id', vendorId);
 
       const totalProducts = products?.length || 0;
-      const activeProducts = products?.filter(p => p.is_active).length || 0;
-      const maxAllowed = limit.max_products;
-      const excessCount = Math.max(0, totalProducts - maxAllowed);
+      const activationPlan = buildProductActivationPlan(products || [], limit.max_products, limit.is_unlimited);
+      const activeProducts = activationPlan.activeProducts;
+      const maxAllowed = activationPlan.maxAllowed;
+      const excessCount = activationPlan.excessCount;
 
       return {
         total_products: totalProducts,
@@ -209,7 +201,7 @@ export class ProductLimitService {
       toast.warning(
         `⚠️ ${status.excess_products} produit(s) désactivé(s)`,
         {
-          description: `Votre abonnement permet ${status.max_allowed} produits actifs. Les produits les plus anciens ont été désactivés automatiquement.`,
+          description: `Votre abonnement permet ${status.max_allowed} produits actifs. Seuls les produits actifs en excedent ont ete desactives automatiquement.`,
           duration: 8000,
           action: {
             label: 'Mettre à niveau',

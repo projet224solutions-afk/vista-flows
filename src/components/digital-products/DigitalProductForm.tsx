@@ -1172,7 +1172,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                             Ajoutez vos fichiers téléchargeables
                           </span>
                           <span className="text-xs text-muted-foreground mt-1">
-                            PDF, ZIP, MP3, MP4, DOCX... (jusqu'à 20MB)
+                            Tous types de fichiers, y compris logiciels et installateurs (jusqu'à 5 Go)
                           </span>
                         </>
                       )}

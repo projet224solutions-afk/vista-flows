@@ -3,35 +3,46 @@
  * 224Solutions - Auto-défilement fluide avec animations premium
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { PlayCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProductImageCarouselProps {
   images: string[];
+  videos?: string[];
   alt?: string;
   className?: string;
   autoPlayInterval?: number;
   showDots?: boolean;
 }
 
+interface MediaItem {
+  type: 'image' | 'video';
+  src: string;
+}
+
 export function ProductImageCarousel({
   images = [],
+  videos = [],
   alt = 'Product image',
   className,
   autoPlayInterval = 15000,
   showDots = true,
 }: ProductImageCarouselProps) {
+  const mediaItems: MediaItem[] = [
+    ...videos.filter(Boolean).map((src) => ({ type: 'video' as const, src })),
+    ...images.filter(Boolean).map((src) => ({ type: 'image' as const, src })),
+  ];
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set([0]));
+  const [loadedMedia, setLoadedMedia] = useState<Set<number>>(new Set([0]));
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Si pas d'images ou qu'une seule, pas de carousel
-  if (!images || images.length === 0) {
+  if (mediaItems.length === 0) {
     return (
       <div className={cn('relative w-full aspect-square bg-muted/30 rounded-lg overflow-hidden', className)}>
         <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
@@ -41,32 +52,51 @@ export function ProductImageCarousel({
     );
   }
 
-  if (images.length === 1) {
+  if (mediaItems.length === 1) {
+    const item = mediaItems[0];
+
     return (
       <div className={cn('relative w-full aspect-square bg-muted/10 rounded-lg overflow-hidden', className)}>
-        <img
-          src={images[0]}
-          alt={alt}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
+        {item.type === 'video' ? (
+          <>
+            <video
+              src={item.src}
+              className="w-full h-full object-cover"
+              muted
+              loop
+              playsInline
+              autoPlay
+              preload="metadata"
+            />
+            <div className="absolute left-2 top-2 rounded-full bg-black/60 p-1 text-white">
+              <PlayCircle className="h-4 w-4" />
+            </div>
+          </>
+        ) : (
+          <img
+            src={item.src}
+            alt={alt}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/placeholder-product.png';
+            }}
+          />
+        )}
       </div>
     );
   }
 
-  // Auto-défilement
   useEffect(() => {
-    // Ne démarrer que si on a plusieurs images et pas en hover
-    if (images.length <= 1 || isHovered) {
+    if (mediaItems.length <= 1 || isHovered) {
       return;
     }
 
     const interval = setInterval(() => {
       setDirection('next');
       setCurrentIndex((prev) => {
-        const next = (prev + 1) % images.length;
-        // Lazy load de l'image suivante
-        setLoadedImages((loaded) => new Set(loaded).add(next));
+        const next = (prev + 1) % mediaItems.length;
+        setLoadedMedia((loaded) => new Set(loaded).add(next));
         return next;
       });
     }, autoPlayInterval);
@@ -74,37 +104,32 @@ export function ProductImageCarousel({
     return () => {
       clearInterval(interval);
     };
-  }, [images.length, autoPlayInterval, isHovered]);
+  }, [mediaItems.length, autoPlayInterval, isHovered]);
 
-  // Cleanup des timeouts
   useEffect(() => {
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
       if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
     };
   }, []);
 
-  // Gérer le hover
   const handleMouseEnter = () => {
     setIsHovered(true);
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    // Retourner à la première image
     if (currentIndex !== 0) {
       setDirection('prev');
       setCurrentIndex(0);
     }
   };
 
-  // Gérer le touch (swipe)
   const minSwipeDistance = 50;
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
-    setIsHovered(true); // Pause l'auto-play
+    setIsHovered(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -113,7 +138,6 @@ export function ProductImageCarousel({
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) {
-      // Redémarrer l'auto-play après 2 secondes
       if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
       restartTimeoutRef.current = setTimeout(() => {
         setIsHovered(false);
@@ -128,8 +152,8 @@ export function ProductImageCarousel({
     if (isLeftSwipe) {
       setDirection('next');
       setCurrentIndex((prev) => {
-        const next = (prev + 1) % images.length;
-        setLoadedImages((loaded) => new Set(loaded).add(next));
+        const next = (prev + 1) % mediaItems.length;
+        setLoadedMedia((loaded) => new Set(loaded).add(next));
         return next;
       });
     }
@@ -137,42 +161,25 @@ export function ProductImageCarousel({
     if (isRightSwipe) {
       setDirection('prev');
       setCurrentIndex((prev) => {
-        const next = (prev - 1 + images.length) % images.length;
-        setLoadedImages((loaded) => new Set(loaded).add(next));
+        const next = (prev - 1 + mediaItems.length) % mediaItems.length;
+        setLoadedMedia((loaded) => new Set(loaded).add(next));
         return next;
       });
     }
 
-    // Redémarrer l'auto-play après 2 secondes
     if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
     restartTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
     }, 2000);
   };
 
-  // Navigation par dots
-  const goToSlide = (index: number) => {
-    setIsHovered(true);
-    setDirection(index > currentIndex ? 'next' : 'prev');
-    setCurrentIndex(index);
-    setLoadedImages((loaded) => new Set(loaded).add(index));
-    
-    // Redémarrer après 3 secondes
-    if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
-    restartTimeoutRef.current = setTimeout(() => {
-      setIsHovered(false);
-    }, 3000);
-  };
-
-  // Preload des images au hover
   useEffect(() => {
     if (isHovered) {
-      // Charger toutes les images
-      images.forEach((_, index) => {
-        setLoadedImages((loaded) => new Set(loaded).add(index));
+      mediaItems.forEach((_, index) => {
+        setLoadedMedia((loaded) => new Set(loaded).add(index));
       });
     }
-  }, [isHovered, images]);
+  }, [isHovered, mediaItems]);
 
   return (
     <div
@@ -187,15 +194,14 @@ export function ProductImageCarousel({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Images Stack */}
       <div className="relative w-full h-full">
-        {images.map((image, index) => {
+        {mediaItems.map((item, index) => {
           const isActive = index === currentIndex;
-          const shouldLoad = loadedImages.has(index);
+          const shouldLoad = loadedMedia.has(index);
 
           return (
             <div
-              key={index}
+              key={`${item.type}-${item.src}-${index}`}
               className={cn(
                 'absolute inset-0 transition-all duration-700 ease-out',
                 isActive
@@ -206,19 +212,38 @@ export function ProductImageCarousel({
               )}
             >
               {shouldLoad ? (
-                <img
-                  src={image}
-                  alt={`${alt} ${index + 1}`}
-                  className={cn(
-                    'w-full h-full object-cover transition-transform duration-700',
-                    'group-hover:scale-105'
-                  )}
-                  loading={index === 0 ? 'eager' : 'lazy'}
-                  onError={(e) => {
-                    // Fallback si l'image ne charge pas
-                    (e.target as HTMLImageElement).src = '/placeholder-product.png';
-                  }}
-                />
+                item.type === 'video' ? (
+                  <>
+                    <video
+                      src={item.src}
+                      className={cn(
+                        'w-full h-full object-cover transition-transform duration-700',
+                        'group-hover:scale-105'
+                      )}
+                      muted
+                      loop
+                      playsInline
+                      autoPlay={isActive}
+                      preload="metadata"
+                    />
+                    <div className="absolute left-2 top-2 z-20 rounded-full bg-black/60 p-1 text-white">
+                      <PlayCircle className="h-4 w-4" />
+                    </div>
+                  </>
+                ) : (
+                  <img
+                    src={item.src}
+                    alt={`${alt} ${index + 1}`}
+                    className={cn(
+                      'w-full h-full object-cover transition-transform duration-700',
+                      'group-hover:scale-105'
+                    )}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder-product.png';
+                    }}
+                  />
+                )
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-muted/10 to-muted/30 animate-pulse" />
               )}
@@ -227,7 +252,6 @@ export function ProductImageCarousel({
         })}
       </div>
 
-      {/* Overlay subtil au hover */}
       <div
         className={cn(
           'absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent',
@@ -235,18 +259,15 @@ export function ProductImageCarousel({
         )}
       />
 
-
-      {/* Badge nombre d'images (discret) */}
-      {images.length > 1 && (
+      {showDots && mediaItems.length > 1 && (
         <div className="absolute top-2 right-10 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md text-white text-xs font-medium">
-            {currentIndex + 1}/{images.length}
+            {currentIndex + 1}/{mediaItems.length}
           </div>
         </div>
       )}
 
-      {/* Loading overlay pour la première image */}
-      {!loadedImages.has(0) && (
+      {!loadedMedia.has(0) && (
         <div className="absolute inset-0 z-40 bg-muted/20 animate-pulse">
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
